@@ -1,0 +1,13 @@
+Find RSS feeds related to music cognition, psychoacoustics, and the 
+physics of sound/harmony. Search for:
+- Academic journals (Music Perception, JASA, Frontiers in Psychology - Auditory Cognitive Neuroscience)
+- Research lab blogs (e.g., music cognition labs at universities)
+- Science news sites that cover music/brain research
+
+For each feed found, give me:
+- Feed name
+- RSS URL (the actual .xml or /feed URL)
+- What it covers
+- Posting frequency if you can tell
+
+Compile into a markdown list I can review.

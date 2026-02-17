@@ -1,0 +1,15 @@
+For this YouTube video: [paste URL]
+
+1. Open the video page
+2. Open the transcript (click "...more" under description, then "Show transcript"
+   OR use the three-dot menu on the video)
+3. Copy the full transcript text
+4. Save to a file: ~/Downloads/ResonantProjects/transcripts/[video-title].txt
+5. At the top of the file, add:
+   - Video title
+   - Channel name
+   - URL
+   - Upload date
+   - Duration
+
+If no transcript is available, let me know.

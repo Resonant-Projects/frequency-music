@@ -1,0 +1,17 @@
+I just finished a research session. I have these browser tabs open with
+articles/papers I want to capture:
+
+[list the tabs or say "all tabs in this window"]
+
+For each one:
+1. Grab the title and URL
+2. Determine type (academic paper, blog post, YouTube video, news article)
+3. Create a Notion page in my Notes database:
+   - Title: [page title]
+   - Tags: ResonantProjects
+   - Source URL: [URL]
+   - Type: [determined type]
+   - Status: inbox
+4. If it's a PDF, download it to ~/Downloads/ResonantProjects/ with proper naming
+
+Give me a summary of what was captured when done.

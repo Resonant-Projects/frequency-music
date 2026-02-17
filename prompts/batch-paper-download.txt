@@ -1,0 +1,11 @@
+I need to download PDFs from these URLs:
+[paste your list of paper URLs]
+
+For each one:
+1. Navigate to the page
+2. Find the PDF download link (check for "Download PDF", "Full Text PDF", or similar)
+3. Download to ~/Downloads/ResonantProjects/
+4. Rename the file to: AuthorLastName-Year-FirstFewWordsOfTitle.pdf
+   (e.g., "Huron-2006-SweetAnticipation.pdf")
+
+If a PDF is paywalled or unavailable, note which ones failed and why.

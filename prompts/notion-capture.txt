@@ -1,0 +1,15 @@
+I'm reading this article: [paste URL]
+
+1. Extract the article using reader mode or by grabbing the main content
+2. Create a new page in my Notion "Notes" database with:
+   - Title: [article title]
+   - Tags: ResonantProjects
+   - Source URL: [the URL]
+   - Type: article
+   - Status: inbox
+3. In the page body, paste:
+   - A "Summary" section (leave blank for me to fill or write 2-3 sentences)
+   - A "Key Quotes" section with any passages I've highlighted (or leave blank)
+   - The full article text under a toggle called "Full Text"
+
+Confirm when done and give me the Notion page link.

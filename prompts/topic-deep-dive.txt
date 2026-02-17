@@ -1,0 +1,12 @@
+I want to research: [topic, e.g., "Schumann resonance and brainwave entrainment"]
+
+1. Search Google Scholar for recent papers (last 5 years) on this topic
+2. Search YouTube for educational videos or lectures
+3. Search for any accessible blog posts or articles from researchers
+
+Compile a reading list with:
+- 5-10 most relevant papers (title, authors, year, link, whether PDF is accessible)
+- 3-5 YouTube videos (title, channel, duration, link)
+- Any notable blog posts or articles
+
+Prioritize sources that seem actionable for music composition experiments.
