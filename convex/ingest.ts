@@ -191,7 +191,7 @@ export const pollFeed = internalAction({
 });
 
 /**
- * Poll all enabled feeds
+ * Poll all enabled feeds (public action)
  */
 export const pollAllFeeds = action({
   handler: async (ctx): Promise<{ results: Record<string, { processed: number; errors: string[] }> }> => {
@@ -208,6 +208,23 @@ export const pollAllFeeds = action({
     }
 
     return { results };
+  },
+});
+
+/**
+ * Poll all enabled feeds (internal action for cron)
+ */
+export const pollAllFeedsInternal = internalAction({
+  handler: async (ctx): Promise<void> => {
+    const feeds = await ctx.runQuery(api.feeds.listEnabled);
+
+    for (const feed of feeds) {
+      try {
+        await ctx.runAction(internal.ingest.pollFeed, { feedId: feed._id });
+      } catch (error) {
+        console.error(`Failed to poll feed ${feed.name}:`, error);
+      }
+    }
   },
 });
 

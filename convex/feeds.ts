@@ -119,7 +119,7 @@ export const seedInitialFeeds = mutation({
   handler: async (ctx) => {
     const now = Date.now();
     const feeds = [
-      // Academic Journals
+      // === Magazines ===
       {
         name: "Quanta Magazine",
         url: "https://api.quantamagazine.org/feed/",
@@ -127,12 +127,21 @@ export const seedInitialFeeds = mutation({
         category: "magazine",
       },
       {
+        name: "Nautilus",
+        url: "https://nautil.us/feed/",
+        type: "rss" as const,
+        category: "magazine",
+      },
+
+      // === Podcasts ===
+      {
         name: "Music and the Brain Podcast",
-        url: "https://www.loc.gov/podcasts/musicandthebrain/feed/", // May need verification
+        url: "https://www.loc.gov/podcasts/musicandthebrain/feed/",
         type: "podcast" as const,
         category: "podcast",
       },
-      // YouTube channels (will need YouTube API or RSS bridge)
+
+      // === YouTube Channels ===
       {
         name: "3Blue1Brown",
         url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw",
@@ -150,6 +159,26 @@ export const seedInitialFeeds = mutation({
         url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCz2iUx-Imr6HgDC3zAFpjOw",
         type: "youtube" as const,
         category: "youtube",
+      },
+      {
+        name: "CymaScope",
+        url: "https://www.youtube.com/feeds/videos.xml?channel_id=UChfmWGYc-CA1KwFRqVL9-9w",
+        type: "youtube" as const,
+        category: "youtube",
+      },
+      {
+        name: "Andrew Huang",
+        url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCdcemy56JtVTrsFIOoqvV8g",
+        type: "youtube" as const,
+        category: "youtube",
+      },
+
+      // === Academic/Research (RSS where available) ===
+      {
+        name: "BRAMS News",
+        url: "https://brams.org/feed/",
+        type: "rss" as const,
+        category: "lab",
       },
     ];
 
