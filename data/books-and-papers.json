@@ -1,0 +1,222 @@
+{
+  "books": {
+    "free_pdfs": [
+      {
+        "title": "Music: A Mathematical Offering",
+        "author": "Dave Benson",
+        "url": "https://homepages.abdn.ac.uk/d.j.benson/pages/html/maths-music.html",
+        "pdf": "https://logosfoundation.org/kursus/music_math.pdf",
+        "topics": ["mathematics", "music theory", "Fourier analysis", "tuning systems", "group theory"],
+        "pages": 531,
+        "category": "core"
+      },
+      {
+        "title": "The Physics of Music and Musical Instruments",
+        "author": "David Lapp",
+        "url": "https://www.e-booksdirectory.com/details.php?ebook=2276",
+        "pdf": "https://kellerphysics.com/acoustics/Lapp.pdf",
+        "topics": ["physics", "waves", "sound", "musical instruments", "acoustics"],
+        "category": "physics"
+      },
+      {
+        "title": "The Physical Basis Of Music",
+        "author": "E. T. Jaynes",
+        "url": "https://www.e-booksdirectory.com/details.php?ebook=2249",
+        "pdf": "https://bayes.wustl.edu/etj/articles/physical.basis.of.music.pdf",
+        "topics": ["physics", "musical instruments", "acoustics", "technique"],
+        "category": "physics"
+      },
+      {
+        "title": "Introduction To Sound Processing",
+        "author": "Davide Rocchesso",
+        "url": "https://www.e-booksdirectory.com/details.php?ebook=29",
+        "topics": ["DSP", "sound processing", "algorithms", "synthesis"],
+        "category": "dsp"
+      },
+      {
+        "title": "Vibrations and Waves",
+        "author": "Benjamin Crowell",
+        "url": "https://www.lightandmatter.com/vw/",
+        "pdf": "https://www.lightandmatter.com/vw/vw.pdf",
+        "topics": ["physics", "vibrations", "waves", "introductory"],
+        "category": "physics"
+      },
+      {
+        "title": "The Theory of Sound, Volume One",
+        "author": "Lord Rayleigh (J.W.S. Strutt)",
+        "url": "https://archive.org/details/theorysound03telerich",
+        "topics": ["acoustics", "classical physics", "wave theory", "historical"],
+        "category": "classical"
+      },
+      {
+        "title": "Acoustics and Architecture",
+        "author": "Paul E. Sabine",
+        "url": "https://archive.org/details/acousticsarchite00sabi",
+        "topics": ["acoustics", "architecture", "reverberation", "room design"],
+        "category": "applied"
+      }
+    ],
+    "recommended_purchase": [
+      {
+        "title": "A Geometry of Music: Harmony and Counterpoint in the Extended Common Practice",
+        "author": "Dmitri Tymoczko",
+        "url": "https://dmitri.mycpanel.princeton.edu/geometry-of-music.html",
+        "isbn": "9780195336672",
+        "topics": ["geometry", "voice leading", "chord spaces", "topology", "orbifolds"],
+        "category": "core"
+      },
+      {
+        "title": "The Science of Musical Sound",
+        "author": "Johan Sundberg",
+        "topics": ["psychoacoustics", "singing voice", "perception"],
+        "category": "psychoacoustics"
+      },
+      {
+        "title": "How Music Works",
+        "author": "John Powell",
+        "topics": ["popular science", "acoustics", "psychology", "accessible"],
+        "category": "popular"
+      },
+      {
+        "title": "Musimathics: The Mathematical Foundations of Music (Vol 1 & 2)",
+        "author": "Gareth Loy",
+        "topics": ["mathematics", "music theory", "DSP", "synthesis", "comprehensive"],
+        "category": "core"
+      },
+      {
+        "title": "Principles of Musical Acoustics",
+        "author": "William M. Hartmann",
+        "topics": ["acoustics", "psychoacoustics", "musical instruments"],
+        "note": "Was free during COVID from Springer",
+        "category": "acoustics"
+      },
+      {
+        "title": "The Physics of Sound",
+        "author": "Richard Berg & David Stork",
+        "topics": ["physics", "acoustics", "music", "undergraduate level"],
+        "category": "physics"
+      },
+      {
+        "title": "Master Handbook of Acoustics",
+        "author": "F. Alton Everest",
+        "topics": ["acoustics", "room design", "practical", "reference"],
+        "category": "applied"
+      },
+      {
+        "title": "Sound Reproduction: The Acoustics and Psychoacoustics of Loudspeakers",
+        "author": "Floyd Toole",
+        "topics": ["psychoacoustics", "loudspeakers", "room acoustics"],
+        "category": "applied"
+      }
+    ]
+  },
+  "arxiv_papers": [
+    {
+      "title": "Unified Music Theories for General Equal-Temperament Systems",
+      "url": "https://arxiv.org/abs/1611.03175",
+      "pdf": "https://arxiv.org/pdf/1611.03175.pdf",
+      "topics": ["equal temperament", "abstract algebra", "scales", "keyboard"],
+      "category": "theory"
+    },
+    {
+      "title": "Mathematical Harmony Analysis",
+      "url": "https://arxiv.org/abs/1603.08904",
+      "pdf": "https://arxiv.org/pdf/1603.08904.pdf",
+      "topics": ["just intonation", "harmony", "mathematical analysis"],
+      "category": "theory"
+    },
+    {
+      "title": "Playing Music in Just Intonation – A Dynamically Adapting Tuning Scheme",
+      "url": "https://arxiv.org/abs/1706.04338",
+      "pdf": "https://arxiv.org/pdf/1706.04338.pdf",
+      "topics": ["just intonation", "adaptive tuning", "chords"],
+      "category": "tuning"
+    },
+    {
+      "title": "Music in Terms of Science",
+      "url": "https://arxiv.org/abs/1209.3767",
+      "pdf": "https://arxiv.org/pdf/1209.3767.pdf",
+      "topics": ["physics", "music", "science", "introductory"],
+      "category": "general"
+    },
+    {
+      "title": "Distorted Sounds: Unlocking the Physics of Modern Music",
+      "url": "https://arxiv.org/abs/2504.04919",
+      "pdf": "https://arxiv.org/pdf/2504.04919.pdf",
+      "topics": ["physics", "modern music", "temperament", "tuning error"],
+      "category": "physics"
+    },
+    {
+      "title": "Computational Extraction of Intonation and Tuning Systems",
+      "url": "https://arxiv.org/abs/2503.11956",
+      "pdf": "https://arxiv.org/pdf/2503.11956.pdf",
+      "topics": ["microtonal", "intonation", "computational analysis", "pitch histograms"],
+      "category": "computational"
+    }
+  ],
+  "journals": [
+    {
+      "name": "Journal of Mathematics and Music",
+      "url": "https://www.tandfonline.com/journals/tmam20",
+      "rss": "https://www.tandfonline.com/feed/rss/tmam20",
+      "publisher": "Taylor & Francis",
+      "topics": ["mathematics", "music theory", "formal methods"],
+      "access": "subscription"
+    },
+    {
+      "name": "Music Perception",
+      "url": "https://online.ucpress.edu/mp",
+      "publisher": "UC Press",
+      "topics": ["psychoacoustics", "cognition", "perception"],
+      "access": "subscription"
+    },
+    {
+      "name": "Music Theory Online (MTO)",
+      "url": "https://mtosmt.org/",
+      "rss": "https://mtosmt.org/mto.xml",
+      "publisher": "Society for Music Theory",
+      "topics": ["music theory", "analysis"],
+      "access": "open"
+    },
+    {
+      "name": "Journal of the Acoustical Society of America (JASA)",
+      "url": "https://pubs.aip.org/asa/jasa",
+      "publisher": "AIP",
+      "topics": ["acoustics", "physics", "speech", "music"],
+      "access": "subscription"
+    },
+    {
+      "name": "Computer Music Journal",
+      "url": "https://direct.mit.edu/comj",
+      "publisher": "MIT Press",
+      "topics": ["computer music", "synthesis", "composition", "technology"],
+      "access": "subscription"
+    },
+    {
+      "name": "Organised Sound",
+      "url": "https://www.cambridge.org/core/journals/organised-sound",
+      "publisher": "Cambridge",
+      "topics": ["electroacoustic music", "sound art", "technology"],
+      "access": "subscription"
+    }
+  ],
+  "arxiv_categories": [
+    {
+      "category": "cs.SD",
+      "name": "Sound",
+      "url": "https://arxiv.org/list/cs.SD/recent",
+      "rss": "https://arxiv.org/rss/cs.SD"
+    },
+    {
+      "category": "eess.AS",
+      "name": "Audio and Speech Processing",
+      "url": "https://arxiv.org/list/eess.AS/recent",
+      "rss": "https://arxiv.org/rss/eess.AS"
+    },
+    {
+      "category": "physics.pop-ph",
+      "name": "Popular Physics (includes music physics)",
+      "url": "https://arxiv.org/list/physics.pop-ph/recent"
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "author": "Robert Edward Grant",
+  "website": "https://robertedwardgrant.com",
+  "papers": [
+    {
+      "title": "Unified Mathematics, Geometry and Music",
+      "url": "https://robertedwardgrant.com/publications/",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/b8252f_6c474c897def4a968bd3c3922a3143a9.pdf",
+      "arxiv": "https://archive.org/details/musicalgeometry",
+      "category": "core",
+      "topics": ["music", "geometry", "polygons", "unit circle", "musical intervals"]
+    },
+    {
+      "title": "Precise Geometrical Correspondence to the Perfect 5th Tuned to 432Hz",
+      "url": "https://robertedwardgrant.com/publications/",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/39d6ce_bb13e020c640468c87d98cfb1a187c0a.pdf",
+      "category": "core",
+      "topics": ["432Hz", "tuning", "geometry", "polygons", "octave notes"]
+    },
+    {
+      "title": "A Novel Geometric Model of Natural Spirals Based on Right Triangle Polygonal Modular Formations",
+      "url": "https://arxiv.org/abs/2111.02895",
+      "pdf": "https://arxiv.org/pdf/2111.02895.pdf",
+      "category": "geometry",
+      "topics": ["spirals", "fractals", "right triangles", "nature patterns"]
+    },
+    {
+      "title": "Accurate and Infinite Prime Prediction from Novel Quasi-Prime Analytical Methodology",
+      "url": "https://arxiv.org/abs/1903.08570",
+      "pdf": "https://arxiv.org/pdf/1903.08570.pdf",
+      "category": "number-theory",
+      "topics": ["prime numbers", "quasi-primes", "digital roots", "24-sided polygon"]
+    },
+    {
+      "title": "Predicting Prime Numbers",
+      "url": "https://archive.org/details/predictprime",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/b8252f_f12a21ef428d44f7ad70d0eb156a8b00.pdf",
+      "category": "number-theory",
+      "topics": ["primes", "icositetragon", "24-sided polygon"]
+    },
+    {
+      "title": "Icositetragon Wheel",
+      "url": "https://robertedwardgrant.com/publications/",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/39d6ce_7f5be22f76eb4624a9712ccc430e591e.pdf",
+      "category": "number-theory",
+      "topics": ["icositetragon", "24-based distribution", "primes", "symmetry"]
+    },
+    {
+      "title": "Four-Fold Mirror-Symmetry Inherent to the Icositetragon Distribution of Numbers",
+      "url": "https://robertedwardgrant.com/publications/",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/b8252f_78941423b4d247109c4fa2d85049123e.pdf",
+      "category": "number-theory",
+      "topics": ["symmetry", "icositetragon", "prime distribution"]
+    },
+    {
+      "title": "The Wave Theory of Numbers",
+      "url": "https://robertedwardgrant.com/publications/",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/b8252f_44507aa494ec4822ae67899a6788e27d.pdf",
+      "category": "number-theory",
+      "topics": ["wave-particle duality", "numbers", "wave theory"]
+    },
+    {
+      "title": "The Wave Theory of Constants",
+      "url": "https://robertedwardgrant.com/publications/",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/b8252f_13302419ecc7442cbf34467435f1837a.pdf",
+      "category": "number-theory",
+      "topics": ["fundamental constants", "wave-matrix", "12-based periodicity"]
+    },
+    {
+      "title": "The Fractal Root of Numbers",
+      "url": "https://robertedwardgrant.com/publications/",
+      "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/b8252f_5b25a6e31bb74510a3d19a7560ecf7e7.pdf",
+      "category": "number-theory",
+      "topics": ["fractal roots", "numerical structure", "mathematics"]
+    }
+  ],
+  "articles": [
+    {
+      "title": "Geometry of Sound",
+      "url": "https://robertedwardgrant.com/geometry-of-sound/",
+      "category": "core",
+      "topics": ["432Hz", "chromatic scale", "geometry", "Pythagorean tuning", "flower of life"]
+    },
+    {
+      "title": "Unity Harmonica Geometric Theory of Everything",
+      "url": "https://robertedwardgrant.com/unity-harmonica-geometric-theory-of-everything/",
+      "category": "core",
+      "topics": ["polyhedra", "harmonic triangle", "means", "logarithmic spiral", "musical intervals"]
+    },
+    {
+      "title": "Precise Temperament Tuning",
+      "url": "https://robertedwardgrant.com/precise-temperament-tuning/",
+      "category": "core",
+      "topics": ["tuning", "just intonation", "equal temperament", "major third", "432Hz"]
+    },
+    {
+      "title": "Harmonic Transcendence and the Dimensional Resonance of Language",
+      "url": "https://robertedwardgrant.com/harmonic-transcendence-and-the-dimensional-resonance-of-language/",
+      "category": "extended",
+      "topics": ["language", "harmonics", "resonance", "dimensions"]
+    },
+    {
+      "title": "Proof of the Riemann Hypothesis",
+      "url": "https://robertedwardgrant.com/proof-of-the-riemann-hypothesis/",
+      "category": "number-theory",
+      "topics": ["Riemann hypothesis", "primes", "geometry"]
+    },
+    {
+      "title": "The Grant Projection Theorem",
+      "url": "https://robertedwardgrant.com/the-grant-projection-theorem/",
+      "category": "geometry",
+      "topics": ["3D polyhedra", "topology", "projection"]
+    },
+    {
+      "title": "Resonance Reversal Mass Inversion",
+      "url": "https://robertedwardgrant.com/resonance-reversal-mass-inversion/",
+      "category": "physics",
+      "topics": ["resonance", "mass", "inversion", "physics"]
+    },
+    {
+      "title": "24 Precepts of Universal Mind",
+      "url": "https://robertedwardgrant.com/24-precepts-of-universal-mind/",
+      "category": "philosophy",
+      "topics": ["philosophy", "consciousness", "universal mind"]
+    },
+    {
+      "title": "NEW DISCOVERY: The 24 Note Quartertone Relationship to Ancient Pyramids",
+      "url": "https://robertedwardgrant.com/new-discovery-the-24-note-quartertone-relationship-to-ancient-pyramids/",
+      "category": "extended",
+      "topics": ["quartertones", "pyramids", "24 notes", "ancient geometry"]
+    },
+    {
+      "title": "NEW DISCOVERY: Our Sexagesimal Time System is Based on Musical Scales",
+      "url": "https://robertedwardgrant.com/new-discovery-our-sexagesimal-time-system-is-based-on-musical-scales/",
+      "category": "extended",
+      "topics": ["sexagesimal", "time", "musical scales", "base-60"]
+    }
+  ],
+  "youtube": {
+    "channel": "https://www.youtube.com/channel/UC2MN4AlpbY9NYxuYH-ecoCQ",
+    "rss": "https://www.youtube.com/feeds/videos.xml?channel_id=UC2MN4AlpbY9NYxuYH-ecoCQ"
+  }
+}
