@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { action, internalMutation } from "./_generated/server";
 import { internal, api } from "./_generated/api";
-import { generateText } from "ai";
+import { generateText, LanguageModel } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createGroq } from "@ai-sdk/groq";
 
 // ============================================================================
 // MODEL CONFIGURATION
@@ -13,16 +14,40 @@ const DEFAULT_MODEL = "anthropic/claude-sonnet-4";
 
 // Available models for different use cases
 export const MODELS = {
-  // Fast & cheap for simple extractions
-  fast: "anthropic/claude-3-5-haiku-20241022",
-  // Balanced for most extractions
+  // === GROQ (blazing fast, cheap) ===
+  fast: "groq/llama-3.3-70b-versatile",
+  kimi: "groq/moonshotai/kimi-k2-instruct",
+  
+  // === OpenRouter (model variety) ===
   default: "anthropic/claude-sonnet-4",
-  // High quality for complex sources
   quality: "anthropic/claude-sonnet-4",
-  // Alternative providers
+  haiku: "anthropic/claude-3-5-haiku-20241022",
   gemini: "google/gemini-2.0-flash-001",
   gpt4: "openai/gpt-4o",
 } as const;
+
+/**
+ * Get the appropriate model instance based on model ID
+ * Routes to Groq for groq/* models, OpenRouter for everything else
+ */
+function getModel(modelId: string): LanguageModel {
+  if (modelId.startsWith("groq/")) {
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey) {
+      throw new Error("GROQ_API_KEY not configured");
+    }
+    const groq = createGroq({ apiKey: groqKey });
+    // Strip the "groq/" prefix for the actual model ID
+    return groq(modelId.replace("groq/", ""));
+  } else {
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterKey) {
+      throw new Error("OPENROUTER_API_KEY not configured");
+    }
+    const openrouter = createOpenRouter({ apiKey: openRouterKey });
+    return openrouter(modelId);
+  }
+}
 
 // ============================================================================
 // EXTRACTION PROMPTS
@@ -143,21 +168,13 @@ export const extractSource = action({
       .replace("{{url}}", source.canonicalUrl || "")
       .replace("{{content}}", content.slice(0, 30000)); // Limit content length
 
-    // Initialize OpenRouter
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    if (!openRouterKey) {
-      throw new Error("OPENROUTER_API_KEY not configured");
-    }
-
-    const openrouter = createOpenRouter({
-      apiKey: openRouterKey,
-    });
-
     const modelId = args.model || DEFAULT_MODEL;
 
     try {
+      const model = getModel(modelId);
+      
       const { text: assistantMessage } = await generateText({
-        model: openrouter(modelId),
+        model,
         system: EXTRACT_SYSTEM_PROMPT,
         prompt: userPrompt,
         maxTokens: 4096,
