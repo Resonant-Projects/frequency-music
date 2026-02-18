@@ -1,6 +1,28 @@
 import { v } from "convex/values";
-import { action, internalAction, internalMutation } from "./_generated/server";
+import { action, internalMutation } from "./_generated/server";
 import { internal, api } from "./_generated/api";
+import { generateText } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+
+// ============================================================================
+// MODEL CONFIGURATION
+// ============================================================================
+
+// Default model - can be overridden per-extraction
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4";
+
+// Available models for different use cases
+export const MODELS = {
+  // Fast & cheap for simple extractions
+  fast: "anthropic/claude-3-5-haiku-20241022",
+  // Balanced for most extractions
+  default: "anthropic/claude-sonnet-4",
+  // High quality for complex sources
+  quality: "anthropic/claude-sonnet-4",
+  // Alternative providers
+  gemini: "google/gemini-2.0-flash-001",
+  gpt4: "openai/gpt-4o",
+} as const;
 
 // ============================================================================
 // EXTRACTION PROMPTS
@@ -78,11 +100,12 @@ interface ExtractionResult {
 }
 
 /**
- * Extract structured data from a source using Claude
+ * Extract structured data from a source using AI SDK + OpenRouter
  */
 export const extractSource = action({
   args: {
     sourceId: v.id("sources"),
+    model: v.optional(v.string()), // Override model if needed
   },
   handler: async (ctx, args) => {
     // Get the source
@@ -120,40 +143,28 @@ export const extractSource = action({
       .replace("{{url}}", source.canonicalUrl || "")
       .replace("{{content}}", content.slice(0, 30000)); // Limit content length
 
-    // Call Claude
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
+    // Initialize OpenRouter
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterKey) {
+      throw new Error("OPENROUTER_API_KEY not configured");
     }
 
+    const openrouter = createOpenRouter({
+      apiKey: openRouterKey,
+    });
+
+    const modelId = args.model || DEFAULT_MODEL;
+
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": anthropicKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4096,
-          system: EXTRACT_SYSTEM_PROMPT,
-          messages: [
-            { role: "user", content: userPrompt },
-          ],
-        }),
+      const { text: assistantMessage } = await generateText({
+        model: openrouter(modelId),
+        system: EXTRACT_SYSTEM_PROMPT,
+        prompt: userPrompt,
+        maxTokens: 4096,
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-      }
-
-      const data = await response.json();
-      const assistantMessage = data.content[0]?.text;
-
       if (!assistantMessage) {
-        throw new Error("No response from Claude");
+        throw new Error("No response from model");
       }
 
       // Parse the JSON response
@@ -184,7 +195,7 @@ export const extractSource = action({
       // Store the extraction
       await ctx.runMutation(internal.extract.storeExtraction, {
         sourceId: args.sourceId,
-        model: "claude-sonnet-4-20250514",
+        model: modelId,
         promptVersion: "extract_v1",
         inputHash,
         summary: extraction.summary,
@@ -200,7 +211,7 @@ export const extractSource = action({
         })),
         topics: extraction.topics || [],
         openQuestions: extraction.openQuestions || [],
-        confidence: 0.8, // Could be computed from claim evidence levels
+        confidence: 0.8,
       });
 
       // Update source status
@@ -211,6 +222,7 @@ export const extractSource = action({
 
       return {
         success: true,
+        model: modelId,
         summary: extraction.summary,
         claimCount: extraction.claims.length,
         parameterCount: extraction.compositionParameters.length,
@@ -291,11 +303,19 @@ export const storeExtraction = internalMutation({
 });
 
 /**
+ * Sanitize a string for use as a Convex field name
+ */
+function sanitizeKey(str: string): string {
+  return str.replace(/[^\x20-\x7E]/g, "_").slice(0, 100);
+}
+
+/**
  * Extract all sources that are ready
  */
 export const extractAllReady = action({
   args: {
     limit: v.optional(v.number()),
+    model: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 10;
@@ -304,25 +324,47 @@ export const extractAllReady = action({
       limit,
     });
 
-    const results: Record<string, { success?: boolean; error?: string; summary?: string }> = {};
+    const results: Array<{
+      id: string;
+      title: string;
+      success: boolean;
+      error?: string;
+      summary?: string;
+      model?: string;
+    }> = [];
 
     for (const source of sources) {
       try {
         const result = await ctx.runAction(api.extract.extractSource, {
           sourceId: source._id,
+          model: args.model,
         });
-        results[source.title || source._id] = {
+        results.push({
+          id: source._id,
+          title: source.title || "Untitled",
           success: true,
           summary: result.summary,
-        };
+          model: result.model,
+        });
       } catch (error) {
-        results[source.title || source._id] = {
+        results.push({
+          id: source._id,
+          title: source.title || "Untitled",
           success: false,
           error: `${error}`,
-        };
+        });
       }
     }
 
-    return results;
+    return { results, processed: results.length };
+  },
+});
+
+/**
+ * List available models
+ */
+export const listModels = action({
+  handler: async () => {
+    return MODELS;
   },
 });
