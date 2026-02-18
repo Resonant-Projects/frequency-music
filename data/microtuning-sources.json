@@ -1,0 +1,360 @@
+{
+  "meta": {
+    "topic": "Microtuning / Xenharmonic Music",
+    "description": "Comprehensive sources covering mathematical foundations, tools, composition techniques, and history of microtonal music",
+    "created": "2026-02-18"
+  },
+  "foundations": {
+    "articles": [
+      {
+        "title": "Just Intonation Explained",
+        "author": "Kyle Gann",
+        "url": "https://www.kylegann.com/tuning.html",
+        "category": "core",
+        "topics": ["just intonation", "fractions", "ratios", "cents", "pure tuning", "equal temperament"]
+      },
+      {
+        "title": "Anatomy of an Octave - Interval Reference Chart",
+        "author": "Kyle Gann",
+        "url": "https://www.kylegann.com/Octave.html",
+        "category": "reference",
+        "topics": ["intervals", "ratios", "cents"]
+      },
+      {
+        "title": "Introduction to Historical Tunings",
+        "author": "Kyle Gann",
+        "url": "https://www.kylegann.com/histune.html",
+        "category": "history",
+        "topics": ["meantone", "well temperaments", "Pythagorean", "historical"]
+      },
+      {
+        "title": "Microtonality - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Microtonality",
+        "category": "overview",
+        "topics": ["history", "composers", "terminology", "overview"]
+      },
+      {
+        "title": "Microtonality (University of Minnesota Music Composition)",
+        "url": "https://open.lib.umn.edu/musiccomposition/chapter/microtonality/",
+        "category": "composition",
+        "topics": ["notation", "composition techniques", "harmonic beating"]
+      }
+    ],
+    "wikis": [
+      {
+        "name": "Xenharmonic Wiki",
+        "url": "https://en.xen.wiki/",
+        "description": "Comprehensive wiki on microtonal tuning systems, theory, and practice"
+      },
+      {
+        "name": "Microtonal Encyclopedia",
+        "url": "https://microtonal.miraheze.org/wiki/Main_Page",
+        "description": "Historical, geographic and human side of microtonal music"
+      }
+    ]
+  },
+  "mathematics": {
+    "formulas": [
+      {
+        "name": "Cents from Ratio",
+        "formula": "cents = 1200 × log₂(ratio)",
+        "alternative": "cents = log₁₀(ratio) × 3986.3137",
+        "description": "Convert frequency ratio to cents"
+      },
+      {
+        "name": "Ratio from Cents",
+        "formula": "ratio = 2^(cents/1200)",
+        "description": "Convert cents to frequency ratio"
+      },
+      {
+        "name": "Frequency from MIDI Note",
+        "formula": "f = 440 × 2^((n-69)/12)",
+        "description": "Standard 12-EDO frequency calculation"
+      },
+      {
+        "name": "EDO Step Size",
+        "formula": "step_cents = 1200/n",
+        "description": "Size of one step in n-EDO in cents"
+      },
+      {
+        "name": "EDO Frequency Ratio",
+        "formula": "ratio = 2^(step/n)",
+        "description": "Ratio of step k in n-EDO"
+      }
+    ],
+    "concepts": [
+      {
+        "term": "Cent",
+        "definition": "1/1200 of an octave; logarithmic unit for measuring intervals",
+        "value": "2^(1/1200) ≈ 1.0005777895"
+      },
+      {
+        "term": "Just Intonation (JI)",
+        "definition": "Tuning based on pure frequency ratios using small whole numbers"
+      },
+      {
+        "term": "Equal Division of the Octave (EDO)",
+        "definition": "Dividing the octave into n equal logarithmic steps"
+      },
+      {
+        "term": "Temperament",
+        "definition": "A tuning that tempers (adjusts) pure intervals for practical purposes"
+      },
+      {
+        "term": "Comma",
+        "definition": "Small interval representing the difference between two ways of reaching the same note"
+      },
+      {
+        "term": "Syntonic Comma",
+        "value": "81/80 ≈ 21.5 cents",
+        "definition": "Difference between Pythagorean and just major thirds"
+      },
+      {
+        "term": "Limit",
+        "definition": "Highest prime number in the ratios of a JI scale (e.g., 5-limit, 7-limit)"
+      }
+    ]
+  },
+  "tuning_systems": {
+    "equal_temperaments": [
+      {
+        "name": "12-EDO",
+        "step_cents": 100,
+        "description": "Standard Western tuning",
+        "features": ["universal transposition", "approximates 3/2 well", "poor 5/4"]
+      },
+      {
+        "name": "19-EDO",
+        "step_cents": 63.16,
+        "description": "Good meantone approximation",
+        "features": ["better 5/4 than 12", "distinct enharmonics", "meantone-like"]
+      },
+      {
+        "name": "22-EDO",
+        "step_cents": 54.55,
+        "description": "Superpyth temperament support",
+        "features": ["good 7-limit", "exotic intervals", "two sizes of whole tone"]
+      },
+      {
+        "name": "24-EDO",
+        "step_cents": 50,
+        "description": "Quarter-tone scale",
+        "features": ["includes 12-EDO", "neutral intervals", "Arabic maqam approximation"]
+      },
+      {
+        "name": "31-EDO",
+        "step_cents": 38.71,
+        "description": "Extended meantone",
+        "features": ["excellent 5-limit", "good 7-limit", "many distinct intervals"]
+      },
+      {
+        "name": "41-EDO",
+        "step_cents": 29.27,
+        "description": "Very accurate temperament",
+        "features": ["excellent all limits through 11", "schismic temperament"]
+      },
+      {
+        "name": "53-EDO",
+        "step_cents": 22.64,
+        "description": "Nearly just 5-limit",
+        "features": ["excellent Pythagorean and 5-limit", "used historically"]
+      },
+      {
+        "name": "72-EDO",
+        "step_cents": 16.67,
+        "description": "High-precision temperament",
+        "features": ["includes 12, 24, 36", "excellent all limits", "ekmelic system"]
+      }
+    ],
+    "just_intonation": [
+      {
+        "name": "5-limit JI",
+        "primes": [2, 3, 5],
+        "description": "Classical just intonation using octaves, fifths, and major thirds"
+      },
+      {
+        "name": "7-limit JI",
+        "primes": [2, 3, 5, 7],
+        "description": "Extended JI including septimal intervals (harmonic 7th)"
+      },
+      {
+        "name": "11-limit JI",
+        "primes": [2, 3, 5, 7, 11],
+        "description": "Further extended, includes neutral intervals"
+      },
+      {
+        "name": "Harry Partch 43-tone",
+        "description": "Partch's system: 11-limit JI with 43 tones per octave"
+      },
+      {
+        "name": "Ben Johnston Extended JI",
+        "description": "Extended just intonation with precise notation system"
+      },
+      {
+        "name": "La Monte Young Well-Tuned Piano",
+        "description": "7-limit JI scale with specific ratios for the piano"
+      }
+    ],
+    "historical": [
+      {
+        "name": "Pythagorean Tuning",
+        "description": "Based on stacked perfect fifths (3/2)",
+        "features": ["pure fifths", "wide major thirds (81/64)", "wolf fifth"]
+      },
+      {
+        "name": "Meantone Temperament",
+        "variants": ["1/4 comma", "1/3 comma", "1/6 comma"],
+        "description": "Tempers fifths to improve major thirds"
+      },
+      {
+        "name": "Well Temperament",
+        "examples": ["Werckmeister III", "Kirnberger III", "Vallotti"],
+        "description": "Circulating temperaments with key color"
+      }
+    ]
+  },
+  "tools": {
+    "software": [
+      {
+        "name": "Scala",
+        "url": "https://www.huygens-fokker.org/scala/",
+        "type": "desktop",
+        "description": "The reference software for microtuning, huge scale archive",
+        "file_formats": [".scl (scale)", ".kbm (keyboard mapping)"]
+      },
+      {
+        "name": "Scale Workshop",
+        "url": "https://scaleworkshop.plainsound.org/",
+        "github": "https://github.com/SeanArchibald/scale-workshop",
+        "type": "web",
+        "description": "Online tool by Sevish for creating and playing microtonal scales"
+      },
+      {
+        "name": "MTS-ESP Suite",
+        "url": "https://oddsound.com/mtsespsuite.php",
+        "type": "plugin",
+        "description": "Master tuning plugin that syncs all compatible synths",
+        "developer": "ODDSound (with Aphex Twin involvement)"
+      },
+      {
+        "name": "Surge XT",
+        "url": "https://surge-synthesizer.github.io/",
+        "type": "synth",
+        "description": "Free open-source synth with excellent microtuning support"
+      },
+      {
+        "name": "Entonal Studio",
+        "url": "https://entonal.studio/",
+        "type": "daw",
+        "description": "DAW designed specifically for microtonal composition"
+      },
+      {
+        "name": "Pianoteq",
+        "type": "plugin",
+        "description": "Physical modeling piano with full microtuning support"
+      }
+    ],
+    "file_formats": [
+      {
+        "extension": ".scl",
+        "name": "Scala Scale File",
+        "description": "Defines scale intervals in cents or ratios"
+      },
+      {
+        "extension": ".kbm",
+        "name": "Scala Keyboard Mapping",
+        "description": "Maps scale degrees to MIDI notes"
+      },
+      {
+        "extension": ".tun",
+        "name": "AnaMark TUN",
+        "description": "Complete tuning including keyboard mapping"
+      },
+      {
+        "extension": "MTS",
+        "name": "MIDI Tuning Standard",
+        "description": "MIDI SysEx messages for real-time retuning"
+      }
+    ],
+    "compatible_synths": [
+      "Surge XT", "Vital", "Serum", "Pigments", "Zebra 2", 
+      "Diva", "TAL-U-NO-LX", "Hive 2", "Omnisphere", "Kontakt",
+      "Audio Damage plugins", "Expert Sleepers", "Xfer Serum"
+    ]
+  },
+  "composition": {
+    "approaches": [
+      {
+        "name": "Extended JI Harmony",
+        "description": "Using just intonation with higher prime limits for new harmonic colors",
+        "composers": ["Ben Johnston", "Kyle Gann", "La Monte Young"]
+      },
+      {
+        "name": "EDO Exploration",
+        "description": "Composing in non-12 equal temperaments",
+        "composers": ["Easley Blackwood", "Sevish", "Brendan Byrnes"]
+      },
+      {
+        "name": "Spectral Microtonality",
+        "description": "Using overtone series and spectral analysis",
+        "composers": ["Gérard Grisey", "Tristan Murail", "Georg Friedrich Haas"]
+      },
+      {
+        "name": "Adaptive JI",
+        "description": "Real-time adjustment of pitches for just intervals",
+        "tools": ["Hermode Tuning", "adaptive JI algorithms"]
+      }
+    ],
+    "notation_systems": [
+      {
+        "name": "Ben Johnston Notation",
+        "url": "https://www.kylegann.com/BJnotation.html",
+        "description": "Extended JI notation with syntonic comma, septimal, etc."
+      },
+      {
+        "name": "Helmholtz-Ellis JI Pitch Notation",
+        "description": "Comprehensive notation for extended JI"
+      },
+      {
+        "name": "Sagittal Notation",
+        "description": "Universal microtonal notation system"
+      }
+    ]
+  },
+  "composers": {
+    "pioneers": [
+      "Harry Partch (43-tone JI)",
+      "Julián Carrillo (fractional tones)",
+      "Alois Hába (quarter/sixth tones)",
+      "Ivan Wyschnegradsky (ultrachromatic)"
+    ],
+    "just_intonation": [
+      "La Monte Young", "Terry Riley", "Ben Johnston", "Kyle Gann",
+      "Michael Harrison", "Lou Harrison", "James Tenney"
+    ],
+    "contemporary": [
+      "Georg Friedrich Haas", "Sevish", "Brendan Byrnes",
+      "King Gizzard and the Lizard Wizard", "Jacob Collier",
+      "Aphex Twin (Richard D. James)", "Dolores Catherino"
+    ]
+  },
+  "resources": {
+    "communities": [
+      {
+        "name": "Xenharmonic Alliance",
+        "platform": "Facebook",
+        "description": "Active community including Paul Erlich and other theorists"
+      },
+      {
+        "name": "r/microtonal",
+        "platform": "Reddit",
+        "url": "https://reddit.com/r/microtonal"
+      }
+    ],
+    "youtube_channels": [
+      "Sevish",
+      "Adam Neely (microtonal content)",
+      "12tone (theory explanations)"
+    ]
+  }
+}
