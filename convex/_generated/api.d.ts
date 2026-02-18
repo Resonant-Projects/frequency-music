@@ -17,6 +17,7 @@ import type * as hypotheses from "../hypotheses.js";
 import type * as ingest from "../ingest.js";
 import type * as recipes from "../recipes.js";
 import type * as sources from "../sources.js";
+import type * as weeklyBriefs from "../weeklyBriefs.js";
 
 import type {
   ApiFromModules,
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   ingest: typeof ingest;
   recipes: typeof recipes;
   sources: typeof sources;
+  weeklyBriefs: typeof weeklyBriefs;
 }>;
 
 /**
