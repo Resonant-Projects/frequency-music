@@ -2,6 +2,16 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 
 /**
+ * Get a single extraction by ID
+ */
+export const get = query({
+  args: { id: v.id("extractions") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+/**
  * Get extraction by input hash (for deduplication)
  */
 export const getByInputHash = query({
