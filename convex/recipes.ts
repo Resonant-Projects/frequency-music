@@ -271,6 +271,21 @@ export const generateFromHypothesis = action({
       throw new Error(`Failed to parse AI response: ${e}`);
     }
     
+    // Sanitize protocol to only include schema-valid fields
+    let sanitizedProtocol = undefined;
+    if (parsed.protocol) {
+      const p = parsed.protocol;
+      sanitizedProtocol = {
+        studyType: p.studyType || "litmus",
+        durationSecs: p.durationSecs || 60,
+        panelPlanned: p.panelPlanned || ["self"],
+        listeningContext: p.listeningContext,
+        listeningMethod: p.listeningMethod,
+        whatVaries: p.whatVaries || [],
+        whatStaysConstant: p.whatStaysConstant || [],
+      };
+    }
+    
     // Create recipe
     const recipeId = await ctx.runMutation(api.recipes.create, {
       hypothesisId: args.hypothesisId,
@@ -278,7 +293,7 @@ export const generateFromHypothesis = action({
       bodyMd: parsed.bodyMd,
       parameters: parsed.parameters,
       dawChecklist: parsed.dawChecklist,
-      protocol: parsed.protocol,
+      protocol: sanitizedProtocol,
     });
     
     return {

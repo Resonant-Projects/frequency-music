@@ -85,6 +85,7 @@ bun run scripts/fetch-youtube-transcripts.ts
 
 ## Convex Commands
 
+### Extraction
 ```bash
 # Run extraction on all text_ready sources
 bunx convex run extract:extractAllReady '{"limit": 20}'
@@ -97,6 +98,31 @@ bunx convex run ingest:pollAllFeeds
 
 # List feeds
 bunx convex run feeds:list
+```
+
+### Hypothesis & Recipe Generation
+```bash
+# Generate hypothesis from extraction (AI)
+bunx convex run hypotheses:generateFromExtraction '{"extractionId": "..."}'
+
+# Generate hypotheses batch (auto-pick best extractions)
+bunx convex run hypotheses:generateBatch '{"limit": 3}'
+
+# Generate recipe from hypothesis (AI)
+bunx convex run recipes:generateFromHypothesis '{"hypothesisId": "..."}'
+
+# Generate recipes for hypotheses without them
+bunx convex run recipes:generateBatch '{"limit": 3}'
+
+# List hypotheses by status
+bunx convex run hypotheses:listByStatus '{"status": "draft", "limit": 10}'
+
+# List recipes
+bunx convex run recipes:listByStatus '{"limit": 10}'
+
+# Full experiment generation script (extraction → hypothesis → recipe)
+bun run scripts/generate-experiment.ts --auto
+bun run scripts/generate-experiment.ts <extractionId>
 ```
 
 ## Environment Variables (.env.local)

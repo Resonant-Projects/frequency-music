@@ -22,20 +22,12 @@ const evidenceLevelValidator = v.union(
   v.literal("personal")
 );
 
+// Parameter types - extensible string for AI flexibility
+// Common types: tempo, key, tuningSystem, rootNote, chordProgression,
+// rhythm, instrument, synthWaveform, harmonicProfile, frequency, note,
+// length, dynamics, timbre, interval, form, etc.
 const compositionParameterValidator = v.object({
-  type: v.union(
-    v.literal("tempo"),
-    v.literal("key"),
-    v.literal("tuningSystem"),
-    v.literal("rootNote"),
-    v.literal("chordProgression"),
-    v.literal("rhythm"),
-    v.literal("instrument"),
-    v.literal("synthWaveform"),
-    v.literal("harmonicProfile"),
-    v.literal("frequency"),
-    v.literal("note")
-  ),
+  type: v.string(),
   value: v.string(),
   details: v.optional(v.any()),
 });
@@ -229,7 +221,7 @@ export default defineSchema({
 
     // Visibility & ownership
     visibility: visibilityValidator,
-    createdBy: v.id("users"),
+    createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -253,6 +245,7 @@ export default defineSchema({
         durationSecs: v.number(),
         panelPlanned: v.array(v.string()),
         listeningContext: v.optional(v.string()),
+        listeningMethod: v.optional(v.string()),
         baselineArtifactId: v.optional(v.id("compositions")),
         whatVaries: v.array(v.string()),
         whatStaysConstant: v.array(v.string()),
@@ -266,7 +259,7 @@ export default defineSchema({
       v.literal("archived")
     ),
     visibility: visibilityValidator,
-    createdBy: v.id("users"),
+    createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
