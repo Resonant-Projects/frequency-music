@@ -1,0 +1,33 @@
+! polygon-angles-pure.scl
+!
+! Pure Polygon Internal Angles Scale
+! Each note derived from a regular polygon's internal angle
+! Formula: internal_angle = (n-2) * 180 / n
+! Mapped to cents: cents = (angle / 360) * 1200
+!
+! Triangle (3):    60° →  200¢
+! Square (4):      90° →  300¢
+! Pentagon (5):   108° →  360¢
+! Hexagon (6):    120° →  400¢
+! Heptagon (7):   128.57° → 428.57¢
+! Octagon (8):    135° →  450¢
+! Nonagon (9):    140° →  466.67¢
+! Decagon (10):   144° →  480¢
+! Hendecagon (11): 147.27° → 490.91¢
+! Dodecagon (12): 150° →  500¢
+!
+! This creates an 11-note scale (+ octave)
+!
+11
+!
+200.00000
+300.00000
+360.00000
+400.00000
+428.57143
+450.00000
+466.66667
+480.00000
+490.90909
+500.00000
+2/1

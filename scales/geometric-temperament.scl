@@ -1,0 +1,33 @@
+! geometric-temperament.scl
+!
+! Geometric Temperament - derived from Robert Edward Grant's polygon-angle theory
+! Combines pure JI intervals (5ths, 3rds) with polygon-derived intervals
+! Designed for A=432Hz reference
+!
+! Intervals:
+! C#: 100.89 (phi-derived approximation)
+! D:  200.00 (equilateral triangle - 60°)
+! Eb: 300.00 (square - 90°)
+! E:  386.31 (pure 5:4 major third)
+! F:  498.04 (pure 4:3 perfect fourth)
+! F#: 600.00 (geometric center / tritone)
+! G:  701.96 (pure 3:2 perfect fifth)
+! Ab: 800.00 (square complement - 240°)
+! A:  884.36 (pure 5:3 major sixth)
+! Bb: 1000.00 (decagon - 144° mapped)
+! B:  1088.27 (pure 15:8 major seventh)
+!
+12
+!
+100.89000
+200.00000
+300.00000
+386.31371
+498.04500
+600.00000
+701.95500
+800.00000
+884.35871
+1000.00000
+1088.26871
+2/1

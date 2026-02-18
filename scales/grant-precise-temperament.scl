@@ -1,0 +1,38 @@
+! grant-precise-temperament.scl
+!
+! Robert Edward Grant's Precise Temperament Tuning
+! Key features:
+! - Major 3rd: 1.26 ratio (vs 1.25 JI) = 400.83¢
+! - Minor 3rd: 1.19 ratio (vs 1.2 JI) = 301.19¢
+! - Perfect 5th: 1.5 ratio (pure 3:2) = 701.96¢
+!
+! Designed for 432Hz reference pitch
+! Overcomes limitations of equal temperament while
+! maintaining connection to geometric expression
+!
+12
+!
+! C# - derived from M3/m3 relationship
+99.64000
+! D - whole tone (M3 - m3 adjusted)
+199.29000
+! Eb - Grant's minor 3rd (1.19 ratio)
+301.19000
+! E - Grant's major 3rd (1.26 ratio)  
+400.83000
+! F - perfect 4th (derived from 5th)
+498.04000
+! F# - tritone (geometric center)
+600.00000
+! G - pure perfect 5th (3:2)
+701.96000
+! Ab - minor 6th (octave - M3)
+799.17000
+! A - major 6th (octave - m3)
+898.81000
+! Bb - minor 7th (5th + m3)
+1003.15000
+! B - major 7th (5th + M3)
+1102.79000
+! C - octave
+2/1

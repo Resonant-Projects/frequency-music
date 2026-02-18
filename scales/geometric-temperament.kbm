@@ -1,0 +1,33 @@
+! geometric-temperament.kbm
+!
+! Keyboard mapping for Geometric Temperament
+! Maps to standard 12-note keyboard with C as root
+! Reference: A4 = 432 Hz (geometric standard)
+!
+! Size of map
+12
+! First MIDI note number to retune
+0
+! Last MIDI note number to retune
+127
+! Middle note (where scale degree 0 is mapped)
+60
+! Reference note for frequency
+69
+! Frequency of reference note (A=432Hz)
+432.00000
+! Scale degree for reference note
+9
+! Mapping (scale degree for each keyboard key)
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
