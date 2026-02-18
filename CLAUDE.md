@@ -1,111 +1,188 @@
 ---
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
+description: Frequency Music Research Pipeline - Bun + Convex
 globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
+alwaysApply: true
 ---
 
-Default to using Bun instead of Node.js.
+# Frequency Music Research Pipeline
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+Research-to-composition pipeline exploring connections between music, physics, mathematics, and geometry.
 
-## APIs
+## Project Overview
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+**Stack:**
+- **Runtime:** Bun (not Node.js)
+- **Backend:** Self-hosted Convex (managed by Cool Guy)
+- **LLM:** OpenRouter + AI SDK (multi-model: Claude, Groq, Gemini, GPT-4)
+- **Tuning Files:** Scala format (.scl, .kbm)
 
-## Testing
+**Repository:** `github.com:Resonant-Projects/frequency-music.git`
 
-Use `bun test` to run tests.
+## Directory Structure
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
-
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+```
+frequency-music/
+├── convex/              # Convex backend functions
+│   ├── schema.ts        # Data model (sources, extractions, feeds, etc.)
+│   ├── sources.ts       # Source CRUD + status management
+│   ├── feeds.ts         # RSS feed management
+│   ├── extract.ts       # AI extraction pipeline (OpenRouter)
+│   ├── ingest.ts        # RSS polling
+│   └── crons.ts         # Scheduled jobs (6-hour feed polling)
+│
+├── data/                # Source manifests and reference data
+│   ├── sources-master.md
+│   ├── robert-edward-grant-sources.json
+│   ├── books-and-papers.json
+│   └── microtuning-sources.json
+│
+├── docs/
+│   ├── essays/          # Synthesized research essays
+│   │   └── geometric-microtuning-composition.md
+│   ├── reference/       # Quick reference guides
+│   │   └── microtuning-overview.md
+│   └── *.md             # Planning/spec docs
+│
+├── planning/            # Architecture and roadmap docs
+│
+├── scales/              # Scala tuning files (.scl, .kbm)
+│   ├── geometric-temperament.scl
+│   ├── geometric-temperament.kbm
+│   ├── grant-precise-temperament.scl
+│   └── polygon-angles-pure.scl
+│
+├── scripts/             # Local ingestion scripts
+│   ├── ingest-robert-grant.ts
+│   ├── ingest-books-papers.ts
+│   ├── ingest-microtuning.ts
+│   ├── fetch-full-articles.ts
+│   ├── fetch-youtube-transcripts.ts
+│   └── fetch-readwise-articles.ts
+│
+└── skills/              # Agent skills (Fabric CLI, etc.)
 ```
 
-## Frontend
+## Key Scripts
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+All scripts use Bun and load env from `.env.local`:
 
-Server:
+```bash
+# Ingest Robert Edward Grant sources (PDFs + articles)
+bun run scripts/ingest-robert-grant.ts
 
-```ts#index.ts
-import index from "./index.html"
+# Ingest books and arXiv papers
+bun run scripts/ingest-books-papers.ts
 
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
+# Ingest microtuning/xenharmonic sources
+bun run scripts/ingest-microtuning.ts
+
+# Fetch full article text via Jina Reader
+bun run scripts/fetch-full-articles.ts --limit 10 [--re-extract]
+
+# Fetch YouTube transcripts via Fabric CLI
+bun run scripts/fetch-youtube-transcripts.ts
 ```
 
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
+## Convex Commands
 
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
+```bash
+# Run extraction on all text_ready sources
+bunx convex run extract:extractAllReady '{"limit": 20}'
+
+# List sources by status
+bunx convex run sources:listByStatus '{"status": "extracted", "limit": 50}'
+
+# Poll all RSS feeds manually
+bunx convex run ingest:pollAllFeeds
+
+# List feeds
+bunx convex run feeds:list
 ```
 
-With the following `frontend.tsx`:
+## Environment Variables (.env.local)
 
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
+```
+CONVEX_SELF_HOSTED_URL='http://convex-backend.paas.rproj.art'
+OPENROUTER_API_KEY=...
+GROQ_API_KEY=...
+```
 
-// import .css files directly and it works
-import './index.css';
+## Data Pipeline
 
-const root = createRoot(document.body);
+```
+Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
+                                     ↓
+                              Claims, Parameters, Topics
+                                     ↓
+                              Hypotheses → Recipes → Compositions
+```
 
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
+**Source Status Flow:**
+1. `ingested` — Metadata only, no full text
+2. `text_ready` — Full text fetched, awaiting extraction
+3. `extracted` — AI extraction complete
+4. `triaged` — Reviewed and categorized
+
+## Models (convex/extract.ts)
+
+```typescript
+MODELS = {
+  fast: "groq/llama-3.3-70b-versatile",
+  kimi: "groq/moonshotai/kimi-k2-instruct",
+  default: "anthropic/claude-sonnet-4",
+  haiku: "anthropic/claude-3-5-haiku-20241022",
+  gemini: "google/gemini-2.0-flash-001",
+  gpt4: "openai/gpt-4o",
 }
-
-root.render(<Frontend />);
 ```
 
-Then, run index.ts
+## Current Feeds (17)
 
-```sh
-bun --hot ./index.ts
+**Research:**
+- Quanta Magazine, Nautilus, BRAMS
+- Music Theory Online, Journal of Mathematics and Music
+- arXiv: cs.SD (Sound), eess.AS (Audio & Speech)
+
+**YouTube:**
+- 3Blue1Brown, Adam Neely, David Bennett Piano
+- CymaScope, Andrew Huang, Robert Edward Grant
+
+**Production:**
+- Sound on Sound, Splice Blog, Bobby Owsinski, Native Instruments
+
+## Research Domains
+
+- **Microtuning/Xenharmonic:** EDOs, JI systems, Scala files
+- **Geometric Music Theory:** Robert Edward Grant's polygon-angle correspondence
+- **Psychoacoustics:** Perception, consonance/dissonance
+- **Wave Physics:** Harmonics, resonance, cymatics
+- **Mathematical Music Theory:** Group theory, Tonnetz, voice-leading geometry
+
+## Scala File Format
+
+```scala
+! filename.scl
+! Description comment
+12
+!
+100.00000
+200.00000
+... (cents or ratios)
+2/1
 ```
 
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+## Bun Defaults
+
+- Use `bun <file>` instead of `node <file>`
+- Use `bun install` instead of `npm install`
+- Use `bunx <package>` instead of `npx`
+- Bun auto-loads `.env.local` — no dotenv needed
+
+## Writing Guidelines
+
+- Document new sources in `data/*.json`
+- Put synthesis essays in `docs/essays/`
+- Put reference guides in `docs/reference/`
+- Put tuning files in `scales/`
+- Commit meaningful progress with clear messages
+- Push when you have something worth sharing
