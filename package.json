@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.24",
+    "@convex-dev/action-cache": "^0.3.0",
+    "@convex-dev/aggregate": "^0.2.1",
+    "@convex-dev/workflow": "^0.3.4",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "ai": "^6.0.90",
     "convex": "^1.31.7",
+    "convex-helpers": "^0.1.112",
     "pdf-parse": "^2.4.5",
     "pdf-parser-client-side": "^1.1.1",
     "youtube-transcript": "^1.2.1"
