@@ -13,6 +13,7 @@ import type * as extract from "../extract.js";
 import type * as extractions from "../extractions.js";
 import type * as fabric from "../fabric.js";
 import type * as feeds from "../feeds.js";
+import type * as graph from "../graph.js";
 import type * as hypotheses from "../hypotheses.js";
 import type * as ingest from "../ingest.js";
 import type * as recipes from "../recipes.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   extractions: typeof extractions;
   fabric: typeof fabric;
   feeds: typeof feeds;
+  graph: typeof graph;
   hypotheses: typeof hypotheses;
   ingest: typeof ingest;
   recipes: typeof recipes;
