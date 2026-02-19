@@ -4,7 +4,9 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@convex-dev/eslint-plugin": "^1.1.1",
+    "@types/bun": "latest",
+    "eslint": "^9.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"

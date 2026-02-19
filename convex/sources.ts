@@ -1,5 +1,16 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { ConvexError } from "convex/values";
+
+// Reusable validator for source status
+const sourceStatusValidator = v.union(
+  v.literal("ingested"),
+  v.literal("text_ready"),
+  v.literal("extracting"),
+  v.literal("extracted"),
+  v.literal("triaged"),
+  v.literal("review_needed")
+);
 
 // ============================================================================
 // QUERIES
@@ -13,6 +24,7 @@ export const listByStatus = query({
     status: v.string(),
     limit: v.optional(v.number()),
   },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
     return await ctx.db
@@ -30,6 +42,7 @@ export const listByStatus = query({
  */
 export const get = query({
   args: { id: v.id("sources") },
+  returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
@@ -40,6 +53,7 @@ export const get = query({
  */
 export const getByDedupeKey = query({
   args: { dedupeKey: v.string() },
+  returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("sources")
@@ -80,6 +94,11 @@ export const create = mutation({
     metadata: v.optional(v.any()),
     dedupeKey: v.string(),
   },
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+    reason: v.optional(v.string()),
+  }),
   handler: async (ctx, args) => {
     const now = Date.now();
 
@@ -90,7 +109,6 @@ export const create = mutation({
       .first();
 
     if (existing) {
-      // Return existing ID, don't create duplicate
       return { id: existing._id, created: false, reason: "duplicate" };
     }
 
@@ -98,7 +116,6 @@ export const create = mutation({
     let rawTextSha256: string | undefined;
     if (args.rawText || args.transcript) {
       const text = args.rawText || args.transcript || "";
-      // Simple hash using Web Crypto (available in Convex runtime)
       const encoder = new TextEncoder();
       const data = encoder.encode(text);
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -130,13 +147,23 @@ export const updateStatus = mutation({
     blockedReason: v.optional(v.string()),
     blockedDetails: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
+    const source = await ctx.db.get(args.id);
+    if (!source) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Source not found",
+      });
+    }
+
     await ctx.db.patch(args.id, {
       status: args.status as any,
       blockedReason: args.blockedReason as any,
       blockedDetails: args.blockedDetails,
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -149,7 +176,16 @@ export const updateText = mutation({
     rawText: v.optional(v.string()),
     transcript: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
+    const source = await ctx.db.get(args.id);
+    if (!source) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Source not found",
+      });
+    }
+
     const text = args.rawText || args.transcript || "";
     
     // Compute hash
@@ -166,6 +202,7 @@ export const updateText = mutation({
       status: "text_ready",
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -211,7 +248,6 @@ export function generateDedupeKey(
 function normalizeUrl(url: string): string {
   try {
     const parsed = new URL(url);
-    // Remove trailing slash, lowercase host
     return `${parsed.host.toLowerCase()}${parsed.pathname.replace(/\/$/, "")}${parsed.search}`;
   } catch {
     return url.toLowerCase();
