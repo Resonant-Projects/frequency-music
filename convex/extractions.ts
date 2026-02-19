@@ -7,7 +7,7 @@ import { query } from "./_generated/server";
 export const get = query({
   args: { id: v.id("extractions") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    return await ctx.db.get("extractions", args.id);
   },
 });
 
@@ -32,7 +32,9 @@ export const getBySourceId = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", args.sourceId))
+      .withIndex("by_sourceId_createdAt", (q) =>
+        q.eq("sourceId", args.sourceId),
+      )
       .order("desc")
       .collect();
   },
@@ -45,9 +47,6 @@ export const listRecent = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    return await ctx.db
-      .query("extractions")
-      .order("desc")
-      .take(limit);
+    return await ctx.db.query("extractions").order("desc").take(limit);
   },
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Fetch YouTube transcripts using Fabric CLI and push to Convex
- * 
+ *
  * Usage: bun run scripts/fetch-youtube-transcripts.ts [--limit N]
  */
 
@@ -25,7 +25,7 @@ function extractVideoId(url: string): string | null {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,  // YouTube Shorts
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/, // YouTube Shorts
   ];
   for (const pattern of patterns) {
     const match = url.match(pattern);
@@ -39,7 +39,7 @@ function extractVideoId(url: string): string | null {
  */
 async function fetchTranscript(videoId: string): Promise<string> {
   const url = `https://www.youtube.com/watch?v=${videoId}`;
-  
+
   const proc = Bun.spawn([FABRIC_PATH, "--youtube", url, "--transcript"], {
     stdout: "pipe",
     stderr: "pipe",
@@ -68,7 +68,7 @@ async function fetchTranscript(videoId: string): Promise<string> {
 async function main() {
   const args = process.argv.slice(2);
   let limit = 10;
-  
+
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--limit" && args[i + 1]) {
       limit = parseInt(args[i + 1], 10);
@@ -93,7 +93,8 @@ async function main() {
   let failed = 0;
 
   for (const source of youtubeSources) {
-    const videoId = source.youtubeVideoId || extractVideoId(source.canonicalUrl || "");
+    const videoId =
+      source.youtubeVideoId || extractVideoId(source.canonicalUrl || "");
     if (!videoId) {
       console.log(`❌ ${source.title}: No video ID`);
       failed++;
@@ -103,7 +104,7 @@ async function main() {
     try {
       console.log(`📹 ${source.title}...`);
       const transcript = await fetchTranscript(videoId);
-      
+
       if (!transcript) {
         throw new Error("Empty transcript");
       }
@@ -118,7 +119,7 @@ async function main() {
       success++;
     } catch (error) {
       console.log(`   ❌ ${error}`);
-      
+
       // Mark as failed
       await client.mutation(api.sources.updateStatus, {
         id: source._id,

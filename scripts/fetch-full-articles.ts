@@ -2,7 +2,7 @@
 /**
  * Fetch full article text using Jina Reader API and update sources
  * Then re-run extraction with complete content
- * 
+ *
  * Usage: bun run scripts/fetch-full-articles.ts [--limit N] [--min-length N] [--re-extract]
  */
 
@@ -24,10 +24,10 @@ const client = new ConvexHttpClient(CONVEX_URL);
  */
 async function fetchFullArticle(url: string): Promise<string> {
   const jinaUrl = `${JINA_READER_URL}/${url}`;
-  
+
   const response = await fetch(jinaUrl, {
     headers: {
-      "Accept": "text/plain",
+      Accept: "text/plain",
       "User-Agent": "ResonantProjects/1.0 (research aggregator)",
     },
   });
@@ -47,7 +47,7 @@ async function main() {
   let limit = 20;
   let minLength = 1000; // Consider anything under 1000 chars as an excerpt
   let reExtract = false;
-  
+
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--limit" && args[i + 1]) {
       limit = parseInt(args[i + 1], 10);
@@ -101,9 +101,11 @@ async function main() {
 
     try {
       const fullText = await fetchFullArticle(source.canonicalUrl);
-      
+
       if (fullText.length <= currentLen) {
-        console.log(`   ⚠️ Fetched text not longer (${fullText.length} chars), skipping`);
+        console.log(
+          `   ⚠️ Fetched text not longer (${fullText.length} chars), skipping`,
+        );
         continue;
       }
 
@@ -122,8 +124,7 @@ async function main() {
       }
 
       // Rate limit: wait 1 second between requests
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       console.log(`   ❌ ${error}`);
       failed++;

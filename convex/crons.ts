@@ -7,7 +7,7 @@ const crons = cronJobs();
 crons.interval(
   "poll-feeds",
   { hours: 6 },
-  internal.ingest.pollAllFeedsInternal
+  internal.ingest.pollAllFeedsInternal,
 );
 
 export default crons;

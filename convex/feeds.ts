@@ -10,6 +10,7 @@ import { internal } from "./_generated/api";
  * List all enabled feeds
  */
 export const listEnabled = query({
+  args: {},
   handler: async (ctx) => {
     return await ctx.db
       .query("feeds")
@@ -22,6 +23,7 @@ export const listEnabled = query({
  * List all feeds
  */
 export const list = query({
+  args: {},
   handler: async (ctx) => {
     return await ctx.db.query("feeds").collect();
   },
@@ -33,7 +35,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("feeds") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    return await ctx.db.get("feeds", args.id);
   },
 });
 
@@ -74,7 +76,7 @@ export const updateLastPolled = internalMutation({
     lastItemAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("feeds", args.id, {
       lastPolledAt: args.lastPolledAt,
       lastItemAt: args.lastItemAt,
       updatedAt: Date.now(),
@@ -91,7 +93,7 @@ export const setEnabled = mutation({
     enabled: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("feeds", args.id, {
       enabled: args.enabled,
       updatedAt: Date.now(),
     });
@@ -104,7 +106,7 @@ export const setEnabled = mutation({
 export const remove = mutation({
   args: { id: v.id("feeds") },
   handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
+    await ctx.db.delete("feeds", args.id);
   },
 });
 
@@ -116,6 +118,7 @@ export const remove = mutation({
  * Seed the initial feeds from the source document
  */
 export const seedInitialFeeds = mutation({
+  args: {},
   handler: async (ctx) => {
     const now = Date.now();
     const feeds = [

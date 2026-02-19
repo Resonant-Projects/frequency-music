@@ -8,7 +8,13 @@
       "pdf": "https://74b8e51b-1d9c-4e9b-b6af-aaa822d757f7.filesusr.com/ugd/b8252f_6c474c897def4a968bd3c3922a3143a9.pdf",
       "arxiv": "https://archive.org/details/musicalgeometry",
       "category": "core",
-      "topics": ["music", "geometry", "polygons", "unit circle", "musical intervals"]
+      "topics": [
+        "music",
+        "geometry",
+        "polygons",
+        "unit circle",
+        "musical intervals"
+      ]
     },
     {
       "title": "Precise Geometrical Correspondence to the Perfect 5th Tuned to 432Hz",
@@ -29,7 +35,12 @@
       "url": "https://arxiv.org/abs/1903.08570",
       "pdf": "https://arxiv.org/pdf/1903.08570.pdf",
       "category": "number-theory",
-      "topics": ["prime numbers", "quasi-primes", "digital roots", "24-sided polygon"]
+      "topics": [
+        "prime numbers",
+        "quasi-primes",
+        "digital roots",
+        "24-sided polygon"
+      ]
     },
     {
       "title": "Predicting Prime Numbers",
@@ -79,19 +90,37 @@
       "title": "Geometry of Sound",
       "url": "https://robertedwardgrant.com/geometry-of-sound/",
       "category": "core",
-      "topics": ["432Hz", "chromatic scale", "geometry", "Pythagorean tuning", "flower of life"]
+      "topics": [
+        "432Hz",
+        "chromatic scale",
+        "geometry",
+        "Pythagorean tuning",
+        "flower of life"
+      ]
     },
     {
       "title": "Unity Harmonica Geometric Theory of Everything",
       "url": "https://robertedwardgrant.com/unity-harmonica-geometric-theory-of-everything/",
       "category": "core",
-      "topics": ["polyhedra", "harmonic triangle", "means", "logarithmic spiral", "musical intervals"]
+      "topics": [
+        "polyhedra",
+        "harmonic triangle",
+        "means",
+        "logarithmic spiral",
+        "musical intervals"
+      ]
     },
     {
       "title": "Precise Temperament Tuning",
       "url": "https://robertedwardgrant.com/precise-temperament-tuning/",
       "category": "core",
-      "topics": ["tuning", "just intonation", "equal temperament", "major third", "432Hz"]
+      "topics": [
+        "tuning",
+        "just intonation",
+        "equal temperament",
+        "major third",
+        "432Hz"
+      ]
     },
     {
       "title": "Harmonic Transcendence and the Dimensional Resonance of Language",

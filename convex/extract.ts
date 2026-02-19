@@ -17,7 +17,7 @@ export const MODELS = {
   // === GROQ (blazing fast, cheap) ===
   fast: "groq/llama-3.3-70b-versatile",
   kimi: "groq/moonshotai/kimi-k2-instruct",
-  
+
   // === OpenRouter (model variety) ===
   default: "anthropic/claude-sonnet-4",
   quality: "anthropic/claude-sonnet-4",
@@ -163,8 +163,10 @@ export const extractSource = action({
     });
 
     // Build the prompt
-    const userPrompt = EXTRACT_USER_PROMPT
-      .replace("{{title}}", source.title || "Untitled")
+    const userPrompt = EXTRACT_USER_PROMPT.replace(
+      "{{title}}",
+      source.title || "Untitled",
+    )
       .replace("{{url}}", source.canonicalUrl || "")
       .replace("{{content}}", content.slice(0, 30000)); // Limit content length
 
@@ -172,7 +174,7 @@ export const extractSource = action({
 
     try {
       const model = getModel(modelId);
-      
+
       const { text: assistantMessage } = await generateText({
         model,
         system: EXTRACT_SYSTEM_PROMPT,
@@ -197,10 +199,15 @@ export const extractSource = action({
       const hashData = encoder.encode(content + "extract_v1");
       const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const inputHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      const inputHash = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
 
       // Check for existing extraction with same hash
-      const existingExtractions = await ctx.runQuery(api.extractions.getByInputHash, { inputHash });
+      const existingExtractions = await ctx.runQuery(
+        api.extractions.getByInputHash,
+        { inputHash },
+      );
       if (existingExtractions) {
         await ctx.runMutation(api.sources.updateStatus, {
           id: args.sourceId,
@@ -244,7 +251,6 @@ export const extractSource = action({
         claimCount: extraction.claims.length,
         parameterCount: extraction.compositionParameters.length,
       };
-
     } catch (error) {
       // Mark as errored
       await ctx.runMutation(api.sources.updateStatus, {
@@ -276,16 +282,16 @@ export const storeExtraction = internalMutation({
           v.literal("preprint"),
           v.literal("anecdotal"),
           v.literal("speculative"),
-          v.literal("personal")
+          v.literal("personal"),
         ),
         citations: v.array(
           v.object({
             label: v.optional(v.string()),
             url: v.optional(v.string()),
             quote: v.optional(v.string()),
-          })
+          }),
         ),
-      })
+      }),
     ),
     compositionParameters: v.array(
       v.object({
@@ -300,11 +306,11 @@ export const storeExtraction = internalMutation({
           v.literal("synthWaveform"),
           v.literal("harmonicProfile"),
           v.literal("frequency"),
-          v.literal("note")
+          v.literal("note"),
         ),
         value: v.string(),
         details: v.optional(v.any()),
-      })
+      }),
     ),
     topics: v.array(v.string()),
     openQuestions: v.array(v.string()),
@@ -381,7 +387,8 @@ export const extractAllReady = action({
  * List available models
  */
 export const listModels = action({
-  handler: async () => {
+  args: {},
+  handler: () => {
     return MODELS;
   },
 });

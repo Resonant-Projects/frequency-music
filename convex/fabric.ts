@@ -16,13 +16,15 @@ interface TranscriptSegment {
 /**
  * Fetch transcript using Supadata API (reliable third-party service)
  */
-async function fetchYouTubeTranscript(videoId: string): Promise<TranscriptSegment[]> {
+async function fetchYouTubeTranscript(
+  videoId: string,
+): Promise<TranscriptSegment[]> {
   // Use Supadata's free YouTube transcript API
   const apiUrl = `https://api.supadata.ai/v1/youtube/transcript?video_id=${videoId}&text=true`;
-  
+
   const response = await fetch(apiUrl, {
     headers: {
-      "Accept": "application/json",
+      Accept: "application/json",
     },
   });
 
@@ -30,11 +32,11 @@ async function fetchYouTubeTranscript(videoId: string): Promise<TranscriptSegmen
     // Fall back to trying tactiq's free API
     const tactiqUrl = `https://tactiq-apps-prod.tactiq.io/transcript?videoId=${videoId}&langCode=en`;
     const tactiqResponse = await fetch(tactiqUrl);
-    
+
     if (!tactiqResponse.ok) {
       throw new Error(`Failed to fetch transcript: ${response.status}`);
     }
-    
+
     const tactiqData = await tactiqResponse.json();
     if (tactiqData.captions) {
       return tactiqData.captions.map((c: any) => ({
@@ -47,16 +49,18 @@ async function fetchYouTubeTranscript(videoId: string): Promise<TranscriptSegmen
   }
 
   const data = await response.json();
-  
+
   if (data.content) {
     // Supadata returns plain text, convert to segments
-    return [{
-      text: data.content,
-      start: 0,
-      duration: 0,
-    }];
+    return [
+      {
+        text: data.content,
+        start: 0,
+        duration: 0,
+      },
+    ];
   }
-  
+
   if (data.transcript) {
     return data.transcript.map((t: any) => ({
       text: t.text,
@@ -75,7 +79,7 @@ function extractVideoId(url: string): string | null {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,  // YouTube Shorts
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/, // YouTube Shorts
   ];
   for (const pattern of patterns) {
     const match = url.match(pattern);
@@ -103,7 +107,7 @@ export const getYouTubeTranscript = action({
     }
 
     const segments = await fetchYouTubeTranscript(videoId);
-    
+
     let transcript: string;
     if (args.withTimestamps) {
       transcript = segments
@@ -215,9 +219,12 @@ export const fetchAllYouTubeTranscripts = action({
 
     for (const source of youtubeSources) {
       try {
-        const result = await ctx.runAction(api.fabric.fetchTranscriptForSource, {
-          sourceId: source._id,
-        });
+        const result = await ctx.runAction(
+          api.fabric.fetchTranscriptForSource,
+          {
+            sourceId: source._id,
+          },
+        );
         results.push({
           id: source._id,
           title: source.title || "Untitled",
@@ -249,10 +256,10 @@ export const fetchArticleText = action({
   handler: async (ctx, args) => {
     // Use Jina Reader API (same as Fabric uses)
     const jinaUrl = `https://r.jina.ai/${args.url}`;
-    
+
     const response = await fetch(jinaUrl, {
       headers: {
-        "Accept": "text/plain",
+        Accept: "text/plain",
       },
     });
 
@@ -289,7 +296,7 @@ export const fetchArticleForSource = action({
     try {
       const jinaUrl = `https://r.jina.ai/${source.canonicalUrl}`;
       const response = await fetch(jinaUrl, {
-        headers: { "Accept": "text/plain" },
+        headers: { Accept: "text/plain" },
       });
 
       if (!response.ok) {
@@ -297,7 +304,7 @@ export const fetchArticleForSource = action({
       }
 
       const text = await response.text();
-      
+
       await ctx.runMutation(api.sources.updateText, {
         id: args.sourceId,
         rawText: text,

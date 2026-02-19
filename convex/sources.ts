@@ -9,7 +9,7 @@ const sourceStatusValidator = v.union(
   v.literal("extracting"),
   v.literal("extracted"),
   v.literal("triaged"),
-  v.literal("review_needed")
+  v.literal("review_needed"),
 );
 
 // ============================================================================
@@ -30,7 +30,7 @@ export const listByStatus = query({
     return await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) =>
-        q.eq("status", args.status as any)
+        q.eq("status", args.status as any),
       )
       .order("desc")
       .take(limit);
@@ -44,7 +44,7 @@ export const get = query({
   args: { id: v.id("sources") },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    return await ctx.db.get("sources", args.id);
   },
 });
 
@@ -77,7 +77,7 @@ export const create = mutation({
       v.literal("url"),
       v.literal("youtube"),
       v.literal("pdf"),
-      v.literal("podcast")
+      v.literal("podcast"),
     ),
     title: v.optional(v.string()),
     author: v.optional(v.string()),
@@ -120,7 +120,9 @@ export const create = mutation({
       const data = encoder.encode(text);
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      rawTextSha256 = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      rawTextSha256 = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
     }
 
     const id = await ctx.db.insert("sources", {
@@ -149,7 +151,7 @@ export const updateStatus = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const source = await ctx.db.get(args.id);
+    const source = await ctx.db.get("sources", args.id);
     if (!source) {
       throw new ConvexError({
         code: "NOT_FOUND",
@@ -157,7 +159,7 @@ export const updateStatus = mutation({
       });
     }
 
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("sources", args.id, {
       status: args.status as any,
       blockedReason: args.blockedReason as any,
       blockedDetails: args.blockedDetails,
@@ -178,7 +180,7 @@ export const updateText = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const source = await ctx.db.get(args.id);
+    const source = await ctx.db.get("sources", args.id);
     if (!source) {
       throw new ConvexError({
         code: "NOT_FOUND",
@@ -187,15 +189,17 @@ export const updateText = mutation({
     }
 
     const text = args.rawText || args.transcript || "";
-    
+
     // Compute hash
     const encoder = new TextEncoder();
     const data = encoder.encode(text);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const rawTextSha256 = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const rawTextSha256 = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("sources", args.id, {
       rawText: args.rawText,
       transcript: args.transcript,
       rawTextSha256,
@@ -222,7 +226,7 @@ export function generateDedupeKey(
     canonicalUrl?: string;
     youtubeVideoId?: string;
     fileSha256?: string;
-  }
+  },
 ): string {
   switch (type) {
     case "notion":

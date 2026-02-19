@@ -19,15 +19,17 @@ export const listByStatus = query({
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    
+
     if (args.status) {
       return await ctx.db
         .query("recipes")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status as any))
+        .withIndex("by_status_updatedAt", (q) =>
+          q.eq("status", args.status as any),
+        )
         .order("desc")
         .take(limit);
     }
-    
+
     return await ctx.db.query("recipes").order("desc").take(limit);
   },
 });
@@ -39,11 +41,11 @@ export const get = query({
   args: { id: v.id("recipes") },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
-    const recipe = await ctx.db.get(args.id);
+    const recipe = await ctx.db.get("recipes", args.id);
     if (!recipe) return null;
-    
-    const hypothesis = await ctx.db.get(recipe.hypothesisId);
-    
+
+    const hypothesis = await ctx.db.get("hypotheses", recipe.hypothesisId);
+
     return {
       ...recipe,
       hypothesis,
@@ -61,7 +63,7 @@ export const getByHypothesisId = query({
     return await ctx.db
       .query("recipes")
       .withIndex("by_hypothesisId_updatedAt", (q) =>
-        q.eq("hypothesisId", args.hypothesisId)
+        q.eq("hypothesisId", args.hypothesisId),
       )
       .order("desc")
       .collect();
@@ -85,7 +87,7 @@ export const create = mutation({
         type: v.string(),
         value: v.string(),
         details: v.optional(v.any()),
-      })
+      }),
     ),
     dawChecklist: v.array(v.string()),
     protocol: v.optional(
@@ -98,13 +100,13 @@ export const create = mutation({
         baselineArtifactId: v.optional(v.id("compositions")),
         whatVaries: v.array(v.string()),
         whatStaysConstant: v.array(v.string()),
-      })
+      }),
     ),
   },
   returns: v.id("recipes"),
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
     return await ctx.db.insert("recipes", {
       ...args,
       parameters: args.parameters as any,
@@ -133,13 +135,13 @@ export const update = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
-    
-    const recipe = await ctx.db.get(id);
+
+    const recipe = await ctx.db.get("recipes", id);
     if (!recipe) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Recipe not found" });
     }
-    
-    await ctx.db.patch(id, {
+
+    await ctx.db.patch("recipes", id, {
       ...updates,
       updatedAt: Date.now(),
     } as any);
@@ -156,12 +158,12 @@ export const updateStatus = mutation({
     status: v.union(
       v.literal("draft"),
       v.literal("in_use"),
-      v.literal("archived")
+      v.literal("archived"),
     ),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("recipes", args.id, {
       status: args.status,
       updatedAt: Date.now(),
     });
@@ -248,33 +250,32 @@ export const generateFromHypothesis = action({
     const hypothesis = await ctx.runQuery(api.hypotheses.get, {
       id: args.hypothesisId,
     });
-    
+
     if (!hypothesis) {
       throw new Error("Hypothesis not found");
     }
-    
+
     // Build prompt
-    const prompt = RECIPE_USER_PROMPT
-      .replace("{{title}}", hypothesis.title)
+    const prompt = RECIPE_USER_PROMPT.replace("{{title}}", hypothesis.title)
       .replace("{{question}}", hypothesis.question)
       .replace("{{hypothesis}}", hypothesis.hypothesis)
       .replace("{{rationale}}", hypothesis.rationaleMd)
       .replace("{{concepts}}", (hypothesis.concepts || []).join(", "));
-    
+
     // Call AI
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
-    
+
     const openrouter = createOpenRouter({ apiKey: openRouterKey });
     const modelId = args.model || "anthropic/claude-sonnet-4";
-    
+
     const result = await generateText({
       model: openrouter(modelId),
       system: RECIPE_SYSTEM_PROMPT,
       prompt,
       maxTokens: 3000,
     });
-    
+
     // Parse response
     let parsed;
     try {
@@ -284,7 +285,7 @@ export const generateFromHypothesis = action({
     } catch (e) {
       throw new Error(`Failed to parse AI response: ${e}`);
     }
-    
+
     // Sanitize protocol to only include schema-valid fields
     let sanitizedProtocol = undefined;
     if (parsed.protocol) {
@@ -299,7 +300,7 @@ export const generateFromHypothesis = action({
         whatStaysConstant: p.whatStaysConstant || [],
       };
     }
-    
+
     // Create recipe
     const recipeId = await ctx.runMutation(api.recipes.create, {
       hypothesisId: args.hypothesisId,
@@ -309,7 +310,7 @@ export const generateFromHypothesis = action({
       dawChecklist: parsed.dawChecklist,
       protocol: sanitizedProtocol,
     });
-    
+
     return {
       recipeId,
       model: modelId,
@@ -328,21 +329,21 @@ export const generateBatch = action({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 3;
-    
+
     // Get hypotheses that need recipes
     const hypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
       status: "queued",
       limit: 20,
     });
-    
+
     // Also include active ones
     const activeHypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
       status: "active",
       limit: 20,
     });
-    
+
     const allHypotheses = [...hypotheses, ...activeHypotheses];
-    
+
     // Filter to ones without recipes
     const needsRecipe = [];
     for (const h of allHypotheses) {
@@ -353,9 +354,9 @@ export const generateBatch = action({
         needsRecipe.push(h);
       }
     }
-    
+
     const results = [];
-    
+
     for (const hypothesis of needsRecipe.slice(0, limit)) {
       try {
         const result = await ctx.runAction(api.recipes.generateFromHypothesis, {
@@ -371,7 +372,7 @@ export const generateBatch = action({
         });
       }
     }
-    
+
     return results;
   },
 });

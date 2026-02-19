@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Fetch articles from Readwise Reader and ingest into Convex
- * 
+ *
  * Usage: bun run scripts/fetch-readwise-articles.ts [options]
  *   --search <terms>    Search for specific topics
  *   --location <loc>    Filter by location (new, later, archive)
@@ -58,14 +58,15 @@ async function fetchReadwiseArticles(params: {
 }): Promise<ReadwiseArticle[]> {
   const queryParams = new URLSearchParams();
   if (params.location) queryParams.set("location", params.location);
-  if (params.category) queryParams.set("category", params.category || "article");
+  if (params.category)
+    queryParams.set("category", params.category || "article");
   queryParams.set("page_size", String(params.pageSize || 100));
 
   const url = `https://readwise.io/api/v3/list/?${queryParams}`;
-  
+
   const response = await fetch(url, {
     headers: {
-      "Authorization": `Token ${READWISE_TOKEN}`,
+      Authorization: `Token ${READWISE_TOKEN}`,
       "Content-Type": "application/json",
     },
   });
@@ -85,7 +86,7 @@ async function fetchFullArticle(url: string): Promise<string | null> {
   try {
     const jinaUrl = `${JINA_READER_URL}/${url}`;
     const response = await fetch(jinaUrl, {
-      headers: { "Accept": "text/plain" },
+      headers: { Accept: "text/plain" },
     });
 
     if (!response.ok) {
@@ -103,14 +104,17 @@ async function fetchFullArticle(url: string): Promise<string | null> {
 /**
  * Filter articles by search terms
  */
-function filterBySearchTerms(articles: ReadwiseArticle[], searchTerms: string[]): ReadwiseArticle[] {
+function filterBySearchTerms(
+  articles: ReadwiseArticle[],
+  searchTerms: string[],
+): ReadwiseArticle[] {
   if (searchTerms.length === 0) return articles;
-  
-  const patterns = searchTerms.map(t => new RegExp(t, "i"));
-  
-  return articles.filter(article => {
+
+  const patterns = searchTerms.map((t) => new RegExp(t, "i"));
+
+  return articles.filter((article) => {
     const searchText = `${article.title} ${article.summary || ""} ${article.site_name || ""}`;
-    return patterns.some(p => p.test(searchText));
+    return patterns.some((p) => p.test(searchText));
   });
 }
 
@@ -123,10 +127,10 @@ async function main() {
   let location: string | undefined;
   let limit = 20;
   let fetchFull = false;
-  
+
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--search" && args[i + 1]) {
-      searchTerms = args[i + 1].split(",").map(s => s.trim());
+      searchTerms = args[i + 1].split(",").map((s) => s.trim());
       i++;
     }
     if (args[i] === "--location" && args[i + 1]) {
@@ -145,11 +149,29 @@ async function main() {
   // Default search terms for research content
   if (searchTerms.length === 0) {
     searchTerms = [
-      "music", "frequency", "harmonic", "acoustic", "cymatics",
-      "tuning", "psychoacoustic", "neuroscience", "perception",
-      "physics", "mathematics", "wave", "resonance", "vibration",
-      "432", "528", "solfeggio", "temperament", "interval",
-      "consonance", "dissonance", "spectrum", "fourier"
+      "music",
+      "frequency",
+      "harmonic",
+      "acoustic",
+      "cymatics",
+      "tuning",
+      "psychoacoustic",
+      "neuroscience",
+      "perception",
+      "physics",
+      "mathematics",
+      "wave",
+      "resonance",
+      "vibration",
+      "432",
+      "528",
+      "solfeggio",
+      "temperament",
+      "interval",
+      "consonance",
+      "dissonance",
+      "spectrum",
+      "fourier",
     ];
   }
 
@@ -168,7 +190,10 @@ async function main() {
   console.log(`Found ${allArticles.length} total articles in Reader`);
 
   // Filter by search terms
-  const relevantArticles = filterBySearchTerms(allArticles, searchTerms).slice(0, limit);
+  const relevantArticles = filterBySearchTerms(allArticles, searchTerms).slice(
+    0,
+    limit,
+  );
   console.log(`${relevantArticles.length} match research criteria\n`);
 
   let success = 0;
@@ -178,14 +203,18 @@ async function main() {
   for (const article of relevantArticles) {
     console.log(`📄 ${article.title?.slice(0, 60)}...`);
     console.log(`   URL: ${article.source_url}`);
-    console.log(`   Location: ${article.location}, Progress: ${Math.round(article.reading_progress * 100)}%`);
+    console.log(
+      `   Location: ${article.location}, Progress: ${Math.round(article.reading_progress * 100)}%`,
+    );
 
     try {
       // Generate dedupeKey
       const dedupeKey = `readwise:${article.id}`;
 
       // Check if already exists
-      const existing = await client.query(api.sources.getByDedupeKey, { dedupeKey });
+      const existing = await client.query(api.sources.getByDedupeKey, {
+        dedupeKey,
+      });
       if (existing) {
         console.log(`   ⏭️ Already ingested`);
         skipped++;
@@ -202,7 +231,7 @@ async function main() {
           console.log(`   ✓ Got ${fullText.length} chars`);
         }
         // Rate limit
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Create source in Convex
@@ -211,7 +240,9 @@ async function main() {
         title: article.title,
         author: article.author || undefined,
         canonicalUrl: article.source_url,
-        publishedAt: article.published_date ? Date.parse(article.published_date) : undefined,
+        publishedAt: article.published_date
+          ? Date.parse(article.published_date)
+          : undefined,
         rawText: rawText || undefined,
         tags: ["readwise", ...Object.keys(article.tags || {})],
         metadata: {
@@ -231,7 +262,6 @@ async function main() {
         console.log(`   ⏭️ Duplicate`);
         skipped++;
       }
-
     } catch (error) {
       console.log(`   ❌ ${error}`);
       failed++;
@@ -240,7 +270,9 @@ async function main() {
   }
 
   console.log(`\n${"=".repeat(50)}`);
-  console.log(`Done: ${success} ingested, ${skipped} skipped, ${failed} failed`);
+  console.log(
+    `Done: ${success} ingested, ${skipped} skipped, ${failed} failed`,
+  );
 }
 
 main().catch(console.error);

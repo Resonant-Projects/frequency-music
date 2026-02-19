@@ -1,6 +1,6 @@
 /**
  * Aggregate Functions
- * 
+ *
  * Uses @convex-dev/aggregate for efficient counts
  */
 
@@ -22,7 +22,7 @@ export const conceptsAggregate = new TableAggregate<any, "concepts">(
   {
     sortKey: (doc: any) => doc.mentionCount,
     sumValue: (doc: any) => doc.mentionCount,
-  }
+  },
 );
 
 // ============================================================================
@@ -56,17 +56,17 @@ export const getTopConceptsRanked = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 10;
-    
+
     const total = await conceptsAggregate.count(ctx);
     if (total === 0) return [];
-    
+
     // Get items with highest mentionCount (from end of sorted list)
     const results = [];
     for (let i = 0; i < Math.min(limit, total); i++) {
       const item = await conceptsAggregate.at(ctx, total - 1 - i);
       if (item) results.push(item);
     }
-    
+
     return results;
   },
 });
@@ -83,7 +83,7 @@ export const sourcesByStatusAggregate = new TableAggregate<any, "sources">(
   {
     namespace: (doc: any) => doc.status,
     sortKey: (doc: any) => doc.createdAt,
-  }
+  },
 );
 
 /**
@@ -94,21 +94,21 @@ export const getSourceCounts = query({
   handler: async (ctx) => {
     const statuses = [
       "ingested",
-      "text_ready", 
+      "text_ready",
       "extracting",
       "extracted",
       "triaged",
       "review_needed",
     ];
-    
+
     const counts: Record<string, number> = {};
-    
+
     for (const status of statuses) {
       counts[status] = await sourcesByStatusAggregate.count(ctx, {
         namespace: status,
       });
     }
-    
+
     return counts;
   },
 });
@@ -135,13 +135,13 @@ export const rebuildConceptAggregate = internalMutation({
   args: {},
   handler: async (ctx) => {
     await conceptsAggregate.clear(ctx);
-    
+
     const concepts = await ctx.db.query("concepts").collect();
-    
+
     for (const concept of concepts) {
       await conceptsAggregate.insert(ctx, concept);
     }
-    
+
     return { rebuilt: concepts.length };
   },
 });
@@ -153,13 +153,13 @@ export const rebuildSourceAggregate = internalMutation({
   args: {},
   handler: async (ctx) => {
     await sourcesByStatusAggregate.clear(ctx);
-    
+
     const sources = await ctx.db.query("sources").collect();
-    
+
     for (const source of sources) {
       await sourcesByStatusAggregate.insert(ctx, source);
     }
-    
+
     return { rebuilt: sources.length };
   },
 });

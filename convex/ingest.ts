@@ -26,37 +26,60 @@ interface ParsedFeed {
 function parseRSSXML(xml: string): ParsedFeed {
   // Simple regex-based parser (works for most RSS/Atom feeds)
   const items: RSSItem[] = [];
-  
+
   // Get feed title
-  const feedTitleMatch = xml.match(/<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i);
+  const feedTitleMatch = xml.match(
+    /<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i,
+  );
   const feedTitle = feedTitleMatch ? feedTitleMatch[1].trim() : "Unknown Feed";
 
   // Match RSS items or Atom entries
-  const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>|<entry[^>]*>([\s\S]*?)<\/entry>/gi;
+  const itemRegex =
+    /<item[^>]*>([\s\S]*?)<\/item>|<entry[^>]*>([\s\S]*?)<\/entry>/gi;
   let match;
 
   while ((match = itemRegex.exec(xml)) !== null) {
     const itemXml = match[1] || match[2];
-    
+
     // Extract fields
-    const titleMatch = itemXml.match(/<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i);
-    const linkMatch = itemXml.match(/<link[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>|<link[^>]*href="([^"]+)"/i);
-    const pubDateMatch = itemXml.match(/<pubDate[^>]*>(.*?)<\/pubDate>|<published[^>]*>(.*?)<\/published>|<updated[^>]*>(.*?)<\/updated>/i);
-    const descMatch = itemXml.match(/<description[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>|<summary[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/summary>/i);
-    const guidMatch = itemXml.match(/<guid[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/guid>|<id[^>]*>(.*?)<\/id>/i);
-    const contentMatch = itemXml.match(/<content:encoded[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content:encoded>|<content[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content>/i);
+    const titleMatch = itemXml.match(
+      /<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i,
+    );
+    const linkMatch = itemXml.match(
+      /<link[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>|<link[^>]*href="([^"]+)"/i,
+    );
+    const pubDateMatch = itemXml.match(
+      /<pubDate[^>]*>(.*?)<\/pubDate>|<published[^>]*>(.*?)<\/published>|<updated[^>]*>(.*?)<\/updated>/i,
+    );
+    const descMatch = itemXml.match(
+      /<description[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>|<summary[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/summary>/i,
+    );
+    const guidMatch = itemXml.match(
+      /<guid[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/guid>|<id[^>]*>(.*?)<\/id>/i,
+    );
+    const contentMatch = itemXml.match(
+      /<content:encoded[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content:encoded>|<content[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content>/i,
+    );
 
     const title = titleMatch ? titleMatch[1].trim() : "";
     const link = linkMatch ? (linkMatch[1] || linkMatch[2] || "").trim() : "";
-    
+
     if (title && link) {
       items.push({
         title,
         link,
-        pubDate: pubDateMatch ? (pubDateMatch[1] || pubDateMatch[2] || pubDateMatch[3] || "").trim() : undefined,
-        description: descMatch ? (descMatch[1] || descMatch[2] || "").trim() : undefined,
-        guid: guidMatch ? (guidMatch[1] || guidMatch[2] || "").trim() : undefined,
-        content: contentMatch ? (contentMatch[1] || contentMatch[2] || "").trim() : undefined,
+        pubDate: pubDateMatch
+          ? (pubDateMatch[1] || pubDateMatch[2] || pubDateMatch[3] || "").trim()
+          : undefined,
+        description: descMatch
+          ? (descMatch[1] || descMatch[2] || "").trim()
+          : undefined,
+        guid: guidMatch
+          ? (guidMatch[1] || guidMatch[2] || "").trim()
+          : undefined,
+        content: contentMatch
+          ? (contentMatch[1] || contentMatch[2] || "").trim()
+          : undefined,
       });
     }
   }
@@ -95,7 +118,10 @@ export const pollFeed = internalAction({
   args: {
     feedId: v.id("feeds"),
   },
-  handler: async (ctx, args): Promise<{ processed: number; errors: string[] }> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ processed: number; errors: string[] }> => {
     // Get feed config
     const feed = await ctx.runQuery(api.feeds.get, { id: args.feedId });
     if (!feed || !feed.enabled) {
@@ -111,7 +137,8 @@ export const pollFeed = internalAction({
       const response = await fetch(feed.url, {
         headers: {
           "User-Agent": "ResonantProjects/1.0 (research aggregator)",
-          "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml",
+          Accept:
+            "application/rss+xml, application/atom+xml, application/xml, text/xml",
         },
       });
 
@@ -126,9 +153,11 @@ export const pollFeed = internalAction({
       for (const item of parsed.items) {
         try {
           const dedupeKey = generateRSSDedupeKey(feed.url, item);
-          
+
           // Check if already exists
-          const existing = await ctx.runQuery(api.sources.getByDedupeKey, { dedupeKey });
+          const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
+            dedupeKey,
+          });
           if (existing) {
             continue; // Skip duplicates
           }
@@ -146,10 +175,10 @@ export const pollFeed = internalAction({
           }
 
           // Get text content
-          const rawText = item.content 
-            ? stripHtml(item.content) 
-            : item.description 
-              ? stripHtml(item.description) 
+          const rawText = item.content
+            ? stripHtml(item.content)
+            : item.description
+              ? stripHtml(item.description)
               : undefined;
 
           // Create source
@@ -181,7 +210,6 @@ export const pollFeed = internalAction({
         lastPolledAt: Date.now(),
         lastItemAt: latestItemDate,
       });
-
     } catch (fetchError) {
       errors.push(`Fetch error: ${fetchError}`);
     }
@@ -194,16 +222,26 @@ export const pollFeed = internalAction({
  * Poll all enabled feeds (public action)
  */
 export const pollAllFeeds = action({
-  handler: async (ctx): Promise<{ results: Record<string, { processed: number; errors: string[] }> }> => {
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<{
+    results: Record<string, { processed: number; errors: string[] }>;
+  }> => {
     const feeds = await ctx.runQuery(api.feeds.listEnabled);
     const results: Record<string, { processed: number; errors: string[] }> = {};
 
     for (const feed of feeds) {
       try {
-        const result = await ctx.runAction(internal.ingest.pollFeed, { feedId: feed._id });
+        const result = await ctx.runAction(internal.ingest.pollFeed, {
+          feedId: feed._id,
+        });
         results[feed.name] = result;
       } catch (error) {
-        results[feed.name] = { processed: 0, errors: [`Action error: ${error}`] };
+        results[feed.name] = {
+          processed: 0,
+          errors: [`Action error: ${error}`],
+        };
       }
     }
 
@@ -215,6 +253,7 @@ export const pollAllFeeds = action({
  * Poll all enabled feeds (internal action for cron)
  */
 export const pollAllFeedsInternal = internalAction({
+  args: {},
   handler: async (ctx): Promise<void> => {
     const feeds = await ctx.runQuery(api.feeds.listEnabled);
 
@@ -246,7 +285,9 @@ export const ingestUrl = action({
     const dedupeKey = `url:${urlObj.hostname}${urlObj.pathname.replace(/\/$/, "")}`;
 
     // Check if already exists
-    const existing = await ctx.runQuery(api.sources.getByDedupeKey, { dedupeKey });
+    const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
+      dedupeKey,
+    });
     if (existing) {
       return { id: existing._id, created: false };
     }
@@ -271,7 +312,9 @@ export const ingestUrl = action({
     // Extract main content (simplified - could use readability library)
     // For now, just strip HTML from body
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    const rawText = bodyMatch ? stripHtml(bodyMatch[1]).slice(0, 50000) : undefined;
+    const rawText = bodyMatch
+      ? stripHtml(bodyMatch[1]).slice(0, 50000)
+      : undefined;
 
     // Create source
     const result = await ctx.runMutation(api.sources.create, {
@@ -324,7 +367,9 @@ export const ingestYouTube = action({
     const dedupeKey = `yt:${videoId}`;
 
     // Check if already exists
-    const existing = await ctx.runQuery(api.sources.getByDedupeKey, { dedupeKey });
+    const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
+      dedupeKey,
+    });
     if (existing) {
       return { id: existing._id, created: false, videoId };
     }
@@ -341,7 +386,7 @@ export const ingestYouTube = action({
 
     if (response.ok) {
       const html = await response.text();
-      
+
       // Extract title
       const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
       if (titleMatch) {

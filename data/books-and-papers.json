@@ -6,7 +6,13 @@
         "author": "Dave Benson",
         "url": "https://homepages.abdn.ac.uk/d.j.benson/pages/html/maths-music.html",
         "pdf": "https://logosfoundation.org/kursus/music_math.pdf",
-        "topics": ["mathematics", "music theory", "Fourier analysis", "tuning systems", "group theory"],
+        "topics": [
+          "mathematics",
+          "music theory",
+          "Fourier analysis",
+          "tuning systems",
+          "group theory"
+        ],
         "pages": 531,
         "category": "core"
       },
@@ -15,7 +21,13 @@
         "author": "David Lapp",
         "url": "https://www.e-booksdirectory.com/details.php?ebook=2276",
         "pdf": "https://kellerphysics.com/acoustics/Lapp.pdf",
-        "topics": ["physics", "waves", "sound", "musical instruments", "acoustics"],
+        "topics": [
+          "physics",
+          "waves",
+          "sound",
+          "musical instruments",
+          "acoustics"
+        ],
         "category": "physics"
       },
       {
@@ -45,7 +57,12 @@
         "title": "The Theory of Sound, Volume One",
         "author": "Lord Rayleigh (J.W.S. Strutt)",
         "url": "https://archive.org/details/theorysound03telerich",
-        "topics": ["acoustics", "classical physics", "wave theory", "historical"],
+        "topics": [
+          "acoustics",
+          "classical physics",
+          "wave theory",
+          "historical"
+        ],
         "category": "classical"
       },
       {
@@ -62,7 +79,13 @@
         "author": "Dmitri Tymoczko",
         "url": "https://dmitri.mycpanel.princeton.edu/geometry-of-music.html",
         "isbn": "9780195336672",
-        "topics": ["geometry", "voice leading", "chord spaces", "topology", "orbifolds"],
+        "topics": [
+          "geometry",
+          "voice leading",
+          "chord spaces",
+          "topology",
+          "orbifolds"
+        ],
         "category": "core"
       },
       {
@@ -80,7 +103,13 @@
       {
         "title": "Musimathics: The Mathematical Foundations of Music (Vol 1 & 2)",
         "author": "Gareth Loy",
-        "topics": ["mathematics", "music theory", "DSP", "synthesis", "comprehensive"],
+        "topics": [
+          "mathematics",
+          "music theory",
+          "DSP",
+          "synthesis",
+          "comprehensive"
+        ],
         "category": "core"
       },
       {
@@ -150,7 +179,12 @@
       "title": "Computational Extraction of Intonation and Tuning Systems",
       "url": "https://arxiv.org/abs/2503.11956",
       "pdf": "https://arxiv.org/pdf/2503.11956.pdf",
-      "topics": ["microtonal", "intonation", "computational analysis", "pitch histograms"],
+      "topics": [
+        "microtonal",
+        "intonation",
+        "computational analysis",
+        "pitch histograms"
+      ],
       "category": "computational"
     }
   ],

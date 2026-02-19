@@ -11,7 +11,7 @@ import { v } from "convex/values";
 const visibilityValidator = v.union(
   v.literal("private"),
   v.literal("followers"),
-  v.literal("public")
+  v.literal("public"),
 );
 
 const evidenceLevelValidator = v.union(
@@ -19,7 +19,7 @@ const evidenceLevelValidator = v.union(
   v.literal("preprint"),
   v.literal("anecdotal"),
   v.literal("speculative"),
-  v.literal("personal")
+  v.literal("personal"),
 );
 
 // Parameter types - extensible string for AI flexibility
@@ -40,7 +40,7 @@ const claimValidator = v.object({
       label: v.optional(v.string()),
       url: v.optional(v.string()),
       quote: v.optional(v.string()),
-    })
+    }),
   ),
 });
 
@@ -55,7 +55,7 @@ export default defineSchema({
     role: v.union(
       v.literal("admin"),
       v.literal("collaborator"),
-      v.literal("follower")
+      v.literal("follower"),
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -72,7 +72,7 @@ export default defineSchema({
       v.literal("url"),
       v.literal("youtube"),
       v.literal("pdf"),
-      v.literal("podcast")
+      v.literal("podcast"),
     ),
 
     // Core metadata
@@ -108,7 +108,7 @@ export default defineSchema({
       v.literal("triaged"),
       v.literal("promoted_followers"),
       v.literal("promoted_public"),
-      v.literal("archived")
+      v.literal("archived"),
     ),
     blockedReason: v.optional(
       v.union(
@@ -118,8 +118,8 @@ export default defineSchema({
         v.literal("needs_tagging"),
         v.literal("ai_error"),
         v.literal("needs_human_review"),
-        v.literal("duplicate")
-      )
+        v.literal("duplicate"),
+      ),
     ),
     blockedDetails: v.optional(v.string()),
     openQuestions: v.optional(v.array(v.string())),
@@ -205,14 +205,14 @@ export default defineSchema({
       v.literal("active"),
       v.literal("evaluated"),
       v.literal("revised"),
-      v.literal("retired")
+      v.literal("retired"),
     ),
     resolution: v.optional(
       v.union(
         v.literal("supported"),
         v.literal("inconclusive"),
-        v.literal("contradicted")
-      )
+        v.literal("contradicted"),
+      ),
     ),
 
     // Versioning
@@ -249,14 +249,14 @@ export default defineSchema({
         baselineArtifactId: v.optional(v.id("compositions")),
         whatVaries: v.array(v.string()),
         whatStaysConstant: v.array(v.string()),
-      })
+      }),
     ),
 
     // Lifecycle
     status: v.union(
       v.literal("draft"),
       v.literal("in_use"),
-      v.literal("archived")
+      v.literal("archived"),
     ),
     visibility: visibilityValidator,
     createdBy: v.union(v.id("users"), v.literal("system")),
@@ -277,7 +277,7 @@ export default defineSchema({
     artifactType: v.union(
       v.literal("microStudy"),
       v.literal("expandedStudy"),
-      v.literal("fullTrack")
+      v.literal("fullTrack"),
     ),
 
     // Content
@@ -287,8 +287,8 @@ export default defineSchema({
         v.object({
           label: v.string(),
           url: v.string(),
-        })
-      )
+        }),
+      ),
     ),
 
     // Versioning
@@ -301,7 +301,7 @@ export default defineSchema({
       v.literal("idea"),
       v.literal("in_progress"),
       v.literal("rendered"),
-      v.literal("published")
+      v.literal("published"),
     ),
     visibility: visibilityValidator,
     createdBy: v.id("users"),
@@ -323,7 +323,7 @@ export default defineSchema({
         name: v.optional(v.string()),
         userId: v.optional(v.id("users")),
         role: v.optional(v.string()), // "self", "wife", "colleague"
-      })
+      }),
     ),
     contextMd: v.optional(v.string()),
 
@@ -341,7 +341,7 @@ export default defineSchema({
     feedbackMd: v.string(),
     bodyMapNotes: v.optional(v.string()),
     expandVerdict: v.optional(
-      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no"))
+      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
     ),
 
     // Ownership
@@ -400,7 +400,7 @@ export default defineSchema({
       v.literal("mathematics"), // Group theory, topology
       v.literal("geometry"), // Sacred geometry, polygons
       v.literal("instrument"), // Instruments, synthesis
-      v.literal("general") // Catch-all
+      v.literal("general"), // Catch-all
     ),
 
     // Metadata
@@ -434,7 +434,7 @@ export default defineSchema({
       v.literal("hypothesis"),
       v.literal("recipe"),
       v.literal("concept"),
-      v.literal("composition")
+      v.literal("composition"),
     ),
     fromId: v.string(), // ID of the source entity
 
@@ -445,7 +445,7 @@ export default defineSchema({
       v.literal("hypothesis"),
       v.literal("recipe"),
       v.literal("concept"),
-      v.literal("composition")
+      v.literal("composition"),
     ),
     toId: v.string(), // ID of the target entity
 
@@ -471,7 +471,7 @@ export default defineSchema({
       // Workflow relationships
       v.literal("extracted_from"), // Extraction from source
       v.literal("generated_from"), // Hypothesis from extraction
-      v.literal("implements") // Recipe implements hypothesis
+      v.literal("implements"), // Recipe implements hypothesis
     ),
 
     // Metadata

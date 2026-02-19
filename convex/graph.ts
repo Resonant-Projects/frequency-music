@@ -29,13 +29,15 @@ export const searchConcepts = query({
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    
+
     // Use search index
     const results = await ctx.db
       .query("concepts")
-      .withSearchIndex("search_concepts", (q) => q.search("displayName", args.query))
+      .withSearchIndex("search_concepts", (q) =>
+        q.search("displayName", args.query),
+      )
       .take(limit);
-    
+
     return results;
   },
 });
@@ -92,10 +94,10 @@ export const upsertConcept = mutation({
       .query("concepts")
       .withIndex("by_name", (q) => q.eq("name", normalized))
       .first();
-    
+
     if (existing) {
       // Update existing
-      await ctx.db.patch(existing._id, {
+      await ctx.db.patch("concepts", existing._id, {
         displayName: args.displayName ?? existing.displayName,
         description: args.description ?? existing.description,
         domain: (args.domain as any) ?? existing.domain,
@@ -129,10 +131,10 @@ export const incrementMentions = mutation({
   args: { conceptId: v.id("concepts"), amount: v.optional(v.number()) },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const concept = await ctx.db.get(args.conceptId);
+    const concept = await ctx.db.get("concepts", args.conceptId);
     if (!concept) return null;
-    
-    await ctx.db.patch(args.conceptId, {
+
+    await ctx.db.patch("concepts", args.conceptId, {
       mentionCount: concept.mentionCount + (args.amount ?? 1),
       updatedAt: Date.now(),
     });
@@ -157,12 +159,12 @@ export const getEdgesFrom = query({
   handler: async (ctx, args) => {
     let q = ctx.db
       .query("edges")
-      .withIndex("by_from", (q) => 
-        q.eq("fromType", args.fromType as any).eq("fromId", args.fromId)
+      .withIndex("by_from", (q) =>
+        q.eq("fromType", args.fromType as any).eq("fromId", args.fromId),
       );
-    
+
     const edges = await q.collect();
-    
+
     if (args.relationship) {
       return edges.filter((e) => e.relationship === args.relationship);
     }
@@ -183,12 +185,12 @@ export const getEdgesTo = query({
   handler: async (ctx, args) => {
     let q = ctx.db
       .query("edges")
-      .withIndex("by_to", (q) => 
-        q.eq("toType", args.toType as any).eq("toId", args.toId)
+      .withIndex("by_to", (q) =>
+        q.eq("toType", args.toType as any).eq("toId", args.toId),
       );
-    
+
     const edges = await q.collect();
-    
+
     if (args.relationship) {
       return edges.filter((e) => e.relationship === args.relationship);
     }
@@ -204,45 +206,45 @@ export const getRelatedSources = query({
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 10;
-    
+
     // Get direct relationships
     const directEdges = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) => 
-        q.eq("fromType", "source").eq("fromId", args.sourceId)
+      .withIndex("by_from", (q) =>
+        q.eq("fromType", "source").eq("fromId", args.sourceId),
       )
       .filter((q) => q.eq(q.field("toType"), "source"))
       .take(limit);
-    
+
     // Get concepts this source mentions
     const conceptEdges = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) => 
-        q.eq("fromType", "source").eq("fromId", args.sourceId)
+      .withIndex("by_from", (q) =>
+        q.eq("fromType", "source").eq("fromId", args.sourceId),
       )
       .filter((q) => q.eq(q.field("toType"), "concept"))
       .collect();
-    
+
     const conceptIds = conceptEdges.map((e) => e.toId);
-    
+
     // Find other sources mentioning the same concepts
     const relatedViaConceptsEdges = [];
     for (const conceptId of conceptIds.slice(0, 5)) {
       const otherSources = await ctx.db
         .query("edges")
-        .withIndex("by_to", (q) => 
-          q.eq("toType", "concept").eq("toId", conceptId)
+        .withIndex("by_to", (q) =>
+          q.eq("toType", "concept").eq("toId", conceptId),
         )
-        .filter((q) => 
+        .filter((q) =>
           q.and(
             q.eq(q.field("fromType"), "source"),
-            q.neq(q.field("fromId"), args.sourceId)
-          )
+            q.neq(q.field("fromId"), args.sourceId),
+          ),
         )
         .take(3);
       relatedViaConceptsEdges.push(...otherSources);
     }
-    
+
     // Combine and dedupe
     const allEdges = [...directEdges, ...relatedViaConceptsEdges];
     const seen = new Set<string>();
@@ -251,7 +253,7 @@ export const getRelatedSources = query({
       seen.add(e.fromId);
       return true;
     });
-    
+
     return unique.slice(0, limit);
   },
 });
@@ -267,12 +269,12 @@ export const getConceptsFor = query({
   handler: async (ctx, args) => {
     const edges = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) => 
-        q.eq("fromType", args.entityType as any).eq("fromId", args.entityId)
+      .withIndex("by_from", (q) =>
+        q.eq("fromType", args.entityType as any).eq("fromId", args.entityId),
       )
       .filter((q) => q.eq(q.field("toType"), "concept"))
       .collect();
-    
+
     // Fetch concept details
     const concepts = await Promise.all(
       edges.map(async (edge) => {
@@ -281,9 +283,9 @@ export const getConceptsFor = query({
           .withIndex("by_name", (q) => q.eq("name", edge.toId))
           .first();
         return concept ? { ...concept, relationship: edge.relationship } : null;
-      })
+      }),
     );
-    
+
     return concepts.filter(Boolean);
   },
 });
@@ -310,26 +312,26 @@ export const createEdge = mutation({
     // Check if edge already exists
     const existing = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) => 
-        q.eq("fromType", args.fromType as any).eq("fromId", args.fromId)
+      .withIndex("by_from", (q) =>
+        q.eq("fromType", args.fromType as any).eq("fromId", args.fromId),
       )
-      .filter((q) => 
+      .filter((q) =>
         q.and(
           q.eq(q.field("toType"), args.toType),
           q.eq(q.field("toId"), args.toId),
-          q.eq(q.field("relationship"), args.relationship)
-        )
+          q.eq(q.field("relationship"), args.relationship),
+        ),
       )
       .first();
-    
+
     if (existing) {
       // Update weight if provided
       if (args.weight !== undefined) {
-        await ctx.db.patch(existing._id, { weight: args.weight });
+        await ctx.db.patch("edges", existing._id, { weight: args.weight });
       }
       return existing._id;
     }
-    
+
     return await ctx.db.insert("edges", {
       fromType: args.fromType as any,
       fromId: args.fromId,
@@ -351,7 +353,7 @@ export const createEdge = mutation({
 export const deleteEdge = mutation({
   args: { id: v.id("edges") },
   handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
+    await ctx.db.delete("edges", args.id);
   },
 });
 
@@ -369,17 +371,17 @@ export const linkExtractionConcepts = action({
     const extraction = await ctx.runQuery(api.extractions.get, {
       id: args.extractionId,
     });
-    
+
     if (!extraction) throw new Error("Extraction not found");
-    
+
     const linkedConcepts = [];
-    
+
     for (const topic of extraction.topics) {
       // Upsert the concept
       const conceptId = await ctx.runMutation(api.graph.upsertConcept, {
         name: topic,
       });
-      
+
       // Create edge from source to concept
       await ctx.runMutation(api.graph.createEdge, {
         fromType: "source",
@@ -389,15 +391,15 @@ export const linkExtractionConcepts = action({
         relationship: "mentions",
         autoGenerated: true,
       });
-      
+
       // Increment mention count
       await ctx.runMutation(api.graph.incrementMentions, {
         conceptId,
       });
-      
+
       linkedConcepts.push(topic);
     }
-    
+
     return { linked: linkedConcepts.length, concepts: linkedConcepts };
   },
 });
@@ -411,18 +413,18 @@ export const linkHypothesisConcepts = action({
     const hypothesis = await ctx.runQuery(api.hypotheses.get, {
       id: args.hypothesisId,
     });
-    
+
     if (!hypothesis) throw new Error("Hypothesis not found");
-    
+
     const concepts = hypothesis.concepts || [];
     const linkedConcepts = [];
-    
+
     for (const concept of concepts) {
       // Upsert the concept
       await ctx.runMutation(api.graph.upsertConcept, {
         name: concept,
       });
-      
+
       // Create edge from hypothesis to concept
       await ctx.runMutation(api.graph.createEdge, {
         fromType: "hypothesis",
@@ -432,10 +434,10 @@ export const linkHypothesisConcepts = action({
         relationship: "tests",
         autoGenerated: true,
       });
-      
+
       linkedConcepts.push(concept);
     }
-    
+
     // Also link to source concepts
     for (const sourceId of hypothesis.sourceIds) {
       await ctx.runMutation(api.graph.createEdge, {
@@ -447,7 +449,7 @@ export const linkHypothesisConcepts = action({
         autoGenerated: true,
       });
     }
-    
+
     return { linked: linkedConcepts.length, concepts: linkedConcepts };
   },
 });
@@ -461,10 +463,10 @@ export const buildGraphFromExtractions = action({
     const extractions = await ctx.runQuery(api.extractions.listRecent, {
       limit: args.limit ?? 100,
     });
-    
+
     let processed = 0;
     let conceptsLinked = 0;
-    
+
     for (const extraction of extractions) {
       try {
         const result = await ctx.runAction(api.graph.linkExtractionConcepts, {
@@ -476,7 +478,7 @@ export const buildGraphFromExtractions = action({
         // Continue on error
       }
     }
-    
+
     return { processed, conceptsLinked };
   },
 });
@@ -496,13 +498,13 @@ export const exportForVisualization = query({
   },
   handler: async (ctx, args) => {
     const depth = args.depth ?? 2;
-    
+
     // Get all concepts as nodes
     const concepts = await ctx.db.query("concepts").take(100);
-    
+
     // Get all edges
     const edges = await ctx.db.query("edges").take(500);
-    
+
     // Build node list
     const nodes = concepts.map((c) => ({
       id: `concept:${c.name}`,
@@ -511,7 +513,7 @@ export const exportForVisualization = query({
       domain: c.domain,
       size: Math.min(c.mentionCount * 2 + 10, 50),
     }));
-    
+
     // Build edge list for visualization
     const links = edges.map((e) => ({
       source: `${e.fromType}:${e.fromId}`,
@@ -519,7 +521,7 @@ export const exportForVisualization = query({
       relationship: e.relationship,
       weight: e.weight ?? 1,
     }));
-    
+
     return { nodes, links };
   },
 });

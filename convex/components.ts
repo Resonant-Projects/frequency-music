@@ -1,9 +1,9 @@
 /**
  * Convex Components Setup
- * 
+ *
  * This file configures the main components:
  * 1. Workflow - Durable extraction pipeline
- * 
+ *
  * Note: Aggregate and ActionCache are configured in their respective modules
  * after codegen creates the _generated types.
  */

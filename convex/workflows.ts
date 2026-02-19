@@ -1,6 +1,6 @@
 /**
  * Durable Workflows for Resonant Projects
- * 
+ *
  * Uses @convex-dev/workflow for:
  * - Reliable extraction pipeline with retries
  * - Batch hypothesis/recipe generation
@@ -27,35 +27,35 @@ export const extractSourceWorkflow = workflowManager.define({
   handler: async (ctx, args): Promise<void> => {
     // Validate source exists and has content
     const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
-    
+
     if (!source) {
       console.log(`Source ${args.sourceId} not found`);
       return;
     }
-    
+
     if (!source.rawText || source.rawText.length < 100) {
       console.log(`Source ${args.sourceId} has no content`);
       return;
     }
-    
+
     // Run extraction with retry
     await ctx.runAction(
       api.extract.extractSource,
       { sourceId: args.sourceId, model: args.model },
-      { retry: true }
+      { retry: true },
     );
-    
+
     // Get extraction and link concepts
     const extractions = await ctx.runQuery(api.extractions.getBySourceId, {
       sourceId: args.sourceId,
     });
-    
+
     if (extractions.length > 0) {
       await ctx.runAction(api.graph.linkExtractionConcepts, {
         extractionId: extractions[0]._id,
       });
     }
-    
+
     console.log(`Completed extraction workflow for ${args.sourceId}`);
   },
 });
@@ -70,26 +70,26 @@ export const batchExtractionWorkflow = workflowManager.define({
   },
   handler: async (ctx, args): Promise<void> => {
     const limit = args.limit ?? 10;
-    
+
     const sources = await ctx.runQuery(api.sources.listByStatus, {
       status: "text_ready",
       limit,
     });
-    
+
     console.log(`Starting batch extraction of ${sources.length} sources`);
-    
+
     for (const source of sources) {
       try {
         await ctx.runAction(
           api.extract.extractSource,
           { sourceId: source._id, model: args.model },
-          { retry: true }
+          { retry: true },
         );
-        
+
         const extractions = await ctx.runQuery(api.extractions.getBySourceId, {
           sourceId: source._id,
         });
-        
+
         if (extractions.length > 0) {
           await ctx.runAction(api.graph.linkExtractionConcepts, {
             extractionId: extractions[0]._id,
@@ -99,7 +99,7 @@ export const batchExtractionWorkflow = workflowManager.define({
         console.error(`Failed to extract ${source._id}: ${e}`);
       }
     }
-    
+
     console.log(`Batch extraction complete`);
   },
 });
@@ -120,9 +120,9 @@ export const generateHypothesisWorkflow = workflowManager.define({
     const result = await ctx.runAction(
       api.hypotheses.generateFromExtraction,
       { extractionId: args.extractionId, model: args.model },
-      { retry: true }
+      { retry: true },
     );
-    
+
     if (result.hypothesisId) {
       await ctx.runAction(api.graph.linkHypothesisConcepts, {
         hypothesisId: result.hypothesisId,
@@ -143,25 +143,28 @@ export const batchHypothesisWorkflow = workflowManager.define({
   handler: async (ctx, args): Promise<void> => {
     const limit = args.limit ?? 5;
     const minClaims = args.minClaims ?? 2;
-    
+
     const extractions = await ctx.runQuery(api.extractions.listRecent, {
       limit: 50,
     });
-    
+
     const candidates = extractions.filter(
-      (e: any) => e.claims.length >= minClaims && e.compositionParameters.length > 0
+      (e: any) =>
+        e.claims.length >= minClaims && e.compositionParameters.length > 0,
     );
-    
-    console.log(`Found ${candidates.length} candidates for hypothesis generation`);
-    
+
+    console.log(
+      `Found ${candidates.length} candidates for hypothesis generation`,
+    );
+
     for (const extraction of candidates.slice(0, limit)) {
       try {
         const result = await ctx.runAction(
           api.hypotheses.generateFromExtraction,
           { extractionId: extraction._id, model: args.model },
-          { retry: true }
+          { retry: true },
         );
-        
+
         if (result.hypothesisId) {
           await ctx.runAction(api.graph.linkHypothesisConcepts, {
             hypothesisId: result.hypothesisId,
@@ -190,57 +193,57 @@ export const fullPipelineWorkflow = workflowManager.define({
   handler: async (ctx, args): Promise<void> => {
     const extractLimit = args.extractLimit ?? 5;
     const hypothesisLimit = args.hypothesisLimit ?? 3;
-    
+
     console.log("Starting full pipeline");
-    
+
     // Step 1: Extract sources
     const sources = await ctx.runQuery(api.sources.listByStatus, {
       status: "text_ready",
       limit: extractLimit,
     });
-    
+
     for (const source of sources) {
       try {
         await ctx.runAction(
           api.extract.extractSource,
           { sourceId: source._id, model: args.model },
-          { retry: true }
+          { retry: true },
         );
       } catch (e) {
         console.error(`Extract failed: ${e}`);
       }
     }
-    
+
     // Step 2: Generate hypotheses
     const extractions = await ctx.runQuery(api.extractions.listRecent, {
       limit: 30,
     });
-    
+
     const candidates = extractions.filter(
-      (e: any) => e.claims.length >= 2 && e.compositionParameters.length > 0
+      (e: any) => e.claims.length >= 2 && e.compositionParameters.length > 0,
     );
-    
+
     for (const extraction of candidates.slice(0, hypothesisLimit)) {
       try {
         const result = await ctx.runAction(
           api.hypotheses.generateFromExtraction,
           { extractionId: extraction._id, model: args.model },
-          { retry: true }
+          { retry: true },
         );
-        
+
         if (result.hypothesisId) {
           // Generate recipe
           await ctx.runAction(
             api.recipes.generateFromHypothesis,
             { hypothesisId: result.hypothesisId, model: args.model },
-            { retry: true }
+            { retry: true },
           );
         }
       } catch (e) {
         console.error(`Pipeline step failed: ${e}`);
       }
     }
-    
+
     console.log("Full pipeline complete");
   },
 });
@@ -261,7 +264,7 @@ export const startBatchExtraction = mutation({
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchExtractionWorkflow,
-      { limit: args.limit, model: args.model }
+      { limit: args.limit, model: args.model },
     );
     return { workflowId };
   },
@@ -280,7 +283,7 @@ export const startBatchHypothesis = mutation({
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchHypothesisWorkflow,
-      args
+      args,
     );
     return { workflowId };
   },
@@ -299,7 +302,7 @@ export const startFullPipeline = mutation({
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.fullPipelineWorkflow,
-      args
+      args,
     );
     return { workflowId };
   },

@@ -19,19 +19,18 @@ export const listByStatus = query({
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    
+
     if (args.status) {
       return await ctx.db
         .query("hypotheses")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status as any))
+        .withIndex("by_status_updatedAt", (q) =>
+          q.eq("status", args.status as any),
+        )
         .order("desc")
         .take(limit);
     }
-    
-    return await ctx.db
-      .query("hypotheses")
-      .order("desc")
-      .take(limit);
+
+    return await ctx.db.query("hypotheses").order("desc").take(limit);
   },
 });
 
@@ -42,14 +41,14 @@ export const get = query({
   args: { id: v.id("hypotheses") },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
-    const hypothesis = await ctx.db.get(args.id);
+    const hypothesis = await ctx.db.get("hypotheses", args.id);
     if (!hypothesis) return null;
-    
+
     // Fetch linked sources
     const sources = await Promise.all(
-      hypothesis.sourceIds.map((id) => ctx.db.get(id))
+      hypothesis.sourceIds.map((id) => ctx.db.get("sources", id)),
     );
-    
+
     return {
       ...hypothesis,
       sources: sources.filter(Boolean),
@@ -88,7 +87,7 @@ export const create = mutation({
   returns: v.id("hypotheses"),
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
     return await ctx.db.insert("hypotheses", {
       ...args,
       status: "draft",
@@ -118,13 +117,16 @@ export const update = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
-    
-    const hypothesis = await ctx.db.get(id);
+
+    const hypothesis = await ctx.db.get("hypotheses", id);
     if (!hypothesis) {
-      throw new ConvexError({ code: "NOT_FOUND", message: "Hypothesis not found" });
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Hypothesis not found",
+      });
     }
-    
-    await ctx.db.patch(id, {
+
+    await ctx.db.patch("hypotheses", id, {
       ...updates,
       updatedAt: Date.now(),
     } as any);
@@ -144,18 +146,18 @@ export const updateStatus = mutation({
       v.literal("active"),
       v.literal("evaluated"),
       v.literal("revised"),
-      v.literal("retired")
+      v.literal("retired"),
     ),
     resolution: v.optional(
       v.union(
         v.literal("supported"),
         v.literal("inconclusive"),
-        v.literal("contradicted")
-      )
+        v.literal("contradicted"),
+      ),
     ),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("hypotheses", args.id, {
       status: args.status,
       resolution: args.resolution,
       updatedAt: Date.now(),
@@ -222,49 +224,52 @@ export const generateFromExtraction = action({
     const extraction = await ctx.runQuery(api.extractions.get, {
       id: args.extractionId,
     });
-    
+
     if (!extraction) {
       throw new Error("Extraction not found");
     }
-    
+
     // Get source
     const source = await ctx.runQuery(api.sources.get, {
       id: extraction.sourceId,
     });
-    
+
     if (!source) {
       throw new Error("Source not found");
     }
-    
+
     // Build prompt
     const claimsText = extraction.claims
       .map((c, i) => `${i + 1}. [${c.evidenceLevel}] ${c.text}`)
       .join("\n");
-    
-    const paramsText = extraction.compositionParameters
-      .map((p) => `- ${p.type}: ${p.value}`)
-      .join("\n") || "None specified";
-    
-    const prompt = HYPOTHESIS_USER_PROMPT
-      .replace("{{sourceTitle}}", source.title || "Untitled")
+
+    const paramsText =
+      extraction.compositionParameters
+        .map((p) => `- ${p.type}: ${p.value}`)
+        .join("\n") || "None specified";
+
+    const prompt = HYPOTHESIS_USER_PROMPT.replace(
+      "{{sourceTitle}}",
+      source.title || "Untitled",
+    )
       .replace("{{claims}}", claimsText)
       .replace("{{parameters}}", paramsText)
       .replace("{{topics}}", extraction.topics.join(", "));
-    
+
     // Call AI
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
-    
+
     const openrouter = createOpenRouter({ apiKey: openRouterKey });
     const modelId = args.model || "anthropic/claude-sonnet-4";
-    
+
     const result = await generateText({
       model: openrouter(modelId),
       system: HYPOTHESIS_SYSTEM_PROMPT,
       prompt,
       maxTokens: 2000,
     });
-    
+
     // Parse response
     let parsed;
     try {
@@ -274,7 +279,7 @@ export const generateFromExtraction = action({
     } catch (e) {
       throw new Error(`Failed to parse AI response: ${e}`);
     }
-    
+
     // Create hypothesis
     const hypothesisId = await ctx.runMutation(api.hypotheses.create, {
       title: parsed.title,
@@ -284,7 +289,7 @@ export const generateFromExtraction = action({
       sourceIds: [extraction.sourceId],
       concepts: parsed.concepts,
     });
-    
+
     return {
       hypothesisId,
       model: modelId,
@@ -305,24 +310,27 @@ export const generateBatch = action({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 3;
     const minClaims = args.minClaims ?? 2;
-    
+
     // Get extractions with enough claims
     const extractions = await ctx.runQuery(api.extractions.listRecent, {
       limit: 50,
     });
-    
+
     const candidates = extractions.filter(
-      (e) => e.claims.length >= minClaims && e.compositionParameters.length > 0
+      (e) => e.claims.length >= minClaims && e.compositionParameters.length > 0,
     );
-    
+
     const results = [];
-    
+
     for (const extraction of candidates.slice(0, limit)) {
       try {
-        const result = await ctx.runAction(api.hypotheses.generateFromExtraction, {
-          extractionId: extraction._id,
-          model: args.model,
-        });
+        const result = await ctx.runAction(
+          api.hypotheses.generateFromExtraction,
+          {
+            extractionId: extraction._id,
+            model: args.model,
+          },
+        );
         results.push({ success: true, ...result });
       } catch (e: any) {
         results.push({
@@ -332,7 +340,7 @@ export const generateBatch = action({
         });
       }
     }
-    
+
     return results;
   },
 });

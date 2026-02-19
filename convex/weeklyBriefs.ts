@@ -22,7 +22,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("weeklyBriefs") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    return await ctx.db.get("weeklyBriefs", args.id);
   },
 });
 
@@ -65,7 +65,7 @@ export const create = mutation({
 export const publish = mutation({
   args: { id: v.id("weeklyBriefs") },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("weeklyBriefs", args.id, {
       visibility: "public",
       publishedAt: Date.now(),
     });
@@ -125,62 +125,70 @@ export const generate = action({
   handler: async (ctx, args) => {
     const daysBack = args.daysBack ?? 7;
     const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
-    
+
     // Get Monday of current week for weekOf
     const now = new Date();
     const monday = new Date(now);
     monday.setDate(now.getDate() - now.getDay() + 1);
     const weekOf = monday.toISOString().split("T")[0];
-    
+
     // Get recent hypotheses
     const allHypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
       limit: 50,
     });
     const hypotheses = allHypotheses.filter((h) => h.createdAt > cutoff);
-    
+
     // Get recent recipes
     const allRecipes = await ctx.runQuery(api.recipes.listByStatus, {
       limit: 50,
     });
     const recipes = allRecipes.filter((r) => r.createdAt > cutoff);
-    
+
     if (hypotheses.length === 0) {
       throw new Error("No recent hypotheses found. Generate some first.");
     }
-    
+
     // Format for prompt
     const hypothesesText = hypotheses
-      .map((h, i) => `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}`)
+      .map(
+        (h, i) =>
+          `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}`,
+      )
       .join("\n\n");
-    
-    const recipesText = recipes.length > 0 
-      ? recipes.map((r, i) => {
-          const params = r.parameters.slice(0, 4).map((p: any) => `${p.type}: ${p.value}`).join(", ");
-          return `${i + 1}. **${r.title}**\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
-        }).join("\n\n")
-      : "No recipes yet - experiments will need recipe generation.";
-    
-    const prompt = BRIEF_USER_PROMPT
-      .replace("{{weekOf}}", weekOf)
+
+    const recipesText =
+      recipes.length > 0
+        ? recipes
+            .map((r, i) => {
+              const params = r.parameters
+                .slice(0, 4)
+                .map((p: any) => `${p.type}: ${p.value}`)
+                .join(", ");
+              return `${i + 1}. **${r.title}**\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
+            })
+            .join("\n\n")
+        : "No recipes yet - experiments will need recipe generation.";
+
+    const prompt = BRIEF_USER_PROMPT.replace("{{weekOf}}", weekOf)
       .replace("{{numHypotheses}}", String(hypotheses.length))
       .replace("{{hypotheses}}", hypothesesText)
       .replace("{{numRecipes}}", String(recipes.length))
       .replace("{{recipes}}", recipesText);
-    
+
     // Call AI
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
-    
+
     const openrouter = createOpenRouter({ apiKey: openRouterKey });
     const modelId = args.model || "anthropic/claude-sonnet-4";
-    
+
     const result = await generateText({
       model: openrouter(modelId),
       system: BRIEF_SYSTEM_PROMPT,
       prompt,
       maxTokens: 4000,
     });
-    
+
     // Extract todo items from JSON block if present
     let todo: string[] = [];
     const jsonMatch = result.text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
@@ -192,10 +200,10 @@ export const generate = action({
         // Ignore parse errors
       }
     }
-    
+
     // Get source IDs from hypotheses
     const sourceIds = [...new Set(hypotheses.flatMap((h) => h.sourceIds))];
-    
+
     // Create the brief
     const briefId = await ctx.runMutation(api.weeklyBriefs.create, {
       weekOf,
@@ -207,7 +215,7 @@ export const generate = action({
       recommendedRecipeIds: recipes.map((r) => r._id),
       todo: todo.length > 0 ? todo : undefined,
     });
-    
+
     return {
       briefId,
       weekOf,
