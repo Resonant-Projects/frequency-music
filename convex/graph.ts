@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation, query, action } from "./_generated/server";
 import { api } from "./_generated/api";
 
@@ -11,6 +11,7 @@ import { api } from "./_generated/api";
  */
 export const getConcept = query({
   args: { name: v.string() },
+  returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
     const normalized = args.name.toLowerCase().trim();
     return await ctx.db
@@ -25,6 +26,7 @@ export const getConcept = query({
  */
 export const searchConcepts = query({
   args: { query: v.string(), limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
     
@@ -43,6 +45,7 @@ export const searchConcepts = query({
  */
 export const listByDomain = query({
   args: { domain: v.string(), limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("concepts")
@@ -56,6 +59,7 @@ export const listByDomain = query({
  */
 export const getTopConcepts = query({
   args: { limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("concepts")
@@ -81,6 +85,7 @@ export const upsertConcept = mutation({
     aliases: v.optional(v.array(v.string())),
     wikipedia: v.optional(v.string()),
   },
+  returns: v.id("concepts"),
   handler: async (ctx, args) => {
     const normalized = args.name.toLowerCase().trim();
     const existing = await ctx.db
@@ -122,14 +127,16 @@ export const upsertConcept = mutation({
  */
 export const incrementMentions = mutation({
   args: { conceptId: v.id("concepts"), amount: v.optional(v.number()) },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const concept = await ctx.db.get(args.conceptId);
-    if (!concept) return;
+    if (!concept) return null;
     
     await ctx.db.patch(args.conceptId, {
       mentionCount: concept.mentionCount + (args.amount ?? 1),
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -146,6 +153,7 @@ export const getEdgesFrom = query({
     fromId: v.string(),
     relationship: v.optional(v.string()),
   },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     let q = ctx.db
       .query("edges")
@@ -171,6 +179,7 @@ export const getEdgesTo = query({
     toId: v.string(),
     relationship: v.optional(v.string()),
   },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     let q = ctx.db
       .query("edges")
@@ -192,6 +201,7 @@ export const getEdgesTo = query({
  */
 export const getRelatedSources = query({
   args: { sourceId: v.id("sources"), limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 10;
     
