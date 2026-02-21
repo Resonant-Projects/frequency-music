@@ -48,11 +48,11 @@ export function buildDomainEdges(scene: THREE.Scene): Array<{ line: THREE.Line; 
 
   SECTORS.forEach((sector) => {
     const origin = getSectorMidArc(sector, 200)  // slightly inside sector
+    const mat = makeDomainEdgeMat(sector.color)   // one material per sector
 
     sector.dots.forEach((dot, di) => {
       const pos = dotWorldPos(sector, dot, 30 + di * 10)
       const end = new THREE.Vector3(pos.x, pos.y, pos.z)
-      const mat = makeDomainEdgeMat(sector.color)
       const line = buildBezierEdge(origin, end, 80, mat)
       scene.add(line)
       edges.push({ line, sectorId: sector.id })

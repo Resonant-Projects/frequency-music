@@ -1,4 +1,5 @@
 # ZODIAC Style & Aesthetics System
+
 ## Single Source of Truth — Illuminated Astrolabe Knowledge Graph
 
 ---
@@ -111,7 +112,7 @@ Opacity communicates state, not style. These are the semantic vocabulary:
 All measurements are in SVG units within an 800×800 viewBox centered at (400, 400).
 In Three.js these map 1:1, centered at origin (0, 0, 0).
 
-```
+```text
 r=6    — Hub gold dot (center)
 r=22   — Hub violet dashed inner ring
 r=36   — Hub outer boundary circle (gold stroke)
@@ -136,7 +137,7 @@ r=282–315  — Source scatter dot zone (just outside outer ring)
 
 ### Sector Geometry
 
-```
+```text
 6 sectors, each spanning 60° (π/3 radians)
 Starting angle: -π/2 (top / 12 o'clock)
 Rotation: clockwise
@@ -149,7 +150,7 @@ Radial spoke:   drawn only at sector start angle, r=175 to r=265
 
 ### Tick Marks (Astrolabe Degree Ring)
 
-```
+```text
 72 total marks at every 5° (0°, 5°, 10° ... 355°)
 Minor ticks (non-30°): r1=269 → r2=280, 0.4px, opacity 0.18
 Major ticks (every 30°): r1=266 → r2=280, 0.9px, opacity 0.45
@@ -317,7 +318,7 @@ scene.fog = new THREE.FogExp2('#0d0620', 0.0008)
 
 camera.position.set(0, -120, 520)  // slightly below and in front
 
-// Post-processing: RenderPass → UnrealBloomPass → SMAAPass
+// Post-processing: RenderPass → UnrealBloomPass
 UnrealBloomPass: strength=1.2, radius=0.6, threshold=0.3
 ```
 
@@ -354,7 +355,7 @@ web/
 │
 └── src/
     ├── routes/
-    │   └── zodiac-3d.tsx         ← Route /6 — SolidJS component
+    │   └── zodiac-3d.tsx         ← Default route / — SolidJS component
     │
     └── lib/
         ├── zodiac-data.ts        ← Types, constants, sector/pipeline data
@@ -377,7 +378,7 @@ cat web/docs/zodiac-style-guide.md
 cd web && bun run build   # 0 errors
 
 # Dev server
-cd web && bun run dev     # navigate to /6
+cd web && bun run dev     # navigate to /
 ```
 
 Visual checklist:

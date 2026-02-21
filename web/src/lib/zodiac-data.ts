@@ -93,7 +93,7 @@ export const SECTORS: SectorDef[] = [
   },
   {
     id: 'synth', label: 'Synthesis', color: '#f5f0e8',
-    startAngle: BASE + 5 * STEP, endAngle: BASE + TAU + BASE,
+    startAngle: BASE + 5 * STEP, endAngle: BASE + TAU,
     sources: 6, claims: 18,
     summary: 'Spectral composition, additive and FM synthesis, granular textures, microtonal DAW',
     dots: [{ angleRel: 0.35, r: 298 }, { angleRel: 0.68, r: 283 }],

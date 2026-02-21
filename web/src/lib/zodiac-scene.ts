@@ -140,7 +140,17 @@ export function initZodiacScene(
 
   function rebuildSectorGroup(sector: (typeof SECTORS)[0], active: boolean) {
     const old = sectorGroups.get(sector.id)
-    if (old) scene.remove(old)
+    if (old) {
+      old.traverse((child) => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+          child.geometry.dispose()
+          const mat = child.material
+          if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
+          else (mat as THREE.Material).dispose()
+        }
+      })
+      scene.remove(old)
+    }
     const g = buildSectorGroup(sector, active)
     scene.add(g)
     sectorGroups.set(sector.id, g)
@@ -152,8 +162,8 @@ export function initZodiacScene(
       const prev = SECTORS.find((s) => s.id === activeSectorId)
       if (prev) rebuildSectorGroup(prev, false)
 
-      // Update CSS label opacity
-      document.querySelectorAll<HTMLElement>('[data-sector-id]').forEach((el) => {
+      // Update CSS label opacity (scoped to this scene's CSS3D layer)
+      cssRenderer.domElement.querySelectorAll<HTMLElement>('[data-sector-id]').forEach((el) => {
         if (el.dataset.sectorId === activeSectorId) el.style.opacity = '0.58'
       })
     }
@@ -165,7 +175,7 @@ export function initZodiacScene(
       if (sector) {
         rebuildSectorGroup(sector, true)
         // Update CSS label
-        document.querySelectorAll<HTMLElement>('[data-sector-id]').forEach((el) => {
+        cssRenderer.domElement.querySelectorAll<HTMLElement>('[data-sector-id]').forEach((el) => {
           if (el.dataset.sectorId === id) el.style.opacity = '1'
         })
       }
@@ -192,16 +202,12 @@ export function initZodiacScene(
 
     const hits = raycaster.intersectObjects(meshes)
     if (hits.length > 0) {
-      // Find which sector group contains the hit object
-      for (const [id, g] of sectorGroups) {
-        let found = false
-        g.traverse((child) => { if (child === hits[0].object) found = true })
-        if (found) {
-          onSectorClick(id)
-          const sector = SECTORS.find((s) => s.id === id)
-          if (sector) focusSector(sector, camera, controls)
-          break
-        }
+      const sectorId = hits[0].object.userData.sectorId as string | undefined
+      if (sectorId) {
+        setActiveSector(sectorId)
+        onSectorClick(sectorId)
+        const sector = SECTORS.find((s) => s.id === sectorId)
+        if (sector) focusSector(sector, camera, controls)
       }
     }
   }
@@ -256,6 +262,17 @@ export function initZodiacScene(
       window.removeEventListener('resize', onResize)
       canvas.removeEventListener('click', onCanvasClick)
       controls.dispose()
+      scene.traverse((object) => {
+        if ('geometry' in object && object.geometry) {
+          (object.geometry as THREE.BufferGeometry).dispose()
+        }
+        if ('material' in object && object.material) {
+          const mat = object.material as THREE.Material | THREE.Material[]
+          if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
+          else mat.dispose()
+        }
+      })
+      composer.dispose()
       renderer.dispose()
       if (cssRenderer.domElement.parentElement) {
         cssRenderer.domElement.parentElement.removeChild(cssRenderer.domElement)

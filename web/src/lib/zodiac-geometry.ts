@@ -81,10 +81,12 @@ function createSectorFillGeometry(sector: SectorDef): THREE.BufferGeometry {
 export function buildSectorGroup(sector: SectorDef, active = false): THREE.Group {
   const g = new THREE.Group()
 
-  // Fill mesh
+  // Fill mesh (userData.sectorId enables O(1) raycast hit identification)
   const fillGeo = createSectorFillGeometry(sector)
   const fillMat = makeSectorFillMat(sector.color, active)
-  g.add(new THREE.Mesh(fillGeo, fillMat))
+  const fillMesh = new THREE.Mesh(fillGeo, fillMat)
+  fillMesh.userData.sectorId = sector.id
+  g.add(fillMesh)
 
   // Inner arc (r=175)
   const innerMat = makeArcMat(sector.color, active ? 0.75 : 0.30)
@@ -110,7 +112,6 @@ export function buildSourceNodes(scene: THREE.Scene): Array<{ mesh: THREE.Mesh; 
 
   SECTORS.forEach((sector) => {
     sector.dots.forEach((dot, di) => {
-      const angle = sector.startAngle + dot.angleRel * (sector.endAngle - sector.startAngle)
       const z = 30 + di * 10  // float 30-60 above disc
       const pos = dotWorldPos(sector, dot, z)
 
@@ -170,6 +171,8 @@ export function buildOuterRings(scene: THREE.Scene): void {
 
 export function buildTickMarks(scene: THREE.Scene): void {
   const TICKS = Array.from({ length: 72 }, (_, i) => i * 5)
+  const majorMat = makeTickMat(true)
+  const minorMat = makeTickMat(false)
 
   TICKS.forEach((deg) => {
     const a = (deg * Math.PI) / 180 - Math.PI / 2
@@ -179,8 +182,7 @@ export function buildTickMarks(scene: THREE.Scene): void {
 
     const pts = [polar3(r1, a), polar3(r2, a)]
     const geo = new THREE.BufferGeometry().setFromPoints(pts)
-    const mat = makeTickMat(isMajor)
-    scene.add(new THREE.Line(geo, mat))
+    scene.add(new THREE.Line(geo, isMajor ? majorMat : minorMat))
   })
 }
 

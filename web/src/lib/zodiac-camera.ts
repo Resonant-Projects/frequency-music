@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { type SectorDef } from './zodiac-data'
 
+let activeFocusAnimId: number | null = null
+
 export function createCamera(aspect: number): THREE.PerspectiveCamera {
   const camera = new THREE.PerspectiveCamera(45, aspect, 1, 3000)
   // Slightly below and in front: shows disc at a cinematic tilt
@@ -46,6 +48,11 @@ export function focusSector(
     0,
   )
 
+  // Cancel any prior focus animation and disable autoRotate during lerp
+  if (activeFocusAnimId !== null) cancelAnimationFrame(activeFocusAnimId)
+  const prevAutoRotate = controls.autoRotate
+  controls.autoRotate = false
+
   // Simple lerp animation over ~800ms
   const startPos = camera.position.clone()
   const startTarget = controls.target.clone()
@@ -60,8 +67,13 @@ export function focusSector(
     controls.target.lerpVectors(startTarget, lookAt, ease)
     controls.update()
 
-    if (t < 1) requestAnimationFrame(step)
+    if (t < 1) {
+      activeFocusAnimId = requestAnimationFrame(step)
+    } else {
+      activeFocusAnimId = null
+      controls.autoRotate = prevAutoRotate
+    }
   }
 
-  requestAnimationFrame(step)
+  activeFocusAnimId = requestAnimationFrame(step)
 }

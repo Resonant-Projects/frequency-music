@@ -103,8 +103,11 @@ export function Zodiac3D() {
           <For each={SECTORS}>
             {(s) => (
               <div
+                role="button"
+                tabIndex={0}
                 style={`display:flex;align-items:center;justify-content:space-between;padding:7px 9px;margin-bottom:3px;cursor:pointer;border:1px solid;transition:all 0.2s;border-color:${selSector() === s.id ? `${s.color}55` : 'rgba(200,168,75,0.1)'};background:${selSector() === s.id ? 'rgba(200,168,75,0.05)' : 'transparent'}`}
                 onClick={() => handleSectorSelect(s.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSectorSelect(s.id) }}
                 onMouseEnter={() => handleSectorHover(s.id)}
                 onMouseLeave={() => handleSectorHover(null)}
               >
@@ -121,6 +124,7 @@ export function Zodiac3D() {
         <div style="padding:14px 26px 24px;border-top:1px solid rgba(200,168,75,0.1)">
           <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:8px">PIPELINE</div>
           <div style="display:flex;align-items:center;gap:5px">
+            {/* Static pipeline totals — update from Convex when live data available */}
             {[
               { label: 'SRC', value: 47 }, { label: 'EXT', value: 23 },
               { label: 'HYP', value: 8  }, { label: 'REC', value: 3  },
