@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
-import { generateDedupeKey } from "./sources";
+import { generateDedupeKey } from "./sourceUtils";
 
 const http = httpRouter();
 

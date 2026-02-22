@@ -34,3 +34,28 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - `app.resonantprojects.art` (SolidJS): dashboard, ingestion, briefs, hypotheses/recipes, compositions, feedback
 - Convex backend: data + actions + scheduled jobs
 - n8n: RSS polling + Notion scheduled sync + webhook pushes
+
+## Local development
+1. Install dependencies:
+   - `bun install`
+   - `cd web && bun install`
+2. Set web env:
+   - `VITE_CONVEX_URL=<your convex deployment url>` in `web/.env.local`
+3. Run web app:
+   - `cd web && bun run dev`
+
+## App routes (TanStack Router)
+- `/` Zodiac 3D knowledge navigation (live Convex pipeline + sector metrics)
+- `/ingest` manual URL/YouTube ingest + extraction trigger
+- `/display` inbox triage and source review actions
+- `/hypotheses` hypothesis drafting and source-citation selection
+- `/recipes` manual/auto recipe generation
+- `/weekly-turns` weekly brief generation and publish flow
+- `/compositions` composition lifecycle tracking
+- `/feedback` listening session capture and ratings
+- `/admin` feed controls + operational overrides
+
+## Verification commands
+- `bun run test`
+- `bun run build:web`
+- `bun run typecheck:web`

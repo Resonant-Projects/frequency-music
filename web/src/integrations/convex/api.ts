@@ -51,4 +51,9 @@ export const convexApi = {
     setSourceStatus: mutationRef("admin:setSourceStatus"),
     promoteVisibility: mutationRef("admin:promoteVisibility"),
   },
+  dashboard: {
+    pipeline: queryRef("dashboard:pipeline"),
+    zodiacSectors: queryRef("dashboard:zodiacSectors"),
+    activityFeed: queryRef("dashboard:activityFeed"),
+  },
 };

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { ConvexError } from "convex/values";
+import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 
 // Reusable validator for source status
 const sourceStatusValidator = v.union(
@@ -419,18 +420,6 @@ export const createFromUrlInput = mutation({
   },
 });
 
-function extractYouTubeVideoId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return match[1];
-  }
-  return null;
-}
-
 /**
  * Create a YouTube source from manual app input.
  */
@@ -466,51 +455,3 @@ export const createFromYouTubeInput = mutation({
     });
   },
 });
-
-// ============================================================================
-// INGEST HELPERS - Deduplication key generators
-// ============================================================================
-
-/**
- * Generate dedupeKey for different source types
- */
-export function generateDedupeKey(
-  type: string,
-  identifiers: {
-    notionPageId?: string;
-    feedUrl?: string;
-    rssGuid?: string;
-    canonicalUrl?: string;
-    youtubeVideoId?: string;
-    fileSha256?: string;
-  },
-): string {
-  switch (type) {
-    case "notion":
-      return `notion:${identifiers.notionPageId}`;
-    case "rss":
-      return `rss:${identifiers.feedUrl}:${identifiers.rssGuid || identifiers.canonicalUrl}`;
-    case "url":
-      return `url:${normalizeUrl(identifiers.canonicalUrl || "")}`;
-    case "youtube":
-      return `yt:${identifiers.youtubeVideoId}`;
-    case "pdf":
-      return `pdf:${identifiers.fileSha256}`;
-    case "podcast":
-      return `podcast:${identifiers.feedUrl}:${identifiers.rssGuid || identifiers.canonicalUrl}`;
-    default:
-      return `unknown:${Date.now()}`;
-  }
-}
-
-/**
- * Normalize URL for deduplication
- */
-function normalizeUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return `${parsed.host.toLowerCase()}${parsed.pathname.replace(/\/$/, "")}${parsed.search}`;
-  } catch {
-    return url.toLowerCase();
-  }
-}

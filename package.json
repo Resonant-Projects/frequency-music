@@ -5,7 +5,10 @@
   "private": true,
   "scripts": {
     "format": "biome format --write .",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test": "bun test convex/sourceUtils.test.ts",
+    "build:web": "cd web && bun run build",
+    "typecheck:web": "cd web && bunx tsc --noEmit"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
