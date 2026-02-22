@@ -304,7 +304,7 @@ export default defineSchema({
       v.literal("published"),
     ),
     visibility: visibilityValidator,
-    createdBy: v.id("users"),
+    createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -346,7 +346,7 @@ export default defineSchema({
 
     // Ownership
     visibility: visibilityValidator,
-    createdBy: v.id("users"),
+    createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
   }).index("by_compositionId_createdAt", ["compositionId", "createdAt"]),
 

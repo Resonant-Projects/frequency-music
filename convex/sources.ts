@@ -38,6 +38,42 @@ export const listByStatus = query({
 });
 
 /**
+ * List recent sources regardless of status
+ */
+export const listRecent = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
+  handler: async (ctx, args) => {
+    return await ctx.db.query("sources").order("desc").take(args.limit ?? 50);
+  },
+});
+
+/**
+ * List sources by type
+ */
+export const listByType = query({
+  args: {
+    type: v.union(
+      v.literal("notion"),
+      v.literal("rss"),
+      v.literal("url"),
+      v.literal("youtube"),
+      v.literal("pdf"),
+      v.literal("podcast"),
+    ),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(v.any()),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("sources")
+      .withIndex("by_type_updatedAt", (q) => q.eq("type", args.type))
+      .order("desc")
+      .take(args.limit ?? 50);
+  },
+});
+
+/**
  * Get a single source by ID
  */
 export const get = query({
@@ -204,6 +240,130 @@ export const updateText = mutation({
       transcript: args.transcript,
       rawTextSha256,
       status: "text_ready",
+      updatedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+/**
+ * Upsert a source for external ingest pipelines (n8n / HTTP endpoints)
+ */
+export const upsertExternal = mutation({
+  args: {
+    dedupeKey: v.string(),
+    type: v.union(
+      v.literal("notion"),
+      v.literal("rss"),
+      v.literal("url"),
+      v.literal("youtube"),
+      v.literal("pdf"),
+      v.literal("podcast"),
+    ),
+    title: v.optional(v.string()),
+    canonicalUrl: v.optional(v.string()),
+    publishedAt: v.optional(v.number()),
+    notionPageId: v.optional(v.string()),
+    rssGuid: v.optional(v.string()),
+    feedUrl: v.optional(v.string()),
+    rawText: v.optional(v.string()),
+    transcript: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    topics: v.optional(v.array(v.string())),
+    metadata: v.optional(v.any()),
+  },
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+    contentChanged: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    const existing = await ctx.db
+      .query("sources")
+      .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", args.dedupeKey))
+      .first();
+
+    const text = args.rawText || args.transcript;
+    let rawTextSha256: string | undefined;
+
+    if (text) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(text);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      rawTextSha256 = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    if (!existing) {
+      const id = await ctx.db.insert("sources", {
+        ...args,
+        rawTextSha256,
+        status: text ? "text_ready" : "ingested",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { id, created: true, contentChanged: Boolean(text) };
+    }
+
+    const contentChanged = Boolean(
+      text &&
+        rawTextSha256 &&
+        (rawTextSha256 !== existing.rawTextSha256 ||
+          existing.status === "ingested"),
+    );
+
+    await ctx.db.patch("sources", existing._id, {
+      ...args,
+      rawTextSha256: rawTextSha256 ?? existing.rawTextSha256,
+      status: contentChanged
+        ? "text_ready"
+        : existing.status === "archived"
+          ? "archived"
+          : existing.status,
+      blockedReason: contentChanged ? undefined : existing.blockedReason,
+      updatedAt: now,
+    });
+
+    return { id: existing._id, created: false, contentChanged };
+  },
+});
+
+/**
+ * Promote source visibility
+ */
+export const setVisibility = mutation({
+  args: {
+    id: v.id("sources"),
+    visibility: v.union(
+      v.literal("private"),
+      v.literal("followers"),
+      v.literal("public"),
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const source = await ctx.db.get("sources", args.id);
+    if (!source) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Source not found",
+      });
+    }
+
+    await ctx.db.patch("sources", args.id, {
+      visibility: args.visibility,
+      status:
+        args.visibility === "followers"
+          ? "promoted_followers"
+          : args.visibility === "public"
+            ? "promoted_public"
+            : source.status,
       updatedAt: Date.now(),
     });
     return null;
