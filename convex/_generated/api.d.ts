@@ -8,17 +8,24 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as aggregates from "../aggregates.js";
 import type * as components_ from "../components.js";
+import type * as compositions from "../compositions.js";
 import type * as crons from "../crons.js";
+import type * as dashboard from "../dashboard.js";
 import type * as extract from "../extract.js";
 import type * as extractions from "../extractions.js";
 import type * as fabric from "../fabric.js";
 import type * as feeds from "../feeds.js";
 import type * as graph from "../graph.js";
+import type * as http from "../http.js";
 import type * as hypotheses from "../hypotheses.js";
+import type * as inbox from "../inbox.js";
 import type * as ingest from "../ingest.js";
+import type * as listening from "../listening.js";
 import type * as recipes from "../recipes.js";
+import type * as sourceUtils from "../sourceUtils.js";
 import type * as sources from "../sources.js";
 import type * as weeklyBriefs from "../weeklyBriefs.js";
 import type * as workflows from "../workflows.js";
@@ -30,17 +37,24 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   aggregates: typeof aggregates;
   components: typeof components_;
+  compositions: typeof compositions;
   crons: typeof crons;
+  dashboard: typeof dashboard;
   extract: typeof extract;
   extractions: typeof extractions;
   fabric: typeof fabric;
   feeds: typeof feeds;
   graph: typeof graph;
+  http: typeof http;
   hypotheses: typeof hypotheses;
+  inbox: typeof inbox;
   ingest: typeof ingest;
+  listening: typeof listening;
   recipes: typeof recipes;
+  sourceUtils: typeof sourceUtils;
   sources: typeof sources;
   weeklyBriefs: typeof weeklyBriefs;
   workflows: typeof workflows;
