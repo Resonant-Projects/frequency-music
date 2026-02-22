@@ -38,7 +38,11 @@ test.describe("navigation", () => {
     await page.goto("/");
 
     const webglError = page.getByText("Error creating WebGL context.");
-    if (await webglError.isVisible().catch(() => false)) {
+    const hasWebGlError = await webglError
+      .waitFor({ state: "visible", timeout: 3_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (hasWebGlError) {
       test.skip(true, "WebGL is unavailable in this headless environment.");
     }
 
