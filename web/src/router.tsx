@@ -8,7 +8,10 @@ import {
 } from "@tanstack/solid-router";
 import { Component } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
+import { AdminPage } from "./routes/admin";
+import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
+import { FeedbackPage } from "./routes/feedback";
 import { HypothesesPage } from "./routes/hypotheses";
 import { IngestPage } from "./routes/ingest";
 import { RecipesPage } from "./routes/recipes";
@@ -115,28 +118,19 @@ const weeklyTurnsRoute = createRoute({
 const compositionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/compositions",
-  component: PlaceholderPage({
-    title: "Compositions",
-    body: "Composition workflow pages will be implemented here.",
-  }),
+  component: CompositionsPage,
 });
 
 const feedbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/feedback",
-  component: PlaceholderPage({
-    title: "Feedback",
-    body: "Listening sessions and subjective metrics will be captured here.",
-  }),
+  component: FeedbackPage,
 });
 
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
-  component: PlaceholderPage({
-    title: "Admin",
-    body: "Admin settings and feed controls will be implemented here.",
-  }),
+  component: AdminPage,
 });
 
 const routeTree = rootRoute.addChildren([

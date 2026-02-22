@@ -33,4 +33,22 @@ export const convexApi = {
     generate: actionRef("weeklyBriefs:generate"),
     publish: mutationRef("weeklyBriefs:publish"),
   },
+  compositions: {
+    list: queryRef("compositions:list"),
+    create: mutationRef("compositions:create"),
+    update: mutationRef("compositions:update"),
+  },
+  listening: {
+    listRecent: queryRef("listening:listRecent"),
+    create: mutationRef("listening:create"),
+  },
+  admin: {
+    workspaceSnapshot: queryRef("admin:workspaceSnapshot"),
+    listFeeds: queryRef("admin:listFeeds"),
+    createFeed: mutationRef("admin:createFeed"),
+    setFeedEnabled: mutationRef("admin:setFeedEnabled"),
+    pollFeedsNow: actionRef("admin:pollFeedsNow"),
+    setSourceStatus: mutationRef("admin:setSourceStatus"),
+    promoteVisibility: mutationRef("admin:promoteVisibility"),
+  },
 };
