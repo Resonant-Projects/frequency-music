@@ -164,7 +164,10 @@ export function CompositionsPage() {
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={compositions.data() ?? []}>
               {(item: any) => (
-                <div class={css({ borderColor: "rgba(200, 168, 75, 0.22)", borderRadius: "l2", borderWidth: "1px", p: "4" })}>
+                <div
+                  data-testid="entity-row"
+                  class={css({ borderColor: "rgba(200, 168, 75, 0.22)", borderRadius: "l2", borderWidth: "1px", p: "4" })}
+                >
                   <div class={css({ display: "flex", gap: "2", marginBottom: "2" })}>
                     <UIBadge tone="gold">{item.status}</UIBadge>
                     <UIBadge tone="violet">{item.artifactType}</UIBadge>

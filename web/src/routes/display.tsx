@@ -35,9 +35,11 @@ function statusTone(status: string): "gold" | "violet" | "cream" {
   return "gold";
 }
 
+const DISPLAY_QUEUE_LIMIT = import.meta.env.VITE_E2E_MODE === "1" ? 200 : 24;
+
 export function DisplayPage() {
   const inboxRows = createQueryWithStatus(convexApi.inbox.list, () => ({
-    limit: 24,
+    limit: DISPLAY_QUEUE_LIMIT,
   }));
   const counts = createQuery(convexApi.inbox.counts);
 
@@ -126,7 +128,10 @@ export function DisplayPage() {
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={inboxRows.data() ?? []}>
               {(row: any) => (
-                <div class={css({ borderColor: "rgba(200, 168, 75, 0.24)", borderRadius: "l2", borderWidth: "1px", p: "4" })}>
+                <div
+                  data-testid="display-row"
+                  class={css({ borderColor: "rgba(200, 168, 75, 0.24)", borderRadius: "l2", borderWidth: "1px", p: "4" })}
+                >
                   <div class={css({ alignItems: "center", display: "flex", gap: "2", marginBottom: "2" })}>
                     <UIBadge tone={statusTone(row.status)}>{row.status}</UIBadge>
                     <UIBadge tone="cream">{row.type}</UIBadge>

@@ -27,6 +27,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 web/styled-system
+web/playwright-report
+web/test-results
 
 # IntelliJ based IDEs
 .idea

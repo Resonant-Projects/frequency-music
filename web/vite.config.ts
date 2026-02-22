@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [solid()],
   appType: 'spa',
   server: {
-    port: 5173,
+    port: 4173,
   },
 })
