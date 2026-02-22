@@ -1,5 +1,5 @@
-import { Zodiac3D } from './routes/zodiac-3d'
+import { AppRouter } from "./router";
 
 export default function App() {
-  return <Zodiac3D />
+  return <AppRouter />;
 }

@@ -10,4 +10,98 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  background: #0d0620;
+  color: #f5f0e8;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(200, 168, 75, 0.2);
+  backdrop-filter: blur(8px);
+  background: rgba(13, 6, 32, 0.7);
+}
+
+.app-title {
+  color: #c8a84b;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+.app-title-mark {
+  opacity: 0.7;
+  margin-right: 2px;
+}
+
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.app-nav-link {
+  border: 1px solid rgba(200, 168, 75, 0.2);
+  color: rgba(245, 240, 232, 0.7);
+  text-decoration: none;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.app-nav-link:hover {
+  color: #f5f0e8;
+  border-color: rgba(200, 168, 75, 0.45);
+}
+
+.app-nav-link.is-active {
+  color: #0d0620;
+  background: #c8a84b;
+  border-color: #c8a84b;
+}
+
+.app-main {
+  padding-top: 52px;
+  min-height: 100vh;
+}
+
+.route-placeholder {
+  min-height: calc(100vh - 52px);
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+}
+
+.route-placeholder h1 {
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+
+.route-placeholder p {
+  margin: 0;
+  color: rgba(245, 240, 232, 0.7);
 }
