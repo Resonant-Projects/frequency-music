@@ -19,7 +19,7 @@ if [[ -z "${VITE_CONVEX_URL:-}" ]]; then
 fi
 
 if [[ -z "${VITE_CONVEX_URL:-}" ]]; then
-  echo "Missing VITE_CONVEX_URL. Set it in the environment or /Users/kelliott/code/frequency-music/.env.local." >&2
+  echo "Missing VITE_CONVEX_URL. Set it in the environment or ${root_env_file}." >&2
   exit 1
 fi
 
