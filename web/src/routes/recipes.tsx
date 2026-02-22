@@ -213,7 +213,10 @@ export function RecipesPage() {
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={recipes.data() ?? []}>
               {(recipe: any) => (
-                <div class={css({ borderColor: "rgba(200, 168, 75, 0.25)", borderRadius: "l2", borderWidth: "1px", p: "4" })}>
+                <div
+                  data-testid="entity-row"
+                  class={css({ borderColor: "rgba(200, 168, 75, 0.25)", borderRadius: "l2", borderWidth: "1px", p: "4" })}
+                >
                   <div class={css({ display: "flex", gap: "2", marginBottom: "2" })}>
                     <UIBadge tone="gold">{recipe.status}</UIBadge>
                     <UIBadge tone="violet">{recipe.parameters.length} params</UIBadge>

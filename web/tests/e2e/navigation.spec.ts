@@ -38,12 +38,11 @@ test.describe("navigation", () => {
     await page.goto("/");
 
     const webglError = page.getByText("Error creating WebGL context.");
-    const hasWebGlError = await webglError
-      .waitFor({ state: "visible", timeout: 3_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (hasWebGlError) {
+    try {
+      await webglError.waitFor({ state: "visible", timeout: 2_000 });
       test.skip(true, "WebGL is unavailable in this headless environment.");
+    } catch {
+      // Continue when the WebGL error does not surface.
     }
 
     await page.getByRole("button", { name: "Open Domain Workspace" }).click();

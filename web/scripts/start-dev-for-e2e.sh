@@ -23,4 +23,6 @@ if [[ -z "${VITE_CONVEX_URL:-}" ]]; then
   exit 1
 fi
 
-exec bun run dev --host 127.0.0.1 --port 4173
+export VITE_E2E_MODE="${VITE_E2E_MODE:-1}"
+
+exec bun run dev -- --host 127.0.0.1 --port 4173

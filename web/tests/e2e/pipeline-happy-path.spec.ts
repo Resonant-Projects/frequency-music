@@ -39,7 +39,13 @@ test.describe("pipeline happy path", () => {
     await test.step("triage source in display queue", async () => {
       await page.goto("/display");
 
-      const triageButton = page.getByRole("button", { name: "Mark Triaged" }).first();
+      const sourceRow = page
+        .getByTestId("display-row")
+        .filter({ hasText: sourceTitle })
+        .first();
+      await expect(sourceRow).toBeVisible({ timeout: 30_000 });
+
+      const triageButton = sourceRow.getByRole("button", { name: "Mark Triaged" });
       await expect(triageButton).toBeVisible({ timeout: 30_000 });
       await triageButton.click();
 
@@ -62,7 +68,10 @@ test.describe("pipeline happy path", () => {
       try {
         await expect(citation).toBeVisible({ timeout: 5_000 });
         await citation.click();
-      } catch {
+      } catch (error) {
+        if (!(error instanceof Error && error.name === "TimeoutError")) {
+          throw error;
+        }
         // Citation selection is optional for this happy-path suite.
       }
 

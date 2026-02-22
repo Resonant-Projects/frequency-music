@@ -9,9 +9,11 @@ export async function waitForRowByText(
   text: string,
   timeout = 30_000,
 ): Promise<Locator> {
-  const heading = page.getByRole("heading", { name: text, exact: true }).first();
-  await expect(heading).toBeVisible({ timeout });
-  const row = heading.locator("xpath=ancestor::div[1]");
+  const row = page
+    .getByTestId("entity-row")
+    .filter({ has: page.getByRole("heading", { name: text, exact: true }) })
+    .first();
+  await expect(row).toBeVisible({ timeout });
   return row;
 }
 
