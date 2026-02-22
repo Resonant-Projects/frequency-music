@@ -9,7 +9,10 @@ import {
 import { Component } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
 import { DisplayPage } from "./routes/display";
+import { HypothesesPage } from "./routes/hypotheses";
 import { IngestPage } from "./routes/ingest";
+import { RecipesPage } from "./routes/recipes";
+import { WeeklyTurnsPage } from "./routes/weekly-turns";
 import { Zodiac3D } from "./routes/zodiac-3d";
 
 const appLinks = [
@@ -94,28 +97,19 @@ const displayRoute = createRoute({
 const hypothesesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/hypotheses",
-  component: PlaceholderPage({
-    title: "Hypotheses",
-    body: "Hypothesis management will be implemented here.",
-  }),
+  component: HypothesesPage,
 });
 
 const recipesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/recipes",
-  component: PlaceholderPage({
-    title: "Recipes",
-    body: "Recipe generation and editing will be implemented here.",
-  }),
+  component: RecipesPage,
 });
 
 const weeklyTurnsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/weekly-turns",
-  component: PlaceholderPage({
-    title: "Weekly Turns",
-    body: "Auto-generated weekly turns will be surfaced here.",
-  }),
+  component: WeeklyTurnsPage,
 });
 
 const compositionsRoute = createRoute({

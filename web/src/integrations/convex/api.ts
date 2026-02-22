@@ -19,4 +19,18 @@ export const convexApi = {
   extract: {
     extractSource: actionRef("extract:extractSource"),
   },
+  hypotheses: {
+    listByStatus: queryRef("hypotheses:listByStatus"),
+    create: mutationRef("hypotheses:create"),
+  },
+  recipes: {
+    listByStatus: queryRef("recipes:listByStatus"),
+    create: mutationRef("recipes:create"),
+    generateFromHypothesis: actionRef("recipes:generateFromHypothesis"),
+  },
+  weeklyBriefs: {
+    list: queryRef("weeklyBriefs:list"),
+    generate: actionRef("weeklyBriefs:generate"),
+    publish: mutationRef("weeklyBriefs:publish"),
+  },
 };
