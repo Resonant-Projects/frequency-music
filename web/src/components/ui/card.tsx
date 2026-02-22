@@ -1,4 +1,5 @@
-import { JSX } from "solid-js";
+import { Dynamic } from "solid-js/web";
+import type { JSX } from "solid-js";
 import { css, cx } from "../../../styled-system/css";
 
 const cardClass = css({
@@ -12,9 +13,10 @@ const cardClass = css({
 });
 
 type UICardProps = JSX.HTMLAttributes<HTMLElement> & {
-  as?: never;
+  as?: keyof JSX.IntrinsicElements;
 };
 
 export function UICard(props: UICardProps) {
-  return <section {...props} class={cx(cardClass, props.class)} />;
+  const { as = "section", class: className, ...rest } = props;
+  return <Dynamic component={as} {...rest} class={cx(cardClass, className)} />;
 }

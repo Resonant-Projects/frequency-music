@@ -8,6 +8,8 @@ import {
 } from "@tanstack/solid-router";
 import { Component } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
+import { DisplayPage } from "./routes/display";
+import { IngestPage } from "./routes/ingest";
 import { Zodiac3D } from "./routes/zodiac-3d";
 
 const appLinks = [
@@ -80,19 +82,13 @@ const indexRoute = createRoute({
 const ingestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/ingest",
-  component: PlaceholderPage({
-    title: "Ingest",
-    body: "Ingestion workflows will be wired here next.",
-  }),
+  component: IngestPage,
 });
 
 const displayRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/display",
-  component: PlaceholderPage({
-    title: "Display",
-    body: "Source and extraction review surfaces will be implemented here.",
-  }),
+  component: DisplayPage,
 });
 
 const hypothesesRoute = createRoute({
