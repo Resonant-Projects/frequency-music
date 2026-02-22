@@ -1,6 +1,7 @@
 import { render } from 'solid-js/web'
 import App from './App'
 import './index.css'
+import '../styled-system/styles.css'
 
 // Self-hosted fonts (fontsource) — replaces Google Fonts CDN
 import '@fontsource/cormorant-garamond/300.css'

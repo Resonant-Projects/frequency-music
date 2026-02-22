@@ -7,6 +7,7 @@ import {
   createRouter,
 } from "@tanstack/solid-router";
 import { Component } from "solid-js";
+import { UIBadge, UIButton, UICard } from "./components/ui";
 import { Zodiac3D } from "./routes/zodiac-3d";
 
 const appLinks = [
@@ -27,6 +28,9 @@ const RootLayout: Component = () => {
       <header class="app-header">
         <div class="app-title">
           <span class="app-title-mark">∴</span> Frequency Music
+          <UIBadge tone="gold" class="app-mode-badge">
+            PARK UI
+          </UIBadge>
         </div>
         <nav class="app-nav">
           {appLinks.map((link) => (
@@ -49,10 +53,16 @@ const RootLayout: Component = () => {
 
 const PlaceholderPage = (props: { title: string; body: string }): Component => {
   const Page: Component = () => (
-    <section class="route-placeholder">
-      <h1>{props.title}</h1>
-      <p>{props.body}</p>
-    </section>
+    <div class="route-placeholder">
+      <UICard class="route-placeholder-card">
+        <UIBadge tone="violet">Checkpoint</UIBadge>
+        <h1>{props.title}</h1>
+        <p>{props.body}</p>
+        <UIButton variant="outline" disabled>
+          Coming Next
+        </UIButton>
+      </UICard>
+    </div>
   );
   return Page;
 };
