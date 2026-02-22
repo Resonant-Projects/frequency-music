@@ -173,11 +173,13 @@ Four node types exist in the system:
 ### Source Dot Placement
 
 Each source dot is positioned within its sector using a polar coordinate:
-```
+
+```text
 angle = sector.startAngle + dot.angleRel × (sector.endAngle - sector.startAngle)
 x = cx + dot.r × cos(angle)
 y = cy + dot.r × sin(angle)
 ```
+
 `dot.r` ranges 282–315 (outside the outer boundary ring).
 `dot.angleRel` ranges 0.18–0.85 (distributes dots across the sector width).
 
@@ -203,14 +205,14 @@ y = cy + dot.r × sin(angle)
 
 ### Transition Timing
 
-```
+```text
 Sector hover/select state changes: transition: all 0.25s ease
 Opacity changes on labels: transition: opacity 0.25s ease
 ```
 
 ### Interaction States
 
-```
+```text
 Resting:  sector fill 3%, arcs 30-38%, labels 58%
 Hovered:  sector fill 10%, arcs 75-85%, outer arc gets z3-sm glow filter
 Selected: same as Hovered — persists after mouse leaves

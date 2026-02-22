@@ -7,7 +7,6 @@ import { SECTORS } from '../lib/zodiac-data'
 import { initZodiacScene } from '../lib/zodiac-scene'
 
 export function Zodiac3D() {
-  const [hovSector, setHovSector] = createSignal<string | null>(null)
   const [selSector, setSelSector] = createSignal<string>('math')
 
   const activeSector = () => SECTORS.find((s) => s.id === selSector()) ?? SECTORS[0]
@@ -19,7 +18,6 @@ export function Zodiac3D() {
   onMount(() => {
     sceneHandle = initZodiacScene(canvasRef, cssContainerRef, (id) => {
       setSelSector(id)
-      setHovSector(null)
     })
   })
 
@@ -33,7 +31,6 @@ export function Zodiac3D() {
   }
 
   function handleSectorHover(id: string | null) {
-    setHovSector(id)
     sceneHandle?.setActiveSector(id ?? selSector())
   }
 

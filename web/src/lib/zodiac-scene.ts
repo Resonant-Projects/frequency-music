@@ -19,7 +19,6 @@ import { buildHubEdges, buildDomainEdges, setEdgeActivity } from './zodiac-edges
 export interface ZodiacHandle {
   cleanup: () => void
   setActiveSector: (id: string | null) => void
-  onSectorClick: ((id: string) => void) | null
 }
 
 export function initZodiacScene(
@@ -189,7 +188,6 @@ export function initZodiacScene(
   const mouse = new THREE.Vector2()
 
   function onCanvasClick(e: MouseEvent) {
-    if (!onSectorClick) return
     const rect = canvas.getBoundingClientRect()
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
@@ -205,7 +203,7 @@ export function initZodiacScene(
       const sectorId = hits[0].object.userData.sectorId as string | undefined
       if (sectorId) {
         setActiveSector(sectorId)
-        onSectorClick(sectorId)
+        if (onSectorClick) onSectorClick(sectorId)
         const sector = SECTORS.find((s) => s.id === sectorId)
         if (sector) focusSector(sector, camera, controls)
       }
@@ -232,12 +230,12 @@ export function initZodiacScene(
   let animId = 0
   let running = true
 
-  function animate() {
+  function animate(time = 0) {
     if (!running) return
     animId = requestAnimationFrame(animate)
     controls.update()
 
-    const t = Date.now() * 0.001
+    const t = time * 0.001
 
     // Pulse source node emissive intensity
     sourceNodes.forEach(({ mesh }, i) => {
@@ -279,6 +277,5 @@ export function initZodiacScene(
       }
     },
     setActiveSector,
-    onSectorClick: onSectorClick ?? null,
   }
 }
