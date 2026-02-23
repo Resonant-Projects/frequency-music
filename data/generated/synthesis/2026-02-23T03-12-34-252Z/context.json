@@ -1,0 +1,1345 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-02-23T03:12:34.252Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 7,
+    "fetch": 160,
+    "minClaims": 2,
+    "minParams": 1,
+    "noveltyWindow": 10,
+    "out": "data/generated/synthesis",
+    "outputName": "final-output.auto.json"
+  },
+  "totals": {
+    "fetchedExtractions": 135,
+    "withSource": 135,
+    "eligibleCandidates": 35,
+    "selected": 7
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97bn99y1e8mk8d49g10310xsn81djj6",
+      "sourceId": "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "sourceTitle": "Meantone temperament - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Meantone_temperament",
+      "extractionCreatedAt": 1771423719820,
+      "extractionSummary": "Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.",
+      "topics": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "Pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "Renaissance music",
+        "Baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards"
+      ],
+      "topicTokens": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "renaissance music",
+        "baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards",
+        "meantone",
+        "historical tuning",
+        "comma"
+      ],
+      "claims": [
+        {
+          "text": "Perfect fifths in just intonation have a frequency ratio of 3:2",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "rather than using perfect fifths, consisting of frequency ratios of value 3:2"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone produces just major thirds with a 5:4 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Four ascending fifths (as C G D A E) tempered by 1/4 comma (and then lowered by two octaves) produce a just major third (C E) (with ratio 5: 4)"
+            }
+          ]
+        },
+        {
+          "text": "In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "as a frequency ratio, it is the geometric mean of the major tone and the minor tone: √(10/9 × 9/8) = √(5/4) = 1.1180340"
+            }
+          ]
+        },
+        {
+          "text": "12-tone equal temperament narrows perfect fifths by about 2 cents or 1/12 of a Pythagorean comma",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "it narrows the perfect fifths by about 2 cents or 1/12 of a Pythagorean comma to give a frequency ratio of 2^(7/12):1"
+            }
+          ]
+        },
+        {
+          "text": "Meantone temperament was commonly used from early 16th century till early 18th century",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "It was commonly used from the early 16th century till the early 18th, after which twelve-tone equal temperament eventually came into general use"
+            }
+          ]
+        },
+        {
+          "text": "31-TET closely approximates quarter-comma meantone temperament",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Quarter-comma meantone can be well approximated by a division of the octave into 31 equal steps"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone creates a residual gap of 125/128 ratio or -41.06 cents between F# and Gb",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "there is a residual gap in quarter-comma meantone tuning between the last of the upper sequence of six fifths and the last of the lower sequence; e.g. between F♯ and G♭ if the starting point is chosen as C, which, adjusted for the octave, are in the ratio of 125/128 or −41.06 cents"
+            }
+          ]
+        },
+        {
+          "text": "Third-comma meantone produces just minor thirds with a 6:5 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "three descending fifths (such as A D G C) produce a just minor third (A C) of ratio 6/5"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Quarter-comma meantone",
+          "details": {
+            "tempered": "1/4 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Third-comma meantone",
+          "details": {
+            "tempered": "1/3 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "tempered": "1/12 Pythagorean comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31 TET",
+          "details": {
+            "divisions": 31
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19 TET",
+          "details": {
+            "divisions": 19
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "53 TET",
+          "details": {
+            "divisions": 53
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "~264 Hz",
+          "details": {
+            "hz": 264,
+            "note": "middle C"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "5:4 major third ratio",
+          "details": {
+            "interval": "major third",
+            "ratio": "5:4"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "6:5 minor third ratio",
+          "details": {
+            "interval": "minor third",
+            "ratio": "6:5"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "3:2 perfect fifth ratio",
+          "details": {
+            "interval": "perfect fifth",
+            "ratio": "3:2"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?",
+        "What are the perceptual differences between meantone and equal temperament for modern listeners?",
+        "How do wolf intervals affect musical composition and performance practice?",
+        "What role does meantone temperament play in contemporary early music performance?",
+        "How do different meantone fractions (1/4, 1/3, 2/7 comma) affect harmonic perception and musical expression?"
+      ],
+      "scores": {
+        "base": 86,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "combined": 0.75,
+        "peerReviewedClaims": 8,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j97a6ptdt3q2wsb4enmnarj6t181dw82",
+      "sourceId": "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "sourceTitle": "Equal temperament - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Equal_temperament",
+      "extractionCreatedAt": 1771423778776,
+      "extractionSummary": "Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.",
+      "topics": [
+        "equal temperament",
+        "12-tone equal temperament",
+        "just intonation",
+        "tuning systems",
+        "musical temperament",
+        "frequency ratios",
+        "cents (music)",
+        "semitones",
+        "octave division",
+        "twelfth root of two",
+        "pitch perception",
+        "logarithmic scaling",
+        "enharmonic modulation",
+        "string instrument tuning",
+        "historical tuning systems"
+      ],
+      "topicTokens": [
+        "equal temperament",
+        "12-tone equal temperament",
+        "just intonation",
+        "tuning systems",
+        "musical temperament",
+        "frequency ratios",
+        "cents (music)",
+        "semitones",
+        "octave division",
+        "twelfth root of two",
+        "pitch perception",
+        "logarithmic scaling",
+        "enharmonic modulation",
+        "string instrument tuning",
+        "historical tuning systems",
+        "history",
+        "mathematics"
+      ],
+      "claims": [
+        {
+          "text": "12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "In classical music and Western music in general, the most common tuning system since the 18th century has been 12 equal temperament"
+            }
+          ]
+        },
+        {
+          "text": "In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "with a ratio equal to the 12th root of 2, ≈ 1.05946"
+            }
+          ]
+        },
+        {
+          "text": "Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "The two figures frequently credited with the achievement of exact calculation of equal temperament are Zhu Zaiyu (also romanized as Chu-Tsaiyu. Chinese: 朱載堉) in 1584 and Simon Stevin in 1585"
+            }
+          ]
+        },
+        {
+          "text": "12 TET produces tuning errors compared to just intonation, with major thirds being 13.69 cents sharp and minor thirds being 15.64 cents flat",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "from comparison table",
+              "quote": "Major third (E): 12 TET cents tuning error +13.69"
+            },
+            {
+              "label": "from comparison table",
+              "quote": "Minor third (E♭): 12 TET cents tuning error -15.64"
+            }
+          ]
+        },
+        {
+          "text": "Perfect fifths and fourths in 12 TET are very close to just intervals, with only 1.96 cents of error",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "The fifths and fourths are almost indistinguishably close to just intervals"
+            },
+            {
+              "label": "from comparison table",
+              "quote": "Perfect fifth (G): 12 TET cents tuning error -1.96"
+            }
+          ]
+        },
+        {
+          "text": "String instruments tuned in perfect fifths (violins, violas, cellos) use a semitone ratio of approximately 100.28 cents, slightly different from 12 TET",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "each tone is in the ratio of ∜(3/2) to the next (100.28 cents), which provides for a perfect fifth with ratio of 3:2"
+            }
+          ]
+        },
+        {
+          "text": "Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Unfretted string ensembles, which can adjust the tuning of all notes except for open strings, and vocal groups, who have no mechanical tuning limitations, sometimes use a tuning much closer to just intonation for acoustic reasons"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "440 Hz",
+          "details": {
+            "hz": 440,
+            "note": "A4",
+            "standard": "A440"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "divisions": 12,
+            "interval": "octave",
+            "ratio": 1.059463
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "261.626 Hz",
+          "details": {
+            "calculated": true,
+            "hz": 261.626,
+            "note": "C4"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19 TET",
+          "details": {
+            "divisions": 19,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31 TET",
+          "details": {
+            "divisions": 31,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "24 TET",
+          "details": {
+            "divisions": 24,
+            "interval": "octave",
+            "system": "Arab tone system"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "5 TET",
+          "details": {
+            "divisions": 5,
+            "interval": "octave",
+            "stepSize": "240 cents"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "7 TET",
+          "details": {
+            "divisions": 7,
+            "interval": "octave",
+            "stepSize": "171 cents"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?",
+        "What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?",
+        "How do performers in practice deviate from theoretical equal temperament when playing?",
+        "What role does cultural conditioning play in preference for 12 TET versus other tuning systems?",
+        "How do the mathematical properties of different equal temperaments affect compositional possibilities?"
+      ],
+      "scores": {
+        "base": 73,
+        "normalizedBase": 0.8311688311688312,
+        "novelty": 0.9090909090909091,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "combined": 0.6727272727272727,
+        "peerReviewedClaims": 7,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j97cnxxmhfsp3cny8msn9w9nzx81dyv4",
+      "sourceId": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+      "sourceTitle": "Precise Temperament Tuning",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+      "extractionCreatedAt": 1771386365134,
+      "extractionSummary": "Robert Edward Grant proposes 'Precise Temperament Tuning' as an alternative to equal temperament, using a base frequency of 432.081 Hz instead of 432 Hz. The system modifies the major third interval from 1.25 to 1.26 while keeping the perfect fifth at 1.5, claiming this creates a more 'geometrically perfect' tuning system. The approach reportedly connects musical intervals to geometric principles and has generated positive listener responses, though the evidence presented is primarily anecdotal.",
+      "topics": [
+        "temperament systems",
+        "alternative tuning",
+        "geometric music theory",
+        "interval ratios",
+        "432 Hz tuning",
+        "just intonation",
+        "equal temperament",
+        "pythagorean tuning",
+        "chakra tones",
+        "piano tuning",
+        "musical perception",
+        "harmonic ratios"
+      ],
+      "topicTokens": [
+        "temperament systems",
+        "alternative tuning",
+        "geometric music theory",
+        "interval ratios",
+        "432 hz tuning",
+        "just intonation",
+        "equal temperament",
+        "pythagorean tuning",
+        "chakra tones",
+        "piano tuning",
+        "musical perception",
+        "harmonic ratios",
+        "tuning",
+        "major third",
+        "432hz"
+      ],
+      "claims": [
+        {
+          "text": "Precise Temperament Tuning uses 432.081 Hz as the base frequency instead of the commonly used 432 Hz",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "label": "page header",
+              "quote": "MUSICAL TUNING METHOD — 432.081hz"
+            },
+            {
+              "label": "video title",
+              "quote": "The Case for Precise Temperament Tuning in 432.081hz"
+            }
+          ]
+        },
+        {
+          "text": "The system replaces the Just Intonation major third interval of 1.25 (5/4) with 1.26",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "label": "system definition",
+              "quote": "replacing the Just Intonation's Major Third interval (1.25 or 5/4) with 1.26"
+            }
+          ]
+        },
+        {
+          "text": "In this tuning system, the minor third interval decreases from 1.2 to 1.19 while the major third increases from 1.25 to 1.26",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "label": "interval modifications",
+              "quote": "the MINOR (3rd) interval FALLS (from 1.2 to 1.19) and the MAJOR (3rd) interval LIFTS (increasing from 1.25 to 1.26)"
+            }
+          ]
+        },
+        {
+          "text": "The system maintains a perfect fifth ratio of 1.5 (3/2)",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "label": "interval specification",
+              "quote": "combining 1.26 as the Major Third and a perfect 1.5 (3/2) as the Perfect Fifth"
+            }
+          ]
+        },
+        {
+          "text": "This tuning system allows for 'direct connection to all geometrical expression'",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "claimed benefit",
+              "quote": "allow for a direct connection to all geometrical expression"
+            }
+          ]
+        },
+        {
+          "text": "Listeners report the tuning feels 'more natural' and 'satisfying' compared to standard tuning",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "user feedback",
+              "quote": "To me, it does feel like it is more natural, much more, than any piano I've ever heard."
+            },
+            {
+              "label": "user feedback",
+              "quote": "The music feels satisfying, more connected to Being"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "432.081 Hz",
+          "details": {
+            "hz": 432.081,
+            "note": "A"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Precise Temperament Tuning",
+          "details": {
+            "majorThird": 1.26,
+            "minorThird": 1.19,
+            "perfectFifth": 1.5
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "432 Hz",
+          "details": {
+            "context": "comparison standard",
+            "hz": 432,
+            "note": "A"
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "528 Hz",
+          "details": {
+            "context": "mentioned in chakra tones video",
+            "hz": 528
+          }
+        }
+      ],
+      "openQuestions": [
+        "What is the mathematical basis for choosing 432.081 Hz specifically over 432 Hz?",
+        "How does the 1.26 major third ratio relate to geometric principles?",
+        "Are there measurable acoustic differences between this system and standard temperaments?",
+        "What neurological or physiological effects might explain the reported listener preferences?",
+        "How does this system perform across different musical styles and instruments?",
+        "What is the relationship between the claimed '24 chakra tones' and the tuning system?",
+        "How does this system compare to other historical temperament systems beyond equal, just, and Pythagorean?"
+      ],
+      "scores": {
+        "base": 24,
+        "normalizedBase": 0.19480519480519481,
+        "novelty": 0.9333333333333333,
+        "crossRunNovelty": 0.84,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.5333333333333333,
+        "domainRelevance": 1,
+        "combined": 0.6648484848484848,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j970s6ygw8rstwdz9qe78yardh81cxs8",
+      "sourceId": "jx73jkcmkw783f8t80379s0h4d81cf22",
+      "sourceTitle": "Music in Terms of Science",
+      "sourceType": "pdf",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/1209.3767",
+      "extractionCreatedAt": 1771422579548,
+      "extractionSummary": "This is a comprehensive scientific examination of music theory, covering the physics of sound production in musical instruments, various tuning systems (just intonation, equal temperament, Pythagorean), and psychoacoustic principles of human sound perception. The work systematically explains how vibrating strings produce overtones, how different tuning systems create frequency ratios between musical notes, and how instruments generate sound through various physical mechanisms. It bridges the gap between the mathematical/physical foundations of music and the artistic experience.",
+      "topics": [
+        "wave equation",
+        "string vibration physics",
+        "sound propagation",
+        "frequency-dependent attenuation",
+        "psychoacoustics",
+        "just intonation",
+        "equal temperament",
+        "Pythagorean tuning",
+        "circle of fifths",
+        "harmonic series",
+        "overtones",
+        "consonance and dissonance",
+        "pitch perception",
+        "timbre",
+        "musical scales",
+        "instrument acoustics"
+      ],
+      "topicTokens": [
+        "wave equation",
+        "string vibration physics",
+        "sound propagation",
+        "frequency-dependent attenuation",
+        "psychoacoustics",
+        "just intonation",
+        "equal temperament",
+        "pythagorean tuning",
+        "circle of fifths",
+        "harmonic series",
+        "overtones",
+        "consonance and dissonance",
+        "pitch perception",
+        "timbre",
+        "musical scales",
+        "instrument acoustics",
+        "physics",
+        "science",
+        "introductory"
+      ],
+      "claims": [
+        {
+          "text": "A vibrating string with fixed ends can only vibrate at certain frequencies determined by the wave equation, producing a fundamental frequency and overtones at integer multiples",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "string_physics",
+              "quote": "Governed by physical laws, the string under tension with two ends fixed can only vibrate at certain frequencies. The mathematical equation describing a (small-amplitude) vibrating string (with viscous damping being neglected) is actually in a form of the so-called (one-dimensional) 'wave equation'"
+            }
+          ]
+        },
+        {
+          "text": "The speed of sound in air is approximately 340 meters per second under standard atmospheric conditions and is independent of frequency and intensity within a wide range",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "sound_speed",
+              "quote": "Under standard atmospheric condition, the speed of sound in air is about 340 meters per second. Within a wide range, the speed of sound in air appears to be independent of the frequency and intensity of the sound."
+            }
+          ]
+        },
+        {
+          "text": "High frequency components of sound decay faster with distance than low frequency components due to absorption coefficient being proportional to frequency squared",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "frequency_dependent_decay",
+              "quote": "It can be theoretically shown that the sound intensity decreases with the traversed distance x according to a law exp(−2γx) with the 'absorption coefficient' γ ∝ ω². Hence, the high frequency components of sound decays much faster with propagation distance than the low frequency components."
+            }
+          ]
+        },
+        {
+          "text": "The octave represents a 2:1 frequency ratio, discovered by Pythagoras around 500 BC",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "octave_ratio",
+              "quote": "It was discovered by Pythagoras, a Greek philosopher who lived around 500 BC, that the note an octave higher than another has a frequency twice high."
+            }
+          ]
+        },
+        {
+          "text": "In just intonation, the perfect fifth has a frequency ratio of 3:2, the perfect fourth 4:3, and the major third 5:4",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "just_intonation_ratios",
+              "quote": "Here the perfect fifth, having a ratio 3/2, is the most consonant interval other than the octave 2/1. The next most consonant interval is the perfect fourth 4/3"
+            },
+            {
+              "label": "major_third_ratio",
+              "quote": "in the just intonation, the perfect major third has a frequency ratio 5/4"
+            }
+          ]
+        },
+        {
+          "text": "Equal temperament divides the octave into 12 equal semitones, each with a frequency ratio of 2^(1/12) ≈ 1.059463",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "equal_temperament",
+              "quote": "This kind of twelve-note musical scale, with 12 equally distributed semi-tones, is called the (equal-tempered) chromatic scale. Thus the frequency ratio of the adjacent semi-tone notes is equal to 2^(1/12) =1.059463"
+            }
+          ]
+        },
+        {
+          "text": "Human perception of musical note pitch is primarily determined by fundamental frequency, with lesser influence from intensity and harmonic content",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "pitch_perception",
+              "quote": "the perceived pitch is nearly always closely connected with the fundamental frequency of a note, with lesser connection to sound intensity, harmonic content of the sound, and to the immediately preceding history of notes heard"
+            }
+          ]
+        },
+        {
+          "text": "The phase of harmonic overtones does not affect human perception of sound quality, despite affecting the waveform",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "phase_perception",
+              "quote": "It is the relative values of the coefficients An in (1.2) that determines the quality or color of the note we hear, though oddly its phase αn does not have an effect on our perception of the sound despite its obvious effect on changing the waveform"
+            }
+          ]
+        },
+        {
+          "text": "Music appears to serve no obvious adaptive purpose, with Darwin noting it has no direct use in ordinary life habits",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "darwin_music",
+              "quote": "Charles Darwin, in 'The Descent of Man', noted that 'neither the enjoyment nor the capacity of producing musical notes are faculties of the least direct use to man in reference to his ordinary habits of life.'"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "440 Hz",
+          "details": {
+            "hz": 440,
+            "note": "A4"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Just Intonation",
+          "details": {
+            "ratios": {
+              "A": "5:3",
+              "B": "15:8",
+              "C": "1:1",
+              "D": "9:8",
+              "E": "5:4",
+              "F": "4:3",
+              "G": "3:2"
+            }
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Equal Temperament",
+          "details": {
+            "octaveDivisions": 12,
+            "semitoneRatio": 1.059463
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Pythagorean Tuning",
+          "details": {
+            "basis": "2:1 and 3:2 ratios"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do individual differences in auditory processing affect perception of different tuning systems?",
+        "What is the optimal tuning system for different musical contexts and instruments?",
+        "How do environmental factors like temperature and humidity quantitatively affect instrument tuning?",
+        "What are the neurological mechanisms behind the brain's ability to 'fill in' missing musical information?",
+        "How do cultural differences influence preference for different harmonic relationships and tuning systems?"
+      ],
+      "scores": {
+        "base": 70,
+        "normalizedBase": 0.7922077922077922,
+        "novelty": 0.9032258064516129,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "combined": 0.6579178885630499,
+        "peerReviewedClaims": 8,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j9731jqbxt3zb4qvpvzrdaz4sd81ddv5",
+      "sourceId": "jx7ac5xs1pwk70wtxxk4xkmgr981d6g9",
+      "sourceTitle": "Microtonality - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Microtonality",
+      "extractionCreatedAt": 1771423800582,
+      "extractionSummary": "Microtonality is the use of musical intervals smaller than a semitone, or any tuning system that differs from Western twelve-tone equal temperament. The term 'microtone' was coined by Maud MacCarthy Mann before 1912 to describe intervals in Indian music, replacing the confusing term 'quarter tone.' Microtonal music encompasses traditional systems like Indian śruti, gamelan, and African-American musical forms including blues and jazz. Various alternative terminologies have been proposed by different theorists and cultural traditions.",
+      "topics": [
+        "microtonality",
+        "microtones",
+        "quarter tones",
+        "śruti",
+        "gamelan",
+        "blues notes",
+        "equal temperament",
+        "just intonation",
+        "meantone temperament",
+        "xenharmonic music",
+        "enharmonic genus",
+        "intervallic systems",
+        "alternative tuning systems"
+      ],
+      "topicTokens": [
+        "microtonality",
+        "microtones",
+        "quarter tones",
+        "śruti",
+        "gamelan",
+        "blues notes",
+        "equal temperament",
+        "just intonation",
+        "meantone temperament",
+        "xenharmonic music",
+        "enharmonic genus",
+        "intervallic systems",
+        "alternative tuning systems",
+        "overview",
+        "history",
+        "composers",
+        "terminology"
+      ],
+      "claims": [
+        {
+          "text": "The terms 'microtone' and 'microtonal' were coined before 1912 by Maud MacCarthy Mann to avoid the misnomer 'quarter tone' when speaking of the srutis of Indian music",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "The words \"microtone\" and \"microtonal\" were coined before 1912 by Maud MacCarthy Mann in order to avoid the misnomer \"quarter tone\" when speaking of the srutis of Indian music."
+            }
+          ]
+        },
+        {
+          "text": "Traditional Indian systems use 22 śruti intervals, which are considered microtonal",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "Traditional Indian systems of 22 śruti; Indonesian gamelan music; Thai, Burmese, and African music, and music using just intonation, meantone temperament or other alternative tunings may be considered microtonal."
+            }
+          ]
+        },
+        {
+          "text": "Microtonal variation of intervals is standard practice in African-American musical forms including spirituals, blues, and jazz",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "Microtonal variation of intervals is standard practice in the African-American musical forms of spirituals, blues, and jazz."
+            }
+          ]
+        },
+        {
+          "text": "Academic studies of early blues concur that its pitch scale contains three microtonal 'blue notes' not found in 12 tone equal temperament",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "In Court B. Cutting's 2019 Microtonal Analysis of \"Blues Notes\" and the Blues Scale, he states that academic studies of the early blues concur that its pitch scale has within it three microtonal \"blue notes\" not found in 12 tone equal temperament intonation."
+            }
+          ]
+        },
+        {
+          "text": "Charles Ives proposed specific quarter tone chords as fundamental structures in microtonal harmony",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "Composer Charles Ives chose the chord above as a good candidate for a \"fundamental\" chord in the quarter tone scale, akin not to the tonic but to the major chord of traditional tonality"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "22 śruti system",
+          "details": {
+            "divisions": 22,
+            "origin": "Indian traditional music"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "quarter tone scale",
+          "details": {
+            "description": "intervals half the size of a semitone",
+            "intervalSize": "50 cents"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12 tone equal temperament",
+          "details": {
+            "divisions": 12,
+            "intervalSize": "100 cents"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What are the specific frequency ratios used in traditional 22 śruti systems?",
+        "How do the three microtonal 'blue notes' in blues music relate to African musical traditions?",
+        "What acoustic properties make quarter tone chords effective as 'fundamental' harmonic structures?",
+        "How do different cultural approaches to microtonality affect musical perception and emotional response?",
+        "What are the practical challenges and solutions for performing microtonal music on conventional instruments?"
+      ],
+      "scores": {
+        "base": 19,
+        "normalizedBase": 0.12987012987012986,
+        "novelty": 0.9032258064516129,
+        "crossRunNovelty": 0.8941176470588236,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.35294117647058826,
+        "domainRelevance": 1,
+        "combined": 0.6496291185095739,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j974v2j00aymr09r19jy1b9xzh81dnk6",
+      "sourceId": "jx74660t0ex71jxbc4j5jh7kh581c0fv",
+      "sourceTitle": "What's the difference between ET and EDO?",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://sevish.com/2016/whats-the-difference-between-et-and-edo/",
+      "sourceAuthor": "Sevish",
+      "extractionCreatedAt": 1771423872988,
+      "extractionSummary": "This article explains the difference between ET (Equal Temperament) and EDO (Equal Divisions of the Octave) terminology in microtonal music theory. While practically interchangeable, ET implies tempering of just intervals, while EDO simply describes equal divisions without tempering implications. The author notes that certain tuning systems like 12-ET, 19-ET, and 31-ET are considered meantone temperaments, while others like 8-EDO and 13-EDO are not typically viewed as temperaments.",
+      "topics": [
+        "equal temperament",
+        "equal divisions of octave",
+        "microtonal music",
+        "xenharmonic theory",
+        "temperament theory",
+        "meantone temperament",
+        "syntonic comma",
+        "just intonation",
+        "tuning systems",
+        "interval ratios"
+      ],
+      "topicTokens": [
+        "equal temperament",
+        "equal divisions of octave",
+        "microtonal music",
+        "xenharmonic theory",
+        "temperament theory",
+        "meantone temperament",
+        "syntonic comma",
+        "just intonation",
+        "tuning systems",
+        "interval ratios",
+        "terminology"
+      ],
+      "claims": [
+        {
+          "text": "12-ET and 12-EDO refer to the exact same tuning which has 12 equal notes per octave",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "For example, 12-ET and 12-EDO both refer to the exact same tuning which has 12 equal notes per octave"
+            }
+          ]
+        },
+        {
+          "text": "12-ET tempers the syntonic comma (81/80) and other intervals",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "12-ET tempers 81/80, the syntonic comma, and other intervals"
+            }
+          ]
+        },
+        {
+          "text": "12-ET, 19-ET and 31-ET are useful meantone temperaments",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "whereas 12-ET, 19-ET and 31-ET are all useful meantone temperaments"
+            }
+          ]
+        },
+        {
+          "text": "The octave equals the ratio 2/1",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "some people use ED2 or ED2/1 synonymously with EDO, because the octave is equal to the ratio 2/1"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "12-ET/12-EDO",
+          "details": {
+            "divisions": 12,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19-ET",
+          "details": {
+            "divisions": 19,
+            "interval": "octave",
+            "temperamentType": "meantone"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31-ET",
+          "details": {
+            "divisions": 31,
+            "interval": "octave",
+            "temperamentType": "meantone"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "8-EDO",
+          "details": {
+            "divisions": 8,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "13-EDO",
+          "details": {
+            "divisions": 13,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "syntonic comma (81/80)",
+          "details": {
+            "intervalType": "comma",
+            "ratio": "81/80"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What are the acoustic and perceptual differences between tuning systems that are considered temperaments versus those that are just equal divisions?",
+        "How do the specific comma relationships in meantone temperaments like 19-ET and 31-ET affect musical harmony and composition?",
+        "What are the practical applications of generalized equal division notation (ED2, ED3/2, etc.) in contemporary microtonal composition?"
+      ],
+      "scores": {
+        "base": 26,
+        "normalizedBase": 0.22077922077922077,
+        "novelty": 0.8,
+        "crossRunNovelty": 0.8363636363636364,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.5454545454545454,
+        "domainRelevance": 1,
+        "combined": 0.6463636363636365,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S7",
+      "extractionId": "j972st3jwrqv2a35jhwk624v0d81c18m",
+      "sourceId": "jx75nc38e24y6ff94y7xfwdhbh81cjja",
+      "sourceTitle": "Microtonality (Music Composition Textbook)",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://open.lib.umn.edu/musiccomposition/chapter/microtonality/",
+      "extractionCreatedAt": 1771423893247,
+      "extractionSummary": "This textbook chapter explores microtonality as a diverse compositional approach that uses intervals smaller than semitones. It discusses various historical approaches including just intonation based on the harmonic series, equal subdivision of the octave into quarter/eighth-tones, and microtones for expressive enhancement. The text covers notation systems, performance techniques across instruments, and compositional strategies for both melodic and harmonic microtonal writing.",
+      "topics": [
+        "microtonality",
+        "quarter-tones",
+        "eighth-tones",
+        "harmonic series",
+        "just intonation",
+        "equal temperament",
+        "microtonal notation",
+        "harmonic beating",
+        "scordatura",
+        "extended techniques",
+        "intonation systems",
+        "pitch bending"
+      ],
+      "topicTokens": [
+        "microtonality",
+        "quarter-tones",
+        "eighth-tones",
+        "harmonic series",
+        "just intonation",
+        "equal temperament",
+        "microtonal notation",
+        "harmonic beating",
+        "scordatura",
+        "extended techniques",
+        "intonation systems",
+        "pitch bending",
+        "composition",
+        "notation",
+        "microtonal composition"
+      ],
+      "claims": [
+        {
+          "text": "American composers like Harry Partch, Benjamin Johnston, LaMonte Young, and Kyle Gann seek to utilize scientifically accurate acoustical relationships between pitches based on the natural harmonic series",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "historical_composers_approach",
+              "quote": "Composers interested in intonation systems other than the standard equal-tempered one practiced in the Western Classical tradition, particularly numerous Americans composers, including Harry Partch (1901-74), Benjamin Johnston (b. 1926), LaMonte Young (b. 1935), and Kyle Gann (b. 1955), seek to utilize the more scientifically accurate acoustical relationship between pitches based on the natural harmonic series."
+            }
+          ]
+        },
+        {
+          "text": "Xenakis and Scelsi use microtones to create specific harmonic beating patterns between closely spaced pitches",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "beating_patterns",
+              "quote": "Iannis Xenakis (1922-2001) and Giacinto Scelsi (1905-1988) used microtones to supplement their pitch resources, especially when creating subtle variations in the harmonic 'beatings' that result between two very close parts."
+            },
+            {
+              "label": "xenakis_example",
+              "quote": "Xenakis' Nomos Alpha, for solo cello, is an excellent example of this: in the score he instructs the performer to perform specific (and quickly changing) beating patterns between two conjunct strings."
+            }
+          ]
+        },
+        {
+          "text": "All non-percussive orchestral instruments (except timpani) can play microtonal gradations with varying degrees of facility using specific techniques",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "instrument_capabilities",
+              "quote": "All non-percussive instruments (with the exception of the tympani) of the standard orchestra have the ability to play the microtonal gradations in pitch with varying degrees of facility. Each has its own inherent technique (or combination of techniques) to achieve the accurate intonations desired."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "quarter-tone (24-step octave)",
+          "details": {
+            "steps": 24,
+            "subdivision": "quarter-tone"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "eighth-tone (48-step octave)",
+          "details": {
+            "steps": 48,
+            "subdivision": "eighth-tone"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "just intonation based on harmonic series",
+          "details": {
+            "basis": "natural_harmonic_series",
+            "type": "just_intonation"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What are the specific mathematical relationships in the harmonic series-based tuning systems used by American microtonal composers?",
+        "How do the acoustic beating patterns created by microtonal intervals affect perception and emotional response?",
+        "What are the measurable differences in intonational accuracy between different instrumental techniques for producing microtones?",
+        "How do different microtonal notation systems affect performer accuracy and interpretation?",
+        "What is the relationship between microtonal intervals and the psychoacoustics of consonance/dissonance perception?"
+      ],
+      "scores": {
+        "base": 15,
+        "normalizedBase": 0.07792207792207792,
+        "novelty": 0.896551724137931,
+        "crossRunNovelty": 0.92,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.26666666666666666,
+        "domainRelevance": 1,
+        "combined": 0.6365830721003136,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "equal temperament": 7,
+      "just intonation": 7,
+      "meantone temperament": 3,
+      "syntonic comma": 2,
+      "frequency ratios": 2,
+      "circle of fifths": 2,
+      "microtonal music": 2,
+      "tuning systems": 2,
+      "pitch perception": 2,
+      "history": 2,
+      "interval ratios": 2,
+      "pythagorean tuning": 2,
+      "harmonic series": 2,
+      "microtonality": 2,
+      "terminology": 2,
+      "quarter-comma meantone": 1,
+      "third-comma meantone": 1,
+      "pythagorean comma": 1,
+      "wolf intervals": 1,
+      "geometric mean": 1,
+      "renaissance music": 1,
+      "baroque music": 1,
+      "keyboard tuning": 1,
+      "isomorphic keyboards": 1,
+      "meantone": 1,
+      "historical tuning": 1,
+      "comma": 1,
+      "12-tone equal temperament": 1,
+      "musical temperament": 1,
+      "cents (music)": 1,
+      "semitones": 1,
+      "octave division": 1,
+      "twelfth root of two": 1,
+      "logarithmic scaling": 1,
+      "enharmonic modulation": 1,
+      "string instrument tuning": 1,
+      "historical tuning systems": 1,
+      "mathematics": 1,
+      "temperament systems": 1,
+      "alternative tuning": 1,
+      "geometric music theory": 1,
+      "432 hz tuning": 1,
+      "chakra tones": 1,
+      "piano tuning": 1,
+      "musical perception": 1,
+      "harmonic ratios": 1,
+      "tuning": 1,
+      "major third": 1,
+      "432hz": 1,
+      "wave equation": 1,
+      "string vibration physics": 1,
+      "sound propagation": 1,
+      "frequency-dependent attenuation": 1,
+      "psychoacoustics": 1,
+      "overtones": 1,
+      "consonance and dissonance": 1,
+      "timbre": 1,
+      "musical scales": 1,
+      "instrument acoustics": 1,
+      "physics": 1,
+      "science": 1,
+      "introductory": 1,
+      "microtones": 1,
+      "quarter tones": 1,
+      "śruti": 1,
+      "gamelan": 1,
+      "blues notes": 1,
+      "xenharmonic music": 1,
+      "enharmonic genus": 1,
+      "intervallic systems": 1,
+      "alternative tuning systems": 1,
+      "overview": 1,
+      "composers": 1,
+      "equal divisions of octave": 1,
+      "xenharmonic theory": 1,
+      "temperament theory": 1,
+      "quarter-tones": 1,
+      "eighth-tones": 1,
+      "microtonal notation": 1,
+      "harmonic beating": 1,
+      "scordatura": 1,
+      "extended techniques": 1,
+      "intonation systems": 1,
+      "pitch bending": 1,
+      "composition": 1,
+      "notation": 1,
+      "microtonal composition": 1
+    },
+    "parameterTypeFrequency": {
+      "tuningsystem": 27,
+      "frequency": 8,
+      "harmonicprofile": 3
+    },
+    "evidenceDistribution": {
+      "peer_reviewed": 23,
+      "anecdotal": 10,
+      "personal": 8,
+      "speculative": 1
+    },
+    "sourceTypeDistribution": {
+      "url": 6,
+      "pdf": 1
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 7,
+    "priorSourceIds": 29,
+    "priorTopicTokens": 327,
+    "priorVariablePhrases": 4,
+    "priorTitlePhrases": 8
+  }
+}

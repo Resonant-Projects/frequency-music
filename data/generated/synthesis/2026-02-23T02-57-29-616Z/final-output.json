@@ -1,0 +1,123 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Adaptive JI Retuning Improves Stability During Rapid Modulation",
+    "question": "When harmony modulates frequently, does dynamically adapting just intonation preserve perceived consonance better than static temperaments?",
+    "hypothesis": "If a harmonically identical progression with frequent key center shifts is rendered using (A) dynamic adaptive just-intonation retuning, (B) static quarter-comma meantone, and (C) static 12-tone equal temperament, then listeners will report higher continuity and lower roughness in A than B/C, because adaptive tuning can minimize interval error per chord while respecting psychoacoustic short-term intonation memory over multi-second windows.",
+    "rationaleMd": "The selected sources establish that consonance is linked to harmonic partial alignment and small integer relationships (S3, S4, S7). Static temperaments distribute unavoidable comma errors differently, creating fixed compromises across intervals (S1, S2, S6). The dynamic JI source explicitly models tuning as a global optimization problem and reports relevant psychoacoustic timing constraints, including an intonational short-term memory window around three seconds (S7). This supports a direct test where rapid modulation stresses static mappings, while adaptive retuning may preserve local consonance without changing composition content (S1, S7, S8).",
+    "sourceIds": [
+      "jx7a9h63cs3gqte5egyke6p6m981chqz",
+      "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "jx754hd6c4vf256e206r9834dh81c0vy",
+      "jx70hfp3mre8mje414z18d6vvn81cx5h",
+      "jx7anm5a3r0vyg5j7eq77cq3d981d6nq"
+    ],
+    "concepts": [
+      "adaptive tuning",
+      "just intonation",
+      "quarter-comma meantone",
+      "12-tone equal temperament",
+      "psychoacoustic memory",
+      "comma compensation",
+      "harmonic alignment",
+      "modulation"
+    ]
+  },
+  "recipe": {
+    "title": "Rapid-Modulation Retuning Study (Adaptive JI vs Static MT/12-TET)",
+    "bodyMd": "## Goal\nTest whether dynamic retuning improves perceived harmonic continuity during frequent modulations.\n\n## Render Conditions\nProduce three renders from one shared MIDI arrangement:\n1. **A: Adaptive JI** (dynamic retuning per harmonic context; global compromise style) [S7]\n2. **B: Static quarter-comma meantone** [S1]\n3. **C: Static 12-TET** [S2]\n\n## Shared Musical Material\n- Length: 32 bars, 4/4, 84 BPM\n- Chord duration: 2 beats (new harmony every 1.43 sec at 84 BPM)\n- Modulation cycle every 8 bars (4 centers over 32 bars)\n- Voicing: 4-note pad + bass pedal motion\n- Identical MIDI, instruments, envelopes, dynamics, and mix levels across A/B/C\n\n## Tuning-Specific Setup\n- **A (Adaptive JI)**: Retune each harmony context to minimize cumulative interval error while preserving smooth transitions (no abrupt pitch jumps if smoothing is available) [S7].\n- **B (Meantone)**: Fixed quarter-comma meantone mapping throughout [S1].\n- **C (12-TET)**: Standard fixed semitone ratio tuning [S2].\n\n## Listening Tasks\nBlind-label exports as P/Q/R. Rate each (0-10):\n- harmonic continuity across chord changes\n- roughness/beating salience\n- overall musical coherence\n\nWrite short notes at bars where tension spikes.\n\n## Expected Pattern\nAdaptive JI should yield higher continuity and lower roughness during fast modulations than static mappings, with static quarter-comma typically between adaptive and 12-TET in this context [S1, S2, S7].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "84 BPM",
+        "details": {
+          "bpm": 84,
+          "rationale": "2-beat chord changes occur within psychoacoustic short-term intonation memory windows cited in S7."
+        }
+      },
+      {
+        "type": "form",
+        "value": "32 bars with modulation cycle every 8 bars",
+        "details": {
+          "barCount": 32,
+          "modulationIntervalBars": 8,
+          "chordDurationBeats": 2
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Adaptive just intonation (dynamic)",
+        "details": {
+          "method": "context-dependent retuning",
+          "source": "S7"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Quarter-comma meantone (static)",
+        "details": {
+          "tempering": "1/4 syntonic comma",
+          "source": "S1"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "12-tone equal temperament (static)",
+        "details": {
+          "semitoneRatio": "2^(1/12)",
+          "source": "S2"
+        }
+      },
+      {
+        "type": "instrument",
+        "value": "Rich harmonic pad + bass",
+        "details": {
+          "rationale": "Consonance judgments depend on harmonic content, not pure sine tones alone (S8)."
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Build one 32-bar MIDI arrangement with chord changes every 2 beats.",
+      "Create three identical project copies for A/B/C tuning conditions.",
+      "Keep instrument chain, MIDI, automation, and mix identical across all renders.",
+      "Configure adaptive JI retuning for Version A with smooth transition settings if available.",
+      "Configure static quarter-comma meantone for Version B.",
+      "Keep default 12-TET for Version C.",
+      "Export all files at matched loudness and same bounce settings.",
+      "Randomize filenames to P/Q/R for blind evaluation.",
+      "Score continuity, roughness, and coherence for each render.",
+      "Annotate bar numbers where roughness or instability is strongest."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 91,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1",
+        "musician_peer_2"
+      ],
+      "listeningContext": "Quiet room, two passes: open-back headphones then nearfield monitors.",
+      "listeningMethod": "Blind P/Q/R evaluation with fixed playback level and repeated order permutations.",
+      "whatVaries": [
+        "tuning strategy (adaptive JI vs static meantone vs static 12-TET)"
+      ],
+      "whatStaysConstant": [
+        "MIDI notes",
+        "harmonic rhythm",
+        "tempo",
+        "instrument patches",
+        "automation",
+        "mix balance",
+        "render settings"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S7",
+    "S8"
+  ],
+  "notes": "Second-batch synthesis emphasizing dynamic retuning under modulation stress using the expanded 8-source context pack."
+}

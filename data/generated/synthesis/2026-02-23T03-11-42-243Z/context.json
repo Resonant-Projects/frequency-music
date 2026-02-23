@@ -1,0 +1,1215 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-02-23T03:11:42.243Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 7,
+    "fetch": 160,
+    "minClaims": 2,
+    "minParams": 1,
+    "noveltyWindow": 10,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 135,
+    "withSource": 135,
+    "eligibleCandidates": 46,
+    "selected": 7
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97bn99y1e8mk8d49g10310xsn81djj6",
+      "sourceId": "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "sourceTitle": "Meantone temperament - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Meantone_temperament",
+      "extractionCreatedAt": 1771423719820,
+      "extractionSummary": "Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.",
+      "topics": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "Pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "Renaissance music",
+        "Baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards"
+      ],
+      "topicTokens": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "renaissance music",
+        "baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards",
+        "meantone",
+        "historical tuning",
+        "comma"
+      ],
+      "claims": [
+        {
+          "text": "Perfect fifths in just intonation have a frequency ratio of 3:2",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "rather than using perfect fifths, consisting of frequency ratios of value 3:2"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone produces just major thirds with a 5:4 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Four ascending fifths (as C G D A E) tempered by 1/4 comma (and then lowered by two octaves) produce a just major third (C E) (with ratio 5: 4)"
+            }
+          ]
+        },
+        {
+          "text": "In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "as a frequency ratio, it is the geometric mean of the major tone and the minor tone: √(10/9 × 9/8) = √(5/4) = 1.1180340"
+            }
+          ]
+        },
+        {
+          "text": "12-tone equal temperament narrows perfect fifths by about 2 cents or 1/12 of a Pythagorean comma",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "it narrows the perfect fifths by about 2 cents or 1/12 of a Pythagorean comma to give a frequency ratio of 2^(7/12):1"
+            }
+          ]
+        },
+        {
+          "text": "Meantone temperament was commonly used from early 16th century till early 18th century",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "It was commonly used from the early 16th century till the early 18th, after which twelve-tone equal temperament eventually came into general use"
+            }
+          ]
+        },
+        {
+          "text": "31-TET closely approximates quarter-comma meantone temperament",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Quarter-comma meantone can be well approximated by a division of the octave into 31 equal steps"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone creates a residual gap of 125/128 ratio or -41.06 cents between F# and Gb",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "there is a residual gap in quarter-comma meantone tuning between the last of the upper sequence of six fifths and the last of the lower sequence; e.g. between F♯ and G♭ if the starting point is chosen as C, which, adjusted for the octave, are in the ratio of 125/128 or −41.06 cents"
+            }
+          ]
+        },
+        {
+          "text": "Third-comma meantone produces just minor thirds with a 6:5 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "three descending fifths (such as A D G C) produce a just minor third (A C) of ratio 6/5"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Quarter-comma meantone",
+          "details": {
+            "tempered": "1/4 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Third-comma meantone",
+          "details": {
+            "tempered": "1/3 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "tempered": "1/12 Pythagorean comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31 TET",
+          "details": {
+            "divisions": 31
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19 TET",
+          "details": {
+            "divisions": 19
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "53 TET",
+          "details": {
+            "divisions": 53
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "~264 Hz",
+          "details": {
+            "hz": 264,
+            "note": "middle C"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "5:4 major third ratio",
+          "details": {
+            "interval": "major third",
+            "ratio": "5:4"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "6:5 minor third ratio",
+          "details": {
+            "interval": "minor third",
+            "ratio": "6:5"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "3:2 perfect fifth ratio",
+          "details": {
+            "interval": "perfect fifth",
+            "ratio": "3:2"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?",
+        "What are the perceptual differences between meantone and equal temperament for modern listeners?",
+        "How do wolf intervals affect musical composition and performance practice?",
+        "What role does meantone temperament play in contemporary early music performance?",
+        "How do different meantone fractions (1/4, 1/3, 2/7 comma) affect harmonic perception and musical expression?"
+      ],
+      "scores": {
+        "base": 86,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "combined": 0.7,
+        "peerReviewedClaims": 8,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j9708ns3q9vcv1v0q2zr64rmhs81cnsy",
+      "sourceId": "jx7e2hkajjb9xghn0ne82p4h8s81db5z",
+      "sourceTitle": "Physicists Make Electrons Flow Like Water",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.quantamagazine.org/physicists-make-electrons-flow-like-water-20260211/",
+      "extractionCreatedAt": 1771382970135,
+      "extractionSummary": "Physicists have successfully made electrons flow like water in ultra-pure graphene, creating electron fluids that exhibit hydrodynamic behavior including shock waves when electrons exceed the 'speed of sound' for electron fluids (hundreds of km/s). This represents a fundamental departure from normal electron behavior in wires, where electrons scatter individually rather than moving collectively. The research could lead to new electronic devices and provides a new framework for understanding quantum materials through fluid dynamics.",
+      "topics": [
+        "electron fluids",
+        "hydrodynamics",
+        "graphene",
+        "condensed matter physics",
+        "momentum conservation",
+        "shock waves",
+        "fluid dynamics",
+        "quantum materials",
+        "Gurzhi effect"
+      ],
+      "topicTokens": [
+        "electron fluids",
+        "hydrodynamics",
+        "graphene",
+        "condensed matter physics",
+        "momentum conservation",
+        "shock waves",
+        "fluid dynamics",
+        "quantum materials",
+        "gurzhi effect"
+      ],
+      "claims": [
+        {
+          "text": "Electrons in ultra-pure graphene can flow like water molecules, exhibiting collective fluid behavior rather than individual particle motion",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "2017 graphene experiment",
+              "quote": "In one early experiment, in 2017, Geim and his collaborators carved a choke point into a strip of graphene, poured electrons through, and measured the resistance. They found that as they turned up the temperature, the resistance fell — the Gurzhi effect in action."
+            },
+            {
+              "label": "2022 electron whirlpool observation",
+              "quote": "And in 2022, physicists at the Weizmann Institute of Science in Israel managed to directly watch electrons flowing. They shaped a material with some similarities to graphene, called tungsten diselenide, into a vertical wire flanked halfway down by two circles resembling Mickey Mouse ears. As electrons flowed into the ears on their way down the wire, the group monitored their motion by measuring the magnetic field the electrons generated when moving around the wire. In doing so, they saw fluidic electric currents swirling backward into the ears — electron whirlpools."
+            }
+          ]
+        },
+        {
+          "text": "Electron fluids have a 'speed of sound' of a few hundred kilometers per second, and electrons can be accelerated past this threshold to create shock waves",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "electron fluid sound speed",
+              "quote": "Then he sent electrons through the constriction formed by the nozzle, which boosted their speed beyond the rate at which ripples travel through the electron fluid. That's the 'speed of sound' for an electron fluid, a few hundred kilometers per second."
+            },
+            {
+              "label": "shock wave detection",
+              "quote": "When the accelerated electrons crashed into other electrons lingering in an open region downstream of the nozzle, the slower, subsonic electrons couldn't get out of the way fast enough, and the liquid compressed. The researchers swept a metallic tip back and forth over the sample, measuring minute changes in the electric field, and detected the pileup. The shock wave indicated that they had in fact broken the electron fluid's sound barrier."
+            }
+          ]
+        },
+        {
+          "text": "The Gurzhi effect predicts that in momentum-conserving electron systems, warming increases conductivity (opposite to normal wire behavior)",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Gurzhi effect theory",
+              "quote": "Gurzhi found that the difference would lie in how the electric current reacted to heat. Warming a copper wire typically impedes electric current, since vibrations in the copper atoms intensify and more greatly impede electrons. But Gurzhi calculated that if momentum were conserved, heat would make electrons move more readily — similar to the way warm honey is runnier than cool honey."
+            },
+            {
+              "label": "experimental confirmation",
+              "quote": "They found that as they turned up the temperature, the resistance fell — the Gurzhi effect in action."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "few hundred km/s",
+          "details": {
+            "context": "electron fluid sound speed",
+            "unit": "km/s"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Could electron fluid dynamics be used to create new types of acoustic or vibrational devices?",
+        "How might the frequency characteristics of electron fluids relate to audible sound or musical frequencies?",
+        "Could the collective oscillations in electron fluids generate measurable electromagnetic frequencies in audio ranges?",
+        "What are the resonant frequencies of electron fluid systems and how do they compare to acoustic resonances?"
+      ],
+      "scores": {
+        "base": 19,
+        "normalizedBase": 0.1518987341772152,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "combined": 0.6183544303797468,
+        "peerReviewedClaims": 2,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j978d4w8eqxmfpm1mjq0ayqz5d81dx23",
+      "sourceId": "jx782ty1nv9643tmw72rx8teb981df07",
+      "sourceTitle": "A Generative-First Neural Audio Autoencoder",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2602.15749",
+      "extractionCreatedAt": 1771452608788,
+      "extractionSummary": "This paper introduces a generative-first neural autoencoder architecture for audio that achieves significantly higher temporal compression (3360x downsampling) compared to existing reconstruction-first approaches (2048x). The new architecture provides 10x faster encoding and 1.6x lower latent rates while supporting both continuous and discrete representations in a single model. For practical applications, a 60-second mono audio signal can be compressed to just 788 tokens, making generative audio modeling more computationally tractable.",
+      "topics": [
+        "neural autoencoders",
+        "generative audio modeling",
+        "temporal compression",
+        "audio encoding",
+        "latent representations",
+        "tokenization",
+        "computational efficiency",
+        "audio preprocessing"
+      ],
+      "topicTokens": [
+        "neural autoencoders",
+        "generative audio modeling",
+        "temporal compression",
+        "audio encoding",
+        "latent representations",
+        "tokenization",
+        "computational efficiency",
+        "audio preprocessing"
+      ],
+      "claims": [
+        {
+          "text": "Existing neural audio autoencoders achieve 2048x temporal downsampling",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "baseline comparison",
+              "quote": "increases temporal downsampling from 2048x to 3360x"
+            }
+          ]
+        },
+        {
+          "text": "The new generative-first architecture achieves 3360x temporal downsampling",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "main result",
+              "quote": "increases temporal downsampling from 2048x to 3360x"
+            }
+          ]
+        },
+        {
+          "text": "The new approach provides 10x faster encoding speed compared to existing methods",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "performance improvement",
+              "quote": "delivers 10x faster encoding"
+            }
+          ]
+        },
+        {
+          "text": "The new architecture achieves 1.6x lower latent rates than existing approaches",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "compression improvement",
+              "quote": "1.6x lower rates"
+            }
+          ]
+        },
+        {
+          "text": "A 60-second mono audio signal compresses to 788 tokens using this method",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "compression example",
+              "quote": "a 60-second mono signal compresses to 788 tokens"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tempo",
+          "value": "2048x downsampling",
+          "details": {
+            "context": "baseline temporal compression",
+            "downsamplingFactor": 2048
+          }
+        },
+        {
+          "type": "tempo",
+          "value": "3360x downsampling",
+          "details": {
+            "context": "new architecture temporal compression",
+            "downsamplingFactor": 3360
+          }
+        },
+        {
+          "type": "rhythm",
+          "value": "60-second duration → 788 tokens",
+          "details": {
+            "channels": "mono",
+            "duration_seconds": 60,
+            "tokens": 788
+          }
+        }
+      ],
+      "openQuestions": [
+        "How does the quality of audio reconstruction compare between 2048x and 3360x downsampling rates?",
+        "What are the perceptual implications of such high temporal compression for different types of audio content?",
+        "How does this compression ratio affect the preservation of musical timing and rhythmic accuracy?",
+        "What is the relationship between token count and audio quality for different musical genres or acoustic environments?"
+      ],
+      "scores": {
+        "base": 19,
+        "normalizedBase": 0.1518987341772152,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "combined": 0.6183544303797468,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j97f61kbm771dzmgmn2pgjc82181dw47",
+      "sourceId": "jx70d0663q4fkcbacwbqw84e8n81czyt",
+      "sourceTitle": "January livestream!",
+      "sourceType": "youtube",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.youtube.com/watch?v=fIUVPpwdCAY",
+      "extractionCreatedAt": 1771383112781,
+      "extractionSummary": "This is a January livestream where Andrew Huang demonstrates his music production workflow, recording beats from a groove box (Side Drums) into Ableton Live. He discusses his approach to hardware vs. software production, provides feedback on patron-submitted tracks, and answers questions about his creative process, studio organization, and views on analog vs. digital production methods.",
+      "topics": [
+        "groove box workflow",
+        "hardware vs software production",
+        "analog vs digital audio processing",
+        "real-time arrangement",
+        "Ableton Live",
+        "Eurorack modular synthesis",
+        "music production workflow",
+        "studio organization",
+        "track feedback methodology",
+        "mute-based live arrangement",
+        "audio latency",
+        "MIDI control",
+        "music release strategies"
+      ],
+      "topicTokens": [
+        "groove box workflow",
+        "hardware vs software production",
+        "analog vs digital audio processing",
+        "real-time arrangement",
+        "ableton live",
+        "eurorack modular synthesis",
+        "music production workflow",
+        "studio organization",
+        "track feedback methodology",
+        "mute-based live arrangement",
+        "audio latency",
+        "midi control",
+        "music release strategies"
+      ],
+      "claims": [
+        {
+          "text": "Physical hardware interaction produces different musical results than computer-based production, even with good MIDI controllers and low-latency plugins",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "when you interact with something physically the results are just different and not necessarily better sometimes. But um yeah, it's it's totally different to have like a no latency hands-on experience than uh clicking around on a mouse or even like you know with the best MIDI controller and low latency plugins. It's just like not quite the same as different kind of dedicated hardware"
+            }
+          ]
+        },
+        {
+          "text": "Modern digital audio processing can achieve virtually identical results to analog processing in most cases",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "analog versus digital in the sense of, you know, how the audio is represented, I'm not sure that makes any difference anymore except in like, you know, these random cases where like some analog distortion might sound 3% better than the really good digital emulations of analog distortion that we now have"
+            }
+          ]
+        },
+        {
+          "text": "Real-time arrangement using mute controls creates different musical outcomes compared to timeline-based editing",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "live arrangement using nothing but mutes is a great practice. Yeah, totally. And a similar thing if you use like Ableton or any of these other clip launching style DAWs. Having loop set up and just triggering them at different times is like effectively a similar thing and is so much different than like moving blocks around on a timeline because you you have to do it in real time. You feel out what works and what doesn't"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "instrument",
+          "value": "Side Drums groove box",
+          "details": {
+            "tracks": 8,
+            "type": "drum_machine"
+          }
+        },
+        {
+          "type": "instrument",
+          "value": "Eurorack modular synthesizer",
+          "details": {
+            "type": "modular_synthesizer"
+          }
+        },
+        {
+          "type": "instrument",
+          "value": "Piano",
+          "details": {
+            "context": "feedback_session"
+          }
+        },
+        {
+          "type": "instrument",
+          "value": "Strings arrangement",
+          "details": {
+            "context": "feedback_session"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific psychoacoustic factors make physical hardware interaction feel different from software control?",
+        "How does real-time arrangement decision-making affect musical creativity compared to timeline editing?",
+        "What are the measurable differences between analog and digital audio processing in modern production?",
+        "How does the limitation of 8-track groove boxes influence compositional choices?",
+        "What role does tactile feedback play in musical performance and composition?"
+      ],
+      "scores": {
+        "base": 18,
+        "normalizedBase": 0.13924050632911392,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "combined": 0.6126582278481012,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j97ff8769b6ms2e833c96898dx81dchw",
+      "sourceId": "jx73wgz927h2xw79q0vnyy7znx81c8z9",
+      "sourceTitle": "Sound is an aspect of life, but is life an aspect of sound?",
+      "sourceType": "youtube",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.youtube.com/watch?v=VqMl-W8H7T0",
+      "extractionCreatedAt": 1771383023634,
+      "extractionSummary": "John Stuart Reid presents a hypothesis that sound and frequency patterns may have played a fundamental organizing role in the emergence of life. He demonstrates how bubbles in water create Faraday wave patterns when subjected to specific frequencies, and argues these sonic scaffolding effects could organize prebiotic molecules brought to Earth by meteorites. Reid draws connections between cymatic patterns and biological structures like radiolaria and diatoms, suggesting that sound's ability to create order from chaos may be a key mechanism in abiogenesis that doesn't require intelligent design.",
+      "topics": [
+        "cymatics",
+        "Faraday wave patterns",
+        "hydrothermal vents",
+        "abiogenesis",
+        "Helmholtz resonators",
+        "bubble dynamics",
+        "sonic scaffolding",
+        "panspermia",
+        "exclusion zone water",
+        "Brownian motion",
+        "prebiotic molecules",
+        "carbonaceous chondrites",
+        "protocells",
+        "lipid organization",
+        "radiolaria",
+        "diatoms"
+      ],
+      "topicTokens": [
+        "cymatics",
+        "faraday wave patterns",
+        "hydrothermal vents",
+        "abiogenesis",
+        "helmholtz resonators",
+        "bubble dynamics",
+        "sonic scaffolding",
+        "panspermia",
+        "exclusion zone water",
+        "brownian motion",
+        "prebiotic molecules",
+        "carbonaceous chondrites",
+        "protocells",
+        "lipid organization",
+        "radiolaria",
+        "diatoms"
+      ],
+      "claims": [
+        {
+          "text": "Hydrothermal vents produce broadband sound containing thousands of audio frequencies extending into ultrasound ranges",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "the bubbles of course that are coming from the gases that are emerging in creates Brooke sound band sound if you analyze it on an FFT analyzer you will see it contains thousands of these audio frequencies you know right from very very low frequencies way up into the into actually into low ultra sound levels frequency ranges"
+            }
+          ]
+        },
+        {
+          "text": "Each bubble acts as a Helmholtz resonator, selecting specific frequencies from the environmental sound spectrum based on its size",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "the wonderful thing about this is that Nature has a way of selecting the frequencies depending on the size of the bubble because each bubble acts as a kind of Helmholtz resonator you know it contains a particular volume of gas and the bubble itself selects its frequency from this Mele of sounds"
+            }
+          ]
+        },
+        {
+          "text": "Bubbles exhibit lifelike behavior when subjected to specific resonant frequencies",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "when you introduce vibration into a bubble first thing that happens is a pattern does appear on the surface but then the bubble also becomes almost lifelike in its behavior"
+            }
+          ]
+        },
+        {
+          "text": "Faraday wave patterns on bubble surfaces could provide organization mechanism for prebiotic molecules",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "these Faraday wave patterns on the surface of bubbles represent a model a way that the building blocks of life can actually come together in a coherent way in an organized way"
+            }
+          ]
+        },
+        {
+          "text": "Sound compression creates observable changes in water's refractive index",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "sound does in fact compress water to the extent that the refractive index is changed just a little bit but enough with powerful lighting to be able to actually see that happen"
+            }
+          ]
+        },
+        {
+          "text": "Cymatic patterns can reproduce structures found in biological organisms like radiolaria and diatoms",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "all of these different shapes here can be created on the Simas go literally you just tuned in you have to know which frequencies to tune in some of them require more than one frequency"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "21 Hz",
+          "details": {
+            "hz": 21
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "43.43 Hz",
+          "details": {
+            "hz": 43.43
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can specific frequency combinations reliably organize prebiotic molecules into proto-cellular structures?",
+        "What is the relationship between bubble resonance frequencies and the formation of biological patterns?",
+        "How do exclusion zones interact with sonic energy to create organizational effects?",
+        "Can the cymatic patterns that resemble biological structures be quantitatively matched to actual organism morphologies?",
+        "What role does turbulence play in creating acoustic impedance that generates Faraday patterns in natural water systems?",
+        "How might the broadband acoustic environment of hydrothermal vents select for specific organizational patterns?",
+        "Can the 'sonic scaffolding' hypothesis be tested with controlled experiments using known prebiotic molecules?"
+      ],
+      "scores": {
+        "base": 18,
+        "normalizedBase": 0.13924050632911392,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "combined": 0.6126582278481012,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j97drtxqajtf9wb4kz8k6mdsns81dw5h",
+      "sourceId": "jx78agkh8hjfga95c5z2aj2bps81dfmz",
+      "sourceTitle": "Unified Music Theories for General Equal-Temperament Systems",
+      "sourceType": "pdf",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/1611.03175",
+      "extractionCreatedAt": 1771422664230,
+      "extractionSummary": "This paper develops a unified mathematical framework for understanding music theory across different equal-temperament systems beyond the standard 12-tone system. Using abstract algebra and group theory, the authors propose axioms to determine keyboard configurations and key signatures for any n-equal temperament system. They redefine classical music theory concepts like the circle of fifths, dominant, and leading tone to work in general equal-temperament systems, showing how the arrangement of black and white keys follows mathematical principles.",
+      "topics": [
+        "equal temperament systems",
+        "abstract algebra in music",
+        "keyboard configuration",
+        "key signatures",
+        "circle of fifths",
+        "enharmonic equivalence",
+        "maximally even sets",
+        "cyclic groups",
+        "modular arithmetic",
+        "scale generation",
+        "music theory axiomatization",
+        "diatonic scales",
+        "chromatic scales"
+      ],
+      "topicTokens": [
+        "equal temperament systems",
+        "abstract algebra in music",
+        "keyboard configuration",
+        "key signatures",
+        "circle of fifths",
+        "enharmonic equivalence",
+        "maximally even sets",
+        "cyclic groups",
+        "modular arithmetic",
+        "scale generation",
+        "music theory axiomatization",
+        "diatonic scales",
+        "chromatic scales",
+        "equal temperament",
+        "abstract algebra",
+        "scales",
+        "keyboard"
+      ],
+      "claims": [
+        {
+          "text": "The number of possible black/white key arrangements in an n-key octave follows a Fibonacci sequence",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "mathematical proof",
+              "quote": "We can write 𝑁𝑛 = ∑ C𝑖^(𝑛−𝑖) ⌊𝑛/2⌋ 𝑖=0, resulting in a Fibonacci sequence. Specifically, 𝑁𝑛 = 𝐹𝑛+1"
+            }
+          ]
+        },
+        {
+          "text": "The circle of fifths relationship stems from the mathematical property that n_w^(-1) ≡ 7 (mod 12) where n_w is the number of white keys",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "mathematical explanation",
+              "quote": "Only the 'fifth' or the number '7' remain enigmatic. As will be shown later, the '7' stems from the fact that 𝑛𝑤^(-1) = 7^(-1) ≡ 7 (𝑚𝑜𝑑 12) where 𝑛𝑤 is the number of white keys in an octave, namely, seven"
+            }
+          ]
+        },
+        {
+          "text": "Key signatures can be computed algebraically using modular arithmetic operations on scale sequences",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "computational method",
+              "quote": "To find a key signature, for example, B major, we first find its tonic (e.g., B = 11), and add it to the sequence as 11 + {0,2,4,5,7,9,11} ≡ {11,1,3,4,6,8,10} (𝑚𝑜𝑑 12). We then sort the sequence to get S₁₁ = {1,3,4,6,8,10,11}, and subtract the C major scale sequence"
+            }
+          ]
+        },
+        {
+          "text": "Enharmonic equivalence can be represented mathematically by allowing -1 and 12 as aliases of 11 and 0 respectively in Z₁₂",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "mathematical representation",
+              "quote": "To make our key signature sequence K𝑛 capable of indicating enharmonic equivalence, we allow -1 and 12 to be the aliases of 11 and 0, respectively, in 𝒁₁₂"
+            }
+          ]
+        },
+        {
+          "text": "The dominant can be generalized across equal-temperament systems as the note with number n_w^(-1) above the tonic",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "generalized definition",
+              "quote": "We can broaden this definition to make the note with number 𝑛𝑤^(-1) the dominant. By this definition, the dominant key is not always the key whose tonic is a perfect fifth (+7) above the tonic of the main key, but 𝑛𝑤^(-1) above the tonic of the main key"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "12-TET (12-tone equal temperament)",
+          "details": {
+            "divisions": 12,
+            "system": "equal temperament"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19-TET",
+          "details": {
+            "divisions": 19,
+            "system": "equal temperament"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31-TET",
+          "details": {
+            "divisions": 31,
+            "system": "equal temperament"
+          }
+        },
+        {
+          "type": "note",
+          "value": "Perfect fifth interval",
+          "details": {
+            "description": "seven semitones",
+            "semitones": 7
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do these mathematical frameworks apply to microtonal composition in practice?",
+        "What are the perceptual implications of keyboard layouts derived from different equal-temperament systems?",
+        "Can these axioms be extended to non-equal temperament systems?",
+        "How might electronic instruments implement these alternative keyboard configurations?",
+        "What compositional possibilities emerge from systematically exploring non-12-TET systems?"
+      ],
+      "scores": {
+        "base": 22,
+        "normalizedBase": 0.189873417721519,
+        "novelty": 0.9411764705882353,
+        "crossRunNovelty": 0.9647058823529412,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.11764705882352941,
+        "combined": 0.6101489203276247,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S7",
+      "extractionId": "j97a6ptdt3q2wsb4enmnarj6t181dw82",
+      "sourceId": "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "sourceTitle": "Equal temperament - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Equal_temperament",
+      "extractionCreatedAt": 1771423778776,
+      "extractionSummary": "Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.",
+      "topics": [
+        "equal temperament",
+        "12-tone equal temperament",
+        "just intonation",
+        "tuning systems",
+        "musical temperament",
+        "frequency ratios",
+        "cents (music)",
+        "semitones",
+        "octave division",
+        "twelfth root of two",
+        "pitch perception",
+        "logarithmic scaling",
+        "enharmonic modulation",
+        "string instrument tuning",
+        "historical tuning systems"
+      ],
+      "topicTokens": [
+        "equal temperament",
+        "12-tone equal temperament",
+        "just intonation",
+        "tuning systems",
+        "musical temperament",
+        "frequency ratios",
+        "cents (music)",
+        "semitones",
+        "octave division",
+        "twelfth root of two",
+        "pitch perception",
+        "logarithmic scaling",
+        "enharmonic modulation",
+        "string instrument tuning",
+        "historical tuning systems",
+        "history",
+        "mathematics"
+      ],
+      "claims": [
+        {
+          "text": "12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "In classical music and Western music in general, the most common tuning system since the 18th century has been 12 equal temperament"
+            }
+          ]
+        },
+        {
+          "text": "In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "with a ratio equal to the 12th root of 2, ≈ 1.05946"
+            }
+          ]
+        },
+        {
+          "text": "Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "The two figures frequently credited with the achievement of exact calculation of equal temperament are Zhu Zaiyu (also romanized as Chu-Tsaiyu. Chinese: 朱載堉) in 1584 and Simon Stevin in 1585"
+            }
+          ]
+        },
+        {
+          "text": "12 TET produces tuning errors compared to just intonation, with major thirds being 13.69 cents sharp and minor thirds being 15.64 cents flat",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "from comparison table",
+              "quote": "Major third (E): 12 TET cents tuning error +13.69"
+            },
+            {
+              "label": "from comparison table",
+              "quote": "Minor third (E♭): 12 TET cents tuning error -15.64"
+            }
+          ]
+        },
+        {
+          "text": "Perfect fifths and fourths in 12 TET are very close to just intervals, with only 1.96 cents of error",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "The fifths and fourths are almost indistinguishably close to just intervals"
+            },
+            {
+              "label": "from comparison table",
+              "quote": "Perfect fifth (G): 12 TET cents tuning error -1.96"
+            }
+          ]
+        },
+        {
+          "text": "String instruments tuned in perfect fifths (violins, violas, cellos) use a semitone ratio of approximately 100.28 cents, slightly different from 12 TET",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "each tone is in the ratio of ∜(3/2) to the next (100.28 cents), which provides for a perfect fifth with ratio of 3:2"
+            }
+          ]
+        },
+        {
+          "text": "Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Unfretted string ensembles, which can adjust the tuning of all notes except for open strings, and vocal groups, who have no mechanical tuning limitations, sometimes use a tuning much closer to just intonation for acoustic reasons"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "440 Hz",
+          "details": {
+            "hz": 440,
+            "note": "A4",
+            "standard": "A440"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "divisions": 12,
+            "interval": "octave",
+            "ratio": 1.059463
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "261.626 Hz",
+          "details": {
+            "calculated": true,
+            "hz": 261.626,
+            "note": "C4"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19 TET",
+          "details": {
+            "divisions": 19,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31 TET",
+          "details": {
+            "divisions": 31,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "24 TET",
+          "details": {
+            "divisions": 24,
+            "interval": "octave",
+            "system": "Arab tone system"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "5 TET",
+          "details": {
+            "divisions": 5,
+            "interval": "octave",
+            "stepSize": "240 cents"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "7 TET",
+          "details": {
+            "divisions": 7,
+            "interval": "octave",
+            "stepSize": "171 cents"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?",
+        "What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?",
+        "How do performers in practice deviate from theoretical equal temperament when playing?",
+        "What role does cultural conditioning play in preference for 12 TET versus other tuning systems?",
+        "How do the mathematical properties of different equal temperaments affect compositional possibilities?"
+      ],
+      "scores": {
+        "base": 73,
+        "normalizedBase": 0.8354430379746836,
+        "novelty": 0.9090909090909091,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "combined": 0.6032220943613349,
+        "peerReviewedClaims": 7,
+        "distinctParameterTypes": 2
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "equal temperament": 3,
+      "just intonation": 2,
+      "frequency ratios": 2,
+      "circle of fifths": 2,
+      "meantone temperament": 1,
+      "quarter-comma meantone": 1,
+      "third-comma meantone": 1,
+      "syntonic comma": 1,
+      "pythagorean comma": 1,
+      "wolf intervals": 1,
+      "geometric mean": 1,
+      "renaissance music": 1,
+      "baroque music": 1,
+      "keyboard tuning": 1,
+      "microtonal music": 1,
+      "isomorphic keyboards": 1,
+      "meantone": 1,
+      "historical tuning": 1,
+      "comma": 1,
+      "electron fluids": 1,
+      "hydrodynamics": 1,
+      "graphene": 1,
+      "condensed matter physics": 1,
+      "momentum conservation": 1,
+      "shock waves": 1,
+      "fluid dynamics": 1,
+      "quantum materials": 1,
+      "gurzhi effect": 1,
+      "neural autoencoders": 1,
+      "generative audio modeling": 1,
+      "temporal compression": 1,
+      "audio encoding": 1,
+      "latent representations": 1,
+      "tokenization": 1,
+      "computational efficiency": 1,
+      "audio preprocessing": 1,
+      "groove box workflow": 1,
+      "hardware vs software production": 1,
+      "analog vs digital audio processing": 1,
+      "real-time arrangement": 1,
+      "ableton live": 1,
+      "eurorack modular synthesis": 1,
+      "music production workflow": 1,
+      "studio organization": 1,
+      "track feedback methodology": 1,
+      "mute-based live arrangement": 1,
+      "audio latency": 1,
+      "midi control": 1,
+      "music release strategies": 1,
+      "cymatics": 1,
+      "faraday wave patterns": 1,
+      "hydrothermal vents": 1,
+      "abiogenesis": 1,
+      "helmholtz resonators": 1,
+      "bubble dynamics": 1,
+      "sonic scaffolding": 1,
+      "panspermia": 1,
+      "exclusion zone water": 1,
+      "brownian motion": 1,
+      "prebiotic molecules": 1,
+      "carbonaceous chondrites": 1,
+      "protocells": 1,
+      "lipid organization": 1,
+      "radiolaria": 1,
+      "diatoms": 1,
+      "equal temperament systems": 1,
+      "abstract algebra in music": 1,
+      "keyboard configuration": 1,
+      "key signatures": 1,
+      "enharmonic equivalence": 1,
+      "maximally even sets": 1,
+      "cyclic groups": 1,
+      "modular arithmetic": 1,
+      "scale generation": 1,
+      "music theory axiomatization": 1,
+      "diatonic scales": 1,
+      "chromatic scales": 1,
+      "abstract algebra": 1,
+      "scales": 1,
+      "keyboard": 1,
+      "12-tone equal temperament": 1,
+      "tuning systems": 1,
+      "musical temperament": 1,
+      "cents (music)": 1,
+      "semitones": 1,
+      "octave division": 1,
+      "twelfth root of two": 1,
+      "pitch perception": 1,
+      "logarithmic scaling": 1,
+      "enharmonic modulation": 1,
+      "string instrument tuning": 1,
+      "historical tuning systems": 1,
+      "history": 1,
+      "mathematics": 1
+    },
+    "parameterTypeFrequency": {
+      "tuningsystem": 15,
+      "frequency": 6,
+      "instrument": 4,
+      "harmonicprofile": 3,
+      "tempo": 2,
+      "rhythm": 1,
+      "note": 1
+    },
+    "evidenceDistribution": {
+      "peer_reviewed": 17,
+      "preprint": 11,
+      "anecdotal": 8,
+      "speculative": 1
+    },
+    "sourceTypeDistribution": {
+      "url": 2,
+      "rss": 2,
+      "youtube": 2,
+      "pdf": 1
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 5,
+    "priorSourceIds": 20,
+    "priorTopicTokens": 235,
+    "priorVariablePhrases": 4,
+    "priorTitlePhrases": 8
+  }
+}

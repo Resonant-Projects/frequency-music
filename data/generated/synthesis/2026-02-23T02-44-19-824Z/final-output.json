@@ -1,0 +1,130 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Comma Placement and Perceived Tension in Sustained Harmony",
+    "question": "Do small temperament offsets (equal temperament and quarter-comma meantone) increase perceived tension versus pure just-intonation ratios in slow sustained triads?",
+    "hypothesis": "If the same sustained triadic progression is rendered in (A) 5-limit just intonation, (B) quarter-comma meantone, and (C) 12-tone equal temperament, then listeners will rate A as most calm/stable, B as intermediate, and C as most tense/shimmering, because progressively tempered intervals introduce larger ratio deviations and beating relative to simple harmonic relationships.",
+    "rationaleMd": "Across the selected sources, consonance is repeatedly tied to simple frequency ratios and overtone alignment (S3, S4, S5). The interval references and temperament material quantify the exact offset sizes involved when moving from pure intervals toward tempered systems, including syntonic and Pythagorean comma behavior (S1, S6). Equal temperament distributes error across all intervals and is mathematically defined by equal semitone ratios, while meantone trades purity differently across fifths/thirds (S1, S2). This supports a direct perceptual test where only tuning system varies while harmony, rhythm, instrumentation, and dynamics remain fixed (S1, S2, S4, S5).",
+    "sourceIds": [
+      "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "jx754hd6c4vf256e206r9834dh81c0vy",
+      "jx735sjatw41r9pgqw6r8mwztn81ddbr",
+      "jx70hfp3mre8mje414z18d6vvn81cx5h"
+    ],
+    "concepts": [
+      "just intonation",
+      "quarter-comma meantone",
+      "12-tone equal temperament",
+      "syntonic comma",
+      "pythagorean comma",
+      "beating",
+      "harmonic series",
+      "consonance"
+    ]
+  },
+  "recipe": {
+    "title": "3-Tuning Triad Drift A/B/C Study (JI vs Meantone vs 12-TET)",
+    "bodyMd": "## Goal\nCompare perceived calmness/tension caused solely by tuning system while holding all musical content constant.\n\n## Render Set\nCreate three versions of the same 24-bar piece:\n1. **Version A (JI)**: 5-limit just intonation triads\n2. **Version B (Meantone)**: quarter-comma meantone mapping\n3. **Version C (12-TET)**: standard equal temperament\n\n## Arrangement (identical in all versions)\n- **Tempo**: 72 BPM\n- **Meter**: 4/4\n- **Length**: 24 bars (~80 sec)\n- **Progression** (6 bars each): I -> vi -> IV -> V in C\n- **Texture**: three sustained voices + one low drone\n- **Voicing rule**: close-position triads in mid register, drone one octave below root\n\n## Tuning Instructions\n- **A / JI**: Use pure-ratio targets for thirds/fifths where possible (e.g., 5:4, 3:2 relationships) [S4, S5].\n- **B / Meantone**: Apply quarter-comma meantone temperament profile; preserve meantone major-third optimization [S1].\n- **C / 12-TET**: Standard equal semitone spacing (12th-root-of-2 step) [S2].\n\n## Evaluation Pass\nBlind-label exports as X/Y/Z. For each, rate 0-10:\n- perceived calm/stability\n- perceived tension/shimmer\n- meditative suitability\n\nCollect at least 2 listening contexts (headphones + monitors).\n\n## Expected Pattern\nBased on ratio-consonance and temperament evidence, expect A > B > C on calmness, with inverse ordering for tension/shimmer [S1, S2, S4, S5, S6].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "72 BPM",
+        "details": {
+          "bpm": 72,
+          "rationale": "Slow sustained tones increase audibility of beating/tension differences."
+        }
+      },
+      {
+        "type": "key",
+        "value": "C major",
+        "details": {
+          "tonic": "C",
+          "mode": "major"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "5-limit Just Intonation",
+        "details": {
+          "variant": "pure ratio reference",
+          "sources": [
+            "S4",
+            "S5"
+          ]
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Quarter-comma meantone",
+        "details": {
+          "tempering": "1/4 syntonic comma",
+          "source": "S1"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "12-tone equal temperament",
+        "details": {
+          "semitoneRatio": "2^(1/12)",
+          "source": "S2"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Sustained triads with drone",
+        "details": {
+          "progression": [
+            "I",
+            "vi",
+            "IV",
+            "V"
+          ],
+          "holdBarsPerChord": 6
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one MIDI arrangement template (24 bars) to be duplicated for A/B/C.",
+      "Lock instrument chain and gain staging before tuning changes.",
+      "Render Version A with 5-limit JI interval targets.",
+      "Render Version B with quarter-comma meantone mapping.",
+      "Render Version C with default 12-TET.",
+      "Normalize loudness across exports to avoid loudness bias.",
+      "Randomize filenames to X/Y/Z for blind listening.",
+      "Rate each file on calmness, tension/shimmer, and meditative suitability.",
+      "Repeat ratings on headphones and monitors.",
+      "Log notes on where beating is most audible (bar + chord)."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 80,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1",
+        "musician_peer_2"
+      ],
+      "listeningContext": "Quiet room; one pass on open-back headphones and one pass on nearfield monitors.",
+      "listeningMethod": "Blind A/B/C with randomized labels and fixed playback level.",
+      "whatVaries": [
+        "tuning system only (JI vs quarter-comma meantone vs 12-TET)"
+      ],
+      "whatStaysConstant": [
+        "MIDI notes",
+        "progression",
+        "tempo",
+        "instrument patches",
+        "arrangement length",
+        "mix levels"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "This output is synthesized from the generated multi-source context pack without calling Convex generation actions."
+}

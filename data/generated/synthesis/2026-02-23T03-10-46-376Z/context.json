@@ -1,0 +1,1095 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-02-23T03:10:46.376Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 7,
+    "fetch": 160,
+    "minClaims": 2,
+    "minParams": 1,
+    "noveltyWindow": 10,
+    "out": "data/generated/synthesis",
+    "outputName": "final-output.auto.json"
+  },
+  "totals": {
+    "fetchedExtractions": 135,
+    "withSource": 135,
+    "eligibleCandidates": 46,
+    "selected": 7
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97bn99y1e8mk8d49g10310xsn81djj6",
+      "sourceId": "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "sourceTitle": "Meantone temperament - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Meantone_temperament",
+      "extractionCreatedAt": 1771423719820,
+      "extractionSummary": "Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.",
+      "topics": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "Pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "Renaissance music",
+        "Baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards"
+      ],
+      "topicTokens": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "renaissance music",
+        "baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards",
+        "meantone",
+        "historical tuning",
+        "comma"
+      ],
+      "claims": [
+        {
+          "text": "Perfect fifths in just intonation have a frequency ratio of 3:2",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "rather than using perfect fifths, consisting of frequency ratios of value 3:2"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone produces just major thirds with a 5:4 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Four ascending fifths (as C G D A E) tempered by 1/4 comma (and then lowered by two octaves) produce a just major third (C E) (with ratio 5: 4)"
+            }
+          ]
+        },
+        {
+          "text": "In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "as a frequency ratio, it is the geometric mean of the major tone and the minor tone: √(10/9 × 9/8) = √(5/4) = 1.1180340"
+            }
+          ]
+        },
+        {
+          "text": "12-tone equal temperament narrows perfect fifths by about 2 cents or 1/12 of a Pythagorean comma",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "it narrows the perfect fifths by about 2 cents or 1/12 of a Pythagorean comma to give a frequency ratio of 2^(7/12):1"
+            }
+          ]
+        },
+        {
+          "text": "Meantone temperament was commonly used from early 16th century till early 18th century",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "It was commonly used from the early 16th century till the early 18th, after which twelve-tone equal temperament eventually came into general use"
+            }
+          ]
+        },
+        {
+          "text": "31-TET closely approximates quarter-comma meantone temperament",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Quarter-comma meantone can be well approximated by a division of the octave into 31 equal steps"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone creates a residual gap of 125/128 ratio or -41.06 cents between F# and Gb",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "there is a residual gap in quarter-comma meantone tuning between the last of the upper sequence of six fifths and the last of the lower sequence; e.g. between F♯ and G♭ if the starting point is chosen as C, which, adjusted for the octave, are in the ratio of 125/128 or −41.06 cents"
+            }
+          ]
+        },
+        {
+          "text": "Third-comma meantone produces just minor thirds with a 6:5 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "three descending fifths (such as A D G C) produce a just minor third (A C) of ratio 6/5"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Quarter-comma meantone",
+          "details": {
+            "tempered": "1/4 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Third-comma meantone",
+          "details": {
+            "tempered": "1/3 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "tempered": "1/12 Pythagorean comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31 TET",
+          "details": {
+            "divisions": 31
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19 TET",
+          "details": {
+            "divisions": 19
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "53 TET",
+          "details": {
+            "divisions": 53
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "~264 Hz",
+          "details": {
+            "hz": 264,
+            "note": "middle C"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "5:4 major third ratio",
+          "details": {
+            "interval": "major third",
+            "ratio": "5:4"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "6:5 minor third ratio",
+          "details": {
+            "interval": "minor third",
+            "ratio": "6:5"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "3:2 perfect fifth ratio",
+          "details": {
+            "interval": "perfect fifth",
+            "ratio": "3:2"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?",
+        "What are the perceptual differences between meantone and equal temperament for modern listeners?",
+        "How do wolf intervals affect musical composition and performance practice?",
+        "What role does meantone temperament play in contemporary early music performance?",
+        "How do different meantone fractions (1/4, 1/3, 2/7 comma) affect harmonic perception and musical expression?"
+      ],
+      "scores": {
+        "base": 86,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "combined": 0.7,
+        "peerReviewedClaims": 8,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j9790ybkvrm64d8vzdzm3h4bn981cbnz",
+      "sourceId": "jx7amg6kghtxzdkxxa8d5nhzr181cd28",
+      "sourceTitle": "Four McGill studies make Québec Science’s list of the Top 10 Discoveries of the Year",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://brams.org/2026/01/19/four-mcgill-studies-make-quebec-sciences-list-of-the-top-10-discoveries-of-the-year/",
+      "extractionCreatedAt": 1771381429479,
+      "extractionSummary": "McGill researchers discovered that music provides optimal pain relief when its tempo matches an individual's spontaneous production rate - their characteristic rhythm tied to circadian rhythms. The study, published in Pain journal, suggests personalizing musical tempo could reduce patient pain levels by aligning with natural neural oscillations and pulling them away from pain-associated frequencies.",
+      "topics": [
+        "music therapy",
+        "pain management",
+        "hypoalgesia",
+        "neural oscillations",
+        "circadian rhythms",
+        "spontaneous production rate",
+        "tempo perception",
+        "personalized music"
+      ],
+      "topicTokens": [
+        "music therapy",
+        "pain management",
+        "hypoalgesia",
+        "neural oscillations",
+        "circadian rhythms",
+        "spontaneous production rate",
+        "tempo perception",
+        "personalized music",
+        "auto-ingested"
+      ],
+      "claims": [
+        {
+          "text": "Each person has their own characteristic rhythm called spontaneous production rate that applies whether they speak, sing, play an instrument, or tap along to music",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "individual rhythm research",
+              "quote": "Research over the past decade has shown that whether we speak, sing, play an instrument or just tap along to music, we each have our own characteristic rhythm. Known as our spontaneous production rate"
+            }
+          ]
+        },
+        {
+          "text": "Spontaneous production rate is tied to circadian rhythms",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "circadian connection",
+              "quote": "Known as our spontaneous production rate, it is thought to be tied to our circadian rhythms"
+            }
+          ]
+        },
+        {
+          "text": "Music played at an individual's spontaneous production rate provides the best pain relief compared to other tempos",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "main finding",
+              "quote": "A McGill research team discovered that music played at this rate has the best chance of providing pain relief"
+            }
+          ]
+        },
+        {
+          "text": "Neural oscillations responsible for preferred tempo can be pulled along more easily when musical tempo matches natural tempo, pulling them away from pain-associated neural frequencies",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "proposed mechanism",
+              "quote": "It is possible the neural oscillations that are responsible for driving our preferred tempo at a particular rate are more easily pulled along when a musical tempo is closer to our own natural tempo... As a result, they are pulled away from the neural frequencies associated with pain"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tempo",
+          "value": "individualized to spontaneous production rate",
+          "details": {
+            "basis": "spontaneous_production_rate",
+            "personalized": true
+          }
+        }
+      ],
+      "openQuestions": [
+        "What is the typical range of spontaneous production rates across individuals?",
+        "How can spontaneous production rate be accurately measured for clinical applications?",
+        "Do other musical parameters besides tempo affect pain relief when personalized?",
+        "What are the specific neural frequencies associated with pain that music can influence?",
+        "How long does the pain relief effect last with tempo-matched music?",
+        "Can this approach be combined with other pain management techniques for enhanced effect?"
+      ],
+      "scores": {
+        "base": 26,
+        "normalizedBase": 0.24050632911392406,
+        "novelty": 1,
+        "crossRunNovelty": 0.9666666666666667,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.1111111111111111,
+        "combined": 0.6482278481012658,
+        "peerReviewedClaims": 3,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j978hgsy4b6xemvy5ekqsbbar981d3er",
+      "sourceId": "jx71ddzhtdz23f72fw2yh0m4z181d0sa",
+      "sourceTitle": "Mapping microtonal scales to a MIDI keyboard in Scala",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://sevish.com/2017/mapping-microtonal-scales-keyboard-scala/",
+      "sourceAuthor": "Sevish",
+      "extractionCreatedAt": 1771423859996,
+      "extractionSummary": "This tutorial explains how to map microtonal scales to standard MIDI keyboards using Scala software, addressing the problem that linear mapping creates irregular fingering patterns. The author demonstrates mapping 7-note scales to white keys and extracting 12-note subsets from larger tuning systems like 31-EDO. The tutorial provides practical workflows for creating keyboard mapping files (.kbm) that can be combined with scale files (.scl) for use in various synthesizers.",
+      "topics": [
+        "microtonal music",
+        "MIDI keyboard mapping",
+        "equal division of octave (EDO)",
+        "scale degrees",
+        "keyboard ergonomics",
+        "meantone temperament",
+        "Scala software",
+        "moment of symmetry scales",
+        "xenharmonic music",
+        "tuning file formats"
+      ],
+      "topicTokens": [
+        "microtonal music",
+        "midi keyboard mapping",
+        "equal division of octave (edo)",
+        "scale degrees",
+        "keyboard ergonomics",
+        "meantone temperament",
+        "scala software",
+        "moment of symmetry scales",
+        "xenharmonic music",
+        "tuning file formats",
+        "scala",
+        "keyboard mapping",
+        "midi",
+        "tutorial"
+      ],
+      "claims": [
+        {
+          "text": "Linear mapping of microtonal scales creates irregular fingering patterns as you move up and down by aural octaves",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "fingering_irregularity",
+              "quote": "With linear mapping, fingering becomes irregular as you go up and down by aural octaves."
+            }
+          ]
+        },
+        {
+          "text": "31-EDO contains a 12-note meantone scale that sounds more in-tune than 12-equal in some keys but worse in others",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "31edo_meantone_quality",
+              "quote": "The 12 notes selected above give a chromatic scale that sounds more in-tune than 12 equal, but only in some keys while other keys can sound worse."
+            }
+          ]
+        },
+        {
+          "text": "Custom keyboard mappings create more familiar and navigable patterns compared to linear chromatic mapping",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "custom_mapping_benefits",
+              "quote": "Custom mappings help to make a regular pattern that is much more familiar and easy to navigate"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "7-EDO",
+          "details": {
+            "divisions": 7,
+            "octaveRatio": 2
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31-EDO",
+          "details": {
+            "divisions": 31,
+            "octaveRatio": 2
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "23-EDO",
+          "details": {
+            "divisions": 23,
+            "octaveRatio": 2
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "50-EDO",
+          "details": {
+            "divisions": 50,
+            "octaveRatio": 2
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "11-EDO",
+          "details": {
+            "divisions": 11,
+            "octaveRatio": 2
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "15-EDO",
+          "details": {
+            "divisions": 15,
+            "octaveRatio": 2
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Mavila[7]",
+          "details": {
+            "notes": 7,
+            "type": "temperament"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do different keyboard mapping strategies affect musical expression and performance technique?",
+        "What are the optimal keyboard layouts for various microtonal scale families?",
+        "How does the choice of mapped notes from larger tuning systems affect harmonic progressions and voice leading?",
+        "What ergonomic considerations should guide microtonal keyboard mapping design?",
+        "How do performers adapt their muscle memory when switching between different microtonal keyboard mappings?"
+      ],
+      "scores": {
+        "base": 27,
+        "normalizedBase": 0.25316455696202533,
+        "novelty": 0.935483870967742,
+        "crossRunNovelty": 0.9571428571428572,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.14285714285714285,
+        "combined": 0.634937875517704,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j9722xab53c1wsvcadtsq0hgjh81dgf4",
+      "sourceId": "jx7ee6pxqhhxg7fwwh9eyjfgen81c348",
+      "sourceTitle": "Accurate and Infinite Prime Prediction from Novel Quasi-Prime Analytical Methodology",
+      "sourceType": "pdf",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/1903.08570",
+      "extractionCreatedAt": 1771386445115,
+      "extractionSummary": "This paper proposes a method for predicting prime numbers using geometric distributions around polygons, specifically focusing on the 24-sided icositetragon. The authors claim to have discovered patterns in prime number distribution and developed a deterministic method for primality testing without trial division. While the mathematical claims about prime distributions are largely correct, the paper's connection to music/acoustics is limited to mentioning digital root patterns and the number 24's significance.",
+      "topics": [
+        "prime number patterns",
+        "geometric distributions",
+        "digital root analysis",
+        "24-sided polygon (icositetragon)",
+        "Fibonacci sequences",
+        "mathematical harmonics",
+        "quasicrystal patterns",
+        "fractal symmetry",
+        "Ramanujan Tau function"
+      ],
+      "topicTokens": [
+        "prime number patterns",
+        "geometric distributions",
+        "digital root analysis",
+        "24-sided polygon (icositetragon)",
+        "fibonacci sequences",
+        "mathematical harmonics",
+        "quasicrystal patterns",
+        "fractal symmetry",
+        "ramanujan tau function",
+        "prime numbers",
+        "quasi-primes",
+        "digital roots",
+        "24-sided polygon"
+      ],
+      "claims": [
+        {
+          "text": "Fibonacci numbers exhibit a 24-based digital root cycle that creates symmetric patterns when distributed around a circle",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "Take Fibonacci numbers for example; by applying the digital root method to these numbers we find a sequence of digits that repeats itself in a 24-based cycle: [1, 1, 2, 3, 5, 8, 4, 3, 7, 1, 8, 9, 8, 8, 7, 6, 4, 1, 5, 6, 2, 8, 1, 9]. Moreover, when these numbers are distributed around a circle or polygon, every two digits lying on the same diameter will add up to 9"
+            }
+          ]
+        },
+        {
+          "text": "The icositetragon (24-sided polygon) has unique properties for prime number distribution and incidence",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "We will also show that the icositetragon (24-sided regular polygon) is a unique polygon pertaining to prime numbers and their ultimate incidence and distribution"
+            },
+            {
+              "quote": "This phenomenon further points to the uniqueness of the Icositetragon to prime incidence and distribution"
+            }
+          ]
+        },
+        {
+          "text": "Ramanujan's Tau function is based on the number 24, suggesting mathematical significance of this value",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Ramanujan's Tau function, and its many prime-based conjectures, is also based on number 24"
+            }
+          ]
+        },
+        {
+          "text": "Prime numbers create quasicrystal-like interference patterns when modeled as atom-like particles, showing previously unknown order",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Prof. Torquato had the idea of looking at what diffraction pattern prime numbers would produce if they were to be modeled as atom-like particles. He observed that not only do prime numbers create a quasicrystal-like interference pattern, the pattern itself is a self-symmetry fractal that has never been observed before"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "harmonicProfile",
+          "value": "24-based cyclic pattern",
+          "details": {
+            "cycles": 24,
+            "pattern": "Fibonacci digital roots"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do the 24-based mathematical patterns relate to musical harmonics or frequency relationships?",
+        "Could the quasicrystal-like patterns of primes have acoustic applications or correspondence to sound structures?",
+        "What is the relationship between Ramanujan's Tau function (based on 24) and musical mathematics?",
+        "Do the geometric prime distributions have any connection to harmonic series or musical intervals?",
+        "Could digital root analysis techniques be applied to analyze musical sequences or frequency patterns?"
+      ],
+      "scores": {
+        "base": 21,
+        "normalizedBase": 0.17721518987341772,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "combined": 0.629746835443038,
+        "peerReviewedClaims": 2,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j97b7vv0p7awywtjhz4ay37y0181cwgn",
+      "sourceId": "jx70pej233h2qc133kmqxaqyms81d6v7",
+      "sourceTitle": "NEW DISCOVERY: The 24 Note Quartertone Relationship to Ancient Pyramids",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://robertedwardgrant.com/new-discovery-the-24-note-quartertone-relationship-to-ancient-pyramids/",
+      "extractionCreatedAt": 1771386265835,
+      "extractionSummary": "Robert Edward Grant claims to have discovered a relationship between a 24-note quartertone musical scale and the geometric proportions of ancient pyramids at Giza. He proposes that musical intervals based on 432.081 Hz and 528.099 Hz 'Precise Temperament Tuning' correspond to pyramid slope angles and dimensional ratios. Specifically, he identifies the interval 11/9 (528/432 = 1.2222) as matching both the Giza Plateau perimeter ratio and Abu Rawash pyramid proportions. He suggests this 24-note system would better accommodate pentatonic and other indigenous musical scales compared to the standard 12-tone system.",
+      "topics": [
+        "quartertone tuning",
+        "ancient pyramid geometry",
+        "musical intervals",
+        "432 Hz tuning",
+        "528 Hz frequency",
+        "pentatonic scales",
+        "sacred geometry",
+        "temperament systems",
+        "Giza plateau",
+        "musical archaeology"
+      ],
+      "topicTokens": [
+        "quartertone tuning",
+        "ancient pyramid geometry",
+        "musical intervals",
+        "432 hz tuning",
+        "528 hz frequency",
+        "pentatonic scales",
+        "sacred geometry",
+        "temperament systems",
+        "giza plateau",
+        "musical archaeology",
+        "quartertones",
+        "pyramids",
+        "24 notes",
+        "ancient geometry"
+      ],
+      "claims": [
+        {
+          "text": "A 24-note quartertone chromatic scale based on 432.081 Hz and 528.099 Hz corresponds to ancient pyramid proportions",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "I discovered that one of the intervals 11/9 (also 528/432 = 1.2222: 'Divine Major 2.5th') matches precisely the 'Giza Plateau Perimeter' (Rectangular Height/Base) as well as the Abu Rawash Djed (efre) Pyramid intervals"
+            }
+          ]
+        },
+        {
+          "text": "The ratio 11/9 equals 528/432 = 1.2222 and matches pyramid geometric proportions",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "528/432 = 1.2222: 'Divine Major 2.5th'"
+            },
+            {
+              "quote": "creating its Equilateral Triangle Proportions (and 60° Slope Angle)"
+            }
+          ]
+        },
+        {
+          "text": "A 24-note quartertone scale naturally allows for pentatonic and other indigenous scales while the 12-semitone scale does not",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "Using a 24 Note Quartertone Scale NATURALLY ALLOWS for the Pentatonic (and other Indigenous Cultures around the world) Musical Scales used across the Near and Far East and globally whereas the current 12 Semitone Scale Does NOT"
+            }
+          ]
+        },
+        {
+          "text": "Musical intervals can be mapped to ancient pyramid structures and their geometric relationships",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "I presented the musical interval relationship to the Giza Plateau"
+            },
+            {
+              "quote": "there are many missing positions (?)....these could either be missing or lost pyramid structures still yet to be found"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "432.081 Hz",
+          "details": {
+            "hz": 432.081
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "528.099 Hz",
+          "details": {
+            "hz": 528.099
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "24-note quartertone chromatic scale",
+          "details": {
+            "noteCount": 24,
+            "system": "quartertone"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "11/9 interval (Divine Major 2.5th)",
+          "details": {
+            "decimal": 1.2222,
+            "ratio": "11/9"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Precise Temperament Tuning",
+          "details": {
+            "approach": "combining 432.081 Hz and 528.099 Hz frequencies"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What is the mathematical basis for 'Precise Temperament Tuning' and how does it differ from established temperament systems?",
+        "Are there peer-reviewed studies validating connections between musical intervals and pyramid geometry?",
+        "How do quartertone systems compare acoustically and perceptually to 12-tone equal temperament?",
+        "What evidence exists for intentional musical/acoustic design in ancient pyramid construction?",
+        "Can the claimed frequency values (432.081 Hz, 528.099 Hz) be independently verified through pyramid measurements?"
+      ],
+      "scores": {
+        "base": 23,
+        "normalizedBase": 0.20253164556962025,
+        "novelty": 1,
+        "crossRunNovelty": 0.9571428571428572,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.14285714285714285,
+        "combined": 0.6282820976491863,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j97amfrpacd0w9n91yk9m7v93981d02e",
+      "sourceId": "jx77mx2zsz4ypg8qwnp7th3t8581cg4a",
+      "sourceTitle": "A Novel Geometric Model of Natural Spirals Based on Right Triangle Polygonal Modular Formations",
+      "sourceType": "pdf",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2111.02895",
+      "extractionCreatedAt": 1771386468909,
+      "extractionSummary": "This paper proposes a novel geometric model for natural spirals based on right triangle formations that create polygonal structures. The authors claim these triangular spirals match natural phenomena (hurricanes, galaxies, nautilus shells) better than traditional logarithmic spirals. They establish mathematical relationships where the 'mod' (number of triangles per rotation) correlates with physical properties like hurricane intensity. The work suggests fundamental geometric principles underlying natural spiral formation.",
+      "topics": [
+        "geometric spirals",
+        "right triangle mathematics",
+        "natural pattern formation",
+        "hurricane categorization",
+        "galactic spiral arms",
+        "golden ratio alternatives",
+        "polygonal geometry",
+        "mathematical modeling of nature",
+        "fractal structures",
+        "harmonic ratios"
+      ],
+      "topicTokens": [
+        "geometric spirals",
+        "right triangle mathematics",
+        "natural pattern formation",
+        "hurricane categorization",
+        "galactic spiral arms",
+        "golden ratio alternatives",
+        "polygonal geometry",
+        "mathematical modeling of nature",
+        "fractal structures",
+        "harmonic ratios",
+        "spirals",
+        "fractals",
+        "right triangles",
+        "nature patterns"
+      ],
+      "claims": [
+        {
+          "text": "Triangular spirals based on right triangle formations match natural spirals better than hyperbolic logarithmic spirals (HLS) which use Euler's number e as expansion factor",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "comparison with existing models",
+              "quote": "The general research on the topic has concentrated mainly on the hyperbolic logarithmic spiral (HLS), where the Euler number e (2.718…) works as the expansion factor. Nevertheless, this approach does not produce accurate models that can fit the observed forms of all spirals unless it is adjusted by certain factors"
+            }
+          ]
+        },
+        {
+          "text": "Hurricane intensity correlates directly with the 'mod' number of matching triangular spirals - stronger hurricanes have higher mod numbers",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "hurricane correlation claim",
+              "quote": "there seems to be a direct correlation between the category or the strength of the hurricane and the mod of the matching triangular spiral; the stronger the hurricane, the higher the mod"
+            }
+          ]
+        },
+        {
+          "text": "Nautilus shells match mod(16) triangular spirals better than golden spirals, with 16 chambers per turn corresponding to triangle hypotenuses",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "nautilus shell analysis",
+              "quote": "the triangular spiral of mod(16) seems to fit the shell more perfectly than the golden spiral does... And not only does the nautilus' spiral match that of the mod(16), but also there are 16 chambers inside the shell for each turn"
+            }
+          ]
+        },
+        {
+          "text": "Galaxy spiral arm tightness correlates with mass concentration and corresponds to higher mod numbers in triangular spirals",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "galactic correlation",
+              "quote": "Galaxies with higher central mass concentrations are predicted to have more tightly wound spiral arms. Furthermore, the greater the speed and the heavier the density, the more mods there are in the matching triangular spiral"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "harmonicProfile",
+          "value": "Right triangle ratios [1:√3:2]",
+          "details": {
+            "description": "Dimensional ratios for 12-turn spiral triangles",
+            "ratios": [
+              1,
+              "√3",
+              2
+            ]
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Pentagon spiral ratios [1:1.37639:1.7013]",
+          "details": {
+            "description": "Dimensional ratios for pentagonal spiral triangles",
+            "ratios": [
+              1,
+              1.37639,
+              1.7013
+            ]
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "Growth rate 1.1547 = 1/cos(30°)",
+          "details": {
+            "angle": "30°",
+            "description": "Expansion rate for hexagonal-based spirals",
+            "ratio": 1.1547
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "Growth rate 1.23606 = 1/cos(36°)",
+          "details": {
+            "angle": "36°",
+            "description": "Expansion rate for pentagonal spirals",
+            "ratio": 1.23606
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do the harmonic ratios in these triangular spirals relate to musical intervals and acoustic phenomena?",
+        "Could the mod numbers correspond to harmonic series or overtone structures in sound?",
+        "Do the growth rates (like 1.1547, 1.23606) have acoustic significance or relate to frequency ratios?",
+        "What is the relationship between these geometric ratios and musical tuning systems?",
+        "Could natural spiral formations influence acoustic properties of environments (shells as resonators, etc.)?",
+        "How might the mathematical relationships discovered here apply to sound wave propagation patterns?"
+      ],
+      "scores": {
+        "base": 20,
+        "normalizedBase": 0.16455696202531644,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "combined": 0.6240506329113924,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S7",
+      "extractionId": "j973h3w2wmjhbxs5hph8gz926d81gnfp",
+      "sourceId": "jx78t2a7b07ssg7yad9mm3jpgd81hgpb",
+      "sourceTitle": "Grinning During Sex Isn’t Contagious, But It Does Require Tempo",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://nautil.us/grinning-during-sex-isnt-contagious-but-it-does-require-tempo-1269012/",
+      "extractionCreatedAt": 1771613403377,
+      "extractionSummary": "A peer-reviewed study analyzed sexual behavior in bonobos to understand rhythm and tempo in evolutionary communication. Researchers found that bonobo sexual movements averaged seven movements per second, and while mutual grinning didn't affect tempo, sexual movements significantly slowed after grinning stopped. This research aims to understand how rhythm, tempo, and vocalization evolved in humans and animals by studying our closest evolutionary relatives.",
+      "topics": [
+        "rhythm",
+        "tempo",
+        "biological rhythms",
+        "evolutionary musicology",
+        "communication",
+        "behavioral tempo",
+        "primate behavior",
+        "movement frequency"
+      ],
+      "topicTokens": [
+        "rhythm",
+        "tempo",
+        "biological rhythms",
+        "evolutionary musicology",
+        "communication",
+        "behavioral tempo",
+        "primate behavior",
+        "movement frequency",
+        "auto-ingested"
+      ],
+      "claims": [
+        {
+          "text": "Bonobo sexual movements averaged seven movements per second during sexual interactions",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "tempo measurement",
+              "quote": "which averaged a rapid seven movements per second"
+            }
+          ]
+        },
+        {
+          "text": "Mutual grinning (bared-teeth displays) had no correlation with the acceleration or deceleration of sexual tempo in bonobos",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "tempo-behavior correlation",
+              "quote": "They found no correlation, concluding that bared-toothed grins didn't accelerate or decelerate sex"
+            }
+          ]
+        },
+        {
+          "text": "Sexual movement tempo decreased sharply after mutual grinning stopped, potentially linked to physiological processes like orgasm",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "tempo change",
+              "quote": "However, once the mutual grinning stopped, sexual movements simmered way down"
+            },
+            {
+              "label": "physiological hypothesis",
+              "quote": "the sharp decrease in tempo afterward could potentially be linked to physiological processes, such as orgasm"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tempo",
+          "value": "7 movements per second",
+          "details": {
+            "bpm": 420,
+            "movementsPerSecond": 7
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do biological rhythms in sexual behavior relate to musical tempo preferences in humans?",
+        "What is the evolutionary relationship between rhythmic movement in sexual contexts and musical rhythm?",
+        "How might the 7 movements per second tempo in bonobo behavior relate to human rhythmic preferences?",
+        "Could studying primate behavioral tempos inform our understanding of optimal musical tempos for human physiological response?"
+      ],
+      "scores": {
+        "base": 24,
+        "normalizedBase": 0.21518987341772153,
+        "novelty": 0.9411764705882353,
+        "crossRunNovelty": 0.9666666666666667,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.1111111111111111,
+        "combined": 0.6221295606850334,
+        "peerReviewedClaims": 3,
+        "distinctParameterTypes": 1
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "meantone temperament": 2,
+      "microtonal music": 2,
+      "auto-ingested": 2,
+      "quarter-comma meantone": 1,
+      "third-comma meantone": 1,
+      "equal temperament": 1,
+      "syntonic comma": 1,
+      "pythagorean comma": 1,
+      "wolf intervals": 1,
+      "just intonation": 1,
+      "frequency ratios": 1,
+      "geometric mean": 1,
+      "circle of fifths": 1,
+      "renaissance music": 1,
+      "baroque music": 1,
+      "keyboard tuning": 1,
+      "isomorphic keyboards": 1,
+      "meantone": 1,
+      "historical tuning": 1,
+      "comma": 1,
+      "music therapy": 1,
+      "pain management": 1,
+      "hypoalgesia": 1,
+      "neural oscillations": 1,
+      "circadian rhythms": 1,
+      "spontaneous production rate": 1,
+      "tempo perception": 1,
+      "personalized music": 1,
+      "midi keyboard mapping": 1,
+      "equal division of octave (edo)": 1,
+      "scale degrees": 1,
+      "keyboard ergonomics": 1,
+      "scala software": 1,
+      "moment of symmetry scales": 1,
+      "xenharmonic music": 1,
+      "tuning file formats": 1,
+      "scala": 1,
+      "keyboard mapping": 1,
+      "midi": 1,
+      "tutorial": 1,
+      "prime number patterns": 1,
+      "geometric distributions": 1,
+      "digital root analysis": 1,
+      "24-sided polygon (icositetragon)": 1,
+      "fibonacci sequences": 1,
+      "mathematical harmonics": 1,
+      "quasicrystal patterns": 1,
+      "fractal symmetry": 1,
+      "ramanujan tau function": 1,
+      "prime numbers": 1,
+      "quasi-primes": 1,
+      "digital roots": 1,
+      "24-sided polygon": 1,
+      "quartertone tuning": 1,
+      "ancient pyramid geometry": 1,
+      "musical intervals": 1,
+      "432 hz tuning": 1,
+      "528 hz frequency": 1,
+      "pentatonic scales": 1,
+      "sacred geometry": 1,
+      "temperament systems": 1,
+      "giza plateau": 1,
+      "musical archaeology": 1,
+      "quartertones": 1,
+      "pyramids": 1,
+      "24 notes": 1,
+      "ancient geometry": 1,
+      "geometric spirals": 1,
+      "right triangle mathematics": 1,
+      "natural pattern formation": 1,
+      "hurricane categorization": 1,
+      "galactic spiral arms": 1,
+      "golden ratio alternatives": 1,
+      "polygonal geometry": 1,
+      "mathematical modeling of nature": 1,
+      "fractal structures": 1,
+      "harmonic ratios": 1,
+      "spirals": 1,
+      "fractals": 1,
+      "right triangles": 1,
+      "nature patterns": 1,
+      "rhythm": 1,
+      "tempo": 1,
+      "biological rhythms": 1,
+      "evolutionary musicology": 1,
+      "communication": 1,
+      "behavioral tempo": 1,
+      "primate behavior": 1,
+      "movement frequency": 1
+    },
+    "parameterTypeFrequency": {
+      "tuningsystem": 15,
+      "harmonicprofile": 7,
+      "frequency": 5,
+      "tempo": 2
+    },
+    "evidenceDistribution": {
+      "peer_reviewed": 16,
+      "speculative": 6,
+      "anecdotal": 6,
+      "personal": 1,
+      "preprint": 1
+    },
+    "sourceTypeDistribution": {
+      "url": 3,
+      "rss": 2,
+      "pdf": 2
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 4,
+    "priorSourceIds": 14,
+    "priorTopicTokens": 169,
+    "priorVariablePhrases": 3,
+    "priorTitlePhrases": 6
+  }
+}
