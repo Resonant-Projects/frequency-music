@@ -10,7 +10,7 @@ import { createGroq } from "@ai-sdk/groq";
 // ============================================================================
 
 // Default model - can be overridden per-extraction
-const DEFAULT_MODEL = "anthropic/claude-sonnet-4";
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
 
 // Available models for different use cases
 export const MODELS = {
@@ -19,8 +19,8 @@ export const MODELS = {
   kimi: "groq/moonshotai/kimi-k2-instruct",
 
   // === OpenRouter (model variety) ===
-  default: "anthropic/claude-sonnet-4",
-  quality: "anthropic/claude-sonnet-4",
+  default: "anthropic/claude-sonnet-4-6",
+  quality: "anthropic/claude-sonnet-4-6",
   haiku: "anthropic/claude-3-5-haiku-20241022",
   gemini: "google/gemini-2.5-flash",
   gpt4: "openai/gpt-4o",

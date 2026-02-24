@@ -180,7 +180,7 @@ export const generate = action({
     if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
 
     const openrouter = createOpenRouter({ apiKey: openRouterKey });
-    const modelId = args.model || "anthropic/claude-sonnet-4";
+    const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
     const result = await generateText({
       model: openrouter(modelId),
