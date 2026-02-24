@@ -10,6 +10,15 @@ crons.interval(
   internal.ingest.pollAllFeedsInternal,
 );
 
+// Extract & analyze: run batch extraction every 8 hours (3 sources per run)
+// Uses @convex-dev/workflow so each extraction step has its own timeout + retries
+crons.interval(
+  "batch-extract",
+  { hours: 8 },
+  api.workflows.startBatchExtraction,
+  { limit: 3 },
+);
+
 // Generate a weekly turn/brief every Friday.
 crons.weekly(
   "generate-weekly-turn",
