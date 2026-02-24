@@ -14,16 +14,18 @@ const DEFAULT_MODEL = "anthropic/claude-sonnet-4";
 
 // Available models for different use cases
 export const MODELS = {
-  // === GROQ (blazing fast, cheap) ===
-  fast: "groq/llama-3.3-70b-versatile",
+  // === GROQ (fast, cheap) ===
+  fast: "groq/moonshotai/kimi-k2-instruct",
   kimi: "groq/moonshotai/kimi-k2-instruct",
 
   // === OpenRouter (model variety) ===
   default: "anthropic/claude-sonnet-4",
   quality: "anthropic/claude-sonnet-4",
   haiku: "anthropic/claude-3-5-haiku-20241022",
-  gemini: "google/gemini-2.0-flash-001",
+  gemini: "google/gemini-2.5-flash",
   gpt4: "openai/gpt-4o",
+  deepseek: "deepseek/deepseek-chat-v3-0324",
+  grok: "x-ai/grok-3-mini-beta",
 } as const;
 
 /**
