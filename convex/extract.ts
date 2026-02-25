@@ -133,6 +133,7 @@ export const extractSource = action({
   args: {
     sourceId: v.id("sources"),
     model: v.optional(v.string()), // Override model if needed
+    force: v.optional(v.boolean()), // Re-extract even if already done
   },
   handler: async (ctx, args) => {
     // Get the source
@@ -141,8 +142,8 @@ export const extractSource = action({
       throw new Error("Source not found");
     }
 
-    // Check if already extracted
-    if (source.status === "extracted") {
+    // Check if already extracted (skip unless forced)
+    if (source.status === "extracted" && !args.force) {
       return { skipped: true, reason: "already extracted" };
     }
 
@@ -210,7 +211,7 @@ export const extractSource = action({
         api.extractions.getByInputHash,
         { inputHash },
       );
-      if (existingExtractions) {
+      if (existingExtractions && !args.force) {
         await ctx.runMutation(api.sources.updateStatus, {
           id: args.sourceId,
           status: "extracted",
