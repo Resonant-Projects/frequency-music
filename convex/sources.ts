@@ -12,6 +12,7 @@ const sourceStatusValidator = v.union(
   v.literal("extracted"),
   v.literal("triaged"),
   v.literal("review_needed"),
+  v.literal("archived"),
 );
 
 // ============================================================================
@@ -453,5 +454,45 @@ export const createFromYouTubeInput = mutation({
       transcript: args.transcript,
       tags: args.tags,
     });
+  },
+});
+
+// ============================================================================
+// ARCHIVE
+// ============================================================================
+
+/**
+ * Archive a source (mark as off-topic/irrelevant)
+ */
+export const archive = mutation({
+  args: { id: v.id("sources"), reason: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const source = await ctx.db.get(args.id);
+    if (!source) throw new ConvexError("Source not found");
+    await ctx.db.patch(args.id, {
+      status: "archived",
+      blockedDetails: args.reason || "Archived: off-topic or irrelevant",
+    });
+  },
+});
+
+/**
+ * Bulk archive sources by ID
+ */
+export const bulkArchive = mutation({
+  args: { ids: v.array(v.id("sources")), reason: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    let archived = 0;
+    for (const id of args.ids) {
+      const source = await ctx.db.get(id);
+      if (source) {
+        await ctx.db.patch(id, {
+          status: "archived",
+          blockedDetails: args.reason || "Archived: off-topic or irrelevant",
+        });
+        archived++;
+      }
+    }
+    return { archived };
   },
 });
