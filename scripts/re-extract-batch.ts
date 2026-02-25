@@ -17,10 +17,13 @@ async function main() {
   // Read the summary file
   const summary = JSON.parse(readFileSync("/tmp/ext-summary.json", "utf-8"));
 
-  // Get source IDs that need re-extraction (prioritize zero claims/params)
-  const needsWork = summary
-    .filter((e: any) => e.claims === 0 || e.params === 0)
-    .slice(offset, offset + limit);
+  // If SOURCE_IDS env var is set, use those directly
+  const sourceIds = process.env.SOURCE_IDS?.split(",") || [];
+  const needsWork = sourceIds.length > 0
+    ? sourceIds.map(sid => summary.find((e: any) => e.sourceId === sid)).filter(Boolean)
+    : summary
+        .filter((e: any) => e.claims === 0 || e.params === 0)
+        .slice(offset, offset + limit);
 
   console.log(`Re-extracting ${needsWork.length} sources (offset=${offset}, limit=${limit})`);
   console.log(`Total needing work: ${summary.filter((e: any) => e.claims === 0 || e.params === 0).length}`);
