@@ -1,0 +1,119 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Frequency-research vs Topic Research Controlled Comparison",
+    "question": "How does tuning strategy (72-EDO vs 19-EDO vs 31-EDO) influence perceived consonance, roughness, and continuity in a controlled harmonic micro-study?",
+    "hypothesis": "If we render one identical arrangement with tuning strategy (72-EDO vs 19-EDO vs 31-EDO) while holding all other musical factors fixed, then listener ratings will show a consistent ordering in consonance and roughness between versions, because interval-ratio alignment and temperament error distribution change partial overlap and beating behavior.",
+    "rationaleMd": "Selected sources converge on ratio-based and temperament-based explanations for consonance and roughness [S1, S2, S6].\n\nThe context includes explicit comma/temperament and interval evidence that supports a controlled comparison where only the tuning variable changes [S1, S2, S6, S7, S3, S8].\n\nFalsification criterion: if blinded ratings show no stable ordering across versions, or if roughness notes fail to cluster by version, the hypothesis is not supported.",
+    "sourceIds": [
+      "jx768nb85rqnjn4mcwmrmwt3b181ecsd",
+      "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "jx73jkcmkw783f8t80379s0h4d81cf22",
+      "jx7cg78xqetbhwr3ehj674a7b981fp39",
+      "jx73rp1gmsqgsf7yvhb08mfmqn81e8v5"
+    ],
+    "concepts": [
+      "frequency-research",
+      "topic research",
+      "tuning system",
+      "frequency",
+      "harmonic profile",
+      "chord progression"
+    ]
+  },
+  "recipe": {
+    "title": "Frequency-research Comparison Micro-Study",
+    "bodyMd": "## Goal\nEvaluate tuning strategy (72-EDO vs 19-EDO vs 31-EDO) under controlled musical conditions using a blinded comparison design.\n\n## Shared Arrangement\n- Tempo: 82 BPM\n- Meter: 4/4\n- Length: 24-32 bars\n- Keep MIDI notes, sound sources, automation, and mix balance identical across versions.\n\n## Variable Under Test\n- Change only: tuning strategy (72-EDO vs 19-EDO vs 31-EDO)\n- Keep all non-target variables fixed.\n\n## Evaluation\n- Blind-label exports and rate: consonance, roughness/beating, and continuity.\n- Annotate bar/chord locations where roughness is strongest.\n\nEvidence basis: [S1, S2, S6, S7, S3, S8].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "82 BPM",
+        "details": {
+          "bpm": 82
+        }
+      },
+      {
+        "type": "form",
+        "value": "24-32 bar controlled comparison",
+        "details": {
+          "barsMin": 24,
+          "barsMax": 32,
+          "meter": "4/4"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Sustained triadic texture with fixed voicing",
+        "details": {
+          "objective": "maximize audibility of roughness differences"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "72-EDO",
+        "details": {
+          "role": "comparison arm A"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "19-EDO",
+        "details": {
+          "role": "comparison arm B"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "31-EDO",
+        "details": {
+          "role": "comparison arm C"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one master MIDI arrangement template.",
+      "Freeze instrument and FX chain before rendering comparison arms.",
+      "Render Version A using 72-EDO.",
+      "Render Version B using 19-EDO.",
+      "Render Version C using 31-EDO.",
+      "Match loudness across exports to remove gain bias.",
+      "Rename exports to blind labels (e.g., X/Y/Z).",
+      "Rate each version for consonance, roughness, and continuity.",
+      "Capture bar-level notes for perceptual spikes.",
+      "Summarize whether observed ordering supports or contradicts hypothesis."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 82,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1",
+        "musician_peer_2"
+      ],
+      "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
+      "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
+      "whatVaries": [
+        "tuning strategy (72-EDO vs 19-EDO vs 31-EDO)"
+      ],
+      "whatStaysConstant": [
+        "MIDI notes",
+        "arrangement length",
+        "tempo",
+        "sound sources",
+        "automation",
+        "mix balance",
+        "export settings"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S6",
+    "S7",
+    "S3",
+    "S8"
+  ],
+  "notes": "Auto-synthesized from context pack using deterministic rule templates. Review before studio execution."
+}

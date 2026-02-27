@@ -50,6 +50,10 @@ const GENERIC_TOPIC_TOKENS = new Set([
   "notion",
   "article",
   "articles",
+  "full article",
+  "web clip",
+  "frequency research",
+  "frequency-research",
   "research",
   "music",
 ]);
@@ -67,6 +71,19 @@ const STRONG_DOMAIN_KEYWORDS = [
   "consonance",
   "dissonance",
   "daw",
+  "healing",
+  "wellbeing",
+  "well being",
+  "physiology",
+  "nervous system",
+  "autonomic",
+  "stress",
+  "recovery",
+  "somatic",
+  "body",
+  "pain",
+  "sleep",
+  "hrv",
 ];
 
 const WEAK_DOMAIN_KEYWORDS = [
@@ -78,7 +95,22 @@ const WEAK_DOMAIN_KEYWORDS = [
   "resonance",
   "rhythm",
   "melody",
+  "perception",
+  "emotion",
+  "attention",
+  "calm",
+  "relaxation",
+  "breath",
+  "meditation",
 ];
+
+const SELECTION_WEIGHTS = {
+  base: 0.3,
+  novelty: 0.18,
+  crossRunNovelty: 0.22,
+  domainRelevance: 0.15,
+  topicalBalance: 0.15,
+} as const;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -140,6 +172,7 @@ interface CandidateExtraction {
   sourceReusePenalty: number;
   topicReusePenalty: number;
   domainRelevanceScore: number;
+  topicalBalanceScore: number;
   combinedScore: number;
 }
 
@@ -167,6 +200,7 @@ export interface SelectedExtractionV1 {
     sourceReusePenalty: number;
     topicReusePenalty: number;
     domainRelevance: number;
+    topicalBalance: number;
     combined: number;
     peerReviewedClaims: number;
     distinctParameterTypes: number;
@@ -185,6 +219,8 @@ export interface SynthesisContextV1 {
     minParams: number;
     out: string;
     noveltyWindow: number;
+    maxReusedSources: number;
+    requireTuningSignal: boolean;
   };
   totals: {
     fetchedExtractions: number;
@@ -251,6 +287,8 @@ interface CollectOptions {
   minParams: number;
   out: string;
   noveltyWindow: number;
+  maxReusedSources: number;
+  requireTuningSignal: boolean;
 }
 
 interface PublishOptions {
@@ -287,9 +325,9 @@ interface NoveltyHistory {
 function usage(): string {
   return [
     "Usage:",
-    "  bun scripts/synthesize-from-convex.ts [collect] [--target N] [--fetch N] [--min-claims N] [--min-params N] [--novelty-window N] [--out PATH]",
+    "  bun scripts/synthesize-from-convex.ts [collect] [--target N] [--fetch N] [--min-claims N] [--min-params N] [--novelty-window N] [--max-reused-sources N] [--allow-broad-domain] [--out PATH]",
     "  bun scripts/synthesize-from-convex.ts publish --input PATH_TO_FINAL_OUTPUT_JSON",
-    "  bun scripts/synthesize-from-convex.ts full [--target N] [--fetch N] [--min-claims N] [--min-params N] [--novelty-window N] [--out PATH] [--output-name NAME]",
+    "  bun scripts/synthesize-from-convex.ts full [--target N] [--fetch N] [--min-claims N] [--min-params N] [--novelty-window N] [--max-reused-sources N] [--allow-broad-domain] [--out PATH] [--output-name NAME]",
     "",
     "Modes:",
     "  collect (default)  Pull, rank, diversify, and emit synthesis context artifacts.",
@@ -366,6 +404,19 @@ function isMeaningfulTopicToken(value: string): boolean {
   return true;
 }
 
+function isTuningCentricLabel(value: string): boolean {
+  const normalized = normalizePhrase(value);
+  return (
+    normalized.includes("tuning") ||
+    normalized.includes("intonation") ||
+    normalized.includes("temperament") ||
+    normalized.includes("just intonation") ||
+    normalized.includes("equal temperament") ||
+    normalized.includes("meantone") ||
+    normalized.includes("comma")
+  );
+}
+
 function computeDomainRelevance(candidate: {
   source: SourceLike;
   extraction: ExtractionLike;
@@ -392,6 +443,93 @@ function computeDomainRelevance(candidate: {
 
   const score = Math.min(1, strongMatches * 0.22 + weakMatches * 0.1);
   return score;
+}
+
+function isLikelyTestArtifact(candidate: {
+  source: SourceLike;
+  extraction: ExtractionLike;
+}): boolean {
+  const combined = normalizePhrase(
+    [
+      candidate.source.title ?? "",
+      candidate.source.canonicalUrl ?? "",
+      candidate.extraction.summary ?? "",
+      ...(candidate.source.tags ?? []),
+      ...(candidate.extraction.topics ?? []),
+    ].join(" "),
+  );
+
+  return (
+    /\be2e\b/.test(combined) ||
+    combined.includes("test payload") ||
+    combined.includes("placeholder") ||
+    combined.includes("system generated metadata")
+  );
+}
+
+function hasTuningSignal(candidate: {
+  extraction: ExtractionLike;
+  topicTokens: string[];
+}): boolean {
+  const paramSignal = candidate.extraction.compositionParameters.some((param) => {
+    const normalizedType = normalizePhrase(param.type);
+    const normalizedValue = normalizePhrase(param.value);
+    return isTuningCentricLabel(normalizedType) || isTuningCentricLabel(normalizedValue);
+  });
+  if (paramSignal) return true;
+
+  const topicSignal = candidate.topicTokens.some((topic) => {
+    return isTuningCentricLabel(topic);
+  });
+
+  return topicSignal;
+}
+
+function buildTopicFrequency(candidates: CandidateExtraction[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const candidate of candidates) {
+    for (const token of candidate.topicTokenSet) {
+      counts.set(token, (counts.get(token) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+function computeTopicalBalanceScore(input: {
+  candidate: CandidateExtraction;
+  globalTopicCounts: Map<string, number>;
+  selectedTopicCounts: Map<string, number>;
+  selectedCount: number;
+  candidatePoolSize: number;
+}): number {
+  const { candidate, globalTopicCounts, selectedTopicCounts, selectedCount, candidatePoolSize } =
+    input;
+  const tokens = [...candidate.topicTokenSet].filter((token) =>
+    isMeaningfulTopicToken(token),
+  );
+  if (tokens.length === 0) return 0.25;
+
+  const rarityScores = tokens.map((token) => {
+    const globalFreq = globalTopicCounts.get(token) ?? 1;
+    const rarity =
+      Math.log((candidatePoolSize + 1) / globalFreq) / Math.log(candidatePoolSize + 1);
+    return Math.max(0, Math.min(1, rarity));
+  });
+  const globalRarity =
+    rarityScores.reduce((sum, value) => sum + value, 0) / Math.max(1, rarityScores.length);
+
+  if (selectedCount === 0) return globalRarity;
+
+  const unseenShare =
+    tokens.filter((token) => !selectedTopicCounts.has(token)).length / tokens.length;
+  const saturationPenalty =
+    tokens.reduce((sum, token) => {
+      const selectedFreq = selectedTopicCounts.get(token) ?? 0;
+      return sum + selectedFreq / selectedCount;
+    }, 0) / tokens.length;
+  const freshness = 1 - Math.max(0, Math.min(1, saturationPenalty));
+
+  return 0.45 * globalRarity + 0.35 * unseenShare + 0.2 * freshness;
 }
 
 function emptyNoveltyHistory(): NoveltyHistory {
@@ -691,6 +829,8 @@ function buildContextMarkdown(context: SynthesisContextV1): string {
   lines.push(`- Minimum claims: ${context.params.minClaims}`);
   lines.push(`- Minimum composition parameters: ${context.params.minParams}`);
   lines.push(`- Cross-run novelty window: ${context.params.noveltyWindow}`);
+  lines.push(`- Max reused sources from novelty window: ${context.params.maxReusedSources}`);
+  lines.push(`- Require tuning/intonation signal: ${context.params.requireTuningSignal}`);
   lines.push("");
   lines.push("## Novelty History");
   lines.push("");
@@ -736,7 +876,7 @@ function buildContextMarkdown(context: SynthesisContextV1): string {
     if (item.sourceUrl) lines.push(`- URL: ${item.sourceUrl}`);
     if (item.sourceAuthor) lines.push(`- Author: ${item.sourceAuthor}`);
     lines.push(
-      `- Scores: base=${item.scores.base.toFixed(2)}, normalized=${item.scores.normalizedBase.toFixed(3)}, intraNovelty=${item.scores.novelty.toFixed(3)}, crossRunNovelty=${item.scores.crossRunNovelty.toFixed(3)}, combined=${item.scores.combined.toFixed(3)}`,
+      `- Scores: base=${item.scores.base.toFixed(2)}, normalized=${item.scores.normalizedBase.toFixed(3)}, intraNovelty=${item.scores.novelty.toFixed(3)}, crossRunNovelty=${item.scores.crossRunNovelty.toFixed(3)}, topicalBalance=${item.scores.topicalBalance.toFixed(3)}, combined=${item.scores.combined.toFixed(3)}`,
     );
     lines.push(`- Domain relevance: ${item.scores.domainRelevance.toFixed(3)}`);
     lines.push(
@@ -1102,6 +1242,7 @@ async function collectMode(
         sourceReusePenalty: 0,
         topicReusePenalty: 0,
         domainRelevanceScore,
+        topicalBalanceScore: 0,
         combinedScore: 0,
       };
     })
@@ -1113,7 +1254,16 @@ async function collectMode(
       USABLE_STATUSES.has(sourceStatus) &&
       candidate.extraction.claims.length >= options.minClaims &&
       candidate.extraction.compositionParameters.length >= options.minParams &&
-      candidate.domainRelevanceScore >= 0.22
+      candidate.domainRelevanceScore >= 0.22 &&
+      !isLikelyTestArtifact({
+        source: candidate.source,
+        extraction: candidate.extraction,
+      }) &&
+      (!options.requireTuningSignal ||
+        hasTuningSignal({
+          extraction: candidate.extraction,
+          topicTokens: candidate.topicTokens,
+        }))
     );
   });
 
@@ -1123,6 +1273,7 @@ async function collectMode(
     );
   }
 
+  const globalTopicCounts = buildTopicFrequency(usableCandidates);
   const baseScores = usableCandidates.map((candidate) => candidate.baseScore);
   const minBase = Math.min(...baseScores);
   const maxBase = Math.max(...baseScores);
@@ -1138,6 +1289,8 @@ async function collectMode(
   const selected: CandidateExtraction[] = [];
 
   while (selected.length < options.target && remaining.length > 0) {
+    const reusedAlready = selected.filter((item) => item.sourceReusePenalty >= 1)
+      .length;
     const selectedSourceIds = new Set(selected.map((item) => item.source._id));
     const distinctSourcePool = remaining.filter(
       (candidate) => !selectedSourceIds.has(candidate.source._id),
@@ -1145,6 +1298,12 @@ async function collectMode(
     const pool = distinctSourcePool.length > 0 ? distinctSourcePool : remaining;
 
     const selectedTopicSets = selected.map((item) => item.topicTokenSet);
+    const selectedTopicCounts = new Map<string, number>();
+    for (const topicSet of selectedTopicSets) {
+      for (const token of topicSet) {
+        selectedTopicCounts.set(token, (selectedTopicCounts.get(token) ?? 0) + 1);
+      }
+    }
     for (const candidate of pool) {
       const intraRunNovelty =
         selectedTopicSets.length === 0
@@ -1176,15 +1335,33 @@ async function collectMode(
       candidate.crossRunNoveltyScore = crossRunNovelty;
       candidate.sourceReusePenalty = sourceReusePenalty;
       candidate.topicReusePenalty = topicReusePenalty;
+      candidate.topicalBalanceScore = computeTopicalBalanceScore({
+        candidate,
+        globalTopicCounts,
+        selectedTopicCounts,
+        selectedCount: selected.length,
+        candidatePoolSize: usableCandidates.length,
+      });
       candidate.combinedScore =
-        0.35 * candidate.normalizedBaseScore +
-        0.2 * candidate.noveltyScore +
-        0.25 * candidate.crossRunNoveltyScore +
-        0.2 * candidate.domainRelevanceScore;
+        SELECTION_WEIGHTS.base * candidate.normalizedBaseScore +
+        SELECTION_WEIGHTS.novelty * candidate.noveltyScore +
+        SELECTION_WEIGHTS.crossRunNovelty * candidate.crossRunNoveltyScore +
+        SELECTION_WEIGHTS.domainRelevance * candidate.domainRelevanceScore +
+        SELECTION_WEIGHTS.topicalBalance * candidate.topicalBalanceScore;
     }
 
-    pool.sort(compareCandidates);
-    const chosen = pool[0];
+    let candidatePool = [...pool];
+    if (reusedAlready >= options.maxReusedSources) {
+      const freshOnly = candidatePool.filter(
+        (candidate) => candidate.sourceReusePenalty < 1,
+      );
+      if (freshOnly.length > 0) {
+        candidatePool = freshOnly;
+      }
+    }
+
+    candidatePool.sort(compareCandidates);
+    const chosen = candidatePool[0];
     if (!chosen) break;
     selected.push(chosen);
 
@@ -1210,18 +1387,19 @@ async function collectMode(
     claims: row.extraction.claims,
     compositionParameters: row.extraction.compositionParameters,
     openQuestions: row.extraction.openQuestions ?? [],
-    scores: {
-      base: row.baseScore,
-      normalizedBase: row.normalizedBaseScore,
-      novelty: row.noveltyScore,
-      crossRunNovelty: row.crossRunNoveltyScore,
-      sourceReusePenalty: row.sourceReusePenalty,
-      topicReusePenalty: row.topicReusePenalty,
-      domainRelevance: row.domainRelevanceScore,
-      combined: row.combinedScore,
-      peerReviewedClaims: row.peerReviewedClaims,
-      distinctParameterTypes: row.distinctParameterTypes,
-    },
+      scores: {
+        base: row.baseScore,
+        normalizedBase: row.normalizedBaseScore,
+        novelty: row.noveltyScore,
+        crossRunNovelty: row.crossRunNoveltyScore,
+        sourceReusePenalty: row.sourceReusePenalty,
+        topicReusePenalty: row.topicReusePenalty,
+        domainRelevance: row.domainRelevanceScore,
+        topicalBalance: row.topicalBalanceScore,
+        combined: row.combinedScore,
+        peerReviewedClaims: row.peerReviewedClaims,
+        distinctParameterTypes: row.distinctParameterTypes,
+      },
   }));
 
   const topicFrequency = new Map<string, number>();
@@ -1439,6 +1617,18 @@ function humanizeParamType(value: string): string {
   return aliases[normalized] ?? normalized;
 }
 
+function canonicalizeParamTypeLabel(value: string): string {
+  const normalized = normalizePhrase(value);
+  const aliases: Record<string, string> = {
+    "tuning system": "tuningSystem",
+    "harmonic profile": "harmonicProfile",
+    "root note": "rootNote",
+    "chord progression": "chordProgression",
+    "synth waveform": "synthWaveform",
+  };
+  return aliases[normalized] ?? value.replace(/\s+/g, "");
+}
+
 function firstNumericInText(value: string): number | null {
   const match = value.match(/(\d+(?:\.\d+)?)/);
   if (!match) return null;
@@ -1473,14 +1663,19 @@ function buildAutoFinalOutput(
   const sourceIds = unique(sourceWindow.map((row) => row.sourceId));
   const citations = sourceWindow.map((row) => row.citation);
 
-  const topTopics = topMeaningfulTopics(context.aggregate.topicFrequency, 3);
-  const topTopicA = topTopics[0]?.key ?? "tuning system";
-  const topTopicB = topTopics[1]?.key ?? "consonance";
-  const topTopicC = topTopics[2]?.key ?? "harmonic profile";
+  const topTopics = topMeaningfulTopics(context.aggregate.topicFrequency, 6);
+  const nonTuningTopics = topTopics.filter((row) => !isTuningCentricLabel(row.key));
+  const topTopicA = nonTuningTopics[0]?.key ?? topTopics[0]?.key ?? "harmonic profile";
+  const topTopicB = nonTuningTopics[1]?.key ?? topTopics[1]?.key ?? "music perception";
+  const topTopicC = nonTuningTopics[2]?.key ?? topTopics[2]?.key ?? "voice leading";
 
-  const topParamTypes = topEntries(context.aggregate.parameterTypeFrequency, 4).map(
+  const topParamTypesRaw = topEntries(context.aggregate.parameterTypeFrequency, 6).map(
     (row) => humanizeParamType(row.key),
   );
+  const nonTuningParamTypes = topParamTypesRaw.filter(
+    (type) => !isTuningCentricLabel(type),
+  );
+  const topParamTypes = unique([...nonTuningParamTypes, ...topParamTypesRaw]).slice(0, 6);
 
   const tuningValues = unique(
     sourceWindow
@@ -1489,28 +1684,79 @@ function buildAutoFinalOutput(
       .map((param) => param.value),
   ).slice(0, 3);
 
+  const topNonTuningParamType = nonTuningParamTypes[0];
+  const topNonTuningValues = topNonTuningParamType
+    ? unique(
+        sourceWindow
+          .flatMap((row) => row.compositionParameters)
+          .filter(
+            (param) => humanizeParamType(param.type) === topNonTuningParamType,
+          )
+          .map((param) => param.value),
+      ).slice(0, 3)
+    : [];
+
   const extractedTempo =
     sourceWindow
       .flatMap((row) => row.compositionParameters)
       .find((param) => param.type.toLowerCase() === "tempo")?.value ?? "82 BPM";
   const tempoBpm = firstNumericInText(extractedTempo) ?? 82;
 
-  const primaryVariable =
-    tuningValues.length >= 2
+  const primaryVariable = topNonTuningParamType
+    ? `${topNonTuningParamType} strategy`
+    : tuningValues.length >= 2
       ? `tuning strategy (${tuningValues.join(" vs ")})`
-      : `${topParamTypes[0] ?? "tuning system"} variation`;
+      : `${topParamTypes[0] ?? "harmonic profile"} variation`;
 
-  const variableCandidates = [
-    primaryVariable,
-    `${topParamTypes[0] ?? "parameter"} strategy across fixed arrangement`,
-    `${topParamTypes[1] ?? topParamTypes[0] ?? "parameter"} emphasis variation`,
-    `contrast between ${topTopicA} and ${topTopicB}`,
-  ];
+  const variableCandidates = unique(
+    [
+      primaryVariable,
+      ...(topNonTuningParamType
+        ? [
+            `${topNonTuningParamType} variation across fixed arrangement`,
+            `interaction between ${topTopicA} and ${topNonTuningParamType}`,
+            ...(tuningValues.length > 0
+              ? [`${topNonTuningParamType} comparison under fixed tuning control`]
+              : []),
+          ]
+        : []),
+      ...(nonTuningTopics.length >= 2
+        ? [`contrast between ${topTopicA} and ${topTopicB}`]
+        : []),
+      ...(tuningValues.length >= 2
+        ? [
+            `tuning strategy (${tuningValues.slice(0, 2).join(" vs ")})`,
+            `temperament mapping contrast (${tuningValues.slice(0, 2).join(" vs ")})`,
+          ]
+        : []),
+    ].filter((value) => normalizePhrase(value).length > 0),
+  );
   const chosenVariable = pickNovelPhrase(
     variableCandidates,
     noveltyHistory.variablePhrases,
     primaryVariable,
   );
+  const tuningIsPrimaryVariable = isTuningCentricLabel(chosenVariable);
+
+  const healingSignals = [topTopicA, topTopicB, topTopicC, ...topParamTypes].some(
+    (value) => {
+      const normalized = normalizePhrase(value);
+      return (
+        normalized.includes("healing") ||
+        normalized.includes("wellbeing") ||
+        normalized.includes("well being") ||
+        normalized.includes("stress") ||
+        normalized.includes("physiology") ||
+        normalized.includes("body") ||
+        normalized.includes("somatic") ||
+        normalized.includes("pain") ||
+        normalized.includes("sleep")
+      );
+    },
+  );
+  const outcomePhrase = healingSignals
+    ? "perceived calm, bodily ease, and continuity"
+    : "perceived consonance, roughness, and continuity";
 
   const titleFallback = `${toTitleCase(topTopicA)} vs ${toTitleCase(topTopicB)} Controlled Comparison`;
   const titleCandidates = [
@@ -1524,21 +1770,39 @@ function buildAutoFinalOutput(
     noveltyHistory.titlePhrases,
     titleFallback,
   );
-  const questionWithNovelty = `How does ${chosenVariable} influence perceived consonance, roughness, and continuity in a controlled harmonic micro-study?`;
-  const hypothesisText = `If we render one identical arrangement with ${chosenVariable} while holding all other musical factors fixed, then listener ratings will show a consistent ordering in consonance and roughness between versions, because interval-ratio alignment and temperament error distribution change partial overlap and beating behavior.`;
+  const questionWithNovelty = `How does ${chosenVariable} influence ${outcomePhrase} in a controlled harmonic micro-study?`;
+  const hypothesisText = tuningIsPrimaryVariable
+    ? `If we render one identical arrangement with ${chosenVariable} while holding all other musical factors fixed, then listener ratings will show a consistent ordering in consonance and roughness between versions, because interval-ratio alignment and temperament error distribution change partial overlap and beating behavior.`
+    : `If we render one identical arrangement with ${chosenVariable} while holding all other musical factors fixed, then listener ratings will show a consistent ordering in ${outcomePhrase} between versions, because this variable changes tension-release contour and perceptual expectation without introducing mix or instrumentation confounds.`;
 
   const rationaleMd = [
-    `Selected sources converge on ratio-based and temperament-based explanations for consonance and roughness [${citations.slice(0, 3).join(", ")}].`,
-    `The context includes explicit comma/temperament and interval evidence that supports a controlled comparison where only the tuning variable changes [${citations.join(", ")}].`,
-    "Falsification criterion: if blinded ratings show no stable ordering across versions, or if roughness notes fail to cluster by version, the hypothesis is not supported.",
+    `Selected sources span acoustic mechanisms (ratio, periodicity, temperament) and structural/cognitive mechanisms (harmonic topology, pitch-space organization, historical usage), allowing non-tuning and tuning variables to be compared under one protocol [${citations.slice(0, 3).join(", ")}].`,
+    tuningIsPrimaryVariable
+      ? `The selected evidence supports a tuning-led comparison while still preserving broader contextual controls from harmony and perception research [${citations.join(", ")}].`
+      : `The selected evidence supports manipulating ${chosenVariable} while keeping tuning fixed as a control, so broader musical and perceptual hypotheses can be tested without collapsing to temperament-only framing [${citations.join(", ")}].`,
+    `Falsification criterion: if blinded ratings show no stable ordering across versions in ${outcomePhrase}, or if annotations fail to cluster by condition, the hypothesis is not supported.`,
   ].join("\n\n");
 
-  const tuningChecklist =
-    tuningValues.length > 0
+  const variableChecklist = tuningIsPrimaryVariable
+    ? tuningValues.length > 0
       ? tuningValues
           .map((value, idx) => `Render Version ${String.fromCharCode(65 + idx)} using ${value}.`)
           .slice(0, 3)
-      : ["Render at least two versions with distinct tuning/parameter mappings."];
+      : ["Render at least two versions with distinct tuning/parameter mappings."]
+    : [
+        topNonTuningValues[0]
+          ? `Render Version A with ${topNonTuningParamType}: ${topNonTuningValues[0]}.`
+          : `Render Version A with baseline ${chosenVariable}.`,
+        topNonTuningValues[1]
+          ? `Render Version B with ${topNonTuningParamType}: ${topNonTuningValues[1]}.`
+          : `Render Version B with alternate ${chosenVariable}.`,
+        ...(topNonTuningValues[2]
+          ? [`Render Version C with ${topNonTuningParamType}: ${topNonTuningValues[2]}.`]
+          : []),
+        ...(tuningValues[0]
+          ? [`Keep tuning fixed at ${tuningValues[0]} across all versions.`]
+          : []),
+      ];
 
   const recipeBody = [
     "## Goal",
@@ -1555,7 +1819,7 @@ function buildAutoFinalOutput(
     "- Keep all non-target variables fixed.",
     "",
     "## Evaluation",
-    "- Blind-label exports and rate: consonance, roughness/beating, and continuity.",
+    `- Blind-label exports and rate: ${outcomePhrase}.`,
     "- Annotate bar/chord locations where roughness is strongest.",
     "",
     `Evidence basis: [${citations.join(", ")}].`,
@@ -1577,35 +1841,79 @@ function buildAutoFinalOutput(
       value: "Sustained triadic texture with fixed voicing",
       details: { objective: "maximize audibility of roughness differences" },
     },
-    {
+  ];
+
+  if (tuningIsPrimaryVariable) {
+    parameters.push({
       type: "tuningSystem",
       value: tuningValues[0] ?? "Version A baseline tuning",
       details: { role: "comparison arm A" },
-    },
-    {
+    });
+    parameters.push({
       type: "tuningSystem",
       value: tuningValues[1] ?? "Version B alternate tuning",
       details: { role: "comparison arm B" },
-    },
-  ];
-
-  if (tuningValues[2]) {
-    parameters.push({
-      type: "tuningSystem",
-      value: tuningValues[2],
-      details: { role: "comparison arm C" },
     });
+    if (tuningValues[2]) {
+      parameters.push({
+        type: "tuningSystem",
+        value: tuningValues[2],
+        details: { role: "comparison arm C" },
+      });
+    }
+  } else {
+    const variableParamType = canonicalizeParamTypeLabel(
+      topNonTuningParamType ?? "harmonic profile",
+    );
+    if (topNonTuningValues[0]) {
+      parameters.push({
+        type: variableParamType,
+        value: topNonTuningValues[0],
+        details: { role: "comparison arm A" },
+      });
+    }
+    if (topNonTuningValues[1]) {
+      parameters.push({
+        type: variableParamType,
+        value: topNonTuningValues[1],
+        details: { role: "comparison arm B" },
+      });
+    }
+    if (topNonTuningValues[2]) {
+      parameters.push({
+        type: variableParamType,
+        value: topNonTuningValues[2],
+        details: { role: "comparison arm C" },
+      });
+    }
+    if (tuningValues[0]) {
+      parameters.push({
+        type: "tuningSystem",
+        value: tuningValues[0],
+        details: { role: "fixed control" },
+      });
+    }
   }
 
   const dawChecklist = [
     "Create one master MIDI arrangement template.",
     "Freeze instrument and FX chain before rendering comparison arms.",
-    ...tuningChecklist,
+    ...variableChecklist,
     "Match loudness across exports to remove gain bias.",
     "Rename exports to blind labels (e.g., X/Y/Z).",
-    "Rate each version for consonance, roughness, and continuity.",
+    `Rate each version for ${outcomePhrase}.`,
     "Capture bar-level notes for perceptual spikes.",
     "Summarize whether observed ordering supports or contradicts hypothesis.",
+  ];
+  const whatStaysConstant = [
+    "MIDI notes",
+    "arrangement length",
+    "tempo",
+    "sound sources",
+    "automation",
+    "mix balance",
+    "export settings",
+    ...(tuningIsPrimaryVariable ? [] : ["tuning system"]),
   ];
 
   return {
@@ -1631,15 +1939,7 @@ function buildAutoFinalOutput(
           "Quiet room; repeat on headphones and monitors at fixed playback level.",
         listeningMethod: "Blinded multi-version comparison with consistent rating rubric.",
         whatVaries: [chosenVariable],
-        whatStaysConstant: [
-          "MIDI notes",
-          "arrangement length",
-          "tempo",
-          "sound sources",
-          "automation",
-          "mix balance",
-          "export settings",
-        ],
+        whatStaysConstant,
       },
     },
     citations,
@@ -1708,6 +2008,8 @@ function parseCollectOptions(args: string[]): CollectOptions {
     minClaims: parseNumberFlag(args, "--min-claims", 2),
     minParams: parseNumberFlag(args, "--min-params", 1),
     noveltyWindow: parseNumberFlag(args, "--novelty-window", 6),
+    maxReusedSources: parseNumberFlag(args, "--max-reused-sources", 2),
+    requireTuningSignal: !args.includes("--allow-broad-domain"),
     out: parseStringFlag(args, "--out", "data/generated/synthesis"),
   };
 }

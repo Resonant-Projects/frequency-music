@@ -1,0 +1,1209 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-02-23T03:18:59.801Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 8,
+    "fetch": 220,
+    "minClaims": 2,
+    "minParams": 1,
+    "noveltyWindow": 12,
+    "maxReusedSources": 1,
+    "out": "data/generated/synthesis",
+    "outputName": "final-output.auto.loop2.json"
+  },
+  "totals": {
+    "fetchedExtractions": 135,
+    "withSource": 135,
+    "eligibleCandidates": 35,
+    "selected": 8
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97bn99y1e8mk8d49g10310xsn81djj6",
+      "sourceId": "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "sourceTitle": "Meantone temperament - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Meantone_temperament",
+      "extractionCreatedAt": 1771423719820,
+      "extractionSummary": "Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.",
+      "topics": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "Pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "Renaissance music",
+        "Baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards"
+      ],
+      "topicTokens": [
+        "meantone temperament",
+        "quarter-comma meantone",
+        "third-comma meantone",
+        "equal temperament",
+        "syntonic comma",
+        "pythagorean comma",
+        "wolf intervals",
+        "just intonation",
+        "frequency ratios",
+        "geometric mean",
+        "circle of fifths",
+        "renaissance music",
+        "baroque music",
+        "keyboard tuning",
+        "microtonal music",
+        "isomorphic keyboards",
+        "meantone",
+        "historical tuning",
+        "comma"
+      ],
+      "claims": [
+        {
+          "text": "Perfect fifths in just intonation have a frequency ratio of 3:2",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "rather than using perfect fifths, consisting of frequency ratios of value 3:2"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone produces just major thirds with a 5:4 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Four ascending fifths (as C G D A E) tempered by 1/4 comma (and then lowered by two octaves) produce a just major third (C E) (with ratio 5: 4)"
+            }
+          ]
+        },
+        {
+          "text": "In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "as a frequency ratio, it is the geometric mean of the major tone and the minor tone: √(10/9 × 9/8) = √(5/4) = 1.1180340"
+            }
+          ]
+        },
+        {
+          "text": "12-tone equal temperament narrows perfect fifths by about 2 cents or 1/12 of a Pythagorean comma",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "it narrows the perfect fifths by about 2 cents or 1/12 of a Pythagorean comma to give a frequency ratio of 2^(7/12):1"
+            }
+          ]
+        },
+        {
+          "text": "Meantone temperament was commonly used from early 16th century till early 18th century",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "It was commonly used from the early 16th century till the early 18th, after which twelve-tone equal temperament eventually came into general use"
+            }
+          ]
+        },
+        {
+          "text": "31-TET closely approximates quarter-comma meantone temperament",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Quarter-comma meantone can be well approximated by a division of the octave into 31 equal steps"
+            }
+          ]
+        },
+        {
+          "text": "Quarter-comma meantone creates a residual gap of 125/128 ratio or -41.06 cents between F# and Gb",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "there is a residual gap in quarter-comma meantone tuning between the last of the upper sequence of six fifths and the last of the lower sequence; e.g. between F♯ and G♭ if the starting point is chosen as C, which, adjusted for the octave, are in the ratio of 125/128 or −41.06 cents"
+            }
+          ]
+        },
+        {
+          "text": "Third-comma meantone produces just minor thirds with a 6:5 ratio",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "three descending fifths (such as A D G C) produce a just minor third (A C) of ratio 6/5"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Quarter-comma meantone",
+          "details": {
+            "tempered": "1/4 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Third-comma meantone",
+          "details": {
+            "tempered": "1/3 syntonic comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "tempered": "1/12 Pythagorean comma"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31 TET",
+          "details": {
+            "divisions": 31
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19 TET",
+          "details": {
+            "divisions": 19
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "53 TET",
+          "details": {
+            "divisions": 53
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "~264 Hz",
+          "details": {
+            "hz": 264,
+            "note": "middle C"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "5:4 major third ratio",
+          "details": {
+            "interval": "major third",
+            "ratio": "5:4"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "6:5 minor third ratio",
+          "details": {
+            "interval": "minor third",
+            "ratio": "6:5"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "3:2 perfect fifth ratio",
+          "details": {
+            "interval": "perfect fifth",
+            "ratio": "3:2"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?",
+        "What are the perceptual differences between meantone and equal temperament for modern listeners?",
+        "How do wolf intervals affect musical composition and performance practice?",
+        "What role does meantone temperament play in contemporary early music performance?",
+        "How do different meantone fractions (1/4, 1/3, 2/7 comma) affect harmonic perception and musical expression?"
+      ],
+      "scores": {
+        "base": 86,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "combined": 0.75,
+        "peerReviewedClaims": 8,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j97a2ftc7jk417rf5e2ka0mp8181dzxx",
+      "sourceId": "jx7716q9n95gmh99a2ce3d926981czcj",
+      "sourceTitle": "Low Budget Indie Film Post Production Workflow",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.production-expert.com/production-expert-1/low-budget-indie-post-workflow?utm_source=convertkit&utm_medium=email&utm_campaign=Low%20Budget%20Indie%20Film%20Post%20Production%20Workflow%20-%2016662392",
+      "sourceAuthor": "Walter Everton",
+      "extractionCreatedAt": 1771383782538,
+      "extractionSummary": "Walter Everton shares his workflow for low-budget independent film post-production audio work, covering the transition from music recording to post-production audio engineering. The article details a systematic approach including dialogue editing, music composition/editing, sound effects placement, and final mixing. Key technical aspects include proper timecode management, sync procedures, and the use of industry standards like 2-pop sync tones. The workflow emphasizes making audio sound natural and supporting the narrative through careful balance and spatial placement of audio elements.",
+      "topics": [
+        "post-production audio",
+        "film scoring",
+        "audio sync",
+        "dialogue editing",
+        "sound design",
+        "mixing workflow",
+        "timecode",
+        "foley",
+        "audio-visual narrative",
+        "Pro Tools",
+        "loudness metering",
+        "audio engineering"
+      ],
+      "topicTokens": [
+        "post-production audio",
+        "film scoring",
+        "audio sync",
+        "dialogue editing",
+        "sound design",
+        "mixing workflow",
+        "timecode",
+        "foley",
+        "audio-visual narrative",
+        "pro tools",
+        "loudness metering",
+        "audio engineering",
+        "readwise"
+      ],
+      "claims": [
+        {
+          "text": "2 pop (sync plop) is an industry-standard 1kHz tone that is one frame long used to confirm sync with picture",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "sync standard",
+              "quote": "2 pop (sync plop) is an industry-standard 1kHz tone that is one frame long. This is used in many scenarios but most importantly it is there to confirm sync with Picture through a leader. The 2 pop is placed 2s before the first frame of Picture where there should be a 1 frame visual 2 pop too."
+            }
+          ]
+        },
+        {
+          "text": "In mixing, the goal should be to make audio sound as if captured naturally in real life, avoiding elements that stick out and distract through panning or volume",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "label": "mixing philosophy",
+              "quote": "My goal in mixing is to make it sound as if we had just set up a camera and captured all of it as if it all happened in real life this way. You don't want things sticking out and distracting the listener, whether that be through panning or volume or a combination of both."
+            }
+          ]
+        },
+        {
+          "text": "Audio elements can help indicate unreality through techniques like over-the-top reverb and dramatic tonal changes",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "dream sequence technique",
+              "quote": "So to help tell the story, I added some relatively on-the-nose elements to help indicate that this wasn't real. With over the top and dramatic reverb and the mood changes in the dream from cherry to dark, the songbirds change to ravens, and the music goes from happy, fluttery and bubbly to a minor, dark, tremolo diminished chord"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "1 kHz",
+          "details": {
+            "duration": "1 frame",
+            "hz": 1000,
+            "purpose": "sync tone"
+          }
+        },
+        {
+          "type": "chordProgression",
+          "value": "tremolo diminished chord",
+          "details": {
+            "context": "dark mood transition",
+            "technique": "tremolo"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do different reverb characteristics specifically contribute to perceived reality vs unreality in audio?",
+        "What are the optimal loudness targets for different types of independent film content?",
+        "How does spatial audio placement affect narrative perception and emotional response?",
+        "What are the measurable differences in audience engagement when using 'hyper-real' vs naturalistic audio mixing approaches?"
+      ],
+      "scores": {
+        "base": 12,
+        "normalizedBase": 0.03896103896103896,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.52,
+        "combined": 0.5676363636363636,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j975j14wc44zhpa4dy9482270d81cndp",
+      "sourceId": "jx7cr7cdgkaqk5b9m0bbp390c181d3ze",
+      "sourceTitle": "Structure-Aware Piano Accompaniment via Style Planning and Dataset-Aligned Pattern Retrieval",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2602.15074",
+      "extractionCreatedAt": 1771452650748,
+      "extractionSummary": "This paper presents a structure-aware approach to automatic piano accompaniment generation that separates high-level musical planning from detailed note realization. The system uses a transformer to predict interpretable style plans based on musical structure and harmony, then retrieves and adapts human-performed patterns from a corpus. The approach addresses harmonic feasibility, voice-leading continuity, and style consistency in generating MIDI piano accompaniments from lead sheets.",
+      "topics": [
+        "piano accompaniment",
+        "symbolic music generation",
+        "harmonic analysis",
+        "voice leading",
+        "musical structure",
+        "style modeling",
+        "pattern retrieval",
+        "transformer models",
+        "MIDI generation",
+        "functional harmony",
+        "musical phrases",
+        "reharmonization"
+      ],
+      "topicTokens": [
+        "piano accompaniment",
+        "symbolic music generation",
+        "harmonic analysis",
+        "voice leading",
+        "musical structure",
+        "style modeling",
+        "pattern retrieval",
+        "transformer models",
+        "midi generation",
+        "functional harmony",
+        "musical phrases",
+        "reharmonization"
+      ],
+      "claims": [
+        {
+          "text": "Decoupling high-level planning from note-level realization improves symbolic piano accompaniment generation",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "main approach",
+              "quote": "We introduce a structure-aware approach for symbolic piano accompaniment that decouples high-level planning from note-level realization"
+            }
+          ]
+        },
+        {
+          "text": "Pattern matching can be formulated with explicit energy terms for harmonic feasibility, structural-role compatibility, voice-leading continuity, style preferences, and repetition control",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "energy formulation",
+              "quote": "We formulate retrieval as pattern matching under an explicit energy with terms for harmonic feasibility, structural-role compatibility, voice-leading continuity, style preferences, and repetition control"
+            }
+          ]
+        },
+        {
+          "text": "Transformer style-planner-guided retrieval produces diverse long-form accompaniments with strong style realization",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "experimental results",
+              "quote": "transformer style-planner-guided retrieval produces diverse long-form accompaniments with strong style realization"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "instrument",
+          "value": "piano",
+          "details": {
+            "instrument": "piano"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do the energy terms for harmonic feasibility and voice-leading continuity relate to established music theory principles?",
+        "What specific harmonic constraints are most effective for maintaining musical coherence in automated accompaniment?",
+        "How does the system's understanding of musical structure compare to human pianists' structural awareness?",
+        "What are the perceptual differences between human-composed and algorithmically-generated piano accompaniments?",
+        "How might this approach extend to other instrumental accompaniment contexts?"
+      ],
+      "scores": {
+        "base": 9,
+        "normalizedBase": 0,
+        "novelty": 1,
+        "crossRunNovelty": 0.975,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.08333333333333333,
+        "domainRelevance": 0.54,
+        "combined": 0.55175,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j970zvhfyf4bfy79dxmxthbb9981cx3s",
+      "sourceId": "jx79mghd7gctn92fj85wb3xae181cmb9",
+      "sourceTitle": "Korg Phase8 in 1 minute!",
+      "sourceType": "youtube",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.youtube.com/shorts/09l9FHhjlTU",
+      "extractionCreatedAt": 1771383084604,
+      "extractionSummary": "The Korg Phase8 is an acoustic synthesizer with eight physical resonators, each with pickups that can be played manually or sequenced. Notes are determined by the physical length of resonating portions, which can be tuned by repositioning or swapping different sized resonators. The 8-step sequencer supports complex polymeters through step skipping, and includes velocity control, envelope shaping, and modulation options.",
+      "topics": [
+        "acoustic synthesis",
+        "physical resonators",
+        "pickup systems",
+        "sequencing",
+        "polymeters",
+        "envelope control",
+        "velocity control",
+        "modulation",
+        "physical tuning methods"
+      ],
+      "topicTokens": [
+        "acoustic synthesis",
+        "physical resonators",
+        "pickup systems",
+        "sequencing",
+        "polymeters",
+        "envelope control",
+        "velocity control",
+        "modulation",
+        "physical tuning methods"
+      ],
+      "claims": [
+        {
+          "text": "Musical notes can be determined by the physical length of resonating portions in acoustic instruments",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "resonator tuning",
+              "quote": "Notes are determined by the length of the resonating portion"
+            }
+          ]
+        },
+        {
+          "text": "Physical repositioning or swapping of resonators of different sizes can be used for tuning",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "physical tuning method",
+              "quote": "you can tune it by either repositioning them or swapping them for different sizes"
+            }
+          ]
+        },
+        {
+          "text": "Skipping steps in a sequencer can create complex polymeters",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "polymeter generation",
+              "quote": "any step on any track can be set to be skipped, which allows for complex polymeters"
+            }
+          ]
+        },
+        {
+          "text": "Raw pickup signals can add character to acoustic synthesizer sounds",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "pickup signal character",
+              "quote": "This slider introduces some of the raw pickup signal and that can add a lot of character"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "instrument",
+          "value": "8-resonator acoustic synthesizer",
+          "details": {
+            "resonatorCount": 8,
+            "type": "acoustic"
+          }
+        },
+        {
+          "type": "rhythm",
+          "value": "8-step sequencer",
+          "details": {
+            "polymeterCapable": true,
+            "steps": 8
+          }
+        }
+      ],
+      "openQuestions": [
+        "What is the relationship between resonator length and fundamental frequency in this system?",
+        "How do the different modulation types affect the harmonic content of the resonators?",
+        "What frequency ranges can be achieved through resonator repositioning and swapping?",
+        "How does the raw pickup signal contribute to the harmonic spectrum compared to processed signal?"
+      ],
+      "scores": {
+        "base": 14,
+        "normalizedBase": 0.06493506493506493,
+        "novelty": 1,
+        "crossRunNovelty": 0.9666666666666667,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.1111111111111111,
+        "domainRelevance": 0.42000000000000004,
+        "combined": 0.5483939393939394,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j974dw3ecka8w26jttwk8yvwf981dfh8",
+      "sourceId": "jx716kk8w95dygtz13ak3w5dks81c2q7",
+      "sourceTitle": "Behind the bounce of Millennium Hip Hop: a conversation with Snipe Young",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://blog.native-instruments.com/snipe-young/",
+      "extractionCreatedAt": 1771452372679,
+      "extractionSummary": "This interview with producer Snipe Young discusses the distinctive Virginia Beach hip hop sound of the late 1990s/early 2000s, pioneered by Timbaland and The Neptunes. The sound is characterized by 'off-the-grid' syncopation, minimalist funk arrangements, and strategic sound selection rather than quantity. Young emphasizes that the 'boom' effect comes from making 'expensive sound choices' with minimal elements, and advocates for a 'song-first' philosophy where melody takes precedence over production complexity.",
+      "topics": [
+        "Virginia Beach hip hop sound",
+        "off-the-grid syncopation",
+        "minimalist funk",
+        "Timbaland production techniques",
+        "The Neptunes",
+        "sonic boom production style",
+        "melody-first composition philosophy",
+        "sparse arrangements",
+        "expensive sound choices",
+        "millennium hip hop",
+        "futuristic synth programming"
+      ],
+      "topicTokens": [
+        "virginia beach hip hop sound",
+        "off-the-grid syncopation",
+        "minimalist funk",
+        "timbaland production techniques",
+        "the neptunes",
+        "sonic boom production style",
+        "melody-first composition philosophy",
+        "sparse arrangements",
+        "expensive sound choices",
+        "millennium hip hop",
+        "futuristic synth programming"
+      ],
+      "claims": [
+        {
+          "text": "The Virginia Beach sound of late 1990s/early 2000s replaced lush samples with jagged, futuristic synths and 'off-the-grid' syncopation",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "quote": "Out of Virginia Beach, a new guard of producers led by Timbaland and The Neptunes replaced lush samples with jagged, futuristic synths and 'off-the-grid' syncopation that redefined the global pop landscape"
+            }
+          ]
+        },
+        {
+          "text": "The 'boom' effect in hip hop production can be achieved with minimal arrangements rather than quantity of sounds",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "The 'boom' doesn't equate to a ton of sounds; it can be accomplished with a minimal arrangement. This particular sound – especially the Timbo side – isn't about the quantity of sounds; it's about the right sounds"
+            }
+          ]
+        },
+        {
+          "text": "Melody should take precedence over other production elements in song creation",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "Nothing is more important than the song! Melody is King, and whatever strikes up the melody, you keep that going until the next leg of the song is ready to come alive"
+            }
+          ]
+        },
+        {
+          "text": "Timbaland's production technique was characterized as 'complex but simple and effective'",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "quote": "His technique was complex but simple and effective, the same as the Neptunes"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "chordProgression",
+          "value": "two-piece chord progression",
+          "details": {
+            "description": "simple two-piece progression emphasized through placement and chord choice",
+            "voices": 2
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific rhythmic patterns define 'off-the-grid' syncopation in Virginia Beach hip hop?",
+        "How do 'expensive sound choices' translate to specific technical production decisions?",
+        "What are the acoustic characteristics that create the 'organic sonic boom' effect?",
+        "How does chord placement timing affect the perceived complexity of simple progressions?",
+        "What specific synthesis techniques were used to create the 'jagged, futuristic synths' sound?"
+      ],
+      "scores": {
+        "base": 11,
+        "normalizedBase": 0.025974025974025976,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.42000000000000004,
+        "combined": 0.5430909090909091,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j9736j3j17y4ts4dgf4fya3rs181ca67",
+      "sourceId": "jx7ahk0xsd15t8whfhqhqqsdhd81d5x4",
+      "sourceTitle": "Predicting Prime Numbers",
+      "sourceType": "pdf",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://archive.org/details/predictprime",
+      "extractionCreatedAt": 1771386424234,
+      "extractionSummary": "This paper by Robert E. Grant proposes a method for predicting prime numbers using a 24-sided polygon (icositetragon) pattern. The author claims that primes (except 2 and 3) only appear in specific moduli (1, 5, 7, 11, 13, 17, 19, 23) when integers are arranged around this geometric figure. While primarily mathematical, this work relates to music theory through the use of the number 24, which corresponds to the chromatic scale's division of the octave.",
+      "topics": [
+        "prime numbers",
+        "geometric patterns",
+        "modular arithmetic",
+        "24-sided polygon",
+        "mathematical prediction",
+        "encryption implications",
+        "chromatic relationships"
+      ],
+      "topicTokens": [
+        "prime numbers",
+        "geometric patterns",
+        "modular arithmetic",
+        "24-sided polygon",
+        "mathematical prediction",
+        "encryption implications",
+        "chromatic relationships",
+        "primes",
+        "icositetragon"
+      ],
+      "claims": [
+        {
+          "text": "Prime numbers arrange uniformly within modulus 1, 5, 7, 11, 13, 17, 19, and 23 when plotted around a 24-sided polygon",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "core claim",
+              "quote": "With the exception of only 2 and 3, prime numbers arrange uniformly within modulus 1, 5, 7, 11, 13, 17, 19, and 23"
+            }
+          ]
+        },
+        {
+          "text": "The icositetragon (24-sided polygon) pattern can predict prime number incidence infinitely without factorization calculations",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "prediction claim",
+              "quote": "use of this equation is proven to generate prime numbers (both known and unknown) into infinity, without the requirement of a factorization calculation or computer-driven algorithm"
+            }
+          ]
+        },
+        {
+          "text": "Mathematical patterns associated with the 24-sided geometric alignment may have implications for physics and other fields",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "broader implications",
+              "quote": "More research is required to determine other mathematical and physical patterns and/or constancies, which may be associated and/or emergent with the icositetragon integer alignment"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "harmonicProfile",
+          "value": "24-fold division",
+          "details": {
+            "divisions": 24,
+            "geometric": "icositetragon"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How might the 24-fold geometric pattern relate to the 24-semitone chromatic scale in music?",
+        "Could this mathematical pattern have acoustic or harmonic implications?",
+        "What other mathematical constants or patterns might emerge from geometric integer arrangements?",
+        "Are there connections between this geometric approach to primes and musical interval relationships?"
+      ],
+      "scores": {
+        "base": 9,
+        "normalizedBase": 0,
+        "novelty": 1,
+        "crossRunNovelty": 0.9,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.3333333333333333,
+        "domainRelevance": 0.54,
+        "combined": 0.533,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S7",
+      "extractionId": "j9705p7rr9mh78sy750xheg3q981c00y",
+      "sourceId": "jx7fbnfg1f5b7mry5tn5kkh41581daje",
+      "sourceTitle": "The Grant Projection Theorem",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://robertedwardgrant.com/the-grant-projection-theorem/",
+      "extractionCreatedAt": 1771386318580,
+      "extractionSummary": "The Grant Projection Theorem proposes that 3D polyhedral topology can be generated deterministically from 2D right triangles through harmonic cascade mechanics. The framework suggests polyhedral geometry is discrete rather than continuous, with valid topologies forming quantized sequences. A special case involves the golden right triangle (Kepler triangle) with sides φ⁻¹, 1, and φ generating the 120-cell polytope through inward self-similar projection. The work claims Euler's formula emerges automatically rather than being an external constraint.",
+      "topics": [
+        "harmonic cascade",
+        "geometric projection",
+        "polyhedral topology",
+        "golden ratio",
+        "Kepler triangle",
+        "quantized geometry",
+        "120-cell polytope",
+        "Euler's formula",
+        "Pythagorean triples",
+        "spherical topology",
+        "self-similar projection",
+        "dimensional emergence"
+      ],
+      "topicTokens": [
+        "harmonic cascade",
+        "geometric projection",
+        "polyhedral topology",
+        "golden ratio",
+        "kepler triangle",
+        "quantized geometry",
+        "120-cell polytope",
+        "euler's formula",
+        "pythagorean triples",
+        "spherical topology",
+        "self-similar projection",
+        "dimensional emergence",
+        "3d polyhedra",
+        "topology",
+        "projection"
+      ],
+      "claims": [
+        {
+          "text": "The 120-cell polytope is generated by the golden right triangle (Kepler triangle) with sides φ⁻¹, 1, and φ through harmonic cascade projection",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "the 120-cell, one of the six regular polytopes in four-dimensional space, is not an external orthogonal extension of the regular dodecahedron but rather the inward self-similar projection of the dodecahedron under the harmonic cascade generated by a single golden right triangle with sides φ−1, 1, and φ (the Kepler triangle)"
+            }
+          ]
+        },
+        {
+          "text": "Polyhedral geometry is discrete rather than continuous, with valid topologies forming quantized sequences",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "The framework suggests that polyhedral geometry is discrete rather than continuous— valid topologies form quantized sequences, not a continuum"
+            }
+          ]
+        },
+        {
+          "text": "Three-dimensional polyhedral topology can be generated entirely from two-dimensional right triangles through harmonic cascade mechanics",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "quote": "We present a mathematical framework demonstrating that three-dimensional polyhedral topology can be generated entirely from two-dimensional right triangles"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "harmonicProfile",
+          "value": "Golden ratio harmonic cascade (φ⁻¹, 1, φ)",
+          "details": {
+            "name": "Kepler triangle",
+            "ratio": "golden",
+            "sides": [
+              0.618,
+              1,
+              1.618
+            ]
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do harmonic cascade mechanics actually generate polyhedral topology from triangles?",
+        "What is the mathematical relationship between golden ratio triangles and higher-dimensional polytopes?",
+        "Can the discrete/quantized nature of polyhedral geometry be experimentally verified?",
+        "How does this geometric framework relate to musical harmony and acoustic resonance?",
+        "What are the implications of Euler's formula emerging automatically rather than being imposed?"
+      ],
+      "scores": {
+        "base": 9,
+        "normalizedBase": 0,
+        "novelty": 1,
+        "crossRunNovelty": 0.98,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.06666666666666667,
+        "domainRelevance": 0.22,
+        "combined": 0.489,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S8",
+      "extractionId": "j97a6ptdt3q2wsb4enmnarj6t181dw82",
+      "sourceId": "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "sourceTitle": "Equal temperament - Wikipedia",
+      "sourceType": "url",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Equal_temperament",
+      "extractionCreatedAt": 1771423778776,
+      "extractionSummary": "Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.",
+      "topics": [
+        "equal temperament",
+        "12-tone equal temperament",
+        "just intonation",
+        "tuning systems",
+        "musical temperament",
+        "frequency ratios",
+        "cents (music)",
+        "semitones",
+        "octave division",
+        "twelfth root of two",
+        "pitch perception",
+        "logarithmic scaling",
+        "enharmonic modulation",
+        "string instrument tuning",
+        "historical tuning systems"
+      ],
+      "topicTokens": [
+        "equal temperament",
+        "12-tone equal temperament",
+        "just intonation",
+        "tuning systems",
+        "musical temperament",
+        "frequency ratios",
+        "cents (music)",
+        "semitones",
+        "octave division",
+        "twelfth root of two",
+        "pitch perception",
+        "logarithmic scaling",
+        "enharmonic modulation",
+        "string instrument tuning",
+        "historical tuning systems",
+        "history",
+        "mathematics"
+      ],
+      "claims": [
+        {
+          "text": "12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "In classical music and Western music in general, the most common tuning system since the 18th century has been 12 equal temperament"
+            }
+          ]
+        },
+        {
+          "text": "In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "with a ratio equal to the 12th root of 2, ≈ 1.05946"
+            }
+          ]
+        },
+        {
+          "text": "Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "The two figures frequently credited with the achievement of exact calculation of equal temperament are Zhu Zaiyu (also romanized as Chu-Tsaiyu. Chinese: 朱載堉) in 1584 and Simon Stevin in 1585"
+            }
+          ]
+        },
+        {
+          "text": "12 TET produces tuning errors compared to just intonation, with major thirds being 13.69 cents sharp and minor thirds being 15.64 cents flat",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "from comparison table",
+              "quote": "Major third (E): 12 TET cents tuning error +13.69"
+            },
+            {
+              "label": "from comparison table",
+              "quote": "Minor third (E♭): 12 TET cents tuning error -15.64"
+            }
+          ]
+        },
+        {
+          "text": "Perfect fifths and fourths in 12 TET are very close to just intervals, with only 1.96 cents of error",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "The fifths and fourths are almost indistinguishably close to just intervals"
+            },
+            {
+              "label": "from comparison table",
+              "quote": "Perfect fifth (G): 12 TET cents tuning error -1.96"
+            }
+          ]
+        },
+        {
+          "text": "String instruments tuned in perfect fifths (violins, violas, cellos) use a semitone ratio of approximately 100.28 cents, slightly different from 12 TET",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "each tone is in the ratio of ∜(3/2) to the next (100.28 cents), which provides for a perfect fifth with ratio of 3:2"
+            }
+          ]
+        },
+        {
+          "text": "Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "quote": "Unfretted string ensembles, which can adjust the tuning of all notes except for open strings, and vocal groups, who have no mechanical tuning limitations, sometimes use a tuning much closer to just intonation for acoustic reasons"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "440 Hz",
+          "details": {
+            "hz": 440,
+            "note": "A4",
+            "standard": "A440"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "divisions": 12,
+            "interval": "octave",
+            "ratio": 1.059463
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "261.626 Hz",
+          "details": {
+            "calculated": true,
+            "hz": 261.626,
+            "note": "C4"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "19 TET",
+          "details": {
+            "divisions": 19,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "31 TET",
+          "details": {
+            "divisions": 31,
+            "interval": "octave"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "24 TET",
+          "details": {
+            "divisions": 24,
+            "interval": "octave",
+            "system": "Arab tone system"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "5 TET",
+          "details": {
+            "divisions": 5,
+            "interval": "octave",
+            "stepSize": "240 cents"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "7 TET",
+          "details": {
+            "divisions": 7,
+            "interval": "octave",
+            "stepSize": "171 cents"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?",
+        "What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?",
+        "How do performers in practice deviate from theoretical equal temperament when playing?",
+        "What role does cultural conditioning play in preference for 12 TET versus other tuning systems?",
+        "How do the mathematical properties of different equal temperaments affect compositional possibilities?"
+      ],
+      "scores": {
+        "base": 73,
+        "normalizedBase": 0.8311688311688312,
+        "novelty": 0.9090909090909091,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "combined": 0.6727272727272727,
+        "peerReviewedClaims": 7,
+        "distinctParameterTypes": 2
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "equal temperament": 2,
+      "just intonation": 2,
+      "frequency ratios": 2,
+      "meantone temperament": 1,
+      "quarter-comma meantone": 1,
+      "third-comma meantone": 1,
+      "syntonic comma": 1,
+      "pythagorean comma": 1,
+      "wolf intervals": 1,
+      "geometric mean": 1,
+      "circle of fifths": 1,
+      "renaissance music": 1,
+      "baroque music": 1,
+      "keyboard tuning": 1,
+      "microtonal music": 1,
+      "isomorphic keyboards": 1,
+      "meantone": 1,
+      "historical tuning": 1,
+      "comma": 1,
+      "post-production audio": 1,
+      "film scoring": 1,
+      "audio sync": 1,
+      "dialogue editing": 1,
+      "sound design": 1,
+      "mixing workflow": 1,
+      "timecode": 1,
+      "foley": 1,
+      "audio-visual narrative": 1,
+      "pro tools": 1,
+      "loudness metering": 1,
+      "audio engineering": 1,
+      "readwise": 1,
+      "piano accompaniment": 1,
+      "symbolic music generation": 1,
+      "harmonic analysis": 1,
+      "voice leading": 1,
+      "musical structure": 1,
+      "style modeling": 1,
+      "pattern retrieval": 1,
+      "transformer models": 1,
+      "midi generation": 1,
+      "functional harmony": 1,
+      "musical phrases": 1,
+      "reharmonization": 1,
+      "acoustic synthesis": 1,
+      "physical resonators": 1,
+      "pickup systems": 1,
+      "sequencing": 1,
+      "polymeters": 1,
+      "envelope control": 1,
+      "velocity control": 1,
+      "modulation": 1,
+      "physical tuning methods": 1,
+      "virginia beach hip hop sound": 1,
+      "off-the-grid syncopation": 1,
+      "minimalist funk": 1,
+      "timbaland production techniques": 1,
+      "the neptunes": 1,
+      "sonic boom production style": 1,
+      "melody-first composition philosophy": 1,
+      "sparse arrangements": 1,
+      "expensive sound choices": 1,
+      "millennium hip hop": 1,
+      "futuristic synth programming": 1,
+      "prime numbers": 1,
+      "geometric patterns": 1,
+      "modular arithmetic": 1,
+      "24-sided polygon": 1,
+      "mathematical prediction": 1,
+      "encryption implications": 1,
+      "chromatic relationships": 1,
+      "primes": 1,
+      "icositetragon": 1,
+      "harmonic cascade": 1,
+      "geometric projection": 1,
+      "polyhedral topology": 1,
+      "golden ratio": 1,
+      "kepler triangle": 1,
+      "quantized geometry": 1,
+      "120-cell polytope": 1,
+      "euler's formula": 1,
+      "pythagorean triples": 1,
+      "spherical topology": 1,
+      "self-similar projection": 1,
+      "dimensional emergence": 1,
+      "3d polyhedra": 1,
+      "topology": 1,
+      "projection": 1,
+      "12-tone equal temperament": 1,
+      "tuning systems": 1,
+      "musical temperament": 1,
+      "cents (music)": 1,
+      "semitones": 1,
+      "octave division": 1,
+      "twelfth root of two": 1,
+      "pitch perception": 1,
+      "logarithmic scaling": 1,
+      "enharmonic modulation": 1,
+      "string instrument tuning": 1,
+      "historical tuning systems": 1,
+      "history": 1,
+      "mathematics": 1
+    },
+    "parameterTypeFrequency": {
+      "tuningsystem": 12,
+      "harmonicprofile": 5,
+      "frequency": 4,
+      "chordprogression": 2,
+      "instrument": 2,
+      "rhythm": 1
+    },
+    "evidenceDistribution": {
+      "peer_reviewed": 15,
+      "anecdotal": 7,
+      "speculative": 6,
+      "personal": 4,
+      "preprint": 3
+    },
+    "sourceTypeDistribution": {
+      "url": 4,
+      "rss": 2,
+      "youtube": 1,
+      "pdf": 1
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 9,
+    "priorSourceIds": 35,
+    "priorTopicTokens": 385,
+    "priorVariablePhrases": 5,
+    "priorTitlePhrases": 10
+  }
+}

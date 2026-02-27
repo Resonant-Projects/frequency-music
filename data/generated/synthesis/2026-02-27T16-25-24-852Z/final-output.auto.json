@@ -1,0 +1,119 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Frequency-research vs Web Clip Controlled Comparison",
+    "question": "How does tuning strategy (Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5) vs Golden ratio algebraic tuning (φ-octave, 10-note scale SN) vs 12-tone Equal Temperament (12TET) — reference system) influence perceived consonance, roughness, and continuity in a controlled harmonic micro-study?",
+    "hypothesis": "If we render one identical arrangement with tuning strategy (Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5) vs Golden ratio algebraic tuning (φ-octave, 10-note scale SN) vs 12-tone Equal Temperament (12TET) — reference system) while holding all other musical factors fixed, then listener ratings will show a consistent ordering in consonance and roughness between versions, because interval-ratio alignment and temperament error distribution change partial overlap and beating behavior.",
+    "rationaleMd": "Selected sources converge on ratio-based and temperament-based explanations for consonance and roughness [S1, S2, S3].\n\nThe context includes explicit comma/temperament and interval evidence that supports a controlled comparison where only the tuning variable changes [S1, S2, S3, S4, S5, S6].\n\nFalsification criterion: if blinded ratings show no stable ordering across versions, or if roughness notes fail to cluster by version, the hypothesis is not supported.",
+    "sourceIds": [
+      "jx75wkgkgz6mtkzbc5f7c5e7cd81tr1g",
+      "jx78fax65x4qbb0jc48007bkrd81v6b0",
+      "jx723zh9434d669xgxvwm8yjxd81tmyp",
+      "jx7etc80rvn379gnkxadezhs8981vm8p",
+      "jx740pjhg25eykbn1qx851q0cd81tjha",
+      "jx78r3789cz8et74b2b8cr6pk581twa6"
+    ],
+    "concepts": [
+      "frequency-research",
+      "web clip",
+      "harmonic profile",
+      "tuning system",
+      "note",
+      "chord progression"
+    ]
+  },
+  "recipe": {
+    "title": "Frequency-research Comparison Micro-Study",
+    "bodyMd": "## Goal\nEvaluate tuning strategy (Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5) vs Golden ratio algebraic tuning (φ-octave, 10-note scale SN) vs 12-tone Equal Temperament (12TET) — reference system) under controlled musical conditions using a blinded comparison design.\n\n## Shared Arrangement\n- Tempo: 82 BPM\n- Meter: 4/4\n- Length: 24-32 bars\n- Keep MIDI notes, sound sources, automation, and mix balance identical across versions.\n\n## Variable Under Test\n- Change only: tuning strategy (Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5) vs Golden ratio algebraic tuning (φ-octave, 10-note scale SN) vs 12-tone Equal Temperament (12TET) — reference system)\n- Keep all non-target variables fixed.\n\n## Evaluation\n- Blind-label exports and rate: consonance, roughness/beating, and continuity.\n- Annotate bar/chord locations where roughness is strongest.\n\nEvidence basis: [S1, S2, S3, S4, S5, S6].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "82 BPM",
+        "details": {
+          "bpm": 82
+        }
+      },
+      {
+        "type": "form",
+        "value": "24-32 bar controlled comparison",
+        "details": {
+          "barsMin": 24,
+          "barsMax": 32,
+          "meter": "4/4"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Sustained triadic texture with fixed voicing",
+        "details": {
+          "objective": "maximize audibility of roughness differences"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5)",
+        "details": {
+          "role": "comparison arm A"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Golden ratio algebraic tuning (φ-octave, 10-note scale SN)",
+        "details": {
+          "role": "comparison arm B"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "12-tone Equal Temperament (12TET) — reference system",
+        "details": {
+          "role": "comparison arm C"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one master MIDI arrangement template.",
+      "Freeze instrument and FX chain before rendering comparison arms.",
+      "Render Version A using Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5).",
+      "Render Version B using Golden ratio algebraic tuning (φ-octave, 10-note scale SN).",
+      "Render Version C using 12-tone Equal Temperament (12TET) — reference system.",
+      "Match loudness across exports to remove gain bias.",
+      "Rename exports to blind labels (e.g., X/Y/Z).",
+      "Rate each version for consonance, roughness, and continuity.",
+      "Capture bar-level notes for perceptual spikes.",
+      "Summarize whether observed ordering supports or contradicts hypothesis."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 82,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1",
+        "musician_peer_2"
+      ],
+      "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
+      "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
+      "whatVaries": [
+        "tuning strategy (Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5) vs Golden ratio algebraic tuning (φ-octave, 10-note scale SN) vs 12-tone Equal Temperament (12TET) — reference system)"
+      ],
+      "whatStaysConstant": [
+        "MIDI notes",
+        "arrangement length",
+        "tempo",
+        "sound sources",
+        "automation",
+        "mix balance",
+        "export settings"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Auto-synthesized from context pack using deterministic rule templates. Review before studio execution."
+}

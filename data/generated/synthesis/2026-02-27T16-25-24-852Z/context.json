@@ -1,0 +1,2720 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-02-27T16:25:24.852Z",
+  "mode": "collect",
+  "convexUrlHost": "convex.resonantprojects.art",
+  "params": {
+    "target": 8,
+    "fetch": 300,
+    "minClaims": 2,
+    "minParams": 1,
+    "noveltyWindow": 15,
+    "maxReusedSources": 1,
+    "requireTuningSignal": false,
+    "out": "data/generated/synthesis",
+    "outputName": "final-output.auto.json"
+  },
+  "totals": {
+    "fetchedExtractions": 300,
+    "withSource": 300,
+    "eligibleCandidates": 117,
+    "selected": 8
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97493ybqk9vnbnwkvxtcdejjh81ty3y",
+      "sourceId": "jx75wkgkgz6mtkzbc5f7c5e7cd81tr1g",
+      "sourceTitle": "Full article: Algebraic tunings",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2023.2234126",
+      "extractionCreatedAt": 1772017251027,
+      "extractionSummary": "This peer-reviewed paper proposes algebraic tuning systems where the conventional octave ratio of 2 is replaced by an algebraic unit τ, with the golden ratio φ ≈ 1.618 as the primary example. Note frequencies are drawn from the ring Z[τ], enabling difference tones between notes to also fall within the tuning system. The authors construct two scales (8 and 10 notes per 'golden octave') based on β-expansions and norm bounds, analyze their additive (difference tone) and multiplicative (interval) properties, and connect the work to the Erdős–Szemerédi sum-product conjecture. A composition, Three Places, is provided as a demonstration of the tuning system in practice.",
+      "topics": [
+        "algebraic tuning systems",
+        "golden ratio",
+        "microtonal music",
+        "difference tones",
+        "combination tones",
+        "octave equivalence",
+        "equal temperament",
+        "just intonation",
+        "Bohlen-Pierce scale",
+        "β-expansions",
+        "Pisot numbers",
+        "algebraic number theory",
+        "ring Z[φ]",
+        "harmonic series",
+        "sum-product conjecture",
+        "Erdős–Szemerédi conjecture",
+        "MIDI keyboard retuning",
+        "string instrument acoustics",
+        "fractal waveforms",
+        "dasian notation",
+        "3-limit tuning",
+        "36-TET",
+        "Fibonacci sequence",
+        "irrational harmonics",
+        "music perception",
+        "Tsimané people",
+        "cents (interval measurement)",
+        "norm-bounded scales",
+        "arithmetic progressions in pitch",
+        "parallel organum",
+        "websynths",
+        "aperiodic waveforms"
+      ],
+      "topicTokens": [
+        "algebraic tuning systems",
+        "golden ratio",
+        "microtonal music",
+        "difference tones",
+        "combination tones",
+        "octave equivalence",
+        "equal temperament",
+        "just intonation",
+        "bohlen-pierce scale",
+        "β-expansions",
+        "pisot numbers",
+        "algebraic number theory",
+        "ring z[φ]",
+        "harmonic series",
+        "sum-product conjecture",
+        "erdős–szemerédi conjecture",
+        "midi keyboard retuning",
+        "string instrument acoustics",
+        "fractal waveforms",
+        "dasian notation",
+        "3-limit tuning",
+        "36-tet",
+        "fibonacci sequence",
+        "irrational harmonics",
+        "music perception",
+        "tsimané people",
+        "cents (interval measurement)",
+        "norm-bounded scales",
+        "arithmetic progressions in pitch",
+        "parallel organum",
+        "websynths",
+        "aperiodic waveforms",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "In 12-tone equal temperament, consecutive pitches differ by a ratio of 2^(1/12), so that 12 semitones give a frequency ratio of 2 (the octave).",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "12TET definition",
+              "quote": "12 tone equal temperament (12TET) tuning in which consecutive pitches differ by a ratio , so that 12 of these smallest intervals (semitones) give a ratio of 2 (conventional octave)."
+            }
+          ]
+        },
+        {
+          "text": "Seven semitones in 12TET gives a frequency ratio of approximately 3/2 (the perfect fifth), but only approximately.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "12TET approximation of perfect fifth",
+              "quote": "Rational frequency ratios other than powers of 2 are also available, albeit only approximately, for example 7 semitones gives ."
+            }
+          ]
+        },
+        {
+          "text": "Difference tones are perceived due to nonlinearities in the ear; their frequency equals the difference (or other simple linear combination) of the original frequencies.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Difference tone mechanism",
+              "quote": "Due to nonlinearities in the ear, these tones may be perceived when intervals or chords are played. Their frequency is the difference, or another simple linear combination, of the original frequencies, the latter termed 'combination tones.'"
+            }
+          ]
+        },
+        {
+          "text": "The Tsimané people of Bolivia do not appear to perceive octave equivalence at a frequency ratio of 2, suggesting octave equivalence is not a universal feature of human auditory perception.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Octave equivalence non-universality",
+              "quote": "Perception of octave equivalence for a frequency ratio of 2 is not universal, for example the Tsimané people of Bolivia do not appear to have this (or any other) octave equivalence."
+            }
+          ]
+        },
+        {
+          "text": "The ninth-century Musica enchiriadis treatises use a 'dasian' notation with equivalence at a perfect fifth (frequency ratio 3/2) and a 3-limit tuning system.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Dasian notation",
+              "quote": "The ninth century treatises Musica enchiriadis and Scolica enchiriadis use 'dasian' notation which has equivalence at a perfect fifth (frequency ratio 3/2), and a 3-limit tuning system, that is, frequency ratios that are multiples of powers of 2 and 3."
+            }
+          ]
+        },
+        {
+          "text": "The Bohlen-Pierce scale uses a ratio of 3 ('tritave') as its period and is well-suited for instruments with strong odd harmonics such as the clarinet; one motivation for it was difference tones.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Bohlen-Pierce scale properties",
+              "quote": "This is periodic with a frequency ratio of 3 ('tritave') and has intervals approximating ratios involving 3, 5 and 7. This makes it well suited for instruments with strong odd harmonics, such as the clarinet, and BP-tuned instruments are available commercially. Interestingly, one motivation for this scale was that of difference tones."
+            }
+          ]
+        },
+        {
+          "text": "If the octave periodicity is an algebraic unit τ and frequencies are proportional to elements of the ring Z[τ], then difference tones between notes also lie in that ring.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Core algebraic tuning claim",
+              "quote": "if the octave periodicity is an algebraic unit τ, and frequencies are proportional to elements of the corresponding ring , then difference tones also lie in the ring."
+            }
+          ]
+        },
+        {
+          "text": "36-TET contains an interval (25/3 semitones, approximately 833 cents) that is very close to the golden ratio φ.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "36TET golden ratio approximation",
+              "quote": "dividing each semitone in thirds (that is, 36TET) yields an interval (25/3 semitones, or close to 833 cents) very close to the golden ratio"
+            }
+          ]
+        },
+        {
+          "text": "The golden ratio is maximally irrational in the sense that it is the most poorly approximated irrational by rationals, as formalized by Hurwitz's theorem.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Golden ratio irrationality",
+              "quote": "the golden ratio is, in a precise sense, maximally irrational, that is, badly approximable by rationals."
+            }
+          ]
+        },
+        {
+          "text": "Three golden octaves span approximately 25 semitones (24.9957 semitones), making the golden ratio scale deployable via retuning a MIDI keyboard.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "MIDI keyboard mapping feasibility",
+              "quote": "three golden octaves (24 notes) are close to the same number of semitones, more precisely cents, that is, just under 25 semitones."
+            }
+          ]
+        },
+        {
+          "text": "A fundamental frequency of φ^(−12) Hz ≈ 55/φ Hz was chosen for the golden scale because it is close to a Fibonacci number; 55 Hz corresponds to A1 in standard 12TET (three octaves below concert pitch A4 = 440 Hz).",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Fundamental frequency choice",
+              "quote": "We choose f to be Hz, which due to equation is close to a Fibonacci number. The Fibonacci frequency 55 Hz is A1 on the usual 12TET scale, being three octaves below concert pitch."
+            }
+          ]
+        },
+        {
+          "text": "It is possible, using a string with a single additional point mass, to produce a harmonic series beginning with frequency ratios 1, φ, φ², φ³.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Modified string harmonic series",
+              "quote": "Optimising to find x = 0.116934 and , the frequencies of vibration relative to the fundamental become . In other words, it is possible with only a single additional mass to make the harmonic series of a string start with frequency ratios ."
+            }
+          ]
+        },
+        {
+          "text": "Irrational harmonics produce aperiodic waveforms, which may have fractal or non-differentiable properties for sufficiently large amplitudes.",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "Irrational harmonic waveform properties",
+              "quote": "Note that irrational harmonics lead to aperiodic wave-forms; for harmonics of sufficiently large amplitude, they may have interesting non-differentiable or fractal properties, along the lines of Weierstrass's original construction of a nowhere-differentiable function."
+            }
+          ]
+        },
+        {
+          "text": "In the golden tuning, the 'golden third' interval (ratio φ^(1/2) or related) lies between the just minor third (6/5) and just major third (5/4), and is as irrational as possible.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Golden third interval",
+              "quote": "a golden third of ratio , is found for -, - and -. This interval lies between that of minor and major thirds, for example the just minor third and 12TET minor third and just major third and 12TET major third ."
+            }
+          ]
+        },
+        {
+          "text": "The golden scales have many difference tones (additive structure) but almost all intervals are distinct (multiplicative structure), consistent with the Erdős–Szemerédi sum-product phenomenon.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Sum-product phenomenon in golden scales",
+              "quote": "Our scales have relatively few sums but many products, whilst the closest relative, the Bohlen 833 scale, has fewer products."
+            }
+          ]
+        },
+        {
+          "text": "12TET contains a quadratic irrational ratio: six semitones (the tritone) gives a frequency ratio of √2.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Tritone as quadratic irrational",
+              "quote": "There is a quadratic irrational ratio in 12TET, namely six semitones gives a frequency ratio ."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Golden ratio algebraic tuning (φ-octave, 8-note scale Sβ5)",
+          "details": {
+            "approximateMIDISemitones": 24.9957,
+            "basisRing": "Z[φ]",
+            "goldenOctavesPerMIDIOctave": "3 golden octaves ≈ 25 semitones",
+            "notesPerOctave": 8,
+            "octaveRatio": 1.6180339887,
+            "octaveRatioName": "golden ratio φ",
+            "selectionCriterion": "greedy β-expansion with at most 5 digits, no consecutive 1s"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Golden ratio algebraic tuning (φ-octave, 10-note scale SN)",
+          "details": {
+            "basisRing": "Z[φ]",
+            "note": "Contains all Sβ5 notes plus two additional notes with 7-digit β-representation",
+            "notesPerOctave": 10,
+            "octaveRatio": 1.6180339887,
+            "octaveRatioName": "golden ratio φ",
+            "selectionCriterion": "norm magnitude ≤ 11"
+          }
+        },
+        {
+          "type": "rootNote",
+          "value": "α ≈ 55/φ Hz (≈ 33.99 Hz) — fundamental frequency of golden scale",
+          "details": {
+            "approximateHz": 33.99,
+            "midiMapping": "α mapped to B1 (shifted 2 semitones from A1 to balance accidentals)",
+            "rationale": "φ^(−12) Hz, close to Fibonacci number 34; 55 Hz is A1 in 12TET"
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "55 Hz — Fibonacci frequency, A1 in standard 12TET",
+          "details": {
+            "hz": 55,
+            "note": "A1",
+            "octavesBelow440": 3,
+            "significance": "Fibonacci number; reference point for golden scale fundamental"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone Equal Temperament (12TET) — reference system",
+          "details": {
+            "notesPerOctave": 12,
+            "octaveRatio": 2,
+            "perfectFifthApprox": "7 semitones ≈ 3/2",
+            "semitoneRatio": 1.0594630943,
+            "semitoneRatioFormula": "2^(1/12)",
+            "tritone": "6 semitones = √2 (exact quadratic irrational)"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Bohlen-Pierce scale (tritave-periodic)",
+          "details": {
+            "harmonicLimits": "3, 5, 7",
+            "octaveName": "tritave",
+            "octaveRatio": 3,
+            "suitableInstruments": [
+              "clarinet",
+              "instruments with strong odd harmonics"
+            ]
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "36-TET (36 equal temperament) — contains ~833 cent golden ratio approximation",
+          "details": {
+            "goldenRatioApprox": "25/3 semitones ≈ 833 cents",
+            "goldenRatioApproxCents": 833.09,
+            "notesPerOctave": 36
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Dasian / 3-limit tuning (9th century)",
+          "details": {
+            "equivalenceInterval": "perfect fifth = 3/2",
+            "frequencyForm": "2^m × 3^n",
+            "primeLimit": 3,
+            "source": "Musica enchiriadis, Scolica enchiriadis"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Modified string with single point mass producing φ-harmonic series",
+          "details": {
+            "harmonicRatios": [
+              1,
+              "φ",
+              "φ²",
+              "φ³"
+            ],
+            "massPosition": 0.116934,
+            "method": "Variable-density string with small weight at fractional position xL",
+            "practicalStatus": "Theoretically derived; not yet physically implemented"
+          }
+        },
+        {
+          "type": "note",
+          "value": "Golden third interval (between minor and major third)",
+          "details": {
+            "approximateCents_range": "between 316 (just minor third 6/5) and 386 (just major third 5/4)",
+            "character": "maximally irrational — badly approximable by simple rationals",
+            "occurrencesInScale": "multiple note pairs"
+          }
+        },
+        {
+          "type": "note",
+          "value": "Dissonant interval of ~1232 cents (just over one octave)",
+          "details": {
+            "cents": 1232,
+            "compositionNote": "Can resolve to octave, with lower note a perfect fifth below upper",
+            "resolutionTarget": "perfect octave (1200 cents)"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Given a fixed number of notes per golden octave, are the proposed scales optimal with respect to maximizing the number of arithmetic sequences (difference tones) in the scale?",
+        "Can a growing sequence of algebraically-bounded note sets (e.g., elements of Z[φ] with bounded norm and β-expansion) serve as a concrete example to test or advance the Erdős–Szemerédi sum-product conjecture?",
+        "How can a workable and precise nomenclature system be developed for pitches in golden ratio scales beyond the 5-digit β-expansion range?",
+        "Can physical instruments (strings, pipes, percussion) be designed or modified to produce harmonic series at integer powers of φ, rather than integer multiples of a fundamental?",
+        "What principles of melody, harmony, and voice-leading are most natural and effective within golden ratio tuning, distinct from 12TET conventions?",
+        "How does listener perception adapt to φ-octave equivalence over extended exposure, given that octave equivalence itself is culturally variable?",
+        "Can similar algebraic tuning systems be constructed for other Pisot units (e.g., silver ratio, plastic number, supergolden ratio) and what are their musical properties?",
+        "Is the norm-bounded scale SN or the β-expansion-bounded scale Sβ5 more musically useful in practice, and by what criteria should 'usefulness' be judged?",
+        "What are the perceptual consequences of the 'maximally irrational' golden third and golden fourth for consonance and dissonance judgments?",
+        "How do fractal or non-differentiable waveform properties (from irrational harmonic ratios) affect timbre perception?"
+      ],
+      "scores": {
+        "base": 140,
+        "normalizedBase": 0.9366197183098591,
+        "novelty": 1,
+        "crossRunNovelty": 0.9382352941176471,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.20588235294117646,
+        "domainRelevance": 1,
+        "combined": 0.9623757249378624,
+        "peerReviewedClaims": 15,
+        "distinctParameterTypes": 5
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j97ctcmckbt3dj3sexjcb1qt2x81w58r",
+      "sourceId": "jx78fax65x4qbb0jc48007bkrd81v6b0",
+      "sourceTitle": "Full article: A two-dimensional representation of musical chords using the simplicity of frequency and period ratios as coordinates",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2021.1924304",
+      "extractionCreatedAt": 1772132846965,
+      "extractionSummary": "This peer-reviewed study proposes a two-dimensional representation of musical chords using the simplicity of frequency ratios (S_F) and period ratios (S_P) as coordinate axes. The key finding is that major and minor triads are reflections of each other across the diagonal S_F = S_P, as are the half-diminished seventh and dominant seventh chords, a relationship rooted in musical inversion and harmonic dualism. The diagonal component (S_F + S_P) correlates with subjective consonance ordering (Major > Minor > Sus4 > Diminished > Augmented), while the perpendicular component (S_F - S_P) correlates with melancholy/sadness ratings from behavioral experiments. The authors speculate that chords in the harmonic region (S_F > S_P) are processed via frequency mechanisms and those in the subharmonic region (S_P > S_F) via periodicity mechanisms in the brain.",
+      "topics": [
+        "consonance and dissonance",
+        "frequency ratios",
+        "period ratios",
+        "just intonation",
+        "equal temperament",
+        "harmonic series",
+        "subharmonic series",
+        "chord perception",
+        "psychoacoustics",
+        "neurophysiology of music",
+        "harmonic dualism",
+        "musical inversion",
+        "emotional valence of chords",
+        "melancholy and sadness in music",
+        "pitch perception",
+        "frequency-following response (FFR)",
+        "auditory cortex",
+        "Tristan chord",
+        "Wagner",
+        "triads",
+        "seventh chords",
+        "chord voicing",
+        "periodicity pitch",
+        "autocorrelation",
+        "two-dimensional chord representation",
+        "major-minor symmetry",
+        "Öttingen-Riemann harmonic dualism"
+      ],
+      "topicTokens": [
+        "consonance and dissonance",
+        "frequency ratios",
+        "period ratios",
+        "just intonation",
+        "equal temperament",
+        "harmonic series",
+        "subharmonic series",
+        "chord perception",
+        "psychoacoustics",
+        "neurophysiology of music",
+        "harmonic dualism",
+        "musical inversion",
+        "emotional valence of chords",
+        "melancholy and sadness in music",
+        "pitch perception",
+        "frequency-following response (ffr)",
+        "auditory cortex",
+        "tristan chord",
+        "wagner",
+        "triads",
+        "seventh chords",
+        "chord voicing",
+        "periodicity pitch",
+        "autocorrelation",
+        "two-dimensional chord representation",
+        "major-minor symmetry",
+        "öttingen-riemann harmonic dualism",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "Simple frequency ratios are associated with consonance of musical intervals and chords, and consonance/dissonance perception is strongly related to the periodicity of chords.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Introduction",
+              "quote": "Simple frequency ratios (FRs) have been often associated with consonance of musical intervals and chords. Recent studies show that the perception of consonance/dissonance of chords is strongly related with their periodicity."
+            }
+          ]
+        },
+        {
+          "text": "The probability distribution of amplitude-frequency combinations in human speech can predict consonance ordering, and intervals with simpler frequency ratios are more prevalent in speech.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Speech-consonance correlation",
+              "quote": "Schwartz, Howe, and Purves (2003) use a large corpus of 6300 utterances of brief sentences to investigate the statistical structure of human speech sounds. They find that the probability distribution of amplitude-frequency combinations in human utterances can predict the consonance ordering; they further find that intervals with simpler FRs are more prevalent in speech."
+            }
+          ]
+        },
+        {
+          "text": "In awake primates' primary auditory cortex (A1), neurons with multipeaked tuning show peaks at harmonically related frequencies, and frequency relationships are more subharmonic than harmonic in nature.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Neurophysiology of A1",
+              "quote": "in awake primates' A1 (primary auditory areas), many neurons with a single characteristic frequency (CF) show inhibitions by tones at frequencies that are harmonically related to the CF, and neurons with multipeaked tuning showed peaks at frequencies harmonically related with each other. Moreover, frequency relationships are more of subharmonic nature"
+            }
+          ]
+        },
+        {
+          "text": "Major and minor triads are the only reflection pair among common triads in the S_F–S_P plane, and the half-diminished seventh (Ø7) and major-minor seventh (Mm7) are the only such reflection pair among seventh chords.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Conclusion",
+              "quote": "we find that major and minor triads are the only reflection pair among the common triads, also the pair of the half-diminished seventh and the major-minor seventh chords is the only reflection pair of seventh chords."
+            }
+          ]
+        },
+        {
+          "text": "The diagonal component (S_F + S_P) of the S_F–S_P representation predicts the subjective consonance ordering of triads: Major > Minor > Sus4 > Diminished > Augmented.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Consonance ordering",
+              "quote": "Available literature seems to agree on the order of consonance, Maj > Min > Sus4 > Dim > Aug, and the behavior of S_+ seems to predict perceived consonance."
+            }
+          ]
+        },
+        {
+          "text": "The component perpendicular to the diagonal (S_F - S_P) correlates with melancholy/sadness ratings of chords from a 269-participant behavioral experiment.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Melancholy/sadness axis",
+              "quote": "In a recent experiment, 269 participants evaluated 14 chords on a 9-item scale of given emotional dimensions. The results for the scale of melancholy/sadness are plotted... M and S_- show an intriguing fit so that the axis perpendicular to the diagonal might be understood as an emotional axis for the melancholy dimension"
+            }
+          ]
+        },
+        {
+          "text": "Musical inversion of a chord exchanges its frequency ratio and period ratio, which corresponds geometrically to reflection across the diagonal S_F = S_P in the proposed plane, and is the acoustic basis of harmonic dualism (Öttingen and Riemann).",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Harmonic dualism",
+              "quote": "Exchanging values between FR and PR of a chord exchanges S_F and S_P, which flips a point around the diagonal S_F = S_P, producing a reflection. This operation corresponds to musical inversion, and this inversional relationship between major and minor triads is the basis of the harmonic dualism of Öttingen and Riemann."
+            }
+          ]
+        },
+        {
+          "text": "The major chord in just intonation has frequency ratio 4:5:6 and period ratio 15:12:10, and equal temperament approximates Maj-H (harmonic series) more closely than Maj-SH (subharmonic series).",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Major chord ratios",
+              "quote": "The FR 4:5:6 of Maj-H (C-E-G) coincides with that of Maj-J (C-E-G and G-B-D) and converts to the PR of 15:12:10. The equitempered scale approximates the FR of Maj-H more closely than that of Maj-SH which sounds quite out of tune."
+            }
+          ]
+        },
+        {
+          "text": "The major seventh chord (M7) is unique among triads and seventh chords in that its harmonic, subharmonic, and just intonation representations all share the same frequency ratio (8:10:12:15) and the same period ratio.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "M7 uniqueness",
+              "quote": "The J, H, and SH representations of the M7 chord turn out to have the same FR 8:10:12:15. Their PR is also the same. The M7 is found to be the only one among the triads and seventh chords having this property."
+            }
+          ]
+        },
+        {
+          "text": "M7 and m7 chords were rated highest in the liking dimension in behavioral studies, and their usage in popular music increased during the 1970s.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Chord liking and usage",
+              "quote": "M7 and m7 were rated highest in the liking dimension in Lahdelma and Eerola (2016). In this connection, Kolchinsky et al. (2017) report that M7 and m7 increased in usage in popular music during the 1970s."
+            }
+          ]
+        },
+        {
+          "text": "Neural correlates of consonance/dissonance are found in the neural periodicities from autocorrelation functions of frequency-following response (FFR) signals, and dissonant intervals show intensified aperiodicity in subcortical responses.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "FFR and consonance",
+              "quote": "Bidelman and Krishnan (2009) find neural correlates of consonance/dissonance in the neural periodicities obtained from the autocorrelation functions of the FFR (frequency-following response) signals to intervals and harmonies... the aperiodicity of dissonant intervals is even intensified in the subcortical response."
+            }
+          ]
+        },
+        {
+          "text": "The Tristan chord is a half-diminished seventh chord (Ø7) voiced in open position, with its characteristic timbre enhanced by the lower two notes forming a tritone (A4) and the upper two notes a perfect fourth (P4).",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Tristan chord voicing",
+              "quote": "The Tristan chord is a Ø7 in its constituent tones, but its very characteristic timbre is probably enhanced due to its particular voicing in open position with the lower two notes forming A4 interval (tritone) and the higher two notes P4."
+            }
+          ]
+        },
+        {
+          "text": "Chords in the harmonic region (S_F > S_P) are hypothesized to be perceived through frequency processing mechanisms, while chords in the subharmonic region (S_P > S_F) are hypothesized to be perceived through periodicity processing mechanisms.",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "Perceptual mechanism hypothesis",
+              "quote": "the hypothesis that the chords in the harmonic region (S_F > S_P), typically Maj-H and Mm7-H, are perceived primarily through a hypothetical frequency processing mechanism, and that those in the subharmonic region (S_P > S_F), typically Min-SH and Ø7-SH, are perceived through a hypothetical period processing mechanism in the brain."
+            }
+          ]
+        },
+        {
+          "text": "Harmony recognition with equal-tempered instruments is hypothesized to function via tuning bandwidths around characteristic frequencies of neurons responding to harmonic and subharmonic resonance.",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "Equal temperament perception speculation",
+              "quote": "We suggest that basically, the harmony recognition and appreciation are based on harmonic and subharmonic resonance within the network and that chords presented with equitempered instrument can still make the network respond and reverberate due to certain tuning bandwidths around the characteristic frequencies of relevant neurons."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Just Intonation",
+          "details": {
+            "description": "Primary tuning system analyzed; defines frequency ratios for all chords",
+            "variants": [
+              "harmonic series (H)",
+              "subharmonic series (SH)",
+              "just intonation scale (J)"
+            ]
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Equal Temperament",
+          "details": {
+            "acceptabilityThreshold": "δ < 0.02 per interval position for acceptable chord representation",
+            "description": "Used as reference for deviation (δ) calculations; semitone ≈ 0.06 in ratio terms"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Major triad: FR 4:5:6, PR 15:12:10",
+          "details": {
+            "frequencyRatio": "4:5:6",
+            "notes": "C-E-G in just intonation / harmonic series",
+            "periodRatio": "15:12:10",
+            "simplicity_SF": "1/30",
+            "simplicity_SP": "1/30"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Minor triad (subharmonic): PR 6:5:4",
+          "details": {
+            "notes": "Min-SH: F-Ab-C; this PR equals the FR of the major chord",
+            "periodRatio": "6:5:4"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Diminished triad (harmonic): FR 5:6:7",
+          "details": {
+            "frequencyRatio": "5:6:7",
+            "notes": "Dim-H; simplest FR among diminished representations"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Augmented triad (stacked major thirds): FR 16:20:25",
+          "details": {
+            "construction": "Two stacked M3 intervals (4:5)",
+            "frequencyRatio": "16:20:25",
+            "label": "AugMaj"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Major seventh chord: FR 8:10:12:15",
+          "details": {
+            "frequencyRatio": "8:10:12:15",
+            "note": "Unique: H, SH, and J representations all identical"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Diminished seventh chord: FR 25:30:35:42",
+          "details": {
+            "construction": "FR 5:6:7 (Dim-H) with m3 (5:6) added on top",
+            "frequencyRatio": "25:30:35:42"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Sus4 triad (just intonation): C-F-G",
+          "details": {
+            "notes": "C-F-G; not a classical triad (intervals are not thirds); only appears in just intonation scale"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Tristan chord: Ø7 (half-diminished seventh) in open voicing, lower interval A4 (tritone), upper interval P4",
+          "details": {
+            "chordCategory": "half-diminished seventh (Ø7)",
+            "context": "Opening of Wagner's Tristan und Isolde prelude, Act 1 (premiered 1865)",
+            "enharmonicSpelling": "E#-G#-B-D#",
+            "lowerInterval": "Augmented fourth / tritone (A4)",
+            "upperInterval": "Perfect fourth (P4)",
+            "voicing": "open position"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Just intonation interval frequency ratios",
+          "details": {
+            "A4": "5:7",
+            "M2": "7:8",
+            "M3": "4:5",
+            "M6": "3:5",
+            "M7": "8:15",
+            "P4": "3:4",
+            "P5": "2:3",
+            "m2": "15:16",
+            "m3": "5:6",
+            "m6": "5:8",
+            "m7": "4:7"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Consonance ordering of triads: Maj > Min > Sus4 > Dim > Aug",
+          "details": {
+            "metric": "S_+ = S_F + S_P (diagonal component in SF-SP plane)",
+            "source": "Behavioral literature consensus, corroborated by S_+ values"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Tristan chord progression: Ø7 → Mm7 (dominant seventh), three times in first 11 measures",
+          "details": {
+            "chordPair": "half-diminished seventh to major-minor seventh (dominant seventh)",
+            "measures": "first 11",
+            "occurrences": 3,
+            "work": "Prelude to Act 1, Tristan und Isolde, Wagner (premiered 1865)"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Does the S_F - S_P axis reliably predict melancholy/sadness ratings across cultures and musical training levels, or is this relationship culturally conditioned?",
+        "Can the SF–SP plane framework be extended to larger chords (9th, 11th, 13th chords) or polychords, and do similar symmetry relationships hold?",
+        "What are the neurophysiological mechanisms that implement distinct 'frequency processing' vs. 'periodicity processing' pathways for harmonic- vs. subharmonic-region chords?",
+        "How does the tuning bandwidth of auditory neurons relate to the δ (deviation from equal temperament) threshold for chord acceptability, and can this be measured directly?",
+        "Does the metaphorical association between subharmonic series (descending) and minor/melancholy character have a cross-cultural basis, or is it specific to Western tonal tradition?",
+        "Why are diminished and augmented chords rated as neither particularly happy nor particularly melancholy, despite their extreme positions in the SF–SP plane?",
+        "Can the SF–SP plane predict listeners' chord preferences or liking ratings more generally, beyond the consonance and melancholy dimensions?",
+        "Is the increase in M7 and m7 chord usage in popular music during the 1970s related to their symmetric position on the SF=SP diagonal, and if so, what cognitive or cultural mechanism would explain this?",
+        "How does the proposed chord recognition model (harmonic/subharmonic resonance within neural networks) account for the perception of chords in highly inharmonic timbres (e.g., bells, metallophones)?",
+        "Could the SF–SP plane be used to systematically design novel chord progressions with specific emotional trajectories, and how would composers respond to such a tool?"
+      ],
+      "scores": {
+        "base": 127,
+        "normalizedBase": 0.8450704225352113,
+        "novelty": 0.9137931034482758,
+        "crossRunNovelty": 0.896551724137931,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.3448275862068966,
+        "domainRelevance": 1,
+        "combined": 0.9026711996114618,
+        "peerReviewedClaims": 12,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j979zp058jtjhzr00pyf61xn1s81tsya",
+      "sourceId": "jx723zh9434d669xgxvwm8yjxd81tmyp",
+      "sourceTitle": "Full article: Type and class vectors and matrices in ℤn. Application to ℤ6, ℤ7, and ℤ12",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2022.2120214",
+      "extractionCreatedAt": 1772017298091,
+      "extractionSummary": "This peer-reviewed paper extends post-tonal music set theory in ℤn, generalizing interval-class vectors and trichord-type vectors to all cardinalities. It focuses on three musically significant cases: ℤ6 (hexachords), ℤ7 (heptatonic scales), and ℤ12 (chromatic scale in 12-TET). The paper provides type and class matrices, several theorems including a complete hexachord theorem, and MATLAB software for computing these structures in the general case. The work bridges abstract mathematics and practical composition tools, providing resources directly usable by researchers and composers working in atonal and post-tonal idioms.",
+      "topics": [
+        "post-tonal music theory",
+        "pitch-class set theory",
+        "interval-class vector (ICV)",
+        "trichord-type vector (TTV)",
+        "set classes and set types",
+        "twelve-tone equal temperament (12-TET)",
+        "inversional symmetry",
+        "transpositional symmetry",
+        "hexachord theorem",
+        "ℤn modular arithmetic in music",
+        "Forte names and normal form",
+        "heptatonic scales",
+        "atonal music",
+        "Schoenberg twelve-tone technique",
+        "Hauer tropes",
+        "embedding numbers (Lewin)",
+        "complementary reciprocity",
+        "Z-related chord classes",
+        "MATLAB computational music theory",
+        "prime form and intervallic form",
+        "combinatorics of pitch-class sets"
+      ],
+      "topicTokens": [
+        "post-tonal music theory",
+        "pitch-class set theory",
+        "interval-class vector (icv)",
+        "trichord-type vector (ttv)",
+        "set classes and set types",
+        "twelve-tone equal temperament (12-tet)",
+        "inversional symmetry",
+        "transpositional symmetry",
+        "hexachord theorem",
+        "ℤn modular arithmetic in music",
+        "forte names and normal form",
+        "heptatonic scales",
+        "atonal music",
+        "schoenberg twelve-tone technique",
+        "hauer tropes",
+        "embedding numbers (lewin)",
+        "complementary reciprocity",
+        "z-related chord classes",
+        "matlab computational music theory",
+        "prime form and intervallic form",
+        "combinatorics of pitch-class sets",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "Twelve-tone equal temperament (12-TET) divides the octave into 12 equal parts, and is the prevalent tuning system in contemporary music.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "tuning system definition",
+              "quote": "The prevalent tuning system is twelve-tone equal temperament (12-TET), which divides the octave into 12 equal parts, from which the notes of any scale are taken."
+            }
+          ]
+        },
+        {
+          "text": "In 12-TET, pitch classes are represented by integers 0–11, where 0 corresponds to C and 11 to B.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "pitch class integer mapping",
+              "quote": "the notes are pitch classes that are represented by integers of ℤ12, where 0 corresponds to note C and 11 to note B"
+            }
+          ]
+        },
+        {
+          "text": "Major and minor scales are heptatonic scales whose notes show great acoustical affinity among them.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "heptatonic acoustical affinity",
+              "quote": "Tonal music is based on major and minor scales. They are heptatonic scales whose notes show great acoustical affinity among them."
+            }
+          ]
+        },
+        {
+          "text": "Heptatonic scales can be studied in a simplified and unified way in ℤ7 by considering divisions of the scale as unequally sized steps, though in this case a chord type usually represents pitch-class sets with different sonorities.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "ℤ7 heptatonic model limitation",
+              "quote": "the different heptatonic scales can be studied in a simplified and unified way in ℤ7, considering the divisions of the scale unequally sized. In this case, however, a chord type usually represents pitch-class sets with different sonorities."
+            }
+          ]
+        },
+        {
+          "text": "Schoenberg's twelve-tone composition technique treats all 12 notes as equally relevant, and Hauer independently developed a 12-tone technique based on 'tropes' — pairs of complementary hexachords.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "twelve-tone historical context",
+              "quote": "Schönberg develops a composition technique based on 12-tone series, where all notes are equally relevant... Hauer develops another 12-tone composition technique, based on so-called 'tropes', which are pairs of complementary hexachords."
+            }
+          ]
+        },
+        {
+          "text": "The interval-class vector (ICV), also known as the 2-class vector (2CV), was first published by Forte as 'interval vectors' and characterizes set classes by their embedded dyads.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "ICV historical attribution",
+              "quote": "The rows of matrices [2CV] are actually the 2CV, which were first published by [Forte], there called interval vectors."
+            }
+          ]
+        },
+        {
+          "text": "The trichord-type vector (3TV), which lists the 3-note set types contained in each set type, was previously published and allows easy derivation of trichord-class vectors.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "trichord-type vector attribution",
+              "quote": "the rows of matrices [3TV] are the 3TV, which were published by [prior work], there called trichord-type vectors or TTV."
+            }
+          ]
+        },
+        {
+          "text": "Non-inversionally-symmetrical chord classes can only appear when the cardinality k satisfies 0 < k < n, and for composite n, there is always at least one such chord class for every valid k.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "inversional symmetry condition",
+              "quote": "non-inversionally-symmetrical chord classes can only appear for [0 < k < n]. In these cases, for every [valid k], there is at least one such chord class."
+            }
+          ]
+        },
+        {
+          "text": "The four basic triads in ℤ12 — diminished (3-10), minor (3-11a), major (3-11b), and augmented (3-12) — all map to a single chord class (3-4) when analyzed in ℤ7.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "triads collapsed in ℤ7",
+              "quote": "the four basic triads in ℤ12, which are the chord types 3-10 (diminished), 3-11a (minor), 3-11b (major), and 3-12 (augmented), in ℤ7 they all are the chord class 3-4."
+            }
+          ]
+        },
+        {
+          "text": "A complementary reciprocity theorem holds for unweighted type contents: the number of times chord type X contains chord type Y (scaled by transpositional symmetry) equals the number of times the complement of Y contains the complement of X, scaled accordingly.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "complementary reciprocity theorem",
+              "quote": "Theorem 5.1 (Complementary reciprocity)... [formal proof provided]"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament (12-TET)",
+          "details": {
+            "description": "Octave divided into 12 equal parts; the prevalent modern tuning system",
+            "divisionsOfOctave": 12,
+            "stepSize": "semitone"
+          }
+        },
+        {
+          "type": "note",
+          "value": "C = pitch class 0, B = pitch class 11 in ℤ12",
+          "details": {
+            "description": "Standard pitch class integer assignment in post-tonal theory",
+            "mapping": {
+              "B": 11,
+              "C": 0
+            },
+            "system": "12-TET integer notation"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "G7 chord = [7, 11, 2, 5] in ℤ12, normal form [0, 3, 6, 8] (A♭7)",
+          "details": {
+            "chord": "dominant seventh",
+            "enharmonicNormalForm": "A♭7",
+            "normalForm": [
+              0,
+              3,
+              6,
+              8
+            ],
+            "normalIntervallicForm": [
+              2,
+              4,
+              3,
+              3
+            ],
+            "pitchClasses": [
+              7,
+              11,
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Diminished triad (3-10) contains one tritone; weighted type content = 1",
+          "details": {
+            "chordType": "diminished triad",
+            "description": "Example of Lewin embedding number computation",
+            "embeddedInterval": "tritone",
+            "forteLabel": "3-10",
+            "tritoneTranspositionalSymmetry": 2,
+            "weightedTypeContent": 1
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "ℤ7 heptatonic abstract scale system",
+          "details": {
+            "description": "Simplified unified model for heptatonic scales; chord types may represent sets with different sonorities",
+            "divisionsOfOctave": 7,
+            "stepSize": "unequal (abstract)"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "ℤ6 hexachordal system",
+          "details": {
+            "description": "Used for hexachord theory, relevant to Hauer tropes and all-combinatorial hexachords; composite n example",
+            "divisionsOfOctave": 6
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do type and class matrices in non-equal divisions of the octave (e.g., just intonation or microtonal systems) compare to those in 12-TET, and can the ℤn framework be meaningfully extended to continuous pitch spaces?",
+        "Can the collapsing of the four basic triads (diminished, minor, major, augmented) into a single ℤ7 chord class be exploited compositionally to derive new voice-leading or harmonic relationships?",
+        "What is the perceptual/psychoacoustic significance of inversional symmetry in chord classes — do listeners perceive inversionally symmetrical sets as more stable or neutral?",
+        "The paper notes that 'acoustical affinity' characterizes heptatonic scale notes — what is the precise acoustic basis for this affinity, and how does it relate to harmonic series relationships or beating frequencies?",
+        "How do the full type and class matrices for ℤ12 relate to known results in spectral music or acoustic composition, where harmonic spectra naturally suggest non-equal pitch-class weightings?",
+        "Can Z-related chord classes (which share interval vectors but are not transpositionally or inversionally equivalent) be distinguished perceptually, and what are the implications for algorithmic composition?",
+        "How might the MATLAB tools provided be extended to microtonal systems like ℤ19, ℤ24, or ℤ31, and what new musical structures would emerge?",
+        "Is there a meaningful physical or acoustic interpretation of the complementary reciprocity theorem beyond its abstract mathematical form?"
+      ],
+      "scores": {
+        "base": 88,
+        "normalizedBase": 0.5704225352112676,
+        "novelty": 0.96,
+        "crossRunNovelty": 0.9739130434782609,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.08695652173913043,
+        "domainRelevance": 1,
+        "combined": 0.8351261481935088,
+        "peerReviewedClaims": 10,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j9720056ynemcvnjmn724gjg5s81v86a",
+      "sourceId": "jx7etc80rvn379gnkxadezhs8981vm8p",
+      "sourceTitle": "Full article: Generalizations of Euler's Tonnetz on triangulated surfaces",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2024.2362132",
+      "extractionCreatedAt": 1772046112753,
+      "extractionSummary": "This peer-reviewed paper generalizes Euler's Tonnetz — a geometric representation of pitch classes and harmonic relationships — to triangulated surfaces beyond the plane, using tools from Lie theory, crystallographic reflection groups, and Langlands duality. The authors construct edge-tonnetzes based on classical Lie algebra tilings (A2, B2/C2, G2) that encode major and minor triads, and show a striking correspondence between Langlands duality in mathematics and major/minor duality in music. A tonnetz on a sphere is constructed that encodes all 12 major ninth chords, while tonnetzes on tori encode subsets of major/minor triads with rich symmetry properties. The work frames the chromatic scale's structure as inherently geometric and proposes these new tonnetzes as potential compositional tools.",
+      "topics": [
+        "Tonnetz",
+        "Euler's Tonnetz",
+        "pitch class",
+        "equal temperament",
+        "triangulated surfaces",
+        "Lie algebras",
+        "Weyl groups",
+        "affine Weyl groups",
+        "Dynkin diagrams",
+        "Langlands duality",
+        "major/minor duality",
+        "crystallographic reflection groups",
+        "torus",
+        "sphere",
+        "major triads",
+        "minor triads",
+        "diminished seventh chords",
+        "augmented triads",
+        "major ninth chords",
+        "circle of fifths",
+        "intervals",
+        "minor third",
+        "major third",
+        "perfect fifth",
+        "tritone",
+        "whole tone scale",
+        "voice leading",
+        "music theory and mathematics",
+        "geometric music theory",
+        "harmonic topology",
+        "neo-Riemannian theory"
+      ],
+      "topicTokens": [
+        "tonnetz",
+        "euler's tonnetz",
+        "pitch class",
+        "equal temperament",
+        "triangulated surfaces",
+        "lie algebras",
+        "weyl groups",
+        "affine weyl groups",
+        "dynkin diagrams",
+        "langlands duality",
+        "major",
+        "minor duality",
+        "crystallographic reflection groups",
+        "torus",
+        "sphere",
+        "major triads",
+        "minor triads",
+        "diminished seventh chords",
+        "augmented triads",
+        "major ninth chords",
+        "circle of fifths",
+        "intervals",
+        "minor third",
+        "major third",
+        "perfect fifth",
+        "tritone",
+        "whole tone scale",
+        "voice leading",
+        "music theory and mathematics",
+        "geometric music theory",
+        "harmonic topology",
+        "neo-riemannian theory",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "Euler's Tonnetz can be interpreted as a complete major/minor vertex-tonnetz on an A2-tiling of the plane, in which major and minor triads appear alternatingly as triples of vertices of triangles, with notes going up in fifths, down in minor thirds, and down in major thirds along the three directions.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Core description of Euler's Tonnetz",
+              "quote": "the famous tonnetz originating in the work of Euler can be thought of as placing a note, or pitch class, at every vertex of this triangulation, such that, along the three directions, notes go up in fifths, down in minor thirds, and down in major thirds, respectively. This creates a beautiful pattern in which the major and minor triads appear alternatingly as triples of vertices of triangles."
+            }
+          ]
+        },
+        {
+          "text": "The mathematical Langlands duality — which swaps long and short sides of fundamental alcoves in Lie theory — corresponds directly to major/minor duality in music: applying Langlands duality to an all-major tonnetz produces an all-minor one, and vice versa.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Abstract statement",
+              "quote": "we observe a curious relationship between the mathematical Langlands duality and major/minor duality"
+            },
+            {
+              "label": "Concrete example in B2/C2 case",
+              "quote": "The Langlands dual tonnetz is now obtained by 'swapping long and short sides' of our fundamental alcove... The B2-major triad has become B2-minor, and all other triads have similarly reversed their quality."
+            }
+          ]
+        },
+        {
+          "text": "Angles between reflection hyperplanes in crystallographic tilings correspond to musical intervals: a 90° angle suggests a minor third (since four minor thirds stack to an octave), a 60° angle suggests a whole tone or major third, and a 30° angle suggests a minor second or perfect fifth.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Angle-to-interval correspondence",
+              "quote": "when an angle is 90° it suggests an interval of a minor third, since four minor thirds stack to an octave. Whereas an angle of 60° suggests a whole tone or a major third, and 30° a minor second or a perfect fifth."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz can be constructed on a sphere using 24 triangles paired into 12 quadrilaterals such that each quadrilateral encodes exactly one major ninth chord, yielding all 12 major ninth chords across the sphere.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Sphere tonnetz construction",
+              "quote": "we construct an edge-tonnetz on a sphere. This tonnetz is made up of 24 triangles paired up into 12 quadrilaterals. Each quadrilateral has five edges in total... Our tonnetz assigns a pitch class to each edge in a way so as to realise precisely all 12 major ninth chords, one in each quadrilateral."
+            }
+          ]
+        },
+        {
+          "text": "The G2-type major/minor edge-tonnetz is based on the circle of fifths and features six major and six minor triads in an alternating pattern; its Langlands dual contains the complementary set of six major and six minor triads, with qualities reversed.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "G2 tonnetz description",
+              "quote": "The G2 tiling of the plane hosts a very natural major/minor edge-tonnetz. Namely, this tonnetz is based on the circle of fifths, and features six major and six minor triads in an alternating pattern. Langlands duality transforms this tonnetz into its complementary one, which contains precisely the remaining triads, turning ones that were originally major into minor ones and vice versa."
+            }
+          ]
+        },
+        {
+          "text": "In the G2 torus tonnetz, rotational symmetries of the tonnetz correspond exactly to transpositions: 60° rotation about the central vertex equals transposition up by a whole tone; 120° rotation about hexagon corners equals transposition up by a major third; 180° rotation about 6-valent vertices equals transposition by a tritone.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Symmetry-transposition correspondence in G2 tonnetz",
+              "quote": "Rotating clockwise by 60° about the central vertex amounts to transposing up by a whole tone. Rotating clockwise by 120° about the corners of the fundamental hexagon corresponds to transposing up by a major third. For each 6-valent vertex, rotation by 180° corresponds to transposition by a tritone."
+            }
+          ]
+        },
+        {
+          "text": "The B2/C2-type major edge-tonnetz on a torus contains exactly four distinct major triads (F, A, C♯/D♭, and D major), each appearing twice, while the four notes absent from these triads are the same four notes absent from the corresponding minor tonnetz — reflecting a shared key-signature structure.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "B2 major tonnetz triads",
+              "quote": "It has eight triangles but only four distinct triads, each one appearing twice. Namely, these triads are the major triads on F, A, C♯ and D."
+            },
+            {
+              "label": "Shared absence of notes",
+              "quote": "the type B2 tonnetz we constructed and its type C2 counterpart... one containing the F, A♭, B, D major chords, and the other their minor versions... The two constructions also have in common the absence of the same four notes"
+            }
+          ]
+        },
+        {
+          "text": "In equal temperament with 12 pitch classes, three transpositions of the B2 major edge-tonnetz cover all 12 major triads, and three transpositions of the C2 minor edge-tonnetz cover all 12 minor triads.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Coverage of all major triads via transposition",
+              "quote": "If we transpose every note up by a whole tone or down by a whole tone, we get two alternative versions of this tonnetz, which altogether cover all of the 12 major triads."
+            }
+          ]
+        },
+        {
+          "text": "In edge-tonnetzes, adjacent chords share at most a single note (the one labeling their common edge), unlike in Euler's vertex-tonnetz where adjacent triads share two notes — making edge-tonnetzes less suited to voice-leading analysis but still geometrically meaningful.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Edge-tonnetz and voice leading",
+              "quote": "With an edge-tonnetz, unlike with Euler's vertex-tonnetz, it is the case that adjacent chords can only be expected to have a single note in common. Our generalization of the concept of a tonnetz in this article is therefore not aimed at being specifically a tool for voice leading."
+            }
+          ]
+        },
+        {
+          "text": "The diminished seventh chord appears naturally at certain vertices of the B2 edge-tonnetz, arising from the prevalence of 90° angles in that tiling — since a 90° rotational symmetry of order 4 corresponds to transposition by a minor third, and four stacked minor thirds form a diminished seventh chord.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Diminished seventh from 90° angles",
+              "quote": "There are many 90° angles in this B2 tonnetz, which is what leads to the diminished seventh chords appearing here. Namely, a rotation by 90 degrees is a symmetry of order four, as is transposition by a minor third."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament",
+          "details": {
+            "description": "Chromatic scale with notes related by octave considered equivalent; residue classes modulo 12",
+            "pitchClasses": 12
+          }
+        },
+        {
+          "type": "chordProgression",
+          "value": "F major, A major, C♯ major, D major (B2 edge-tonnetz on torus)",
+          "details": {
+            "eachAppearances": 2,
+            "surface": "torus",
+            "tonnetzType": "B2 edge-tonnetz",
+            "totalTriangles": 8,
+            "triadQuality": "major",
+            "triads": [
+              "F major",
+              "A major",
+              "C# major",
+              "D major"
+            ]
+          }
+        },
+        {
+          "type": "chordProgression",
+          "value": "F minor, A♭ minor, B minor, D minor (C2 edge-tonnetz on torus)",
+          "details": {
+            "eachAppearances": 2,
+            "surface": "torus",
+            "tonnetzType": "C2 edge-tonnetz",
+            "triadQuality": "minor",
+            "triads": [
+              "F minor",
+              "Ab minor",
+              "B minor",
+              "D minor"
+            ]
+          }
+        },
+        {
+          "type": "chordProgression",
+          "value": "6 major + 6 minor triads alternating, circle-of-fifths based (G2 edge-tonnetz on torus)",
+          "details": {
+            "basis": "circle of fifths",
+            "fundamentalDomainTriangles": 12,
+            "surface": "torus",
+            "tonnetzType": "G2 edge-tonnetz",
+            "totalTriads": 12,
+            "triadQuality": "major/minor alternating"
+          }
+        },
+        {
+          "type": "chordProgression",
+          "value": "All 12 major ninth chords on sphere tonnetz",
+          "details": {
+            "chordType": "major ninth",
+            "notesPerChord": 5,
+            "quadrilaterals": 12,
+            "surface": "sphere",
+            "tonnetzType": "edge-tonnetz on sphere",
+            "totalChords": 12,
+            "totalTriangles": 24
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Diminished seventh chord at 8-valent vertices of B2 tonnetz",
+          "details": {
+            "chordType": "diminished seventh",
+            "geometricOrigin": "90-degree angles in B2 tiling",
+            "intervalStackedToOctave": "minor third × 4",
+            "vertexValence": 8
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Augmented triads at hexagon-corner vertices of G2 torus tonnetz",
+          "details": {
+            "chordType": "augmented triad",
+            "examples": [
+              "C/E/G#",
+              "second augmented triad"
+            ],
+            "multisetMultiplicity": 6,
+            "tonnetz": "G2 torus",
+            "vertexType": "hexagon corners after gluing"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Whole tone scale major triads in G2-type tritone edge-tonnetz (Section 5)",
+          "details": {
+            "chordType": "major triads",
+            "edgeDyadType": "tritone",
+            "scaleContext": "whole tone scale",
+            "surface": "torus"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Langlands duality ↔ major/minor duality correspondence be given a deeper musical or acoustic explanation, beyond the geometric coincidence demonstrated here?",
+        "Are there rank-3 or higher-rank generalizations of these tonnetzes that correspond to 3-dimensional or higher-dimensional musical structures (e.g., four-note chords in 3D space)?",
+        "How do the exotic G2-type tritone edge-tonnetzes (Section 5) sound compositionally, and do their unusual symmetry groups produce perceptually interesting harmonic patterns?",
+        "Can the sphere tonnetz encoding all 12 major ninth chords be used as a practical compositional constraint system, and what voice-leading properties does adjacency on the sphere imply?",
+        "Is there a natural extension of this framework to microtonal or non-equal-tempered systems (e.g., just intonation), where the geometric angles might correspond to just-intoned interval ratios?",
+        "What is the relationship between the Klein bottle tonnetz mentioned in passing and these surface tonnetzes — does Langlands duality extend meaningfully to non-orientable surfaces?",
+        "Do the hyperbolic plane tonnetzes (based on pentagons, mentioned briefly) have analogues in these crystallographic Lie-theoretic constructions?",
+        "Can the rotational symmetry ↔ transposition correspondence (e.g., 60° rotation = whole tone transposition in G2) be exploited to generate algorithmically coherent compositions by traversing the tonnetz geometrically?",
+        "What perceptual or psychoacoustic significance, if any, do the diminished seventh chords at high-valence vertices of the B2 tonnetz have — are these natural 'pivot' chords in that harmonic space?",
+        "How does restricting composition to a single edge-tonnetz (as suggested by the authors) affect perceived harmonic coherence compared to Euler's vertex-tonnetz?"
+      ],
+      "scores": {
+        "base": 94,
+        "normalizedBase": 0.6126760563380281,
+        "novelty": 0.95,
+        "crossRunNovelty": 0.9117647058823529,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.29411764705882354,
+        "domainRelevance": 1,
+        "combined": 0.8323777961888981,
+        "peerReviewedClaims": 10,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j9767qr9za63ktnsym8176cs7d81x075",
+      "sourceId": "jx740pjhg25eykbn1qx851q0cd81tjha",
+      "sourceTitle": "Full article: On features of fugue subjects. A comparison of J.S. Bach and later composers",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2019.1610193",
+      "extractionCreatedAt": 1772132634175,
+      "extractionSummary": "This peer-reviewed study quantifies fugue subjects from 238 organ works (Bach: 47, Reger: 45, Others: 146) using six integer-valued features: length, range, number of pitch classes, initial interval, number of unique intervals, and maximum interval between successive notes. Statistical analysis (PCA, Kruskal-Wallis, regression models) reveals that Bach's fugue subjects differ significantly from both Reger and other composers in range (compass), and all three composer categories differ significantly in the number of unique pitch classes employed. The study demonstrates that mathematical and statistical methods can meaningfully distinguish compositional styles across historical epochs. Key findings include that most fugue subjects across all categories employ 7–8 unique pitch classes, and that the initial interval between the first two notes does not significantly distinguish composer categories.",
+      "topics": [
+        "fugue",
+        "counterpoint",
+        "fugue subject analysis",
+        "J.S. Bach",
+        "Max Reger",
+        "organ music",
+        "music theory",
+        "mathematical music analysis",
+        "statistical musicology",
+        "principal component analysis",
+        "pitch class",
+        "interval measurement",
+        "chromaticism",
+        "diatonic harmony",
+        "semitone",
+        "musical range",
+        "Spielfuge",
+        "music and mathematics",
+        "regression models for music",
+        "Kruskal-Wallis test",
+        "ordinal regression",
+        "Poisson regression",
+        "composer style classification",
+        "historical musicology",
+        "BWV catalog",
+        "tonal vs chromatic writing",
+        "octave equivalence",
+        "multivariate statistics in music"
+      ],
+      "topicTokens": [
+        "fugue",
+        "counterpoint",
+        "fugue subject analysis",
+        "j.s. bach",
+        "max reger",
+        "organ music",
+        "music theory",
+        "mathematical music analysis",
+        "statistical musicology",
+        "principal component analysis",
+        "pitch class",
+        "interval measurement",
+        "chromaticism",
+        "diatonic harmony",
+        "semitone",
+        "musical range",
+        "spielfuge",
+        "music and mathematics",
+        "regression models for music",
+        "kruskal-wallis test",
+        "ordinal regression",
+        "poisson regression",
+        "composer style classification",
+        "historical musicology",
+        "bwv catalog",
+        "tonal vs chromatic writing",
+        "octave equivalence",
+        "multivariate statistics in music",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "A statistically significant difference exists between Bach's fugue subjects and those of later composers (Reger and others) with respect to the range (compass) of the subject, measured in semitones.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Abstract finding",
+              "quote": "Concerning the range of the subject, a statistically significant difference was found between Bach and other composers."
+            },
+            {
+              "label": "Regression result",
+              "quote": "With 'Bach' category as the reference level for the dummy variables, we find significant differences to 'Reger' as well as 'Others' (p values , , respectively)."
+            }
+          ]
+        },
+        {
+          "text": "A statistically significant difference in the number of unique pitch classes employed was found between all three composer categories (Bach, Reger, and other composers), with Reger's subjects tending toward higher values.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Abstract finding",
+              "quote": "Furthermore, regarding the number of unique notes employed, a statistically significant difference was found between all composer categories."
+            },
+            {
+              "label": "Visual observation",
+              "quote": "From Figure, it seems that outcomes of Reger are shifted against higher values."
+            },
+            {
+              "label": "Ordinal regression result",
+              "quote": "The composer category turns out to be significant (in the resulting ANOVA table), and closer examination shows differences between all composers."
+            }
+          ]
+        },
+        {
+          "text": "The initial interval between the first two notes of a fugue subject does not significantly distinguish composer categories and is non-significant in regression models for subject range.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Regression model result",
+              "quote": "Variables and , on the other hand, are significant in the model... (initial interval), is clearly non-significant (p value 0.9640)."
+            },
+            {
+              "label": "Author's prior expectation",
+              "quote": "Regarding, perhaps we expect no distinguishing effect due to composer; the interval between the first two notes would probably not depend on the era in music history."
+            }
+          ]
+        },
+        {
+          "text": "Most fugue subjects in the dataset, regardless of composer category, employ typically 7 or 8 unique pitch classes, consistent with diatonic writing.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Descriptive statistics finding",
+              "quote": "Most fugues in the data set, regardless of composer category, has typically 7 or 8 notes, as seen from Figure. For a theme of diatonic character, a value below 7 is likely."
+            }
+          ]
+        },
+        {
+          "text": "Bach's D major fugue BWV 532 (Spielfuge type) is the longest subject in the Bach dataset at 64 notes, yet employs few unique pitch classes due to its sequential passage construction.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Data observation",
+              "quote": "Among Bach's works, we find the longest subjects (with a length of 64 tones) as the D major fugue BWV 532, which is of so-called Spielfuge type... Despite the considerable length of such a subject, few unique notes are employed."
+            }
+          ]
+        },
+        {
+          "text": "Bach's fugue in E minor BWV 548 employs the maximum number of unique pitch classes (value of 11) among Bach's subjects, the highest observed in the Bach category.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Data observation",
+              "quote": "Among Bach's subjects, we find a maximum value of (for the fugue in E minor, BWV 548)."
+            }
+          ]
+        },
+        {
+          "text": "Among all fugue subjects studied, Bach has four works where the number of unique intervals equals a high value (BWV 543, 548, 564, 575), with only Schumann's second fugue on BACH op. 60:2 matching this among non-Bach composers.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Comparative data finding",
+              "quote": "Interestingly Bach has as many as four subjects where: BWV 543, BWV 548, BWV 564, BWV 575. In the total collection of subjects, we find further only Schumann's second fugue on BACH op 60:2 with."
+            }
+          ]
+        },
+        {
+          "text": "The compass of a fugue subject is typically centered around the octave (12 semitones), with distributions that are more symmetric than the right-skewed length distributions.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Descriptive statistics",
+              "quote": "For the variable, range, we note in Figure somewhat more symmetric shapes of the distributions with a typical mode around the octave (12 semitones)."
+            }
+          ]
+        },
+        {
+          "text": "The first principal component of the six fugue-subject features accounts for 51% of total variance, with the first three components together explaining 80%, indicating that a low-dimensional structure captures most of the variability in fugue subject characteristics.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "PCA result",
+              "quote": "For our data, the first principal component accounts for 51%, the first two principal components 68% and the first three 80%."
+            }
+          ]
+        },
+        {
+          "text": "No significant differences between composer categories were found for the variables initial interval, number of unique intervals between notes, and maximum interval between successive notes, using Kruskal-Wallis non-parametric tests.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Statistical test result",
+              "quote": "For variables,, , for each variable no significant differences were found between categories, using the same methodology as above."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "note",
+          "value": "Semitone as unit of interval measurement",
+          "details": {
+            "description": "All intervals and ranges in the study are measured in semitones",
+            "examples": {
+              "octave": 12,
+              "perfectFifth": 7,
+              "tritone": 6
+            },
+            "unit": "semitones"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Fugue subject range: mode ~12 semitones (octave), max observed >12",
+          "details": {
+            "bwv577Max": "largest range in Bach dataset (BWV 577)",
+            "distribution": "approximately symmetric around octave",
+            "typicalMode": 12,
+            "unit": "semitones"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Fugue subject length: mode varies, longest 64 notes (BWV 532)",
+          "details": {
+            "distribution": "right-skewed",
+            "longestBach": 64,
+            "piece": "BWV 532, D major fugue (Spielfuge)",
+            "unit": "number of notes"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Fugue subject pitch class count: typical 7–8 out of 12",
+          "details": {
+            "bachMax": 11,
+            "description": "Based on conventional 12-note chromatic scale with octave equivalence",
+            "maximum": 12,
+            "piece": "BWV 548, E minor fugue",
+            "typicalRange": "7-8",
+            "unit": "unique pitch classes",
+            "upperBound": 12
+          }
+        },
+        {
+          "type": "instrument",
+          "value": "Pipe organ",
+          "details": {
+            "description": "All fugues in the dataset are organ works; the study focuses exclusively on the organ fugue repertoire from Bach onwards"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Rheinberger Fuga cromatica: single interval type (semitone), minimum unique intervals",
+          "details": {
+            "composer": "Josef Rheinberger",
+            "description": "Subject is a chromatic scale, hence only one interval type (semitone) occurs",
+            "intervalType": "semitone only",
+            "piece": "Fuga cromatica, A minor, 4th organ sonata",
+            "uniqueIntervals": 1
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Lemare fugue in D minor op. 98: maximum observed interval between successive notes",
+          "details": {
+            "composer": "Edwin H. Lemare",
+            "description": "Lemare's D minor fugue op. 98 contains the largest maximum interval between successive notes in the entire dataset",
+            "unit": "semitones"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Reger fugue subjects: no opening fifth interval observed",
+          "details": {
+            "composer": "Max Reger",
+            "description": "For Reger's subjects, no subject has an opening fifth (interval of 7 semitones) as the initial interval, unlike Bach and other composers",
+            "observedInitialIntervals": "0 or non-fifth values only"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Bach BWV 548 (E minor): 11 unique pitch classes in subject",
+          "details": {
+            "composer": "J.S. Bach",
+            "outOf": 12,
+            "piece": "Fugue in E minor, BWV 548",
+            "uniquePitchClasses": 11
+          }
+        }
+      ],
+      "openQuestions": [
+        "Could these same quantitative features (length, range, pitch class count, intervals) be used to distinguish composer styles in non-organ fugues, such as keyboard or choral fugues, and would the same statistical differences between Bach and later composers hold?",
+        "What acoustic or perceptual reasons underlie the tendency for fugue subjects to cluster around a range of one octave (12 semitones)? Is this a psychoacoustic optimum for melodic memorability or a practical constraint of counterpoint?",
+        "Could machine learning models trained on these six features reliably attribute anonymous fugues to specific composers, and what additional features (e.g., rhythmic profile, harmonic rhythm, contour) would improve attribution accuracy?",
+        "The study excludes 20th-century modern works (e.g., David's 12 Orgelfugen). How do dodecaphonic or post-tonal fugue subjects differ statistically from the tonal subjects studied here, particularly in pitch class count and interval distribution?",
+        "Is the modal distribution of fugue subject length (right-skewed) consistent with Zipfian or other natural language/information-theoretic length distributions, suggesting common cognitive constraints on musical phrase construction?",
+        "Reger's subjects show higher unique pitch class counts and no opening fifths — does this reflect a deliberate compositional choice to differentiate from Bach, or an organic consequence of his extended harmonic language?",
+        "Could these quantitative features be used as generative constraints in algorithmic composition to produce stylistically authentic fugue subjects for a target composer category?",
+        "The study notes that determining where a fugue subject ends is subjective. How much does inter-rater variability in subject boundary identification affect the statistical findings, and could automated score analysis reduce this ambiguity?",
+        "Are there cross-cultural parallels to the fugue subject features identified here in non-Western contrapuntal or imitative forms (e.g., Indonesian kotekan, Indian raga development), and would similar statistical methods reveal analogous structural constraints?",
+        "The compass of vocal fugues is noted to be constrained by human voice range — is there a quantifiable relationship between the tessitura/range of fugue subjects and the intended performance medium (voice type, instrument) that could inform orchestration decisions?"
+      ],
+      "scores": {
+        "base": 97,
+        "normalizedBase": 0.6338028169014085,
+        "novelty": 0.9508196721311475,
+        "crossRunNovelty": 0.97,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.1,
+        "domainRelevance": 0.8600000000000001,
+        "combined": 0.8264949203417226,
+        "peerReviewedClaims": 10,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j97bbtpm75c4h5388kv4vaj7en81v0pf",
+      "sourceId": "jx78r3789cz8et74b2b8cr6pk581twa6",
+      "sourceTitle": "Full article: Mathematical foundations of complex tonality",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2023.2228546",
+      "extractionCreatedAt": 1772017322095,
+      "extractionSummary": "This peer-reviewed paper proposes a new mathematical framework for tonality based on ratios of Gaussian integers (complex numbers), extending the traditional just intonation system which uses products of powers of primes 2, 3, and 5. The authors argue that the tritone—problematic in just intonation due to multiple unsatisfactory rational representations—can be elegantly represented as a single complex ratio (i). They construct complete major and minor scales using complex semitones derived from Gaussian primes, and prove the existence of exactly three distinct complex chromatic systems. The work bridges number theory, abstract algebra, and music theory, offering both a new compositional framework and a new analytical lens for Western music.",
+      "topics": [
+        "just intonation",
+        "equal temperament",
+        "complex tonality",
+        "Gaussian integers",
+        "Gaussian primes",
+        "temperament theory",
+        "Ptolemy's intense diatonic scale",
+        "tritone",
+        "syntonic comma",
+        "wolf intervals",
+        "n-limit tone systems",
+        "Generalized Interval Systems",
+        "chromatic scale construction",
+        "ecclesiastical modes",
+        "Kepler's Monochord",
+        "music and number theory",
+        "harmonic series",
+        "string vibration frequency ratios",
+        "scale theory",
+        "diatonic and chromatic scales",
+        "modulation and key change",
+        "algebraic combinatorics of musical words",
+        "Pythagorean tuning",
+        "5-limit harmony",
+        "middle C frequency"
+      ],
+      "topicTokens": [
+        "just intonation",
+        "equal temperament",
+        "complex tonality",
+        "gaussian integers",
+        "gaussian primes",
+        "temperament theory",
+        "ptolemy's intense diatonic scale",
+        "tritone",
+        "syntonic comma",
+        "wolf intervals",
+        "n-limit tone systems",
+        "generalized interval systems",
+        "chromatic scale construction",
+        "ecclesiastical modes",
+        "kepler's monochord",
+        "music and number theory",
+        "harmonic series",
+        "string vibration frequency ratios",
+        "scale theory",
+        "diatonic and chromatic scales",
+        "modulation and key change",
+        "algebraic combinatorics of musical words",
+        "pythagorean tuning",
+        "5-limit harmony",
+        "middle c frequency",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "No tuning system exists for keyboard instruments such that all harmonious intervals are perfectly tuned — this is described as a fundamental paradox at the heart of Western music.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "core paradox statement",
+              "quote": "The problem is that there is a paradox at the heart of Western music. The paradox is that no tuning system exists for keyboard instruments such that all the harmonious intervals are perfectly tuned."
+            }
+          ]
+        },
+        {
+          "text": "In just intonation, harmonious intervals are represented as products of powers of the prime numbers 2, 3, and 5: minor third = 6/5, major third = 5/4, fourth = 4/3, fifth = 3/2, minor sixth = 8/5, major sixth = 5/3, octave = 2.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "just intonation interval ratios",
+              "quote": "The minor third is 6/5, the major third is 5/4, the fourth is 4/3, the fifth is 3/2, the minor sixth is 8/5, the major sixth is 5/3, and the octave is 2."
+            }
+          ]
+        },
+        {
+          "text": "Ptolemy's intense diatonic scale, expressed with middle C = 1, takes the form C=1, D=9/8, E=5/4, F=4/3, G=3/2, A=5/3, B=15/8, C'=2.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Ptolemaic scale definition",
+              "quote": "Ptolemy's scale, expressed in units of time such that the frequency of middle C is unity, takes the form (1)"
+            }
+          ]
+        },
+        {
+          "text": "The syntonic comma (ratio 81/80) arises as a multiplicative discrepancy when the tonal centre is shifted in just intonation, causing instability in the system.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "syntonic comma definition",
+              "quote": "The multiplicative discrepancy 81/80 between the two values of D is called the syntonic comma (or comma of Didymus)."
+            }
+          ]
+        },
+        {
+          "text": "The tritone (F#/Bb) in just intonation requires at least four distinct ratio representations, none fully satisfactory, motivating the search for an alternative framework.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "problem of the tritone",
+              "quote": "four different values for [the tritone] are required, corresponding to the various ways that the interval can be formed out of simpler intervals... The multiplicity of the intervals representing [it] is troubling, and all are rather complicated when they are factorized into products of powers of primes."
+            }
+          ]
+        },
+        {
+          "text": "In equal temperament, the semitone is the irrational ratio 2^(1/12), meaning no interval except the octave is acoustically pure.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "equal temperament definition and limitation",
+              "quote": "we introduce a irrational semitone [2^(1/12)] which functions as the single 'particle' out of which all the tones of the chromatic scale can be assembled by aggregation... Under equal temperament none of the harmonious intervals are perfect."
+            }
+          ]
+        },
+        {
+          "text": "The seven ecclesiastical (church) modes arise from permutations of the aggregation sequence of two whole-tone atoms (X=9/8, Y=10/9) and one semitone atom (Z=16/15) in just intonation.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "modal generation via atom permutation",
+              "quote": "The seven ecclesiastical modes arise in this way, for example, corresponding to permutations of the original aggregation sequence"
+            }
+          ]
+        },
+        {
+          "text": "Exactly three distinct families of rational three-semitone chromatic systems exist that interleave Ptolemy's diatonic scale, each yielding 32 variant scales for a total of 96 scales.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Theorem 4.1",
+              "quote": "Three and only three such sets of semitones exist... Each such system gives rise to thirty-two distinct chromatic scales."
+            }
+          ]
+        },
+        {
+          "text": "The tritone can be represented in the complex tone system as the ratio i (the imaginary unit), making it a single power of a single Gaussian prime — proposed as its most consonant representation.",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "complex tritone proposal",
+              "quote": "Our construction proposes that the tritone interval from C to [F#] can be given the value i, a single power of a single complex prime, which can thus be seen as the most consonant interval in the system."
+            }
+          ]
+        },
+        {
+          "text": "The set of complex 5-limit intervals modulo units and complex 5-limit phase factors forms a Generalized Interval System, generalizing existing real n-limit tone theory.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Proposition 6.1",
+              "quote": "the set of complex 5-limit intervals modulo units and complex 5-limit phase factors forms a Generalized Interval System in the sense of [citation]."
+            }
+          ]
+        },
+        {
+          "text": "Equal temperament's thirds are noticeably wide and acoustically impure, which critics argue gives triads an 'insecure and restless sound' and eliminates key differentiation.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "equal temperament critique",
+              "quote": "although the fifths are reasonably accurate under equal temperament, the thirds are noticeably wide... there is not one single pure interval; the thirds are especially poor, giving the triad an insecure and restless sound; there is no differentiation between the keys"
+            }
+          ]
+        },
+        {
+          "text": "Middle C has a frequency of approximately 261.62 Hz.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "middle C frequency",
+              "quote": "Suppose we fix a length of string so that it will vibrate at about 261.62 Hertz, so-called middle C"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Just Intonation (5-limit, Ptolemaic)",
+          "details": {
+            "description": "Ptolemy's intense diatonic scale with middle C = 1",
+            "primes": [
+              2,
+              3,
+              5
+            ],
+            "scale": {
+              "A": "5/3",
+              "B": "15/8",
+              "C": 1,
+              "C2": 2,
+              "D": "9/8",
+              "E": "5/4",
+              "F": "4/3",
+              "G": "3/2"
+            }
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Equal Temperament (12-TET)",
+          "details": {
+            "description": "Single irrational semitone particle; no pure intervals except octave",
+            "semitone_ratio": "2^(1/12)",
+            "semitone_ratio_decimal": 1.059463
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Complex Tonality (Gaussian Integer basis)",
+          "details": {
+            "basis": "Ratios of Gaussian integers",
+            "complexSemitones": {
+              "major_complex_semitone": "(2+i)/sqrt(5)",
+              "minor_complex_semitone": "(1+i)/sqrt(2)"
+            },
+            "description": "Novel system proposed by authors; tritone = i, uses Gaussian primes as generators",
+            "scales_per_system": 32,
+            "systems": 3,
+            "total_scales": 96,
+            "tritone_value": "i (imaginary unit)"
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Kepler's Monochord No. 2 (transposed down a fifth)",
+          "details": {
+            "description": "Just chromatic scale attributed to Johannes Kepler / Alexander Malcolm's Monochord",
+            "reference": "Equation (2) in paper"
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "261.62 Hz (Middle C)",
+          "details": {
+            "hz": 261.62,
+            "note": "C4 (middle C)",
+            "role": "tonal centre / unity reference in just intonation calculations"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Just intonation interval ratios",
+          "details": {
+            "diatonic_semitone": "16/15",
+            "major_sixth": "5/3",
+            "major_third": "5/4",
+            "major_whole_tone": "9/8",
+            "minor_sixth": "8/5",
+            "minor_third": "6/5",
+            "minor_whole_tone": "10/9",
+            "octave": "2/1",
+            "perfect_fifth": "3/2",
+            "perfect_fourth": "4/3",
+            "syntonic_comma": "81/80"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Three-semitone Just Systems (Theorem 4.1)",
+          "details": {
+            "Just_System_I": {
+              "p": "16/15",
+              "q": "135/128",
+              "r": "25/24"
+            },
+            "Just_System_II": {
+              "description": "Second family, 32 variants"
+            },
+            "Just_System_III": {
+              "description": "Third family, 32 variants"
+            },
+            "atoms": {
+              "X": "9/8",
+              "Y": "10/9",
+              "Z": "16/15"
+            }
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can complex tonality (Gaussian integer-based intervals) be realized acoustically, and what would compositions written in this system actually sound like?",
+        "How would the three complex chromatic systems compare perceptually to equal temperament and just intonation in listener studies?",
+        "Is there a physical or psychoacoustic justification for representing the tritone as the imaginary unit i, beyond mathematical elegance?",
+        "Can the algebraic combinatorics of modal permutations (aggregation sequences) be fully formalized in the spirit of Dominguez, Clampitt, and Noll?",
+        "What are the implications of 'shadow' real tuning systems derived from the magnitudes of complex intervals (Theorems 9.1 and 9.2) for practical instrument design?",
+        "How does the complex 5-limit Generalized Interval System relate to existing neo-Riemannian and transformational music theory frameworks?",
+        "Could higher Gaussian prime limits (analogous to 7-limit or 11-limit just intonation) yield additional musically meaningful complex tone systems?",
+        "What would a keyboard or digital instrument interface look like that could navigate complex chromatic scales, given the non-real nature of some interval ratios?",
+        "Is Newton's preference for the Dorian mode on account of its palindromic aggregation sequence musically or mathematically significant beyond symmetry?",
+        "How does complex tonality handle the problem of enharmonic equivalence (e.g., C# vs Db) which equal temperament resolves by definition?"
+      ],
+      "scores": {
+        "base": 95,
+        "normalizedBase": 0.6197183098591549,
+        "novelty": 0.9019607843137255,
+        "crossRunNovelty": 0.9,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.3333333333333333,
+        "domainRelevance": 1,
+        "combined": 0.8222935653134493,
+        "peerReviewedClaims": 10,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S7",
+      "extractionId": "j97abcj1qcxybswc6dz7vygpzs81tvxk",
+      "sourceId": "jx71tnc8eh6kqa0nv5d2q3vdb181vdz1",
+      "sourceTitle": "Full article: The line of fifths and the co-evolution of tonal pitch-classes",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2022.2044927",
+      "extractionCreatedAt": 1771988801698,
+      "extractionSummary": "This peer-reviewed study uses dimensionality reduction (PCA) on a large historical corpus of 2,012 Western musical pieces (ca. 1360–1940) to demonstrate that the line of fifths is the fundamental organizing principle of tonal pitch-class distributions. The authors show that the first two principal components of pitch-class distributions correspond to direction and distance along the line of fifths, accounting for 64% of total data variance. A key finding is a historically growing 'fifths range' — the span of pitch classes used in a piece along the line of fifths — reflecting the expansion from diatonic Renaissance music toward chromatic and enharmonic Romantic and modern compositions. The study also introduces 'pitch-class co-evolution' to track how pitch-class co-occurrence patterns changed over history. The authors argue these tonal relationships reflect cognitive models of composers and listeners rather than physical or logical necessities.",
+      "topics": [
+        "line of fifths",
+        "circle of fifths",
+        "pitch-class distributions",
+        "tonal pitch classes",
+        "neutral pitch classes",
+        "enharmonic equivalence",
+        "octave equivalence",
+        "perfect fifth",
+        "dimensionality reduction",
+        "Principal Component Analysis (PCA)",
+        "corpus musicology",
+        "computational musicology",
+        "diatonic scales",
+        "pentatonic scales",
+        "whole-tone scales",
+        "chromaticism",
+        "fifths range",
+        "historical musicology",
+        "music cognition",
+        "tonal space",
+        "pitch space models",
+        "well-formed scales",
+        "pitch-class co-evolution",
+        "music history",
+        "Western classical music",
+        "equal temperament",
+        "Pythagorean tuning",
+        "harmonic interval content",
+        "key relationships"
+      ],
+      "topicTokens": [
+        "line of fifths",
+        "circle of fifths",
+        "pitch-class distributions",
+        "tonal pitch classes",
+        "neutral pitch classes",
+        "enharmonic equivalence",
+        "octave equivalence",
+        "perfect fifth",
+        "dimensionality reduction",
+        "principal component analysis (pca)",
+        "corpus musicology",
+        "computational musicology",
+        "diatonic scales",
+        "pentatonic scales",
+        "whole-tone scales",
+        "chromaticism",
+        "fifths range",
+        "historical musicology",
+        "music cognition",
+        "tonal space",
+        "pitch space models",
+        "well-formed scales",
+        "pitch-class co-evolution",
+        "music history",
+        "western classical music",
+        "equal temperament",
+        "pythagorean tuning",
+        "harmonic interval content",
+        "key relationships",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "The perfect fifth plays a fundamental role in the organization of tonal pitch space, and this can be empirically inferred directly from a large corpus of musical pieces using dimensionality reduction.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Research question",
+              "quote": "Can the central role of the perfect fifth for tonal organization be inferred directly from a corpus of musical pieces?"
+            },
+            {
+              "label": "Finding",
+              "quote": "we demonstrate that the line of fifths, our central object of interest, can be shown to be a fundamental organization principle for musical pieces using dimensionality reduction methods"
+            }
+          ]
+        },
+        {
+          "text": "The first principal component of tonal pitch-class distributions accounts for 41% of total data variance and corresponds to the direction (sharp vs. flat) along the line of fifths from D.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "PCA result",
+              "quote": "The first principal component (PC1, top panel) distinguishes the two directions, ascending vs. descending (red vs. blue colouring), of the line of fifths departing from D, the most frequent tonal pitch-class in the corpus. This dimension accounts for 41 percent of the total data variance."
+            }
+          ]
+        },
+        {
+          "text": "The second principal component accounts for 23% of data variance and corresponds to distance from the center of the line of fifths, distinguishing natural from altered tonal pitch-classes.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "PCA result",
+              "quote": "The second principal component (PC2, bottom panel) represents the distance to the centre of the line of fifths – regardless of the direction – and distinguishes pieces with natural tonal centres (from F to B; white or very light colours) from more altered tonal pitch-classes. This distinction accounts for 23 percent of the variance in the data."
+            }
+          ]
+        },
+        {
+          "text": "Together, the first two principal components of tonal pitch-class distributions account for 64% of total variance, compressing 35 dimensions into two interpretable axes of direction and distance on the line of fifths.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "PCA variance explained",
+              "quote": "They together account for a total of 64 percent of the variance in the data but greatly simplify the space from 35 dimensions to just two."
+            }
+          ]
+        },
+        {
+          "text": "D is the most frequent tonal pitch-class in the Western corpus studied, and serves as the center of the line of fifths around which pitch-class distributions are symmetrically arranged.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Corpus-level finding",
+              "quote": "On average, and perhaps not surprisingly, the natural tonal pitch-classes (from F to B) are most common, while altered tonal pitch-classes (with sharps or flats) are much less frequent in the corpus. Moreover, they are centered around D, the exact middle of the natural tonal pitch-classes in fifths order."
+            }
+          ]
+        },
+        {
+          "text": "The 'fifths range' of musical pieces has grown historically, reflecting an expansion from diatonic (range ≤ 6) Renaissance music to chromatic (range > 6) and enharmonic (range > 12) Romantic and modern compositions.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Fifths range definition and historical trend",
+              "quote": "The fifths range of strictly diatonic pieces is at most 6, while pieces with larger fifths ranges contain chromatic notes; pieces with a fifths range larger than 12 potentially contain enharmonically equivalent notes. It is thus reasonable to expect that the fifths range of pieces increases over time since, for example, Renaissance pieces rarely contain chromaticism, while that feature becomes much more frequent in Classical and in particular in Romantic compositions."
+            }
+          ]
+        },
+        {
+          "text": "Pentatonic scales occupy a span of 4 fifths (5 pitch classes), diatonic scales occupy a span of 6 fifths (7 pitch classes), and the two whole-tone scales correspond to alternating even and odd integers on the line of fifths.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Scale structure on line of fifths",
+              "quote": "pentatonic scales are segments of length 4 (containing five pitch classes), e.g. from G♭ to B♭; diatonic scales are defined by segments of length 6, e.g. from F to B; the early extensions of the natural diatonic scale by B♭ and F♯ correspond to a span of eight fifths; and the two whole-tone scales correspond to the odd and even numbers, respectively, since a whole tone consists of two consecutive perfect fifths"
+            }
+          ]
+        },
+        {
+          "text": "Tonal relationships in music reflect underlying cognitive models of composers, performers, and listeners rather than being physically or logically necessary properties of sound.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Epistemological claim",
+              "quote": "Our interpretation of the organization of tones in any conception of tonal space does not entail in any way that these relations are physically or logically necessary – as assumed, for example – but rather that they reflect underlying, possibly unconscious cognitive models of composers, performers, or listeners"
+            }
+          ]
+        },
+        {
+          "text": "The F major scale shares all but one pitch class with B♭ major (its neighbor on the line of fifths), but shares no pitch classes with F♯ major (seven fifths away).",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Interval-based key relationship",
+              "quote": "the scale of the F major key shares all but one tonal pitch-class with that of B♭ major, which is its direct neighbour on the line of fifths, but it does not share any tonal pitch-classes with the scale of F♯ major, which is seven fifths apart from F major."
+            }
+          ]
+        },
+        {
+          "text": "The fifths range measure is invariant under transposition, making it a useful tool for cross-historical comparison of harmonic content regardless of key.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Methodological property",
+              "quote": "Note that this measure is invariant under transposition, i.e. transposing the piece to a different key will not change its interval content and hence not its fifths range."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "harmonicProfile",
+          "value": "Line of fifths segment F to B (35 tonal pitch classes)",
+          "details": {
+            "centerPitchClass": "D",
+            "encoding": "tonal (non-enharmonic) pitch classes",
+            "range": "F♭♭ to B##",
+            "size": 35
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Diatonic scale = 7 consecutive pitch classes spanning 6 fifths",
+          "details": {
+            "example": "F to B",
+            "fifthsSpan": 6,
+            "pitchClassCount": 7
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Pentatonic scale = 5 consecutive pitch classes spanning 4 fifths",
+          "details": {
+            "example": "G♭ to B♭",
+            "fifthsSpan": 4,
+            "pitchClassCount": 5
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Whole-tone scale = every other integer on the line of fifths (2 fifths per step)",
+          "details": {
+            "fifthsPerStep": 2,
+            "notes": "Two whole-tone scales correspond to even and odd integers on the line of fifths"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Chromatic threshold: fifths range > 6 indicates chromatic notes present",
+          "details": {
+            "chromaticThreshold": 7,
+            "diatonicMaxRange": 6,
+            "enharmonicThreshold": 13
+          }
+        },
+        {
+          "type": "note",
+          "value": "D as tonal center (integer 0 on line of fifths)",
+          "details": {
+            "description": "Center of natural pitch classes F-C-G-D-A-E-B; most frequent tonal pitch class in the corpus",
+            "lineOfFifthsPosition": 0
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "Tonal pitch-class representation (non-enharmonic, potentially non-equal-temperament)",
+          "details": {
+            "assumesEnharmonicEquivalence": false,
+            "assumesOctaveEquivalence": true,
+            "notes": "Distinguishes F♯ from G♭; compatible with tuning systems other than equal temperament"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Would the same PCA results hold for non-Western musical traditions with different interval hierarchies — does the perfect fifth's centrality generalize, or is it culturally specific?",
+        "How does the fifths range expansion correlate with specific compositional techniques (e.g., modal mixture, chromatic mediant relations) across historical periods?",
+        "Could the line-of-fifths framework be productively applied to microtonality or extended just intonation systems where the line of fifths extends further than Western tonal practice?",
+        "To what extent does the centrality of D as the most frequent tonal pitch class reflect notation conventions and instrument affordances (e.g., open strings, natural keys) rather than purely cognitive preferences?",
+        "What is the relationship between a piece's fifths range and listener-perceived harmonic complexity or tension?",
+        "Could pitch-class co-evolution patterns be used generatively — e.g., to constrain AI composition systems to historically informed pitch-class vocabularies?",
+        "How do the PCA axes (direction and distance on the line of fifths) relate to psychoacoustic measures of tonal tension or key distance as measured in listener experiments?",
+        "Does the fifths range measure correlate with other complexity metrics such as entropy of pitch-class distributions or harmonic rhythm density?",
+        "How would the results change if pieces were analyzed in multiple local windows (phrase-level) rather than globally, given that pieces modulate through different regions of the line of fifths?",
+        "Is there a maximum useful fifths range beyond which composers effectively abandon tonal organization, and does that threshold vary by era or style?"
+      ],
+      "scores": {
+        "base": 91,
+        "normalizedBase": 0.5915492957746479,
+        "novelty": 0.9107142857142857,
+        "crossRunNovelty": 0.9129032258064516,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.2903225806451613,
+        "domainRelevance": 1,
+        "combined": 0.8174109171155968,
+        "peerReviewedClaims": 10,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S8",
+      "extractionId": "j97ey7a59nq6196cg3z3dpc1s981w0hk",
+      "sourceId": "jx77kge8bq2k04edr2azdctnk181tvxe",
+      "sourceTitle": "Full article: Why topology?",
+      "sourceType": "notion",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.tandfonline.com/doi/full/10.1080/17459737.2020.1799563",
+      "extractionCreatedAt": 1772132682499,
+      "extractionSummary": "This paper by Dmitri Tymoczko applies algebraic topology to music theory, specifically to model voice leading between chords using orbifold geometry and homotopy theory. The central argument is that chord spaces have non-trivial topological structure (annuli, simplices, cones over projective planes) and that voice leadings correspond to paths in these spaces whose homotopy classes encode musically meaningful transformations. The paper unifies neo-Riemannian theory, set-class theory, and voice-leading geometry by showing that the Tonnetz, interscalar matrices, and orbifold homotopy groups are deeply related. A formal 'voice-leading alphabet' of primitive transformations (transpositions-along-the-chord, voice exchanges, and contextual inversions) is introduced to classify all voice leadings between set classes.",
+      "topics": [
+        "voice leading geometry",
+        "orbifold theory",
+        "homotopy groups",
+        "neo-Riemannian theory",
+        "set-class space",
+        "Tonnetz",
+        "algebraic topology in music",
+        "chord spaces",
+        "contextual inversion",
+        "transpositional equivalence",
+        "inversional equivalence",
+        "voice exchanges",
+        "step-interval representation",
+        "fundamental group",
+        "diatonic theory",
+        "Schenkerian analysis",
+        "Tristan chord",
+        "maximally even chords",
+        "signature transformations",
+        "pitch-class space",
+        "simplicial geometry",
+        "music and mathematics"
+      ],
+      "topicTokens": [
+        "voice leading geometry",
+        "orbifold theory",
+        "homotopy groups",
+        "neo-riemannian theory",
+        "set-class space",
+        "tonnetz",
+        "algebraic topology in music",
+        "chord spaces",
+        "contextual inversion",
+        "transpositional equivalence",
+        "inversional equivalence",
+        "voice exchanges",
+        "step-interval representation",
+        "fundamental group",
+        "diatonic theory",
+        "schenkerian analysis",
+        "tristan chord",
+        "maximally even chords",
+        "signature transformations",
+        "pitch-class space",
+        "simplicial geometry",
+        "music and mathematics",
+        "web clip",
+        "frequency-research"
+      ],
+      "claims": [
+        {
+          "text": "Two-note chord space is ℝ²/(S₂ ⋉ ℤ²), with the two factors representing permutation (S₂) and octave equivalence (ℤ²), and transpositions along the chord do not appear among these global symmetries because their effect depends on the ordering of the dyad.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 83",
+              "quote": "Two-note chord space is ℝ2/(S2 ⋉ ℤ2), with the two factors representing permutation (S2) and octave equivalence (ℤ2). The transpositions along the chord do not appear among these global symmetries as their effect depends on the ordering of the dyad."
+            }
+          ]
+        },
+        {
+          "text": "Four-note transpositional set-class space is topologically a cone over the real projective plane with singular base and tip.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 21",
+              "quote": "four-note transpositional set-class space is a cone over the real projective plane with singular base and tip (CitationCallender, Quinn, and Tymoczko 2008)"
+            }
+          ]
+        },
+        {
+          "text": "Voice leadings correspond to paths in orbifold chord spaces, and two voice leadings are homotopic (belong to the same homotopy class) if one path can be smoothly deformed into the other — meaning the voice leading depends not on specific geometry but on topological features.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 10",
+              "quote": "Two loops are homotopic, or belong to the same homotopy class, if one can be smoothly deformed into the other. In the musical context this means that the voice leading corresponding to a path depends not on its specific geometry but on its general topological features."
+            }
+          ]
+        },
+        {
+          "text": "Neo-Riemannian transformations L, P, and R can be understood as contextual inversions: for a triad in geometrical normal form 037, L is 𝔦₀ moving (0,3,7)→(0,3,8), R is 𝔦₁ moving (0,3,7)→(10,3,7), and P is 𝔦₂ moving (0,3,7)→(0,4,7).",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 55",
+              "quote": "The triad's geometrical normal form is 037. L is 𝔦0 or (0, 3, 7)→(0, 3, 8), moving 0 to I3(3), R is 𝔦1 or (0, 3, 7)→(10, 3, 7), moving 0 to I10(0), and P is 𝔦2 or (0, 3, 7)→(0, 4, 7), moving 0 to I7(7)."
+            }
+          ]
+        },
+        {
+          "text": "The fundamental group of transpositional set-class space is the semidirect product of the voice-exchange group with the cyclic group Cₙ, while for inversional set-class space it is the semidirect product with the dihedral group Dₙ; in chord space the transpositions along the chord are represented by ℤ.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 72",
+              "quote": "The fundamental group of the permutation region is the group of voice exchanges; for transpositional or inversional set-class space it is the semidirect product of the voice exchanges with either the cyclic group Cn or the dihedral group Dn. In chord space the transpositions along the chord are instead represented by ℤ."
+            }
+          ]
+        },
+        {
+          "text": "For an n-note chord in an o-note scale, transposition by n chordal steps is equivalent to transposition by o scale steps, and this equivalence is reflected by the topological equivalence of the associated paths in chord space.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 24",
+              "quote": "For an n-note chord in an o-note scale, transposition by n chordal steps is equivalent to transposition by o scale steps, and this is reflected by the topological equivalence of the associated paths."
+            }
+          ]
+        },
+        {
+          "text": "The Cohnian Tonnetz does not perspicuously reflect the underlying annular topology of the voice leadings it purports to model, even in its modified form that adds augmented triads.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 15",
+              "quote": "Here I raise a further issue that applies even to this modified Tonnetz, namely that it does not perspicuously reflect the underlying annular topology of the voice leadings it purports to model."
+            }
+          ]
+        },
+        {
+          "text": "The interscalar interval matrices relating inversionally related chords depict the crossing-free subgroup of the homotopy group of trichordal set-class space, which in turn lifts to the Cohnian Tonnetz.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 57",
+              "quote": "This paper's answer is that the latter (in particular, the interscalar interval matrices relating inversionally related chords) depict the crossing-free subgroup of the homotopy group of Callender's trichordal set-class space, which in turn lifts to the Cohnian Tonnetz."
+            }
+          ]
+        },
+        {
+          "text": "A symmetrical chord is invariant under some word W — a combination of voice exchanges (cₓ), transpositions-along-the-chord (tᵧ), and contextual inversions (iᵤ) — and therefore chords near a symmetrical chord can be connected by efficient voice leading to their W-forms.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 78",
+              "quote": "A symmetrical chord is invariant under some word W, a combination of cx, ty, and iz, and therefore under the subgroup of voice leadings generated by W; chords near this symmetrical chord can be connected by efficient voice leading to their W-forms."
+            }
+          ]
+        },
+        {
+          "text": "The step-interval representation of a set class (e.g., 4, 3, 5 for the major triad) is related to the standard simplex, whose entries represent the set-class's step intervals expressed as fractions of an octave — a structure that appears throughout applied mathematics, including in representing the possible results of an n-candidate election.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "footnote 34",
+              "quote": "The entries in the standard simplex can be understood as the set-class's step intervals expressed as fractions of an octave... The standard simplex appears throughout applied mathematics, representing (for instance) the possible results of an n-candidate election."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "chordProgression",
+          "value": "Tristan chord (half-diminished seventh) → dominant seventh",
+          "details": {
+            "context": "Tristan prelude analysis via set-class space paths",
+            "setClass1": "half-diminished seventh",
+            "setClass2": "dominant seventh",
+            "voiceLeadingType": "crossing-free, normal-order-preserving"
+          }
+        },
+        {
+          "type": "note",
+          "value": "Major triad in geometrical normal form: pitch classes 0, 3, 7",
+          "details": {
+            "label": "geometrical normal form of major/minor triad",
+            "pitchClasses": [
+              0,
+              3,
+              7
+            ],
+            "representation": "semitonal",
+            "stepIntervals": [
+              4,
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal temperament (implicit); generalized to o-note chromatic scale with n-note chords",
+          "details": {
+            "chromaticDivisions": 12,
+            "diatonicSubset": 7,
+            "generalizedForm": "n-note chord in o-note scale"
+          }
+        },
+        {
+          "type": "harmonicProfile",
+          "value": "Neo-Riemannian transformations L, P, R as contextual inversions on triads",
+          "details": {
+            "L": {
+              "mapping": "(0,3,7)→(0,3,8)",
+              "operation": "𝔦₀"
+            },
+            "P": {
+              "mapping": "(0,3,7)→(0,4,7)",
+              "operation": "𝔦₂"
+            },
+            "R": {
+              "mapping": "(0,3,7)→(10,3,7)",
+              "operation": "𝔦₁"
+            }
+          }
+        }
+      ],
+      "openQuestions": [
+        "How can nonbijective voice leadings (where doublings are flexible) be treated using the orbifold topological tools introduced here?",
+        "What is the full classification of 'problematic paths' near singularities in set-class space, requiring a more sophisticated approach to orbifold singularities?",
+        "How does the continuous multiplicative transform (moving linearly toward the perfectly even chord E, exchanging largest and smallest intervals) behave across a wider range of chord types?",
+        "Can the voice-leading alphabet (cₓ, tᵧ, iᵤ) be extended to nonbijective voice leadings between chords of different sizes?",
+        "What is the relationship between the generalized neo-Riemannian polygon models and higher-dimensional Tonnetze for chords with more than 3 notes?",
+        "When is it musically appropriate to assert a genuinely dualistic neo-Riemannian transformation (L, P, R) versus merely an efficient voice leading between inversionally related chords?",
+        "How do the orbifold homotopy groups change when the underlying scale is continuous and unquantized (the limiting case of pitch space)?",
+        "Can the M-transform relationship between set classes (coordinate transformation near the perfectly even chord) be generalized to a broader theory of chord similarity?"
+      ],
+      "scores": {
+        "base": 82,
+        "normalizedBase": 0.528169014084507,
+        "novelty": 0.9259259259259259,
+        "crossRunNovelty": 0.9625,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.125,
+        "domainRelevance": 1,
+        "combined": 0.8106693401147627,
+        "peerReviewedClaims": 10,
+        "distinctParameterTypes": 4
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "web clip": 8,
+      "frequency-research": 8,
+      "equal temperament": 5,
+      "octave equivalence": 3,
+      "just intonation": 3,
+      "harmonic series": 3,
+      "tristan chord": 2,
+      "tonnetz": 2,
+      "pitch class": 2,
+      "circle of fifths": 2,
+      "perfect fifth": 2,
+      "tritone": 2,
+      "neo-riemannian theory": 2,
+      "chromaticism": 2,
+      "music and mathematics": 2,
+      "historical musicology": 2,
+      "pythagorean tuning": 2,
+      "algebraic tuning systems": 1,
+      "golden ratio": 1,
+      "microtonal music": 1,
+      "difference tones": 1,
+      "combination tones": 1,
+      "bohlen-pierce scale": 1,
+      "β-expansions": 1,
+      "pisot numbers": 1,
+      "algebraic number theory": 1,
+      "ring z[φ]": 1,
+      "sum-product conjecture": 1,
+      "erdős–szemerédi conjecture": 1,
+      "midi keyboard retuning": 1,
+      "string instrument acoustics": 1,
+      "fractal waveforms": 1,
+      "dasian notation": 1,
+      "3-limit tuning": 1,
+      "36-tet": 1,
+      "fibonacci sequence": 1,
+      "irrational harmonics": 1,
+      "music perception": 1,
+      "tsimané people": 1,
+      "cents (interval measurement)": 1,
+      "norm-bounded scales": 1,
+      "arithmetic progressions in pitch": 1,
+      "parallel organum": 1,
+      "websynths": 1,
+      "aperiodic waveforms": 1,
+      "consonance and dissonance": 1,
+      "frequency ratios": 1,
+      "period ratios": 1,
+      "subharmonic series": 1,
+      "chord perception": 1,
+      "psychoacoustics": 1,
+      "neurophysiology of music": 1,
+      "harmonic dualism": 1,
+      "musical inversion": 1,
+      "emotional valence of chords": 1,
+      "melancholy and sadness in music": 1,
+      "pitch perception": 1,
+      "frequency-following response (ffr)": 1,
+      "auditory cortex": 1,
+      "wagner": 1,
+      "triads": 1,
+      "seventh chords": 1,
+      "chord voicing": 1,
+      "periodicity pitch": 1,
+      "autocorrelation": 1,
+      "two-dimensional chord representation": 1,
+      "major-minor symmetry": 1,
+      "öttingen-riemann harmonic dualism": 1,
+      "post-tonal music theory": 1,
+      "pitch-class set theory": 1,
+      "interval-class vector (icv)": 1,
+      "trichord-type vector (ttv)": 1,
+      "set classes and set types": 1,
+      "twelve-tone equal temperament (12-tet)": 1,
+      "inversional symmetry": 1,
+      "transpositional symmetry": 1,
+      "hexachord theorem": 1,
+      "ℤn modular arithmetic in music": 1,
+      "forte names and normal form": 1,
+      "heptatonic scales": 1,
+      "atonal music": 1,
+      "schoenberg twelve-tone technique": 1,
+      "hauer tropes": 1,
+      "embedding numbers (lewin)": 1,
+      "complementary reciprocity": 1,
+      "z-related chord classes": 1,
+      "matlab computational music theory": 1,
+      "prime form and intervallic form": 1,
+      "combinatorics of pitch-class sets": 1,
+      "euler's tonnetz": 1,
+      "triangulated surfaces": 1,
+      "lie algebras": 1,
+      "weyl groups": 1,
+      "affine weyl groups": 1,
+      "dynkin diagrams": 1,
+      "langlands duality": 1,
+      "major": 1,
+      "minor duality": 1,
+      "crystallographic reflection groups": 1,
+      "torus": 1,
+      "sphere": 1,
+      "major triads": 1,
+      "minor triads": 1,
+      "diminished seventh chords": 1,
+      "augmented triads": 1,
+      "major ninth chords": 1,
+      "intervals": 1,
+      "minor third": 1,
+      "major third": 1,
+      "whole tone scale": 1,
+      "voice leading": 1,
+      "music theory and mathematics": 1,
+      "geometric music theory": 1,
+      "harmonic topology": 1,
+      "fugue": 1,
+      "counterpoint": 1,
+      "fugue subject analysis": 1,
+      "j.s. bach": 1,
+      "max reger": 1,
+      "organ music": 1,
+      "music theory": 1,
+      "mathematical music analysis": 1,
+      "statistical musicology": 1,
+      "principal component analysis": 1,
+      "interval measurement": 1,
+      "diatonic harmony": 1,
+      "semitone": 1,
+      "musical range": 1,
+      "spielfuge": 1,
+      "regression models for music": 1,
+      "kruskal-wallis test": 1,
+      "ordinal regression": 1,
+      "poisson regression": 1,
+      "composer style classification": 1,
+      "bwv catalog": 1,
+      "tonal vs chromatic writing": 1,
+      "multivariate statistics in music": 1,
+      "complex tonality": 1,
+      "gaussian integers": 1,
+      "gaussian primes": 1,
+      "temperament theory": 1,
+      "ptolemy's intense diatonic scale": 1,
+      "syntonic comma": 1,
+      "wolf intervals": 1,
+      "n-limit tone systems": 1,
+      "generalized interval systems": 1,
+      "chromatic scale construction": 1,
+      "ecclesiastical modes": 1,
+      "kepler's monochord": 1,
+      "music and number theory": 1,
+      "string vibration frequency ratios": 1,
+      "scale theory": 1,
+      "diatonic and chromatic scales": 1,
+      "modulation and key change": 1,
+      "algebraic combinatorics of musical words": 1,
+      "5-limit harmony": 1,
+      "middle c frequency": 1,
+      "line of fifths": 1,
+      "pitch-class distributions": 1,
+      "tonal pitch classes": 1,
+      "neutral pitch classes": 1,
+      "enharmonic equivalence": 1,
+      "dimensionality reduction": 1,
+      "principal component analysis (pca)": 1,
+      "corpus musicology": 1,
+      "computational musicology": 1,
+      "diatonic scales": 1,
+      "pentatonic scales": 1,
+      "whole-tone scales": 1,
+      "fifths range": 1,
+      "music cognition": 1,
+      "tonal space": 1,
+      "pitch space models": 1,
+      "well-formed scales": 1,
+      "pitch-class co-evolution": 1,
+      "music history": 1,
+      "western classical music": 1,
+      "harmonic interval content": 1,
+      "key relationships": 1,
+      "voice leading geometry": 1,
+      "orbifold theory": 1,
+      "homotopy groups": 1,
+      "set-class space": 1,
+      "algebraic topology in music": 1,
+      "chord spaces": 1,
+      "contextual inversion": 1,
+      "transpositional equivalence": 1,
+      "inversional equivalence": 1,
+      "voice exchanges": 1,
+      "step-interval representation": 1,
+      "fundamental group": 1,
+      "diatonic theory": 1,
+      "schenkerian analysis": 1,
+      "maximally even chords": 1,
+      "signature transformations": 1,
+      "pitch-class space": 1,
+      "simplicial geometry": 1
+    },
+    "parameterTypeFrequency": {
+      "harmonicprofile": 32,
+      "tuningsystem": 18,
+      "note": 6,
+      "chordprogression": 5,
+      "frequency": 2,
+      "rootnote": 1,
+      "instrument": 1
+    },
+    "evidenceDistribution": {
+      "peer_reviewed": 87,
+      "speculative": 4,
+      "anecdotal": 1
+    },
+    "sourceTypeDistribution": {
+      "notion": 8
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 13,
+    "priorSourceIds": 47,
+    "priorTopicTokens": 519,
+    "priorVariablePhrases": 5,
+    "priorTitlePhrases": 10
+  }
+}

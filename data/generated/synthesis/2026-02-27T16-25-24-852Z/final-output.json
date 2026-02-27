@@ -1,0 +1,142 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Two-Layer Tuning Effect in Controlled Harmonic Traversal",
+    "question": "When one fixed arrangement is rendered in Golden ratio algebraic tuning (phi-octave Sbeta5), Golden ratio algebraic tuning (phi-octave SN), and 12-tone Equal Temperament (12TET), do consonance/roughness ratings diverge by tuning while continuity ratings remain tied to shared voice-leading path structure?",
+    "hypothesis": "If only tuning is changed across otherwise identical renders, then consonance and roughness ratings will separate by tuning arm, with the strongest divergence in tritone-rich bars, while continuity ratings across sections with the same transformational path will remain comparatively stable. This is expected because interval-ratio and temperament error distribution alter beating and difference-tone behavior, whereas transformational/topological path identity constrains perceived harmonic continuity.",
+    "rationaleMd": "The sources support a two-layer interpretation of harmony perception. Layer 1 is acoustic ratio behavior: consonance/roughness depends on ratio simplicity, periodicity, and temperament mismatch, and tritone treatment is a known fault line across systems [S1, S2, S6]. Layer 2 is structural continuity: harmonic motion can be represented as geometric/topological paths whose identity is partly independent of exact tuning values [S4, S8].\n\nA potential conflict exists between physically grounded claims (ratio/periodicity mechanisms) and cognitively grounded claims (historical pitch-space learning and line-of-fifths organization) [S2, S7]. This protocol resolves the conflict by measuring both: local roughness/consonance (acoustic layer) and section-level continuity (structural-cognitive layer).\n\nFalsification criteria: (1) no consistent arm-level separation in roughness/consonance; (2) no tritone-window amplification of differences; or (3) continuity ratings vary as strongly by tuning arm as roughness does, contradicting the proposed layer split.",
+    "sourceIds": [
+      "jx75wkgkgz6mtkzbc5f7c5e7cd81tr1g",
+      "jx78fax65x4qbb0jc48007bkrd81v6b0",
+      "jx723zh9434d669xgxvwm8yjxd81tmyp",
+      "jx7etc80rvn379gnkxadezhs8981vm8p",
+      "jx740pjhg25eykbn1qx851q0cd81tjha",
+      "jx78r3789cz8et74b2b8cr6pk581twa6",
+      "jx71tnc8eh6kqa0nv5d2q3vdb181vdz1",
+      "jx77kge8bq2k04edr2azdctnk181tvxe"
+    ],
+    "concepts": [
+      "tuning system comparison",
+      "roughness and consonance",
+      "difference tones",
+      "tritone stress test",
+      "voice-leading topology",
+      "line of fifths cognition"
+    ]
+  },
+  "recipe": {
+    "title": "TriTone Window + Topology-Controlled Blind Comparison",
+    "bodyMd": "## Goal\nTest whether tuning system changes mostly affect local sensory roughness/consonance while leaving structural continuity tied to shared path design [S1, S2, S4, S8].\n\n## Arrangement Design (single MIDI source)\nUse one 36-bar form at 82 BPM, 4/4, split into three analytical windows:\n- Bars 1-12: Diatonic corridor (fifths-range constrained vocabulary) to establish baseline stability [S7].\n- Bars 13-24: Tritone window with repeated pivot material (e.g., half-diminished to dominant region) to maximize sensitivity to tuning-dependent stress [S2, S6, S8].\n- Bars 25-36: Symmetry loop preserving transformational path class while re-voicing surface sonorities (L/P/R-like or equivalent contextual moves) [S4, S8].\n\nRender the exact same MIDI, instruments, automation, and mix in three tuning arms:\nA) Golden ratio algebraic tuning (phi-octave Sbeta5),\nB) Golden ratio algebraic tuning (phi-octave SN),\nC) 12TET reference [S1].\n\n## Evaluation Rubric\nFor each render, collect 1-7 ratings at section level for:\n- Consonance\n- Roughness/beating\n- Continuity of harmonic motion\n\nThen annotate bar-level peaks of roughness and classify them by window (baseline, tritone, symmetry). Evidence expectation: largest arm separation appears in tritone window; continuity rank should be more stable across arms than roughness rank if the two-layer model is correct [S2, S4, S8].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "82 BPM",
+        "details": {
+          "bpm": 82
+        }
+      },
+      {
+        "type": "form",
+        "value": "36 bars, 4/4, 3 windows x 12 bars",
+        "details": {
+          "barsTotal": 36,
+          "meter": "4/4",
+          "windows": [
+            "baseline_diatonic",
+            "tritone_stress",
+            "symmetry_loop"
+          ]
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Sustained triadic/seventh texture with fixed register and voicing plan",
+        "details": {
+          "objective": "maximize comparability of beating and continuity judgments"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Golden ratio algebraic tuning (phi-octave, 8-note scale Sbeta5)",
+        "details": {
+          "role": "arm_A"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Golden ratio algebraic tuning (phi-octave, 10-note scale SN)",
+        "details": {
+          "role": "arm_B"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "12-tone Equal Temperament (12TET)",
+        "details": {
+          "role": "arm_C_reference"
+        }
+      },
+      {
+        "type": "evaluation",
+        "value": "1-7 Likert per window and global pass",
+        "details": {
+          "metrics": [
+            "consonance",
+            "roughness",
+            "continuity"
+          ],
+          "focusWindow": "bars_13_24_tritone"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one locked master MIDI arrangement with 36 bars and three labeled windows.",
+      "Keep instrument patch, FX chain, automation, and pan law identical for all arms.",
+      "Implement Arm A retuning: phi-octave Sbeta5.",
+      "Implement Arm B retuning: phi-octave SN.",
+      "Implement Arm C retuning: 12TET reference.",
+      "Render all arms with identical export settings and bit depth.",
+      "Loudness-match exports to remove gain bias before listening.",
+      "Blind-label files as X/Y/Z and randomize playback order per listener.",
+      "Collect section-level 1-7 scores for consonance, roughness, and continuity.",
+      "Mark exact bars where roughness peaks occur; tag by analytical window.",
+      "Compute per-arm medians and rank stability across listeners.",
+      "Accept hypothesis only if roughness/consonance separate by arm and continuity is relatively arm-stable."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 95,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1",
+        "musician_peer_2",
+        "musician_peer_3"
+      ],
+      "listeningContext": "Quiet room at fixed SPL; run each listener on headphones first and monitors second.",
+      "listeningMethod": "Blinded within-subject comparison with randomized order and window-level scoring sheet.",
+      "whatVaries": [
+        "Tuning arm (phi-octave Sbeta5 vs phi-octave SN vs 12TET)"
+      ],
+      "whatStaysConstant": [
+        "MIDI note events",
+        "section boundaries and bar count",
+        "tempo and meter",
+        "instrument sources",
+        "FX and automation",
+        "mix balance and export settings",
+        "rating rubric"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6",
+    "S7",
+    "S8"
+  ],
+  "notes": "Strengthened manual synthesis emphasizing a two-layer model (acoustic vs structural), tritone stress-window analysis, and explicit falsification conditions."
+}

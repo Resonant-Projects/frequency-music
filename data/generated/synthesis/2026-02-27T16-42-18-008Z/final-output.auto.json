@@ -1,0 +1,130 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Music Cognition vs Circle Of Fifths Controlled Comparison",
+    "question": "How does harmonic profile strategy influence perceived consonance, roughness, and continuity in a controlled harmonic micro-study?",
+    "hypothesis": "If we render one identical arrangement with harmonic profile strategy while holding all other musical factors fixed, then listener ratings will show a consistent ordering in perceived consonance, roughness, and continuity between versions, because this variable changes tension-release contour and perceptual expectation without introducing mix or instrumentation confounds.",
+    "rationaleMd": "Selected sources span acoustic mechanisms (ratio, periodicity, temperament) and structural/cognitive mechanisms (harmonic topology, pitch-space organization, historical usage), allowing non-tuning and tuning variables to be compared under one protocol [S1, S2, S3].\n\nThe selected evidence supports manipulating harmonic profile strategy while keeping tuning fixed as a control, so broader musical and perceptual hypotheses can be tested without collapsing to temperament-only framing [S1, S2, S3, S4, S5, S6].\n\nFalsification criterion: if blinded ratings show no stable ordering across versions in perceived consonance, roughness, and continuity, or if annotations fail to cluster by condition, the hypothesis is not supported.",
+    "sourceIds": [
+      "jx7dd5hnyja0zbrac38z4w2e9x81twvt",
+      "jx76a8vtx3a4xrem6f7h9sdz0s81vms2",
+      "jx75dvaw9d88cpdxhd03pcjc2s81vgha",
+      "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "jx7d5c704qs65djwnndba5km1h81v4by",
+      "jx73bwkc9fk3k3pzryb3dg6n4n81y2vq"
+    ],
+    "concepts": [
+      "music cognition",
+      "circle of fifths",
+      "harmonic profile",
+      "frequency",
+      "note",
+      "chord progression",
+      "instrument",
+      "tuning system"
+    ]
+  },
+  "recipe": {
+    "title": "Music Cognition Comparison Micro-Study",
+    "bodyMd": "## Goal\nEvaluate harmonic profile strategy under controlled musical conditions using a blinded comparison design.\n\n## Shared Arrangement\n- Tempo: 82 BPM\n- Meter: 4/4\n- Length: 24-32 bars\n- Keep MIDI notes, sound sources, automation, and mix balance identical across versions.\n\n## Variable Under Test\n- Change only: harmonic profile strategy\n- Keep all non-target variables fixed.\n\n## Evaluation\n- Blind-label exports and rate: perceived consonance, roughness, and continuity.\n- Annotate bar/chord locations where roughness is strongest.\n\nEvidence basis: [S1, S2, S3, S4, S5, S6].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "82 BPM",
+        "details": {
+          "bpm": 82
+        }
+      },
+      {
+        "type": "form",
+        "value": "24-32 bar controlled comparison",
+        "details": {
+          "barsMin": 24,
+          "barsMax": 32,
+          "meter": "4/4"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Sustained triadic texture with fixed voicing",
+        "details": {
+          "objective": "maximize audibility of roughness differences"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Octatonic scale (half-step/whole-step diminished): 8 tones, 4-fold rotational symmetry, maximally even",
+        "details": {
+          "role": "comparison arm A"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Hexatonic scale: 6 tones, 3-fold rotational symmetry, not maximally even",
+        "details": {
+          "role": "comparison arm B"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Interval size range for adjacent scale degrees: 1–3 semitones (cross-cultural norm)",
+        "details": {
+          "role": "comparison arm C"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "12-tone equal temperament",
+        "details": {
+          "role": "fixed control"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one master MIDI arrangement template.",
+      "Freeze instrument and FX chain before rendering comparison arms.",
+      "Render Version A with harmonic profile: Octatonic scale (half-step/whole-step diminished): 8 tones, 4-fold rotational symmetry, maximally even.",
+      "Render Version B with harmonic profile: Hexatonic scale: 6 tones, 3-fold rotational symmetry, not maximally even.",
+      "Render Version C with harmonic profile: Interval size range for adjacent scale degrees: 1–3 semitones (cross-cultural norm).",
+      "Keep tuning fixed at 12-tone equal temperament across all versions.",
+      "Match loudness across exports to remove gain bias.",
+      "Rename exports to blind labels (e.g., X/Y/Z).",
+      "Rate each version for perceived consonance, roughness, and continuity.",
+      "Capture bar-level notes for perceptual spikes.",
+      "Summarize whether observed ordering supports or contradicts hypothesis."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 82,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1",
+        "musician_peer_2"
+      ],
+      "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
+      "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
+      "whatVaries": [
+        "harmonic profile strategy"
+      ],
+      "whatStaysConstant": [
+        "MIDI notes",
+        "arrangement length",
+        "tempo",
+        "sound sources",
+        "automation",
+        "mix balance",
+        "export settings",
+        "tuning system"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Auto-synthesized from context pack using deterministic rule templates. Review before studio execution."
+}

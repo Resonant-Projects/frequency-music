@@ -1,0 +1,48 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "",
+    "question": "",
+    "hypothesis": "",
+    "rationaleMd": "Provide rationale with explicit S# citations, e.g. `Supported by S1 and S3.`",
+    "sourceIds": [
+      "jx768nb85rqnjn4mcwmrmwt3b181ecsd",
+      "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "jx7cg78xqetbhwr3ehj674a7b981fp39",
+      "jx74s2vyngeearnz3ezhyshz8n81emje",
+      "jx79xpdrqhwgpmcb55hqhmk4eh81ehdv",
+      "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "jx73jkcmkw783f8t80379s0h4d81cf22",
+      "jx73rp1gmsqgsf7yvhb08mfmqn81e8v5"
+    ],
+    "concepts": []
+  },
+  "recipe": {
+    "title": "",
+    "bodyMd": "Describe arrangement, test method, and expected outcomes with S# citations.",
+    "parameters": [],
+    "dawChecklist": [],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "",
+      "listeningMethod": "",
+      "whatVaries": [],
+      "whatStaysConstant": []
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6",
+    "S7",
+    "S8"
+  ],
+  "notes": "Fill all required fields, then run publish mode with this file path."
+}

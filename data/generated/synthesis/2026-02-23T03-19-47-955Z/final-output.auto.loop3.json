@@ -1,0 +1,118 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Equal Temperament and Frequency Ratios Multi-Source Study",
+    "question": "How does tuning system contrast across 3 fixed mappings influence perceived consonance, roughness, and continuity in a controlled harmonic micro-study?",
+    "hypothesis": "If we render one identical arrangement with tuning system contrast across 3 fixed mappings while holding all other musical factors fixed, then listener ratings will show a consistent ordering in consonance and roughness between versions, because interval-ratio alignment and temperament error distribution change partial overlap and beating behavior.",
+    "rationaleMd": "Selected sources converge on ratio-based and temperament-based explanations for consonance and roughness [S1, S2, S3].\n\nThe context includes explicit comma/temperament and interval evidence that supports a controlled comparison where only the tuning variable changes [S1, S2, S3, S4, S5, S6].\n\nFalsification criterion: if blinded ratings show no stable ordering across versions, or if roughness notes fail to cluster by version, the hypothesis is not supported.",
+    "sourceIds": [
+      "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+      "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+      "jx73jkcmkw783f8t80379s0h4d81cf22",
+      "jx754hd6c4vf256e206r9834dh81c0vy",
+      "jx735sjatw41r9pgqw6r8mwztn81ddbr",
+      "jx70hfp3mre8mje414z18d6vvn81cx5h"
+    ],
+    "concepts": [
+      "equal temperament",
+      "just intonation",
+      "tuning system",
+      "frequency",
+      "harmonic profile"
+    ]
+  },
+  "recipe": {
+    "title": "Equal Temperament Comparison Micro-Study",
+    "bodyMd": "## Goal\nEvaluate tuning system contrast across 3 fixed mappings under controlled musical conditions using a blinded comparison design.\n\n## Shared Arrangement\n- Tempo: 82 BPM\n- Meter: 4/4\n- Length: 24-32 bars\n- Keep MIDI notes, sound sources, automation, and mix balance identical across versions.\n\n## Variable Under Test\n- Change only: tuning system contrast across 3 fixed mappings\n- Keep all non-target variables fixed.\n\n## Evaluation\n- Blind-label exports and rate: consonance, roughness/beating, and continuity.\n- Annotate bar/chord locations where roughness is strongest.\n\nEvidence basis: [S1, S2, S3, S4, S5, S6].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "82 BPM",
+        "details": {
+          "bpm": 82
+        }
+      },
+      {
+        "type": "form",
+        "value": "24-32 bar controlled comparison",
+        "details": {
+          "barsMin": 24,
+          "barsMax": 32,
+          "meter": "4/4"
+        }
+      },
+      {
+        "type": "harmonicProfile",
+        "value": "Sustained triadic texture with fixed voicing",
+        "details": {
+          "objective": "maximize audibility of roughness differences"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Quarter-comma meantone",
+        "details": {
+          "role": "comparison arm A"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "Third-comma meantone",
+        "details": {
+          "role": "comparison arm B"
+        }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "12-tone equal temperament",
+        "details": {
+          "role": "comparison arm C"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one master MIDI arrangement template.",
+      "Freeze instrument and FX chain before rendering comparison arms.",
+      "Render Version A using Quarter-comma meantone.",
+      "Render Version B using Third-comma meantone.",
+      "Render Version C using 12-tone equal temperament.",
+      "Match loudness across exports to remove gain bias.",
+      "Rename exports to blind labels (e.g., X/Y/Z).",
+      "Rate each version for consonance, roughness, and continuity.",
+      "Capture bar-level notes for perceptual spikes.",
+      "Summarize whether observed ordering supports or contradicts hypothesis."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 82,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1",
+        "musician_peer_2"
+      ],
+      "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
+      "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
+      "whatVaries": [
+        "tuning system contrast across 3 fixed mappings"
+      ],
+      "whatStaysConstant": [
+        "MIDI notes",
+        "arrangement length",
+        "tempo",
+        "sound sources",
+        "automation",
+        "mix balance",
+        "export settings"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Auto-synthesized from context pack using deterministic rule templates. Review before studio execution."
+}

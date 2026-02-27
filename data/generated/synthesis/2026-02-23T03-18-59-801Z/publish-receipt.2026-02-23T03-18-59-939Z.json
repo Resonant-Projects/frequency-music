@@ -1,0 +1,16 @@
+{
+  "publishedAt": "2026-02-23T03:18:59.939Z",
+  "inputPath": "/Users/kelliott/code/frequency-music/data/generated/synthesis/2026-02-23T03-18-59-801Z/final-output.auto.loop2.json",
+  "hypothesisId": "jh7f0760mthdcr7df32v5fgcps81qwrs",
+  "recipeId": "js794r7fn14kzvmm7z94ptdtbd81qf7e",
+  "sourceIds": [
+    "jx7ccx92kkm9539kfdfzyecgj581dcbk",
+    "jx74cjt6ppgggzt3fxc9w6d03x81d3zf",
+    "jx7716q9n95gmh99a2ce3d926981czcj",
+    "jx7cr7cdgkaqk5b9m0bbp390c181d3ze",
+    "jx79mghd7gctn92fj85wb3xae181cmb9",
+    "jx716kk8w95dygtz13ak3w5dks81c2q7"
+  ],
+  "parameterCount": 6,
+  "checklistCount": 10
+}
