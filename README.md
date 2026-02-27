@@ -41,6 +41,9 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
    - `cd web && bun install`
 2. Set web env:
    - `VITE_CONVEX_URL=<your convex deployment url>` in `web/.env.local`
+   - `VITE_CLERK_PUBLISHABLE_KEY=<your clerk publishable key>`
+   - `VITE_CLERK_SIGN_IN_URL=https://login.resonantrhythm.com/sign-in`
+   - `VITE_CLERK_SIGN_UP_URL=https://login.resonantrhythm.com/sign-up`
 3. Run web app:
    - `cd web && bun run dev`
 

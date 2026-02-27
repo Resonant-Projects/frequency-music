@@ -2,6 +2,10 @@ import { ConvexClient } from "convex/browser";
 import { render } from "solid-js/web";
 import App from "./App";
 import { ConvexProvider } from "./integrations/convex";
+import {
+  createConvexClerkAuthAdapter,
+  initializeClerk,
+} from "./integrations/clerk";
 import "./index.css";
 import "../styled-system/styles.css";
 
@@ -35,11 +39,20 @@ const convexClient = new ConvexClient(convexUrl, {
   unsavedChangesWarning: false,
 });
 
-render(
-  () => (
-    <ConvexProvider client={convexClient}>
-      <App />
-    </ConvexProvider>
-  ),
-  root,
-);
+async function bootstrap() {
+  await initializeClerk();
+
+  render(
+    () => (
+      <ConvexProvider client={convexClient} useAuth={createConvexClerkAuthAdapter}>
+        <App />
+      </ConvexProvider>
+    ),
+    root,
+  );
+}
+
+void bootstrap().catch((error) => {
+  console.error("Failed to initialize app auth:", error);
+  throw error;
+});

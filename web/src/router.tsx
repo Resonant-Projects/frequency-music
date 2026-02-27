@@ -6,8 +6,9 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/solid-router";
-import { Component } from "solid-js";
+import { Component, createEffect } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
+import { buildHostedSignInUrl, useClerkAuthSnapshot } from "./integrations/clerk";
 import { AdminPage } from "./routes/admin";
 import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
@@ -31,6 +32,31 @@ const appLinks = [
 ] as const;
 
 const RootLayout: Component = () => {
+  const auth = useClerkAuthSnapshot();
+
+  createEffect(() => {
+    const state = auth();
+    if (!state.isLoaded || state.isSignedIn) return;
+
+    const returnTo = window.location.href;
+    window.location.assign(buildHostedSignInUrl(returnTo));
+  });
+
+  if (!auth().isLoaded || !auth().isSignedIn) {
+    return (
+      <div class="route-placeholder">
+        <UICard class="route-placeholder-card">
+          <UIBadge tone="violet">Authentication</UIBadge>
+          <h1>Redirecting to sign in...</h1>
+          <p>
+            This app requires authentication. You&apos;ll be redirected to
+            login.resonantrhythm.com.
+          </p>
+        </UICard>
+      </div>
+    );
+  }
+
   return (
     <div class="app-root">
       <header class="app-header">
