@@ -6,6 +6,15 @@
  */
 import Kernel from "@onkernel/sdk";
 
+interface KernelExecutionResult {
+  text?: string;
+  title?: string;
+  result?: {
+    text?: string;
+    title?: string;
+  };
+}
+
 async function main() {
   const url = process.argv[2];
   const sourceId = process.argv[3];
@@ -57,7 +66,7 @@ async function main() {
 
     console.error(`Result: ${JSON.stringify(result).slice(0, 200)}`);
 
-    const data = result as any;
+    const data = result as KernelExecutionResult;
     const text = data?.text || data?.result?.text || JSON.stringify(data);
     const title = data?.title || data?.result?.title || "";
 
@@ -71,13 +80,25 @@ async function main() {
     console.log(text.slice(0, 3000));
     if (text.length > 3000)
       console.log(`\n... [${text.length - 3000} more chars]`);
-  } catch (e: any) {
-    console.error(`Error: ${e.message}`);
-    console.error(JSON.stringify(e, null, 2).slice(0, 500));
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      console.error(`Error: ${e.message}`);
+      console.error(JSON.stringify(e, null, 2).slice(0, 500));
+    } else {
+      console.error(`Error: ${String(e)}`);
+      try {
+        console.error(JSON.stringify(e, null, 2).slice(0, 500));
+      } catch {
+        // ignore non-serializable errors
+      }
+    }
   } finally {
     await kernel.browsers.deleteByID(sessionId);
     console.error("Cleaned up");
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -24,6 +24,12 @@ const sectorRouteMap: Record<string, string> = {
   synthesis: "/compositions",
 };
 
+type SectorMetricRow = {
+  id: string;
+  sources: number;
+  claims: number;
+};
+
 export function Zodiac3D() {
   const navigate = useNavigate();
   const [selSector, setSelSector] = createSignal<string>("math");
@@ -34,9 +40,9 @@ export function Zodiac3D() {
   const pipeline = createQuery(convexApi.dashboard.pipeline);
 
   const sectors = createMemo(() => {
-    const rows = sectorMetrics() ?? [];
+    const rows = (sectorMetrics() ?? []) as SectorMetricRow[];
     const metrics = new Map<string, { sources: number; claims: number }>(
-      rows.map((entry) => [
+      rows.map((entry: SectorMetricRow) => [
         entry.id,
         {
           sources: Number(entry.sources ?? 0),

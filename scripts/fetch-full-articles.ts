@@ -19,6 +19,15 @@ if (!CONVEX_URL) {
 
 const client = new ConvexHttpClient(CONVEX_URL);
 
+interface SourceRow {
+  _id: string;
+  type: string;
+  status: string;
+  canonicalUrl?: string;
+  rawText?: string;
+  title?: string;
+}
+
 /**
  * Fetch full article text using Jina Reader
  */
@@ -66,7 +75,7 @@ async function main() {
   // Get sources that might need full text
   // Check both extracted and text_ready sources
   const statuses = ["extracted", "text_ready"];
-  const allSources: any[] = [];
+  const allSources: SourceRow[] = [];
 
   for (const status of statuses) {
     const sources = await client.query(api.sources.listByStatus, {
@@ -78,7 +87,7 @@ async function main() {
 
   // Filter to RSS/URL sources with short text and valid URLs
   const sourcesToProcess = allSources
-    .filter((s: any) => {
+    .filter((s: SourceRow) => {
       const textLen = (s.rawText || "").length;
       const hasUrl = s.canonicalUrl?.startsWith("http");
       const isArticle = s.type === "rss" || s.type === "url";

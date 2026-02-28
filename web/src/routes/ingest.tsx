@@ -63,6 +63,14 @@ function formatTimestamp(timestamp: number) {
 }
 
 export function IngestPage() {
+  type RecentSourceRow = {
+    _id: Id<"sources">;
+    type: string;
+    status: string;
+    title?: string;
+    canonicalUrl?: string;
+    updatedAt: number;
+  };
   const [urlTitle, setUrlTitle] = createSignal("");
   const [urlValue, setUrlValue] = createSignal("");
   const [urlRawText, setUrlRawText] = createSignal("");
@@ -171,12 +179,10 @@ export function IngestPage() {
     }
   }
 
-  async function triggerExtraction(sourceId: string) {
+  async function triggerExtraction(sourceId: Id<"sources">) {
     setNotice(null);
     try {
-      await runExtraction(
-        withDevBypassSecret({ sourceId: sourceId as Id<"sources"> }),
-      );
+      await runExtraction(withDevBypassSecret({ sourceId }));
       setNotice("Extraction dispatched.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);
@@ -333,7 +339,7 @@ export function IngestPage() {
         >
           <div class={sourceListClass}>
             <For each={recentSources.data() ?? []}>
-              {(source: any) => (
+              {(source: RecentSourceRow) => (
                 <UICard class={css({ bg: "rgba(13, 6, 32, 0.38)", p: "4" })}>
                   <div
                     class={css({
@@ -365,7 +371,7 @@ export function IngestPage() {
                     <UIButton
                       variant="outline"
                       disabled={source.status !== "text_ready"}
-                      onClick={() => triggerExtraction(String(source._id))}
+                      onClick={() => triggerExtraction(source._id)}
                     >
                       Run Extraction
                     </UIButton>

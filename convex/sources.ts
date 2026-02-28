@@ -5,13 +5,15 @@ import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 
 // Reusable validator for source status
-const _sourceStatusValidator = v.union(
+const sourceStatusValidator = v.union(
   v.literal("ingested"),
   v.literal("text_ready"),
   v.literal("extracting"),
   v.literal("extracted"),
   v.literal("triaged"),
   v.literal("review_needed"),
+  v.literal("promoted_followers"),
+  v.literal("promoted_public"),
   v.literal("archived"),
 );
 
@@ -24,7 +26,7 @@ const _sourceStatusValidator = v.union(
  */
 export const listByStatus = query({
   args: {
-    status: v.string(),
+    status: sourceStatusValidator,
     limit: v.optional(v.number()),
   },
   returns: v.array(v.any()),
@@ -32,9 +34,7 @@ export const listByStatus = query({
     const limit = args.limit ?? 50;
     return await ctx.db
       .query("sources")
-      .withIndex("by_status_updatedAt", (q) =>
-        q.eq("status", args.status as any),
-      )
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
       .order("desc")
       .take(limit);
   },
@@ -294,7 +294,7 @@ type ExternalUpsertArgs = {
   transcript?: string;
   tags?: string[];
   topics?: string[];
-  metadata?: any;
+  metadata?: unknown;
   createdBy?: string;
 };
 

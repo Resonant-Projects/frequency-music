@@ -111,6 +111,7 @@ const SELECTION_WEIGHTS = {
   domainRelevance: 0.15,
   topicalBalance: 0.15,
 } as const;
+const DEFAULT_TEMPO_BPM = 120;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -825,10 +826,14 @@ function coerceSource(value: unknown): SourceLike | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const row = value as JsonRecord;
   if (typeof row._id !== "string" || typeof row.type !== "string") return null;
+  const status =
+    typeof row.status === "string" && isSourceStatus(row.status)
+      ? row.status
+      : "ingested";
   return {
     _id: row._id,
     type: row.type,
-    status: typeof row.status === "string" ? row.status : "ingested",
+    status,
     title: typeof row.title === "string" ? row.title : undefined,
     canonicalUrl:
       typeof row.canonicalUrl === "string" ? row.canonicalUrl : undefined,
@@ -838,6 +843,20 @@ function coerceSource(value: unknown): SourceLike | null {
     updatedAt: typeof row.updatedAt === "number" ? row.updatedAt : undefined,
     createdAt: typeof row.createdAt === "number" ? row.createdAt : undefined,
   };
+}
+
+function isSourceStatus(value: string): value is SourceStatus {
+  return (
+    value === "ingested" ||
+    value === "text_ready" ||
+    value === "extracting" ||
+    value === "extracted" ||
+    value === "review_needed" ||
+    value === "triaged" ||
+    value === "promoted_followers" ||
+    value === "promoted_public" ||
+    value === "archived"
+  );
 }
 
 function extractionCreatedAt(extraction: ExtractionLike): number {
@@ -1798,6 +1817,12 @@ function buildAutoFinalOutput(
       .flatMap((row) => row.compositionParameters)
       .find((param) => param.type.toLowerCase() === "tempo")?.value ?? "82 BPM";
   const tempoBpm = firstNumericInText(extractedTempo) ?? 82;
+  const safeTempo = tempoBpm > 0 ? tempoBpm : DEFAULT_TEMPO_BPM;
+  if (tempoBpm <= 0) {
+    console.warn(
+      `Non-positive tempo "${tempoBpm}" detected, defaulting to ${DEFAULT_TEMPO_BPM} BPM`,
+    );
+  }
 
   const primaryVariable = topNonTuningParamType
     ? `${topNonTuningParamType} strategy`
@@ -2042,7 +2067,7 @@ function buildAutoFinalOutput(
       dawChecklist,
       protocol: {
         studyType: "comparison",
-        durationSecs: Math.round(((28 * 60) / tempoBpm) * 4),
+        durationSecs: Math.round(((28 * 60) / safeTempo) * 4),
         panelPlanned: ["self", "musician_peer_1", "musician_peer_2"],
         listeningContext:
           "Quiet room; repeat on headphones and monitors at fixed playback level.",

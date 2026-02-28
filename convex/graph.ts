@@ -497,7 +497,7 @@ export const exportForVisualization = query({
     depth: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const _depth = args.depth ?? 2;
+    const maxDepth = Math.max(0, Math.floor(args.depth ?? 2));
 
     // Get all concepts as nodes
     const concepts = await ctx.db.query("concepts").take(100);
@@ -505,22 +505,97 @@ export const exportForVisualization = query({
     // Get all edges
     const edges = await ctx.db.query("edges").take(500);
 
-    // Build node list
-    const nodes = concepts.map((c) => ({
-      id: `concept:${c.name}`,
-      label: c.displayName,
-      type: "concept",
-      domain: c.domain,
-      size: Math.min(c.mentionCount * 2 + 10, 50),
-    }));
+    const allNodes = new Map<
+      string,
+      {
+        id: string;
+        label: string;
+        type: string;
+        domain?: string;
+        size: number;
+      }
+    >(
+      concepts.map((c) => [
+        `concept:${c.name}`,
+        {
+          id: `concept:${c.name}`,
+          label: c.displayName,
+          type: "concept",
+          domain: c.domain,
+          size: Math.min(c.mentionCount * 2 + 10, 50),
+        },
+      ]),
+    );
 
-    // Build edge list for visualization
-    const links = edges.map((e) => ({
+    const allLinks = edges.map((e) => ({
       source: `${e.fromType}:${e.fromId}`,
       target: `${e.toType}:${e.toId}`,
       relationship: e.relationship,
       weight: e.weight ?? 1,
     }));
+
+    for (const link of allLinks) {
+      if (!allNodes.has(link.source)) {
+        const [type, rawId] = link.source.split(":");
+        allNodes.set(link.source, {
+          id: link.source,
+          label: rawId ?? link.source,
+          type: type ?? "unknown",
+          size: 12,
+        });
+      }
+      if (!allNodes.has(link.target)) {
+        const [type, rawId] = link.target.split(":");
+        allNodes.set(link.target, {
+          id: link.target,
+          label: rawId ?? link.target,
+          type: type ?? "unknown",
+          size: 12,
+        });
+      }
+    }
+
+    if (!args.centerType || !args.centerId) {
+      return { nodes: [...allNodes.values()], links: allLinks };
+    }
+
+    const centerNode = `${args.centerType}:${args.centerId}`;
+    if (!allNodes.has(centerNode)) {
+      return { nodes: [], links: [] };
+    }
+
+    const adjacency = new Map<string, Set<string>>();
+    for (const link of allLinks) {
+      if (!adjacency.has(link.source)) adjacency.set(link.source, new Set());
+      if (!adjacency.has(link.target)) adjacency.set(link.target, new Set());
+      adjacency.get(link.source)?.add(link.target);
+      adjacency.get(link.target)?.add(link.source);
+    }
+
+    const visitedDepth = new Map<string, number>([[centerNode, 0]]);
+    const queue: Array<{ node: string; depth: number }> = [
+      { node: centerNode, depth: 0 },
+    ];
+    while (queue.length > 0) {
+      const next = queue.shift();
+      if (!next) break;
+      if (next.depth >= maxDepth) continue;
+      const neighbors = adjacency.get(next.node) ?? new Set<string>();
+      for (const neighbor of neighbors) {
+        if (visitedDepth.has(neighbor)) continue;
+        const depth = next.depth + 1;
+        visitedDepth.set(neighbor, depth);
+        queue.push({ node: neighbor, depth });
+      }
+    }
+
+    const allowedNodes = new Set(visitedDepth.keys());
+    const nodes = [...allNodes.values()].filter((node) =>
+      allowedNodes.has(node.id),
+    );
+    const links = allLinks.filter(
+      (link) => allowedNodes.has(link.source) && allowedNodes.has(link.target),
+    );
 
     return { nodes, links };
   },

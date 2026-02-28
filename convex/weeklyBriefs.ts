@@ -5,6 +5,11 @@ import { api, internal } from "./_generated/api";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
+interface BriefParameter {
+  type: string;
+  value: string;
+}
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -166,7 +171,7 @@ export const generate = action({
             .map((r, i) => {
               const params = r.parameters
                 .slice(0, 4)
-                .map((p: any) => `${p.type}: ${p.value}`)
+                .map((p: BriefParameter) => `${p.type}: ${p.value}`)
                 .join(", ");
               return `${i + 1}. **${r.title}**\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
             })
@@ -214,7 +219,7 @@ export const generate = action({
       model: modelId,
       promptVersion: "v1",
       bodyMd: result.text,
-      sourceIds: sourceIds.slice(0, 20) as any, // Limit to 20
+      sourceIds: sourceIds.slice(0, 20), // Limit to 20
       recommendedHypothesisIds: hypotheses.map((h) => h._id),
       recommendedRecipeIds: recipes.map((r) => r._id),
       todo: todo.length > 0 ? todo : undefined,

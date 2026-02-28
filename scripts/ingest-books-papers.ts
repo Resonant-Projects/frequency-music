@@ -35,6 +35,11 @@ if (!CONVEX_URL) throw new Error("Missing CONVEX_URL");
 
 const client = new ConvexHttpClient(CONVEX_URL);
 
+interface FeedRow {
+  url: string;
+  name?: string;
+}
+
 // Load source data
 const dataPath = join(import.meta.dir, "../data/books-and-papers.json");
 const sourceData = JSON.parse(readFileSync(dataPath, "utf-8"));
@@ -145,10 +150,10 @@ async function addFeeds(): Promise<void> {
     },
   ];
 
-  const existingFeeds = await client.query(api.feeds.list);
+  const existingFeeds = (await client.query(api.feeds.list)) as FeedRow[];
 
   for (const feed of feeds) {
-    const exists = existingFeeds.some((f: any) => f.url === feed.url);
+    const exists = existingFeeds.some((f: FeedRow) => f.url === feed.url);
     if (exists) {
       console.log(`  Already exists: ${feed.name}`);
       continue;

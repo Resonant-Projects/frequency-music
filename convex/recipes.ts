@@ -5,6 +5,210 @@ import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
+const recipeStatusValidator = v.union(
+  v.literal("draft"),
+  v.literal("in_use"),
+  v.literal("archived"),
+);
+
+interface RecipeParameter {
+  type: string;
+  value: string;
+  details?: unknown;
+}
+
+interface RecipeProtocol {
+  studyType: "litmus" | "comparison";
+  durationSecs: number;
+  panelPlanned: string[];
+  listeningContext?: string;
+  listeningMethod?: string;
+  whatVaries: string[];
+  whatStaysConstant: string[];
+}
+
+interface ParsedRecipePayload {
+  title: string;
+  bodyMd: string;
+  parameters: RecipeParameter[];
+  dawChecklist: string[];
+  protocol?: {
+    studyType?: "litmus" | "comparison";
+    durationSecs?: number;
+    panelPlanned?: string[];
+    listeningContext?: string;
+    listeningMethod?: string;
+    whatVaries?: string[];
+    whatStaysConstant?: string[];
+  };
+}
+
+function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "generated recipe payload must be an object",
+      field: "root",
+      raw,
+    });
+  }
+  const row = raw as Record<string, unknown>;
+  if (typeof row.title !== "string" || row.title.trim().length === 0) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "generated recipe title must be a non-empty string",
+      field: "title",
+      raw,
+    });
+  }
+  if (typeof row.bodyMd !== "string" || row.bodyMd.trim().length === 0) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "generated recipe bodyMd must be a non-empty string",
+      field: "bodyMd",
+      raw,
+    });
+  }
+  if (!Array.isArray(row.parameters)) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "generated recipe parameters must be an array",
+      field: "parameters",
+      raw,
+    });
+  }
+  const parameters: RecipeParameter[] = row.parameters.map((value, index) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "recipe parameter must be an object",
+        field: `parameters[${index}]`,
+        raw,
+      });
+    }
+    const param = value as Record<string, unknown>;
+    if (typeof param.type !== "string" || param.type.trim().length === 0) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "recipe parameter type must be a non-empty string",
+        field: `parameters[${index}].type`,
+        raw,
+      });
+    }
+    if (typeof param.value !== "string" || param.value.trim().length === 0) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "recipe parameter value must be a non-empty string",
+        field: `parameters[${index}].value`,
+        raw,
+      });
+    }
+
+    return {
+      type: param.type,
+      value: param.value,
+      details: param.details,
+    };
+  });
+  if (
+    !Array.isArray(row.dawChecklist) ||
+    row.dawChecklist.some(
+      (item) => typeof item !== "string" || item.trim().length === 0,
+    )
+  ) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "generated recipe dawChecklist must be string[]",
+      field: "dawChecklist",
+      raw,
+    });
+  }
+
+  const protocol = row.protocol;
+  if (protocol !== undefined) {
+    if (!protocol || typeof protocol !== "object" || Array.isArray(protocol)) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "generated recipe protocol must be an object",
+        field: "protocol",
+        raw,
+      });
+    }
+
+    const p = protocol as Record<string, unknown>;
+    if (
+      p.studyType !== undefined &&
+      p.studyType !== "litmus" &&
+      p.studyType !== "comparison"
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "protocol.studyType must be litmus|comparison",
+        field: "protocol.studyType",
+        raw,
+      });
+    }
+    if (p.durationSecs !== undefined && typeof p.durationSecs !== "number") {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "protocol.durationSecs must be a number",
+        field: "protocol.durationSecs",
+        raw,
+      });
+    }
+    if (
+      p.panelPlanned !== undefined &&
+      (!Array.isArray(p.panelPlanned) ||
+        p.panelPlanned.some(
+          (item) => typeof item !== "string" || item.trim().length === 0,
+        ))
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "protocol.panelPlanned must be string[]",
+        field: "protocol.panelPlanned",
+        raw,
+      });
+    }
+    if (
+      p.whatVaries !== undefined &&
+      (!Array.isArray(p.whatVaries) ||
+        p.whatVaries.some(
+          (item) => typeof item !== "string" || item.trim().length === 0,
+        ))
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "protocol.whatVaries must be string[]",
+        field: "protocol.whatVaries",
+        raw,
+      });
+    }
+    if (
+      p.whatStaysConstant !== undefined &&
+      (!Array.isArray(p.whatStaysConstant) ||
+        p.whatStaysConstant.some(
+          (item) => typeof item !== "string" || item.trim().length === 0,
+        ))
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "protocol.whatStaysConstant must be string[]",
+        field: "protocol.whatStaysConstant",
+        raw,
+      });
+    }
+  }
+
+  return {
+    title: row.title,
+    bodyMd: row.bodyMd,
+    parameters,
+    dawChecklist: row.dawChecklist as string[],
+    protocol: row.protocol as ParsedRecipePayload["protocol"],
+  };
+}
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -14,19 +218,17 @@ import { requireAuth } from "./auth";
  */
 export const listByStatus = query({
   args: {
-    status: v.optional(v.string()),
+    status: v.optional(recipeStatusValidator),
     limit: v.optional(v.number()),
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
-    if (args.status) {
+    if (args.status !== undefined) {
       return await ctx.db
         .query("recipes")
-        .withIndex("by_status_updatedAt", (q) =>
-          q.eq("status", args.status as any),
-        )
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
         .order("desc")
         .take(limit);
     }
@@ -113,7 +315,6 @@ export const create = mutation({
 
     return await ctx.db.insert("recipes", {
       ...createArgs,
-      parameters: createArgs.parameters as any,
       status: "draft",
       visibility: "private",
       createdBy: identity.subject,
@@ -134,7 +335,7 @@ export const update = mutation({
     parameters: v.optional(v.array(v.any())),
     dawChecklist: v.optional(v.array(v.string())),
     protocol: v.optional(v.any()),
-    status: v.optional(v.string()),
+    status: v.optional(recipeStatusValidator),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -147,10 +348,7 @@ export const update = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Recipe not found" });
     }
 
-    await ctx.db.patch("recipes", id, {
-      ...updates,
-      updatedAt: Date.now(),
-    } as any);
+    await ctx.db.patch("recipes", id, { ...updates, updatedAt: Date.now() });
     return null;
   },
 });
@@ -161,11 +359,7 @@ export const update = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("recipes"),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("in_use"),
-      v.literal("archived"),
-    ),
+    status: recipeStatusValidator,
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -287,41 +481,18 @@ export const generateFromHypothesis = action({
     });
 
     // Parse response
-    let parsed: {
-      title: string;
-      bodyMd: string;
-      parameters: Array<{ type: string; value: string; details?: unknown }>;
-      dawChecklist: string[];
-      protocol?: {
-        studyType?: "litmus" | "comparison";
-        durationSecs?: number;
-        panelPlanned?: string[];
-        listeningContext?: string;
-        listeningMethod?: string;
-        whatVaries?: string[];
-        whatStaysConstant?: string[];
-      };
-    };
+    let parsed: ParsedRecipePayload;
     try {
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      throw new Error(`Failed to parse AI response: ${e}`);
+      parsed = validateGeneratedRecipePayload(JSON.parse(jsonMatch[0]));
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unknown parse error";
+      throw new Error(`Failed to parse AI response: ${message}`);
     }
 
     // Sanitize protocol to only include schema-valid fields
-    let sanitizedProtocol:
-      | {
-          studyType: "litmus" | "comparison";
-          durationSecs: number;
-          panelPlanned: string[];
-          listeningContext?: string;
-          listeningMethod?: string;
-          whatVaries: string[];
-          whatStaysConstant: string[];
-        }
-      | undefined;
+    let sanitizedProtocol: RecipeProtocol | undefined;
     if (parsed.protocol) {
       const p = parsed.protocol;
       sanitizedProtocol = {
@@ -402,11 +573,12 @@ export const generateBatch = action({
           devBypassSecret: args.devBypassSecret,
         });
         results.push({ success: true, ...result });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "Unknown error";
         results.push({
           success: false,
           hypothesisId: hypothesis._id,
-          error: e.message,
+          error: message,
         });
       }
     }

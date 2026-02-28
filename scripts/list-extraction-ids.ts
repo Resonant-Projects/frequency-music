@@ -7,13 +7,24 @@ import { api } from "../convex/_generated/api";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
+interface ExtractionRow {
+  _id: string;
+  sourceId: string;
+  claims?: unknown[];
+  topics?: string[];
+  compositionParameters?: unknown[];
+  model?: string;
+}
+
 async function main() {
   // Get all extractions in batches
-  const all: any[] = [];
-  const batch = await client.query(api.extractions.listRecent, { limit: 200 });
+  const all: ExtractionRow[] = [];
+  const batch = (await client.query(api.extractions.listRecent, {
+    limit: 200,
+  })) as ExtractionRow[];
   all.push(...batch);
 
-  const summary = all.map((e: any) => ({
+  const summary = all.map((e: ExtractionRow) => ({
     id: e._id,
     sourceId: e.sourceId,
     claims: e.claims?.length ?? 0,

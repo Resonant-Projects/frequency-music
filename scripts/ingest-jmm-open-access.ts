@@ -89,8 +89,12 @@ async function fetchFullText(url: string): Promise<string | null> {
     }
 
     return text.slice(0, 100000);
-  } catch (e: any) {
-    console.error(`   ❌ Fetch error: ${e.message}`);
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      console.error(`   ❌ Fetch error: ${e.message}`);
+    } else {
+      console.error(`   ❌ Fetch error: ${String(e)}`);
+    }
     return null;
   }
 }
@@ -165,8 +169,9 @@ async function main() {
         console.log(`   ✅ Created: ${result.id}`);
         created++;
       }
-    } catch (e: any) {
-      console.error(`   ❌ Error: ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(`   ❌ Error: ${message}`);
       errors++;
     }
 

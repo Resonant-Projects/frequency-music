@@ -12,6 +12,12 @@ import { api, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { workflowManager } from "./components";
 
+interface MinimalExtraction {
+  _id: string;
+  claims: unknown[];
+  compositionParameters: unknown[];
+}
+
 // ============================================================================
 // EXTRACTION WORKFLOW
 // ============================================================================
@@ -149,7 +155,7 @@ export const batchHypothesisWorkflow = workflowManager.define({
     });
 
     const candidates = extractions.filter(
-      (e: any) =>
+      (e: MinimalExtraction) =>
         e.claims.length >= minClaims && e.compositionParameters.length > 0,
     );
 
@@ -220,7 +226,8 @@ export const fullPipelineWorkflow = workflowManager.define({
     });
 
     const candidates = extractions.filter(
-      (e: any) => e.claims.length >= 2 && e.compositionParameters.length > 0,
+      (e: MinimalExtraction) =>
+        e.claims.length >= 2 && e.compositionParameters.length > 0,
     );
 
     for (const extraction of candidates.slice(0, hypothesisLimit)) {
@@ -314,6 +321,6 @@ export const startFullPipeline = mutation({
 export const getStatus = query({
   args: { workflowId: v.string() },
   handler: async (ctx, args) => {
-    return await workflowManager.status(ctx, args.workflowId as any);
+    return await workflowManager.status(ctx, args.workflowId);
   },
 });

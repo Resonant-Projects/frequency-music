@@ -43,6 +43,19 @@ function statusTone(status: string): "gold" | "violet" | "cream" {
 const DISPLAY_QUEUE_LIMIT = import.meta.env.VITE_E2E_MODE === "1" ? 200 : 24;
 
 export function DisplayPage() {
+  type InboxRow = {
+    _id: Id<"sources">;
+    status: string;
+    type: string;
+    title?: string;
+    blockedReason?: string;
+    canonicalUrl?: string;
+    nextAction: string;
+    extractionPreview?: {
+      summary: string;
+    } | null;
+  };
+
   const inboxRows = createQueryWithStatus(convexApi.inbox.list, () => ({
     limit: DISPLAY_QUEUE_LIMIT,
   }));
@@ -54,22 +67,20 @@ export function DisplayPage() {
 
   const [notice, setNotice] = createSignal<string | null>(null);
 
-  async function runRowExtraction(sourceId: string) {
+  async function runRowExtraction(sourceId: Id<"sources">) {
     try {
-      await runExtraction(
-        withDevBypassSecret({ sourceId: sourceId as Id<"sources"> }),
-      );
+      await runExtraction(withDevBypassSecret({ sourceId }));
       setNotice("Extraction started.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);
     }
   }
 
-  async function markTriaged(sourceId: string) {
+  async function markTriaged(sourceId: Id<"sources">) {
     try {
       await updateStatus(
         withDevBypassSecret({
-          id: sourceId as Id<"sources">,
+          id: sourceId,
           status: "triaged" as const,
         }),
       );
@@ -79,11 +90,11 @@ export function DisplayPage() {
     }
   }
 
-  async function promoteFollowers(sourceId: string) {
+  async function promoteFollowers(sourceId: Id<"sources">) {
     try {
       await setVisibility(
         withDevBypassSecret({
-          id: sourceId as Id<"sources">,
+          id: sourceId,
           visibility: "followers",
         }),
       );
@@ -188,7 +199,7 @@ export function DisplayPage() {
         <Show when={!inboxRows.isLoading()} fallback={<p>Loading inbox…</p>}>
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={inboxRows.data() ?? []}>
-              {(row: any) => (
+              {(row: InboxRow) => (
                 <div
                   data-testid="display-row"
                   class={css({
@@ -231,15 +242,17 @@ export function DisplayPage() {
                   </p>
 
                   <Show when={row.extractionPreview}>
-                    <p
-                      class={css({
-                        color: "rgba(245, 240, 232, 0.56)",
-                        fontSize: "sm",
-                        marginBottom: "2",
-                      })}
-                    >
-                      {row.extractionPreview.summary}
-                    </p>
+                    {(preview) => (
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.56)",
+                          fontSize: "sm",
+                          marginBottom: "2",
+                        })}
+                      >
+                        {preview().summary}
+                      </p>
+                    )}
                   </Show>
 
                   <div
@@ -248,19 +261,19 @@ export function DisplayPage() {
                     <UIButton
                       variant="outline"
                       disabled={row.status !== "text_ready"}
-                      onClick={() => runRowExtraction(String(row._id))}
+                      onClick={() => runRowExtraction(row._id)}
                     >
                       Run Extraction
                     </UIButton>
                     <UIButton
                       variant="outline"
-                      onClick={() => markTriaged(String(row._id))}
+                      onClick={() => markTriaged(row._id)}
                     >
                       Mark Triaged
                     </UIButton>
                     <UIButton
                       variant="ghost"
-                      onClick={() => promoteFollowers(String(row._id))}
+                      onClick={() => promoteFollowers(row._id)}
                     >
                       Promote Followers
                     </UIButton>

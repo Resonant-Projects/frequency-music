@@ -63,6 +63,7 @@ function parseChecklist(input: string) {
 }
 
 export function RecipesPage() {
+  type HypothesisRow = { _id: string; title: string };
   const hypotheses = createQuery(convexApi.hypotheses.listByStatus, () => ({
     limit: 30,
   }));
@@ -154,7 +155,7 @@ export function RecipesPage() {
         >
           <option value="">Select hypothesis</option>
           <For each={hypotheses() ?? []}>
-            {(item: any) => (
+            {(item: HypothesisRow) => (
               <option value={String(item._id)}>{item.title}</option>
             )}
           </For>

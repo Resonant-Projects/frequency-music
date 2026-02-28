@@ -65,6 +65,10 @@ interface NotionPage {
   };
 }
 
+interface RichTextElement {
+  plain_text?: string;
+}
+
 async function getTagNotes(tagId: string): Promise<string[]> {
   const page = await notionRequest(`/pages/${tagId}`);
   const notes = page.properties?.Notes?.relation || [];
@@ -85,7 +89,10 @@ async function getPageContent(pageId: string): Promise<string> {
     const content = block[type];
 
     if (content?.rich_text) {
-      const text = content.rich_text.map((t: any) => t.plain_text).join("");
+      const text = (content.rich_text as RichTextElement[])
+        .map((t) => (typeof t.plain_text === "string" ? t.plain_text : ""))
+        .filter((value) => value.trim().length > 0)
+        .join("");
       if (text) textParts.push(text);
     }
 

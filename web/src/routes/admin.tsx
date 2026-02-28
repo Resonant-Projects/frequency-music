@@ -51,6 +51,14 @@ export function AdminPage() {
   const [sourceStatus, setSourceStatusValue] = createSignal("review_needed");
   const [notice, setNotice] = createSignal<string | null>(null);
 
+  type FeedRow = {
+    _id: string;
+    name?: string;
+    type: string;
+    url: string;
+    enabled?: boolean;
+  };
+
   async function submitFeed(event: SubmitEvent) {
     event.preventDefault();
 
@@ -254,7 +262,7 @@ export function AdminPage() {
         <h2 class={sectionTitleClass}>Feed List</h2>
         <div class={css({ display: "grid", gap: "2" })}>
           <For each={feeds() ?? []}>
-            {(feed: any) => (
+            {(feed: FeedRow) => (
               <div
                 class={css({
                   alignItems: "center",

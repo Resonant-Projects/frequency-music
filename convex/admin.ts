@@ -1,6 +1,5 @@
 import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
@@ -139,22 +138,58 @@ export const setSourceStatus = mutation({
 });
 
 export const promoteVisibility = mutation({
-  args: {
-    entityType: v.union(
-      v.literal("sources"),
-      v.literal("hypotheses"),
-      v.literal("recipes"),
-      v.literal("compositions"),
-      v.literal("weeklyBriefs"),
-    ),
-    id: v.string(),
-    visibility: v.union(
-      v.literal("private"),
-      v.literal("followers"),
-      v.literal("public"),
-    ),
-    devBypassSecret: v.optional(v.string()),
-  },
+  args: v.union(
+    v.object({
+      entityType: v.literal("sources"),
+      id: v.id("sources"),
+      visibility: v.union(
+        v.literal("private"),
+        v.literal("followers"),
+        v.literal("public"),
+      ),
+      devBypassSecret: v.optional(v.string()),
+    }),
+    v.object({
+      entityType: v.literal("hypotheses"),
+      id: v.id("hypotheses"),
+      visibility: v.union(
+        v.literal("private"),
+        v.literal("followers"),
+        v.literal("public"),
+      ),
+      devBypassSecret: v.optional(v.string()),
+    }),
+    v.object({
+      entityType: v.literal("recipes"),
+      id: v.id("recipes"),
+      visibility: v.union(
+        v.literal("private"),
+        v.literal("followers"),
+        v.literal("public"),
+      ),
+      devBypassSecret: v.optional(v.string()),
+    }),
+    v.object({
+      entityType: v.literal("compositions"),
+      id: v.id("compositions"),
+      visibility: v.union(
+        v.literal("private"),
+        v.literal("followers"),
+        v.literal("public"),
+      ),
+      devBypassSecret: v.optional(v.string()),
+    }),
+    v.object({
+      entityType: v.literal("weeklyBriefs"),
+      id: v.id("weeklyBriefs"),
+      visibility: v.union(
+        v.literal("private"),
+        v.literal("followers"),
+        v.literal("public"),
+      ),
+      devBypassSecret: v.optional(v.string()),
+    }),
+  ),
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
@@ -162,7 +197,7 @@ export const promoteVisibility = mutation({
 
     switch (args.entityType) {
       case "sources":
-        await ctx.db.patch("sources", args.id as Id<"sources">, {
+        await ctx.db.patch("sources", args.id, {
           visibility: args.visibility,
           status:
             args.visibility === "followers"
@@ -174,25 +209,25 @@ export const promoteVisibility = mutation({
         });
         break;
       case "hypotheses":
-        await ctx.db.patch("hypotheses", args.id as Id<"hypotheses">, {
+        await ctx.db.patch("hypotheses", args.id, {
           visibility: args.visibility,
           updatedAt: now,
         });
         break;
       case "recipes":
-        await ctx.db.patch("recipes", args.id as Id<"recipes">, {
+        await ctx.db.patch("recipes", args.id, {
           visibility: args.visibility,
           updatedAt: now,
         });
         break;
       case "compositions":
-        await ctx.db.patch("compositions", args.id as Id<"compositions">, {
+        await ctx.db.patch("compositions", args.id, {
           visibility: args.visibility,
           updatedAt: now,
         });
         break;
       case "weeklyBriefs":
-        await ctx.db.patch("weeklyBriefs", args.id as Id<"weeklyBriefs">, {
+        await ctx.db.patch("weeklyBriefs", args.id, {
           visibility: args.visibility,
           publishedAt: args.visibility === "public" ? now : undefined,
         });

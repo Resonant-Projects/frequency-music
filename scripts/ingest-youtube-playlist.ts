@@ -11,8 +11,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL =
-  process.env.CONVEX_URL || "https://righteous-marmot-892.convex.cloud";
+const CONVEX_URL = process.env.CONVEX_URL;
 
 interface Video {
   title: string;
@@ -35,7 +34,13 @@ async function getPlaylistVideos(playlistUrl: string): Promise<Video[]> {
   );
 
   const output = await new Response(proc.stdout).text();
-  await proc.exited;
+  const stderr = await new Response(proc.stderr).text();
+  const exitCode = await proc.exited;
+  if (exitCode !== 0) {
+    throw new Error(
+      `yt-dlp failed with exit code ${exitCode}\n${stderr}\n${output}`,
+    );
+  }
 
   return output
     .trim()
@@ -51,7 +56,7 @@ async function getPlaylistVideos(playlistUrl: string): Promise<Video[]> {
         channel: channel || "Unknown",
       };
     })
-    .filter((v) => v.url && v.title !== "[Private video]");
+    .filter((v) => v.videoId && v.url && v.title !== "[Private video]");
 }
 
 async function main() {
@@ -61,6 +66,10 @@ async function main() {
 
   if (!playlistUrl) {
     console.log("Usage: bun scripts/ingest-youtube-playlist.ts <playlist-url>");
+    process.exit(1);
+  }
+  if (!CONVEX_URL) {
+    console.error("CONVEX_URL must be set");
     process.exit(1);
   }
 
@@ -114,8 +123,9 @@ async function main() {
       } else {
         skipped++;
       }
-    } catch (e: any) {
-      console.error(`   ❌ ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(`   ❌ ${message}`);
       errors++;
     }
   }
@@ -128,4 +138,7 @@ async function main() {
   console.log(`❌ Errors: ${errors}`);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

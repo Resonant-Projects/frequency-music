@@ -243,55 +243,65 @@ export function FeedbackPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Recent Feedback</h2>
         <Show when={!sessions.isLoading()} fallback={<p>Loading sessions…</p>}>
-          <div class={css({ display: "grid", gap: "3" })}>
-            <For each={sessions.data() ?? []}>
-              {(session: Doc<"listeningSessions">) => (
-                <div
-                  class={css({
-                    borderColor: "rgba(200, 168, 75, 0.24)",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    p: "4",
-                  })}
-                >
+          <Show
+            when={!sessions.isError()}
+            fallback={
+              <p class={css({ color: "#f87171" })}>
+                Failed to load sessions:{" "}
+                {sessions.error()?.message ?? "Unknown error"}
+              </p>
+            }
+          >
+            <div class={css({ display: "grid", gap: "3" })}>
+              <For each={sessions.data() ?? []}>
+                {(session: Doc<"listeningSessions">) => (
                   <div
                     class={css({
-                      display: "flex",
-                      gap: "2",
-                      marginBottom: "2",
+                      borderColor: "rgba(200, 168, 75, 0.24)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      p: "4",
                     })}
                   >
-                    <UIBadge tone="gold">
-                      {compositionById().get(String(session.compositionId)) ??
-                        "Composition"}
-                    </UIBadge>
-                    <UIBadge tone="cream">
-                      {session.participants.length} listeners
-                    </UIBadge>
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        marginBottom: "2",
+                      })}
+                    >
+                      <UIBadge tone="gold">
+                        {compositionById().get(String(session.compositionId)) ??
+                          "Composition"}
+                      </UIBadge>
+                      <UIBadge tone="cream">
+                        {session.participants.length} listeners
+                      </UIBadge>
+                    </div>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.75)",
+                        marginBottom: "2",
+                      })}
+                    >
+                      {session.feedbackMd}
+                    </p>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.55)",
+                        fontFamily: "mono",
+                        fontSize: "xs",
+                      })}
+                    >
+                      pleasantness: {session.ratings?.bodilyPleasantness ?? "-"}{" "}
+                      · goosebumps: {session.ratings?.goosebumps ?? "-"} ·
+                      musicality: {session.ratings?.musicality ?? "-"}
+                    </p>
                   </div>
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.75)",
-                      marginBottom: "2",
-                    })}
-                  >
-                    {session.feedbackMd}
-                  </p>
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.55)",
-                      fontFamily: "mono",
-                      fontSize: "xs",
-                    })}
-                  >
-                    pleasantness: {session.ratings?.bodilyPleasantness ?? "-"} ·
-                    goosebumps: {session.ratings?.goosebumps ?? "-"} ·
-                    musicality: {session.ratings?.musicality ?? "-"}
-                  </p>
-                </div>
-              )}
-            </For>
-          </div>
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
       </UICard>
     </section>

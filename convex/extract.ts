@@ -337,13 +337,6 @@ export const storeExtraction = internalMutation({
 });
 
 /**
- * Sanitize a string for use as a Convex field name
- */
-function _sanitizeKey(str: string): string {
-  return str.replace(/[^\x20-\x7E]/g, "_").slice(0, 100);
-}
-
-/**
  * Extract all sources that are ready
  */
 export const extractAllReady = action({

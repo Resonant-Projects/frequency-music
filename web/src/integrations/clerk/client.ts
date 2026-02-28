@@ -28,13 +28,11 @@ function getRequiredEnv(name: keyof ImportMetaEnv): string {
 }
 
 function updateAuthSnapshotFromClerk(clerk: Clerk) {
-  const organizationMembership = clerk.organizationMembership;
-
   setAuthSnapshot({
     isLoaded: clerk.loaded,
     isSignedIn: !!clerk.user && !!clerk.session,
     orgId: clerk.organization?.id ?? null,
-    orgRole: organizationMembership?.role ?? null,
+    orgRole: null,
   });
 }
 

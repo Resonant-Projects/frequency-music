@@ -11,29 +11,57 @@ import { api } from "../convex/_generated/api";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
+interface ExtractionSummaryRow {
+  sourceId: string;
+  claims: number;
+  params: number;
+}
+
+function isExtractionSummaryRow(value: unknown): value is ExtractionSummaryRow {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.sourceId === "string" &&
+    typeof row.claims === "number" &&
+    typeof row.params === "number"
+  );
+}
+
 async function main() {
   const offset = parseInt(process.argv[2] || "0", 10);
   const limit = parseInt(process.argv[3] || "5", 10);
 
   // Read the summary file
-  const summary = JSON.parse(readFileSync("/tmp/ext-summary.json", "utf-8"));
+  const rawSummary = JSON.parse(readFileSync("/tmp/ext-summary.json", "utf-8"));
+  const summary = Array.isArray(rawSummary)
+    ? rawSummary.filter((entry): entry is ExtractionSummaryRow =>
+        isExtractionSummaryRow(entry),
+      )
+    : [];
 
   // If SOURCE_IDS env var is set, use those directly
   const sourceIds = process.env.SOURCE_IDS?.split(",") || [];
   const needsWork =
     sourceIds.length > 0
       ? sourceIds
-          .map((sid) => summary.find((e: any) => e.sourceId === sid))
+          .map((sid) =>
+            summary.find(
+              (entry: ExtractionSummaryRow) => entry.sourceId === sid,
+            ),
+          )
           .filter(Boolean)
       : summary
-          .filter((e: any) => e.claims === 0 || e.params === 0)
+          .filter(
+            (entry: ExtractionSummaryRow) =>
+              entry.claims === 0 || entry.params === 0,
+          )
           .slice(offset, offset + limit);
 
   console.log(
     `Re-extracting ${needsWork.length} sources (offset=${offset}, limit=${limit})`,
   );
   console.log(
-    `Total needing work: ${summary.filter((e: any) => e.claims === 0 || e.params === 0).length}`,
+    `Total needing work: ${summary.filter((entry) => entry.claims === 0 || entry.params === 0).length}`,
   );
 
   for (const ext of needsWork) {
@@ -45,10 +73,14 @@ async function main() {
         force: true,
       });
       console.log(`  ✓ Done: ${JSON.stringify(result)}`);
-    } catch (e: any) {
-      console.error(`  ✗ Failed: ${e.message?.slice(0, 100)}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(`  ✗ Failed: ${message.slice(0, 100)}`);
     }
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

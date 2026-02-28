@@ -38,6 +38,10 @@ if (!CONVEX_URL) throw new Error("Missing CONVEX_URL");
 
 const client = new ConvexHttpClient(CONVEX_URL);
 
+interface FeedRow {
+  url: string;
+}
+
 // Load source data
 const sourcesPath = join(
   import.meta.dir,
@@ -155,8 +159,8 @@ async function ingestSource(
 async function addYouTubeFeed(): Promise<void> {
   const feed = sourceData.youtube;
 
-  const existing = await client.query(api.feeds.list);
-  const hasGrant = existing.some((f: any) =>
+  const existing = (await client.query(api.feeds.list)) as FeedRow[];
+  const hasGrant = existing.some((f: FeedRow) =>
     f.url.includes("UC2MN4AlpbY9NYxuYH-ecoCQ"),
   );
 

@@ -3,8 +3,18 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
-const summary = JSON.parse(readFileSync("/tmp/ext-summary.json", "utf-8"));
-const zeros = summary.filter((e: any) => e.claims === 0 && e.params === 0);
+
+interface SummaryItem {
+  sourceId: string;
+  claims: number;
+  params: number;
+}
+
+const summary = JSON.parse(
+  readFileSync("/tmp/ext-summary.json", "utf-8"),
+) as unknown;
+const rows = Array.isArray(summary) ? (summary as SummaryItem[]) : [];
+const zeros = rows.filter((e: SummaryItem) => e.claims === 0 && e.params === 0);
 
 async function main() {
   for (const z of zeros) {

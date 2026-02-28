@@ -12,6 +12,14 @@ type HypothesisStatus =
   | "evaluated"
   | "revised"
   | "retired";
+const hypothesisStatusValidator = v.union(
+  v.literal("draft"),
+  v.literal("queued"),
+  v.literal("active"),
+  v.literal("evaluated"),
+  v.literal("revised"),
+  v.literal("retired"),
+);
 
 interface GeneratedHypothesisPayload {
   title: string;
@@ -138,7 +146,7 @@ export const update = mutation({
     rationaleMd: v.optional(v.string()),
     sourceIds: v.optional(v.array(v.id("sources"))),
     concepts: v.optional(v.array(v.string())),
-    status: v.optional(v.string()),
+    status: v.optional(hypothesisStatusValidator),
     resolution: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
@@ -176,8 +184,7 @@ export const update = mutation({
       patch.rationaleMd = updates.rationaleMd;
     if (updates.sourceIds !== undefined) patch.sourceIds = updates.sourceIds;
     if (updates.concepts !== undefined) patch.concepts = updates.concepts;
-    if (updates.status !== undefined)
-      patch.status = updates.status as HypothesisStatus;
+    if (updates.status !== undefined) patch.status = updates.status;
     if (updates.resolution !== undefined) patch.resolution = updates.resolution;
 
     await ctx.db.patch("hypotheses", id, patch);
@@ -191,14 +198,7 @@ export const update = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("hypotheses"),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("queued"),
-      v.literal("active"),
-      v.literal("evaluated"),
-      v.literal("revised"),
-      v.literal("retired"),
-    ),
+    status: hypothesisStatusValidator,
     resolution: v.optional(
       v.union(
         v.literal("supported"),
