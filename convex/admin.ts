@@ -3,6 +3,7 @@ import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { requireAuth } from "./auth";
 
+// Intentionally public — read-only data, personal research tool.
 export const workspaceSnapshot = query({
   args: {},
   returns: v.object({
@@ -35,6 +36,7 @@ export const workspaceSnapshot = query({
   },
 });
 
+// Intentionally public — read-only data, personal research tool.
 export const listFeeds = query({
   args: {},
   returns: v.array(v.any()),
@@ -172,6 +174,6 @@ export const pollFeedsNow = action({
   args: { devBypassSecret: v.optional(v.string()) },
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    return await ctx.runAction(api.ingest.pollAllFeeds, {});
+    return await ctx.runAction(api.ingest.pollAllFeeds, { devBypassSecret: args.devBypassSecret });
   },
 });

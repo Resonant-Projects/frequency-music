@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { generateDedupeKey } from "./sourceUtils";
 
 const http = httpRouter();
@@ -20,7 +20,12 @@ function getConfiguredSecret() {
 
 function isAuthorized(request: Request, payloadSecret?: string): boolean {
   const expected = getConfiguredSecret();
-  if (!expected) return true;
+  if (!expected) {
+    console.warn(
+      "isAuthorized: No INGEST_SHARED_SECRET configured — all ingest endpoints are open. Set this in production.",
+    );
+    return true;
+  }
 
   const authHeader = request.headers.get("x-ingest-secret") ?? undefined;
   const candidate = payloadSecret ?? authHeader;
@@ -55,7 +60,7 @@ http.route({
       return json({ error: "Unauthorized" }, 401);
     }
 
-    const result = await ctx.runMutation(api.sources.upsertExternal, {
+    const result = await ctx.runMutation(internal.sources.upsertExternal, {
       dedupeKey: generateDedupeKey("notion", {
         notionPageId: payload.notionPageId,
       }),
@@ -96,7 +101,7 @@ http.route({
       return json({ error: "Unauthorized" }, 401);
     }
 
-    const result = await ctx.runMutation(api.sources.upsertExternal, {
+    const result = await ctx.runMutation(internal.sources.upsertExternal, {
       dedupeKey: generateDedupeKey("rss", {
         feedUrl: payload.feedUrl,
         rssGuid: payload.guid,
@@ -135,7 +140,7 @@ http.route({
       return json({ error: "Unauthorized" }, 401);
     }
 
-    const result = await ctx.runMutation(api.sources.upsertExternal, {
+    const result = await ctx.runMutation(internal.sources.upsertExternal, {
       dedupeKey: generateDedupeKey("url", { canonicalUrl: payload.url }),
       type: "url",
       title: payload.title,

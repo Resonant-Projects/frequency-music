@@ -7,6 +7,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
+import { withDevBypassSecret } from "../integrations/authBypass";
 
 const pageClass = css({
   display: "grid",
@@ -75,17 +76,19 @@ export function FeedbackPage() {
     }
 
     try {
-      await createSession({
-        compositionId: compositionId() as any,
-        participants: parseParticipants(participants()),
-        contextMd: contextMd().trim() || undefined,
-        feedbackMd: feedbackMd().trim(),
-        ratings: {
-          bodilyPleasantness: Number(pleasantness()),
-          goosebumps: Number(goosebumps()),
-          musicality: Number(musicality()),
-        },
-      });
+      await createSession(
+        withDevBypassSecret({
+          compositionId: compositionId() as any,
+          participants: parseParticipants(participants()),
+          contextMd: contextMd().trim() || undefined,
+          feedbackMd: feedbackMd().trim(),
+          ratings: {
+            bodilyPleasantness: Number(pleasantness()),
+            goosebumps: Number(goosebumps()),
+            musicality: Number(musicality()),
+          },
+        }),
+      );
 
       setParticipants("");
       setContextMd("");

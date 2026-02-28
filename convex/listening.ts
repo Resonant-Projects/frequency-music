@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth } from "./auth";
 
 export const listByComposition = query({
   args: { compositionId: v.id("compositions") },
@@ -53,9 +54,11 @@ export const create = mutation({
       v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
     ),
     createdBy: v.optional(v.id("users")),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("listeningSessions"),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const composition = await ctx.db.get("compositions", args.compositionId);
     if (!composition) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Composition not found" });
@@ -80,9 +83,11 @@ export const updateVisibility = mutation({
   args: {
     id: v.id("listeningSessions"),
     visibility: v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const session = await ctx.db.get("listeningSessions", args.id);
     if (!session) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Listening session not found" });

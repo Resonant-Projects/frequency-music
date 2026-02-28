@@ -1,4 +1,5 @@
 import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
+import { ConvexError } from "convex/values";
 
 type AuthCtx = QueryCtx | MutationCtx | ActionCtx;
 
@@ -39,6 +40,15 @@ export async function requireAuth(
 
   if (isBypassEnabled()) {
     const configuredSecret = getConfiguredBypassSecret();
+    if (!configuredSecret) {
+      console.error(
+        "requireAuth: AUTH_BYPASS_ENABLED=true but AUTH_BYPASS_SECRET is not set on the server.",
+      );
+      throw new ConvexError({
+        code: "CONFIGURATION_ERROR",
+        message: "Bypass is enabled but AUTH_BYPASS_SECRET is not configured",
+      });
+    }
     const providedSecret = options?.devBypassSecret;
 
     if (
@@ -56,5 +66,5 @@ export async function requireAuth(
     }
   }
 
-  throw new Error("Unauthorized");
+  throw new ConvexError({ code: "UNAUTHORIZED", message: "Authentication required" });
 }

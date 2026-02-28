@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { ConvexError } from "convex/values";
 import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
@@ -331,9 +331,10 @@ async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) 
 }
 
 /**
- * Upsert a source for external ingest pipelines (n8n / HTTP endpoints)
+ * Upsert a source for external ingest pipelines (n8n / HTTP endpoints).
+ * Internal-only — called via secret-guarded HTTP actions in http.ts.
  */
-export const upsertExternal = mutation({
+export const upsertExternal = internalMutation({
   args: {
     dedupeKey: v.string(),
     type: v.union(
@@ -355,7 +356,6 @@ export const upsertExternal = mutation({
     tags: v.optional(v.array(v.string())),
     topics: v.optional(v.array(v.string())),
     metadata: v.optional(v.any()),
-    devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({
     id: v.id("sources"),
@@ -363,10 +363,7 @@ export const upsertExternal = mutation({
     contentChanged: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    const { devBypassSecret: _devBypassSecret, ...upsertArgs } = args;
-    // This path is used by secret-guarded ingest HTTP endpoints and n8n jobs.
-    // It intentionally does not require interactive user auth.
-    return await upsertExternalSource(ctx, upsertArgs as ExternalUpsertArgs);
+    return await upsertExternalSource(ctx, args as ExternalUpsertArgs);
   },
 });
 

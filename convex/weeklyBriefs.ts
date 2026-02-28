@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
-import { api } from "./_generated/api";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { api, internal } from "./_generated/api";
+import { requireAuth } from "./auth";
 import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
@@ -41,7 +42,7 @@ export const getLatest = query({
 // MUTATIONS
 // ============================================================================
 
-export const create = mutation({
+export const create = internalMutation({
   args: {
     weekOf: v.string(),
     model: v.string(),
@@ -63,8 +64,9 @@ export const create = mutation({
 });
 
 export const publish = mutation({
-  args: { id: v.id("weeklyBriefs") },
+  args: { id: v.id("weeklyBriefs"), devBypassSecret: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     await ctx.db.patch("weeklyBriefs", args.id, {
       visibility: "public",
       publishedAt: Date.now(),
@@ -121,8 +123,10 @@ export const generate = action({
   args: {
     daysBack: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const daysBack = args.daysBack ?? 7;
     const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
 
@@ -205,7 +209,7 @@ export const generate = action({
     const sourceIds = [...new Set(hypotheses.flatMap((h) => h.sourceIds))];
 
     // Create the brief
-    const briefId = await ctx.runMutation(api.weeklyBriefs.create, {
+    const briefId = await ctx.runMutation(internal.weeklyBriefs.create, {
       weekOf,
       model: modelId,
       promptVersion: "v1",
