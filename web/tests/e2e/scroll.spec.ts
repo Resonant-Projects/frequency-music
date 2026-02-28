@@ -36,9 +36,9 @@ test.describe("scroll behavior", () => {
 
     await page.mouse.move(240, 240);
     await page.mouse.wheel(0, 1400);
-    await page.waitForTimeout(150);
 
-    const scrollYAfterWheel = await page.evaluate(() => window.scrollY);
-    expect(scrollYAfterWheel).toBeGreaterThan(0);
+    await expect
+      .poll(async () => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(0);
   });
 });

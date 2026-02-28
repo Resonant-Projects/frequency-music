@@ -32,34 +32,36 @@ const appLinks = [
   { to: "/admin", label: "Admin" },
 ] as const;
 
+const AppShell: Component = () => (
+  <div class="app-root">
+    <header class="app-header">
+      <div class="app-title">
+        <span class="app-title-mark">∴</span> Frequency Music
+        <UIBadge tone="gold" class="app-mode-badge">
+          PARK UI
+        </UIBadge>
+      </div>
+      <nav class="app-nav">
+        {appLinks.map((link) => (
+          <Link
+            to={link.to}
+            class="app-nav-link"
+            activeProps={{ class: "app-nav-link is-active" }}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+    </header>
+    <main class="app-main">
+      <Outlet />
+    </main>
+  </div>
+);
+
 const RootLayout: Component = () => {
   if (isLocalAuthBypassEnabled()) {
-    return (
-      <div class="app-root">
-        <header class="app-header">
-          <div class="app-title">
-            <span class="app-title-mark">∴</span> Frequency Music
-            <UIBadge tone="gold" class="app-mode-badge">
-              PARK UI
-            </UIBadge>
-          </div>
-          <nav class="app-nav">
-            {appLinks.map((link) => (
-              <Link
-                to={link.to}
-                class="app-nav-link"
-                activeProps={{ class: "app-nav-link is-active" }}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </header>
-        <main class="app-main">
-          <Outlet />
-        </main>
-      </div>
-    );
+    return <AppShell />;
   }
 
   const auth = useClerkAuthSnapshot();
@@ -87,32 +89,7 @@ const RootLayout: Component = () => {
     );
   }
 
-  return (
-    <div class="app-root">
-      <header class="app-header">
-        <div class="app-title">
-          <span class="app-title-mark">∴</span> Frequency Music
-          <UIBadge tone="gold" class="app-mode-badge">
-            PARK UI
-          </UIBadge>
-        </div>
-        <nav class="app-nav">
-          {appLinks.map((link) => (
-            <Link
-              to={link.to}
-              class="app-nav-link"
-              activeProps={{ class: "app-nav-link is-active" }}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </header>
-      <main class="app-main">
-        <Outlet />
-      </main>
-    </div>
-  );
+  return <AppShell />;
 };
 
 const PlaceholderPage = (props: { title: string; body: string }): Component => {
