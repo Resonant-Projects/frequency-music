@@ -138,98 +138,97 @@ export const setSourceStatus = mutation({
 });
 
 export const promoteVisibility = mutation({
-  args: v.union(
-    v.object({
-      entityType: v.literal("sources"),
-      id: v.id("sources"),
-      visibility: v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
-      devBypassSecret: v.optional(v.string()),
-    }),
-    v.object({
-      entityType: v.literal("hypotheses"),
-      id: v.id("hypotheses"),
-      visibility: v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
-      devBypassSecret: v.optional(v.string()),
-    }),
-    v.object({
-      entityType: v.literal("recipes"),
-      id: v.id("recipes"),
-      visibility: v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
-      devBypassSecret: v.optional(v.string()),
-    }),
-    v.object({
-      entityType: v.literal("compositions"),
-      id: v.id("compositions"),
-      visibility: v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
-      devBypassSecret: v.optional(v.string()),
-    }),
-    v.object({
-      entityType: v.literal("weeklyBriefs"),
-      id: v.id("weeklyBriefs"),
-      visibility: v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
-      devBypassSecret: v.optional(v.string()),
-    }),
-  ),
+  args: {
+    devBypassSecret: v.optional(v.string()),
+    input: v.union(
+      v.object({
+        entityType: v.literal("sources"),
+        id: v.id("sources"),
+        visibility: v.union(
+          v.literal("private"),
+          v.literal("followers"),
+          v.literal("public"),
+        ),
+      }),
+      v.object({
+        entityType: v.literal("hypotheses"),
+        id: v.id("hypotheses"),
+        visibility: v.union(
+          v.literal("private"),
+          v.literal("followers"),
+          v.literal("public"),
+        ),
+      }),
+      v.object({
+        entityType: v.literal("recipes"),
+        id: v.id("recipes"),
+        visibility: v.union(
+          v.literal("private"),
+          v.literal("followers"),
+          v.literal("public"),
+        ),
+      }),
+      v.object({
+        entityType: v.literal("compositions"),
+        id: v.id("compositions"),
+        visibility: v.union(
+          v.literal("private"),
+          v.literal("followers"),
+          v.literal("public"),
+        ),
+      }),
+      v.object({
+        entityType: v.literal("weeklyBriefs"),
+        id: v.id("weeklyBriefs"),
+        visibility: v.union(
+          v.literal("private"),
+          v.literal("followers"),
+          v.literal("public"),
+        ),
+      }),
+    ),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const now = Date.now();
+    const input = args.input;
 
-    switch (args.entityType) {
+    switch (input.entityType) {
       case "sources":
-        await ctx.db.patch("sources", args.id, {
-          visibility: args.visibility,
+        await ctx.db.patch("sources", input.id, {
+          visibility: input.visibility,
           status:
-            args.visibility === "followers"
+            input.visibility === "followers"
               ? "promoted_followers"
-              : args.visibility === "public"
+              : input.visibility === "public"
                 ? "promoted_public"
                 : "triaged",
           updatedAt: now,
         });
         break;
       case "hypotheses":
-        await ctx.db.patch("hypotheses", args.id, {
-          visibility: args.visibility,
+        await ctx.db.patch("hypotheses", input.id, {
+          visibility: input.visibility,
           updatedAt: now,
         });
         break;
       case "recipes":
-        await ctx.db.patch("recipes", args.id, {
-          visibility: args.visibility,
+        await ctx.db.patch("recipes", input.id, {
+          visibility: input.visibility,
           updatedAt: now,
         });
         break;
       case "compositions":
-        await ctx.db.patch("compositions", args.id, {
-          visibility: args.visibility,
+        await ctx.db.patch("compositions", input.id, {
+          visibility: input.visibility,
           updatedAt: now,
         });
         break;
       case "weeklyBriefs":
-        await ctx.db.patch("weeklyBriefs", args.id, {
-          visibility: args.visibility,
-          publishedAt: args.visibility === "public" ? now : undefined,
+        await ctx.db.patch("weeklyBriefs", input.id, {
+          visibility: input.visibility,
+          publishedAt: input.visibility === "public" ? now : undefined,
         });
         break;
       default:
