@@ -38,23 +38,14 @@ interface GeneratedHypothesisPayload {
  */
 export const listByStatus = query({
   args: {
-    status: v.optional(
-      v.union(
-        v.literal("draft"),
-        v.literal("queued"),
-        v.literal("active"),
-        v.literal("evaluated"),
-        v.literal("revised"),
-        v.literal("retired"),
-      ),
-    ),
+    status: v.optional(hypothesisStatusValidator),
     limit: v.optional(v.number()),
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
-    if (args.status) {
+    if (args.status !== undefined) {
       return await ctx.db
         .query("hypotheses")
         .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))

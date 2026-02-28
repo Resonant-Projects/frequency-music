@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 
@@ -466,6 +466,7 @@ export const buildGraphFromExtractions = action({
 
     let processed = 0;
     let conceptsLinked = 0;
+    const failures: Array<{ extractionId: string; error: string }> = [];
 
     for (const extraction of extractions) {
       try {
@@ -474,12 +475,17 @@ export const buildGraphFromExtractions = action({
         });
         conceptsLinked += result.linked;
         processed++;
-      } catch (_e) {
-        // Continue on error
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("graph linking failed", {
+          extractionId: extraction._id,
+          error: message,
+        });
+        failures.push({ extractionId: String(extraction._id), error: message });
       }
     }
 
-    return { processed, conceptsLinked };
+    return { processed, conceptsLinked, failures };
   },
 });
 
@@ -497,6 +503,16 @@ export const exportForVisualization = query({
     depth: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    if (
+      (args.centerType !== undefined && args.centerId === undefined) ||
+      (args.centerType === undefined && args.centerId !== undefined)
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "Both centerType and centerId must be provided together",
+      });
+    }
+
     const maxDepth = Math.max(0, Math.floor(args.depth ?? 2));
 
     // Get all concepts as nodes
@@ -536,20 +552,28 @@ export const exportForVisualization = query({
 
     for (const link of allLinks) {
       if (!allNodes.has(link.source)) {
-        const [type, rawId] = link.source.split(":");
+        const firstColon = link.source.indexOf(":");
+        const type =
+          firstColon >= 0 ? link.source.slice(0, firstColon) : "unknown";
+        const rawId =
+          firstColon >= 0 ? link.source.slice(firstColon + 1) : link.source;
         allNodes.set(link.source, {
           id: link.source,
-          label: rawId ?? link.source,
-          type: type ?? "unknown",
+          label: rawId || link.source,
+          type,
           size: 12,
         });
       }
       if (!allNodes.has(link.target)) {
-        const [type, rawId] = link.target.split(":");
+        const firstColon = link.target.indexOf(":");
+        const type =
+          firstColon >= 0 ? link.target.slice(0, firstColon) : "unknown";
+        const rawId =
+          firstColon >= 0 ? link.target.slice(firstColon + 1) : link.target;
         allNodes.set(link.target, {
           id: link.target,
-          label: rawId ?? link.target,
-          type: type ?? "unknown",
+          label: rawId || link.target,
+          type,
           size: 12,
         });
       }

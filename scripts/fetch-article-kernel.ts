@@ -92,6 +92,7 @@ async function main() {
         // ignore non-serializable errors
       }
     }
+    throw e;
   } finally {
     await kernel.browsers.deleteByID(sessionId);
     console.error("Cleaned up");

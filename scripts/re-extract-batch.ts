@@ -40,13 +40,15 @@ async function main() {
     : [];
 
   // If SOURCE_IDS env var is set, use those directly
-  const sourceIds = process.env.SOURCE_IDS?.split(",") || [];
+  const sourceIds = (process.env.SOURCE_IDS?.split(",") || [])
+    .map((sid) => sid.trim())
+    .filter((sid) => sid.length > 0);
   const needsWork =
     sourceIds.length > 0
       ? sourceIds
           .map((sid) =>
             summary.find(
-              (entry: ExtractionSummaryRow) => entry.sourceId === sid,
+              (entry: ExtractionSummaryRow) => entry.sourceId.trim() === sid,
             ),
           )
           .filter(Boolean)

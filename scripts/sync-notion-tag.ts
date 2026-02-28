@@ -14,8 +14,10 @@ import { homedir } from "node:os";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL =
-  process.env.CONVEX_URL || "https://righteous-marmot-892.convex.cloud";
+const CONVEX_URL = process.env.CONVEX_URL;
+if (!CONVEX_URL) {
+  throw new Error("CONVEX_URL must be set");
+}
 const NOTION_VERSION = "2025-09-03";
 const FREQUENCY_RESEARCH_TAG_ID = "2ff1c0d4-15f5-806e-8d86-d62c5f4cf701";
 
@@ -143,9 +145,21 @@ function extractType(page: NotionPage): string | undefined {
 
 async function main() {
   const args = process.argv.slice(2);
-  const tagId = args.includes("--tag-id")
-    ? args[args.indexOf("--tag-id") + 1]
-    : FREQUENCY_RESEARCH_TAG_ID;
+  const tagIdx = args.indexOf("--tag-id");
+  let tagId = FREQUENCY_RESEARCH_TAG_ID;
+  if (tagIdx !== -1) {
+    const candidate = args[tagIdx + 1];
+    if (
+      !candidate ||
+      candidate.trim().length === 0 ||
+      candidate.startsWith("--")
+    ) {
+      throw new Error(
+        "Missing value for --tag-id. Usage: --tag-id <notion-tag-id>",
+      );
+    }
+    tagId = candidate;
+  }
   const fetchFullTextFlag = args.includes("--fetch-full-text");
 
   console.log(`🔄 Syncing Notion tag: ${tagId}`);
@@ -239,4 +253,7 @@ async function main() {
   console.log(`❌ Errors: ${errors}`);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

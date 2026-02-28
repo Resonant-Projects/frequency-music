@@ -1943,7 +1943,7 @@ function buildAutoFinalOutput(
     `Evaluate ${chosenVariable} under controlled musical conditions using a blinded comparison design.`,
     "",
     "## Shared Arrangement",
-    `- Tempo: ${tempoBpm} BPM`,
+    `- Tempo: ${safeTempo} BPM`,
     "- Meter: 4/4",
     "- Length: 24-32 bars",
     "- Keep MIDI notes, sound sources, automation, and mix balance identical across versions.",
@@ -1962,8 +1962,8 @@ function buildAutoFinalOutput(
   const parameters: CompositionParameter[] = [
     {
       type: "tempo",
-      value: `${tempoBpm} BPM`,
-      details: { bpm: tempoBpm },
+      value: `${safeTempo} BPM`,
+      details: { bpm: safeTempo },
     },
     {
       type: "form",

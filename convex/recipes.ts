@@ -10,6 +10,40 @@ const recipeStatusValidator = v.union(
   v.literal("in_use"),
   v.literal("archived"),
 );
+const recipeParameterValidator = v.object({
+  type: v.string(),
+  value: v.string(),
+  details: v.optional(v.any()),
+});
+const recipeProtocolValidator = v.object({
+  studyType: v.union(v.literal("litmus"), v.literal("comparison")),
+  durationSecs: v.number(),
+  panelPlanned: v.array(v.string()),
+  listeningContext: v.optional(v.string()),
+  listeningMethod: v.optional(v.string()),
+  baselineArtifactId: v.optional(v.id("compositions")),
+  whatVaries: v.array(v.string()),
+  whatStaysConstant: v.array(v.string()),
+});
+const recipeReturnValidator = v.object({
+  _id: v.id("recipes"),
+  _creationTime: v.number(),
+  hypothesisId: v.id("hypotheses"),
+  title: v.string(),
+  bodyMd: v.string(),
+  parameters: v.array(recipeParameterValidator),
+  dawChecklist: v.array(v.string()),
+  protocol: v.optional(recipeProtocolValidator),
+  status: recipeStatusValidator,
+  visibility: v.union(
+    v.literal("private"),
+    v.literal("followers"),
+    v.literal("public"),
+  ),
+  createdBy: v.union(v.id("users"), v.literal("system")),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
 
 interface RecipeParameter {
   type: string;
@@ -221,7 +255,7 @@ export const listByStatus = query({
     status: v.optional(recipeStatusValidator),
     limit: v.optional(v.number()),
   },
-  returns: v.array(v.any()),
+  returns: v.array(recipeReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
@@ -261,7 +295,7 @@ export const get = query({
  */
 export const getByHypothesisId = query({
   args: { hypothesisId: v.id("hypotheses") },
-  returns: v.array(v.any()),
+  returns: v.array(recipeReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("recipes")

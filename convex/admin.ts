@@ -196,16 +196,20 @@ export const promoteVisibility = mutation({
 
     switch (input.entityType) {
       case "sources":
+        {
+          const statusPatch =
+            input.visibility === "followers"
+              ? { status: "promoted_followers" as const }
+              : input.visibility === "public"
+                ? { status: "promoted_public" as const }
+                : {};
+
         await ctx.db.patch("sources", input.id, {
           visibility: input.visibility,
-          status:
-            input.visibility === "followers"
-              ? "promoted_followers"
-              : input.visibility === "public"
-                ? "promoted_public"
-                : "triaged",
+          ...statusPatch,
           updatedAt: now,
         });
+        }
         break;
       case "hypotheses":
         await ctx.db.patch("hypotheses", input.id, {

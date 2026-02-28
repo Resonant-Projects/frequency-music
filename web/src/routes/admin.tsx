@@ -10,6 +10,14 @@ import {
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
+type FeedRow = {
+  _id: string;
+  name?: string;
+  type: string;
+  url: string;
+  enabled?: boolean;
+};
+
 const pageClass = css({
   display: "grid",
   gap: "6",
@@ -50,14 +58,6 @@ export function AdminPage() {
   const [sourceId, setSourceId] = createSignal("");
   const [sourceStatus, setSourceStatusValue] = createSignal("review_needed");
   const [notice, setNotice] = createSignal<string | null>(null);
-
-  type FeedRow = {
-    _id: string;
-    name?: string;
-    type: string;
-    url: string;
-    enabled?: boolean;
-  };
 
   async function submitFeed(event: SubmitEvent) {
     event.preventDefault();
@@ -199,7 +199,7 @@ export function AdminPage() {
         </div>
       </UICard>
 
-      <UICard as="form" onSubmit={submitFeed as any}>
+      <UICard as="form" onSubmit={submitFeed}>
         <h2 class={sectionTitleClass}>Add Feed</h2>
 
         <label class={fieldLabelClass} for="admin-feed-name">
@@ -302,7 +302,7 @@ export function AdminPage() {
         </div>
       </UICard>
 
-      <UICard as="form" onSubmit={submitSourceStatus as any}>
+      <UICard as="form" onSubmit={submitSourceStatus}>
         <h2 class={sectionTitleClass}>Source Override</h2>
         <label class={fieldLabelClass} for="admin-source-id">
           Source ID

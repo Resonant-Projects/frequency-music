@@ -9,8 +9,10 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL =
-  process.env.CONVEX_URL || "https://righteous-marmot-892.convex.cloud";
+const CONVEX_URL = process.env.CONVEX_URL;
+if (!CONVEX_URL) {
+  throw new Error("CONVEX_URL must be set");
+}
 const RSS_URL = "https://www.tandfonline.com/feed/rss/tmam20";
 
 interface Article {
@@ -188,4 +190,7 @@ async function main() {
   console.log(`❌ Errors: ${errors}`);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

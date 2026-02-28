@@ -17,6 +17,15 @@ import {
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
+type HypothesisRow = { _id: string; title: string };
+type RecipeRow = {
+  _id: string;
+  title: string;
+  status: string;
+  bodyMd: string;
+  parameters: Array<{ type: string; value: string }>;
+};
+
 const pageClass = css({
   display: "grid",
   gap: "6",
@@ -63,7 +72,6 @@ function parseChecklist(input: string) {
 }
 
 export function RecipesPage() {
-  type HypothesisRow = { _id: string; title: string };
   const hypotheses = createQuery(convexApi.hypotheses.listByStatus, () => ({
     limit: 30,
   }));
@@ -132,6 +140,7 @@ export function RecipesPage() {
 
   return (
     <section class={pageClass}>
+      {/* UICard's onSubmit prop typing doesn't align with submitRecipe's SubmitEvent signature in Solid. */}
       <UICard as="form" onSubmit={submitRecipe as any}>
         <h1 class={sectionTitleClass}>Recipes</h1>
 
@@ -245,7 +254,7 @@ export function RecipesPage() {
         <Show when={!recipes.isLoading()} fallback={<p>Loading recipes…</p>}>
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={recipes.data() ?? []}>
-              {(recipe: any) => (
+              {(recipe: RecipeRow) => (
                 <div
                   data-testid="entity-row"
                   class={css({

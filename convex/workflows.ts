@@ -8,12 +8,13 @@
  */
 
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { workflowManager } from "./components";
 
 interface MinimalExtraction {
-  _id: string;
+  _id: Id<"extractions">;
   claims: unknown[];
   compositionParameters: unknown[];
 }

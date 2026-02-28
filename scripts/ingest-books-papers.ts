@@ -12,25 +12,7 @@ import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-// Load environment
-const envPath = join(import.meta.dir, "../.env.local");
-const envContent = readFileSync(envPath, "utf-8");
-const env: Record<string, string> = {};
-for (const line of envContent.split("\n")) {
-  const [key, ...vals] = line.split("=");
-  if (key && vals.length) {
-    let value = vals.join("=").trim();
-    if (
-      (value.startsWith("'") && value.endsWith("'")) ||
-      (value.startsWith('"') && value.endsWith('"'))
-    ) {
-      value = value.slice(1, -1);
-    }
-    env[key.trim()] = value;
-  }
-}
-
-const CONVEX_URL = env.CONVEX_SELF_HOSTED_URL || env.CONVEX_URL;
+const CONVEX_URL = process.env.CONVEX_SELF_HOSTED_URL || process.env.CONVEX_URL;
 if (!CONVEX_URL) throw new Error("Missing CONVEX_URL");
 
 const client = new ConvexHttpClient(CONVEX_URL);

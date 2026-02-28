@@ -10,10 +10,26 @@ interface SummaryItem {
   params: number;
 }
 
+function isSummaryItem(item: unknown): item is SummaryItem {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+  const row = item as Record<string, unknown>;
+  return (
+    typeof row.sourceId === "string" &&
+    typeof row.claims === "number" &&
+    typeof row.params === "number"
+  );
+}
+
 const summary = JSON.parse(
   readFileSync("/tmp/ext-summary.json", "utf-8"),
 ) as unknown;
-const rows = Array.isArray(summary) ? (summary as SummaryItem[]) : [];
+const rows = Array.isArray(summary)
+  ? summary.filter((item): item is SummaryItem => isSummaryItem(item))
+  : [];
+const invalidCount = Array.isArray(summary) ? summary.length - rows.length : 0;
+if (invalidCount > 0) {
+  console.warn(`Skipped ${invalidCount} invalid summary rows`);
+}
 const zeros = rows.filter((e: SummaryItem) => e.claims === 0 && e.params === 0);
 
 async function main() {

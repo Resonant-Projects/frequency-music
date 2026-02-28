@@ -33,8 +33,10 @@ async function getPlaylistVideos(playlistUrl: string): Promise<Video[]> {
     { stdout: "pipe", stderr: "pipe" },
   );
 
-  const output = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
+  const [output, stderr] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ]);
   const exitCode = await proc.exited;
   if (exitCode !== 0) {
     throw new Error(
