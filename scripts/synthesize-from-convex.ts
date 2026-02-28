@@ -619,13 +619,13 @@ async function loadNoveltyHistory(
           ? hypothesis.sourceIds.filter((id) => typeof id === "string")
           : [];
         for (const sourceId of sourceIds) {
-          history.sourceIds.add(sourceId as string);
+          history.sourceIds.add(sourceId);
         }
 
         const concepts = Array.isArray(hypothesis.concepts)
           ? hypothesis.concepts.filter((value) => typeof value === "string")
           : [];
-        addPhrasesToSet(concepts as string[], history.topicTokens, true);
+        addPhrasesToSet(concepts, history.topicTokens, true);
       }
 
       if (recipe) {
@@ -636,7 +636,7 @@ async function loadNoveltyHistory(
             ? (recipe.protocol as JsonRecord)
             : undefined;
         const whatVaries = Array.isArray(protocol?.whatVaries)
-          ? (protocol?.whatVaries.filter((value) => typeof value === "string") as string[])
+          ? (protocol?.whatVaries.filter((value) => typeof value === "string"))
           : [];
         addPhrasesToSet(whatVaries, history.variablePhrases);
       }
@@ -654,7 +654,7 @@ async function loadNoveltyHistory(
         const topicTokens = Array.isArray(sourceRow.topicTokens)
           ? sourceRow.topicTokens.filter((token) => typeof token === "string")
           : [];
-        for (const token of topicTokens as string[]) {
+        for (const token of topicTokens) {
           const normalized = normalizePhrase(token);
           if (normalized.length > 0 && isMeaningfulTopicToken(normalized)) {
             history.topicTokens.add(normalized);
@@ -760,7 +760,7 @@ function coerceStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
     .filter((entry) => typeof entry === "string")
-    .map((entry) => (entry as string).trim())
+    .map((entry) => (entry).trim())
     .filter((entry) => entry.length > 0);
 }
 

@@ -1,7 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
+import { requireAuth } from "./auth";
 
+// Intentionally public — read-only data, personal research tool.
 export const workspaceSnapshot = query({
   args: {},
   returns: v.object({
@@ -34,6 +36,7 @@ export const workspaceSnapshot = query({
   },
 });
 
+// Intentionally public — read-only data, personal research tool.
 export const listFeeds = query({
   args: {},
   returns: v.array(v.any()),
@@ -48,12 +51,15 @@ export const createFeed = mutation({
     url: v.string(),
     type: v.union(v.literal("rss"), v.literal("podcast"), v.literal("youtube")),
     category: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("feeds"),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
     const now = Date.now();
     return await ctx.db.insert("feeds", {
-      ...args,
+      ...createArgs,
       enabled: true,
       createdAt: now,
       updatedAt: now,
@@ -62,15 +68,20 @@ export const createFeed = mutation({
 });
 
 export const setFeedEnabled = mutation({
-  args: { id: v.id("feeds"), enabled: v.boolean() },
+  args: {
+    id: v.id("feeds"),
+    enabled: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const feed = await ctx.db.get(args.id);
+    await requireAuth(ctx, args);
+    const feed = await ctx.db.get("feeds", args.id);
     if (!feed) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Feed not found" });
     }
 
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("feeds", args.id, {
       enabled: args.enabled,
       updatedAt: Date.now(),
     });
@@ -82,20 +93,40 @@ export const setFeedEnabled = mutation({
 export const setSourceStatus = mutation({
   args: {
     id: v.id("sources"),
-    status: v.string(),
-    blockedReason: v.optional(v.string()),
+    status: v.union(
+      v.literal("ingested"),
+      v.literal("text_ready"),
+      v.literal("extracting"),
+      v.literal("extracted"),
+      v.literal("review_needed"),
+      v.literal("triaged"),
+      v.literal("promoted_followers"),
+      v.literal("promoted_public"),
+      v.literal("archived"),
+    ),
+    blockedReason: v.optional(v.union(
+      v.literal("no_text"),
+      v.literal("copyright"),
+      v.literal("needs_metadata"),
+      v.literal("needs_tagging"),
+      v.literal("ai_error"),
+      v.literal("needs_human_review"),
+      v.literal("duplicate"),
+    )),
     blockedDetails: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const source = await ctx.db.get(args.id);
+    await requireAuth(ctx, args);
+    const source = await ctx.db.get("sources", args.id);
     if (!source) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Source not found" });
     }
 
-    await ctx.db.patch(args.id, {
-      status: args.status as any,
-      blockedReason: args.blockedReason as any,
+    await ctx.db.patch("sources", args.id, {
+      status: args.status,
+      blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
       updatedAt: Date.now(),
     });
@@ -115,9 +146,11 @@ export const promoteVisibility = mutation({
     ),
     id: v.string(),
     visibility: v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const now = Date.now();
 
     switch (args.entityType) {
@@ -156,8 +189,9 @@ export const promoteVisibility = mutation({
 });
 
 export const pollFeedsNow = action({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.runAction(api.ingest.pollAllFeeds, {});
+  args: { devBypassSecret: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    return await ctx.runAction(api.ingest.pollAllFeeds, { devBypassSecret: args.devBypassSecret });
   },
 });

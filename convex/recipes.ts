@@ -3,6 +3,7 @@ import { mutation, query, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { requireAuth } from "./auth";
 
 // ============================================================================
 // QUERIES
@@ -102,17 +103,20 @@ export const create = mutation({
         whatStaysConstant: v.array(v.string()),
       }),
     ),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("recipes"),
   handler: async (ctx, args) => {
+    const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
+    const identity = await requireAuth(ctx, args);
     const now = Date.now();
 
     return await ctx.db.insert("recipes", {
-      ...args,
-      parameters: args.parameters as any,
+      ...createArgs,
+      parameters: createArgs.parameters as any,
       status: "draft",
       visibility: "private",
-      createdBy: "system",
+      createdBy: identity.subject,
       createdAt: now,
       updatedAt: now,
     });
@@ -131,10 +135,12 @@ export const update = mutation({
     dawChecklist: v.optional(v.array(v.string())),
     protocol: v.optional(v.any()),
     status: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    await requireAuth(ctx, args);
+    const { id, devBypassSecret: _devBypassSecret, ...updates } = args;
 
     const recipe = await ctx.db.get("recipes", id);
     if (!recipe) {
@@ -160,9 +166,11 @@ export const updateStatus = mutation({
       v.literal("in_use"),
       v.literal("archived"),
     ),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     await ctx.db.patch("recipes", args.id, {
       status: args.status,
       updatedAt: Date.now(),
@@ -244,8 +252,10 @@ export const generateFromHypothesis = action({
   args: {
     hypothesisId: v.id("hypotheses"),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     // Get hypothesis
     const hypothesis = await ctx.runQuery(api.hypotheses.get, {
       id: args.hypothesisId,
@@ -309,6 +319,7 @@ export const generateFromHypothesis = action({
       parameters: parsed.parameters,
       dawChecklist: parsed.dawChecklist,
       protocol: sanitizedProtocol,
+      devBypassSecret: args.devBypassSecret,
     });
 
     return {
@@ -326,8 +337,10 @@ export const generateBatch = action({
   args: {
     limit: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const limit = args.limit ?? 3;
 
     // Get hypotheses that need recipes
@@ -362,6 +375,7 @@ export const generateBatch = action({
         const result = await ctx.runAction(api.recipes.generateFromHypothesis, {
           hypothesisId: hypothesis._id,
           model: args.model,
+          devBypassSecret: args.devBypassSecret,
         });
         results.push({ success: true, ...result });
       } catch (e: any) {

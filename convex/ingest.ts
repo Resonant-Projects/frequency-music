@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
 import { internal, api } from "./_generated/api";
+import { requireAuth } from "./auth";
 
 // ============================================================================
 // RSS FEED POLLING
@@ -222,12 +223,14 @@ export const pollFeed = internalAction({
  * Poll all enabled feeds (public action)
  */
 export const pollAllFeeds = action({
-  args: {},
+  args: { devBypassSecret: v.optional(v.string()) },
   handler: async (
     ctx,
+    args,
   ): Promise<{
     results: Record<string, { processed: number; errors: string[] }>;
   }> => {
+    await requireAuth(ctx, args);
     const feeds = await ctx.runQuery(api.feeds.listEnabled);
     const results: Record<string, { processed: number; errors: string[] }> = {};
 
@@ -278,8 +281,10 @@ export const ingestUrl = action({
   args: {
     url: v.string(),
     tags: v.optional(v.array(v.string())),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     // Generate dedupeKey
     const urlObj = new URL(args.url);
     const dedupeKey = `url:${urlObj.hostname}${urlObj.pathname.replace(/\/$/, "")}`;
@@ -324,6 +329,7 @@ export const ingestUrl = action({
       rawText,
       tags: args.tags || [],
       dedupeKey,
+      devBypassSecret: args.devBypassSecret,
     });
 
     return { id: result.id, created: result.created };
@@ -357,8 +363,10 @@ export const ingestYouTube = action({
   args: {
     url: v.string(),
     tags: v.optional(v.array(v.string())),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const videoId = extractYouTubeVideoId(args.url);
     if (!videoId) {
       throw new Error("Invalid YouTube URL");
@@ -409,6 +417,7 @@ export const ingestYouTube = action({
       youtubeVideoId: videoId,
       tags: args.tags || [],
       dedupeKey,
+      devBypassSecret: args.devBypassSecret,
     });
 
     return { id: result.id, created: result.created, videoId };

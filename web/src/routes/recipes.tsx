@@ -1,7 +1,9 @@
 import { For, Show, createSignal } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
@@ -83,13 +85,15 @@ export function RecipesPage() {
     }
 
     try {
-      await createRecipe({
-        hypothesisId: hypothesisId() as any,
-        title: title().trim(),
-        bodyMd: bodyMd().trim(),
-        parameters: parseParameters(parameters()) as any,
-        dawChecklist: parseChecklist(checklist()),
-      });
+      await createRecipe(
+        withDevBypassSecret({
+          hypothesisId: hypothesisId() as Id<"hypotheses">,
+          title: title().trim(),
+          bodyMd: bodyMd().trim(),
+          parameters: parseParameters(parameters()),
+          dawChecklist: parseChecklist(checklist()),
+        }),
+      );
 
       setTitle("");
       setBodyMd("");
@@ -108,9 +112,11 @@ export function RecipesPage() {
     }
 
     try {
-      await generateFromHypothesis({
-        hypothesisId: hypothesisId() as any,
-      });
+      await generateFromHypothesis(
+        withDevBypassSecret({
+          hypothesisId: hypothesisId() as Id<"hypotheses">,
+        }),
+      );
       setNotice("Auto recipe generation started.");
     } catch (error) {
       setNotice(`Auto generation failed: ${String(error)}`);

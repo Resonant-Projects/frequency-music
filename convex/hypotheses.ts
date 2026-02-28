@@ -3,6 +3,7 @@ import { mutation, query, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { requireAuth } from "./auth";
 
 // ============================================================================
 // QUERIES
@@ -83,16 +84,19 @@ export const create = mutation({
     rationaleMd: v.string(),
     sourceIds: v.array(v.id("sources")),
     concepts: v.optional(v.array(v.string())),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("hypotheses"),
   handler: async (ctx, args) => {
+    const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
+    const identity = await requireAuth(ctx, args);
     const now = Date.now();
 
     return await ctx.db.insert("hypotheses", {
-      ...args,
+      ...createArgs,
       status: "draft",
       visibility: "private",
-      createdBy: "system",
+      createdBy: identity.subject,
       createdAt: now,
       updatedAt: now,
     });
@@ -113,10 +117,12 @@ export const update = mutation({
     concepts: v.optional(v.array(v.string())),
     status: v.optional(v.string()),
     resolution: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    await requireAuth(ctx, args);
+    const { id, devBypassSecret: _devBypassSecret, ...updates } = args;
 
     const hypothesis = await ctx.db.get("hypotheses", id);
     if (!hypothesis) {
@@ -155,8 +161,10 @@ export const updateStatus = mutation({
         v.literal("contradicted"),
       ),
     ),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     await ctx.db.patch("hypotheses", args.id, {
       status: args.status,
       resolution: args.resolution,
@@ -218,8 +226,10 @@ export const generateFromExtraction = action({
   args: {
     extractionId: v.id("extractions"),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     // Get extraction
     const extraction = await ctx.runQuery(api.extractions.get, {
       id: args.extractionId,
@@ -288,6 +298,7 @@ export const generateFromExtraction = action({
       rationaleMd: parsed.rationaleMd,
       sourceIds: [extraction.sourceId],
       concepts: parsed.concepts,
+      devBypassSecret: args.devBypassSecret,
     });
 
     return {
@@ -306,8 +317,10 @@ export const generateBatch = action({
     limit: v.optional(v.number()),
     minClaims: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const limit = args.limit ?? 3;
     const minClaims = args.minClaims ?? 2;
 
@@ -329,6 +342,7 @@ export const generateBatch = action({
           {
             extractionId: extraction._id,
             model: args.model,
+            devBypassSecret: args.devBypassSecret,
           },
         );
         results.push({ success: true, ...result });

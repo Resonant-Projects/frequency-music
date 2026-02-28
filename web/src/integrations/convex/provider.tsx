@@ -61,11 +61,15 @@ export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
         forceRefreshToken,
       }) => {
         try {
-          return auth.getToken({
+          return await auth.getToken({
             template: "convex",
             skipCache: forceRefreshToken,
           });
-        } catch {
+        } catch (error) {
+          console.error(
+            "fetchAccessToken failed — verify 'convex' JWT template in Clerk dashboard:",
+            error,
+          );
           return null;
         }
       };

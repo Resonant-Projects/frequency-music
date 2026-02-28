@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { ConvexError } from "convex/values";
+import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 
 // Reusable validator for source status
@@ -132,6 +133,7 @@ export const create = mutation({
     topics: v.optional(v.array(v.string())),
     metadata: v.optional(v.any()),
     dedupeKey: v.string(),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({
     id: v.id("sources"),
@@ -139,12 +141,14 @@ export const create = mutation({
     reason: v.optional(v.string()),
   }),
   handler: async (ctx, args) => {
+    const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
+    const identity = await requireAuth(ctx, args);
     const now = Date.now();
 
     // Check for duplicate
     const existing = await ctx.db
       .query("sources")
-      .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", args.dedupeKey))
+      .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", createArgs.dedupeKey))
       .first();
 
     if (existing) {
@@ -153,8 +157,8 @@ export const create = mutation({
 
     // Compute hash if we have text
     let rawTextSha256: string | undefined;
-    if (args.rawText || args.transcript) {
-      const text = args.rawText || args.transcript || "";
+    if (createArgs.rawText || createArgs.transcript) {
+      const text = createArgs.rawText || createArgs.transcript || "";
       const encoder = new TextEncoder();
       const data = encoder.encode(text);
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -165,11 +169,11 @@ export const create = mutation({
     }
 
     const id = await ctx.db.insert("sources", {
-      ...args,
+      ...createArgs,
       rawTextSha256,
-      status: args.rawText || args.transcript ? "text_ready" : "ingested",
+      status: createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
       visibility: "private",
-      createdBy: "system",
+      createdBy: identity.subject,
       createdAt: now,
       updatedAt: now,
     });
@@ -184,12 +188,32 @@ export const create = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("sources"),
-    status: v.string(),
-    blockedReason: v.optional(v.string()),
+    status: v.union(
+      v.literal("ingested"),
+      v.literal("text_ready"),
+      v.literal("extracting"),
+      v.literal("extracted"),
+      v.literal("review_needed"),
+      v.literal("triaged"),
+      v.literal("promoted_followers"),
+      v.literal("promoted_public"),
+      v.literal("archived"),
+    ),
+    blockedReason: v.optional(v.union(
+      v.literal("no_text"),
+      v.literal("copyright"),
+      v.literal("needs_metadata"),
+      v.literal("needs_tagging"),
+      v.literal("ai_error"),
+      v.literal("needs_human_review"),
+      v.literal("duplicate"),
+    )),
     blockedDetails: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const source = await ctx.db.get("sources", args.id);
     if (!source) {
       throw new ConvexError({
@@ -199,8 +223,8 @@ export const updateStatus = mutation({
     }
 
     await ctx.db.patch("sources", args.id, {
-      status: args.status as any,
-      blockedReason: args.blockedReason as any,
+      status: args.status,
+      blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
       updatedAt: Date.now(),
     });
@@ -216,9 +240,11 @@ export const updateText = mutation({
     id: v.id("sources"),
     rawText: v.optional(v.string()),
     transcript: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const source = await ctx.db.get("sources", args.id);
     if (!source) {
       throw new ConvexError({
@@ -264,6 +290,7 @@ type ExternalUpsertArgs = {
   tags?: string[];
   topics?: string[];
   metadata?: any;
+  createdBy?: string;
 };
 
 async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) {
@@ -293,7 +320,7 @@ async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) 
       rawTextSha256,
       status: text ? "text_ready" : "ingested",
       visibility: "private",
-      createdBy: "system",
+      createdBy: args.createdBy ?? "system",
       createdAt: now,
       updatedAt: now,
     });
@@ -323,9 +350,10 @@ async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) 
 }
 
 /**
- * Upsert a source for external ingest pipelines (n8n / HTTP endpoints)
+ * Upsert a source for external ingest pipelines (n8n / HTTP endpoints).
+ * Internal-only — called via secret-guarded HTTP actions in http.ts.
  */
-export const upsertExternal = mutation({
+export const upsertExternal = internalMutation({
   args: {
     dedupeKey: v.string(),
     type: v.union(
@@ -369,9 +397,11 @@ export const setVisibility = mutation({
       v.literal("followers"),
       v.literal("public"),
     ),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const source = await ctx.db.get("sources", args.id);
     if (!source) {
       throw new ConvexError({
@@ -403,6 +433,7 @@ export const createFromUrlInput = mutation({
     title: v.optional(v.string()),
     rawText: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({
     id: v.id("sources"),
@@ -410,6 +441,7 @@ export const createFromUrlInput = mutation({
     contentChanged: v.boolean(),
   }),
   handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
     return await upsertExternalSource(ctx, {
       dedupeKey: generateDedupeKey("url", { canonicalUrl: args.url }),
       type: "url",
@@ -417,6 +449,7 @@ export const createFromUrlInput = mutation({
       canonicalUrl: args.url,
       rawText: args.rawText,
       tags: args.tags,
+      createdBy: identity.subject,
     });
   },
 });
@@ -430,6 +463,7 @@ export const createFromYouTubeInput = mutation({
     title: v.optional(v.string()),
     transcript: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({
     id: v.id("sources"),
@@ -437,6 +471,7 @@ export const createFromYouTubeInput = mutation({
     contentChanged: v.boolean(),
   }),
   handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
     const videoId = extractYouTubeVideoId(args.url);
     if (!videoId) {
       throw new ConvexError({
@@ -453,6 +488,7 @@ export const createFromYouTubeInput = mutation({
       youtubeVideoId: videoId,
       transcript: args.transcript,
       tags: args.tags,
+      createdBy: identity.subject,
     });
   },
 });
@@ -465,13 +501,19 @@ export const createFromYouTubeInput = mutation({
  * Archive a source (mark as off-topic/irrelevant)
  */
 export const archive = mutation({
-  args: { id: v.id("sources"), reason: v.optional(v.string()) },
+  args: {
+    id: v.id("sources"),
+    reason: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    const source = await ctx.db.get(args.id);
+    await requireAuth(ctx, args);
+    const source = await ctx.db.get("sources", args.id);
     if (!source) throw new ConvexError("Source not found");
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("sources", args.id, {
       status: "archived",
       blockedDetails: args.reason || "Archived: off-topic or irrelevant",
+      updatedAt: Date.now(),
     });
   },
 });
@@ -480,15 +522,21 @@ export const archive = mutation({
  * Bulk archive sources by ID
  */
 export const bulkArchive = mutation({
-  args: { ids: v.array(v.id("sources")), reason: v.optional(v.string()) },
+  args: {
+    ids: v.array(v.id("sources")),
+    reason: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     let archived = 0;
     for (const id of args.ids) {
-      const source = await ctx.db.get(id);
+      const source = await ctx.db.get("sources", id);
       if (source) {
-        await ctx.db.patch(id, {
+        await ctx.db.patch("sources", id, {
           status: "archived",
           blockedDetails: args.reason || "Archived: off-topic or irrelevant",
+          updatedAt: Date.now(),
         });
         archived++;
       }

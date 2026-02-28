@@ -2,10 +2,19 @@
   box-sizing: border-box;
 }
 
+:root {
+  --app-header-height: 52px;
+}
+
+html {
+  overflow-y: auto;
+}
+
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: "Cormorant Garamond", Georgia, serif;
   background: #0d0620;
   color: #f5f0e8;
@@ -81,8 +90,8 @@ body {
 }
 
 .app-main {
-  padding-top: 52px;
-  min-height: 100vh;
+  padding-top: var(--app-header-height);
+  min-height: calc(100vh - var(--app-header-height));
 }
 
 .app-mode-badge {
@@ -90,7 +99,7 @@ body {
 }
 
 .route-placeholder {
-  min-height: calc(100vh - 52px);
+  min-height: calc(100vh - var(--app-header-height));
   display: grid;
   place-content: center;
   gap: 12px;

@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth } from "./auth";
 
 export const list = query({
   args: {
@@ -33,10 +34,10 @@ export const get = query({
   args: { id: v.id("compositions") },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
-    const composition = await ctx.db.get(args.id);
+    const composition = await ctx.db.get("compositions", args.id);
     if (!composition) return null;
 
-    const recipe = await ctx.db.get(composition.recipeId);
+    const recipe = await ctx.db.get("recipes", composition.recipeId);
     const listeningSessions = await ctx.db
       .query("listeningSessions")
       .withIndex("by_compositionId_createdAt", (q) =>
@@ -67,24 +68,27 @@ export const create = mutation({
     projectNotesMd: v.optional(v.string()),
     version: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("compositions"),
   handler: async (ctx, args) => {
-    const recipe = await ctx.db.get(args.recipeId);
+    const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
+    const identity = await requireAuth(ctx, args);
+    const recipe = await ctx.db.get("recipes", createArgs.recipeId);
     if (!recipe) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Recipe not found" });
     }
 
     const now = Date.now();
     return await ctx.db.insert("compositions", {
-      title: args.title,
-      recipeId: args.recipeId,
-      artifactType: args.artifactType ?? "microStudy",
-      projectNotesMd: args.projectNotesMd,
-      version: args.version ?? "v0.1",
+      title: createArgs.title,
+      recipeId: createArgs.recipeId,
+      artifactType: createArgs.artifactType ?? "microStudy",
+      projectNotesMd: createArgs.projectNotesMd,
+      version: createArgs.version ?? "v0.1",
       status: "idea",
       visibility: "private",
-      createdBy: args.createdBy ?? "system",
+      createdBy: identity.subject,
       createdAt: now,
       updatedAt: now,
     });
@@ -124,16 +128,18 @@ export const update = mutation({
     visibility: v.optional(
       v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
     ),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const composition = await ctx.db.get(args.id);
+    await requireAuth(ctx, args);
+    const composition = await ctx.db.get("compositions", args.id);
     if (!composition) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Composition not found" });
     }
 
-    const { id, ...patch } = args;
-    await ctx.db.patch(id, {
+    const { id, devBypassSecret: _devBypassSecret, ...patch } = args;
+    await ctx.db.patch("compositions", id, {
       ...patch,
       updatedAt: Date.now(),
     });

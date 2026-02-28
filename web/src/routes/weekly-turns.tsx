@@ -1,4 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard } from "../components/ui";
 import { convexApi } from "../integrations/convex/api";
@@ -7,6 +8,7 @@ import {
   createMutation,
   createQueryWithStatus,
 } from "../integrations/convex";
+import { withDevBypassSecret } from "../integrations/authBypass";
 
 const pageClass = css({
   display: "grid",
@@ -35,7 +37,7 @@ export function WeeklyTurnsPage() {
   async function runGenerate() {
     setNotice(null);
     try {
-      const result: any = await generateBrief({ daysBack: 7 });
+      const result = await generateBrief(withDevBypassSecret({ daysBack: 7 }));
       setNotice(`Weekly turn generated for ${result.weekOf}.`);
     } catch (error) {
       setNotice(`Generation failed: ${String(error)}`);
@@ -44,7 +46,7 @@ export function WeeklyTurnsPage() {
 
   async function publish(id: string) {
     try {
-      await publishBrief({ id: id as any });
+      await publishBrief(withDevBypassSecret({ id: id as Id<"weeklyBriefs"> }));
       setNotice("Weekly turn published.");
     } catch (error) {
       setNotice(`Publish failed: ${String(error)}`);

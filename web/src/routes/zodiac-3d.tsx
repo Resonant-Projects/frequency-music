@@ -91,11 +91,11 @@ export function Zodiac3D() {
   }
 
   return (
-    <div style="min-height:100vh;background:#0d0620;color:#f5f0e8;overflow:hidden;font-family:'Cormorant Garamond',Georgia,serif;display:flex">
+    <div style="height:calc(100vh - var(--app-header-height));background:#0d0620;color:#f5f0e8;overflow:hidden;font-family:'Cormorant Garamond',Georgia,serif;display:flex">
       <div style="position:fixed;inset:0;pointer-events:none;opacity:0.022;background-image:radial-gradient(circle,#c8a84b 1px,transparent 1px);background-size:52px 52px" />
 
-      <div ref={cssContainerRef!} style="flex:1;position:relative;overflow:hidden;min-width:0">
-        <canvas ref={canvasRef!} style="width:100%;height:100%;display:block" />
+      <div ref={cssContainerRef} style="flex:1;position:relative;overflow:hidden;min-width:0">
+        <canvas ref={canvasRef} style="width:100%;height:100%;display:block" />
       </div>
 
       <div style="width:355px;display:flex;flex-direction:column;border-left:1px solid rgba(200,168,75,0.12);overflow-y:auto;flex-shrink:0">

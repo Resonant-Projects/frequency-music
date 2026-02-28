@@ -1,3 +1,4 @@
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { For, Show, createMemo, createSignal } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
@@ -7,6 +8,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
+import { withDevBypassSecret } from "../integrations/authBypass";
 
 const pageClass = css({
   display: "grid",
@@ -52,7 +54,7 @@ export function FeedbackPage() {
   const compositionById = createMemo(() => {
     const lookup = new Map<string, string>();
     for (const composition of compositions() ?? []) {
-      lookup.set(String((composition as any)._id), (composition as any).title);
+      lookup.set(String(composition._id), composition.title);
     }
     return lookup;
   });
@@ -75,17 +77,19 @@ export function FeedbackPage() {
     }
 
     try {
-      await createSession({
-        compositionId: compositionId() as any,
-        participants: parseParticipants(participants()),
-        contextMd: contextMd().trim() || undefined,
-        feedbackMd: feedbackMd().trim(),
-        ratings: {
-          bodilyPleasantness: Number(pleasantness()),
-          goosebumps: Number(goosebumps()),
-          musicality: Number(musicality()),
-        },
-      });
+      await createSession(
+        withDevBypassSecret({
+          compositionId: compositionId() as Id<"compositions">,
+          participants: parseParticipants(participants()),
+          contextMd: contextMd().trim() || undefined,
+          feedbackMd: feedbackMd().trim(),
+          ratings: {
+            bodilyPleasantness: Number(pleasantness()),
+            goosebumps: Number(goosebumps()),
+            musicality: Number(musicality()),
+          },
+        }),
+      );
 
       setParticipants("");
       setContextMd("");
@@ -98,7 +102,7 @@ export function FeedbackPage() {
 
   return (
     <section class={pageClass}>
-      <UICard as="form" onSubmit={submitSession as any}>
+      <UICard as="form" onSubmit={submitSession}>
         <h1 class={sectionTitleClass}>Feedback & Listening Sessions</h1>
 
         <label class={fieldLabelClass} for="feedback-composition">
@@ -121,7 +125,9 @@ export function FeedbackPage() {
         >
           <option value="">Select composition</option>
           <For each={compositions() ?? []}>
-            {(item: any) => <option value={String(item._id)}>{item.title}</option>}
+            {(item: Doc<"compositions">) => (
+              <option value={String(item._id)}>{item.title}</option>
+            )}
           </For>
         </select>
 
@@ -212,7 +218,7 @@ export function FeedbackPage() {
         <Show when={!sessions.isLoading()} fallback={<p>Loading sessions…</p>}>
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={sessions.data() ?? []}>
-              {(session: any) => (
+              {(session: Doc<"listeningSessions">) => (
                 <div class={css({ borderColor: "rgba(200, 168, 75, 0.24)", borderRadius: "l2", borderWidth: "1px", p: "4" })}>
                   <div class={css({ display: "flex", gap: "2", marginBottom: "2" })}>
                     <UIBadge tone="gold">

@@ -53,3 +53,29 @@ vercel env add VITE_CONVEX_URL production
 - Any unauthenticated app route redirects to Clerk-hosted sign in.
 - Sign in redirects back to the originating `app.resonantrhythm.com` URL.
 - Convex auth uses Clerk token template `convex`.
+
+## 5) Local auth bypass (single Convex instance)
+
+Use this only for localhost development when you explicitly need to skip Clerk.
+
+Web env (`web/.env.local`):
+
+- `VITE_AUTH_BYPASS=1`
+- `VITE_AUTH_BYPASS_SECRET=<same-shared-secret-as-convex>`
+
+Convex runtime env:
+
+- `AUTH_BYPASS_ENABLED=true`
+- `AUTH_BYPASS_SECRET=<same-shared-secret-as-web>`
+
+How it works:
+
+- Local web skips Clerk bootstrap and auth redirect.
+- Protected Convex mutations/actions accept local bypass only when the provided
+  bypass secret matches server-side `AUTH_BYPASS_SECRET`.
+
+Production safety:
+
+- Never set `AUTH_BYPASS_ENABLED=true` in production.
+- Keep `VITE_AUTH_BYPASS=0` (or unset) in production builds.
+- Rotate `AUTH_BYPASS_SECRET` immediately if it is exposed.

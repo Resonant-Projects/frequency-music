@@ -1,7 +1,9 @@
 import { createSignal, For, Show } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
@@ -90,15 +92,17 @@ export function IngestPage() {
     setNotice(null);
 
     try {
-      const result = await createFromUrlInput({
-        url: urlValue().trim(),
-        title: urlTitle().trim() || undefined,
-        rawText: urlRawText().trim() || undefined,
-        tags: urlTags()
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-      });
+      const result = await createFromUrlInput(
+        withDevBypassSecret({
+          url: urlValue().trim(),
+          title: urlTitle().trim() || undefined,
+          rawText: urlRawText().trim() || undefined,
+          tags: urlTags()
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        }),
+      );
 
       setNotice(
         result.created
@@ -128,15 +132,17 @@ export function IngestPage() {
     setNotice(null);
 
     try {
-      const result = await createFromYouTubeInput({
-        url: ytValue().trim(),
-        title: ytTitle().trim() || undefined,
-        transcript: ytTranscript().trim() || undefined,
-        tags: ytTags()
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-      });
+      const result = await createFromYouTubeInput(
+        withDevBypassSecret({
+          url: ytValue().trim(),
+          title: ytTitle().trim() || undefined,
+          transcript: ytTranscript().trim() || undefined,
+          tags: ytTags()
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        }),
+      );
 
       setNotice(
         result.created
@@ -157,7 +163,7 @@ export function IngestPage() {
   async function triggerExtraction(sourceId: string) {
     setNotice(null);
     try {
-      await runExtraction({ sourceId: sourceId as any });
+      await runExtraction(withDevBypassSecret({ sourceId: sourceId as Id<"sources"> }));
       setNotice("Extraction dispatched.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);

@@ -1,6 +1,7 @@
 import { ConvexClient } from "convex/browser";
 import { render } from "solid-js/web";
 import App from "./App";
+import { isLocalAuthBypassEnabled } from "./integrations/authBypass";
 import { ConvexProvider } from "./integrations/convex";
 import {
   createConvexClerkAuthAdapter,
@@ -40,11 +41,17 @@ const convexClient = new ConvexClient(convexUrl, {
 });
 
 async function bootstrap() {
-  await initializeClerk();
+  const bypassEnabled = isLocalAuthBypassEnabled();
+  if (!bypassEnabled) {
+    await initializeClerk();
+  }
 
   render(
     () => (
-      <ConvexProvider client={convexClient} useAuth={createConvexClerkAuthAdapter}>
+      <ConvexProvider
+        client={convexClient}
+        useAuth={bypassEnabled ? undefined : createConvexClerkAuthAdapter}
+      >
         <App />
       </ConvexProvider>
     ),

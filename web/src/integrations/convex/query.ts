@@ -33,9 +33,12 @@ export function createQuery<Query extends FunctionReference<"query">>(
   createEffect(() => {
     const nextArgs = resolvedArgs();
     unsubscribe?.();
-    unsubscribe = convex.onUpdate(query, nextArgs, (result) => {
-      setData(() => result as FunctionReturnType<Query>);
-    });
+    unsubscribe = convex.onUpdate(
+      query,
+      nextArgs,
+      (result) => { setData(() => result); },
+      (err) => { console.error("createQuery subscription error:", err); },
+    );
   });
 
   onCleanup(() => {
