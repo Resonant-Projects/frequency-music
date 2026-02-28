@@ -15,9 +15,17 @@
   "rules": {
     "typescript/no-namespace": "error",
     "typescript/no-require-imports": "error",
-    "import/no-unassigned-import": "off",
+    "import/no-unassigned-import": "warn",
     "require-await": "warn",
     "no-else-return": "warn",
     "unicorn/prefer-string-replace-all": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/styles/**", "src/polyfills.js"],
+      "rules": {
+        "import/no-unassigned-import": "off"
+      }
+    }
+  ]
 }
