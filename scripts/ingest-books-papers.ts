@@ -57,7 +57,7 @@ async function ingestSource(
   const dedupeKey =
     type === "arxiv"
       ? `arxiv:${item.url.split("/").pop()}`
-      : `book:${item.title.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+      : `book:${item.title.toLowerCase().replaceAll(/[^a-z0-9]/g, "-")}`;
 
   // Check if exists
   const existing = await client.query(api.sources.getByDedupeKey, {

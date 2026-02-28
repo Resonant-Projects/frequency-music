@@ -76,7 +76,9 @@ export function Zodiac3D() {
     ];
   });
 
+  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
   let canvasRef!: HTMLCanvasElement;
+  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
   let cssContainerRef!: HTMLDivElement;
   let sceneHandle: ReturnType<typeof initZodiacScene> | null = null;
 

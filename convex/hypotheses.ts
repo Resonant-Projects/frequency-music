@@ -5,13 +5,6 @@ import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
-type HypothesisStatus =
-  | "draft"
-  | "queued"
-  | "active"
-  | "evaluated"
-  | "revised"
-  | "retired";
 const hypothesisStatusValidator = v.union(
   v.literal("draft"),
   v.literal("queued"),
@@ -306,7 +299,7 @@ export const generateFromExtraction = action({
       parsed = JSON.parse(jsonMatch[0]) as GeneratedHypothesisPayload;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown parse error";
-      throw new Error(`Failed to parse AI response: ${message}`);
+      throw new Error(`Failed to parse AI response: ${message}`, { cause: e });
     }
 
     // Create hypothesis

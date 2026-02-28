@@ -493,7 +493,7 @@ export const generateFromHypothesis = action({
       parsed = validateGeneratedRecipePayload(JSON.parse(jsonMatch[0]));
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown parse error";
-      throw new Error(`Failed to parse AI response: ${message}`);
+      throw new Error(`Failed to parse AI response: ${message}`, { cause: e });
     }
 
     // Sanitize protocol to only include schema-valid fields
