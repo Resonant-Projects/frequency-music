@@ -21,10 +21,12 @@ function getConfiguredSecret() {
 function isAuthorized(request: Request, payloadSecret?: string): boolean {
   const expected = getConfiguredSecret();
   if (!expected) {
-    console.warn(
-      "isAuthorized: No INGEST_SHARED_SECRET configured — all ingest endpoints are open. Set this in production.",
+    // Fail closed: deny all requests when no secret is configured to prevent
+    // accidental public access in production. Set INGEST_SHARED_SECRET to enable.
+    console.error(
+      "isAuthorized: No INGEST_SHARED_SECRET configured — denying all ingest requests.",
     );
-    return true;
+    return false;
   }
 
   const authHeader = request.headers.get("x-ingest-secret") ?? undefined;
