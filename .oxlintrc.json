@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "plugins": ["typescript", "unicorn", "import"],
+  "ignorePatterns": [
+    "convex/_generated/**",
+    "node_modules/**",
+    "web/styled-system/**",
+    "dist/**"
+  ],
+  "rules": {
+    "typescript/no-namespace": "error",
+    "typescript/no-require-imports": "error",
+    "import/no-unassigned-import": "off"
+  }
+}

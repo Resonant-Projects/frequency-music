@@ -5,13 +5,6 @@ import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
-type HypothesisStatus =
-  | "draft"
-  | "queued"
-  | "active"
-  | "evaluated"
-  | "revised"
-  | "retired";
 const hypothesisStatusValidator = v.union(
   v.literal("draft"),
   v.literal("queued"),

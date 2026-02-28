@@ -214,7 +214,7 @@ export const generate = action({
         } else {
           todo = [];
         }
-      } catch (_e) {
+      } catch {
         // Ignore parse errors
       }
     }
