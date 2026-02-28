@@ -77,6 +77,25 @@ interface ParsedRecipePayload {
   };
 }
 
+function assertStringArray(
+  value: unknown,
+  field: string,
+  raw: unknown,
+): string[] {
+  if (
+    !Array.isArray(value) ||
+    value.some((item) => typeof item !== "string" || item.trim().length === 0)
+  ) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: `${field} must be a non-empty string[]`,
+      field,
+      raw,
+    });
+  }
+  return value as string[];
+}
+
 function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new ConvexError({
@@ -144,19 +163,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
       details: param.details,
     };
   });
-  if (
-    !Array.isArray(row.dawChecklist) ||
-    row.dawChecklist.some(
-      (item) => typeof item !== "string" || item.trim().length === 0,
-    )
-  ) {
-    throw new ConvexError({
-      code: "INVALID_ARGUMENT",
-      message: "generated recipe dawChecklist must be string[]",
-      field: "dawChecklist",
-      raw,
-    });
-  }
+  assertStringArray(row.dawChecklist, "dawChecklist", raw);
 
   const protocol = row.protocol;
   if (protocol !== undefined) {
@@ -190,48 +197,12 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
         raw,
       });
     }
-    if (
-      p.panelPlanned !== undefined &&
-      (!Array.isArray(p.panelPlanned) ||
-        p.panelPlanned.some(
-          (item) => typeof item !== "string" || item.trim().length === 0,
-        ))
-    ) {
-      throw new ConvexError({
-        code: "INVALID_ARGUMENT",
-        message: "protocol.panelPlanned must be string[]",
-        field: "protocol.panelPlanned",
-        raw,
-      });
-    }
-    if (
-      p.whatVaries !== undefined &&
-      (!Array.isArray(p.whatVaries) ||
-        p.whatVaries.some(
-          (item) => typeof item !== "string" || item.trim().length === 0,
-        ))
-    ) {
-      throw new ConvexError({
-        code: "INVALID_ARGUMENT",
-        message: "protocol.whatVaries must be string[]",
-        field: "protocol.whatVaries",
-        raw,
-      });
-    }
-    if (
-      p.whatStaysConstant !== undefined &&
-      (!Array.isArray(p.whatStaysConstant) ||
-        p.whatStaysConstant.some(
-          (item) => typeof item !== "string" || item.trim().length === 0,
-        ))
-    ) {
-      throw new ConvexError({
-        code: "INVALID_ARGUMENT",
-        message: "protocol.whatStaysConstant must be string[]",
-        field: "protocol.whatStaysConstant",
-        raw,
-      });
-    }
+    if (p.panelPlanned !== undefined)
+      assertStringArray(p.panelPlanned, "protocol.panelPlanned", raw);
+    if (p.whatVaries !== undefined)
+      assertStringArray(p.whatVaries, "protocol.whatVaries", raw);
+    if (p.whatStaysConstant !== undefined)
+      assertStringArray(p.whatStaysConstant, "protocol.whatStaysConstant", raw);
   }
 
   return {

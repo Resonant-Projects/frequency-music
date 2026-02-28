@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { visibilityValidator } from "./schema";
 
 // Intentionally public — read-only data, personal research tool.
 export const workspaceSnapshot = query({
@@ -144,47 +145,27 @@ export const promoteVisibility = mutation({
       v.object({
         entityType: v.literal("sources"),
         id: v.id("sources"),
-        visibility: v.union(
-          v.literal("private"),
-          v.literal("followers"),
-          v.literal("public"),
-        ),
+        visibility: visibilityValidator,
       }),
       v.object({
         entityType: v.literal("hypotheses"),
         id: v.id("hypotheses"),
-        visibility: v.union(
-          v.literal("private"),
-          v.literal("followers"),
-          v.literal("public"),
-        ),
+        visibility: visibilityValidator,
       }),
       v.object({
         entityType: v.literal("recipes"),
         id: v.id("recipes"),
-        visibility: v.union(
-          v.literal("private"),
-          v.literal("followers"),
-          v.literal("public"),
-        ),
+        visibility: visibilityValidator,
       }),
       v.object({
         entityType: v.literal("compositions"),
         id: v.id("compositions"),
-        visibility: v.union(
-          v.literal("private"),
-          v.literal("followers"),
-          v.literal("public"),
-        ),
+        visibility: visibilityValidator,
       }),
       v.object({
         entityType: v.literal("weeklyBriefs"),
         id: v.id("weeklyBriefs"),
-        visibility: v.union(
-          v.literal("private"),
-          v.literal("followers"),
-          v.literal("public"),
-        ),
+        visibility: visibilityValidator,
       }),
     ),
   },
@@ -204,11 +185,11 @@ export const promoteVisibility = mutation({
                 ? { status: "promoted_public" as const }
                 : {};
 
-        await ctx.db.patch("sources", input.id, {
-          visibility: input.visibility,
-          ...statusPatch,
-          updatedAt: now,
-        });
+          await ctx.db.patch("sources", input.id, {
+            visibility: input.visibility,
+            ...statusPatch,
+            updatedAt: now,
+          });
         }
         break;
       case "hypotheses":

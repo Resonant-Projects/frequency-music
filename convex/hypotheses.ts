@@ -138,7 +138,13 @@ export const update = mutation({
     sourceIds: v.optional(v.array(v.id("sources"))),
     concepts: v.optional(v.array(v.string())),
     status: v.optional(hypothesisStatusValidator),
-    resolution: v.optional(v.string()),
+    resolution: v.optional(
+      v.union(
+        v.literal("supported"),
+        v.literal("inconclusive"),
+        v.literal("contradicted"),
+      ),
+    ),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -154,31 +160,7 @@ export const update = mutation({
       });
     }
 
-    const patch: {
-      title?: string;
-      question?: string;
-      hypothesis?: string;
-      rationaleMd?: string;
-      sourceIds?: string[];
-      concepts?: string[];
-      status?: HypothesisStatus;
-      resolution?: string;
-      updatedAt: number;
-    } = {
-      updatedAt: Date.now(),
-    };
-
-    if (updates.title !== undefined) patch.title = updates.title;
-    if (updates.question !== undefined) patch.question = updates.question;
-    if (updates.hypothesis !== undefined) patch.hypothesis = updates.hypothesis;
-    if (updates.rationaleMd !== undefined)
-      patch.rationaleMd = updates.rationaleMd;
-    if (updates.sourceIds !== undefined) patch.sourceIds = updates.sourceIds;
-    if (updates.concepts !== undefined) patch.concepts = updates.concepts;
-    if (updates.status !== undefined) patch.status = updates.status;
-    if (updates.resolution !== undefined) patch.resolution = updates.resolution;
-
-    await ctx.db.patch("hypotheses", id, patch);
+    await ctx.db.patch("hypotheses", id, { ...updates, updatedAt: Date.now() });
     return null;
   },
 });

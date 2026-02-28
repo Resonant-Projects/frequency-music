@@ -2,6 +2,14 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 
+function parseNodeId(nodeId: string): { type: string; id: string } {
+  const firstColon = nodeId.indexOf(":");
+  return {
+    type: firstColon >= 0 ? nodeId.slice(0, firstColon) : "unknown",
+    id: firstColon >= 0 ? nodeId.slice(firstColon + 1) : nodeId,
+  };
+}
+
 // ============================================================================
 // CONCEPT QUERIES
 // ============================================================================
@@ -552,28 +560,20 @@ export const exportForVisualization = query({
 
     for (const link of allLinks) {
       if (!allNodes.has(link.source)) {
-        const firstColon = link.source.indexOf(":");
-        const type =
-          firstColon >= 0 ? link.source.slice(0, firstColon) : "unknown";
-        const rawId =
-          firstColon >= 0 ? link.source.slice(firstColon + 1) : link.source;
+        const parsed = parseNodeId(link.source);
         allNodes.set(link.source, {
           id: link.source,
-          label: rawId || link.source,
-          type,
+          label: parsed.id || link.source,
+          type: parsed.type,
           size: 12,
         });
       }
       if (!allNodes.has(link.target)) {
-        const firstColon = link.target.indexOf(":");
-        const type =
-          firstColon >= 0 ? link.target.slice(0, firstColon) : "unknown";
-        const rawId =
-          firstColon >= 0 ? link.target.slice(firstColon + 1) : link.target;
+        const parsed = parseNodeId(link.target);
         allNodes.set(link.target, {
           id: link.target,
-          label: rawId || link.target,
-          type,
+          label: parsed.id || link.target,
+          type: parsed.type,
           size: 12,
         });
       }
