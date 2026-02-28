@@ -1,8 +1,8 @@
-import { v, ConvexError } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
-import { api } from "./_generated/api";
-import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText } from "ai";
+import { ConvexError, v } from "convex/values";
+import { api } from "./_generated/api";
+import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
 // ============================================================================
@@ -287,7 +287,21 @@ export const generateFromHypothesis = action({
     });
 
     // Parse response
-    let parsed;
+    let parsed: {
+      title: string;
+      bodyMd: string;
+      parameters: Array<{ type: string; value: string; details?: unknown }>;
+      dawChecklist: string[];
+      protocol?: {
+        studyType?: "litmus" | "comparison";
+        durationSecs?: number;
+        panelPlanned?: string[];
+        listeningContext?: string;
+        listeningMethod?: string;
+        whatVaries?: string[];
+        whatStaysConstant?: string[];
+      };
+    };
     try {
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
@@ -297,7 +311,17 @@ export const generateFromHypothesis = action({
     }
 
     // Sanitize protocol to only include schema-valid fields
-    let sanitizedProtocol = undefined;
+    let sanitizedProtocol:
+      | {
+          studyType: "litmus" | "comparison";
+          durationSecs: number;
+          panelPlanned: string[];
+          listeningContext?: string;
+          listeningMethod?: string;
+          whatVaries: string[];
+          whatStaysConstant: string[];
+        }
+      | undefined;
     if (parsed.protocol) {
       const p = parsed.protocol;
       sanitizedProtocol = {

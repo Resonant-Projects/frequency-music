@@ -174,15 +174,7 @@
             "chromaticSize": 12,
             "diatonicSize": 7,
             "modeledAs": "cyclic embedding from Z_7 into Z_12",
-            "pitchClasses": [
-              "C=0",
-              "D=2",
-              "E=4",
-              "F=5",
-              "G=7",
-              "A=9",
-              "B=11"
-            ]
+            "pitchClasses": ["C=0", "D=2", "E=4", "F=5", "G=7", "A=9", "B=11"]
           }
         },
         {
@@ -415,27 +407,10 @@
           "details": {
             "anchoringStrength": "counted as number of levels shared (A–D)",
             "levels": {
-              "A_octave": [
-                "C"
-              ],
-              "B_openFifth": [
-                "C",
-                "G"
-              ],
-              "C_triadic": [
-                "C",
-                "E",
-                "G"
-              ],
-              "D_diatonic": [
-                "C",
-                "D",
-                "E",
-                "F",
-                "G",
-                "A",
-                "B"
-              ],
+              "A_octave": ["C"],
+              "B_openFifth": ["C", "G"],
+              "C_triadic": ["C", "E", "G"],
+              "D_diatonic": ["C", "D", "E", "F", "G", "A", "B"],
               "E_chromatic": [
                 "C",
                 "C#",
@@ -471,46 +446,23 @@
             "chords": [
               {
                 "name": "major triad",
-                "pitches": [
-                  "C",
-                  "E",
-                  "G"
-                ]
+                "pitches": ["C", "E", "G"]
               },
               {
                 "name": "minor triad",
-                "pitches": [
-                  "C",
-                  "Eb",
-                  "G"
-                ]
+                "pitches": ["C", "Eb", "G"]
               },
               {
                 "name": "dominant seventh",
-                "pitches": [
-                  "C",
-                  "E",
-                  "G",
-                  "Bb"
-                ]
+                "pitches": ["C", "E", "G", "Bb"]
               },
               {
                 "name": "French sixth",
-                "pitches": [
-                  "C",
-                  "E",
-                  "Gb",
-                  "Bb"
-                ]
+                "pitches": ["C", "E", "Gb", "Bb"]
               },
               {
                 "name": "half-diminished seventh",
-                "pitches": [
-                  "C",
-                  "Eb",
-                  "Gb",
-                  "Bb"
-                ]
+                "pitches": ["C", "Eb", "Gb", "Bb"]
               }
             ],
             "source": "Experimental stimuli from dynamic attraction probe-tone study"
@@ -522,14 +474,8 @@
           "details": {
             "basicRotationAngle": "π/12 radians per semitone on circle of fifths",
             "representation": "2D complex vector space",
-            "tonicVector": [
-              1,
-              0
-            ],
-            "tritoneVector": [
-              0,
-              1
-            ]
+            "tonicVector": [1, 0],
+            "tritoneVector": [0, 1]
           }
         }
       ],
@@ -1328,10 +1274,7 @@
           "type": "rhythm",
           "value": "Crotchet (quarter note) as unit of temporal measurement for pattern boundaries",
           "details": {
-            "agreementThresholds": [
-              1,
-              5
-            ],
+            "agreementThresholds": [1, 5],
             "note": "Starts and ends of patterns measured in crotchets; threshold T=5 crotchets used as default for inter-annotator agreement matching",
             "thresholdUnit": "crotchets",
             "unit": "crotchet (quarter note)"
@@ -1385,10 +1328,7 @@
             "highestPearsonCorrelation": {
               "correlationANOMIC": 0.64,
               "correlationPAF": 0.65,
-              "featurePair": [
-                "pattern duration",
-                "note range"
-              ]
+              "featurePair": ["pattern duration", "note range"]
             },
             "keyFeatures": [
               "pattern duration",

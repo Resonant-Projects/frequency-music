@@ -1,9 +1,9 @@
-import { v } from "convex/values";
-import { action, internalMutation } from "./_generated/server";
-import { internal, api } from "./_generated/api";
-import { generateText, LanguageModel } from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText, type LanguageModel } from "ai";
+import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
+import { action, internalMutation } from "./_generated/server";
 import { requireAuth } from "./auth";
 
 // ============================================================================
@@ -204,7 +204,7 @@ export const extractSource = action({
 
       // Compute input hash for deduplication
       const encoder = new TextEncoder();
-      const hashData = encoder.encode(content + "extract_v1");
+      const hashData = encoder.encode(`${content}extract_v1`);
       const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const inputHash = hashArray
@@ -339,7 +339,7 @@ export const storeExtraction = internalMutation({
 /**
  * Sanitize a string for use as a Convex field name
  */
-function sanitizeKey(str: string): string {
+function _sanitizeKey(str: string): string {
   return str.replace(/[^\x20-\x7E]/g, "_").slice(0, 100);
 }
 

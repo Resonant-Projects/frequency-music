@@ -1,6 +1,6 @@
-import { v, ConvexError } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
+import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { action, mutation, query } from "./_generated/server";
 
 // ============================================================================
 // CONCEPT QUERIES
@@ -157,7 +157,7 @@ export const getEdgesFrom = query({
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
-    let q = ctx.db
+    const q = ctx.db
       .query("edges")
       .withIndex("by_from", (q) =>
         q.eq("fromType", args.fromType as any).eq("fromId", args.fromId),
@@ -183,7 +183,7 @@ export const getEdgesTo = query({
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
-    let q = ctx.db
+    const q = ctx.db
       .query("edges")
       .withIndex("by_to", (q) =>
         q.eq("toType", args.toType as any).eq("toId", args.toId),
@@ -474,7 +474,7 @@ export const buildGraphFromExtractions = action({
         });
         conceptsLinked += result.linked;
         processed++;
-      } catch (e) {
+      } catch (_e) {
         // Continue on error
       }
     }
@@ -497,7 +497,7 @@ export const exportForVisualization = query({
     depth: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const depth = args.depth ?? 2;
+    const _depth = args.depth ?? 2;
 
     // Get all concepts as nodes
     const concepts = await ctx.db.query("concepts").take(100);

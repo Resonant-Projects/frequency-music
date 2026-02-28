@@ -18,10 +18,10 @@ export const list = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 30;
 
-    if (args.status) {
+    if (args.status !== undefined) {
       return await ctx.db
         .query("compositions")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status!))
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
         .order("desc")
         .take(limit);
     }
@@ -126,7 +126,11 @@ export const update = mutation({
       ),
     ),
     visibility: v.optional(
-      v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
+      v.union(
+        v.literal("private"),
+        v.literal("followers"),
+        v.literal("public"),
+      ),
     ),
     devBypassSecret: v.optional(v.string()),
   },
@@ -135,7 +139,10 @@ export const update = mutation({
     await requireAuth(ctx, args);
     const composition = await ctx.db.get("compositions", args.id);
     if (!composition) {
-      throw new ConvexError({ code: "NOT_FOUND", message: "Composition not found" });
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Composition not found",
+      });
     }
 
     const { id, devBypassSecret: _devBypassSecret, ...patch } = args;

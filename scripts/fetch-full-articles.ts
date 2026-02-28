@@ -80,7 +80,7 @@ async function main() {
   const sourcesToProcess = allSources
     .filter((s: any) => {
       const textLen = (s.rawText || "").length;
-      const hasUrl = s.canonicalUrl && s.canonicalUrl.startsWith("http");
+      const hasUrl = s.canonicalUrl?.startsWith("http");
       const isArticle = s.type === "rss" || s.type === "url";
       const needsFullText = textLen < minLength;
       return isArticle && hasUrl && needsFullText;

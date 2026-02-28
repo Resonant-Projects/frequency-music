@@ -2,11 +2,11 @@ import { ConvexClient } from "convex/browser";
 import { render } from "solid-js/web";
 import App from "./App";
 import { isLocalAuthBypassEnabled } from "./integrations/authBypass";
-import { ConvexProvider } from "./integrations/convex";
 import {
   createConvexClerkAuthAdapter,
   initializeClerk,
 } from "./integrations/clerk";
+import { ConvexProvider } from "./integrations/convex";
 import "./index.css";
 import "../styled-system/styles.css";
 

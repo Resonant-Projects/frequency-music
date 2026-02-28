@@ -1,5 +1,5 @@
-import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 import { ConvexError } from "convex/values";
+import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 
 type AuthCtx = QueryCtx | MutationCtx | ActionCtx;
 
@@ -66,5 +66,8 @@ export async function requireAuth(
     }
   }
 
-  throw new ConvexError({ code: "UNAUTHORIZED", message: "Authentication required" });
+  throw new ConvexError({
+    code: "UNAUTHORIZED",
+    message: "Authentication required",
+  });
 }

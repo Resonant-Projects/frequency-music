@@ -1,9 +1,25 @@
-import { v, ConvexError } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
-import { api } from "./_generated/api";
-import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText } from "ai";
+import { ConvexError, v } from "convex/values";
+import { api } from "./_generated/api";
+import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+
+type HypothesisStatus =
+  | "draft"
+  | "queued"
+  | "active"
+  | "evaluated"
+  | "revised"
+  | "retired";
+
+interface GeneratedHypothesisPayload {
+  title: string;
+  question: string;
+  hypothesis: string;
+  rationaleMd: string;
+  concepts?: string[];
+}
 
 // ============================================================================
 // QUERIES
@@ -14,7 +30,16 @@ import { requireAuth } from "./auth";
  */
 export const listByStatus = query({
   args: {
-    status: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("draft"),
+        v.literal("queued"),
+        v.literal("active"),
+        v.literal("evaluated"),
+        v.literal("revised"),
+        v.literal("retired"),
+      ),
+    ),
     limit: v.optional(v.number()),
   },
   returns: v.array(v.any()),
@@ -24,9 +49,7 @@ export const listByStatus = query({
     if (args.status) {
       return await ctx.db
         .query("hypotheses")
-        .withIndex("by_status_updatedAt", (q) =>
-          q.eq("status", args.status as any),
-        )
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
         .order("desc")
         .take(limit);
     }
@@ -132,10 +155,32 @@ export const update = mutation({
       });
     }
 
-    await ctx.db.patch("hypotheses", id, {
-      ...updates,
+    const patch: {
+      title?: string;
+      question?: string;
+      hypothesis?: string;
+      rationaleMd?: string;
+      sourceIds?: string[];
+      concepts?: string[];
+      status?: HypothesisStatus;
+      resolution?: string;
+      updatedAt: number;
+    } = {
       updatedAt: Date.now(),
-    } as any);
+    };
+
+    if (updates.title !== undefined) patch.title = updates.title;
+    if (updates.question !== undefined) patch.question = updates.question;
+    if (updates.hypothesis !== undefined) patch.hypothesis = updates.hypothesis;
+    if (updates.rationaleMd !== undefined)
+      patch.rationaleMd = updates.rationaleMd;
+    if (updates.sourceIds !== undefined) patch.sourceIds = updates.sourceIds;
+    if (updates.concepts !== undefined) patch.concepts = updates.concepts;
+    if (updates.status !== undefined)
+      patch.status = updates.status as HypothesisStatus;
+    if (updates.resolution !== undefined) patch.resolution = updates.resolution;
+
+    await ctx.db.patch("hypotheses", id, patch);
     return null;
   },
 });
@@ -281,13 +326,14 @@ export const generateFromExtraction = action({
     });
 
     // Parse response
-    let parsed;
+    let parsed: GeneratedHypothesisPayload;
     try {
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      throw new Error(`Failed to parse AI response: ${e}`);
+      parsed = JSON.parse(jsonMatch[0]) as GeneratedHypothesisPayload;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unknown parse error";
+      throw new Error(`Failed to parse AI response: ${message}`);
     }
 
     // Create hypothesis
@@ -346,11 +392,12 @@ export const generateBatch = action({
           },
         );
         results.push({ success: true, ...result });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "Unknown error";
         results.push({
           success: false,
           extractionId: extraction._id,
-          error: e.message,
+          error: message,
         });
       }
     }

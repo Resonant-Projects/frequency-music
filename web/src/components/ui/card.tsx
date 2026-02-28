@@ -1,5 +1,5 @@
-import { Dynamic } from "solid-js/web";
 import type { JSX } from "solid-js";
+import { Dynamic } from "solid-js/web";
 import { css, cx } from "../../../styled-system/css";
 
 const cardClass = css({

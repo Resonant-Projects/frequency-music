@@ -48,10 +48,7 @@
         "value": "5-limit Just Intonation",
         "details": {
           "variant": "pure ratio reference",
-          "sources": [
-            "S4",
-            "S5"
-          ]
+          "sources": ["S4", "S5"]
         }
       },
       {
@@ -74,12 +71,7 @@
         "type": "harmonicProfile",
         "value": "Sustained triads with drone",
         "details": {
-          "progression": [
-            "I",
-            "vi",
-            "IV",
-            "V"
-          ],
+          "progression": ["I", "vi", "IV", "V"],
           "holdBarsPerChord": 6
         }
       }
@@ -99,11 +91,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 80,
-      "panelPlanned": [
-        "self",
-        "musician_peer_1",
-        "musician_peer_2"
-      ],
+      "panelPlanned": ["self", "musician_peer_1", "musician_peer_2"],
       "listeningContext": "Quiet room; one pass on open-back headphones and one pass on nearfield monitors.",
       "listeningMethod": "Blind A/B/C with randomized labels and fixed playback level.",
       "whatVaries": [
@@ -119,12 +107,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S4", "S5", "S6"],
   "notes": "This output is synthesized from the generated multi-source context pack without calling Convex generation actions."
 }

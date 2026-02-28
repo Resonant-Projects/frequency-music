@@ -1,12 +1,11 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { ConvexError } from "convex/values";
 import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 
 // Reusable validator for source status
-const sourceStatusValidator = v.union(
+const _sourceStatusValidator = v.union(
   v.literal("ingested"),
   v.literal("text_ready"),
   v.literal("extracting"),
@@ -48,7 +47,10 @@ export const listRecent = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
-    return await ctx.db.query("sources").order("desc").take(args.limit ?? 50);
+    return await ctx.db
+      .query("sources")
+      .order("desc")
+      .take(args.limit ?? 50);
   },
 });
 
@@ -171,7 +173,8 @@ export const create = mutation({
     const id = await ctx.db.insert("sources", {
       ...createArgs,
       rawTextSha256,
-      status: createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
+      status:
+        createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
       visibility: "private",
       createdBy: identity.subject,
       createdAt: now,
@@ -199,15 +202,17 @@ export const updateStatus = mutation({
       v.literal("promoted_public"),
       v.literal("archived"),
     ),
-    blockedReason: v.optional(v.union(
-      v.literal("no_text"),
-      v.literal("copyright"),
-      v.literal("needs_metadata"),
-      v.literal("needs_tagging"),
-      v.literal("ai_error"),
-      v.literal("needs_human_review"),
-      v.literal("duplicate"),
-    )),
+    blockedReason: v.optional(
+      v.union(
+        v.literal("no_text"),
+        v.literal("copyright"),
+        v.literal("needs_metadata"),
+        v.literal("needs_tagging"),
+        v.literal("ai_error"),
+        v.literal("needs_human_review"),
+        v.literal("duplicate"),
+      ),
+    ),
     blockedDetails: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
@@ -293,7 +298,10 @@ type ExternalUpsertArgs = {
   createdBy?: string;
 };
 
-async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) {
+async function upsertExternalSource(
+  ctx: MutationCtx,
+  args: ExternalUpsertArgs,
+) {
   const now = Date.now();
 
   const existing = await ctx.db

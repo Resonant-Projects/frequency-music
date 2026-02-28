@@ -1,15 +1,18 @@
 import {
-  Link,
-  Outlet,
-  RouterProvider,
   createRootRoute,
   createRoute,
   createRouter,
+  Link,
+  Outlet,
+  RouterProvider,
 } from "@tanstack/solid-router";
-import { Component, createEffect } from "solid-js";
+import { type Component, createEffect } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
 import { isLocalAuthBypassEnabled } from "./integrations/authBypass";
-import { buildHostedSignInUrl, useClerkAuthSnapshot } from "./integrations/clerk";
+import {
+  buildHostedSignInUrl,
+  useClerkAuthSnapshot,
+} from "./integrations/clerk";
 import { AdminPage } from "./routes/admin";
 import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
@@ -92,7 +95,10 @@ const RootLayout: Component = () => {
   return <AppShell />;
 };
 
-const PlaceholderPage = (props: { title: string; body: string }): Component => {
+const _PlaceholderPage = (props: {
+  title: string;
+  body: string;
+}): Component => {
   const Page: Component = () => (
     <div class="route-placeholder">
       <UICard class="route-placeholder-card">

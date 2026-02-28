@@ -86,11 +86,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 56,
-      "panelPlanned": [
-        "self",
-        "musician_peer_1",
-        "musician_peer_2"
-      ],
+      "panelPlanned": ["self", "musician_peer_1", "musician_peer_2"],
       "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
       "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
       "whatVaries": [
@@ -107,13 +103,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S4",
-    "S3",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S4", "S3", "S5", "S6"],
   "notes": "Auto-synthesized from context pack using deterministic rule templates. Review before studio execution."
 }

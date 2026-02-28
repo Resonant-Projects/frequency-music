@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * Ingest books (free PDFs) and arXiv papers
  *
@@ -6,10 +7,10 @@
  *   bun run scripts/ingest-books-papers.ts [--books] [--arxiv] [--feeds]
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
-import { readFileSync } from "fs";
-import { join } from "path";
 
 // Load environment
 const envPath = join(import.meta.dir, "../.env.local");

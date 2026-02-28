@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * Ingest Robert Edward Grant's papers and articles
  *
@@ -8,10 +9,10 @@
  *   bun run scripts/ingest-robert-grant.ts [--pdfs] [--articles] [--youtube]
  */
 
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
 
 // Load environment
 const envPath = join(import.meta.dir, "../.env.local");
@@ -113,8 +114,7 @@ async function ingestSource(
   try {
     if (type === "pdf" && source.pdf) {
       // PDF source - download and extract text
-      const filename =
-        source.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase() + ".pdf";
+      const filename = `${source.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}.pdf`;
       fullText = await fetchPdfText(source.pdf, filename);
     } else {
       // Web article - fetch via Jina

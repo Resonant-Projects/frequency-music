@@ -1,14 +1,14 @@
-import { For, Show, createSignal } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard } from "../components/ui";
-import { convexApi } from "../integrations/convex/api";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
   createMutation,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { withDevBypassSecret } from "../integrations/authBypass";
+import { convexApi } from "../integrations/convex/api";
 
 const pageClass = css({
   display: "grid",
@@ -56,10 +56,22 @@ export function WeeklyTurnsPage() {
   return (
     <section class={pageClass}>
       <UICard>
-        <div class={css({ alignItems: "center", display: "flex", justifyContent: "space-between", gap: "3" })}>
+        <div
+          class={css({
+            alignItems: "center",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "3",
+          })}
+        >
           <div>
             <h1 class={sectionTitleClass}>Weekly Turns</h1>
-            <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
+            <p
+              class={css({
+                color: "rgba(245, 240, 232, 0.62)",
+                lineHeight: "1.6",
+              })}
+            >
               Weekly briefs summarize the ingest cycle into experiment cards,
               hypothesis focus, and recipe recommendations.
             </p>
@@ -70,19 +82,41 @@ export function WeeklyTurnsPage() {
         </div>
 
         <Show when={notice()}>
-          {(message) => <p class={css({ color: "zodiac.cream", marginTop: "3" })}>{message()}</p>}
+          {(message) => (
+            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+              {message()}
+            </p>
+          )}
         </Show>
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Generated Briefs</h2>
 
-        <Show when={!briefs.isLoading()} fallback={<p>Loading weekly turns…</p>}>
+        <Show
+          when={!briefs.isLoading()}
+          fallback={<p>Loading weekly turns…</p>}
+        >
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={briefs.data() ?? []}>
               {(brief: any) => (
-                <div class={css({ borderColor: "rgba(200, 168, 75, 0.25)", borderRadius: "l2", borderWidth: "1px", p: "4" })}>
-                  <div class={css({ alignItems: "center", display: "flex", gap: "2", justifyContent: "space-between", marginBottom: "2" })}>
+                <div
+                  class={css({
+                    borderColor: "rgba(200, 168, 75, 0.25)",
+                    borderRadius: "l2",
+                    borderWidth: "1px",
+                    p: "4",
+                  })}
+                >
+                  <div
+                    class={css({
+                      alignItems: "center",
+                      display: "flex",
+                      gap: "2",
+                      justifyContent: "space-between",
+                      marginBottom: "2",
+                    })}
+                  >
                     <div class={css({ display: "flex", gap: "2" })}>
                       <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
                       <UIBadge tone="cream">{brief.visibility}</UIBadge>
@@ -96,7 +130,14 @@ export function WeeklyTurnsPage() {
                     </UIButton>
                   </div>
 
-                  <p class={css({ color: "rgba(245, 240, 232, 0.7)", fontFamily: "mono", fontSize: "xs", marginBottom: "2" })}>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.7)",
+                      fontFamily: "mono",
+                      fontSize: "xs",
+                      marginBottom: "2",
+                    })}
+                  >
                     model: {brief.model} · prompt: {brief.promptVersion}
                   </p>
 

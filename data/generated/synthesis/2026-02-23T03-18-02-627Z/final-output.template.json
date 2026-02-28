@@ -25,24 +25,13 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "",
       "listeningMethod": "",
       "whatVaries": [],
       "whatStaysConstant": []
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6",
-    "S7",
-    "S8"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"],
   "notes": "Fill all required fields, then run publish mode with this file path."
 }

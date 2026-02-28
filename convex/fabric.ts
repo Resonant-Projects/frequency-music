@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
 import { api } from "./_generated/api";
+import { action } from "./_generated/server";
 
 // ============================================================================
 // YOUTUBE TRANSCRIPT FETCHING
@@ -11,6 +11,27 @@ interface TranscriptSegment {
   text: string;
   start: number;
   duration: number;
+}
+
+interface TactiqCaption {
+  text: string;
+  start: number;
+  dur?: number;
+}
+
+interface TactiqResponse {
+  captions?: TactiqCaption[];
+}
+
+interface SupadataTranscriptSegment {
+  text: string;
+  start?: number;
+  duration?: number;
+}
+
+interface SupadataResponse {
+  content?: string;
+  transcript?: SupadataTranscriptSegment[];
 }
 
 /**
@@ -37,9 +58,9 @@ async function fetchYouTubeTranscript(
       throw new Error(`Failed to fetch transcript: ${response.status}`);
     }
 
-    const tactiqData = await tactiqResponse.json();
+    const tactiqData = (await tactiqResponse.json()) as TactiqResponse;
     if (tactiqData.captions) {
-      return tactiqData.captions.map((c: any) => ({
+      return tactiqData.captions.map((c) => ({
         text: c.text,
         start: c.start,
         duration: c.dur || 0,
@@ -48,7 +69,7 @@ async function fetchYouTubeTranscript(
     throw new Error("No transcript available");
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as SupadataResponse;
 
   if (data.content) {
     // Supadata returns plain text, convert to segments
@@ -62,7 +83,7 @@ async function fetchYouTubeTranscript(
   }
 
   if (data.transcript) {
-    return data.transcript.map((t: any) => ({
+    return data.transcript.map((t) => ({
       text: t.text,
       start: t.start || 0,
       duration: t.duration || 0,
@@ -100,7 +121,7 @@ export const getYouTubeTranscript = action({
     url: v.string(),
     withTimestamps: v.optional(v.boolean()),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const videoId = extractVideoId(args.url);
     if (!videoId) {
       throw new Error("Invalid YouTube URL");
@@ -253,7 +274,7 @@ export const fetchArticleText = action({
   args: {
     url: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     // Use Jina Reader API (same as Fabric uses)
     const jinaUrl = `https://r.jina.ai/${args.url}`;
 

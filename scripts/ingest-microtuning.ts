@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
+
 /**
  * Ingest microtuning/xenharmonic sources
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
-import { readFileSync } from "fs";
-import { join } from "path";
 
 // Load environment
 const envPath = join(import.meta.dir, "../.env.local");

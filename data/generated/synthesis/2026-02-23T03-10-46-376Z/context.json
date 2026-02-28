@@ -820,11 +820,7 @@
           "value": "Right triangle ratios [1:√3:2]",
           "details": {
             "description": "Dimensional ratios for 12-turn spiral triangles",
-            "ratios": [
-              1,
-              "√3",
-              2
-            ]
+            "ratios": [1, "√3", 2]
           }
         },
         {
@@ -832,11 +828,7 @@
           "value": "Pentagon spiral ratios [1:1.37639:1.7013]",
           "details": {
             "description": "Dimensional ratios for pentagonal spiral triangles",
-            "ratios": [
-              1,
-              1.37639,
-              1.7013
-            ]
+            "ratios": [1, 1.37639, 1.7013]
           }
         },
         {

@@ -2,21 +2,26 @@
  * Store an extraction result from a JSON file via bunx convex run.
  * Usage: bun run scripts/store-extraction.ts <path-to-json>
  */
-import { execSync } from "child_process";
-import { readFileSync } from "fs";
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 async function main() {
   const path = process.argv[2];
-  if (!path) { console.error("Usage: store-extraction.ts <json-path>"); process.exit(1); }
-  
+  if (!path) {
+    console.error("Usage: store-extraction.ts <json-path>");
+    process.exit(1);
+  }
+
   const data = JSON.parse(readFileSync(path, "utf-8"));
-  
-  // Compute input hash  
+
+  // Compute input hash
   const encoder = new TextEncoder();
-  const hashData = encoder.encode(data.sourceId + "opus_reextract_v1");
+  const hashData = encoder.encode(`${data.sourceId}opus_reextract_v1`);
   const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const inputHash = hashArray.map((b: number) => b.toString(16).padStart(2, "0")).join("");
+  const inputHash = hashArray
+    .map((b: number) => b.toString(16).padStart(2, "0"))
+    .join("");
 
   const payload = JSON.stringify({
     sourceId: data.sourceId,
@@ -32,19 +37,25 @@ async function main() {
   });
 
   // Store extraction
-  const result = execSync(`bunx convex run extract:storeExtraction '${payload.replace(/'/g, "'\\''")}'`, {
-    cwd: process.cwd(),
-    encoding: "utf-8",
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  const result = execSync(
+    `bunx convex run extract:storeExtraction '${payload.replace(/'/g, "'\\''")}'`,
+    {
+      cwd: process.cwd(),
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    },
+  );
   console.log(`Stored: ${result.trim()}`);
 
-  // Update source status  
-  execSync(`bunx convex run sources:updateStatus '${JSON.stringify({ id: data.sourceId, status: "extracted" }).replace(/'/g, "'\\''")}'`, {
-    cwd: process.cwd(),
-    encoding: "utf-8",
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  // Update source status
+  execSync(
+    `bunx convex run sources:updateStatus '${JSON.stringify({ id: data.sourceId, status: "extracted" }).replace(/'/g, "'\\''")}'`,
+    {
+      cwd: process.cwd(),
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    },
+  );
   console.log(`Updated source status to extracted`);
 }
 

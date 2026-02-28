@@ -1,6 +1,6 @@
+import { readFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
-import { readFileSync } from "fs";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 const summary = JSON.parse(readFileSync("/tmp/ext-summary.json", "utf-8"));
@@ -12,7 +12,9 @@ async function main() {
     const title = source?.title?.slice(0, 70) || "UNKNOWN";
     const type = source?.type || "?";
     const textLen = source?.rawText?.length || 0;
-    console.log(`${z.sourceId} | ${type.padEnd(10)} | ${textLen.toString().padStart(6)} | ${title}`);
+    console.log(
+      `${z.sourceId} | ${type.padEnd(10)} | ${textLen.toString().padStart(6)} | ${title}`,
+    );
   }
 }
 main();

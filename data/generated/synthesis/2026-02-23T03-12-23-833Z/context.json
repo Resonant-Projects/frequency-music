@@ -1055,10 +1055,7 @@
           "value": "5/4 ratio",
           "details": {
             "cents": 386.314,
-            "ratio": [
-              5,
-              4
-            ]
+            "ratio": [5, 4]
           }
         },
         {
@@ -1066,10 +1063,7 @@
           "value": "25/16 ratio",
           "details": {
             "cents": 772.627,
-            "ratio": [
-              25,
-              16
-            ]
+            "ratio": [25, 16]
           }
         },
         {
@@ -1077,10 +1071,7 @@
           "value": "2/1 ratio (octave)",
           "details": {
             "cents": 1200,
-            "ratio": [
-              2,
-              1
-            ]
+            "ratio": [2, 1]
           }
         }
       ],

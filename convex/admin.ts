@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
-import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
 // Intentionally public — read-only data, personal research tool.
@@ -104,15 +105,17 @@ export const setSourceStatus = mutation({
       v.literal("promoted_public"),
       v.literal("archived"),
     ),
-    blockedReason: v.optional(v.union(
-      v.literal("no_text"),
-      v.literal("copyright"),
-      v.literal("needs_metadata"),
-      v.literal("needs_tagging"),
-      v.literal("ai_error"),
-      v.literal("needs_human_review"),
-      v.literal("duplicate"),
-    )),
+    blockedReason: v.optional(
+      v.union(
+        v.literal("no_text"),
+        v.literal("copyright"),
+        v.literal("needs_metadata"),
+        v.literal("needs_tagging"),
+        v.literal("ai_error"),
+        v.literal("needs_human_review"),
+        v.literal("duplicate"),
+      ),
+    ),
     blockedDetails: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
@@ -145,7 +148,11 @@ export const promoteVisibility = mutation({
       v.literal("weeklyBriefs"),
     ),
     id: v.string(),
-    visibility: v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
+    visibility: v.union(
+      v.literal("private"),
+      v.literal("followers"),
+      v.literal("public"),
+    ),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -155,7 +162,7 @@ export const promoteVisibility = mutation({
 
     switch (args.entityType) {
       case "sources":
-        await ctx.db.patch(args.id as any, {
+        await ctx.db.patch("sources", args.id as Id<"sources">, {
           visibility: args.visibility,
           status:
             args.visibility === "followers"
@@ -167,21 +174,34 @@ export const promoteVisibility = mutation({
         });
         break;
       case "hypotheses":
+        await ctx.db.patch("hypotheses", args.id as Id<"hypotheses">, {
+          visibility: args.visibility,
+          updatedAt: now,
+        });
+        break;
       case "recipes":
+        await ctx.db.patch("recipes", args.id as Id<"recipes">, {
+          visibility: args.visibility,
+          updatedAt: now,
+        });
+        break;
       case "compositions":
-        await ctx.db.patch(args.id as any, {
+        await ctx.db.patch("compositions", args.id as Id<"compositions">, {
           visibility: args.visibility,
           updatedAt: now,
         });
         break;
       case "weeklyBriefs":
-        await ctx.db.patch(args.id as any, {
+        await ctx.db.patch("weeklyBriefs", args.id as Id<"weeklyBriefs">, {
           visibility: args.visibility,
           publishedAt: args.visibility === "public" ? now : undefined,
         });
         break;
       default:
-        throw new ConvexError({ code: "INVALID_ARGUMENT", message: "Unsupported entity type" });
+        throw new ConvexError({
+          code: "INVALID_ARGUMENT",
+          message: "Unsupported entity type",
+        });
     }
 
     return null;
@@ -192,6 +212,8 @@ export const pollFeedsNow = action({
   args: { devBypassSecret: v.optional(v.string()) },
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    return await ctx.runAction(api.ingest.pollAllFeeds, { devBypassSecret: args.devBypassSecret });
+    return await ctx.runAction(api.ingest.pollAllFeeds, {
+      devBypassSecret: args.devBypassSecret,
+    });
   },
 });

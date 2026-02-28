@@ -1,14 +1,14 @@
-import { For, Show, createSignal } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
-import { convexApi } from "../integrations/convex/api";
-import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
   createQuery,
 } from "../integrations/convex";
+import { convexApi } from "../integrations/convex/api";
 
 const pageClass = css({
   display: "grid",
@@ -119,10 +119,22 @@ export function AdminPage() {
   return (
     <section class={pageClass}>
       <UICard>
-        <div class={css({ alignItems: "center", display: "flex", justifyContent: "space-between", gap: "3" })}>
+        <div
+          class={css({
+            alignItems: "center",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "3",
+          })}
+        >
           <div>
             <h1 class={sectionTitleClass}>Admin</h1>
-            <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
+            <p
+              class={css({
+                color: "rgba(245, 240, 232, 0.62)",
+                lineHeight: "1.6",
+              })}
+            >
               Feed controls, workspace metrics, and operational overrides.
             </p>
           </div>
@@ -132,19 +144,50 @@ export function AdminPage() {
         </div>
 
         <Show when={notice()}>
-          {(message) => <p class={css({ color: "zodiac.cream", marginTop: "3" })}>{message()}</p>}
+          {(message) => (
+            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+              {message()}
+            </p>
+          )}
         </Show>
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Workspace Snapshot</h2>
-        <div class={css({ display: "grid", gap: "3", gridTemplateColumns: { base: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } })}>
-          <div><UIBadge tone="gold">Sources</UIBadge><p>{snapshot()?.sources ?? 0}</p></div>
-          <div><UIBadge tone="violet">Hypotheses</UIBadge><p>{snapshot()?.hypotheses ?? 0}</p></div>
-          <div><UIBadge tone="cream">Recipes</UIBadge><p>{snapshot()?.recipes ?? 0}</p></div>
-          <div><UIBadge tone="gold">Compositions</UIBadge><p>{snapshot()?.compositions ?? 0}</p></div>
-          <div><UIBadge tone="violet">Weekly Briefs</UIBadge><p>{snapshot()?.weeklyBriefs ?? 0}</p></div>
-          <div><UIBadge tone="cream">Feeds</UIBadge><p>{snapshot()?.feeds ?? 0}</p></div>
+        <div
+          class={css({
+            display: "grid",
+            gap: "3",
+            gridTemplateColumns: {
+              base: "repeat(2, minmax(0, 1fr))",
+              md: "repeat(3, minmax(0, 1fr))",
+            },
+          })}
+        >
+          <div>
+            <UIBadge tone="gold">Sources</UIBadge>
+            <p>{snapshot()?.sources ?? 0}</p>
+          </div>
+          <div>
+            <UIBadge tone="violet">Hypotheses</UIBadge>
+            <p>{snapshot()?.hypotheses ?? 0}</p>
+          </div>
+          <div>
+            <UIBadge tone="cream">Recipes</UIBadge>
+            <p>{snapshot()?.recipes ?? 0}</p>
+          </div>
+          <div>
+            <UIBadge tone="gold">Compositions</UIBadge>
+            <p>{snapshot()?.compositions ?? 0}</p>
+          </div>
+          <div>
+            <UIBadge tone="violet">Weekly Briefs</UIBadge>
+            <p>{snapshot()?.weeklyBriefs ?? 0}</p>
+          </div>
+          <div>
+            <UIBadge tone="cream">Feeds</UIBadge>
+            <p>{snapshot()?.feeds ?? 0}</p>
+          </div>
         </div>
       </UICard>
 
@@ -194,7 +237,13 @@ export function AdminPage() {
           <option value="youtube">youtube</option>
         </select>
 
-        <div class={css({ display: "flex", justifyContent: "flex-end", marginTop: "3" })}>
+        <div
+          class={css({
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: "3",
+          })}
+        >
           <UIButton type="submit" variant="solid">
             Add Feed
           </UIButton>
@@ -206,14 +255,37 @@ export function AdminPage() {
         <div class={css({ display: "grid", gap: "2" })}>
           <For each={feeds() ?? []}>
             {(feed: any) => (
-              <div class={css({ alignItems: "center", borderColor: "rgba(200, 168, 75, 0.24)", borderRadius: "l2", borderWidth: "1px", display: "flex", gap: "2", justifyContent: "space-between", p: "3" })}>
+              <div
+                class={css({
+                  alignItems: "center",
+                  borderColor: "rgba(200, 168, 75, 0.24)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  display: "flex",
+                  gap: "2",
+                  justifyContent: "space-between",
+                  p: "3",
+                })}
+              >
                 <div>
                   <p class={css({ margin: 0 })}>{feed.name}</p>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.58)", fontFamily: "mono", fontSize: "xs", margin: 0 })}>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.58)",
+                      fontFamily: "mono",
+                      fontSize: "xs",
+                      margin: 0,
+                    })}
+                  >
                     {feed.type} · {feed.url}
                   </p>
                 </div>
-                <UIButton variant="outline" onClick={() => toggleFeed(String(feed._id), Boolean(feed.enabled))}>
+                <UIButton
+                  variant="outline"
+                  onClick={() =>
+                    toggleFeed(String(feed._id), Boolean(feed.enabled))
+                  }
+                >
                   {feed.enabled ? "Disable" : "Enable"}
                 </UIButton>
               </div>
@@ -260,7 +332,13 @@ export function AdminPage() {
           <option value="archived">archived</option>
         </select>
 
-        <div class={css({ display: "flex", justifyContent: "flex-end", marginTop: "3" })}>
+        <div
+          class={css({
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: "3",
+          })}
+        >
           <UIButton type="submit" variant="solid">
             Apply Status
           </UIButton>

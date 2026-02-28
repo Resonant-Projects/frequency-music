@@ -22,15 +22,15 @@ async function main() {
     model: e.model,
   }));
 
-  const zeroClaims = summary.filter(s => s.claims === 0).length;
-  const zeroParams = summary.filter(s => s.params === 0).length;
+  const zeroClaims = summary.filter((s) => s.claims === 0).length;
+  const zeroParams = summary.filter((s) => s.params === 0).length;
 
   console.error(`Total: ${summary.length}`);
   console.error(`Zero claims: ${zeroClaims}`);
   console.error(`Zero params: ${zeroParams}`);
 
   // Write to file
-  const fs = await import("fs");
+  const fs = await import("node:fs");
   fs.writeFileSync("/tmp/ext-summary.json", JSON.stringify(summary, null, 2));
   console.error("Written to /tmp/ext-summary.json");
 }

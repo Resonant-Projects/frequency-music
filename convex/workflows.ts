@@ -8,9 +8,9 @@
  */
 
 import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { workflowManager } from "./components";
-import { internal, api } from "./_generated/api";
 
 // ============================================================================
 // EXTRACTION WORKFLOW

@@ -1,9 +1,9 @@
-import { v } from "convex/values";
-import { action, internalMutation, mutation, query } from "./_generated/server";
-import { api, internal } from "./_generated/api";
-import { requireAuth } from "./auth";
-import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText } from "ai";
+import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { requireAuth } from "./auth";
 
 // ============================================================================
 // QUERIES
@@ -200,7 +200,7 @@ export const generate = action({
       try {
         const parsed = JSON.parse(jsonMatch[1]);
         todo = parsed.todo || [];
-      } catch (e) {
+      } catch (_e) {
         // Ignore parse errors
       }
     }
@@ -229,7 +229,7 @@ export const generate = action({
         recipes: recipes.length,
         sources: sourceIds.length,
       },
-      preview: result.text.slice(0, 500) + "...",
+      preview: `${result.text.slice(0, 500)}...`,
     };
   },
 });

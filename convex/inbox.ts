@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 
 type InboxStatus = "ingested" | "text_ready" | "extracted" | "review_needed";
@@ -26,7 +27,8 @@ function nextActionForSource(source: {
   if (source.status === "ingested") {
     if (source.type === "url" || source.type === "rss") return "Fetch text";
     if (source.type === "youtube") return "Fetch transcript";
-    if (source.type === "pdf" && source.uploadThingUrl) return "Extract PDF text";
+    if (source.type === "pdf" && source.uploadThingUrl)
+      return "Extract PDF text";
     return "Add missing content";
   }
 
@@ -46,7 +48,7 @@ export const list = query({
       "review_needed",
     ];
 
-    let candidates: any[] = [];
+    let candidates: Doc<"sources">[] = [];
 
     for (const status of statuses) {
       const rows = await ctx.db
@@ -55,13 +57,18 @@ export const list = query({
         .order("asc")
         .take(limit * 2);
 
-      candidates = candidates.concat(rows.filter((row) => row.visibility === "private"));
+      candidates = candidates.concat(
+        rows.filter((row) => row.visibility === "private"),
+      );
     }
 
-    const deduped = Array.from(new Map(candidates.map((s) => [s._id, s])).values());
+    const deduped = Array.from(
+      new Map(candidates.map((s) => [s._id, s])).values(),
+    );
 
     deduped.sort((a, b) => {
-      const blockedDelta = Number(Boolean(b.blockedReason)) - Number(Boolean(a.blockedReason));
+      const blockedDelta =
+        Number(Boolean(b.blockedReason)) - Number(Boolean(a.blockedReason));
       if (blockedDelta !== 0) return blockedDelta;
 
       const ap = statusPriority[a.status as InboxStatus] ?? 99;
@@ -77,7 +84,9 @@ export const list = query({
       selected.map(async (source) => {
         const latestExtraction = await ctx.db
           .query("extractions")
-          .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
+          .withIndex("by_sourceId_createdAt", (q) =>
+            q.eq("sourceId", source._id),
+          )
           .order("desc")
           .first();
 
@@ -128,7 +137,8 @@ export const counts = query({
     return {
       ingested: ingested.filter((row) => row.visibility === "private").length,
       textReady: textReady.filter((row) => row.visibility === "private").length,
-      reviewNeeded: reviewNeeded.filter((row) => row.visibility === "private").length,
+      reviewNeeded: reviewNeeded.filter((row) => row.visibility === "private")
+        .length,
       blocked,
     };
   },

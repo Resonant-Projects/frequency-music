@@ -41,11 +41,7 @@
         "details": {
           "barsTotal": 36,
           "meter": "4/4",
-          "windows": [
-            "baseline_diatonic",
-            "tritone_stress",
-            "symmetry_loop"
-          ]
+          "windows": ["baseline_diatonic", "tritone_stress", "symmetry_loop"]
         }
       },
       {
@@ -80,11 +76,7 @@
         "type": "evaluation",
         "value": "1-7 Likert per window and global pass",
         "details": {
-          "metrics": [
-            "consonance",
-            "roughness",
-            "continuity"
-          ],
+          "metrics": ["consonance", "roughness", "continuity"],
           "focusWindow": "bars_13_24_tritone"
         }
       }
@@ -128,15 +120,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6",
-    "S7",
-    "S8"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"],
   "notes": "Strengthened manual synthesis emphasizing a two-layer model (acoustic vs structural), tritone stress-window analysis, and explicit falsification conditions."
 }

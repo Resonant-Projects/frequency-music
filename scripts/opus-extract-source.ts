@@ -10,13 +10,19 @@ const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
 async function main() {
   const sourceId = process.argv[2];
-  if (!sourceId) { console.error("Usage: opus-extract-source.ts <sourceId>"); process.exit(1); }
-  
+  if (!sourceId) {
+    console.error("Usage: opus-extract-source.ts <sourceId>");
+    process.exit(1);
+  }
+
   const source = await client.query(api.sources.get, { id: sourceId as any });
-  if (!source) { console.error("Source not found"); process.exit(1); }
-  
+  if (!source) {
+    console.error("Source not found");
+    process.exit(1);
+  }
+
   const text = source.rawText || source.transcript || "";
-  
+
   // Output compact info
   console.log(`TITLE: ${source.title}`);
   console.log(`URL: ${source.url}`);
@@ -24,7 +30,8 @@ async function main() {
   console.log(`TEXT_LENGTH: ${text.length}`);
   console.log(`---TEXT---`);
   console.log(text.slice(0, 12000));
-  if (text.length > 12000) console.log(`\n... [truncated, ${text.length - 12000} more chars]`);
+  if (text.length > 12000)
+    console.log(`\n... [truncated, ${text.length - 12000} more chars]`);
 }
 
 main().catch(console.error);
