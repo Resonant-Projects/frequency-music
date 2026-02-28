@@ -3,6 +3,7 @@ import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
@@ -63,7 +64,7 @@ export function AdminPage() {
         withDevBypassSecret({
           name: feedName().trim(),
           url: feedUrl().trim(),
-          type: feedType() as any,
+          type: feedType() as "rss" | "podcast" | "youtube",
         }),
       );
       setFeedName("");
@@ -77,7 +78,7 @@ export function AdminPage() {
   async function toggleFeed(id: string, enabled: boolean) {
     try {
       await setFeedEnabled(
-        withDevBypassSecret({ id: id as any, enabled: !enabled }),
+        withDevBypassSecret({ id: id as Id<"feeds">, enabled: !enabled }),
       );
       setNotice("Feed state updated.");
     } catch (error) {
@@ -105,7 +106,7 @@ export function AdminPage() {
     try {
       await setSourceStatus(
         withDevBypassSecret({
-          id: sourceId().trim() as any,
+          id: sourceId().trim() as Id<"sources">,
           status: sourceStatus(),
         }),
       );

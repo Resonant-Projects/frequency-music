@@ -3,6 +3,7 @@ import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
@@ -86,10 +87,10 @@ export function RecipesPage() {
     try {
       await createRecipe(
         withDevBypassSecret({
-          hypothesisId: hypothesisId() as any,
+          hypothesisId: hypothesisId() as Id<"hypotheses">,
           title: title().trim(),
           bodyMd: bodyMd().trim(),
-          parameters: parseParameters(parameters()) as any,
+          parameters: parseParameters(parameters()),
           dawChecklist: parseChecklist(checklist()),
         }),
       );
@@ -113,7 +114,7 @@ export function RecipesPage() {
     try {
       await generateFromHypothesis(
         withDevBypassSecret({
-          hypothesisId: hypothesisId() as any,
+          hypothesisId: hypothesisId() as Id<"hypotheses">,
         }),
       );
       setNotice("Auto recipe generation started.");

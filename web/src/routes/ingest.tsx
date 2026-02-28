@@ -3,6 +3,7 @@ import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
@@ -100,7 +101,7 @@ export function IngestPage() {
             .split(",")
             .map((tag) => tag.trim())
             .filter(Boolean),
-        } as any),
+        }),
       );
 
       setNotice(
@@ -140,7 +141,7 @@ export function IngestPage() {
             .split(",")
             .map((tag) => tag.trim())
             .filter(Boolean),
-        } as any),
+        }),
       );
 
       setNotice(
@@ -162,7 +163,7 @@ export function IngestPage() {
   async function triggerExtraction(sourceId: string) {
     setNotice(null);
     try {
-      await runExtraction(withDevBypassSecret({ sourceId: sourceId as any }));
+      await runExtraction(withDevBypassSecret({ sourceId: sourceId as Id<"sources"> }));
       setNotice("Extraction dispatched.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);

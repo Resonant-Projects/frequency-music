@@ -3,6 +3,7 @@ import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
@@ -52,7 +53,7 @@ export function DisplayPage() {
 
   async function runRowExtraction(sourceId: string) {
     try {
-      await runExtraction(withDevBypassSecret({ sourceId: sourceId as any }));
+      await runExtraction(withDevBypassSecret({ sourceId: sourceId as Id<"sources"> }));
       setNotice("Extraction started.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);
@@ -62,7 +63,7 @@ export function DisplayPage() {
   async function markTriaged(sourceId: string) {
     try {
       await updateStatus(
-        withDevBypassSecret({ id: sourceId as any, status: "triaged" }),
+        withDevBypassSecret({ id: sourceId as Id<"sources">, status: "triaged" as const }),
       );
       setNotice("Source marked as triaged.");
     } catch (error) {
@@ -73,7 +74,7 @@ export function DisplayPage() {
   async function promoteFollowers(sourceId: string) {
     try {
       await setVisibility(
-        withDevBypassSecret({ id: sourceId as any, visibility: "followers" }),
+        withDevBypassSecret({ id: sourceId as Id<"sources">, visibility: "followers" }),
       );
       setNotice("Visibility promoted to followers.");
     } catch (error) {

@@ -93,8 +93,26 @@ export const setFeedEnabled = mutation({
 export const setSourceStatus = mutation({
   args: {
     id: v.id("sources"),
-    status: v.string(),
-    blockedReason: v.optional(v.string()),
+    status: v.union(
+      v.literal("ingested"),
+      v.literal("text_ready"),
+      v.literal("extracting"),
+      v.literal("extracted"),
+      v.literal("review_needed"),
+      v.literal("triaged"),
+      v.literal("promoted_followers"),
+      v.literal("promoted_public"),
+      v.literal("archived"),
+    ),
+    blockedReason: v.optional(v.union(
+      v.literal("no_text"),
+      v.literal("copyright"),
+      v.literal("needs_metadata"),
+      v.literal("needs_tagging"),
+      v.literal("ai_error"),
+      v.literal("needs_human_review"),
+      v.literal("duplicate"),
+    )),
     blockedDetails: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
@@ -107,8 +125,8 @@ export const setSourceStatus = mutation({
     }
 
     await ctx.db.patch("sources", args.id, {
-      status: args.status as any,
-      blockedReason: args.blockedReason as any,
+      status: args.status,
+      blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
       updatedAt: Date.now(),
     });

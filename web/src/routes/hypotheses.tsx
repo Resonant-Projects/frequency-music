@@ -75,7 +75,7 @@ export function HypothesesPage() {
           question: question().trim(),
           hypothesis: statement().trim(),
           rationaleMd: rationale().trim() || "Draft rationale.",
-          sourceIds: selectedSources().map((id) => id as any),
+          sourceIds: selectedSources(),
           concepts: [],
         }),
       );

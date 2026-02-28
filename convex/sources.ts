@@ -188,8 +188,26 @@ export const create = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("sources"),
-    status: v.string(),
-    blockedReason: v.optional(v.string()),
+    status: v.union(
+      v.literal("ingested"),
+      v.literal("text_ready"),
+      v.literal("extracting"),
+      v.literal("extracted"),
+      v.literal("review_needed"),
+      v.literal("triaged"),
+      v.literal("promoted_followers"),
+      v.literal("promoted_public"),
+      v.literal("archived"),
+    ),
+    blockedReason: v.optional(v.union(
+      v.literal("no_text"),
+      v.literal("copyright"),
+      v.literal("needs_metadata"),
+      v.literal("needs_tagging"),
+      v.literal("ai_error"),
+      v.literal("needs_human_review"),
+      v.literal("duplicate"),
+    )),
     blockedDetails: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
@@ -205,8 +223,8 @@ export const updateStatus = mutation({
     }
 
     await ctx.db.patch("sources", args.id, {
-      status: args.status as any,
-      blockedReason: args.blockedReason as any,
+      status: args.status,
+      blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
       updatedAt: Date.now(),
     });
@@ -272,6 +290,7 @@ type ExternalUpsertArgs = {
   tags?: string[];
   topics?: string[];
   metadata?: any;
+  createdBy?: string;
 };
 
 async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) {
@@ -301,7 +320,7 @@ async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) 
       rawTextSha256,
       status: text ? "text_ready" : "ingested",
       visibility: "private",
-      createdBy: "system",
+      createdBy: args.createdBy ?? "system",
       createdAt: now,
       updatedAt: now,
     });
@@ -422,7 +441,7 @@ export const createFromUrlInput = mutation({
     contentChanged: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
+    const identity = await requireAuth(ctx, args);
     return await upsertExternalSource(ctx, {
       dedupeKey: generateDedupeKey("url", { canonicalUrl: args.url }),
       type: "url",
@@ -430,6 +449,7 @@ export const createFromUrlInput = mutation({
       canonicalUrl: args.url,
       rawText: args.rawText,
       tags: args.tags,
+      createdBy: identity.subject,
     });
   },
 });
@@ -451,7 +471,7 @@ export const createFromYouTubeInput = mutation({
     contentChanged: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
+    const identity = await requireAuth(ctx, args);
     const videoId = extractYouTubeVideoId(args.url);
     if (!videoId) {
       throw new ConvexError({
@@ -468,6 +488,7 @@ export const createFromYouTubeInput = mutation({
       youtubeVideoId: videoId,
       transcript: args.transcript,
       tags: args.tags,
+      createdBy: identity.subject,
     });
   },
 });
@@ -492,6 +513,7 @@ export const archive = mutation({
     await ctx.db.patch("sources", args.id, {
       status: "archived",
       blockedDetails: args.reason || "Archived: off-topic or irrelevant",
+      updatedAt: Date.now(),
     });
   },
 });
@@ -514,6 +536,7 @@ export const bulkArchive = mutation({
         await ctx.db.patch("sources", id, {
           status: "archived",
           blockedDetails: args.reason || "Archived: off-topic or irrelevant",
+          updatedAt: Date.now(),
         });
         archived++;
       }

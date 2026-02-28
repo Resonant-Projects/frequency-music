@@ -88,7 +88,7 @@ export const create = mutation({
       version: createArgs.version ?? "v0.1",
       status: "idea",
       visibility: "private",
-      createdBy: createArgs.createdBy ?? identity.subject,
+      createdBy: identity.subject,
       createdAt: now,
       updatedAt: now,
     });

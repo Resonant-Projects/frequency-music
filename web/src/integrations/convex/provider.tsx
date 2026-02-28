@@ -61,7 +61,7 @@ export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
         forceRefreshToken,
       }) => {
         try {
-          return auth.getToken({
+          return await auth.getToken({
             template: "convex",
             skipCache: forceRefreshToken,
           });

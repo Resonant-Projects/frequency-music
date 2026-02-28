@@ -53,12 +53,11 @@ export const create = mutation({
     expandVerdict: v.optional(
       v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
     ),
-    createdBy: v.optional(v.id("users")),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("listeningSessions"),
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
+    const identity = await requireAuth(ctx, args);
     const composition = await ctx.db.get("compositions", args.compositionId);
     if (!composition) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Composition not found" });
@@ -73,7 +72,7 @@ export const create = mutation({
       bodyMapNotes: args.bodyMapNotes,
       expandVerdict: args.expandVerdict,
       visibility: "private",
-      createdBy: args.createdBy ?? "system",
+      createdBy: identity.subject,
       createdAt: Date.now(),
     });
   },
@@ -87,10 +86,14 @@ export const updateVisibility = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
+    const identity = await requireAuth(ctx, args);
     const session = await ctx.db.get("listeningSessions", args.id);
     if (!session) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Listening session not found" });
+    }
+
+    if (session.createdBy !== identity.subject) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Not authorized to update this session" });
     }
 
     await ctx.db.patch("listeningSessions", args.id, { visibility: args.visibility });
