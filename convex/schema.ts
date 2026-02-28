@@ -8,7 +8,7 @@ import { v } from "convex/values";
 // ============================================================================
 
 // Shared validators
-const visibilityValidator = v.union(
+export const visibilityValidator = v.union(
   v.literal("private"),
   v.literal("followers"),
   v.literal("public"),

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * Ingest books (free PDFs) and arXiv papers
  *
@@ -6,33 +7,20 @@
  *   bun run scripts/ingest-books-papers.ts [--books] [--arxiv] [--feeds]
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
-import { readFileSync } from "fs";
-import { join } from "path";
 
-// Load environment
-const envPath = join(import.meta.dir, "../.env.local");
-const envContent = readFileSync(envPath, "utf-8");
-const env: Record<string, string> = {};
-for (const line of envContent.split("\n")) {
-  const [key, ...vals] = line.split("=");
-  if (key && vals.length) {
-    let value = vals.join("=").trim();
-    if (
-      (value.startsWith("'") && value.endsWith("'")) ||
-      (value.startsWith('"') && value.endsWith('"'))
-    ) {
-      value = value.slice(1, -1);
-    }
-    env[key.trim()] = value;
-  }
-}
-
-const CONVEX_URL = env.CONVEX_SELF_HOSTED_URL || env.CONVEX_URL;
+const CONVEX_URL = process.env.CONVEX_SELF_HOSTED_URL || process.env.CONVEX_URL;
 if (!CONVEX_URL) throw new Error("Missing CONVEX_URL");
 
 const client = new ConvexHttpClient(CONVEX_URL);
+
+interface FeedRow {
+  url: string;
+  name?: string;
+}
 
 // Load source data
 const dataPath = join(import.meta.dir, "../data/books-and-papers.json");
@@ -144,10 +132,10 @@ async function addFeeds(): Promise<void> {
     },
   ];
 
-  const existingFeeds = await client.query(api.feeds.list);
+  const existingFeeds = (await client.query(api.feeds.list)) as FeedRow[];
 
   for (const feed of feeds) {
-    const exists = existingFeeds.some((f: any) => f.url === feed.url);
+    const exists = existingFeeds.some((f: FeedRow) => f.url === feed.url);
     if (exists) {
       console.log(`  Already exists: ${feed.name}`);
       continue;

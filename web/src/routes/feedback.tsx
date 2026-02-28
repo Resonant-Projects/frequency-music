@@ -1,14 +1,20 @@
+import { createMemo, createSignal, For, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { For, Show, createMemo, createSignal } from "solid-js";
 import { css } from "../../styled-system/css";
-import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
-import { convexApi } from "../integrations/convex/api";
+import {
+  UIBadge,
+  UIButton,
+  UICard,
+  UIInput,
+  UITextarea,
+} from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createMutation,
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { withDevBypassSecret } from "../integrations/authBypass";
+import { convexApi } from "../integrations/convex/api";
 
 const pageClass = css({
   display: "grid",
@@ -46,9 +52,12 @@ export function FeedbackPage() {
   const compositions = createQuery(convexApi.compositions.list, () => ({
     limit: 40,
   }));
-  const sessions = createQueryWithStatus(convexApi.listening.listRecent, () => ({
-    limit: 30,
-  }));
+  const sessions = createQueryWithStatus(
+    convexApi.listening.listRecent,
+    () => ({
+      limit: 30,
+    }),
+  );
   const createSession = createMutation(convexApi.listening.create);
 
   const compositionById = createMemo(() => {
@@ -161,7 +170,16 @@ export function FeedbackPage() {
           placeholder="Describe body response, harmonic clarity, and next action"
         />
 
-        <div class={css({ display: "grid", gap: "3", gridTemplateColumns: { base: "1fr", md: "repeat(3, minmax(0, 1fr))" } })}>
+        <div
+          class={css({
+            display: "grid",
+            gap: "3",
+            gridTemplateColumns: {
+              base: "1fr",
+              md: "repeat(3, minmax(0, 1fr))",
+            },
+          })}
+        >
           <div>
             <label class={fieldLabelClass} for="feedback-pleasantness">
               Pleasantness (0-5)
@@ -203,9 +221,18 @@ export function FeedbackPage() {
           </div>
         </div>
 
-        <div class={css({ alignItems: "center", display: "flex", justifyContent: "space-between", marginTop: "4" })}>
+        <div
+          class={css({
+            alignItems: "center",
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: "4",
+          })}
+        >
           <Show when={notice()}>
-            {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
+            {(message) => (
+              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+            )}
           </Show>
           <UIButton type="submit" variant="solid">
             Log Session
@@ -216,26 +243,65 @@ export function FeedbackPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Recent Feedback</h2>
         <Show when={!sessions.isLoading()} fallback={<p>Loading sessions…</p>}>
-          <div class={css({ display: "grid", gap: "3" })}>
-            <For each={sessions.data() ?? []}>
-              {(session: Doc<"listeningSessions">) => (
-                <div class={css({ borderColor: "rgba(200, 168, 75, 0.24)", borderRadius: "l2", borderWidth: "1px", p: "4" })}>
-                  <div class={css({ display: "flex", gap: "2", marginBottom: "2" })}>
-                    <UIBadge tone="gold">
-                      {compositionById().get(String(session.compositionId)) ?? "Composition"}
-                    </UIBadge>
-                    <UIBadge tone="cream">{session.participants.length} listeners</UIBadge>
+          <Show
+            when={!sessions.isError()}
+            fallback={
+              <p class={css({ color: "#f87171" })}>
+                Failed to load sessions:{" "}
+                {sessions.error()?.message ?? "Unknown error"}
+              </p>
+            }
+          >
+            <div class={css({ display: "grid", gap: "3" })}>
+              <For each={sessions.data() ?? []}>
+                {(session: Doc<"listeningSessions">) => (
+                  <div
+                    class={css({
+                      borderColor: "rgba(200, 168, 75, 0.24)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      p: "4",
+                    })}
+                  >
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        marginBottom: "2",
+                      })}
+                    >
+                      <UIBadge tone="gold">
+                        {compositionById().get(String(session.compositionId)) ??
+                          "Composition"}
+                      </UIBadge>
+                      <UIBadge tone="cream">
+                        {session.participants.length} listeners
+                      </UIBadge>
+                    </div>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.75)",
+                        marginBottom: "2",
+                      })}
+                    >
+                      {session.feedbackMd}
+                    </p>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.55)",
+                        fontFamily: "mono",
+                        fontSize: "xs",
+                      })}
+                    >
+                      pleasantness: {session.ratings?.bodilyPleasantness ?? "-"}{" "}
+                      · goosebumps: {session.ratings?.goosebumps ?? "-"} ·
+                      musicality: {session.ratings?.musicality ?? "-"}
+                    </p>
                   </div>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.75)", marginBottom: "2" })}>
-                    {session.feedbackMd}
-                  </p>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.55)", fontFamily: "mono", fontSize: "xs" })}>
-                    pleasantness: {session.ratings?.bodilyPleasantness ?? "-"} · goosebumps: {session.ratings?.goosebumps ?? "-"} · musicality: {session.ratings?.musicality ?? "-"}
-                  </p>
-                </div>
-              )}
-            </For>
-          </div>
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
       </UICard>
     </section>

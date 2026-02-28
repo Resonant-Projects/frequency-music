@@ -1,14 +1,14 @@
-import { For, Show, createSignal } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
-import { convexApi } from "../integrations/convex/api";
-import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createMutation,
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
+import { convexApi } from "../integrations/convex/api";
 
 const pageClass = css({
   display: "grid",
@@ -35,9 +35,12 @@ const fieldLabelClass = css({
 });
 
 export function CompositionsPage() {
-  const compositions = createQueryWithStatus(convexApi.compositions.list, () => ({
-    limit: 24,
-  }));
+  const compositions = createQueryWithStatus(
+    convexApi.compositions.list,
+    () => ({
+      limit: 24,
+    }),
+  );
   const recipes = createQuery(convexApi.recipes.listByStatus, () => ({
     limit: 40,
   }));
@@ -63,7 +66,10 @@ export function CompositionsPage() {
         withDevBypassSecret({
           title: title().trim(),
           recipeId: recipeId() as Id<"recipes">,
-          artifactType: artifactType() as "microStudy" | "expandedStudy" | "fullTrack",
+          artifactType: artifactType() as
+            | "microStudy"
+            | "expandedStudy"
+            | "fullTrack",
         }),
       );
       setTitle("");
@@ -102,7 +108,14 @@ export function CompositionsPage() {
           placeholder="Drift Study A"
         />
 
-        <div class={css({ display: "grid", gap: "3", gridTemplateColumns: { base: "1fr", md: "1fr 1fr" }, marginTop: "3" })}>
+        <div
+          class={css({
+            display: "grid",
+            gap: "3",
+            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            marginTop: "3",
+          })}
+        >
           <div>
             <label class={fieldLabelClass} for="composition-recipe">
               Recipe
@@ -157,9 +170,18 @@ export function CompositionsPage() {
           </div>
         </div>
 
-        <div class={css({ alignItems: "center", display: "flex", justifyContent: "space-between", marginTop: "4" })}>
+        <div
+          class={css({
+            alignItems: "center",
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: "4",
+          })}
+        >
           <Show when={notice()}>
-            {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
+            {(message) => (
+              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+            )}
           </Show>
           <UIButton type="submit" variant="solid">
             Create Composition
@@ -169,30 +191,57 @@ export function CompositionsPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Artifact Pipeline</h2>
-        <Show when={!compositions.isLoading()} fallback={<p>Loading compositions…</p>}>
+        <Show
+          when={!compositions.isLoading()}
+          fallback={<p>Loading compositions…</p>}
+        >
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={compositions.data() ?? []}>
               {(item: any) => (
                 <div
                   data-testid="entity-row"
-                  class={css({ borderColor: "rgba(200, 168, 75, 0.22)", borderRadius: "l2", borderWidth: "1px", p: "4" })}
+                  class={css({
+                    borderColor: "rgba(200, 168, 75, 0.22)",
+                    borderRadius: "l2",
+                    borderWidth: "1px",
+                    p: "4",
+                  })}
                 >
-                  <div class={css({ display: "flex", gap: "2", marginBottom: "2" })}>
+                  <div
+                    class={css({
+                      display: "flex",
+                      gap: "2",
+                      marginBottom: "2",
+                    })}
+                  >
                     <UIBadge tone="gold">{item.status}</UIBadge>
                     <UIBadge tone="violet">{item.artifactType}</UIBadge>
                     <UIBadge tone="cream">{item.version}</UIBadge>
                   </div>
 
-                  <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>{item.title}</h3>
+                  <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
+                    {item.title}
+                  </h3>
 
-                  <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
-                    <UIButton variant="outline" onClick={() => setStatus(String(item._id), "in_progress")}>
+                  <div
+                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                  >
+                    <UIButton
+                      variant="outline"
+                      onClick={() => setStatus(String(item._id), "in_progress")}
+                    >
                       In Progress
                     </UIButton>
-                    <UIButton variant="outline" onClick={() => setStatus(String(item._id), "rendered")}>
+                    <UIButton
+                      variant="outline"
+                      onClick={() => setStatus(String(item._id), "rendered")}
+                    >
                       Rendered
                     </UIButton>
-                    <UIButton variant="ghost" onClick={() => setStatus(String(item._id), "published")}>
+                    <UIButton
+                      variant="ghost"
+                      onClick={() => setStatus(String(item._id), "published")}
+                    >
                       Published
                     </UIButton>
                   </div>

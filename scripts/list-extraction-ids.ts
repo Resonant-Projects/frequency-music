@@ -7,13 +7,24 @@ import { api } from "../convex/_generated/api";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
+interface ExtractionRow {
+  _id: string;
+  sourceId: string;
+  claims?: unknown[];
+  topics?: string[];
+  compositionParameters?: unknown[];
+  model?: string;
+}
+
 async function main() {
   // Get all extractions in batches
-  const all: any[] = [];
-  const batch = await client.query(api.extractions.listRecent, { limit: 200 });
+  const all: ExtractionRow[] = [];
+  const batch = (await client.query(api.extractions.listRecent, {
+    limit: 200,
+  })) as ExtractionRow[];
   all.push(...batch);
 
-  const summary = all.map((e: any) => ({
+  const summary = all.map((e: ExtractionRow) => ({
     id: e._id,
     sourceId: e.sourceId,
     claims: e.claims?.length ?? 0,
@@ -22,15 +33,15 @@ async function main() {
     model: e.model,
   }));
 
-  const zeroClaims = summary.filter(s => s.claims === 0).length;
-  const zeroParams = summary.filter(s => s.params === 0).length;
+  const zeroClaims = summary.filter((s) => s.claims === 0).length;
+  const zeroParams = summary.filter((s) => s.params === 0).length;
 
   console.error(`Total: ${summary.length}`);
   console.error(`Zero claims: ${zeroClaims}`);
   console.error(`Zero params: ${zeroParams}`);
 
   // Write to file
-  const fs = await import("fs");
+  const fs = await import("node:fs");
   fs.writeFileSync("/tmp/ext-summary.json", JSON.stringify(summary, null, 2));
   console.error("Written to /tmp/ext-summary.json");
 }

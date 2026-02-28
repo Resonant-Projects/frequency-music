@@ -1,15 +1,15 @@
-import { For, Show, createSignal } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
-import { convexApi } from "../integrations/convex/api";
-import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createAction,
   createMutation,
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
+import { convexApi } from "../integrations/convex/api";
 
 const pageClass = css({
   display: "grid",
@@ -20,7 +20,10 @@ const pageClass = css({
 const statGridClass = css({
   display: "grid",
   gap: "3",
-  gridTemplateColumns: { base: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" },
+  gridTemplateColumns: {
+    base: "repeat(2, minmax(0, 1fr))",
+    md: "repeat(4, minmax(0, 1fr))",
+  },
 });
 
 const sectionTitleClass = css({
@@ -40,6 +43,19 @@ function statusTone(status: string): "gold" | "violet" | "cream" {
 const DISPLAY_QUEUE_LIMIT = import.meta.env.VITE_E2E_MODE === "1" ? 200 : 24;
 
 export function DisplayPage() {
+  type InboxRow = {
+    _id: Id<"sources">;
+    status: string;
+    type: string;
+    title?: string;
+    blockedReason?: string;
+    canonicalUrl?: string;
+    nextAction: string;
+    extractionPreview?: {
+      summary: string;
+    } | null;
+  };
+
   const inboxRows = createQueryWithStatus(convexApi.inbox.list, () => ({
     limit: DISPLAY_QUEUE_LIMIT,
   }));
@@ -51,19 +67,22 @@ export function DisplayPage() {
 
   const [notice, setNotice] = createSignal<string | null>(null);
 
-  async function runRowExtraction(sourceId: string) {
+  async function runRowExtraction(sourceId: Id<"sources">) {
     try {
-      await runExtraction(withDevBypassSecret({ sourceId: sourceId as Id<"sources"> }));
+      await runExtraction(withDevBypassSecret({ sourceId }));
       setNotice("Extraction started.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);
     }
   }
 
-  async function markTriaged(sourceId: string) {
+  async function markTriaged(sourceId: Id<"sources">) {
     try {
       await updateStatus(
-        withDevBypassSecret({ id: sourceId as Id<"sources">, status: "triaged" as const }),
+        withDevBypassSecret({
+          id: sourceId,
+          status: "triaged" as const,
+        }),
       );
       setNotice("Source marked as triaged.");
     } catch (error) {
@@ -71,10 +90,13 @@ export function DisplayPage() {
     }
   }
 
-  async function promoteFollowers(sourceId: string) {
+  async function promoteFollowers(sourceId: Id<"sources">) {
     try {
       await setVisibility(
-        withDevBypassSecret({ id: sourceId as Id<"sources">, visibility: "followers" }),
+        withDevBypassSecret({
+          id: sourceId,
+          visibility: "followers",
+        }),
       );
       setNotice("Visibility promoted to followers.");
     } catch (error) {
@@ -86,13 +108,17 @@ export function DisplayPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={sectionTitleClass}>Display & Triage</h1>
-        <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
+        <p
+          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
+        >
           This queue prioritizes blocked and oldest private sources so weekly
           review stays aligned with ingest throughput.
         </p>
         <Show when={notice()}>
           {(message) => (
-            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>{message()}</p>
+            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+              {message()}
+            </p>
           )}
         </Show>
       </UICard>
@@ -101,26 +127,66 @@ export function DisplayPage() {
         <h2 class={sectionTitleClass}>Inbox Totals</h2>
         <div class={statGridClass}>
           <div>
-            <div class={css({ color: "zodiac.gold", fontSize: "3xl" })}>{counts()?.ingested ?? 0}</div>
-            <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontFamily: "mono", fontSize: "xs", letterSpacing: "0.14em", textTransform: "uppercase" })}>
+            <div class={css({ color: "zodiac.gold", fontSize: "3xl" })}>
+              {counts()?.ingested ?? 0}
+            </div>
+            <div
+              class={css({
+                color: "rgba(245, 240, 232, 0.58)",
+                fontFamily: "mono",
+                fontSize: "xs",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              })}
+            >
               Ingested
             </div>
           </div>
           <div>
-            <div class={css({ color: "zodiac.violet", fontSize: "3xl" })}>{counts()?.textReady ?? 0}</div>
-            <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontFamily: "mono", fontSize: "xs", letterSpacing: "0.14em", textTransform: "uppercase" })}>
+            <div class={css({ color: "zodiac.violet", fontSize: "3xl" })}>
+              {counts()?.textReady ?? 0}
+            </div>
+            <div
+              class={css({
+                color: "rgba(245, 240, 232, 0.58)",
+                fontFamily: "mono",
+                fontSize: "xs",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              })}
+            >
               Text Ready
             </div>
           </div>
           <div>
-            <div class={css({ color: "zodiac.cream", fontSize: "3xl" })}>{counts()?.reviewNeeded ?? 0}</div>
-            <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontFamily: "mono", fontSize: "xs", letterSpacing: "0.14em", textTransform: "uppercase" })}>
+            <div class={css({ color: "zodiac.cream", fontSize: "3xl" })}>
+              {counts()?.reviewNeeded ?? 0}
+            </div>
+            <div
+              class={css({
+                color: "rgba(245, 240, 232, 0.58)",
+                fontFamily: "mono",
+                fontSize: "xs",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              })}
+            >
               Review Needed
             </div>
           </div>
           <div>
-            <div class={css({ color: "#f87171", fontSize: "3xl" })}>{counts()?.blocked ?? 0}</div>
-            <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontFamily: "mono", fontSize: "xs", letterSpacing: "0.14em", textTransform: "uppercase" })}>
+            <div class={css({ color: "#f87171", fontSize: "3xl" })}>
+              {counts()?.blocked ?? 0}
+            </div>
+            <div
+              class={css({
+                color: "rgba(245, 240, 232, 0.58)",
+                fontFamily: "mono",
+                fontSize: "xs",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              })}
+            >
               Blocked
             </div>
           </div>
@@ -133,42 +199,82 @@ export function DisplayPage() {
         <Show when={!inboxRows.isLoading()} fallback={<p>Loading inbox…</p>}>
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={inboxRows.data() ?? []}>
-              {(row: any) => (
+              {(row: InboxRow) => (
                 <div
                   data-testid="display-row"
-                  class={css({ borderColor: "rgba(200, 168, 75, 0.24)", borderRadius: "l2", borderWidth: "1px", p: "4" })}
+                  class={css({
+                    borderColor: "rgba(200, 168, 75, 0.24)",
+                    borderRadius: "l2",
+                    borderWidth: "1px",
+                    p: "4",
+                  })}
                 >
-                  <div class={css({ alignItems: "center", display: "flex", gap: "2", marginBottom: "2" })}>
-                    <UIBadge tone={statusTone(row.status)}>{row.status}</UIBadge>
+                  <div
+                    class={css({
+                      alignItems: "center",
+                      display: "flex",
+                      gap: "2",
+                      marginBottom: "2",
+                    })}
+                  >
+                    <UIBadge tone={statusTone(row.status)}>
+                      {row.status}
+                    </UIBadge>
                     <UIBadge tone="cream">{row.type}</UIBadge>
                     <Show when={row.blockedReason}>
-                      <UIBadge tone="violet">blocked: {row.blockedReason}</UIBadge>
+                      <UIBadge tone="violet">
+                        blocked: {row.blockedReason}
+                      </UIBadge>
                     </Show>
                   </div>
 
-                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>{row.title ?? "Untitled source"}</h3>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.66)", fontSize: "sm", marginBottom: "2" })}>
+                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                    {row.title ?? "Untitled source"}
+                  </h3>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.66)",
+                      fontSize: "sm",
+                      marginBottom: "2",
+                    })}
+                  >
                     Next action: <strong>{row.nextAction}</strong>
                   </p>
 
                   <Show when={row.extractionPreview}>
-                    <p class={css({ color: "rgba(245, 240, 232, 0.56)", fontSize: "sm", marginBottom: "2" })}>
-                      {row.extractionPreview.summary}
-                    </p>
+                    {(preview) => (
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.56)",
+                          fontSize: "sm",
+                          marginBottom: "2",
+                        })}
+                      >
+                        {preview().summary}
+                      </p>
+                    )}
                   </Show>
 
-                  <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+                  <div
+                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                  >
                     <UIButton
                       variant="outline"
                       disabled={row.status !== "text_ready"}
-                      onClick={() => runRowExtraction(String(row._id))}
+                      onClick={() => runRowExtraction(row._id)}
                     >
                       Run Extraction
                     </UIButton>
-                    <UIButton variant="outline" onClick={() => markTriaged(String(row._id))}>
+                    <UIButton
+                      variant="outline"
+                      onClick={() => markTriaged(row._id)}
+                    >
                       Mark Triaged
                     </UIButton>
-                    <UIButton variant="ghost" onClick={() => promoteFollowers(String(row._id))}>
+                    <UIButton
+                      variant="ghost"
+                      onClick={() => promoteFollowers(row._id)}
+                    >
                       Promote Followers
                     </UIButton>
                   </div>

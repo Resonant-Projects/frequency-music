@@ -622,12 +622,7 @@
           "value": "I-IV-V-I progression",
           "details": {
             "function": "creates tension via dominant chord resolution",
-            "progression": [
-              "I",
-              "IV",
-              "V",
-              "I"
-            ]
+            "progression": ["I", "IV", "V", "I"]
           }
         }
       ],
@@ -741,11 +736,7 @@
           "type": "chordProgression",
           "value": "Three pitch sets A, B, C with Boolean operations",
           "details": {
-            "operations": [
-              "union",
-              "intersection",
-              "negation"
-            ],
+            "operations": ["union", "intersection", "negation"],
             "piece": "Herma",
             "sets": 3
           }

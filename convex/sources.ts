@@ -1,7 +1,6 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { ConvexError } from "convex/values";
 import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 
@@ -13,6 +12,8 @@ const sourceStatusValidator = v.union(
   v.literal("extracted"),
   v.literal("triaged"),
   v.literal("review_needed"),
+  v.literal("promoted_followers"),
+  v.literal("promoted_public"),
   v.literal("archived"),
 );
 
@@ -25,7 +26,7 @@ const sourceStatusValidator = v.union(
  */
 export const listByStatus = query({
   args: {
-    status: v.string(),
+    status: sourceStatusValidator,
     limit: v.optional(v.number()),
   },
   returns: v.array(v.any()),
@@ -33,9 +34,7 @@ export const listByStatus = query({
     const limit = args.limit ?? 50;
     return await ctx.db
       .query("sources")
-      .withIndex("by_status_updatedAt", (q) =>
-        q.eq("status", args.status as any),
-      )
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
       .order("desc")
       .take(limit);
   },
@@ -48,7 +47,10 @@ export const listRecent = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
-    return await ctx.db.query("sources").order("desc").take(args.limit ?? 50);
+    return await ctx.db
+      .query("sources")
+      .order("desc")
+      .take(args.limit ?? 50);
   },
 });
 
@@ -171,7 +173,8 @@ export const create = mutation({
     const id = await ctx.db.insert("sources", {
       ...createArgs,
       rawTextSha256,
-      status: createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
+      status:
+        createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
       visibility: "private",
       createdBy: identity.subject,
       createdAt: now,
@@ -199,15 +202,17 @@ export const updateStatus = mutation({
       v.literal("promoted_public"),
       v.literal("archived"),
     ),
-    blockedReason: v.optional(v.union(
-      v.literal("no_text"),
-      v.literal("copyright"),
-      v.literal("needs_metadata"),
-      v.literal("needs_tagging"),
-      v.literal("ai_error"),
-      v.literal("needs_human_review"),
-      v.literal("duplicate"),
-    )),
+    blockedReason: v.optional(
+      v.union(
+        v.literal("no_text"),
+        v.literal("copyright"),
+        v.literal("needs_metadata"),
+        v.literal("needs_tagging"),
+        v.literal("ai_error"),
+        v.literal("needs_human_review"),
+        v.literal("duplicate"),
+      ),
+    ),
     blockedDetails: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
@@ -289,11 +294,14 @@ type ExternalUpsertArgs = {
   transcript?: string;
   tags?: string[];
   topics?: string[];
-  metadata?: any;
+  metadata?: unknown;
   createdBy?: string;
 };
 
-async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) {
+async function upsertExternalSource(
+  ctx: MutationCtx,
+  args: ExternalUpsertArgs,
+) {
   const now = Date.now();
 
   const existing = await ctx.db

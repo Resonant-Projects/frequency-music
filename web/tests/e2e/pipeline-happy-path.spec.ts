@@ -25,9 +25,9 @@ test.describe("pipeline happy path", () => {
       await page.locator("#url-input-url").fill(sourceUrl);
       await page.locator("#url-input-title").fill(sourceTitle);
       await page.locator("#url-input-tags").fill(`e2e,${runId}`);
-      await page.locator("#url-input-raw-text").fill(
-        `E2E ingest payload for ${runId}`,
-      );
+      await page
+        .locator("#url-input-raw-text")
+        .fill(`E2E ingest payload for ${runId}`);
       await page.getByRole("button", { name: "Ingest URL" }).click();
 
       await expectNoticeToMatch(page, [
@@ -45,7 +45,9 @@ test.describe("pipeline happy path", () => {
         .first();
       await expect(sourceRow).toBeVisible({ timeout: 30_000 });
 
-      const triageButton = sourceRow.getByRole("button", { name: "Mark Triaged" });
+      const triageButton = sourceRow.getByRole("button", {
+        name: "Mark Triaged",
+      });
       await expect(triageButton).toBeVisible({ timeout: 30_000 });
       await triageButton.click();
 
@@ -56,15 +58,20 @@ test.describe("pipeline happy path", () => {
       await page.goto("/hypotheses");
 
       await page.locator("#hyp-title").fill(hypothesisTitle);
-      await page.locator("#hyp-question").fill(
-        `Does ${runId} improve clarity in constrained harmonic drift?`,
-      );
-      await page.locator("#hyp-statement").fill(
-        `If ${runId} keeps a stable anchor, perceived cohesion should increase.`,
-      );
+      await page
+        .locator("#hyp-question")
+        .fill(`Does ${runId} improve clarity in constrained harmonic drift?`);
+      await page
+        .locator("#hyp-statement")
+        .fill(
+          `If ${runId} keeps a stable anchor, perceived cohesion should increase.`,
+        );
       await page.locator("#hyp-rationale").fill(`Rationale for ${runId}`);
 
-      const citation = page.locator("label").filter({ hasText: sourceTitle }).first();
+      const citation = page
+        .locator("label")
+        .filter({ hasText: sourceTitle })
+        .first();
       try {
         await expect(citation).toBeVisible({ timeout: 5_000 });
         await citation.click();
@@ -93,12 +100,16 @@ test.describe("pipeline happy path", () => {
           { timeout: 30_000 },
         )
         .toBeGreaterThan(0);
-      await page.locator("#recipe-hypothesis").selectOption({ label: hypothesisTitle });
+      await page
+        .locator("#recipe-hypothesis")
+        .selectOption({ label: hypothesisTitle });
 
       await page.locator("#recipe-title").fill(recipeTitle);
       await page.locator("#recipe-body").fill(`Recipe body for ${runId}`);
       await page.locator("#recipe-params").fill("tempo:108 BPM\nrootNote:C");
-      await page.locator("#recipe-checklist").fill("Set tempo\nPrint version A");
+      await page
+        .locator("#recipe-checklist")
+        .fill("Set tempo\nPrint version A");
 
       await page.getByRole("button", { name: "Create Recipe" }).click();
       await expectNoticeToMatch(page, [/Recipe created\./i]);
@@ -149,12 +160,16 @@ test.describe("pipeline happy path", () => {
         .selectOption({ label: compositionTitle });
 
       await page.locator("#feedback-participants").fill("self, collaborator");
-      await page.locator("#feedback-context").fill(`Headphones session ${runId}`);
+      await page
+        .locator("#feedback-context")
+        .fill(`Headphones session ${runId}`);
       await page.locator("#feedback-notes").fill(feedbackNotes);
 
       await page.getByRole("button", { name: "Log Session" }).click();
       await expectNoticeToMatch(page, [/Listening session logged\./i]);
-      await expect(page.getByText(feedbackNotes)).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText(feedbackNotes)).toBeVisible({
+        timeout: 30_000,
+      });
     });
 
     await test.step("create and toggle feed in admin", async () => {
@@ -176,8 +191,11 @@ test.describe("pipeline happy path", () => {
       const feedRow = feedNameParagraph.locator("xpath=ancestor::div[2]");
       await expect(feedRow).toBeVisible({ timeout: 30_000 });
 
-      const toggleButton = feedRow.getByRole("button", { name: /Disable|Enable/ }).first();
-      const previousLabel = (await toggleButton.textContent())?.trim() ?? "Disable";
+      const toggleButton = feedRow
+        .getByRole("button", { name: /Disable|Enable/ })
+        .first();
+      const previousLabel =
+        (await toggleButton.textContent())?.trim() ?? "Disable";
       const expectedLabel = previousLabel === "Disable" ? "Enable" : "Disable";
 
       await toggleButton.click();
@@ -191,7 +209,9 @@ test.describe("pipeline happy path", () => {
       await expect(
         page.getByRole("heading", { name: "Weekly Turns" }),
       ).toBeVisible();
-      await expect(page.getByRole("button", { name: "Generate Now" })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Generate Now" }),
+      ).toBeVisible();
     });
   });
 });

@@ -108,7 +108,7 @@ async function main() {
     recipeResult.generated.dawChecklist.forEach((item: string, i: number) => {
       console.log(`  ${i + 1}. ${item}`);
     });
-    console.log("\n" + "=".repeat(60));
+    console.log(`\n${"=".repeat(60)}`);
   } catch (error: any) {
     console.error("❌ Error:", error.message);
     process.exit(1);

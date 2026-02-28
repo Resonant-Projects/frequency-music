@@ -4,10 +4,11 @@
  * Uses @convex-dev/aggregate for efficient counts
  */
 
-import { mutation, query, internalMutation } from "./_generated/server";
+import { TableAggregate } from "@convex-dev/aggregate";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import { TableAggregate } from "@convex-dev/aggregate";
+import type { DataModel, Doc } from "./_generated/dataModel";
+import { internalMutation, query } from "./_generated/server";
 
 // ============================================================================
 // CONCEPT MENTIONS AGGREGATE
@@ -15,13 +16,12 @@ import { TableAggregate } from "@convex-dev/aggregate";
 
 /**
  * Aggregate for ranking concepts by mention count
- * Uses any type since DataModel isn't available at compile time
  */
-export const conceptsAggregate = new TableAggregate<any, "concepts">(
+export const conceptsAggregate = new TableAggregate<DataModel, "concepts">(
   components.aggregate,
   {
-    sortKey: (doc: any) => doc.mentionCount,
-    sumValue: (doc: any) => doc.mentionCount,
+    sortKey: (doc: Doc<"concepts">) => doc.mentionCount,
+    sumValue: (doc: Doc<"concepts">) => doc.mentionCount,
   },
 );
 
@@ -78,13 +78,13 @@ export const getTopConceptsRanked = query({
 /**
  * Aggregate for counting sources by status
  */
-export const sourcesByStatusAggregate = new TableAggregate<any, "sources">(
-  components.aggregate,
-  {
-    namespace: (doc: any) => doc.status,
-    sortKey: (doc: any) => doc.createdAt,
-  },
-);
+export const sourcesByStatusAggregate = new TableAggregate<
+  DataModel,
+  "sources"
+>(components.aggregate, {
+  namespace: (doc: Doc<"sources">) => doc.status,
+  sortKey: (doc: Doc<"sources">) => doc.createdAt,
+});
 
 /**
  * Get source counts by status (efficient dashboard stats)

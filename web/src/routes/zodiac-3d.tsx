@@ -2,7 +2,14 @@
 // Three.js 3D implementation of the ZODIAC design with live Convex metrics.
 
 import { useNavigate } from "@tanstack/solid-router";
-import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import {
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js";
 import { createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import { SECTORS } from "../lib/zodiac-data";
@@ -17,6 +24,12 @@ const sectorRouteMap: Record<string, string> = {
   synthesis: "/compositions",
 };
 
+type SectorMetricRow = {
+  id: string;
+  sources: number;
+  claims: number;
+};
+
 export function Zodiac3D() {
   const navigate = useNavigate();
   const [selSector, setSelSector] = createSignal<string>("math");
@@ -27,9 +40,10 @@ export function Zodiac3D() {
   const pipeline = createQuery(convexApi.dashboard.pipeline);
 
   const sectors = createMemo(() => {
+    const rows = (sectorMetrics() ?? []) as SectorMetricRow[];
     const metrics = new Map<string, { sources: number; claims: number }>(
-      ((sectorMetrics() as any[] | undefined) ?? []).map((entry: any) => [
-        entry.id as string,
+      rows.map((entry: SectorMetricRow) => [
+        entry.id,
         {
           sources: Number(entry.sources ?? 0),
           claims: Number(entry.claims ?? 0),
@@ -94,7 +108,10 @@ export function Zodiac3D() {
     <div style="height:calc(100vh - var(--app-header-height));background:#0d0620;color:#f5f0e8;overflow:hidden;font-family:'Cormorant Garamond',Georgia,serif;display:flex">
       <div style="position:fixed;inset:0;pointer-events:none;opacity:0.022;background-image:radial-gradient(circle,#c8a84b 1px,transparent 1px);background-size:52px 52px" />
 
-      <div ref={cssContainerRef} style="flex:1;position:relative;overflow:hidden;min-width:0">
+      <div
+        ref={cssContainerRef}
+        style="flex:1;position:relative;overflow:hidden;min-width:0"
+      >
         <canvas ref={canvasRef} style="width:100%;height:100%;display:block" />
       </div>
 
@@ -132,12 +149,20 @@ export function Zodiac3D() {
           </p>
           <div style="display:flex;gap:12px;margin-bottom:14px">
             <div style="flex:1;padding:10px;border:1px solid rgba(200,168,75,0.18);text-align:center">
-              <div style="font-size:26px;color:#c8a84b">{activeSector().sources}</div>
-              <div style="font-size:8px;letter-spacing:0.25em;color:rgba(245,240,232,0.28);margin-top:2px">SOURCES</div>
+              <div style="font-size:26px;color:#c8a84b">
+                {activeSector().sources}
+              </div>
+              <div style="font-size:8px;letter-spacing:0.25em;color:rgba(245,240,232,0.28);margin-top:2px">
+                SOURCES
+              </div>
             </div>
             <div style="flex:1;padding:10px;border:1px solid rgba(139,92,246,0.18);text-align:center">
-              <div style="font-size:26px;color:#8b5cf6">{activeSector().claims}</div>
-              <div style="font-size:8px;letter-spacing:0.25em;color:rgba(245,240,232,0.28);margin-top:2px">CLAIMS</div>
+              <div style="font-size:26px;color:#8b5cf6">
+                {activeSector().claims}
+              </div>
+              <div style="font-size:8px;letter-spacing:0.25em;color:rgba(245,240,232,0.28);margin-top:2px">
+                CLAIMS
+              </div>
             </div>
           </div>
 
@@ -156,16 +181,10 @@ export function Zodiac3D() {
           </div>
           <For each={sectors()}>
             {(sector) => (
-              <div
-                role="button"
-                tabIndex={0}
-                style={`display:flex;align-items:center;justify-content:space-between;padding:7px 9px;margin-bottom:3px;cursor:pointer;border:1px solid;transition:all 0.2s;border-color:${selSector() === sector.id ? `${sector.color}55` : "rgba(200,168,75,0.1)"};background:${selSector() === sector.id ? "rgba(200,168,75,0.05)" : "transparent"}`}
+              <button
+                type="button"
+                style={`display:flex;align-items:center;justify-content:space-between;padding:7px 9px;margin-bottom:3px;cursor:pointer;border:1px solid;transition:all 0.2s;border-color:${selSector() === sector.id ? `${sector.color}55` : "rgba(200,168,75,0.1)"};background:${selSector() === sector.id ? "rgba(200,168,75,0.05)" : "transparent"};width:100%;text-align:left`}
                 onClick={() => handleSectorSelect(sector.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    handleSectorSelect(sector.id);
-                  }
-                }}
                 onMouseEnter={() => handleSectorHover(sector.id)}
                 onMouseLeave={() => handleSectorHover(null)}
               >
@@ -174,24 +193,32 @@ export function Zodiac3D() {
                 >
                   {sector.label}
                 </div>
-                <div style="font-size:10px;color:rgba(245,240,232,0.28)">{sector.sources} src</div>
-              </div>
+                <div style="font-size:10px;color:rgba(245,240,232,0.28)">
+                  {sector.sources} src
+                </div>
+              </button>
             )}
           </For>
         </div>
 
         <div style="padding:14px 26px 24px;border-top:1px solid rgba(200,168,75,0.1)">
-          <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:8px">PIPELINE</div>
+          <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:8px">
+            PIPELINE
+          </div>
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
             <For each={pipelineSummary()}>
               {(item, index) => (
                 <>
                   <div style="text-align:center;min-width:46px">
                     <div style="font-size:15px;color:#c8a84b">{item.value}</div>
-                    <div style="font-size:7.5px;letter-spacing:0.2em;color:rgba(245,240,232,0.25)">{item.label}</div>
+                    <div style="font-size:7.5px;letter-spacing:0.2em;color:rgba(245,240,232,0.25)">
+                      {item.label}
+                    </div>
                   </div>
                   <Show when={index() < pipelineSummary().length - 1}>
-                    <div style="font-size:9px;color:rgba(200,168,75,0.25);margin-bottom:8px">→</div>
+                    <div style="font-size:9px;color:rgba(200,168,75,0.25);margin-bottom:8px">
+                      →
+                    </div>
                   </Show>
                 </>
               )}

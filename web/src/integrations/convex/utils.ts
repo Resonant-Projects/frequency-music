@@ -1,4 +1,4 @@
-import { Accessor } from "solid-js";
+import type { Accessor } from "solid-js";
 
 export function isFunction<T>(value: unknown): value is Accessor<T> {
   return typeof value === "function";

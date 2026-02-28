@@ -1,14 +1,20 @@
 import { createSignal, For, Show } from "solid-js";
-import { css } from "../../styled-system/css";
-import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
-import { convexApi } from "../integrations/convex/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { css } from "../../styled-system/css";
+import {
+  UIBadge,
+  UIButton,
+  UICard,
+  UIInput,
+  UITextarea,
+} from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
   createMutation,
   createQueryWithStatus,
 } from "../integrations/convex";
+import { convexApi } from "../integrations/convex/api";
 
 const pageClass = css({
   display: "grid",
@@ -57,6 +63,14 @@ function formatTimestamp(timestamp: number) {
 }
 
 export function IngestPage() {
+  type RecentSourceRow = {
+    _id: Id<"sources">;
+    type: string;
+    status: string;
+    title?: string;
+    canonicalUrl?: string;
+    updatedAt: number;
+  };
   const [urlTitle, setUrlTitle] = createSignal("");
   const [urlValue, setUrlValue] = createSignal("");
   const [urlRawText, setUrlRawText] = createSignal("");
@@ -70,15 +84,20 @@ export function IngestPage() {
   const [notice, setNotice] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
-  const createFromUrlInput = createMutation(convexApi.sources.createFromUrlInput);
+  const createFromUrlInput = createMutation(
+    convexApi.sources.createFromUrlInput,
+  );
   const createFromYouTubeInput = createMutation(
     convexApi.sources.createFromYouTubeInput,
   );
   const runExtraction = createAction(convexApi.extract.extractSource);
 
-  const recentSources = createQueryWithStatus(convexApi.sources.listRecent, () => ({
-    limit: 14,
-  }));
+  const recentSources = createQueryWithStatus(
+    convexApi.sources.listRecent,
+    () => ({
+      limit: 14,
+    }),
+  );
 
   async function submitUrl(event: SubmitEvent) {
     event.preventDefault();
@@ -160,10 +179,10 @@ export function IngestPage() {
     }
   }
 
-  async function triggerExtraction(sourceId: string) {
+  async function triggerExtraction(sourceId: Id<"sources">) {
     setNotice(null);
     try {
-      await runExtraction(withDevBypassSecret({ sourceId: sourceId as Id<"sources"> }));
+      await runExtraction(withDevBypassSecret({ sourceId }));
       setNotice("Extraction dispatched.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);
@@ -180,7 +199,9 @@ export function IngestPage() {
         </p>
         <Show when={notice()}>
           {(message) => (
-            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>{message()}</p>
+            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+              {message()}
+            </p>
           )}
         </Show>
       </UICard>
@@ -229,7 +250,13 @@ export function IngestPage() {
             placeholder="Paste text if fetch step is not automated yet"
           />
 
-          <div class={css({ display: "flex", justifyContent: "flex-end", marginTop: "4" })}>
+          <div
+            class={css({
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: "4",
+            })}
+          >
             <UIButton type="submit" variant="solid" disabled={isSubmitting()}>
               Ingest URL
             </UIButton>
@@ -279,7 +306,13 @@ export function IngestPage() {
             placeholder="Paste transcript text if already available"
           />
 
-          <div class={css({ display: "flex", justifyContent: "flex-end", marginTop: "4" })}>
+          <div
+            class={css({
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: "4",
+            })}
+          >
             <UIButton type="submit" variant="solid" disabled={isSubmitting()}>
               Ingest YouTube
             </UIButton>
@@ -288,17 +321,33 @@ export function IngestPage() {
       </div>
 
       <UICard>
-        <div class={css({ alignItems: "center", display: "flex", justifyContent: "space-between", marginBottom: "3" })}>
+        <div
+          class={css({
+            alignItems: "center",
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "3",
+          })}
+        >
           <h2 class={sectionTitleClass}>Recent Sources</h2>
           <UIBadge tone="violet">Convex Live</UIBadge>
         </div>
 
-        <Show when={!recentSources.isLoading()} fallback={<p class={helperClass}>Loading sources…</p>}>
+        <Show
+          when={!recentSources.isLoading()}
+          fallback={<p class={helperClass}>Loading sources…</p>}
+        >
           <div class={sourceListClass}>
             <For each={recentSources.data() ?? []}>
-              {(source: any) => (
+              {(source: RecentSourceRow) => (
                 <UICard class={css({ bg: "rgba(13, 6, 32, 0.38)", p: "4" })}>
-                  <div class={css({ display: "flex", gap: "2", marginBottom: "2" })}>
+                  <div
+                    class={css({
+                      display: "flex",
+                      gap: "2",
+                      marginBottom: "2",
+                    })}
+                  >
                     <UIBadge tone="cream">{source.type}</UIBadge>
                     <UIBadge tone="gold">{source.status}</UIBadge>
                   </div>
@@ -306,15 +355,23 @@ export function IngestPage() {
                   <h3 class={css({ fontSize: "lg", marginBottom: "1" })}>
                     {source.title ?? "Untitled source"}
                   </h3>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.58)", fontFamily: "mono", fontSize: "xs" })}>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.58)",
+                      fontFamily: "mono",
+                      fontSize: "xs",
+                    })}
+                  >
                     Updated {formatTimestamp(source.updatedAt)}
                   </p>
 
-                  <div class={css({ display: "flex", gap: "2", marginTop: "3" })}>
+                  <div
+                    class={css({ display: "flex", gap: "2", marginTop: "3" })}
+                  >
                     <UIButton
                       variant="outline"
                       disabled={source.status !== "text_ready"}
-                      onClick={() => triggerExtraction(String(source._id))}
+                      onClick={() => triggerExtraction(source._id)}
                     >
                       Run Extraction
                     </UIButton>
@@ -323,7 +380,15 @@ export function IngestPage() {
                         href={source.canonicalUrl}
                         target="_blank"
                         rel="noreferrer"
-                        class={css({ color: "zodiac.gold", fontFamily: "mono", fontSize: "xs", letterSpacing: "0.12em", textTransform: "uppercase", textDecoration: "none", alignSelf: "center" })}
+                        class={css({
+                          color: "zodiac.gold",
+                          fontFamily: "mono",
+                          fontSize: "xs",
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          textDecoration: "none",
+                          alignSelf: "center",
+                        })}
                       >
                         Open
                       </a>

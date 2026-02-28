@@ -22,16 +22,18 @@ export async function expectNoticeToMatch(
   patterns: RegExp[],
   timeout = 20_000,
 ): Promise<void> {
-  await expect.poll(
-    async () => {
-      for (const pattern of patterns) {
-        const match = page.getByText(pattern).first();
-        if (await match.isVisible().catch(() => false)) {
-          return true;
+  await expect
+    .poll(
+      async () => {
+        for (const pattern of patterns) {
+          const match = page.getByText(pattern).first();
+          if (await match.isVisible().catch(() => false)) {
+            return true;
+          }
         }
-      }
-      return false;
-    },
-    { timeout },
-  ).toBeTruthy();
+        return false;
+      },
+      { timeout },
+    )
+    .toBeTruthy();
 }

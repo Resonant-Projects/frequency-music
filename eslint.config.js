@@ -1,7 +1,7 @@
 // @ts-check
 import convexPlugin from "@convex-dev/eslint-plugin";
-import tseslint from "typescript-eslint";
 import biome from "eslint-config-biome";
+import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   // Globally ignored paths

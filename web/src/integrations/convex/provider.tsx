@@ -1,4 +1,4 @@
-import { ConvexClient } from "convex/browser";
+import type { ConvexClient } from "convex/browser";
 import type { Component, Context, JSX } from "solid-js";
 import {
   createContext,
@@ -8,11 +8,11 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
-import {
+import type {
   AuthStateSnapshot,
+  AuthTokenFetcher,
   ConvexAuthState,
   UseAuthAdapter,
-  type AuthTokenFetcher,
 } from "./types";
 import { safeAccess } from "./utils";
 
@@ -115,7 +115,10 @@ export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
           setIsConvexAuthenticated(backendAuthed);
         });
       } else {
-        props.client.setAuth(async () => null, () => {});
+        props.client.setAuth(
+          () => Promise.resolve(null),
+          () => {},
+        );
         setIsConvexAuthenticated(false);
       }
 
@@ -129,7 +132,10 @@ export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
 
   onCleanup(() => {
     try {
-      props.client.setAuth(async () => null, () => {});
+      props.client.setAuth(
+        () => Promise.resolve(null),
+        () => {},
+      );
     } catch (error) {
       console.error("Convex auth cleanup failed:", error);
     }

@@ -1,13 +1,19 @@
-import { For, Show, createSignal } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { css } from "../../styled-system/css";
-import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
+import {
+  UIBadge,
+  UIButton,
+  UICard,
+  UIInput,
+  UITextarea,
+} from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
-import { convexApi } from "../integrations/convex/api";
 import {
   createMutation,
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
+import { convexApi } from "../integrations/convex/api";
 
 const pageClass = css({
   display: "grid",
@@ -34,9 +40,12 @@ const fieldLabelClass = css({
 });
 
 export function HypothesesPage() {
-  const hypotheses = createQueryWithStatus(convexApi.hypotheses.listByStatus, () => ({
-    limit: 24,
-  }));
+  const hypotheses = createQueryWithStatus(
+    convexApi.hypotheses.listByStatus,
+    () => ({
+      limit: 24,
+    }),
+  );
   const recentSources = createQuery(convexApi.sources.listRecent, () => ({
     limit: 20,
   }));
@@ -138,7 +147,16 @@ export function HypothesesPage() {
 
         <div class={css({ marginTop: "3" })}>
           <p class={fieldLabelClass}>Source Citations</p>
-          <div class={css({ display: "grid", gap: "2", gridTemplateColumns: { base: "1fr", md: "repeat(2, minmax(0, 1fr))" } })}>
+          <div
+            class={css({
+              display: "grid",
+              gap: "2",
+              gridTemplateColumns: {
+                base: "1fr",
+                md: "repeat(2, minmax(0, 1fr))",
+              },
+            })}
+          >
             <For each={recentSources() ?? []}>
               {(source: any) => (
                 <label
@@ -166,9 +184,17 @@ export function HypothesesPage() {
           </div>
         </div>
 
-        <div class={css({ display: "flex", justifyContent: "space-between", marginTop: "4" })}>
+        <div
+          class={css({
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: "4",
+          })}
+        >
           <Show when={notice()}>
-            {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
+            {(message) => (
+              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+            )}
           </Show>
           <UIButton type="submit" variant="solid">
             Create Hypothesis
@@ -178,21 +204,53 @@ export function HypothesesPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Current Queue</h2>
-        <Show when={!hypotheses.isLoading()} fallback={<p>Loading hypotheses…</p>}>
+        <Show
+          when={!hypotheses.isLoading()}
+          fallback={<p>Loading hypotheses…</p>}
+        >
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={hypotheses.data() ?? []}>
               {(item: any) => (
                 <div
                   data-testid="entity-row"
-                  class={css({ borderColor: "rgba(200, 168, 75, 0.25)", borderRadius: "l2", borderWidth: "1px", p: "4" })}
+                  class={css({
+                    borderColor: "rgba(200, 168, 75, 0.25)",
+                    borderRadius: "l2",
+                    borderWidth: "1px",
+                    p: "4",
+                  })}
                 >
-                  <div class={css({ display: "flex", gap: "2", marginBottom: "2" })}>
+                  <div
+                    class={css({
+                      display: "flex",
+                      gap: "2",
+                      marginBottom: "2",
+                    })}
+                  >
                     <UIBadge tone="cream">{item.status}</UIBadge>
-                    <UIBadge tone="violet">{item.sourceIds.length} citations</UIBadge>
+                    <UIBadge tone="violet">
+                      {item.sourceIds.length} citations
+                    </UIBadge>
                   </div>
-                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>{item.title}</h3>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.7)", marginBottom: "1" })}>{item.question}</p>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.55)", fontSize: "sm" })}>{item.hypothesis}</p>
+                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                    {item.title}
+                  </h3>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.7)",
+                      marginBottom: "1",
+                    })}
+                  >
+                    {item.question}
+                  </p>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.55)",
+                      fontSize: "sm",
+                    })}
+                  >
+                    {item.hypothesis}
+                  </p>
                 </div>
               )}
             </For>

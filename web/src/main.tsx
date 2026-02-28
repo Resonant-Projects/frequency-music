@@ -2,11 +2,11 @@ import { ConvexClient } from "convex/browser";
 import { render } from "solid-js/web";
 import App from "./App";
 import { isLocalAuthBypassEnabled } from "./integrations/authBypass";
-import { ConvexProvider } from "./integrations/convex";
 import {
   createConvexClerkAuthAdapter,
   initializeClerk,
 } from "./integrations/clerk";
+import { ConvexProvider } from "./integrations/convex";
 import "./index.css";
 import "../styled-system/styles.css";
 
@@ -26,8 +26,13 @@ import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "@fontsource/ibm-plex-mono/400-italic.css";
 
-const root = document.getElementById("root");
-if (!root) throw new Error("Root element #root not found");
+const rootElement = (() => {
+  const element = document.getElementById("root");
+  if (!(element instanceof HTMLElement)) {
+    throw new Error("Root element #root not found");
+  }
+  return element;
+})();
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 if (!convexUrl) {
@@ -55,7 +60,7 @@ async function bootstrap() {
         <App />
       </ConvexProvider>
     ),
-    root,
+    rootElement,
   );
 }
 

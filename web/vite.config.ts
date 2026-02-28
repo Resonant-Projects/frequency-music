@@ -1,10 +1,10 @@
-import { defineConfig } from 'vite'
-import solid from 'vite-plugin-solid'
+import { defineConfig } from "vite";
+import solid from "vite-plugin-solid";
 
 export default defineConfig({
   plugins: [solid()],
-  appType: 'spa',
+  appType: "spa",
   server: {
     port: 4173,
   },
-})
+});

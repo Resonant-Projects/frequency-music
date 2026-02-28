@@ -3,9 +3,10 @@
  * Reads from /tmp/extraction-audit.json and processes sequentially.
  * Tracks progress in /tmp/re-extract-progress.json.
  */
+
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
-import { readFileSync, writeFileSync, existsSync } from "fs";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 const PROGRESS_FILE = "/tmp/re-extract-progress.json";
@@ -25,7 +26,7 @@ async function main() {
     progress = JSON.parse(readFileSync(PROGRESS_FILE, "utf-8"));
   }
 
-  const remaining = toProcess.filter(r => !progress[r.sourceId]);
+  const remaining = toProcess.filter((r) => !progress[r.sourceId]);
   console.log(`Total to process: ${toProcess.length}`);
   console.log(`Already done: ${Object.keys(progress).length}`);
   console.log(`Remaining: ${remaining.length}`);
@@ -58,7 +59,7 @@ async function main() {
     writeFileSync(PROGRESS_FILE, JSON.stringify(progress, null, 2));
 
     // Small delay to be gentle on the API
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
   }
 
   console.log(`\n=== Done ===`);

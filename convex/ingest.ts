@@ -1,6 +1,6 @@
 import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
 import { action, internalAction } from "./_generated/server";
-import { internal, api } from "./_generated/api";
 import { requireAuth } from "./auth";
 
 // ============================================================================
@@ -37,9 +37,9 @@ function parseRSSXML(xml: string): ParsedFeed {
   // Match RSS items or Atom entries
   const itemRegex =
     /<item[^>]*>([\s\S]*?)<\/item>|<entry[^>]*>([\s\S]*?)<\/entry>/gi;
-  let match;
-
-  while ((match = itemRegex.exec(xml)) !== null) {
+  while (true) {
+    const match = itemRegex.exec(xml);
+    if (match === null) break;
     const itemXml = match[1] || match[2];
 
     // Extract fields
@@ -167,7 +167,7 @@ export const pollFeed = internalAction({
           let publishedAt: number | undefined;
           if (item.pubDate) {
             const parsed = Date.parse(item.pubDate);
-            if (!isNaN(parsed)) {
+            if (!Number.isNaN(parsed)) {
               publishedAt = parsed;
               if (!latestItemDate || parsed > latestItemDate) {
                 latestItemDate = parsed;

@@ -1,9 +1,33 @@
-import { v, ConvexError } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
-import { api } from "./_generated/api";
-import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText } from "ai";
+import { ConvexError, v } from "convex/values";
+import { api } from "./_generated/api";
+import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+
+type HypothesisStatus =
+  | "draft"
+  | "queued"
+  | "active"
+  | "evaluated"
+  | "revised"
+  | "retired";
+const hypothesisStatusValidator = v.union(
+  v.literal("draft"),
+  v.literal("queued"),
+  v.literal("active"),
+  v.literal("evaluated"),
+  v.literal("revised"),
+  v.literal("retired"),
+);
+
+interface GeneratedHypothesisPayload {
+  title: string;
+  question: string;
+  hypothesis: string;
+  rationaleMd: string;
+  concepts?: string[];
+}
 
 // ============================================================================
 // QUERIES
@@ -14,19 +38,17 @@ import { requireAuth } from "./auth";
  */
 export const listByStatus = query({
   args: {
-    status: v.optional(v.string()),
+    status: v.optional(hypothesisStatusValidator),
     limit: v.optional(v.number()),
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
-    if (args.status) {
+    if (args.status !== undefined) {
       return await ctx.db
         .query("hypotheses")
-        .withIndex("by_status_updatedAt", (q) =>
-          q.eq("status", args.status as any),
-        )
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
         .order("desc")
         .take(limit);
     }
@@ -115,8 +137,14 @@ export const update = mutation({
     rationaleMd: v.optional(v.string()),
     sourceIds: v.optional(v.array(v.id("sources"))),
     concepts: v.optional(v.array(v.string())),
-    status: v.optional(v.string()),
-    resolution: v.optional(v.string()),
+    status: v.optional(hypothesisStatusValidator),
+    resolution: v.optional(
+      v.union(
+        v.literal("supported"),
+        v.literal("inconclusive"),
+        v.literal("contradicted"),
+      ),
+    ),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -132,10 +160,7 @@ export const update = mutation({
       });
     }
 
-    await ctx.db.patch("hypotheses", id, {
-      ...updates,
-      updatedAt: Date.now(),
-    } as any);
+    await ctx.db.patch("hypotheses", id, { ...updates, updatedAt: Date.now() });
     return null;
   },
 });
@@ -146,14 +171,7 @@ export const update = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("hypotheses"),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("queued"),
-      v.literal("active"),
-      v.literal("evaluated"),
-      v.literal("revised"),
-      v.literal("retired"),
-    ),
+    status: hypothesisStatusValidator,
     resolution: v.optional(
       v.union(
         v.literal("supported"),
@@ -281,13 +299,14 @@ export const generateFromExtraction = action({
     });
 
     // Parse response
-    let parsed;
+    let parsed: GeneratedHypothesisPayload;
     try {
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      throw new Error(`Failed to parse AI response: ${e}`);
+      parsed = JSON.parse(jsonMatch[0]) as GeneratedHypothesisPayload;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unknown parse error";
+      throw new Error(`Failed to parse AI response: ${message}`);
     }
 
     // Create hypothesis
@@ -346,11 +365,12 @@ export const generateBatch = action({
           },
         );
         results.push({ success: true, ...result });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "Unknown error";
         results.push({
           success: false,
           extractionId: extraction._id,
-          error: e.message,
+          error: message,
         });
       }
     }

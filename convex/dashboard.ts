@@ -1,5 +1,5 @@
-import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { query } from "./_generated/server";
 
 type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
 
@@ -15,11 +15,39 @@ const emptySectors: Record<SectorId, { sources: number; claims: number }> = {
 function inferSector(topics: string[]): SectorId {
   const joined = topics.join(" ").toLowerCase();
 
-  if (joined.includes("math") || joined.includes("ratio") || joined.includes("topolog")) return "math";
-  if (joined.includes("wave") || joined.includes("frequency") || joined.includes("reson") || joined.includes("acoust")) return "wave";
-  if (joined.includes("psycho") || joined.includes("perception") || joined.includes("consonan") || joined.includes("disson")) return "psycho";
-  if (joined.includes("geometr") || joined.includes("tonnetz") || joined.includes("symmetry")) return "geometry";
-  if (joined.includes("synth") || joined.includes("timbre") || joined.includes("sound design") || joined.includes("production")) return "synthesis";
+  if (
+    joined.includes("math") ||
+    joined.includes("ratio") ||
+    joined.includes("topolog")
+  )
+    return "math";
+  if (
+    joined.includes("wave") ||
+    joined.includes("frequency") ||
+    joined.includes("reson") ||
+    joined.includes("acoust")
+  )
+    return "wave";
+  if (
+    joined.includes("psycho") ||
+    joined.includes("perception") ||
+    joined.includes("consonan") ||
+    joined.includes("disson")
+  )
+    return "psycho";
+  if (
+    joined.includes("geometr") ||
+    joined.includes("tonnetz") ||
+    joined.includes("symmetry")
+  )
+    return "geometry";
+  if (
+    joined.includes("synth") ||
+    joined.includes("timbre") ||
+    joined.includes("sound design") ||
+    joined.includes("production")
+  )
+    return "synthesis";
   return "music";
 }
 
@@ -34,15 +62,21 @@ export const pipeline = query({
     weeklyBriefs: v.number(),
   }),
   handler: async (ctx) => {
-    const [sources, extractions, hypotheses, recipes, compositions, weeklyBriefs] =
-      await Promise.all([
-        ctx.db.query("sources").collect(),
-        ctx.db.query("extractions").collect(),
-        ctx.db.query("hypotheses").collect(),
-        ctx.db.query("recipes").collect(),
-        ctx.db.query("compositions").collect(),
-        ctx.db.query("weeklyBriefs").collect(),
-      ]);
+    const [
+      sources,
+      extractions,
+      hypotheses,
+      recipes,
+      compositions,
+      weeklyBriefs,
+    ] = await Promise.all([
+      ctx.db.query("sources").collect(),
+      ctx.db.query("extractions").collect(),
+      ctx.db.query("hypotheses").collect(),
+      ctx.db.query("recipes").collect(),
+      ctx.db.query("compositions").collect(),
+      ctx.db.query("weeklyBriefs").collect(),
+    ]);
 
     return {
       sources: sources.length,
@@ -66,9 +100,15 @@ export const zodiacSectors = query({
   ),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 120;
-    const extractions = await ctx.db.query("extractions").order("desc").take(limit);
+    const extractions = await ctx.db
+      .query("extractions")
+      .order("desc")
+      .take(limit);
 
-    const sectorMetrics: Record<SectorId, { sources: Set<string>; claims: number }> = {
+    const sectorMetrics: Record<
+      SectorId,
+      { sources: Set<string>; claims: number }
+    > = {
       math: { sources: new Set(), claims: 0 },
       wave: { sources: new Set(), claims: 0 },
       music: { sources: new Set(), claims: 0 },

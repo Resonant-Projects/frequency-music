@@ -831,11 +831,7 @@
           "details": {
             "name": "Kepler triangle",
             "ratio": "golden",
-            "sides": [
-              0.618,
-              1,
-              1.618
-            ]
+            "sides": [0.618, 1, 1.618]
           }
         }
       ],

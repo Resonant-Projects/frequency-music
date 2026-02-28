@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { httpAction } from "./_generated/server";
 import { generateDedupeKey } from "./sourceUtils";
 
 const http = httpRouter();
@@ -37,7 +37,7 @@ function isAuthorized(request: Request, payloadSecret?: string): boolean {
 http.route({
   path: "/health",
   method: "GET",
-  handler: httpAction(async () => json({ ok: true })),
+  handler: httpAction(() => json({ ok: true })),
 });
 
 http.route({

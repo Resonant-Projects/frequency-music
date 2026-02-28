@@ -3,7 +3,13 @@ import type {
   FunctionReference,
   FunctionReturnType,
 } from "convex/server";
-import { createEffect, createMemo, createSignal, onCleanup, type Accessor } from "solid-js";
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+} from "solid-js";
 import { useConvexClient } from "./provider";
 
 export interface QueryStatus<T> {
@@ -11,6 +17,25 @@ export interface QueryStatus<T> {
   error: Accessor<Error | null>;
   isLoading: Accessor<boolean>;
   isError: Accessor<boolean>;
+}
+
+function toError(err: unknown): Error {
+  if (err instanceof Error) return err;
+  if (typeof err === "string") return new Error(err);
+  if (typeof err === "number" || typeof err === "boolean") {
+    return new Error(String(err));
+  }
+
+  if (err && typeof err === "object" && "message" in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string") return new Error(message);
+  }
+
+  try {
+    return new Error(JSON.stringify(err));
+  } catch {
+    return new Error("Unknown error");
+  }
 }
 
 export function createQuery<Query extends FunctionReference<"query">>(
@@ -24,8 +49,9 @@ export function createQuery<Query extends FunctionReference<"query">>(
 
   const resolvedArgs = createMemo(
     () =>
-      (typeof args === "function" ? (args as () => FunctionArgs<Query>)() : args) ??
-      ({} as FunctionArgs<Query>),
+      (typeof args === "function"
+        ? (args as () => FunctionArgs<Query>)()
+        : args) ?? ({} as FunctionArgs<Query>),
   );
 
   let unsubscribe: (() => void) | null = null;
@@ -36,8 +62,12 @@ export function createQuery<Query extends FunctionReference<"query">>(
     unsubscribe = convex.onUpdate(
       query,
       nextArgs,
-      (result) => { setData(() => result); },
-      (err) => { console.error("createQuery subscription error:", err); },
+      (result) => {
+        setData(() => result);
+      },
+      (err) => {
+        console.error("createQuery subscription error:", err);
+      },
     );
   });
 
@@ -62,8 +92,9 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
 
   const resolvedArgs = createMemo(
     () =>
-      (typeof args === "function" ? (args as () => FunctionArgs<Query>)() : args) ??
-      ({} as FunctionArgs<Query>),
+      (typeof args === "function"
+        ? (args as () => FunctionArgs<Query>)()
+        : args) ?? ({} as FunctionArgs<Query>),
   );
 
   let unsubscribe: (() => void) | null = null;
@@ -88,9 +119,7 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
       },
       (err: unknown) => {
         if (!isMounted) return;
-        setError(() =>
-          err instanceof Error ? err : new Error(String(err ?? "Unknown error")),
-        );
+        setError(() => toError(err));
       },
     );
 
@@ -103,9 +132,7 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
       })
       .catch((err: unknown) => {
         if (!isMounted || hasReceivedData) return;
-        setError(() =>
-          err instanceof Error ? err : new Error(String(err ?? "Unknown error")),
-        );
+        setError(() => toError(err));
       });
   });
 

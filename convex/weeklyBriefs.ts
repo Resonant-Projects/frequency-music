@@ -1,9 +1,14 @@
-import { v } from "convex/values";
-import { action, internalMutation, mutation, query } from "./_generated/server";
-import { api, internal } from "./_generated/api";
-import { requireAuth } from "./auth";
-import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText } from "ai";
+import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { requireAuth } from "./auth";
+
+interface BriefParameter {
+  type: string;
+  value: string;
+}
 
 // ============================================================================
 // QUERIES
@@ -166,7 +171,7 @@ export const generate = action({
             .map((r, i) => {
               const params = r.parameters
                 .slice(0, 4)
-                .map((p: any) => `${p.type}: ${p.value}`)
+                .map((p: BriefParameter) => `${p.type}: ${p.value}`)
                 .join(", ");
               return `${i + 1}. **${r.title}**\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
             })
@@ -198,15 +203,25 @@ export const generate = action({
     const jsonMatch = result.text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
     if (jsonMatch) {
       try {
-        const parsed = JSON.parse(jsonMatch[1]);
-        todo = parsed.todo || [];
-      } catch (e) {
+        const parsed = JSON.parse(jsonMatch[1]) as { todo?: unknown };
+        if (
+          Array.isArray(parsed.todo) &&
+          parsed.todo.every((item) => typeof item === "string")
+        ) {
+          todo = parsed.todo;
+        } else if (typeof parsed.todo === "string") {
+          todo = [parsed.todo];
+        } else {
+          todo = [];
+        }
+      } catch (_e) {
         // Ignore parse errors
       }
     }
 
     // Get source IDs from hypotheses
     const sourceIds = [...new Set(hypotheses.flatMap((h) => h.sourceIds))];
+    const persistedSourceIds = sourceIds.slice(0, 20);
 
     // Create the brief
     const briefId = await ctx.runMutation(internal.weeklyBriefs.create, {
@@ -214,7 +229,7 @@ export const generate = action({
       model: modelId,
       promptVersion: "v1",
       bodyMd: result.text,
-      sourceIds: sourceIds.slice(0, 20) as any, // Limit to 20
+      sourceIds: persistedSourceIds,
       recommendedHypothesisIds: hypotheses.map((h) => h._id),
       recommendedRecipeIds: recipes.map((r) => r._id),
       todo: todo.length > 0 ? todo : undefined,
@@ -227,9 +242,9 @@ export const generate = action({
       stats: {
         hypotheses: hypotheses.length,
         recipes: recipes.length,
-        sources: sourceIds.length,
+        sources: persistedSourceIds.length,
       },
-      preview: result.text.slice(0, 500) + "...",
+      preview: `${result.text.slice(0, 500)}...`,
     };
   },
 });

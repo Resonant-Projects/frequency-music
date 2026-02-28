@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * Ingest Robert Edward Grant's papers and articles
  *
@@ -8,34 +9,19 @@
  *   bun run scripts/ingest-robert-grant.ts [--pdfs] [--articles] [--youtube]
  */
 
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
 
-// Load environment
-const envPath = join(import.meta.dir, "../.env.local");
-const envContent = readFileSync(envPath, "utf-8");
-const env: Record<string, string> = {};
-for (const line of envContent.split("\n")) {
-  const [key, ...vals] = line.split("=");
-  if (key && vals.length) {
-    // Strip quotes from value
-    let value = vals.join("=").trim();
-    if (
-      (value.startsWith("'") && value.endsWith("'")) ||
-      (value.startsWith('"') && value.endsWith('"'))
-    ) {
-      value = value.slice(1, -1);
-    }
-    env[key.trim()] = value;
-  }
-}
-
-const CONVEX_URL = env.CONVEX_SELF_HOSTED_URL || env.CONVEX_URL;
+const CONVEX_URL = process.env.CONVEX_SELF_HOSTED_URL || process.env.CONVEX_URL;
 if (!CONVEX_URL) throw new Error("Missing CONVEX_URL");
 
 const client = new ConvexHttpClient(CONVEX_URL);
+
+interface FeedRow {
+  url: string;
+}
 
 // Load source data
 const sourcesPath = join(
@@ -113,8 +99,7 @@ async function ingestSource(
   try {
     if (type === "pdf" && source.pdf) {
       // PDF source - download and extract text
-      const filename =
-        source.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase() + ".pdf";
+      const filename = `${source.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}.pdf`;
       fullText = await fetchPdfText(source.pdf, filename);
     } else {
       // Web article - fetch via Jina
@@ -155,8 +140,8 @@ async function ingestSource(
 async function addYouTubeFeed(): Promise<void> {
   const feed = sourceData.youtube;
 
-  const existing = await client.query(api.feeds.list);
-  const hasGrant = existing.some((f: any) =>
+  const existing = (await client.query(api.feeds.list)) as FeedRow[];
+  const hasGrant = existing.some((f: FeedRow) =>
     f.url.includes("UC2MN4AlpbY9NYxuYH-ecoCQ"),
   );
 

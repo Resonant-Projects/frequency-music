@@ -356,12 +356,7 @@
           "type": "harmonicProfile",
           "value": "Modified string with single point mass producing φ-harmonic series",
           "details": {
-            "harmonicRatios": [
-              1,
-              "φ",
-              "φ²",
-              "φ³"
-            ],
+            "harmonicRatios": [1, "φ", "φ²", "φ³"],
             "massPosition": 0.116934,
             "method": "Variable-density string with small weight at fractional position xL",
             "practicalStatus": "Theoretically derived; not yet physically implemented"
@@ -964,24 +959,9 @@
           "details": {
             "chord": "dominant seventh",
             "enharmonicNormalForm": "A♭7",
-            "normalForm": [
-              0,
-              3,
-              6,
-              8
-            ],
-            "normalIntervallicForm": [
-              2,
-              4,
-              3,
-              3
-            ],
-            "pitchClasses": [
-              7,
-              11,
-              2,
-              5
-            ]
+            "normalForm": [0, 3, 6, 8],
+            "normalIntervallicForm": [2, 4, 3, 3],
+            "pitchClasses": [7, 11, 2, 5]
           }
         },
         {
@@ -1244,12 +1224,7 @@
             "tonnetzType": "B2 edge-tonnetz",
             "totalTriangles": 8,
             "triadQuality": "major",
-            "triads": [
-              "F major",
-              "A major",
-              "C# major",
-              "D major"
-            ]
+            "triads": ["F major", "A major", "C# major", "D major"]
           }
         },
         {
@@ -1260,12 +1235,7 @@
             "surface": "torus",
             "tonnetzType": "C2 edge-tonnetz",
             "triadQuality": "minor",
-            "triads": [
-              "F minor",
-              "Ab minor",
-              "B minor",
-              "D minor"
-            ]
+            "triads": ["F minor", "Ab minor", "B minor", "D minor"]
           }
         },
         {
@@ -1308,10 +1278,7 @@
           "value": "Augmented triads at hexagon-corner vertices of G2 torus tonnetz",
           "details": {
             "chordType": "augmented triad",
-            "examples": [
-              "C/E/G#",
-              "second augmented triad"
-            ],
+            "examples": ["C/E/G#", "second augmented triad"],
             "multisetMultiplicity": 6,
             "tonnetz": "G2 torus",
             "vertexType": "hexagon corners after gluing"
@@ -1856,11 +1823,7 @@
           "value": "Just Intonation (5-limit, Ptolemaic)",
           "details": {
             "description": "Ptolemy's intense diatonic scale with middle C = 1",
-            "primes": [
-              2,
-              3,
-              5
-            ],
+            "primes": [2, 3, 5],
             "scale": {
               "A": "5/3",
               "B": "15/8",
@@ -2427,17 +2390,9 @@
           "value": "Major triad in geometrical normal form: pitch classes 0, 3, 7",
           "details": {
             "label": "geometrical normal form of major/minor triad",
-            "pitchClasses": [
-              0,
-              3,
-              7
-            ],
+            "pitchClasses": [0, 3, 7],
             "representation": "semitonal",
-            "stepIntervals": [
-              4,
-              3,
-              5
-            ]
+            "stepIntervals": [4, 3, 5]
           }
         },
         {
