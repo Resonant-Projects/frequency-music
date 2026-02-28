@@ -34,7 +34,7 @@ export function createQuery<Query extends FunctionReference<"query">>(
     const nextArgs = resolvedArgs();
     unsubscribe?.();
     unsubscribe = convex.onUpdate(query, nextArgs, (result) => {
-      setData(() => result as FunctionReturnType<Query>);
+      setData(() => result);
     });
   });
 

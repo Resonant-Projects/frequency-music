@@ -52,7 +52,7 @@ export function FeedbackPage() {
   const compositionById = createMemo(() => {
     const lookup = new Map<string, string>();
     for (const composition of compositions() ?? []) {
-      lookup.set(String((composition as any)._id), (composition as any).title);
+      lookup.set(String((composition)._id), (composition).title);
     }
     return lookup;
   });

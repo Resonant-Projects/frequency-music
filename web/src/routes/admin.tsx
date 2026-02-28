@@ -1,6 +1,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput } from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
 import {
   createAction,
@@ -58,11 +59,13 @@ export function AdminPage() {
     }
 
     try {
-      await createFeed({
-        name: feedName().trim(),
-        url: feedUrl().trim(),
-        type: feedType() as any,
-      });
+      await createFeed(
+        withDevBypassSecret({
+          name: feedName().trim(),
+          url: feedUrl().trim(),
+          type: feedType() as any,
+        }),
+      );
       setFeedName("");
       setFeedUrl("");
       setNotice("Feed created.");
@@ -73,7 +76,9 @@ export function AdminPage() {
 
   async function toggleFeed(id: string, enabled: boolean) {
     try {
-      await setFeedEnabled({ id: id as any, enabled: !enabled });
+      await setFeedEnabled(
+        withDevBypassSecret({ id: id as any, enabled: !enabled }),
+      );
       setNotice("Feed state updated.");
     } catch (error) {
       setNotice(`Failed to toggle feed: ${String(error)}`);
@@ -82,7 +87,7 @@ export function AdminPage() {
 
   async function runPoll() {
     try {
-      await pollFeedsNow({});
+      await pollFeedsNow(withDevBypassSecret({}));
       setNotice("Feed poll started.");
     } catch (error) {
       setNotice(`Feed poll failed: ${String(error)}`);
@@ -98,10 +103,12 @@ export function AdminPage() {
     }
 
     try {
-      await setSourceStatus({
-        id: sourceId().trim() as any,
-        status: sourceStatus(),
-      });
+      await setSourceStatus(
+        withDevBypassSecret({
+          id: sourceId().trim() as any,
+          status: sourceStatus(),
+        }),
+      );
       setNotice("Source status updated.");
     } catch (error) {
       setNotice(`Source status update failed: ${String(error)}`);

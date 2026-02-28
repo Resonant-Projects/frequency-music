@@ -1,6 +1,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput } from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
 import {
   createMutation,
@@ -57,11 +58,13 @@ export function CompositionsPage() {
     }
 
     try {
-      await createComposition({
-        title: title().trim(),
-        recipeId: recipeId() as any,
-        artifactType: artifactType() as any,
-      });
+      await createComposition(
+        withDevBypassSecret({
+          title: title().trim(),
+          recipeId: recipeId() as any,
+          artifactType: artifactType() as any,
+        }),
+      );
       setTitle("");
       setNotice("Composition created.");
     } catch (error) {
@@ -71,7 +74,9 @@ export function CompositionsPage() {
 
   async function setStatus(id: string, status: string) {
     try {
-      await updateComposition({ id: id as any, status: status as any });
+      await updateComposition(
+        withDevBypassSecret({ id: id as any, status: status as any }),
+      );
       setNotice(`Composition set to ${status}.`);
     } catch (error) {
       setNotice(`Status update failed: ${String(error)}`);

@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
+import { requireAuth } from "./auth";
 
 export const workspaceSnapshot = query({
   args: {},
@@ -48,12 +49,15 @@ export const createFeed = mutation({
     url: v.string(),
     type: v.union(v.literal("rss"), v.literal("podcast"), v.literal("youtube")),
     category: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("feeds"),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
     const now = Date.now();
     return await ctx.db.insert("feeds", {
-      ...args,
+      ...createArgs,
       enabled: true,
       createdAt: now,
       updatedAt: now,
@@ -62,15 +66,20 @@ export const createFeed = mutation({
 });
 
 export const setFeedEnabled = mutation({
-  args: { id: v.id("feeds"), enabled: v.boolean() },
+  args: {
+    id: v.id("feeds"),
+    enabled: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const feed = await ctx.db.get(args.id);
+    await requireAuth(ctx, args);
+    const feed = await ctx.db.get("feeds", args.id);
     if (!feed) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Feed not found" });
     }
 
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("feeds", args.id, {
       enabled: args.enabled,
       updatedAt: Date.now(),
     });
@@ -85,15 +94,17 @@ export const setSourceStatus = mutation({
     status: v.string(),
     blockedReason: v.optional(v.string()),
     blockedDetails: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const source = await ctx.db.get(args.id);
+    await requireAuth(ctx, args);
+    const source = await ctx.db.get("sources", args.id);
     if (!source) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Source not found" });
     }
 
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch("sources", args.id, {
       status: args.status as any,
       blockedReason: args.blockedReason as any,
       blockedDetails: args.blockedDetails,
@@ -115,9 +126,11 @@ export const promoteVisibility = mutation({
     ),
     id: v.string(),
     visibility: v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const now = Date.now();
 
     switch (args.entityType) {
@@ -156,8 +169,9 @@ export const promoteVisibility = mutation({
 });
 
 export const pollFeedsNow = action({
-  args: {},
-  handler: async (ctx) => {
+  args: { devBypassSecret: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     return await ctx.runAction(api.ingest.pollAllFeeds, {});
   },
 });

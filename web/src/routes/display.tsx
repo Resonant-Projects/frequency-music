@@ -1,6 +1,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard } from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
 import {
   createAction,
@@ -51,7 +52,7 @@ export function DisplayPage() {
 
   async function runRowExtraction(sourceId: string) {
     try {
-      await runExtraction({ sourceId: sourceId as any });
+      await runExtraction(withDevBypassSecret({ sourceId: sourceId as any }));
       setNotice("Extraction started.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);
@@ -60,7 +61,9 @@ export function DisplayPage() {
 
   async function markTriaged(sourceId: string) {
     try {
-      await updateStatus({ id: sourceId as any, status: "triaged" });
+      await updateStatus(
+        withDevBypassSecret({ id: sourceId as any, status: "triaged" }),
+      );
       setNotice("Source marked as triaged.");
     } catch (error) {
       setNotice(`Status update failed: ${String(error)}`);
@@ -69,7 +72,9 @@ export function DisplayPage() {
 
   async function promoteFollowers(sourceId: string) {
     try {
-      await setVisibility({ id: sourceId as any, visibility: "followers" });
+      await setVisibility(
+        withDevBypassSecret({ id: sourceId as any, visibility: "followers" }),
+      );
       setNotice("Visibility promoted to followers.");
     } catch (error) {
       setNotice(`Promotion failed: ${String(error)}`);

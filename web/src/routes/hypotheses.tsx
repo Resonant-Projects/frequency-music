@@ -1,6 +1,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, UIInput, UITextarea } from "../components/ui";
+import { withDevBypassSecret } from "../integrations/authBypass";
 import { convexApi } from "../integrations/convex/api";
 import {
   createMutation,
@@ -68,14 +69,16 @@ export function HypothesesPage() {
     setNotice(null);
 
     try {
-      await createHypothesis({
-        title: title().trim(),
-        question: question().trim(),
-        hypothesis: statement().trim(),
-        rationaleMd: rationale().trim() || "Draft rationale.",
-        sourceIds: selectedSources().map((id) => id as any),
-        concepts: [],
-      });
+      await createHypothesis(
+        withDevBypassSecret({
+          title: title().trim(),
+          question: question().trim(),
+          hypothesis: statement().trim(),
+          rationaleMd: rationale().trim() || "Draft rationale.",
+          sourceIds: selectedSources().map((id) => id as any),
+          concepts: [],
+        }),
+      );
 
       setTitle("");
       setQuestion("");

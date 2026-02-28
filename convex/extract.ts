@@ -4,6 +4,7 @@ import { internal, api } from "./_generated/api";
 import { generateText, LanguageModel } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
+import { requireAuth } from "./auth";
 
 // ============================================================================
 // MODEL CONFIGURATION
@@ -134,8 +135,10 @@ export const extractSource = action({
     sourceId: v.id("sources"),
     model: v.optional(v.string()), // Override model if needed
     force: v.optional(v.boolean()), // Re-extract even if already done
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     // Get the source
     const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
     if (!source) {
@@ -155,6 +158,7 @@ export const extractSource = action({
         status: "review_needed",
         blockedReason: "no_text",
         blockedDetails: "No text content available for extraction",
+        devBypassSecret: args.devBypassSecret,
       });
       return { skipped: true, reason: "no content" };
     }
@@ -163,6 +167,7 @@ export const extractSource = action({
     await ctx.runMutation(api.sources.updateStatus, {
       id: args.sourceId,
       status: "extracting",
+      devBypassSecret: args.devBypassSecret,
     });
 
     // Build the prompt
@@ -215,6 +220,7 @@ export const extractSource = action({
         await ctx.runMutation(api.sources.updateStatus, {
           id: args.sourceId,
           status: "extracted",
+          devBypassSecret: args.devBypassSecret,
         });
         return { skipped: true, reason: "duplicate extraction" };
       }
@@ -245,6 +251,7 @@ export const extractSource = action({
       await ctx.runMutation(api.sources.updateStatus, {
         id: args.sourceId,
         status: "extracted",
+        devBypassSecret: args.devBypassSecret,
       });
 
       return {
@@ -261,6 +268,7 @@ export const extractSource = action({
         status: "review_needed",
         blockedReason: "ai_error",
         blockedDetails: `Extraction failed: ${error}`,
+        devBypassSecret: args.devBypassSecret,
       });
       throw error;
     }
@@ -342,8 +350,10 @@ export const extractAllReady = action({
   args: {
     limit: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const limit = args.limit ?? 10;
     const sources = await ctx.runQuery(api.sources.listByStatus, {
       status: "text_ready",
@@ -364,6 +374,7 @@ export const extractAllReady = action({
         const result = await ctx.runAction(api.extract.extractSource, {
           sourceId: source._id,
           model: args.model,
+          devBypassSecret: args.devBypassSecret,
         });
         results.push({
           id: source._id,

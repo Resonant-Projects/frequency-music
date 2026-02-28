@@ -56,7 +56,7 @@ export const create = mutation({
   },
   returns: v.id("listeningSessions"),
   handler: async (ctx, args) => {
-    const composition = await ctx.db.get(args.compositionId);
+    const composition = await ctx.db.get("compositions", args.compositionId);
     if (!composition) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Composition not found" });
     }
@@ -83,12 +83,12 @@ export const updateVisibility = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.id);
+    const session = await ctx.db.get("listeningSessions", args.id);
     if (!session) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Listening session not found" });
     }
 
-    await ctx.db.patch(args.id, { visibility: args.visibility });
+    await ctx.db.patch("listeningSessions", args.id, { visibility: args.visibility });
     return null;
   },
 });
