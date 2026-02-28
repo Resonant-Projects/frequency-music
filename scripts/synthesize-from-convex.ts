@@ -386,14 +386,14 @@ function normalizeTopicToken(value: string): string[] {
     .split(/[|,/;]+/)
     .map((v) => v.trim().toLowerCase())
     .filter((v) => v.length > 0)
-    .map((v) => v.replace(/\s+/g, " "));
+    .map((v) => v.replaceAll(/\s+/g, " "));
 }
 
 function normalizePhrase(value: string): string {
   return value
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
+    .replaceAll(/[^a-z0-9\s]/g, " ")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 
@@ -597,8 +597,8 @@ async function loadNoveltyHistory(
     dirs = entries
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
-      .sort()
-      .reverse()
+      .toSorted()
+      .toReversed()
       .slice(0, noveltyWindow);
   } catch {
     return history;
@@ -719,7 +719,7 @@ function normalizedScore(base: number, min: number, max: number): number {
 }
 
 function timestampSlug(date: Date): string {
-  return date.toISOString().replace(/[:.]/g, "-");
+  return date.toISOString().replaceAll(/[:.]/g, "-");
 }
 
 function ensureObject(value: unknown, label: string): JsonRecord {
@@ -1549,16 +1549,16 @@ async function collectMode(
     selected: selectedRows,
     aggregate: {
       topicFrequency: Object.fromEntries(
-        [...topicFrequency.entries()].sort((a, b) => b[1] - a[1]),
+        [...topicFrequency.entries()].toSorted((a, b) => b[1] - a[1]),
       ),
       parameterTypeFrequency: Object.fromEntries(
-        [...parameterTypeFrequency.entries()].sort((a, b) => b[1] - a[1]),
+        [...parameterTypeFrequency.entries()].toSorted((a, b) => b[1] - a[1]),
       ),
       evidenceDistribution: Object.fromEntries(
-        [...evidenceDistribution.entries()].sort((a, b) => b[1] - a[1]),
+        [...evidenceDistribution.entries()].toSorted((a, b) => b[1] - a[1]),
       ),
       sourceTypeDistribution: Object.fromEntries(
-        [...sourceTypeDistribution.entries()].sort((a, b) => b[1] - a[1]),
+        [...sourceTypeDistribution.entries()].toSorted((a, b) => b[1] - a[1]),
       ),
     },
     noveltyHistory: {
@@ -1686,7 +1686,7 @@ function topEntries(
 ): Array<{ key: string; count: number }> {
   return Object.entries(counts)
     .map(([key, count]) => ({ key, count }))
-    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key))
+    .toSorted((a, b) => b.count - a.count || a.key.localeCompare(b.key))
     .slice(0, limit);
 }
 
@@ -1709,7 +1709,7 @@ function toTitleCase(value: string): string {
 
 function humanizeParamType(value: string): string {
   const normalized = normalizePhrase(
-    value.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " "),
+    value.replaceAll(/([a-z])([A-Z])/g, "$1 $2").replaceAll('_', " "),
   );
   const aliases: Record<string, string> = {
     tuningsystem: "tuning system",
@@ -1730,7 +1730,7 @@ function canonicalizeParamTypeLabel(value: string): string {
     "chord progression": "chordProgression",
     "synth waveform": "synthWaveform",
   };
-  return aliases[normalized] ?? value.replace(/\s+/g, "");
+  return aliases[normalized] ?? value.replaceAll(/\s+/g, "");
 }
 
 function firstNumericInText(value: string): number | null {
@@ -1757,7 +1757,7 @@ function buildAutoFinalOutput(
   context: SynthesisContextV1,
   noveltyHistory: NoveltyHistory,
 ): FinalOutputV1 {
-  const rankedSources = [...context.selected].sort(
+  const rankedSources = [...context.selected].toSorted(
     (a, b) =>
       b.scores.combined - a.scores.combined ||
       b.scores.peerReviewedClaims - a.scores.peerReviewedClaims,

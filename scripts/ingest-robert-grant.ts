@@ -99,7 +99,7 @@ async function ingestSource(
   try {
     if (type === "pdf" && source.pdf) {
       // PDF source - download and extract text
-      const filename = `${source.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}.pdf`;
+      const filename = `${source.title.replaceAll(/[^a-zA-Z0-9]/g, "-").toLowerCase()}.pdf`;
       fullText = await fetchPdfText(source.pdf, filename);
     } else {
       // Web article - fetch via Jina

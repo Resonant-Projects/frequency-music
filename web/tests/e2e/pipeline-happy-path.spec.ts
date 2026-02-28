@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { createRunId, expectNoticeToMatch, waitForRowByText } from "./helpers";
 
 function escapeForRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 test.describe("pipeline happy path", () => {

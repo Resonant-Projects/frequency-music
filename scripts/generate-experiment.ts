@@ -40,7 +40,7 @@ async function main() {
           peerReviewedClaims * 5;
         return { extraction: e, score };
       })
-      .sort((a, b) => b.score - a.score);
+      .toSorted((a, b) => b.score - a.score);
 
     if (scored.length === 0) {
       console.error("❌ No extractions found. Run some extractions first.");

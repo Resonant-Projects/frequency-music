@@ -2,9 +2,10 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "categories": {
     "correctness": "error",
-    "suspicious": "warn"
+    "suspicious": "warn",
+    "perf": "warn"
   },
-  "plugins": ["typescript", "unicorn", "import"],
+  "plugins": ["typescript", "unicorn", "import", "promise"],
   "ignorePatterns": [
     "convex/_generated/**",
     "node_modules/**",
@@ -14,6 +15,9 @@
   "rules": {
     "typescript/no-namespace": "error",
     "typescript/no-require-imports": "error",
-    "import/no-unassigned-import": "off"
+    "import/no-unassigned-import": "off",
+    "require-await": "warn",
+    "no-else-return": "warn",
+    "unicorn/prefer-string-replace-all": "warn"
   }
 }

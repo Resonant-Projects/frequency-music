@@ -114,7 +114,7 @@ export const upsertConcept = mutation({
         updatedAt: Date.now(),
       });
       return existing._id;
-    } else {
+    }
       // Create new
       return await ctx.db.insert("concepts", {
         name: normalized,
@@ -128,7 +128,7 @@ export const upsertConcept = mutation({
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-    }
+    
   },
 });
 

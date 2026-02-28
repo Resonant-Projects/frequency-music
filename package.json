@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "format": "biome format --write .",
-    "lint": "oxlint . --fix",
+    "lint": "oxlint . --fix --tsconfig tsconfig.json",
     "test": "bun test convex/sourceUtils.test.ts",
     "build:web": "cd web && bun run build",
     "typecheck:web": "cd web && bunx tsc --noEmit"

@@ -299,7 +299,7 @@ export const generateFromExtraction = action({
       parsed = JSON.parse(jsonMatch[0]) as GeneratedHypothesisPayload;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown parse error";
-      throw new Error(`Failed to parse AI response: ${message}`);
+      throw new Error(`Failed to parse AI response: ${message}`, { cause: e });
     }
 
     // Create hypothesis

@@ -42,14 +42,14 @@ function getModel(modelId: string): LanguageModel {
     const groq = createGroq({ apiKey: groqKey });
     // Strip the "groq/" prefix for the actual model ID
     return groq(modelId.replace("groq/", ""));
-  } else {
+  }
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterKey) {
       throw new Error("OPENROUTER_API_KEY not configured");
     }
     const openrouter = createOpenRouter({ apiKey: openRouterKey });
     return openrouter(modelId);
-  }
+  
 }
 
 // ============================================================================
