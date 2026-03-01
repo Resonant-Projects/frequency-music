@@ -1,7 +1,13 @@
 import { createSignal, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
-import { UIBadge, UIButton, UICard } from "../components/ui";
+import {
+  pageClass,
+  sectionTitleClass,
+  UIBadge,
+  UIButton,
+  UICard,
+} from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
@@ -9,20 +15,6 @@ import {
   createQueryWithStatus,
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
-
-const pageClass = css({
-  display: "grid",
-  gap: "6",
-  p: { base: "4", md: "6" },
-});
-
-const sectionTitleClass = css({
-  color: "zodiac.gold",
-  fontSize: "lg",
-  letterSpacing: "0.12em",
-  marginBottom: "3",
-  textTransform: "uppercase",
-});
 
 export function WeeklyTurnsPage() {
   const briefs = createQueryWithStatus(convexApi.weeklyBriefs.list, () => ({

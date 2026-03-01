@@ -1,7 +1,13 @@
 import { createSignal, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
-import { UIBadge, UIButton, UICard } from "../components/ui";
+import {
+  pageClass,
+  sectionTitleClass,
+  UIBadge,
+  UIButton,
+  UICard,
+} from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
@@ -11,12 +17,6 @@ import {
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
-const pageClass = css({
-  display: "grid",
-  gap: "6",
-  p: { base: "4", md: "6" },
-});
-
 const statGridClass = css({
   display: "grid",
   gap: "3",
@@ -24,14 +24,6 @@ const statGridClass = css({
     base: "repeat(2, minmax(0, 1fr))",
     md: "repeat(4, minmax(0, 1fr))",
   },
-});
-
-const sectionTitleClass = css({
-  color: "zodiac.gold",
-  fontSize: "lg",
-  letterSpacing: "0.12em",
-  marginBottom: "3",
-  textTransform: "uppercase",
 });
 
 function statusTone(status: string): "gold" | "violet" | "cream" {

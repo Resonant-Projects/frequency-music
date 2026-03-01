@@ -115,20 +115,19 @@ export const upsertConcept = mutation({
       });
       return existing._id;
     }
-      // Create new
-      return await ctx.db.insert("concepts", {
-        name: normalized,
-        displayName: args.displayName ?? args.name,
-        description: args.description,
-        domain: (args.domain as any) ?? "general",
-        aliases: args.aliases ?? [],
-        wikipedia: args.wikipedia,
-        mentionCount: 0,
-        hypothesisCount: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
-    
+    // Create new
+    return await ctx.db.insert("concepts", {
+      name: normalized,
+      displayName: args.displayName ?? args.name,
+      description: args.description,
+      domain: (args.domain as any) ?? "general",
+      aliases: args.aliases ?? [],
+      wikipedia: args.wikipedia,
+      mentionCount: 0,
+      hypothesisCount: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   },
 });
 

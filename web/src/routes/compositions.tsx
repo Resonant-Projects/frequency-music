@@ -1,7 +1,15 @@
 import { createSignal, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
-import { UIBadge, UIButton, UICard, UIInput } from "../components/ui";
+import {
+  fieldLabelClass,
+  pageClass,
+  sectionTitleClass,
+  UIBadge,
+  UIButton,
+  UICard,
+  UIInput,
+} from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createMutation,
@@ -9,30 +17,6 @@ import {
   createQueryWithStatus,
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
-
-const pageClass = css({
-  display: "grid",
-  gap: "6",
-  p: { base: "4", md: "6" },
-});
-
-const sectionTitleClass = css({
-  color: "zodiac.gold",
-  fontSize: "lg",
-  letterSpacing: "0.12em",
-  marginBottom: "3",
-  textTransform: "uppercase",
-});
-
-const fieldLabelClass = css({
-  color: "rgba(245, 240, 232, 0.75)",
-  display: "block",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.14em",
-  marginBottom: "1.5",
-  textTransform: "uppercase",
-});
 
 export function CompositionsPage() {
   const compositions = createQueryWithStatus(

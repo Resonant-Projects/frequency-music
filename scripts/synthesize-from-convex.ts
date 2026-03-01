@@ -1709,7 +1709,7 @@ function toTitleCase(value: string): string {
 
 function humanizeParamType(value: string): string {
   const normalized = normalizePhrase(
-    value.replaceAll(/([a-z])([A-Z])/g, "$1 $2").replaceAll('_', " "),
+    value.replaceAll(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " "),
   );
   const aliases: Record<string, string> = {
     tuningsystem: "tuning system",

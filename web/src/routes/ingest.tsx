@@ -2,6 +2,9 @@ import { createSignal, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
+  fieldLabelClass,
+  pageClass,
+  sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
@@ -12,38 +15,15 @@ import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
   createMutation,
+  createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
-
-const pageClass = css({
-  display: "grid",
-  gap: "6",
-  p: { base: "4", md: "6" },
-});
 
 const twoColClass = css({
   display: "grid",
   gap: "4",
   gridTemplateColumns: { base: "1fr", lg: "1fr 1fr" },
-});
-
-const sectionTitleClass = css({
-  color: "zodiac.gold",
-  fontSize: "lg",
-  letterSpacing: "0.12em",
-  marginBottom: "3",
-  textTransform: "uppercase",
-});
-
-const fieldLabelClass = css({
-  color: "rgba(245, 240, 232, 0.75)",
-  display: "block",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.14em",
-  marginBottom: "1.5",
-  textTransform: "uppercase",
 });
 
 const helperClass = css({
@@ -63,6 +43,13 @@ function formatTimestamp(timestamp: number) {
 }
 
 export function IngestPage() {
+  type FeedRow = {
+    _id: string;
+    name?: string;
+    type: string;
+    url: string;
+    enabled?: boolean;
+  };
   type RecentSourceRow = {
     _id: Id<"sources">;
     type: string;
@@ -81,6 +68,10 @@ export function IngestPage() {
   const [ytTranscript, setYtTranscript] = createSignal("");
   const [ytTags, setYtTags] = createSignal("");
 
+  const [feedName, setFeedName] = createSignal("");
+  const [feedUrl, setFeedUrl] = createSignal("");
+  const [feedType, setFeedType] = createSignal("rss");
+
   const [notice, setNotice] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
@@ -90,7 +81,10 @@ export function IngestPage() {
   const createFromYouTubeInput = createMutation(
     convexApi.sources.createFromYouTubeInput,
   );
-  const runExtraction = createAction(convexApi.extract.extractSource);
+  const createFeed = createMutation(convexApi.admin.createFeed);
+  const setFeedEnabled = createMutation(convexApi.admin.setFeedEnabled);
+  const pollFeedsNow = createAction(convexApi.admin.pollFeedsNow);
+  const feeds = createQuery(convexApi.admin.listFeeds);
 
   const recentSources = createQueryWithStatus(
     convexApi.sources.listRecent,
@@ -179,13 +173,51 @@ export function IngestPage() {
     }
   }
 
-  async function triggerExtraction(sourceId: Id<"sources">) {
-    setNotice(null);
+  async function submitFeed(event: SubmitEvent) {
+    event.preventDefault();
+
+    if (!feedName().trim() || !feedUrl().trim()) {
+      setNotice("Feed name and URL are required.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      await runExtraction(withDevBypassSecret({ sourceId }));
-      setNotice("Extraction dispatched.");
+      await createFeed(
+        withDevBypassSecret({
+          name: feedName().trim(),
+          url: feedUrl().trim(),
+          type: feedType() as "rss" | "podcast" | "youtube",
+        }),
+      );
+      setFeedName("");
+      setFeedUrl("");
+      setNotice("Feed created.");
     } catch (error) {
-      setNotice(`Extraction failed: ${String(error)}`);
+      setNotice(`Feed creation failed: ${String(error)}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function toggleFeed(id: string, enabled: boolean) {
+    try {
+      await setFeedEnabled(
+        withDevBypassSecret({ id: id as Id<"feeds">, enabled: !enabled }),
+      );
+      setNotice("Feed state updated.");
+    } catch (error) {
+      setNotice(`Failed to toggle feed: ${String(error)}`);
+    }
+  }
+
+  async function runPoll() {
+    try {
+      await pollFeedsNow(withDevBypassSecret({}));
+      setNotice("Feed poll started.");
+    } catch (error) {
+      setNotice(`Feed poll failed: ${String(error)}`);
     }
   }
 
@@ -204,6 +236,158 @@ export function IngestPage() {
             </p>
           )}
         </Show>
+      </UICard>
+
+      <UICard>
+        <div
+          class={css({
+            alignItems: "center",
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "3",
+          })}
+        >
+          <h2 class={sectionTitleClass}>Feed Intake</h2>
+          <UIButton
+            data-testid="ingest-poll-feeds-btn"
+            variant="outline"
+            onClick={runPoll}
+          >
+            Poll Feeds Now
+          </UIButton>
+        </div>
+        <p class={helperClass}>
+          Manage automated feed intake here. Add feeds, enable/disable them, and
+          trigger a poll when you need immediate refresh.
+        </p>
+
+        <div class={twoColClass}>
+          <UICard
+            as="form"
+            data-testid="ingest-feed-form"
+            onSubmit={submitFeed as any}
+            class={css({ bg: "rgba(13, 6, 32, 0.38)" })}
+          >
+            <h3 class={sectionTitleClass}>Add Feed</h3>
+
+            <label class={fieldLabelClass} for="ingest-feed-name">
+              Feed Name
+            </label>
+            <UIInput
+              id="ingest-feed-name"
+              value={feedName()}
+              onInput={(event) => setFeedName(event.currentTarget.value)}
+              placeholder="Quanta"
+            />
+
+            <label class={fieldLabelClass} for="ingest-feed-url">
+              Feed URL
+            </label>
+            <UIInput
+              id="ingest-feed-url"
+              value={feedUrl()}
+              onInput={(event) => setFeedUrl(event.currentTarget.value)}
+              placeholder="https://example.com/feed.xml"
+            />
+
+            <label class={fieldLabelClass} for="ingest-feed-type">
+              Type
+            </label>
+            <select
+              id="ingest-feed-type"
+              value={feedType()}
+              onChange={(event) => setFeedType(event.currentTarget.value)}
+              class={css({
+                bg: "rgba(26, 15, 53, 0.45)",
+                borderColor: "rgba(200, 168, 75, 0.28)",
+                borderRadius: "l2",
+                borderWidth: "1px",
+                color: "zodiac.cream",
+                minH: "10",
+                px: "3",
+                width: "full",
+              })}
+            >
+              <option value="rss">rss</option>
+              <option value="podcast">podcast</option>
+              <option value="youtube">youtube</option>
+            </select>
+
+            <div
+              class={css({
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: "3",
+              })}
+            >
+              <UIButton type="submit" variant="solid" disabled={isSubmitting()}>
+                Add Feed
+              </UIButton>
+            </div>
+          </UICard>
+
+          <UICard class={css({ bg: "rgba(13, 6, 32, 0.38)" })}>
+            <div
+              class={css({
+                alignItems: "center",
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "2",
+              })}
+            >
+              <h3 class={sectionTitleClass}>Feed List</h3>
+              <UIBadge tone="violet">{(feeds() ?? []).length} feeds</UIBadge>
+            </div>
+            <div
+              class={css({
+                display: "grid",
+                gap: "2",
+                maxH: "96",
+                overflow: "auto",
+              })}
+            >
+              <For each={feeds() ?? []}>
+                {(feed: FeedRow) => (
+                  <div
+                    data-testid="ingest-feed-row"
+                    class={css({
+                      alignItems: "center",
+                      borderColor: "rgba(200, 168, 75, 0.24)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      display: "flex",
+                      gap: "2",
+                      justifyContent: "space-between",
+                      p: "3",
+                    })}
+                  >
+                    <div>
+                      <p class={css({ margin: 0 })}>{feed.name}</p>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.58)",
+                          fontFamily: "mono",
+                          fontSize: "xs",
+                          margin: 0,
+                        })}
+                      >
+                        {feed.type} · {feed.url}
+                      </p>
+                    </div>
+                    <UIButton
+                      variant="outline"
+                      onClick={() =>
+                        toggleFeed(String(feed._id), Boolean(feed.enabled))
+                      }
+                    >
+                      {feed.enabled ? "Disable" : "Enable"}
+                    </UIButton>
+                  </div>
+                )}
+              </For>
+            </div>
+          </UICard>
+        </div>
       </UICard>
 
       <div class={twoColClass}>
@@ -365,17 +549,14 @@ export function IngestPage() {
                     Updated {formatTimestamp(source.updatedAt)}
                   </p>
 
-                  <div
-                    class={css({ display: "flex", gap: "2", marginTop: "3" })}
-                  >
-                    <UIButton
-                      variant="outline"
-                      disabled={source.status !== "text_ready"}
-                      onClick={() => triggerExtraction(source._id)}
+                  <Show when={source.canonicalUrl}>
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        marginTop: "3",
+                      })}
                     >
-                      Run Extraction
-                    </UIButton>
-                    <Show when={source.canonicalUrl}>
                       <a
                         href={source.canonicalUrl}
                         target="_blank"
@@ -387,13 +568,12 @@ export function IngestPage() {
                           letterSpacing: "0.12em",
                           textTransform: "uppercase",
                           textDecoration: "none",
-                          alignSelf: "center",
                         })}
                       >
                         Open
                       </a>
-                    </Show>
-                  </div>
+                    </div>
+                  </Show>
                 </UICard>
               )}
             </For>

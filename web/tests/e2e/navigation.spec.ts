@@ -40,20 +40,31 @@ test.describe("navigation", () => {
     });
   }
 
-  test("home workspace CTA navigates to a mapped route", async ({ page }) => {
+  test("home workspace shortcuts include full workflow routes", async ({
+    page,
+  }) => {
     await page.goto("/");
 
-    const webglError = page.getByText("Error creating WebGL context.");
-    try {
-      await webglError.waitFor({ state: "visible", timeout: 2_000 });
-      test.skip(true, "WebGL is unavailable in this headless environment.");
-    } catch {
-      // Continue when the WebGL error does not surface.
-    }
+    await expect(
+      page.getByTestId("home-workspace-link").filter({ hasText: "Feedback" }),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("home-workspace-link").filter({ hasText: "Admin" }),
+    ).toBeVisible();
 
-    await page.getByRole("button", { name: "Open Domain Workspace" }).click();
-    await expect(page).toHaveURL(
-      /\/(display|ingest|recipes|hypotheses|weekly-turns|compositions)$/,
-    );
+    await page
+      .getByTestId("home-workspace-link")
+      .filter({ hasText: "Admin" })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await page.goto("/");
+    await page
+      .getByTestId("home-workspace-link")
+      .filter({ hasText: "Display" })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/display$/);
   });
 });

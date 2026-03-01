@@ -57,7 +57,9 @@ export async function requireAuth(
       providedSecret === configuredSecret
     ) {
       return {
-        subject: "dev-bypass-user",
+        // Schema requires createdBy to be either a users table id or "system".
+        // In bypass mode we intentionally persist writes as system-authored.
+        subject: "system",
         tokenIdentifier: "dev-bypass-token",
         email: "local-dev@resonantrhythm.local",
         name: "Local Dev Bypass",

@@ -17,12 +17,23 @@ import { initZodiacScene } from "../lib/zodiac-scene";
 
 const sectorRouteMap: Record<string, string> = {
   math: "/display",
-  wave: "/ingest",
+  phys: "/ingest",
   music: "/recipes",
   psycho: "/hypotheses",
-  geometry: "/weekly-turns",
-  synthesis: "/compositions",
+  geo: "/weekly-turns",
+  synth: "/compositions",
 };
+
+const workspaceLinks = [
+  { label: "Display", to: "/display" },
+  { label: "Ingest", to: "/ingest" },
+  { label: "Hypotheses", to: "/hypotheses" },
+  { label: "Recipes", to: "/recipes" },
+  { label: "Weekly Turns", to: "/weekly-turns" },
+  { label: "Compositions", to: "/compositions" },
+  { label: "Feedback", to: "/feedback" },
+  { label: "Admin", to: "/admin" },
+] as const;
 
 type SectorMetricRow = {
   id: string;
@@ -33,6 +44,7 @@ type SectorMetricRow = {
 export function Zodiac3D() {
   const navigate = useNavigate();
   const [selSector, setSelSector] = createSignal<string>("math");
+  const [webglUnavailable, setWebglUnavailable] = createSignal(false);
 
   const sectorMetrics = createQuery(convexApi.dashboard.zodiacSectors, () => ({
     limit: 200,
@@ -83,9 +95,14 @@ export function Zodiac3D() {
   let sceneHandle: ReturnType<typeof initZodiacScene> | null = null;
 
   onMount(() => {
-    sceneHandle = initZodiacScene(canvasRef, cssContainerRef, (id) => {
-      setSelSector(id);
-    });
+    try {
+      sceneHandle = initZodiacScene(canvasRef, cssContainerRef, (id) => {
+        setSelSector(id);
+      });
+    } catch (error) {
+      console.error("Zodiac scene initialization failed:", error);
+      setWebglUnavailable(true);
+    }
   });
 
   onCleanup(() => {
@@ -104,6 +121,77 @@ export function Zodiac3D() {
   function openDomainWorkspace() {
     const destination = sectorRouteMap[selSector()] ?? "/display";
     navigate({ to: destination });
+  }
+
+  function openWorkspace(path: string) {
+    navigate({ to: path });
+  }
+
+  if (webglUnavailable()) {
+    return (
+      <div style="min-height:calc(100vh - var(--app-header-height));background:#0d0620;color:#f5f0e8;padding:24px">
+        <div style="max-width:1120px;margin:0 auto;display:grid;gap:16px">
+          <div style="border:1px solid rgba(200,168,75,0.2);padding:18px;border-radius:8px;background:rgba(13,6,32,0.5)">
+            <div style="font-size:10px;letter-spacing:0.24em;color:#c8a84b;opacity:0.72">
+              HOME FALLBACK
+            </div>
+            <h1 style="margin:10px 0 8px;font-size:34px;font-weight:300">
+              Workspace Navigator
+            </h1>
+            <p style="margin:0;color:rgba(245,240,232,0.66);line-height:1.6">
+              3D mode is unavailable in this environment. Use direct workflow
+              links below to continue managing intake, research, production, and
+              participation.
+            </p>
+          </div>
+
+          <div style="border:1px solid rgba(200,168,75,0.2);padding:18px;border-radius:8px;background:rgba(13,6,32,0.5)">
+            <div style="font-size:10px;letter-spacing:0.24em;color:#c8a84b;opacity:0.72;margin-bottom:12px">
+              QUICK ACCESS
+            </div>
+            <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+              <For each={workspaceLinks}>
+                {(link) => (
+                  <button
+                    type="button"
+                    data-testid="home-workspace-link"
+                    onClick={() => openWorkspace(link.to)}
+                    style="cursor:pointer;background:#130a31;border:1px solid rgba(200,168,75,0.28);padding:11px 12px;color:#f5f0e8;text-align:left;font-family:'IBM Plex Mono','JetBrains Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase"
+                  >
+                    {link.label}
+                  </button>
+                )}
+              </For>
+            </div>
+          </div>
+
+          <div style="border:1px solid rgba(200,168,75,0.2);padding:18px;border-radius:8px;background:rgba(13,6,32,0.5)">
+            <div style="font-size:10px;letter-spacing:0.24em;color:#c8a84b;opacity:0.72;margin-bottom:10px">
+              PIPELINE SNAPSHOT
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <For each={pipelineSummary()}>
+                {(item, index) => (
+                  <>
+                    <div style="min-width:72px;padding:8px;border:1px solid rgba(200,168,75,0.2);text-align:center">
+                      <div style="font-size:20px;color:#c8a84b">
+                        {item.value}
+                      </div>
+                      <div style="font-size:9px;letter-spacing:0.18em;color:rgba(245,240,232,0.5)">
+                        {item.label}
+                      </div>
+                    </div>
+                    <Show when={index() < pipelineSummary().length - 1}>
+                      <div style="color:rgba(200,168,75,0.35)">→</div>
+                    </Show>
+                  </>
+                )}
+              </For>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -201,6 +289,26 @@ export function Zodiac3D() {
               </button>
             )}
           </For>
+        </div>
+
+        <div style="padding:0 26px 16px;flex-shrink:0;border-top:1px solid rgba(200,168,75,0.1)">
+          <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin:12px 0 10px">
+            WORKFLOW SHORTCUTS
+          </div>
+          <div style="display:grid;gap:6px;grid-template-columns:1fr 1fr">
+            <For each={workspaceLinks}>
+              {(link) => (
+                <button
+                  type="button"
+                  data-testid="home-workspace-link"
+                  onClick={() => openWorkspace(link.to)}
+                  style="cursor:pointer;border:1px solid rgba(200,168,75,0.2);background:rgba(26,15,53,0.55);color:#f5f0e8;padding:7px 8px;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;text-align:center"
+                >
+                  {link.label}
+                </button>
+              )}
+            </For>
+          </div>
         </div>
 
         <div style="padding:14px 26px 24px;border-top:1px solid rgba(200,168,75,0.1)">
