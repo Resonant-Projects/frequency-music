@@ -224,6 +224,9 @@ export const pollFeed = internalAction({
  */
 export const pollAllFeeds = action({
   args: { devBypassSecret: v.optional(v.string()) },
+  returns: v.object({
+    results: v.any(),
+  }),
   handler: async (
     ctx,
     args,
@@ -283,6 +286,10 @@ export const ingestUrl = action({
     tags: v.optional(v.array(v.string())),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     // Generate dedupeKey
@@ -365,6 +372,11 @@ export const ingestYouTube = action({
     tags: v.optional(v.array(v.string())),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+    videoId: v.string(),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const videoId = extractYouTubeVideoId(args.url);

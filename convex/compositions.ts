@@ -1,6 +1,11 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import {
+  compositionReturnValidator,
+  listeningSessionReturnValidator,
+  recipeReturnValidator,
+} from "./validators";
 
 export const list = query({
   args: {
@@ -14,7 +19,7 @@ export const list = query({
     ),
     limit: v.optional(v.number()),
   },
-  returns: v.array(v.any()),
+  returns: v.array(compositionReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 30;
 
@@ -32,7 +37,14 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id("compositions") },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(
+    v.object({
+      ...compositionReturnValidator.fields,
+      recipe: v.union(recipeReturnValidator, v.null()),
+      listeningSessions: v.array(listeningSessionReturnValidator),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     const composition = await ctx.db.get("compositions", args.id);
     if (!composition) return null;
@@ -160,8 +172,10 @@ export const update = mutation({
  */
 export const deleteById = mutation({
   args: { id: v.id("compositions"), devBypassSecret: v.optional(v.string()) },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.delete(args.id);
+    return null;
   },
 });

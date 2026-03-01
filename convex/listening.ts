@@ -1,10 +1,11 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { listeningSessionReturnValidator } from "./validators";
 
 export const listByComposition = query({
   args: { compositionId: v.id("compositions") },
-  returns: v.array(v.any()),
+  returns: v.array(listeningSessionReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("listeningSessions")
@@ -18,7 +19,7 @@ export const listByComposition = query({
 
 export const listRecent = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(v.any()),
+  returns: v.array(listeningSessionReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("listeningSessions")

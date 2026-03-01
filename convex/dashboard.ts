@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { activityFeedItemValidator } from "./validators";
 
 type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
 
@@ -133,7 +134,7 @@ export const zodiacSectors = query({
 
 export const activityFeed = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(v.any()),
+  returns: v.array(activityFeedItemValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 12;
 

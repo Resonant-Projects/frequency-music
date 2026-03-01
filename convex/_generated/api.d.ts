@@ -28,6 +28,7 @@ import type * as listening from "../listening.js";
 import type * as recipes from "../recipes.js";
 import type * as sourceUtils from "../sourceUtils.js";
 import type * as sources from "../sources.js";
+import type * as validators from "../validators.js";
 import type * as weeklyBriefs from "../weeklyBriefs.js";
 import type * as workflows from "../workflows.js";
 
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   recipes: typeof recipes;
   sourceUtils: typeof sourceUtils;
   sources: typeof sources;
+  validators: typeof validators;
   weeklyBriefs: typeof weeklyBriefs;
   workflows: typeof workflows;
 }>;

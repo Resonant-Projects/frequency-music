@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { weeklyBriefReturnValidator } from "./validators";
 
 interface BriefParameter {
   type: string;
@@ -16,6 +17,7 @@ interface BriefParameter {
 
 export const list = query({
   args: { limit: v.optional(v.number()) },
+  returns: v.array(weeklyBriefReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("weeklyBriefs")
@@ -27,6 +29,7 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id("weeklyBriefs") },
+  returns: v.union(weeklyBriefReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get("weeklyBriefs", args.id);
   },
@@ -34,6 +37,7 @@ export const get = query({
 
 export const getLatest = query({
   args: {},
+  returns: v.union(weeklyBriefReturnValidator, v.null()),
   handler: async (ctx) => {
     return await ctx.db
       .query("weeklyBriefs")
@@ -70,12 +74,14 @@ export const create = internalMutation({
 
 export const publish = mutation({
   args: { id: v.id("weeklyBriefs"), devBypassSecret: v.optional(v.string()) },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.patch("weeklyBriefs", args.id, {
       visibility: "public",
       publishedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -130,6 +136,17 @@ export const generate = action({
     model: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    briefId: v.id("weeklyBriefs"),
+    weekOf: v.string(),
+    model: v.string(),
+    stats: v.object({
+      hypotheses: v.number(),
+      recipes: v.number(),
+      sources: v.number(),
+    }),
+    preview: v.string(),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const daysBack = args.daysBack ?? 7;

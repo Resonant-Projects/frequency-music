@@ -1,11 +1,13 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { extractionReturnValidator } from "./validators";
 
 /**
  * Get a single extraction by ID
  */
 export const get = query({
   args: { id: v.id("extractions") },
+  returns: v.union(extractionReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get("extractions", args.id);
   },
@@ -16,6 +18,7 @@ export const get = query({
  */
 export const getByInputHash = query({
   args: { inputHash: v.string() },
+  returns: v.union(extractionReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("extractions")
@@ -29,6 +32,7 @@ export const getByInputHash = query({
  */
 export const getBySourceId = query({
   args: { sourceId: v.id("sources") },
+  returns: v.array(extractionReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("extractions")
@@ -45,6 +49,7 @@ export const getBySourceId = query({
  */
 export const listRecent = query({
   args: { limit: v.optional(v.number()) },
+  returns: v.array(extractionReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
     return await ctx.db.query("extractions").order("desc").take(limit);

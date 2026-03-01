@@ -3,6 +3,7 @@ import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { visibilityValidator } from "./schema";
+import { feedReturnValidator } from "./validators";
 
 // Intentionally public — read-only data, personal research tool.
 export const workspaceSnapshot = query({
@@ -40,7 +41,7 @@ export const workspaceSnapshot = query({
 // Intentionally public — read-only data, personal research tool.
 export const listFeeds = query({
   args: {},
-  returns: v.array(v.any()),
+  returns: v.array(feedReturnValidator),
   handler: async (ctx) => {
     return await ctx.db.query("feeds").order("desc").collect();
   },
@@ -229,6 +230,9 @@ export const promoteVisibility = mutation({
 
 export const pollFeedsNow = action({
   args: { devBypassSecret: v.optional(v.string()) },
+  returns: v.object({
+    results: v.any(),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     return await ctx.runAction(api.ingest.pollAllFeeds, {

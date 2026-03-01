@@ -4,46 +4,18 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import {
+  hypothesisReturnValidator,
+  recipeParameterValidator,
+  recipeProtocolValidator,
+  recipeReturnValidator,
+} from "./validators";
 
 const recipeStatusValidator = v.union(
   v.literal("draft"),
   v.literal("in_use"),
   v.literal("archived"),
 );
-const recipeParameterValidator = v.object({
-  type: v.string(),
-  value: v.string(),
-  details: v.optional(v.any()),
-});
-const recipeProtocolValidator = v.object({
-  studyType: v.union(v.literal("litmus"), v.literal("comparison")),
-  durationSecs: v.number(),
-  panelPlanned: v.array(v.string()),
-  listeningContext: v.optional(v.string()),
-  listeningMethod: v.optional(v.string()),
-  baselineArtifactId: v.optional(v.id("compositions")),
-  whatVaries: v.array(v.string()),
-  whatStaysConstant: v.array(v.string()),
-});
-const recipeReturnValidator = v.object({
-  _id: v.id("recipes"),
-  _creationTime: v.number(),
-  hypothesisId: v.id("hypotheses"),
-  title: v.string(),
-  bodyMd: v.string(),
-  parameters: v.array(recipeParameterValidator),
-  dawChecklist: v.array(v.string()),
-  protocol: v.optional(recipeProtocolValidator),
-  status: recipeStatusValidator,
-  visibility: v.union(
-    v.literal("private"),
-    v.literal("followers"),
-    v.literal("public"),
-  ),
-  createdBy: v.union(v.id("users"), v.literal("system")),
-  createdAt: v.number(),
-  updatedAt: v.number(),
-});
 
 interface RecipeParameter {
   type: string;
@@ -247,7 +219,13 @@ export const listByStatus = query({
  */
 export const get = query({
   args: { id: v.id("recipes") },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(
+    v.object({
+      ...recipeReturnValidator.fields,
+      hypothesis: v.union(hypothesisReturnValidator, v.null()),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     const recipe = await ctx.db.get("recipes", args.id);
     if (!recipe) return null;
@@ -337,9 +315,9 @@ export const update = mutation({
     id: v.id("recipes"),
     title: v.optional(v.string()),
     bodyMd: v.optional(v.string()),
-    parameters: v.optional(v.array(v.any())),
+    parameters: v.optional(v.array(recipeParameterValidator)),
     dawChecklist: v.optional(v.array(v.string())),
-    protocol: v.optional(v.any()),
+    protocol: v.optional(recipeProtocolValidator),
     status: v.optional(recipeStatusValidator),
     devBypassSecret: v.optional(v.string()),
   },
@@ -453,6 +431,17 @@ export const generateFromHypothesis = action({
     model: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    recipeId: v.id("recipes"),
+    model: v.string(),
+    generated: v.object({
+      title: v.string(),
+      bodyMd: v.string(),
+      parameters: v.array(recipeParameterValidator),
+      dawChecklist: v.array(v.string()),
+      protocol: v.optional(recipeProtocolValidator),
+    }),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     // Get hypothesis
@@ -539,6 +528,27 @@ export const generateBatch = action({
     model: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.array(
+    v.union(
+      v.object({
+        success: v.literal(true),
+        recipeId: v.id("recipes"),
+        model: v.string(),
+        generated: v.object({
+          title: v.string(),
+          bodyMd: v.string(),
+          parameters: v.array(recipeParameterValidator),
+          dawChecklist: v.array(v.string()),
+          protocol: v.optional(recipeProtocolValidator),
+        }),
+      }),
+      v.object({
+        success: v.literal(false),
+        hypothesisId: v.id("hypotheses"),
+        error: v.string(),
+      }),
+    ),
+  ),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const limit = args.limit ?? 3;
@@ -597,8 +607,10 @@ export const generateBatch = action({
  */
 export const deleteById = mutation({
   args: { id: v.id("recipes"), devBypassSecret: v.optional(v.string()) },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.delete(args.id);
+    return null;
   },
 });

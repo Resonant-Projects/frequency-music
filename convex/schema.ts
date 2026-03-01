@@ -159,7 +159,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_enabled", ["enabled"])
-    .index("by_type", ["type"]),
+    .index("by_type", ["type"])
+    .index("by_url", ["url"]),
 
   // ==========================================================================
   // EXTRACTIONS - AI-generated structured output from sources

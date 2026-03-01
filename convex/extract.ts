@@ -136,6 +136,19 @@ export const extractSource = action({
     force: v.optional(v.boolean()), // Re-extract even if already done
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.union(
+    v.object({
+      skipped: v.literal(true),
+      reason: v.string(),
+    }),
+    v.object({
+      success: v.literal(true),
+      model: v.string(),
+      summary: v.string(),
+      claimCount: v.number(),
+      parameterCount: v.number(),
+    }),
+  ),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     // Get the source
@@ -344,6 +357,19 @@ export const extractAllReady = action({
     model: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    results: v.array(
+      v.object({
+        id: v.string(),
+        title: v.string(),
+        success: v.boolean(),
+        error: v.optional(v.string()),
+        summary: v.optional(v.string()),
+        model: v.optional(v.string()),
+      }),
+    ),
+    processed: v.number(),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const limit = args.limit ?? 10;
@@ -394,6 +420,17 @@ export const extractAllReady = action({
  */
 export const listModels = action({
   args: {},
+  returns: v.object({
+    fast: v.string(),
+    kimi: v.string(),
+    default: v.string(),
+    quality: v.string(),
+    haiku: v.string(),
+    gemini: v.string(),
+    gpt4: v.string(),
+    deepseek: v.string(),
+    grok: v.string(),
+  }),
   handler: () => {
     return MODELS;
   },

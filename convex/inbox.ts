@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
+import { sourceReturnValidator } from "./validators";
 
 type InboxStatus = "ingested" | "text_ready" | "extracted" | "review_needed";
 
@@ -38,7 +39,22 @@ function nextActionForSource(source: {
 
 export const list = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(v.any()),
+  returns: v.array(
+    v.object({
+      ...sourceReturnValidator.fields,
+      nextAction: v.string(),
+      extractionPreview: v.union(
+        v.object({
+          id: v.id("extractions"),
+          summary: v.string(),
+          claims: v.number(),
+          parameters: v.number(),
+          confidence: v.number(),
+        }),
+        v.null(),
+      ),
+    }),
+  ),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 30;
     const statuses: InboxStatus[] = [

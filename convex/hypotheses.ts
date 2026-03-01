@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { hypothesisReturnValidator, sourceReturnValidator } from "./validators";
 
 const hypothesisStatusValidator = v.union(
   v.literal("draft"),
@@ -34,7 +35,7 @@ export const listByStatus = query({
     status: v.optional(hypothesisStatusValidator),
     limit: v.optional(v.number()),
   },
-  returns: v.array(v.any()),
+  returns: v.array(hypothesisReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
@@ -55,7 +56,13 @@ export const listByStatus = query({
  */
 export const get = query({
   args: { id: v.id("hypotheses") },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(
+    v.object({
+      ...hypothesisReturnValidator.fields,
+      sources: v.array(sourceReturnValidator),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     const hypothesis = await ctx.db.get("hypotheses", args.id);
     if (!hypothesis) return null;
@@ -67,7 +74,7 @@ export const get = query({
 
     return {
       ...hypothesis,
-      sources: sources.filter(Boolean),
+      sources: sources.filter((s): s is NonNullable<typeof s> => s !== null),
     };
   },
 });
@@ -77,7 +84,7 @@ export const get = query({
  */
 export const getBySourceId = query({
   args: { sourceId: v.id("sources") },
-  returns: v.array(v.any()),
+  returns: v.array(hypothesisReturnValidator),
   handler: async (ctx, args) => {
     const all = await ctx.db.query("hypotheses").collect();
     return all.filter((h) => h.sourceIds.includes(args.sourceId));
@@ -174,6 +181,7 @@ export const updateStatus = mutation({
     ),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.patch("hypotheses", args.id, {
@@ -181,6 +189,7 @@ export const updateStatus = mutation({
       resolution: args.resolution,
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -239,6 +248,17 @@ export const generateFromExtraction = action({
     model: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    hypothesisId: v.id("hypotheses"),
+    model: v.string(),
+    generated: v.object({
+      title: v.string(),
+      question: v.string(),
+      hypothesis: v.string(),
+      rationaleMd: v.string(),
+      concepts: v.optional(v.array(v.string())),
+    }),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     // Get extraction
@@ -331,6 +351,27 @@ export const generateBatch = action({
     model: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.array(
+    v.union(
+      v.object({
+        success: v.literal(true),
+        hypothesisId: v.id("hypotheses"),
+        model: v.string(),
+        generated: v.object({
+          title: v.string(),
+          question: v.string(),
+          hypothesis: v.string(),
+          rationaleMd: v.string(),
+          concepts: v.optional(v.array(v.string())),
+        }),
+      }),
+      v.object({
+        success: v.literal(false),
+        extractionId: v.id("extractions"),
+        error: v.string(),
+      }),
+    ),
+  ),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const limit = args.limit ?? 3;
@@ -377,8 +418,10 @@ export const generateBatch = action({
  */
 export const deleteById = mutation({
   args: { id: v.id("hypotheses"), devBypassSecret: v.optional(v.string()) },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.delete(args.id);
+    return null;
   },
 });

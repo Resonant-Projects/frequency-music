@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { feedReturnValidator } from "./validators";
 
 // ============================================================================
 // QUERIES
@@ -10,6 +11,7 @@ import { internalMutation, mutation, query } from "./_generated/server";
  */
 export const listEnabled = query({
   args: {},
+  returns: v.array(feedReturnValidator),
   handler: async (ctx) => {
     return await ctx.db
       .query("feeds")
@@ -23,6 +25,7 @@ export const listEnabled = query({
  */
 export const list = query({
   args: {},
+  returns: v.array(feedReturnValidator),
   handler: async (ctx) => {
     return await ctx.db.query("feeds").collect();
   },
@@ -33,6 +36,7 @@ export const list = query({
  */
 export const get = query({
   args: { id: v.id("feeds") },
+  returns: v.union(feedReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get("feeds", args.id);
   },
@@ -54,6 +58,7 @@ export const create = mutation({
     pollIntervalMs: v.optional(v.number()),
     metadata: v.optional(v.any()),
   },
+  returns: v.id("feeds"),
   handler: async (ctx, args) => {
     const now = Date.now();
     return await ctx.db.insert("feeds", {
@@ -91,11 +96,13 @@ export const setEnabled = mutation({
     id: v.id("feeds"),
     enabled: v.boolean(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch("feeds", args.id, {
       enabled: args.enabled,
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -104,8 +111,10 @@ export const setEnabled = mutation({
  */
 export const remove = mutation({
   args: { id: v.id("feeds") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.delete("feeds", args.id);
+    return null;
   },
 });
 
@@ -118,6 +127,13 @@ export const remove = mutation({
  */
 export const seedInitialFeeds = mutation({
   args: {},
+  returns: v.array(
+    v.object({
+      name: v.string(),
+      id: v.id("feeds"),
+      created: v.boolean(),
+    }),
+  ),
   handler: async (ctx) => {
     const now = Date.now();
     const feeds = [
@@ -189,7 +205,7 @@ export const seedInitialFeeds = mutation({
       // Check if already exists
       const existing = await ctx.db
         .query("feeds")
-        .filter((q) => q.eq(q.field("url"), feed.url))
+        .withIndex("by_url", (q) => q.eq("url", feed.url))
         .first();
 
       if (!existing) {

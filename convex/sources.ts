@@ -3,6 +3,7 @@ import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
+import { sourceReturnValidator } from "./validators";
 
 // Reusable validator for source status
 const sourceStatusValidator = v.union(
@@ -29,7 +30,7 @@ export const listByStatus = query({
     status: sourceStatusValidator,
     limit: v.optional(v.number()),
   },
-  returns: v.array(v.any()),
+  returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
     return await ctx.db
@@ -45,7 +46,7 @@ export const listByStatus = query({
  */
 export const listRecent = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(v.any()),
+  returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("sources")
@@ -69,7 +70,7 @@ export const listByType = query({
     ),
     limit: v.optional(v.number()),
   },
-  returns: v.array(v.any()),
+  returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("sources")
@@ -84,7 +85,7 @@ export const listByType = query({
  */
 export const get = query({
   args: { id: v.id("sources") },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get("sources", args.id);
   },
@@ -95,7 +96,7 @@ export const get = query({
  */
 export const getByDedupeKey = query({
   args: { dedupeKey: v.string() },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("sources")
@@ -514,15 +515,22 @@ export const archive = mutation({
     reason: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const source = await ctx.db.get("sources", args.id);
-    if (!source) throw new ConvexError("Source not found");
+    if (!source) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Source not found",
+      });
+    }
     await ctx.db.patch("sources", args.id, {
       status: "archived",
       blockedDetails: args.reason || "Archived: off-topic or irrelevant",
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -535,6 +543,7 @@ export const bulkArchive = mutation({
     reason: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({ archived: v.number() }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     let archived = 0;
