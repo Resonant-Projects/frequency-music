@@ -115,3 +115,14 @@ export const updateVisibility = mutation({
     return null;
   },
 });
+
+/**
+ * Delete a listening session by ID
+ */
+export const deleteById = mutation({
+  args: { id: v.id("listeningSessions"), devBypassSecret: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    await ctx.db.delete(args.id);
+  },
+});
