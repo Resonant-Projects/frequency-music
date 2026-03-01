@@ -591,3 +591,14 @@ export const generateBatch = action({
     return results;
   },
 });
+
+/**
+ * Delete a recipe by ID
+ */
+export const deleteById = mutation({
+  args: { id: v.id("recipes"), devBypassSecret: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    await ctx.db.delete(args.id);
+  },
+});
