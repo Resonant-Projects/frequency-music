@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { action } from "./_generated/server";
+import { requireAuth } from "./auth";
 
 // ============================================================================
 // YOUTUBE TRANSCRIPT FETCHING
@@ -35,6 +36,23 @@ interface SupadataResponse {
 }
 
 /**
+ * Fetch with a timeout using AbortController
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 30_000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
  * Fetch transcript using Supadata API (reliable third-party service)
  */
 async function fetchYouTubeTranscript(
@@ -43,7 +61,7 @@ async function fetchYouTubeTranscript(
   // Use Supadata's free YouTube transcript API
   const apiUrl = `https://api.supadata.ai/v1/youtube/transcript?video_id=${videoId}&text=true`;
 
-  const response = await fetch(apiUrl, {
+  const response = await fetchWithTimeout(apiUrl, {
     headers: {
       Accept: "application/json",
     },
@@ -52,7 +70,7 @@ async function fetchYouTubeTranscript(
   if (!response.ok) {
     // Fall back to trying tactiq's free API
     const tactiqUrl = `https://tactiq-apps-prod.tactiq.io/transcript?videoId=${videoId}&langCode=en`;
-    const tactiqResponse = await fetch(tactiqUrl);
+    const tactiqResponse = await fetchWithTimeout(tactiqUrl);
 
     if (!tactiqResponse.ok) {
       throw new Error(`Failed to fetch transcript: ${response.status}`);
@@ -120,8 +138,16 @@ export const getYouTubeTranscript = action({
   args: {
     url: v.string(),
     withTimestamps: v.optional(v.boolean()),
+    devBypassSecret: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  returns: v.object({
+    videoId: v.string(),
+    transcript: v.string(),
+    withTimestamps: v.boolean(),
+    segments: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const videoId = extractVideoId(args.url);
     if (!videoId) {
       throw new Error("Invalid YouTube URL");
@@ -162,8 +188,22 @@ function formatTime(seconds: number): string {
 export const fetchTranscriptForSource = action({
   args: {
     sourceId: v.id("sources"),
+    devBypassSecret: v.optional(v.string()),
   },
+  returns: v.union(
+    v.object({
+      success: v.literal(true),
+      videoId: v.string(),
+      transcriptLength: v.number(),
+      segments: v.number(),
+    }),
+    v.object({
+      success: v.literal(false),
+      error: v.string(),
+    }),
+  ),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     // Get the source
     const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
     if (!source) {
@@ -190,23 +230,26 @@ export const fetchTranscriptForSource = action({
       await ctx.runMutation(api.sources.updateText, {
         id: args.sourceId,
         transcript,
+        devBypassSecret: args.devBypassSecret,
       });
 
       return {
-        success: true,
+        success: true as const,
         videoId,
         transcriptLength: transcript.length,
         segments: segments.length,
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       // Update source with error
       await ctx.runMutation(api.sources.updateStatus, {
         id: args.sourceId,
         status: "review_needed",
         blockedReason: "no_text",
-        blockedDetails: `Transcript fetch failed: ${error}`,
+        blockedDetails: `Transcript fetch failed: ${message}`,
+        devBypassSecret: args.devBypassSecret,
       });
-      return { success: false, error: `${error}` };
+      return { success: false as const, error: message };
     }
   },
 });
@@ -217,8 +260,21 @@ export const fetchTranscriptForSource = action({
 export const fetchAllYouTubeTranscripts = action({
   args: {
     limit: v.optional(v.number()),
+    devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    results: v.array(
+      v.object({
+        id: v.string(),
+        title: v.string(),
+        success: v.boolean(),
+        error: v.optional(v.string()),
+      }),
+    ),
+    processed: v.number(),
+  }),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const limit = args.limit ?? 10;
 
     // Get YouTube sources that are in "ingested" status (no transcript yet)
@@ -244,20 +300,23 @@ export const fetchAllYouTubeTranscripts = action({
           api.fabric.fetchTranscriptForSource,
           {
             sourceId: source._id,
+            devBypassSecret: args.devBypassSecret,
           },
         );
         results.push({
           id: source._id,
           title: source.title || "Untitled",
           success: result.success,
-          error: result.error,
+          error: result.success ? undefined : result.error,
         });
       } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         results.push({
           id: source._id,
           title: source.title || "Untitled",
           success: false,
-          error: `${error}`,
+          error: message,
         });
       }
     }
@@ -273,12 +332,19 @@ export const fetchAllYouTubeTranscripts = action({
 export const fetchArticleText = action({
   args: {
     url: v.string(),
+    devBypassSecret: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  returns: v.object({
+    url: v.string(),
+    text: v.string(),
+    length: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     // Use Jina Reader API (same as Fabric uses)
     const jinaUrl = `https://r.jina.ai/${args.url}`;
 
-    const response = await fetch(jinaUrl, {
+    const response = await fetchWithTimeout(jinaUrl, {
       headers: {
         Accept: "text/plain",
       },
@@ -303,8 +369,21 @@ export const fetchArticleText = action({
 export const fetchArticleForSource = action({
   args: {
     sourceId: v.id("sources"),
+    devBypassSecret: v.optional(v.string()),
   },
+  returns: v.union(
+    v.object({
+      success: v.literal(true),
+      url: v.string(),
+      textLength: v.number(),
+    }),
+    v.object({
+      success: v.literal(false),
+      error: v.string(),
+    }),
+  ),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
     if (!source) {
       throw new Error("Source not found");
@@ -316,7 +395,7 @@ export const fetchArticleForSource = action({
 
     try {
       const jinaUrl = `https://r.jina.ai/${source.canonicalUrl}`;
-      const response = await fetch(jinaUrl, {
+      const response = await fetchWithTimeout(jinaUrl, {
         headers: { Accept: "text/plain" },
       });
 
@@ -329,21 +408,24 @@ export const fetchArticleForSource = action({
       await ctx.runMutation(api.sources.updateText, {
         id: args.sourceId,
         rawText: text,
+        devBypassSecret: args.devBypassSecret,
       });
 
       return {
-        success: true,
+        success: true as const,
         url: source.canonicalUrl,
         textLength: text.length,
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       await ctx.runMutation(api.sources.updateStatus, {
         id: args.sourceId,
         status: "review_needed",
         blockedReason: "no_text",
-        blockedDetails: `Article fetch failed: ${error}`,
+        blockedDetails: `Article fetch failed: ${message}`,
+        devBypassSecret: args.devBypassSecret,
       });
-      return { success: false, error: `${error}` };
+      return { success: false as const, error: message };
     }
   },
 });

@@ -2,7 +2,13 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { action, internalMutation, mutation, query } from "./_generated/server";
+import {
+  action,
+  internalAction,
+  internalMutation,
+  mutation,
+  query,
+} from "./_generated/server";
 import { requireAuth } from "./auth";
 import { weeklyBriefReturnValidator } from "./validators";
 
@@ -130,138 +136,175 @@ Also provide a JSON block at the end with:
 }
 \`\`\``;
 
+interface GenerateBriefArgs {
+  daysBack?: number;
+  model?: string;
+}
+
+interface GenerateBriefResult {
+  briefId: string; // Id<"weeklyBriefs"> at runtime
+  weekOf: string;
+  model: string;
+  stats: { hypotheses: number; recipes: number; sources: number };
+  preview: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- shared between action and internalAction contexts
+async function generateBriefCore(
+  ctx: any,
+  args: GenerateBriefArgs,
+): Promise<GenerateBriefResult> {
+  const daysBack = args.daysBack ?? 7;
+  const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
+
+  // Get Monday of current week for weekOf
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - now.getDay() + 1);
+  const weekOf = monday.toISOString().split("T")[0] as string;
+
+  // Get recent hypotheses
+  const allHypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
+    limit: 50,
+  });
+  const hypotheses = allHypotheses.filter((h) => h.createdAt > cutoff);
+
+  // Get recent recipes
+  const allRecipes = await ctx.runQuery(api.recipes.listByStatus, {
+    limit: 50,
+  });
+  const recipes = allRecipes.filter((r) => r.createdAt > cutoff);
+
+  if (hypotheses.length === 0) {
+    throw new Error("No recent hypotheses found. Generate some first.");
+  }
+
+  // Format for prompt
+  const hypothesesText = hypotheses
+    .map(
+      (h, i) =>
+        `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}`,
+    )
+    .join("\n\n");
+
+  const recipesText =
+    recipes.length > 0
+      ? recipes
+          .map((r, i) => {
+            const params = r.parameters
+              .slice(0, 4)
+              .map((p: BriefParameter) => `${p.type}: ${p.value}`)
+              .join(", ");
+            return `${i + 1}. **${r.title}**\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
+          })
+          .join("\n\n")
+      : "No recipes yet - experiments will need recipe generation.";
+
+  const prompt = BRIEF_USER_PROMPT.replace("{{weekOf}}", weekOf)
+    .replace("{{numHypotheses}}", String(hypotheses.length))
+    .replace("{{hypotheses}}", hypothesesText)
+    .replace("{{numRecipes}}", String(recipes.length))
+    .replace("{{recipes}}", recipesText);
+
+  // Call AI
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
+
+  const openrouter = createOpenRouter({ apiKey: openRouterKey });
+  const modelId = args.model || "anthropic/claude-sonnet-4-6";
+
+  const result = await generateText({
+    model: openrouter(modelId),
+    system: BRIEF_SYSTEM_PROMPT,
+    prompt,
+    maxTokens: 4000,
+  });
+
+  // Extract todo items from JSON block if present
+  let todo: string[] = [];
+  const jsonMatch = result.text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1]) as { todo?: unknown };
+      if (
+        Array.isArray(parsed.todo) &&
+        parsed.todo.every((item) => typeof item === "string")
+      ) {
+        todo = parsed.todo;
+      } else if (typeof parsed.todo === "string") {
+        todo = [parsed.todo];
+      } else {
+        todo = [];
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  // Get source IDs from hypotheses
+  const sourceIds = [...new Set(hypotheses.flatMap((h) => h.sourceIds))];
+  const persistedSourceIds = sourceIds.slice(0, 20);
+
+  // Create the brief
+  const briefId = await ctx.runMutation(internal.weeklyBriefs.create, {
+    weekOf,
+    model: modelId,
+    promptVersion: "v1",
+    bodyMd: result.text,
+    sourceIds: persistedSourceIds,
+    recommendedHypothesisIds: hypotheses.map((h) => h._id),
+    recommendedRecipeIds: recipes.map((r) => r._id),
+    todo: todo.length > 0 ? todo : undefined,
+  });
+
+  return {
+    briefId,
+    weekOf,
+    model: modelId,
+    stats: {
+      hypotheses: hypotheses.length,
+      recipes: recipes.length,
+      sources: persistedSourceIds.length,
+    },
+    preview: `${result.text.slice(0, 500)}...`,
+  };
+}
+
+const generateReturnsValidator = v.object({
+  briefId: v.id("weeklyBriefs"),
+  weekOf: v.string(),
+  model: v.string(),
+  stats: v.object({
+    hypotheses: v.number(),
+    recipes: v.number(),
+    sources: v.number(),
+  }),
+  preview: v.string(),
+});
+
 export const generate = action({
   args: {
     daysBack: v.optional(v.number()),
     model: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.object({
-    briefId: v.id("weeklyBriefs"),
-    weekOf: v.string(),
-    model: v.string(),
-    stats: v.object({
-      hypotheses: v.number(),
-      recipes: v.number(),
-      sources: v.number(),
-    }),
-    preview: v.string(),
-  }),
+  returns: generateReturnsValidator,
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const daysBack = args.daysBack ?? 7;
-    const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
+    return await generateBriefCore(ctx, args);
+  },
+});
 
-    // Get Monday of current week for weekOf
-    const now = new Date();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - now.getDay() + 1);
-    const weekOf = monday.toISOString().split("T")[0];
-
-    // Get recent hypotheses
-    const allHypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
-      limit: 50,
-    });
-    const hypotheses = allHypotheses.filter((h) => h.createdAt > cutoff);
-
-    // Get recent recipes
-    const allRecipes = await ctx.runQuery(api.recipes.listByStatus, {
-      limit: 50,
-    });
-    const recipes = allRecipes.filter((r) => r.createdAt > cutoff);
-
-    if (hypotheses.length === 0) {
-      throw new Error("No recent hypotheses found. Generate some first.");
-    }
-
-    // Format for prompt
-    const hypothesesText = hypotheses
-      .map(
-        (h, i) =>
-          `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}`,
-      )
-      .join("\n\n");
-
-    const recipesText =
-      recipes.length > 0
-        ? recipes
-            .map((r, i) => {
-              const params = r.parameters
-                .slice(0, 4)
-                .map((p: BriefParameter) => `${p.type}: ${p.value}`)
-                .join(", ");
-              return `${i + 1}. **${r.title}**\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
-            })
-            .join("\n\n")
-        : "No recipes yet - experiments will need recipe generation.";
-
-    const prompt = BRIEF_USER_PROMPT.replace("{{weekOf}}", weekOf)
-      .replace("{{numHypotheses}}", String(hypotheses.length))
-      .replace("{{hypotheses}}", hypothesesText)
-      .replace("{{numRecipes}}", String(recipes.length))
-      .replace("{{recipes}}", recipesText);
-
-    // Call AI
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
-
-    const openrouter = createOpenRouter({ apiKey: openRouterKey });
-    const modelId = args.model || "anthropic/claude-sonnet-4-6";
-
-    const result = await generateText({
-      model: openrouter(modelId),
-      system: BRIEF_SYSTEM_PROMPT,
-      prompt,
-      maxTokens: 4000,
-    });
-
-    // Extract todo items from JSON block if present
-    let todo: string[] = [];
-    const jsonMatch = result.text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[1]) as { todo?: unknown };
-        if (
-          Array.isArray(parsed.todo) &&
-          parsed.todo.every((item) => typeof item === "string")
-        ) {
-          todo = parsed.todo;
-        } else if (typeof parsed.todo === "string") {
-          todo = [parsed.todo];
-        } else {
-          todo = [];
-        }
-      } catch {
-        // Ignore parse errors
-      }
-    }
-
-    // Get source IDs from hypotheses
-    const sourceIds = [...new Set(hypotheses.flatMap((h) => h.sourceIds))];
-    const persistedSourceIds = sourceIds.slice(0, 20);
-
-    // Create the brief
-    const briefId = await ctx.runMutation(internal.weeklyBriefs.create, {
-      weekOf,
-      model: modelId,
-      promptVersion: "v1",
-      bodyMd: result.text,
-      sourceIds: persistedSourceIds,
-      recommendedHypothesisIds: hypotheses.map((h) => h._id),
-      recommendedRecipeIds: recipes.map((r) => r._id),
-      todo: todo.length > 0 ? todo : undefined,
-    });
-
-    return {
-      briefId,
-      weekOf,
-      model: modelId,
-      stats: {
-        hypotheses: hypotheses.length,
-        recipes: recipes.length,
-        sources: persistedSourceIds.length,
-      },
-      preview: `${result.text.slice(0, 500)}...`,
-    };
+/**
+ * Internal action for cron-triggered brief generation (no auth required)
+ */
+export const generateInternal = internalAction({
+  args: {
+    daysBack: v.optional(v.number()),
+    model: v.optional(v.string()),
+  },
+  returns: generateReturnsValidator,
+  handler: async (ctx, args) => {
+    return await generateBriefCore(ctx, args);
   },
 });

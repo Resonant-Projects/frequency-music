@@ -4,6 +4,27 @@ import { action, internalAction } from "./_generated/server";
 import { requireAuth } from "./auth";
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Fetch with a timeout using AbortController
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 30_000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ============================================================================
 // RSS FEED POLLING
 // ============================================================================
 
@@ -135,7 +156,7 @@ export const pollFeed = internalAction({
 
     try {
       // Fetch the feed
-      const response = await fetch(feed.url, {
+      const response = await fetchWithTimeout(feed.url, {
         headers: {
           "User-Agent": "ResonantProjects/1.0 (research aggregator)",
           Accept:
@@ -182,8 +203,8 @@ export const pollFeed = internalAction({
               ? stripHtml(item.description)
               : undefined;
 
-          // Create source
-          await ctx.runMutation(api.sources.create, {
+          // Create source (use internal mutation — no auth needed for cron/internal)
+          await ctx.runMutation(internal.sources.upsertExternal, {
             type: feed.type === "youtube" ? "youtube" : "rss",
             title: item.title,
             canonicalUrl: item.link,
@@ -305,7 +326,7 @@ export const ingestUrl = action({
     }
 
     // Fetch the page
-    const response = await fetch(args.url, {
+    const response = await fetchWithTimeout(args.url, {
       headers: {
         "User-Agent": "ResonantProjects/1.0 (research aggregator)",
       },
@@ -395,11 +416,14 @@ export const ingestYouTube = action({
     }
 
     // Fetch video page for metadata
-    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; ResonantProjects/1.0)",
+    const response = await fetchWithTimeout(
+      `https://www.youtube.com/watch?v=${videoId}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; ResonantProjects/1.0)",
+        },
       },
-    });
+    );
 
     let title = `YouTube: ${videoId}`;
     let author: string | undefined;

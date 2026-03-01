@@ -18,6 +18,21 @@ function getConfiguredSecret() {
   return process.env.INGEST_SHARED_SECRET ?? process.env.N8N_INGEST_SECRET;
 }
 
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const encoder = new TextEncoder();
+  const bufA = encoder.encode(a);
+  const bufB = encoder.encode(b);
+  let result = 0;
+  for (let i = 0; i < bufA.length; i++) {
+    result |= (bufA[i] as number) ^ (bufB[i] as number);
+  }
+  return result === 0;
+}
+
 function isAuthorized(request: Request, payloadSecret?: string): boolean {
   const expected = getConfiguredSecret();
   if (!expected) {
@@ -31,7 +46,7 @@ function isAuthorized(request: Request, payloadSecret?: string): boolean {
 
   const authHeader = request.headers.get("x-ingest-secret") ?? undefined;
   const candidate = payloadSecret ?? authHeader;
-  return Boolean(candidate && candidate === expected);
+  return Boolean(candidate && constantTimeEqual(candidate, expected));
 }
 
 http.route({

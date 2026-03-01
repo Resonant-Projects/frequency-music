@@ -86,7 +86,7 @@ export const getBySourceId = query({
   args: { sourceId: v.id("sources") },
   returns: v.array(hypothesisReturnValidator),
   handler: async (ctx, args) => {
-    const all = await ctx.db.query("hypotheses").collect();
+    const all = await ctx.db.query("hypotheses").order("desc").take(200);
     return all.filter((h) => h.sourceIds.includes(args.sourceId));
   },
 });

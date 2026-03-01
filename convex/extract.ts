@@ -279,7 +279,7 @@ export const extractSource = action({
         id: args.sourceId,
         status: "review_needed",
         blockedReason: "ai_error",
-        blockedDetails: `Extraction failed: ${error}`,
+        blockedDetails: `Extraction failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         devBypassSecret: args.devBypassSecret,
       });
       throw error;

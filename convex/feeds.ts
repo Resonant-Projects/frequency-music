@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { requireAuth } from "./auth";
 import { feedReturnValidator } from "./validators";
 
 // ============================================================================
@@ -57,12 +58,15 @@ export const create = mutation({
     category: v.optional(v.string()),
     pollIntervalMs: v.optional(v.number()),
     metadata: v.optional(v.any()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("feeds"),
   handler: async (ctx, args) => {
+    const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
+    await requireAuth(ctx, args);
     const now = Date.now();
     return await ctx.db.insert("feeds", {
-      ...args,
+      ...createArgs,
       enabled: true,
       createdAt: now,
       updatedAt: now,
@@ -95,9 +99,11 @@ export const setEnabled = mutation({
   args: {
     id: v.id("feeds"),
     enabled: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     await ctx.db.patch("feeds", args.id, {
       enabled: args.enabled,
       updatedAt: Date.now(),
@@ -110,9 +116,10 @@ export const setEnabled = mutation({
  * Delete a feed
  */
 export const remove = mutation({
-  args: { id: v.id("feeds") },
+  args: { id: v.id("feeds"), devBypassSecret: v.optional(v.string()) },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     await ctx.db.delete("feeds", args.id);
     return null;
   },
@@ -125,7 +132,7 @@ export const remove = mutation({
 /**
  * Seed the initial feeds from the source document
  */
-export const seedInitialFeeds = mutation({
+export const seedInitialFeeds = internalMutation({
   args: {},
   returns: v.array(
     v.object({

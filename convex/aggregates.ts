@@ -34,6 +34,7 @@ export const conceptsAggregate = new TableAggregate<DataModel, "concepts">(
  */
 export const getTotalConceptCount = query({
   args: {},
+  returns: v.number(),
   handler: async (ctx) => {
     return await conceptsAggregate.count(ctx);
   },
@@ -44,6 +45,7 @@ export const getTotalConceptCount = query({
  */
 export const getTotalMentions = query({
   args: {},
+  returns: v.number(),
   handler: async (ctx) => {
     return await conceptsAggregate.sum(ctx);
   },
@@ -54,6 +56,7 @@ export const getTotalMentions = query({
  */
 export const getTopConceptsRanked = query({
   args: { limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 10;
 
@@ -91,6 +94,7 @@ export const sourcesByStatusAggregate = new TableAggregate<
  */
 export const getSourceCounts = query({
   args: {},
+  returns: v.any(),
   handler: async (ctx) => {
     const statuses = [
       "ingested",
@@ -118,6 +122,7 @@ export const getSourceCounts = query({
  */
 export const getTotalSourceCount = query({
   args: {},
+  returns: v.number(),
   handler: async (ctx) => {
     return await sourcesByStatusAggregate.count(ctx);
   },

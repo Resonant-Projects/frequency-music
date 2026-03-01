@@ -10,7 +10,8 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { requireAuth } from "./auth";
 import { workflowManager } from "./components";
 
 interface MinimalExtraction {
@@ -267,14 +268,34 @@ export const startBatchExtraction = mutation({
   args: {
     limit: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchExtractionWorkflow,
       { limit: args.limit, model: args.model },
     );
     return { workflowId };
+  },
+});
+
+/**
+ * Start batch extraction (internal, for crons)
+ */
+export const startBatchExtractionInternal = internalMutation({
+  args: {
+    limit: v.optional(v.number()),
+    model: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await workflowManager.start(
+      ctx,
+      internal.workflows.batchExtractionWorkflow,
+      { limit: args.limit, model: args.model },
+    );
   },
 });
 
@@ -286,12 +307,16 @@ export const startBatchHypothesis = mutation({
     limit: v.optional(v.number()),
     minClaims: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const { devBypassSecret: _devBypassSecret, ...workflowArgs } = args;
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchHypothesisWorkflow,
-      args,
+      workflowArgs,
     );
     return { workflowId };
   },
@@ -305,12 +330,16 @@ export const startFullPipeline = mutation({
     extractLimit: v.optional(v.number()),
     hypothesisLimit: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const { devBypassSecret: _devBypassSecret, ...workflowArgs } = args;
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.fullPipelineWorkflow,
-      args,
+      workflowArgs,
     );
     return { workflowId };
   },
@@ -321,6 +350,7 @@ export const startFullPipeline = mutation({
  */
 export const getStatus = query({
   args: { workflowId: v.string() },
+  returns: v.any(),
   handler: async (ctx, args) => {
     return await workflowManager.status(ctx, args.workflowId);
   },

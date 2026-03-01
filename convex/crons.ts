@@ -1,5 +1,5 @@
 import { cronJobs } from "convex/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
@@ -15,7 +15,7 @@ crons.interval(
 crons.interval(
   "batch-extract",
   { hours: 8 },
-  api.workflows.startBatchExtraction,
+  internal.workflows.startBatchExtractionInternal,
   { limit: 3 },
 );
 
@@ -23,7 +23,7 @@ crons.interval(
 crons.weekly(
   "generate-weekly-turn",
   { dayOfWeek: "friday", hourUTC: 16, minuteUTC: 0 },
-  api.weeklyBriefs.generate,
+  internal.weeklyBriefs.generateInternal,
   { daysBack: 7 },
 );
 
