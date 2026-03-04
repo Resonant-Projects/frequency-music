@@ -20,6 +20,9 @@ interface MinimalExtraction {
   compositionParameters: unknown[];
 }
 
+// Auth bypass secret is threaded through workflow args since workflow handlers
+// run in mutation context where process.env is not available.
+
 // ============================================================================
 // EXTRACTION WORKFLOW
 // ============================================================================
@@ -31,8 +34,10 @@ export const extractSourceWorkflow = workflowManager.define({
   args: {
     sourceId: v.id("sources"),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
+    const devBypassSecret = args.devBypassSecret;
     // Validate source exists and has content
     const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
 
@@ -49,7 +54,7 @@ export const extractSourceWorkflow = workflowManager.define({
     // Run extraction with retry
     await ctx.runAction(
       api.extract.extractSource,
-      { sourceId: args.sourceId, model: args.model },
+      { sourceId: args.sourceId, model: args.model, devBypassSecret },
       { retry: true },
     );
 
@@ -75,9 +80,11 @@ export const batchExtractionWorkflow = workflowManager.define({
   args: {
     limit: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
     const limit = args.limit ?? 10;
+    const devBypassSecret = args.devBypassSecret;
 
     const sources = await ctx.runQuery(api.sources.listByStatus, {
       status: "text_ready",
@@ -90,7 +97,7 @@ export const batchExtractionWorkflow = workflowManager.define({
       try {
         await ctx.runAction(
           api.extract.extractSource,
-          { sourceId: source._id, model: args.model },
+          { sourceId: source._id, model: args.model, devBypassSecret },
           { retry: true },
         );
 
@@ -123,11 +130,13 @@ export const generateHypothesisWorkflow = workflowManager.define({
   args: {
     extractionId: v.id("extractions"),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
+    const devBypassSecret = args.devBypassSecret;
     const result = await ctx.runAction(
       api.hypotheses.generateFromExtraction,
-      { extractionId: args.extractionId, model: args.model },
+      { extractionId: args.extractionId, model: args.model, devBypassSecret },
       { retry: true },
     );
 
@@ -147,10 +156,12 @@ export const batchHypothesisWorkflow = workflowManager.define({
     limit: v.optional(v.number()),
     minClaims: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
     const limit = args.limit ?? 5;
     const minClaims = args.minClaims ?? 2;
+    const devBypassSecret = args.devBypassSecret;
 
     const extractions = await ctx.runQuery(api.extractions.listRecent, {
       limit: 50,
@@ -169,7 +180,7 @@ export const batchHypothesisWorkflow = workflowManager.define({
       try {
         const result = await ctx.runAction(
           api.hypotheses.generateFromExtraction,
-          { extractionId: extraction._id, model: args.model },
+          { extractionId: extraction._id, model: args.model, devBypassSecret },
           { retry: true },
         );
 
@@ -197,10 +208,12 @@ export const fullPipelineWorkflow = workflowManager.define({
     extractLimit: v.optional(v.number()),
     hypothesisLimit: v.optional(v.number()),
     model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
     const extractLimit = args.extractLimit ?? 5;
     const hypothesisLimit = args.hypothesisLimit ?? 3;
+    const devBypassSecret = args.devBypassSecret;
 
     console.log("Starting full pipeline");
 
@@ -214,7 +227,7 @@ export const fullPipelineWorkflow = workflowManager.define({
       try {
         await ctx.runAction(
           api.extract.extractSource,
-          { sourceId: source._id, model: args.model },
+          { sourceId: source._id, model: args.model, devBypassSecret },
           { retry: true },
         );
       } catch (e) {
@@ -236,7 +249,7 @@ export const fullPipelineWorkflow = workflowManager.define({
       try {
         const result = await ctx.runAction(
           api.hypotheses.generateFromExtraction,
-          { extractionId: extraction._id, model: args.model },
+          { extractionId: extraction._id, model: args.model, devBypassSecret },
           { retry: true },
         );
 
@@ -244,7 +257,11 @@ export const fullPipelineWorkflow = workflowManager.define({
           // Generate recipe
           await ctx.runAction(
             api.recipes.generateFromHypothesis,
-            { hypothesisId: result.hypothesisId, model: args.model },
+            {
+              hypothesisId: result.hypothesisId,
+              model: args.model,
+              devBypassSecret,
+            },
             { retry: true },
           );
         }
@@ -276,7 +293,11 @@ export const startBatchExtraction = mutation({
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchExtractionWorkflow,
-      { limit: args.limit, model: args.model },
+      {
+        limit: args.limit,
+        model: args.model,
+        devBypassSecret: args.devBypassSecret,
+      },
     );
     return { workflowId };
   },
@@ -291,10 +312,15 @@ export const startBatchExtractionInternal = internalMutation({
     model: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Internal mutations can access process.env; pass bypass secret to workflow
+    const devBypassSecret =
+      process.env.AUTH_BYPASS_ENABLED === "true"
+        ? process.env.AUTH_BYPASS_SECRET
+        : undefined;
     await workflowManager.start(
       ctx,
       internal.workflows.batchExtractionWorkflow,
-      { limit: args.limit, model: args.model },
+      { limit: args.limit, model: args.model, devBypassSecret },
     );
   },
 });
@@ -312,11 +338,15 @@ export const startBatchHypothesis = mutation({
   returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const { devBypassSecret: _devBypassSecret, ...workflowArgs } = args;
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchHypothesisWorkflow,
-      workflowArgs,
+      {
+        limit: args.limit,
+        minClaims: args.minClaims,
+        model: args.model,
+        devBypassSecret: args.devBypassSecret,
+      },
     );
     return { workflowId };
   },
@@ -335,11 +365,15 @@ export const startFullPipeline = mutation({
   returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const { devBypassSecret: _devBypassSecret, ...workflowArgs } = args;
     const workflowId = await workflowManager.start(
       ctx,
       internal.workflows.fullPipelineWorkflow,
-      workflowArgs,
+      {
+        extractLimit: args.extractLimit,
+        hypothesisLimit: args.hypothesisLimit,
+        model: args.model,
+        devBypassSecret: args.devBypassSecret,
+      },
     );
     return { workflowId };
   },
