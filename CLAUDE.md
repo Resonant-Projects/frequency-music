@@ -34,11 +34,13 @@ frequency-music/
 │   ├── sources-master.md
 │   ├── robert-edward-grant-sources.json
 │   ├── books-and-papers.json
-│   └── microtuning-sources.json
+│   ├── microtuning-sources.json
+│   ├── esoteric-sources.json          # Sacred geometry, bowls, biofield, etc.
+│   ├── esoteric-sources-2.json        # Extended esoteric sources
+│   └── pdfs/                          # Downloaded PDF files
 │
 ├── docs/
-│   ├── essays/          # Synthesized research essays
-│   │   └── geometric-microtuning-composition.md
+│   ├── essays/          # Synthesized research essays (18 essays)
 │   ├── reference/       # Quick reference guides
 │   │   └── microtuning-overview.md
 │   └── *.md             # Planning/spec docs
@@ -67,20 +69,31 @@ frequency-music/
 All scripts use Bun and load env from `.env.local`:
 
 ```bash
-# Ingest Robert Edward Grant sources (PDFs + articles)
-bun run scripts/ingest-robert-grant.ts
+# Source ingestion
+bun run scripts/ingest-robert-grant.ts      # Robert Edward Grant sources
+bun run scripts/ingest-books-papers.ts       # Books and arXiv papers
+bun run scripts/ingest-microtuning.ts        # Microtuning/xenharmonic sources
+bun run scripts/ingest-esoteric.ts           # Esoteric research batch 1 (26 sources)
+bun run scripts/ingest-esoteric-2.ts         # Esoteric research batch 2
+bun run scripts/ingest-jmm-open-access.ts    # JMM RSS full text
 
-# Ingest books and arXiv papers
-bun run scripts/ingest-books-papers.ts
+# Text fetching
+bun run scripts/fetch-full-articles.ts --limit 10    # Jina Reader
+bun run scripts/fetch-article-kernel.ts <url>        # Kernel.sh cloud browser
+bun run scripts/fetch-blocked-kernel.ts              # Batch fetch blocked sources
+bun run scripts/fetch-remaining-kernel.ts             # Retry remaining blocked
+bun run scripts/update-text-from-files.ts             # Update Convex from /tmp files
+bun run scripts/fetch-notion-full-text.ts             # Notion sources → Jina
 
-# Ingest microtuning/xenharmonic sources
-bun run scripts/ingest-microtuning.ts
+# YouTube & Notion
+bun run scripts/fetch-youtube-transcripts.ts          # Fabric CLI transcripts
+bun run scripts/sync-notion-tag.ts                    # Sync Frequency Research tag
 
-# Fetch full article text via Jina Reader
-bun run scripts/fetch-full-articles.ts --limit 10 [--re-extract]
-
-# Fetch YouTube transcripts via Fabric CLI
-bun run scripts/fetch-youtube-transcripts.ts
+# Analysis & Maintenance
+bun run scripts/audit-extractions.ts                  # Audit extraction quality
+bun run scripts/list-extraction-ids.ts                # Export to /tmp/ext-summary.json
+bun run scripts/list-zero-sources.ts                  # Find zero-claim sources
+bun run scripts/find-e2e.ts                           # Find E2E test data
 ```
 
 ## Convex Commands
@@ -125,12 +138,23 @@ bun run scripts/generate-experiment.ts --auto
 bun run scripts/generate-experiment.ts <extractionId>
 ```
 
+## Authentication
+
+All CLI mutations require auth bypass (Clerk integration):
+```bash
+# Add devBypassSecret to mutation args
+bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4-6", "devBypassSecret": "freq-opus-extract-2026"}'
+```
+
+Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=freq-opus-extract-2026`
+
 ## Environment Variables (.env.local)
 
 ```
 CONVEX_SELF_HOSTED_URL='http://convex-backend.paas.rproj.art'
 OPENROUTER_API_KEY=...
 GROQ_API_KEY=...
+KERNEL_API_KEY=...  # Kernel.sh cloud browser (5 concurrent sessions)
 ```
 
 ## Data Pipeline
@@ -153,36 +177,45 @@ Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
 
 ```typescript
 MODELS = {
-  fast: "groq/llama-3.3-70b-versatile",
-  kimi: "groq/moonshotai/kimi-k2-instruct",
-  default: "anthropic/claude-sonnet-4",
-  haiku: "anthropic/claude-3-5-haiku-20241022",
-  gemini: "google/gemini-2.0-flash-001",
-  gpt4: "openai/gpt-4o",
+  fast: "groq/moonshotai/kimi-k2-instruct",
+  default: "anthropic/claude-sonnet-4-6",
+  gemini: "google/gemini-2.5-flash",
+  grok: "x-ai/grok-3-mini-beta",
+  deepseek: "deepseek/deepseek-chat-v3-0324",
 }
 ```
 
-## Current Feeds (17)
+> **Note:** Never use Llama models. Sonnet 4.6 for automated cron extractions, Opus for manual re-extractions.
 
-**Research:**
+## Current Feeds (18, 6 dead)
+
+**Research (active):**
 - Quanta Magazine, Nautilus, BRAMS
-- Music Theory Online, Journal of Mathematics and Music
+- Music Theory Online, Journal of Mathematics and Music (T&F — Cloudflare blocks full text)
 - arXiv: cs.SD (Sound), eess.AS (Audio & Speech)
 
-**YouTube:**
-- 3Blue1Brown, Adam Neely, David Bennett Piano
-- CymaScope, Andrew Huang, Robert Edward Grant
+**YouTube (mostly dead):**
+- ~~3Blue1Brown~~ (HTTP 500), ~~Adam Neely~~ (HTTP 500), ~~David Bennett Piano~~ (HTTP 404)
+- ~~CymaScope~~ (HTTP 500), Andrew Huang, ~~Robert Edward Grant~~ (HTTP 404)
 
 **Production:**
-- Sound on Sound, Splice Blog, Bobby Owsinski, Native Instruments
+- ~~Sound on Sound~~ (HTTP 410 Gone — permanently dead), Splice Blog, Bobby Owsinski, Native Instruments
+
+> **TODO:** Remove 6 dead feeds, find replacements
 
 ## Research Domains
 
 - **Microtuning/Xenharmonic:** EDOs, JI systems, Scala files
 - **Geometric Music Theory:** Robert Edward Grant's polygon-angle correspondence
 - **Psychoacoustics:** Perception, consonance/dissonance
-- **Wave Physics:** Harmonics, resonance, cymatics
+- **Wave Physics:** Harmonics, resonance, cymatics, Faraday waves
 - **Mathematical Music Theory:** Group theory, Tonnetz, voice-leading geometry
+- **Sacred Geometry:** Music of the Spheres, Pythagorean harmony, cathedral acoustics
+- **Consciousness & Sound:** General Resonance Theory, noetic science, Schumann resonance
+- **Biofield Science:** Biophotons, electromagnetic bioinformation, biofield therapies
+- **Sound Healing:** Singing bowls, toning/chanting, vibroacoustic therapy, 40Hz gamma
+- **Cymatics:** Chladni patterns, Hans Jenny, Lauterwasser water images
+- **Ley Lines & Earth Energy:** Rory Duff classification, Watkins, Becker-Hagens grid
 
 ## Scala File Format
 
