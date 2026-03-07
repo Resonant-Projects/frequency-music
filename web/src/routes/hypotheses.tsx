@@ -1,4 +1,6 @@
-import { createSignal, For, Show } from "solid-js";
+import { Link } from "@tanstack/solid-router";
+import { createMemo, createSignal, For, Show } from "solid-js";
+import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
@@ -28,6 +30,12 @@ export function HypothesesPage() {
   const recentSources = createQuery(convexApi.sources.listRecent, () => ({
     limit: 20,
   }));
+  const recentSourceRows = createMemo<Doc<"sources">[]>(
+    () => (recentSources() ?? []) as Doc<"sources">[],
+  );
+  const hypothesisRows = createMemo<Doc<"hypotheses">[]>(
+    () => (hypotheses.data() ?? []) as Doc<"hypotheses">[],
+  );
 
   const createHypothesis = createMutation(convexApi.hypotheses.create);
 
@@ -136,8 +144,8 @@ export function HypothesesPage() {
               },
             })}
           >
-            <For each={recentSources() ?? []}>
-              {(source: any) => (
+            <For each={recentSourceRows()}>
+              {(source) => (
                 <label
                   class={css({
                     alignItems: "center",
@@ -188,49 +196,59 @@ export function HypothesesPage() {
           fallback={<p>Loading hypotheses…</p>}
         >
           <div class={css({ display: "grid", gap: "3" })}>
-            <For each={hypotheses.data() ?? []}>
-              {(item: any) => (
-                <div
-                  data-testid="entity-row"
-                  class={css({
-                    borderColor: "rgba(200, 168, 75, 0.25)",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    p: "4",
-                  })}
+            <For each={hypothesisRows()}>
+              {(item) => (
+                <Link
+                  to={"/hypotheses/" + item._id}
+                  style={{ "text-decoration": "none", color: "inherit" }}
                 >
                   <div
+                    data-testid="entity-row"
                     class={css({
-                      display: "flex",
-                      gap: "2",
-                      marginBottom: "2",
+                      borderColor: "rgba(200, 168, 75, 0.25)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      cursor: "pointer",
+                      p: "4",
+                      transition: "border-color 0.2s",
+                      _hover: {
+                        borderColor: "rgba(200, 168, 75, 0.45)",
+                      },
                     })}
                   >
-                    <UIBadge tone="cream">{item.status}</UIBadge>
-                    <UIBadge tone="violet">
-                      {item.sourceIds.length} citations
-                    </UIBadge>
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        marginBottom: "2",
+                      })}
+                    >
+                      <UIBadge tone="cream">{item.status}</UIBadge>
+                      <UIBadge tone="violet">
+                        {item.sourceIds.length} citations
+                      </UIBadge>
+                    </div>
+                    <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                      {item.title}
+                    </h3>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.7)",
+                        marginBottom: "1",
+                      })}
+                    >
+                      {item.question}
+                    </p>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.55)",
+                        fontSize: "sm",
+                      })}
+                    >
+                      {item.hypothesis}
+                    </p>
                   </div>
-                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
-                    {item.title}
-                  </h3>
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.7)",
-                      marginBottom: "1",
-                    })}
-                  >
-                    {item.question}
-                  </p>
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.55)",
-                      fontSize: "sm",
-                    })}
-                  >
-                    {item.hypothesis}
-                  </p>
-                </div>
+                </Link>
               )}
             </For>
           </div>

@@ -16,10 +16,15 @@ import {
 import { AdminPage } from "./routes/admin";
 import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
+import { EssayDetailPage } from "./routes/essay-detail";
+import { EssaysPage } from "./routes/essays";
 import { FeedbackPage } from "./routes/feedback";
+import { HypothesisDetailPage } from "./routes/hypothesis-detail";
 import { HypothesesPage } from "./routes/hypotheses";
 import { IngestPage } from "./routes/ingest";
+import { RecipeDetailPage } from "./routes/recipe-detail";
 import { RecipesPage } from "./routes/recipes";
+import { WeeklyBriefDetailPage } from "./routes/weekly-brief-detail";
 import { WeeklyTurnsPage } from "./routes/weekly-turns";
 import { Zodiac3D } from "./routes/zodiac-3d";
 
@@ -27,6 +32,7 @@ const appLinks = [
   { to: "/", label: "Home" },
   { to: "/ingest", label: "Ingest" },
   { to: "/display", label: "Display" },
+  { to: "/essays", label: "Essays" },
   { to: "/hypotheses", label: "Hypotheses" },
   { to: "/recipes", label: "Recipes" },
   { to: "/weekly-turns", label: "Weekly Turns" },
@@ -136,10 +142,28 @@ const displayRoute = createRoute({
   component: DisplayPage,
 });
 
+const essaysRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/essays",
+  component: EssaysPage,
+});
+
+const essayDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/essays/$essaySlug",
+  component: EssayDetailPage,
+});
+
 const hypothesesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/hypotheses",
   component: HypothesesPage,
+});
+
+const hypothesisDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/hypotheses/$hypothesisId",
+  component: HypothesisDetailPage,
 });
 
 const recipesRoute = createRoute({
@@ -148,10 +172,22 @@ const recipesRoute = createRoute({
   component: RecipesPage,
 });
 
+const recipeDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/recipes/$recipeId",
+  component: RecipeDetailPage,
+});
+
 const weeklyTurnsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/weekly-turns",
   component: WeeklyTurnsPage,
+});
+
+const weeklyBriefDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/weekly-turns/$briefId",
+  component: WeeklyBriefDetailPage,
 });
 
 const compositionsRoute = createRoute({
@@ -176,9 +212,14 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   ingestRoute,
   displayRoute,
+  essaysRoute,
+  essayDetailRoute,
   hypothesesRoute,
+  hypothesisDetailRoute,
   recipesRoute,
+  recipeDetailRoute,
   weeklyTurnsRoute,
+  weeklyBriefDetailRoute,
   compositionsRoute,
   feedbackRoute,
   adminRoute,

@@ -1,5 +1,6 @@
-import { createSignal, For, Show } from "solid-js";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { Link } from "@tanstack/solid-router";
+import { createMemo, createSignal, For, Show } from "solid-js";
+import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   pageClass,
@@ -11,18 +12,50 @@ import {
 import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
-  createMutation,
   createQueryWithStatus,
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
+import { extractTitle } from "../lib/markdown-utils";
+
+function extractExcerpt(bodyMd: string, maxLen = 180): string {
+  // Skip the first heading line, grab the next non-empty lines as plain text
+  const lines = bodyMd.split("\n");
+  const contentLines: string[] = [];
+  let pastFirstHeading = false;
+
+  for (const line of lines) {
+    if (!pastFirstHeading) {
+      if (line.match(/^#\s+/)) {
+        pastFirstHeading = true;
+      }
+      continue;
+    }
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    // Strip markdown formatting for plain text excerpt
+    const plain = trimmed
+      .replace(/^#{1,6}\s+/, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/`(.*?)`/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+    contentLines.push(plain);
+    if (contentLines.join(" ").length >= maxLen) break;
+  }
+
+  const text = contentLines.join(" ");
+  return text.length > maxLen ? `${text.slice(0, maxLen)}...` : text;
+}
 
 export function WeeklyTurnsPage() {
   const briefs = createQueryWithStatus(convexApi.weeklyBriefs.list, () => ({
     limit: 12,
   }));
+  const briefRows = createMemo<Doc<"weeklyBriefs">[]>(
+    () => (briefs.data() ?? []) as Doc<"weeklyBriefs">[],
+  );
 
   const generateBrief = createAction(convexApi.weeklyBriefs.generate);
-  const publishBrief = createMutation(convexApi.weeklyBriefs.publish);
 
   const [notice, setNotice] = createSignal<string | null>(null);
 
@@ -33,15 +66,6 @@ export function WeeklyTurnsPage() {
       setNotice(`Weekly turn generated for ${result.weekOf}.`);
     } catch (error) {
       setNotice(`Generation failed: ${String(error)}`);
-    }
-  }
-
-  async function publish(id: string) {
-    try {
-      await publishBrief(withDevBypassSecret({ id: id as Id<"weeklyBriefs"> }));
-      setNotice("Weekly turn published.");
-    } catch (error) {
-      setNotice(`Publish failed: ${String(error)}`);
     }
   }
 
@@ -87,17 +111,26 @@ export function WeeklyTurnsPage() {
 
         <Show
           when={!briefs.isLoading()}
-          fallback={<p>Loading weekly turns…</p>}
+          fallback={<p>Loading weekly turns...</p>}
         >
           <div class={css({ display: "grid", gap: "3" })}>
-            <For each={briefs.data() ?? []}>
-              {(brief: any) => (
-                <div
+            <For each={briefRows()}>
+              {(brief) => (
+                <Link
+                  to="/weekly-turns/$briefId"
+                  params={{ briefId: String(brief._id) }}
                   class={css({
                     borderColor: "rgba(200, 168, 75, 0.25)",
                     borderRadius: "l2",
                     borderWidth: "1px",
+                    cursor: "pointer",
+                    display: "block",
                     p: "4",
+                    textDecoration: "none",
+                    transition: "border-color 0.15s",
+                    _hover: {
+                      borderColor: "rgba(200, 168, 75, 0.5)",
+                    },
                   })}
                 >
                   <div
@@ -109,47 +142,58 @@ export function WeeklyTurnsPage() {
                       marginBottom: "2",
                     })}
                   >
-                    <div class={css({ display: "flex", gap: "2" })}>
+                    <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
                       <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
                       <UIBadge tone="cream">{brief.visibility}</UIBadge>
+                      <Show when={brief.publishedAt}>
+                        {(ts) => (
+                          <UIBadge tone="violet">
+                            Published{" "}
+                            {new Date(ts()).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </UIBadge>
+                        )}
+                      </Show>
                     </div>
-                    <UIButton
-                      variant="outline"
-                      disabled={brief.visibility === "public"}
-                      onClick={() => publish(String(brief._id))}
-                    >
-                      Publish
-                    </UIButton>
                   </div>
+
+                  <h3
+                    class={css({
+                      color: "zodiac.cream",
+                      fontFamily: "display",
+                      fontSize: "lg",
+                      fontWeight: "normal",
+                      lineHeight: "1.4",
+                      mb: "2",
+                    })}
+                  >
+                    {extractTitle(brief.bodyMd)}
+                  </h3>
 
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.7)",
+                      color: "rgba(245, 240, 232, 0.55)",
+                      fontFamily: "body",
+                      fontSize: "sm",
+                      lineHeight: "1.6",
+                      mb: "2",
+                    })}
+                  >
+                    {extractExcerpt(brief.bodyMd)}
+                  </p>
+
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.35)",
                       fontFamily: "mono",
                       fontSize: "xs",
-                      marginBottom: "2",
                     })}
                   >
                     model: {brief.model} · prompt: {brief.promptVersion}
                   </p>
-
-                  <pre
-                    class={css({
-                      bg: "rgba(13, 6, 32, 0.5)",
-                      borderRadius: "l1",
-                      color: "rgba(245, 240, 232, 0.72)",
-                      fontFamily: "body",
-                      fontSize: "sm",
-                      lineHeight: "1.65",
-                      maxH: "64",
-                      overflow: "auto",
-                      p: "3",
-                      whiteSpace: "pre-wrap",
-                    })}
-                  >
-                    {brief.bodyMd}
-                  </pre>
-                </div>
+                </Link>
               )}
             </For>
           </div>

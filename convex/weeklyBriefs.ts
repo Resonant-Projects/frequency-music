@@ -308,3 +308,206 @@ export const generateInternal = internalAction({
     return await generateBriefCore(ctx, args);
   },
 });
+
+// ============================================================================
+// NOTION PUBLISHING
+// ============================================================================
+
+interface NotionRichText {
+  type: "text";
+  text: { content: string };
+}
+
+interface NotionBlock {
+  object: "block";
+  type: string;
+  [key: string]: unknown;
+}
+
+function chunkText(text: string, maxLen = 2000): NotionRichText[] {
+  const chunks: NotionRichText[] = [];
+  for (let i = 0; i < text.length; i += maxLen) {
+    chunks.push({ type: "text", text: { content: text.slice(i, i + maxLen) } });
+  }
+  return chunks;
+}
+
+function stripTrailingFencedBlock(md: string): string {
+  const trimmed = md.trimEnd();
+  const match = trimmed.match(
+    /^(?<body>[\s\S]*?)\n```(?:[a-zA-Z0-9_-]+)?[^\n]*\n[\s\S]*\n```$/,
+  );
+
+  return match?.groups?.body?.trimEnd() ?? trimmed;
+}
+
+function markdownToNotionBlocks(md: string): NotionBlock[] {
+  const blocks: NotionBlock[] = [];
+  const lines = stripTrailingFencedBlock(md).split("\n");
+  let buffer: string[] = [];
+
+  function flushBuffer() {
+    const text = buffer.join("\n").trim();
+    if (!text) {
+      buffer = [];
+      return;
+    }
+    // Split bullet lists
+    const bulletLines = text.split("\n");
+    let paragraphLines: string[] = [];
+
+    for (const line of bulletLines) {
+      const bulletMatch = line.match(/^[-*]\s+(.*)/);
+      if (bulletMatch) {
+        // Flush any paragraph lines first
+        if (paragraphLines.length > 0) {
+          const pText = paragraphLines.join("\n").trim();
+          if (pText) {
+            blocks.push({
+              object: "block",
+              type: "paragraph",
+              paragraph: { rich_text: chunkText(pText) },
+            });
+          }
+          paragraphLines = [];
+        }
+        blocks.push({
+          object: "block",
+          type: "bulleted_list_item",
+          bulleted_list_item: {
+            rich_text: chunkText(bulletMatch[1]),
+          },
+        });
+      } else {
+        paragraphLines.push(line);
+      }
+    }
+
+    if (paragraphLines.length > 0) {
+      const pText = paragraphLines.join("\n").trim();
+      if (pText) {
+        blocks.push({
+          object: "block",
+          type: "paragraph",
+          paragraph: { rich_text: chunkText(pText) },
+        });
+      }
+    }
+
+    buffer = [];
+  }
+
+  for (const line of lines) {
+    const h1Match = line.match(/^#\s+(.*)/);
+    const h2Match = line.match(/^##\s+(.*)/);
+    const h3Match = line.match(/^###\s+(.*)/);
+
+    if (h3Match) {
+      flushBuffer();
+      blocks.push({
+        object: "block",
+        type: "heading_3",
+        heading_3: { rich_text: chunkText(h3Match[1]) },
+      });
+    } else if (h2Match) {
+      flushBuffer();
+      blocks.push({
+        object: "block",
+        type: "heading_2",
+        heading_2: { rich_text: chunkText(h2Match[1]) },
+      });
+    } else if (h1Match) {
+      flushBuffer();
+      blocks.push({
+        object: "block",
+        type: "heading_1",
+        heading_1: { rich_text: chunkText(h1Match[1]) },
+      });
+    } else {
+      buffer.push(line);
+    }
+  }
+
+  flushBuffer();
+
+  // Notion API limits 100 blocks per request
+  return blocks.slice(0, 100);
+}
+
+export const setPublished = internalMutation({
+  args: {
+    id: v.id("weeklyBriefs"),
+    notionPageId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch("weeklyBriefs", args.id, {
+      visibility: "public",
+      publishedAt: Date.now(),
+      notionPageId: args.notionPageId,
+    });
+  },
+});
+
+export const publishToNotion = action({
+  args: {
+    id: v.id("weeklyBriefs"),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    notionPageId: v.string(),
+    notionUrl: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const brief = await ctx.runQuery(api.weeklyBriefs.get, { id: args.id });
+    if (!brief) throw new Error("Brief not found");
+    if (brief.notionPageId) {
+      return { notionPageId: brief.notionPageId, notionUrl: undefined };
+    }
+
+    const notionToken = process.env.NOTION_API_KEY;
+    const notionDbId = process.env.NOTION_WEEKLY_BRIEFS_DB;
+    if (!notionToken || !notionDbId) {
+      throw new Error(
+        "Notion not configured. Set NOTION_API_KEY and NOTION_WEEKLY_BRIEFS_DB env vars.",
+      );
+    }
+
+    const response = await fetch("https://api.notion.com/v1/pages", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        parent: { database_id: notionDbId },
+        properties: {
+          Name: {
+            title: [
+              { text: { content: `Weekly Brief — ${brief.weekOf}` } },
+            ],
+          },
+          "Week Of": { date: { start: brief.weekOf } },
+          Model: {
+            rich_text: [{ text: { content: brief.model } }],
+          },
+        },
+        children: markdownToNotionBlocks(brief.bodyMd),
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Notion API error ${response.status}: ${body}`);
+    }
+
+    const page = (await response.json()) as { id: string; url?: string };
+    await ctx.runMutation(internal.weeklyBriefs.setPublished, {
+      id: args.id,
+      notionPageId: page.id,
+    });
+
+    return { notionPageId: page.id, notionUrl: page.url };
+  },
+});

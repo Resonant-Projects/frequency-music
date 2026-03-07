@@ -20,18 +20,24 @@ export const convexApi = {
     extractSource: actionRef("extract:extractSource"),
   },
   hypotheses: {
+    get: queryRef("hypotheses:get"),
     listByStatus: queryRef("hypotheses:listByStatus"),
     create: mutationRef("hypotheses:create"),
+    update: mutationRef("hypotheses:update"),
+    deleteById: mutationRef("hypotheses:deleteById"),
   },
   recipes: {
+    get: queryRef("recipes:get"),
     listByStatus: queryRef("recipes:listByStatus"),
     create: mutationRef("recipes:create"),
     generateFromHypothesis: actionRef("recipes:generateFromHypothesis"),
   },
   weeklyBriefs: {
+    get: queryRef("weeklyBriefs:get"),
     list: queryRef("weeklyBriefs:list"),
     generate: actionRef("weeklyBriefs:generate"),
     publish: mutationRef("weeklyBriefs:publish"),
+    publishToNotion: actionRef("weeklyBriefs:publishToNotion"),
   },
   compositions: {
     list: queryRef("compositions:list"),
@@ -55,5 +61,13 @@ export const convexApi = {
     pipeline: queryRef("dashboard:pipeline"),
     zodiacSectors: queryRef("dashboard:zodiacSectors"),
     activityFeed: queryRef("dashboard:activityFeed"),
+    domainSubTopics: queryRef("dashboard:domainSubTopics"),
+    pipelineItems: queryRef("dashboard:pipelineItems"),
+    itemRelations: queryRef("dashboard:itemRelations"),
+  },
+  graph: {
+    getConceptsForDomain: queryRef("graph:getConceptsForDomain"),
+    getConceptEdges: queryRef("graph:getConceptEdges"),
+    getConceptDetail: queryRef("graph:getConceptDetail"),
   },
 };

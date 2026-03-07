@@ -172,6 +172,39 @@ export function dotWorldPos(
   };
 }
 
+// Map concept domains (9) to zodiac display sectors (6)
+export const CONCEPT_DOMAIN_TO_SECTOR: Record<string, string> = {
+  mathematics: "math",
+  acoustics: "phys",
+  tuning: "music",
+  theory: "music",
+  psychoacoustics: "psycho",
+  geometry: "geo",
+  production: "synth",
+  instrument: "synth",
+  general: "music", // fallback
+};
+
+export function conceptDomainToSector(domain: string): string {
+  return CONCEPT_DOMAIN_TO_SECTOR[domain] ?? "music";
+}
+
+// Status colors for pipeline items
+export const STATUS_COLORS: Record<string, string> = {
+  ingested: "#4a5568",
+  text_ready: "#2b6cb0",
+  extracting: "#c8a84b",
+  extracted: "#38a169",
+  review_needed: "#d69e2e",
+  triaged: "#805ad5",
+  draft: "#718096",
+  queued: "#2b6cb0",
+  active: "#38a169",
+  evaluated: "#805ad5",
+  in_use: "#38a169",
+  archived: "#4a5568",
+};
+
 // Compute the midpoint position on an arc (for edge targets, label placement, etc.)
 export function arcMidpoint(
   r: number,

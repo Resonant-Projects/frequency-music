@@ -6,6 +6,7 @@
         "author": "Dave Benson",
         "url": "https://homepages.abdn.ac.uk/d.j.benson/pages/html/maths-music.html",
         "pdf": "https://logosfoundation.org/kursus/music_math.pdf",
+        "local_file": "data/pdfs/benson-music-a-mathematical-offering.pdf",
         "topics": [
           "mathematics",
           "music theory",
@@ -71,6 +72,52 @@
         "url": "https://archive.org/details/acousticsarchite00sabi",
         "topics": ["acoustics", "architecture", "reverberation", "room design"],
         "category": "applied"
+      },
+      {
+        "title": "Mathematics and Music",
+        "author": "David Wright",
+        "url": "https://www.math.wustl.edu/~wright/Math109/00Book.pdf",
+        "pdf": "https://www.math.wustl.edu/~wright/Math109/00Book.pdf",
+        "local_file": "data/pdfs/wright-mathematics-and-music.pdf",
+        "topics": ["mathematics", "music theory", "scales", "harmony", "tuning", "introductory"],
+        "category": "core",
+        "notes": "Free textbook from Washington University math course"
+      },
+      {
+        "title": "Divisions of the Tetrachord",
+        "author": "John H. Chalmers",
+        "url": "https://eamusic.dartmouth.edu/~larry/published_articles/divisions_of_the_tetrachord/index.html",
+        "local_file": "data/pdfs/chalmers-divisions-of-tetrachord-intro-preface.pdf",
+        "local_notes": "Intro/preface only saved. Chapters 1-9 available individually at the URL above.",
+        "partial": true,
+        "excerpt": "intro/preface",
+        "topics": [
+          "tetrachord",
+          "just intonation",
+          "ancient Greek music",
+          "xenharmonic",
+          "tuning theory"
+        ],
+        "category": "microtuning",
+        "notes": "Classic xenharmonic reference, available freely online"
+      },
+      {
+        "title": "Tuning, Timbre, Spectrum, Scale",
+        "author": "William A. Sethares",
+        "url": "https://sethares.engr.wisc.edu/ttss.html",
+        "local_file": "data/pdfs/sethares-tuning-timbre-spectrum-scale.pdf",
+        "isbn": "9781852337971",
+        "topics": [
+          "timbre",
+          "tuning",
+          "consonance",
+          "dissonance",
+          "psychoacoustics",
+          "adaptive tuning",
+          "xenharmonic"
+        ],
+        "category": "microtuning",
+        "notes": "Author hosts free download on university site. Foundational text linking timbre to tuning — essential for the project."
       }
     ],
     "recommended_purchase": [
@@ -103,6 +150,10 @@
       {
         "title": "Musimathics: The Mathematical Foundations of Music (Vol 1 & 2)",
         "author": "Gareth Loy",
+        "isbn_vol1": "9780262516556",
+        "amazon_vol1": "https://www.amazon.com/dp/0262516551/",
+        "isbn_vol2": "9780262516563",
+        "amazon_vol2": "https://www.amazon.com/dp/026251656X/",
         "topics": [
           "mathematics",
           "music theory",
@@ -136,6 +187,283 @@
         "author": "Floyd Toole",
         "topics": ["psychoacoustics", "loudspeakers", "room acoustics"],
         "category": "applied"
+      },
+      {
+        "title": "Music by the Numbers: From Pythagoras to Schoenberg",
+        "author": "Eli Maor",
+        "isbn": "9780691176901",
+        "amazon": "https://www.amazon.com/dp/0691176906/",
+        "topics": [
+          "history of mathematics",
+          "Pythagoras",
+          "vibrating string",
+          "twelve-tone",
+          "Schoenberg",
+          "physics",
+          "relativity"
+        ],
+        "category": "history",
+        "notes": "Accessible narrative history of music-math connections. Princeton UP, 176 pages."
+      },
+      {
+        "title": "The Physics of Music: The Science of Musical Sound",
+        "author": "Various (Dover reprint)",
+        "isbn": "9780486779348",
+        "amazon": "https://www.amazon.com/dp/0486779343/",
+        "topics": [
+          "physics",
+          "acoustics",
+          "musical instruments",
+          "sound science"
+        ],
+        "category": "physics",
+        "notes": "Dover Publications reprint — affordable classic on musical acoustics."
+      },
+      {
+        "title": "Every Brain Needs Music: The Neuroscience of Making and Listening to Music",
+        "author": "Lawrence Sherman & Dennis Plies",
+        "isbn": "9780231209106",
+        "amazon": "https://www.amazon.com/dp/023120910X/",
+        "topics": [
+          "neuroscience",
+          "psychoacoustics",
+          "music cognition",
+          "perception",
+          "brain"
+        ],
+        "category": "neuroscience",
+        "notes": "Columbia UP, 2023. Covers the neurological basis of music perception."
+      },
+      {
+        "title": "Music, Math, and Mind: The Physics and Neuroscience of Music",
+        "author": "David Sulzer (aka Dave Soldier)",
+        "isbn": "9780231193795",
+        "amazon": "https://www.amazon.com/dp/0231193793/",
+        "topics": [
+          "physics",
+          "neuroscience",
+          "mathematics",
+          "psychoacoustics",
+          "scales",
+          "rhythm",
+          "tuning",
+          "Pythagoras"
+        ],
+        "category": "neuroscience",
+        "notes": "Columbia UP, 2021. Dual-perspective from a Columbia neuroscience professor and experimental musician. Covers math of scales, tuning, psychoacoustics, and animal sound."
+      },
+      {
+        "title": "Mathemagical Music Production",
+        "author": "Derrick Scott van Heerden",
+        "edition": "Second Edition",
+        "isbn": "9781494312046",
+        "amazon": "https://www.amazon.com/dp/B00I0YQ4OE/",
+        "topics": [
+          "432 Hz",
+          "Pythagorean tuning",
+          "just intonation",
+          "harmonic series",
+          "music production",
+          "sacred geometry"
+        ],
+        "category": "alternative",
+        "notes": "Self-published, 2016. Applies ancient mathematical principles to modern production. 432 Hz perspective — useful for Robert Edward Grant-adjacent research."
+      },
+      {
+        "title": "From Music to Mathematics: Exploring the Connections",
+        "author": "Gareth E. Roberts",
+        "isbn": "9781421419183",
+        "url": "https://www.press.jhu.edu/books/title/11245/music-mathematics",
+        "topics": [
+          "mathematics",
+          "scales",
+          "rhythm",
+          "geometric sequences",
+          "group theory",
+          "Steve Reich",
+          "phase shifting",
+          "bell ringing"
+        ],
+        "category": "core",
+        "notes": "Johns Hopkins UP. 'Music first' approach — musical examples motivate mathematical depth. Highly regarded textbook."
+      },
+      {
+        "title": "Music and Mathematics: From Pythagoras to Fractals",
+        "author": "John Fauvel, Raymond Flood & Robin Wilson (eds.)",
+        "isbn": "9780199298938",
+        "url": "https://global.oup.com/academic/product/music-and-mathematics-9780199298938",
+        "topics": [
+          "Pythagoras",
+          "fractals",
+          "tuning",
+          "temperament",
+          "acoustics",
+          "composition",
+          "history of science",
+          "bell ringing"
+        ],
+        "category": "core",
+        "notes": "Oxford UP. Multi-author collection by leading scholars. Covers physical, theoretical, physiological, and compositional connections."
+      },
+      {
+        "title": "Mathematical Music Theory: Algebraic, Geometric, Combinatorial, Topological and Applied Approaches",
+        "author": "Mariana Montiel & Robert W. Peck (eds.)",
+        "isbn": "9789813235304",
+        "url": "https://www.worldscientific.com/worldscibooks/10.1142/10858",
+        "topics": [
+          "algebraic combinatorics",
+          "topology",
+          "graph theory",
+          "Tonnetz",
+          "Fourier",
+          "voice leading",
+          "homotopy"
+        ],
+        "category": "advanced",
+        "notes": "World Scientific, 2018. Advanced academic treatment. Includes chapters by Dmitri Tymoczko and Jason Yust on geometric Tonnetz generalizations."
+      },
+      {
+        "title": "The Geometry of Musical Rhythm: What Makes a 'Good' Rhythm Good?",
+        "author": "Godfried T. Toussaint",
+        "edition": "2nd Edition",
+        "isbn": "9781138059726",
+        "topics": [
+          "rhythm",
+          "geometry",
+          "Euclidean rhythms",
+          "combinatorics",
+          "ethnomusicology",
+          "mathematical music theory"
+        ],
+        "category": "geometry",
+        "notes": "CRC Press. Widely cited. Explores rhythm mathematically through geometric lenses — Euclidean algorithms, necklaces, and polygonal representations."
+      },
+      {
+        "title": "Microtonality and the Tuning Systems of Erv Wilson",
+        "author": "Terumi Narushima",
+        "isbn": "9781138857568",
+        "url": "https://www.routledge.com/Microtonality-and-the-Tuning-Systems-of-Erv-Wilson/Narushima/p/book/9780367872403",
+        "topics": [
+          "Erv Wilson",
+          "microtonality",
+          "Scale Tree",
+          "Moments of Symmetry",
+          "Constant Structures",
+          "Combination-Product Sets",
+          "multidimensional geometry",
+          "instrument design"
+        ],
+        "category": "microtuning",
+        "notes": "Routledge Studies in Music Theory. First book-length treatment of Wilson's theories. Essential for xenharmonic geometry work."
+      },
+      {
+        "title": "Tuning and Temperament: A Historical Survey",
+        "author": "J. Murray Barbour",
+        "isbn": "9780486434063",
+        "url": "https://www.amazon.com/dp/0486434060/",
+        "archive_url": "https://archive.org/details/tuningtemperamen00barb",
+        "local_file": "data/pdfs/barbour-tuning-and-temperament.pdf",
+        "topics": [
+          "tuning",
+          "temperament",
+          "history",
+          "Pythagorean",
+          "just intonation",
+          "equal temperament",
+          "meantone"
+        ],
+        "category": "microtuning",
+        "notes": "Dover reprint. Classic 1932 scholarly survey of Western tuning history. Foundational xenharmonic reference."
+      },
+      {
+        "title": "The Structure of Recognizable Diatonic Tunings",
+        "author": "Easley Blackwood",
+        "isbn": "9780691091228",
+        "topics": [
+          "equal temperament",
+          "diatonic tuning",
+          "recognizability",
+          "microtonal",
+          "EDO"
+        ],
+        "category": "microtuning",
+        "notes": "Princeton UP, 1985. Theoretical analysis of EDO systems from 12 to 24 tones. Key reference in xenharmonic theory."
+      },
+      {
+        "title": "Genesis of a Music",
+        "author": "Harry Partch",
+        "edition": "2nd Edition",
+        "isbn": "9780306801068",
+        "topics": [
+          "just intonation",
+          "43-tone scale",
+          "instrument building",
+          "extended just intonation",
+          "microtonality",
+          "alternative tuning"
+        ],
+        "category": "microtuning",
+        "notes": "Da Capo Press. The foundational text of 20th-century microtonal composition. Combines theory, aesthetics, and instrument design."
+      },
+      {
+        "title": "How Equal Temperament Ruined Harmony (and Why You Should Care)",
+        "author": "Ross W. Duffin",
+        "isbn": "9780393334203",
+        "topics": [
+          "equal temperament",
+          "historical tuning",
+          "meantone",
+          "intonation",
+          "temperament history",
+          "accessible"
+        ],
+        "category": "microtuning",
+        "notes": "W.W. Norton, 2007. Accessible argument for historical temperaments. Good entry point for non-specialists."
+      },
+      {
+        "title": "Mathematical Theory of Music",
+        "author": "Franck Jedrzejewski",
+        "isbn": "9782855750644",
+        "topics": [
+          "group theory",
+          "set theory",
+          "algebra",
+          "topology",
+          "formal music theory"
+        ],
+        "category": "advanced",
+        "notes": "Delatour France / IRCAM, 2006. Advanced mathematical treatment of music theory. Referenced on the Xenharmonic Wiki."
+      },
+      {
+        "title": "The Math Behind the Music",
+        "author": "Leon Harkleroad",
+        "isbn": "9780521009355",
+        "url": "https://www.amazon.com/dp/0521009359/",
+        "topics": [
+          "mathematics",
+          "scales",
+          "tuning",
+          "rhythm",
+          "twelve-tone",
+          "accessible"
+        ],
+        "category": "core",
+        "notes": "Cambridge UP / MAA Outlooks series. Concise, accessible overview of mathematics in music for general audiences."
+      },
+      {
+        "title": "Tuning In: Microtonality, Temperaments and Artful Microtuning for Synthesizers",
+        "author": "Scott Wilkinson & Wendy Carlos",
+        "isbn": "9780881886337",
+        "url": "https://www.amazon.com/dp/0881886335/",
+        "topics": [
+          "microtonality",
+          "synthesizers",
+          "temperament",
+          "Wendy Carlos",
+          "practical microtuning"
+        ],
+        "category": "microtuning",
+        "notes": "Hal Leonard, 1988. Practical guide to microtuning synthesizers. Historically significant, co-authored by Wendy Carlos."
       }
     ]
   },
@@ -188,14 +516,174 @@
       "category": "computational"
     }
   ],
+  "canonical_feeds": {
+    "journal-of-mathematics-and-music": {
+      "name": "Journal of Mathematics and Music",
+      "url": "https://www.tandfonline.com/journals/tmam20",
+      "type": "rss",
+      "category": "journal",
+      "rss": "https://www.tandfonline.com/feed/rss/tmam20",
+      "publisher": "Taylor & Francis",
+      "topics": ["mathematics", "music theory", "formal methods"],
+      "access": "subscription",
+      "in_convex": true
+    },
+    "music-theory-spectrum-advance": {
+      "name": "Music Theory Spectrum — Advance Articles",
+      "url": "https://academic.oup.com/mts",
+      "type": "rss",
+      "category": "journal",
+      "rss_advance": "https://academic.oup.com/mts/rss/advance",
+      "publisher": "Oxford University Press / Society for Music Theory",
+      "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
+      "access": "hybrid"
+    },
+    "music-theory-online": {
+      "name": "Music Theory Online (MTO)",
+      "url": "https://mtosmt.org/",
+      "type": "rss",
+      "category": "journal",
+      "rss": "https://mtosmt.org/mto.xml",
+      "publisher": "Society for Music Theory",
+      "topics": ["music theory", "analysis"],
+      "access": "open",
+      "in_convex": true
+    },
+    "journal-of-new-music-research": {
+      "name": "Journal of New Music Research",
+      "url": "https://www.tandfonline.com/journals/nnmr20",
+      "type": "rss",
+      "category": "journal",
+      "rss": "https://www.tandfonline.com/feed/rss/nnmr20",
+      "publisher": "Taylor & Francis",
+      "topics": ["music technology", "computational musicology", "psychoacoustics", "composition", "interdisciplinary"],
+      "access": "subscription"
+    },
+    "auditory-perception-and-cognition": {
+      "name": "Auditory Perception & Cognition",
+      "url": "https://www.tandfonline.com/journals/rpac20",
+      "type": "rss",
+      "category": "journal",
+      "rss": "https://www.tandfonline.com/feed/rss/rpac20",
+      "publisher": "Taylor & Francis",
+      "topics": ["psychoacoustics", "auditory scene analysis", "pitch", "timbre", "speech", "neuroscience"],
+      "access": "subscription"
+    },
+    "sevish-main": {
+      "name": "Sevish — Microtonal / Xenharmonic Blog",
+      "url": "https://sevish.com",
+      "type": "rss",
+      "category": "xenharmonic",
+      "rss": "https://sevish.com/feed/",
+      "topics": ["microtonality", "xenharmonic", "scales", "synthesis", "Scale Workshop", "EDO", "composition"]
+    },
+    "sevish-microtonal": {
+      "name": "Sevish — Microtonal category feed",
+      "url": "https://sevish.com/category/microtonal-music/",
+      "type": "rss",
+      "category": "xenharmonic",
+      "rss": "https://sevish.com/category/microtonal-music/feed/",
+      "topics": ["microtonality", "xenharmonic", "tuning"]
+    },
+    "postclassic": {
+      "name": "PostClassic — Kyle Gann (ArtsJournal)",
+      "url": "https://www.artsjournal.com/postclassic/",
+      "type": "rss",
+      "category": "music theory",
+      "rss": "https://www.artsjournal.com/postclassic/feed",
+      "topics": ["postminimalism", "just intonation", "microtonality", "American music", "tuning theory", "composition"]
+    },
+    "now-and-xen": {
+      "name": "Now and Xen Podcast",
+      "url": "https://nowandxen.libsyn.com/",
+      "type": "podcast",
+      "category": "podcast",
+      "rss": "http://nowandxen.libsyn.com/rss",
+      "topics": ["xenharmonic", "microtonality", "just intonation", "alternative tuning", "composition", "interviews"]
+    },
+    "smt-pod": {
+      "name": "SMT-Pod (Society for Music Theory Podcast)",
+      "url": "https://smt-pod.org/",
+      "type": "podcast",
+      "category": "podcast",
+      "rss": "https://smt-pod.org/feed.xml",
+      "topics": ["music theory", "academic", "analysis", "tuning", "harmony"]
+    },
+    "arxiv-cs-sd": {
+      "name": "arXiv: Sound (cs.SD)",
+      "url": "https://arxiv.org/list/cs.SD/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/cs.SD",
+      "in_convex": true
+    },
+    "arxiv-eess-as": {
+      "name": "arXiv: Audio and Speech Processing (eess.AS)",
+      "url": "https://arxiv.org/list/eess.AS/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/eess.AS",
+      "in_convex": true
+    },
+    "arxiv-math-ho": {
+      "name": "arXiv — math.HO (History and Overview, includes music theory)",
+      "url": "https://arxiv.org/list/math.HO/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/math.HO",
+      "topics": ["history of mathematics", "mathematical music theory", "Tonnetz", "tuning theory", "group theory music"]
+    },
+    "arxiv-math-co": {
+      "name": "arXiv — math.CO (Combinatorics, includes pitch-class & rhythm geometry)",
+      "url": "https://arxiv.org/list/math.CO/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/math.CO",
+      "topics": ["combinatorics", "Euclidean rhythms", "pitch class sets", "geometry of music"]
+    },
+    "arxiv-physics-pop-ph": {
+      "name": "arXiv — physics.pop-ph (Popular Physics)",
+      "url": "https://arxiv.org/list/physics.pop-ph/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/physics.pop-ph"
+    }
+  },
   "journals": [
     {
       "name": "Journal of Mathematics and Music",
       "url": "https://www.tandfonline.com/journals/tmam20",
-      "rss": "https://www.tandfonline.com/feed/rss/tmam20",
+      "canonical_feed_ids": ["journal-of-mathematics-and-music"],
       "publisher": "Taylor & Francis",
       "topics": ["mathematics", "music theory", "formal methods"],
       "access": "subscription"
+    },
+    {
+      "name": "Music Theory Spectrum",
+      "url": "https://academic.oup.com/mts",
+      "canonical_feed_ids": ["music-theory-spectrum-advance"],
+      "publisher": "Oxford University Press / Society for Music Theory",
+      "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
+      "access": "hybrid",
+      "notes": "Premier peer-reviewed journal of the Society for Music Theory. Track advance articles and issue releases through the canonical feed registry."
+    },
+    {
+      "name": "Music Theory Online (MTO)",
+      "url": "https://mtosmt.org/",
+      "canonical_feed_ids": ["music-theory-online"],
+      "publisher": "Society for Music Theory",
+      "topics": ["music theory", "analysis"],
+      "access": "open"
+    },
+    {
+      "name": "Journal of New Music Research",
+      "url": "https://www.tandfonline.com/journals/nnmr20",
+      "canonical_feed_ids": ["journal-of-new-music-research"],
+      "publisher": "Taylor & Francis",
+      "topics": ["music technology", "computational musicology", "psychoacoustics", "composition", "interdisciplinary"],
+      "access": "subscription",
+      "notes": "Founded in 1972 as Interface. Broad interdisciplinary coverage across computational musicology, psychoacoustics, composition, and empirical music research.",
+      "last_checked": "2026-03-07"
     },
     {
       "name": "Music Perception",
@@ -205,12 +693,21 @@
       "access": "subscription"
     },
     {
-      "name": "Music Theory Online (MTO)",
-      "url": "https://mtosmt.org/",
-      "rss": "https://mtosmt.org/mto.xml",
-      "publisher": "Society for Music Theory",
-      "topics": ["music theory", "analysis"],
-      "access": "open"
+      "name": "Psychomusicology: Music, Mind, and Brain",
+      "url": "https://www.apa.org/pubs/journals/pmu/",
+      "publisher": "APA",
+      "topics": ["music cognition", "neuroscience", "psychology", "perception", "emotion"],
+      "access": "subscription",
+      "notes": "APA journal covering cognitive and neuroscientific aspects of music. Companion to Music Perception."
+    },
+    {
+      "name": "Auditory Perception & Cognition",
+      "url": "https://www.tandfonline.com/journals/rpac20",
+      "canonical_feed_ids": ["auditory-perception-and-cognition"],
+      "publisher": "Taylor & Francis",
+      "topics": ["psychoacoustics", "auditory scene analysis", "pitch", "timbre", "speech", "neuroscience"],
+      "access": "subscription",
+      "notes": "Covers localization, motion perception, auditory scene analysis, pitch, loudness, timbre, music, and speech perception."
     },
     {
       "name": "Journal of the Acoustical Society of America (JASA)",
@@ -234,23 +731,164 @@
       "access": "subscription"
     }
   ],
+  "rss_feeds": [
+    {
+      "name": "Sevish — Microtonal / Xenharmonic Blog",
+      "url": "https://sevish.com",
+      "canonical_feed_id": "sevish-main",
+      "category": "xenharmonic",
+      "topics": ["microtonality", "xenharmonic", "scales", "synthesis", "Scale Workshop", "EDO", "composition"],
+      "notes": "Sevish writes about xenharmonic practice, scale design, synthesis, and tools such as Scale Workshop.",
+      "last_checked": "2026-03-07"
+    },
+    {
+      "name": "Sevish — Microtonal category feed",
+      "url": "https://sevish.com/category/microtonal-music/",
+      "canonical_feed_id": "sevish-microtonal",
+      "category": "xenharmonic",
+      "topics": ["microtonality", "xenharmonic", "tuning"]
+    },
+    {
+      "name": "PostClassic — Kyle Gann (ArtsJournal)",
+      "url": "https://www.artsjournal.com/postclassic/",
+      "canonical_feed_id": "postclassic",
+      "category": "music theory",
+      "topics": ["postminimalism", "just intonation", "microtonality", "American music", "tuning theory", "composition"],
+      "notes": "Kyle Gann is a major writer on just intonation and microtonality, and the archive pairs well with his longer-form tuning reference pages."
+    },
+    {
+      "name": "Now and Xen Podcast",
+      "url": "https://nowandxen.libsyn.com/",
+      "canonical_feed_id": "now-and-xen",
+      "category": "podcast",
+      "topics": ["xenharmonic", "microtonality", "just intonation", "alternative tuning", "composition", "interviews"],
+      "notes": "Long-form interview podcast focused on xenharmonic music, alternative tuning systems, and working composers."
+    },
+    {
+      "name": "SMT-Pod (Society for Music Theory Podcast)",
+      "url": "https://smt-pod.org/",
+      "canonical_feed_id": "smt-pod",
+      "category": "podcast",
+      "topics": ["music theory", "academic", "analysis", "tuning", "harmony"],
+      "notes": "Society for Music Theory podcast featuring scholarly conversations on analysis, pedagogy, and current research.",
+      "last_checked": "2026-03-07"
+    }
+  ],
+  "websites": [
+    {
+      "name": "Kyle Gann — Just Intonation Explained",
+      "url": "https://www.kylegann.com/tuning.html",
+      "topics": ["just intonation", "tuning theory", "microtonality", "American music", "reference"],
+      "notes": "The definitive accessible introduction to just intonation. Essential reading. Also check kylegann.com/microtonality.html for extended theory."
+    },
+    {
+      "name": "Sound American — Just Intonation Issue",
+      "url": "https://soundamerican.org/issues/just-intonation/just-intonation-issue",
+      "topics": ["just intonation", "composition", "tuning", "contemporary music"],
+      "notes": "Deep-dive editorial collection on just intonation in contemporary composition."
+    },
+    {
+      "name": "CymaScope",
+      "url": "https://cymascope.com/",
+      "topics": ["cymatics", "acoustics", "wave physics", "Faraday waves", "sacred geometry", "resonance"],
+      "notes": "John Stuart Reid's patented instrument making sound visible. Research includes work in the King's Chamber of the Great Pyramid. Quantum physics connections. Already a YouTube source in Convex.",
+      "in_convex": true
+    },
+    {
+      "name": "Harmonics of Nature",
+      "url": "https://harmonicsofnature.com/",
+      "topics": ["harmonics", "Pythagoras", "resonance", "just intonation", "sacred geometry", "cymatics"],
+      "notes": "Explores relationships between harmonics, geometry, resonance, and natural pattern formation.",
+      "last_checked": "2026-03-07"
+    },
+    {
+      "name": "Huygens-Fokker Foundation",
+      "url": "https://www.huygens-fokker.org/",
+      "topics": ["microtonality", "31-EDO", "Fokker periodicity blocks", "Scala", "just intonation", "tuning theory"],
+      "notes": "Primary home of the Scala tuning software. Comprehensive library of scales, tuning theory, and the Fokker periodicity block system. Essential for microtuning work."
+    },
+    {
+      "name": "Xenharmonic Wiki",
+      "url": "https://en.xen.wiki/w/Main_Page",
+      "topics": ["xenharmonic", "microtonality", "EDO", "just intonation", "scales", "temperament", "MOS", "Erv Wilson"],
+      "notes": "Community-maintained encyclopedia of xenharmonic music theory. The Library page (en.xen.wiki/w/The_Library) has the best curated bibliography in the field."
+    },
+    {
+      "name": "Xenharmonic Wiki — Microtonal Blogs",
+      "url": "https://en.xen.wiki/w/Microtonal_blogs",
+      "topics": ["blogs", "microtonality", "xenharmonic", "directory"],
+      "notes": "Curated list of active and archived microtonal blogs with links. Use this to find more RSS sources."
+    },
+    {
+      "name": "Huygens-Fokker Scala Scale Archive",
+      "url": "https://www.huygens-fokker.org/scala/scl_dir.html",
+      "topics": ["Scala", "scales", "tuning", "microtonality", "reference"],
+      "notes": "Archive of thousands of Scala (.scl) tuning files. Directly relevant to the scales/ directory in this project."
+    },
+    {
+      "name": "Sevish — Scale Workshop (web app)",
+      "url": "https://sevish.com/scaleworkshop/",
+      "topics": ["scales", "microtonality", "EDO", "Scala", "tool"],
+      "notes": "Browser-based tool for creating and exploring microtonal scales. Exports Scala files compatible with this project."
+    },
+    {
+      "name": "Cosmic Core — Sound, Waves & Cymatics Articles",
+      "url": "https://www.cosmic-core.org/free/article-121-physics-sound-waves-part-2-cymatics-the-geometry-of-sound/",
+      "topics": ["cymatics", "sacred geometry", "wave physics", "vibration", "universal patterns"],
+      "notes": "Deep exploration of how vibrations create geometry. Aligns with Robert Edward Grant's polygon-angle research."
+    }
+  ],
   "arxiv_categories": [
     {
       "category": "cs.SD",
       "name": "Sound",
       "url": "https://arxiv.org/list/cs.SD/recent",
-      "rss": "https://arxiv.org/rss/cs.SD"
+      "canonical_feed_id": "arxiv-cs-sd"
     },
     {
       "category": "eess.AS",
       "name": "Audio and Speech Processing",
       "url": "https://arxiv.org/list/eess.AS/recent",
-      "rss": "https://arxiv.org/rss/eess.AS"
+      "canonical_feed_id": "arxiv-eess-as"
+    },
+    {
+      "category": "math.HO",
+      "name": "History and Overview (includes mathematical music theory)",
+      "url": "https://arxiv.org/list/math.HO/recent",
+      "canonical_feed_id": "arxiv-math-ho",
+      "notes": "Best arXiv category for music-math papers: Tonnetz, tuning theory, group theory applications to music."
+    },
+    {
+      "category": "math.CO",
+      "name": "Combinatorics (Euclidean rhythms, pitch-class geometry)",
+      "url": "https://arxiv.org/list/math.CO/recent",
+      "canonical_feed_id": "arxiv-math-co"
     },
     {
       "category": "physics.pop-ph",
       "name": "Popular Physics (includes music physics)",
-      "url": "https://arxiv.org/list/physics.pop-ph/recent"
+      "url": "https://arxiv.org/list/physics.pop-ph/recent",
+      "canonical_feed_id": "arxiv-physics-pop-ph"
+    }
+  ],
+  "online_references": [
+    {
+      "name": "Xenharmonic Wiki — The Library",
+      "url": "https://en.xen.wiki/w/The_Library",
+      "topics": ["xenharmonic", "microtonality", "tuning theory", "bibliography"],
+      "notes": "Curated bibliography of microtonal and xenharmonic literature"
+    },
+    {
+      "name": "Huygens-Fokker Foundation — Tuning & Temperament Bibliography",
+      "url": "https://www.huygens-fokker.org/bibliography.html",
+      "topics": ["tuning", "temperament", "Fokker", "just intonation"],
+      "notes": "Comprehensive academic bibliography on tuning and temperament"
+    },
+    {
+      "name": "Sethares — Tuning, Timbre, Spectrum, Scale (author's page with free download)",
+      "url": "https://sethares.engr.wisc.edu/ttss.html",
+      "topics": ["timbre", "tuning", "consonance", "dissonance"],
+      "notes": "Author hosts full book download"
     }
   ]
 }

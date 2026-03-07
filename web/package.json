@@ -20,6 +20,7 @@
     "@tanstack/solid-router": "^1.121.5",
     "convex": "^1.31.7",
     "solid-js": "^1.9.11",
+    "solid-markdown": "^2.1.1",
     "three": "^0.183.1"
   },
   "devDependencies": {

@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 const routeHeadings: Array<{ path: string; heading: string }> = [
   { path: "/ingest", heading: "Ingest Console" },
   { path: "/display", heading: "Display & Triage" },
+  { path: "/essays", heading: "Essays" },
   { path: "/hypotheses", heading: "Hypotheses" },
   { path: "/recipes", heading: "Recipes" },
   { path: "/weekly-turns", heading: "Weekly Turns" },
@@ -19,6 +20,7 @@ test.describe("navigation", () => {
     await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Ingest" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Display" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Essays" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Hypotheses" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Recipes" })).toBeVisible();
     await expect(
@@ -45,6 +47,9 @@ test.describe("navigation", () => {
   }) => {
     await page.goto("/");
 
+    await expect(
+      page.getByTestId("home-workspace-link").filter({ hasText: "Essays" }),
+    ).toBeVisible();
     await expect(
       page.getByTestId("home-workspace-link").filter({ hasText: "Feedback" }),
     ).toBeVisible();

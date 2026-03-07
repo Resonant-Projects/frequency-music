@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -234,13 +235,22 @@ export function RecipesPage() {
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={recipes.data() ?? []}>
               {(recipe: RecipeRow) => (
-                <div
+                <Link
+                  to={`/recipes/${recipe._id}`}
                   data-testid="entity-row"
                   class={css({
                     borderColor: "rgba(200, 168, 75, 0.25)",
                     borderRadius: "l2",
                     borderWidth: "1px",
+                    cursor: "pointer",
+                    display: "block",
                     p: "4",
+                    textDecoration: "none",
+                    transition: "border-color 0.15s, box-shadow 0.15s",
+                    _hover: {
+                      borderColor: "rgba(200, 168, 75, 0.5)",
+                      boxShadow: "0 0 12px rgba(200, 168, 75, 0.08)",
+                    },
                   })}
                 >
                   <div
@@ -261,13 +271,16 @@ export function RecipesPage() {
                   <p
                     class={css({
                       color: "rgba(245, 240, 232, 0.62)",
+                      display: "-webkit-box",
                       fontSize: "sm",
-                      whiteSpace: "pre-wrap",
+                      overflow: "hidden",
+                      WebkitBoxOrient: "vertical",
+                      WebkitLineClamp: 3,
                     })}
                   >
                     {recipe.bodyMd}
                   </p>
-                </div>
+                </Link>
               )}
             </For>
           </div>

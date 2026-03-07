@@ -30,16 +30,64 @@ import {
   buildTickMarks,
   getLabelPositions,
 } from "./zodiac-geometry";
+import type { Id } from "../../../convex/_generated/dataModel";
+import type {
+  ConstellationGroup,
+  ConstellationEdge,
+} from "./zodiac-constellations";
+import {
+  buildConstellations,
+  updateConstellationTime,
+  animateConstellationFadeIn,
+} from "./zodiac-constellations";
+import type { ArmillaryRingGroup } from "./zodiac-armillary";
+import {
+  buildArmillaryRings,
+  animateArmillarySpring,
+  updateArmillaryRotation,
+} from "./zodiac-armillary";
+import type { OrbitalSystem } from "./zodiac-orbits";
+import { buildOrbitalSystem, updateOrbits, buildPullLines } from "./zodiac-orbits";
+import { pickAny, configureRaycaster, type PickResult } from "./zodiac-orbit-picking";
+import type {
+  ConstellationConcept,
+  ItemRelation,
+  OrbitalExtraction,
+  OrbitalHypothesis,
+  OrbitalRecipe,
+  OrbitalSource,
+  ZodiacSubTopic,
+} from "./zodiac-types";
 
 export interface ZodiacHandle {
   cleanup: () => void;
   setActiveSector: (id: string | null) => void;
+  loadConstellations: (
+    sectorId: string,
+    concepts: ConstellationConcept[],
+    edges: ConstellationEdge[],
+  ) => void;
+  loadArmillaryRings: (sectorId: string, subTopics: ZodiacSubTopic[]) => void;
+  loadOrbitalBodies: (
+    sources: OrbitalSource[],
+    extractions: OrbitalExtraction[],
+    hypotheses: OrbitalHypothesis[],
+    recipes: OrbitalRecipe[],
+  ) => void;
+  showPullLines: (
+    itemId: string,
+    relations: ItemRelation[],
+  ) => void;
+  clearPullLines: () => void;
 }
 
 export function initZodiacScene(
   canvas: HTMLCanvasElement,
   cssContainer: HTMLElement,
   onSectorClick?: (id: string) => void,
+  onConceptClick?: (conceptId: Id<"concepts">) => void,
+  onOrbitalClick?: (itemId: string, itemType: string, title: string) => void,
+  onArmillaryClick?: (label: string, conceptNames: string[]) => void,
 ): ZodiacHandle {
   // --- Renderer ---------------------------------------------------------------
   const renderer = new THREE.WebGLRenderer({
@@ -156,6 +204,51 @@ export function initZodiacScene(
   // --- State ------------------------------------------------------------------
   let activeSectorId: string | null = null;
 
+  // Phase 1: Constellation layer
+  let activeConstellation: ConstellationGroup | null = null;
+  let constellationFadeStart: number | null = null;
+
+  // Phase 2: Armillary rings
+  let activeArmillary: ArmillaryRingGroup | null = null;
+  let armillarySpringStart: number | null = null;
+
+  // Phase 3: Orbital system (persistent, loaded once)
+  let orbitalSystem: OrbitalSystem | null = null;
+  let pullLinesGroup: THREE.Group | null = null;
+
+  function clearConstellation() {
+    if (activeConstellation) {
+      scene.remove(activeConstellation.group);
+      activeConstellation.dispose();
+      activeConstellation = null;
+      constellationFadeStart = null;
+    }
+  }
+
+  function clearArmillary() {
+    if (activeArmillary) {
+      scene.remove(activeArmillary.group);
+      activeArmillary.dispose();
+      activeArmillary = null;
+      armillarySpringStart = null;
+    }
+  }
+
+  function clearPullLines() {
+    if (pullLinesGroup) {
+      scene.remove(pullLinesGroup);
+      pullLinesGroup.traverse((child) => {
+        if ("geometry" in child && child.geometry) {
+          (child.geometry as THREE.BufferGeometry).dispose();
+        }
+        if ("material" in child && child.material) {
+          (child.material as THREE.Material).dispose();
+        }
+      });
+      pullLinesGroup = null;
+    }
+  }
+
   function rebuildSectorGroup(sector: (typeof SECTORS)[0], active: boolean) {
     const old = sectorGroups.get(sector.id);
     if (old) {
@@ -189,6 +282,12 @@ export function initZodiacScene(
         .forEach((el) => {
           if (el.dataset.sectorId === activeSectorId) el.style.opacity = "0.58";
         });
+
+      // Clear overlays from previous sector
+      clearConstellation();
+      clearArmillary();
+      clearPullLines();
+      clearSelectionHalo();
     }
 
     activeSectorId = id;
@@ -211,6 +310,7 @@ export function initZodiacScene(
 
   // --- Raycaster for sector click -------------------------------------------
   const raycaster = new THREE.Raycaster();
+  configureRaycaster(raycaster);
   const mouse = new THREE.Vector2();
 
   function onCanvasClick(e: MouseEvent) {
@@ -219,6 +319,35 @@ export function initZodiacScene(
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
 
+    // Phase 1-3: Try picking concepts, armillary rings, orbital items first
+    const pick = pickAny(raycaster, activeConstellation, activeArmillary, orbitalSystem);
+    if (pick) {
+      showSelectionHalo(pick.position);
+      if (pick.type === "concept" && onConceptClick) {
+        onConceptClick(pick.id as Id<"concepts">);
+        return;
+      }
+      if (pick.type === "orbital-item" && onOrbitalClick) {
+        // Infer type from ring label
+        const typeMap: Record<string, string> = {
+          Sources: "source",
+          Extractions: "extraction",
+          Hypotheses: "hypothesis",
+          Recipes: "recipe",
+        };
+        onOrbitalClick(pick.id, typeMap[pick.ringLabel ?? ""] ?? "source", pick.label);
+        return;
+      }
+      if (pick.type === "armillary-ring" && onArmillaryClick) {
+        const ring = activeArmillary?.rings[pick.ringIndex ?? 0];
+        if (ring) {
+          onArmillaryClick(ring.label, ring.conceptNames);
+        }
+        return;
+      }
+    }
+
+    // Fall through to sector picks
     const meshes: THREE.Mesh[] = [];
     sectorGroups.forEach((g) => {
       g.traverse((child) => {
@@ -239,6 +368,66 @@ export function initZodiacScene(
   }
 
   canvas.addEventListener("click", onCanvasClick);
+
+  // --- Hover tooltip (CSS3D) ------------------------------------------------
+  const tooltipEl = document.createElement("div");
+  tooltipEl.style.cssText =
+    "font-family:'IBM Plex Mono',monospace;font-size:10px;color:#c8a84b;background:rgba(13,6,32,0.88);border:1px solid rgba(200,168,75,0.35);padding:4px 8px;pointer-events:none;white-space:nowrap;display:none;position:absolute;z-index:100";
+  cssContainer.appendChild(tooltipEl);
+
+  // Selection halo
+  let selectionHalo: THREE.Mesh | null = null;
+
+  function clearSelectionHalo() {
+    if (selectionHalo) {
+      scene.remove(selectionHalo);
+      selectionHalo.geometry.dispose();
+      (selectionHalo.material as THREE.Material).dispose();
+      selectionHalo = null;
+    }
+  }
+
+  function showSelectionHalo(position: THREE.Vector3) {
+    clearSelectionHalo();
+    const haloGeo = new THREE.RingGeometry(4, 6, 24);
+    const haloMat = new THREE.MeshBasicMaterial({
+      color: COLORS.gold,
+      transparent: true,
+      opacity: 0.7,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    selectionHalo = new THREE.Mesh(haloGeo, haloMat);
+    selectionHalo.position.copy(position);
+    selectionHalo.lookAt(camera.position);
+    scene.add(selectionHalo);
+  }
+
+  let lastHoverTime = 0;
+  function onCanvasMouseMove(e: MouseEvent) {
+    const now = performance.now();
+    if (now - lastHoverTime < 33) return; // throttle ~30fps
+    lastHoverTime = now;
+
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    const pick = pickAny(raycaster, activeConstellation, activeArmillary, orbitalSystem);
+    if (pick) {
+      tooltipEl.textContent = pick.label;
+      tooltipEl.style.display = "block";
+      tooltipEl.style.left = `${e.clientX - rect.left + 12}px`;
+      tooltipEl.style.top = `${e.clientY - rect.top - 20}px`;
+      canvas.style.cursor = "pointer";
+    } else {
+      tooltipEl.style.display = "none";
+      canvas.style.cursor = "grab";
+    }
+  }
+
+  canvas.addEventListener("mousemove", onCanvasMouseMove);
 
   // --- Resize handler --------------------------------------------------------
   function onResize() {
@@ -275,6 +464,38 @@ export function initZodiacScene(
     // Slow hub rotation (the hub dot)
     hubDot.rotation.y += 0.002;
 
+    // Phase 1: Constellation twinkle + fade-in
+    if (activeConstellation) {
+      updateConstellationTime(activeConstellation, t);
+      if (constellationFadeStart !== null) {
+        const fadeProgress = (time - constellationFadeStart) / 600;
+        animateConstellationFadeIn(activeConstellation, fadeProgress);
+        if (fadeProgress >= 1) constellationFadeStart = null;
+      }
+    }
+
+    // Phase 2: Armillary ring rotation + spring
+    if (activeArmillary) {
+      updateArmillaryRotation(activeArmillary, t);
+      if (armillarySpringStart !== null) {
+        const elapsed = time - armillarySpringStart;
+        const done = animateArmillarySpring(activeArmillary, elapsed);
+        if (done) armillarySpringStart = null;
+      }
+    }
+
+    // Phase 3: Orbital body animation
+    if (orbitalSystem) {
+      updateOrbits(orbitalSystem, t);
+    }
+
+    // Selection halo pulse
+    if (selectionHalo) {
+      const pulse = 0.5 + 0.3 * Math.sin(t * 3);
+      (selectionHalo.material as THREE.MeshBasicMaterial).opacity = pulse;
+      selectionHalo.lookAt(camera.position);
+    }
+
     composer.render();
     cssRenderer.render(cssScene, camera);
   }
@@ -288,6 +509,13 @@ export function initZodiacScene(
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", onResize);
       canvas.removeEventListener("click", onCanvasClick);
+      canvas.removeEventListener("mousemove", onCanvasMouseMove);
+      tooltipEl.remove();
+      clearSelectionHalo();
+      clearConstellation();
+      clearArmillary();
+      clearPullLines();
+      orbitalSystem?.dispose();
       controls.dispose();
       scene.traverse((object) => {
         if ("geometry" in object && object.geometry) {
@@ -311,5 +539,69 @@ export function initZodiacScene(
       }
     },
     setActiveSector,
+
+    // Phase 1: Load constellation for active sector
+    loadConstellations(
+      sectorId: string,
+      concepts: ConstellationConcept[],
+      edges: ConstellationEdge[],
+    ) {
+      clearConstellation();
+      const sector = SECTORS.find((s) => s.id === sectorId);
+      if (!sector) return;
+
+      activeConstellation = buildConstellations(sector, concepts, edges);
+      scene.add(activeConstellation.group);
+      constellationFadeStart = performance.now();
+    },
+
+    // Phase 2: Load armillary rings for active sector
+    loadArmillaryRings(sectorId: string, subTopics: ZodiacSubTopic[]) {
+      clearArmillary();
+      const sector = SECTORS.find((s) => s.id === sectorId);
+      if (!sector || subTopics.length === 0) return;
+
+      activeArmillary = buildArmillaryRings(sector, subTopics);
+      scene.add(activeArmillary.group);
+      armillarySpringStart = performance.now();
+    },
+
+    // Phase 3: Load orbital bodies (called once on mount)
+    loadOrbitalBodies(
+      sources: OrbitalSource[],
+      extractions: OrbitalExtraction[],
+      hypotheses: OrbitalHypothesis[],
+      recipes: OrbitalRecipe[],
+    ) {
+      // Remove old orbital system
+      if (orbitalSystem) {
+        scene.remove(orbitalSystem.group);
+        orbitalSystem.dispose();
+      }
+
+      orbitalSystem = buildOrbitalSystem(sources, extractions, hypotheses, recipes);
+      scene.add(orbitalSystem.group);
+    },
+
+    // Phase 3: Show pull-lines from a clicked item to related items
+    showPullLines(
+      itemId: string,
+      relations: ItemRelation[],
+    ) {
+      clearPullLines();
+      if (!orbitalSystem) return;
+
+      // Find which ring and index the clicked item is in
+      for (const ring of orbitalSystem.rings) {
+        const idx = ring.items.findIndex((item) => item.id === itemId);
+        if (idx !== -1) {
+          pullLinesGroup = buildPullLines(ring, idx, relations, orbitalSystem.rings);
+          scene.add(pullLinesGroup);
+          break;
+        }
+      }
+    },
+
+    clearPullLines,
   };
 }
