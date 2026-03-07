@@ -22,9 +22,41 @@ interface FeedRow {
   name?: string;
 }
 
+interface CanonicalFeed {
+  name: string;
+  url: string;
+  type: "rss" | "podcast" | "youtube";
+  category?: string;
+  rss?: string;
+  rss_advance?: string;
+  in_convex?: boolean;
+}
+
+interface SourceData {
+  books: {
+    free_pdfs: Array<{
+      title: string;
+      author?: string;
+      url: string;
+      pdf?: string;
+      topics?: string[];
+      category?: string;
+    }>;
+  };
+  arxiv_papers: Array<{
+    title: string;
+    author?: string;
+    url: string;
+    pdf?: string;
+    topics?: string[];
+    category?: string;
+  }>;
+  canonical_feeds?: Record<string, CanonicalFeed>;
+}
+
 // Load source data
 const dataPath = join(import.meta.dir, "../data/books-and-papers.json");
-const sourceData = JSON.parse(readFileSync(dataPath, "utf-8"));
+const sourceData = JSON.parse(readFileSync(dataPath, "utf-8")) as SourceData;
 
 // Jina Reader for fetching content
 async function fetchText(url: string): Promise<string> {
@@ -106,31 +138,20 @@ async function ingestSource(
 async function addFeeds(): Promise<void> {
   console.log("\n--- Adding Journal/ArXiv RSS Feeds ---");
 
-  const feeds = [
-    // Open journals
-    {
-      name: "Music Theory Online",
-      url: "https://mtosmt.org/mto.xml",
-      type: "rss" as const,
-    },
-    // ArXiv categories
-    {
-      name: "arXiv: Sound (cs.SD)",
-      url: "https://arxiv.org/rss/cs.SD",
-      type: "rss" as const,
-    },
-    {
-      name: "arXiv: Audio & Speech (eess.AS)",
-      url: "https://arxiv.org/rss/eess.AS",
-      type: "rss" as const,
-    },
-    // Journal of Mathematics and Music
-    {
-      name: "Journal of Mathematics and Music",
-      url: "https://www.tandfonline.com/feed/rss/tmam20",
-      type: "rss" as const,
-    },
-  ];
+  const feeds = Object.values(sourceData.canonical_feeds ?? {})
+    .filter((feed) => feed.in_convex)
+    .map((feed) => {
+      const feedUrl = feed.rss ?? feed.rss_advance;
+      if (!feedUrl) return null;
+
+      return {
+        name: feed.name,
+        url: feedUrl,
+        type: feed.type,
+        category: feed.category ?? "academic",
+      };
+    })
+    .filter((feed): feed is NonNullable<typeof feed> => feed !== null);
 
   const existingFeeds = (await client.query(api.feeds.list)) as FeedRow[];
 
@@ -146,7 +167,7 @@ async function addFeeds(): Promise<void> {
         name: feed.name,
         url: feed.url,
         type: feed.type,
-        category: "academic",
+        category: feed.category,
         metadata: { source: "books-and-papers.json" },
       });
       console.log(`  ✓ Added: ${feed.name}`);

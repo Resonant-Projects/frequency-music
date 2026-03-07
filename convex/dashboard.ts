@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { activityFeedItemValidator } from "./validators";
 
@@ -147,7 +148,7 @@ export const domainSubTopics = query({
   ),
   handler: async (ctx, args) => {
     // Map zodiac sector IDs to concept domains — include "general"
-    const domainMap: Record<string, string[]> = {
+    const domainMap: Record<string, Doc<"concepts">["domain"][]> = {
       math: ["mathematics", "general"],
       phys: ["acoustics", "general"],
       music: ["tuning", "theory", "general"],
@@ -157,13 +158,13 @@ export const domainSubTopics = query({
     };
 
     const conceptDomains = domainMap[args.domain] ?? ["general"];
-    const allConcepts: Array<any> = [];
-    const seen = new Set<string>();
+    const allConcepts: Doc<"concepts">[] = [];
+    const seen = new Set<Id<"concepts">>();
 
     for (const d of conceptDomains) {
       const concepts = await ctx.db
         .query("concepts")
-        .withIndex("by_domain", (q) => q.eq("domain", d as any))
+        .withIndex("by_domain", (q) => q.eq("domain", d))
         .take(100);
       for (const c of concepts) {
         if (!seen.has(c._id)) {
@@ -363,16 +364,22 @@ export const itemRelations = query({
       let title = otherId;
       try {
         if (otherType === "source") {
-          const s = await ctx.db.get("sources", otherId as any);
+          const s = await ctx.db.get("sources", otherId as Id<"sources">);
           if (s) title = s.title ?? "Untitled source";
         } else if (otherType === "hypothesis") {
-          const h = await ctx.db.get("hypotheses", otherId as any);
+          const h = await ctx.db.get(
+            "hypotheses",
+            otherId as Id<"hypotheses">,
+          );
           if (h) title = h.title;
         } else if (otherType === "recipe") {
-          const r = await ctx.db.get("recipes", otherId as any);
+          const r = await ctx.db.get("recipes", otherId as Id<"recipes">);
           if (r) title = r.title;
         } else if (otherType === "extraction") {
-          const e = await ctx.db.get("extractions", otherId as any);
+          const e = await ctx.db.get(
+            "extractions",
+            otherId as Id<"extractions">,
+          );
           if (e) title = `Extraction (${e.topics.slice(0, 2).join(", ")})`;
         }
       } catch {

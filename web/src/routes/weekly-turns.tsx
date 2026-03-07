@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/solid-router";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
+import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   pageClass,
@@ -14,11 +15,7 @@ import {
   createQueryWithStatus,
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
-
-function extractTitle(bodyMd: string): string {
-  const match = bodyMd.match(/^#\s+(.+)/m);
-  return match ? match[1] : "Weekly Brief";
-}
+import { extractTitle } from "../lib/markdown-utils";
 
 function extractExcerpt(bodyMd: string, maxLen = 180): string {
   // Skip the first heading line, grab the next non-empty lines as plain text
@@ -54,6 +51,9 @@ export function WeeklyTurnsPage() {
   const briefs = createQueryWithStatus(convexApi.weeklyBriefs.list, () => ({
     limit: 12,
   }));
+  const briefRows = createMemo<Doc<"weeklyBriefs">[]>(
+    () => (briefs.data() ?? []) as Doc<"weeklyBriefs">[],
+  );
 
   const generateBrief = createAction(convexApi.weeklyBriefs.generate);
 
@@ -114,8 +114,8 @@ export function WeeklyTurnsPage() {
           fallback={<p>Loading weekly turns...</p>}
         >
           <div class={css({ display: "grid", gap: "3" })}>
-            <For each={briefs.data() ?? []}>
-              {(brief: any) => (
+            <For each={briefRows()}>
+              {(brief) => (
                 <Link
                   to="/weekly-turns/$briefId"
                   params={{ briefId: String(brief._id) }}

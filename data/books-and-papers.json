@@ -89,6 +89,8 @@
         "url": "https://eamusic.dartmouth.edu/~larry/published_articles/divisions_of_the_tetrachord/index.html",
         "local_file": "data/pdfs/chalmers-divisions-of-tetrachord-intro-preface.pdf",
         "local_notes": "Intro/preface only saved. Chapters 1-9 available individually at the URL above.",
+        "partial": true,
+        "excerpt": "intro/preface",
         "topics": [
           "tetrachord",
           "just intonation",
@@ -150,6 +152,8 @@
         "author": "Gareth Loy",
         "isbn_vol1": "9780262516556",
         "amazon_vol1": "https://www.amazon.com/dp/0262516551/",
+        "isbn_vol2": "9780262516563",
+        "amazon_vol2": "https://www.amazon.com/dp/026251656X/",
         "topics": [
           "mathematics",
           "music theory",
@@ -512,42 +516,174 @@
       "category": "computational"
     }
   ],
-  "journals": [
-    {
+  "canonical_feeds": {
+    "journal-of-mathematics-and-music": {
       "name": "Journal of Mathematics and Music",
       "url": "https://www.tandfonline.com/journals/tmam20",
+      "type": "rss",
+      "category": "journal",
       "rss": "https://www.tandfonline.com/feed/rss/tmam20",
       "publisher": "Taylor & Francis",
       "topics": ["mathematics", "music theory", "formal methods"],
       "access": "subscription",
       "in_convex": true
     },
-    {
-      "name": "Music Theory Spectrum",
+    "music-theory-spectrum-advance": {
+      "name": "Music Theory Spectrum — Advance Articles",
       "url": "https://academic.oup.com/mts",
+      "type": "rss",
+      "category": "journal",
       "rss_advance": "https://academic.oup.com/mts/rss/advance",
       "publisher": "Oxford University Press / Society for Music Theory",
       "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
-      "access": "hybrid",
-      "notes": "Premier peer-reviewed journal of the Society for Music Theory. Offers separate RSS feeds for latest issue, advance articles, and open-access articles."
+      "access": "hybrid"
     },
-    {
+    "music-theory-online": {
       "name": "Music Theory Online (MTO)",
       "url": "https://mtosmt.org/",
+      "type": "rss",
+      "category": "journal",
       "rss": "https://mtosmt.org/mto.xml",
       "publisher": "Society for Music Theory",
       "topics": ["music theory", "analysis"],
       "access": "open",
       "in_convex": true
     },
-    {
+    "journal-of-new-music-research": {
       "name": "Journal of New Music Research",
       "url": "https://www.tandfonline.com/journals/nnmr20",
+      "type": "rss",
+      "category": "journal",
       "rss": "https://www.tandfonline.com/feed/rss/nnmr20",
       "publisher": "Taylor & Francis",
       "topics": ["music technology", "computational musicology", "psychoacoustics", "composition", "interdisciplinary"],
+      "access": "subscription"
+    },
+    "auditory-perception-and-cognition": {
+      "name": "Auditory Perception & Cognition",
+      "url": "https://www.tandfonline.com/journals/rpac20",
+      "type": "rss",
+      "category": "journal",
+      "rss": "https://www.tandfonline.com/feed/rss/rpac20",
+      "publisher": "Taylor & Francis",
+      "topics": ["psychoacoustics", "auditory scene analysis", "pitch", "timbre", "speech", "neuroscience"],
+      "access": "subscription"
+    },
+    "sevish-main": {
+      "name": "Sevish — Microtonal / Xenharmonic Blog",
+      "url": "https://sevish.com",
+      "type": "rss",
+      "category": "xenharmonic",
+      "rss": "https://sevish.com/feed/",
+      "topics": ["microtonality", "xenharmonic", "scales", "synthesis", "Scale Workshop", "EDO", "composition"]
+    },
+    "sevish-microtonal": {
+      "name": "Sevish — Microtonal category feed",
+      "url": "https://sevish.com/category/microtonal-music/",
+      "type": "rss",
+      "category": "xenharmonic",
+      "rss": "https://sevish.com/category/microtonal-music/feed/",
+      "topics": ["microtonality", "xenharmonic", "tuning"]
+    },
+    "postclassic": {
+      "name": "PostClassic — Kyle Gann (ArtsJournal)",
+      "url": "https://www.artsjournal.com/postclassic/",
+      "type": "rss",
+      "category": "music theory",
+      "rss": "https://www.artsjournal.com/postclassic/feed",
+      "topics": ["postminimalism", "just intonation", "microtonality", "American music", "tuning theory", "composition"]
+    },
+    "now-and-xen": {
+      "name": "Now and Xen Podcast",
+      "url": "https://nowandxen.libsyn.com/",
+      "type": "podcast",
+      "category": "podcast",
+      "rss": "http://nowandxen.libsyn.com/rss",
+      "topics": ["xenharmonic", "microtonality", "just intonation", "alternative tuning", "composition", "interviews"]
+    },
+    "smt-pod": {
+      "name": "SMT-Pod (Society for Music Theory Podcast)",
+      "url": "https://smt-pod.org/",
+      "type": "podcast",
+      "category": "podcast",
+      "rss": "https://smt-pod.org/feed.xml",
+      "topics": ["music theory", "academic", "analysis", "tuning", "harmony"]
+    },
+    "arxiv-cs-sd": {
+      "name": "arXiv: Sound (cs.SD)",
+      "url": "https://arxiv.org/list/cs.SD/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/cs.SD",
+      "in_convex": true
+    },
+    "arxiv-eess-as": {
+      "name": "arXiv: Audio and Speech Processing (eess.AS)",
+      "url": "https://arxiv.org/list/eess.AS/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/eess.AS",
+      "in_convex": true
+    },
+    "arxiv-math-ho": {
+      "name": "arXiv — math.HO (History and Overview, includes music theory)",
+      "url": "https://arxiv.org/list/math.HO/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/math.HO",
+      "topics": ["history of mathematics", "mathematical music theory", "Tonnetz", "tuning theory", "group theory music"]
+    },
+    "arxiv-math-co": {
+      "name": "arXiv — math.CO (Combinatorics, includes pitch-class & rhythm geometry)",
+      "url": "https://arxiv.org/list/math.CO/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/math.CO",
+      "topics": ["combinatorics", "Euclidean rhythms", "pitch class sets", "geometry of music"]
+    },
+    "arxiv-physics-pop-ph": {
+      "name": "arXiv — physics.pop-ph (Popular Physics)",
+      "url": "https://arxiv.org/list/physics.pop-ph/recent",
+      "type": "rss",
+      "category": "arxiv",
+      "rss": "https://arxiv.org/rss/physics.pop-ph"
+    }
+  },
+  "journals": [
+    {
+      "name": "Journal of Mathematics and Music",
+      "url": "https://www.tandfonline.com/journals/tmam20",
+      "canonical_feed_ids": ["journal-of-mathematics-and-music"],
+      "publisher": "Taylor & Francis",
+      "topics": ["mathematics", "music theory", "formal methods"],
+      "access": "subscription"
+    },
+    {
+      "name": "Music Theory Spectrum",
+      "url": "https://academic.oup.com/mts",
+      "canonical_feed_ids": ["music-theory-spectrum-advance"],
+      "publisher": "Oxford University Press / Society for Music Theory",
+      "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
+      "access": "hybrid",
+      "notes": "Premier peer-reviewed journal of the Society for Music Theory. Track advance articles and issue releases through the canonical feed registry."
+    },
+    {
+      "name": "Music Theory Online (MTO)",
+      "url": "https://mtosmt.org/",
+      "canonical_feed_ids": ["music-theory-online"],
+      "publisher": "Society for Music Theory",
+      "topics": ["music theory", "analysis"],
+      "access": "open"
+    },
+    {
+      "name": "Journal of New Music Research",
+      "url": "https://www.tandfonline.com/journals/nnmr20",
+      "canonical_feed_ids": ["journal-of-new-music-research"],
+      "publisher": "Taylor & Francis",
+      "topics": ["music technology", "computational musicology", "psychoacoustics", "composition", "interdisciplinary"],
       "access": "subscription",
-      "notes": "Founded 1972 as Interface. Broad scope: popular music, world music, classical. Quantitative and empirical methods. Vol 54 (2025) current."
+      "notes": "Founded in 1972 as Interface. Broad interdisciplinary coverage across computational musicology, psychoacoustics, composition, and empirical music research.",
+      "last_checked": "2026-03-07"
     },
     {
       "name": "Music Perception",
@@ -567,11 +703,11 @@
     {
       "name": "Auditory Perception & Cognition",
       "url": "https://www.tandfonline.com/journals/rpac20",
-      "rss": "https://www.tandfonline.com/feed/rss/rpac20",
+      "canonical_feed_ids": ["auditory-perception-and-cognition"],
       "publisher": "Taylor & Francis",
       "topics": ["psychoacoustics", "auditory scene analysis", "pitch", "timbre", "speech", "neuroscience"],
       "access": "subscription",
-      "notes": "Covers localization, motion perception, auditory scene analysis, pitch, loudness, timbre, music and speech perception."
+      "notes": "Covers localization, motion perception, auditory scene analysis, pitch, loudness, timbre, music, and speech perception."
     },
     {
       "name": "Journal of the Acoustical Society of America (JASA)",
@@ -599,76 +735,43 @@
     {
       "name": "Sevish — Microtonal / Xenharmonic Blog",
       "url": "https://sevish.com",
-      "rss": "https://sevish.com/feed/",
+      "canonical_feed_id": "sevish-main",
       "category": "xenharmonic",
       "topics": ["microtonality", "xenharmonic", "scales", "synthesis", "Scale Workshop", "EDO", "composition"],
-      "notes": "The most actively updated xenharmonic blog. Sevish is also creator of Scale Workshop. Posts through Feb 2026."
+      "notes": "Sevish writes about xenharmonic practice, scale design, synthesis, and tools such as Scale Workshop.",
+      "last_checked": "2026-03-07"
     },
     {
       "name": "Sevish — Microtonal category feed",
       "url": "https://sevish.com/category/microtonal-music/",
-      "rss": "https://sevish.com/category/microtonal-music/feed/",
+      "canonical_feed_id": "sevish-microtonal",
       "category": "xenharmonic",
       "topics": ["microtonality", "xenharmonic", "tuning"]
     },
     {
       "name": "PostClassic — Kyle Gann (ArtsJournal)",
       "url": "https://www.artsjournal.com/postclassic/",
-      "rss": "https://www.artsjournal.com/postclassic/feed",
+      "canonical_feed_id": "postclassic",
       "category": "music theory",
       "topics": ["postminimalism", "just intonation", "microtonality", "American music", "tuning theory", "composition"],
-      "notes": "Kyle Gann is one of the foremost writers on just intonation and microtonality. His kylegann.com site also has comprehensive tuning theory reference pages."
+      "notes": "Kyle Gann is a major writer on just intonation and microtonality, and the archive pairs well with his longer-form tuning reference pages."
     },
     {
       "name": "Now and Xen Podcast",
       "url": "https://nowandxen.libsyn.com/",
-      "rss": "http://nowandxen.libsyn.com/rss",
+      "canonical_feed_id": "now-and-xen",
       "category": "podcast",
       "topics": ["xenharmonic", "microtonality", "just intonation", "alternative tuning", "composition", "interviews"],
-      "notes": "The primary podcast dedicated to xenharmonic music. Long-form interviews with microtonal composers and theorists. Active since 2018. ~83 min avg episode."
+      "notes": "Long-form interview podcast focused on xenharmonic music, alternative tuning systems, and working composers."
     },
     {
       "name": "SMT-Pod (Society for Music Theory Podcast)",
       "url": "https://smt-pod.org/",
-      "rss": "https://smt-pod.org/feed.xml",
+      "canonical_feed_id": "smt-pod",
       "category": "podcast",
       "topics": ["music theory", "academic", "analysis", "tuning", "harmony"],
-      "notes": "Academic podcast from the Society for Music Theory. Season 4 (Spring 2025) underway. Scholarly level."
-    },
-    {
-      "name": "Journal of Mathematics and Music — RSS",
-      "url": "https://www.tandfonline.com/journals/tmam20",
-      "rss": "https://www.tandfonline.com/feed/rss/tmam20",
-      "category": "journal",
-      "topics": ["mathematics", "music theory", "tuning", "formal methods"]
-    },
-    {
-      "name": "Journal of New Music Research — RSS",
-      "url": "https://www.tandfonline.com/journals/nnmr20",
-      "rss": "https://www.tandfonline.com/feed/rss/nnmr20",
-      "category": "journal",
-      "topics": ["computational musicology", "music technology", "psychoacoustics"]
-    },
-    {
-      "name": "Auditory Perception & Cognition — RSS",
-      "url": "https://www.tandfonline.com/journals/rpac20",
-      "rss": "https://www.tandfonline.com/feed/rss/rpac20",
-      "category": "journal",
-      "topics": ["psychoacoustics", "timbre", "pitch", "auditory cognition"]
-    },
-    {
-      "name": "arXiv — math.HO (History and Overview, includes music theory)",
-      "url": "https://arxiv.org/list/math.HO/recent",
-      "rss": "https://arxiv.org/rss/math.HO",
-      "category": "arxiv",
-      "topics": ["history of mathematics", "mathematical music theory", "Tonnetz", "tuning theory", "group theory music"]
-    },
-    {
-      "name": "arXiv — math.CO (Combinatorics, includes pitch-class & rhythm geometry)",
-      "url": "https://arxiv.org/list/math.CO/recent",
-      "rss": "https://arxiv.org/rss/math.CO",
-      "category": "arxiv",
-      "topics": ["combinatorics", "Euclidean rhythms", "pitch class sets", "geometry of music"]
+      "notes": "Society for Music Theory podcast featuring scholarly conversations on analysis, pedagogy, and current research.",
+      "last_checked": "2026-03-07"
     }
   ],
   "websites": [
@@ -695,7 +798,8 @@
       "name": "Harmonics of Nature",
       "url": "https://harmonicsofnature.com/",
       "topics": ["harmonics", "Pythagoras", "resonance", "just intonation", "sacred geometry", "cymatics"],
-      "notes": "Explores connections between harmonics, geometry, and nature. Active through 2025."
+      "notes": "Explores relationships between harmonics, geometry, resonance, and natural pattern formation.",
+      "last_checked": "2026-03-07"
     },
     {
       "name": "Huygens-Fokker Foundation",
@@ -739,34 +843,32 @@
       "category": "cs.SD",
       "name": "Sound",
       "url": "https://arxiv.org/list/cs.SD/recent",
-      "rss": "https://arxiv.org/rss/cs.SD",
-      "in_convex": true
+      "canonical_feed_id": "arxiv-cs-sd"
     },
     {
       "category": "eess.AS",
       "name": "Audio and Speech Processing",
       "url": "https://arxiv.org/list/eess.AS/recent",
-      "rss": "https://arxiv.org/rss/eess.AS",
-      "in_convex": true
+      "canonical_feed_id": "arxiv-eess-as"
     },
     {
       "category": "math.HO",
       "name": "History and Overview (includes mathematical music theory)",
       "url": "https://arxiv.org/list/math.HO/recent",
-      "rss": "https://arxiv.org/rss/math.HO",
+      "canonical_feed_id": "arxiv-math-ho",
       "notes": "Best arXiv category for music-math papers: Tonnetz, tuning theory, group theory applications to music."
     },
     {
       "category": "math.CO",
       "name": "Combinatorics (Euclidean rhythms, pitch-class geometry)",
       "url": "https://arxiv.org/list/math.CO/recent",
-      "rss": "https://arxiv.org/rss/math.CO"
+      "canonical_feed_id": "arxiv-math-co"
     },
     {
       "category": "physics.pop-ph",
       "name": "Popular Physics (includes music physics)",
       "url": "https://arxiv.org/list/physics.pop-ph/recent",
-      "rss": "https://arxiv.org/rss/physics.pop-ph"
+      "canonical_feed_id": "arxiv-physics-pop-ph"
     }
   ],
   "online_references": [

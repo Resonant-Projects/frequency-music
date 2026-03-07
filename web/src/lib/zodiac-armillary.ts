@@ -3,12 +3,7 @@
 
 import * as THREE from "three";
 import { R, type SectorDef } from "./zodiac-data";
-
-export interface SubTopic {
-  label: string;
-  conceptNames: string[];
-  itemCount: number;
-}
+import type { ZodiacSubTopic } from "./zodiac-types";
 
 export interface ArmillaryRingGroup {
   group: THREE.Group;
@@ -25,7 +20,7 @@ const TILT_ANGLES = [15, 30, 45, 60]; // degrees
 
 export function buildArmillaryRings(
   sector: SectorDef,
-  subTopics: SubTopic[],
+  subTopics: ZodiacSubTopic[],
 ): ArmillaryRingGroup {
   const group = new THREE.Group();
   group.userData.type = "armillary";
@@ -90,7 +85,7 @@ export function buildArmillaryRings(
         const angle = (j / sphereCount) * Math.PI * 2;
         const sx = ringRadius * Math.cos(angle);
         const sy = ringRadius * Math.sin(angle);
-        const sphere = new THREE.Mesh(sphereGeo, sphereMat.clone());
+        const sphere = new THREE.Mesh(sphereGeo, sphereMat);
         sphere.position.set(sx, sy, 0);
         torus.add(sphere); // child of torus, inherits transforms
       }
@@ -103,13 +98,23 @@ export function buildArmillaryRings(
     group,
     rings,
     dispose: () => {
+      const disposedMaterials = new Set<THREE.Material>();
       group.traverse((child) => {
         if ("geometry" in child && child.geometry) {
           (child.geometry as THREE.BufferGeometry).dispose();
         }
         if ("material" in child && child.material) {
-          const mat = child.material as THREE.Material;
-          mat.dispose();
+          const mat = child.material as THREE.Material | THREE.Material[];
+          if (Array.isArray(mat)) {
+            mat.forEach((entry) => {
+              if (disposedMaterials.has(entry)) return;
+              disposedMaterials.add(entry);
+              entry.dispose();
+            });
+          } else if (!disposedMaterials.has(mat)) {
+            disposedMaterials.add(mat);
+            mat.dispose();
+          }
         }
       });
     },

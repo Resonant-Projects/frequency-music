@@ -30,6 +30,7 @@ import {
   buildTickMarks,
   getLabelPositions,
 } from "./zodiac-geometry";
+import type { Id } from "../../../convex/_generated/dataModel";
 import type {
   ConstellationGroup,
   ConstellationEdge,
@@ -39,7 +40,7 @@ import {
   updateConstellationTime,
   animateConstellationFadeIn,
 } from "./zodiac-constellations";
-import type { ArmillaryRingGroup, SubTopic } from "./zodiac-armillary";
+import type { ArmillaryRingGroup } from "./zodiac-armillary";
 import {
   buildArmillaryRings,
   animateArmillarySpring,
@@ -48,25 +49,34 @@ import {
 import type { OrbitalSystem } from "./zodiac-orbits";
 import { buildOrbitalSystem, updateOrbits, buildPullLines } from "./zodiac-orbits";
 import { pickAny, configureRaycaster, type PickResult } from "./zodiac-orbit-picking";
+import type {
+  ConstellationConcept,
+  ItemRelation,
+  OrbitalExtraction,
+  OrbitalHypothesis,
+  OrbitalRecipe,
+  OrbitalSource,
+  ZodiacSubTopic,
+} from "./zodiac-types";
 
 export interface ZodiacHandle {
   cleanup: () => void;
   setActiveSector: (id: string | null) => void;
   loadConstellations: (
     sectorId: string,
-    concepts: Array<{ name: string; displayName: string; _id: string; mentionCount: number; domain: string }>,
+    concepts: ConstellationConcept[],
     edges: ConstellationEdge[],
   ) => void;
-  loadArmillaryRings: (sectorId: string, subTopics: SubTopic[]) => void;
+  loadArmillaryRings: (sectorId: string, subTopics: ZodiacSubTopic[]) => void;
   loadOrbitalBodies: (
-    sources: Array<{ _id: string; title?: string; status: string; topics?: string[]; createdAt: number }>,
-    extractions: Array<{ _id: string; sourceId: string; confidence: number; topics: string[] }>,
-    hypotheses: Array<{ _id: string; title: string; status: string; concepts?: string[] }>,
-    recipes: Array<{ _id: string; title: string; hypothesisId: string; status: string }>,
+    sources: OrbitalSource[],
+    extractions: OrbitalExtraction[],
+    hypotheses: OrbitalHypothesis[],
+    recipes: OrbitalRecipe[],
   ) => void;
   showPullLines: (
     itemId: string,
-    relations: Array<{ id: string; type: string }>,
+    relations: ItemRelation[],
   ) => void;
   clearPullLines: () => void;
 }
@@ -75,7 +85,7 @@ export function initZodiacScene(
   canvas: HTMLCanvasElement,
   cssContainer: HTMLElement,
   onSectorClick?: (id: string) => void,
-  onConceptClick?: (conceptId: string) => void,
+  onConceptClick?: (conceptId: Id<"concepts">) => void,
   onOrbitalClick?: (itemId: string, itemType: string, title: string) => void,
   onArmillaryClick?: (label: string, conceptNames: string[]) => void,
 ): ZodiacHandle {
@@ -314,7 +324,7 @@ export function initZodiacScene(
     if (pick) {
       showSelectionHalo(pick.position);
       if (pick.type === "concept" && onConceptClick) {
-        onConceptClick(pick.id);
+        onConceptClick(pick.id as Id<"concepts">);
         return;
       }
       if (pick.type === "orbital-item" && onOrbitalClick) {
@@ -533,7 +543,7 @@ export function initZodiacScene(
     // Phase 1: Load constellation for active sector
     loadConstellations(
       sectorId: string,
-      concepts: Array<{ name: string; displayName: string; _id: string; mentionCount: number; domain: string }>,
+      concepts: ConstellationConcept[],
       edges: ConstellationEdge[],
     ) {
       clearConstellation();
@@ -546,7 +556,7 @@ export function initZodiacScene(
     },
 
     // Phase 2: Load armillary rings for active sector
-    loadArmillaryRings(sectorId: string, subTopics: SubTopic[]) {
+    loadArmillaryRings(sectorId: string, subTopics: ZodiacSubTopic[]) {
       clearArmillary();
       const sector = SECTORS.find((s) => s.id === sectorId);
       if (!sector || subTopics.length === 0) return;
@@ -558,10 +568,10 @@ export function initZodiacScene(
 
     // Phase 3: Load orbital bodies (called once on mount)
     loadOrbitalBodies(
-      sources: Array<{ _id: string; title?: string; status: string; topics?: string[]; createdAt: number }>,
-      extractions: Array<{ _id: string; sourceId: string; confidence: number; topics: string[] }>,
-      hypotheses: Array<{ _id: string; title: string; status: string; concepts?: string[] }>,
-      recipes: Array<{ _id: string; title: string; hypothesisId: string; status: string }>,
+      sources: OrbitalSource[],
+      extractions: OrbitalExtraction[],
+      hypotheses: OrbitalHypothesis[],
+      recipes: OrbitalRecipe[],
     ) {
       // Remove old orbital system
       if (orbitalSystem) {
@@ -576,7 +586,7 @@ export function initZodiacScene(
     // Phase 3: Show pull-lines from a clicked item to related items
     showPullLines(
       itemId: string,
-      relations: Array<{ id: string; type: string }>,
+      relations: ItemRelation[],
     ) {
       clearPullLines();
       if (!orbitalSystem) return;

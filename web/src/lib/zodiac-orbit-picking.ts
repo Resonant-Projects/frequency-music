@@ -3,13 +3,14 @@
 // This uses a simple grid-based spatial lookup.
 
 import * as THREE from "three";
+import type { Id } from "../../../convex/_generated/dataModel";
 import type { OrbitalRing, OrbitalSystem } from "./zodiac-orbits";
 import type { ConstellationGroup, ConceptStar } from "./zodiac-constellations";
 import type { ArmillaryRingGroup } from "./zodiac-armillary";
 
 export interface PickResult {
   type: "concept" | "orbital-item" | "armillary-ring";
-  id: string;
+  id: string | Id<"concepts">;
   label: string;
   position: THREE.Vector3;
   ringLabel?: string;

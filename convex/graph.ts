@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
 import { action, mutation, query } from "./_generated/server";
 import { conceptReturnValidator, edgeReturnValidator } from "./validators";
 
@@ -536,10 +537,11 @@ export const getConceptsForDomain = query({
   returns: v.array(conceptReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
+    type ConceptDomain = Doc<"concepts">["domain"];
 
     // Map zodiac sector IDs to concept domain(s) — always include "general"
     // since most concepts default to domain: "general"
-    const domainMap: Record<string, string[]> = {
+    const domainMap: Record<string, ConceptDomain[]> = {
       math: ["mathematics", "general"],
       phys: ["acoustics", "general"],
       music: ["tuning", "theory", "general"],
@@ -550,14 +552,19 @@ export const getConceptsForDomain = query({
 
     const conceptDomains = domainMap[args.domain] ?? ["general"];
     const specificDomains = new Set(conceptDomains.filter((d) => d !== "general"));
-    const results: Array<any> = [];
+    const results: Doc<"concepts">[] = [];
+    const seen = new Set<Id<"concepts">>();
 
     for (const d of conceptDomains) {
       const concepts = await ctx.db
         .query("concepts")
-        .withIndex("by_domain", (q) => q.eq("domain", d as any))
-        .take(limit);
-      results.push(...concepts);
+        .withIndex("by_domain", (q) => q.eq("domain", d))
+        .collect();
+      for (const concept of concepts) {
+        if (seen.has(concept._id)) continue;
+        seen.add(concept._id);
+        results.push(concept);
+      }
     }
 
     // Sort: domain-specific concepts first, then general, all by mentionCount desc
@@ -567,12 +574,8 @@ export const getConceptsForDomain = query({
       if (aSpecific !== bSpecific) return aSpecific - bSpecific;
       return b.mentionCount - a.mentionCount;
     });
-    const seen = new Set<string>();
-    return results.filter((c) => {
-      if (seen.has(c._id)) return false;
-      seen.add(c._id);
-      return true;
-    }).slice(0, limit);
+
+    return results.slice(0, limit);
   },
 });
 
@@ -584,7 +587,7 @@ export const getConceptEdges = query({
   returns: v.array(edgeReturnValidator),
   handler: async (ctx, args) => {
     const nameSet = new Set(args.conceptNames.map((n) => n.toLowerCase().trim()));
-    const results: Array<any> = [];
+    const results: Doc<"edges">[] = [];
 
     // Get edges where both ends are in our concept set
     for (const name of nameSet) {
@@ -656,24 +659,27 @@ export const getConceptDetail = query({
     const allEdges = [...edgesTo, ...edgesFrom];
 
     // Collect linked entity IDs by type
-    const sourceIds = new Set<string>();
-    const hypothesisIds = new Set<string>();
-    const recipeIds = new Set<string>();
+    const sourceIds = new Set<Id<"sources">>();
+    const hypothesisIds = new Set<Id<"hypotheses">>();
+    const recipeIds = new Set<Id<"recipes">>();
 
     for (const edge of allEdges) {
       const otherId = edge.fromType === "concept" ? edge.toId : edge.fromId;
       const otherType = edge.fromType === "concept" ? edge.toType : edge.fromType;
-      if (otherType === "source") sourceIds.add(otherId);
-      if (otherType === "hypothesis") hypothesisIds.add(otherId);
-      if (otherType === "recipe") recipeIds.add(otherId);
+      if (otherType === "source") sourceIds.add(otherId as Id<"sources">);
+      if (otherType === "hypothesis") {
+        hypothesisIds.add(otherId as Id<"hypotheses">);
+      }
+      if (otherType === "recipe") recipeIds.add(otherId as Id<"recipes">);
     }
 
     // Fetch linked items (limit to 20 each)
     const linkedSources = (await Promise.all(
       [...sourceIds].slice(0, 20).map(async (id) => {
         try {
-          const s = await ctx.db.get("sources", id as any);
-          return s ? { _id: s._id, title: s.title, status: s.status } : null;
+          const s = await ctx.db.get("sources", id);
+          if (!s || s.visibility !== "public") return null;
+          return { _id: s._id, title: s.title, status: s.status };
         } catch { return null; }
       }),
     )).filter((s): s is NonNullable<typeof s> => s !== null);
@@ -681,8 +687,9 @@ export const getConceptDetail = query({
     const linkedHypotheses = (await Promise.all(
       [...hypothesisIds].slice(0, 20).map(async (id) => {
         try {
-          const h = await ctx.db.get("hypotheses", id as any);
-          return h ? { _id: h._id, title: h.title, status: h.status } : null;
+          const h = await ctx.db.get("hypotheses", id);
+          if (!h || h.visibility !== "public") return null;
+          return { _id: h._id, title: h.title, status: h.status };
         } catch { return null; }
       }),
     )).filter((h): h is NonNullable<typeof h> => h !== null);
@@ -690,8 +697,9 @@ export const getConceptDetail = query({
     const linkedRecipes = (await Promise.all(
       [...recipeIds].slice(0, 20).map(async (id) => {
         try {
-          const r = await ctx.db.get("recipes", id as any);
-          return r ? { _id: r._id, title: r.title, status: r.status } : null;
+          const r = await ctx.db.get("recipes", id);
+          if (!r || r.visibility !== "public") return null;
+          return { _id: r._id, title: r.title, status: r.status };
         } catch { return null; }
       }),
     )).filter((r): r is NonNullable<typeof r> => r !== null);

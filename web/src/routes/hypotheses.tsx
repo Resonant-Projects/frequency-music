@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/solid-router";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
+import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
@@ -29,6 +30,12 @@ export function HypothesesPage() {
   const recentSources = createQuery(convexApi.sources.listRecent, () => ({
     limit: 20,
   }));
+  const recentSourceRows = createMemo<Doc<"sources">[]>(
+    () => (recentSources() ?? []) as Doc<"sources">[],
+  );
+  const hypothesisRows = createMemo<Doc<"hypotheses">[]>(
+    () => (hypotheses.data() ?? []) as Doc<"hypotheses">[],
+  );
 
   const createHypothesis = createMutation(convexApi.hypotheses.create);
 
@@ -137,8 +144,8 @@ export function HypothesesPage() {
               },
             })}
           >
-            <For each={recentSources() ?? []}>
-              {(source: any) => (
+            <For each={recentSourceRows()}>
+              {(source) => (
                 <label
                   class={css({
                     alignItems: "center",
@@ -189,8 +196,8 @@ export function HypothesesPage() {
           fallback={<p>Loading hypotheses…</p>}
         >
           <div class={css({ display: "grid", gap: "3" })}>
-            <For each={hypotheses.data() ?? []}>
-              {(item: any) => (
+            <For each={hypothesisRows()}>
+              {(item) => (
                 <Link
                   to={"/hypotheses/" + item._id}
                   style={{ "text-decoration": "none", color: "inherit" }}

@@ -7,6 +7,7 @@ import { UIBadge, UIButton, UICard, pageClass } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { createAction, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
+import { extractTitle } from "../lib/markdown-utils";
 
 const goldDivider = css({
   border: "none",
@@ -127,11 +128,6 @@ const markdownWrapper = css({
   },
 });
 
-function extractTitle(bodyMd: string): string {
-  const match = bodyMd.match(/^#\s+(.+)/m);
-  return match ? match[1] : "Weekly Brief";
-}
-
 export function WeeklyBriefDetailPage() {
   const params = useParams({ from: "/weekly-turns/$briefId" });
 
@@ -154,7 +150,8 @@ export function WeeklyBriefDetailPage() {
       );
       setNotice(`Published to Notion: ${result.notionUrl ?? "success"}`);
     } catch (error) {
-      setNotice(`Publish failed: ${String(error)}`);
+      console.error("Weekly brief publish failed", error);
+      setNotice("Publish failed. Please try again or contact support.");
     } finally {
       setPublishing(false);
     }

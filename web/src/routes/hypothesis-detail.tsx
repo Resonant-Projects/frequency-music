@@ -1,6 +1,6 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { For, Show } from "solid-js";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { createSignal, For, Show } from "solid-js";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import { UIBadge, UIButton, UICard, pageClass } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
@@ -89,6 +89,9 @@ const STATUSES = [
 ] as const;
 
 const RESOLUTIONS = ["supported", "inconclusive", "contradicted"] as const;
+type Status = (typeof STATUSES)[number];
+type Resolution = (typeof RESOLUTIONS)[number];
+type HypothesisSource = Doc<"sources">;
 
 export function HypothesisDetailPage() {
   const params = useParams({ from: "/hypotheses/$hypothesisId" });
@@ -98,23 +101,57 @@ export function HypothesisDetailPage() {
   }));
 
   const updateHypothesis = createMutation(convexApi.hypotheses.update);
+  const [notice, setNotice] = createSignal<string | null>(null);
+  const [saving, setSaving] = createSignal(false);
 
-  function setStatus(status: string) {
-    updateHypothesis(
+  async function setStatus(status: Status) {
+    await updateHypothesis(
       withDevBypassSecret({
         id: params().hypothesisId as Id<"hypotheses">,
-        status: status as any,
+        status,
       }),
     );
   }
 
-  function setResolution(resolution: string) {
-    updateHypothesis(
+  async function setResolution(resolution: Resolution) {
+    await updateHypothesis(
       withDevBypassSecret({
         id: params().hypothesisId as Id<"hypotheses">,
-        resolution: resolution as any,
+        resolution,
       }),
     );
+  }
+
+  async function handleStatusClick(status: Status) {
+    setSaving(true);
+    setNotice(null);
+    try {
+      await setStatus(status);
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Failed to update hypothesis status.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleResolutionClick(resolution: Resolution) {
+    setSaving(true);
+    setNotice(null);
+    try {
+      await setResolution(resolution);
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Failed to update hypothesis resolution.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -158,6 +195,13 @@ export function HypothesisDetailPage() {
 
             {/* Title */}
             <h1 class={titleClass}>{h().title}</h1>
+            <Show when={notice()}>
+              {(message) => (
+                <p class={css({ color: "zodiac.cream", mt: "2" })}>
+                  {message()}
+                </p>
+              )}
+            </Show>
 
             {/* Question */}
             <hr class={goldDivider} />
@@ -211,7 +255,7 @@ export function HypothesisDetailPage() {
               <div class={sectionLabel}>Linked Sources</div>
               <div class={sourceGrid}>
                 <For each={h().sources}>
-                  {(source: any) => (
+                  {(source: HypothesisSource) => (
                     <div class={sourceCell}>
                       <div
                         class={css({
@@ -221,7 +265,7 @@ export function HypothesisDetailPage() {
                         })}
                       >
                         <UIBadge tone="cream">
-                          {source.sourceType ?? "unknown"}
+                          {source.type}
                         </UIBadge>
                       </div>
                       <div
@@ -269,8 +313,8 @@ export function HypothesisDetailPage() {
                 {(status) => (
                   <UIButton
                     variant={h().status === status ? "solid" : "outline"}
-                    size="sm"
-                    onClick={() => setStatus(status)}
+                    disabled={saving()}
+                    onClick={() => void handleStatusClick(status)}
                   >
                     {status}
                   </UIButton>
@@ -293,8 +337,8 @@ export function HypothesisDetailPage() {
                   {(res) => (
                     <UIButton
                       variant={h().resolution === res ? "solid" : "outline"}
-                      size="sm"
-                      onClick={() => setResolution(res)}
+                      disabled={saving()}
+                      onClick={() => void handleResolutionClick(res)}
                     >
                       {res}
                     </UIButton>

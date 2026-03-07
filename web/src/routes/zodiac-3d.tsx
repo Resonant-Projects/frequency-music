@@ -3,6 +3,7 @@
 // Phases 1-3: Constellations, Armillary Rings, Planetary Orrery with sidebar drill-down.
 
 import { useNavigate } from "@tanstack/solid-router";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createEffect,
   createMemo,
@@ -15,8 +16,20 @@ import {
 } from "solid-js";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
+import type { ConstellationEdge } from "../lib/zodiac-constellations";
 import { SECTORS } from "../lib/zodiac-data";
 import { initZodiacScene, type ZodiacHandle } from "../lib/zodiac-scene";
+import type {
+  ConceptDetailData,
+  ConstellationConcept,
+  ItemRelation,
+  OrbitalExtraction,
+  OrbitalHypothesis,
+  OrbitalRecipe,
+  OrbitalSource,
+  ZodiacConstellationEdge,
+  ZodiacSubTopic,
+} from "../lib/zodiac-types";
 
 const sectorRouteMap: Record<string, string> = {
   math: "/display",
@@ -47,7 +60,7 @@ type SectorMetricRow = {
 
 type SidebarMode =
   | { kind: "overview" }
-  | { kind: "concept-detail"; conceptId: string }
+  | { kind: "concept-detail"; conceptId: Id<"concepts"> }
   | { kind: "sub-topic"; label: string; conceptNames: string[] }
   | { kind: "item-detail"; itemId: string; itemType: string; title: string };
 
@@ -70,19 +83,30 @@ export function Zodiac3D() {
     domain: selSector(),
     limit: 40,
   }));
-  const domainConcepts = domainConceptsQ.data;
+  const domainConcepts = createMemo<ConstellationConcept[]>(
+    () => (domainConceptsQ.data() ?? []) as ConstellationConcept[],
+  );
 
   // Phase 1: Edges between those concepts
-  const conceptNames = createMemo(() =>
-    (domainConcepts() ?? []).map((c: any) => c.name),
-  );
+  const conceptNames = createMemo(() => domainConcepts().map((c) => c.name));
   const conceptEdgesQ = createQueryWithStatus(convexApi.graph.getConceptEdges, () => ({
     conceptNames: conceptNames(),
   }));
-  const conceptEdges = conceptEdgesQ.data;
+  const conceptEdges = createMemo<ConstellationEdge[]>(
+    () =>
+      ((conceptEdgesQ.data() ?? []) as Array<{
+        fromId: string;
+        toId: string;
+        relationship: string;
+      }>).map<ZodiacConstellationEdge>((edge) => ({
+        from: edge.fromId,
+        to: edge.toId,
+        relationship: edge.relationship,
+      })),
+  );
 
   // Phase 1: Concept detail — conditional, only queries when sidebar is in concept-detail mode
-  const activeConceptId = createMemo(() => {
+  const activeConceptId = createMemo<Id<"concepts"> | undefined>(() => {
     const mode = sidebarMode();
     return mode.kind === "concept-detail" ? mode.conceptId : undefined;
   });
@@ -90,20 +114,36 @@ export function Zodiac3D() {
     convexApi.graph.getConceptDetail,
     () => {
       const id = activeConceptId();
-      return id ? { conceptId: id as any } : {};
+      return id ? { conceptId: id } : {};
     },
   );
-  const conceptDetail = createMemo(() => activeConceptId() ? conceptDetailQ.data() : undefined);
+  const conceptDetail = createMemo<ConceptDetailData | undefined>(() =>
+    activeConceptId()
+      ? (conceptDetailQ.data() as ConceptDetailData | undefined)
+      : undefined,
+  );
 
   // Phase 2: Sub-topics for active sector
   const subTopicsQ = createQueryWithStatus(convexApi.dashboard.domainSubTopics, () => ({
     domain: selSector(),
   }));
-  const subTopics = subTopicsQ.data;
+  const subTopics = createMemo<ZodiacSubTopic[]>(
+    () => (subTopicsQ.data() ?? []) as ZodiacSubTopic[],
+  );
 
   // Phase 3: Pipeline items (loaded once)
   const pipelineItemsQ = createQueryWithStatus(convexApi.dashboard.pipelineItems);
-  const pipelineItems = pipelineItemsQ.data;
+  const pipelineItems = createMemo<{
+    sources: OrbitalSource[];
+    extractions: OrbitalExtraction[];
+    hypotheses: OrbitalHypothesis[];
+    recipes: OrbitalRecipe[];
+  } | undefined>(() => pipelineItemsQ.data() as {
+    sources: OrbitalSource[];
+    extractions: OrbitalExtraction[];
+    hypotheses: OrbitalHypothesis[];
+    recipes: OrbitalRecipe[];
+  } | undefined);
 
   // Phase 3: Item relations — conditional
   const activeItem = createMemo(() => {
@@ -114,7 +154,11 @@ export function Zodiac3D() {
     convexApi.dashboard.itemRelations,
     () => ({ itemId: activeItem()?.id ?? "", itemType: activeItem()?.type ?? "source" }),
   );
-  const itemRelations = createMemo(() => activeItem() ? itemRelationsQ.data() : undefined);
+  const itemRelations = createMemo<ItemRelation[] | undefined>(() =>
+    activeItem()
+      ? (itemRelationsQ.data() as ItemRelation[] | undefined)
+      : undefined,
+  );
 
   const sectors = createMemo(() => {
     const rows = (sectorMetrics() ?? []) as SectorMetricRow[];
@@ -201,12 +245,8 @@ export function Zodiac3D() {
 
       sceneHandle.loadConstellations(
         selSector(),
-        concepts as any[],
-        (edges ?? []).map((e: any) => ({
-          from: e.fromId,
-          to: e.toId,
-          relationship: e.relationship,
-        })),
+        concepts,
+        edges ?? [],
       );
     }),
   );
@@ -216,7 +256,7 @@ export function Zodiac3D() {
     on(subTopics, () => {
       const st = subTopics();
       if (!st || !sceneHandle) return;
-      sceneHandle.loadArmillaryRings(selSector(), st as any[]);
+      sceneHandle.loadArmillaryRings(selSector(), st);
     }),
   );
 
@@ -226,10 +266,10 @@ export function Zodiac3D() {
       const items = pipelineItems();
       if (!items || !sceneHandle) return;
       sceneHandle.loadOrbitalBodies(
-        items.sources as any[],
-        items.extractions as any[],
-        items.hypotheses as any[],
-        items.recipes as any[],
+        items.sources,
+        items.extractions,
+        items.hypotheses,
+        items.recipes,
       );
     }),
   );
@@ -241,7 +281,7 @@ export function Zodiac3D() {
       const mode = sidebarMode();
       if (!sceneHandle) return;
       if (mode.kind === "item-detail" && relations) {
-        sceneHandle.showPullLines(mode.itemId, relations as any[]);
+        sceneHandle.showPullLines(mode.itemId, relations);
       } else {
         sceneHandle.clearPullLines();
       }
@@ -335,7 +375,7 @@ export function Zodiac3D() {
               CONCEPTS ({(domainConcepts() ?? []).length})
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px">
-              <For each={(domainConcepts() ?? []).slice(0, 12) as any[]}>
+              <For each={domainConcepts().slice(0, 12)}>
                 {(concept) => (
                   <button
                     type="button"
@@ -434,58 +474,64 @@ export function Zodiac3D() {
   }
 
   function SidebarConceptDetail() {
-    const detail = createMemo(() => conceptDetail() as any);
+    const detail = createMemo<ConceptDetailData | undefined>(() => conceptDetail());
     return (
       <>
         <div style="padding:20px 26px;border-bottom:1px solid rgba(200,168,75,0.1)">
           <BackButton />
           <Show when={detail()}>
-            <div style="font-size:9px;letter-spacing:0.35em;color:rgba(139,92,246,0.6);margin-bottom:8px">
-              CONCEPT
-            </div>
-            <div style="font-size:24px;color:#c8a84b;font-weight:300;margin-bottom:6px">
-              {detail().concept.displayName}
-            </div>
-            <div style="font-size:11px;color:rgba(245,240,232,0.35);margin-bottom:12px">
-              {detail().concept.domain} &middot; {detail().concept.mentionCount} mentions &middot; {detail().edgeCount} edges
-            </div>
-            <Show when={detail().concept.description}>
-              <p style="font-size:12.5px;line-height:1.65;color:rgba(245,240,232,0.5);margin:0 0 16px">
-                {detail().concept.description}
-              </p>
-            </Show>
-            <Show when={detail().concept.aliases?.length > 0}>
-              <div style="font-size:10px;color:rgba(245,240,232,0.3);margin-bottom:16px">
-                Also: {detail().concept.aliases.join(", ")}
-              </div>
-            </Show>
+            {(detailData) => (
+              <>
+                <div style="font-size:9px;letter-spacing:0.35em;color:rgba(139,92,246,0.6);margin-bottom:8px">
+                  CONCEPT
+                </div>
+                <div style="font-size:24px;color:#c8a84b;font-weight:300;margin-bottom:6px">
+                  {detailData().concept.displayName}
+                </div>
+                <div style="font-size:11px;color:rgba(245,240,232,0.35);margin-bottom:12px">
+                  {detailData().concept.domain} &middot; {detailData().concept.mentionCount} mentions &middot; {detailData().edgeCount} edges
+                </div>
+                <Show when={detailData().concept.description}>
+                  <p style="font-size:12.5px;line-height:1.65;color:rgba(245,240,232,0.5);margin:0 0 16px">
+                    {detailData().concept.description}
+                  </p>
+                </Show>
+                <Show when={detailData().concept.aliases?.length > 0}>
+                  <div style="font-size:10px;color:rgba(245,240,232,0.3);margin-bottom:16px">
+                    Also: {detailData().concept.aliases.join(", ")}
+                  </div>
+                </Show>
+              </>
+            )}
           </Show>
         </div>
 
         <Show when={detail()}>
-          <div style="padding:16px 26px;flex:1;overflow-y:auto">
-            <Show when={detail().linkedSources.length > 0}>
-              <PipelineSection
-                label="SOURCES"
-                items={detail().linkedSources}
-                type="source"
-              />
-            </Show>
-            <Show when={detail().linkedHypotheses.length > 0}>
-              <PipelineSection
-                label="HYPOTHESES"
-                items={detail().linkedHypotheses}
-                type="hypothesis"
-              />
-            </Show>
-            <Show when={detail().linkedRecipes.length > 0}>
-              <PipelineSection
-                label="RECIPES"
-                items={detail().linkedRecipes}
-                type="recipe"
-              />
-            </Show>
-          </div>
+          {(detailData) => (
+            <div style="padding:16px 26px;flex:1;overflow-y:auto">
+              <Show when={detailData().linkedSources.length > 0}>
+                <PipelineSection
+                  label="SOURCES"
+                  items={detailData().linkedSources}
+                  type="source"
+                />
+              </Show>
+              <Show when={detailData().linkedHypotheses.length > 0}>
+                <PipelineSection
+                  label="HYPOTHESES"
+                  items={detailData().linkedHypotheses}
+                  type="hypothesis"
+                />
+              </Show>
+              <Show when={detailData().linkedRecipes.length > 0}>
+                <PipelineSection
+                  label="RECIPES"
+                  items={detailData().linkedRecipes}
+                  type="recipe"
+                />
+              </Show>
+            </div>
+          )}
         </Show>
 
         <Show when={!detail()}>
@@ -520,7 +566,7 @@ export function Zodiac3D() {
           </div>
           <For each={mode().conceptNames}>
             {(name) => {
-              const concept = () => (domainConcepts() ?? []).find((c: any) => c.name === name) as any;
+              const concept = () => domainConcepts().find((c) => c.name === name);
               return (
                 <button
                   type="button"
@@ -547,7 +593,7 @@ export function Zodiac3D() {
 
   function SidebarItemDetail() {
     const mode = () => sidebarMode() as { kind: "item-detail"; itemId: string; itemType: string; title: string };
-    const relations = createMemo(() => (itemRelations() ?? []) as any[]);
+    const relations = createMemo<ItemRelation[]>(() => itemRelations() ?? []);
 
     return (
       <>

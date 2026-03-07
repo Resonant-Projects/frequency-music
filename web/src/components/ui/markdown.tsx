@@ -1,8 +1,9 @@
+import type { JSX } from "solid-js";
 import { SolidMarkdown } from "solid-markdown";
 import { css } from "../../../styled-system/css";
 
 const components = {
-  h2: (props: any) => (
+  h2: (props: JSX.HTMLAttributes<HTMLHeadingElement>) => (
     <h2
       class={css({
         color: "zodiac.gold",
@@ -14,7 +15,7 @@ const components = {
       {...props}
     />
   ),
-  h3: (props: any) => (
+  h3: (props: JSX.HTMLAttributes<HTMLHeadingElement>) => (
     <h3
       class={css({
         color: "zodiac.gold",
@@ -26,7 +27,7 @@ const components = {
       {...props}
     />
   ),
-  h4: (props: any) => (
+  h4: (props: JSX.HTMLAttributes<HTMLHeadingElement>) => (
     <h4
       class={css({
         color: "rgba(245, 240, 232, 0.92)",
@@ -38,7 +39,7 @@ const components = {
       {...props}
     />
   ),
-  p: (props: any) => (
+  p: (props: JSX.HTMLAttributes<HTMLParagraphElement>) => (
     <p
       class={css({
         color: "rgba(245, 240, 232, 0.82)",
@@ -50,7 +51,7 @@ const components = {
       {...props}
     />
   ),
-  blockquote: (props: any) => (
+  blockquote: (props: JSX.BlockquoteHTMLAttributes<HTMLQuoteElement>) => (
     <blockquote
       class={css({
         borderLeft: "2px solid rgba(200, 168, 75, 0.4)",
@@ -64,7 +65,7 @@ const components = {
       {...props}
     />
   ),
-  ul: (props: any) => (
+  ul: (props: JSX.HTMLAttributes<HTMLUListElement>) => (
     <ul
       class={css({
         listStyleType: "disc",
@@ -77,7 +78,7 @@ const components = {
       {...props}
     />
   ),
-  ol: (props: any) => (
+  ol: (props: JSX.HTMLAttributes<HTMLOListElement>) => (
     <ol
       class={css({
         listStyleType: "decimal",
@@ -90,7 +91,7 @@ const components = {
       {...props}
     />
   ),
-  li: (props: any) => (
+  li: (props: JSX.HTMLAttributes<HTMLLIElement>) => (
     <li
       class={css({
         color: "rgba(245, 240, 232, 0.82)",
@@ -101,7 +102,7 @@ const components = {
       {...props}
     />
   ),
-  hr: (props: any) => (
+  hr: (props: JSX.HTMLAttributes<HTMLHRElement>) => (
     <hr
       class={css({
         border: "none",
@@ -111,13 +112,13 @@ const components = {
       {...props}
     />
   ),
-  strong: (props: any) => (
+  strong: (props: JSX.HTMLAttributes<HTMLElement>) => (
     <strong
       class={css({ color: "rgba(245, 240, 232, 0.95)", fontWeight: "bold" })}
       {...props}
     />
   ),
-  code: (props: any) => (
+  code: (props: JSX.HTMLAttributes<HTMLElement>) => (
     <code
       class={css({
         fontFamily: "mono",
@@ -130,7 +131,7 @@ const components = {
       {...props}
     />
   ),
-  a: (props: any) => (
+  a: (props: JSX.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a
       class={css({
         color: "zodiac.gold",

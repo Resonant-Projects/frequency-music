@@ -332,9 +332,18 @@ function chunkText(text: string, maxLen = 2000): NotionRichText[] {
   return chunks;
 }
 
+function stripTrailingFencedBlock(md: string): string {
+  const trimmed = md.trimEnd();
+  const match = trimmed.match(
+    /^(?<body>[\s\S]*?)\n```(?:[a-zA-Z0-9_-]+)?[^\n]*\n[\s\S]*\n```$/,
+  );
+
+  return match?.groups?.body?.trimEnd() ?? trimmed;
+}
+
 function markdownToNotionBlocks(md: string): NotionBlock[] {
   const blocks: NotionBlock[] = [];
-  const lines = md.split("\n");
+  const lines = stripTrailingFencedBlock(md).split("\n");
   let buffer: string[] = [];
 
   function flushBuffer() {
@@ -452,6 +461,9 @@ export const publishToNotion = action({
     await requireAuth(ctx, args);
     const brief = await ctx.runQuery(api.weeklyBriefs.get, { id: args.id });
     if (!brief) throw new Error("Brief not found");
+    if (brief.notionPageId) {
+      return { notionPageId: brief.notionPageId, notionUrl: undefined };
+    }
 
     const notionToken = process.env.NOTION_API_KEY;
     const notionDbId = process.env.NOTION_WEEKLY_BRIEFS_DB;

@@ -2,9 +2,16 @@
 // Sources (r=160), Extractions (r=128), Hypotheses (r=92), Recipes (r=58).
 
 import * as THREE from "three";
-import { COLORS, R, SECTORS, STATUS_COLORS, conceptDomainToSector } from "./zodiac-data";
+import { COLORS, R, SECTORS, STATUS_COLORS } from "./zodiac-data";
+import type {
+  ItemRelation,
+  OrbitalExtraction,
+  OrbitalHypothesis,
+  OrbitalRecipe,
+  OrbitalSource,
+} from "./zodiac-types";
 
-export interface OrbitalItem {
+interface OrbitalItem {
   id: string;
   title: string;
   status: string;
@@ -25,6 +32,8 @@ export interface OrbitalSystem {
   dispose: () => void;
 }
 
+const reusableOrbitDummy = new THREE.Object3D();
+
 // Infer which sector an item belongs to from its topics
 function inferSectorFromTopics(topics: string[]): string {
   const joined = topics.join(" ").toLowerCase();
@@ -41,42 +50,6 @@ function getSectorAngleRange(sectorId: string): { start: number; end: number } {
   if (!sector) return { start: 0, end: Math.PI * 2 / 6 };
   return { start: sector.startAngle, end: sector.endAngle };
 }
-
-// Orbit vertex shader — per-instance orbital animation
-const ORBIT_VERTEX = /* glsl */ `
-  attribute float aBaseAngle;
-  attribute float aSpeed;
-  attribute vec3 aColor;
-  uniform float uTime;
-  uniform float uRadius;
-  varying vec3 vColor;
-  varying float vDist;
-
-  void main() {
-    float angle = aBaseAngle + uTime * aSpeed;
-    vec3 offset = vec3(
-      uRadius * cos(angle),
-      -uRadius * sin(angle),
-      0.0
-    );
-
-    // instanceMatrix gives per-instance scale (from setMatrixAt)
-    vec4 worldPos = instanceMatrix * vec4(position, 1.0);
-    worldPos.xyz += offset;
-
-    vColor = aColor;
-    vDist = length(worldPos.xyz);
-    gl_Position = projectionMatrix * modelViewMatrix * worldPos;
-  }
-`;
-
-const ORBIT_FRAGMENT = /* glsl */ `
-  varying vec3 vColor;
-  varying float vDist;
-  void main() {
-    gl_FragColor = vec4(vColor, 0.85);
-  }
-`;
 
 function buildOrbitalRing(
   ringRadius: number,
@@ -174,10 +147,10 @@ function buildOrbitalRing(
 }
 
 export function buildOrbitalSystem(
-  sources: Array<{ _id: string; title?: string; status: string; topics?: string[]; createdAt: number }>,
-  extractions: Array<{ _id: string; sourceId: string; confidence: number; topics: string[] }>,
-  hypotheses: Array<{ _id: string; title: string; status: string; concepts?: string[] }>,
-  recipes: Array<{ _id: string; title: string; hypothesisId: string; status: string }>,
+  sources: OrbitalSource[],
+  extractions: OrbitalExtraction[],
+  hypotheses: OrbitalHypothesis[],
+  recipes: OrbitalRecipe[],
 ): OrbitalSystem {
   const group = new THREE.Group();
   group.userData.type = "orbital-system";
@@ -259,8 +232,6 @@ export function buildOrbitalSystem(
 
 // Update orbital positions each frame
 export function updateOrbits(system: OrbitalSystem, time: number): void {
-  const dummy = new THREE.Object3D();
-
   for (const ring of system.rings) {
     const baseAngles = ring.mesh.userData.baseAngles as Float32Array | undefined;
     const speeds = ring.mesh.userData.speeds as Float32Array | undefined;
@@ -270,13 +241,13 @@ export function updateOrbits(system: OrbitalSystem, time: number): void {
 
     for (let i = 0; i < ring.items.length; i++) {
       const angle = baseAngles[i] + time * speeds[i];
-      dummy.position.set(
+      reusableOrbitDummy.position.set(
         ring.radius * Math.cos(angle),
         -ring.radius * Math.sin(angle),
         z,
       );
-      dummy.updateMatrix();
-      ring.mesh.setMatrixAt(i, dummy.matrix);
+      reusableOrbitDummy.updateMatrix();
+      ring.mesh.setMatrixAt(i, reusableOrbitDummy.matrix);
     }
 
     ring.mesh.instanceMatrix.needsUpdate = true;
@@ -287,7 +258,7 @@ export function updateOrbits(system: OrbitalSystem, time: number): void {
 export function buildPullLines(
   clickedRing: OrbitalRing,
   clickedIndex: number,
-  relations: Array<{ id: string; type: string }>,
+  relations: ItemRelation[],
   allRings: OrbitalRing[],
 ): THREE.Group {
   const group = new THREE.Group();

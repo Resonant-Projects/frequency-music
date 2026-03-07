@@ -4,11 +4,15 @@
 
 import * as THREE from "three";
 import { COLORS, R, SECTORS, type SectorDef } from "./zodiac-data";
+import type {
+  ConstellationConcept,
+  ZodiacConstellationEdge,
+} from "./zodiac-types";
 
 export interface ConceptStar {
   name: string;
   displayName: string;
-  conceptId: string;
+  conceptId: ConstellationConcept["_id"];
   mentionCount: number;
   domain: string;
   x: number;
@@ -16,11 +20,7 @@ export interface ConceptStar {
   z: number;
 }
 
-export interface ConstellationEdge {
-  from: string; // concept name
-  to: string;
-  relationship: string;
-}
+export type ConstellationEdge = ZodiacConstellationEdge;
 
 export interface ConstellationGroup {
   group: THREE.Group;
@@ -32,7 +32,7 @@ export interface ConstellationGroup {
 // Simple force-repulsion to distribute concepts within a sector wedge
 function layoutConcepts(
   sector: SectorDef,
-  concepts: Array<{ name: string; displayName: string; _id: string; mentionCount: number; domain: string }>,
+  concepts: ConstellationConcept[],
 ): ConceptStar[] {
   const { startAngle, endAngle } = sector;
   const rMin = 185;
@@ -110,7 +110,7 @@ const TWINKLE_FRAGMENT = /* glsl */ `
 
 export function buildConstellations(
   sector: SectorDef,
-  concepts: Array<{ name: string; displayName: string; _id: string; mentionCount: number; domain: string }>,
+  concepts: ConstellationConcept[],
   edges: ConstellationEdge[],
 ): ConstellationGroup {
   const group = new THREE.Group();
@@ -198,13 +198,23 @@ export function buildConstellations(
     stars,
     pointCloud,
     dispose: () => {
+      const disposedMaterials = new Set<THREE.Material>();
       group.traverse((child) => {
         if ("geometry" in child && child.geometry) {
           (child.geometry as THREE.BufferGeometry).dispose();
         }
         if ("material" in child && child.material) {
-          const mat = child.material as THREE.Material;
-          mat.dispose();
+          const mat = child.material as THREE.Material | THREE.Material[];
+          if (Array.isArray(mat)) {
+            mat.forEach((entry) => {
+              if (disposedMaterials.has(entry)) return;
+              disposedMaterials.add(entry);
+              entry.dispose();
+            });
+          } else if (!disposedMaterials.has(mat)) {
+            disposedMaterials.add(mat);
+            mat.dispose();
+          }
         }
       });
     },
@@ -262,11 +272,6 @@ export function buildCrossDomainArcs(
     for (let i = 0; i < positions.length - 1; i++) {
       const start = positions[i];
       const end = positions[i + 1];
-      const mid = new THREE.Vector3(
-        (start.x + end.x) / 2,
-        (start.y + end.y) / 2,
-        30, // arc above the disc
-      );
       const curve = new THREE.CubicBezierCurve3(
         start,
         new THREE.Vector3(start.x, start.y, 25),
