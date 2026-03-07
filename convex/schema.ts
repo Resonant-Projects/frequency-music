@@ -371,6 +371,7 @@ export default defineSchema({
     // Publishing
     visibility: visibilityValidator,
     publishedAt: v.optional(v.number()),
+    notionPageId: v.optional(v.string()),
     createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
   })

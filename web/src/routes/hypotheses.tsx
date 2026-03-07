@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 import { css } from "../../styled-system/css";
 import {
@@ -190,47 +191,57 @@ export function HypothesesPage() {
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={hypotheses.data() ?? []}>
               {(item: any) => (
-                <div
-                  data-testid="entity-row"
-                  class={css({
-                    borderColor: "rgba(200, 168, 75, 0.25)",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    p: "4",
-                  })}
+                <Link
+                  to={"/hypotheses/" + item._id}
+                  style={{ "text-decoration": "none", color: "inherit" }}
                 >
                   <div
+                    data-testid="entity-row"
                     class={css({
-                      display: "flex",
-                      gap: "2",
-                      marginBottom: "2",
+                      borderColor: "rgba(200, 168, 75, 0.25)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      cursor: "pointer",
+                      p: "4",
+                      transition: "border-color 0.2s",
+                      _hover: {
+                        borderColor: "rgba(200, 168, 75, 0.45)",
+                      },
                     })}
                   >
-                    <UIBadge tone="cream">{item.status}</UIBadge>
-                    <UIBadge tone="violet">
-                      {item.sourceIds.length} citations
-                    </UIBadge>
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        marginBottom: "2",
+                      })}
+                    >
+                      <UIBadge tone="cream">{item.status}</UIBadge>
+                      <UIBadge tone="violet">
+                        {item.sourceIds.length} citations
+                      </UIBadge>
+                    </div>
+                    <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                      {item.title}
+                    </h3>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.7)",
+                        marginBottom: "1",
+                      })}
+                    >
+                      {item.question}
+                    </p>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.55)",
+                        fontSize: "sm",
+                      })}
+                    >
+                      {item.hypothesis}
+                    </p>
                   </div>
-                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
-                    {item.title}
-                  </h3>
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.7)",
-                      marginBottom: "1",
-                    })}
-                  >
-                    {item.question}
-                  </p>
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.55)",
-                      fontSize: "sm",
-                    })}
-                  >
-                    {item.hypothesis}
-                  </p>
-                </div>
+                </Link>
               )}
             </For>
           </div>

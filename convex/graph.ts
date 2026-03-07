@@ -525,6 +525,188 @@ export const buildGraphFromExtractions = action({
 });
 
 // ============================================================================
+// VISUALIZATION QUERIES (used by zodiac 3D frontend)
+// ============================================================================
+
+/**
+ * Get concepts for a display domain (maps concept domains to zodiac sectors)
+ */
+export const getConceptsForDomain = query({
+  args: { domain: v.string(), limit: v.optional(v.number()) },
+  returns: v.array(conceptReturnValidator),
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+
+    // Map zodiac sector IDs to concept domain(s) — always include "general"
+    // since most concepts default to domain: "general"
+    const domainMap: Record<string, string[]> = {
+      math: ["mathematics", "general"],
+      phys: ["acoustics", "general"],
+      music: ["tuning", "theory", "general"],
+      psycho: ["psychoacoustics", "general"],
+      geo: ["geometry", "general"],
+      synth: ["production", "instrument", "general"],
+    };
+
+    const conceptDomains = domainMap[args.domain] ?? ["general"];
+    const specificDomains = new Set(conceptDomains.filter((d) => d !== "general"));
+    const results: Array<any> = [];
+
+    for (const d of conceptDomains) {
+      const concepts = await ctx.db
+        .query("concepts")
+        .withIndex("by_domain", (q) => q.eq("domain", d as any))
+        .take(limit);
+      results.push(...concepts);
+    }
+
+    // Sort: domain-specific concepts first, then general, all by mentionCount desc
+    results.sort((a, b) => {
+      const aSpecific = specificDomains.has(a.domain) ? 0 : 1;
+      const bSpecific = specificDomains.has(b.domain) ? 0 : 1;
+      if (aSpecific !== bSpecific) return aSpecific - bSpecific;
+      return b.mentionCount - a.mentionCount;
+    });
+    const seen = new Set<string>();
+    return results.filter((c) => {
+      if (seen.has(c._id)) return false;
+      seen.add(c._id);
+      return true;
+    }).slice(0, limit);
+  },
+});
+
+/**
+ * Get edges between a set of concept names (for constellation lines)
+ */
+export const getConceptEdges = query({
+  args: { conceptNames: v.array(v.string()) },
+  returns: v.array(edgeReturnValidator),
+  handler: async (ctx, args) => {
+    const nameSet = new Set(args.conceptNames.map((n) => n.toLowerCase().trim()));
+    const results: Array<any> = [];
+
+    // Get edges where both ends are in our concept set
+    for (const name of nameSet) {
+      const edges = await ctx.db
+        .query("edges")
+        .withIndex("by_from", (q) =>
+          q.eq("fromType", "concept").eq("fromId", name),
+        )
+        .filter((q) => q.eq(q.field("toType"), "concept"))
+        .collect();
+      for (const edge of edges) {
+        if (nameSet.has(edge.toId)) {
+          results.push(edge);
+        }
+      }
+    }
+
+    return results;
+  },
+});
+
+/**
+ * Get full concept detail with linked pipeline items (for sidebar drill-down)
+ */
+export const getConceptDetail = query({
+  args: { conceptId: v.optional(v.id("concepts")) },
+  returns: v.union(
+    v.object({
+      concept: conceptReturnValidator,
+      linkedSources: v.array(v.object({
+        _id: v.id("sources"),
+        title: v.optional(v.string()),
+        status: v.string(),
+      })),
+      linkedHypotheses: v.array(v.object({
+        _id: v.id("hypotheses"),
+        title: v.string(),
+        status: v.string(),
+      })),
+      linkedRecipes: v.array(v.object({
+        _id: v.id("recipes"),
+        title: v.string(),
+        status: v.string(),
+      })),
+      edgeCount: v.number(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    if (!args.conceptId) return null;
+    const concept = await ctx.db.get("concepts", args.conceptId);
+    if (!concept) return null;
+
+    // Get all edges mentioning this concept
+    const edgesTo = await ctx.db
+      .query("edges")
+      .withIndex("by_to", (q) =>
+        q.eq("toType", "concept").eq("toId", concept.name),
+      )
+      .collect();
+
+    const edgesFrom = await ctx.db
+      .query("edges")
+      .withIndex("by_from", (q) =>
+        q.eq("fromType", "concept").eq("fromId", concept.name),
+      )
+      .collect();
+
+    const allEdges = [...edgesTo, ...edgesFrom];
+
+    // Collect linked entity IDs by type
+    const sourceIds = new Set<string>();
+    const hypothesisIds = new Set<string>();
+    const recipeIds = new Set<string>();
+
+    for (const edge of allEdges) {
+      const otherId = edge.fromType === "concept" ? edge.toId : edge.fromId;
+      const otherType = edge.fromType === "concept" ? edge.toType : edge.fromType;
+      if (otherType === "source") sourceIds.add(otherId);
+      if (otherType === "hypothesis") hypothesisIds.add(otherId);
+      if (otherType === "recipe") recipeIds.add(otherId);
+    }
+
+    // Fetch linked items (limit to 20 each)
+    const linkedSources = (await Promise.all(
+      [...sourceIds].slice(0, 20).map(async (id) => {
+        try {
+          const s = await ctx.db.get("sources", id as any);
+          return s ? { _id: s._id, title: s.title, status: s.status } : null;
+        } catch { return null; }
+      }),
+    )).filter((s): s is NonNullable<typeof s> => s !== null);
+
+    const linkedHypotheses = (await Promise.all(
+      [...hypothesisIds].slice(0, 20).map(async (id) => {
+        try {
+          const h = await ctx.db.get("hypotheses", id as any);
+          return h ? { _id: h._id, title: h.title, status: h.status } : null;
+        } catch { return null; }
+      }),
+    )).filter((h): h is NonNullable<typeof h> => h !== null);
+
+    const linkedRecipes = (await Promise.all(
+      [...recipeIds].slice(0, 20).map(async (id) => {
+        try {
+          const r = await ctx.db.get("recipes", id as any);
+          return r ? { _id: r._id, title: r.title, status: r.status } : null;
+        } catch { return null; }
+      }),
+    )).filter((r): r is NonNullable<typeof r> => r !== null);
+
+    return {
+      concept,
+      linkedSources,
+      linkedHypotheses,
+      linkedRecipes,
+      edgeCount: allEdges.length,
+    };
+  },
+});
+
+// ============================================================================
 // GRAPH EXPORT (for visualization)
 // ============================================================================
 

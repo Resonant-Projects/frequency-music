@@ -312,6 +312,7 @@ export const weeklyBriefReturnValidator = v.object({
   todo: v.optional(v.array(v.string())),
   visibility: visibilityValidator,
   publishedAt: v.optional(v.number()),
+  notionPageId: v.optional(v.string()),
   createdBy: createdByValidator,
   createdAt: v.number(),
 });
