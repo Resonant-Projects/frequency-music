@@ -5,15 +5,15 @@
     "": {
       "name": "frequency-music",
       "dependencies": {
-        "@ai-sdk/groq": "^3.0.24",
+        "@ai-sdk/groq": "^3.0.26",
         "@convex-dev/action-cache": "^0.3.0",
         "@convex-dev/aggregate": "^0.2.1",
         "@convex-dev/workflow": "^0.3.4",
         "@onkernel/sdk": "^0.37.0",
         "@openrouter/ai-sdk-provider": "^2.2.3",
-        "ai": "^6.0.90",
-        "convex": "^1.31.7",
-        "convex-helpers": "^0.1.112",
+        "ai": "^6.0.105",
+        "convex": "^1.32.0",
+        "convex-helpers": "^0.1.114",
         "pdf-parse": "^2.4.5",
         "pdf-parser-client-side": "^1.1.1",
         "playwright": "^1.58.2",
@@ -25,7 +25,7 @@
         "oxlint": "^1.50.0",
       },
       "peerDependencies": {
-        "typescript": "^5",
+        "typescript": "^5.9.3",
       },
     },
   },
