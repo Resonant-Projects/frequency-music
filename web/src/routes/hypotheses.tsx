@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/solid-router";
-import { createMemo, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
@@ -21,6 +22,8 @@ import {
 import { convexApi } from "../integrations/convex/api";
 
 export function HypothesesPage() {
+  onMount(() => { document.title = "Hypotheses — Frequency Music"; });
+
   const hypotheses = createQueryWithStatus(
     convexApi.hypotheses.listByStatus,
     () => ({
@@ -90,7 +93,7 @@ export function HypothesesPage() {
   return (
     <section class={pageClass}>
       <UICard as="form" onSubmit={submitHypothesis as any}>
-        <h1 class={sectionTitleClass}>Hypotheses</h1>
+        <h1 class={pageTitleClass}>Hypotheses</h1>
 
         <label class={fieldLabelClass} for="hyp-title">
           Title
@@ -178,11 +181,13 @@ export function HypothesesPage() {
             marginTop: "4",
           })}
         >
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-            )}
-          </Show>
+          <div aria-live="polite">
+            <Show when={notice()}>
+              {(message) => (
+                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+              )}
+            </Show>
+          </div>
           <UIButton type="submit" variant="solid">
             Create Hypothesis
           </UIButton>
@@ -195,63 +200,79 @@ export function HypothesesPage() {
           when={!hypotheses.isLoading()}
           fallback={<p>Loading hypotheses…</p>}
         >
-          <div class={css({ display: "grid", gap: "3" })}>
-            <For each={hypothesisRows()}>
-              {(item) => (
-                <Link
-                  to={"/hypotheses/" + item._id}
-                  style={{ "text-decoration": "none", color: "inherit" }}
-                >
-                  <div
-                    data-testid="entity-row"
-                    class={css({
-                      borderColor: "rgba(200, 168, 75, 0.25)",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      cursor: "pointer",
-                      p: "4",
-                      transition: "border-color 0.2s",
-                      _hover: {
-                        borderColor: "rgba(200, 168, 75, 0.45)",
-                      },
-                    })}
+          <Show
+            when={hypothesisRows().length > 0}
+            fallback={
+              <p class={css({
+                color: "rgba(245, 240, 232, 0.55)",
+                fontFamily: "display",
+                fontSize: "md",
+                lineHeight: "1.6",
+                textAlign: "center",
+                py: "8",
+              })}>
+                No hypotheses yet. Generate one from an extraction or create one above.
+              </p>
+            }
+          >
+            <div class={css({ display: "grid", gap: "3" })}>
+              <For each={hypothesisRows()}>
+                {(item) => (
+                  <Link
+                    to={"/hypotheses/" + item._id}
+                    style={{ "text-decoration": "none", color: "inherit" }}
                   >
                     <div
+                      data-testid="entity-row"
                       class={css({
-                        display: "flex",
-                        gap: "2",
-                        marginBottom: "2",
+                        borderColor: "rgba(200, 168, 75, 0.25)",
+                        borderRadius: "l2",
+                        borderWidth: "1px",
+                        cursor: "pointer",
+                        p: "4",
+                        transition: "border-color 0.2s",
+                        _hover: {
+                          borderColor: "rgba(200, 168, 75, 0.45)",
+                        },
                       })}
                     >
-                      <UIBadge tone="cream">{item.status}</UIBadge>
-                      <UIBadge tone="violet">
-                        {item.sourceIds.length} citations
-                      </UIBadge>
+                      <div
+                        class={css({
+                          display: "flex",
+                          gap: "2",
+                          marginBottom: "2",
+                        })}
+                      >
+                        <UIBadge tone="cream">{item.status}</UIBadge>
+                        <UIBadge tone="violet">
+                          {item.sourceIds.length} citations
+                        </UIBadge>
+                      </div>
+                      <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                        {item.title}
+                      </h3>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.7)",
+                          marginBottom: "1",
+                        })}
+                      >
+                        {item.question}
+                      </p>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.55)",
+                          fontSize: "sm",
+                        })}
+                      >
+                        {item.hypothesis}
+                      </p>
                     </div>
-                    <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
-                      {item.title}
-                    </h3>
-                    <p
-                      class={css({
-                        color: "rgba(245, 240, 232, 0.7)",
-                        marginBottom: "1",
-                      })}
-                    >
-                      {item.question}
-                    </p>
-                    <p
-                      class={css({
-                        color: "rgba(245, 240, 232, 0.55)",
-                        fontSize: "sm",
-                      })}
-                    >
-                      {item.hypothesis}
-                    </p>
-                  </div>
-                </Link>
-              )}
-            </For>
-          </div>
+                  </Link>
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
       </UICard>
     </section>

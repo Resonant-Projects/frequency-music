@@ -245,3 +245,35 @@ MODELS = {
 - Put tuning files in `scales/`
 - Commit meaningful progress with clear messages
 - Push when you have something worth sharing
+
+## Design Context
+
+### Users
+
+A small circle of collaborators and fellow researchers exploring connections between music, physics, mathematics, and geometry. They share deep domain knowledge and use this as a research-to-composition workbench — not a consumer product.
+
+### Brand Personality
+
+**Elegant, contemplative, deep.** Quiet authority — the kind of calm you feel in a cathedral or observatory. The interface should feel like opening an illuminated manuscript in a well-lit study, not like using software.
+
+### Aesthetic Direction
+
+- **Theme:** Dark mode only. Deep void purple (`#0d0620`) ground, gold (`#c8a84b`) accent, violet (`#8b5cf6`) secondary, cream (`#f5f0e8`) text.
+- **Typography:** Cormorant Garamond for display and body (serif, editorial feel). JetBrains Mono / IBM Plex Mono for labels, metadata, and code.
+- **Visual language:** "Zodiac" — astrolabe-inspired 3D home, glassmorphism cards with backdrop-blur and translucent backgrounds, monospace uppercase eyebrows, gold-bordered navigation.
+- **Tone:** Somewhere between an astronomical atlas and a literary journal. Generous whitespace, restrained animation, precise typographic hierarchy.
+- **Anti-references:** No dry LaTeX/academic-journal walls of text. No neon-overload crypto/Web3 aesthetic. No generic SaaS gray dashboards.
+
+### Emotional Goals
+
+- **Wonder & discovery** — like finding hidden connections in an ancient star chart
+- **Flow & focus** — minimal friction, the tool disappears into the work
+- **Intuitive & obvious** — navigation and hierarchy should be self-evident without explanation
+
+### Design Principles
+
+1. **Substance over spectacle.** Every visual element should earn its place. Decoration serves meaning, never the reverse.
+2. **Typography carries the weight.** Cormorant Garamond at large sizes, tight leading, and generous measure is the primary design tool. Let the type breathe.
+3. **Gold is earned.** Use gold accent sparingly for active states, key labels, and moments of emphasis. Overuse dulls it.
+4. **Depth through translucency.** Glassmorphism cards and backdrop-blur create spatial layering without heavy borders or shadows.
+5. **Monospace whispers, serif speaks.** Metadata, labels, and system information in small monospace uppercase. Content and titles in serif.

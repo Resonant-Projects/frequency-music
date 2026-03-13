@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/solid-router";
-import { createMemo, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
@@ -48,6 +49,8 @@ function extractExcerpt(bodyMd: string, maxLen = 180): string {
 }
 
 export function WeeklyTurnsPage() {
+  onMount(() => { document.title = "Weekly Turns — Frequency Music"; });
+
   const briefs = createQueryWithStatus(convexApi.weeklyBriefs.list, () => ({
     limit: 12,
   }));
@@ -81,7 +84,7 @@ export function WeeklyTurnsPage() {
           })}
         >
           <div>
-            <h1 class={sectionTitleClass}>Weekly Turns</h1>
+            <h1 class={pageTitleClass}>Weekly Turns</h1>
             <p
               class={css({
                 color: "rgba(245, 240, 232, 0.62)",
@@ -97,13 +100,15 @@ export function WeeklyTurnsPage() {
           </UIButton>
         </div>
 
-        <Show when={notice()}>
-          {(message) => (
-            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-              {message()}
-            </p>
-          )}
-        </Show>
+        <div aria-live="polite">
+          <Show when={notice()}>
+            {(message) => (
+              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+                {message()}
+              </p>
+            )}
+          </Show>
+        </div>
       </UICard>
 
       <UICard>
@@ -113,90 +118,106 @@ export function WeeklyTurnsPage() {
           when={!briefs.isLoading()}
           fallback={<p>Loading weekly turns...</p>}
         >
-          <div class={css({ display: "grid", gap: "3" })}>
-            <For each={briefRows()}>
-              {(brief) => (
-                <Link
-                  to="/weekly-turns/$briefId"
-                  params={{ briefId: String(brief._id) }}
-                  class={css({
-                    borderColor: "rgba(200, 168, 75, 0.25)",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    cursor: "pointer",
-                    display: "block",
-                    p: "4",
-                    textDecoration: "none",
-                    transition: "border-color 0.15s",
-                    _hover: {
-                      borderColor: "rgba(200, 168, 75, 0.5)",
-                    },
-                  })}
-                >
-                  <div
+          <Show
+            when={briefRows().length > 0}
+            fallback={
+              <p class={css({
+                color: "rgba(245, 240, 232, 0.55)",
+                fontFamily: "display",
+                fontSize: "md",
+                lineHeight: "1.6",
+                textAlign: "center",
+                py: "8",
+              })}>
+                No weekly turns yet. Generate one to summarize the latest ingest cycle.
+              </p>
+            }
+          >
+            <div class={css({ display: "grid", gap: "3" })}>
+              <For each={briefRows()}>
+                {(brief) => (
+                  <Link
+                    to="/weekly-turns/$briefId"
+                    params={{ briefId: String(brief._id) }}
                     class={css({
-                      alignItems: "center",
-                      display: "flex",
-                      gap: "2",
-                      justifyContent: "space-between",
-                      marginBottom: "2",
+                      borderColor: "rgba(200, 168, 75, 0.25)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      cursor: "pointer",
+                      display: "block",
+                      p: "4",
+                      textDecoration: "none",
+                      transition: "border-color 0.15s",
+                      _hover: {
+                        borderColor: "rgba(200, 168, 75, 0.5)",
+                      },
                     })}
                   >
-                    <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
-                      <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
-                      <UIBadge tone="cream">{brief.visibility}</UIBadge>
-                      <Show when={brief.publishedAt}>
-                        {(ts) => (
-                          <UIBadge tone="violet">
-                            Published{" "}
-                            {new Date(ts()).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </UIBadge>
-                        )}
-                      </Show>
+                    <div
+                      class={css({
+                        alignItems: "center",
+                        display: "flex",
+                        gap: "2",
+                        justifyContent: "space-between",
+                        marginBottom: "2",
+                      })}
+                    >
+                      <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                        <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
+                        <UIBadge tone="cream">{brief.visibility}</UIBadge>
+                        <Show when={brief.publishedAt}>
+                          {(ts) => (
+                            <UIBadge tone="violet">
+                              Published{" "}
+                              {new Date(ts()).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </UIBadge>
+                          )}
+                        </Show>
+                      </div>
                     </div>
-                  </div>
 
-                  <h3
-                    class={css({
-                      color: "zodiac.cream",
-                      fontFamily: "display",
-                      fontSize: "lg",
-                      fontWeight: "normal",
-                      lineHeight: "1.4",
-                      mb: "2",
-                    })}
-                  >
-                    {extractTitle(brief.bodyMd)}
-                  </h3>
+                    <h3
+                      class={css({
+                        color: "zodiac.cream",
+                        fontFamily: "display",
+                        fontSize: "lg",
+                        fontWeight: "normal",
+                        lineHeight: "1.4",
+                        mb: "2",
+                      })}
+                    >
+                      {extractTitle(brief.bodyMd)}
+                    </h3>
 
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.55)",
-                      fontFamily: "body",
-                      fontSize: "sm",
-                      lineHeight: "1.6",
-                      mb: "2",
-                    })}
-                  >
-                    {extractExcerpt(brief.bodyMd)}
-                  </p>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.55)",
+                        fontFamily: "body",
+                        fontSize: "sm",
+                        lineHeight: "1.6",
+                        mb: "2",
+                      })}
+                    >
+                      {extractExcerpt(brief.bodyMd)}
+                    </p>
 
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.35)",
-                      fontFamily: "mono",
-                      fontSize: "xs",
-                    })}
-                  >
-                    model: {brief.model} · prompt: {brief.promptVersion}
-                  </p>
-                </Link>
-              )}
-            </For>
-          </div>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.55)",
+                        fontFamily: "mono",
+                        fontSize: "xs",
+                      })}
+                    >
+                      model: {brief.model} · prompt: {brief.promptVersion}
+                    </p>
+                  </Link>
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
       </UICard>
     </section>

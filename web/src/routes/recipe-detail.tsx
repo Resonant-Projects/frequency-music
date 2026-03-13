@@ -1,48 +1,19 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { For, Show } from "solid-js";
+import { createEffect, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
-import { Markdown, UIBadge, UICard, pageClass } from "../components/ui";
+import {
+  Markdown,
+  UIBadge,
+  UICard,
+  backLink,
+  detailTitleClass,
+  goldDivider,
+  pageClass,
+  sectionLabel,
+} from "../components/ui";
 import { createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
-
-const goldDivider = css({
-  border: "none",
-  borderTop: "1px solid rgba(200, 168, 75, 0.22)",
-  my: "6",
-});
-
-const backLink = css({
-  color: "zodiac.gold",
-  display: "inline-flex",
-  alignItems: "center",
-  fontFamily: "mono",
-  fontSize: "xs",
-  gap: "1.5",
-  letterSpacing: "0.14em",
-  textDecoration: "none",
-  textTransform: "uppercase",
-  opacity: 0.7,
-  _hover: { opacity: 1 },
-});
-
-const titleClass = css({
-  color: "zodiac.cream",
-  fontFamily: "display",
-  fontSize: { base: "2xl", md: "3xl" },
-  fontWeight: "normal",
-  lineHeight: "1.3",
-  mt: "3",
-});
-
-const sectionLabel = css({
-  color: "zodiac.gold",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.14em",
-  mb: "3",
-  textTransform: "uppercase",
-});
 
 const paramGrid = css({
   display: "grid",
@@ -145,6 +116,8 @@ export function RecipeDetailPage() {
     id: params().recipeId as Id<"recipes">,
   }));
 
+  createEffect(() => { const r = recipe(); if (r) document.title = `${r.title} — Frequency Music`; });
+
   return (
     <section class={pageClass}>
       <div>
@@ -178,7 +151,7 @@ export function RecipeDetailPage() {
                 <UIBadge tone="cream">{r().visibility}</UIBadge>
                 <span
                   class={css({
-                    color: "rgba(245, 240, 232, 0.45)",
+                    color: "rgba(245, 240, 232, 0.55)",
                     fontFamily: "mono",
                     fontSize: "2xs",
                     ml: "auto",
@@ -192,7 +165,7 @@ export function RecipeDetailPage() {
                 </span>
               </div>
 
-              <h1 class={titleClass}>{r().title}</h1>
+              <h1 class={detailTitleClass}>{r().title}</h1>
 
               <Show when={r().hypothesis}>
                 {(hyp) => (

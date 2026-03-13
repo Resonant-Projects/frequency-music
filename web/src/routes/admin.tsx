@@ -1,20 +1,24 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UISelect,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 export function AdminPage() {
+  onMount(() => { document.title = "Admin — Frequency Music"; });
+
   const snapshot = createQuery(convexApi.admin.workspaceSnapshot);
   const setSourceStatus = createMutation(convexApi.admin.setSourceStatus);
 
@@ -55,7 +59,7 @@ export function AdminPage() {
           })}
         >
           <div>
-            <h1 class={sectionTitleClass}>Admin</h1>
+            <h1 class={pageTitleClass}>Admin</h1>
             <p
               class={css({
                 color: "rgba(245, 240, 232, 0.62)",
@@ -67,13 +71,15 @@ export function AdminPage() {
           </div>
         </div>
 
-        <Show when={notice()}>
-          {(message) => (
-            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-              {message()}
-            </p>
-          )}
-        </Show>
+        <div aria-live="polite">
+          <Show when={notice()}>
+            {(message) => (
+              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+                {message()}
+              </p>
+            )}
+          </Show>
+        </div>
       </UICard>
 
       <UICard>
@@ -151,20 +157,10 @@ export function AdminPage() {
         <label class={fieldLabelClass} for="admin-source-status">
           Status
         </label>
-        <select
+        <UISelect
           id="admin-source-status"
           value={sourceStatus()}
           onChange={(event) => setSourceStatusValue(event.currentTarget.value)}
-          class={css({
-            bg: "rgba(26, 15, 53, 0.45)",
-            borderColor: "rgba(200, 168, 75, 0.28)",
-            borderRadius: "l2",
-            borderWidth: "1px",
-            color: "zodiac.cream",
-            minH: "10",
-            px: "3",
-            width: "full",
-          })}
         >
           <option value="ingested">ingested</option>
           <option value="text_ready">text_ready</option>
@@ -172,7 +168,7 @@ export function AdminPage() {
           <option value="review_needed">review_needed</option>
           <option value="triaged">triaged</option>
           <option value="archived">archived</option>
-        </select>
+        </UISelect>
 
         <div
           class={css({

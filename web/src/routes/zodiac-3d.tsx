@@ -14,6 +14,7 @@ import {
   onMount,
   Show,
 } from "solid-js";
+import { css } from "../../styled-system/css";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import type { ConstellationEdge } from "../lib/zodiac-constellations";
@@ -30,6 +31,578 @@ import type {
   ZodiacConstellationEdge,
   ZodiacSubTopic,
 } from "../lib/zodiac-types";
+
+// ---------------------------------------------------------------------------
+// PandaCSS style constants — Sidebar
+// ---------------------------------------------------------------------------
+
+const focusRing = {
+  _focusVisible: {
+    borderColor: "zodiac.gold",
+    boxShadow: "0 0 0 1px rgba(200, 168, 75, 0.4)",
+    outline: "none",
+  },
+} as const;
+
+// -- Layout --
+
+const pageContainer = css({
+  height: "calc(100vh - var(--app-header-height))",
+  background: "zodiac.void",
+  color: "zodiac.cream",
+  overflowX: "hidden",
+  overflowY: { base: "auto", lg: "hidden" },
+  fontFamily: "display",
+  display: "flex",
+  flexDirection: { base: "column", lg: "row" },
+});
+
+const dotOverlay = css({
+  position: "fixed",
+  inset: "0",
+  pointerEvents: "none",
+  opacity: 0.022,
+  backgroundImage: "radial-gradient(circle, #c8a84b 1px, transparent 1px)",
+  backgroundSize: "52px 52px",
+});
+
+const canvasWrapper = css({
+  flex: "1",
+  position: "relative",
+  overflow: "hidden",
+  minWidth: "0",
+  height: { base: "60vh", lg: "auto" },
+});
+
+const canvasEl = css({
+  width: "100%",
+  height: "100%",
+  display: "block",
+});
+
+const sidebarContainer = css({
+  width: { base: "100%", lg: "355px" },
+  display: "flex",
+  flexDirection: "column",
+  borderLeft: { base: "none", lg: "1px solid rgba(200, 168, 75, 0.12)" },
+  borderTop: { base: "1px solid rgba(200, 168, 75, 0.12)", lg: "none" },
+  overflowY: "auto",
+  flexShrink: 0,
+});
+
+// -- Sidebar sections --
+
+const sidebarSection = css({
+  padding: "36px 26px 20px",
+  borderBottom: "1px solid rgba(200, 168, 75, 0.1)",
+});
+
+const sidebarSectionCompact = css({
+  padding: "20px 26px",
+  borderBottom: "1px solid rgba(200, 168, 75, 0.1)",
+});
+
+const sidebarSectionScrollable = css({
+  padding: "16px 26px",
+  flex: "1",
+  overflowY: "auto",
+});
+
+const sidebarSectionDomain = css({
+  padding: "22px 26px",
+  flex: "1",
+  borderBottom: "1px solid rgba(200, 168, 75, 0.1)",
+});
+
+const sidebarSectionDomains = css({
+  padding: "16px 26px",
+  flexShrink: 0,
+});
+
+const sidebarSectionWorkflow = css({
+  padding: "0 26px 16px",
+  flexShrink: 0,
+  borderTop: "1px solid rgba(200, 168, 75, 0.1)",
+});
+
+const sidebarSectionPipeline = css({
+  padding: "14px 26px 24px",
+  borderTop: "1px solid rgba(200, 168, 75, 0.1)",
+});
+
+// -- Typography --
+
+const sidebarEyebrow = css({
+  fontSize: "9px",
+  letterSpacing: "0.4em",
+  color: "rgba(200, 168, 75, 0.58)",
+  marginBottom: "14px",
+});
+
+const sidebarEyebrowSmall = css({
+  fontSize: "9px",
+  letterSpacing: "0.35em",
+  opacity: 0.75,
+  marginBottom: "10px",
+});
+
+const sidebarEyebrowViolet = css({
+  fontSize: "9px",
+  letterSpacing: "0.35em",
+  color: "rgba(139, 92, 246, 0.6)",
+  marginBottom: "8px",
+});
+
+const sidebarEyebrowGold = css({
+  fontSize: "9px",
+  letterSpacing: "0.35em",
+  color: "rgba(200, 168, 75, 0.6)",
+  marginBottom: "8px",
+});
+
+const sidebarEyebrowSection = css({
+  fontSize: "9px",
+  letterSpacing: "0.3em",
+  color: "rgba(200, 168, 75, 0.55)",
+  marginBottom: "10px",
+});
+
+const sidebarEyebrowSectionTop = css({
+  fontSize: "9px",
+  letterSpacing: "0.3em",
+  color: "rgba(200, 168, 75, 0.55)",
+  margin: "12px 0 10px",
+});
+
+const sidebarEyebrowConceptsLabel = css({
+  fontSize: "9px",
+  letterSpacing: "0.3em",
+  color: "rgba(200, 168, 75, 0.55)",
+  margin: "16px 0 8px",
+});
+
+const sidebarTitle = css({
+  fontSize: "34px",
+  fontWeight: "300",
+  lineHeight: "1.15",
+  margin: "0 0 10px",
+});
+
+const sidebarTitleMd = css({
+  fontSize: "22px",
+  fontWeight: "300",
+  marginBottom: "8px",
+});
+
+const sidebarTitleSm = css({
+  fontSize: "24px",
+  color: "zodiac.gold",
+  fontWeight: "300",
+  marginBottom: "6px",
+});
+
+const sidebarTitleItem = css({
+  fontSize: "18px",
+  color: "zodiac.gold",
+  fontWeight: "300",
+  marginBottom: "4px",
+  lineHeight: "1.3",
+});
+
+const sidebarBody = css({
+  fontSize: "13px",
+  fontWeight: "300",
+  lineHeight: "1.65",
+  color: "rgba(245, 240, 232, 0.58)",
+  margin: "0",
+});
+
+const sidebarBodySm = css({
+  fontSize: "12.5px",
+  lineHeight: "1.65",
+  color: "rgba(245, 240, 232, 0.58)",
+  margin: "0 0 18px",
+});
+
+const sidebarBodyDetail = css({
+  fontSize: "12.5px",
+  lineHeight: "1.65",
+  color: "rgba(245, 240, 232, 0.55)",
+  margin: "0 0 16px",
+});
+
+const sidebarMeta = css({
+  fontSize: "11px",
+  color: "rgba(245, 240, 232, 0.58)",
+  marginBottom: "12px",
+});
+
+const sidebarAliases = css({
+  fontSize: "10px",
+  color: "rgba(245, 240, 232, 0.55)",
+  marginBottom: "16px",
+});
+
+const sidebarLoading = css({
+  padding: "26px",
+  color: "rgba(245, 240, 232, 0.55)",
+  fontSize: "12px",
+});
+
+const sidebarEmpty = css({
+  color: "rgba(245, 240, 232, 0.55)",
+  fontSize: "12px",
+});
+
+// -- Stats --
+
+const statRow = css({
+  display: "flex",
+  gap: "12px",
+  marginBottom: "14px",
+});
+
+const statCellGold = css({
+  flex: "1",
+  padding: "10px",
+  border: "1px solid rgba(200, 168, 75, 0.18)",
+  textAlign: "center",
+});
+
+const statCellViolet = css({
+  flex: "1",
+  padding: "10px",
+  border: "1px solid rgba(139, 92, 246, 0.18)",
+  textAlign: "center",
+});
+
+const statValue = css({
+  fontSize: "26px",
+});
+
+const statLabel = css({
+  fontSize: "8px",
+  letterSpacing: "0.25em",
+  color: "rgba(245, 240, 232, 0.55)",
+  marginTop: "2px",
+});
+
+// -- Concept tags --
+
+const conceptTagRow = css({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "4px",
+  marginBottom: "14px",
+});
+
+const conceptTag = css({
+  cursor: "pointer",
+  background: "rgba(139, 92, 246, 0.1)",
+  border: "1px solid rgba(139, 92, 246, 0.25)",
+  color: "zodiac.gold",
+  padding: "3px 8px",
+  fontSize: "10px",
+  letterSpacing: "0.08em",
+  ...focusRing,
+});
+
+const conceptTagCount = css({
+  opacity: 0.58,
+  marginLeft: "4px",
+});
+
+// -- Buttons --
+
+const openDomainBtn = css({
+  width: "100%",
+  cursor: "pointer",
+  border: "1px solid rgba(200, 168, 75, 0.45)",
+  background: "zodiac.gold",
+  color: "zodiac.void",
+  padding: "8px 10px",
+  letterSpacing: "0.18em",
+  fontSize: "10px",
+  textTransform: "uppercase",
+  ...focusRing,
+});
+
+const sectorButton = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "7px 9px",
+  marginBottom: "3px",
+  cursor: "pointer",
+  border: "1px solid",
+  transition: "all 0.2s",
+  width: "100%",
+  textAlign: "left",
+  ...focusRing,
+});
+
+const sectorButtonLabel = css({
+  fontSize: "12.5px",
+});
+
+const sectorButtonMeta = css({
+  fontSize: "10px",
+  color: "rgba(245, 240, 232, 0.55)",
+});
+
+const workspaceGrid = css({
+  display: "grid",
+  gap: "6px",
+  gridTemplateColumns: "1fr 1fr",
+});
+
+const workspaceButton = css({
+  cursor: "pointer",
+  border: "1px solid rgba(200, 168, 75, 0.2)",
+  background: "rgba(26, 15, 53, 0.55)",
+  color: "zodiac.cream",
+  padding: "7px 8px",
+  fontSize: "9px",
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  textAlign: "center",
+  ...focusRing,
+});
+
+const backButton = css({
+  cursor: "pointer",
+  border: "1px solid rgba(200, 168, 75, 0.25)",
+  background: "transparent",
+  color: "zodiac.gold",
+  padding: "5px 12px",
+  fontSize: "10px",
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+  marginBottom: "14px",
+  ...focusRing,
+});
+
+// -- Pipeline --
+
+const pipelineRow = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "5px",
+  flexWrap: "wrap",
+});
+
+const pipelineCell = css({
+  textAlign: "center",
+  minWidth: "46px",
+});
+
+const pipelineCellValue = css({
+  fontSize: "15px",
+  color: "zodiac.gold",
+});
+
+const pipelineCellLabel = css({
+  fontSize: "7.5px",
+  letterSpacing: "0.2em",
+  color: "rgba(245, 240, 232, 0.55)",
+});
+
+const pipelineArrow = css({
+  fontSize: "9px",
+  color: "rgba(200, 168, 75, 0.55)",
+  marginBottom: "8px",
+});
+
+const pipelineSectionContainer = css({
+  marginBottom: "16px",
+});
+
+const pipelineSectionEyebrow = css({
+  fontSize: "9px",
+  letterSpacing: "0.3em",
+  color: "rgba(200, 168, 75, 0.55)",
+  marginBottom: "8px",
+});
+
+const pipelineItemButton = css({
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  cursor: "pointer",
+  padding: "6px 8px",
+  marginBottom: "3px",
+  border: "1px solid rgba(200, 168, 75, 0.12)",
+  background: "transparent",
+  color: "zodiac.cream",
+  fontSize: "11.5px",
+  lineHeight: "1.4",
+  ...focusRing,
+});
+
+const pipelineItemStatus = css({
+  fontSize: "9px",
+  color: "rgba(245, 240, 232, 0.55)",
+  marginTop: "2px",
+});
+
+// -- Sub-topic / Item-detail list buttons --
+
+const listButton = css({
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  cursor: "pointer",
+  padding: "6px 8px",
+  marginBottom: "3px",
+  border: "1px solid rgba(200, 168, 75, 0.12)",
+  background: "transparent",
+  color: "zodiac.cream",
+  fontSize: "12px",
+  ...focusRing,
+});
+
+const listButtonMentions = css({
+  float: "right",
+  color: "rgba(200, 168, 75, 0.58)",
+  fontSize: "10px",
+});
+
+const relationButton = css({
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  cursor: "pointer",
+  padding: "8px",
+  marginBottom: "4px",
+  border: "1px solid rgba(200, 168, 75, 0.12)",
+  background: "transparent",
+  color: "zodiac.cream",
+  fontSize: "12px",
+  lineHeight: "1.4",
+  ...focusRing,
+});
+
+const relationTypeLabel = css({
+  fontSize: "9px",
+  letterSpacing: "0.15em",
+  color: "rgba(139, 92, 246, 0.55)",
+  marginBottom: "2px",
+});
+
+const relationTitle = css({
+  color: "rgba(245, 240, 232, 0.7)",
+});
+
+// ---------------------------------------------------------------------------
+// PandaCSS style constants — WebGL fallback
+// ---------------------------------------------------------------------------
+
+const fallbackContainer = css({
+  minHeight: "calc(100vh - var(--app-header-height))",
+  background: "zodiac.void",
+  color: "zodiac.cream",
+  padding: "24px",
+});
+
+const fallbackGrid = css({
+  maxWidth: "1120px",
+  margin: "0 auto",
+  display: "grid",
+  gap: "16px",
+});
+
+const fallbackCard = css({
+  border: "1px solid rgba(200, 168, 75, 0.2)",
+  padding: "18px",
+  borderRadius: "8px",
+  background: "rgba(13, 6, 32, 0.5)",
+});
+
+const fallbackEyebrow = css({
+  fontSize: "10px",
+  letterSpacing: "0.24em",
+  color: "zodiac.gold",
+  opacity: 0.72,
+});
+
+const fallbackEyebrowSpaced = css({
+  fontSize: "10px",
+  letterSpacing: "0.24em",
+  color: "zodiac.gold",
+  opacity: 0.72,
+  marginBottom: "12px",
+});
+
+const fallbackEyebrowPipeline = css({
+  fontSize: "10px",
+  letterSpacing: "0.24em",
+  color: "zodiac.gold",
+  opacity: 0.72,
+  marginBottom: "10px",
+});
+
+const fallbackTitle = css({
+  margin: "10px 0 8px",
+  fontSize: "34px",
+  fontWeight: "300",
+});
+
+const fallbackBody = css({
+  margin: "0",
+  color: "rgba(245, 240, 232, 0.66)",
+  lineHeight: "1.6",
+});
+
+const fallbackLinkGrid = css({
+  display: "grid",
+  gap: "10px",
+  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+});
+
+const fallbackLinkButton = css({
+  cursor: "pointer",
+  background: "#130a31",
+  border: "1px solid rgba(200, 168, 75, 0.55)",
+  padding: "11px 12px",
+  color: "zodiac.cream",
+  textAlign: "left",
+  fontFamily: "mono",
+  fontSize: "11px",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  ...focusRing,
+});
+
+const fallbackPipelineRow = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  flexWrap: "wrap",
+});
+
+const fallbackPipelineCell = css({
+  minWidth: "72px",
+  padding: "8px",
+  border: "1px solid rgba(200, 168, 75, 0.2)",
+  textAlign: "center",
+});
+
+const fallbackPipelineValue = css({
+  fontSize: "20px",
+  color: "zodiac.gold",
+});
+
+const fallbackPipelineLabel = css({
+  fontSize: "9px",
+  letterSpacing: "0.18em",
+  color: "rgba(245, 240, 232, 0.55)",
+});
+
+const fallbackPipelineArrow = css({
+  color: "rgba(200, 168, 75, 0.58)",
+});
+
+// ---------------------------------------------------------------------------
 
 const sectorRouteMap: Record<string, string> = {
   math: "/display",
@@ -65,6 +638,8 @@ type SidebarMode =
   | { kind: "item-detail"; itemId: string; itemType: string; title: string };
 
 export function Zodiac3D() {
+  onMount(() => { document.title = "Zodiac — Frequency Music"; });
+
   const navigate = useNavigate();
   const [selSector, setSelSector] = createSignal<string>("math");
   const [webglUnavailable, setWebglUnavailable] = createSignal(false);
@@ -320,70 +895,72 @@ export function Zodiac3D() {
   function SidebarOverview() {
     return (
       <>
-        <div style="padding:36px 26px 20px;border-bottom:1px solid rgba(200,168,75,0.1)">
-          <div style="font-size:9px;letter-spacing:0.4em;color:rgba(200,168,75,0.4);margin-bottom:14px">
+        <div class={sidebarSection}>
+          <div class={sidebarEyebrow}>
             ∴ RESEARCH ZODIAC — 3D
           </div>
-          <h1 style="font-size:34px;font-weight:300;line-height:1.15;margin:0 0 10px">
+          <h1 class={sidebarTitle}>
             Astrolabe
             <br />
-            <em style="color:#c8a84b">Knowledge</em>
+            <em class={css({ color: "zodiac.gold" })}>Knowledge</em>
             <br />
             Orrery
           </h1>
-          <p style="font-size:13px;font-weight:300;line-height:1.65;color:rgba(245,240,232,0.38);margin:0">
+          <p class={sidebarBody}>
             Drag to orbit. Click a sector to focus. Click stars for concept details.
             Click orbiting bodies for pipeline items.
           </p>
         </div>
 
-        <div style="padding:22px 26px;flex:1;border-bottom:1px solid rgba(200,168,75,0.1)">
+        <div class={sidebarSectionDomain}>
           <div
-            style={`font-size:9px;letter-spacing:0.35em;margin-bottom:10px;color:${activeSector().color};opacity:0.75`}
+            class={sidebarEyebrowSmall}
+            style={{ color: activeSector().color }}
           >
             {activeSector().id.toUpperCase()} DOMAIN
           </div>
           <div
-            style={`font-size:22px;color:${activeSector().color};margin-bottom:8px;font-weight:300`}
+            class={sidebarTitleMd}
+            style={{ color: activeSector().color }}
           >
             {activeSector().label}
           </div>
-          <p style="font-size:12.5px;line-height:1.65;color:rgba(245,240,232,0.42);margin:0 0 18px">
+          <p class={sidebarBodySm}>
             {activeSector().summary}
           </p>
-          <div style="display:flex;gap:12px;margin-bottom:14px">
-            <div style="flex:1;padding:10px;border:1px solid rgba(200,168,75,0.18);text-align:center">
-              <div style="font-size:26px;color:#c8a84b">
+          <div class={statRow}>
+            <div class={statCellGold}>
+              <div class={statValue} style={{ color: "#c8a84b" }}>
                 {activeSector().sources}
               </div>
-              <div style="font-size:8px;letter-spacing:0.25em;color:rgba(245,240,232,0.28);margin-top:2px">
+              <div class={statLabel}>
                 SOURCES
               </div>
             </div>
-            <div style="flex:1;padding:10px;border:1px solid rgba(139,92,246,0.18);text-align:center">
-              <div style="font-size:26px;color:#8b5cf6">
+            <div class={statCellViolet}>
+              <div class={statValue} style={{ color: "#8b5cf6" }}>
                 {activeSector().claims}
               </div>
-              <div style="font-size:8px;letter-spacing:0.25em;color:rgba(245,240,232,0.28);margin-top:2px">
+              <div class={statLabel}>
                 CLAIMS
               </div>
             </div>
           </div>
 
           <Show when={(domainConcepts() ?? []).length > 0}>
-            <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin:16px 0 8px">
+            <div class={sidebarEyebrowConceptsLabel}>
               CONCEPTS ({(domainConcepts() ?? []).length})
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px">
+            <div class={conceptTagRow}>
               <For each={domainConcepts().slice(0, 12)}>
                 {(concept) => (
                   <button
                     type="button"
                     onClick={() => setSidebarMode({ kind: "concept-detail", conceptId: concept._id })}
-                    style="cursor:pointer;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);color:#c8a84b;padding:3px 8px;font-size:10px;letter-spacing:0.08em"
+                    class={conceptTag}
                   >
                     {concept.displayName}
-                    <span style="opacity:0.4;margin-left:4px">{concept.mentionCount}</span>
+                    <span class={conceptTagCount}>{concept.mentionCount}</span>
                   </button>
                 )}
               </For>
@@ -393,31 +970,37 @@ export function Zodiac3D() {
           <button
             type="button"
             onClick={openDomainWorkspace}
-            style="width:100%;cursor:pointer;border:1px solid rgba(200,168,75,0.45);background:#c8a84b;color:#0d0620;padding:8px 10px;letter-spacing:0.18em;font-size:10px;text-transform:uppercase"
+            class={openDomainBtn}
           >
             Open Domain Workspace
           </button>
         </div>
 
-        <div style="padding:16px 26px;flex-shrink:0">
-          <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:10px">
+        <div class={sidebarSectionDomains}>
+          <div class={sidebarEyebrowSection}>
             ALL DOMAINS
           </div>
           <For each={sectors()}>
             {(sector) => (
               <button
                 type="button"
-                style={`display:flex;align-items:center;justify-content:space-between;padding:7px 9px;margin-bottom:3px;cursor:pointer;border:1px solid;transition:all 0.2s;border-color:${selSector() === sector.id ? `${sector.color}55` : "rgba(200,168,75,0.1)"};background:${selSector() === sector.id ? "rgba(200,168,75,0.05)" : "transparent"};width:100%;text-align:left`}
+                class={sectorButton}
+                aria-pressed={selSector() === sector.id}
+                style={{
+                  "border-color": selSector() === sector.id ? `${sector.color}55` : "rgba(200,168,75,0.1)",
+                  background: selSector() === sector.id ? "rgba(200,168,75,0.05)" : "transparent",
+                }}
                 onClick={() => handleSectorSelect(sector.id)}
                 onMouseEnter={() => handleSectorHover(sector.id)}
                 onMouseLeave={() => handleSectorHover(null)}
               >
                 <div
-                  style={`font-size:12.5px;color:${sector.color};opacity:${selSector() === sector.id ? 1 : 0.58}`}
+                  class={sectorButtonLabel}
+                  style={{ color: sector.color, opacity: selSector() === sector.id ? 1 : 0.58 }}
                 >
                   {sector.label}
                 </div>
-                <div style="font-size:10px;color:rgba(245,240,232,0.28)">
+                <div class={sectorButtonMeta}>
                   {sector.sources} src
                 </div>
               </button>
@@ -425,18 +1008,18 @@ export function Zodiac3D() {
           </For>
         </div>
 
-        <div style="padding:0 26px 16px;flex-shrink:0;border-top:1px solid rgba(200,168,75,0.1)">
-          <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin:12px 0 10px">
+        <div class={sidebarSectionWorkflow}>
+          <div class={sidebarEyebrowSectionTop}>
             WORKFLOW SHORTCUTS
           </div>
-          <div style="display:grid;gap:6px;grid-template-columns:1fr 1fr">
+          <div class={workspaceGrid}>
             <For each={workspaceLinks}>
               {(link) => (
                 <button
                   type="button"
                   data-testid="home-workspace-link"
                   onClick={() => openWorkspace(link.to)}
-                  style="cursor:pointer;border:1px solid rgba(200,168,75,0.2);background:rgba(26,15,53,0.55);color:#f5f0e8;padding:7px 8px;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;text-align:center"
+                  class={workspaceButton}
                 >
                   {link.label}
                 </button>
@@ -445,22 +1028,22 @@ export function Zodiac3D() {
           </div>
         </div>
 
-        <div style="padding:14px 26px 24px;border-top:1px solid rgba(200,168,75,0.1)">
-          <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:8px">
+        <div class={sidebarSectionPipeline}>
+          <div class={css({ fontSize: "9px", letterSpacing: "0.3em", color: "rgba(200, 168, 75, 0.55)", marginBottom: "8px" })}>
             PIPELINE
           </div>
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          <div class={pipelineRow}>
             <For each={pipelineSummary()}>
               {(item, index) => (
                 <>
-                  <div style="text-align:center;min-width:46px">
-                    <div style="font-size:15px;color:#c8a84b">{item.value}</div>
-                    <div style="font-size:7.5px;letter-spacing:0.2em;color:rgba(245,240,232,0.25)">
+                  <div class={pipelineCell}>
+                    <div class={pipelineCellValue}>{item.value}</div>
+                    <div class={pipelineCellLabel}>
                       {item.label}
                     </div>
                   </div>
                   <Show when={index() < pipelineSummary().length - 1}>
-                    <div style="font-size:9px;color:rgba(200,168,75,0.25);margin-bottom:8px">
+                    <div class={pipelineArrow}>
                       →
                     </div>
                   </Show>
@@ -477,27 +1060,27 @@ export function Zodiac3D() {
     const detail = createMemo<ConceptDetailData | undefined>(() => conceptDetail());
     return (
       <>
-        <div style="padding:20px 26px;border-bottom:1px solid rgba(200,168,75,0.1)">
+        <div class={sidebarSectionCompact}>
           <BackButton />
           <Show when={detail()}>
             {(detailData) => (
               <>
-                <div style="font-size:9px;letter-spacing:0.35em;color:rgba(139,92,246,0.6);margin-bottom:8px">
+                <div class={sidebarEyebrowViolet}>
                   CONCEPT
                 </div>
-                <div style="font-size:24px;color:#c8a84b;font-weight:300;margin-bottom:6px">
+                <div class={sidebarTitleSm}>
                   {detailData().concept.displayName}
                 </div>
-                <div style="font-size:11px;color:rgba(245,240,232,0.35);margin-bottom:12px">
+                <div class={sidebarMeta}>
                   {detailData().concept.domain} &middot; {detailData().concept.mentionCount} mentions &middot; {detailData().edgeCount} edges
                 </div>
                 <Show when={detailData().concept.description}>
-                  <p style="font-size:12.5px;line-height:1.65;color:rgba(245,240,232,0.5);margin:0 0 16px">
+                  <p class={sidebarBodyDetail}>
                     {detailData().concept.description}
                   </p>
                 </Show>
                 <Show when={detailData().concept.aliases?.length > 0}>
-                  <div style="font-size:10px;color:rgba(245,240,232,0.3);margin-bottom:16px">
+                  <div class={sidebarAliases}>
                     Also: {detailData().concept.aliases.join(", ")}
                   </div>
                 </Show>
@@ -508,7 +1091,7 @@ export function Zodiac3D() {
 
         <Show when={detail()}>
           {(detailData) => (
-            <div style="padding:16px 26px;flex:1;overflow-y:auto">
+            <div class={sidebarSectionScrollable}>
               <Show when={detailData().linkedSources.length > 0}>
                 <PipelineSection
                   label="SOURCES"
@@ -535,7 +1118,7 @@ export function Zodiac3D() {
         </Show>
 
         <Show when={!detail()}>
-          <div style="padding:26px;color:rgba(245,240,232,0.3);font-size:12px">
+          <div class={sidebarLoading}>
             Loading concept details...
           </div>
         </Show>
@@ -547,21 +1130,21 @@ export function Zodiac3D() {
     const mode = () => sidebarMode() as { kind: "sub-topic"; label: string; conceptNames: string[] };
     return (
       <>
-        <div style="padding:20px 26px;border-bottom:1px solid rgba(200,168,75,0.1)">
+        <div class={sidebarSectionCompact}>
           <BackButton />
-          <div style="font-size:9px;letter-spacing:0.35em;color:rgba(200,168,75,0.6);margin-bottom:8px">
+          <div class={sidebarEyebrowGold}>
             SUB-TOPIC
           </div>
-          <div style="font-size:22px;color:#c8a84b;font-weight:300;margin-bottom:6px">
+          <div class={sidebarTitleMd} style={{ color: "#c8a84b" }}>
             {mode().label}
           </div>
-          <div style="font-size:11px;color:rgba(245,240,232,0.35);margin-bottom:12px">
+          <div class={sidebarMeta}>
             {mode().conceptNames.length} concepts
           </div>
         </div>
 
-        <div style="padding:16px 26px;flex:1;overflow-y:auto">
-          <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:10px">
+        <div class={sidebarSectionScrollable}>
+          <div class={sidebarEyebrowSection}>
             CONCEPTS IN CLUSTER
           </div>
           <For each={mode().conceptNames}>
@@ -574,11 +1157,11 @@ export function Zodiac3D() {
                     const c = concept();
                     if (c) setSidebarMode({ kind: "concept-detail", conceptId: c._id });
                   }}
-                  style="display:block;width:100%;text-align:left;cursor:pointer;padding:6px 8px;margin-bottom:3px;border:1px solid rgba(200,168,75,0.12);background:transparent;color:#f5f0e8;font-size:12px"
+                  class={listButton}
                 >
                   {concept()?.displayName ?? name}
                   <Show when={concept()}>
-                    <span style="float:right;color:rgba(200,168,75,0.4);font-size:10px">
+                    <span class={listButtonMentions}>
                       {concept()?.mentionCount} mentions
                     </span>
                   </Show>
@@ -597,19 +1180,19 @@ export function Zodiac3D() {
 
     return (
       <>
-        <div style="padding:20px 26px;border-bottom:1px solid rgba(200,168,75,0.1)">
+        <div class={sidebarSectionCompact}>
           <BackButton />
-          <div style="font-size:9px;letter-spacing:0.35em;color:rgba(200,168,75,0.6);margin-bottom:8px">
+          <div class={sidebarEyebrowGold}>
             {mode().itemType.toUpperCase()}
           </div>
-          <div style="font-size:18px;color:#c8a84b;font-weight:300;margin-bottom:4px;line-height:1.3">
+          <div class={sidebarTitleItem}>
             {mode().title}
           </div>
         </div>
 
-        <div style="padding:16px 26px;flex:1;overflow-y:auto">
+        <div class={sidebarSectionScrollable}>
           <Show when={relations().length > 0}>
-            <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:10px">
+            <div class={sidebarEyebrowSection}>
               RELATED ITEMS ({relations().length})
             </div>
             <For each={relations()}>
@@ -619,18 +1202,18 @@ export function Zodiac3D() {
                   onClick={() =>
                     setSidebarMode({ kind: "item-detail", itemId: rel.id, itemType: rel.type, title: rel.title })
                   }
-                  style="display:block;width:100%;text-align:left;cursor:pointer;padding:8px;margin-bottom:4px;border:1px solid rgba(200,168,75,0.12);background:transparent;color:#f5f0e8;font-size:12px;line-height:1.4"
+                  class={relationButton}
                 >
-                  <div style="font-size:9px;letter-spacing:0.15em;color:rgba(139,92,246,0.5);margin-bottom:2px">
+                  <div class={relationTypeLabel}>
                     {rel.type.toUpperCase()} &middot; {rel.relationship}
                   </div>
-                  <div style="color:rgba(245,240,232,0.7)">{rel.title}</div>
+                  <div class={relationTitle}>{rel.title}</div>
                 </button>
               )}
             </For>
           </Show>
           <Show when={relations().length === 0}>
-            <div style="color:rgba(245,240,232,0.3);font-size:12px">
+            <div class={sidebarEmpty}>
               No cross-pipeline relations found.
             </div>
           </Show>
@@ -644,7 +1227,7 @@ export function Zodiac3D() {
       <button
         type="button"
         onClick={goBack}
-        style="cursor:pointer;border:1px solid rgba(200,168,75,0.25);background:transparent;color:#c8a84b;padding:5px 12px;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:14px"
+        class={backButton}
       >
         ← Back
       </button>
@@ -657,8 +1240,8 @@ export function Zodiac3D() {
     type: string;
   }) {
     return (
-      <div style="margin-bottom:16px">
-        <div style="font-size:9px;letter-spacing:0.3em;color:rgba(200,168,75,0.3);margin-bottom:8px">
+      <div class={pipelineSectionContainer}>
+        <div class={pipelineSectionEyebrow}>
           {props.label} ({props.items.length})
         </div>
         <For each={props.items}>
@@ -668,10 +1251,10 @@ export function Zodiac3D() {
               onClick={() =>
                 setSidebarMode({ kind: "item-detail", itemId: item._id, itemType: props.type, title: item.title ?? "Untitled" })
               }
-              style="display:block;width:100%;text-align:left;cursor:pointer;padding:6px 8px;margin-bottom:3px;border:1px solid rgba(200,168,75,0.12);background:transparent;color:#f5f0e8;font-size:11.5px;line-height:1.4"
+              class={pipelineItemButton}
             >
               <div>{item.title ?? "Untitled"}</div>
-              <div style="font-size:9px;color:rgba(245,240,232,0.25);margin-top:2px">
+              <div class={pipelineItemStatus}>
                 {item.status}
               </div>
             </button>
@@ -683,34 +1266,34 @@ export function Zodiac3D() {
 
   if (webglUnavailable()) {
     return (
-      <div style="min-height:calc(100vh - var(--app-header-height));background:#0d0620;color:#f5f0e8;padding:24px">
-        <div style="max-width:1120px;margin:0 auto;display:grid;gap:16px">
-          <div style="border:1px solid rgba(200,168,75,0.2);padding:18px;border-radius:8px;background:rgba(13,6,32,0.5)">
-            <div style="font-size:10px;letter-spacing:0.24em;color:#c8a84b;opacity:0.72">
+      <div class={fallbackContainer}>
+        <div class={fallbackGrid}>
+          <div class={fallbackCard}>
+            <div class={fallbackEyebrow}>
               HOME FALLBACK
             </div>
-            <h1 style="margin:10px 0 8px;font-size:34px;font-weight:300">
+            <h1 class={fallbackTitle}>
               Workspace Navigator
             </h1>
-            <p style="margin:0;color:rgba(245,240,232,0.66);line-height:1.6">
+            <p class={fallbackBody}>
               3D mode is unavailable in this environment. Use direct workflow
               links below to continue managing intake, research, production, and
               participation.
             </p>
           </div>
 
-          <div style="border:1px solid rgba(200,168,75,0.2);padding:18px;border-radius:8px;background:rgba(13,6,32,0.5)">
-            <div style="font-size:10px;letter-spacing:0.24em;color:#c8a84b;opacity:0.72;margin-bottom:12px">
+          <div class={fallbackCard}>
+            <div class={fallbackEyebrowSpaced}>
               QUICK ACCESS
             </div>
-            <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+            <div class={fallbackLinkGrid}>
               <For each={workspaceLinks}>
                 {(link) => (
                   <button
                     type="button"
                     data-testid="home-workspace-link"
                     onClick={() => openWorkspace(link.to)}
-                    style="cursor:pointer;background:#130a31;border:1px solid rgba(200,168,75,0.28);padding:11px 12px;color:#f5f0e8;text-align:left;font-family:'IBM Plex Mono','JetBrains Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase"
+                    class={fallbackLinkButton}
                   >
                     {link.label}
                   </button>
@@ -719,24 +1302,24 @@ export function Zodiac3D() {
             </div>
           </div>
 
-          <div style="border:1px solid rgba(200,168,75,0.2);padding:18px;border-radius:8px;background:rgba(13,6,32,0.5)">
-            <div style="font-size:10px;letter-spacing:0.24em;color:#c8a84b;opacity:0.72;margin-bottom:10px">
+          <div class={fallbackCard}>
+            <div class={fallbackEyebrowPipeline}>
               PIPELINE SNAPSHOT
             </div>
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class={fallbackPipelineRow}>
               <For each={pipelineSummary()}>
                 {(item, index) => (
                   <>
-                    <div style="min-width:72px;padding:8px;border:1px solid rgba(200,168,75,0.2);text-align:center">
-                      <div style="font-size:20px;color:#c8a84b">
+                    <div class={fallbackPipelineCell}>
+                      <div class={fallbackPipelineValue}>
                         {item.value}
                       </div>
-                      <div style="font-size:9px;letter-spacing:0.18em;color:rgba(245,240,232,0.5)">
+                      <div class={fallbackPipelineLabel}>
                         {item.label}
                       </div>
                     </div>
                     <Show when={index() < pipelineSummary().length - 1}>
-                      <div style="color:rgba(200,168,75,0.35)">→</div>
+                      <div class={fallbackPipelineArrow}>→</div>
                     </Show>
                   </>
                 )}
@@ -749,17 +1332,17 @@ export function Zodiac3D() {
   }
 
   return (
-    <div style="height:calc(100vh - var(--app-header-height));background:#0d0620;color:#f5f0e8;overflow:hidden;font-family:'Cormorant Garamond',Georgia,serif;display:flex">
-      <div style="position:fixed;inset:0;pointer-events:none;opacity:0.022;background-image:radial-gradient(circle,#c8a84b 1px,transparent 1px);background-size:52px 52px" />
+    <div class={pageContainer}>
+      <div class={dotOverlay} />
 
       <div
         ref={cssContainerRef}
-        style="flex:1;position:relative;overflow:hidden;min-width:0"
+        class={canvasWrapper}
       >
-        <canvas ref={canvasRef} style="width:100%;height:100%;display:block" />
+        <canvas ref={canvasRef} class={canvasEl} />
       </div>
 
-      <div style="width:355px;display:flex;flex-direction:column;border-left:1px solid rgba(200,168,75,0.12);overflow-y:auto;flex-shrink:0">
+      <div class={`${sidebarContainer} zodiac-sidebar`}>
         <Show when={sidebarMode().kind === "overview"}>
           <SidebarOverview />
         </Show>

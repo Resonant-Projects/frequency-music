@@ -19,7 +19,7 @@ const inputClass = css({
     outline: "none",
   },
   _placeholder: {
-    color: "rgba(245, 240, 232, 0.4)",
+    color: "rgba(245, 240, 232, 0.5)",
   },
 });
 

@@ -3,6 +3,20 @@ import { SolidMarkdown } from "solid-markdown";
 import { css } from "../../../styled-system/css";
 
 const components = {
+  h1: (props: JSX.HTMLAttributes<HTMLHeadingElement>) => (
+    <h1
+      class={css({
+        color: "zodiac.cream",
+        fontFamily: "display",
+        fontSize: "2xl",
+        fontWeight: "normal",
+        lineHeight: "1.3",
+        mt: "6",
+        mb: "3",
+      })}
+      {...props}
+    />
+  ),
   h2: (props: JSX.HTMLAttributes<HTMLHeadingElement>) => (
     <h2
       class={css({
@@ -115,6 +129,24 @@ const components = {
   strong: (props: JSX.HTMLAttributes<HTMLElement>) => (
     <strong
       class={css({ color: "rgba(245, 240, 232, 0.95)", fontWeight: "bold" })}
+      {...props}
+    />
+  ),
+  em: (props: JSX.HTMLAttributes<HTMLElement>) => (
+    <em class={css({ fontStyle: "italic" })} {...props} />
+  ),
+  pre: (props: JSX.HTMLAttributes<HTMLPreElement>) => (
+    <pre
+      class={css({
+        bg: "rgba(13, 6, 32, 0.5)",
+        borderRadius: "l1",
+        fontFamily: "mono",
+        fontSize: "sm",
+        lineHeight: "1.6",
+        overflow: "auto",
+        p: "3",
+        mb: "3",
+      })}
       {...props}
     />
   ),
