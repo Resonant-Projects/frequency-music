@@ -1,15 +1,17 @@
 import { Link } from "@tanstack/solid-router";
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UISelect,
   UITextarea,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
@@ -52,6 +54,8 @@ function parseChecklist(input: string) {
 }
 
 export function RecipesPage() {
+  onMount(() => { document.title = "Recipes — Frequency Music"; });
+
   const hypotheses = createQuery(convexApi.hypotheses.listByStatus, () => ({
     limit: 30,
   }));
@@ -122,25 +126,15 @@ export function RecipesPage() {
     <section class={pageClass}>
       {/* UICard's onSubmit prop typing doesn't align with submitRecipe's SubmitEvent signature in Solid. */}
       <UICard as="form" onSubmit={submitRecipe as any}>
-        <h1 class={sectionTitleClass}>Recipes</h1>
+        <h1 class={pageTitleClass}>Recipes</h1>
 
         <label class={fieldLabelClass} for="recipe-hypothesis">
           Hypothesis
         </label>
-        <select
+        <UISelect
           id="recipe-hypothesis"
           value={hypothesisId()}
           onChange={(event) => setHypothesisId(event.currentTarget.value)}
-          class={css({
-            bg: "rgba(26, 15, 53, 0.45)",
-            borderColor: "rgba(200, 168, 75, 0.28)",
-            borderRadius: "l2",
-            borderWidth: "1px",
-            color: "zodiac.cream",
-            minH: "10",
-            px: "3",
-            width: "full",
-          })}
         >
           <option value="">Select hypothesis</option>
           <For each={hypotheses() ?? []}>
@@ -148,7 +142,7 @@ export function RecipesPage() {
               <option value={String(item._id)}>{item.title}</option>
             )}
           </For>
-        </select>
+        </UISelect>
 
         <label class={fieldLabelClass} for="recipe-title">
           Recipe Title
@@ -213,11 +207,13 @@ export function RecipesPage() {
             marginTop: "4",
           })}
         >
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-            )}
-          </Show>
+          <div aria-live="polite">
+            <Show when={notice()}>
+              {(message) => (
+                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+              )}
+            </Show>
+          </div>
           <div class={css({ display: "flex", gap: "2" })}>
             <UIButton type="button" variant="outline" onClick={runAutoGenerate}>
               Auto Generate
@@ -232,58 +228,74 @@ export function RecipesPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Recipe Library</h2>
         <Show when={!recipes.isLoading()} fallback={<p>Loading recipes…</p>}>
-          <div class={css({ display: "grid", gap: "3" })}>
-            <For each={recipes.data() ?? []}>
-              {(recipe: RecipeRow) => (
-                <Link
-                  to={`/recipes/${recipe._id}`}
-                  data-testid="entity-row"
-                  class={css({
-                    borderColor: "rgba(200, 168, 75, 0.25)",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    cursor: "pointer",
-                    display: "block",
-                    p: "4",
-                    textDecoration: "none",
-                    transition: "border-color 0.15s, box-shadow 0.15s",
-                    _hover: {
-                      borderColor: "rgba(200, 168, 75, 0.5)",
-                      boxShadow: "0 0 12px rgba(200, 168, 75, 0.08)",
-                    },
-                  })}
-                >
-                  <div
+          <Show
+            when={(recipes.data() ?? []).length > 0}
+            fallback={
+              <p class={css({
+                color: "rgba(245, 240, 232, 0.55)",
+                fontFamily: "display",
+                fontSize: "md",
+                lineHeight: "1.6",
+                textAlign: "center",
+                py: "8",
+              })}>
+                No recipes yet. Generate one from a hypothesis to get started.
+              </p>
+            }
+          >
+            <div class={css({ display: "grid", gap: "3" })}>
+              <For each={recipes.data() ?? []}>
+                {(recipe: RecipeRow) => (
+                  <Link
+                    to={`/recipes/${recipe._id}`}
+                    data-testid="entity-row"
                     class={css({
-                      display: "flex",
-                      gap: "2",
-                      marginBottom: "2",
+                      borderColor: "rgba(200, 168, 75, 0.25)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      cursor: "pointer",
+                      display: "block",
+                      p: "4",
+                      textDecoration: "none",
+                      transition: "border-color 0.15s, box-shadow 0.15s",
+                      _hover: {
+                        borderColor: "rgba(200, 168, 75, 0.5)",
+                        boxShadow: "0 0 12px rgba(200, 168, 75, 0.08)",
+                      },
                     })}
                   >
-                    <UIBadge tone="gold">{recipe.status}</UIBadge>
-                    <UIBadge tone="violet">
-                      {recipe.parameters.length} params
-                    </UIBadge>
-                  </div>
-                  <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
-                    {recipe.title}
-                  </h3>
-                  <p
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.62)",
-                      display: "-webkit-box",
-                      fontSize: "sm",
-                      overflow: "hidden",
-                      WebkitBoxOrient: "vertical",
-                      WebkitLineClamp: 3,
-                    })}
-                  >
-                    {recipe.bodyMd}
-                  </p>
-                </Link>
-              )}
-            </For>
-          </div>
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        marginBottom: "2",
+                      })}
+                    >
+                      <UIBadge tone="gold">{recipe.status}</UIBadge>
+                      <UIBadge tone="violet">
+                        {recipe.parameters.length} params
+                      </UIBadge>
+                    </div>
+                    <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
+                      {recipe.title}
+                    </h3>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.62)",
+                        display: "-webkit-box",
+                        fontSize: "sm",
+                        overflow: "hidden",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 3,
+                      })}
+                    >
+                      {recipe.bodyMd}
+                    </p>
+                  </Link>
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
       </UICard>
     </section>

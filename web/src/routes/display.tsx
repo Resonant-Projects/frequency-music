@@ -1,8 +1,9 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
@@ -35,6 +36,8 @@ function statusTone(status: string): "gold" | "violet" | "cream" {
 const DISPLAY_QUEUE_LIMIT = import.meta.env.VITE_E2E_MODE === "1" ? 200 : 24;
 
 export function DisplayPage() {
+  onMount(() => { document.title = "Display Queue — Frequency Music"; });
+
   type InboxRow = {
     _id: Id<"sources">;
     status: string;
@@ -99,20 +102,22 @@ export function DisplayPage() {
   return (
     <section class={pageClass}>
       <UICard>
-        <h1 class={sectionTitleClass}>Display & Triage</h1>
+        <h1 class={pageTitleClass}>Display & Triage</h1>
         <p
           class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
         >
           This queue prioritizes blocked and oldest private sources so weekly
           review stays aligned with ingest throughput.
         </p>
-        <Show when={notice()}>
-          {(message) => (
-            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-              {message()}
-            </p>
-          )}
-        </Show>
+        <div aria-live="polite">
+          <Show when={notice()}>
+            {(message) => (
+              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+                {message()}
+              </p>
+            )}
+          </Show>
+        </div>
       </UICard>
 
       <UICard>
@@ -167,7 +172,7 @@ export function DisplayPage() {
             </div>
           </div>
           <div>
-            <div class={css({ color: "#f87171", fontSize: "3xl" })}>
+            <div class={css({ color: "zodiac.error", fontSize: "3xl" })}>
               {counts()?.blocked ?? 0}
             </div>
             <div

@@ -1,14 +1,16 @@
-import { createMemo, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UISelect,
   UITextarea,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
@@ -28,6 +30,8 @@ function parseParticipants(input: string) {
 }
 
 export function FeedbackPage() {
+  onMount(() => { document.title = "Feedback — Frequency Music"; });
+
   const compositions = createQuery(convexApi.compositions.list, () => ({
     limit: 40,
   }));
@@ -91,25 +95,15 @@ export function FeedbackPage() {
   return (
     <section class={pageClass}>
       <UICard as="form" onSubmit={submitSession}>
-        <h1 class={sectionTitleClass}>Feedback & Listening Sessions</h1>
+        <h1 class={pageTitleClass}>Feedback & Listening Sessions</h1>
 
         <label class={fieldLabelClass} for="feedback-composition">
           Composition
         </label>
-        <select
+        <UISelect
           id="feedback-composition"
           value={compositionId()}
           onChange={(event) => setCompositionId(event.currentTarget.value)}
-          class={css({
-            bg: "rgba(26, 15, 53, 0.45)",
-            borderColor: "rgba(200, 168, 75, 0.28)",
-            borderRadius: "l2",
-            borderWidth: "1px",
-            color: "zodiac.cream",
-            minH: "10",
-            px: "3",
-            width: "full",
-          })}
         >
           <option value="">Select composition</option>
           <For each={compositions() ?? []}>
@@ -117,7 +111,7 @@ export function FeedbackPage() {
               <option value={String(item._id)}>{item.title}</option>
             )}
           </For>
-        </select>
+        </UISelect>
 
         <label class={fieldLabelClass} for="feedback-participants">
           Participants (comma separated)
@@ -208,11 +202,13 @@ export function FeedbackPage() {
             marginTop: "4",
           })}
         >
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-            )}
-          </Show>
+          <div aria-live="polite">
+            <Show when={notice()}>
+              {(message) => (
+                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+              )}
+            </Show>
+          </div>
           <UIButton type="submit" variant="solid">
             Log Session
           </UIButton>
@@ -225,7 +221,7 @@ export function FeedbackPage() {
           <Show
             when={!sessions.isError()}
             fallback={
-              <p class={css({ color: "#f87171" })}>
+              <p class={css({ color: "zodiac.error" })}>
                 Failed to load sessions:{" "}
                 {sessions.error()?.message ?? "Unknown error"}
               </p>

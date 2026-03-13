@@ -1,18 +1,14 @@
 import type { JSX } from "solid-js";
 import { css, cx } from "../../../styled-system/css";
 
-const textareaClass = css({
+const selectClass = css({
   bg: "rgba(26, 15, 53, 0.45)",
   borderColor: "rgba(200, 168, 75, 0.28)",
   borderRadius: "l2",
   borderWidth: "1px",
   color: "zodiac.cream",
-  fontFamily: "mono",
-  fontSize: "sm",
-  minH: "28",
+  minH: "10",
   px: "3",
-  py: "2",
-  resize: "vertical",
   width: "full",
   _focusVisible: {
     borderColor: "zodiac.gold",
@@ -24,8 +20,8 @@ const textareaClass = css({
   },
 });
 
-export type UITextareaProps = JSX.TextareaHTMLAttributes<HTMLTextAreaElement>;
+export type UISelectProps = JSX.SelectHTMLAttributes<HTMLSelectElement>;
 
-export function UITextarea(props: UITextareaProps) {
-  return <textarea {...props} class={cx(textareaClass, props.class)} />;
+export function UISelect(props: UISelectProps) {
+  return <select {...props} class={cx(selectClass, props.class)} />;
 }

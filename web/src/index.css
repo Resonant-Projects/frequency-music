@@ -60,6 +60,23 @@ body {
   margin-right: 2px;
 }
 
+.app-nav-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid rgba(200, 168, 75, 0.2);
+  color: #c8a84b;
+  font-family: monospace;
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.app-nav-toggle:hover {
+  border-color: rgba(200, 168, 75, 0.45);
+}
+
 .app-nav {
   display: flex;
   flex-wrap: wrap;
@@ -123,4 +140,75 @@ body {
 .route-placeholder p {
   margin: 0;
   color: rgba(245, 240, 232, 0.7);
+}
+
+/* ── Zodiac sidebar scrollbar ── */
+
+.zodiac-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.zodiac-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.zodiac-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(200, 168, 75, 0.25);
+  border-radius: 3px;
+}
+
+.zodiac-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 168, 75, 0.45);
+}
+
+/* Firefox */
+.zodiac-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 168, 75, 0.25) transparent;
+}
+
+/* ── Mobile responsive navigation ── */
+
+@media (max-width: 767px) {
+  .app-nav-toggle {
+    display: block;
+  }
+
+  .app-header {
+    flex-wrap: wrap;
+  }
+
+  .app-nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+    order: 3;
+    border-top: 1px solid rgba(200, 168, 75, 0.15);
+    padding-top: 4px;
+    margin-top: 4px;
+  }
+
+  .app-nav.is-open {
+    display: flex;
+  }
+
+  .app-nav .app-nav-link {
+    padding: 10px 16px;
+    font-size: 12px;
+    border: none;
+    border-bottom: 1px solid rgba(200, 168, 75, 0.1);
+  }
+
+  .app-nav .app-nav-link:last-child {
+    border-bottom: none;
+  }
+
+  .app-nav .app-nav-link.is-active {
+    border-bottom: 1px solid rgba(200, 168, 75, 0.1);
+  }
+
+  .app-nav .app-nav-link.is-active:last-child {
+    border-bottom: none;
+  }
 }

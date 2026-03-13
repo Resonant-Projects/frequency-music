@@ -1,14 +1,16 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UISelect,
   UITextarea,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
@@ -43,6 +45,8 @@ function formatTimestamp(timestamp: number) {
 }
 
 export function IngestPage() {
+  onMount(() => { document.title = "Ingest — Frequency Music"; });
+
   type FeedRow = {
     _id: string;
     name?: string;
@@ -224,18 +228,20 @@ export function IngestPage() {
   return (
     <section class={pageClass}>
       <UICard>
-        <h1 class={sectionTitleClass}>Ingest Console</h1>
+        <h1 class={pageTitleClass}>Ingest Console</h1>
         <p class={helperClass}>
           Add research inputs directly into Convex. URL and YouTube entries are
           dedupe-safe and land in the private inbox pipeline.
         </p>
-        <Show when={notice()}>
-          {(message) => (
-            <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-              {message()}
-            </p>
-          )}
-        </Show>
+        <div aria-live="polite">
+          <Show when={notice()}>
+            {(message) => (
+              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+                {message()}
+              </p>
+            )}
+          </Show>
+        </div>
       </UICard>
 
       <UICard>
@@ -293,25 +299,15 @@ export function IngestPage() {
             <label class={fieldLabelClass} for="ingest-feed-type">
               Type
             </label>
-            <select
+            <UISelect
               id="ingest-feed-type"
               value={feedType()}
               onChange={(event) => setFeedType(event.currentTarget.value)}
-              class={css({
-                bg: "rgba(26, 15, 53, 0.45)",
-                borderColor: "rgba(200, 168, 75, 0.28)",
-                borderRadius: "l2",
-                borderWidth: "1px",
-                color: "zodiac.cream",
-                minH: "10",
-                px: "3",
-                width: "full",
-              })}
             >
               <option value="rss">rss</option>
               <option value="podcast">podcast</option>
               <option value="youtube">youtube</option>
-            </select>
+            </UISelect>
 
             <div
               class={css({

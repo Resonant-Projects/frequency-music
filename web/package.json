@@ -25,10 +25,7 @@
   },
   "devDependencies": {
     "@fontsource/cormorant-garamond": "^5.2.5",
-    "@fontsource/ibm-plex-mono": "^5.2.5",
-    "@fontsource/inter": "^5.2.5",
     "@fontsource/jetbrains-mono": "^5.2.5",
-    "@fontsource/space-grotesk": "^5.2.5",
     "@pandacss/dev": "^1.8.2",
     "@playwright/test": "^1.58.2",
     "@types/three": "^0.183.1",

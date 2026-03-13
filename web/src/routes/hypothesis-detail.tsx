@@ -1,49 +1,21 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
-import { UIBadge, UIButton, UICard, pageClass } from "../components/ui";
+import {
+  UIBadge,
+  UIButton,
+  UICard,
+  backLink,
+  detailTitleClass,
+  goldDivider,
+  metaLine,
+  pageClass,
+  sectionLabel,
+} from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
-
-const goldDivider = css({
-  border: "none",
-  borderTop: "1px solid rgba(200, 168, 75, 0.22)",
-  my: "6",
-});
-
-const backLink = css({
-  color: "zodiac.gold",
-  display: "inline-flex",
-  alignItems: "center",
-  fontFamily: "mono",
-  fontSize: "xs",
-  gap: "1.5",
-  letterSpacing: "0.14em",
-  textDecoration: "none",
-  textTransform: "uppercase",
-  opacity: 0.7,
-  _hover: { opacity: 1 },
-});
-
-const titleClass = css({
-  color: "zodiac.cream",
-  fontFamily: "display",
-  fontSize: { base: "2xl", md: "3xl" },
-  fontWeight: "normal",
-  lineHeight: "1.3",
-  mt: "3",
-});
-
-const sectionLabel = css({
-  color: "zodiac.gold",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.14em",
-  mb: "3",
-  textTransform: "uppercase",
-});
 
 const bodyClass = css({
   color: "rgba(245, 240, 232, 0.7)",
@@ -73,12 +45,6 @@ const sourceCell = css({
   p: "3",
 });
 
-const metaLine = css({
-  color: "rgba(245, 240, 232, 0.4)",
-  fontFamily: "mono",
-  fontSize: "xs",
-});
-
 const STATUSES = [
   "draft",
   "queued",
@@ -99,6 +65,8 @@ export function HypothesisDetailPage() {
   const hypothesis = createQuery(convexApi.hypotheses.get, () => ({
     id: params().hypothesisId as Id<"hypotheses">,
   }));
+
+  createEffect(() => { const h = hypothesis(); if (h) document.title = `${h.title} — Frequency Music`; });
 
   const updateHypothesis = createMutation(convexApi.hypotheses.update);
   const [notice, setNotice] = createSignal<string | null>(null);
@@ -194,7 +162,7 @@ export function HypothesisDetailPage() {
             </div>
 
             {/* Title */}
-            <h1 class={titleClass}>{h().title}</h1>
+            <h1 class={detailTitleClass}>{h().title}</h1>
             <Show when={notice()}>
               {(message) => (
                 <p class={css({ color: "zodiac.cream", mt: "2" })}>
@@ -313,6 +281,7 @@ export function HypothesisDetailPage() {
                 {(status) => (
                   <UIButton
                     variant={h().status === status ? "solid" : "outline"}
+                    aria-pressed={h().status === status}
                     disabled={saving()}
                     onClick={() => void handleStatusClick(status)}
                   >
@@ -337,6 +306,7 @@ export function HypothesisDetailPage() {
                   {(res) => (
                     <UIButton
                       variant={h().resolution === res ? "solid" : "outline"}
+                      aria-pressed={h().resolution === res}
                       disabled={saving()}
                       onClick={() => void handleResolutionClick(res)}
                     >

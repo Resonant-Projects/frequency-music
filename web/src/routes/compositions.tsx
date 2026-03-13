@@ -1,14 +1,16 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
   pageClass,
+  pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UISelect,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import {
@@ -19,6 +21,8 @@ import {
 import { convexApi } from "../integrations/convex/api";
 
 export function CompositionsPage() {
+  onMount(() => { document.title = "Compositions — Frequency Music"; });
+
   const compositions = createQueryWithStatus(
     convexApi.compositions.list,
     () => ({
@@ -80,7 +84,7 @@ export function CompositionsPage() {
   return (
     <section class={pageClass}>
       <UICard as="form" onSubmit={submitComposition as any}>
-        <h1 class={sectionTitleClass}>Compositions</h1>
+        <h1 class={pageTitleClass}>Compositions</h1>
 
         <label class={fieldLabelClass} for="composition-title">
           Title
@@ -104,20 +108,10 @@ export function CompositionsPage() {
             <label class={fieldLabelClass} for="composition-recipe">
               Recipe
             </label>
-            <select
+            <UISelect
               id="composition-recipe"
               value={recipeId()}
               onChange={(event) => setRecipeId(event.currentTarget.value)}
-              class={css({
-                bg: "rgba(26, 15, 53, 0.45)",
-                borderColor: "rgba(200, 168, 75, 0.28)",
-                borderRadius: "l2",
-                borderWidth: "1px",
-                color: "zodiac.cream",
-                minH: "10",
-                px: "3",
-                width: "full",
-              })}
             >
               <option value="">Select recipe</option>
               <For each={recipes() ?? []}>
@@ -125,32 +119,22 @@ export function CompositionsPage() {
                   <option value={String(recipe._id)}>{recipe.title}</option>
                 )}
               </For>
-            </select>
+            </UISelect>
           </div>
 
           <div>
             <label class={fieldLabelClass} for="composition-type">
               Artifact Type
             </label>
-            <select
+            <UISelect
               id="composition-type"
               value={artifactType()}
               onChange={(event) => setArtifactType(event.currentTarget.value)}
-              class={css({
-                bg: "rgba(26, 15, 53, 0.45)",
-                borderColor: "rgba(200, 168, 75, 0.28)",
-                borderRadius: "l2",
-                borderWidth: "1px",
-                color: "zodiac.cream",
-                minH: "10",
-                px: "3",
-                width: "full",
-              })}
             >
               <option value="microStudy">microStudy</option>
               <option value="expandedStudy">expandedStudy</option>
               <option value="fullTrack">fullTrack</option>
-            </select>
+            </UISelect>
           </div>
         </div>
 
@@ -162,11 +146,13 @@ export function CompositionsPage() {
             marginTop: "4",
           })}
         >
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-            )}
-          </Show>
+          <div aria-live="polite">
+            <Show when={notice()}>
+              {(message) => (
+                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+              )}
+            </Show>
+          </div>
           <UIButton type="submit" variant="solid">
             Create Composition
           </UIButton>
@@ -179,60 +165,76 @@ export function CompositionsPage() {
           when={!compositions.isLoading()}
           fallback={<p>Loading compositions…</p>}
         >
-          <div class={css({ display: "grid", gap: "3" })}>
-            <For each={compositions.data() ?? []}>
-              {(item: any) => (
-                <div
-                  data-testid="entity-row"
-                  class={css({
-                    borderColor: "rgba(200, 168, 75, 0.22)",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    p: "4",
-                  })}
-                >
+          <Show
+            when={(compositions.data() ?? []).length > 0}
+            fallback={
+              <p class={css({
+                color: "rgba(245, 240, 232, 0.55)",
+                fontFamily: "display",
+                fontSize: "md",
+                lineHeight: "1.6",
+                textAlign: "center",
+                py: "8",
+              })}>
+                No compositions yet. Create one above to begin.
+              </p>
+            }
+          >
+            <div class={css({ display: "grid", gap: "3" })}>
+              <For each={compositions.data() ?? []}>
+                {(item: any) => (
                   <div
+                    data-testid="entity-row"
                     class={css({
-                      display: "flex",
-                      gap: "2",
-                      marginBottom: "2",
+                      borderColor: "rgba(200, 168, 75, 0.22)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      p: "4",
                     })}
                   >
-                    <UIBadge tone="gold">{item.status}</UIBadge>
-                    <UIBadge tone="violet">{item.artifactType}</UIBadge>
-                    <UIBadge tone="cream">{item.version}</UIBadge>
-                  </div>
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        marginBottom: "2",
+                      })}
+                    >
+                      <UIBadge tone="gold">{item.status}</UIBadge>
+                      <UIBadge tone="violet">{item.artifactType}</UIBadge>
+                      <UIBadge tone="cream">{item.version}</UIBadge>
+                    </div>
 
-                  <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
-                    {item.title}
-                  </h3>
+                    <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
+                      {item.title}
+                    </h3>
 
-                  <div
-                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                  >
-                    <UIButton
-                      variant="outline"
-                      onClick={() => setStatus(String(item._id), "in_progress")}
+                    <div
+                      class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
                     >
-                      In Progress
-                    </UIButton>
-                    <UIButton
-                      variant="outline"
-                      onClick={() => setStatus(String(item._id), "rendered")}
-                    >
-                      Rendered
-                    </UIButton>
-                    <UIButton
-                      variant="ghost"
-                      onClick={() => setStatus(String(item._id), "published")}
-                    >
-                      Published
-                    </UIButton>
+                      <UIButton
+                        variant="outline"
+                        onClick={() => setStatus(String(item._id), "in_progress")}
+                      >
+                        In Progress
+                      </UIButton>
+                      <UIButton
+                        variant="outline"
+                        onClick={() => setStatus(String(item._id), "rendered")}
+                      >
+                        Rendered
+                      </UIButton>
+                      <UIButton
+                        variant="ghost"
+                        onClick={() => setStatus(String(item._id), "published")}
+                      >
+                        Published
+                      </UIButton>
+                    </div>
                   </div>
-                </div>
-              )}
-            </For>
-          </div>
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
       </UICard>
     </section>

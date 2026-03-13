@@ -19,12 +19,7 @@ import "@fontsource/cormorant-garamond/400-italic.css";
 import "@fontsource/jetbrains-mono/300.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
-import "@fontsource/jetbrains-mono/700.css";
 import "@fontsource/jetbrains-mono/400-italic.css";
-import "@fontsource/ibm-plex-mono/300.css";
-import "@fontsource/ibm-plex-mono/400.css";
-import "@fontsource/ibm-plex-mono/500.css";
-import "@fontsource/ibm-plex-mono/400-italic.css";
 
 const rootElement = (() => {
   const element = document.getElementById("root");

@@ -1,22 +1,8 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { For, Show } from "solid-js";
+import { createEffect, For, Show } from "solid-js";
 import { css } from "../../styled-system/css";
-import { Markdown, UIBadge, UICard, pageClass, sectionTitleClass } from "../components/ui";
+import { Markdown, UIBadge, UICard, backLink, pageClass, sectionTitleClass } from "../components/ui";
 import { essayLibrary, getEssayBySlug } from "../lib/essays";
-
-const backLink = css({
-  color: "zodiac.gold",
-  display: "inline-flex",
-  alignItems: "center",
-  fontFamily: "mono",
-  fontSize: "xs",
-  gap: "1.5",
-  letterSpacing: "0.14em",
-  textDecoration: "none",
-  textTransform: "uppercase",
-  opacity: 0.7,
-  _hover: { opacity: 1 },
-});
 
 const heroCard = css({
   position: "relative",
@@ -72,7 +58,7 @@ const articleHeader = css({
 });
 
 const articleLabel = css({
-  color: "rgba(245, 240, 232, 0.44)",
+  color: "rgba(245, 240, 232, 0.58)",
   fontFamily: "mono",
   fontSize: "xs",
   letterSpacing: "0.2em",
@@ -122,6 +108,8 @@ const relatedExcerpt = css({
 export function EssayDetailPage() {
   const params = useParams({ from: "/essays/$essaySlug" });
   const essay = () => getEssayBySlug(params().essaySlug);
+
+  createEffect(() => { const e = essay(); if (e) document.title = `${e.title} — Frequency Music`; });
   const related = () =>
     essayLibrary.filter((entry) => entry.slug !== params().essaySlug).slice(0, 3);
 
@@ -143,7 +131,7 @@ export function EssayDetailPage() {
       >
         {(entry) => (
           <>
-            <UICard class={heroCard}>
+            <UICard glass class={heroCard}>
               <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
                 <UIBadge tone="gold">{entry().dateLabel ?? "Research essay"}</UIBadge>
                 <UIBadge tone="cream">{entry().readTimeMinutes} min read</UIBadge>

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/solid-router";
-import { For } from "solid-js";
+import { For, onMount } from "solid-js";
 import { css } from "../../styled-system/css";
 import { UIBadge, UICard, pageClass, sectionTitleClass } from "../components/ui";
 import { essayLibrary } from "../lib/essays";
@@ -49,7 +49,7 @@ const heroFeaturedZone = css({
 });
 
 const eyebrow = css({
-  color: "rgba(200, 168, 75, 0.42)",
+  color: "rgba(200, 168, 75, 0.58)",
   fontFamily: "mono",
   fontSize: "9px",
   letterSpacing: "0.4em",
@@ -180,7 +180,7 @@ const essayExcerpt = css({
 });
 
 const essayFooter = css({
-  color: "rgba(245, 240, 232, 0.42)",
+  color: "rgba(245, 240, 232, 0.58)",
   fontFamily: "mono",
   fontSize: "9px",
   letterSpacing: "0.26em",
@@ -189,11 +189,13 @@ const essayFooter = css({
 });
 
 export function EssaysPage() {
+  onMount(() => { document.title = "Essays — Frequency Music"; });
+
   const [featured, ...archive] = essayLibrary;
 
   return (
     <section class={pageClass}>
-      <UICard class={heroCard}>
+      <UICard glass class={heroCard}>
         <div class={heroLayout}>
           <div class={heroLead}>
             <div class={eyebrow}>Written Essays</div>

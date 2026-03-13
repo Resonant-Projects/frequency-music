@@ -3,7 +3,6 @@ import { Dynamic } from "solid-js/web";
 import { css, cx } from "../../../styled-system/css";
 
 const cardClass = css({
-  backdropFilter: "blur(8px)",
   bg: "rgba(13, 6, 32, 0.72)",
   borderColor: "rgba(200, 168, 75, 0.22)",
   borderRadius: "l3",
@@ -12,11 +11,22 @@ const cardClass = css({
   p: "5",
 });
 
+const glassClass = css({
+  backdropFilter: "blur(8px)",
+});
+
 type UICardProps = JSX.HTMLAttributes<HTMLElement> & {
   as?: keyof JSX.IntrinsicElements;
+  glass?: boolean;
 };
 
 export function UICard(props: UICardProps) {
-  const { as = "section", class: className, ...rest } = props;
-  return <Dynamic component={as} {...rest} class={cx(cardClass, className)} />;
+  const { as = "section", class: className, glass, ...rest } = props;
+  return (
+    <Dynamic
+      component={as}
+      {...rest}
+      class={cx(cardClass, glass && glassClass, className)}
+    />
+  );
 }

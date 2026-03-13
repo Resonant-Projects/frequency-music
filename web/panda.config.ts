@@ -22,7 +22,7 @@ export default defineConfig({
         fonts: {
           display: { value: "'Cormorant Garamond', Georgia, serif" },
           body: { value: "'Cormorant Garamond', Georgia, serif" },
-          mono: { value: "'JetBrains Mono', 'IBM Plex Mono', monospace" },
+          mono: { value: "'JetBrains Mono', monospace" },
         },
       },
       semanticTokens: {
@@ -32,6 +32,7 @@ export default defineConfig({
             gold: { value: "#c8a84b" },
             violet: { value: "#8b5cf6" },
             cream: { value: "#f5f0e8" },
+            error: { value: "#f87171" },
             "glow-inner": { value: "#1a0f35" },
           },
         },

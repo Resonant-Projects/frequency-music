@@ -6,7 +6,7 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/solid-router";
-import { type Component, createEffect } from "solid-js";
+import { type Component, createEffect, createSignal, lazy } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
 import { isLocalAuthBypassEnabled } from "./integrations/authBypass";
 import {
@@ -16,7 +16,9 @@ import {
 import { AdminPage } from "./routes/admin";
 import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
-import { EssayDetailPage } from "./routes/essay-detail";
+const EssayDetailPage = lazy(() =>
+  import("./routes/essay-detail").then((m) => ({ default: m.EssayDetailPage })),
+);
 import { EssaysPage } from "./routes/essays";
 import { FeedbackPage } from "./routes/feedback";
 import { HypothesisDetailPage } from "./routes/hypothesis-detail";
@@ -24,9 +26,15 @@ import { HypothesesPage } from "./routes/hypotheses";
 import { IngestPage } from "./routes/ingest";
 import { RecipeDetailPage } from "./routes/recipe-detail";
 import { RecipesPage } from "./routes/recipes";
-import { WeeklyBriefDetailPage } from "./routes/weekly-brief-detail";
+const WeeklyBriefDetailPage = lazy(() =>
+  import("./routes/weekly-brief-detail").then((m) => ({
+    default: m.WeeklyBriefDetailPage,
+  })),
+);
 import { WeeklyTurnsPage } from "./routes/weekly-turns";
-import { Zodiac3D } from "./routes/zodiac-3d";
+const Zodiac3D = lazy(() =>
+  import("./routes/zodiac-3d").then((m) => ({ default: m.Zodiac3D })),
+);
 
 const appLinks = [
   { to: "/", label: "Home" },
@@ -41,32 +49,50 @@ const appLinks = [
   { to: "/admin", label: "Admin" },
 ] as const;
 
-const AppShell: Component = () => (
-  <div class="app-root">
-    <header class="app-header">
-      <div class="app-title">
-        <span class="app-title-mark">∴</span> Frequency Music
-        <UIBadge tone="gold" class="app-mode-badge">
-          PARK UI
-        </UIBadge>
-      </div>
-      <nav class="app-nav">
-        {appLinks.map((link) => (
-          <Link
-            to={link.to}
-            class="app-nav-link"
-            activeProps={{ class: "app-nav-link is-active" }}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-    </header>
-    <main class="app-main">
-      <Outlet />
-    </main>
-  </div>
-);
+const AppShell: Component = () => {
+  const [menuOpen, setMenuOpen] = createSignal(false);
+
+  return (
+    <div class="app-root">
+      <header class="app-header">
+        <div class="app-title">
+          <span class="app-title-mark">∴</span> Frequency Music
+          <UIBadge tone="gold" class="app-mode-badge">
+            PARK UI
+          </UIBadge>
+        </div>
+        <button
+          class="app-nav-toggle"
+          aria-expanded={menuOpen()}
+          aria-controls="app-nav-menu"
+          aria-label="Toggle navigation menu"
+          onClick={() => setMenuOpen((prev) => !prev)}
+        >
+          ≡
+        </button>
+        <nav
+          id="app-nav-menu"
+          class="app-nav"
+          classList={{ "is-open": menuOpen() }}
+        >
+          {appLinks.map((link) => (
+            <Link
+              to={link.to}
+              class="app-nav-link"
+              activeProps={{ class: "app-nav-link is-active" }}
+              onClick={() => setMenuOpen(false)}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </header>
+      <main class="app-main">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
 
 const RootLayout: Component = () => {
   if (isLocalAuthBypassEnabled()) {
