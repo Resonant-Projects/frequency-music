@@ -62,6 +62,7 @@ const AppShell: Component = () => {
           </UIBadge>
         </div>
         <button
+          type="button"
           class="app-nav-toggle"
           aria-expanded={menuOpen()}
           aria-controls="app-nav-menu"

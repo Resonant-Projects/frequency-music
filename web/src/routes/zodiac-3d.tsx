@@ -50,7 +50,8 @@ const pageContainer = css({
   height: "calc(100vh - var(--app-header-height))",
   background: "zodiac.void",
   color: "zodiac.cream",
-  overflow: "hidden",
+  overflowX: "hidden",
+  overflowY: { base: "auto", lg: "hidden" },
   fontFamily: "display",
   display: "flex",
   flexDirection: { base: "column", lg: "row" },
@@ -984,6 +985,7 @@ export function Zodiac3D() {
               <button
                 type="button"
                 class={sectorButton}
+                aria-pressed={selSector() === sector.id}
                 style={{
                   "border-color": selSector() === sector.id ? `${sector.color}55` : "rgba(200,168,75,0.1)",
                   background: selSector() === sector.id ? "rgba(200,168,75,0.05)" : "transparent",

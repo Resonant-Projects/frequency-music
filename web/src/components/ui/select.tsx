@@ -15,9 +15,6 @@ const selectClass = css({
     boxShadow: "0 0 0 1px rgba(200, 168, 75, 0.4)",
     outline: "none",
   },
-  _placeholder: {
-    color: "rgba(245, 240, 232, 0.5)",
-  },
 });
 
 export type UISelectProps = JSX.SelectHTMLAttributes<HTMLSelectElement>;

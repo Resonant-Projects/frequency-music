@@ -115,7 +115,7 @@ export function CompositionsPage() {
             >
               <option value="">Select recipe</option>
               <For each={recipes() ?? []}>
-                {(recipe: any) => (
+                {(recipe: { _id: string; title: string }) => (
                   <option value={String(recipe._id)}>{recipe.title}</option>
                 )}
               </For>
@@ -182,7 +182,7 @@ export function CompositionsPage() {
           >
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={compositions.data() ?? []}>
-                {(item: any) => (
+                {(item: { _id: string; status: string; artifactType: string; version: string; title: string }) => (
                   <div
                     data-testid="entity-row"
                     class={css({
