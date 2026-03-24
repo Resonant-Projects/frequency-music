@@ -92,6 +92,7 @@ Fields:
 - `title: string`
 - `question: string`
 - `hypothesis: string`
+- `whyThisMatters?: string`
 - `rationaleMd: string`
 - `sourceIds: Id<sources>[]`
 - `concepts?: string[]` (simple tags until you add concepts table)
@@ -111,6 +112,7 @@ Indexes:
 Fields:
 - `hypothesisId: Id<hypotheses>`
 - `title: string`
+- `whyThisMatters?: string`
 - `bodyMd: string`
 - `parameters: (same schema as extraction params)[]`
 - `dawChecklist: string[]`
@@ -146,7 +148,20 @@ Fields:
 - `participants: { name?: string, userId?: Id<users> }[]`
 - `contextMd?: string`
 - `feedbackMd: string`
-- `ratings?: { label: string, value: number, scaleMax: number }[]`
+- `ratings: {
+    bodilyPleasantness?: number,
+    goosebumps?: number,
+    perceivedConsonance?: number,
+    musicality?: number,
+    easeOfComposability?: number,
+    consonanceComputed?: number,
+    expandability?: number
+  }`
+- `bodyMapNotes?: string`
+- `feltQualities?: string[]`
+- `bodyMapTags?: string[]`
+- `standoutMoments?: string[]`
+- `expandVerdict?: "yes" | "maybe" | "no"`
 - `visibility: "private" | "followers" | "public"`
 - `createdAt: number`
 - `createdBy: Id<users>`

@@ -1342,7 +1342,7 @@ export function Zodiac3D() {
         <canvas ref={canvasRef} class={canvasEl} />
       </div>
 
-      <div class={`${sidebarContainer} zodiac-sidebar`}>
+      <div class={`${sidebarContainer} zodiac-scroll`}>
         <Show when={sidebarMode().kind === "overview"}>
           <SidebarOverview />
         </Show>

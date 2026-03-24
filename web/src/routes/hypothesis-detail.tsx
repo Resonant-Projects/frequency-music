@@ -181,6 +181,16 @@ export function HypothesisDetailPage() {
             <div class={sectionLabel}>Hypothesis</div>
             <p class={bodyClass}>{h().hypothesis}</p>
 
+            <Show when={h().whyThisMatters}>
+              {(value) => (
+                <>
+                  <hr class={goldDivider} />
+                  <div class={sectionLabel}>Why This Matters</div>
+                  <p class={bodyClass}>{value()}</p>
+                </>
+              )}
+            </Show>
+
             {/* Rationale */}
             <hr class={goldDivider} />
             <div class={sectionLabel}>Rationale</div>

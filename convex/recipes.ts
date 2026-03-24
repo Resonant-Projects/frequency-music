@@ -35,6 +35,7 @@ interface RecipeProtocol {
 
 interface ParsedRecipePayload {
   title: string;
+  whyThisMatters?: string;
   bodyMd: string;
   parameters: RecipeParameter[];
   dawChecklist: string[];
@@ -179,6 +180,8 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
 
   return {
     title: row.title,
+    whyThisMatters:
+      typeof row.whyThisMatters === "string" ? row.whyThisMatters : undefined,
     bodyMd: row.bodyMd,
     parameters,
     dawChecklist: row.dawChecklist as string[],
@@ -267,6 +270,7 @@ export const create = mutation({
   args: {
     hypothesisId: v.id("hypotheses"),
     title: v.string(),
+    whyThisMatters: v.optional(v.string()),
     bodyMd: v.string(),
     parameters: v.array(
       v.object({
@@ -314,6 +318,7 @@ export const update = mutation({
   args: {
     id: v.id("recipes"),
     title: v.optional(v.string()),
+    whyThisMatters: v.optional(v.string()),
     bodyMd: v.optional(v.string()),
     parameters: v.optional(v.array(recipeParameterValidator)),
     dawChecklist: v.optional(v.array(v.string())),
@@ -385,6 +390,9 @@ const RECIPE_USER_PROMPT = `Generate a DAW-ready recipe for this hypothesis:
 
 **Hypothesis**: {{hypothesis}}
 
+**Why This Matters**:
+{{whyThisMatters}}
+
 **Rationale**:
 {{rationale}}
 
@@ -399,6 +407,7 @@ Create a practical micro-study recipe that tests this hypothesis. Be specific ab
 Respond in JSON format:
 {
   "title": "Recipe title",
+  "whyThisMatters": "What musical or perceptual stake this recipe is trying to reveal",
   "bodyMd": "Markdown narrative with arrangement sketch and musical instructions",
   "parameters": [
     {"type": "tempo", "value": "108", "details": {"bpm": 108, "rationale": "..."}},
@@ -436,6 +445,7 @@ export const generateFromHypothesis = action({
     model: v.string(),
     generated: v.object({
       title: v.string(),
+      whyThisMatters: v.optional(v.string()),
       bodyMd: v.string(),
       parameters: v.array(recipeParameterValidator),
       dawChecklist: v.array(v.string()),
@@ -457,6 +467,10 @@ export const generateFromHypothesis = action({
     const prompt = RECIPE_USER_PROMPT.replace("{{title}}", hypothesis.title)
       .replace("{{question}}", hypothesis.question)
       .replace("{{hypothesis}}", hypothesis.hypothesis)
+      .replace(
+        "{{whyThisMatters}}",
+        hypothesis.whyThisMatters ?? "Not specified. Infer the musical stakes from the hypothesis and rationale.",
+      )
       .replace("{{rationale}}", hypothesis.rationaleMd)
       .replace("{{concepts}}", (hypothesis.concepts || []).join(", "));
 
@@ -504,6 +518,7 @@ export const generateFromHypothesis = action({
     const recipeId = await ctx.runMutation(api.recipes.create, {
       hypothesisId: args.hypothesisId,
       title: parsed.title,
+      whyThisMatters: parsed.whyThisMatters,
       bodyMd: parsed.bodyMd,
       parameters: parsed.parameters,
       dawChecklist: parsed.dawChecklist,

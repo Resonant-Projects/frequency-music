@@ -101,6 +101,7 @@ Create a weekly brief that:
 1. Summarizes research themes across hypotheses and recipes
 2. Prioritizes 3-10 actionable studio experiments
 3. Identifies open questions for future exploration
+4. Preserves the artistic stakes behind each idea, not just the procedural steps
 
 Format your output as a markdown document with:
 - Title and date range
@@ -109,7 +110,8 @@ Format your output as a markdown document with:
 - Themes section
 - Open questions section
 
-Be practical and DAW-focused. Each experiment should be completable in a single studio session.`;
+Be practical and DAW-focused. Each experiment should be completable in a single studio session.
+For each recommended experiment, explain both what to try and why it matters musically or perceptually.`;
 
 const BRIEF_USER_PROMPT = `Create a weekly research brief.
 
@@ -183,7 +185,7 @@ async function generateBriefCore(
   const hypothesesText = hypotheses
     .map(
       (h, i) =>
-        `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}`,
+        `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}\n   Why this matters: ${h.whyThisMatters ?? "Not specified"}`,
     )
     .join("\n\n");
 
@@ -195,7 +197,7 @@ async function generateBriefCore(
               .slice(0, 4)
               .map((p: BriefParameter) => `${p.type}: ${p.value}`)
               .join(", ");
-            return `${i + 1}. **${r.title}**\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
+            return `${i + 1}. **${r.title}**\n   Why this matters: ${r.whyThisMatters ?? "Not specified"}\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
           })
           .join("\n\n")
       : "No recipes yet - experiments will need recipe generation.";
@@ -249,7 +251,7 @@ async function generateBriefCore(
   const briefId = await ctx.runMutation(internal.weeklyBriefs.create, {
     weekOf,
     model: modelId,
-    promptVersion: "v1",
+    promptVersion: "v1.1",
     bodyMd: result.text,
     sourceIds: persistedSourceIds,
     recommendedHypothesisIds: hypotheses.map((h) => h._id),

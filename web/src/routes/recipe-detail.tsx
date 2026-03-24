@@ -182,6 +182,25 @@ export function RecipeDetailPage() {
                 )}
               </Show>
 
+              <Show when={r().whyThisMatters}>
+                {(value) => (
+                  <>
+                    <hr class={goldDivider} />
+                    <div class={sectionLabel}>Why This Matters</div>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.74)",
+                        fontFamily: "display",
+                        fontSize: "md",
+                        lineHeight: "1.7",
+                      })}
+                    >
+                      {value()}
+                    </p>
+                  </>
+                )}
+              </Show>
+
               {/* Body */}
               <hr class={goldDivider} />
               <div class={sectionLabel}>Body</div>

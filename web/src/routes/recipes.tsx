@@ -28,6 +28,7 @@ type RecipeRow = {
   _id: string;
   title: string;
   status: string;
+  whyThisMatters?: string;
   bodyMd: string;
   parameters: Array<{ type: string; value: string }>;
 };
@@ -70,6 +71,7 @@ export function RecipesPage() {
 
   const [hypothesisId, setHypothesisId] = createSignal("");
   const [title, setTitle] = createSignal("");
+  const [whyThisMatters, setWhyThisMatters] = createSignal("");
   const [bodyMd, setBodyMd] = createSignal("");
   const [parameters, setParameters] = createSignal("");
   const [checklist, setChecklist] = createSignal("");
@@ -78,16 +80,23 @@ export function RecipesPage() {
   async function submitRecipe(event: SubmitEvent) {
     event.preventDefault();
 
-    if (!hypothesisId() || !title().trim() || !bodyMd().trim()) {
-      setNotice("Hypothesis, title, and body are required.");
+    if (
+      !hypothesisId() ||
+      !title().trim() ||
+      !whyThisMatters().trim() ||
+      !bodyMd().trim()
+    ) {
+      setNotice("Hypothesis, title, why this matters, and body are required.");
       return;
     }
 
     try {
+      setNotice(null);
       await createRecipe(
         withDevBypassSecret({
           hypothesisId: hypothesisId() as Id<"hypotheses">,
           title: title().trim(),
+          whyThisMatters: whyThisMatters().trim(),
           bodyMd: bodyMd().trim(),
           parameters: parseParameters(parameters()),
           dawChecklist: parseChecklist(checklist()),
@@ -95,6 +104,7 @@ export function RecipesPage() {
       );
 
       setTitle("");
+      setWhyThisMatters("");
       setBodyMd("");
       setParameters("");
       setChecklist("");
@@ -152,6 +162,16 @@ export function RecipesPage() {
           value={title()}
           onInput={(event) => setTitle(event.currentTarget.value)}
           placeholder="16-bar harmonic drift study"
+        />
+
+        <label class={fieldLabelClass} for="recipe-why">
+          Why This Matters
+        </label>
+        <UITextarea
+          id="recipe-why"
+          value={whyThisMatters()}
+          onInput={(event) => setWhyThisMatters(event.currentTarget.value)}
+          placeholder="What is this recipe trying to reveal musically, perceptually, or compositionally?"
         />
 
         <label class={fieldLabelClass} for="recipe-body">
@@ -247,7 +267,8 @@ export function RecipesPage() {
               <For each={recipes.data() ?? []}>
                 {(recipe: RecipeRow) => (
                   <Link
-                    to={`/recipes/${recipe._id}`}
+                    to="/recipes/$recipeId"
+                    params={{ recipeId: recipe._id }}
                     data-testid="entity-row"
                     class={css({
                       borderColor: "rgba(200, 168, 75, 0.25)",
@@ -282,15 +303,26 @@ export function RecipesPage() {
                     <p
                       class={css({
                         color: "rgba(245, 240, 232, 0.62)",
-                        display: "-webkit-box",
+                        lineClamp: 3,
+                        marginBottom: recipe.whyThisMatters ? "2" : "0",
                         fontSize: "sm",
                         overflow: "hidden",
-                        WebkitBoxOrient: "vertical",
-                        WebkitLineClamp: 3,
                       })}
                     >
                       {recipe.bodyMd}
                     </p>
+                    <Show when={recipe.whyThisMatters}>
+                      {(value) => (
+                        <p
+                          class={css({
+                            color: "rgba(245, 240, 232, 0.48)",
+                            fontSize: "sm",
+                          })}
+                        >
+                          Why this matters: {value()}
+                        </p>
+                      )}
+                    </Show>
                   </Link>
                 )}
               </For>

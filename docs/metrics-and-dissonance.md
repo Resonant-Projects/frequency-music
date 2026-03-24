@@ -37,8 +37,16 @@ All metrics are rated per listener per artifact.
 - 3: workable with effort
 - 5: flows; easy to expand
 
+6) **Expandability (0–5)**
+- 0: interesting as a narrow study only
+- 3: could support a more developed sketch with care
+- 5: clearly wants to become a larger piece
+- Use this to separate “useful experiment” from “material with real compositional pull”
+
 Required qualitative notes:
 - body map (where it’s felt)
+- felt qualities tags (texture / mood / embodied character)
+- body map tags (quick location labels like chest, jaw, spine)
 - standout timestamps (“0:22 swell hits chest”)
 - what felt “off” (if anything)
 
@@ -102,6 +110,7 @@ Notes:
 ## Exit criteria suggestions (starter)
 - Expand if:
   - bodily pleasantness ≥ 3 AND ease ≥ 3
+  - AND expandability ≥ 3
   - AND (goosebumps ≥ 2 OR musicality ≥ 3)
 - Revise if:
   - ear consonance ≤ 2 OR computed consonance ≤ 0.4 (twice)

@@ -3,6 +3,20 @@ import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { listeningSessionReturnValidator } from "./validators";
 
+function assertOptionalZeroToFive(
+  value: number | undefined,
+  field: string,
+): void {
+  if (value === undefined) return;
+  if (value < 0 || value > 5) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: `${field} must be between 0 and 5`,
+      field,
+    });
+  }
+}
+
 export const listByComposition = query({
   args: { compositionId: v.id("compositions") },
   returns: v.array(listeningSessionReturnValidator),
@@ -48,9 +62,13 @@ export const create = mutation({
         musicality: v.optional(v.number()),
         easeOfComposability: v.optional(v.number()),
         consonanceComputed: v.optional(v.number()),
+        expandability: v.optional(v.number()),
       }),
     ),
     bodyMapNotes: v.optional(v.string()),
+    feltQualities: v.optional(v.array(v.string())),
+    bodyMapTags: v.optional(v.array(v.string())),
+    standoutMoments: v.optional(v.array(v.string())),
     expandVerdict: v.optional(
       v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
     ),
@@ -66,6 +84,7 @@ export const create = mutation({
         message: "Composition not found",
       });
     }
+    assertOptionalZeroToFive(args.ratings?.expandability, "ratings.expandability");
 
     return await ctx.db.insert("listeningSessions", {
       compositionId: args.compositionId,
@@ -74,6 +93,9 @@ export const create = mutation({
       feedbackMd: args.feedbackMd,
       ratings: args.ratings ?? {},
       bodyMapNotes: args.bodyMapNotes,
+      feltQualities: args.feltQualities,
+      bodyMapTags: args.bodyMapTags,
+      standoutMoments: args.standoutMoments,
       expandVerdict: args.expandVerdict,
       visibility: "private",
       createdBy: identity.subject,

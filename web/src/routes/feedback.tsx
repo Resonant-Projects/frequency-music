@@ -29,6 +29,31 @@ function parseParticipants(input: string) {
     .map((name) => ({ name, role: "collaborator" }));
 }
 
+function parseCommaSeparated(input: string) {
+  return input
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function parseLineSeparated(input: string) {
+  return input
+    .split("\n")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function parseOptionalRating(input: string) {
+  const value = input.trim();
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function truncate(text: string, maxLength: number) {
+  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
+}
+
 export function FeedbackPage() {
   onMount(() => { document.title = "Feedback — Frequency Music"; });
 
@@ -58,6 +83,10 @@ export function FeedbackPage() {
   const [pleasantness, setPleasantness] = createSignal("3");
   const [goosebumps, setGoosebumps] = createSignal("2");
   const [musicality, setMusicality] = createSignal("3");
+  const [expandability, setExpandability] = createSignal("");
+  const [feltQualities, setFeltQualities] = createSignal("");
+  const [bodyMapTags, setBodyMapTags] = createSignal("");
+  const [standoutMoments, setStandoutMoments] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
 
   async function submitSession(event: SubmitEvent) {
@@ -69,6 +98,11 @@ export function FeedbackPage() {
     }
 
     try {
+      const parsedFeltQualities = parseCommaSeparated(feltQualities());
+      const parsedBodyMapTags = parseCommaSeparated(bodyMapTags());
+      const parsedStandoutMoments = parseLineSeparated(standoutMoments());
+
+      setNotice(null);
       await createSession(
         withDevBypassSecret({
           compositionId: compositionId() as Id<"compositions">,
@@ -79,13 +113,26 @@ export function FeedbackPage() {
             bodilyPleasantness: Number(pleasantness()),
             goosebumps: Number(goosebumps()),
             musicality: Number(musicality()),
+            expandability: parseOptionalRating(expandability()),
           },
+          feltQualities:
+            parsedFeltQualities.length > 0 ? parsedFeltQualities : undefined,
+          bodyMapTags:
+            parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
+          standoutMoments:
+            parsedStandoutMoments.length > 0
+              ? parsedStandoutMoments
+              : undefined,
         }),
       );
 
       setParticipants("");
       setContextMd("");
       setFeedbackMd("");
+      setExpandability("");
+      setFeltQualities("");
+      setBodyMapTags("");
+      setStandoutMoments("");
       setNotice("Listening session logged.");
     } catch (error) {
       setNotice(`Failed to log session: ${String(error)}`);
@@ -149,7 +196,7 @@ export function FeedbackPage() {
             gap: "3",
             gridTemplateColumns: {
               base: "1fr",
-              md: "repeat(3, minmax(0, 1fr))",
+              md: "repeat(4, minmax(0, 1fr))",
             },
           })}
         >
@@ -192,7 +239,66 @@ export function FeedbackPage() {
               onInput={(event) => setMusicality(event.currentTarget.value)}
             />
           </div>
+          <div>
+            <label class={fieldLabelClass} for="feedback-expandability">
+              Expandability (0-5)
+            </label>
+            <UIInput
+              id="feedback-expandability"
+              type="number"
+              min="0"
+              max="5"
+              value={expandability()}
+              onInput={(event) => setExpandability(event.currentTarget.value)}
+              placeholder="4"
+            />
+          </div>
         </div>
+
+        <div
+          class={css({
+            display: "grid",
+            gap: "3",
+            gridTemplateColumns: {
+              base: "1fr",
+              md: "1fr 1fr",
+            },
+            marginTop: "3",
+          })}
+        >
+          <div>
+            <label class={fieldLabelClass} for="feedback-felt">
+              Felt Qualities
+            </label>
+            <UIInput
+              id="feedback-felt"
+              value={feltQualities()}
+              onInput={(event) => setFeltQualities(event.currentTarget.value)}
+              placeholder="weightless, suspended, glassy"
+            />
+          </div>
+          <div>
+            <label class={fieldLabelClass} for="feedback-body-tags">
+              Body Map Tags
+            </label>
+            <UIInput
+              id="feedback-body-tags"
+              value={bodyMapTags()}
+              onInput={(event) => setBodyMapTags(event.currentTarget.value)}
+              placeholder="chest, jaw, spine"
+            />
+          </div>
+        </div>
+
+        <label class={fieldLabelClass} for="feedback-standout">
+          Standout Moments
+        </label>
+        <UITextarea
+          id="feedback-standout"
+          value={standoutMoments()}
+          onInput={(event) => setStandoutMoments(event.currentTarget.value)}
+          placeholder={"0:22 low swell hits the chest\n0:46 harmony opens up"}
+        />
 
         <div
           class={css({
@@ -266,12 +372,58 @@ export function FeedbackPage() {
                         color: "rgba(245, 240, 232, 0.55)",
                         fontFamily: "mono",
                         fontSize: "xs",
+                        marginBottom:
+                          session.ratings?.expandability !== undefined ||
+                          (session.feltQualities?.length ?? 0) > 0
+                            ? "2"
+                            : "0",
                       })}
                     >
                       pleasantness: {session.ratings?.bodilyPleasantness ?? "-"}{" "}
                       · goosebumps: {session.ratings?.goosebumps ?? "-"} ·
                       musicality: {session.ratings?.musicality ?? "-"}
                     </p>
+                    <Show when={session.ratings?.expandability !== undefined}>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.62)",
+                          fontFamily: "mono",
+                          fontSize: "xs",
+                          marginBottom:
+                            (session.feltQualities?.length ?? 0) > 0 ||
+                            (session.standoutMoments?.length ?? 0) > 0
+                              ? "2"
+                              : "0",
+                        })}
+                      >
+                        expandability: {session.ratings?.expandability}
+                      </p>
+                    </Show>
+                    <Show when={(session.feltQualities?.length ?? 0) > 0}>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.62)",
+                          fontSize: "sm",
+                          marginBottom:
+                            (session.standoutMoments?.length ?? 0) > 0
+                              ? "2"
+                              : "0",
+                        })}
+                      >
+                        Felt: {session.feltQualities?.join(", ")}
+                      </p>
+                    </Show>
+                    <Show when={(session.standoutMoments?.length ?? 0) > 0}>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.55)",
+                          fontSize: "sm",
+                        })}
+                      >
+                        Standout:{" "}
+                        {truncate(session.standoutMoments?.slice(0, 2).join(" • ") ?? "", 160)}
+                      </p>
+                    </Show>
                   </div>
                 )}
               </For>

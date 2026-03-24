@@ -195,6 +195,7 @@ export default defineSchema({
     title: v.string(),
     question: v.string(),
     hypothesis: v.string(),
+    whyThisMatters: v.optional(v.string()),
     rationaleMd: v.string(),
     sourceIds: v.array(v.id("sources")),
     concepts: v.optional(v.array(v.string())),
@@ -235,6 +236,7 @@ export default defineSchema({
   recipes: defineTable({
     hypothesisId: v.id("hypotheses"),
     title: v.string(),
+    whyThisMatters: v.optional(v.string()),
     bodyMd: v.string(),
     parameters: v.array(compositionParameterValidator),
     dawChecklist: v.array(v.string()),
@@ -336,11 +338,15 @@ export default defineSchema({
       musicality: v.optional(v.number()),
       easeOfComposability: v.optional(v.number()),
       consonanceComputed: v.optional(v.number()),
+      expandability: v.optional(v.number()),
     }),
 
     // Feedback
     feedbackMd: v.string(),
     bodyMapNotes: v.optional(v.string()),
+    feltQualities: v.optional(v.array(v.string())),
+    bodyMapTags: v.optional(v.array(v.string())),
+    standoutMoments: v.optional(v.array(v.string())),
     expandVerdict: v.optional(
       v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
     ),

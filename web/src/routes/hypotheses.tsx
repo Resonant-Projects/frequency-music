@@ -21,6 +21,10 @@ import {
 } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
+function truncate(text: string, maxLength: number) {
+  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
+}
+
 export function HypothesesPage() {
   onMount(() => { document.title = "Hypotheses — Frequency Music"; });
 
@@ -45,6 +49,7 @@ export function HypothesesPage() {
   const [title, setTitle] = createSignal("");
   const [question, setQuestion] = createSignal("");
   const [statement, setStatement] = createSignal("");
+  const [whyThisMatters, setWhyThisMatters] = createSignal("");
   const [rationale, setRationale] = createSignal("");
   const [selectedSources, setSelectedSources] = createSignal<string[]>([]);
   const [notice, setNotice] = createSignal<string | null>(null);
@@ -60,8 +65,15 @@ export function HypothesesPage() {
   async function submitHypothesis(event: SubmitEvent) {
     event.preventDefault();
 
-    if (!title().trim() || !question().trim() || !statement().trim()) {
-      setNotice("Title, question, and hypothesis statement are required.");
+    if (
+      !title().trim() ||
+      !question().trim() ||
+      !statement().trim() ||
+      !whyThisMatters().trim()
+    ) {
+      setNotice(
+        "Title, question, hypothesis statement, and why this matters are required.",
+      );
       return;
     }
 
@@ -73,6 +85,7 @@ export function HypothesesPage() {
           title: title().trim(),
           question: question().trim(),
           hypothesis: statement().trim(),
+          whyThisMatters: whyThisMatters().trim(),
           rationaleMd: rationale().trim() || "Draft rationale.",
           sourceIds: selectedSources(),
           concepts: [],
@@ -82,6 +95,7 @@ export function HypothesesPage() {
       setTitle("");
       setQuestion("");
       setStatement("");
+      setWhyThisMatters("");
       setRationale("");
       setSelectedSources([]);
       setNotice("Hypothesis created.");
@@ -123,6 +137,16 @@ export function HypothesesPage() {
           value={statement()}
           onInput={(event) => setStatement(event.currentTarget.value)}
           placeholder="If we maintain stable fifth anchors while modulating upper partial clusters..."
+        />
+
+        <label class={fieldLabelClass} for="hyp-why">
+          Why This Matters
+        </label>
+        <UITextarea
+          id="hyp-why"
+          value={whyThisMatters()}
+          onInput={(event) => setWhyThisMatters(event.currentTarget.value)}
+          placeholder="Why does this deserve studio time? What would change in the music if it proves useful?"
         />
 
         <label class={fieldLabelClass} for="hyp-rationale">
@@ -267,6 +291,19 @@ export function HypothesesPage() {
                       >
                         {item.hypothesis}
                       </p>
+                      <Show when={item.whyThisMatters}>
+                        {(value) => (
+                          <p
+                            class={css({
+                              color: "rgba(245, 240, 232, 0.48)",
+                              fontSize: "sm",
+                              marginTop: "2",
+                            })}
+                          >
+                            Why this matters: {truncate(value(), 140)}
+                          </p>
+                        )}
+                      </Show>
                     </div>
                   </Link>
                 )}

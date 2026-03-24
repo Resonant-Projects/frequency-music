@@ -19,6 +19,7 @@ interface GeneratedHypothesisPayload {
   title: string;
   question: string;
   hypothesis: string;
+  whyThisMatters?: string;
   rationaleMd: string;
   concepts?: string[];
 }
@@ -103,6 +104,7 @@ export const create = mutation({
     title: v.string(),
     question: v.string(),
     hypothesis: v.string(),
+    whyThisMatters: v.optional(v.string()),
     rationaleMd: v.string(),
     sourceIds: v.array(v.id("sources")),
     concepts: v.optional(v.array(v.string())),
@@ -134,6 +136,7 @@ export const update = mutation({
     title: v.optional(v.string()),
     question: v.optional(v.string()),
     hypothesis: v.optional(v.string()),
+    whyThisMatters: v.optional(v.string()),
     rationaleMd: v.optional(v.string()),
     sourceIds: v.optional(v.array(v.id("sources"))),
     concepts: v.optional(v.array(v.string())),
@@ -210,6 +213,7 @@ A good hypothesis should:
 Format:
 - **Question**: What are we trying to find out?
 - **Hypothesis**: If/then statement (If we do X, then Y will occur because Z)
+- **Why This Matters**: What musical or perceptual stakes make this worth studio time
 - **Rationale**: Why we think this, citing claims
 - **Concepts**: Key terms and domains`;
 
@@ -235,6 +239,7 @@ Respond in JSON format:
   "title": "Short descriptive title",
   "question": "What question does this address?",
   "hypothesis": "If/then statement",
+  "whyThisMatters": "Why this deserves studio time and what would change musically if it holds",
   "rationaleMd": "Markdown explanation with citations to the claims",
   "concepts": ["concept1", "concept2"]
 }`;
@@ -255,6 +260,7 @@ export const generateFromExtraction = action({
       title: v.string(),
       question: v.string(),
       hypothesis: v.string(),
+      whyThisMatters: v.optional(v.string()),
       rationaleMd: v.string(),
       concepts: v.optional(v.array(v.string())),
     }),
@@ -327,6 +333,7 @@ export const generateFromExtraction = action({
       title: parsed.title,
       question: parsed.question,
       hypothesis: parsed.hypothesis,
+      whyThisMatters: parsed.whyThisMatters,
       rationaleMd: parsed.rationaleMd,
       sourceIds: [extraction.sourceId],
       concepts: parsed.concepts,
@@ -361,6 +368,7 @@ export const generateBatch = action({
           title: v.string(),
           question: v.string(),
           hypothesis: v.string(),
+          whyThisMatters: v.optional(v.string()),
           rationaleMd: v.string(),
           concepts: v.optional(v.array(v.string())),
         }),

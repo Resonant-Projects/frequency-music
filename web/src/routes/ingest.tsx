@@ -335,13 +335,13 @@ export function IngestPage() {
               <UIBadge tone="violet">{(feeds() ?? []).length} feeds</UIBadge>
             </div>
             <div
-              class={css({
+              class={`${css({
                 display: "grid",
                 gap: "2",
                 maxH: "96",
                 overflowY: "auto",
                 overflowX: "hidden",
-              })}
+              })} zodiac-scroll`}
             >
               <For each={feeds() ?? []}>
                 {(feed: FeedRow) => (

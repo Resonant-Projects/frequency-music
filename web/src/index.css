@@ -142,27 +142,32 @@ body {
   color: rgba(245, 240, 232, 0.7);
 }
 
-/* ── Zodiac sidebar scrollbar ── */
+/* ── Zodiac scrollbar — reusable for any scrollable container ── */
 
-.zodiac-sidebar::-webkit-scrollbar {
+.zodiac-scroll::-webkit-scrollbar {
   width: 5px;
 }
 
-.zodiac-sidebar::-webkit-scrollbar-track {
+.zodiac-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.zodiac-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(200, 168, 75, 0.25);
+.zodiac-scroll::-webkit-scrollbar-thumb {
+  background: rgba(200, 168, 75, 0);
   border-radius: 3px;
+  transition: background 0.3s ease;
 }
 
-.zodiac-sidebar::-webkit-scrollbar-thumb:hover {
+.zodiac-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(200, 168, 75, 0.25);
+}
+
+.zodiac-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(200, 168, 75, 0.45);
 }
 
 /* Firefox */
-.zodiac-sidebar {
+.zodiac-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(200, 168, 75, 0.25) transparent;
 }
