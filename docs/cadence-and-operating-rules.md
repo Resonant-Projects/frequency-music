@@ -1,5 +1,7 @@
 ## Cadence Rules (to keep it productive)
 
+> These cadence rules are the weekly operating rhythm. For the longer-term rationale behind them, see [meaning-roadmap.md](./meaning-roadmap.md) and [vision-and-meaning.md](./vision-and-meaning.md).
+
 ### Mon–Thu: Collect + Distill
 - goal: keep inbox near-zero “unextracted”
 - limit: no more than 15 minutes/day of triage unless you choose otherwise

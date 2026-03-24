@@ -35,6 +35,12 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - Convex backend: data + actions + scheduled jobs
 - n8n: RSS polling + Notion scheduled sync + webhook pushes
 
+## Strategic Docs
+- [Vision and Meaning](./docs/vision-and-meaning.md)
+- [Meaning Roadmap](./docs/meaning-roadmap.md)
+- [Implementation Checkpoints](./docs/implementation-checkpoints.md)
+- [Decision Log](./docs/decision-log.md)
+
 ## Local development
 1. Install dependencies:
    - `bun install`

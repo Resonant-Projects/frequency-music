@@ -1,5 +1,7 @@
 # Resonant Projects — Loop Spec v1.1 (Foundation)
 
+> This document defines the operational engine of the project. For the doctrine and strategic layer above it, see [vision-and-meaning.md](./vision-and-meaning.md) and [meaning-roadmap.md](./meaning-roadmap.md).
+
 ### Purpose
 
 Create a repeatable pipeline that turns (1) research + notes into (2) testable musical hypotheses and (3) composable recipes, then (4) captures embodied + musical outcomes and (5) iterates with traceability.
