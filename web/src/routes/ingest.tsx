@@ -339,7 +339,8 @@ export function IngestPage() {
                 display: "grid",
                 gap: "2",
                 maxH: "96",
-                overflow: "auto",
+                overflowY: "auto",
+                overflowX: "hidden",
               })}
             >
               <For each={feeds() ?? []}>
@@ -357,7 +358,7 @@ export function IngestPage() {
                       p: "3",
                     })}
                   >
-                    <div>
+                    <div class={css({ minW: 0, overflow: "hidden" })}>
                       <p class={css({ margin: 0 })}>{feed.name}</p>
                       <p
                         class={css({
@@ -365,6 +366,9 @@ export function IngestPage() {
                           fontFamily: "mono",
                           fontSize: "xs",
                           margin: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                         })}
                       >
                         {feed.type} · {feed.url}
