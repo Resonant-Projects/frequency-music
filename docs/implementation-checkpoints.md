@@ -19,29 +19,32 @@ Read this alongside:
 
 ### Phase 1: Rigor and Interpretation
 
+Status:
+- Phase 1A is landed in the current codebase: `whyThisMatters` on hypotheses and recipes, richer listening-session language, and weekly-brief / generation prompt support.
+- Phase 1B completes the remaining foundation: lightweight theses, claim-level confidence-vs-interest metadata, composition revision discipline, and UI/doc parity.
+
 #### Backend and schema
 
 - add a `theses` table
-- add `whyThisMatters` to hypotheses and recipes
-- add listening-session fields for embodied language and expandability
-- add source or extraction fields to distinguish interest from truth confidence
-- add revision metadata for compositions and recipe/composition revisions
+- add `thesisId` to hypotheses
+- add claim-level extraction metadata to distinguish interest from truth confidence
+- add revision metadata for compositions before lineage work
+- keep all new Phase 1B fields backward-compatible and optional where migration would add unnecessary churn
 
 #### Query and API
 
 - query active theses
 - query hypotheses grouped by thesis
 - return listening-session embodied metadata in existing composition/listening flows
-- return truth/interest metadata in extraction and source detail flows
+- return truth/interest metadata in extraction and source review flows
+- include linked thesis data in hypothesis detail responses
 
 #### UI and workflow
 
-- hypothesis create/edit flow includes `why this matters`
-- recipe surfaces include `why this matters`
-- feedback flow captures:
-  - body map or felt tags
-  - standout moments
-  - expandability score
+- hypothesis create/detail flow includes `why this matters`
+- recipe detail surfaces include `why this matters`
+- feedback flow captures body-map tags, felt qualities, standout moments, and expandability
+- hypothesis workflow can optionally attach a thesis
 - composition update flow prompts for what changed when revising
 
 #### AI prompt and generation
@@ -57,10 +60,10 @@ Read this alongside:
 
 #### Test expectations
 
-- creating a hypothesis requires or strongly validates `whyThisMatters`
+- creating a hypothesis still works with or without thesis linkage
 - listening session validates expandability range
 - revision flows cannot silently mutate multiple variables without recording the revision note
-- extraction/source displays can distinguish interesting from true
+- extraction/source displays can distinguish creative fertility from evidential confidence
 
 ### Phase 2: Represent Accumulated Learning
 

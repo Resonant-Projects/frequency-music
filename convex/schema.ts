@@ -22,6 +22,12 @@ const evidenceLevelValidator = v.union(
   v.literal("personal"),
 );
 
+const confidenceBandValidator = v.union(
+  v.literal("low"),
+  v.literal("medium"),
+  v.literal("high"),
+);
+
 // Parameter types - extensible string for AI flexibility
 // Common types: tempo, key, tuningSystem, rootNote, chordProgression,
 // rhythm, instrument, synthWaveform, harmonicProfile, frequency, note,
@@ -35,6 +41,8 @@ const compositionParameterValidator = v.object({
 const claimValidator = v.object({
   text: v.string(),
   evidenceLevel: evidenceLevelValidator,
+  truthConfidence: v.optional(confidenceBandValidator),
+  interestLevel: v.optional(confidenceBandValidator),
   citations: v.array(
     v.object({
       label: v.optional(v.string()),
@@ -189,6 +197,26 @@ export default defineSchema({
     .index("by_inputHash", ["inputHash"]),
 
   // ==========================================================================
+  // THESES - Lightweight organizing layer for related hypotheses
+  // ==========================================================================
+  theses: defineTable({
+    title: v.string(),
+    statement: v.string(),
+    descriptionMd: v.optional(v.string()),
+    status: v.union(
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("retired"),
+    ),
+    visibility: visibilityValidator,
+    createdBy: v.union(v.id("users"), v.literal("system")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_visibility_updatedAt", ["visibility", "updatedAt"]),
+
+  // ==========================================================================
   // HYPOTHESES - Testable claims derived from extractions
   // ==========================================================================
   hypotheses: defineTable({
@@ -197,6 +225,7 @@ export default defineSchema({
     hypothesis: v.string(),
     whyThisMatters: v.optional(v.string()),
     rationaleMd: v.string(),
+    thesisId: v.optional(v.id("theses")),
     sourceIds: v.array(v.id("sources")),
     concepts: v.optional(v.array(v.string())),
 
@@ -228,7 +257,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_status_updatedAt", ["status", "updatedAt"])
-    .index("by_visibility_updatedAt", ["visibility", "updatedAt"]),
+    .index("by_visibility_updatedAt", ["visibility", "updatedAt"])
+    .index("by_thesisId_updatedAt", ["thesisId", "updatedAt"]),
 
   // ==========================================================================
   // RECIPES - DAW-ready composition specifications
@@ -298,6 +328,8 @@ export default defineSchema({
     version: v.string(), // e.g., "v0.1"
     diffNote: v.optional(v.string()),
     versionOfId: v.optional(v.id("compositions")),
+    revisionParentId: v.optional(v.id("compositions")),
+    revisionVariable: v.optional(v.string()),
 
     // Lifecycle
     status: v.union(

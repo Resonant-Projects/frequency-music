@@ -13,9 +13,17 @@ const evidenceLevelValidator = v.union(
   v.literal("personal"),
 );
 
+const confidenceBandValidator = v.union(
+  v.literal("low"),
+  v.literal("medium"),
+  v.literal("high"),
+);
+
 const claimValidator = v.object({
   text: v.string(),
   evidenceLevel: evidenceLevelValidator,
+  truthConfidence: v.optional(confidenceBandValidator),
+  interestLevel: v.optional(confidenceBandValidator),
   citations: v.array(
     v.object({
       label: v.optional(v.string()),
@@ -150,6 +158,23 @@ export const extractionReturnValidator = v.object({
 // HYPOTHESIS
 // ============================================================================
 
+export const thesisReturnValidator = v.object({
+  _id: v.id("theses"),
+  _creationTime: v.number(),
+  title: v.string(),
+  statement: v.string(),
+  descriptionMd: v.optional(v.string()),
+  status: v.union(
+    v.literal("active"),
+    v.literal("paused"),
+    v.literal("retired"),
+  ),
+  visibility: visibilityValidator,
+  createdBy: createdByValidator,
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
 const hypothesisStatusValidator = v.union(
   v.literal("draft"),
   v.literal("queued"),
@@ -167,6 +192,7 @@ export const hypothesisReturnValidator = v.object({
   hypothesis: v.string(),
   whyThisMatters: v.optional(v.string()),
   rationaleMd: v.string(),
+  thesisId: v.optional(v.id("theses")),
   sourceIds: v.array(v.id("sources")),
   concepts: v.optional(v.array(v.string())),
   status: hypothesisStatusValidator,
@@ -249,6 +275,8 @@ export const compositionReturnValidator = v.object({
   version: v.string(),
   diffNote: v.optional(v.string()),
   versionOfId: v.optional(v.id("compositions")),
+  revisionParentId: v.optional(v.id("compositions")),
+  revisionVariable: v.optional(v.string()),
   status: v.union(
     v.literal("idea"),
     v.literal("in_progress"),

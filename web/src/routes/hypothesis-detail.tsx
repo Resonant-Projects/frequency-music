@@ -8,10 +8,13 @@ import {
   UICard,
   backLink,
   detailTitleClass,
+  fieldLabelClass,
   goldDivider,
   metaLine,
   pageClass,
   sectionLabel,
+  UISelect,
+  UITextarea,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
 import { createMutation, createQuery } from "../integrations/convex";
@@ -65,12 +68,27 @@ export function HypothesisDetailPage() {
   const hypothesis = createQuery(convexApi.hypotheses.get, () => ({
     id: params().hypothesisId as Id<"hypotheses">,
   }));
+  const theses = createQuery(convexApi.theses.list, () => ({
+    limit: 100,
+  }));
 
-  createEffect(() => { const h = hypothesis(); if (h) document.title = `${h.title} — Frequency Music`; });
+  createEffect(() => {
+    const h = hypothesis();
+    if (h) document.title = `${h.title} — Frequency Music`;
+  });
 
   const updateHypothesis = createMutation(convexApi.hypotheses.update);
   const [notice, setNotice] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
+  const [whyThisMattersDraft, setWhyThisMattersDraft] = createSignal("");
+  const [thesisIdDraft, setThesisIdDraft] = createSignal("");
+
+  createEffect(() => {
+    const row = hypothesis();
+    if (!row) return;
+    setWhyThisMattersDraft(row.whyThisMatters ?? "");
+    setThesisIdDraft(row.thesis?._id ? String(row.thesis._id) : "");
+  });
 
   async function setStatus(status: Status) {
     await updateHypothesis(
@@ -122,6 +140,29 @@ export function HypothesisDetailPage() {
     }
   }
 
+  async function saveMeaningMetadata() {
+    setSaving(true);
+    setNotice(null);
+    try {
+      await updateHypothesis(
+        withDevBypassSecret({
+          id: params().hypothesisId as Id<"hypotheses">,
+          whyThisMatters: whyThisMattersDraft().trim() || undefined,
+          thesisId: thesisIdDraft() ? (thesisIdDraft() as Id<"theses">) : null,
+        }),
+      );
+      setNotice("Meaning metadata updated.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Failed to update meaning metadata.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <section class={pageClass}>
       <div>
@@ -134,9 +175,7 @@ export function HypothesisDetailPage() {
         when={hypothesis()}
         fallback={
           <UICard>
-            <p class={css({ color: "zodiac.cream" })}>
-              Loading hypothesis...
-            </p>
+            <p class={css({ color: "zodiac.cream" })}>Loading hypothesis...</p>
           </UICard>
         }
       >
@@ -153,9 +192,7 @@ export function HypothesisDetailPage() {
               })}
             >
               <UIBadge tone="gold">{h().status}</UIBadge>
-              <UIBadge tone="violet">
-                {h().sourceIds.length} citations
-              </UIBadge>
+              <UIBadge tone="violet">{h().sourceIds.length} citations</UIBadge>
               <Show when={h().resolution}>
                 {(res) => <UIBadge tone="cream">{res()}</UIBadge>}
               </Show>
@@ -191,6 +228,17 @@ export function HypothesisDetailPage() {
               )}
             </Show>
 
+            <Show when={h().thesis}>
+              {(thesis) => (
+                <>
+                  <hr class={goldDivider} />
+                  <div class={sectionLabel}>Linked Thesis</div>
+                  <p class={questionClass}>{thesis().title}</p>
+                  <p class={bodyClass}>{thesis().statement}</p>
+                </>
+              )}
+            </Show>
+
             {/* Rationale */}
             <hr class={goldDivider} />
             <div class={sectionLabel}>Rationale</div>
@@ -220,9 +268,7 @@ export function HypothesisDetailPage() {
                 })}
               >
                 <For each={h().openQuestions}>
-                  {(q) => (
-                    <li class={css({ py: "1" })}>{q}</li>
-                  )}
+                  {(q) => <li class={css({ py: "1" })}>{q}</li>}
                 </For>
               </ul>
             </Show>
@@ -242,9 +288,7 @@ export function HypothesisDetailPage() {
                           mb: "1",
                         })}
                       >
-                        <UIBadge tone="cream">
-                          {source.type}
-                        </UIBadge>
+                        <UIBadge tone="cream">{source.type}</UIBadge>
                       </div>
                       <div
                         class={css({
@@ -284,6 +328,53 @@ export function HypothesisDetailPage() {
             </Show>
 
             {/* Status Controls */}
+            <hr class={goldDivider} />
+            <div class={sectionLabel}>Meaning Metadata</div>
+            <div class={css({ display: "grid", gap: "3", mb: "4" })}>
+              <div>
+                <label class={fieldLabelClass} for="hyp-detail-thesis">
+                  Thesis
+                </label>
+                <UISelect
+                  id="hyp-detail-thesis"
+                  value={thesisIdDraft()}
+                  onChange={(event) =>
+                    setThesisIdDraft(event.currentTarget.value)
+                  }
+                >
+                  <option value="">No thesis yet</option>
+                  <For each={theses() ?? []}>
+                    {(thesis: Doc<"theses">) => (
+                      <option value={String(thesis._id)}>
+                        {thesis.title} ({thesis.status})
+                      </option>
+                    )}
+                  </For>
+                </UISelect>
+              </div>
+              <div>
+                <label class={fieldLabelClass} for="hyp-detail-why">
+                  Why This Matters
+                </label>
+                <UITextarea
+                  id="hyp-detail-why"
+                  value={whyThisMattersDraft()}
+                  onInput={(event) =>
+                    setWhyThisMattersDraft(event.currentTarget.value)
+                  }
+                />
+              </div>
+              <div class={css({ display: "flex", justifyContent: "flex-end" })}>
+                <UIButton
+                  variant="solid"
+                  disabled={saving()}
+                  onClick={() => void saveMeaningMetadata()}
+                >
+                  Save Meaning Metadata
+                </UIButton>
+              </div>
+            </div>
+
             <hr class={goldDivider} />
             <div class={sectionLabel}>Status</div>
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>

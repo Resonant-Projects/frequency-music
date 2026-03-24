@@ -50,6 +50,25 @@ export const list = query({
           claims: v.number(),
           parameters: v.number(),
           confidence: v.number(),
+          claimPreviews: v.array(
+            v.object({
+              text: v.string(),
+              truthConfidence: v.optional(
+                v.union(
+                  v.literal("low"),
+                  v.literal("medium"),
+                  v.literal("high"),
+                ),
+              ),
+              interestLevel: v.optional(
+                v.union(
+                  v.literal("low"),
+                  v.literal("medium"),
+                  v.literal("high"),
+                ),
+              ),
+            }),
+          ),
         }),
         v.null(),
       ),
@@ -116,6 +135,13 @@ export const list = query({
                 claims: latestExtraction.claims.length,
                 parameters: latestExtraction.compositionParameters.length,
                 confidence: latestExtraction.confidence,
+                claimPreviews: latestExtraction.claims
+                  .slice(0, 3)
+                  .map((claim) => ({
+                    text: claim.text,
+                    truthConfidence: claim.truthConfidence,
+                    interestLevel: claim.interestLevel,
+                  })),
               }
             : null,
         };

@@ -70,6 +70,12 @@ Be rigorous about evidence levels:
 - speculative: Theoretical proposals without direct evidence
 - personal: Your own inferences from the text
 
+For every claim, separate:
+- truthConfidence: how confident the source makes you that the claim is well-supported
+- interestLevel: how creatively fertile the claim seems for composition work
+
+Use low|medium|high for both fields. These are not true/false labels.
+
 For composition parameters, be specific about values and units. If a claim mentions "432 Hz tuning," extract that as a parameter with type "frequency" or "rootNote."`;
 
 const EXTRACT_USER_PROMPT = `Analyze this source and extract structured information.
@@ -88,6 +94,8 @@ Respond with a JSON object containing:
     {
       "text": "The specific claim being made",
       "evidenceLevel": "peer_reviewed|preprint|anecdotal|speculative|personal",
+      "truthConfidence": "low|medium|high",
+      "interestLevel": "low|medium|high",
       "citations": [
         {"quote": "supporting quote from the text", "label": "optional label"}
       ]
@@ -115,6 +123,8 @@ interface ExtractionResult {
   claims: Array<{
     text: string;
     evidenceLevel: string;
+    truthConfidence?: string;
+    interestLevel?: string;
     citations: Array<{ quote?: string; label?: string }>;
   }>;
   compositionParameters: Array<{
@@ -124,6 +134,14 @@ interface ExtractionResult {
   }>;
   topics: string[];
   openQuestions: string[];
+}
+
+function parseConfidenceBand(
+  value: unknown,
+): "low" | "medium" | "high" | undefined {
+  return value === "low" || value === "medium" || value === "high"
+    ? value
+    : undefined;
 }
 
 /**
@@ -159,7 +177,7 @@ export const extractSource = action({
 
     // Check if already extracted (skip unless forced)
     if (source.status === "extracted" && !args.force) {
-      return { skipped: true, reason: "already extracted" };
+      return { skipped: true as const, reason: "already extracted" };
     }
 
     // Get content
@@ -172,7 +190,7 @@ export const extractSource = action({
         blockedDetails: "No text content available for extraction",
         devBypassSecret: args.devBypassSecret,
       });
-      return { skipped: true, reason: "no content" };
+      return { skipped: true as const, reason: "no content" };
     }
 
     // Mark as extracting
@@ -199,7 +217,7 @@ export const extractSource = action({
         model,
         system: EXTRACT_SYSTEM_PROMPT,
         prompt: userPrompt,
-        maxTokens: 4096,
+        maxOutputTokens: 4096,
       });
 
       if (!assistantMessage) {
@@ -216,7 +234,7 @@ export const extractSource = action({
 
       // Compute input hash for deduplication
       const encoder = new TextEncoder();
-      const hashData = encoder.encode(`${content}extract_v1`);
+      const hashData = encoder.encode(`${content}extract_v2`);
       const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const inputHash = hashArray
@@ -234,19 +252,21 @@ export const extractSource = action({
           status: "extracted",
           devBypassSecret: args.devBypassSecret,
         });
-        return { skipped: true, reason: "duplicate extraction" };
+        return { skipped: true as const, reason: "duplicate extraction" };
       }
 
       // Store the extraction
       await ctx.runMutation(internal.extract.storeExtraction, {
         sourceId: args.sourceId,
         model: modelId,
-        promptVersion: "extract_v1",
+        promptVersion: "extract_v2",
         inputHash,
         summary: extraction.summary,
         claims: extraction.claims.map((c) => ({
           text: c.text,
           evidenceLevel: c.evidenceLevel as any,
+          truthConfidence: parseConfidenceBand(c.truthConfidence),
+          interestLevel: parseConfidenceBand(c.interestLevel),
           citations: c.citations || [],
         })),
         compositionParameters: extraction.compositionParameters.map((p) => ({
@@ -267,7 +287,7 @@ export const extractSource = action({
       });
 
       return {
-        success: true,
+        success: true as const,
         model: modelId,
         summary: extraction.summary,
         claimCount: extraction.claims.length,
@@ -313,6 +333,12 @@ export const storeExtraction = internalMutation({
             url: v.optional(v.string()),
             quote: v.optional(v.string()),
           }),
+        ),
+        truthConfidence: v.optional(
+          v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+        ),
+        interestLevel: v.optional(
+          v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
         ),
       }),
     ),

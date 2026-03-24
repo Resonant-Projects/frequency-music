@@ -67,6 +67,8 @@ Fields:
 - `claims: {
     text: string,
     evidenceLevel: "peer_reviewed"|"preprint"|"anecdotal"|"speculative"|"personal",
+    truthConfidence?: "low"|"medium"|"high",
+    interestLevel?: "low"|"medium"|"high",
     citations: { label?: string, url?: string, quote?: string }[]
   }[]`
 - `compositionParameters: {
@@ -87,28 +89,46 @@ Indexes:
 - `by_sourceId_createdAt (sourceId, createdAt)`
 - `by_inputHash (inputHash)` // prevent re-run duplicates
 
-## 4) hypotheses
+## 4) theses
+Fields:
+- `title: string`
+- `statement: string`
+- `descriptionMd?: string`
+- `status: "active" | "paused" | "retired"`
+- `visibility: "private" | "followers" | "public"`
+- `createdBy: Id<users> | "system"`
+- `createdAt: number`
+- `updatedAt: number`
+
+Indexes:
+- `by_status_updatedAt (status, updatedAt)`
+- `by_visibility_updatedAt (visibility, updatedAt)`
+
+## 5) hypotheses
 Fields:
 - `title: string`
 - `question: string`
 - `hypothesis: string`
 - `whyThisMatters?: string`
 - `rationaleMd: string`
+- `thesisId?: Id<theses>`
 - `sourceIds: Id<sources>[]`
 - `concepts?: string[]` (simple tags until you add concepts table)
-- `status: "draft" | "active" | "retired"`
+- `status: "draft" | "queued" | "active" | "evaluated" | "revised" | "retired"`
+- `resolution?: "supported" | "inconclusive" | "contradicted"`
 - `visibility: "private" | "followers" | "public"`
 - `versionOfId?: Id<hypotheses>`
 - `openQuestions?: string[]`
 - `createdAt: number`
 - `updatedAt: number`
-- `createdBy: Id<users>`
+- `createdBy: Id<users> | "system"`
 
 Indexes:
 - `by_status_updatedAt (status, updatedAt)`
 - `by_visibility_updatedAt (visibility, updatedAt)`
+- `by_thesisId_updatedAt (thesisId, updatedAt)`
 
-## 5) recipes
+## 6) recipes
 Fields:
 - `hypothesisId: Id<hypotheses>`
 - `title: string`
@@ -116,33 +136,49 @@ Fields:
 - `bodyMd: string`
 - `parameters: (same schema as extraction params)[]`
 - `dawChecklist: string[]`
+- `protocol?: {
+    studyType: "litmus" | "comparison",
+    durationSecs: number,
+    panelPlanned: string[],
+    listeningContext?: string,
+    listeningMethod?: string,
+    baselineArtifactId?: Id<compositions>,
+    whatVaries: string[],
+    whatStaysConstant: string[]
+  }`
 - `status: "draft" | "in_use" | "archived"`
 - `visibility: "private" | "followers" | "public"`
 - `createdAt: number`
 - `updatedAt: number`
-- `createdBy: Id<users>`
+- `createdBy: Id<users> | "system"`
 
 Indexes:
 - `by_hypothesisId_updatedAt (hypothesisId, updatedAt)`
 - `by_status_updatedAt (status, updatedAt)`
 
-## 6) compositions
+## 7) compositions
 Fields:
 - `title: string`
 - `recipeId: Id<recipes>`
+- `artifactType: "microStudy" | "expandedStudy" | "fullTrack"`
 - `status: "idea" | "in_progress" | "rendered" | "published"`
 - `projectNotesMd?: string`
 - `links?: { label: string, url: string }[]`
+- `version: string`
+- `diffNote?: string`
+- `versionOfId?: Id<compositions>`
+- `revisionParentId?: Id<compositions>`
+- `revisionVariable?: string`
 - `visibility: "private" | "followers" | "public"`
 - `createdAt: number`
 - `updatedAt: number`
-- `createdBy: Id<users>`
+- `createdBy: Id<users> | "system"`
 
 Indexes:
 - `by_recipeId_updatedAt (recipeId, updatedAt)`
 - `by_status_updatedAt (status, updatedAt)`
 
-## 7) listeningSessions
+## 8) listeningSessions
 Fields:
 - `compositionId: Id<compositions>`
 - `participants: { name?: string, userId?: Id<users> }[]`
@@ -169,7 +205,7 @@ Fields:
 Indexes:
 - `by_compositionId_createdAt (compositionId, createdAt)`
 
-## 8) weeklyBriefs
+## 9) weeklyBriefs
 Fields:
 - `weekOf: string` (e.g. "2026-02-02" Monday)
 - `model: string`

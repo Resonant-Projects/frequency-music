@@ -11,6 +11,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UISelect,
   UITextarea,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
@@ -26,7 +27,9 @@ function truncate(text: string, maxLength: number) {
 }
 
 export function HypothesesPage() {
-  onMount(() => { document.title = "Hypotheses — Frequency Music"; });
+  onMount(() => {
+    document.title = "Hypotheses — Frequency Music";
+  });
 
   const hypotheses = createQueryWithStatus(
     convexApi.hypotheses.listByStatus,
@@ -37,8 +40,15 @@ export function HypothesesPage() {
   const recentSources = createQuery(convexApi.sources.listRecent, () => ({
     limit: 20,
   }));
+  const activeTheses = createQuery(convexApi.theses.list, () => ({
+    status: "active" as const,
+    limit: 50,
+  }));
   const recentSourceRows = createMemo<Doc<"sources">[]>(
     () => (recentSources() ?? []) as Doc<"sources">[],
+  );
+  const thesisRows = createMemo<Doc<"theses">[]>(
+    () => (activeTheses() ?? []) as Doc<"theses">[],
   );
   const hypothesisRows = createMemo<Doc<"hypotheses">[]>(
     () => (hypotheses.data() ?? []) as Doc<"hypotheses">[],
@@ -51,6 +61,7 @@ export function HypothesesPage() {
   const [statement, setStatement] = createSignal("");
   const [whyThisMatters, setWhyThisMatters] = createSignal("");
   const [rationale, setRationale] = createSignal("");
+  const [thesisId, setThesisId] = createSignal("");
   const [selectedSources, setSelectedSources] = createSignal<string[]>([]);
   const [notice, setNotice] = createSignal<string | null>(null);
 
@@ -87,6 +98,9 @@ export function HypothesesPage() {
           hypothesis: statement().trim(),
           whyThisMatters: whyThisMatters().trim(),
           rationaleMd: rationale().trim() || "Draft rationale.",
+          thesisId: thesisId().trim()
+            ? (thesisId().trim() as Doc<"theses">["_id"])
+            : undefined,
           sourceIds: selectedSources(),
           concepts: [],
         }),
@@ -97,6 +111,7 @@ export function HypothesesPage() {
       setStatement("");
       setWhyThisMatters("");
       setRationale("");
+      setThesisId("");
       setSelectedSources([]);
       setNotice("Hypothesis created.");
     } catch (error) {
@@ -158,6 +173,22 @@ export function HypothesesPage() {
           onInput={(event) => setRationale(event.currentTarget.value)}
           placeholder="Reference extracted claims and why this is testable in one weekly turn."
         />
+
+        <label class={fieldLabelClass} for="hyp-thesis">
+          Thesis
+        </label>
+        <UISelect
+          id="hyp-thesis"
+          value={thesisId()}
+          onChange={(event) => setThesisId(event.currentTarget.value)}
+        >
+          <option value="">No thesis yet</option>
+          <For each={thesisRows()}>
+            {(thesis) => (
+              <option value={String(thesis._id)}>{thesis.title}</option>
+            )}
+          </For>
+        </UISelect>
 
         <div class={css({ marginTop: "3" })}>
           <p class={fieldLabelClass}>Source Citations</p>
@@ -227,15 +258,18 @@ export function HypothesesPage() {
           <Show
             when={hypothesisRows().length > 0}
             fallback={
-              <p class={css({
-                color: "rgba(245, 240, 232, 0.55)",
-                fontFamily: "display",
-                fontSize: "md",
-                lineHeight: "1.6",
-                textAlign: "center",
-                py: "8",
-              })}>
-                No hypotheses yet. Generate one from an extraction or create one above.
+              <p
+                class={css({
+                  color: "rgba(245, 240, 232, 0.55)",
+                  fontFamily: "display",
+                  fontSize: "md",
+                  lineHeight: "1.6",
+                  textAlign: "center",
+                  py: "8",
+                })}
+              >
+                No hypotheses yet. Generate one from an extraction or create one
+                above.
               </p>
             }
           >
@@ -263,6 +297,7 @@ export function HypothesesPage() {
                       <div
                         class={css({
                           display: "flex",
+                          flexWrap: "wrap",
                           gap: "2",
                           marginBottom: "2",
                         })}
@@ -271,6 +306,9 @@ export function HypothesesPage() {
                         <UIBadge tone="violet">
                           {item.sourceIds.length} citations
                         </UIBadge>
+                        <Show when={item.thesisId}>
+                          <UIBadge tone="gold">linked thesis</UIBadge>
+                        </Show>
                       </div>
                       <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
                         {item.title}

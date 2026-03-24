@@ -21,7 +21,9 @@ import {
 import { convexApi } from "../integrations/convex/api";
 
 export function CompositionsPage() {
-  onMount(() => { document.title = "Compositions — Frequency Music"; });
+  onMount(() => {
+    document.title = "Compositions — Frequency Music";
+  });
 
   const compositions = createQueryWithStatus(
     convexApi.compositions.list,
@@ -39,6 +41,8 @@ export function CompositionsPage() {
   const [title, setTitle] = createSignal("");
   const [recipeId, setRecipeId] = createSignal("");
   const [artifactType, setArtifactType] = createSignal("microStudy");
+  const [revisionParentId, setRevisionParentId] = createSignal("");
+  const [revisionVariable, setRevisionVariable] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
 
   async function submitComposition(event: SubmitEvent) {
@@ -46,6 +50,10 @@ export function CompositionsPage() {
 
     if (!title().trim() || !recipeId()) {
       setNotice("Title and recipe are required.");
+      return;
+    }
+    if (revisionParentId().trim() && !revisionVariable().trim()) {
+      setNotice("Changed Variable is required when this is a revision.");
       return;
     }
 
@@ -58,9 +66,15 @@ export function CompositionsPage() {
             | "microStudy"
             | "expandedStudy"
             | "fullTrack",
+          revisionParentId: revisionParentId().trim()
+            ? (revisionParentId().trim() as Id<"compositions">)
+            : undefined,
+          revisionVariable: revisionVariable().trim() || undefined,
         }),
       );
       setTitle("");
+      setRevisionParentId("");
+      setRevisionVariable("");
       setNotice("Composition created.");
     } catch (error) {
       setNotice(`Failed to create composition: ${String(error)}`);
@@ -140,6 +154,66 @@ export function CompositionsPage() {
 
         <div
           class={css({
+            display: "grid",
+            gap: "3",
+            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            marginTop: "3",
+          })}
+        >
+          <div>
+            <label class={fieldLabelClass} for="composition-revision-parent">
+              Revision Of
+            </label>
+            <UISelect
+              id="composition-revision-parent"
+              value={revisionParentId()}
+              onChange={(event) =>
+                setRevisionParentId(event.currentTarget.value)
+              }
+            >
+              <option value="">Original composition</option>
+              <For each={compositions.data() ?? []}>
+                {(item: { _id: string; title: string; version: string }) => (
+                  <option value={String(item._id)}>
+                    {item.title} ({item.version})
+                  </option>
+                )}
+              </For>
+            </UISelect>
+          </div>
+
+          <Show when={revisionParentId()}>
+            <div>
+              <label
+                class={fieldLabelClass}
+                for="composition-revision-variable"
+              >
+                Changed Variable
+              </label>
+              <UIInput
+                id="composition-revision-variable"
+                value={revisionVariable()}
+                onInput={(event) =>
+                  setRevisionVariable(event.currentTarget.value)
+                }
+                placeholder="tuning, tempo, timbre, rhythm density, voicing..."
+              />
+              <p
+                class={css({
+                  color: "rgba(245, 240, 232, 0.58)",
+                  fontSize: "xs",
+                  mt: "2",
+                })}
+              >
+                Name the one major variable this revision is testing: tuning,
+                tempo, timbre, rhythm density, voicing, etc.
+              </p>
+            </div>
+          </Show>
+        </div>
+
+        <div
+          class={css({
             alignItems: "center",
             display: "flex",
             justifyContent: "space-between",
@@ -168,70 +242,117 @@ export function CompositionsPage() {
           <Show
             when={(compositions.data() ?? []).length > 0}
             fallback={
-              <p class={css({
-                color: "rgba(245, 240, 232, 0.55)",
-                fontFamily: "display",
-                fontSize: "md",
-                lineHeight: "1.6",
-                textAlign: "center",
-                py: "8",
-              })}>
+              <p
+                class={css({
+                  color: "rgba(245, 240, 232, 0.55)",
+                  fontFamily: "display",
+                  fontSize: "md",
+                  lineHeight: "1.6",
+                  textAlign: "center",
+                  py: "8",
+                })}
+              >
                 No compositions yet. Create one above to begin.
               </p>
             }
           >
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={compositions.data() ?? []}>
-                {(item: { _id: string; status: string; artifactType: string; version: string; title: string }) => (
-                  <div
-                    data-testid="entity-row"
-                    class={css({
-                      borderColor: "rgba(200, 168, 75, 0.22)",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      p: "4",
-                    })}
-                  >
+                {(item: {
+                  _id: string;
+                  status: string;
+                  artifactType: string;
+                  version: string;
+                  title: string;
+                  revisionParentId?: string;
+                  revisionVariable?: string;
+                }) => {
+                  const revisionParent = () =>
+                    (compositions.data() ?? []).find(
+                      (candidate: { _id: string }) =>
+                        String(candidate._id) === String(item.revisionParentId),
+                    ) as { title: string } | undefined;
+
+                  return (
                     <div
+                      data-testid="entity-row"
                       class={css({
-                        display: "flex",
-                        gap: "2",
-                        marginBottom: "2",
+                        borderColor: "rgba(200, 168, 75, 0.22)",
+                        borderRadius: "l2",
+                        borderWidth: "1px",
+                        p: "4",
                       })}
                     >
-                      <UIBadge tone="gold">{item.status}</UIBadge>
-                      <UIBadge tone="violet">{item.artifactType}</UIBadge>
-                      <UIBadge tone="cream">{item.version}</UIBadge>
-                    </div>
+                      <div
+                        class={css({
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "2",
+                          marginBottom: "2",
+                        })}
+                      >
+                        <UIBadge tone="gold">{item.status}</UIBadge>
+                        <UIBadge tone="violet">{item.artifactType}</UIBadge>
+                        <UIBadge tone="cream">{item.version}</UIBadge>
+                        <Show when={item.revisionVariable}>
+                          <UIBadge tone="gold">
+                            variable: {item.revisionVariable}
+                          </UIBadge>
+                        </Show>
+                      </div>
 
-                    <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
-                      {item.title}
-                    </h3>
+                      <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
+                        {item.title}
+                      </h3>
 
-                    <div
-                      class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                    >
-                      <UIButton
-                        variant="outline"
-                        onClick={() => setStatus(String(item._id), "in_progress")}
+                      <Show when={item.revisionParentId}>
+                        <p
+                          class={css({
+                            color: "rgba(245, 240, 232, 0.62)",
+                            fontSize: "sm",
+                            mb: "2",
+                          })}
+                        >
+                          Revision of{" "}
+                          {revisionParent()?.title ?? "an earlier composition"}
+                        </p>
+                      </Show>
+
+                      <div
+                        class={css({
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "2",
+                        })}
                       >
-                        In Progress
-                      </UIButton>
-                      <UIButton
-                        variant="outline"
-                        onClick={() => setStatus(String(item._id), "rendered")}
-                      >
-                        Rendered
-                      </UIButton>
-                      <UIButton
-                        variant="ghost"
-                        onClick={() => setStatus(String(item._id), "published")}
-                      >
-                        Published
-                      </UIButton>
+                        <UIButton
+                          variant="outline"
+                          onClick={() =>
+                            setStatus(String(item._id), "in_progress")
+                          }
+                        >
+                          In Progress
+                        </UIButton>
+                        <UIButton
+                          variant="outline"
+                          onClick={() =>
+                            setStatus(String(item._id), "rendered")
+                          }
+                        >
+                          Rendered
+                        </UIButton>
+                        <UIButton
+                          variant="ghost"
+                          onClick={() =>
+                            setStatus(String(item._id), "published")
+                          }
+                        >
+                          Published
+                        </UIButton>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                }}
               </For>
             </div>
           </Show>

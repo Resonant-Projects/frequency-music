@@ -1,10 +1,16 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
+import { makeFunctionReference } from "convex/server";
 import { ConvexError, v } from "convex/values";
+import type { Doc, Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { hypothesisReturnValidator, sourceReturnValidator } from "./validators";
+import {
+  hypothesisReturnValidator,
+  sourceReturnValidator,
+  thesisReturnValidator,
+} from "./validators";
 
 const hypothesisStatusValidator = v.union(
   v.literal("draft"),
@@ -24,6 +30,47 @@ interface GeneratedHypothesisPayload {
   concepts?: string[];
 }
 
+type BatchGenerationResult =
+  | {
+      success: true;
+      hypothesisId: Id<"hypotheses">;
+      model: string;
+      generated: GeneratedHypothesisPayload;
+    }
+  | {
+      success: false;
+      extractionId: Id<"extractions">;
+      error: string;
+    };
+
+type GenerateFromExtractionResult = {
+  hypothesisId: Id<"hypotheses">;
+  model: string;
+  generated: GeneratedHypothesisPayload;
+};
+
+const generateFromExtractionRef = makeFunctionReference<"action">(
+  "hypotheses:generateFromExtraction",
+);
+
+async function loadThesisOrThrow(
+  ctx: {
+    db: {
+      get: (table: "theses", id: Id<"theses">) => Promise<unknown>;
+    };
+  },
+  thesisId: Id<"theses">,
+) {
+  const thesis = await ctx.db.get("theses", thesisId);
+  if (!thesis) {
+    throw new ConvexError({
+      code: "NOT_FOUND",
+      message: "Thesis not found",
+    });
+  }
+  return thesis;
+}
+
 // ============================================================================
 // QUERIES
 // ============================================================================
@@ -39,11 +86,12 @@ export const listByStatus = query({
   returns: v.array(hypothesisReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
+    const status = args.status;
 
-    if (args.status !== undefined) {
+    if (status !== undefined) {
       return await ctx.db
         .query("hypotheses")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", status))
         .order("desc")
         .take(limit);
     }
@@ -61,6 +109,7 @@ export const get = query({
     v.object({
       ...hypothesisReturnValidator.fields,
       sources: v.array(sourceReturnValidator),
+      thesis: v.union(thesisReturnValidator, v.null()),
     }),
     v.null(),
   ),
@@ -72,10 +121,14 @@ export const get = query({
     const sources = await Promise.all(
       hypothesis.sourceIds.map((id) => ctx.db.get("sources", id)),
     );
+    const thesis = hypothesis.thesisId
+      ? await ctx.db.get("theses", hypothesis.thesisId)
+      : null;
 
     return {
       ...hypothesis,
       sources: sources.filter((s): s is NonNullable<typeof s> => s !== null),
+      thesis,
     };
   },
 });
@@ -89,6 +142,24 @@ export const getBySourceId = query({
   handler: async (ctx, args) => {
     const all = await ctx.db.query("hypotheses").order("desc").take(200);
     return all.filter((h) => h.sourceIds.includes(args.sourceId));
+  },
+});
+
+export const listByThesis = query({
+  args: {
+    thesisId: v.id("theses"),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(hypothesisReturnValidator),
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 20;
+    return await ctx.db
+      .query("hypotheses")
+      .withIndex("by_thesisId_updatedAt", (q) =>
+        q.eq("thesisId", args.thesisId),
+      )
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -106,6 +177,7 @@ export const create = mutation({
     hypothesis: v.string(),
     whyThisMatters: v.optional(v.string()),
     rationaleMd: v.string(),
+    thesisId: v.optional(v.id("theses")),
     sourceIds: v.array(v.id("sources")),
     concepts: v.optional(v.array(v.string())),
     devBypassSecret: v.optional(v.string()),
@@ -115,12 +187,18 @@ export const create = mutation({
     const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
     const identity = await requireAuth(ctx, args);
     const now = Date.now();
+    if (createArgs.thesisId) {
+      await loadThesisOrThrow(ctx, createArgs.thesisId);
+    }
 
     return await ctx.db.insert("hypotheses", {
       ...createArgs,
       status: "draft",
       visibility: "private",
-      createdBy: identity.subject,
+      createdBy:
+        identity.subject === "system"
+          ? "system"
+          : (identity.subject as Id<"users">),
       createdAt: now,
       updatedAt: now,
     });
@@ -138,6 +216,7 @@ export const update = mutation({
     hypothesis: v.optional(v.string()),
     whyThisMatters: v.optional(v.string()),
     rationaleMd: v.optional(v.string()),
+    thesisId: v.optional(v.union(v.id("theses"), v.null())),
     sourceIds: v.optional(v.array(v.id("sources"))),
     concepts: v.optional(v.array(v.string())),
     status: v.optional(hypothesisStatusValidator),
@@ -153,7 +232,12 @@ export const update = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const { id, devBypassSecret: _devBypassSecret, ...updates } = args;
+    const {
+      id,
+      devBypassSecret: _devBypassSecret,
+      thesisId,
+      ...updates
+    } = args;
 
     const hypothesis = await ctx.db.get("hypotheses", id);
     if (!hypothesis) {
@@ -163,7 +247,19 @@ export const update = mutation({
       });
     }
 
-    await ctx.db.patch("hypotheses", id, { ...updates, updatedAt: Date.now() });
+    if (thesisId) {
+      await loadThesisOrThrow(ctx, thesisId);
+    }
+
+    const patch = {
+      ...updates,
+      ...(thesisId !== undefined
+        ? { thesisId: thesisId === null ? undefined : thesisId }
+        : {}),
+      updatedAt: Date.now(),
+    };
+
+    await ctx.db.patch("hypotheses", id, patch);
     return null;
   },
 });
@@ -265,19 +361,22 @@ export const generateFromExtraction = action({
       concepts: v.optional(v.array(v.string())),
     }),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<GenerateFromExtractionResult> => {
     await requireAuth(ctx, args);
     // Get extraction
-    const extraction = await ctx.runQuery(api.extractions.get, {
-      id: args.extractionId,
-    });
+    const extraction: Doc<"extractions"> | null = await ctx.runQuery(
+      api.extractions.get,
+      {
+        id: args.extractionId,
+      },
+    );
 
     if (!extraction) {
       throw new Error("Extraction not found");
     }
 
     // Get source
-    const source = await ctx.runQuery(api.sources.get, {
+    const source: Doc<"sources"> | null = await ctx.runQuery(api.sources.get, {
       id: extraction.sourceId,
     });
 
@@ -287,12 +386,18 @@ export const generateFromExtraction = action({
 
     // Build prompt
     const claimsText = extraction.claims
-      .map((c, i) => `${i + 1}. [${c.evidenceLevel}] ${c.text}`)
+      .map(
+        (c: Doc<"extractions">["claims"][number], i: number) =>
+          `${i + 1}. [${c.evidenceLevel}] ${c.text}`,
+      )
       .join("\n");
 
     const paramsText =
       extraction.compositionParameters
-        .map((p) => `- ${p.type}: ${p.value}`)
+        .map(
+          (p: Doc<"extractions">["compositionParameters"][number]) =>
+            `- ${p.type}: ${p.value}`,
+        )
         .join("\n") || "None specified";
 
     const prompt = HYPOTHESIS_USER_PROMPT.replace(
@@ -314,7 +419,7 @@ export const generateFromExtraction = action({
       model: openrouter(modelId),
       system: HYPOTHESIS_SYSTEM_PROMPT,
       prompt,
-      maxTokens: 2000,
+      maxOutputTokens: 2000,
     });
 
     // Parse response
@@ -329,16 +434,19 @@ export const generateFromExtraction = action({
     }
 
     // Create hypothesis
-    const hypothesisId = await ctx.runMutation(api.hypotheses.create, {
-      title: parsed.title,
-      question: parsed.question,
-      hypothesis: parsed.hypothesis,
-      whyThisMatters: parsed.whyThisMatters,
-      rationaleMd: parsed.rationaleMd,
-      sourceIds: [extraction.sourceId],
-      concepts: parsed.concepts,
-      devBypassSecret: args.devBypassSecret,
-    });
+    const hypothesisId: Id<"hypotheses"> = await ctx.runMutation(
+      api.hypotheses.create,
+      {
+        title: parsed.title,
+        question: parsed.question,
+        hypothesis: parsed.hypothesis,
+        whyThisMatters: parsed.whyThisMatters,
+        rationaleMd: parsed.rationaleMd,
+        sourceIds: [extraction.sourceId],
+        concepts: parsed.concepts,
+        devBypassSecret: args.devBypassSecret,
+      },
+    );
 
     return {
       hypothesisId,
@@ -380,32 +488,33 @@ export const generateBatch = action({
       }),
     ),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<BatchGenerationResult[]> => {
     await requireAuth(ctx, args);
     const limit = args.limit ?? 3;
     const minClaims = args.minClaims ?? 2;
 
     // Get extractions with enough claims
-    const extractions = await ctx.runQuery(api.extractions.listRecent, {
-      limit: 50,
-    });
-
-    const candidates = extractions.filter(
-      (e) => e.claims.length >= minClaims && e.compositionParameters.length > 0,
+    const extractions: Doc<"extractions">[] = await ctx.runQuery(
+      api.extractions.listRecent,
+      {
+        limit: 50,
+      },
     );
 
-    const results = [];
+    const candidates: Doc<"extractions">[] = extractions.filter(
+      (e: Doc<"extractions">) =>
+        e.claims.length >= minClaims && e.compositionParameters.length > 0,
+    );
+
+    const results: BatchGenerationResult[] = [];
 
     for (const extraction of candidates.slice(0, limit)) {
       try {
-        const result = await ctx.runAction(
-          api.hypotheses.generateFromExtraction,
-          {
-            extractionId: extraction._id,
-            model: args.model,
-            devBypassSecret: args.devBypassSecret,
-          },
-        );
+        const result = await ctx.runAction(generateFromExtractionRef, {
+          extractionId: extraction._id,
+          model: args.model,
+          devBypassSecret: args.devBypassSecret,
+        });
         results.push({ success: true, ...result });
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : "Unknown error";

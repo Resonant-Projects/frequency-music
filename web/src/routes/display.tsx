@@ -33,10 +33,18 @@ function statusTone(status: string): "gold" | "violet" | "cream" {
   return "gold";
 }
 
+function confidenceTone(value: string): "gold" | "violet" | "cream" {
+  if (value === "high") return "gold";
+  if (value === "medium") return "violet";
+  return "cream";
+}
+
 const DISPLAY_QUEUE_LIMIT = import.meta.env.VITE_E2E_MODE === "1" ? 200 : 24;
 
 export function DisplayPage() {
-  onMount(() => { document.title = "Display Queue — Frequency Music"; });
+  onMount(() => {
+    document.title = "Display Queue — Frequency Music";
+  });
 
   type InboxRow = {
     _id: Id<"sources">;
@@ -48,6 +56,11 @@ export function DisplayPage() {
     nextAction: string;
     extractionPreview?: {
       summary: string;
+      claimPreviews: Array<{
+        text: string;
+        truthConfidence?: "low" | "medium" | "high";
+        interestLevel?: "low" | "medium" | "high";
+      }>;
     } | null;
   };
 
@@ -240,15 +253,66 @@ export function DisplayPage() {
 
                   <Show when={row.extractionPreview}>
                     {(preview) => (
-                      <p
-                        class={css({
-                          color: "rgba(245, 240, 232, 0.56)",
-                          fontSize: "sm",
-                          marginBottom: "2",
-                        })}
-                      >
-                        {preview().summary}
-                      </p>
+                      <div class={css({ marginBottom: "2" })}>
+                        <p
+                          class={css({
+                            color: "rgba(245, 240, 232, 0.56)",
+                            fontSize: "sm",
+                            marginBottom: "2",
+                          })}
+                        >
+                          {preview().summary}
+                        </p>
+                        <Show when={preview().claimPreviews.length > 0}>
+                          <div class={css({ display: "grid", gap: "2" })}>
+                            <For each={preview().claimPreviews}>
+                              {(claim) => (
+                                <div
+                                  class={css({
+                                    bg: "rgba(245, 240, 232, 0.02)",
+                                    borderColor: "rgba(200, 168, 75, 0.16)",
+                                    borderRadius: "l2",
+                                    borderWidth: "1px",
+                                    p: "2.5",
+                                  })}
+                                >
+                                  <p
+                                    class={css({
+                                      color: "rgba(245, 240, 232, 0.68)",
+                                      fontSize: "sm",
+                                      marginBottom: "2",
+                                    })}
+                                  >
+                                    {claim.text}
+                                  </p>
+                                  <div
+                                    class={css({
+                                      display: "flex",
+                                      flexWrap: "wrap",
+                                      gap: "2",
+                                    })}
+                                  >
+                                    <Show when={claim.truthConfidence}>
+                                      {(value) => (
+                                        <UIBadge tone={confidenceTone(value())}>
+                                          truth: {value()}
+                                        </UIBadge>
+                                      )}
+                                    </Show>
+                                    <Show when={claim.interestLevel}>
+                                      {(value) => (
+                                        <UIBadge tone={confidenceTone(value())}>
+                                          interest: {value()}
+                                        </UIBadge>
+                                      )}
+                                    </Show>
+                                  </div>
+                                </div>
+                              )}
+                            </For>
+                          </div>
+                        </Show>
+                      </div>
                     )}
                   </Show>
 

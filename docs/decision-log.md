@@ -36,6 +36,31 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 
 ## Initial Foundational Decisions
 
+## 2026-03-24 — Phase 1B Meaning Foundation
+
+**Decision**
+- Keep `theses` lightweight and optional in Phase 1B rather than introducing campaign logic or a dedicated thesis UI.
+- Store `truthConfidence` and `interestLevel` on individual extraction claims, not on whole extractions.
+- Store `revisionParentId` and `revisionVariable` on compositions now, while full lineage views wait for Phase 2.
+
+**Rationale**
+- The project needs a durable meaning layer before adding heavier lineage and editorial graph features.
+- Confidence and creative fertility vary claim by claim, so extraction-level metadata would be too blunt.
+- Revision metadata is useful immediately for studio discipline even without a full ancestry surface.
+
+**Alternatives considered**
+- Defer theses entirely until Phase 2.
+- Put "interesting vs true" at the extraction level.
+- Wait for a full lineage graph before recording revision intent.
+
+**Downstream implications**
+- Hypotheses can be grouped under broader questions without overbuilding taxonomy.
+- Review surfaces can distinguish epistemic confidence from compositional usefulness.
+- Phase 2 can build lineage and failure/archive views from stored revision metadata instead of backfilling intent later.
+
+**Revisit trigger**
+- Revisit if thesis management becomes a daily workflow bottleneck or if claim-level metadata proves too noisy for review.
+
 ## 2026-03-24 — Documentation Architecture
 
 **Decision**

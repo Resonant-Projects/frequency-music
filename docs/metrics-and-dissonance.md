@@ -41,7 +41,9 @@ All metrics are rated per listener per artifact.
 - 0: interesting as a narrow study only
 - 3: could support a more developed sketch with care
 - 5: clearly wants to become a larger piece
-- Use this to separate “useful experiment” from “material with real compositional pull”
+- Ask: "Could this become fuller music?"
+- Use this to separate "useful experiment" from "material with real compositional pull"
+- This is not a disguised like/dislike score. A piece can be compelling, strange, or even difficult and still score high if it opens into larger musical form.
 
 Required qualitative notes:
 - body map (where it’s felt)

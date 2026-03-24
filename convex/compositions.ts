@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import {
@@ -22,11 +23,12 @@ export const list = query({
   returns: v.array(compositionReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 30;
+    const status = args.status;
 
-    if (args.status !== undefined) {
+    if (status !== undefined) {
       return await ctx.db
         .query("compositions")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", status))
         .order("desc")
         .take(limit);
     }
@@ -79,6 +81,8 @@ export const create = mutation({
     ),
     projectNotesMd: v.optional(v.string()),
     version: v.optional(v.string()),
+    revisionParentId: v.optional(v.id("compositions")),
+    revisionVariable: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
     devBypassSecret: v.optional(v.string()),
   },
@@ -90,6 +94,27 @@ export const create = mutation({
     if (!recipe) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Recipe not found" });
     }
+    if (
+      createArgs.revisionParentId &&
+      !createArgs.revisionVariable?.trim().length
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "revisionVariable is required when revisionParentId is set",
+      });
+    }
+    if (createArgs.revisionParentId) {
+      const parent = await ctx.db.get(
+        "compositions",
+        createArgs.revisionParentId,
+      );
+      if (!parent) {
+        throw new ConvexError({
+          code: "NOT_FOUND",
+          message: "Revision parent composition not found",
+        });
+      }
+    }
 
     const now = Date.now();
     return await ctx.db.insert("compositions", {
@@ -98,9 +123,14 @@ export const create = mutation({
       artifactType: createArgs.artifactType ?? "microStudy",
       projectNotesMd: createArgs.projectNotesMd,
       version: createArgs.version ?? "v0.1",
+      revisionParentId: createArgs.revisionParentId,
+      revisionVariable: createArgs.revisionVariable?.trim() || undefined,
       status: "idea",
       visibility: "private",
-      createdBy: identity.subject,
+      createdBy:
+        identity.subject === "system"
+          ? "system"
+          : (identity.subject as Id<"users">),
       createdAt: now,
       updatedAt: now,
     });
@@ -129,6 +159,8 @@ export const update = mutation({
     ),
     version: v.optional(v.string()),
     diffNote: v.optional(v.string()),
+    revisionParentId: v.optional(v.union(v.id("compositions"), v.null())),
+    revisionVariable: v.optional(v.string()),
     status: v.optional(
       v.union(
         v.literal("idea"),
@@ -157,9 +189,39 @@ export const update = mutation({
       });
     }
 
-    const { id, devBypassSecret: _devBypassSecret, ...patch } = args;
+    const {
+      id,
+      devBypassSecret: _devBypassSecret,
+      revisionParentId,
+      revisionVariable,
+      ...patch
+    } = args;
+    if (revisionParentId && !revisionVariable?.trim().length) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "revisionVariable is required when revisionParentId is set",
+      });
+    }
+    if (revisionParentId) {
+      const parent = await ctx.db.get("compositions", revisionParentId);
+      if (!parent) {
+        throw new ConvexError({
+          code: "NOT_FOUND",
+          message: "Revision parent composition not found",
+        });
+      }
+    }
     await ctx.db.patch("compositions", id, {
       ...patch,
+      ...(revisionParentId !== undefined
+        ? {
+            revisionParentId:
+              revisionParentId === null ? undefined : revisionParentId,
+          }
+        : {}),
+      ...(revisionVariable !== undefined
+        ? { revisionVariable: revisionVariable.trim() || undefined }
+        : {}),
       updatedAt: Date.now(),
     });
 
