@@ -215,6 +215,8 @@ Fields:
 - `sourceIds: Id<sources>[]`
 - `recommendedHypothesisIds: Id<hypotheses>[]`
 - `recommendedRecipeIds: Id<recipes>[]`
+- `activeThesisIds?: Id<theses>[]`
+- `referencedFailureKeys?: string[]`
 - `todo?: string[]`
 - `visibility: "private" | "followers" | "public"`
 - `publishedAt?: number`
@@ -224,6 +226,19 @@ Fields:
 Indexes:
 - `by_weekOf (weekOf)`
 - `by_visibility_createdAt (visibility, createdAt)`
+
+## Phase 2 query surfaces
+
+- `compositions.getLineage(id)`
+  Returns composition ancestry, direct revisions, recipe/hypothesis/thesis provenance, linked sources, listening history, and current derived failure status.
+- `theses.getDetail(id)`
+  Returns thesis detail plus linked hypotheses, recipes, compositions, aggregate counts, and recent weekly brief references.
+- `failures.listArchive(reason?, thesisId?, limit?)`
+  Returns derived archive entries for contradictions, retired hypotheses, archived recipes, and low-yield compositions.
+- `failures.getByKey(key)`
+  Returns a single derived archive entry by synthetic key.
+- `dashboard.editorialSignals(limit?)`
+  Returns concept-level yield scoring and grouped high-yield/low-yield domain clusters.
 
 ## DedupeKey strategy (concrete)
 Set `sources.dedupeKey` using first available:

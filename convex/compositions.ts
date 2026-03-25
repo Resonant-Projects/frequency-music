@@ -2,10 +2,15 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { getFailureStatusForComposition } from "./failures";
 import {
+  compositionLineageValidator,
   compositionReturnValidator,
   listeningSessionReturnValidator,
   recipeReturnValidator,
+  sourceReturnValidator,
+  thesisReturnValidator,
+  hypothesisReturnValidator,
 } from "./validators";
 
 export const list = query({
@@ -64,6 +69,76 @@ export const get = query({
       ...composition,
       recipe,
       listeningSessions,
+    };
+  },
+});
+
+export const getLineage = query({
+  args: { id: v.id("compositions") },
+  returns: v.union(compositionLineageValidator, v.null()),
+  handler: async (ctx, args) => {
+    const composition = await ctx.db.get("compositions", args.id);
+    if (!composition) return null;
+
+    const ancestry = [];
+    let cursor = composition;
+    while (cursor.revisionParentId) {
+      const parent = await ctx.db.get("compositions", cursor.revisionParentId);
+      if (!parent) break;
+      ancestry.unshift(parent);
+      cursor = parent;
+    }
+
+    const children = await ctx.db
+      .query("compositions")
+      .withIndex("by_revisionParentId_updatedAt", (q) =>
+        q.eq("revisionParentId", composition._id),
+      )
+      .order("desc")
+      .collect();
+
+    const recipe = await ctx.db.get("recipes", composition.recipeId);
+    const hypothesis = recipe
+      ? await ctx.db.get("hypotheses", recipe.hypothesisId)
+      : null;
+    const thesis = hypothesis?.thesisId
+      ? await ctx.db.get("theses", hypothesis.thesisId)
+      : null;
+    const sources = hypothesis
+      ? (
+          await Promise.all(
+            hypothesis.sourceIds.map((sourceId) => ctx.db.get("sources", sourceId)),
+          )
+        ).filter((source): source is NonNullable<typeof source> => source !== null)
+      : [];
+    const listeningSessions = await ctx.db
+      .query("listeningSessions")
+      .withIndex("by_compositionId_createdAt", (q) =>
+        q.eq("compositionId", composition._id),
+      )
+      .order("desc")
+      .collect();
+
+    const latestListeningSession = listeningSessions[0];
+    const failureStatus = await getFailureStatusForComposition(ctx.db as any, composition._id);
+
+    return {
+      composition,
+      ancestry,
+      children,
+      recipe,
+      hypothesis,
+      thesis,
+      sources,
+      listeningSessions,
+      summary: {
+        depth: ancestry.length,
+        revisionVariable: composition.revisionVariable,
+        hasChildren: children.length > 0,
+        latestExpandVerdict: latestListeningSession?.expandVerdict,
+        latestExpandability: latestListeningSession?.ratings.expandability,
+        failureStatus,
+      },
     };
   },
 });

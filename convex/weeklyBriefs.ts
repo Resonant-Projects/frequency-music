@@ -1,7 +1,10 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { v } from "convex/values";
+import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
+import { computeEditorialSignals } from "./dashboard";
+import { deriveFailureArchiveEntries } from "./failures";
 import {
   action,
   internalAction,
@@ -67,6 +70,8 @@ export const create = internalMutation({
     sourceIds: v.array(v.id("sources")),
     recommendedHypothesisIds: v.array(v.id("hypotheses")),
     recommendedRecipeIds: v.array(v.id("recipes")),
+    activeThesisIds: v.optional(v.array(v.id("theses"))),
+    referencedFailureKeys: v.optional(v.array(v.string())),
     todo: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -103,16 +108,21 @@ Create a weekly brief that:
 2. Prioritizes 3-10 actionable studio experiments
 3. Identifies open questions for future exploration
 4. Preserves the artistic stakes behind each idea, not just the procedural steps
+5. Notes active theses, contradictions, and low-yield paths when they should influence next actions
 
 Format your output as a markdown document with:
 - Title and date range
 - Executive summary (2-3 sentences)
 - Experiment cards with priority, time estimate, and requirements
+- Active theses section
+- Contradictions and reversals section
+- Concept signal section
 - Themes section
 - Open questions section
 
 Be practical and DAW-focused. Each experiment should be completable in a single studio session.
-For each recommended experiment, explain both what to try and why it matters musically or perceptually.`;
+For each recommended experiment, explain both what to try and why it matters musically or perceptually.
+Explicitly mention when a line of work contradicts prior work or has repeatedly failed to expand.`;
 
 const BRIEF_USER_PROMPT = `Create a weekly research brief.
 
@@ -123,6 +133,19 @@ const BRIEF_USER_PROMPT = `Create a weekly research brief.
 
 **Recipes ({{numRecipes}})**:
 {{recipes}}
+
+**Active Theses ({{numTheses}})**:
+{{theses}}
+
+**Recent Failures / Contradictions ({{numFailures}})**:
+{{failures}}
+
+**Editorial Signals**:
+High-yield concept areas:
+{{highYield}}
+
+Low-yield concept areas:
+{{lowYield}}
 
 Generate a comprehensive weekly brief in markdown format. Include:
 1. A catchy title for the week's theme
@@ -145,7 +168,7 @@ interface GenerateBriefArgs {
 }
 
 interface GenerateBriefResult {
-  briefId: string; // Id<"weeklyBriefs"> at runtime
+  briefId: Id<"weeklyBriefs">;
   weekOf: string;
   model: string;
   stats: { hypotheses: number; recipes: number; sources: number };
@@ -170,13 +193,28 @@ async function generateBriefCore(
   const allHypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
     limit: 50,
   });
-  const hypotheses = allHypotheses.filter((h) => h.createdAt > cutoff);
+  const hypotheses = (allHypotheses as Doc<"hypotheses">[]).filter(
+    (h: Doc<"hypotheses">) => h.createdAt > cutoff,
+  );
 
   // Get recent recipes
   const allRecipes = await ctx.runQuery(api.recipes.listByStatus, {
     limit: 50,
   });
-  const recipes = allRecipes.filter((r) => r.createdAt > cutoff);
+  const recipes = (allRecipes as Doc<"recipes">[]).filter(
+    (r: Doc<"recipes">) => r.createdAt > cutoff,
+  );
+  const activeTheses = await ctx.db
+    .query("theses")
+    .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
+    .order("desc")
+    .take(10);
+  const typedActiveTheses = activeTheses as Doc<"theses">[];
+  const failureArchive = await deriveFailureArchiveEntries(ctx.db as any);
+  const recentFailures = failureArchive
+    .filter((entry) => entry.createdAt > cutoff)
+    .slice(0, 8);
+  const editorialSignals = await computeEditorialSignals(ctx.db as any, 8);
 
   if (hypotheses.length === 0) {
     throw new Error("No recent hypotheses found. Generate some first.");
@@ -185,7 +223,7 @@ async function generateBriefCore(
   // Format for prompt
   const hypothesesText = hypotheses
     .map(
-      (h, i) =>
+      (h: Doc<"hypotheses">, i: number) =>
         `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}\n   Why this matters: ${h.whyThisMatters ?? "Not specified"}`,
     )
     .join("\n\n");
@@ -193,7 +231,7 @@ async function generateBriefCore(
   const recipesText =
     recipes.length > 0
       ? recipes
-          .map((r, i) => {
+          .map((r: Doc<"recipes">, i: number) => {
             const params = r.parameters
               .slice(0, 4)
               .map(
@@ -205,12 +243,54 @@ async function generateBriefCore(
           })
           .join("\n\n")
       : "No recipes yet - experiments will need recipe generation.";
+  const thesesText =
+    typedActiveTheses.length > 0
+      ? typedActiveTheses
+          .map(
+            (thesis: Doc<"theses">, i: number) =>
+              `${i + 1}. **${thesis.title}**\n   Statement: ${thesis.statement}`,
+          )
+          .join("\n\n")
+      : "No active theses.";
+  const failuresText =
+    recentFailures.length > 0
+      ? recentFailures
+          .map(
+            (failure, i: number) =>
+              `${i + 1}. **${failure.title}** [${failure.reason}]\n   ${failure.explanation}`,
+          )
+          .join("\n\n")
+      : "No recent contradictions or low-yield results.";
+  const highYieldText =
+    editorialSignals.highYieldClusters.length > 0
+      ? editorialSignals.highYieldClusters
+          .map(
+            (cluster) =>
+              `${cluster.domain}: ${cluster.conceptNames.join(", ")} (score ${cluster.score})`,
+          )
+          .join("\n")
+      : "No strong high-yield clusters yet.";
+  const lowYieldText =
+    editorialSignals.lowYieldClusters.length > 0
+      ? editorialSignals.lowYieldClusters
+          .map(
+            (cluster) =>
+              `${cluster.domain}: ${cluster.conceptNames.join(", ")} (score ${cluster.score})`,
+          )
+          .join("\n")
+      : "No notable low-yield clusters yet.";
 
   const prompt = BRIEF_USER_PROMPT.replace("{{weekOf}}", weekOf)
     .replace("{{numHypotheses}}", String(hypotheses.length))
     .replace("{{hypotheses}}", hypothesesText)
     .replace("{{numRecipes}}", String(recipes.length))
-    .replace("{{recipes}}", recipesText);
+    .replace("{{recipes}}", recipesText)
+    .replace("{{numTheses}}", String(typedActiveTheses.length))
+    .replace("{{theses}}", thesesText)
+    .replace("{{numFailures}}", String(recentFailures.length))
+    .replace("{{failures}}", failuresText)
+    .replace("{{highYield}}", highYieldText)
+    .replace("{{lowYield}}", lowYieldText);
 
   // Call AI
   const openRouterKey = process.env.OPENROUTER_API_KEY;
@@ -223,7 +303,7 @@ async function generateBriefCore(
     model: openrouter(modelId),
     system: BRIEF_SYSTEM_PROMPT,
     prompt,
-    maxTokens: 4000,
+    maxOutputTokens: 4000,
   });
 
   // Extract todo items from JSON block if present
@@ -231,7 +311,7 @@ async function generateBriefCore(
   const jsonMatch = result.text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
   if (jsonMatch) {
     try {
-      const parsed = JSON.parse(jsonMatch[1]) as { todo?: unknown };
+      const parsed = JSON.parse(jsonMatch[1] ?? "{}") as { todo?: unknown };
       if (
         Array.isArray(parsed.todo) &&
         parsed.todo.every((item) => typeof item === "string")
@@ -248,7 +328,9 @@ async function generateBriefCore(
   }
 
   // Get source IDs from hypotheses
-  const sourceIds = [...new Set(hypotheses.flatMap((h) => h.sourceIds))];
+  const sourceIds = [
+    ...new Set(hypotheses.flatMap((h: Doc<"hypotheses">) => h.sourceIds)),
+  ];
   const persistedSourceIds = sourceIds.slice(0, 20);
 
   // Create the brief
@@ -258,8 +340,10 @@ async function generateBriefCore(
     promptVersion: "v1.1",
     bodyMd: result.text,
     sourceIds: persistedSourceIds,
-    recommendedHypothesisIds: hypotheses.map((h) => h._id),
-    recommendedRecipeIds: recipes.map((r) => r._id),
+    recommendedHypothesisIds: hypotheses.map((h: Doc<"hypotheses">) => h._id),
+    recommendedRecipeIds: recipes.map((r: Doc<"recipes">) => r._id),
+    activeThesisIds: typedActiveTheses.map((thesis: Doc<"theses">) => thesis._id),
+    referencedFailureKeys: recentFailures.map((failure) => failure.key),
     todo: todo.length > 0 ? todo : undefined,
   });
 
@@ -381,7 +465,7 @@ function markdownToNotionBlocks(md: string): NotionBlock[] {
           object: "block",
           type: "bulleted_list_item",
           bulleted_list_item: {
-            rich_text: chunkText(bulletMatch[1]),
+            rich_text: chunkText(bulletMatch[1] ?? ""),
           },
         });
       } else {
@@ -413,21 +497,21 @@ function markdownToNotionBlocks(md: string): NotionBlock[] {
       blocks.push({
         object: "block",
         type: "heading_3",
-        heading_3: { rich_text: chunkText(h3Match[1]) },
+        heading_3: { rich_text: chunkText(h3Match[1] ?? "") },
       });
     } else if (h2Match) {
       flushBuffer();
       blocks.push({
         object: "block",
         type: "heading_2",
-        heading_2: { rich_text: chunkText(h2Match[1]) },
+        heading_2: { rich_text: chunkText(h2Match[1] ?? "") },
       });
     } else if (h1Match) {
       flushBuffer();
       blocks.push({
         object: "block",
         type: "heading_1",
-        heading_1: { rich_text: chunkText(h1Match[1]) },
+        heading_1: { rich_text: chunkText(h1Match[1] ?? "") },
       });
     } else {
       buffer.push(line);

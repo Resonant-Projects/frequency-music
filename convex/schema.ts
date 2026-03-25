@@ -415,6 +415,8 @@ export default defineSchema({
     sourceIds: v.array(v.id("sources")),
     recommendedHypothesisIds: v.array(v.id("hypotheses")),
     recommendedRecipeIds: v.array(v.id("recipes")),
+    activeThesisIds: v.optional(v.array(v.id("theses"))),
+    referencedFailureKeys: v.optional(v.array(v.string())),
     todo: v.optional(v.array(v.string())),
 
     // Publishing

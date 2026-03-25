@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/solid-router";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -301,9 +302,19 @@ export function CompositionsPage() {
                         </Show>
                       </div>
 
-                      <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
-                        {item.title}
-                      </h3>
+                      <Link
+                        to="/compositions/$compositionId"
+                        params={{ compositionId: String(item._id) }}
+                        class={css({
+                          color: "zodiac.cream",
+                          display: "inline-block",
+                          fontSize: "xl",
+                          marginBottom: "2",
+                          textDecoration: "none",
+                        })}
+                      >
+                        <h3>{item.title}</h3>
+                      </Link>
 
                       <Show when={item.revisionParentId}>
                         <p

@@ -1,6 +1,6 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, createSignal, For, Show } from "solid-js";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   Markdown,
@@ -25,6 +25,24 @@ export function WeeklyBriefDetailPage() {
   const brief = createQuery(convexApi.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
+  const theses = createQuery(convexApi.theses.list, () => ({
+    limit: 100,
+  }));
+  const failureArchive = createQuery(convexApi.failures.listArchive, () => ({
+    limit: 100,
+  }));
+  const activeTheses = createMemo<Doc<"theses">[]>(() => {
+    const thesisIds = new Set((brief()?.activeThesisIds ?? []).map(String));
+    return ((theses() ?? []) as Doc<"theses">[]).filter((thesis) =>
+      thesisIds.has(String(thesis._id)),
+    );
+  });
+  const referencedFailures = createMemo(() => {
+    const failureKeys = new Set(brief()?.referencedFailureKeys ?? []);
+    return (failureArchive() ?? []).filter((entry: { key: string }) =>
+      failureKeys.has(entry.key),
+    );
+  });
 
   createEffect(() => { const b = brief(); if (b) document.title = `Week ${b.weekOf} — Frequency Music`; });
 
@@ -89,6 +107,16 @@ export function WeeklyBriefDetailPage() {
               <UIBadge tone="violet">
                 {b().sourceIds.length} sources
               </UIBadge>
+              <Show when={(b().activeThesisIds ?? []).length > 0}>
+                <UIBadge tone="violet">
+                  {(b().activeThesisIds ?? []).length} theses
+                </UIBadge>
+              </Show>
+              <Show when={(b().referencedFailureKeys ?? []).length > 0}>
+                <UIBadge tone="violet">
+                  {(b().referencedFailureKeys ?? []).length} reversals
+                </UIBadge>
+              </Show>
             </div>
 
             {/* Title */}
@@ -152,6 +180,53 @@ export function WeeklyBriefDetailPage() {
                   )}
                 </For>
               </ul>
+            </Show>
+
+            <Show when={activeTheses().length > 0}>
+              <hr class={goldDivider} />
+              <div class={sectionLabel}>Active Theses</div>
+              <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                <For each={activeTheses()}>
+                  {(thesis) => (
+                    <Link
+                      to="/theses/$thesisId"
+                      params={{ thesisId: String(thesis._id) }}
+                      class={css({ textDecoration: "none" })}
+                    >
+                      <UIBadge tone="gold">{thesis.title}</UIBadge>
+                    </Link>
+                  )}
+                </For>
+              </div>
+            </Show>
+
+            <Show when={referencedFailures().length > 0}>
+              <hr class={goldDivider} />
+              <div class={sectionLabel}>Referenced Reversals</div>
+              <div class={css({ display: "grid", gap: "2" })}>
+                <For each={referencedFailures()}>
+                  {(failure) => (
+                    <a
+                      href={`/failures#${failure.key}`}
+                      class={css({
+                        borderColor: "rgba(200, 168, 75, 0.18)",
+                        borderRadius: "l2",
+                        borderWidth: "1px",
+                        color: "rgba(245, 240, 232, 0.76)",
+                        display: "block",
+                        p: "3",
+                        textDecoration: "none",
+                      })}
+                    >
+                      <div class={css({ display: "flex", gap: "2", flexWrap: "wrap", mb: "1" })}>
+                        <UIBadge tone="cream">{failure.reason}</UIBadge>
+                        <UIBadge tone="violet">{failure.recommendedNextAction}</UIBadge>
+                      </div>
+                      <div>{failure.title}</div>
+                    </a>
+                  )}
+                </For>
+              </div>
             </Show>
 
             {/* Footer meta */}

@@ -14,15 +14,19 @@ import {
   useClerkAuthSnapshot,
 } from "./integrations/clerk";
 import { AdminPage } from "./routes/admin";
+import { CompositionDetailPage } from "./routes/composition-detail";
 import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
 import { EssaysPage } from "./routes/essays";
+import { FailuresPage } from "./routes/failures";
 import { FeedbackPage } from "./routes/feedback";
 import { HypothesisDetailPage } from "./routes/hypothesis-detail";
 import { HypothesesPage } from "./routes/hypotheses";
 import { IngestPage } from "./routes/ingest";
 import { RecipeDetailPage } from "./routes/recipe-detail";
 import { RecipesPage } from "./routes/recipes";
+import { ThesisDetailPage } from "./routes/thesis-detail";
+import { ThesesPage } from "./routes/theses";
 import { WeeklyTurnsPage } from "./routes/weekly-turns";
 
 function lazyRoute<T extends Component>(
@@ -55,9 +59,11 @@ const appLinks = [
   { to: "/display", label: "Display" },
   { to: "/essays", label: "Essays" },
   { to: "/hypotheses", label: "Hypotheses" },
+  { to: "/theses", label: "Theses" },
   { to: "/recipes", label: "Recipes" },
   { to: "/weekly-turns", label: "Weekly Turns" },
   { to: "/compositions", label: "Compositions" },
+  { to: "/failures", label: "Failures" },
   { to: "/feedback", label: "Feedback" },
   { to: "/admin", label: "Admin" },
 ] as const;
@@ -212,6 +218,18 @@ const recipesRoute = createRoute({
   component: RecipesPage,
 });
 
+const thesesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/theses",
+  component: ThesesPage,
+});
+
+const thesisDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/theses/$thesisId",
+  component: ThesisDetailPage,
+});
+
 const recipeDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/recipes/$recipeId",
@@ -236,6 +254,18 @@ const compositionsRoute = createRoute({
   component: CompositionsPage,
 });
 
+const compositionDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/compositions/$compositionId",
+  component: CompositionDetailPage,
+});
+
+const failuresRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/failures",
+  component: FailuresPage,
+});
+
 const feedbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/feedback",
@@ -256,11 +286,15 @@ const routeTree = rootRoute.addChildren([
   essayDetailRoute,
   hypothesesRoute,
   hypothesisDetailRoute,
+  thesesRoute,
+  thesisDetailRoute,
   recipesRoute,
   recipeDetailRoute,
   weeklyTurnsRoute,
   weeklyBriefDetailRoute,
   compositionsRoute,
+  compositionDetailRoute,
+  failuresRoute,
   feedbackRoute,
   adminRoute,
 ]);

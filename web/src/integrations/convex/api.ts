@@ -24,6 +24,7 @@ export const convexApi = {
   theses: {
     list: queryRef("theses:list"),
     get: queryRef("theses:get"),
+    getDetail: queryRef("theses:getDetail"),
     create: mutationRef("theses:create"),
     update: mutationRef("theses:update"),
   },
@@ -50,8 +51,13 @@ export const convexApi = {
   },
   compositions: {
     list: queryRef("compositions:list"),
+    getLineage: queryRef("compositions:getLineage"),
     create: mutationRef("compositions:create"),
     update: mutationRef("compositions:update"),
+  },
+  failures: {
+    listArchive: queryRef("failures:listArchive"),
+    getByKey: queryRef("failures:getByKey"),
   },
   listening: {
     listRecent: queryRef("listening:listRecent"),
@@ -69,6 +75,7 @@ export const convexApi = {
   dashboard: {
     pipeline: queryRef("dashboard:pipeline"),
     zodiacSectors: queryRef("dashboard:zodiacSectors"),
+    editorialSignals: queryRef("dashboard:editorialSignals"),
     activityFeed: queryRef("dashboard:activityFeed"),
     domainSubTopics: queryRef("dashboard:domainSubTopics"),
     pipelineItems: queryRef("dashboard:pipelineItems"),

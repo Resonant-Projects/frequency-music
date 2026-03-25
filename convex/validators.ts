@@ -4,6 +4,11 @@ import {
   registryStatusValidator,
   visibilityValidator,
 } from "./schema";
+import {
+  failureActionValidator,
+  failureReasonValidator,
+  yieldBandValidator,
+} from "./phase2";
 
 // ============================================================================
 // SHARED SUB-VALIDATORS
@@ -341,6 +346,8 @@ export const weeklyBriefReturnValidator = v.object({
   sourceIds: v.array(v.id("sources")),
   recommendedHypothesisIds: v.array(v.id("hypotheses")),
   recommendedRecipeIds: v.array(v.id("recipes")),
+  activeThesisIds: v.optional(v.array(v.id("theses"))),
+  referencedFailureKeys: v.optional(v.array(v.string())),
   todo: v.optional(v.array(v.string())),
   visibility: visibilityValidator,
   publishedAt: v.optional(v.number()),
@@ -368,6 +375,85 @@ export const conceptReturnValidator = v.object({
   hypothesisCount: v.number(),
   createdAt: v.number(),
   updatedAt: v.number(),
+});
+
+export const failureArchiveEntryValidator = v.object({
+  key: v.string(),
+  reason: failureReasonValidator,
+  createdAt: v.number(),
+  title: v.string(),
+  summary: v.string(),
+  thesisId: v.optional(v.id("theses")),
+  hypothesisId: v.optional(v.id("hypotheses")),
+  recipeId: v.optional(v.id("recipes")),
+  compositionId: v.optional(v.id("compositions")),
+  latestListeningSessionId: v.optional(v.id("listeningSessions")),
+  revisionBranchRootId: v.optional(v.id("compositions")),
+  explanation: v.string(),
+  recommendedNextAction: failureActionValidator,
+  supportingIds: v.object({
+    hypothesisIds: v.array(v.id("hypotheses")),
+    recipeIds: v.array(v.id("recipes")),
+    compositionIds: v.array(v.id("compositions")),
+    listeningSessionIds: v.array(v.id("listeningSessions")),
+    thesisIds: v.array(v.id("theses")),
+  }),
+});
+
+export const compositionLineageValidator = v.object({
+  composition: compositionReturnValidator,
+  ancestry: v.array(compositionReturnValidator),
+  children: v.array(compositionReturnValidator),
+  recipe: v.union(recipeReturnValidator, v.null()),
+  hypothesis: v.union(hypothesisReturnValidator, v.null()),
+  thesis: v.union(thesisReturnValidator, v.null()),
+  sources: v.array(sourceReturnValidator),
+  listeningSessions: v.array(listeningSessionReturnValidator),
+  summary: v.object({
+    depth: v.number(),
+    revisionVariable: v.optional(v.string()),
+    hasChildren: v.boolean(),
+    latestExpandVerdict: v.optional(
+      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
+    ),
+    latestExpandability: v.optional(v.number()),
+    failureStatus: v.optional(failureReasonValidator),
+  }),
+});
+
+export const thesisDetailValidator = v.object({
+  thesis: thesisReturnValidator,
+  hypotheses: v.array(hypothesisReturnValidator),
+  recipes: v.array(recipeReturnValidator),
+  compositions: v.array(compositionReturnValidator),
+  stats: v.object({
+    contradictionCount: v.number(),
+    activeCount: v.number(),
+    evaluatedCount: v.number(),
+    retiredCount: v.number(),
+  }),
+  recentWeeklyBriefIds: v.array(v.id("weeklyBriefs")),
+});
+
+export const editorialSignalValidator = v.object({
+  conceptName: v.string(),
+  displayName: v.string(),
+  domain: v.string(),
+  mentionCount: v.number(),
+  hypothesisCount: v.number(),
+  linkedRecipes: v.number(),
+  linkedCompositions: v.number(),
+  positiveSignals: v.number(),
+  negativeSignals: v.number(),
+  netYieldScore: v.number(),
+  yieldBand: yieldBandValidator,
+});
+
+export const editorialSignalClusterValidator = v.object({
+  domain: v.string(),
+  conceptNames: v.array(v.string()),
+  score: v.number(),
+  yieldBand: yieldBandValidator,
 });
 
 // ============================================================================

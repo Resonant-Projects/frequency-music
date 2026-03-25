@@ -5,9 +5,11 @@ const routeHeadings: Array<{ path: string; heading: string }> = [
   { path: "/display", heading: "Display & Triage" },
   { path: "/essays", heading: "Essays" },
   { path: "/hypotheses", heading: "Hypotheses" },
+  { path: "/theses", heading: "Theses" },
   { path: "/recipes", heading: "Recipes" },
   { path: "/weekly-turns", heading: "Weekly Turns" },
   { path: "/compositions", heading: "Compositions" },
+  { path: "/failures", heading: "Failure Archive" },
   { path: "/feedback", heading: "Feedback & Listening Sessions" },
   { path: "/admin", heading: "Admin" },
 ];
@@ -22,12 +24,18 @@ test.describe("navigation", () => {
     await expect(page.getByRole("link", { name: "Display" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Essays" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Hypotheses" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Theses", exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole("link", { name: "Recipes" })).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Weekly Turns" }),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Compositions" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Failures", exact: true }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Feedback" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Admin" })).toBeVisible();

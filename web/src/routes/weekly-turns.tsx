@@ -165,6 +165,16 @@ export function WeeklyTurnsPage() {
                       <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
                         <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
                         <UIBadge tone="cream">{brief.visibility}</UIBadge>
+                        <Show when={(brief.activeThesisIds ?? []).length > 0}>
+                          <UIBadge tone="violet">
+                            {(brief.activeThesisIds ?? []).length} theses
+                          </UIBadge>
+                        </Show>
+                        <Show when={(brief.referencedFailureKeys ?? []).length > 0}>
+                          <UIBadge tone="violet">
+                            {(brief.referencedFailureKeys ?? []).length} reversals
+                          </UIBadge>
+                        </Show>
                         <Show when={brief.publishedAt}>
                           {(ts) => (
                             <UIBadge tone="violet">

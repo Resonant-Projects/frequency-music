@@ -2,9 +2,14 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { inferDisplaySectorFromDomain, normalizeSectorId } from "./domainMappings";
+import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
 
 type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
+
+type DbReader = {
+  query: (table: string) => any;
+};
 
 const emptySectors: Record<SectorId, { sources: number; claims: number }> = {
   math: { sources: 0, claims: 0 },
@@ -307,6 +312,209 @@ export const pipelineItems = query({
         status: r.status,
       })),
     };
+  },
+});
+
+export async function computeEditorialSignals(db: DbReader, limit = 24) {
+  const [concepts, hypotheses, recipes, compositions, listeningSessions] =
+    (await Promise.all([
+      db.query("concepts").take(200),
+      db.query("hypotheses").collect(),
+      db.query("recipes").collect(),
+      db.query("compositions").collect(),
+      db.query("listeningSessions").collect(),
+    ])) as [
+      Doc<"concepts">[],
+      Doc<"hypotheses">[],
+      Doc<"recipes">[],
+      Doc<"compositions">[],
+      Doc<"listeningSessions">[],
+    ];
+
+  const recipesByHypothesisId = new Map<string, Doc<"recipes">[]>();
+  for (const recipe of recipes) {
+    const existing = recipesByHypothesisId.get(String(recipe.hypothesisId)) ?? [];
+    existing.push(recipe);
+    recipesByHypothesisId.set(String(recipe.hypothesisId), existing);
+  }
+
+  const compositionsByRecipeId = new Map<string, Doc<"compositions">[]>();
+  for (const composition of compositions) {
+    const existing = compositionsByRecipeId.get(String(composition.recipeId)) ?? [];
+    existing.push(composition);
+    compositionsByRecipeId.set(String(composition.recipeId), existing);
+  }
+
+  const sessionsByCompositionId = new Map<string, Doc<"listeningSessions">[]>();
+  for (const session of listeningSessions) {
+    const existing = sessionsByCompositionId.get(String(session.compositionId)) ?? [];
+    existing.push(session);
+    sessionsByCompositionId.set(String(session.compositionId), existing);
+  }
+
+  const rows = concepts.map((concept: Doc<"concepts">) => {
+    const linkedHypotheses = hypotheses.filter((hypothesis: Doc<"hypotheses">) =>
+      (hypothesis.concepts ?? []).some(
+        (item: string) => item.toLowerCase().trim() === concept.name,
+      ),
+    );
+    const linkedRecipes = linkedHypotheses.flatMap(
+      (hypothesis: Doc<"hypotheses">) =>
+        recipesByHypothesisId.get(String(hypothesis._id)) ?? [],
+    );
+    const linkedCompositions = linkedRecipes.flatMap(
+      (recipe: Doc<"recipes">) =>
+        compositionsByRecipeId.get(String(recipe._id)) ?? [],
+    );
+
+    let supportedHypotheses = 0;
+    let contradictedHypotheses = 0;
+    let retiredHypotheses = 0;
+    for (const hypothesis of linkedHypotheses) {
+      if (hypothesis.resolution === "supported") supportedHypotheses += 1;
+      if (hypothesis.resolution === "contradicted") contradictedHypotheses += 1;
+      if (hypothesis.status === "retired") retiredHypotheses += 1;
+    }
+
+    let archivedRecipes = 0;
+    for (const recipe of linkedRecipes) {
+      if (recipe.status === "archived") archivedRecipes += 1;
+    }
+
+    let compositionsYes = 0;
+    let compositionsMaybe = 0;
+    let compositionsNo = 0;
+    let compositionsLowExpandability = 0;
+    for (const composition of linkedCompositions) {
+      const sessions = (sessionsByCompositionId.get(String(composition._id)) ?? []).sort(
+        (a, b) => b.createdAt - a.createdAt,
+      );
+      const latest = sessions[0];
+      if (!latest) continue;
+      if (latest.expandVerdict === "yes") compositionsYes += 1;
+      if (latest.expandVerdict === "maybe") compositionsMaybe += 1;
+      if (latest.expandVerdict === "no") compositionsNo += 1;
+      if ((latest.ratings.expandability ?? Number.POSITIVE_INFINITY) <= 2) {
+        compositionsLowExpandability += 1;
+      }
+    }
+
+    return {
+      conceptName: concept.name,
+      displayName: concept.displayName,
+      domain: concept.domain,
+      mentionCount: concept.mentionCount,
+      hypothesisCount: concept.hypothesisCount,
+      linkedRecipes: linkedRecipes.length,
+      linkedCompositions: linkedCompositions.length,
+      ...scoreEditorialSignals({
+        linkedHypotheses: linkedHypotheses.length,
+        linkedRecipes: linkedRecipes.length,
+        linkedCompositions: linkedCompositions.length,
+        supportedHypotheses,
+        contradictedHypotheses,
+        retiredHypotheses,
+        archivedRecipes,
+        compositionsYes,
+        compositionsMaybe,
+        compositionsNo,
+        compositionsLowExpandability,
+      }),
+    };
+  });
+
+  const sorted = [...rows].sort((a, b) => b.netYieldScore - a.netYieldScore);
+  const topRows = sorted.slice(0, limit);
+
+  const byDomain = new Map<
+    string,
+    {
+      domain: string;
+      conceptNames: string[];
+      score: number;
+      yieldBand: "high" | "mixed" | "low";
+    }
+  >();
+  for (const row of rows) {
+    const existing = byDomain.get(row.domain) ?? {
+      domain: row.domain,
+      conceptNames: [],
+      score: 0,
+      yieldBand: row.yieldBand,
+    };
+    existing.conceptNames.push(row.displayName);
+    existing.score += row.netYieldScore;
+    existing.yieldBand =
+      existing.score >= 6 ? "high" : existing.score <= -1 ? "low" : "mixed";
+    byDomain.set(row.domain, existing);
+  }
+
+  const clusters = [...byDomain.values()]
+    .map((cluster) => ({
+      ...cluster,
+      conceptNames: cluster.conceptNames.slice(0, 4),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  return {
+    concepts: topRows,
+    highYieldClusters: clusters.filter((cluster) => cluster.score > 0).slice(0, 4),
+    lowYieldClusters: [...clusters]
+      .reverse()
+      .filter((cluster) => cluster.score <= 0)
+      .slice(0, 4),
+  };
+}
+
+export const editorialSignals = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.object({
+    concepts: v.array(
+      v.object({
+        conceptName: v.string(),
+        displayName: v.string(),
+        domain: v.string(),
+        mentionCount: v.number(),
+        hypothesisCount: v.number(),
+        linkedRecipes: v.number(),
+        linkedCompositions: v.number(),
+        positiveSignals: v.number(),
+        negativeSignals: v.number(),
+        netYieldScore: v.number(),
+        yieldBand: v.union(
+          v.literal("high"),
+          v.literal("mixed"),
+          v.literal("low"),
+        ),
+      }),
+    ),
+    highYieldClusters: v.array(
+      v.object({
+        domain: v.string(),
+        conceptNames: v.array(v.string()),
+        score: v.number(),
+        yieldBand: v.union(
+          v.literal("high"),
+          v.literal("mixed"),
+          v.literal("low"),
+        ),
+      }),
+    ),
+    lowYieldClusters: v.array(
+      v.object({
+        domain: v.string(),
+        conceptNames: v.array(v.string()),
+        score: v.number(),
+        yieldBand: v.union(
+          v.literal("high"),
+          v.literal("mixed"),
+          v.literal("low"),
+        ),
+      }),
+    ),
+  }),
+  handler: async (ctx, args) => {
+    return await computeEditorialSignals(ctx.db as DbReader, args.limit ?? 24);
   },
 });
 
