@@ -75,7 +75,7 @@ What's mathematically interesting here is that the analog processing chain intro
 
 DJ T-1000 (Alan D. Oldham), a veteran Detroit techno producer, provides perhaps the most explicit bridge between intuitive practice and mathematical structure. He describes his recent adoption of **swing at 25–30%** applied to all drum patterns as "transformative for rhythmic feel." Swing, in production terms, delays every other subdivision by a percentage of the grid spacing — converting an isochronous grid into a non-isochronous one.
 
-This is precisely the kind of asymmetric time division studied in the polska research, but applied at the sixteenth-note level rather than the beat level. A swing of 25% on sixteenths transforms a 1:1 ratio between consecutive sixteenths into approximately 5:3 — very close to the 3:2 ratios found in polska beat durations. The biomechanical connection is direct: both polska dance timing and techno swing percentages converge on duration ratios that optimize the body's ability to entrain — to lock its movement cycles to the rhythmic pattern.
+This is precisely the kind of asymmetric time division studied in the polska research, but applied at the sixteenth-note level rather than the beat level. A swing of 25% on sixteenths (in the MPC sense — shifting the off-beat note 25% later, so the first note occupies 62.5% and the second 37.5% of each pair) transforms a 1:1 ratio into approximately 5:3 — very close to the 3:2 ratios found in polska beat durations. The biomechanical connection is direct: both polska dance timing and techno swing percentages converge on duration ratios that optimize the body's ability to entrain — to lock its movement cycles to the rhythmic pattern.
 
 ### The Circle Guitar: Rhythm as Rotation
 

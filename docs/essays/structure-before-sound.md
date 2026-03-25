@@ -21,7 +21,7 @@ A recent paper on automatic piano accompaniment generation makes this insight ex
 
 This mirrors what experienced composers and producers do intuitively. When Timbaland builds a beat, he's not thinking about individual notes first — he's thinking about *where the energy goes*. The syncopation pattern is the architecture; the specific sounds are furniture.
 
-The paper formalizes this with "energy terms" for harmonic feasibility, structural-role compatibility, and voice-leading continuity. These are measurable properties of the *structure*, not the surface. The claim is strong: you can evaluate whether an accompaniment is well-formed by examining its structural properties alone, before hearing a single note.
+The paper formalizes this with "energy terms" — mathematical penalty functions in the generation algorithm, essentially cost functions that measure how well an accompaniment satisfies harmonic, structural, and voice-leading constraints. These are measurable properties of the *structure*, not the surface. The claim is strong: you can evaluate whether an accompaniment is well-formed by examining its structural properties alone, before hearing a single note.
 
 ## Self-Similarity as Structure
 
@@ -49,7 +49,7 @@ If you compress a Tom Johnson self-similar melody to 788 tokens, the recursive s
 
 If structure-before-sound is a real compositional principle, we should be able to measure it. I'll call it **structural density**: the ratio of structural information to surface information in a piece of music.
 
-A Neptunes beat has high structural density — almost every audible element is load-bearing, contributing to the rhythmic or harmonic architecture. A heavily orchestrated film score might have low structural density — many elements are decorative, adding color without changing the structural skeleton.
+A Neptunes beat has high structural density — almost every audible element is load-bearing, contributing to the rhythmic or harmonic architecture. A densely layered ambient or synthwave track might have low structural density — many elements are decorative, adding color and atmosphere without changing the structural skeleton. (Good orchestral writing, by contrast, often has surprisingly high structural density — every counter-melody serving a specific leitmotivic or narrative function.)
 
 **Experiment:** Take three tracks with different apparent complexity levels. Compress each to extreme ratios (using a neural codec or even just a very low-bitrate MP3). Compare: which tracks retain their identity under compression? The hypothesis is that tracks with high structural density will be more recognizable after compression than tracks with low structural density — even if the low-density tracks sound "better" at full quality.
 

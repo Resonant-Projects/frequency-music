@@ -12,7 +12,7 @@ What emerges is a map where **the diagonal line s_f = s_p acts as a mirror**, an
 
 ## Major and Minor: The Only Reflection Pair
 
-Here's the striking result: among all common triads, **major and minor are the only pair that maps to each other under this reflection**. The major triad (4:5:6 in frequency ratios, 15:12:10 in period ratios) sits on one side of the diagonal; the minor triad (the subharmonic mirror, with those numbers swapped) sits on the other. They are reflections of each other in the most literal geometric sense.
+Here's the striking result: among all common triads, **major and minor are the only pair that maps to each other under this reflection**. The major triad (4:5:6 in frequency ratios, 15:12:10 in period ratios) sits on one side of the diagonal; the minor triad (10:12:15 in frequency ratios, 6:5:4 in period ratios — exactly the swap) sits on the other. They are reflections of each other in the most literal geometric sense.
 
 The diminished chord? It reflects to another diminished chord. The augmented chord reflects to another augmented chord. The suspended fourth chord sits *on* the diagonal — it's its own reflection. Only major and minor are genuinely different chord types that mirror each other.
 
