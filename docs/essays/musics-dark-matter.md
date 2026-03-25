@@ -56,7 +56,7 @@ We can speculate about what kinds of patterns might live in music's uncodified s
 
 If music has dark matter — perceptually real patterns that traditional theory doesn't name — then composers have two new frontiers:
 
-**Conscious deployment.** If interpretability tools can identify what these uncodified patterns are, composers can learn to use them deliberately. This would be like an astronomer who, having detected dark matter's effects, can now predict galactic behavior more accurately. A composer who understands music's unnamed patterns can deploy them with intention rather than just intuition.
+**Conscious deployment.** If interpretability tools can identify what these uncodified patterns are, composers can learn to use them deliberately — at which point, of course, they stop being "dark matter" and become regular music theory. That's the paradox and the promise: dark matter is a *transitional* category. Every technique in music theory was once an unnamed intuition that someone formalized. SAE interpretability tools might simply be accelerating the eternal process by which felt patterns become teachable concepts.
 
 **Concept steering as composition.** The SAE paper shows that discovered concepts can be used to *steer* model outputs — turn features up or down to control what the model generates. This is essentially a new compositional interface: instead of specifying notes, you specify structural features and let the system realize them. But the interesting case is steering on *uncodified* features. You'd be shaping music along dimensions that have no name, producing effects that are perceptibly coherent but theoretically novel.
 

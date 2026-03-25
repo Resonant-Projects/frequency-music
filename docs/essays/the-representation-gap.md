@@ -36,7 +36,7 @@ This dual identity creates a philosophical puzzle that the deepfake detection co
 
 But the musical implications go deeper. A neural codec is, at its core, a learned theory about what matters in audio. Its latent space is a compressed representation that preserves whatever the training process decided was important for reconstruction. When that same latent space becomes the vocabulary for *generating* audio, the compression assumptions become compositional assumptions.
 
-What the codec throws away during compression, it can never generate during synthesis. The representation defines the boundary of the possible.
+What the codec throws away during compression, it can never *faithfully recover* during synthesis — though vocoders like HiFi-GAN do hallucinate new high-frequency detail during decoding, generating plausible acoustic data that wasn't in the compressed representation. The representation doesn't define a hard boundary so much as a fidelity horizon: beyond it, generation becomes invention.
 
 ## The Map Is Not the Territory (But Which Map?)
 
@@ -55,7 +55,7 @@ The way forward isn't to find the One True Representation. It's to build systems
 
 A composer working with a DAW already does this unconsciously: they hear the audio, read the MIDI piano roll, check the notation, and hold a conceptual model of the form in their head simultaneously. The richness of musical thought comes from this multi-resolution perspective.
 
-The Pythagorean tradition held that the fundamental structure of reality was music-like — that harmony, not particles, was the irreducible substrate. Whether or not you go that far, there's something right about the intuition that music resists reduction to any single formal system. It lives in the gaps between representations, in the surplus that every translation leaves behind.
+There's something right about the intuition that music resists reduction to any single formal system. (The Pythagoreans would have disagreed — they believed integer ratios captured *everything* — but the evidence from these papers suggests otherwise.) Music lives in the gaps between representations, in the surplus that every translation leaves behind.
 
 The representation gap isn't a problem to solve. It's a feature of music's richness — and a reminder that any single lens, however powerful, is still just one way of seeing.
 

@@ -61,7 +61,7 @@ A forced harmonic oscillator — one of the most studied systems in physics — 
 
 The human body contains coupled oscillatory systems at every scale: cellular membranes, neural oscillation networks, cardiac rhythms, respiratory cycles, cranial bone resonances, vocal tract modes. Each has natural frequencies. Each responds preferentially to specific driving frequencies.
 
-The gap between "coupled oscillators respond to specific frequencies" (established physics) and "528 Hz heals DNA" (unfounded marketing) is enormous. But it's not a gap between physics and non-physics. It's a gap between well-characterized simple systems and poorly characterized complex ones. The *mechanism* for frequency-specific biological effects exists. The *specifics* haven't been mapped.
+The gap between "coupled oscillators respond to specific frequencies" (established physics) and "528 Hz heals DNA" (unfounded marketing) is enormous — and honestly, it *is* partly a gap between physics and non-physics. DNA repair is a biochemical process, not an acoustic or mechanical one, and the leap from "cells on a vibrating plate respond to frequency" to "sound waves repair genetic damage" crosses a fundamental disciplinary boundary. The mechanism for frequency-specific *mechanical* effects on cells exists. But extrapolating this to genetic repair is a category error, not just an unmapped specificity.
 
 ## What Nāda Yoga Got Right (and Wrong)
 

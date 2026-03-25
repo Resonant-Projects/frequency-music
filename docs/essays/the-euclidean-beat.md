@@ -48,11 +48,11 @@ This is a well-known rhythm in West African and Afro-Cuban music. In fact, it's 
 | E(5, 16) | `x . . x . . x . . x . . x . . .` | Bossa nova |
 | E(9, 16) | `x . x x . x . x . x x . x . x .` | Rhythm necklace in Aka pygmy music |
 
-The patterns aren't approximations or analogues. They're exact matches, confirmed by ethnomusicological transcription.
+When quantized to an even grid, these patterns are exact matches to ethnomusicological transcriptions — though of course, a master percussionist's performance includes micro-timing deviations (swing, feel) that the algorithm deliberately does not model.
 
 ## 3. Why Maximal Evenness?
 
-The obvious question: why should human musical cultures, developed independently across continents and millennia, converge on the same mathematical property — maximal evenness?
+The obvious question: why should *so many independent* human musical cultures, developed across continents and millennia, converge on the same mathematical property — maximal evenness? (Not all did — gamelan and Native American powwow drumming follow different organizing principles — but the convergence among those that did demands explanation.)
 
 Several interlocking explanations:
 
