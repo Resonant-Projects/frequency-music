@@ -12,7 +12,7 @@ The answer is familiar: the pentatonic scale and its modes. The 5-note pentatoni
 
 But then they escalate: what about a *three-voice* constraint — no three consecutive semitones? The maximal sets satisfying this stronger constraint are the 7-note diatonic scales.
 
-Here's the kicker: **there's a formal duality between the two-voice and three-voice constraint worlds.** Scales satisfying one type of constraint correspond systematically to scales satisfying the other. The pentatonic scale (5 notes from the 2-voice constraint) and the diatonic scale (7 notes from the 3-voice constraint) are dual partners — their union covers all 12 pitch classes, their structures are complementary, and one can be derived from the other by a well-defined inversion operation.
+Here's the kicker: **there's a formal duality between the two-voice and three-voice constraint worlds.** Scales satisfying one type of constraint correspond systematically to scales satisfying the other. The pentatonic scale (5 notes from the 2-voice constraint) and the diatonic scale (7 notes from the 3-voice constraint) are dual partners — specifically, the *complementary* pairing (e.g., the black keys and the white keys on a piano), whose union covers all 12 pitch classes. Their structures are complementary, and one can be derived from the other by a well-defined inversion operation.
 
 This is not just a numerological coincidence (5 + 7 = 12). The paper proves that the correspondence is structural: the interval patterns of a scale and its dual are related by a specific transformation, and the harmonic properties of one predict the harmonic properties of the other.
 
@@ -56,7 +56,7 @@ What can a musician *do* with this?
 
 **Exploit the major/minor mirror deliberately.** The s_f–s_p framework suggests that the diagonal component (s_f + s_p) tracks consonance while the perpendicular component (s_f − s_p) tracks emotional valence. A composer can move along these axes independently: increase consonance without changing emotional color (move along the diagonal), or shift from bright to dark without changing consonance (move perpendicular to it).
 
-**Layer dualities.** A passage that simultaneously exploits constraint duality (pentatonic melody over diatonic harmony) and harmonic duality (major chords resolving to their minor mirrors) creates a multi-layered sense of reflection that listeners can feel even if they can't name it.
+**Layer dualities.** A passage that simultaneously exploits constraint duality (complementary pentatonic melody over diatonic harmony — the black keys singing over the white keys) and harmonic duality (major chords resolving to their minor mirrors) creates a multi-layered sense of reflection that listeners can feel even if they can't name it.
 
 **Microtonality through duality.** The constraint approach generalizes beyond 12-TET. In a 19-tone equal temperament, the "no adjacent semitones" constraint produces different maximal sets, with different duals. Each tuning system has its own duality landscape, and exploring that landscape is a systematic way to discover the natural scales of unfamiliar temperaments.
 

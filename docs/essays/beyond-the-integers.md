@@ -14,7 +14,7 @@ Three recent papers from the *Journal of Mathematics and Music* each push past t
 
 The tritone has been a thorn in tuning theory for centuries. In just intonation, it doesn't have a clean representation — you can approximate it as 7/5 or 45/32 or √2, but none of these feel *right*. The tritone divides the octave exactly in half, yet no ratio of small integers does this cleanly.
 
-The solution proposed in "Mathematical Foundations of Complex Tonality" is elegant: stop using real numbers. By extending the number system to Gaussian integers (complex numbers of the form a + bi where a, b are integers), the tritone simply *is* the imaginary unit i. The ratio i has magnitude 1, and i² = -1, so two tritones give you... well, an inversion, which is exactly what happens musically.
+The solution proposed in "Mathematical Foundations of Complex Tonality" is elegant: stop restricting ourselves to real numbers. By extending the number system to Gaussian integers (complex numbers of the form a + bi where a, b are integers), the tritone simply *is* the imaginary unit i. The ratio i has magnitude 1, and i² = -1, so two tritones give you... well, an inversion, which is exactly what happens musically.
 
 From this foundation, the authors construct complete major and minor scales using Gaussian primes as building blocks, and prove that exactly three distinct complex chromatic systems exist. The tritone isn't an anomaly anymore — it's a first-class citizen in a richer algebraic world.
 
@@ -22,7 +22,7 @@ From this foundation, the authors construct complete major and minor scales usin
 
 If Gaussian integers rescue the tritone, algebraic tuning systems go further: they replace the octave entirely. In "Algebraic Tunings," the conventional octave ratio of 2 is swapped for an algebraic unit τ — specifically the golden ratio φ ≈ 1.618.
 
-Why would anyone do this? Because of difference tones. When two frequencies sound simultaneously, you hear not just the fundamentals but also their difference. In standard tuning, difference tones usually *don't* land on notes in your scale — they're artifacts. But when your frequencies live in the ring ℤ[φ], something remarkable happens: the difference tones land back in the same ring. The tuning system is *closed* under the physical phenomenon of combination tones.
+Why would anyone do this? Because of difference tones. When two frequencies sound simultaneously, you hear not just the fundamentals but also their difference — a physical phenomenon where the difference in Hz produces an audible tone. In standard tuning, these difference tones usually *don't* land on notes in your scale — they're artifacts. But when your frequencies live in the ring ℤ[φ], something remarkable happens: the difference tone in Hz lands back on a frequency within the same ring, because φ - 1 = 1/φ, which is itself an element of ℤ[φ]. The tuning system is *closed* under the physical phenomenon of combination tones.
 
 The authors build two concrete scales — 8 and 10 notes per "golden octave" — and connect the construction to deep number theory (the Erdős–Szemerédi sum-product conjecture). There's even a composition, *Three Places*, demonstrating that this isn't just math: it sounds like something.
 

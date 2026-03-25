@@ -54,7 +54,7 @@ If the comma is inevitable, its *placement* becomes a compositional choice. A pi
 
 In equal temperament, every non-octave interval produces beating — the slow pulsation you hear when two close frequencies interact. The rate of beating is the difference in Hz between the two frequencies. In just intonation, the beating disappears on pure intervals — the sensation is qualitatively different, not just quantitatively.
 
-The microtonality literature (Xenakis, Scelsi) explicitly uses closely-spaced pitches to *create* beating as a compositional texture. This is the opposite strategy from JI: instead of eliminating beats, make them the point.
+The microtonality literature (Xenakis, Scelsi) explicitly uses closely-spaced pitches to *create* beating as a compositional texture — the interference pattern between nearly-identical frequencies produces a pulsation that becomes a rhythmic and timbral element in its own right. This is the opposite strategy from JI: instead of eliminating beats, make them the point.
 
 **Studio experiment:** Layer two sine waves at a pure 5:4 major third (e.g., 432 Hz and 540 Hz). Then detune the upper note by 5 cents, 10 cents, 15 cents. The beating creates an LFO-like effect — amplitude modulation generated purely by frequency relationships, with no synthesis tricks. How slow can you make the beating before it stops being perceived as texture and starts being heard as "out of tune"?
 
@@ -68,7 +68,7 @@ Similarly, the 7th harmonic (968.8 cents) is the "barbershop seventh" — a soun
 
 ## The Deeper Pattern
 
-What strikes me reading across these sources is that the comma problem isn't a bug — it's a feature of a universe where frequencies relate through multiplication (harmonic series) but our perception organizes them through addition (equal steps). These two mathematical operations are fundamentally incompatible, and the comma is where the incompatibility becomes audible.
+What strikes me reading across these sources is that the comma problem isn't a bug — it's a feature of a universe where frequencies relate through multiplication (harmonic series) but our instruments and notation organize them through addition (equal steps on a keyboard, equal spacing on a staff). Our *perception* is actually logarithmic — we hear ratios as equal distances — but our *technological interfaces* impose additive structure. These two mathematical operations are fundamentally incompatible, and the comma is where the incompatibility becomes audible.
 
 Every tuning system is a mapping between the multiplicative world of physics and the additive world of human perception. The question isn't "which mapping is correct?" — they're all correct. The question is "which mapping reveals the music you want to make?"
 

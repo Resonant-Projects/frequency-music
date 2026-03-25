@@ -14,7 +14,7 @@ This essay bridges Robert Edward Grant's research on the geometric correspondenc
 
 ### The Core Discovery
 
-Grant's research reveals that when music is tuned to A=432Hz (rather than A=440Hz), the 12 chromatic notes correspond precisely to the internal angles of regular polygons. This isn't arbitrary numerology—it emerges from the mathematical relationship between the harmonic series and geometric symmetry.
+Grant's research reveals that when music is tuned to A=432Hz (rather than A=440Hz), the 12 chromatic notes map systematically to the internal angles of regular polygons. This isn't arbitrary numerology—it emerges from the mathematical relationship between the harmonic series and geometric symmetry, though the precision of the correspondence varies across the scale.
 
 **Key Relationships at 432Hz:**
 

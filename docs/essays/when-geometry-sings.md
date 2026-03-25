@@ -6,7 +6,7 @@
 
 A team at Harvard recently answered a question nobody thought was physics: why do basketball shoes squeak? Using cameras capturing up to a million frames per second, they discovered that sneaker tread intermittently slips and sticks to the court surface at *supersonic speeds*, producing sound waves. But the truly musical finding was about geometry.
 
-Smooth rubber produces broadband noise — white noise, essentially. **Ridged rubber produces a clear tone.** The ridges on sneaker tread act as a waveguide, channeling the acoustic energy of friction into a coherent pitch. Moreover, the pitch is a function of rubber thickness: thinner blocks produce higher pitches, with a relationship so precise that the researchers manufactured custom blocks to play "The Imperial March" from *Star Wars*.
+Smooth rubber produces broadband noise — white noise, essentially. **Ridged rubber produces a clear tone.** The ridges on sneaker tread create a periodic stick-slip oscillation — each ridge catches and releases in sequence, channeling the chaotic energy of friction into a coherent pitch. Moreover, the pitch is a function of rubber thickness: thinner blocks produce higher pitches, with a relationship so precise that the researchers manufactured custom blocks to play "The Imperial March" from *Star Wars*.
 
 This is, in miniature, the physics of every wind instrument, every vibrating plate, every resonant cavity. Geometry transforms noise into tone.
 
@@ -52,7 +52,7 @@ The basketball shoe finding suggests a compositional principle: **periodic geome
 - A **flute** is a waveguide — a tube that selects harmonics from turbulent air.
 - A **violin body** is a waveguide — a resonant chamber that amplifies and filters string vibrations.
 - A **room** is a waveguide — its dimensions determine standing wave patterns (room modes) that color every sound produced within it.
-- An **EQ filter** is a digital waveguide — a mathematical structure that selects frequencies from a signal.
+- A **delay line** or **comb filter** is a digital waveguide — a mathematical structure that creates periodic resonance from feedback, the computational equivalent of a resonant tube.
 
 The shoe experiment quantifies this: the relationship between ridge geometry and pitch is precise enough to *compose with*. That's the definition of a musical instrument.
 
