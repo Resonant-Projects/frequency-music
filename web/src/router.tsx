@@ -16,9 +16,6 @@ import {
 import { AdminPage } from "./routes/admin";
 import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
-const EssayDetailPage = lazy(() =>
-  import("./routes/essay-detail").then((m) => ({ default: m.EssayDetailPage })),
-);
 import { EssaysPage } from "./routes/essays";
 import { FeedbackPage } from "./routes/feedback";
 import { HypothesisDetailPage } from "./routes/hypothesis-detail";
@@ -26,13 +23,29 @@ import { HypothesesPage } from "./routes/hypotheses";
 import { IngestPage } from "./routes/ingest";
 import { RecipeDetailPage } from "./routes/recipe-detail";
 import { RecipesPage } from "./routes/recipes";
-const WeeklyBriefDetailPage = lazy(() =>
+import { WeeklyTurnsPage } from "./routes/weekly-turns";
+
+function lazyRoute<T extends Component>(
+  loader: () => Promise<{ default: T }>,
+): T & { preload: () => Promise<void> } {
+  const component = lazy(loader) as unknown as T & {
+    preload: () => Promise<void>;
+  };
+  component.preload = () => loader().then(() => undefined);
+  return component;
+}
+
+const EssayDetailPage = lazyRoute(() =>
+  import("./routes/essay-detail").then((m) => ({ default: m.EssayDetailPage })),
+);
+
+const WeeklyBriefDetailPage = lazyRoute(() =>
   import("./routes/weekly-brief-detail").then((m) => ({
     default: m.WeeklyBriefDetailPage,
   })),
 );
-import { WeeklyTurnsPage } from "./routes/weekly-turns";
-const Zodiac3D = lazy(() =>
+
+const Zodiac3D = lazyRoute(() =>
   import("./routes/zodiac-3d").then((m) => ({ default: m.Zodiac3D })),
 );
 

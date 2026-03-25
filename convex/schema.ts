@@ -344,7 +344,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_recipeId_updatedAt", ["recipeId", "updatedAt"])
-    .index("by_status_updatedAt", ["status", "updatedAt"]),
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_revisionParentId_updatedAt", ["revisionParentId", "updatedAt"]),
 
   // ==========================================================================
   // LISTENING SESSIONS - Evaluation data

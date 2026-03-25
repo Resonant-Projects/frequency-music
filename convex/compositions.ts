@@ -103,6 +103,16 @@ export const create = mutation({
         message: "revisionVariable is required when revisionParentId is set",
       });
     }
+    if (
+      !createArgs.revisionParentId &&
+      createArgs.revisionVariable?.trim().length
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message:
+          "revisionParentId is required when revisionVariable is provided",
+      });
+    }
     if (createArgs.revisionParentId) {
       const parent = await ctx.db.get(
         "compositions",
@@ -200,6 +210,28 @@ export const update = mutation({
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
         message: "revisionVariable is required when revisionParentId is set",
+      });
+    }
+    if (
+      revisionParentId === undefined &&
+      revisionVariable !== undefined &&
+      revisionVariable.trim().length
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message:
+          "revisionParentId is required when revisionVariable is provided",
+      });
+    }
+    if (
+      revisionParentId === null &&
+      revisionVariable !== undefined &&
+      revisionVariable.trim().length
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message:
+          "revisionParentId is required when revisionVariable is provided",
       });
     }
     if (revisionParentId) {

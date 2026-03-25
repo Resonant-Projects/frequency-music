@@ -177,6 +177,7 @@ Fields:
 Indexes:
 - `by_recipeId_updatedAt (recipeId, updatedAt)`
 - `by_status_updatedAt (status, updatedAt)`
+- `by_revisionParentId_updatedAt (revisionParentId, updatedAt)`
 
 ## 8) listeningSessions
 Fields:
