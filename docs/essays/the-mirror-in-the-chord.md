@@ -36,7 +36,7 @@ The s_f–s_p representation suggests two more speculative but tantalizing conne
 
 **The diagonal component predicts consonance.** If you project a chord's position onto the diagonal (s_f + s_p), you get a value that tracks well with subjective consonance ratings: major > minor > suspended > diminished > augmented. The further you are from the origin along the diagonal, the more "consonant" the chord sounds.
 
-**The perpendicular component predicts emotional valence.** The component perpendicular to the diagonal (s_f - s_p) correlates with listeners' ratings of melancholy and sadness. Minor chords, which sit in the "subharmonic region" (s_p > s_f), score higher on melancholy. Major chords, in the "harmonic region," score lower.
+**The perpendicular component correlates with emotional valence — in Western listeners.** The component perpendicular to the diagonal (s_f - s_p) correlates with Western listeners' ratings of melancholy and sadness. Minor chords, which sit in the "subharmonic region" (s_p > s_f), score higher on melancholy; major chords score lower. Whether this reflects a universal acoustic property or a culturally learned association remains an open question — in musical traditions where the minor pentatonic carries joyful or celebratory associations, the correlation might not hold.
 
 If this holds up, it means the emotional character of a chord isn't arbitrary — it's geometrically encoded in the balance between its harmonic and subharmonic simplicity. Sadness lives on one side of the mirror; brightness on the other.
 

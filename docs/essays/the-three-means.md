@@ -24,7 +24,7 @@ For a string of length 1 (fundamental) and length 1/2 (octave), the arithmetic m
 
 This divides the octave into a fourth (bottom) and a fifth (top): 1 → 4/3 → 2.
 
-The arithmetic mean is *additive*. It splits the interval by finding the midpoint of the *physical* quantity (string length, wavelength). It biases toward the lower end of the frequency range — the fourth sits below the fifth.
+The arithmetic mean is *additive*. It splits the interval by finding the midpoint of the *physical* quantity (string length, wavelength). Here's the counterintuitive part: a *longer* string produces a *lower* frequency (frequency is inversely proportional to wavelength). So the midpoint of string length (3/4 of the whole) gives the *fourth*, which sits *below* the fifth in pitch. The arithmetic mean biases toward the lower end of the frequency range precisely because of this inverse relationship.
 
 ### The Harmonic Mean
 
