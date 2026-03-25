@@ -81,9 +81,9 @@ What does this mean for a composer?
 - Harmonic division produces a *wider upper interval* (the fifth-below-fourth pattern). This has an open, soaring quality.
 - Geometric division produces *equal* intervals. This has a symmetrical, ambiguous quality — the tritone's instability is a direct consequence.
 
-**2. Chord voicing recapitulates the means.** A major triad in root position (C-E-G) roughly follows arithmetic division of the octave. Its first inversion (E-G-C) shifts toward harmonic division. The choice of voicing is, implicitly, a choice of mean.
+**2. Chord voicing echoes the mean principle — loosely.** The arithmetic and harmonic means bisect the octave at the fifth and fourth respectively; a major triad's internal intervals (major third + minor third) don't map cleanly onto these bisections. But the *spirit* of the idea — that redistributing the same pitch content across different registers changes the character of a chord from "grounded" to "floating" — parallels the shift from arithmetic to harmonic division. Don't push this analogy further than it can bear.
 
-**3. Microtonal tuning as mean selection.** Instead of committing to a single tuning system, a composer could *modulate between means* — shifting continuously from just intonation (arithmetic/harmonic) toward equal temperament (geometric) and back. This is a form of tuning modulation that's mathematically principled rather than arbitrary.
+**3. Microtonal tuning as mean selection.** A composer working with adaptive tuning or fretless instruments could *modulate between means* — shifting from just intonation (arithmetic/harmonic) toward equal temperament (geometric) and back. On a standard MIDI keyboard this isn't practical without custom pitch-bend scripting, but for electronic composers with microtonal DAW setups (like those using Scala files) or for fretless string players who do this intuitively through vibrato and expressive intonation, it's a concrete technique.
 
 **4. Rhythm and the means.** The three means apply equally to temporal intervals. Dividing a measure arithmetically vs. harmonically vs. geometrically produces different rhythmic subdivisions — the arithmetic version giving evenly spaced beats, the harmonic version accelerating, and the geometric version producing logarithmic spacing (which is how we actually perceive rhythmic acceleration).
 

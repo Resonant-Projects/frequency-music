@@ -30,7 +30,7 @@ The paper also introduces three metrics for evaluating this relational property:
 
 Note the progression. IRS is a property of individual tracks. CBS and CBD are properties of *relationships* between tracks. The fact that these relational metrics didn't exist before SyncTrack tells you something about how the field has been thinking — or failing to think — about what makes multi-track music musical.
 
-The open question that excites me most: what happens when you *intentionally* desynchronize? J Dilla's "drunk" beats, the push-and-pull of a jazz rhythm section, the deliberate flamming of New Orleans second-line drumming — these are all *controlled deviations from synchronization*. SyncTrack's CBS metric would score them as errors. A more complete theory of multi-track rhythm would need to distinguish *intentional* micro-timing variation from *accidental* drift, and that distinction lives entirely in the relational domain.
+Here's the uncomfortable truth about SyncTrack's achievement: J Dilla's "drunk" beats, the push-and-pull of a jazz rhythm section, the deliberate flamming of New Orleans second-line drumming — these are all *controlled deviations from synchronization*. CBS would score them as errors. This isn't a minor caveat — it means the AI's core metric for relational quality actively penalizes the most human, expressive forms of musical relationship. The metric formalizes rhythmic *rigidity*, not rhythmic *intelligence*. A more complete theory of multi-track rhythm would need to distinguish *intentional* micro-timing variation from *accidental* drift, and that distinction lives entirely in the relational domain that current models lack.
 
 ## Rooms Shape Sound
 

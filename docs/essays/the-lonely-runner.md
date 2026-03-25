@@ -30,7 +30,7 @@ In ["The Comma Problem"](/docs/essays/the-comma-problem.md), we explored how sta
 
 The deeper connection: the reason the comma exists at all is that log₂(3/2) is *irrational*. The runner never returns to its starting point. It traces out an equidistributed sequence on the circle (by Weyl's theorem), eventually coming arbitrarily close to every point — but never exactly landing on any rational point. The comma is a measure of how badly "close" falls short of "exact."
 
-This is also why equal temperament works at all. The twelfth root of 2 is chosen precisely because it distributes 12 points evenly around the octave — it's the spacing that maximizes the *minimum* distance between any two adjacent points. Equal temperament is the solution to the Lonely Runner problem for 12 runners that gives up on matching harmonic ratios in exchange for maximum, uniform separation.
+Equal temperament distributes 12 points evenly around the octave — maximum uniform separation. But this is a *static* geometry, not a kinematic one: the notes don't move at different speeds, so the Lonely Runner conjecture doesn't strictly apply. Where the conjecture *does* illuminate music is in polyphonic voice leading, where voices genuinely move at different rates through pitch space, and the theorem's guarantee — that each runner eventually finds itself isolated — resonates with the contrapuntal principle that every voice deserves its moment of independence.
 
 ## Phase Music as Lonely Runner Experiment
 

@@ -4,15 +4,15 @@
 
 ---
 
-## The Paradox
+## Two Levels of the Same Thing
 
-Here are two claims from recent research that seem to contradict each other:
+Two recent papers address the same phenomenon — timbre — from opposite directions:
 
-1. A compact set of interpretable acoustic parameters — no neural network, no training, no learned weights — can match or outperform deep learning embeddings at detecting voice timbre attributes.
+1. A compact set of interpretable acoustic parameters — spectral centroid, harmonics-to-noise ratio, spectral flux — can match or outperform deep learning embeddings at detecting voice timbre attributes. (This is well-established DSP; the 2026 paper's contribution is the *specific comparison* against modern neural methods, not the acoustic analysis itself.)
 
-2. The acoustic speech signal is "the most accessible but least causally informative" product of sound production. To understand what's actually happening, you need simultaneous MRI, EEG, and EMG.
+2. The acoustic speech signal is "the most accessible but least causally informative" product of sound production. To understand what's actually happening — which muscles contracted, what neural commands were sent — you need simultaneous MRI, EEG, and EMG.
 
-The first says timbre is *simple*: a handful of measurable parameters captures what you need to know. The second says sound is *deep*: the signal you hear barely hints at the causal chain that produced it. Both are correct, and the tension between them illuminates something fundamental about how music works.
+These aren't contradictory; they're different levels of description. The first captures what timbre *sounds like* (surface); the second reveals what timbre *comes from* (source). The gap between them is where the interesting compositional questions live.
 
 ## What the Timbre Paper Shows
 

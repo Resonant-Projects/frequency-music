@@ -50,7 +50,7 @@ But here's the connection to polyphony: prosody is fundamentally relational. A r
 
 The same is true of polyphonic music. A chord progression isn't a sequence of chords — it's a trajectory through harmonic space, where each simultaneity is meaningful only in relation to what came before and what follows. Voice leading isn't a property of individual voices — it's a property of the *mapping* between consecutive simultaneities.
 
-Vevo2's notation-free approach suggests that the right representation for these trajectories might not be the symbolic one musicians have used for centuries. Notes on a staff are discrete, quantized, voice-separated. The actual acoustic phenomenon is continuous, entangled, holistic. Maybe polyphonic reasoning requires a representation that lives closer to the phenomenon.
+Vevo2's notation-free approach to *monophonic* singing voice generation hints at alternatives to symbolic representation. But it would be a logical leap to conclude that polyphonic reasoning should also abandon notation — standard music notation was, after all, explicitly *invented* to solve the polyphony problem (aligning multiple voices in time). The question isn't whether to use notation or not, but whether the right representation for polyphonic AI sits closer to the symbolic score or the continuous acoustic phenomenon — or perhaps in some intermediate space that preserves the structural clarity of notation while capturing the entangled reality of sounding polyphony.
 
 ## What Polyphony Teaches
 

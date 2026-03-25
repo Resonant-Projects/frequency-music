@@ -38,7 +38,7 @@ These are Allen Forte's set classes — the foundation of post-tonal music theor
 | 5 | 66 | 38 |
 | 6 | 80 | 50 |
 
-The bulge at cardinality 6 is no accident — it reflects the combinatorial peak of "choose 6 from 12," tempered by the symmetry quotient. Hexachords are where the richest harmonic variety lives, which is why twelve-tone composers found them so fertile. The complement theorem (every hexachord's complement belongs to the same or a Z-related set class) is a direct consequence of this arithmetic.
+The bulge at cardinality 6 is no accident — it reflects the combinatorial peak of "choose 6 from 12," tempered by the symmetry quotient. Hexachords are where the greatest *combinatorial* variety lives — more distinct set classes than any other cardinality — which is one reason twelve-tone composers found them so fertile (though mathematical abundance doesn't automatically mean aesthetic richness). The complement theorem (every hexachord's complement belongs to the same or a Z-related set class) is a direct consequence of this arithmetic.
 
 ## Rhythmic Necklaces: How Many Rhythms Are There?
 
@@ -53,7 +53,7 @@ For the 16-slot grid of common 4/4 time:
 
 Godfried Toussaint's *Euclidean rhythms* are a special case: among those 286 four-onset patterns in 16 slots, the Euclidean distribution E(4,16) produces the maximally even spacing. These are the rhythms that appear independently across musical cultures — the same way certain cube structures feel more "natural" than others.
 
-The connection to LeWitt goes deeper. Just as he was interested in connectivity (the incomplete cube must be a single connected structure), musicians implicitly impose constraints beyond mere subset selection. A useful rhythm needs to be parseable by the body — it needs a kind of perceptual "connectivity."
+The connection to LeWitt goes deeper. Just as he was interested in connectivity (the incomplete cube must be a single connected structure), musicians implicitly impose constraints beyond mere subset selection. A useful rhythm needs to be parseable by the body — though the physical constraints here (biological entrainment, motor cortex limits) are fundamentally different from LeWitt's topological connectivity, even if both apply Burnside's lemma to the same combinatorial problem.
 
 ## Scales as Necklaces
 
