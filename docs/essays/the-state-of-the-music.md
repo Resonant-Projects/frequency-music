@@ -29,7 +29,7 @@ This is exactly what a state space model does. The state vector *x* is the liste
 
 The analogy runs deep:
 
-- **A's eigenvalues** determine the *timescales of musical memory*. Large eigenvalues mean slow decay — the model remembers events from far back. Small eigenvalues mean rapid forgetting. A well-structured *A* matrix can simultaneously model the fast decay of a grace note's influence and the slow persistence of a tonal center.
+- **A's eigenvalues** determine the *timescales of musical memory*. Large eigenvalues mean slow decay — the model remembers events from far back. Small eigenvalues mean rapid forgetting. In principle, a well-structured *A* matrix could simultaneously model the fast decay of a grace note's influence and the slow persistence of a tonal center — though whether SMDIM's learned matrices actually exhibit this interpretable structure is an open empirical question the paper doesn't address.
 
 - **The discretization step** (converting continuous-time SSMs to discrete updates) mirrors the relationship between continuous musical flow and discrete note events. Music lives in both worlds: the pitch space is continuous (think glissandi, vibrato, microtonal inflection), but compositional structure is discrete (notes, beats, measures). SSMs handle this duality natively.
 
@@ -62,7 +62,7 @@ The fact that forward modeling (generation) and inverse modeling (restoration) c
 
 Here's where it gets compositionally interesting. If we take the SSM framework seriously as a model of musical cognition, it suggests concrete compositional strategies:
 
-**Manipulating decay rates.** The eigenvalues of *A* control how long musical events persist in the listener's state. A composer who introduces a striking event (an unusual chord, a distinctive timbre) and then delays its resolution is effectively relying on the *slow-decay eigenvalue* associated with that event type. Conversely, rapid ornamental passages work because their associated eigenvalues are small — they color the moment without displacing the larger context.
+**Manipulating decay rates (speculation).** *If* eigenvalues of *A* control how long musical events persist in the model's state — which the SSM mathematics permits but the SMDIM paper doesn't verify — then a composer who introduces a striking event and delays its resolution is effectively relying on a slow-decay dimension. This is a hypothesis about what SSMs *could* reveal about musical memory, not a claim about what the cited paper demonstrates.
 
 **State disruptions.** A dramatic silence, a sudden key change, or a textural rupture disrupts some dimensions of the listener's accumulated state *x* — though unlike a machine's state vector, a human listener's silence is *pregnant* with everything that preceded it, not zeroed out. A better analogy: these gestures *rotate* the state vector, forcing the listener to reorient. A silence after a long development section disrupts temporal expectations while preserving tonal memory; a sudden modulation disrupts tonal context while preserving rhythmic momentum. The drama comes precisely from what the listener *does* remember, not from what's erased.
 

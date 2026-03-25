@@ -22,7 +22,7 @@ The history of "music of the spheres" research is largely a history of cherry-pi
 
 What sets the newer work apart is exactly that probability analysis. Both groups explicitly ask: "Is this result distinguishable from chance?" And both answer: yes, with substantial margins.
 
-The Scafetta result is particularly striking because the 2/3 exponent isn't cherry-picked — it emerges from the relationship between orbital radius and orbital velocity via Kepler's third law (though the exact connection to Kepler's 3/2 exponent requires further investigation). The scaling equation also reveals a mirror symmetry in the solar system around the asteroid belt, with planetary pairs on either side exhibiting complementary harmonic relationships.
+The Scafetta result is particularly striking because the 2/3 exponent derives directly from Kepler's Third Law: since T² ∝ a³, taking a^(2/3) converts spatial distance ratios into a metric proportional to orbital period ratios. The exponent is physically constrained, not free to be tuned for a desired result. The scaling equation also reveals a mirror symmetry in the solar system around the asteroid belt, with planetary pairs on either side exhibiting complementary harmonic relationships.
 
 ## The Dissonance Test
 
