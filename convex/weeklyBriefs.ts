@@ -13,7 +13,8 @@ import { requireAuth } from "./auth";
 import { weeklyBriefReturnValidator } from "./validators";
 
 interface BriefParameter {
-  type: string;
+  kind?: string;
+  type?: string;
   value: string;
 }
 
@@ -195,7 +196,10 @@ async function generateBriefCore(
           .map((r, i) => {
             const params = r.parameters
               .slice(0, 4)
-              .map((p: BriefParameter) => `${p.type}: ${p.value}`)
+              .map(
+                (p: BriefParameter) =>
+                  `${p.kind ?? p.type ?? "parameter"}: ${p.value}`,
+              )
               .join(", ");
             return `${i + 1}. **${r.title}**\n   Why this matters: ${r.whyThisMatters ?? "Not specified"}\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
           })

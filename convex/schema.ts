@@ -14,6 +14,13 @@ export const visibilityValidator = v.union(
   v.literal("public"),
 );
 
+export const registryStatusValidator = v.union(
+  v.literal("known"),
+  v.literal("provisional"),
+  v.literal("experimental"),
+  v.literal("deprecated"),
+);
+
 const evidenceLevelValidator = v.union(
   v.literal("peer_reviewed"),
   v.literal("preprint"),
@@ -32,10 +39,13 @@ const confidenceBandValidator = v.union(
 // Common types: tempo, key, tuningSystem, rootNote, chordProgression,
 // rhythm, instrument, synthWaveform, harmonicProfile, frequency, note,
 // length, dynamics, timbre, interval, form, etc.
-const compositionParameterValidator = v.object({
-  type: v.string(),
+export const compositionParameterValidator = v.object({
+  kind: v.optional(v.string()),
+  type: v.optional(v.string()),
   value: v.string(),
   details: v.optional(v.any()),
+  registryStatus: v.optional(registryStatusValidator),
+  canonicalKind: v.optional(v.string()),
 });
 
 const claimValidator = v.object({
@@ -418,6 +428,56 @@ export default defineSchema({
     .index("by_visibility_createdAt", ["visibility", "createdAt"]),
 
   // ==========================================================================
+  // VOCABULARY REGISTRIES - extensible graph and extraction vocabulary
+  // ==========================================================================
+
+  parameterKinds: defineTable({
+    name: v.string(),
+    status: registryStatusValidator,
+    description: v.optional(v.string()),
+    introducedBy: v.union(v.id("users"), v.literal("system")),
+    displayLabel: v.optional(v.string()),
+    color: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_name", ["name"])
+    .index("by_status", ["status"]),
+
+  conceptDomains: defineTable({
+    name: v.string(),
+    status: registryStatusValidator,
+    description: v.optional(v.string()),
+    introducedBy: v.union(v.id("users"), v.literal("system")),
+    displayLabel: v.optional(v.string()),
+    color: v.optional(v.string()),
+    sectorMapping: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_name", ["name"])
+    .index("by_status", ["status"])
+    .index("by_sectorMapping", ["sectorMapping"]),
+
+  relationshipKinds: defineTable({
+    name: v.string(),
+    status: registryStatusValidator,
+    description: v.optional(v.string()),
+    introducedBy: v.union(v.id("users"), v.literal("system")),
+    displayLabel: v.optional(v.string()),
+    color: v.optional(v.string()),
+    directional: v.optional(v.boolean()),
+    symmetric: v.optional(v.boolean()),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_name", ["name"])
+    .index("by_status", ["status"]),
+
+  // ==========================================================================
   // KNOWLEDGE GRAPH - Concepts and relationships
   // ==========================================================================
 
@@ -432,17 +492,8 @@ export default defineSchema({
     aliases: v.array(v.string()), // Alternative names/spellings
 
     // Categorization
-    domain: v.union(
-      v.literal("tuning"), // Tuning systems, temperaments
-      v.literal("acoustics"), // Wave physics, resonance
-      v.literal("psychoacoustics"), // Perception, consonance
-      v.literal("theory"), // Music theory, harmony
-      v.literal("production"), // DAW, mixing, arrangement
-      v.literal("mathematics"), // Group theory, topology
-      v.literal("geometry"), // Sacred geometry, polygons
-      v.literal("instrument"), // Instruments, synthesis
-      v.literal("general"), // Catch-all
-    ),
+    domain: v.string(),
+    domains: v.optional(v.array(v.string())),
 
     // Metadata
     wikipedia: v.optional(v.string()), // Wikipedia URL
@@ -491,29 +542,7 @@ export default defineSchema({
     toId: v.string(), // ID of the target entity
 
     // Relationship type
-    relationship: v.union(
-      // Source/Article relationships
-      v.literal("cites"), // Source cites another source
-      v.literal("related_to"), // Sources are topically related
-      v.literal("contradicts"), // Source contradicts another
-      v.literal("supports"), // Source supports claims in another
-
-      // Concept relationships
-      v.literal("mentions"), // Source/hypothesis mentions concept
-      v.literal("defines"), // Source defines a concept
-      v.literal("tests"), // Hypothesis tests a concept
-      v.literal("applies"), // Recipe applies a concept
-
-      // Hierarchy relationships
-      v.literal("is_a"), // Concept is a type of another
-      v.literal("part_of"), // Concept is part of another
-      v.literal("derived_from"), // Entity derived from another
-
-      // Workflow relationships
-      v.literal("extracted_from"), // Extraction from source
-      v.literal("generated_from"), // Hypothesis from extraction
-      v.literal("implements"), // Recipe implements hypothesis
-    ),
+    relationship: v.string(),
 
     // Metadata
     weight: v.optional(v.number()), // Strength of relationship (0-1)

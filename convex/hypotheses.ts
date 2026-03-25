@@ -396,7 +396,7 @@ export const generateFromExtraction = action({
       extraction.compositionParameters
         .map(
           (p: Doc<"extractions">["compositionParameters"][number]) =>
-            `- ${p.type}: ${p.value}`,
+            `- ${p.kind ?? p.type ?? "parameter"}: ${p.value}`,
         )
         .join("\n") || "None specified";
 

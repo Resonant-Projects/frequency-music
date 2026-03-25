@@ -38,10 +38,10 @@ const reusableOrbitDummy = new THREE.Object3D();
 function inferSectorFromTopics(topics: string[]): string {
   const joined = topics.join(" ").toLowerCase();
   if (joined.includes("math") || joined.includes("ratio") || joined.includes("topolog")) return "math";
-  if (joined.includes("wave") || joined.includes("frequency") || joined.includes("reson") || joined.includes("acoust")) return "phys";
+  if (joined.includes("wave") || joined.includes("frequency") || joined.includes("reson") || joined.includes("acoust")) return "wave";
   if (joined.includes("psycho") || joined.includes("perception") || joined.includes("consonan")) return "psycho";
-  if (joined.includes("geometr") || joined.includes("tonnetz") || joined.includes("symmetry")) return "geo";
-  if (joined.includes("synth") || joined.includes("timbre") || joined.includes("production")) return "synth";
+  if (joined.includes("geometr") || joined.includes("tonnetz") || joined.includes("symmetry")) return "geometry";
+  if (joined.includes("synth") || joined.includes("timbre") || joined.includes("production")) return "synthesis";
   return "music";
 }
 

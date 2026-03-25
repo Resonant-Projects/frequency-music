@@ -304,6 +304,31 @@ export const startBatchExtraction = mutation({
 });
 
 /**
+ * Start extraction workflow for a single source.
+ */
+export const startSingleSourceExtraction = mutation({
+  args: {
+    sourceId: v.id("sources"),
+    model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({ workflowId: v.string() }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const workflowId = await workflowManager.start(
+      ctx,
+      internal.workflows.extractSourceWorkflow,
+      {
+        sourceId: args.sourceId,
+        model: args.model,
+        devBypassSecret: args.devBypassSecret,
+      },
+    );
+    return { workflowId };
+  },
+});
+
+/**
  * Start batch extraction (internal, for crons)
  */
 export const startBatchExtractionInternal = internalMutation({

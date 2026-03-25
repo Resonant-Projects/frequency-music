@@ -606,11 +606,11 @@ const fallbackPipelineArrow = css({
 
 const sectorRouteMap: Record<string, string> = {
   math: "/display",
-  phys: "/ingest",
+  wave: "/ingest",
   music: "/recipes",
   psycho: "/hypotheses",
-  geo: "/weekly-turns",
-  synth: "/compositions",
+  geometry: "/weekly-turns",
+  synthesis: "/compositions",
 };
 
 const workspaceLinks = [

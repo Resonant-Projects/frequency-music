@@ -214,7 +214,9 @@ export function RecipeDetailPage() {
                   <For each={r().parameters}>
                     {(param) => (
                       <div class={paramCell}>
-                        <div class={paramType}>{param.type}</div>
+                        <div class={paramType}>
+                          {param.kind ?? param.type ?? "parameter"}
+                        </div>
                         <div class={paramValue}>{param.value}</div>
                       </div>
                     )}

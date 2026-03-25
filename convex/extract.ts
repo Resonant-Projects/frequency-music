@@ -103,7 +103,7 @@ Respond with a JSON object containing:
   ],
   "compositionParameters": [
     {
-      "type": "tempo|key|tuningSystem|rootNote|chordProgression|rhythm|instrument|synthWaveform|harmonicProfile|frequency|note",
+      "kind": "parameter type label such as tempo|key|tuningSystem|rootNote|interval|measurement|duration|frequency|note",
       "value": "human-readable value (e.g., '432 Hz', '120 BPM', 'Pythagorean')",
       "details": { /* structured details like { "hz": 432 } or { "bpm": 120 } */ }
     }
@@ -128,7 +128,8 @@ interface ExtractionResult {
     citations: Array<{ quote?: string; label?: string }>;
   }>;
   compositionParameters: Array<{
-    type: string;
+    kind?: string;
+    type?: string;
     value: string;
     details?: Record<string, unknown>;
   }>;
@@ -269,8 +270,17 @@ export const extractSource = action({
           interestLevel: parseConfidenceBand(c.interestLevel),
           citations: c.citations || [],
         })),
-        compositionParameters: extraction.compositionParameters.map((p) => ({
-          type: p.type as any,
+        compositionParameters: extraction.compositionParameters
+          .filter(
+            (p) =>
+              typeof (p.kind ?? p.type) === "string" &&
+              typeof p.value === "string" &&
+              (p.kind ?? p.type)?.trim().length !== 0 &&
+              p.value.trim().length !== 0,
+          )
+          .map((p) => ({
+          kind: (p.kind ?? p.type)!,
+          type: p.type ?? p.kind,
           value: p.value,
           details: p.details,
         })),
@@ -344,21 +354,12 @@ export const storeExtraction = internalMutation({
     ),
     compositionParameters: v.array(
       v.object({
-        type: v.union(
-          v.literal("tempo"),
-          v.literal("key"),
-          v.literal("tuningSystem"),
-          v.literal("rootNote"),
-          v.literal("chordProgression"),
-          v.literal("rhythm"),
-          v.literal("instrument"),
-          v.literal("synthWaveform"),
-          v.literal("harmonicProfile"),
-          v.literal("frequency"),
-          v.literal("note"),
-        ),
+        kind: v.optional(v.string()),
+        type: v.optional(v.string()),
         value: v.string(),
         details: v.optional(v.any()),
+        registryStatus: v.optional(v.string()),
+        canonicalKind: v.optional(v.string()),
       }),
     ),
     topics: v.array(v.string()),
@@ -366,8 +367,27 @@ export const storeExtraction = internalMutation({
     confidence: v.number(),
   },
   handler: async (ctx, args) => {
+    const compositionParameters = await Promise.all(
+      args.compositionParameters.map(async (parameter) => {
+        const kind = (parameter.kind ?? parameter.type ?? "").trim();
+        const registry = await ctx.runMutation(
+          internal.vocabulary.ensureParameterKind,
+          { name: kind },
+        );
+        return {
+          kind,
+          type: parameter.type ?? kind,
+          value: parameter.value,
+          details: parameter.details,
+          registryStatus: registry.status,
+          canonicalKind: parameter.canonicalKind,
+        };
+      }),
+    );
+
     return await ctx.db.insert("extractions", {
       ...args,
+      compositionParameters,
       createdBy: "system",
       createdAt: Date.now(),
     });

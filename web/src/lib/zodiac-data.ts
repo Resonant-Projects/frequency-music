@@ -70,7 +70,7 @@ export const SECTORS: SectorDef[] = [
     ],
   },
   {
-    id: "phys",
+    id: "wave",
     label: "Wave Physics",
     color: "#c8a84b",
     startAngle: BASE + STEP,
@@ -118,7 +118,7 @@ export const SECTORS: SectorDef[] = [
     ],
   },
   {
-    id: "geo",
+    id: "geometry",
     label: "Geometry",
     color: "#c8a84b",
     startAngle: BASE + 4 * STEP,
@@ -134,7 +134,7 @@ export const SECTORS: SectorDef[] = [
     ],
   },
   {
-    id: "synth",
+    id: "synthesis",
     label: "Synthesis",
     color: "#f5f0e8",
     startAngle: BASE + 5 * STEP,
@@ -175,13 +175,13 @@ export function dotWorldPos(
 // Map concept domains (9) to zodiac display sectors (6)
 export const CONCEPT_DOMAIN_TO_SECTOR: Record<string, string> = {
   mathematics: "math",
-  acoustics: "phys",
+  acoustics: "wave",
   tuning: "music",
   theory: "music",
   psychoacoustics: "psycho",
-  geometry: "geo",
-  production: "synth",
-  instrument: "synth",
+  geometry: "geometry",
+  production: "synthesis",
+  instrument: "synthesis",
   general: "music", // fallback
 };
 

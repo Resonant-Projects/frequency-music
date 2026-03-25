@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
+import { inferDisplaySectorFromDomain, normalizeSectorId } from "./domainMappings";
 import { activityFeedItemValidator } from "./validators";
 
 type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
@@ -147,32 +148,20 @@ export const domainSubTopics = query({
     }),
   ),
   handler: async (ctx, args) => {
-    // Map zodiac sector IDs to concept domains — include "general"
-    const domainMap: Record<string, Doc<"concepts">["domain"][]> = {
-      math: ["mathematics", "general"],
-      phys: ["acoustics", "general"],
-      music: ["tuning", "theory", "general"],
-      psycho: ["psychoacoustics", "general"],
-      geo: ["geometry", "general"],
-      synth: ["production", "instrument", "general"],
-    };
-
-    const conceptDomains = domainMap[args.domain] ?? ["general"];
-    const allConcepts: Doc<"concepts">[] = [];
-    const seen = new Set<Id<"concepts">>();
-
-    for (const d of conceptDomains) {
-      const concepts = await ctx.db
-        .query("concepts")
-        .withIndex("by_domain", (q) => q.eq("domain", d))
-        .take(100);
-      for (const c of concepts) {
-        if (!seen.has(c._id)) {
-          seen.add(c._id);
-          allConcepts.push(c);
-        }
-      }
-    }
+    const sector = normalizeSectorId(args.domain);
+    const [allRegisteredDomains, allStoredConcepts] = await Promise.all([
+      ctx.db.query("conceptDomains").collect(),
+      ctx.db.query("concepts").take(300),
+    ]);
+    const domainSectorMap = new Map(
+      allRegisteredDomains.map((item) => [item.name, item.sectorMapping]),
+    );
+    const allConcepts: Doc<"concepts">[] = allStoredConcepts.filter((concept) => {
+      const conceptSector =
+        domainSectorMap.get(concept.domain) ??
+        inferDisplaySectorFromDomain(concept.domain);
+      return conceptSector === sector;
+    });
 
     if (allConcepts.length === 0) return [];
 

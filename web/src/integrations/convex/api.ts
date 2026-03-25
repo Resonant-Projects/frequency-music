@@ -13,6 +13,8 @@ export const convexApi = {
     listRecent: queryRef("sources:listRecent"),
     createFromUrlInput: mutationRef("sources:createFromUrlInput"),
     createFromYouTubeInput: mutationRef("sources:createFromYouTubeInput"),
+    createFromUrlAndQueue: actionRef("sources:createFromUrlAndQueue"),
+    createFromYouTubeAndQueue: actionRef("sources:createFromYouTubeAndQueue"),
     updateStatus: mutationRef("sources:updateStatus"),
     setVisibility: mutationRef("sources:setVisibility"),
   },
@@ -72,9 +74,18 @@ export const convexApi = {
     pipelineItems: queryRef("dashboard:pipelineItems"),
     itemRelations: queryRef("dashboard:itemRelations"),
   },
+  vocabulary: {
+    reviewSummary: queryRef("vocabulary:reviewSummary"),
+  },
   graph: {
     getConceptsForDomain: queryRef("graph:getConceptsForDomain"),
     getConceptEdges: queryRef("graph:getConceptEdges"),
     getConceptDetail: queryRef("graph:getConceptDetail"),
+  },
+  workflows: {
+    startBatchExtraction: mutationRef("workflows:startBatchExtraction"),
+    startSingleSourceExtraction: mutationRef(
+      "workflows:startSingleSourceExtraction",
+    ),
   },
 };

@@ -18,7 +18,8 @@ const recipeStatusValidator = v.union(
 );
 
 interface RecipeParameter {
-  type: string;
+  kind?: string;
+  type?: string;
   value: string;
   details?: unknown;
 }
@@ -113,11 +114,12 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
       });
     }
     const param = value as Record<string, unknown>;
-    if (typeof param.type !== "string" || param.type.trim().length === 0) {
+    const kind = param.kind ?? param.type;
+    if (typeof kind !== "string" || kind.trim().length === 0) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
-        message: "recipe parameter type must be a non-empty string",
-        field: `parameters[${index}].type`,
+        message: "recipe parameter kind must be a non-empty string",
+        field: `parameters[${index}].kind`,
         raw,
       });
     }
@@ -131,7 +133,8 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
     }
 
     return {
-      type: param.type,
+      kind,
+      type: typeof param.type === "string" ? param.type : kind,
       value: param.value,
       details: param.details,
     };
