@@ -42,11 +42,9 @@ Well-temperament systems (Werckmeister, Kirnberger, Vallotti) are handcrafted co
 
 ## Critical Bandwidth Is the Masking Threshold
 
-Why does equal temperament work at all? Its major thirds are 14 cents sharp — objectively, measurably wrong. The answer is the same reason MP3 works: **perceptual masking.**
+Why does equal temperament work at all? Its major thirds are 14 cents sharp — objectively, measurably wrong, and audible as beating to anyone who listens for it. The answer is *not* that the ear can't hear the error. It can. The answer is **cultural tolerance** — a learned acceptance of a specific beating rate as the "normal" sound of a third, reinforced by centuries of keyboard-dominated music.
 
-The ear's frequency resolution is limited by the critical bandwidth of the basilar membrane — roughly 1/3 octave at mid frequencies, widening at extremes. Two tones within the same critical band interact nonlinearly, producing roughness and beating. Two tones in separate critical bands are resolved independently. The critical bandwidth sets a natural **masking threshold**: deviations below a certain magnitude are inaudible (or at least, not experienced as "out of tune") because the ear's resolution cannot distinguish them from the pure interval.
-
-For most listeners, in most musical contexts, 14 cents of error on a major third falls below the functional masking threshold — especially when the third is heard in a rich timbral context with vibrato, ensemble spread, and room acoustics providing additional masking. The comma is masked the same way that quantization noise in MP3 is masked by the signal itself.
+The critical band mechanism actually works *against* equal temperament here: because the partials of a tempered third fall within the same critical band but don't perfectly align, they produce audible roughness. A just major third (5:4) is noticeably smoother. Equal temperament succeeds not because the comma is "masked" (it isn't), but because — like a lossy codec whose artifacts you stop noticing after years of MP3 listening — the beating has become part of the expected sound. The codec analogy holds, but the mechanism is habituation, not perceptual invisibility.
 
 This is why 12-TET conquered the world despite its measurable imperfections, exactly as MP3 conquered digital audio despite its measurable artifacts. Both are "good enough" compression for the dominant use case — and both have passionate communities of people who insist the artifacts are unacceptable (audiophiles and just intonation advocates, respectively, sometimes the same people).
 

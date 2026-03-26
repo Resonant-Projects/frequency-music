@@ -53,7 +53,7 @@ This explains several things that are otherwise puzzling:
 
 **Why do some modulations feel smooth and others feel abrupt?** In dynamical systems, the topology of basin boundaries matters. Closely related keys (C major and G major) have basins that share a large boundary surface — the transition is gradual, with many states that could belong to either basin. Distant keys (C major and F♯ major) have basins that barely touch — the transition is a discontinuous jump, a **bifurcation** in the technical sense.
 
-**Why does the tonic feel like "rest"?** Because a fixed-point attractor is, by definition, a state of zero net motion. Trajectories converge there and stop. The tonic isn't "restful" by convention — it's restful because it's the state where the dynamical pressure is zero. Every other pitch in the key carries dynamical pressure: a tendency to move, felt by the listener as tension.
+**Why does the tonic feel like "rest"?** In the dynamical systems metaphor, the tonic functions like a fixed-point attractor — a state where trajectories converge and stop. This is a *descriptive model* of the subjective experience of tonal gravity, not an explanation of its cause. The model doesn't tell us *why* the tonic is restful; it gives us a mathematical vocabulary for *describing* the patterns of tension and resolution that listeners report. The "why" requires psychoacoustic and cultural explanations that the dynamical metaphor alone can't provide.
 
 ### Scale Degrees as Gradient
 
@@ -131,7 +131,7 @@ In ["The Arrow of Sound"](/docs/essays/the-arrow-of-sound.md), we argued that mu
 
 This is why reversed tonal music sounds uncanny rather than merely scrambled. The tonic, played in reverse context, *repels* the listener's perception instead of attracting it. Cadences feel like explosions rather than resolutions. Tension and release swap polarities. The system's phase portrait, viewed in reverse, is a *different system* — one with no natural analog in musical experience.
 
-But not all music is strongly dissipative. Minimalist music (Reich, Glass, Riley) deliberately weakens the attractor structure — the tonic is present but its pull is reduced, the gradient is flattened. This makes the music more nearly *conservative* (in the dynamical sense: a system that preserves phase-space volume). And conservative systems are time-reversible. Which is exactly why minimalist music tolerates repetition and near-stasis in ways that tonal music doesn't — the system isn't trying to converge anywhere. It's orbiting, not falling.
+But not all music is strongly goal-directed. Minimalist music (Reich, Glass, Riley) deliberately weakens the attractor structure — the tonic is present but its pull is reduced, the harmonic gradient is flattened. This creates tolerance for repetition and near-stasis that strongly tonal music doesn't permit. (Note: calling minimalism "time-reversible" would be acoustically false — the physical envelope of every instrument, with sharp attacks and slow decays, makes all real audio fundamentally asymmetric in time. A piano note played backwards is a swell-then-click, not a note. The metaphor of "conservative dynamics" captures something about the *harmonic* stasis of minimalism while completely failing to describe its *acoustic* reality.)
 
 ---
 

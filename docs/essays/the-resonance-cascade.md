@@ -16,7 +16,7 @@ Here's a claim: the physical mechanism of resonance — the selective amplificat
 | Social | Ensemble interaction | Temporal coupling | Groove, synchrony |
 | Cultural | Shared conventions | Genre/style recognition | Meaning, affect |
 
-This isn't a loose analogy. At each level, the mathematics is the same: a driven oscillator (or oscillator network) with frequency-dependent gain, preferentially amplifying inputs near its natural frequency while attenuating others. The differences are in substrate, timescale, and bandwidth — not in mechanism.
+At the physical levels (1-4), this is rigorous: each involves driven oscillators with frequency-dependent gain, preferentially amplifying inputs near natural frequencies. At the psychological and cultural levels (5-7), "resonance" becomes a *descriptive metaphor* for pattern-matching and preference — useful for seeing structural parallels, but not governed by the same differential equations. The honest claim is: resonance is a *recurring structural motif* across levels, not that the mathematics is literally identical at every scale.
 
 ## Level 1: The String
 
@@ -76,7 +76,7 @@ This is resonance at the social scale: individual nervous systems, each an oscil
 
 The "locked-in" state of a great ensemble performance — when the groove is undeniable, when the band is "in the pocket" — is mode-locking at the social scale. The coupling strength (how well the musicians hear each other, how responsive they are to timing cues) determines whether the ensemble locks into a shared groove or drifts into disconnection.
 
-Audiences experience this too. The shared rhythmic entrainment of a crowd at a concert — thousands of people clapping, swaying, or bouncing in near-synchrony — is a visible manifestation of social resonance. The sound waves couple the nervous systems; the nervous systems respond by generating rhythmic motor output; the motor output feeds back into the acoustic environment. The room becomes one resonator.
+Audiences experience this too. The shared rhythmic entrainment of a crowd at a concert — thousands of people clapping, swaying, or bouncing in near-synchrony — is a visible manifestation of social resonance. The sound waves couple the nervous systems; the nervous systems respond by generating rhythmic motor output; the motor output feeds back into the acoustic environment. The room behaves *as if* it were one resonator — though the mechanism is discrete motor synchronization (entrainment to a periodic pulse), not standing-wave physics.
 
 ## Level 7: Cultural Resonance
 
@@ -94,7 +94,7 @@ What makes this a *cascade* rather than just a list? Each level's output is the 
 
 **Downward constraints:** Cultural expectations determine what composers write, which determines what listeners hear, which shapes neural entrainment patterns, which modulates cochlear gain (attentional modulation of outer hair cell activity is real), which affects what we literally *hear* in the physical signal. A trained musician hearing a detuned note experiences a physical cochlear response that an untrained listener doesn't — their cognitive model is literally tuning their peripheral auditory system.
 
-The bidirectional flow means the cascade is not a one-way pipeline but a **resonant loop**. The system self-organizes around frequencies that resonate at multiple levels simultaneously. The major triad is special not because it resonates at *any one* level but because it resonates at *all seven*: simple integer ratios (Level 1), efficient room coupling (Level 2), clean cochlear excitation (Level 3), robust neural phase-locking (Level 4), strong predictive activation in tonal listeners (Level 5), easy ensemble synchronization (Level 6), and near-universal cultural presence (Level 7).
+The bidirectional flow means the cascade is not a one-way pipeline but a **resonant loop**. The system self-organizes around frequencies that resonate at multiple levels simultaneously. The major triad is special in *Western music* because it engages multiple levels simultaneously: simple integer ratios (Level 1), efficient room coupling (Level 2), clean cochlear excitation (Level 3), robust neural phase-locking (Level 4), and strong predictive activation in tonally trained listeners (Level 5). But Level 7 (cultural universality) is where the argument breaks: many musical traditions (gamelan, certain maqam systems) don't use the major triad as a structural foundation, proving that the physical "cascade" doesn't deterministically dictate cultural practice.
 
 Conversely, a truly alien sound — one that resonates at none of these levels — literally cannot become music. It would be filtered out at Level 3 (inaudible or painful), fail to entrain at Level 4 (metrically unintelligible), generate only noise in the predictive model at Level 5 (meaningless), resist social synchronization at Level 6, and fail to propagate culturally at Level 7.
 

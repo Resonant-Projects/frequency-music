@@ -10,7 +10,7 @@ Twelve-tone composers treated retrograde as a first-class operation. If a tone r
 
 In the ear, it's invisible.
 
-This is one of music theory's most persistent embarrassments: an operation that is trivial on paper is nearly imperceptible in listening. Trained musicians struggle to identify retrogrades of even simple melodies. Play a Bach fugue subject backwards and it doesn't sound like "the same thing reversed" — it sounds like a *different, worse melody*. The intervallic content is preserved. The musical content is destroyed.
+This is one of music theory's most persistent embarrassments: an operation that is trivial on paper is nearly imperceptible in listening. Trained musicians struggle to identify retrogrades of even simple melodies. Play a Bach fugue subject backwards and it doesn't sound like "the same thing reversed" — it sounds like a *functionally different melody*. The intervallic content is preserved, but the harmonic implications are inverted — a leading tone resolving upward becomes a tonic falling away. The identity is destroyed not because the notes are "wrong" but because their temporal function has been reversed.
 
 Why? The standard answer — "we're just used to hearing things forward" — is both true and insufficient. We're "used to" seeing things right-side-up too, but an inverted photograph is instantly recognizable as an inverted photograph. Spatial inversion preserves identity. Temporal inversion annihilates it. The question isn't habit. It's architecture.
 
@@ -48,7 +48,7 @@ Reverse a sonata and the consequence precedes the cause. The recapitulation — 
 
 This is because musical form, at every level, exploits the listener's forward-modeling. A theme introduced in the exposition becomes a *memory* that the development can allude to, fragment, and distort. These operations only work if the memory was formed first. A variation on a theme you haven't heard yet is just a theme. A return to a place you've never left isn't a homecoming.
 
-Stravinsky understood this. The *Rite of Spring* opens with a solo bassoon in its extreme high register — a sound that signals "not-beginning," a sound that seems to have been going on before we started listening. The first thing the audience predicts is that this will resolve, settle, find its footing. Stravinsky withholds that footing for the entire ballet. The piece's violence comes not from the dissonance *per se* but from the sustained denial of predicted resolution. Time is the weapon. The arrow is the blade.
+Stravinsky understood this. The *Rite of Spring* opens with a solo bassoon in its extreme high register — a sound that signals "not-beginning," a sound that seems to have been going on before we started listening. The first thing the audience predicts is that this will resolve, settle, find its footing. Stravinsky withholds that footing for the entire ballet. The piece's violence comes from both sources simultaneously: the *physical* acoustic roughness of biting polytonal harmonies (like the famous E major over E♭ dominant 7th) AND the *cognitive* sustained denial of predicted resolution. Separating the two — pretending it's all cognition, no physics — would be a false dichotomy. Time is the weapon. The arrow is the blade. But the blade has a physical edge.
 
 ## Information Theory's Verdict
 
