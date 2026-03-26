@@ -417,7 +417,8 @@ export const compositionLineageValidator = v.object({
       v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
     ),
     latestExpandability: v.optional(v.number()),
-    failureStatus: v.optional(failureReasonValidator),
+    localFailureStatus: v.optional(failureReasonValidator),
+    branchFailureStatus: v.optional(failureReasonValidator),
   }),
 });
 

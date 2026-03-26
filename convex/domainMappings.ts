@@ -47,6 +47,18 @@ const directDomainSectorMap = new Map<string, DisplaySectorId>(
   ),
 );
 
+const seedConceptDomainEntries: Array<ConceptDomainRegistryEntry> = [
+  { name: "mathematics", sectorMapping: "math" },
+  { name: "acoustics", sectorMapping: "wave" },
+  { name: "tuning", sectorMapping: "music" },
+  { name: "theory", sectorMapping: "music" },
+  { name: "psychoacoustics", sectorMapping: "psycho" },
+  { name: "geometry", sectorMapping: "geometry" },
+  { name: "production", sectorMapping: "synthesis" },
+  { name: "instrument", sectorMapping: "synthesis" },
+  { name: "general" },
+];
+
 export function normalizeSectorId(raw: string): DisplaySectorId {
   const normalized = raw.toLowerCase().trim();
   return sectorAliases[normalized] ?? "music";
@@ -56,32 +68,57 @@ export function getDefaultDomainsForSector(sectorId: string): string[] {
   return fallbackSectorDomainMap[normalizeSectorId(sectorId)];
 }
 
+export function getSeedConceptDomainEntries(): ConceptDomainRegistryEntry[] {
+  return seedConceptDomainEntries.map((entry) => ({ ...entry }));
+}
+
+export function isConceptDomainRegistrySeeded(
+  entries: ConceptDomainRegistryEntry[],
+): boolean {
+  const names = new Set(
+    entries
+      .map((entry) => entry.name.toLowerCase().trim())
+      .filter((name) => name.length > 0),
+  );
+  return seedConceptDomainEntries.every((entry) => names.has(entry.name));
+}
+
 export function resolveDomainsForSector(
   entries: ConceptDomainRegistryEntry[],
   sectorId: string,
 ) {
   const sector = normalizeSectorId(sectorId);
+  const registrySeeded = isConceptDomainRegistrySeeded(entries);
+  if (!registrySeeded) {
+    const fallbackDomains = fallbackSectorDomainMap[sector];
+    return {
+      sector,
+      domains: fallbackDomains,
+      specificDomains: fallbackDomains.filter((domain) => domain !== "general"),
+      usedFallback: true,
+    };
+  }
+
   const registryDomains = Array.from(
     new Set(
       entries.flatMap((entry) => {
+        const name = entry.name.toLowerCase().trim();
+        if (!name) return [];
+        if (name === "general") return ["general"];
         const entrySector =
-          entry.sectorMapping ?? inferDisplaySectorFromDomain(entry.name);
+          entry.sectorMapping ?? inferDisplaySectorFromDomain(name);
         return entrySector === sector
-          ? [entry.name.toLowerCase().trim()]
+          ? [name]
           : [];
       }),
     ),
   );
-  const domains =
-    registryDomains.length > 0
-      ? registryDomains
-      : fallbackSectorDomainMap[sector];
 
   return {
     sector,
-    domains,
-    specificDomains: domains.filter((domain) => domain !== "general"),
-    usedFallback: registryDomains.length === 0,
+    domains: registryDomains,
+    specificDomains: registryDomains.filter((domain) => domain !== "general"),
+    usedFallback: false,
   };
 }
 

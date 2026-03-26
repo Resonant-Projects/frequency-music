@@ -62,8 +62,15 @@ export function CompositionDetailPage() {
               <UIBadge tone="gold">{row().composition.status}</UIBadge>
               <UIBadge tone="violet">{row().composition.artifactType}</UIBadge>
               <UIBadge tone="cream">{row().composition.version}</UIBadge>
-              <Show when={row().summary.failureStatus}>
-                {(status) => <UIBadge tone="violet">{status()}</UIBadge>}
+              <Show when={row().summary.localFailureStatus}>
+                {(status) => (
+                  <UIBadge tone="violet">local: {status()}</UIBadge>
+                )}
+              </Show>
+              <Show when={row().summary.branchFailureStatus}>
+                {(status) => (
+                  <UIBadge tone="violet">branch: {status()}</UIBadge>
+                )}
               </Show>
             </div>
 
@@ -85,22 +92,40 @@ export function CompositionDetailPage() {
               </Show>
             </p>
 
-            <Show when={row().summary.failureStatus}>
-              {(status) => (
-                <>
-                  <hr class={goldDivider} />
-                  <div class={sectionLabel}>Archive Signal</div>
+            <Show
+              when={
+                row().summary.localFailureStatus || row().summary.branchFailureStatus
+              }
+            >
+              <hr class={goldDivider} />
+              <div class={sectionLabel}>Archive Signal</div>
+              <Show when={row().summary.localFailureStatus}>
+                {(status) => (
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.76)",
+                      lineHeight: "1.7",
+                      mb: "2",
+                    })}
+                  >
+                    This composition is currently classified locally as{" "}
+                    <code>{status()}</code> based on its own listening history.
+                  </p>
+                )}
+              </Show>
+              <Show when={row().summary.branchFailureStatus}>
+                {(status) => (
                   <p
                     class={css({
                       color: "rgba(245, 240, 232, 0.76)",
                       lineHeight: "1.7",
                     })}
                   >
-                    This composition is currently classified as `{status()}` in
-                    the derived failure archive.
+                    This revision branch is currently classified as{" "}
+                    <code>{status()}</code> in the derived failure archive.
                   </p>
-                </>
-              )}
+                )}
+              </Show>
             </Show>
 
             <hr class={goldDivider} />

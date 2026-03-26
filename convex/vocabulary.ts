@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { getSeedConceptDomainEntries } from "./domainMappings";
 import { internalMutation, query } from "./_generated/server";
 import { registryStatusValidator } from "./schema";
 
@@ -127,6 +128,50 @@ export const ensureConceptDomain = internalMutation({
       updatedAt: now,
     });
     return { status };
+  },
+});
+
+export const seedConceptDomains = internalMutation({
+  args: {},
+  returns: v.object({
+    seeded: v.number(),
+    updated: v.number(),
+  }),
+  handler: async (ctx) => {
+    const now = Date.now();
+    let seeded = 0;
+    let updated = 0;
+
+    for (const entry of getSeedConceptDomainEntries()) {
+      const existing = await ctx.db
+        .query("conceptDomains")
+        .withIndex("by_name", (q) => q.eq("name", entry.name))
+        .first();
+
+      if (!existing) {
+        await ctx.db.insert("conceptDomains", {
+          name: entry.name,
+          status: "known",
+          introducedBy: "system",
+          sectorMapping: entry.sectorMapping,
+          createdAt: now,
+          updatedAt: now,
+        });
+        seeded += 1;
+        continue;
+      }
+
+      if (existing.status !== "known" || existing.sectorMapping !== entry.sectorMapping) {
+        await ctx.db.patch(existing._id, {
+          status: "known",
+          sectorMapping: entry.sectorMapping,
+          updatedAt: now,
+        });
+        updated += 1;
+      }
+    }
+
+    return { seeded, updated };
   },
 });
 

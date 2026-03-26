@@ -336,7 +336,7 @@ export const pipelineItems = query({
 export async function computeEditorialSignals(db: DbReader, limit = 24) {
   const [concepts, hypotheses, recipes, compositions, listeningSessions] =
     (await Promise.all([
-      db.query("concepts").take(200),
+      db.query("concepts").collect(),
       db.query("hypotheses").collect(),
       db.query("recipes").collect(),
       db.query("compositions").collect(),
