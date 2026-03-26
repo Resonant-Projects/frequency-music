@@ -2,7 +2,11 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { getFailureStatusForComposition } from "./failures";
+import {
+  type DbReader,
+  getBranchFailureStatusForComposition,
+  getFailureStatusForComposition,
+} from "./failures";
 import {
   compositionLineageValidator,
   compositionReturnValidator,
@@ -121,8 +125,12 @@ export const getLineage = query({
       .collect();
 
     const latestListeningSession = listeningSessions[0];
-    const failureStatus = await getFailureStatusForComposition(
-      ctx.db as any,
+    const localFailureStatus = await getFailureStatusForComposition(
+      ctx.db as DbReader,
+      composition._id,
+    );
+    const branchFailureStatus = await getBranchFailureStatusForComposition(
+      ctx.db as DbReader,
       composition._id,
     );
 
@@ -141,7 +149,8 @@ export const getLineage = query({
         hasChildren: children.length > 0,
         latestExpandVerdict: latestListeningSession?.expandVerdict,
         latestExpandability: latestListeningSession?.ratings.expandability,
-        failureStatus,
+        localFailureStatus,
+        branchFailureStatus,
       },
     };
   },

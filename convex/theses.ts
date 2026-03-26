@@ -40,6 +40,19 @@ export const get = query({
   },
 });
 
+export const getByIds = query({
+  args: { ids: v.array(v.id("theses")) },
+  returns: v.array(thesisReturnValidator),
+  handler: async (ctx, args) => {
+    const results = await Promise.all(
+      args.ids.map((id) => ctx.db.get("theses", id)),
+    );
+    return results.filter(
+      (thesis): thesis is NonNullable<typeof thesis> => thesis !== null,
+    );
+  },
+});
+
 export const getDetail = query({
   args: { id: v.id("theses") },
   returns: v.union(thesisDetailValidator, v.null()),
@@ -61,7 +74,7 @@ export const getDetail = query({
             q.eq("hypothesisId", hypothesis._id),
           )
           .order("desc")
-          .collect(),
+          .take(50),
       ),
     );
     const recipes = recipeLists.flat();
@@ -74,7 +87,7 @@ export const getDetail = query({
             q.eq("recipeId", recipe._id),
           )
           .order("desc")
-          .collect(),
+          .take(50),
       ),
     );
     const compositions = compositionLists.flat();

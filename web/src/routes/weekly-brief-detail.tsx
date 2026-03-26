@@ -25,24 +25,16 @@ export function WeeklyBriefDetailPage() {
   const brief = createQuery(convexApi.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
-  const theses = createQuery(convexApi.theses.list, () => ({
-    limit: 100,
+  const activeThesesQuery = createQuery(convexApi.theses.getByIds, () => ({
+    ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
-  const failureArchive = createQuery(convexApi.failures.listArchive, () => ({
-    limit: 100,
+  const referencedFailureEntries = createQuery(convexApi.failures.getByKeys, () => ({
+    keys: brief()?.referencedFailureKeys ?? [],
   }));
-  const activeTheses = createMemo<Doc<"theses">[]>(() => {
-    const thesisIds = new Set((brief()?.activeThesisIds ?? []).map(String));
-    return ((theses() ?? []) as Doc<"theses">[]).filter((thesis) =>
-      thesisIds.has(String(thesis._id)),
-    );
-  });
-  const referencedFailures = createMemo(() => {
-    const failureKeys = new Set(brief()?.referencedFailureKeys ?? []);
-    return (failureArchive() ?? []).filter((entry: { key: string }) =>
-      failureKeys.has(entry.key),
-    );
-  });
+  const activeTheses = createMemo<Doc<"theses">[]>(
+    () => (activeThesesQuery() ?? []) as Doc<"theses">[],
+  );
+  const referencedFailures = createMemo(() => referencedFailureEntries() ?? []);
 
   createEffect(() => {
     const b = brief();
