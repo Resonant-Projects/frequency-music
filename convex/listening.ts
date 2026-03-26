@@ -84,7 +84,10 @@ export const create = mutation({
         message: "Composition not found",
       });
     }
-    assertOptionalZeroToFive(args.ratings?.expandability, "ratings.expandability");
+    assertOptionalZeroToFive(
+      args.ratings?.expandability,
+      "ratings.expandability",
+    );
 
     return await ctx.db.insert("listeningSessions", {
       compositionId: args.compositionId,
@@ -143,7 +146,10 @@ export const updateVisibility = mutation({
  * Delete a listening session by ID
  */
 export const deleteById = mutation({
-  args: { id: v.id("listeningSessions"), devBypassSecret: v.optional(v.string()) },
+  args: {
+    id: v.id("listeningSessions"),
+    devBypassSecret: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.delete(args.id);

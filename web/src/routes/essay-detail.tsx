@@ -1,7 +1,14 @@
 import { Link, useParams } from "@tanstack/solid-router";
 import { createEffect, For, Show } from "solid-js";
 import { css } from "../../styled-system/css";
-import { Markdown, UIBadge, UICard, backLink, pageClass, sectionTitleClass } from "../components/ui";
+import {
+  Markdown,
+  UIBadge,
+  UICard,
+  backLink,
+  pageClass,
+  sectionTitleClass,
+} from "../components/ui";
 import { essayLibrary, getEssayBySlug } from "../lib/essays";
 
 const heroCard = css({
@@ -84,7 +91,8 @@ const relatedLink = css({
   borderWidth: "1px",
   color: "zodiac.cream",
   p: "16px 18px",
-  transition: "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+  transition:
+    "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
   _hover: {
     transform: "translateY(-3px)",
     borderColor: "rgba(200, 168, 75, 0.48)",
@@ -109,9 +117,14 @@ export function EssayDetailPage() {
   const params = useParams({ from: "/essays/$essaySlug" });
   const essay = () => getEssayBySlug(params().essaySlug);
 
-  createEffect(() => { const e = essay(); if (e) document.title = `${e.title} — Frequency Music`; });
+  createEffect(() => {
+    const e = essay();
+    if (e) document.title = `${e.title} — Frequency Music`;
+  });
   const related = () =>
-    essayLibrary.filter((entry) => entry.slug !== params().essaySlug).slice(0, 3);
+    essayLibrary
+      .filter((entry) => entry.slug !== params().essaySlug)
+      .slice(0, 3);
 
   return (
     <section class={pageClass}>
@@ -133,9 +146,15 @@ export function EssayDetailPage() {
           <>
             <UICard glass class={heroCard}>
               <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
-                <UIBadge tone="gold">{entry().dateLabel ?? "Research essay"}</UIBadge>
-                <UIBadge tone="cream">{entry().readTimeMinutes} min read</UIBadge>
-                <UIBadge tone="violet">{entry().wordCount.toLocaleString()} words</UIBadge>
+                <UIBadge tone="gold">
+                  {entry().dateLabel ?? "Research essay"}
+                </UIBadge>
+                <UIBadge tone="cream">
+                  {entry().readTimeMinutes} min read
+                </UIBadge>
+                <UIBadge tone="violet">
+                  {entry().wordCount.toLocaleString()} words
+                </UIBadge>
               </div>
               <h1 class={titleClass}>{entry().title}</h1>
               <p class={dekClass}>{entry().excerpt}</p>

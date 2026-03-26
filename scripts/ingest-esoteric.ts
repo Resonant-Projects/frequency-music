@@ -21,7 +21,7 @@ async function fetchText(url: string): Promise<string> {
   try {
     const jinaUrl = `https://r.jina.ai/${url}`;
     const resp = await fetch(jinaUrl, {
-      headers: { "Accept": "text/plain" },
+      headers: { Accept: "text/plain" },
     });
     if (!resp.ok) return "";
     const text = await resp.text();
@@ -33,7 +33,7 @@ async function fetchText(url: string): Promise<string> {
 
 async function main() {
   const sources: Source[] = JSON.parse(
-    readFileSync("data/esoteric-sources.json", "utf-8")
+    readFileSync("data/esoteric-sources.json", "utf-8"),
   );
 
   const offset = parseInt(process.argv[2] || "0");
@@ -76,7 +76,9 @@ async function main() {
     }
   }
 
-  console.log(`\nDone: ${ingested} ingested, ${skipped} skipped, ${failed} failed`);
+  console.log(
+    `\nDone: ${ingested} ingested, ${skipped} skipped, ${failed} failed`,
+  );
 }
 
 main().catch(console.error);

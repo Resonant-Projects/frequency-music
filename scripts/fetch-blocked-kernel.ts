@@ -1,7 +1,7 @@
 /**
  * Fetch blocked articles using Kernel.sh cloud browsers.
  * Keeps browser sessions alive for manual attachment.
- * 
+ *
  * Usage: KERNEL_API_KEY=... bun run scripts/fetch-blocked-kernel.ts
  */
 import Kernel from "@onkernel/sdk";
@@ -21,21 +21,74 @@ interface BlockedSource {
 
 const BLOCKED: BlockedSource[] = [
   // PMC CAPTCHA-blocked (got ~410 chars instead of full text)
-  { id: "jx7aya0a4y1kje0xs0rp61n9gs8260k7", title: "Qualitative Analysis of Noetic Experiences", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9364752/", reason: "PMC CAPTCHA" },
-  { id: "jx738krg6mbv1bb8ezefcjfy4x827cv9", title: "Non-Contact Biofield Practices: Narrative Review", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8296239/", reason: "PMC CAPTCHA" },
-  { id: "jx70nvxt87z3jr9czce9cxngfh826qzw", title: "Clinical Studies of Biofield Therapies", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC4654788/", reason: "PMC CAPTCHA" },
-  { id: "jx70q2w84sw2r31wgkkwj5k7hs827hxn", title: "Biofield Science and Healing: History", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC4654789/", reason: "PMC CAPTCHA" },
-  { id: "jx78j7pq0hbsx71n6vqf9evms1827bv3", title: "Singing Bowls Systematic Review", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12063014/", reason: "PMC CAPTCHA" },
+  {
+    id: "jx7aya0a4y1kje0xs0rp61n9gs8260k7",
+    title: "Qualitative Analysis of Noetic Experiences",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9364752/",
+    reason: "PMC CAPTCHA",
+  },
+  {
+    id: "jx738krg6mbv1bb8ezefcjfy4x827cv9",
+    title: "Non-Contact Biofield Practices: Narrative Review",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8296239/",
+    reason: "PMC CAPTCHA",
+  },
+  {
+    id: "jx70nvxt87z3jr9czce9cxngfh826qzw",
+    title: "Clinical Studies of Biofield Therapies",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC4654788/",
+    reason: "PMC CAPTCHA",
+  },
+  {
+    id: "jx70q2w84sw2r31wgkkwj5k7hs827hxn",
+    title: "Biofield Science and Healing: History",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC4654789/",
+    reason: "PMC CAPTCHA",
+  },
+  {
+    id: "jx78j7pq0hbsx71n6vqf9evms1827bv3",
+    title: "Singing Bowls Systematic Review",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12063014/",
+    reason: "PMC CAPTCHA",
+  },
   // ResearchGate PDFs (Jina returned 0 chars)
-  { id: "jx7a3z9azbhr84hphaeznx8vp5827ars", title: "Sacred Science of Sound: Music and Mathematics", url: "https://www.researchgate.net/publication/275711911_The_Sacred_Science_of_Sound_Music_and_Mathematics", reason: "ResearchGate blocked" },
-  { id: "jx76v6hrvdyhdrste3tngxeqtx8260nq", title: "Pythagoras, Music, Sacred Geometry, and Genetic Code", url: "https://www.researchgate.net/publication/335910464_Pythagoras_music_sacred_geometry_and_genetic_code", reason: "ResearchGate blocked" },
-  { id: "jx70awak2ng08veat4dtvg20mh8263h0", title: "Brain Waves and the Schumann Resonance", url: "https://www.researchgate.net/publication/384040884_Brain_Waves_and_the_Schumann_Resonance_Exploring_the_Electromagnetic_Connection_Between_the_Earth_and_Human_Consciousness", reason: "ResearchGate blocked" },
-  { id: "jx7aa4vrprfb3xsdraktektxnn8276ms", title: "Schumann Resonance and Brain Waves: Quantum Description", url: "https://www.researchgate.net/publication/281316806_Schumann_Resonance_and_Brain_Waves_A_Quantum_Description", reason: "ResearchGate blocked" },
-  // IFLScience (Jina returned 0 chars)  
-  { id: "jx7f2xjetx571g7wjn362p6ar1826y2m", title: "What Are Ley Lines And Do They Really Exist?", url: "https://www.iflscience.com/what-are-ley-lines-and-do-they-really-exist-71960", reason: "IFLScience blocked" },
+  {
+    id: "jx7a3z9azbhr84hphaeznx8vp5827ars",
+    title: "Sacred Science of Sound: Music and Mathematics",
+    url: "https://www.researchgate.net/publication/275711911_The_Sacred_Science_of_Sound_Music_and_Mathematics",
+    reason: "ResearchGate blocked",
+  },
+  {
+    id: "jx76v6hrvdyhdrste3tngxeqtx8260nq",
+    title: "Pythagoras, Music, Sacred Geometry, and Genetic Code",
+    url: "https://www.researchgate.net/publication/335910464_Pythagoras_music_sacred_geometry_and_genetic_code",
+    reason: "ResearchGate blocked",
+  },
+  {
+    id: "jx70awak2ng08veat4dtvg20mh8263h0",
+    title: "Brain Waves and the Schumann Resonance",
+    url: "https://www.researchgate.net/publication/384040884_Brain_Waves_and_the_Schumann_Resonance_Exploring_the_Electromagnetic_Connection_Between_the_Earth_and_Human_Consciousness",
+    reason: "ResearchGate blocked",
+  },
+  {
+    id: "jx7aa4vrprfb3xsdraktektxnn8276ms",
+    title: "Schumann Resonance and Brain Waves: Quantum Description",
+    url: "https://www.researchgate.net/publication/281316806_Schumann_Resonance_and_Brain_Waves_A_Quantum_Description",
+    reason: "ResearchGate blocked",
+  },
+  // IFLScience (Jina returned 0 chars)
+  {
+    id: "jx7f2xjetx571g7wjn362p6ar1826y2m",
+    title: "What Are Ley Lines And Do They Really Exist?",
+    url: "https://www.iflscience.com/what-are-ley-lines-and-do-they-really-exist-71960",
+    reason: "IFLScience blocked",
+  },
 ];
 
-async function fetchWithKernel(kernel: Kernel, src: BlockedSource): Promise<{ text: string; sessionId: string }> {
+async function fetchWithKernel(
+  kernel: Kernel,
+  src: BlockedSource,
+): Promise<{ text: string; sessionId: string }> {
   const browser = await kernel.browsers.create({
     timeout_seconds: 300, // 5 min keepalive
     stealth: true,
@@ -83,18 +136,26 @@ async function fetchWithKernel(kernel: Kernel, src: BlockedSource): Promise<{ te
 async function main() {
   const kernel = new Kernel();
   const logFile = "/tmp/kernel-fetch-log.txt";
-  writeFileSync(logFile, `Kernel.sh fetch log — ${new Date().toISOString()}\n\n`);
+  writeFileSync(
+    logFile,
+    `Kernel.sh fetch log — ${new Date().toISOString()}\n\n`,
+  );
 
   const results: { src: BlockedSource; text: string; sessionId: string }[] = [];
 
   // Process sequentially to avoid rate limits
   for (const src of BLOCKED) {
-    console.log(`\n[${BLOCKED.indexOf(src) + 1}/${BLOCKED.length}] ${src.title}`);
+    console.log(
+      `\n[${BLOCKED.indexOf(src) + 1}/${BLOCKED.length}] ${src.title}`,
+    );
     const { text, sessionId } = await fetchWithKernel(kernel, src);
     console.log(`  Got ${text.length} chars (session: ${sessionId})`);
     results.push({ src, text, sessionId });
 
-    appendFileSync(logFile, `${src.id} | ${src.title} | ${text.length} chars | session: ${sessionId}\n`);
+    appendFileSync(
+      logFile,
+      `${src.id} | ${src.title} | ${text.length} chars | session: ${sessionId}\n`,
+    );
 
     if (text.length > 500) {
       // Update source in Convex with full text
@@ -111,7 +172,10 @@ async function main() {
         console.log(`  ⚠ Convex update failed: ${e.message?.slice(0, 80)}`);
         // Save to file as fallback
         writeFileSync(`/tmp/kernel-text-${src.id}.txt`, text);
-        appendFileSync(logFile, `  → Saved to /tmp/kernel-text-${src.id}.txt\n`);
+        appendFileSync(
+          logFile,
+          `  → Saved to /tmp/kernel-text-${src.id}.txt\n`,
+        );
       }
     } else {
       appendFileSync(logFile, `  → Too short, needs manual clip\n`);
@@ -119,11 +183,13 @@ async function main() {
   }
 
   // Summary
-  const fetched = results.filter(r => r.text.length > 500);
-  const needClip = results.filter(r => r.text.length <= 500);
+  const fetched = results.filter((r) => r.text.length > 500);
+  const needClip = results.filter((r) => r.text.length <= 500);
 
   console.log(`\n${"=".repeat(60)}`);
-  console.log(`RESULTS: ${fetched.length} fetched, ${needClip.length} need manual clip`);
+  console.log(
+    `RESULTS: ${fetched.length} fetched, ${needClip.length} need manual clip`,
+  );
   console.log(`\nFetched OK:`);
   for (const r of fetched) {
     console.log(`  ✓ ${r.src.title} (${r.text.length} chars)`);
@@ -142,7 +208,10 @@ async function main() {
     console.log(`  ${r.sessionId} → ${r.src.url.slice(0, 70)}`);
   }
 
-  appendFileSync(logFile, `\n---\nFetched: ${fetched.length}, Need clip: ${needClip.length}\n`);
+  appendFileSync(
+    logFile,
+    `\n---\nFetched: ${fetched.length}, Need clip: ${needClip.length}\n`,
+  );
 }
 
 main().catch(console.error);

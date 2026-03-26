@@ -3,6 +3,7 @@ import { createEffect, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
+  Markdown,
   UIBadge,
   UICard,
   backLink,
@@ -50,7 +51,14 @@ export function CompositionDetailPage() {
       >
         {(row) => (
           <UICard>
-            <div class={css({ display: "flex", gap: "2", flexWrap: "wrap", mb: "2" })}>
+            <div
+              class={css({
+                display: "flex",
+                gap: "2",
+                flexWrap: "wrap",
+                mb: "2",
+              })}
+            >
               <UIBadge tone="gold">{row().composition.status}</UIBadge>
               <UIBadge tone="violet">{row().composition.artifactType}</UIBadge>
               <UIBadge tone="cream">{row().composition.version}</UIBadge>
@@ -61,7 +69,13 @@ export function CompositionDetailPage() {
 
             <h1 class={detailTitleClass}>{row().composition.title}</h1>
 
-            <p class={css({ color: "rgba(245, 240, 232, 0.62)", fontSize: "sm", lineHeight: "1.7" })}>
+            <p
+              class={css({
+                color: "rgba(245, 240, 232, 0.62)",
+                fontSize: "sm",
+                lineHeight: "1.7",
+              })}
+            >
               Depth {row().summary.depth} in revision branch
               <Show when={row().summary.revisionVariable}>
                 {(variable) => <> · changed variable: {variable()}</>}
@@ -76,9 +90,14 @@ export function CompositionDetailPage() {
                 <>
                   <hr class={goldDivider} />
                   <div class={sectionLabel}>Archive Signal</div>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.76)", lineHeight: "1.7" })}>
-                    This composition is currently classified as `{status()}` in the
-                    derived failure archive.
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.76)",
+                      lineHeight: "1.7",
+                    })}
+                  >
+                    This composition is currently classified as `{status()}` in
+                    the derived failure archive.
                   </p>
                 </>
               )}
@@ -93,11 +112,20 @@ export function CompositionDetailPage() {
                     <Link
                       to="/compositions/$compositionId"
                       params={{ compositionId: String(ancestor._id) }}
-                      class={css({ color: "zodiac.cream", textDecoration: "none" })}
+                      class={css({
+                        color: "zodiac.cream",
+                        textDecoration: "none",
+                      })}
                     >
                       {ancestor.title}
                     </Link>
-                    <p class={css({ color: "rgba(245, 240, 232, 0.55)", fontSize: "sm", mt: "1" })}>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.55)",
+                        fontSize: "sm",
+                        mt: "1",
+                      })}
+                    >
                       {ancestor.version}
                       <Show when={ancestor.revisionVariable}>
                         {(variable) => <> · variable: {variable()}</>}
@@ -107,8 +135,16 @@ export function CompositionDetailPage() {
                 )}
               </For>
               <div class={lineItem}>
-                <div class={css({ color: "zodiac.gold" })}>{row().composition.title}</div>
-                <p class={css({ color: "rgba(245, 240, 232, 0.55)", fontSize: "sm", mt: "1" })}>
+                <div class={css({ color: "zodiac.gold" })}>
+                  {row().composition.title}
+                </div>
+                <p
+                  class={css({
+                    color: "rgba(245, 240, 232, 0.55)",
+                    fontSize: "sm",
+                    mt: "1",
+                  })}
+                >
                   current node
                 </p>
               </div>
@@ -124,11 +160,20 @@ export function CompositionDetailPage() {
                       <Link
                         to="/compositions/$compositionId"
                         params={{ compositionId: String(child._id) }}
-                        class={css({ color: "zodiac.cream", textDecoration: "none" })}
+                        class={css({
+                          color: "zodiac.cream",
+                          textDecoration: "none",
+                        })}
                       >
                         {child.title}
                       </Link>
-                      <p class={css({ color: "rgba(245, 240, 232, 0.55)", fontSize: "sm", mt: "1" })}>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.55)",
+                          fontSize: "sm",
+                          mt: "1",
+                        })}
+                      >
                         {child.version}
                         <Show when={child.revisionVariable}>
                           {(variable) => <> · variable: {variable()}</>}
@@ -146,11 +191,22 @@ export function CompositionDetailPage() {
               <Show when={row().recipe}>
                 {(recipe) => (
                   <div class={lineItem}>
-                    <div class={css({ color: "zodiac.gold", fontSize: "sm", mb: "1" })}>Recipe</div>
+                    <div
+                      class={css({
+                        color: "zodiac.gold",
+                        fontSize: "sm",
+                        mb: "1",
+                      })}
+                    >
+                      Recipe
+                    </div>
                     <Link
                       to="/recipes/$recipeId"
                       params={{ recipeId: String(recipe()._id) }}
-                      class={css({ color: "zodiac.cream", textDecoration: "none" })}
+                      class={css({
+                        color: "zodiac.cream",
+                        textDecoration: "none",
+                      })}
                     >
                       {recipe().title}
                     </Link>
@@ -160,11 +216,22 @@ export function CompositionDetailPage() {
               <Show when={row().hypothesis}>
                 {(hypothesis) => (
                   <div class={lineItem}>
-                    <div class={css({ color: "zodiac.gold", fontSize: "sm", mb: "1" })}>Hypothesis</div>
+                    <div
+                      class={css({
+                        color: "zodiac.gold",
+                        fontSize: "sm",
+                        mb: "1",
+                      })}
+                    >
+                      Hypothesis
+                    </div>
                     <Link
                       to="/hypotheses/$hypothesisId"
                       params={{ hypothesisId: String(hypothesis()._id) }}
-                      class={css({ color: "zodiac.cream", textDecoration: "none" })}
+                      class={css({
+                        color: "zodiac.cream",
+                        textDecoration: "none",
+                      })}
                     >
                       {hypothesis().title}
                     </Link>
@@ -174,11 +241,22 @@ export function CompositionDetailPage() {
               <Show when={row().thesis}>
                 {(thesis) => (
                   <div class={lineItem}>
-                    <div class={css({ color: "zodiac.gold", fontSize: "sm", mb: "1" })}>Thesis</div>
+                    <div
+                      class={css({
+                        color: "zodiac.gold",
+                        fontSize: "sm",
+                        mb: "1",
+                      })}
+                    >
+                      Thesis
+                    </div>
                     <Link
                       to="/theses/$thesisId"
                       params={{ thesisId: String(thesis()._id) }}
-                      class={css({ color: "zodiac.cream", textDecoration: "none" })}
+                      class={css({
+                        color: "zodiac.cream",
+                        textDecoration: "none",
+                      })}
                     >
                       {thesis().title}
                     </Link>
@@ -197,7 +275,13 @@ export function CompositionDetailPage() {
                       <div class={css({ color: "zodiac.cream" })}>
                         {source.title ?? "Untitled source"}
                       </div>
-                      <p class={css({ color: "rgba(245, 240, 232, 0.55)", fontSize: "sm", mt: "1" })}>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.55)",
+                          fontSize: "sm",
+                          mt: "1",
+                        })}
+                      >
                         {source.type}
                       </p>
                     </div>
@@ -220,17 +304,37 @@ export function CompositionDetailPage() {
                 <For each={row().listeningSessions}>
                   {(session) => (
                     <div class={lineItem}>
-                      <div class={css({ display: "flex", gap: "2", flexWrap: "wrap", mb: "1" })}>
+                      <div
+                        class={css({
+                          display: "flex",
+                          gap: "2",
+                          flexWrap: "wrap",
+                          mb: "1",
+                        })}
+                      >
                         <Show when={session.expandVerdict}>
-                          {(verdict) => <UIBadge tone="gold">{verdict()}</UIBadge>}
+                          {(verdict) => (
+                            <UIBadge tone="gold">{verdict()}</UIBadge>
+                          )}
                         </Show>
-                        <Show when={session.ratings.expandability !== undefined}>
-                          {(score) => <UIBadge tone="cream">expandability {score()}</UIBadge>}
+                        <Show
+                          when={session.ratings.expandability !== undefined}
+                        >
+                          {(score) => (
+                            <UIBadge tone="cream">
+                              expandability {score()}
+                            </UIBadge>
+                          )}
                         </Show>
                       </div>
-                      <p class={css({ color: "rgba(245, 240, 232, 0.7)", lineHeight: "1.7" })}>
-                        {session.feedbackMd}
-                      </p>
+                      <div
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.7)",
+                          lineHeight: "1.7",
+                        })}
+                      >
+                        <Markdown content={session.feedbackMd} />
+                      </div>
                     </div>
                   )}
                 </For>

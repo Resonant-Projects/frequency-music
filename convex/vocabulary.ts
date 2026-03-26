@@ -46,7 +46,7 @@ const KNOWN_RELATIONSHIP_KINDS = new Set([
 ]);
 
 function normalizeName(name: string) {
-  return name.trim();
+  return name.trim().toLowerCase();
 }
 
 function inferStatus(
@@ -98,7 +98,7 @@ export const ensureConceptDomain = internalMutation({
     status: registryStatusValidator,
   }),
   handler: async (ctx, args) => {
-    const name = normalizeName(args.name.toLowerCase());
+    const name = normalizeName(args.name);
     if (!name) return { status: "provisional" };
 
     const existing = await ctx.db

@@ -45,7 +45,9 @@ function formatTimestamp(timestamp: number) {
 }
 
 export function IngestPage() {
-  onMount(() => { document.title = "Ingest — Frequency Music"; });
+  onMount(() => {
+    document.title = "Ingest — Frequency Music";
+  });
 
   type FeedRow = {
     _id: string;

@@ -2,13 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import {
-  compositionReturnValidator,
-  hypothesisReturnValidator,
-  recipeReturnValidator,
-  thesisDetailValidator,
-  thesisReturnValidator,
-} from "./validators";
+import { thesisDetailValidator, thesisReturnValidator } from "./validators";
 
 const thesisStatusValidator = v.union(
   v.literal("active"),
@@ -76,7 +70,9 @@ export const getDetail = query({
       recipes.map((recipe) =>
         ctx.db
           .query("compositions")
-          .withIndex("by_recipeId_updatedAt", (q) => q.eq("recipeId", recipe._id))
+          .withIndex("by_recipeId_updatedAt", (q) =>
+            q.eq("recipeId", recipe._id),
+          )
           .order("desc")
           .collect(),
       ),
@@ -101,13 +97,15 @@ export const getDetail = query({
         contradictionCount: hypotheses.filter(
           (hypothesis) => hypothesis.resolution === "contradicted",
         ).length,
-        activeCount: hypotheses.filter((hypothesis) => hypothesis.status === "active")
-          .length,
+        activeCount: hypotheses.filter(
+          (hypothesis) => hypothesis.status === "active",
+        ).length,
         evaluatedCount: hypotheses.filter(
           (hypothesis) => hypothesis.status === "evaluated",
         ).length,
-        retiredCount: hypotheses.filter((hypothesis) => hypothesis.status === "retired")
-          .length,
+        retiredCount: hypotheses.filter(
+          (hypothesis) => hypothesis.status === "retired",
+        ).length,
       },
       recentWeeklyBriefIds,
     };

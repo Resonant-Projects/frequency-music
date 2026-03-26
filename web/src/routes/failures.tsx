@@ -9,7 +9,7 @@ import {
   UICard,
   UISelect,
 } from "../components/ui";
-import { createQuery } from "../integrations/convex";
+import { createQuery, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 const rowClass = css({
@@ -36,7 +36,7 @@ export function FailuresPage() {
   const [thesisId, setThesisId] = createSignal("");
 
   const theses = createQuery(convexApi.theses.list, () => ({ limit: 100 }));
-  const archive = createQuery(convexApi.failures.listArchive, () => ({
+  const archive = createQueryWithStatus(convexApi.failures.listArchive, () => ({
     limit: 100,
     reason: reason() ? (reason() as (typeof REASONS)[number]) : undefined,
     thesisId: thesisId() ? (thesisId() as Id<"theses">) : undefined,
@@ -46,7 +46,9 @@ export function FailuresPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Failure Archive</h1>
-        <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
+        <p
+          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
+        >
           Contradictions and low-yield paths stay visible here so the system can
           learn honestly instead of silently discarding reversals.
         </p>
@@ -54,9 +56,22 @@ export function FailuresPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Filters</h2>
-        <div class={css({ display: "grid", gap: "3", gridTemplateColumns: { base: "1fr", md: "1fr 1fr" } })}>
+        <div
+          class={css({
+            display: "grid",
+            gap: "3",
+            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+          })}
+        >
           <div>
-            <label class={css({ color: "rgba(245, 240, 232, 0.7)", display: "block", mb: "2" })} for="failure-reason">
+            <label
+              class={css({
+                color: "rgba(245, 240, 232, 0.7)",
+                display: "block",
+                mb: "2",
+              })}
+              for="failure-reason"
+            >
               Reason
             </label>
             <UISelect
@@ -71,7 +86,14 @@ export function FailuresPage() {
             </UISelect>
           </div>
           <div>
-            <label class={css({ color: "rgba(245, 240, 232, 0.7)", display: "block", mb: "2" })} for="failure-thesis">
+            <label
+              class={css({
+                color: "rgba(245, 240, 232, 0.7)",
+                display: "block",
+                mb: "2",
+              })}
+              for="failure-thesis"
+            >
               Thesis
             </label>
             <UISelect
@@ -93,48 +115,96 @@ export function FailuresPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Archive</h2>
         <Show
-          when={(archive() ?? []).length > 0}
+          when={!archive.isLoading() && (archive.data() ?? []).length > 0}
           fallback={
             <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
-              No archived failures match the current filters.
+              {archive.isLoading()
+                ? "Loading..."
+                : "No archived failures match the current filters."}
             </p>
           }
         >
           <div class={css({ display: "grid", gap: "3" })}>
-            <For each={archive() ?? []}>
+            <For each={archive.data() ?? []}>
               {(entry) => (
                 <div id={entry.key} data-testid="failure-row" class={rowClass}>
-                  <div class={css({ display: "flex", gap: "2", flexWrap: "wrap", mb: "2" })}>
+                  <div
+                    class={css({
+                      display: "flex",
+                      gap: "2",
+                      flexWrap: "wrap",
+                      mb: "2",
+                    })}
+                  >
                     <UIBadge tone="gold">{entry.reason}</UIBadge>
-                    <UIBadge tone="cream">{entry.recommendedNextAction}</UIBadge>
+                    <UIBadge tone="cream">
+                      {entry.recommendedNextAction}
+                    </UIBadge>
                   </div>
-                  <h3 class={css({ color: "zodiac.cream", fontSize: "xl", mb: "2" })}>
+                  <h3
+                    class={css({
+                      color: "zodiac.cream",
+                      fontSize: "xl",
+                      mb: "2",
+                    })}
+                  >
                     {entry.title}
                   </h3>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.75)", lineHeight: "1.7", mb: "2" })}>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.75)",
+                      lineHeight: "1.7",
+                      mb: "2",
+                    })}
+                  >
                     {entry.explanation}
                   </p>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.58)", lineHeight: "1.7", mb: "2" })}>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.58)",
+                      lineHeight: "1.7",
+                      mb: "2",
+                    })}
+                  >
                     {entry.summary}
                   </p>
-                  <div class={css({ display: "flex", gap: "3", flexWrap: "wrap", fontSize: "sm" })}>
+                  <div
+                    class={css({
+                      display: "flex",
+                      gap: "3",
+                      flexWrap: "wrap",
+                      fontSize: "sm",
+                    })}
+                  >
                     <Show when={entry.hypothesisId}>
-                      <a href={`/hypotheses/${entry.hypothesisId}`} class={css({ color: "zodiac.violet" })}>
+                      <a
+                        href={`/hypotheses/${entry.hypothesisId}`}
+                        class={css({ color: "zodiac.violet" })}
+                      >
                         Hypothesis
                       </a>
                     </Show>
                     <Show when={entry.recipeId}>
-                      <a href={`/recipes/${entry.recipeId}`} class={css({ color: "zodiac.violet" })}>
+                      <a
+                        href={`/recipes/${entry.recipeId}`}
+                        class={css({ color: "zodiac.violet" })}
+                      >
                         Recipe
                       </a>
                     </Show>
                     <Show when={entry.compositionId}>
-                      <a href={`/compositions/${entry.compositionId}`} class={css({ color: "zodiac.violet" })}>
+                      <a
+                        href={`/compositions/${entry.compositionId}`}
+                        class={css({ color: "zodiac.violet" })}
+                      >
                         Composition
                       </a>
                     </Show>
                     <Show when={entry.thesisId}>
-                      <a href={`/theses/${entry.thesisId}`} class={css({ color: "zodiac.violet" })}>
+                      <a
+                        href={`/theses/${entry.thesisId}`}
+                        class={css({ color: "zodiac.violet" })}
+                      >
                         Thesis
                       </a>
                     </Show>

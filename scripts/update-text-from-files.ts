@@ -10,13 +10,15 @@ const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 const BYPASS = "freq-opus-extract-2026";
 
 async function main() {
-  const files = readdirSync("/tmp").filter(f => f.startsWith("kernel-text-jx7"));
-  
+  const files = readdirSync("/tmp").filter((f) =>
+    f.startsWith("kernel-text-jx7"),
+  );
+
   for (const file of files) {
     const sourceId = file.replace("kernel-text-", "").replace(".txt", "");
     const text = readFileSync(`/tmp/${file}`, "utf-8");
     console.log(`${sourceId}: ${text.length} chars`);
-    
+
     if (text.length < 500) {
       console.log("  ⏭ Too short, skipping");
       continue;

@@ -8,9 +8,6 @@ import {
   compositionReturnValidator,
   listeningSessionReturnValidator,
   recipeReturnValidator,
-  sourceReturnValidator,
-  thesisReturnValidator,
-  hypothesisReturnValidator,
 } from "./validators";
 
 export const list = query({
@@ -107,9 +104,13 @@ export const getLineage = query({
     const sources = hypothesis
       ? (
           await Promise.all(
-            hypothesis.sourceIds.map((sourceId) => ctx.db.get("sources", sourceId)),
+            hypothesis.sourceIds.map((sourceId) =>
+              ctx.db.get("sources", sourceId),
+            ),
           )
-        ).filter((source): source is NonNullable<typeof source> => source !== null)
+        ).filter(
+          (source): source is NonNullable<typeof source> => source !== null,
+        )
       : [];
     const listeningSessions = await ctx.db
       .query("listeningSessions")
@@ -120,7 +121,10 @@ export const getLineage = query({
       .collect();
 
     const latestListeningSession = listeningSessions[0];
-    const failureStatus = await getFailureStatusForComposition(ctx.db as any, composition._id);
+    const failureStatus = await getFailureStatusForComposition(
+      ctx.db as any,
+      composition._id,
+    );
 
     return {
       composition,

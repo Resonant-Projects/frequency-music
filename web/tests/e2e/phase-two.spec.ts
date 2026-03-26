@@ -30,6 +30,9 @@ test.describe("phase two surfaces", () => {
         page.getByRole("heading", { name: "Failure Archive" }),
       ).toBeVisible();
       await page.locator("#failure-reason").selectOption("archived_recipe");
+      await expect(page.locator("#failure-reason")).toHaveValue(
+        "archived_recipe",
+      );
     });
   });
 });

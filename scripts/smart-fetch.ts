@@ -15,7 +15,10 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 
 const BYPASS = "freq-opus-extract-2026";
-const CONVEX_URL = process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL || "http://convex-backend.paas.rproj.art";
+const CONVEX_URL =
+  process.env.CONVEX_URL ||
+  process.env.CONVEX_SELF_HOSTED_URL ||
+  "http://convex-backend.paas.rproj.art";
 
 interface FetchResult {
   text: string;
@@ -39,7 +42,9 @@ async function fetchViaJina(url: string): Promise<string> {
 async function fetchDirect(url: string): Promise<string> {
   try {
     const resp = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+      },
       redirect: "follow",
       signal: AbortSignal.timeout(15000),
     });
@@ -50,19 +55,19 @@ async function fetchDirect(url: string): Promise<string> {
     // Extract text from HTML
     const body = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || html;
     return body
-      .replace(/<script[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[\s\S]*?<\/style>/gi, "")
-      .replace(/<nav[\s\S]*?<\/nav>/gi, "")
-      .replace(/<footer[\s\S]*?<\/footer>/gi, "")
-      .replace(/<header[\s\S]*?<\/header>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&#x27;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/\s+/g, " ")
+      .replaceAll(/<script[\s\S]*?<\/script>/gi, "")
+      .replaceAll(/<style[\s\S]*?<\/style>/gi, "")
+      .replaceAll(/<nav[\s\S]*?<\/nav>/gi, "")
+      .replaceAll(/<footer[\s\S]*?<\/footer>/gi, "")
+      .replaceAll(/<header[\s\S]*?<\/header>/gi, "")
+      .replaceAll(/<[^>]+>/g, " ")
+      .replaceAll("&nbsp;", " ")
+      .replaceAll("&amp;", "&")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+      .replaceAll("&#x27;", "'")
+      .replaceAll("&quot;", '"')
+      .replaceAll(/\s+/g, " ")
       .trim()
       .slice(0, 100000);
   } catch {
@@ -84,14 +89,19 @@ async function smartFetch(url: string): Promise<FetchResult> {
     try {
       const Kernel = (await import("@onkernel/sdk")).default;
       const kernel = new Kernel();
-      const browser = await kernel.browsers.create({ timeout_seconds: 60, stealth: true });
+      const browser = await kernel.browsers.create({
+        timeout_seconds: 60,
+        stealth: true,
+      });
       const sessionId = browser.session_id;
       try {
-        const result: any = await kernel.browsers.playwright.execute(sessionId, {
-          code: `
+        const result: any = await kernel.browsers.playwright.execute(
+          sessionId,
+          {
+            code: `
             const ctx = browser.contexts()[0];
             const pg = ctx.pages()[0] || await ctx.newPage();
-            await pg.goto("${url.replace(/"/g, '\\"')}", { waitUntil: "domcontentloaded", timeout: 30000 });
+            await pg.goto("${url.replaceAll('"', '\\"')}", { waitUntil: "domcontentloaded", timeout: 30000 });
             await pg.waitForTimeout(5000);
             const text = await pg.evaluate(() => {
               const sels = ['article', '[role="main"]', '.article-body', 'main', '.entry-content'];
@@ -103,11 +113,15 @@ async function smartFetch(url: string): Promise<FetchResult> {
             });
             return { text: text.slice(0, 100000) };
           `,
-        });
+          },
+        );
         text = result?.text || "";
-        if (text.length > 500) return { text, method: "kernel", chars: text.length };
+        if (text.length > 500)
+          return { text, method: "kernel", chars: text.length };
       } finally {
-        try { await kernel.browsers.deleteByID(sessionId); } catch {}
+        try {
+          await kernel.browsers.deleteByID(sessionId);
+        } catch {}
       }
     } catch {
       // Kernel.sh unavailable or rate limited
@@ -119,15 +133,25 @@ async function smartFetch(url: string): Promise<FetchResult> {
 
 async function batchUpdate() {
   const client = new ConvexHttpClient(CONVEX_URL);
-  const ingested = await client.query(api.sources.listByStatus, { status: "ingested" as any, limit: 500 });
+  const ingested = await client.query(api.sources.listByStatus, {
+    status: "ingested" as any,
+    limit: 500,
+  });
   console.log(`Found ${ingested.length} ingested sources without text\n`);
 
-  let updated = 0, failed = 0, skipped = 0;
+  let updated = 0,
+    failed = 0,
+    skipped = 0;
   for (const src of ingested) {
     const url = src.canonicalUrl;
-    if (!url) { skipped++; continue; }
+    if (!url) {
+      skipped++;
+      continue;
+    }
 
-    console.log(`[${updated + failed + skipped + 1}/${ingested.length}] ${(src.title || "").slice(0, 55)}...`);
+    console.log(
+      `[${updated + failed + skipped + 1}/${ingested.length}] ${(src.title || "").slice(0, 55)}...`,
+    );
     const result = await smartFetch(url);
 
     if (result.chars > 200) {
@@ -149,7 +173,9 @@ async function batchUpdate() {
     }
   }
 
-  console.log(`\nDone: ${updated} updated, ${skipped} skipped, ${failed} failed`);
+  console.log(
+    `\nDone: ${updated} updated, ${skipped} skipped, ${failed} failed`,
+  );
 }
 
 async function main() {
@@ -160,9 +186,11 @@ async function main() {
     return;
   }
 
-  const url = args.find(a => !a.startsWith("--"));
+  const url = args.find((a) => !a.startsWith("--"));
   if (!url) {
-    console.log("Usage: smart-fetch.ts <url> [--update <sourceId>] | --batch-update");
+    console.log(
+      "Usage: smart-fetch.ts <url> [--update <sourceId>] | --batch-update",
+    );
     process.exit(1);
   }
 
@@ -182,7 +210,8 @@ async function main() {
   }
 
   console.log(result.text.slice(0, 2000));
-  if (result.chars > 2000) console.log(`\n... [${result.chars - 2000} more chars]`);
+  if (result.chars > 2000)
+    console.log(`\n... [${result.chars - 2000} more chars]`);
 }
 
 main().catch(console.error);

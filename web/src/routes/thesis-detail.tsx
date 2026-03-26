@@ -17,7 +17,10 @@ import { convexApi } from "../integrations/convex/api";
 const statGrid = css({
   display: "grid",
   gap: "3",
-  gridTemplateColumns: { base: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" },
+  gridTemplateColumns: {
+    base: "repeat(2, minmax(0, 1fr))",
+    md: "repeat(4, minmax(0, 1fr))",
+  },
 });
 
 const statCard = css({
@@ -63,16 +66,33 @@ export function ThesisDetailPage() {
         {(row) => (
           <>
             <UICard>
-              <div class={css({ display: "flex", gap: "2", flexWrap: "wrap", mb: "2" })}>
+              <div
+                class={css({
+                  display: "flex",
+                  gap: "2",
+                  flexWrap: "wrap",
+                  mb: "2",
+                })}
+              >
                 <UIBadge tone="gold">{row().thesis.status}</UIBadge>
                 <UIBadge tone="cream">{row().thesis.visibility}</UIBadge>
-                <UIBadge tone="violet">{row().hypotheses.length} hypotheses</UIBadge>
+                <UIBadge tone="violet">
+                  {row().hypotheses.length} hypotheses
+                </UIBadge>
                 <UIBadge tone="violet">{row().recipes.length} recipes</UIBadge>
-                <UIBadge tone="violet">{row().compositions.length} compositions</UIBadge>
+                <UIBadge tone="violet">
+                  {row().compositions.length} compositions
+                </UIBadge>
               </div>
 
               <h1 class={detailTitleClass}>{row().thesis.title}</h1>
-              <p class={css({ color: "rgba(245, 240, 232, 0.78)", fontSize: "lg", lineHeight: "1.7" })}>
+              <p
+                class={css({
+                  color: "rgba(245, 240, 232, 0.78)",
+                  fontSize: "lg",
+                  lineHeight: "1.7",
+                })}
+              >
                 {row().thesis.statement}
               </p>
 
@@ -81,7 +101,13 @@ export function ThesisDetailPage() {
                   <>
                     <hr class={goldDivider} />
                     <div class={sectionLabel}>Description</div>
-                    <p class={css({ color: "rgba(245, 240, 232, 0.7)", lineHeight: "1.7", whiteSpace: "pre-wrap" })}>
+                    <p
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.7)",
+                        lineHeight: "1.7",
+                        whiteSpace: "pre-wrap",
+                      })}
+                    >
                       {description()}
                     </p>
                   </>
@@ -95,7 +121,12 @@ export function ThesisDetailPage() {
                   <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
                     {row().stats.contradictionCount}
                   </div>
-                  <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontSize: "sm" })}>
+                  <div
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.58)",
+                      fontSize: "sm",
+                    })}
+                  >
                     contradictions
                   </div>
                 </div>
@@ -103,7 +134,12 @@ export function ThesisDetailPage() {
                   <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
                     {row().stats.activeCount}
                   </div>
-                  <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontSize: "sm" })}>
+                  <div
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.58)",
+                      fontSize: "sm",
+                    })}
+                  >
                     active
                   </div>
                 </div>
@@ -111,7 +147,12 @@ export function ThesisDetailPage() {
                   <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
                     {row().stats.evaluatedCount}
                   </div>
-                  <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontSize: "sm" })}>
+                  <div
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.58)",
+                      fontSize: "sm",
+                    })}
+                  >
                     evaluated
                   </div>
                 </div>
@@ -119,7 +160,12 @@ export function ThesisDetailPage() {
                   <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
                     {row().stats.retiredCount}
                   </div>
-                  <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontSize: "sm" })}>
+                  <div
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.58)",
+                      fontSize: "sm",
+                    })}
+                  >
                     retired
                   </div>
                 </div>
@@ -133,7 +179,10 @@ export function ThesisDetailPage() {
                     <Link
                       to="/hypotheses/$hypothesisId"
                       params={{ hypothesisId: String(hypothesis._id) }}
-                      class={css({ color: "rgba(245, 240, 232, 0.78)", textDecoration: "none" })}
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.78)",
+                        textDecoration: "none",
+                      })}
                     >
                       {hypothesis.title}
                     </Link>
@@ -150,7 +199,10 @@ export function ThesisDetailPage() {
                       <Link
                         to="/recipes/$recipeId"
                         params={{ recipeId: String(recipe._id) }}
-                        class={css({ color: "rgba(245, 240, 232, 0.78)", textDecoration: "none" })}
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.78)",
+                          textDecoration: "none",
+                        })}
                       >
                         {recipe.title}
                       </Link>
@@ -168,7 +220,10 @@ export function ThesisDetailPage() {
                       <Link
                         to="/compositions/$compositionId"
                         params={{ compositionId: String(composition._id) }}
-                        class={css({ color: "rgba(245, 240, 232, 0.78)", textDecoration: "none" })}
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.78)",
+                          textDecoration: "none",
+                        })}
                       >
                         {composition.title}
                       </Link>
@@ -186,7 +241,10 @@ export function ThesisDetailPage() {
                       <Link
                         to="/weekly-turns/$briefId"
                         params={{ briefId: String(briefId) }}
-                        class={css({ color: "rgba(245, 240, 232, 0.78)", textDecoration: "none" })}
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.78)",
+                          textDecoration: "none",
+                        })}
                       >
                         Weekly brief {String(briefId).slice(-6)}
                       </Link>

@@ -23,7 +23,9 @@ const helperClass = css({
 });
 
 export function AdminPage() {
-  onMount(() => { document.title = "Admin — Frequency Music"; });
+  onMount(() => {
+    document.title = "Admin — Frequency Music";
+  });
 
   const snapshot = createQuery(convexApi.admin.workspaceSnapshot);
   const setSourceStatus = createMutation(convexApi.admin.setSourceStatus);
@@ -184,9 +186,18 @@ export function AdminPage() {
         <div class={css({ display: "grid", gap: "4", marginTop: "3" })}>
           <div>
             <UIBadge tone="gold">Parameter Kinds</UIBadge>
-            <div class={css({ display: "flex", flexWrap: "wrap", gap: "2", marginTop: "2" })}>
+            <div
+              class={css({
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "2",
+                marginTop: "2",
+              })}
+            >
               <Show
-                when={(reviewSummary()?.provisionalParameterKinds.length ?? 0) > 0}
+                when={
+                  (reviewSummary()?.provisionalParameterKinds.length ?? 0) > 0
+                }
                 fallback={<span class={helperClass}>None</span>}
               >
                 <For each={reviewSummary()?.provisionalParameterKinds ?? []}>
@@ -197,9 +208,18 @@ export function AdminPage() {
           </div>
           <div>
             <UIBadge tone="violet">Concept Domains</UIBadge>
-            <div class={css({ display: "flex", flexWrap: "wrap", gap: "2", marginTop: "2" })}>
+            <div
+              class={css({
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "2",
+                marginTop: "2",
+              })}
+            >
               <Show
-                when={(reviewSummary()?.provisionalConceptDomains.length ?? 0) > 0}
+                when={
+                  (reviewSummary()?.provisionalConceptDomains.length ?? 0) > 0
+                }
                 fallback={<span class={helperClass}>None</span>}
               >
                 <For each={reviewSummary()?.provisionalConceptDomains ?? []}>
@@ -210,9 +230,19 @@ export function AdminPage() {
           </div>
           <div>
             <UIBadge tone="cream">Relationship Kinds</UIBadge>
-            <div class={css({ display: "flex", flexWrap: "wrap", gap: "2", marginTop: "2" })}>
+            <div
+              class={css({
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "2",
+                marginTop: "2",
+              })}
+            >
               <Show
-                when={(reviewSummary()?.provisionalRelationshipKinds.length ?? 0) > 0}
+                when={
+                  (reviewSummary()?.provisionalRelationshipKinds.length ?? 0) >
+                  0
+                }
                 fallback={<span class={helperClass}>None</span>}
               >
                 <For each={reviewSummary()?.provisionalRelationshipKinds ?? []}>

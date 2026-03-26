@@ -30,12 +30,14 @@ async function fetchText(url: string): Promise<string> {
 
 async function main() {
   const sources: Source[] = JSON.parse(
-    readFileSync("data/esoteric-sources-2.json", "utf-8")
+    readFileSync("data/esoteric-sources-2.json", "utf-8"),
   );
 
   console.log("Processing " + sources.length + " sources");
 
-  let ingested = 0, skipped = 0, failed = 0;
+  let ingested = 0,
+    skipped = 0,
+    failed = 0;
 
   for (const src of sources) {
     try {
@@ -67,7 +69,15 @@ async function main() {
     }
   }
 
-  console.log("\nDone: " + ingested + " ingested, " + skipped + " skipped, " + failed + " failed");
+  console.log(
+    "\nDone: " +
+      ingested +
+      " ingested, " +
+      skipped +
+      " skipped, " +
+      failed +
+      " failed",
+  );
 }
 
 main().catch(console.error);

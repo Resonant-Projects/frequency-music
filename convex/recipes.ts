@@ -134,7 +134,10 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
 
     return {
       kind,
-      type: typeof param.type === "string" ? param.type : kind,
+      type:
+        typeof param.type === "string" && param.type.trim().length > 0
+          ? param.type.trim()
+          : kind,
       value: param.value,
       details: param.details,
     };
@@ -472,7 +475,8 @@ export const generateFromHypothesis = action({
       .replace("{{hypothesis}}", hypothesis.hypothesis)
       .replace(
         "{{whyThisMatters}}",
-        hypothesis.whyThisMatters ?? "Not specified. Infer the musical stakes from the hypothesis and rationale.",
+        hypothesis.whyThisMatters ??
+          "Not specified. Infer the musical stakes from the hypothesis and rationale.",
       )
       .replace("{{rationale}}", hypothesis.rationaleMd)
       .replace("{{concepts}}", (hypothesis.concepts || []).join(", "));

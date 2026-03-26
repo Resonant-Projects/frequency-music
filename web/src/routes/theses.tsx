@@ -9,7 +9,7 @@ import {
   UIBadge,
   UICard,
 } from "../components/ui";
-import { createQuery } from "../integrations/convex";
+import { createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 const thesisCard = css({
@@ -30,10 +30,12 @@ export function ThesesPage() {
     document.title = "Theses — Frequency Music";
   });
 
-  const theses = createQuery(convexApi.theses.list, () => ({
+  const theses = createQueryWithStatus(convexApi.theses.list, () => ({
     limit: 100,
   }));
-  const thesisRows = createMemo<Doc<"theses">[]>(() => (theses() ?? []) as Doc<"theses">[]);
+  const thesisRows = createMemo<Doc<"theses">[]>(
+    () => (theses.data() ?? []) as Doc<"theses">[],
+  );
 
   const active = createMemo(() =>
     thesisRows().filter((thesis) => thesis.status === "active"),
@@ -62,10 +64,21 @@ export function ThesesPage() {
                     <UIBadge tone="gold">{thesis.status}</UIBadge>
                     <UIBadge tone="cream">{thesis.visibility}</UIBadge>
                   </div>
-                  <h3 class={css({ color: "zodiac.cream", fontSize: "xl", mb: "2" })}>
+                  <h3
+                    class={css({
+                      color: "zodiac.cream",
+                      fontSize: "xl",
+                      mb: "2",
+                    })}
+                  >
                     {thesis.title}
                   </h3>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.66)", lineHeight: "1.7" })}>
+                  <p
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.66)",
+                      lineHeight: "1.7",
+                    })}
+                  >
                     {thesis.statement}
                   </p>
                 </Link>
@@ -81,17 +94,21 @@ export function ThesesPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Theses</h1>
-        <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
+        <p
+          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
+        >
           Theses are the lightweight organizing questions that accumulate
           hypotheses, recipes, compositions, and reversals over time.
         </p>
       </UICard>
 
       <Show
-        when={thesisRows().length > 0}
+        when={!theses.isLoading() && thesisRows().length > 0}
         fallback={
           <UICard>
-            <p class={css({ color: "zodiac.cream" })}>No theses yet.</p>
+            <p class={css({ color: "zodiac.cream" })}>
+              {theses.isLoading() ? "Loading theses..." : "No theses yet."}
+            </p>
           </UICard>
         }
       >

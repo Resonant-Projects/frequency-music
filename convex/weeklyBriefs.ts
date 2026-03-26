@@ -342,7 +342,9 @@ async function generateBriefCore(
     sourceIds: persistedSourceIds,
     recommendedHypothesisIds: hypotheses.map((h: Doc<"hypotheses">) => h._id),
     recommendedRecipeIds: recipes.map((r: Doc<"recipes">) => r._id),
-    activeThesisIds: typedActiveTheses.map((thesis: Doc<"theses">) => thesis._id),
+    activeThesisIds: typedActiveTheses.map(
+      (thesis: Doc<"theses">) => thesis._id,
+    ),
     referencedFailureKeys: recentFailures.map((failure) => failure.key),
     todo: todo.length > 0 ? todo : undefined,
   });
@@ -574,9 +576,7 @@ export const publishToNotion = action({
         parent: { database_id: notionDbId },
         properties: {
           Name: {
-            title: [
-              { text: { content: `Weekly Brief — ${brief.weekOf}` } },
-            ],
+            title: [{ text: { content: `Weekly Brief — ${brief.weekOf}` } }],
           },
           "Week Of": { date: { start: brief.weekOf } },
           Model: {

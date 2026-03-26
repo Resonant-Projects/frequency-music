@@ -638,12 +638,16 @@ type SidebarMode =
   | { kind: "item-detail"; itemId: string; itemType: string; title: string };
 
 export function Zodiac3D() {
-  onMount(() => { document.title = "Zodiac — Frequency Music"; });
+  onMount(() => {
+    document.title = "Zodiac — Frequency Music";
+  });
 
   const navigate = useNavigate();
   const [selSector, setSelSector] = createSignal<string>("math");
   const [webglUnavailable, setWebglUnavailable] = createSignal(false);
-  const [sidebarMode, setSidebarMode] = createSignal<SidebarMode>({ kind: "overview" });
+  const [sidebarMode, setSidebarMode] = createSignal<SidebarMode>({
+    kind: "overview",
+  });
 
   // --- Convex Queries (existing, stable) ---
   const sectorMetrics = createQuery(convexApi.dashboard.zodiacSectors, () => ({
@@ -654,30 +658,37 @@ export function Zodiac3D() {
   // --- New queries (use createQueryWithStatus so errors don't crash the page) ---
 
   // Phase 1: Concepts for active sector
-  const domainConceptsQ = createQueryWithStatus(convexApi.graph.getConceptsForDomain, () => ({
-    domain: selSector(),
-    limit: 40,
-  }));
+  const domainConceptsQ = createQueryWithStatus(
+    convexApi.graph.getConceptsForDomain,
+    () => ({
+      domain: selSector(),
+      limit: 40,
+    }),
+  );
   const domainConcepts = createMemo<ConstellationConcept[]>(
     () => (domainConceptsQ.data() ?? []) as ConstellationConcept[],
   );
 
   // Phase 1: Edges between those concepts
   const conceptNames = createMemo(() => domainConcepts().map((c) => c.name));
-  const conceptEdgesQ = createQueryWithStatus(convexApi.graph.getConceptEdges, () => ({
-    conceptNames: conceptNames(),
-  }));
-  const conceptEdges = createMemo<ConstellationEdge[]>(
-    () =>
-      ((conceptEdgesQ.data() ?? []) as Array<{
+  const conceptEdgesQ = createQueryWithStatus(
+    convexApi.graph.getConceptEdges,
+    () => ({
+      conceptNames: conceptNames(),
+    }),
+  );
+  const conceptEdges = createMemo<ConstellationEdge[]>(() =>
+    (
+      (conceptEdgesQ.data() ?? []) as Array<{
         fromId: string;
         toId: string;
         relationship: string;
-      }>).map<ZodiacConstellationEdge>((edge) => ({
-        from: edge.fromId,
-        to: edge.toId,
-        relationship: edge.relationship,
-      })),
+      }>
+    ).map<ZodiacConstellationEdge>((edge) => ({
+      from: edge.fromId,
+      to: edge.toId,
+      relationship: edge.relationship,
+    })),
   );
 
   // Phase 1: Concept detail — conditional, only queries when sidebar is in concept-detail mode
@@ -699,35 +710,53 @@ export function Zodiac3D() {
   );
 
   // Phase 2: Sub-topics for active sector
-  const subTopicsQ = createQueryWithStatus(convexApi.dashboard.domainSubTopics, () => ({
-    domain: selSector(),
-  }));
+  const subTopicsQ = createQueryWithStatus(
+    convexApi.dashboard.domainSubTopics,
+    () => ({
+      domain: selSector(),
+    }),
+  );
   const subTopics = createMemo<ZodiacSubTopic[]>(
     () => (subTopicsQ.data() ?? []) as ZodiacSubTopic[],
   );
 
   // Phase 3: Pipeline items (loaded once)
-  const pipelineItemsQ = createQueryWithStatus(convexApi.dashboard.pipelineItems);
-  const pipelineItems = createMemo<{
-    sources: OrbitalSource[];
-    extractions: OrbitalExtraction[];
-    hypotheses: OrbitalHypothesis[];
-    recipes: OrbitalRecipe[];
-  } | undefined>(() => pipelineItemsQ.data() as {
-    sources: OrbitalSource[];
-    extractions: OrbitalExtraction[];
-    hypotheses: OrbitalHypothesis[];
-    recipes: OrbitalRecipe[];
-  } | undefined);
+  const pipelineItemsQ = createQueryWithStatus(
+    convexApi.dashboard.pipelineItems,
+  );
+  const pipelineItems = createMemo<
+    | {
+        sources: OrbitalSource[];
+        extractions: OrbitalExtraction[];
+        hypotheses: OrbitalHypothesis[];
+        recipes: OrbitalRecipe[];
+      }
+    | undefined
+  >(
+    () =>
+      pipelineItemsQ.data() as
+        | {
+            sources: OrbitalSource[];
+            extractions: OrbitalExtraction[];
+            hypotheses: OrbitalHypothesis[];
+            recipes: OrbitalRecipe[];
+          }
+        | undefined,
+  );
 
   // Phase 3: Item relations — conditional
   const activeItem = createMemo(() => {
     const mode = sidebarMode();
-    return mode.kind === "item-detail" ? { id: mode.itemId, type: mode.itemType } : undefined;
+    return mode.kind === "item-detail"
+      ? { id: mode.itemId, type: mode.itemType }
+      : undefined;
   });
   const itemRelationsQ = createQueryWithStatus(
     convexApi.dashboard.itemRelations,
-    () => ({ itemId: activeItem()?.id ?? "", itemType: activeItem()?.type ?? "source" }),
+    () => ({
+      itemId: activeItem()?.id ?? "",
+      itemType: activeItem()?.type ?? "source",
+    }),
   );
   const itemRelations = createMemo<ItemRelation[] | undefined>(() =>
     activeItem()
@@ -818,11 +847,7 @@ export function Zodiac3D() {
       const edges = conceptEdges();
       if (!concepts || !sceneHandle) return;
 
-      sceneHandle.loadConstellations(
-        selSector(),
-        concepts,
-        edges ?? [],
-      );
+      sceneHandle.loadConstellations(selSector(), concepts, edges ?? []);
     }),
   );
 
@@ -884,7 +909,11 @@ export function Zodiac3D() {
 
   function goBack() {
     const mode = sidebarMode();
-    if (mode.kind === "item-detail" || mode.kind === "concept-detail" || mode.kind === "sub-topic") {
+    if (
+      mode.kind === "item-detail" ||
+      mode.kind === "concept-detail" ||
+      mode.kind === "sub-topic"
+    ) {
       setSidebarMode({ kind: "overview" });
       sceneHandle?.clearPullLines();
     }
@@ -896,9 +925,7 @@ export function Zodiac3D() {
     return (
       <>
         <div class={sidebarSection}>
-          <div class={sidebarEyebrow}>
-            ∴ RESEARCH ZODIAC — 3D
-          </div>
+          <div class={sidebarEyebrow}>∴ RESEARCH ZODIAC — 3D</div>
           <h1 class={sidebarTitle}>
             Astrolabe
             <br />
@@ -907,8 +934,8 @@ export function Zodiac3D() {
             Orrery
           </h1>
           <p class={sidebarBody}>
-            Drag to orbit. Click a sector to focus. Click stars for concept details.
-            Click orbiting bodies for pipeline items.
+            Drag to orbit. Click a sector to focus. Click stars for concept
+            details. Click orbiting bodies for pipeline items.
           </p>
         </div>
 
@@ -919,31 +946,22 @@ export function Zodiac3D() {
           >
             {activeSector().id.toUpperCase()} DOMAIN
           </div>
-          <div
-            class={sidebarTitleMd}
-            style={{ color: activeSector().color }}
-          >
+          <div class={sidebarTitleMd} style={{ color: activeSector().color }}>
             {activeSector().label}
           </div>
-          <p class={sidebarBodySm}>
-            {activeSector().summary}
-          </p>
+          <p class={sidebarBodySm}>{activeSector().summary}</p>
           <div class={statRow}>
             <div class={statCellGold}>
               <div class={statValue} style={{ color: "#c8a84b" }}>
                 {activeSector().sources}
               </div>
-              <div class={statLabel}>
-                SOURCES
-              </div>
+              <div class={statLabel}>SOURCES</div>
             </div>
             <div class={statCellViolet}>
               <div class={statValue} style={{ color: "#8b5cf6" }}>
                 {activeSector().claims}
               </div>
-              <div class={statLabel}>
-                CLAIMS
-              </div>
+              <div class={statLabel}>CLAIMS</div>
             </div>
           </div>
 
@@ -956,7 +974,12 @@ export function Zodiac3D() {
                 {(concept) => (
                   <button
                     type="button"
-                    onClick={() => setSidebarMode({ kind: "concept-detail", conceptId: concept._id })}
+                    onClick={() =>
+                      setSidebarMode({
+                        kind: "concept-detail",
+                        conceptId: concept._id,
+                      })
+                    }
                     class={conceptTag}
                   >
                     {concept.displayName}
@@ -977,9 +1000,7 @@ export function Zodiac3D() {
         </div>
 
         <div class={sidebarSectionDomains}>
-          <div class={sidebarEyebrowSection}>
-            ALL DOMAINS
-          </div>
+          <div class={sidebarEyebrowSection}>ALL DOMAINS</div>
           <For each={sectors()}>
             {(sector) => (
               <button
@@ -987,8 +1008,14 @@ export function Zodiac3D() {
                 class={sectorButton}
                 aria-pressed={selSector() === sector.id}
                 style={{
-                  "border-color": selSector() === sector.id ? `${sector.color}55` : "rgba(200,168,75,0.1)",
-                  background: selSector() === sector.id ? "rgba(200,168,75,0.05)" : "transparent",
+                  "border-color":
+                    selSector() === sector.id
+                      ? `${sector.color}55`
+                      : "rgba(200,168,75,0.1)",
+                  background:
+                    selSector() === sector.id
+                      ? "rgba(200,168,75,0.05)"
+                      : "transparent",
                 }}
                 onClick={() => handleSectorSelect(sector.id)}
                 onMouseEnter={() => handleSectorHover(sector.id)}
@@ -996,22 +1023,21 @@ export function Zodiac3D() {
               >
                 <div
                   class={sectorButtonLabel}
-                  style={{ color: sector.color, opacity: selSector() === sector.id ? 1 : 0.58 }}
+                  style={{
+                    color: sector.color,
+                    opacity: selSector() === sector.id ? 1 : 0.58,
+                  }}
                 >
                   {sector.label}
                 </div>
-                <div class={sectorButtonMeta}>
-                  {sector.sources} src
-                </div>
+                <div class={sectorButtonMeta}>{sector.sources} src</div>
               </button>
             )}
           </For>
         </div>
 
         <div class={sidebarSectionWorkflow}>
-          <div class={sidebarEyebrowSectionTop}>
-            WORKFLOW SHORTCUTS
-          </div>
+          <div class={sidebarEyebrowSectionTop}>WORKFLOW SHORTCUTS</div>
           <div class={workspaceGrid}>
             <For each={workspaceLinks}>
               {(link) => (
@@ -1029,7 +1055,14 @@ export function Zodiac3D() {
         </div>
 
         <div class={sidebarSectionPipeline}>
-          <div class={css({ fontSize: "9px", letterSpacing: "0.3em", color: "rgba(200, 168, 75, 0.55)", marginBottom: "8px" })}>
+          <div
+            class={css({
+              fontSize: "9px",
+              letterSpacing: "0.3em",
+              color: "rgba(200, 168, 75, 0.55)",
+              marginBottom: "8px",
+            })}
+          >
             PIPELINE
           </div>
           <div class={pipelineRow}>
@@ -1038,14 +1071,10 @@ export function Zodiac3D() {
                 <>
                   <div class={pipelineCell}>
                     <div class={pipelineCellValue}>{item.value}</div>
-                    <div class={pipelineCellLabel}>
-                      {item.label}
-                    </div>
+                    <div class={pipelineCellLabel}>{item.label}</div>
                   </div>
                   <Show when={index() < pipelineSummary().length - 1}>
-                    <div class={pipelineArrow}>
-                      →
-                    </div>
+                    <div class={pipelineArrow}>→</div>
                   </Show>
                 </>
               )}
@@ -1057,7 +1086,9 @@ export function Zodiac3D() {
   }
 
   function SidebarConceptDetail() {
-    const detail = createMemo<ConceptDetailData | undefined>(() => conceptDetail());
+    const detail = createMemo<ConceptDetailData | undefined>(() =>
+      conceptDetail(),
+    );
     return (
       <>
         <div class={sidebarSectionCompact}>
@@ -1065,14 +1096,14 @@ export function Zodiac3D() {
           <Show when={detail()}>
             {(detailData) => (
               <>
-                <div class={sidebarEyebrowViolet}>
-                  CONCEPT
-                </div>
+                <div class={sidebarEyebrowViolet}>CONCEPT</div>
                 <div class={sidebarTitleSm}>
                   {detailData().concept.displayName}
                 </div>
                 <div class={sidebarMeta}>
-                  {detailData().concept.domain} &middot; {detailData().concept.mentionCount} mentions &middot; {detailData().edgeCount} edges
+                  {detailData().concept.domain} &middot;{" "}
+                  {detailData().concept.mentionCount} mentions &middot;{" "}
+                  {detailData().edgeCount} edges
                 </div>
                 <Show when={detailData().concept.description}>
                   <p class={sidebarBodyDetail}>
@@ -1118,44 +1149,46 @@ export function Zodiac3D() {
         </Show>
 
         <Show when={!detail()}>
-          <div class={sidebarLoading}>
-            Loading concept details...
-          </div>
+          <div class={sidebarLoading}>Loading concept details...</div>
         </Show>
       </>
     );
   }
 
   function SidebarSubTopic() {
-    const mode = () => sidebarMode() as { kind: "sub-topic"; label: string; conceptNames: string[] };
+    const mode = () =>
+      sidebarMode() as {
+        kind: "sub-topic";
+        label: string;
+        conceptNames: string[];
+      };
     return (
       <>
         <div class={sidebarSectionCompact}>
           <BackButton />
-          <div class={sidebarEyebrowGold}>
-            SUB-TOPIC
-          </div>
+          <div class={sidebarEyebrowGold}>SUB-TOPIC</div>
           <div class={sidebarTitleMd} style={{ color: "#c8a84b" }}>
             {mode().label}
           </div>
-          <div class={sidebarMeta}>
-            {mode().conceptNames.length} concepts
-          </div>
+          <div class={sidebarMeta}>{mode().conceptNames.length} concepts</div>
         </div>
 
         <div class={sidebarSectionScrollable}>
-          <div class={sidebarEyebrowSection}>
-            CONCEPTS IN CLUSTER
-          </div>
+          <div class={sidebarEyebrowSection}>CONCEPTS IN CLUSTER</div>
           <For each={mode().conceptNames}>
             {(name) => {
-              const concept = () => domainConcepts().find((c) => c.name === name);
+              const concept = () =>
+                domainConcepts().find((c) => c.name === name);
               return (
                 <button
                   type="button"
                   onClick={() => {
                     const c = concept();
-                    if (c) setSidebarMode({ kind: "concept-detail", conceptId: c._id });
+                    if (c)
+                      setSidebarMode({
+                        kind: "concept-detail",
+                        conceptId: c._id,
+                      });
                   }}
                   class={listButton}
                 >
@@ -1175,19 +1208,21 @@ export function Zodiac3D() {
   }
 
   function SidebarItemDetail() {
-    const mode = () => sidebarMode() as { kind: "item-detail"; itemId: string; itemType: string; title: string };
+    const mode = () =>
+      sidebarMode() as {
+        kind: "item-detail";
+        itemId: string;
+        itemType: string;
+        title: string;
+      };
     const relations = createMemo<ItemRelation[]>(() => itemRelations() ?? []);
 
     return (
       <>
         <div class={sidebarSectionCompact}>
           <BackButton />
-          <div class={sidebarEyebrowGold}>
-            {mode().itemType.toUpperCase()}
-          </div>
-          <div class={sidebarTitleItem}>
-            {mode().title}
-          </div>
+          <div class={sidebarEyebrowGold}>{mode().itemType.toUpperCase()}</div>
+          <div class={sidebarTitleItem}>{mode().title}</div>
         </div>
 
         <div class={sidebarSectionScrollable}>
@@ -1200,7 +1235,12 @@ export function Zodiac3D() {
                 <button
                   type="button"
                   onClick={() =>
-                    setSidebarMode({ kind: "item-detail", itemId: rel.id, itemType: rel.type, title: rel.title })
+                    setSidebarMode({
+                      kind: "item-detail",
+                      itemId: rel.id,
+                      itemType: rel.type,
+                      title: rel.title,
+                    })
                   }
                   class={relationButton}
                 >
@@ -1213,9 +1253,7 @@ export function Zodiac3D() {
             </For>
           </Show>
           <Show when={relations().length === 0}>
-            <div class={sidebarEmpty}>
-              No cross-pipeline relations found.
-            </div>
+            <div class={sidebarEmpty}>No cross-pipeline relations found.</div>
           </Show>
         </div>
       </>
@@ -1224,11 +1262,7 @@ export function Zodiac3D() {
 
   function BackButton() {
     return (
-      <button
-        type="button"
-        onClick={goBack}
-        class={backButton}
-      >
+      <button type="button" onClick={goBack} class={backButton}>
         ← Back
       </button>
     );
@@ -1249,14 +1283,17 @@ export function Zodiac3D() {
             <button
               type="button"
               onClick={() =>
-                setSidebarMode({ kind: "item-detail", itemId: item._id, itemType: props.type, title: item.title ?? "Untitled" })
+                setSidebarMode({
+                  kind: "item-detail",
+                  itemId: item._id,
+                  itemType: props.type,
+                  title: item.title ?? "Untitled",
+                })
               }
               class={pipelineItemButton}
             >
               <div>{item.title ?? "Untitled"}</div>
-              <div class={pipelineItemStatus}>
-                {item.status}
-              </div>
+              <div class={pipelineItemStatus}>{item.status}</div>
             </button>
           )}
         </For>
@@ -1269,12 +1306,8 @@ export function Zodiac3D() {
       <div class={fallbackContainer}>
         <div class={fallbackGrid}>
           <div class={fallbackCard}>
-            <div class={fallbackEyebrow}>
-              HOME FALLBACK
-            </div>
-            <h1 class={fallbackTitle}>
-              Workspace Navigator
-            </h1>
+            <div class={fallbackEyebrow}>HOME FALLBACK</div>
+            <h1 class={fallbackTitle}>Workspace Navigator</h1>
             <p class={fallbackBody}>
               3D mode is unavailable in this environment. Use direct workflow
               links below to continue managing intake, research, production, and
@@ -1283,9 +1316,7 @@ export function Zodiac3D() {
           </div>
 
           <div class={fallbackCard}>
-            <div class={fallbackEyebrowSpaced}>
-              QUICK ACCESS
-            </div>
+            <div class={fallbackEyebrowSpaced}>QUICK ACCESS</div>
             <div class={fallbackLinkGrid}>
               <For each={workspaceLinks}>
                 {(link) => (
@@ -1303,20 +1334,14 @@ export function Zodiac3D() {
           </div>
 
           <div class={fallbackCard}>
-            <div class={fallbackEyebrowPipeline}>
-              PIPELINE SNAPSHOT
-            </div>
+            <div class={fallbackEyebrowPipeline}>PIPELINE SNAPSHOT</div>
             <div class={fallbackPipelineRow}>
               <For each={pipelineSummary()}>
                 {(item, index) => (
                   <>
                     <div class={fallbackPipelineCell}>
-                      <div class={fallbackPipelineValue}>
-                        {item.value}
-                      </div>
-                      <div class={fallbackPipelineLabel}>
-                        {item.label}
-                      </div>
+                      <div class={fallbackPipelineValue}>{item.value}</div>
+                      <div class={fallbackPipelineLabel}>{item.label}</div>
                     </div>
                     <Show when={index() < pipelineSummary().length - 1}>
                       <div class={fallbackPipelineArrow}>→</div>
@@ -1335,10 +1360,7 @@ export function Zodiac3D() {
     <div class={pageContainer}>
       <div class={dotOverlay} />
 
-      <div
-        ref={cssContainerRef}
-        class={canvasWrapper}
-      >
+      <div ref={cssContainerRef} class={canvasWrapper}>
         <canvas ref={canvasRef} class={canvasEl} />
       </div>
 

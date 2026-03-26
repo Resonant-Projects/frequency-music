@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { inferDisplaySectorFromDomain, normalizeSectorId } from "./domainMappings";
+import {
+  inferDisplaySectorFromDomain,
+  normalizeSectorId,
+} from "./domainMappings";
 import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
 
@@ -154,19 +157,39 @@ export const domainSubTopics = query({
   ),
   handler: async (ctx, args) => {
     const sector = normalizeSectorId(args.domain);
-    const [allRegisteredDomains, allStoredConcepts] = await Promise.all([
-      ctx.db.query("conceptDomains").collect(),
-      ctx.db.query("concepts").take(300),
-    ]);
-    const domainSectorMap = new Map(
-      allRegisteredDomains.map((item) => [item.name, item.sectorMapping]),
+    const allRegisteredDomains = await ctx.db.query("conceptDomains").collect();
+
+    // Find all domains that map to this sector
+    const matchingDomains = new Set<string>();
+    for (const entry of allRegisteredDomains) {
+      const entrySector =
+        entry.sectorMapping ?? inferDisplaySectorFromDomain(entry.name);
+      if (entrySector === sector) {
+        matchingDomains.add(entry.name);
+      }
+    }
+
+    // Fetch concepts using the by_domain index for each matching domain
+    const conceptLists = await Promise.all(
+      [...matchingDomains].map((domain) =>
+        ctx.db
+          .query("concepts")
+          .withIndex("by_domain", (q) => q.eq("domain", domain))
+          .collect(),
+      ),
     );
-    const allConcepts: Doc<"concepts">[] = allStoredConcepts.filter((concept) => {
-      const conceptSector =
-        domainSectorMap.get(concept.domain) ??
-        inferDisplaySectorFromDomain(concept.domain);
-      return conceptSector === sector;
-    });
+
+    // Deduplicate in case a concept appears in multiple domains
+    const seen = new Set<string>();
+    const allConcepts: Doc<"concepts">[] = [];
+    for (const list of conceptLists) {
+      for (const concept of list) {
+        if (!seen.has(concept._id)) {
+          seen.add(concept._id);
+          allConcepts.push(concept);
+        }
+      }
+    }
 
     if (allConcepts.length === 0) return [];
 
@@ -202,15 +225,18 @@ export const domainSubTopics = query({
       groups.clear();
       // Use first significant word (>3 chars) from displayName
       for (const concept of allConcepts) {
-        const words = concept.displayName.split(/\s+/).map((w: string) => w.toLowerCase());
-        const keyword = words.find((w: string) => w.length > 3) ?? concept.domain ?? "other";
+        const words = concept.displayName
+          .split(/\s+/)
+          .map((w: string) => w.toLowerCase());
+        const keyword =
+          words.find((w: string) => w.length > 3) ?? concept.domain ?? "other";
         if (!groups.has(keyword)) groups.set(keyword, []);
         groups.get(keyword)!.push(concept.name);
       }
       // If still <=1 group, split alphabetically into 2-3 buckets
       if (groups.size <= 1) {
         groups.clear();
-        const sorted = [...allConcepts].sort((a, b) =>
+        const sorted = [...allConcepts].toSorted((a, b) =>
           a.displayName.localeCompare(b.displayName),
         );
         const bucketSize = Math.ceil(sorted.length / 3);
@@ -225,7 +251,7 @@ export const domainSubTopics = query({
 
     // Take top 4 clusters by size
     const sorted = [...groups.entries()]
-      .sort((a, b) => b[1].length - a[1].length)
+      .toSorted((a, b) => b[1].length - a[1].length)
       .slice(0, 4);
 
     return sorted.map(([key, names]) => ({
@@ -333,30 +359,34 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
 
   const recipesByHypothesisId = new Map<string, Doc<"recipes">[]>();
   for (const recipe of recipes) {
-    const existing = recipesByHypothesisId.get(String(recipe.hypothesisId)) ?? [];
+    const existing =
+      recipesByHypothesisId.get(String(recipe.hypothesisId)) ?? [];
     existing.push(recipe);
     recipesByHypothesisId.set(String(recipe.hypothesisId), existing);
   }
 
   const compositionsByRecipeId = new Map<string, Doc<"compositions">[]>();
   for (const composition of compositions) {
-    const existing = compositionsByRecipeId.get(String(composition.recipeId)) ?? [];
+    const existing =
+      compositionsByRecipeId.get(String(composition.recipeId)) ?? [];
     existing.push(composition);
     compositionsByRecipeId.set(String(composition.recipeId), existing);
   }
 
   const sessionsByCompositionId = new Map<string, Doc<"listeningSessions">[]>();
   for (const session of listeningSessions) {
-    const existing = sessionsByCompositionId.get(String(session.compositionId)) ?? [];
+    const existing =
+      sessionsByCompositionId.get(String(session.compositionId)) ?? [];
     existing.push(session);
     sessionsByCompositionId.set(String(session.compositionId), existing);
   }
 
   const rows = concepts.map((concept: Doc<"concepts">) => {
-    const linkedHypotheses = hypotheses.filter((hypothesis: Doc<"hypotheses">) =>
-      (hypothesis.concepts ?? []).some(
-        (item: string) => item.toLowerCase().trim() === concept.name,
-      ),
+    const linkedHypotheses = hypotheses.filter(
+      (hypothesis: Doc<"hypotheses">) =>
+        (hypothesis.concepts ?? []).some(
+          (item: string) => item.toLowerCase().trim() === concept.name,
+        ),
     );
     const linkedRecipes = linkedHypotheses.flatMap(
       (hypothesis: Doc<"hypotheses">) =>
@@ -386,9 +416,9 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
     let compositionsNo = 0;
     let compositionsLowExpandability = 0;
     for (const composition of linkedCompositions) {
-      const sessions = (sessionsByCompositionId.get(String(composition._id)) ?? []).sort(
-        (a, b) => b.createdAt - a.createdAt,
-      );
+      const sessions = (
+        sessionsByCompositionId.get(String(composition._id)) ?? []
+      ).toSorted((a, b) => b.createdAt - a.createdAt);
       const latest = sessions[0];
       if (!latest) continue;
       if (latest.expandVerdict === "yes") compositionsYes += 1;
@@ -423,7 +453,9 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
     };
   });
 
-  const sorted = [...rows].sort((a, b) => b.netYieldScore - a.netYieldScore);
+  const sorted = [...rows].toSorted(
+    (a, b) => b.netYieldScore - a.netYieldScore,
+  );
   const topRows = sorted.slice(0, limit);
 
   const byDomain = new Map<
@@ -454,13 +486,15 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
       ...cluster,
       conceptNames: cluster.conceptNames.slice(0, 4),
     }))
-    .sort((a, b) => b.score - a.score);
+    .toSorted((a, b) => b.score - a.score);
 
   return {
     concepts: topRows,
-    highYieldClusters: clusters.filter((cluster) => cluster.score > 0).slice(0, 4),
+    highYieldClusters: clusters
+      .filter((cluster) => cluster.score > 0)
+      .slice(0, 4),
     lowYieldClusters: [...clusters]
-      .reverse()
+      .toReversed()
       .filter((cluster) => cluster.score <= 0)
       .slice(0, 4),
   };
@@ -551,7 +585,8 @@ export const itemRelations = query({
     }> = [];
 
     for (const edge of [...edgesFrom, ...edgesTo]) {
-      const isFrom = edge.fromType === args.itemType && edge.fromId === args.itemId;
+      const isFrom =
+        edge.fromType === args.itemType && edge.fromId === args.itemId;
       const otherId = isFrom ? edge.toId : edge.fromId;
       const otherType = isFrom ? edge.toType : edge.fromType;
 
@@ -564,10 +599,7 @@ export const itemRelations = query({
           const s = await ctx.db.get("sources", otherId as Id<"sources">);
           if (s) title = s.title ?? "Untitled source";
         } else if (otherType === "hypothesis") {
-          const h = await ctx.db.get(
-            "hypotheses",
-            otherId as Id<"hypotheses">,
-          );
+          const h = await ctx.db.get("hypotheses", otherId as Id<"hypotheses">);
           if (h) title = h.title;
         } else if (otherType === "recipe") {
           const r = await ctx.db.get("recipes", otherId as Id<"recipes">);

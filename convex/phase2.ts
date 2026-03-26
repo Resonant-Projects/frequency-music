@@ -69,10 +69,7 @@ export type GraphSignalScore = {
 };
 
 export function isLowYieldListeningSession(
-  session: Pick<
-    Doc<"listeningSessions">,
-    "expandVerdict" | "ratings"
-  >,
+  session: Pick<Doc<"listeningSessions">, "expandVerdict" | "ratings">,
 ): boolean {
   return (
     session.expandVerdict === "no" ||
@@ -83,7 +80,7 @@ export function isLowYieldListeningSession(
 export function summarizeListeningSessions(
   sessions: Doc<"listeningSessions">[],
 ): ListeningSummary {
-  const sorted = [...sessions].sort((a, b) => b.createdAt - a.createdAt);
+  const sorted = [...sessions].toSorted((a, b) => b.createdAt - a.createdAt);
   const latest = sorted[0];
   const lowOutcomeCount = sorted.filter(isLowYieldListeningSession).length;
 

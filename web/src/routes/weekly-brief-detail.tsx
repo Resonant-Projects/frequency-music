@@ -44,7 +44,10 @@ export function WeeklyBriefDetailPage() {
     );
   });
 
-  createEffect(() => { const b = brief(); if (b) document.title = `Week ${b.weekOf} — Frequency Music`; });
+  createEffect(() => {
+    const b = brief();
+    if (b) document.title = `Week ${b.weekOf} — Frequency Music`;
+  });
 
   const publishToNotion = createAction(convexApi.weeklyBriefs.publishToNotion);
   const [notice, setNotice] = createSignal<string | null>(null);
@@ -104,9 +107,7 @@ export function WeeklyBriefDetailPage() {
               <UIBadge tone="violet">
                 {b().recommendedRecipeIds.length} recipes
               </UIBadge>
-              <UIBadge tone="violet">
-                {b().sourceIds.length} sources
-              </UIBadge>
+              <UIBadge tone="violet">{b().sourceIds.length} sources</UIBadge>
               <Show when={(b().activeThesisIds ?? []).length > 0}>
                 <UIBadge tone="violet">
                   {(b().activeThesisIds ?? []).length} theses
@@ -175,9 +176,7 @@ export function WeeklyBriefDetailPage() {
                 })}
               >
                 <For each={b().todo}>
-                  {(item) => (
-                    <li class={css({ py: "1" })}>{item}</li>
-                  )}
+                  {(item) => <li class={css({ py: "1" })}>{item}</li>}
                 </For>
               </ul>
             </Show>
@@ -218,9 +217,18 @@ export function WeeklyBriefDetailPage() {
                         textDecoration: "none",
                       })}
                     >
-                      <div class={css({ display: "flex", gap: "2", flexWrap: "wrap", mb: "1" })}>
+                      <div
+                        class={css({
+                          display: "flex",
+                          gap: "2",
+                          flexWrap: "wrap",
+                          mb: "1",
+                        })}
+                      >
                         <UIBadge tone="cream">{failure.reason}</UIBadge>
-                        <UIBadge tone="violet">{failure.recommendedNextAction}</UIBadge>
+                        <UIBadge tone="violet">
+                          {failure.recommendedNextAction}
+                        </UIBadge>
                       </div>
                       <div>{failure.title}</div>
                     </a>
@@ -240,7 +248,11 @@ export function WeeklyBriefDetailPage() {
               })}
               {" | "}Visibility: {b().visibility}
               <Show when={b().notionPageId}>
-                {(id) => <>{" | "}Notion: {id()}</>}
+                {(id) => (
+                  <>
+                    {" | "}Notion: {id()}
+                  </>
+                )}
               </Show>
             </div>
           </UICard>

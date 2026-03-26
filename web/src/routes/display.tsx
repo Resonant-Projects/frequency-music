@@ -68,9 +68,12 @@ export function DisplayPage() {
     limit: DISPLAY_QUEUE_LIMIT,
   }));
   const counts = createQuery(convexApi.inbox.counts);
-  const editorialSignals = createQuery(convexApi.dashboard.editorialSignals, () => ({
-    limit: 6,
-  }));
+  const editorialSignals = createQuery(
+    convexApi.dashboard.editorialSignals,
+    () => ({
+      limit: 6,
+    }),
+  );
 
   const runExtraction = createAction(convexApi.extract.extractSource);
   const updateStatus = createMutation(convexApi.sources.updateStatus);
@@ -231,13 +234,24 @@ export function DisplayPage() {
             </div>
             <Show
               when={(editorialSignals()?.highYieldClusters ?? []).length > 0}
-              fallback={<p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>No high-yield clusters yet.</p>}
+              fallback={
+                <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
+                  No high-yield clusters yet.
+                </p>
+              }
             >
               <For each={editorialSignals()?.highYieldClusters ?? []}>
                 {(cluster) => (
                   <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>{cluster.domain}</div>
-                    <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontSize: "sm" })}>
+                    <div class={css({ color: "zodiac.cream" })}>
+                      {cluster.domain}
+                    </div>
+                    <div
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.58)",
+                        fontSize: "sm",
+                      })}
+                    >
                       {cluster.conceptNames.join(", ")} · score {cluster.score}
                     </div>
                   </div>
@@ -251,13 +265,24 @@ export function DisplayPage() {
             </div>
             <Show
               when={(editorialSignals()?.lowYieldClusters ?? []).length > 0}
-              fallback={<p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>No low-yield clusters yet.</p>}
+              fallback={
+                <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
+                  No low-yield clusters yet.
+                </p>
+              }
             >
               <For each={editorialSignals()?.lowYieldClusters ?? []}>
                 {(cluster) => (
                   <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>{cluster.domain}</div>
-                    <div class={css({ color: "rgba(245, 240, 232, 0.58)", fontSize: "sm" })}>
+                    <div class={css({ color: "zodiac.cream" })}>
+                      {cluster.domain}
+                    </div>
+                    <div
+                      class={css({
+                        color: "rgba(245, 240, 232, 0.58)",
+                        fontSize: "sm",
+                      })}
+                    >
                       {cluster.conceptNames.join(", ")} · score {cluster.score}
                     </div>
                   </div>

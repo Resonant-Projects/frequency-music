@@ -82,7 +82,7 @@ async function getListeningSessionsForCompositionIds(
     ),
   );
 
-  return sessions.flat().sort((a, b) => b.createdAt - a.createdAt);
+  return sessions.flat().toSorted((a, b) => b.createdAt - a.createdAt);
 }
 
 async function loadCompositionContext(
@@ -90,11 +90,17 @@ async function loadCompositionContext(
   composition: Doc<"compositions">,
 ) {
   const recipe = await db.get("recipes", composition.recipeId);
-  const hypothesis = recipe ? await db.get("hypotheses", recipe.hypothesisId) : null;
-  const thesis =
-    hypothesis?.thesisId ? await db.get("theses", hypothesis.thesisId) : null;
+  const hypothesis = recipe
+    ? await db.get("hypotheses", recipe.hypothesisId)
+    : null;
+  const thesis = hypothesis?.thesisId
+    ? await db.get("theses", hypothesis.thesisId)
+    : null;
   const revisionBranchRootId = await getBranchRootId(db, composition);
-  const branchCompositionIds = await getBranchCompositionIds(db, revisionBranchRootId);
+  const branchCompositionIds = await getBranchCompositionIds(
+    db,
+    revisionBranchRootId,
+  );
   const branchListeningSessions = await getListeningSessionsForCompositionIds(
     db,
     branchCompositionIds,
@@ -112,7 +118,9 @@ async function loadCompositionContext(
   };
 }
 
-function makeFailureEntry(args: Omit<FailureArchiveEntry, "recommendedNextAction">) {
+function makeFailureEntry(
+  args: Omit<FailureArchiveEntry, "recommendedNextAction">,
+) {
   return {
     ...args,
     recommendedNextAction: inferFailureAction(args.reason),
@@ -143,7 +151,8 @@ export async function deriveFailureArchiveEntries(
           summary: hypothesis.hypothesis,
           thesisId: thesis?._id,
           hypothesisId: hypothesis._id,
-          explanation: "This hypothesis is marked contradicted and should remain visible as a reversal.",
+          explanation:
+            "This hypothesis is marked contradicted and should remain visible as a reversal.",
           supportingIds: {
             hypothesisIds: [hypothesis._id],
             recipeIds: [],
@@ -164,7 +173,8 @@ export async function deriveFailureArchiveEntries(
           summary: hypothesis.hypothesis,
           thesisId: thesis?._id,
           hypothesisId: hypothesis._id,
-          explanation: "This hypothesis has been retired and should be treated as completed or intentionally shelved learning.",
+          explanation:
+            "This hypothesis has been retired and should be treated as completed or intentionally shelved learning.",
           supportingIds: {
             hypothesisIds: [hypothesis._id],
             recipeIds: [],
@@ -180,8 +190,9 @@ export async function deriveFailureArchiveEntries(
   for (const recipe of recipes) {
     if (recipe.status !== "archived") continue;
     const hypothesis = await db.get("hypotheses", recipe.hypothesisId);
-    const thesis =
-      hypothesis?.thesisId ? await db.get("theses", hypothesis.thesisId) : null;
+    const thesis = hypothesis?.thesisId
+      ? await db.get("theses", hypothesis.thesisId)
+      : null;
     entries.push(
       makeFailureEntry({
         key: `recipe:${recipe._id}:archived`,
@@ -192,7 +203,8 @@ export async function deriveFailureArchiveEntries(
         thesisId: thesis?._id,
         hypothesisId: hypothesis?._id,
         recipeId: recipe._id,
-        explanation: "This recipe is archived and should be revisited only with clear comparative intent.",
+        explanation:
+          "This recipe is archived and should be revisited only with clear comparative intent.",
         supportingIds: {
           hypothesisIds: hypothesis ? [hypothesis._id] : [],
           recipeIds: [recipe._id],
@@ -224,7 +236,9 @@ export async function deriveFailureArchiveEntries(
         hypothesisIds: context.hypothesis ? [context.hypothesis._id] : [],
         recipeIds: context.recipe ? [context.recipe._id] : [],
         compositionIds: context.branchCompositionIds,
-        listeningSessionIds: context.branchListeningSessions.map((session) => session._id),
+        listeningSessionIds: context.branchListeningSessions.map(
+          (session) => session._id,
+        ),
         thesisIds: context.thesis ? [context.thesis._id] : [],
       },
     };
@@ -239,7 +253,8 @@ export async function deriveFailureArchiveEntries(
           key: `composition:${composition._id}:low_expandability`,
           reason: "low_expandability_composition",
           createdAt: latestSession.createdAt,
-          explanation: "The latest listening result indicates low expandability or a no-expand verdict.",
+          explanation:
+            "The latest listening result indicates low expandability or a no-expand verdict.",
           ...baseEntry,
         }),
       );
@@ -251,23 +266,37 @@ export async function deriveFailureArchiveEntries(
           key: `composition:${composition._id}:repeat_no_expand`,
           reason: "repeat_no_expand_composition",
           createdAt: latestSession?.createdAt ?? composition.updatedAt,
-          explanation: "Multiple low-yield listening outcomes across this revision branch suggest it should remain archived.",
+          explanation:
+            "Multiple low-yield listening outcomes across this revision branch suggest it should remain archived.",
           ...baseEntry,
         }),
       );
     }
   }
 
-  return entries.sort((a, b) => b.createdAt - a.createdAt);
+  return entries.toSorted((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function getFailureStatusForComposition(
   db: DbReader,
   compositionId: Id<"compositions">,
 ): Promise<FailureReason | undefined> {
-  const archive = await deriveFailureArchiveEntries(db);
-  const matching = archive.find((entry) => entry.compositionId === compositionId);
-  return matching?.reason;
+  const composition = await db.get("compositions", compositionId);
+  if (!composition) return undefined;
+
+  const context = await loadCompositionContext(db, composition);
+  const latestSession = context.branchListeningSessions[0];
+  const lowOutcomeCount = context.branchSummary.lowOutcomeCount;
+
+  if (lowOutcomeCount >= 2) return "repeat_no_expand_composition";
+  if (
+    latestSession &&
+    (latestSession.expandVerdict === "no" ||
+      (latestSession.ratings.expandability ?? Number.POSITIVE_INFINITY) <= 2)
+  ) {
+    return "low_expandability_composition";
+  }
+  return undefined;
 }
 
 export const listArchive = query({
@@ -289,7 +318,9 @@ export const listArchive = query({
     const archive = await deriveFailureArchiveEntries(ctx.db as DbReader);
     return archive
       .filter((entry) => (args.reason ? entry.reason === args.reason : true))
-      .filter((entry) => (args.thesisId ? entry.thesisId === args.thesisId : true))
+      .filter((entry) =>
+        args.thesisId ? entry.thesisId === args.thesisId : true,
+      )
       .slice(0, args.limit ?? 100);
   },
 });

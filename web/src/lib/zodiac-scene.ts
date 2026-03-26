@@ -47,8 +47,12 @@ import {
   updateArmillaryRotation,
 } from "./zodiac-armillary";
 import type { OrbitalSystem } from "./zodiac-orbits";
-import { buildOrbitalSystem, updateOrbits, buildPullLines } from "./zodiac-orbits";
-import { pickAny, configureRaycaster, type PickResult } from "./zodiac-orbit-picking";
+import {
+  buildOrbitalSystem,
+  updateOrbits,
+  buildPullLines,
+} from "./zodiac-orbits";
+import { pickAny, configureRaycaster } from "./zodiac-orbit-picking";
 import type {
   ConstellationConcept,
   ItemRelation,
@@ -74,10 +78,7 @@ export interface ZodiacHandle {
     hypotheses: OrbitalHypothesis[],
     recipes: OrbitalRecipe[],
   ) => void;
-  showPullLines: (
-    itemId: string,
-    relations: ItemRelation[],
-  ) => void;
+  showPullLines: (itemId: string, relations: ItemRelation[]) => void;
   clearPullLines: () => void;
 }
 
@@ -320,7 +321,12 @@ export function initZodiacScene(
     raycaster.setFromCamera(mouse, camera);
 
     // Phase 1-3: Try picking concepts, armillary rings, orbital items first
-    const pick = pickAny(raycaster, activeConstellation, activeArmillary, orbitalSystem);
+    const pick = pickAny(
+      raycaster,
+      activeConstellation,
+      activeArmillary,
+      orbitalSystem,
+    );
     if (pick) {
       showSelectionHalo(pick.position);
       if (pick.type === "concept" && onConceptClick) {
@@ -335,7 +341,11 @@ export function initZodiacScene(
           Hypotheses: "hypothesis",
           Recipes: "recipe",
         };
-        onOrbitalClick(pick.id, typeMap[pick.ringLabel ?? ""] ?? "source", pick.label);
+        onOrbitalClick(
+          pick.id,
+          typeMap[pick.ringLabel ?? ""] ?? "source",
+          pick.label,
+        );
         return;
       }
       if (pick.type === "armillary-ring" && onArmillaryClick) {
@@ -414,7 +424,12 @@ export function initZodiacScene(
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
 
-    const pick = pickAny(raycaster, activeConstellation, activeArmillary, orbitalSystem);
+    const pick = pickAny(
+      raycaster,
+      activeConstellation,
+      activeArmillary,
+      orbitalSystem,
+    );
     if (pick) {
       tooltipEl.textContent = pick.label;
       tooltipEl.style.display = "block";
@@ -579,15 +594,17 @@ export function initZodiacScene(
         orbitalSystem.dispose();
       }
 
-      orbitalSystem = buildOrbitalSystem(sources, extractions, hypotheses, recipes);
+      orbitalSystem = buildOrbitalSystem(
+        sources,
+        extractions,
+        hypotheses,
+        recipes,
+      );
       scene.add(orbitalSystem.group);
     },
 
     // Phase 3: Show pull-lines from a clicked item to related items
-    showPullLines(
-      itemId: string,
-      relations: ItemRelation[],
-    ) {
+    showPullLines(itemId: string, relations: ItemRelation[]) {
       clearPullLines();
       if (!orbitalSystem) return;
 
@@ -595,7 +612,12 @@ export function initZodiacScene(
       for (const ring of orbitalSystem.rings) {
         const idx = ring.items.findIndex((item) => item.id === itemId);
         if (idx !== -1) {
-          pullLinesGroup = buildPullLines(ring, idx, relations, orbitalSystem.rings);
+          pullLinesGroup = buildPullLines(
+            ring,
+            idx,
+            relations,
+            orbitalSystem.rings,
+          );
           scene.add(pullLinesGroup);
           break;
         }

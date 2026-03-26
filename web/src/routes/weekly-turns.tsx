@@ -11,10 +11,7 @@ import {
   UICard,
 } from "../components/ui";
 import { withDevBypassSecret } from "../integrations/authBypass";
-import {
-  createAction,
-  createQueryWithStatus,
-} from "../integrations/convex";
+import { createAction, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import { extractTitle } from "../lib/markdown-utils";
 
@@ -36,10 +33,10 @@ function extractExcerpt(bodyMd: string, maxLen = 180): string {
     // Strip markdown formatting for plain text excerpt
     const plain = trimmed
       .replace(/^#{1,6}\s+/, "")
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .replace(/\*(.*?)\*/g, "$1")
-      .replace(/`(.*?)`/g, "$1")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+      .replaceAll(/\*\*(.*?)\*\*/g, "$1")
+      .replaceAll(/\*(.*?)\*/g, "$1")
+      .replaceAll(/`(.*?)`/g, "$1")
+      .replaceAll(/\[([^\]]+)\]\([^)]+\)/g, "$1");
     contentLines.push(plain);
     if (contentLines.join(" ").length >= maxLen) break;
   }
@@ -49,7 +46,9 @@ function extractExcerpt(bodyMd: string, maxLen = 180): string {
 }
 
 export function WeeklyTurnsPage() {
-  onMount(() => { document.title = "Weekly Turns — Frequency Music"; });
+  onMount(() => {
+    document.title = "Weekly Turns — Frequency Music";
+  });
 
   const briefs = createQueryWithStatus(convexApi.weeklyBriefs.list, () => ({
     limit: 12,
@@ -121,15 +120,18 @@ export function WeeklyTurnsPage() {
           <Show
             when={briefRows().length > 0}
             fallback={
-              <p class={css({
-                color: "rgba(245, 240, 232, 0.55)",
-                fontFamily: "display",
-                fontSize: "md",
-                lineHeight: "1.6",
-                textAlign: "center",
-                py: "8",
-              })}>
-                No weekly turns yet. Generate one to summarize the latest ingest cycle.
+              <p
+                class={css({
+                  color: "rgba(245, 240, 232, 0.55)",
+                  fontFamily: "display",
+                  fontSize: "md",
+                  lineHeight: "1.6",
+                  textAlign: "center",
+                  py: "8",
+                })}
+              >
+                No weekly turns yet. Generate one to summarize the latest ingest
+                cycle.
               </p>
             }
           >
@@ -162,7 +164,13 @@ export function WeeklyTurnsPage() {
                         marginBottom: "2",
                       })}
                     >
-                      <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                      <div
+                        class={css({
+                          display: "flex",
+                          gap: "2",
+                          flexWrap: "wrap",
+                        })}
+                      >
                         <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
                         <UIBadge tone="cream">{brief.visibility}</UIBadge>
                         <Show when={(brief.activeThesisIds ?? []).length > 0}>
@@ -170,9 +178,12 @@ export function WeeklyTurnsPage() {
                             {(brief.activeThesisIds ?? []).length} theses
                           </UIBadge>
                         </Show>
-                        <Show when={(brief.referencedFailureKeys ?? []).length > 0}>
+                        <Show
+                          when={(brief.referencedFailureKeys ?? []).length > 0}
+                        >
                           <UIBadge tone="violet">
-                            {(brief.referencedFailureKeys ?? []).length} reversals
+                            {(brief.referencedFailureKeys ?? []).length}{" "}
+                            reversals
                           </UIBadge>
                         </Show>
                         <Show when={brief.publishedAt}>

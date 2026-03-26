@@ -568,16 +568,13 @@ export const createFromYouTubeAndQueue = action({
   }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const result = await ctx.runMutation(
-      api.sources.createFromYouTubeInput,
-      {
-        url: args.url,
-        title: args.title,
-        transcript: args.transcript,
-        tags: args.tags,
-        devBypassSecret: args.devBypassSecret,
-      },
-    );
+    const result = await ctx.runMutation(api.sources.createFromYouTubeInput, {
+      url: args.url,
+      title: args.title,
+      transcript: args.transcript,
+      tags: args.tags,
+      devBypassSecret: args.devBypassSecret,
+    });
     const hasReadyContent = Boolean(args.transcript?.trim());
     if (!hasReadyContent || (!result.created && !result.contentChanged)) {
       return { ...result, queued: false };

@@ -256,6 +256,22 @@ export const extractSource = action({
         return { skipped: true as const, reason: "duplicate extraction" };
       }
 
+      // Filter and map parameters before storing
+      const filteredParameters = extraction.compositionParameters
+        .filter(
+          (p) =>
+            typeof (p.kind ?? p.type) === "string" &&
+            typeof p.value === "string" &&
+            (p.kind ?? p.type)?.trim().length !== 0 &&
+            p.value.trim().length !== 0,
+        )
+        .map((p) => ({
+          kind: (p.kind ?? p.type)!,
+          type: p.type ?? p.kind,
+          value: p.value,
+          details: p.details,
+        }));
+
       // Store the extraction
       await ctx.runMutation(internal.extract.storeExtraction, {
         sourceId: args.sourceId,
@@ -270,20 +286,7 @@ export const extractSource = action({
           interestLevel: parseConfidenceBand(c.interestLevel),
           citations: c.citations || [],
         })),
-        compositionParameters: extraction.compositionParameters
-          .filter(
-            (p) =>
-              typeof (p.kind ?? p.type) === "string" &&
-              typeof p.value === "string" &&
-              (p.kind ?? p.type)?.trim().length !== 0 &&
-              p.value.trim().length !== 0,
-          )
-          .map((p) => ({
-          kind: (p.kind ?? p.type)!,
-          type: p.type ?? p.kind,
-          value: p.value,
-          details: p.details,
-        })),
+        compositionParameters: filteredParameters,
         topics: extraction.topics || [],
         openQuestions: extraction.openQuestions || [],
         confidence: 0.8,
@@ -301,7 +304,7 @@ export const extractSource = action({
         model: modelId,
         summary: extraction.summary,
         claimCount: extraction.claims.length,
-        parameterCount: extraction.compositionParameters.length,
+        parameterCount: filteredParameters.length,
       };
     } catch (error) {
       // Mark as errored
