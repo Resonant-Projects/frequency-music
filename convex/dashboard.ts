@@ -2,8 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import {
-  inferDisplaySectorFromDomain,
-  normalizeSectorId,
+  resolveDomainsForSector,
 } from "./domainMappings";
 import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
@@ -156,22 +155,15 @@ export const domainSubTopics = query({
     }),
   ),
   handler: async (ctx, args) => {
-    const sector = normalizeSectorId(args.domain);
     const allRegisteredDomains = await ctx.db.query("conceptDomains").collect();
-
-    // Find all domains that map to this sector
-    const matchingDomains = new Set<string>();
-    for (const entry of allRegisteredDomains) {
-      const entrySector =
-        entry.sectorMapping ?? inferDisplaySectorFromDomain(entry.name);
-      if (entrySector === sector) {
-        matchingDomains.add(entry.name);
-      }
-    }
+    const { domains } = resolveDomainsForSector(
+      allRegisteredDomains,
+      args.domain,
+    );
 
     // Fetch concepts using the by_domain index for each matching domain
     const conceptLists = await Promise.all(
-      [...matchingDomains].map((domain) =>
+      domains.map((domain) =>
         ctx.db
           .query("concepts")
           .withIndex("by_domain", (q) => q.eq("domain", domain))

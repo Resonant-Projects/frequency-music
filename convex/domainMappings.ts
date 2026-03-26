@@ -6,6 +6,11 @@ export type DisplaySectorId =
   | "geometry"
   | "synthesis";
 
+export type ConceptDomainRegistryEntry = {
+  name: string;
+  sectorMapping?: string;
+};
+
 const sectorAliases: Record<string, DisplaySectorId> = {
   math: "math",
   phys: "wave",
@@ -18,7 +23,7 @@ const sectorAliases: Record<string, DisplaySectorId> = {
   synthesis: "synthesis",
 };
 
-const defaultSectorDomainMap: Record<DisplaySectorId, string[]> = {
+const registryDefaultSectorDomainMap: Record<DisplaySectorId, string[]> = {
   math: ["mathematics"],
   wave: ["acoustics"],
   music: ["tuning", "theory", "general"],
@@ -27,8 +32,17 @@ const defaultSectorDomainMap: Record<DisplaySectorId, string[]> = {
   synthesis: ["production", "instrument"],
 };
 
+const fallbackSectorDomainMap: Record<DisplaySectorId, string[]> = {
+  math: ["mathematics", "general"],
+  wave: ["acoustics", "general"],
+  music: ["tuning", "theory", "general"],
+  psycho: ["psychoacoustics", "general"],
+  geometry: ["geometry", "general"],
+  synthesis: ["production", "instrument", "general"],
+};
+
 const directDomainSectorMap = new Map<string, DisplaySectorId>(
-  Object.entries(defaultSectorDomainMap).flatMap(([sector, domains]) =>
+  Object.entries(registryDefaultSectorDomainMap).flatMap(([sector, domains]) =>
     domains.map((domain) => [domain, sector as DisplaySectorId]),
   ),
 );
@@ -39,7 +53,36 @@ export function normalizeSectorId(raw: string): DisplaySectorId {
 }
 
 export function getDefaultDomainsForSector(sectorId: string): string[] {
-  return defaultSectorDomainMap[normalizeSectorId(sectorId)];
+  return fallbackSectorDomainMap[normalizeSectorId(sectorId)];
+}
+
+export function resolveDomainsForSector(
+  entries: ConceptDomainRegistryEntry[],
+  sectorId: string,
+) {
+  const sector = normalizeSectorId(sectorId);
+  const registryDomains = Array.from(
+    new Set(
+      entries.flatMap((entry) => {
+        const entrySector =
+          entry.sectorMapping ?? inferDisplaySectorFromDomain(entry.name);
+        return entrySector === sector
+          ? [entry.name.toLowerCase().trim()]
+          : [];
+      }),
+    ),
+  );
+  const domains =
+    registryDomains.length > 0
+      ? registryDomains
+      : fallbackSectorDomainMap[sector];
+
+  return {
+    sector,
+    domains,
+    specificDomains: domains.filter((domain) => domain !== "general"),
+    usedFallback: registryDomains.length === 0,
+  };
 }
 
 export function inferDisplaySectorFromDomain(domain?: string): DisplaySectorId {

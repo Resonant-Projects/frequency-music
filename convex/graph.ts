@@ -3,9 +3,8 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, mutation, query } from "./_generated/server";
 import {
-  getDefaultDomainsForSector,
   inferDisplaySectorFromDomain,
-  normalizeSectorId,
+  resolveDomainsForSector,
 } from "./domainMappings";
 import { conceptReturnValidator, edgeReturnValidator } from "./validators";
 
@@ -569,23 +568,15 @@ export const getConceptsForDomain = query({
   returns: v.array(conceptReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
-    const sector = normalizeSectorId(args.domain);
-    const specificDomains = new Set(getDefaultDomainsForSector(sector));
-
-    // Find all domains that map to this sector via registry
     const registeredDomains = await ctx.db.query("conceptDomains").collect();
-    const matchingDomains = new Set<string>();
-    for (const entry of registeredDomains) {
-      const entrySector =
-        entry.sectorMapping ?? inferDisplaySectorFromDomain(entry.name);
-      if (entrySector === sector) {
-        matchingDomains.add(entry.name);
-      }
-    }
+    const { domains, specificDomains } = resolveDomainsForSector(
+      registeredDomains,
+      args.domain,
+    );
 
     // Fetch concepts using by_domain index for each matching domain
     const conceptLists = await Promise.all(
-      [...matchingDomains].map((domain) =>
+      domains.map((domain) =>
         ctx.db
           .query("concepts")
           .withIndex("by_domain", (q) => q.eq("domain", domain))
@@ -607,8 +598,8 @@ export const getConceptsForDomain = query({
 
     // Sort: domain-specific concepts first, then general, all by mentionCount desc
     results.sort((a, b) => {
-      const aSpecific = specificDomains.has(a.domain) ? 0 : 1;
-      const bSpecific = specificDomains.has(b.domain) ? 0 : 1;
+      const aSpecific = specificDomains.includes(a.domain) ? 0 : 1;
+      const bSpecific = specificDomains.includes(b.domain) ? 0 : 1;
       if (aSpecific !== bSpecific) return aSpecific - bSpecific;
       return b.mentionCount - a.mentionCount;
     });
