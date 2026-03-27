@@ -119,7 +119,8 @@ export function ThesesPage() {
       setDescriptionMd("");
       setNotice("Thesis created.");
     } catch (error) {
-      setNotice(`Failed to create thesis: ${String(error)}`);
+      console.error("Failed to create thesis:", error);
+      setNotice("Failed to create thesis. Please try again.");
     }
   }
 

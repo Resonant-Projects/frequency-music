@@ -8,6 +8,7 @@ import {
   isLowYieldListeningSession,
   summarizeListeningSessions,
 } from "./phase2";
+export type { FailureArchiveEntry };
 import { failureArchiveEntryValidator } from "./validators";
 
 export type DbReader = {

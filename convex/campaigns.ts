@@ -2,7 +2,10 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { deriveFailureArchiveEntries } from "./failures";
+import {
+  deriveFailureArchiveEntries,
+  type FailureArchiveEntry,
+} from "./failures";
 import { summarizeListeningSessions } from "./phase2";
 import {
   campaignReturnValidator,
@@ -29,6 +32,7 @@ export type RecommendationContext = {
   hypotheses: Doc<"hypotheses">[];
   recipes: Doc<"recipes">[];
   actions: RecommendedAction[];
+  failureArchive: FailureArchiveEntry[];
 };
 
 const campaignStatusValidator = v.union(
@@ -376,7 +380,14 @@ export async function computeRecommendedActionContext(
     hypotheses: distinctById(scope.hypotheses),
     recipes: distinctById(scope.recipes),
     actions: topActions,
+    failureArchive: failureEntries,
   };
+}
+
+export async function listCampaignSelectionRows(
+  db: any,
+): Promise<Doc<"campaigns">[]> {
+  return await db.query("campaigns").order("desc").take(200);
 }
 
 export const list = query({
@@ -396,6 +407,14 @@ export const list = query({
         .take(limit);
     }
     return await ctx.db.query("campaigns").order("desc").take(limit);
+  },
+});
+
+export const listForSelection = query({
+  args: {},
+  returns: v.array(campaignReturnValidator),
+  handler: async (ctx) => {
+    return await listCampaignSelectionRows(ctx.db);
   },
 });
 

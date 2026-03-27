@@ -8,7 +8,6 @@ import {
   type RecommendedAction,
 } from "./campaigns";
 import { computeEditorialSignals } from "./dashboard";
-import { deriveFailureArchiveEntries } from "./failures";
 import {
   action,
   internalAction,
@@ -227,6 +226,28 @@ const DEFAULT_STUDIO_PROMPTS: StudioPromptVariants = {
     "Use the current weekly brief to expand the most promising branch into a structured study that could plausibly become a finished piece.",
 };
 
+export function selectRecentBriefInputs(args: {
+  hypotheses: Doc<"hypotheses">[];
+  recipes: Doc<"recipes">[];
+  cutoff: number;
+}) {
+  const recentHypotheses = args.hypotheses.filter(
+    (hypothesis) => hypothesis.createdAt > args.cutoff,
+  );
+  const recentRecipes = args.recipes.filter((recipe) => recipe.createdAt > args.cutoff);
+  const sourceIds = [
+    ...new Set(
+      recentHypotheses.flatMap((hypothesis) => hypothesis.sourceIds),
+    ),
+  ];
+
+  return {
+    recentHypotheses,
+    recentRecipes,
+    sourceIds,
+  };
+}
+
 export function parseBriefResponse(text: string): ParsedBriefMetadata {
   let todo: string[] = [];
   let studioPrompts: StudioPromptVariants = { ...DEFAULT_STUDIO_PROMPTS };
@@ -292,7 +313,7 @@ interface GenerateBriefResult {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shared between action and internalAction contexts
-async function generateBriefCore(
+export async function generateBriefCore(
   ctx: any,
   args: GenerateBriefArgs,
 ): Promise<GenerateBriefResult> {
@@ -310,6 +331,16 @@ async function generateBriefCore(
   });
   const hypotheses = recommendationContext.hypotheses;
   const recipes = recommendationContext.recipes;
+  const { recentHypotheses, recentRecipes, sourceIds } = selectRecentBriefInputs({
+    hypotheses,
+    recipes,
+    cutoff,
+  });
+
+  if (recentHypotheses.length === 0) {
+    throw new Error("No recent hypotheses found. Generate some first.");
+  }
+
   const typedActiveTheses =
     recommendationContext.theses.length > 0
       ? recommendationContext.theses
@@ -319,18 +350,13 @@ async function generateBriefCore(
           .order("desc")
           .take(10)) as Doc<"theses">[]);
   const recommendedActions = recommendationContext.actions;
-  const failureArchive = await deriveFailureArchiveEntries(ctx.db as any);
-  const recentFailures = failureArchive
+  const recentFailures = recommendationContext.failureArchive
     .filter((entry) => entry.createdAt > cutoff)
     .slice(0, 8);
   const editorialSignals = await computeEditorialSignals(ctx.db as any, 8);
 
-  if (hypotheses.length === 0) {
-    throw new Error("No recent hypotheses found. Generate some first.");
-  }
-
   // Format for prompt
-  const hypothesesText = hypotheses
+  const hypothesesText = recentHypotheses
     .map(
       (h: Doc<"hypotheses">, i: number) =>
         `${i + 1}. **${h.title}**\n   Question: ${h.question}\n   Hypothesis: ${h.hypothesis}\n   Why this matters: ${h.whyThisMatters ?? "Not specified"}`,
@@ -338,8 +364,8 @@ async function generateBriefCore(
     .join("\n\n");
 
   const recipesText =
-    recipes.length > 0
-      ? recipes
+    recentRecipes.length > 0
+      ? recentRecipes
           .map((r: Doc<"recipes">, i: number) => {
             const params = r.parameters
               .slice(0, 4)
@@ -409,9 +435,9 @@ Theses: ${
 
   const prompt = BRIEF_USER_PROMPT.replace("{{weekOf}}", weekOf)
     .replace("{{campaign}}", campaignText)
-    .replace("{{numHypotheses}}", String(hypotheses.length))
+    .replace("{{numHypotheses}}", String(recentHypotheses.length))
     .replace("{{hypotheses}}", hypothesesText)
-    .replace("{{numRecipes}}", String(recipes.length))
+    .replace("{{numRecipes}}", String(recentRecipes.length))
     .replace("{{recipes}}", recipesText)
     .replace("{{numTheses}}", String(typedActiveTheses.length))
     .replace("{{theses}}", thesesText)
@@ -437,10 +463,6 @@ Theses: ${
 
   const parsed = parseBriefResponse(result.text);
 
-  // Get source IDs from hypotheses
-  const sourceIds = [
-    ...new Set(hypotheses.flatMap((h: Doc<"hypotheses">) => h.sourceIds)),
-  ];
   const persistedSourceIds = sourceIds.slice(0, 20);
 
   // Create the brief
@@ -451,8 +473,10 @@ Theses: ${
     bodyMd: parsed.cleanBodyMd,
     sourceIds: persistedSourceIds,
     campaignId: recommendationContext.campaign?._id,
-    recommendedHypothesisIds: hypotheses.map((h: Doc<"hypotheses">) => h._id),
-    recommendedRecipeIds: recipes.map((r: Doc<"recipes">) => r._id),
+    recommendedHypothesisIds: recentHypotheses.map(
+      (h: Doc<"hypotheses">) => h._id,
+    ),
+    recommendedRecipeIds: recentRecipes.map((r: Doc<"recipes">) => r._id),
     activeThesisIds: typedActiveTheses.map(
       (thesis: Doc<"theses">) => thesis._id,
     ),
@@ -467,8 +491,8 @@ Theses: ${
     weekOf,
     model: modelId,
     stats: {
-      hypotheses: hypotheses.length,
-      recipes: recipes.length,
+      hypotheses: recentHypotheses.length,
+      recipes: recentRecipes.length,
       sources: persistedSourceIds.length,
     },
     preview: `${result.text.slice(0, 500)}...`,

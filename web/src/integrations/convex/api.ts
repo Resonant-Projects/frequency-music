@@ -31,6 +31,7 @@ export const convexApi = {
   },
   campaigns: {
     list: queryRef("campaigns:list"),
+    listForSelection: queryRef("campaigns:listForSelection"),
     get: queryRef("campaigns:get"),
     getActive: queryRef("campaigns:getActive"),
     getRecommendedActions: queryRef("campaigns:getRecommendedActions"),

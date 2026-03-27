@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/solid-router";
-import { createMemo, createSignal, For, onMount, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onMount,
+  Show,
+} from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
@@ -80,33 +87,86 @@ function CampaignCard(props: {
     status: "active" | "paused" | "completed";
   }) => Promise<void>;
 }) {
-  const [title, setTitle] = createSignal(props.campaign.title);
-  const [question, setQuestion] = createSignal(props.campaign.question);
-  const [descriptionMd, setDescriptionMd] = createSignal(
-    props.campaign.descriptionMd ?? "",
-  );
-  const [status, setStatus] = createSignal<
-    "active" | "paused" | "completed"
-  >(props.campaign.status);
+  type CampaignDraft = {
+    title: string;
+    question: string;
+    descriptionMd: string;
+    status: "active" | "paused" | "completed";
+  };
+
+  function buildDraft(campaign: Doc<"campaigns">): CampaignDraft {
+    return {
+      title: campaign.title,
+      question: campaign.question,
+      descriptionMd: campaign.descriptionMd ?? "",
+      status: campaign.status,
+    };
+  }
+
+  const [draft, setDraft] = createSignal<CampaignDraft>(buildDraft(props.campaign));
+  const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
+  const [activating, setActivating] = createSignal(false);
+
+  function resetDraftFromCampaign(campaign: Doc<"campaigns">) {
+    setDraft(buildDraft(campaign));
+    setDirty(false);
+  }
+
+  function updateDraft<K extends keyof CampaignDraft>(
+    key: K,
+    value: CampaignDraft[K],
+  ) {
+    setDirty(true);
+    setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  let lastCampaignId = String(props.campaign._id);
+  let lastUpdatedAt = props.campaign.updatedAt;
+
+  createEffect(() => {
+    const campaignId = String(props.campaign._id);
+    const updatedAt = props.campaign.updatedAt;
+    const changedCampaign = campaignId !== lastCampaignId;
+    const changedVersion = updatedAt !== lastUpdatedAt;
+
+    if (changedCampaign || (changedVersion && !dirty())) {
+      resetDraftFromCampaign(props.campaign);
+    }
+
+    lastCampaignId = campaignId;
+    lastUpdatedAt = updatedAt;
+  });
 
   async function saveCampaign() {
+    const currentDraft = draft();
     setSaving(true);
     try {
       await props.onSave({
         id: props.campaign._id,
-        title: title().trim(),
-        question: question().trim(),
-        descriptionMd: descriptionMd().trim() || undefined,
-        status: status(),
+        title: currentDraft.title.trim(),
+        question: currentDraft.question.trim(),
+        descriptionMd: currentDraft.descriptionMd.trim() || undefined,
+        status: currentDraft.status,
       });
+      setDirty(false);
     } finally {
       setSaving(false);
     }
   }
 
+  async function handleActivate() {
+    setActivating(true);
+    try {
+      await props.onActivate(props.campaign._id);
+    } finally {
+      setActivating(false);
+    }
+  }
+
   return (
     <div
+      data-testid="campaign-card"
       class={css({
         borderColor: "rgba(200, 168, 75, 0.22)",
         borderRadius: "l2",
@@ -135,33 +195,40 @@ function CampaignCard(props: {
         <Show when={props.campaign.status !== "active"}>
           <UIButton
             variant="outline"
-            onClick={() => props.onActivate(props.campaign._id)}
+            onClick={handleActivate}
+            disabled={saving() || activating()}
           >
-            Set Active
+            {activating() ? "Activating..." : "Set Active"}
           </UIButton>
         </Show>
       </div>
 
       <label class={fieldLabelClass}>Title</label>
-      <UIInput value={title()} onInput={(event) => setTitle(event.currentTarget.value)} />
+      <UIInput
+        value={draft().title}
+        onInput={(event) => updateDraft("title", event.currentTarget.value)}
+      />
 
       <label class={fieldLabelClass}>Question</label>
       <UITextarea
-        value={question()}
-        onInput={(event) => setQuestion(event.currentTarget.value)}
+        value={draft().question}
+        onInput={(event) => updateDraft("question", event.currentTarget.value)}
       />
 
       <label class={fieldLabelClass}>Description</label>
       <UITextarea
-        value={descriptionMd()}
-        onInput={(event) => setDescriptionMd(event.currentTarget.value)}
+        value={draft().descriptionMd}
+        onInput={(event) =>
+          updateDraft("descriptionMd", event.currentTarget.value)
+        }
       />
 
       <label class={fieldLabelClass}>Status</label>
       <UISelect
-        value={status()}
+        value={draft().status}
         onChange={(event) =>
-          setStatus(
+          updateDraft(
+            "status",
             event.currentTarget.value as "active" | "paused" | "completed",
           )
         }
@@ -188,7 +255,11 @@ function CampaignCard(props: {
       </Show>
 
       <div class={css({ display: "flex", justifyContent: "flex-end", mt: "4" })}>
-        <UIButton variant="solid" onClick={saveCampaign} disabled={saving()}>
+        <UIButton
+          variant="solid"
+          onClick={saveCampaign}
+          disabled={saving() || activating()}
+        >
           {saving() ? "Saving..." : "Save Campaign"}
         </UIButton>
       </div>

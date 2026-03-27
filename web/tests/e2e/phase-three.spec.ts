@@ -1,5 +1,22 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { createRunId, expectNoticeToMatch, waitForRowByText } from "./helpers";
+
+async function createCampaignViaUi(page: Page, title: string) {
+  await page.goto("/weekly-turns");
+  await page.locator("#campaign-title").fill(title);
+  await page.locator("#campaign-question").fill(`Campaign question for ${title}`);
+  await page.locator("#campaign-description").fill(
+    `Campaign description for ${title}`,
+  );
+  await page.locator("#campaign-status").selectOption("paused");
+  await page.getByRole("button", { name: "Create Campaign" }).click();
+  await expect(
+    page
+      .getByTestId("campaign-card")
+      .filter({ has: page.getByDisplayValue(title) })
+      .first(),
+  ).toBeVisible({ timeout: 30_000 });
+}
 
 test.describe("phase three weekly turns", () => {
   test.describe.configure({ mode: "serial" });
@@ -106,6 +123,67 @@ test.describe("phase three weekly turns", () => {
       await expect(page.getByText("10-minute")).toBeVisible();
       await expect(page.getByText("30-minute")).toBeVisible();
       await expect(page.getByText("90-minute")).toBeVisible();
+    });
+  });
+
+  test("saving an activated campaign keeps it active", async ({ page }) => {
+    const runId = createRunId();
+    const firstCampaignTitle = `E2E Campaign First ${runId}`;
+    const secondCampaignTitle = `E2E Campaign Second ${runId}`;
+
+    await createCampaignViaUi(page, firstCampaignTitle);
+    await createCampaignViaUi(page, secondCampaignTitle);
+
+    await page.goto("/weekly-turns");
+    const firstCard = page
+      .getByTestId("campaign-card")
+      .filter({ has: page.getByDisplayValue(firstCampaignTitle) })
+      .first();
+
+    await firstCard.getByRole("button", { name: "Set Active" }).click();
+    await expectNoticeToMatch(page, [/Active campaign updated\./i]);
+
+    await firstCard.getByRole("button", { name: "Save Campaign" }).click();
+    await expectNoticeToMatch(page, [/Campaign updated\./i]);
+
+    await expect(firstCard.locator("select")).toHaveValue("active");
+    await expect(
+      firstCard.getByRole("button", { name: "Set Active" }),
+    ).toHaveCount(0);
+  });
+
+  test("older campaigns remain selectable from thesis detail", async ({
+    page,
+  }) => {
+    const runId = createRunId();
+    const thesisTitle = `E2E Selection Thesis ${runId}`;
+    const oldestCampaignTitle = `E2E Oldest Campaign ${runId}`;
+
+    await page.goto("/theses");
+    await page.locator("#thesis-title").fill(thesisTitle);
+    await page
+      .locator("#thesis-statement")
+      .fill(`Selection thesis statement ${runId}`);
+    await page.getByRole("button", { name: "Create Thesis" }).click();
+    await expectNoticeToMatch(page, [/Thesis created\./i]);
+    await expect(page.getByRole("link", { name: thesisTitle })).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await createCampaignViaUi(page, oldestCampaignTitle);
+    for (let index = 0; index < 20; index += 1) {
+      await createCampaignViaUi(page, `E2E Newer Campaign ${index + 1} ${runId}`);
+    }
+
+    await page.goto("/theses");
+    await page.getByRole("link", { name: thesisTitle }).click();
+    const campaignSelect = page.getByTestId("thesis-campaign-select");
+
+    await campaignSelect.selectOption({ label: oldestCampaignTitle });
+    await page.getByRole("button", { name: "Attach" }).click();
+    await expectNoticeToMatch(page, [/Thesis attached to campaign\./i]);
+    await expect(page.getByText(oldestCampaignTitle)).toBeVisible({
+      timeout: 30_000,
     });
   });
 });

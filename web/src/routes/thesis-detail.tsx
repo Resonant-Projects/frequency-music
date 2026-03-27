@@ -44,7 +44,7 @@ export function ThesisDetailPage() {
   const detail = createQuery(convexApi.theses.getDetail, () => ({
     id: params().thesisId as Id<"theses">,
   }));
-  const campaigns = createQuery(convexApi.campaigns.list, () => ({ limit: 20 }));
+  const campaigns = createQuery(convexApi.campaigns.listForSelection);
   const attachThesis = createMutation(convexApi.campaigns.attachThesis);
   const detachThesis = createMutation(convexApi.campaigns.detachThesis);
   const [selectedCampaignId, setSelectedCampaignId] = createSignal("");
@@ -271,6 +271,7 @@ export function ThesisDetailPage() {
                   </label>
                   <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
                     <UISelect
+                      data-testid="thesis-campaign-select"
                       value={selectedCampaignId()}
                       onChange={(event) => setSelectedCampaignId(event.currentTarget.value)}
                     >
