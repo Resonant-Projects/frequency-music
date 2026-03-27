@@ -105,8 +105,9 @@ export function resolveDomainsForSector(
         const name = entry.name.toLowerCase().trim();
         if (!name) return [];
         if (name === "general") return ["general"];
-        const entrySector =
-          entry.sectorMapping ?? inferDisplaySectorFromDomain(name);
+        const entrySector = entry.sectorMapping
+          ? normalizeSectorId(entry.sectorMapping)
+          : inferDisplaySectorFromDomain(name);
         return entrySector === sector
           ? [name]
           : [];

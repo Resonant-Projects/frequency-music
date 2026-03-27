@@ -48,7 +48,10 @@ async function getBranchRootId(
   composition: Doc<"compositions">,
 ): Promise<Id<"compositions">> {
   let current = composition;
+  const seen = new Set([String(composition._id)]);
   while (current.revisionParentId) {
+    if (seen.has(String(current.revisionParentId))) break;
+    seen.add(String(current.revisionParentId));
     const parent = await db.get("compositions", current.revisionParentId);
     if (!parent) break;
     current = parent;

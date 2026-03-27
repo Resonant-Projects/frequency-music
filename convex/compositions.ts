@@ -83,7 +83,10 @@ export const getLineage = query({
 
     const ancestry = [];
     let cursor = composition;
+    const seen = new Set([String(composition._id)]);
     while (cursor.revisionParentId) {
+      if (seen.has(String(cursor.revisionParentId))) break;
+      seen.add(String(cursor.revisionParentId));
       const parent = await ctx.db.get("compositions", cursor.revisionParentId);
       if (!parent) break;
       ancestry.unshift(parent);

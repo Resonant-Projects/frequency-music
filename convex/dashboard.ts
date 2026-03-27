@@ -483,11 +483,11 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
   return {
     concepts: topRows,
     highYieldClusters: clusters
-      .filter((cluster) => cluster.score > 0)
+      .filter((cluster) => cluster.yieldBand === "high")
       .slice(0, 4),
     lowYieldClusters: [...clusters]
+      .filter((cluster) => cluster.yieldBand === "low")
       .toReversed()
-      .filter((cluster) => cluster.score <= 0)
       .slice(0, 4),
   };
 }

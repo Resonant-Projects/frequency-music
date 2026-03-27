@@ -257,20 +257,23 @@ export const extractSource = action({
       }
 
       // Filter and map parameters before storing
-      const filteredParameters = extraction.compositionParameters
-        .filter(
-          (p) =>
-            typeof (p.kind ?? p.type) === "string" &&
-            typeof p.value === "string" &&
-            (p.kind ?? p.type)?.trim().length !== 0 &&
-            p.value.trim().length !== 0,
-        )
-        .map((p) => ({
-          kind: (p.kind ?? p.type)!,
-          type: p.type ?? p.kind,
-          value: p.value,
-          details: p.details,
-        }));
+      const filteredParameters = extraction.compositionParameters.flatMap(
+        (p) => {
+          const kind = p.kind?.trim();
+          const type = p.type?.trim();
+          const resolvedKind = kind || type;
+          const value = p.value?.trim();
+          if (!resolvedKind || !value) return [];
+          return [
+            {
+              kind: resolvedKind,
+              type: type || resolvedKind,
+              value,
+              details: p.details,
+            },
+          ];
+        },
+      );
 
       // Store the extraction
       await ctx.runMutation(internal.extract.storeExtraction, {
