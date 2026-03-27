@@ -55,7 +55,9 @@ function truncate(text: string, maxLength: number) {
 }
 
 export function FeedbackPage() {
-  onMount(() => { document.title = "Feedback — Frequency Music"; });
+  onMount(() => {
+    document.title = "Feedback — Frequency Music";
+  });
 
   const compositions = createQuery(convexApi.compositions.list, () => ({
     limit: 40,
@@ -421,7 +423,11 @@ export function FeedbackPage() {
                         })}
                       >
                         Standout:{" "}
-                        {truncate(session.standoutMoments?.slice(0, 2).join(" • ") ?? "", 160)}
+                        {truncate(
+                          session.standoutMoments?.slice(0, 2).join(" • ") ??
+                            "",
+                          160,
+                        )}
                       </p>
                     </Show>
                   </div>

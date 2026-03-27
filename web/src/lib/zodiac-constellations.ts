@@ -3,7 +3,7 @@
 // Cross-domain concepts get gold bezier arcs.
 
 import * as THREE from "three";
-import { COLORS, R, SECTORS, type SectorDef } from "./zodiac-data";
+import { COLORS, type SectorDef } from "./zodiac-data";
 import type {
   ConstellationConcept,
   ZodiacConstellationEdge,

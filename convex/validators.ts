@@ -1,5 +1,14 @@
 import { v } from "convex/values";
-import { visibilityValidator } from "./schema";
+import {
+  compositionParameterValidator,
+  registryStatusValidator,
+  visibilityValidator,
+} from "./schema";
+import {
+  failureActionValidator,
+  failureReasonValidator,
+  yieldBandValidator,
+} from "./phase2";
 
 // ============================================================================
 // SHARED SUB-VALIDATORS
@@ -31,12 +40,6 @@ const claimValidator = v.object({
       quote: v.optional(v.string()),
     }),
   ),
-});
-
-const compositionParameterValidator = v.object({
-  type: v.string(),
-  value: v.string(),
-  details: v.optional(v.any()),
 });
 
 const createdByValidator = v.union(v.id("users"), v.literal("system"));
@@ -343,6 +346,8 @@ export const weeklyBriefReturnValidator = v.object({
   sourceIds: v.array(v.id("sources")),
   recommendedHypothesisIds: v.array(v.id("hypotheses")),
   recommendedRecipeIds: v.array(v.id("recipes")),
+  activeThesisIds: v.optional(v.array(v.id("theses"))),
+  referencedFailureKeys: v.optional(v.array(v.string())),
   todo: v.optional(v.array(v.string())),
   visibility: visibilityValidator,
   publishedAt: v.optional(v.number()),
@@ -355,18 +360,6 @@ export const weeklyBriefReturnValidator = v.object({
 // KNOWLEDGE GRAPH: CONCEPT
 // ============================================================================
 
-const conceptDomainValidator = v.union(
-  v.literal("tuning"),
-  v.literal("acoustics"),
-  v.literal("psychoacoustics"),
-  v.literal("theory"),
-  v.literal("production"),
-  v.literal("mathematics"),
-  v.literal("geometry"),
-  v.literal("instrument"),
-  v.literal("general"),
-);
-
 export const conceptReturnValidator = v.object({
   _id: v.id("concepts"),
   _creationTime: v.number(),
@@ -374,13 +367,94 @@ export const conceptReturnValidator = v.object({
   displayName: v.string(),
   description: v.optional(v.string()),
   aliases: v.array(v.string()),
-  domain: conceptDomainValidator,
+  domain: v.string(),
+  domains: v.optional(v.array(v.string())),
   wikipedia: v.optional(v.string()),
   definitionSource: v.optional(v.id("sources")),
   mentionCount: v.number(),
   hypothesisCount: v.number(),
   createdAt: v.number(),
   updatedAt: v.number(),
+});
+
+export const failureArchiveEntryValidator = v.object({
+  key: v.string(),
+  reason: failureReasonValidator,
+  createdAt: v.number(),
+  title: v.string(),
+  summary: v.string(),
+  thesisId: v.optional(v.id("theses")),
+  hypothesisId: v.optional(v.id("hypotheses")),
+  recipeId: v.optional(v.id("recipes")),
+  compositionId: v.optional(v.id("compositions")),
+  latestListeningSessionId: v.optional(v.id("listeningSessions")),
+  revisionBranchRootId: v.optional(v.id("compositions")),
+  explanation: v.string(),
+  recommendedNextAction: failureActionValidator,
+  supportingIds: v.object({
+    hypothesisIds: v.array(v.id("hypotheses")),
+    recipeIds: v.array(v.id("recipes")),
+    compositionIds: v.array(v.id("compositions")),
+    listeningSessionIds: v.array(v.id("listeningSessions")),
+    thesisIds: v.array(v.id("theses")),
+  }),
+});
+
+export const compositionLineageValidator = v.object({
+  composition: compositionReturnValidator,
+  ancestry: v.array(compositionReturnValidator),
+  children: v.array(compositionReturnValidator),
+  recipe: v.union(recipeReturnValidator, v.null()),
+  hypothesis: v.union(hypothesisReturnValidator, v.null()),
+  thesis: v.union(thesisReturnValidator, v.null()),
+  sources: v.array(sourceReturnValidator),
+  listeningSessions: v.array(listeningSessionReturnValidator),
+  summary: v.object({
+    depth: v.number(),
+    revisionVariable: v.optional(v.string()),
+    hasChildren: v.boolean(),
+    latestExpandVerdict: v.optional(
+      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
+    ),
+    latestExpandability: v.optional(v.number()),
+    localFailureStatus: v.optional(failureReasonValidator),
+    branchFailureStatus: v.optional(failureReasonValidator),
+  }),
+});
+
+export const thesisDetailValidator = v.object({
+  thesis: thesisReturnValidator,
+  hypotheses: v.array(hypothesisReturnValidator),
+  recipes: v.array(recipeReturnValidator),
+  compositions: v.array(compositionReturnValidator),
+  stats: v.object({
+    contradictionCount: v.number(),
+    activeCount: v.number(),
+    evaluatedCount: v.number(),
+    retiredCount: v.number(),
+  }),
+  recentWeeklyBriefIds: v.array(v.id("weeklyBriefs")),
+});
+
+export const editorialSignalValidator = v.object({
+  conceptName: v.string(),
+  displayName: v.string(),
+  domain: v.string(),
+  mentionCount: v.number(),
+  hypothesisCount: v.number(),
+  linkedRecipes: v.number(),
+  linkedCompositions: v.number(),
+  positiveSignals: v.number(),
+  negativeSignals: v.number(),
+  netYieldScore: v.number(),
+  yieldBand: yieldBandValidator,
+});
+
+export const editorialSignalClusterValidator = v.object({
+  domain: v.string(),
+  conceptNames: v.array(v.string()),
+  score: v.number(),
+  yieldBand: yieldBandValidator,
 });
 
 // ============================================================================
@@ -396,23 +470,6 @@ const entityTypeValidator = v.union(
   v.literal("composition"),
 );
 
-const relationshipValidator = v.union(
-  v.literal("cites"),
-  v.literal("related_to"),
-  v.literal("contradicts"),
-  v.literal("supports"),
-  v.literal("mentions"),
-  v.literal("defines"),
-  v.literal("tests"),
-  v.literal("applies"),
-  v.literal("is_a"),
-  v.literal("part_of"),
-  v.literal("derived_from"),
-  v.literal("extracted_from"),
-  v.literal("generated_from"),
-  v.literal("implements"),
-);
-
 export const edgeReturnValidator = v.object({
   _id: v.id("edges"),
   _creationTime: v.number(),
@@ -420,12 +477,30 @@ export const edgeReturnValidator = v.object({
   fromId: v.string(),
   toType: entityTypeValidator,
   toId: v.string(),
-  relationship: relationshipValidator,
+  relationship: v.string(),
   weight: v.optional(v.number()),
   context: v.optional(v.string()),
   autoGenerated: v.boolean(),
   createdAt: v.number(),
   createdBy: createdByValidator,
+});
+
+export const registryItemValidator = v.object({
+  _id: v.union(
+    v.id("parameterKinds"),
+    v.id("conceptDomains"),
+    v.id("relationshipKinds"),
+  ),
+  _creationTime: v.number(),
+  name: v.string(),
+  status: registryStatusValidator,
+  description: v.optional(v.string()),
+  introducedBy: createdByValidator,
+  displayLabel: v.optional(v.string()),
+  color: v.optional(v.string()),
+  notes: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
 });
 
 // ============================================================================

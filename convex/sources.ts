@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
+import { api } from "./_generated/api";
 import type { MutationCtx } from "./_generated/server";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 import { sourceReturnValidator } from "./validators";
@@ -499,6 +500,100 @@ export const createFromYouTubeInput = mutation({
       tags: args.tags,
       createdBy: identity.subject,
     });
+  },
+});
+
+export const createFromUrlAndQueue = action({
+  args: {
+    url: v.string(),
+    title: v.optional(v.string()),
+    rawText: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+    contentChanged: v.boolean(),
+    queued: v.boolean(),
+    workflowId: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const result = await ctx.runMutation(api.sources.createFromUrlInput, {
+      url: args.url,
+      title: args.title,
+      rawText: args.rawText,
+      tags: args.tags,
+      devBypassSecret: args.devBypassSecret,
+    });
+    const hasReadyContent = Boolean(args.rawText?.trim());
+    if (!hasReadyContent || (!result.created && !result.contentChanged)) {
+      return { ...result, queued: false };
+    }
+
+    const workflow = await ctx.runMutation(
+      api.workflows.startSingleSourceExtraction,
+      {
+        sourceId: result.id,
+        model: args.model,
+        devBypassSecret: args.devBypassSecret,
+      },
+    );
+
+    return {
+      ...result,
+      queued: true,
+      workflowId: workflow.workflowId,
+    };
+  },
+});
+
+export const createFromYouTubeAndQueue = action({
+  args: {
+    url: v.string(),
+    title: v.optional(v.string()),
+    transcript: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    model: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+    contentChanged: v.boolean(),
+    queued: v.boolean(),
+    workflowId: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const result = await ctx.runMutation(api.sources.createFromYouTubeInput, {
+      url: args.url,
+      title: args.title,
+      transcript: args.transcript,
+      tags: args.tags,
+      devBypassSecret: args.devBypassSecret,
+    });
+    const hasReadyContent = Boolean(args.transcript?.trim());
+    if (!hasReadyContent || (!result.created && !result.contentChanged)) {
+      return { ...result, queued: false };
+    }
+
+    const workflow = await ctx.runMutation(
+      api.workflows.startSingleSourceExtraction,
+      {
+        sourceId: result.id,
+        model: args.model,
+        devBypassSecret: args.devBypassSecret,
+      },
+    );
+
+    return {
+      ...result,
+      queued: true,
+      workflowId: workflow.workflowId,
+    };
   },
 });
 

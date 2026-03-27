@@ -6,7 +6,7 @@
   "scripts": {
     "format": "biome format --write .",
     "lint": "oxlint . --fix --tsconfig tsconfig.json",
-    "test": "bun test convex/sourceUtils.test.ts",
+    "test": "bun test convex/*.test.ts",
     "build:web": "cd web && bun run build",
     "typecheck:web": "cd web && bunx tsc --noEmit"
   },

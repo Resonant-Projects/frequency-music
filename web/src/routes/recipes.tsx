@@ -55,7 +55,9 @@ function parseChecklist(input: string) {
 }
 
 export function RecipesPage() {
-  onMount(() => { document.title = "Recipes — Frequency Music"; });
+  onMount(() => {
+    document.title = "Recipes — Frequency Music";
+  });
 
   const hypotheses = createQuery(convexApi.hypotheses.listByStatus, () => ({
     limit: 30,
@@ -251,14 +253,16 @@ export function RecipesPage() {
           <Show
             when={(recipes.data() ?? []).length > 0}
             fallback={
-              <p class={css({
-                color: "rgba(245, 240, 232, 0.55)",
-                fontFamily: "display",
-                fontSize: "md",
-                lineHeight: "1.6",
-                textAlign: "center",
-                py: "8",
-              })}>
+              <p
+                class={css({
+                  color: "rgba(245, 240, 232, 0.55)",
+                  fontFamily: "display",
+                  fontSize: "md",
+                  lineHeight: "1.6",
+                  textAlign: "center",
+                  py: "8",
+                })}
+              >
                 No recipes yet. Generate one from a hypothesis to get started.
               </p>
             }

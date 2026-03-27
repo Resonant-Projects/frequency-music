@@ -45,7 +45,9 @@ function formatTimestamp(timestamp: number) {
 }
 
 export function IngestPage() {
-  onMount(() => { document.title = "Ingest — Frequency Music"; });
+  onMount(() => {
+    document.title = "Ingest — Frequency Music";
+  });
 
   type FeedRow = {
     _id: string;
@@ -79,11 +81,11 @@ export function IngestPage() {
   const [notice, setNotice] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
-  const createFromUrlInput = createMutation(
-    convexApi.sources.createFromUrlInput,
+  const createFromUrlInput = createAction(
+    convexApi.sources.createFromUrlAndQueue,
   );
-  const createFromYouTubeInput = createMutation(
-    convexApi.sources.createFromYouTubeInput,
+  const createFromYouTubeInput = createAction(
+    convexApi.sources.createFromYouTubeAndQueue,
   );
   const createFeed = createMutation(convexApi.admin.createFeed);
   const setFeedEnabled = createMutation(convexApi.admin.setFeedEnabled);
@@ -122,9 +124,13 @@ export function IngestPage() {
       );
 
       setNotice(
-        result.created
-          ? "URL source ingested into private inbox."
-          : "URL updated from latest ingest payload.",
+        result.queued
+          ? result.created
+            ? `URL source ingested and extraction queued (${result.workflowId ?? "workflow pending"}).`
+            : `URL source updated and extraction re-queued (${result.workflowId ?? "workflow pending"}).`
+          : result.created
+            ? "URL source ingested into private inbox."
+            : "URL unchanged; no new extraction queued.",
       );
       setUrlTitle("");
       setUrlValue("");
@@ -162,9 +168,13 @@ export function IngestPage() {
       );
 
       setNotice(
-        result.created
-          ? "YouTube source ingested into private inbox."
-          : "YouTube source updated from latest ingest payload.",
+        result.queued
+          ? result.created
+            ? `YouTube source ingested and extraction queued (${result.workflowId ?? "workflow pending"}).`
+            : `YouTube source updated and extraction re-queued (${result.workflowId ?? "workflow pending"}).`
+          : result.created
+            ? "YouTube source ingested into private inbox."
+            : "YouTube source unchanged; no new extraction queued.",
       );
       setYtTitle("");
       setYtValue("");

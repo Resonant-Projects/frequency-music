@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { thesisReturnValidator } from "./validators";
+import { thesisDetailValidator, thesisReturnValidator } from "./validators";
 
 const thesisStatusValidator = v.union(
   v.literal("active"),
@@ -37,6 +37,91 @@ export const get = query({
   returns: v.union(thesisReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get("theses", args.id);
+  },
+});
+
+export const getByIds = query({
+  args: { ids: v.array(v.id("theses")) },
+  returns: v.array(thesisReturnValidator),
+  handler: async (ctx, args) => {
+    const results = await Promise.all(
+      args.ids.map((id) => ctx.db.get("theses", id)),
+    );
+    return results.filter(
+      (thesis): thesis is NonNullable<typeof thesis> => thesis !== null,
+    );
+  },
+});
+
+export const getDetail = query({
+  args: { id: v.id("theses") },
+  returns: v.union(thesisDetailValidator, v.null()),
+  handler: async (ctx, args) => {
+    const thesis = await ctx.db.get("theses", args.id);
+    if (!thesis) return null;
+
+    const hypotheses = await ctx.db
+      .query("hypotheses")
+      .withIndex("by_thesisId_updatedAt", (q) => q.eq("thesisId", args.id))
+      .order("desc")
+      .collect();
+
+    const recipeLists = await Promise.all(
+      hypotheses.map((hypothesis) =>
+        ctx.db
+          .query("recipes")
+          .withIndex("by_hypothesisId_updatedAt", (q) =>
+            q.eq("hypothesisId", hypothesis._id),
+          )
+          .order("desc")
+          .take(50),
+      ),
+    );
+    const recipes = recipeLists.flat();
+
+    const compositionLists = await Promise.all(
+      recipes.map((recipe) =>
+        ctx.db
+          .query("compositions")
+          .withIndex("by_recipeId_updatedAt", (q) =>
+            q.eq("recipeId", recipe._id),
+          )
+          .order("desc")
+          .take(50),
+      ),
+    );
+    const compositions = compositionLists.flat();
+
+    const weeklyBriefs = await ctx.db
+      .query("weeklyBriefs")
+      .order("desc")
+      .take(20);
+    const recentWeeklyBriefIds = weeklyBriefs
+      .filter((brief) => brief.activeThesisIds?.includes(args.id))
+      .slice(0, 5)
+      .map((brief) => brief._id);
+
+    return {
+      thesis,
+      hypotheses,
+      recipes,
+      compositions,
+      stats: {
+        contradictionCount: hypotheses.filter(
+          (hypothesis) => hypothesis.resolution === "contradicted",
+        ).length,
+        activeCount: hypotheses.filter(
+          (hypothesis) => hypothesis.status === "active",
+        ).length,
+        evaluatedCount: hypotheses.filter(
+          (hypothesis) => hypothesis.status === "evaluated",
+        ).length,
+        retiredCount: hypotheses.filter(
+          (hypothesis) => hypothesis.status === "retired",
+        ).length,
+      },
+      recentWeeklyBriefIds,
+    };
   },
 });
 

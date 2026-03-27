@@ -3,6 +3,12 @@ import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import {
+  type DbReader,
+  getBranchFailureStatusForComposition,
+  getFailureStatusForComposition,
+} from "./failures";
+import {
+  compositionLineageValidator,
   compositionReturnValidator,
   listeningSessionReturnValidator,
   recipeReturnValidator,
@@ -64,6 +70,91 @@ export const get = query({
       ...composition,
       recipe,
       listeningSessions,
+    };
+  },
+});
+
+export const getLineage = query({
+  args: { id: v.id("compositions") },
+  returns: v.union(compositionLineageValidator, v.null()),
+  handler: async (ctx, args) => {
+    const composition = await ctx.db.get("compositions", args.id);
+    if (!composition) return null;
+
+    const ancestry = [];
+    let cursor = composition;
+    const seen = new Set([String(composition._id)]);
+    while (cursor.revisionParentId) {
+      if (seen.has(String(cursor.revisionParentId))) break;
+      seen.add(String(cursor.revisionParentId));
+      const parent = await ctx.db.get("compositions", cursor.revisionParentId);
+      if (!parent) break;
+      ancestry.unshift(parent);
+      cursor = parent;
+    }
+
+    const children = await ctx.db
+      .query("compositions")
+      .withIndex("by_revisionParentId_updatedAt", (q) =>
+        q.eq("revisionParentId", composition._id),
+      )
+      .order("desc")
+      .collect();
+
+    const recipe = await ctx.db.get("recipes", composition.recipeId);
+    const hypothesis = recipe
+      ? await ctx.db.get("hypotheses", recipe.hypothesisId)
+      : null;
+    const thesis = hypothesis?.thesisId
+      ? await ctx.db.get("theses", hypothesis.thesisId)
+      : null;
+    const sources = hypothesis
+      ? (
+          await Promise.all(
+            hypothesis.sourceIds.map((sourceId) =>
+              ctx.db.get("sources", sourceId),
+            ),
+          )
+        ).filter(
+          (source): source is NonNullable<typeof source> => source !== null,
+        )
+      : [];
+    const listeningSessions = await ctx.db
+      .query("listeningSessions")
+      .withIndex("by_compositionId_createdAt", (q) =>
+        q.eq("compositionId", composition._id),
+      )
+      .order("desc")
+      .collect();
+
+    const latestListeningSession = listeningSessions[0];
+    const localFailureStatus = await getFailureStatusForComposition(
+      ctx.db as DbReader,
+      composition._id,
+    );
+    const branchFailureStatus = await getBranchFailureStatusForComposition(
+      ctx.db as DbReader,
+      composition._id,
+    );
+
+    return {
+      composition,
+      ancestry,
+      children,
+      recipe,
+      hypothesis,
+      thesis,
+      sources,
+      listeningSessions,
+      summary: {
+        depth: ancestry.length,
+        revisionVariable: composition.revisionVariable,
+        hasChildren: children.length > 0,
+        latestExpandVerdict: latestListeningSession?.expandVerdict,
+        latestExpandability: latestListeningSession?.ratings.expandability,
+        localFailureStatus,
+        branchFailureStatus,
+      },
     };
   },
 });

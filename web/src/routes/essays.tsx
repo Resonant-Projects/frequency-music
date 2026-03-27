@@ -1,7 +1,12 @@
 import { Link } from "@tanstack/solid-router";
 import { For, onMount } from "solid-js";
 import { css } from "../../styled-system/css";
-import { UIBadge, UICard, pageClass, sectionTitleClass } from "../components/ui";
+import {
+  UIBadge,
+  UICard,
+  pageClass,
+  sectionTitleClass,
+} from "../components/ui";
 import { essayLibrary } from "../lib/essays";
 
 const heroCard = css({
@@ -140,7 +145,8 @@ const essayCard = css({
   textDecoration: "none",
   minHeight: { base: "auto", md: "13.5rem" },
   bg: "rgba(13, 6, 32, 0.92)",
-  transition: "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+  transition:
+    "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
   backdropFilter: "blur(8px)",
   borderColor: "rgba(200, 168, 75, 0.22)",
   borderRadius: "l3",
@@ -189,7 +195,9 @@ const essayFooter = css({
 });
 
 export function EssaysPage() {
-  onMount(() => { document.title = "Essays — Frequency Music"; });
+  onMount(() => {
+    document.title = "Essays — Frequency Music";
+  });
 
   const [featured, ...archive] = essayLibrary;
 
@@ -203,8 +211,8 @@ export function EssaysPage() {
             <p class={heroBody}>
               These essays take the project&apos;s raw material, papers, and
               notes and turn them into arguments worth reading end to end. The
-              latest pieces lean into mathematical music theory, tuning,
-              rhythm, AI, and the physical structure of sound.
+              latest pieces lean into mathematical music theory, tuning, rhythm,
+              AI, and the physical structure of sound.
             </p>
 
             <div class={statRow}>
@@ -254,7 +262,9 @@ export function EssaysPage() {
                 class={essayCard}
               >
                 <div class={essayMeta}>
-                  <UIBadge tone="gold">{essay.dateLabel ?? "Research essay"}</UIBadge>
+                  <UIBadge tone="gold">
+                    {essay.dateLabel ?? "Research essay"}
+                  </UIBadge>
                   <UIBadge tone="cream">{essay.readTimeMinutes} min</UIBadge>
                 </div>
                 <h2 class={essayTitle}>{essay.title}</h2>

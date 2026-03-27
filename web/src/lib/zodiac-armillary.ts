@@ -91,7 +91,11 @@ export function buildArmillaryRings(
       }
     }
 
-    rings.push({ torus, label: subTopic.label, conceptNames: subTopic.conceptNames });
+    rings.push({
+      torus,
+      label: subTopic.label,
+      conceptNames: subTopic.conceptNames,
+    });
   });
 
   return {

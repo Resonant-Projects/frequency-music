@@ -4,8 +4,8 @@
 
 import * as THREE from "three";
 import type { Id } from "../../../convex/_generated/dataModel";
-import type { OrbitalRing, OrbitalSystem } from "./zodiac-orbits";
-import type { ConstellationGroup, ConceptStar } from "./zodiac-constellations";
+import type { OrbitalSystem } from "./zodiac-orbits";
+import type { ConstellationGroup } from "./zodiac-constellations";
 import type { ArmillaryRingGroup } from "./zodiac-armillary";
 
 export interface PickResult {

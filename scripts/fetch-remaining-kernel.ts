@@ -5,21 +5,46 @@ import Kernel from "@onkernel/sdk";
 import { writeFileSync } from "fs";
 
 const SOURCES = [
-  { id: "jx7a3z9azbhr84hphaeznx8vp5827ars", title: "Sacred Science of Sound", url: "https://www.researchgate.net/publication/275711911_The_Sacred_Science_of_Sound_Music_and_Mathematics" },
-  { id: "jx76v6hrvdyhdrste3tngxeqtx8260nq", title: "Pythagoras Music Sacred Geometry Genetic Code", url: "https://www.researchgate.net/publication/335910464_Pythagoras_music_sacred_geometry_and_genetic_code" },
-  { id: "jx70awak2ng08veat4dtvg20mh8263h0", title: "Brain Waves and Schumann Resonance", url: "https://www.researchgate.net/publication/384040884_Brain_Waves_and_the_Schumann_Resonance_Exploring_the_Electromagnetic_Connection_Between_the_Earth_and_Human_Consciousness" },
-  { id: "jx7aa4vrprfb3xsdraktektxnn8276ms", title: "Schumann Resonance Quantum Description", url: "https://www.researchgate.net/publication/281316806_Schumann_Resonance_and_Brain_Waves_A_Quantum_Description" },
-  { id: "jx7f2xjetx571g7wjn362p6ar1826y2m", title: "Ley Lines: Do They Really Exist?", url: "https://www.iflscience.com/what-are-ley-lines-and-do-they-really-exist-71960" },
+  {
+    id: "jx7a3z9azbhr84hphaeznx8vp5827ars",
+    title: "Sacred Science of Sound",
+    url: "https://www.researchgate.net/publication/275711911_The_Sacred_Science_of_Sound_Music_and_Mathematics",
+  },
+  {
+    id: "jx76v6hrvdyhdrste3tngxeqtx8260nq",
+    title: "Pythagoras Music Sacred Geometry Genetic Code",
+    url: "https://www.researchgate.net/publication/335910464_Pythagoras_music_sacred_geometry_and_genetic_code",
+  },
+  {
+    id: "jx70awak2ng08veat4dtvg20mh8263h0",
+    title: "Brain Waves and Schumann Resonance",
+    url: "https://www.researchgate.net/publication/384040884_Brain_Waves_and_the_Schumann_Resonance_Exploring_the_Electromagnetic_Connection_Between_the_Earth_and_Human_Consciousness",
+  },
+  {
+    id: "jx7aa4vrprfb3xsdraktektxnn8276ms",
+    title: "Schumann Resonance Quantum Description",
+    url: "https://www.researchgate.net/publication/281316806_Schumann_Resonance_and_Brain_Waves_A_Quantum_Description",
+  },
+  {
+    id: "jx7f2xjetx571g7wjn362p6ar1826y2m",
+    title: "Ley Lines: Do They Really Exist?",
+    url: "https://www.iflscience.com/what-are-ley-lines-and-do-they-really-exist-71960",
+  },
 ];
 
 async function main() {
   const kernel = new Kernel();
 
   for (const src of SOURCES) {
-    console.log(`\n[${SOURCES.indexOf(src) + 1}/${SOURCES.length}] ${src.title}`);
+    console.log(
+      `\n[${SOURCES.indexOf(src) + 1}/${SOURCES.length}] ${src.title}`,
+    );
     let sessionId = "";
     try {
-      const browser = await kernel.browsers.create({ timeout_seconds: 120, stealth: true });
+      const browser = await kernel.browsers.create({
+        timeout_seconds: 120,
+        stealth: true,
+      });
       sessionId = browser.session_id;
       console.log(`  Browser: ${sessionId}`);
 
@@ -66,7 +91,9 @@ async function main() {
       console.log("  CLIP: " + src.url);
     } finally {
       if (sessionId) {
-        try { await kernel.browsers.deleteByID(sessionId); } catch {}
+        try {
+          await kernel.browsers.deleteByID(sessionId);
+        } catch {}
       }
     }
   }

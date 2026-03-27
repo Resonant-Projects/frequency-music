@@ -103,7 +103,7 @@ Respond with a JSON object containing:
   ],
   "compositionParameters": [
     {
-      "type": "tempo|key|tuningSystem|rootNote|chordProgression|rhythm|instrument|synthWaveform|harmonicProfile|frequency|note",
+      "kind": "parameter type label such as tempo|key|tuningSystem|rootNote|interval|measurement|duration|frequency|note",
       "value": "human-readable value (e.g., '432 Hz', '120 BPM', 'Pythagorean')",
       "details": { /* structured details like { "hz": 432 } or { "bpm": 120 } */ }
     }
@@ -128,7 +128,8 @@ interface ExtractionResult {
     citations: Array<{ quote?: string; label?: string }>;
   }>;
   compositionParameters: Array<{
-    type: string;
+    kind?: string;
+    type?: string;
     value: string;
     details?: Record<string, unknown>;
   }>;
@@ -255,6 +256,25 @@ export const extractSource = action({
         return { skipped: true as const, reason: "duplicate extraction" };
       }
 
+      // Filter and map parameters before storing
+      const filteredParameters = extraction.compositionParameters.flatMap(
+        (p) => {
+          const kind = p.kind?.trim();
+          const type = p.type?.trim();
+          const resolvedKind = kind || type;
+          const value = p.value?.trim();
+          if (!resolvedKind || !value) return [];
+          return [
+            {
+              kind: resolvedKind,
+              type: type || resolvedKind,
+              value,
+              details: p.details,
+            },
+          ];
+        },
+      );
+
       // Store the extraction
       await ctx.runMutation(internal.extract.storeExtraction, {
         sourceId: args.sourceId,
@@ -269,11 +289,7 @@ export const extractSource = action({
           interestLevel: parseConfidenceBand(c.interestLevel),
           citations: c.citations || [],
         })),
-        compositionParameters: extraction.compositionParameters.map((p) => ({
-          type: p.type as any,
-          value: p.value,
-          details: p.details,
-        })),
+        compositionParameters: filteredParameters,
         topics: extraction.topics || [],
         openQuestions: extraction.openQuestions || [],
         confidence: 0.8,
@@ -291,7 +307,7 @@ export const extractSource = action({
         model: modelId,
         summary: extraction.summary,
         claimCount: extraction.claims.length,
-        parameterCount: extraction.compositionParameters.length,
+        parameterCount: filteredParameters.length,
       };
     } catch (error) {
       // Mark as errored
@@ -344,21 +360,12 @@ export const storeExtraction = internalMutation({
     ),
     compositionParameters: v.array(
       v.object({
-        type: v.union(
-          v.literal("tempo"),
-          v.literal("key"),
-          v.literal("tuningSystem"),
-          v.literal("rootNote"),
-          v.literal("chordProgression"),
-          v.literal("rhythm"),
-          v.literal("instrument"),
-          v.literal("synthWaveform"),
-          v.literal("harmonicProfile"),
-          v.literal("frequency"),
-          v.literal("note"),
-        ),
+        kind: v.optional(v.string()),
+        type: v.optional(v.string()),
         value: v.string(),
         details: v.optional(v.any()),
+        registryStatus: v.optional(v.string()),
+        canonicalKind: v.optional(v.string()),
       }),
     ),
     topics: v.array(v.string()),
@@ -366,8 +373,27 @@ export const storeExtraction = internalMutation({
     confidence: v.number(),
   },
   handler: async (ctx, args) => {
+    const compositionParameters = await Promise.all(
+      args.compositionParameters.map(async (parameter) => {
+        const kind = (parameter.kind ?? parameter.type ?? "").trim();
+        const registry = await ctx.runMutation(
+          internal.vocabulary.ensureParameterKind,
+          { name: kind },
+        );
+        return {
+          kind,
+          type: parameter.type ?? kind,
+          value: parameter.value,
+          details: parameter.details,
+          registryStatus: registry.status,
+          canonicalKind: parameter.canonicalKind,
+        };
+      }),
+    );
+
     return await ctx.db.insert("extractions", {
       ...args,
+      compositionParameters,
       createdBy: "system",
       createdAt: Date.now(),
     });

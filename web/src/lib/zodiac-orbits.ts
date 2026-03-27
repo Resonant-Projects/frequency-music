@@ -37,17 +37,43 @@ const reusableOrbitDummy = new THREE.Object3D();
 // Infer which sector an item belongs to from its topics
 function inferSectorFromTopics(topics: string[]): string {
   const joined = topics.join(" ").toLowerCase();
-  if (joined.includes("math") || joined.includes("ratio") || joined.includes("topolog")) return "math";
-  if (joined.includes("wave") || joined.includes("frequency") || joined.includes("reson") || joined.includes("acoust")) return "phys";
-  if (joined.includes("psycho") || joined.includes("perception") || joined.includes("consonan")) return "psycho";
-  if (joined.includes("geometr") || joined.includes("tonnetz") || joined.includes("symmetry")) return "geo";
-  if (joined.includes("synth") || joined.includes("timbre") || joined.includes("production")) return "synth";
+  if (
+    joined.includes("math") ||
+    joined.includes("ratio") ||
+    joined.includes("topolog")
+  )
+    return "math";
+  if (
+    joined.includes("wave") ||
+    joined.includes("frequency") ||
+    joined.includes("reson") ||
+    joined.includes("acoust")
+  )
+    return "wave";
+  if (
+    joined.includes("psycho") ||
+    joined.includes("perception") ||
+    joined.includes("consonan")
+  )
+    return "psycho";
+  if (
+    joined.includes("geometr") ||
+    joined.includes("tonnetz") ||
+    joined.includes("symmetry")
+  )
+    return "geometry";
+  if (
+    joined.includes("synth") ||
+    joined.includes("timbre") ||
+    joined.includes("production")
+  )
+    return "synthesis";
   return "music";
 }
 
 function getSectorAngleRange(sectorId: string): { start: number; end: number } {
   const sector = SECTORS.find((s) => s.id === sectorId);
-  if (!sector) return { start: 0, end: Math.PI * 2 / 6 };
+  if (!sector) return { start: 0, end: (Math.PI * 2) / 6 };
   return { start: sector.startAngle, end: sector.endAngle };
 }
 
@@ -60,8 +86,18 @@ function buildOrbitalRing(
 ): OrbitalRing {
   const count = items.length;
   if (count === 0) {
-    const dummy = new THREE.InstancedMesh(geometry, new THREE.MeshBasicMaterial(), 0);
-    return { mesh: dummy, items, radius: ringRadius, label, dispose: () => dummy.dispose() };
+    const dummy = new THREE.InstancedMesh(
+      geometry,
+      new THREE.MeshBasicMaterial(),
+      0,
+    );
+    return {
+      mesh: dummy,
+      items,
+      radius: ringRadius,
+      label,
+      dispose: () => dummy.dispose(),
+    };
   }
 
   const mat = new THREE.MeshStandardMaterial({
@@ -121,7 +157,11 @@ function buildOrbitalRing(
     mesh.setMatrixAt(i, dummy.matrix);
 
     // Set instance color from status
-    color.set(colorAttrib[i * 3], colorAttrib[i * 3 + 1], colorAttrib[i * 3 + 2]);
+    color.set(
+      colorAttrib[i * 3],
+      colorAttrib[i * 3 + 1],
+      colorAttrib[i * 3 + 2],
+    );
     mesh.setColorAt(i, color);
   });
 
@@ -233,7 +273,9 @@ export function buildOrbitalSystem(
 // Update orbital positions each frame
 export function updateOrbits(system: OrbitalSystem, time: number): void {
   for (const ring of system.rings) {
-    const baseAngles = ring.mesh.userData.baseAngles as Float32Array | undefined;
+    const baseAngles = ring.mesh.userData.baseAngles as
+      | Float32Array
+      | undefined;
     const speeds = ring.mesh.userData.speeds as Float32Array | undefined;
     const z = ring.mesh.userData.zOffset ?? 0;
 

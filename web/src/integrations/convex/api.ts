@@ -13,6 +13,8 @@ export const convexApi = {
     listRecent: queryRef("sources:listRecent"),
     createFromUrlInput: mutationRef("sources:createFromUrlInput"),
     createFromYouTubeInput: mutationRef("sources:createFromYouTubeInput"),
+    createFromUrlAndQueue: actionRef("sources:createFromUrlAndQueue"),
+    createFromYouTubeAndQueue: actionRef("sources:createFromYouTubeAndQueue"),
     updateStatus: mutationRef("sources:updateStatus"),
     setVisibility: mutationRef("sources:setVisibility"),
   },
@@ -22,6 +24,8 @@ export const convexApi = {
   theses: {
     list: queryRef("theses:list"),
     get: queryRef("theses:get"),
+    getByIds: queryRef("theses:getByIds"),
+    getDetail: queryRef("theses:getDetail"),
     create: mutationRef("theses:create"),
     update: mutationRef("theses:update"),
   },
@@ -48,8 +52,14 @@ export const convexApi = {
   },
   compositions: {
     list: queryRef("compositions:list"),
+    getLineage: queryRef("compositions:getLineage"),
     create: mutationRef("compositions:create"),
     update: mutationRef("compositions:update"),
+  },
+  failures: {
+    listArchive: queryRef("failures:listArchive"),
+    getByKey: queryRef("failures:getByKey"),
+    getByKeys: queryRef("failures:getByKeys"),
   },
   listening: {
     listRecent: queryRef("listening:listRecent"),
@@ -67,14 +77,24 @@ export const convexApi = {
   dashboard: {
     pipeline: queryRef("dashboard:pipeline"),
     zodiacSectors: queryRef("dashboard:zodiacSectors"),
+    editorialSignals: queryRef("dashboard:editorialSignals"),
     activityFeed: queryRef("dashboard:activityFeed"),
     domainSubTopics: queryRef("dashboard:domainSubTopics"),
     pipelineItems: queryRef("dashboard:pipelineItems"),
     itemRelations: queryRef("dashboard:itemRelations"),
   },
+  vocabulary: {
+    reviewSummary: queryRef("vocabulary:reviewSummary"),
+  },
   graph: {
     getConceptsForDomain: queryRef("graph:getConceptsForDomain"),
     getConceptEdges: queryRef("graph:getConceptEdges"),
     getConceptDetail: queryRef("graph:getConceptDetail"),
+  },
+  workflows: {
+    startBatchExtraction: mutationRef("workflows:startBatchExtraction"),
+    startSingleSourceExtraction: mutationRef(
+      "workflows:startSingleSourceExtraction",
+    ),
   },
 };

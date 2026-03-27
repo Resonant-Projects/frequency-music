@@ -79,7 +79,14 @@
         "url": "https://www.math.wustl.edu/~wright/Math109/00Book.pdf",
         "pdf": "https://www.math.wustl.edu/~wright/Math109/00Book.pdf",
         "local_file": "data/pdfs/wright-mathematics-and-music.pdf",
-        "topics": ["mathematics", "music theory", "scales", "harmony", "tuning", "introductory"],
+        "topics": [
+          "mathematics",
+          "music theory",
+          "scales",
+          "harmony",
+          "tuning",
+          "introductory"
+        ],
         "category": "core",
         "notes": "Free textbook from Washington University math course"
       },
@@ -535,7 +542,13 @@
       "category": "journal",
       "rss_advance": "https://academic.oup.com/mts/rss/advance",
       "publisher": "Oxford University Press / Society for Music Theory",
-      "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
+      "topics": [
+        "music theory",
+        "analysis",
+        "harmony",
+        "voice leading",
+        "form"
+      ],
       "access": "hybrid"
     },
     "music-theory-online": {
@@ -556,7 +569,13 @@
       "category": "journal",
       "rss": "https://www.tandfonline.com/feed/rss/nnmr20",
       "publisher": "Taylor & Francis",
-      "topics": ["music technology", "computational musicology", "psychoacoustics", "composition", "interdisciplinary"],
+      "topics": [
+        "music technology",
+        "computational musicology",
+        "psychoacoustics",
+        "composition",
+        "interdisciplinary"
+      ],
       "access": "subscription"
     },
     "auditory-perception-and-cognition": {
@@ -566,7 +585,14 @@
       "category": "journal",
       "rss": "https://www.tandfonline.com/feed/rss/rpac20",
       "publisher": "Taylor & Francis",
-      "topics": ["psychoacoustics", "auditory scene analysis", "pitch", "timbre", "speech", "neuroscience"],
+      "topics": [
+        "psychoacoustics",
+        "auditory scene analysis",
+        "pitch",
+        "timbre",
+        "speech",
+        "neuroscience"
+      ],
       "access": "subscription"
     },
     "sevish-main": {
@@ -575,7 +601,15 @@
       "type": "rss",
       "category": "xenharmonic",
       "rss": "https://sevish.com/feed/",
-      "topics": ["microtonality", "xenharmonic", "scales", "synthesis", "Scale Workshop", "EDO", "composition"]
+      "topics": [
+        "microtonality",
+        "xenharmonic",
+        "scales",
+        "synthesis",
+        "Scale Workshop",
+        "EDO",
+        "composition"
+      ]
     },
     "sevish-microtonal": {
       "name": "Sevish — Microtonal category feed",
@@ -591,7 +625,14 @@
       "type": "rss",
       "category": "music theory",
       "rss": "https://www.artsjournal.com/postclassic/feed",
-      "topics": ["postminimalism", "just intonation", "microtonality", "American music", "tuning theory", "composition"]
+      "topics": [
+        "postminimalism",
+        "just intonation",
+        "microtonality",
+        "American music",
+        "tuning theory",
+        "composition"
+      ]
     },
     "now-and-xen": {
       "name": "Now and Xen Podcast",
@@ -599,7 +640,14 @@
       "type": "podcast",
       "category": "podcast",
       "rss": "http://nowandxen.libsyn.com/rss",
-      "topics": ["xenharmonic", "microtonality", "just intonation", "alternative tuning", "composition", "interviews"]
+      "topics": [
+        "xenharmonic",
+        "microtonality",
+        "just intonation",
+        "alternative tuning",
+        "composition",
+        "interviews"
+      ]
     },
     "smt-pod": {
       "name": "SMT-Pod (Society for Music Theory Podcast)",
@@ -631,7 +679,13 @@
       "type": "rss",
       "category": "arxiv",
       "rss": "https://arxiv.org/rss/math.HO",
-      "topics": ["history of mathematics", "mathematical music theory", "Tonnetz", "tuning theory", "group theory music"]
+      "topics": [
+        "history of mathematics",
+        "mathematical music theory",
+        "Tonnetz",
+        "tuning theory",
+        "group theory music"
+      ]
     },
     "arxiv-math-co": {
       "name": "arXiv — math.CO (Combinatorics, includes pitch-class & rhythm geometry)",
@@ -639,7 +693,12 @@
       "type": "rss",
       "category": "arxiv",
       "rss": "https://arxiv.org/rss/math.CO",
-      "topics": ["combinatorics", "Euclidean rhythms", "pitch class sets", "geometry of music"]
+      "topics": [
+        "combinatorics",
+        "Euclidean rhythms",
+        "pitch class sets",
+        "geometry of music"
+      ]
     },
     "arxiv-physics-pop-ph": {
       "name": "arXiv — physics.pop-ph (Popular Physics)",
@@ -663,7 +722,13 @@
       "url": "https://academic.oup.com/mts",
       "canonical_feed_ids": ["music-theory-spectrum-advance"],
       "publisher": "Oxford University Press / Society for Music Theory",
-      "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
+      "topics": [
+        "music theory",
+        "analysis",
+        "harmony",
+        "voice leading",
+        "form"
+      ],
       "access": "hybrid",
       "notes": "Premier peer-reviewed journal of the Society for Music Theory. Track advance articles and issue releases through the canonical feed registry."
     },
@@ -680,7 +745,13 @@
       "url": "https://www.tandfonline.com/journals/nnmr20",
       "canonical_feed_ids": ["journal-of-new-music-research"],
       "publisher": "Taylor & Francis",
-      "topics": ["music technology", "computational musicology", "psychoacoustics", "composition", "interdisciplinary"],
+      "topics": [
+        "music technology",
+        "computational musicology",
+        "psychoacoustics",
+        "composition",
+        "interdisciplinary"
+      ],
       "access": "subscription",
       "notes": "Founded in 1972 as Interface. Broad interdisciplinary coverage across computational musicology, psychoacoustics, composition, and empirical music research.",
       "last_checked": "2026-03-07"
@@ -696,7 +767,13 @@
       "name": "Psychomusicology: Music, Mind, and Brain",
       "url": "https://www.apa.org/pubs/journals/pmu/",
       "publisher": "APA",
-      "topics": ["music cognition", "neuroscience", "psychology", "perception", "emotion"],
+      "topics": [
+        "music cognition",
+        "neuroscience",
+        "psychology",
+        "perception",
+        "emotion"
+      ],
       "access": "subscription",
       "notes": "APA journal covering cognitive and neuroscientific aspects of music. Companion to Music Perception."
     },
@@ -705,7 +782,14 @@
       "url": "https://www.tandfonline.com/journals/rpac20",
       "canonical_feed_ids": ["auditory-perception-and-cognition"],
       "publisher": "Taylor & Francis",
-      "topics": ["psychoacoustics", "auditory scene analysis", "pitch", "timbre", "speech", "neuroscience"],
+      "topics": [
+        "psychoacoustics",
+        "auditory scene analysis",
+        "pitch",
+        "timbre",
+        "speech",
+        "neuroscience"
+      ],
       "access": "subscription",
       "notes": "Covers localization, motion perception, auditory scene analysis, pitch, loudness, timbre, music, and speech perception."
     },
@@ -737,7 +821,15 @@
       "url": "https://sevish.com",
       "canonical_feed_id": "sevish-main",
       "category": "xenharmonic",
-      "topics": ["microtonality", "xenharmonic", "scales", "synthesis", "Scale Workshop", "EDO", "composition"],
+      "topics": [
+        "microtonality",
+        "xenharmonic",
+        "scales",
+        "synthesis",
+        "Scale Workshop",
+        "EDO",
+        "composition"
+      ],
       "notes": "Sevish writes about xenharmonic practice, scale design, synthesis, and tools such as Scale Workshop.",
       "last_checked": "2026-03-07"
     },
@@ -753,7 +845,14 @@
       "url": "https://www.artsjournal.com/postclassic/",
       "canonical_feed_id": "postclassic",
       "category": "music theory",
-      "topics": ["postminimalism", "just intonation", "microtonality", "American music", "tuning theory", "composition"],
+      "topics": [
+        "postminimalism",
+        "just intonation",
+        "microtonality",
+        "American music",
+        "tuning theory",
+        "composition"
+      ],
       "notes": "Kyle Gann is a major writer on just intonation and microtonality, and the archive pairs well with his longer-form tuning reference pages."
     },
     {
@@ -761,7 +860,14 @@
       "url": "https://nowandxen.libsyn.com/",
       "canonical_feed_id": "now-and-xen",
       "category": "podcast",
-      "topics": ["xenharmonic", "microtonality", "just intonation", "alternative tuning", "composition", "interviews"],
+      "topics": [
+        "xenharmonic",
+        "microtonality",
+        "just intonation",
+        "alternative tuning",
+        "composition",
+        "interviews"
+      ],
       "notes": "Long-form interview podcast focused on xenharmonic music, alternative tuning systems, and working composers."
     },
     {
@@ -778,39 +884,80 @@
     {
       "name": "Kyle Gann — Just Intonation Explained",
       "url": "https://www.kylegann.com/tuning.html",
-      "topics": ["just intonation", "tuning theory", "microtonality", "American music", "reference"],
+      "topics": [
+        "just intonation",
+        "tuning theory",
+        "microtonality",
+        "American music",
+        "reference"
+      ],
       "notes": "The definitive accessible introduction to just intonation. Essential reading. Also check kylegann.com/microtonality.html for extended theory."
     },
     {
       "name": "Sound American — Just Intonation Issue",
       "url": "https://soundamerican.org/issues/just-intonation/just-intonation-issue",
-      "topics": ["just intonation", "composition", "tuning", "contemporary music"],
+      "topics": [
+        "just intonation",
+        "composition",
+        "tuning",
+        "contemporary music"
+      ],
       "notes": "Deep-dive editorial collection on just intonation in contemporary composition."
     },
     {
       "name": "CymaScope",
       "url": "https://cymascope.com/",
-      "topics": ["cymatics", "acoustics", "wave physics", "Faraday waves", "sacred geometry", "resonance"],
+      "topics": [
+        "cymatics",
+        "acoustics",
+        "wave physics",
+        "Faraday waves",
+        "sacred geometry",
+        "resonance"
+      ],
       "notes": "John Stuart Reid's patented instrument making sound visible. Research includes work in the King's Chamber of the Great Pyramid. Quantum physics connections. Already a YouTube source in Convex.",
       "in_convex": true
     },
     {
       "name": "Harmonics of Nature",
       "url": "https://harmonicsofnature.com/",
-      "topics": ["harmonics", "Pythagoras", "resonance", "just intonation", "sacred geometry", "cymatics"],
+      "topics": [
+        "harmonics",
+        "Pythagoras",
+        "resonance",
+        "just intonation",
+        "sacred geometry",
+        "cymatics"
+      ],
       "notes": "Explores relationships between harmonics, geometry, resonance, and natural pattern formation.",
       "last_checked": "2026-03-07"
     },
     {
       "name": "Huygens-Fokker Foundation",
       "url": "https://www.huygens-fokker.org/",
-      "topics": ["microtonality", "31-EDO", "Fokker periodicity blocks", "Scala", "just intonation", "tuning theory"],
+      "topics": [
+        "microtonality",
+        "31-EDO",
+        "Fokker periodicity blocks",
+        "Scala",
+        "just intonation",
+        "tuning theory"
+      ],
       "notes": "Primary home of the Scala tuning software. Comprehensive library of scales, tuning theory, and the Fokker periodicity block system. Essential for microtuning work."
     },
     {
       "name": "Xenharmonic Wiki",
       "url": "https://en.xen.wiki/w/Main_Page",
-      "topics": ["xenharmonic", "microtonality", "EDO", "just intonation", "scales", "temperament", "MOS", "Erv Wilson"],
+      "topics": [
+        "xenharmonic",
+        "microtonality",
+        "EDO",
+        "just intonation",
+        "scales",
+        "temperament",
+        "MOS",
+        "Erv Wilson"
+      ],
       "notes": "Community-maintained encyclopedia of xenharmonic music theory. The Library page (en.xen.wiki/w/The_Library) has the best curated bibliography in the field."
     },
     {
@@ -834,7 +981,13 @@
     {
       "name": "Cosmic Core — Sound, Waves & Cymatics Articles",
       "url": "https://www.cosmic-core.org/free/article-121-physics-sound-waves-part-2-cymatics-the-geometry-of-sound/",
-      "topics": ["cymatics", "sacred geometry", "wave physics", "vibration", "universal patterns"],
+      "topics": [
+        "cymatics",
+        "sacred geometry",
+        "wave physics",
+        "vibration",
+        "universal patterns"
+      ],
       "notes": "Deep exploration of how vibrations create geometry. Aligns with Robert Edward Grant's polygon-angle research."
     }
   ],
@@ -875,7 +1028,12 @@
     {
       "name": "Xenharmonic Wiki — The Library",
       "url": "https://en.xen.wiki/w/The_Library",
-      "topics": ["xenharmonic", "microtonality", "tuning theory", "bibliography"],
+      "topics": [
+        "xenharmonic",
+        "microtonality",
+        "tuning theory",
+        "bibliography"
+      ],
       "notes": "Curated bibliography of microtonal and xenharmonic literature"
     },
     {

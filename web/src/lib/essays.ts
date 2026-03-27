@@ -20,16 +20,16 @@ const essayModules = import.meta.glob("../../../docs/essays/*.md", {
 
 function stripMarkdown(input: string) {
   return input
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/^>\s?/gm, "")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^\s*[-*+]\s+/gm, "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/_{1,2}([^_]+)_{1,2}/g, "$1")
-    .replace(/\s+/g, " ")
+    .replaceAll(/`([^`]+)`/g, "$1")
+    .replaceAll(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replaceAll(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replaceAll(/^>\s?/gm, "")
+    .replaceAll(/^#{1,6}\s+/gm, "")
+    .replaceAll(/^\s*[-*+]\s+/gm, "")
+    .replaceAll(/\*\*([^*]+)\*\*/g, "$1")
+    .replaceAll(/\*([^*]+)\*/g, "$1")
+    .replaceAll(/_{1,2}([^_]+)_{1,2}/g, "$1")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 
@@ -68,7 +68,7 @@ function extractExcerpt(markdown: string) {
 }
 
 function parseEssay(slug: string, raw: string): Essay {
-  const normalized = raw.replace(/\r/g, "");
+  const normalized = raw.replaceAll("\r", "");
   const lines = normalized.split("\n");
   const titleLine = lines.find((line) => line.trim().startsWith("# "));
   const title = titleLine?.replace(/^#\s+/, "").trim() ?? slug;
@@ -112,7 +112,7 @@ export const essayLibrary = Object.entries(essayModules)
     const slug = match?.[1] ?? path;
     return parseEssay(slug, raw);
   })
-  .sort((left, right) => {
+  .toSorted((left, right) => {
     if (left.dateValue !== null && right.dateValue !== null) {
       return right.dateValue - left.dateValue;
     }

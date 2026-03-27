@@ -7,7 +7,8 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
+const CONVEX_URL =
+  process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
 const BYPASS = "freq-opus-extract-2026";
 
 function normalizeUrl(url: string): string {
@@ -27,8 +28,8 @@ function normalizeUrl(url: string): string {
 function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .replace(/\s+/g, " ")
+    .replaceAll(/[^a-z0-9\s]/g, "")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 
@@ -40,7 +41,10 @@ async function main() {
   const statuses = ["ingested", "text_ready", "extracted"] as const;
   const allSources: any[] = [];
   for (const status of statuses) {
-    const batch = await client.query(api.sources.listByStatus, { status: status as any, limit: 1000 });
+    const batch = await client.query(api.sources.listByStatus, {
+      status: status as any,
+      limit: 1000,
+    });
     allSources.push(...batch);
   }
 
@@ -58,7 +62,8 @@ async function main() {
     }
     if (src.title) {
       const key = normalizeTitle(src.title);
-      if (key.length > 10) { // Skip very short titles
+      if (key.length > 10) {
+        // Skip very short titles
         if (!byTitle.has(key)) byTitle.set(key, []);
         byTitle.get(key)!.push(src);
       }
@@ -66,14 +71,16 @@ async function main() {
   }
 
   // Find URL dupes
-  const urlDupes = [...byUrl.entries()].filter(([_, sources]) => sources.length > 1);
+  const urlDupes = [...byUrl.entries()].filter(
+    ([_, sources]) => sources.length > 1,
+  );
   if (urlDupes.length > 0) {
     console.log(`=== URL Duplicates (${urlDupes.length} groups) ===\n`);
     let archived = 0;
     for (const [url, sources] of urlDupes) {
       console.log(`URL: ${url.slice(0, 70)}`);
       // Keep the one with most text, or the extracted one
-      const sorted = sources.sort((a: any, b: any) => {
+      const sorted = sources.toSorted((a: any, b: any) => {
         if (a.status === "extracted" && b.status !== "extracted") return -1;
         if (b.status === "extracted" && a.status !== "extracted") return 1;
         return (b.rawText?.length || 0) - (a.rawText?.length || 0);
@@ -81,7 +88,9 @@ async function main() {
       for (let i = 0; i < sorted.length; i++) {
         const s = sorted[i];
         const keep = i === 0;
-        console.log(`  ${keep ? "KEEP" : "DUPE"} | ${s._id} | ${s.status} | ${(s.rawText?.length || 0).toString().padStart(6)} chars | ${s.title?.slice(0, 50)}`);
+        console.log(
+          `  ${keep ? "KEEP" : "DUPE"} | ${s._id} | ${s.status} | ${(s.rawText?.length || 0).toString().padStart(6)} chars | ${s.title?.slice(0, 50)}`,
+        );
         if (!keep && doArchive) {
           try {
             await client.mutation(api.sources.archive, {
@@ -106,16 +115,22 @@ async function main() {
     .filter(([_, sources]) => sources.length > 1)
     .filter(([_, sources]) => {
       // Skip if all have the same URL (already caught above)
-      const urls = new Set(sources.map((s: any) => normalizeUrl(s.canonicalUrl || "")));
+      const urls = new Set(
+        sources.map((s: any) => normalizeUrl(s.canonicalUrl || "")),
+      );
       return urls.size > 1;
     });
 
   if (titleDupes.length > 0) {
-    console.log(`=== Title-Similar Duplicates (${titleDupes.length} groups) ===\n`);
+    console.log(
+      `=== Title-Similar Duplicates (${titleDupes.length} groups) ===\n`,
+    );
     for (const [title, sources] of titleDupes.slice(0, 20)) {
       console.log(`Title: "${title.slice(0, 60)}"`);
       for (const s of sources) {
-        console.log(`  ${s._id} | ${s.status} | ${s.canonicalUrl?.slice(0, 60)}`);
+        console.log(
+          `  ${s._id} | ${s.status} | ${s.canonicalUrl?.slice(0, 60)}`,
+        );
       }
       console.log();
     }

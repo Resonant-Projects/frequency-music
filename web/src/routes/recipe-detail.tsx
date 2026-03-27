@@ -116,7 +116,10 @@ export function RecipeDetailPage() {
     id: params().recipeId as Id<"recipes">,
   }));
 
-  createEffect(() => { const r = recipe(); if (r) document.title = `${r.title} — Frequency Music`; });
+  createEffect(() => {
+    const r = recipe();
+    if (r) document.title = `${r.title} — Frequency Music`;
+  });
 
   return (
     <section class={pageClass}>
@@ -214,7 +217,9 @@ export function RecipeDetailPage() {
                   <For each={r().parameters}>
                     {(param) => (
                       <div class={paramCell}>
-                        <div class={paramType}>{param.type}</div>
+                        <div class={paramType}>
+                          {param.kind ?? param.type ?? "parameter"}
+                        </div>
                         <div class={paramValue}>{param.value}</div>
                       </div>
                     )}

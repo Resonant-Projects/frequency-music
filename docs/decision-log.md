@@ -166,6 +166,34 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 - Make graph expansion a first-wave priority without requiring decision support value.
 - Lead with public narrative before internal rigor improvements.
 
+## 2026-03-25 — Phase 2 Derived Failure Rules
+
+**Decision**
+- Implement the Phase 2 failure archive as a derived view rather than a dedicated table.
+- Use these initial derived reasons:
+  - `contradicted_hypothesis`
+  - `retired_hypothesis`
+  - `archived_recipe`
+  - `low_expandability_composition`
+  - `repeat_no_expand_composition`
+
+**Rationale**
+- Existing hypothesis, recipe, composition, and listening data already carries enough signal to make contradictions and low-yield paths visible.
+- A derived archive keeps the first Phase 2 slice additive and avoids premature taxonomy lock-in.
+
+**Alternatives considered**
+- Introduce a dedicated `failures` table immediately.
+- Limit the archive to explicit contradiction and retirement only.
+- Wait to surface low-yield patterns until campaigns exist.
+
+**Downstream implications**
+- Weekly briefs can reference recent reversals by stable synthetic keys.
+- Composition detail can show derived archive status without new write-time bookkeeping.
+- If the archive becomes noisy, the next step is sharper failure taxonomy, not silent removal.
+
+**Revisit trigger**
+- Revisit if low-yield composition rules produce too many false positives or if editorial review needs explicit human-confirmed failure categories.
+
 ## Deferred Questions
 
 - Whether thesis and campaign records should eventually have direct public-facing representations

@@ -10,7 +10,8 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import { writeFileSync, mkdirSync } from "fs";
 
-const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
+const CONVEX_URL =
+  process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
 
 interface BibEntry {
   id: string;
@@ -43,24 +44,24 @@ function categorize(tags: string[], url: string, title: string): string[] {
     "crystal bowls": "Sound Healing & Therapy",
     "toning/chanting": "Sound Healing & Therapy",
     "biofield/EM healing": "Biofield Science",
-    "consciousness": "Consciousness & Perception",
+    consciousness: "Consciousness & Perception",
     "noetic science": "Consciousness & Perception",
-    "cymatics": "Cymatics & Wave Physics",
+    cymatics: "Cymatics & Wave Physics",
     "multi-dimensional cosmos": "Physics & Cosmology",
     "electromagnetic fields": "Biofield Science",
-    "microtuning": "Tuning Systems & Temperament",
-    "xenharmonic": "Tuning Systems & Temperament",
+    microtuning: "Tuning Systems & Temperament",
+    xenharmonic: "Tuning Systems & Temperament",
     "music-theory": "Music Theory & Analysis",
-    "psychoacoustics": "Psychoacoustics & Perception",
+    psychoacoustics: "Psychoacoustics & Perception",
     "AI-music": "AI & Music Technology",
-    "spectral": "Spectral Analysis",
+    spectral: "Spectral Analysis",
     "robert-grant": "Geometric Music Theory",
     "vibroacoustic therapy": "Sound Healing & Therapy",
     "binaural beats": "Sound Healing & Therapy",
     "40Hz gamma": "Sound Healing & Therapy",
     "rife frequencies": "Sound Healing & Therapy",
     "faraday waves": "Cymatics & Wave Physics",
-    "biophotons": "Biofield Science",
+    biophotons: "Biofield Science",
     "throat singing": "Vocal & Overtone Research",
     "overtone singing": "Vocal & Overtone Research",
   };
@@ -76,18 +77,33 @@ function categorize(tags: string[], url: string, title: string): string[] {
     const u = url.toLowerCase();
     const t = title.toLowerCase();
     if (u.includes("arxiv.org")) topics.add("AI & Computational Audio (arXiv)");
-    else if (u.includes("tandfonline.com") || u.includes("jmm")) topics.add("Journal of Mathematics & Music");
-    else if (u.includes("youtube.com") || u.includes("youtu.be")) topics.add("YouTube & Video");
-    else if (u.includes("pmc.ncbi.nlm.nih.gov") || u.includes("pubmed.ncbi")) topics.add("Biomedical Research (PMC/PubMed)");
-    else if (u.includes("researchgate.net")) topics.add("Academic Papers (ResearchGate)");
+    else if (u.includes("tandfonline.com") || u.includes("jmm"))
+      topics.add("Journal of Mathematics & Music");
+    else if (u.includes("youtube.com") || u.includes("youtu.be"))
+      topics.add("YouTube & Video");
+    else if (u.includes("pmc.ncbi.nlm.nih.gov") || u.includes("pubmed.ncbi"))
+      topics.add("Biomedical Research (PMC/PubMed)");
+    else if (u.includes("researchgate.net"))
+      topics.add("Academic Papers (ResearchGate)");
     else if (u.includes("archive.org")) topics.add("Books & Archives");
     else if (u.includes("quantamagazine.org")) topics.add("Science Journalism");
     else if (u.includes("nautil.us")) topics.add("Science Journalism");
-    else if (u.includes("robertedwardgrant.com")) topics.add("Geometric Music Theory");
+    else if (u.includes("robertedwardgrant.com"))
+      topics.add("Geometric Music Theory");
     else if (u.includes("wikipedia.org")) topics.add("Reference (Wikipedia)");
     // Title-based fallback
-    else if (t.includes("speech") || t.includes("audio") || t.includes("music generation")) topics.add("AI & Computational Audio");
-    else if (t.includes("tuning") || t.includes("temperament") || t.includes("intonation")) topics.add("Tuning Systems & Temperament");
+    else if (
+      t.includes("speech") ||
+      t.includes("audio") ||
+      t.includes("music generation")
+    )
+      topics.add("AI & Computational Audio");
+    else if (
+      t.includes("tuning") ||
+      t.includes("temperament") ||
+      t.includes("intonation")
+    )
+      topics.add("Tuning Systems & Temperament");
     else topics.add("General / Uncategorized");
   }
 
@@ -101,7 +117,10 @@ async function main() {
   const statuses = ["extracted", "text_ready", "ingested"] as const;
   const allSources: any[] = [];
   for (const status of statuses) {
-    const batch = await client.query(api.sources.listByStatus, { status: status as any, limit: 1000 });
+    const batch = await client.query(api.sources.listByStatus, {
+      status: status as any,
+      limit: 1000,
+    });
     allSources.push(...batch);
   }
 
@@ -132,16 +151,20 @@ async function main() {
   }
 
   const groups: TopicGroup[] = [...topicMap.entries()]
-    .map(([topic, entries]) => ({ topic, count: entries.length, entries: entries.sort((a, b) => a.title.localeCompare(b.title)) }))
-    .sort((a, b) => b.count - a.count);
+    .map(([topic, entries]) => ({
+      topic,
+      count: entries.length,
+      entries: entries.toSorted((a, b) => a.title.localeCompare(b.title)),
+    }))
+    .toSorted((a, b) => b.count - a.count);
 
   // Summary stats
   const stats = {
     totalSources: entries.length,
-    extracted: entries.filter(e => e.status === "extracted").length,
-    textReady: entries.filter(e => e.status === "text_ready").length,
-    ingested: entries.filter(e => e.status === "ingested").length,
-    withText: entries.filter(e => e.textLength > 200).length,
+    extracted: entries.filter((e) => e.status === "extracted").length,
+    textReady: entries.filter((e) => e.status === "text_ready").length,
+    ingested: entries.filter((e) => e.status === "ingested").length,
+    withText: entries.filter((e) => e.textLength > 200).length,
     topicCount: groups.length,
     generatedAt: new Date().toISOString(),
   };
@@ -149,7 +172,9 @@ async function main() {
   // Write JSON for web app
   const jsonOutput = { stats, groups };
   writeFileSync("data/bibliography.json", JSON.stringify(jsonOutput, null, 2));
-  console.log(`Wrote data/bibliography.json (${groups.length} topics, ${entries.length} entries)`);
+  console.log(
+    `Wrote data/bibliography.json (${groups.length} topics, ${entries.length} entries)`,
+  );
 
   // Write Markdown bibliography
   let md = `# Research Bibliography\n\n`;
@@ -164,8 +189,16 @@ async function main() {
   for (const group of groups) {
     md += `## ${group.topic} (${group.count})\n\n`;
     for (const entry of group.entries) {
-      const statusIcon = entry.status === "extracted" ? "✅" : entry.status === "text_ready" ? "📄" : "📌";
-      const textInfo = entry.textLength > 0 ? ` (${Math.round(entry.textLength / 1000)}k chars)` : "";
+      const statusIcon =
+        entry.status === "extracted"
+          ? "✅"
+          : entry.status === "text_ready"
+            ? "📄"
+            : "📌";
+      const textInfo =
+        entry.textLength > 0
+          ? ` (${Math.round(entry.textLength / 1000)}k chars)`
+          : "";
       if (entry.url) {
         md += `- ${statusIcon} [${entry.title}](${entry.url})${textInfo}\n`;
       } else {
