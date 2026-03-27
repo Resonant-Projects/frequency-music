@@ -1,15 +1,20 @@
 import { Link } from "@tanstack/solid-router";
-import { createMemo, For, onMount, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
+  fieldLabelClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
   UIBadge,
+  UIButton,
   UICard,
+  UIInput,
+  UITextarea,
 } from "../components/ui";
-import { createQueryWithStatus } from "../integrations/convex";
+import { withDevBypassSecret } from "../integrations/authBypass";
+import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 const thesisCard = css({
@@ -33,9 +38,14 @@ export function ThesesPage() {
   const theses = createQueryWithStatus(convexApi.theses.list, () => ({
     limit: 100,
   }));
+  const createThesis = createMutation(convexApi.theses.create);
   const thesisRows = createMemo<Doc<"theses">[]>(
     () => (theses.data() ?? []) as Doc<"theses">[],
   );
+  const [title, setTitle] = createSignal("");
+  const [statement, setStatement] = createSignal("");
+  const [descriptionMd, setDescriptionMd] = createSignal("");
+  const [notice, setNotice] = createSignal<string | null>(null);
 
   const active = createMemo(() =>
     thesisRows().filter((thesis) => thesis.status === "active"),
@@ -90,9 +100,32 @@ export function ThesesPage() {
     );
   }
 
+  async function handleCreate(event: SubmitEvent) {
+    event.preventDefault();
+    if (!title().trim() || !statement().trim()) {
+      setNotice("Title and statement are required.");
+      return;
+    }
+    try {
+      await createThesis(
+        withDevBypassSecret({
+          title: title().trim(),
+          statement: statement().trim(),
+          descriptionMd: descriptionMd().trim() || undefined,
+        }),
+      );
+      setTitle("");
+      setStatement("");
+      setDescriptionMd("");
+      setNotice("Thesis created.");
+    } catch (error) {
+      setNotice(`Failed to create thesis: ${String(error)}`);
+    }
+  }
+
   return (
     <section class={pageClass}>
-      <UICard>
+      <UICard as="form" onSubmit={handleCreate as any}>
         <h1 class={pageTitleClass}>Theses</h1>
         <p
           class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
@@ -100,6 +133,56 @@ export function ThesesPage() {
           Theses are the lightweight organizing questions that accumulate
           hypotheses, recipes, compositions, and reversals over time.
         </p>
+
+        <label class={fieldLabelClass} for="thesis-title">
+          Title
+        </label>
+        <UIInput
+          id="thesis-title"
+          value={title()}
+          onInput={(event) => setTitle(event.currentTarget.value)}
+          placeholder="Symmetry as a compositional constraint"
+        />
+
+        <label class={fieldLabelClass} for="thesis-statement">
+          Statement
+        </label>
+        <UITextarea
+          id="thesis-statement"
+          value={statement()}
+          onInput={(event) => setStatement(event.currentTarget.value)}
+          placeholder="A concise thesis statement that can accumulate many weekly turns."
+        />
+
+        <label class={fieldLabelClass} for="thesis-description">
+          Description
+        </label>
+        <UITextarea
+          id="thesis-description"
+          value={descriptionMd()}
+          onInput={(event) => setDescriptionMd(event.currentTarget.value)}
+          placeholder="Optional longer framing."
+        />
+
+        <div
+          class={css({
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "3",
+            marginTop: "4",
+            flexWrap: "wrap",
+          })}
+        >
+          <Show when={notice()}>
+            {(message) => (
+              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+            )}
+          </Show>
+          <UIButton type="submit" variant="outline">
+            Create Thesis
+          </UIButton>
+        </div>
       </UICard>
 
       <Show

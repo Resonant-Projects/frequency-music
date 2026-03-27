@@ -21,6 +21,12 @@ export const registryStatusValidator = v.union(
   v.literal("deprecated"),
 );
 
+export const campaignStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("paused"),
+  v.literal("completed"),
+);
+
 const evidenceLevelValidator = v.union(
   v.literal("peer_reviewed"),
   v.literal("preprint"),
@@ -227,6 +233,26 @@ export default defineSchema({
     .index("by_visibility_updatedAt", ["visibility", "updatedAt"]),
 
   // ==========================================================================
+  // CAMPAIGNS - Multi-week organizing layer for theses and briefs
+  // ==========================================================================
+  campaigns: defineTable({
+    title: v.string(),
+    question: v.string(),
+    descriptionMd: v.optional(v.string()),
+    status: campaignStatusValidator,
+    thesisIds: v.array(v.id("theses")),
+    startedAt: v.optional(v.number()),
+    endedAt: v.optional(v.number()),
+    summaryMd: v.optional(v.string()),
+    visibility: visibilityValidator,
+    createdBy: v.union(v.id("users"), v.literal("system")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_visibility_updatedAt", ["visibility", "updatedAt"]),
+
+  // ==========================================================================
   // HYPOTHESES - Testable claims derived from extractions
   // ==========================================================================
   hypotheses: defineTable({
@@ -413,10 +439,43 @@ export default defineSchema({
     // Content
     bodyMd: v.string(),
     sourceIds: v.array(v.id("sources")),
+    campaignId: v.optional(v.id("campaigns")),
     recommendedHypothesisIds: v.array(v.id("hypotheses")),
     recommendedRecipeIds: v.array(v.id("recipes")),
     activeThesisIds: v.optional(v.array(v.id("theses"))),
     referencedFailureKeys: v.optional(v.array(v.string())),
+    studioPrompts: v.optional(
+      v.object({
+        tenMinuteMd: v.string(),
+        thirtyMinuteMd: v.string(),
+        ninetyMinuteMd: v.string(),
+      }),
+    ),
+    recommendedActions: v.optional(
+      v.array(
+        v.object({
+          kind: v.union(
+            v.literal("advance_recipe"),
+            v.literal("revive_recipe"),
+            v.literal("expand_composition"),
+            v.literal("compare_branch"),
+            v.literal("prototype_hypothesis"),
+          ),
+          targetType: v.union(
+            v.literal("hypothesis"),
+            v.literal("recipe"),
+            v.literal("composition"),
+          ),
+          targetId: v.string(),
+          durationBucket: v.union(
+            v.literal("10-minute"),
+            v.literal("30-minute"),
+            v.literal("90-minute"),
+          ),
+          reason: v.string(),
+        }),
+      ),
+    ),
     todo: v.optional(v.array(v.string())),
 
     // Publishing

@@ -3,6 +3,10 @@ import { generateText } from "ai";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
+import {
+  computeRecommendedActionContext,
+  type RecommendedAction,
+} from "./campaigns";
 import { computeEditorialSignals } from "./dashboard";
 import { deriveFailureArchiveEntries } from "./failures";
 import {
@@ -20,6 +24,18 @@ interface BriefParameter {
   type?: string;
   value: string;
 }
+
+interface StudioPromptVariants {
+  tenMinuteMd: string;
+  thirtyMinuteMd: string;
+  ninetyMinuteMd: string;
+}
+
+type ParsedBriefMetadata = {
+  todo: string[];
+  studioPrompts: StudioPromptVariants;
+  cleanBodyMd: string;
+};
 
 // ============================================================================
 // QUERIES
@@ -68,10 +84,39 @@ export const create = internalMutation({
     promptVersion: v.string(),
     bodyMd: v.string(),
     sourceIds: v.array(v.id("sources")),
+    campaignId: v.optional(v.id("campaigns")),
     recommendedHypothesisIds: v.array(v.id("hypotheses")),
     recommendedRecipeIds: v.array(v.id("recipes")),
     activeThesisIds: v.optional(v.array(v.id("theses"))),
     referencedFailureKeys: v.optional(v.array(v.string())),
+    studioPrompts: v.object({
+      tenMinuteMd: v.string(),
+      thirtyMinuteMd: v.string(),
+      ninetyMinuteMd: v.string(),
+    }),
+    recommendedActions: v.array(
+      v.object({
+        kind: v.union(
+          v.literal("advance_recipe"),
+          v.literal("revive_recipe"),
+          v.literal("expand_composition"),
+          v.literal("compare_branch"),
+          v.literal("prototype_hypothesis"),
+        ),
+        targetType: v.union(
+          v.literal("hypothesis"),
+          v.literal("recipe"),
+          v.literal("composition"),
+        ),
+        targetId: v.string(),
+        durationBucket: v.union(
+          v.literal("10-minute"),
+          v.literal("30-minute"),
+          v.literal("90-minute"),
+        ),
+        reason: v.string(),
+      }),
+    ),
     todo: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -128,6 +173,9 @@ const BRIEF_USER_PROMPT = `Create a weekly research brief.
 
 **Week of**: {{weekOf}}
 
+**Active Campaign**:
+{{campaign}}
+
 **Hypotheses ({{numHypotheses}})**:
 {{hypotheses}}
 
@@ -147,6 +195,9 @@ High-yield concept areas:
 Low-yield concept areas:
 {{lowYield}}
 
+**Recommended Actions**:
+{{recommendedActions}}
+
 Generate a comprehensive weekly brief in markdown format. Include:
 1. A catchy title for the week's theme
 2. 3-10 experiment cards sorted by priority (high/medium/low)
@@ -158,9 +209,74 @@ Generate a comprehensive weekly brief in markdown format. Include:
 Also provide a JSON block at the end with:
 \`\`\`json
 {
-  "todo": ["actionable item 1", "actionable item 2", ...]
+  "todo": ["actionable item 1", "actionable item 2", ...],
+  "studioPrompts": {
+    "tenMinuteMd": "short focused prompt",
+    "thirtyMinuteMd": "medium prompt",
+    "ninetyMinuteMd": "deep session prompt"
+  }
 }
 \`\`\``;
+
+const DEFAULT_STUDIO_PROMPTS: StudioPromptVariants = {
+  tenMinuteMd:
+    "Choose the most concrete open thread from this week and make the smallest possible audible test of it.",
+  thirtyMinuteMd:
+    "Take the strongest recipe or branch from this week and produce a deliberate comparison pass with one clearly named change.",
+  ninetyMinuteMd:
+    "Use the current weekly brief to expand the most promising branch into a structured study that could plausibly become a finished piece.",
+};
+
+export function parseBriefResponse(text: string): ParsedBriefMetadata {
+  let todo: string[] = [];
+  let studioPrompts: StudioPromptVariants = { ...DEFAULT_STUDIO_PROMPTS };
+
+  const jsonMatch = text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1] ?? "{}") as {
+        todo?: unknown;
+        studioPrompts?: Partial<StudioPromptVariants>;
+      };
+      if (
+        Array.isArray(parsed.todo) &&
+        parsed.todo.every((item) => typeof item === "string")
+      ) {
+        todo = parsed.todo;
+      } else if (typeof parsed.todo === "string") {
+        todo = [parsed.todo];
+      }
+
+      if (parsed.studioPrompts && typeof parsed.studioPrompts === "object") {
+        studioPrompts = {
+          tenMinuteMd:
+            typeof parsed.studioPrompts.tenMinuteMd === "string" &&
+            parsed.studioPrompts.tenMinuteMd.trim().length > 0
+              ? parsed.studioPrompts.tenMinuteMd
+              : DEFAULT_STUDIO_PROMPTS.tenMinuteMd,
+          thirtyMinuteMd:
+            typeof parsed.studioPrompts.thirtyMinuteMd === "string" &&
+            parsed.studioPrompts.thirtyMinuteMd.trim().length > 0
+              ? parsed.studioPrompts.thirtyMinuteMd
+              : DEFAULT_STUDIO_PROMPTS.thirtyMinuteMd,
+          ninetyMinuteMd:
+            typeof parsed.studioPrompts.ninetyMinuteMd === "string" &&
+            parsed.studioPrompts.ninetyMinuteMd.trim().length > 0
+              ? parsed.studioPrompts.ninetyMinuteMd
+              : DEFAULT_STUDIO_PROMPTS.ninetyMinuteMd,
+        };
+      }
+    } catch {
+      // Ignore parse errors and fall back to defaults.
+    }
+  }
+
+  return {
+    todo,
+    studioPrompts,
+    cleanBodyMd: stripTrailingFencedBlock(text),
+  };
+}
 
 interface GenerateBriefArgs {
   daysBack?: number;
@@ -189,27 +305,20 @@ async function generateBriefCore(
   monday.setDate(now.getDate() - now.getDay() + 1);
   const weekOf = monday.toISOString().split("T")[0] as string;
 
-  // Get recent hypotheses
-  const allHypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
-    limit: 50,
+  const recommendationContext = await computeRecommendedActionContext(ctx.db, {
+    limit: 5,
   });
-  const hypotheses = (allHypotheses as Doc<"hypotheses">[]).filter(
-    (h: Doc<"hypotheses">) => h.createdAt > cutoff,
-  );
-
-  // Get recent recipes
-  const allRecipes = await ctx.runQuery(api.recipes.listByStatus, {
-    limit: 50,
-  });
-  const recipes = (allRecipes as Doc<"recipes">[]).filter(
-    (r: Doc<"recipes">) => r.createdAt > cutoff,
-  );
-  const activeTheses = await ctx.db
-    .query("theses")
-    .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
-    .order("desc")
-    .take(10);
-  const typedActiveTheses = activeTheses as Doc<"theses">[];
+  const hypotheses = recommendationContext.hypotheses;
+  const recipes = recommendationContext.recipes;
+  const typedActiveTheses =
+    recommendationContext.theses.length > 0
+      ? recommendationContext.theses
+      : ((await ctx.db
+          .query("theses")
+          .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
+          .order("desc")
+          .take(10)) as Doc<"theses">[]);
+  const recommendedActions = recommendationContext.actions;
   const failureArchive = await deriveFailureArchiveEntries(ctx.db as any);
   const recentFailures = failureArchive
     .filter((entry) => entry.createdAt > cutoff)
@@ -261,6 +370,15 @@ async function generateBriefCore(
           )
           .join("\n\n")
       : "No recent contradictions or low-yield results.";
+  const campaignText = recommendationContext.campaign
+    ? `Title: ${recommendationContext.campaign.title}
+Question: ${recommendationContext.campaign.question}
+Theses: ${
+        recommendationContext.theses.length > 0
+          ? recommendationContext.theses.map((thesis) => thesis.title).join(", ")
+          : "None attached yet"
+      }`
+    : "No active campaign. Use the strongest active threads from the current weekly system.";
   const highYieldText =
     editorialSignals.highYieldClusters.length > 0
       ? editorialSignals.highYieldClusters
@@ -279,8 +397,18 @@ async function generateBriefCore(
           )
           .join("\n")
       : "No notable low-yield clusters yet.";
+  const recommendedActionsText =
+    recommendedActions.length > 0
+      ? recommendedActions
+          .map(
+            (action, index) =>
+              `${index + 1}. [${action.durationBucket}] ${action.kind} -> ${action.targetType} ${action.targetId}\n   Reason: ${action.reason}`,
+          )
+          .join("\n\n")
+      : "No precomputed recommendation candidates. Derive action items from the strongest active hypotheses.";
 
   const prompt = BRIEF_USER_PROMPT.replace("{{weekOf}}", weekOf)
+    .replace("{{campaign}}", campaignText)
     .replace("{{numHypotheses}}", String(hypotheses.length))
     .replace("{{hypotheses}}", hypothesesText)
     .replace("{{numRecipes}}", String(recipes.length))
@@ -290,7 +418,8 @@ async function generateBriefCore(
     .replace("{{numFailures}}", String(recentFailures.length))
     .replace("{{failures}}", failuresText)
     .replace("{{highYield}}", highYieldText)
-    .replace("{{lowYield}}", lowYieldText);
+    .replace("{{lowYield}}", lowYieldText)
+    .replace("{{recommendedActions}}", recommendedActionsText);
 
   // Call AI
   const openRouterKey = process.env.OPENROUTER_API_KEY;
@@ -306,26 +435,7 @@ async function generateBriefCore(
     maxOutputTokens: 4000,
   });
 
-  // Extract todo items from JSON block if present
-  let todo: string[] = [];
-  const jsonMatch = result.text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[1] ?? "{}") as { todo?: unknown };
-      if (
-        Array.isArray(parsed.todo) &&
-        parsed.todo.every((item) => typeof item === "string")
-      ) {
-        todo = parsed.todo;
-      } else if (typeof parsed.todo === "string") {
-        todo = [parsed.todo];
-      } else {
-        todo = [];
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }
+  const parsed = parseBriefResponse(result.text);
 
   // Get source IDs from hypotheses
   const sourceIds = [
@@ -337,16 +447,19 @@ async function generateBriefCore(
   const briefId = await ctx.runMutation(internal.weeklyBriefs.create, {
     weekOf,
     model: modelId,
-    promptVersion: "v1.1",
-    bodyMd: result.text,
+    promptVersion: "v2.phase3",
+    bodyMd: parsed.cleanBodyMd,
     sourceIds: persistedSourceIds,
+    campaignId: recommendationContext.campaign?._id,
     recommendedHypothesisIds: hypotheses.map((h: Doc<"hypotheses">) => h._id),
     recommendedRecipeIds: recipes.map((r: Doc<"recipes">) => r._id),
     activeThesisIds: typedActiveTheses.map(
       (thesis: Doc<"theses">) => thesis._id,
     ),
     referencedFailureKeys: recentFailures.map((failure) => failure.key),
-    todo: todo.length > 0 ? todo : undefined,
+    studioPrompts: parsed.studioPrompts,
+    recommendedActions: recommendedActions as RecommendedAction[],
+    todo: parsed.todo.length > 0 ? parsed.todo : undefined,
   });
 
   return {

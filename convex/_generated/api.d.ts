@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as aggregates from "../aggregates.js";
 import type * as auth from "../auth.js";
+import type * as campaigns from "../campaigns.js";
 import type * as components_ from "../components.js";
 import type * as compositions from "../compositions.js";
 import type * as crons from "../crons.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   aggregates: typeof aggregates;
   auth: typeof auth;
+  campaigns: typeof campaigns;
   components: typeof components_;
   compositions: typeof compositions;
   crons: typeof crons;

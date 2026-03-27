@@ -25,6 +25,7 @@ export function WeeklyBriefDetailPage() {
   const brief = createQuery(convexApi.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
+  const campaigns = createQuery(convexApi.campaigns.list, () => ({ limit: 20 }));
   const activeThesesQuery = createQuery(convexApi.theses.getByIds, () => ({
     ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
@@ -34,6 +35,15 @@ export function WeeklyBriefDetailPage() {
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
+  const campaign = createMemo<Doc<"campaigns"> | null>(() => {
+    const campaignId = brief()?.campaignId;
+    if (!campaignId) return null;
+    return (
+      ((campaigns() ?? []) as Doc<"campaigns">[]).find(
+        (row) => row._id === campaignId,
+      ) ?? null
+    );
+  });
   const referencedFailures = createMemo(() => referencedFailureEntries() ?? []);
 
   createEffect(() => {
@@ -100,6 +110,9 @@ export function WeeklyBriefDetailPage() {
                 {b().recommendedRecipeIds.length} recipes
               </UIBadge>
               <UIBadge tone="violet">{b().sourceIds.length} sources</UIBadge>
+              <Show when={b().campaignId}>
+                <UIBadge tone="gold">campaign</UIBadge>
+              </Show>
               <Show when={(b().activeThesisIds ?? []).length > 0}>
                 <UIBadge tone="violet">
                   {(b().activeThesisIds ?? []).length} theses
@@ -149,6 +162,153 @@ export function WeeklyBriefDetailPage() {
               {(msg) => (
                 <p class={css({ color: "zodiac.cream", mt: "2" })}>{msg()}</p>
               )}
+            </Show>
+
+            <Show when={campaign()}>
+              {(row) => (
+                <>
+                  <hr class={goldDivider} />
+                  <div class={sectionLabel}>Campaign Context</div>
+                  <div
+                    class={css({
+                      borderColor: "rgba(200, 168, 75, 0.18)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      p: "3",
+                    })}
+                  >
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        flexWrap: "wrap",
+                        mb: "2",
+                      })}
+                    >
+                      <UIBadge tone="gold">{row().title}</UIBadge>
+                      <UIBadge tone="cream">{row().status}</UIBadge>
+                    </div>
+                    <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>
+                      {row().question}
+                    </p>
+                  </div>
+                </>
+              )}
+            </Show>
+
+            <hr class={goldDivider} />
+            <div class={sectionLabel}>Studio Prompts</div>
+            <div class={css({ display: "grid", gap: "3" })}>
+              <div
+                class={css({
+                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  p: "3",
+                })}
+              >
+                <UIBadge tone="gold">10-minute</UIBadge>
+                <p
+                  class={css({
+                    color: "rgba(245, 240, 232, 0.76)",
+                    lineHeight: "1.7",
+                    mt: "2",
+                    whiteSpace: "pre-wrap",
+                  })}
+                >
+                  {b().studioPrompts?.tenMinuteMd ??
+                    "No 10-minute prompt was stored for this older brief."}
+                </p>
+              </div>
+              <div
+                class={css({
+                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  p: "3",
+                })}
+              >
+                <UIBadge tone="gold">30-minute</UIBadge>
+                <p
+                  class={css({
+                    color: "rgba(245, 240, 232, 0.76)",
+                    lineHeight: "1.7",
+                    mt: "2",
+                    whiteSpace: "pre-wrap",
+                  })}
+                >
+                  {b().studioPrompts?.thirtyMinuteMd ??
+                    "No 30-minute prompt was stored for this older brief."}
+                </p>
+              </div>
+              <div
+                class={css({
+                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  p: "3",
+                })}
+              >
+                <UIBadge tone="gold">90-minute</UIBadge>
+                <p
+                  class={css({
+                    color: "rgba(245, 240, 232, 0.76)",
+                    lineHeight: "1.7",
+                    mt: "2",
+                    whiteSpace: "pre-wrap",
+                  })}
+                >
+                  {b().studioPrompts?.ninetyMinuteMd ??
+                    "No 90-minute prompt was stored for this older brief."}
+                </p>
+              </div>
+            </div>
+
+            <Show when={(b().recommendedActions ?? []).length > 0}>
+              <hr class={goldDivider} />
+              <div class={sectionLabel}>Recommended Actions</div>
+              <div class={css({ display: "grid", gap: "2" })}>
+                <For each={b().recommendedActions ?? []}>
+                  {(action) => (
+                    <a
+                      href={
+                        action.targetType === "hypothesis"
+                          ? `/hypotheses/${action.targetId}`
+                          : action.targetType === "recipe"
+                            ? `/recipes/${action.targetId}`
+                            : `/compositions/${action.targetId}`
+                      }
+                      class={css({
+                        borderColor: "rgba(200, 168, 75, 0.18)",
+                        borderRadius: "l2",
+                        borderWidth: "1px",
+                        color: "inherit",
+                        display: "block",
+                        p: "3",
+                        textDecoration: "none",
+                      })}
+                    >
+                      <div
+                        class={css({
+                          display: "flex",
+                          gap: "2",
+                          flexWrap: "wrap",
+                          mb: "1",
+                        })}
+                      >
+                        <UIBadge tone="gold">{action.durationBucket}</UIBadge>
+                        <UIBadge tone="cream">{action.kind}</UIBadge>
+                      </div>
+                      <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                        {action.targetType} {action.targetId.slice(-6)}
+                      </div>
+                      <div class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
+                        {action.reason}
+                      </div>
+                    </a>
+                  )}
+                </For>
+              </div>
             </Show>
 
             {/* Rendered Markdown Body */}

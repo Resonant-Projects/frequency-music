@@ -1,17 +1,20 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, For, Show } from "solid-js";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { createEffect, createSignal, For, Show } from "solid-js";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   UIBadge,
+  UIButton,
   UICard,
+  UISelect,
   backLink,
   detailTitleClass,
   goldDivider,
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { createQuery } from "../integrations/convex";
+import { withDevBypassSecret } from "../integrations/authBypass";
+import { createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 const statGrid = css({
@@ -41,11 +44,49 @@ export function ThesisDetailPage() {
   const detail = createQuery(convexApi.theses.getDetail, () => ({
     id: params().thesisId as Id<"theses">,
   }));
+  const campaigns = createQuery(convexApi.campaigns.list, () => ({ limit: 20 }));
+  const attachThesis = createMutation(convexApi.campaigns.attachThesis);
+  const detachThesis = createMutation(convexApi.campaigns.detachThesis);
+  const [selectedCampaignId, setSelectedCampaignId] = createSignal("");
+  const [notice, setNotice] = createSignal<string | null>(null);
 
   createEffect(() => {
     const thesis = detail()?.thesis;
     if (thesis) document.title = `${thesis.title} — Frequency Music`;
   });
+
+  async function handleAttach() {
+    if (!selectedCampaignId()) {
+      setNotice("Select a campaign first.");
+      return;
+    }
+    try {
+      await attachThesis(
+        withDevBypassSecret({
+          campaignId: selectedCampaignId() as Id<"campaigns">,
+          thesisId: params().thesisId as Id<"theses">,
+        }),
+      );
+      setNotice("Thesis attached to campaign.");
+      setSelectedCampaignId("");
+    } catch (error) {
+      setNotice(`Attach failed: ${String(error)}`);
+    }
+  }
+
+  async function handleDetach(campaignId: Id<"campaigns">) {
+    try {
+      await detachThesis(
+        withDevBypassSecret({
+          campaignId,
+          thesisId: params().thesisId as Id<"theses">,
+        }),
+      );
+      setNotice("Thesis detached from campaign.");
+    } catch (error) {
+      setNotice(`Detach failed: ${String(error)}`);
+    }
+  }
 
   return (
     <section class={pageClass}>
@@ -169,6 +210,95 @@ export function ThesisDetailPage() {
                     retired
                   </div>
                 </div>
+              </div>
+
+              <hr class={goldDivider} />
+              <div class={sectionLabel}>Campaign Membership</div>
+              <div class={css({ display: "grid", gap: "3" })}>
+                <Show
+                  when={row().campaigns.length > 0}
+                  fallback={
+                    <p class={css({ color: "rgba(245, 240, 232, 0.62)" })}>
+                      This thesis is not attached to a campaign yet.
+                    </p>
+                  }
+                >
+                  <For each={row().campaigns}>
+                    {(campaign) => (
+                      <div
+                        class={css({
+                          alignItems: "center",
+                          borderColor: "rgba(200, 168, 75, 0.18)",
+                          borderRadius: "l2",
+                          borderWidth: "1px",
+                          display: "flex",
+                          gap: "3",
+                          justifyContent: "space-between",
+                          p: "3",
+                          flexWrap: "wrap",
+                        })}
+                      >
+                        <div>
+                          <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                            {campaign.title}
+                          </div>
+                          <div
+                            class={css({
+                              color: "rgba(245, 240, 232, 0.62)",
+                              fontSize: "sm",
+                            })}
+                          >
+                            {campaign.question}
+                          </div>
+                        </div>
+                        <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                          <UIBadge tone="gold">{campaign.status}</UIBadge>
+                          <UIButton
+                            variant="outline"
+                            onClick={() => handleDetach(campaign._id)}
+                          >
+                            Detach
+                          </UIButton>
+                        </div>
+                      </div>
+                    )}
+                  </For>
+                </Show>
+
+                <div>
+                  <label class={css({ color: "rgba(245, 240, 232, 0.68)", display: "block", mb: "2" })}>
+                    Attach To Campaign
+                  </label>
+                  <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                    <UISelect
+                      value={selectedCampaignId()}
+                      onChange={(event) => setSelectedCampaignId(event.currentTarget.value)}
+                    >
+                      <option value="">Select campaign</option>
+                      <For each={((campaigns() ?? []) as Doc<"campaigns">[]).filter(
+                        (campaign: Doc<"campaigns">) =>
+                          !row()
+                            .campaigns.map((linked: Doc<"campaigns">) => linked._id)
+                            .includes(campaign._id),
+                      )}>
+                        {(campaign) => (
+                          <option value={String(campaign._id)}>
+                            {campaign.title}
+                          </option>
+                        )}
+                      </For>
+                    </UISelect>
+                    <UIButton variant="outline" onClick={handleAttach}>
+                      Attach
+                    </UIButton>
+                  </div>
+                </div>
+
+                <Show when={notice()}>
+                  {(message) => (
+                    <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+                  )}
+                </Show>
               </div>
 
               <hr class={goldDivider} />

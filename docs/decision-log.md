@@ -197,9 +197,35 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 ## Deferred Questions
 
 - Whether thesis and campaign records should eventually have direct public-facing representations
-- Whether studio prompts should be stored persistently or generated on demand
 - What scoring method should be used for graph yield and experiment prioritization
 - How much structure the embodied listening vocabulary should enforce
+
+## 2026-03-26 - Phase 3 brief persistence and campaign activation
+
+**Decision**
+- Store 10/30/90-minute studio prompts on each weekly brief at generation time.
+- Persist deterministic recommended actions on the brief alongside the narrative markdown.
+- Treat campaigns as the current implementation of themes/chapters.
+- Enforce a single active campaign at a time.
+
+**Rationale**
+- Prompt variants need to remain stable enough to review, compare, and reuse after a weekly turn is generated.
+- Recommended actions should not silently drift after the brief is written.
+- A single active campaign keeps weekly steering legible and avoids turning campaigns into a backlog taxonomy.
+- Using campaigns as the current theme abstraction avoids adding a second organizing table before the first one is proven.
+
+**Alternatives considered**
+- Generate studio prompts on demand from current state.
+- Allow multiple active campaigns.
+- Introduce separate `themes` and `campaigns` tables immediately.
+
+**Downstream implications**
+- Weekly brief detail can render persisted studio prompts without recomputing them.
+- Campaign activation is now a scheduling/priority choice, not just metadata.
+- Thesis detail is responsible for campaign attachment until a broader campaign route becomes necessary.
+
+**Revisit trigger**
+- Revisit if weekly briefs need explicit regeneration flows, if parallel campaign work becomes common, or if "theme" semantics diverge from campaign semantics in practice.
 
 ## Reversals / What Changed Our Mind
 
