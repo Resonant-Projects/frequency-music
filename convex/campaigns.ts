@@ -160,6 +160,13 @@ async function loadScope(
         : await db.get("campaigns", campaignId)
       : await getActiveCampaignDoc(db);
 
+  if (campaignId !== undefined && campaignId !== null && campaign === null) {
+    throw new ConvexError({
+      code: "NOT_FOUND",
+      message: "Campaign not found",
+    });
+  }
+
   const theses =
     campaign && campaign.thesisIds.length > 0
       ? (
@@ -539,7 +546,11 @@ export const update = mutation({
       ...(thesisIds !== undefined ? { thesisIds: nextThesisIds } : {}),
       ...(status !== undefined ? { status } : {}),
       ...(status === "active" && !campaign.startedAt ? { startedAt: now } : {}),
-      ...(status === "completed" ? { endedAt: now } : {}),
+      ...(status === "completed"
+        ? { endedAt: now }
+        : status !== undefined
+          ? { endedAt: undefined }
+          : {}),
       updatedAt: now,
     });
     return null;
@@ -567,6 +578,7 @@ export const setActive = mutation({
     await ctx.db.patch(args.id, {
       status: "active",
       startedAt: campaign.startedAt ?? now,
+      endedAt: undefined,
       updatedAt: now,
     });
     return null;

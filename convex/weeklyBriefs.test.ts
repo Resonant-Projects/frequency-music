@@ -105,6 +105,6 @@ Research summary.
       generateBriefCore({ db } as any, {
         daysBack: 7,
       }),
-    ).rejects.toThrow("No recent hypotheses found. Generate some first.");
+    ).rejects.toThrow("No recent hypotheses or recipes found. Generate some first.");
   });
 });

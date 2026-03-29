@@ -159,6 +159,7 @@ function CampaignCard(props: {
     setActivating(true);
     try {
       await props.onActivate(props.campaign._id);
+      setDirty(false);
     } finally {
       setActivating(false);
     }
@@ -203,28 +204,32 @@ function CampaignCard(props: {
         </Show>
       </div>
 
-      <label class={fieldLabelClass}>Title</label>
+      <label for={`campaign-${props.campaign._id}-title`} class={fieldLabelClass}>Title</label>
       <UIInput
+        id={`campaign-${props.campaign._id}-title`}
         value={draft().title}
         onInput={(event) => updateDraft("title", event.currentTarget.value)}
       />
 
-      <label class={fieldLabelClass}>Question</label>
+      <label for={`campaign-${props.campaign._id}-question`} class={fieldLabelClass}>Question</label>
       <UITextarea
+        id={`campaign-${props.campaign._id}-question`}
         value={draft().question}
         onInput={(event) => updateDraft("question", event.currentTarget.value)}
       />
 
-      <label class={fieldLabelClass}>Description</label>
+      <label for={`campaign-${props.campaign._id}-description`} class={fieldLabelClass}>Description</label>
       <UITextarea
+        id={`campaign-${props.campaign._id}-description`}
         value={draft().descriptionMd}
         onInput={(event) =>
           updateDraft("descriptionMd", event.currentTarget.value)
         }
       />
 
-      <label class={fieldLabelClass}>Status</label>
+      <label for={`campaign-${props.campaign._id}-status`} class={fieldLabelClass}>Status</label>
       <UISelect
+        id={`campaign-${props.campaign._id}-status`}
         value={draft().status}
         onChange={(event) =>
           updateDraft(

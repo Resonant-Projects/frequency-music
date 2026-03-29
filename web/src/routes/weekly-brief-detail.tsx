@@ -25,7 +25,10 @@ export function WeeklyBriefDetailPage() {
   const brief = createQuery(convexApi.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
-  const campaigns = createQuery(convexApi.campaigns.list, () => ({ limit: 20 }));
+  const campaignQuery = createQuery(convexApi.campaigns.get, () => {
+    const campaignId = brief()?.campaignId;
+    return campaignId ? { id: campaignId } : "skip";
+  });
   const activeThesesQuery = createQuery(convexApi.theses.getByIds, () => ({
     ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
@@ -35,15 +38,9 @@ export function WeeklyBriefDetailPage() {
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
-  const campaign = createMemo<Doc<"campaigns"> | null>(() => {
-    const campaignId = brief()?.campaignId;
-    if (!campaignId) return null;
-    return (
-      ((campaigns() ?? []) as Doc<"campaigns">[]).find(
-        (row) => row._id === campaignId,
-      ) ?? null
-    );
-  });
+  const campaign = createMemo<Doc<"campaigns"> | null>(
+    () => (campaignQuery() as Doc<"campaigns"> | null) ?? null,
+  );
   const referencedFailures = createMemo(() => referencedFailureEntries() ?? []);
 
   createEffect(() => {

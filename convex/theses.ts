@@ -101,8 +101,7 @@ export const getDetail = query({
       .slice(0, 5)
       .map((brief) => brief._id);
     const campaigns = (await ctx.db.query("campaigns").order("desc").collect())
-      .filter((campaign) => campaign.thesisIds.includes(args.id))
-      .slice(0, 10);
+      .filter((campaign) => campaign.thesisIds.includes(args.id));
 
     return {
       thesis,

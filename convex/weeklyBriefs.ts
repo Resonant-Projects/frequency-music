@@ -337,8 +337,8 @@ export async function generateBriefCore(
     cutoff,
   });
 
-  if (recentHypotheses.length === 0) {
-    throw new Error("No recent hypotheses found. Generate some first.");
+  if (recentHypotheses.length === 0 && recentRecipes.length === 0) {
+    throw new Error("No recent hypotheses or recipes found. Generate some first.");
   }
 
   const typedActiveTheses =
