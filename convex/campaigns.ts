@@ -80,9 +80,7 @@ async function pauseOtherCampaigns(
   );
 }
 
-async function getActiveCampaignDoc(
-  db: any,
-): Promise<Doc<"campaigns"> | null> {
+async function getActiveCampaignDoc(db: any): Promise<Doc<"campaigns"> | null> {
   return await db
     .query("campaigns")
     .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
@@ -99,7 +97,9 @@ async function loadScopedHypotheses(
     thesisIds.map((thesisId) =>
       db
         .query("hypotheses")
-        .withIndex("by_thesisId_updatedAt", (q: any) => q.eq("thesisId", thesisId))
+        .withIndex("by_thesisId_updatedAt", (q: any) =>
+          q.eq("thesisId", thesisId),
+        )
         .collect(),
     ),
   );
@@ -133,7 +133,9 @@ async function loadRecipesForHypotheses(
   );
   return lists
     .flat()
-    .toSorted((a: Doc<"recipes">, b: Doc<"recipes">) => b.updatedAt - a.updatedAt);
+    .toSorted(
+      (a: Doc<"recipes">, b: Doc<"recipes">) => b.updatedAt - a.updatedAt,
+    );
 }
 
 async function loadFallbackHypotheses(db: any): Promise<Doc<"hypotheses">[]> {
@@ -175,7 +177,10 @@ async function loadScope(
               db.get("theses", thesisId),
             ),
           )
-        ).filter((thesis: Doc<"theses"> | null): thesis is Doc<"theses"> => thesis !== null)
+        ).filter(
+          (thesis: Doc<"theses"> | null): thesis is Doc<"theses"> =>
+            thesis !== null,
+        )
       : [];
 
   const hypotheses =
@@ -241,8 +246,9 @@ export async function computeRecommendedActionContext(
     );
     if (hypothesisFailures.length > 0) continue;
 
-    const linkedRecipes = (recipesByHypothesis.get(String(hypothesis._id)) ?? [])
-      .filter((recipe) => recipe.status !== "archived");
+    const linkedRecipes = (
+      recipesByHypothesis.get(String(hypothesis._id)) ?? []
+    ).filter((recipe) => recipe.status !== "archived");
 
     if (linkedRecipes.length === 0) {
       actions.push({
@@ -358,9 +364,9 @@ export async function computeRecommendedActionContext(
       (summary.latestExpandability ?? 0) >= 3
     ) {
       actions.push({
-        kind: sortedCompositions.length > 1 ? "compare_branch" : "revive_recipe",
-        targetType:
-          sortedCompositions.length > 1 ? "composition" : "recipe",
+        kind:
+          sortedCompositions.length > 1 ? "compare_branch" : "revive_recipe",
+        targetType: sortedCompositions.length > 1 ? "composition" : "recipe",
         targetId:
           sortedCompositions.length > 1
             ? String(latestComposition._id)
@@ -474,7 +480,9 @@ export const create = mutation({
     const now = Date.now();
     const thesisIds = [...new Set(createArgs.thesisIds ?? [])];
 
-    await Promise.all(thesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)));
+    await Promise.all(
+      thesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)),
+    );
 
     const status = createArgs.status ?? "paused";
     if (status === "active") {
@@ -522,8 +530,13 @@ export const update = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const { id, devBypassSecret: _devBypassSecret, thesisIds, status, ...updates } =
-      args;
+    const {
+      id,
+      devBypassSecret: _devBypassSecret,
+      thesisIds,
+      status,
+      ...updates
+    } = args;
     const campaign = await ctx.db.get("campaigns", id);
     if (!campaign) {
       throw new ConvexError({
@@ -534,7 +547,9 @@ export const update = mutation({
 
     const nextThesisIds =
       thesisIds !== undefined ? [...new Set(thesisIds)] : campaign.thesisIds;
-    await Promise.all(nextThesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)));
+    await Promise.all(
+      nextThesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)),
+    );
 
     if (status === "active") {
       await pauseOtherCampaigns(ctx, id);

@@ -161,7 +161,10 @@ export const seedConceptDomains = internalMutation({
         continue;
       }
 
-      if (existing.status !== "known" || existing.sectorMapping !== entry.sectorMapping) {
+      if (
+        existing.status !== "known" ||
+        existing.sectorMapping !== entry.sectorMapping
+      ) {
         await ctx.db.patch(existing._id, {
           status: "known",
           sectorMapping: entry.sectorMapping,

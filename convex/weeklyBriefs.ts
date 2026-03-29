@@ -234,11 +234,11 @@ export function selectRecentBriefInputs(args: {
   const recentHypotheses = args.hypotheses.filter(
     (hypothesis) => hypothesis.createdAt > args.cutoff,
   );
-  const recentRecipes = args.recipes.filter((recipe) => recipe.createdAt > args.cutoff);
+  const recentRecipes = args.recipes.filter(
+    (recipe) => recipe.createdAt > args.cutoff,
+  );
   const sourceIds = [
-    ...new Set(
-      recentHypotheses.flatMap((hypothesis) => hypothesis.sourceIds),
-    ),
+    ...new Set(recentHypotheses.flatMap((hypothesis) => hypothesis.sourceIds)),
   ];
 
   return {
@@ -331,14 +331,17 @@ export async function generateBriefCore(
   });
   const hypotheses = recommendationContext.hypotheses;
   const recipes = recommendationContext.recipes;
-  const { recentHypotheses, recentRecipes, sourceIds } = selectRecentBriefInputs({
-    hypotheses,
-    recipes,
-    cutoff,
-  });
+  const { recentHypotheses, recentRecipes, sourceIds } =
+    selectRecentBriefInputs({
+      hypotheses,
+      recipes,
+      cutoff,
+    });
 
   if (recentHypotheses.length === 0 && recentRecipes.length === 0) {
-    throw new Error("No recent hypotheses or recipes found. Generate some first.");
+    throw new Error(
+      "No recent hypotheses or recipes found. Generate some first.",
+    );
   }
 
   const typedActiveTheses =
@@ -346,7 +349,9 @@ export async function generateBriefCore(
       ? recommendationContext.theses
       : ((await ctx.db
           .query("theses")
-          .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
+          .withIndex("by_status_updatedAt", (q: any) =>
+            q.eq("status", "active"),
+          )
           .order("desc")
           .take(10)) as Doc<"theses">[]);
   const recommendedActions = recommendationContext.actions;
@@ -401,7 +406,9 @@ export async function generateBriefCore(
 Question: ${recommendationContext.campaign.question}
 Theses: ${
         recommendationContext.theses.length > 0
-          ? recommendationContext.theses.map((thesis) => thesis.title).join(", ")
+          ? recommendationContext.theses
+              .map((thesis) => thesis.title)
+              .join(", ")
           : "None attached yet"
       }`
     : "No active campaign. Use the strongest active threads from the current weekly system.";

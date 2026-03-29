@@ -63,9 +63,7 @@ export function CompositionDetailPage() {
               <UIBadge tone="violet">{row().composition.artifactType}</UIBadge>
               <UIBadge tone="cream">{row().composition.version}</UIBadge>
               <Show when={row().summary.localFailureStatus}>
-                {(status) => (
-                  <UIBadge tone="violet">local: {status()}</UIBadge>
-                )}
+                {(status) => <UIBadge tone="violet">local: {status()}</UIBadge>}
               </Show>
               <Show when={row().summary.branchFailureStatus}>
                 {(status) => (
@@ -94,7 +92,8 @@ export function CompositionDetailPage() {
 
             <Show
               when={
-                row().summary.localFailureStatus || row().summary.branchFailureStatus
+                row().summary.localFailureStatus ||
+                row().summary.branchFailureStatus
               }
             >
               <hr class={goldDivider} />

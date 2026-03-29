@@ -4,10 +4,12 @@ import { createRunId, expectNoticeToMatch, waitForRowByText } from "./helpers";
 async function createCampaignViaUi(page: Page, title: string) {
   await page.goto("/weekly-turns");
   await page.locator("#campaign-title").fill(title);
-  await page.locator("#campaign-question").fill(`Campaign question for ${title}`);
-  await page.locator("#campaign-description").fill(
-    `Campaign description for ${title}`,
-  );
+  await page
+    .locator("#campaign-question")
+    .fill(`Campaign question for ${title}`);
+  await page
+    .locator("#campaign-description")
+    .fill(`Campaign description for ${title}`);
   await page.locator("#campaign-status").selectOption("paused");
   await page.getByRole("button", { name: "Create Campaign" }).click();
   await expect(
@@ -41,9 +43,7 @@ test.describe("phase three weekly turns", () => {
       await page
         .locator("#thesis-statement")
         .fill(`A thesis statement for ${runId}`);
-      await page
-        .getByRole("button", { name: "Create Thesis" })
-        .click();
+      await page.getByRole("button", { name: "Create Thesis" }).click();
       await expectNoticeToMatch(page, [/Thesis created\./i]);
       await expect(page.getByRole("link", { name: thesisTitle })).toBeVisible({
         timeout: 30_000,
@@ -57,9 +57,7 @@ test.describe("phase three weekly turns", () => {
       await page.locator("#hyp-statement").fill(`Hypothesis ${runId}`);
       await page.locator("#hyp-why").fill(`Why this matters ${runId}`);
       await page.locator("#hyp-rationale").fill(`Rationale ${runId}`);
-      await page
-        .locator("#hyp-thesis")
-        .selectOption({ label: thesisTitle });
+      await page.locator("#hyp-thesis").selectOption({ label: thesisTitle });
       await page.getByRole("button", { name: "Create Hypothesis" }).click();
       await expectNoticeToMatch(page, [/Hypothesis created\./i]);
       await waitForRowByText(page, hypothesisTitle);
@@ -83,8 +81,12 @@ test.describe("phase three weekly turns", () => {
     await test.step("create active campaign", async () => {
       await page.goto("/weekly-turns");
       await page.locator("#campaign-title").fill(campaignTitle);
-      await page.locator("#campaign-question").fill(`Campaign question ${runId}`);
-      await page.locator("#campaign-description").fill(`Campaign description ${runId}`);
+      await page
+        .locator("#campaign-question")
+        .fill(`Campaign question ${runId}`);
+      await page
+        .locator("#campaign-description")
+        .fill(`Campaign description ${runId}`);
       await page.locator("#campaign-status").selectOption("active");
       await page.getByRole("button", { name: "Create Campaign" }).click();
       await expectNoticeToMatch(page, [/Campaign created\./i]);
@@ -96,7 +98,10 @@ test.describe("phase three weekly turns", () => {
     await test.step("attach thesis to campaign", async () => {
       await page.goto("/theses");
       await page.getByRole("link", { name: thesisTitle }).click();
-      await page.locator("select").last().selectOption({ label: campaignTitle });
+      await page
+        .locator("select")
+        .last()
+        .selectOption({ label: campaignTitle });
       await page.getByRole("button", { name: "Attach" }).click();
       await expectNoticeToMatch(page, [/Thesis attached to campaign\./i]);
       await expect(page.getByText(campaignTitle)).toBeVisible({
@@ -172,7 +177,10 @@ test.describe("phase three weekly turns", () => {
 
     await createCampaignViaUi(page, oldestCampaignTitle);
     for (let index = 0; index < 20; index += 1) {
-      await createCampaignViaUi(page, `E2E Newer Campaign ${index + 1} ${runId}`);
+      await createCampaignViaUi(
+        page,
+        `E2E Newer Campaign ${index + 1} ${runId}`,
+      );
     }
 
     await page.goto("/theses");

@@ -10,16 +10,18 @@ function makeId<TableName extends string>(value: string) {
   return value as Id<TableName>;
 }
 
-function sortRows<T extends { createdAt?: number; updatedAt?: number }>(rows: T[]) {
+function sortRows<T extends { createdAt?: number; updatedAt?: number }>(
+  rows: T[],
+) {
   return [...rows].toSorted(
     (a, b) =>
       (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
   );
 }
 
-function createQueryResult<T extends { createdAt?: number; updatedAt?: number }>(
-  rows: T[],
-) {
+function createQueryResult<
+  T extends { createdAt?: number; updatedAt?: number },
+>(rows: T[]) {
   return {
     collect: async () => rows,
     first: async () => rows[0] ?? null,
@@ -64,7 +66,10 @@ function makeDb(data: {
           );
         }
 
-        if (table === "compositions" && index === "by_revisionParentId_updatedAt") {
+        if (
+          table === "compositions" &&
+          index === "by_revisionParentId_updatedAt"
+        ) {
           return createQueryResult(
             sortRows(
               tables.compositions.filter(

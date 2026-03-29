@@ -251,7 +251,13 @@ export function ThesisDetailPage() {
                             {campaign.question}
                           </div>
                         </div>
-                        <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                        <div
+                          class={css({
+                            display: "flex",
+                            gap: "2",
+                            flexWrap: "wrap",
+                          })}
+                        >
                           <UIBadge tone="gold">{campaign.status}</UIBadge>
                           <UIButton
                             variant="outline"
@@ -266,22 +272,38 @@ export function ThesisDetailPage() {
                 </Show>
 
                 <div>
-                  <label class={css({ color: "rgba(245, 240, 232, 0.68)", display: "block", mb: "2" })}>
+                  <label
+                    class={css({
+                      color: "rgba(245, 240, 232, 0.68)",
+                      display: "block",
+                      mb: "2",
+                    })}
+                  >
                     Attach To Campaign
                   </label>
-                  <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                  <div
+                    class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}
+                  >
                     <UISelect
                       data-testid="thesis-campaign-select"
                       value={selectedCampaignId()}
-                      onChange={(event) => setSelectedCampaignId(event.currentTarget.value)}
+                      onChange={(event) =>
+                        setSelectedCampaignId(event.currentTarget.value)
+                      }
                     >
                       <option value="">Select campaign</option>
-                      <For each={((campaigns() ?? []) as Doc<"campaigns">[]).filter(
-                        (campaign: Doc<"campaigns">) =>
-                          !row()
-                            .campaigns.map((linked: Doc<"campaigns">) => linked._id)
-                            .includes(campaign._id),
-                      )}>
+                      <For
+                        each={(
+                          (campaigns() ?? []) as Doc<"campaigns">[]
+                        ).filter(
+                          (campaign: Doc<"campaigns">) =>
+                            !row()
+                              .campaigns.map(
+                                (linked: Doc<"campaigns">) => linked._id,
+                              )
+                              .includes(campaign._id),
+                        )}
+                      >
                         {(campaign) => (
                           <option value={String(campaign._id)}>
                             {campaign.title}

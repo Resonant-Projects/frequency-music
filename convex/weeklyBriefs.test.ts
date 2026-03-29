@@ -65,9 +65,9 @@ Research summary.
       ],
     });
 
-    expect(result.recentHypotheses.map((hypothesis) => hypothesis._id)).toEqual([
-      recentHypothesisId,
-    ]);
+    expect(result.recentHypotheses.map((hypothesis) => hypothesis._id)).toEqual(
+      [recentHypothesisId],
+    );
     expect(result.recentRecipes.map((recipe) => recipe._id)).toEqual([
       "recipe-recent",
     ]);
@@ -105,6 +105,8 @@ Research summary.
       generateBriefCore({ db } as any, {
         daysBack: 7,
       }),
-    ).rejects.toThrow("No recent hypotheses or recipes found. Generate some first.");
+    ).rejects.toThrow(
+      "No recent hypotheses or recipes found. Generate some first.",
+    );
   });
 });

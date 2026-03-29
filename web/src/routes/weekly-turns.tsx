@@ -59,12 +59,10 @@ function extractExcerpt(bodyMd: string, maxLen = 180): string {
   return text.length > maxLen ? `${text.slice(0, maxLen)}...` : text;
 }
 
-function actionHref(
-  action: {
-    targetType: "hypothesis" | "recipe" | "composition";
-    targetId: string;
-  },
-) {
+function actionHref(action: {
+  targetType: "hypothesis" | "recipe" | "composition";
+  targetId: string;
+}) {
   switch (action.targetType) {
     case "hypothesis":
       return `/hypotheses/${action.targetId}`;
@@ -103,7 +101,9 @@ function CampaignCard(props: {
     };
   }
 
-  const [draft, setDraft] = createSignal<CampaignDraft>(buildDraft(props.campaign));
+  const [draft, setDraft] = createSignal<CampaignDraft>(
+    buildDraft(props.campaign),
+  );
   const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [activating, setActivating] = createSignal(false);
@@ -204,21 +204,36 @@ function CampaignCard(props: {
         </Show>
       </div>
 
-      <label for={`campaign-${props.campaign._id}-title`} class={fieldLabelClass}>Title</label>
+      <label
+        for={`campaign-${props.campaign._id}-title`}
+        class={fieldLabelClass}
+      >
+        Title
+      </label>
       <UIInput
         id={`campaign-${props.campaign._id}-title`}
         value={draft().title}
         onInput={(event) => updateDraft("title", event.currentTarget.value)}
       />
 
-      <label for={`campaign-${props.campaign._id}-question`} class={fieldLabelClass}>Question</label>
+      <label
+        for={`campaign-${props.campaign._id}-question`}
+        class={fieldLabelClass}
+      >
+        Question
+      </label>
       <UITextarea
         id={`campaign-${props.campaign._id}-question`}
         value={draft().question}
         onInput={(event) => updateDraft("question", event.currentTarget.value)}
       />
 
-      <label for={`campaign-${props.campaign._id}-description`} class={fieldLabelClass}>Description</label>
+      <label
+        for={`campaign-${props.campaign._id}-description`}
+        class={fieldLabelClass}
+      >
+        Description
+      </label>
       <UITextarea
         id={`campaign-${props.campaign._id}-description`}
         value={draft().descriptionMd}
@@ -227,7 +242,12 @@ function CampaignCard(props: {
         }
       />
 
-      <label for={`campaign-${props.campaign._id}-status`} class={fieldLabelClass}>Status</label>
+      <label
+        for={`campaign-${props.campaign._id}-status`}
+        class={fieldLabelClass}
+      >
+        Status
+      </label>
       <UISelect
         id={`campaign-${props.campaign._id}-status`}
         value={draft().status}
@@ -259,7 +279,9 @@ function CampaignCard(props: {
         </div>
       </Show>
 
-      <div class={css({ display: "flex", justifyContent: "flex-end", mt: "4" })}>
+      <div
+        class={css({ display: "flex", justifyContent: "flex-end", mt: "4" })}
+      >
         <UIButton
           variant="solid"
           onClick={saveCampaign}
@@ -377,7 +399,12 @@ export function WeeklyTurnsPage() {
 
   return (
     <section class={pageClass}>
-      <UICard as="form" onSubmit={handleCreateCampaign as any}>
+      <UICard
+        as="form"
+        onSubmit={(e: SubmitEvent) => {
+          handleCreateCampaign(e);
+        }}
+      >
         <div
           class={css({
             alignItems: "center",
@@ -508,38 +535,63 @@ export function WeeklyTurnsPage() {
                 }
               >
                 <For each={preview().actions}>
-                  {(action) => (
-                    <a
-                      href={actionHref(action)}
-                      class={css({
-                        borderColor: "rgba(200, 168, 75, 0.2)",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        color: "inherit",
-                        display: "block",
-                        p: "3",
-                        textDecoration: "none",
-                      })}
-                    >
-                      <div
-                        class={css({
-                          display: "flex",
-                          gap: "2",
-                          flexWrap: "wrap",
-                          mb: "1",
-                        })}
+                  {(action) => {
+                    const linkClass = css({
+                      borderColor: "rgba(200, 168, 75, 0.2)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      color: "inherit",
+                      display: "block",
+                      p: "3",
+                      textDecoration: "none",
+                    });
+                    const cardBody = (
+                      <>
+                        <div
+                          class={css({
+                            display: "flex",
+                            gap: "2",
+                            flexWrap: "wrap",
+                            mb: "1",
+                          })}
+                        >
+                          <UIBadge tone="gold">{action.durationBucket}</UIBadge>
+                          <UIBadge tone="cream">{action.kind}</UIBadge>
+                        </div>
+                        <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                          {action.targetType} {action.targetId.slice(-6)}
+                        </div>
+                        <p class={css({ color: "rgba(245, 240, 232, 0.62)" })}>
+                          {action.reason}
+                        </p>
+                      </>
+                    );
+                    return action.targetType === "hypothesis" ? (
+                      <Link
+                        to="/hypotheses/$hypothesisId"
+                        params={{ hypothesisId: action.targetId }}
+                        class={linkClass}
                       >
-                        <UIBadge tone="gold">{action.durationBucket}</UIBadge>
-                        <UIBadge tone="cream">{action.kind}</UIBadge>
-                      </div>
-                      <div class={css({ color: "zodiac.cream", mb: "1" })}>
-                        {action.targetType} {action.targetId.slice(-6)}
-                      </div>
-                      <p class={css({ color: "rgba(245, 240, 232, 0.62)" })}>
-                        {action.reason}
-                      </p>
-                    </a>
-                  )}
+                        {cardBody}
+                      </Link>
+                    ) : action.targetType === "recipe" ? (
+                      <Link
+                        to="/recipes/$recipeId"
+                        params={{ recipeId: action.targetId }}
+                        class={linkClass}
+                      >
+                        {cardBody}
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/compositions/$compositionId"
+                        params={{ compositionId: action.targetId }}
+                        class={linkClass}
+                      >
+                        {cardBody}
+                      </Link>
+                    );
+                  }}
                 </For>
               </Show>
             </div>

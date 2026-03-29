@@ -1,9 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import {
-  resolveDomainsForSector,
-} from "./domainMappings";
+import { resolveDomainsForSector } from "./domainMappings";
 import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
 

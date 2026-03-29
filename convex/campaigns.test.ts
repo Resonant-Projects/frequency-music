@@ -111,9 +111,9 @@ describe("campaign recommendation context", () => {
     });
 
     expect(result.campaign?._id).toBe(campaignId);
-    expect(result.actions.some((action) => action.kind === "advance_recipe")).toBe(
-      true,
-    );
+    expect(
+      result.actions.some((action) => action.kind === "advance_recipe"),
+    ).toBe(true);
     expect(
       result.actions.some(
         (action) =>
@@ -122,7 +122,9 @@ describe("campaign recommendation context", () => {
       ),
     ).toBe(true);
     expect(
-      result.actions.some((action) => action.targetId === contradictedHypothesisId),
+      result.actions.some(
+        (action) => action.targetId === contradictedHypothesisId,
+      ),
     ).toBe(false);
   });
 

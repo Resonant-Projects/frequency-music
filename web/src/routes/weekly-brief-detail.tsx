@@ -32,9 +32,12 @@ export function WeeklyBriefDetailPage() {
   const activeThesesQuery = createQuery(convexApi.theses.getByIds, () => ({
     ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
-  const referencedFailureEntries = createQuery(convexApi.failures.getByKeys, () => ({
-    keys: brief()?.referencedFailureKeys ?? [],
-  }));
+  const referencedFailureEntries = createQuery(
+    convexApi.failures.getByKeys,
+    () => ({
+      keys: brief()?.referencedFailureKeys ?? [],
+    }),
+  );
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
@@ -266,44 +269,65 @@ export function WeeklyBriefDetailPage() {
               <div class={sectionLabel}>Recommended Actions</div>
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={b().recommendedActions ?? []}>
-                  {(action) => (
-                    <a
-                      href={
-                        action.targetType === "hypothesis"
-                          ? `/hypotheses/${action.targetId}`
-                          : action.targetType === "recipe"
-                            ? `/recipes/${action.targetId}`
-                            : `/compositions/${action.targetId}`
-                      }
-                      class={css({
-                        borderColor: "rgba(200, 168, 75, 0.18)",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        color: "inherit",
-                        display: "block",
-                        p: "3",
-                        textDecoration: "none",
-                      })}
-                    >
-                      <div
-                        class={css({
-                          display: "flex",
-                          gap: "2",
-                          flexWrap: "wrap",
-                          mb: "1",
-                        })}
+                  {(action) => {
+                    const linkClass = css({
+                      borderColor: "rgba(200, 168, 75, 0.18)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      color: "inherit",
+                      display: "block",
+                      p: "3",
+                      textDecoration: "none",
+                    });
+                    const cardBody = (
+                      <>
+                        <div
+                          class={css({
+                            display: "flex",
+                            gap: "2",
+                            flexWrap: "wrap",
+                            mb: "1",
+                          })}
+                        >
+                          <UIBadge tone="gold">{action.durationBucket}</UIBadge>
+                          <UIBadge tone="cream">{action.kind}</UIBadge>
+                        </div>
+                        <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                          {action.targetType} {action.targetId.slice(-6)}
+                        </div>
+                        <div
+                          class={css({ color: "rgba(245, 240, 232, 0.68)" })}
+                        >
+                          {action.reason}
+                        </div>
+                      </>
+                    );
+                    return action.targetType === "hypothesis" ? (
+                      <Link
+                        to="/hypotheses/$hypothesisId"
+                        params={{ hypothesisId: action.targetId }}
+                        class={linkClass}
                       >
-                        <UIBadge tone="gold">{action.durationBucket}</UIBadge>
-                        <UIBadge tone="cream">{action.kind}</UIBadge>
-                      </div>
-                      <div class={css({ color: "zodiac.cream", mb: "1" })}>
-                        {action.targetType} {action.targetId.slice(-6)}
-                      </div>
-                      <div class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
-                        {action.reason}
-                      </div>
-                    </a>
-                  )}
+                        {cardBody}
+                      </Link>
+                    ) : action.targetType === "recipe" ? (
+                      <Link
+                        to="/recipes/$recipeId"
+                        params={{ recipeId: action.targetId }}
+                        class={linkClass}
+                      >
+                        {cardBody}
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/compositions/$compositionId"
+                        params={{ compositionId: action.targetId }}
+                        class={linkClass}
+                      >
+                        {cardBody}
+                      </Link>
+                    );
+                  }}
                 </For>
               </div>
             </Show>
@@ -354,8 +378,9 @@ export function WeeklyBriefDetailPage() {
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={referencedFailures()}>
                   {(failure) => (
-                    <a
-                      href={`/failures#${failure.key}`}
+                    <Link
+                      to="/failures"
+                      hash={failure.key}
                       class={css({
                         borderColor: "rgba(200, 168, 75, 0.18)",
                         borderRadius: "l2",
@@ -380,7 +405,7 @@ export function WeeklyBriefDetailPage() {
                         </UIBadge>
                       </div>
                       <div>{failure.title}</div>
-                    </a>
+                    </Link>
                   )}
                 </For>
               </div>
