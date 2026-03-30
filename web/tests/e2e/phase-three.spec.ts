@@ -99,8 +99,7 @@ test.describe("phase three weekly turns", () => {
       await page.goto("/theses");
       await page.getByRole("link", { name: thesisTitle }).click();
       await page
-        .locator("select")
-        .last()
+        .getByTestId("thesis-campaign-select")
         .selectOption({ label: campaignTitle });
       await page.getByRole("button", { name: "Attach" }).click();
       await expectNoticeToMatch(page, [/Thesis attached to campaign\./i]);

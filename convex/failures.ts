@@ -219,12 +219,12 @@ type FailureDerivationFilter = {
   thesisId?: Id<"theses">;
 };
 
-const HYPOTHESIS_REASONS: FailureReason[] = new Set([
+const HYPOTHESIS_REASONS: Set<FailureReason> = new Set([
   "contradicted_hypothesis",
   "retired_hypothesis",
 ]);
-const RECIPE_REASONS: FailureReason[] = new Set(["archived_recipe"]);
-const COMPOSITION_REASONS: FailureReason[] = new Set([
+const RECIPE_REASONS: Set<FailureReason> = new Set(["archived_recipe"]);
+const COMPOSITION_REASONS: Set<FailureReason> = new Set([
   "low_expandability_composition",
   "repeat_no_expand_composition",
 ]);

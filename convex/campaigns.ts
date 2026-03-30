@@ -416,10 +416,17 @@ export const list = query({
       return await ctx.db
         .query("campaigns")
         .withIndex("by_status_updatedAt", (q) => q.eq("status", status))
+        .filter((q) => q.eq(q.field("visibility"), "public"))
         .order("desc")
         .take(limit);
     }
-    return await ctx.db.query("campaigns").order("desc").take(limit);
+    return await ctx.db
+      .query("campaigns")
+      .withIndex("by_visibility_updatedAt", (q) =>
+        q.eq("visibility", "public"),
+      )
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -435,7 +442,9 @@ export const get = query({
   args: { id: v.id("campaigns") },
   returns: v.union(campaignReturnValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get("campaigns", args.id);
+    const campaign = await ctx.db.get("campaigns", args.id);
+    if (!campaign || campaign.visibility !== "public") return null;
+    return campaign;
   },
 });
 
@@ -537,6 +546,15 @@ export const update = mutation({
       status,
       ...updates
     } = args;
+    if (
+      (args.title !== undefined && !args.title.trim()) ||
+      (args.question !== undefined && !args.question.trim())
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGS",
+        message: "Campaign title and question must not be empty",
+      });
+    }
     const campaign = await ctx.db.get("campaigns", id);
     if (!campaign) {
       throw new ConvexError({

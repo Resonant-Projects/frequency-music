@@ -140,12 +140,15 @@ function CampaignCard(props: {
 
   async function saveCampaign() {
     const currentDraft = draft();
+    const title = currentDraft.title.trim();
+    const question = currentDraft.question.trim();
+    if (!title || !question) return;
     setSaving(true);
     try {
       await props.onSave({
         id: props.campaign._id,
-        title: currentDraft.title.trim(),
-        question: currentDraft.question.trim(),
+        title,
+        question,
         descriptionMd: currentDraft.descriptionMd.trim() || undefined,
         status: currentDraft.status,
       });

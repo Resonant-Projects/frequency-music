@@ -208,17 +208,14 @@ export function WeeklyBriefDetailPage() {
                 })}
               >
                 <UIBadge tone="gold">10-minute</UIBadge>
-                <p
-                  class={css({
-                    color: "rgba(245, 240, 232, 0.76)",
-                    lineHeight: "1.7",
-                    mt: "2",
-                    whiteSpace: "pre-wrap",
-                  })}
-                >
-                  {b().studioPrompts?.tenMinuteMd ??
-                    "No 10-minute prompt was stored for this older brief."}
-                </p>
+                <div class={css({ mt: "2" })}>
+                  <Markdown
+                    content={
+                      b().studioPrompts?.tenMinuteMd ??
+                      "No 10-minute prompt was stored for this older brief."
+                    }
+                  />
+                </div>
               </div>
               <div
                 class={css({
@@ -229,17 +226,14 @@ export function WeeklyBriefDetailPage() {
                 })}
               >
                 <UIBadge tone="gold">30-minute</UIBadge>
-                <p
-                  class={css({
-                    color: "rgba(245, 240, 232, 0.76)",
-                    lineHeight: "1.7",
-                    mt: "2",
-                    whiteSpace: "pre-wrap",
-                  })}
-                >
-                  {b().studioPrompts?.thirtyMinuteMd ??
-                    "No 30-minute prompt was stored for this older brief."}
-                </p>
+                <div class={css({ mt: "2" })}>
+                  <Markdown
+                    content={
+                      b().studioPrompts?.thirtyMinuteMd ??
+                      "No 30-minute prompt was stored for this older brief."
+                    }
+                  />
+                </div>
               </div>
               <div
                 class={css({
@@ -250,17 +244,14 @@ export function WeeklyBriefDetailPage() {
                 })}
               >
                 <UIBadge tone="gold">90-minute</UIBadge>
-                <p
-                  class={css({
-                    color: "rgba(245, 240, 232, 0.76)",
-                    lineHeight: "1.7",
-                    mt: "2",
-                    whiteSpace: "pre-wrap",
-                  })}
-                >
-                  {b().studioPrompts?.ninetyMinuteMd ??
-                    "No 90-minute prompt was stored for this older brief."}
-                </p>
+                <div class={css({ mt: "2" })}>
+                  <Markdown
+                    content={
+                      b().studioPrompts?.ninetyMinuteMd ??
+                      "No 90-minute prompt was stored for this older brief."
+                    }
+                  />
+                </div>
               </div>
             </div>
 

@@ -273,6 +273,7 @@ export function ThesisDetailPage() {
 
                 <div>
                   <label
+                    for="thesis-campaign-select"
                     class={css({
                       color: "rgba(245, 240, 232, 0.68)",
                       display: "block",
@@ -285,6 +286,7 @@ export function ThesisDetailPage() {
                     class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}
                   >
                     <UISelect
+                      id="thesis-campaign-select"
                       data-testid="thesis-campaign-select"
                       value={selectedCampaignId()}
                       onChange={(event) =>
