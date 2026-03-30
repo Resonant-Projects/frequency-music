@@ -84,6 +84,7 @@ function CampaignCard(props: {
     descriptionMd?: string;
     status: "active" | "paused" | "completed";
   }) => Promise<void>;
+  onNotice?: (message: string) => void;
 }) {
   type CampaignDraft = {
     title: string;
@@ -142,7 +143,10 @@ function CampaignCard(props: {
     const currentDraft = draft();
     const title = currentDraft.title.trim();
     const question = currentDraft.question.trim();
-    if (!title || !question) return;
+    if (!title || !question) {
+      props.onNotice?.("Campaign title and question are required.");
+      return;
+    }
     setSaving(true);
     try {
       await props.onSave({
@@ -630,6 +634,7 @@ export function WeeklyTurnsPage() {
                     thesisTitleById={thesisTitleById()}
                     onActivate={handleActivateCampaign}
                     onSave={handleSaveCampaign}
+                    onNotice={setNotice}
                   />
                 )}
               </For>

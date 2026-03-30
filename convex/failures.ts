@@ -27,6 +27,19 @@ export type DataModelMap = {
   listeningSessions: Doc<"listeningSessions">;
 };
 
+function resolveBranchCreatedAt(
+  branchSummary: ReturnType<typeof summarizeListeningSessions>,
+  branchListeningSessions: Doc<"listeningSessions">[],
+  fallbackTimestamp: number,
+): number {
+  if (!branchSummary.latestListeningSessionId) return fallbackTimestamp;
+  const session =
+    branchListeningSessions.find(
+      (s) => s._id === branchSummary.latestListeningSessionId,
+    ) ?? branchListeningSessions[0];
+  return session?.createdAt ?? fallbackTimestamp;
+}
+
 type BranchFailureContext = {
   rootComposition: Doc<"compositions">;
   revisionBranchRootId: Id<"compositions">;
@@ -415,15 +428,11 @@ async function deriveCompositionFailures(
         makeFailureEntry({
           key: `composition:${context.branch.revisionBranchRootId}:repeat_no_expand`,
           reason: "repeat_no_expand_composition",
-          createdAt: context.branch.branchSummary.latestListeningSessionId
-            ? ((
-                context.branch.branchListeningSessions.find(
-                  (session) =>
-                    session._id ===
-                    context.branch.branchSummary.latestListeningSessionId,
-                ) ?? context.branch.branchListeningSessions[0]
-              )?.createdAt ?? context.branch.rootComposition.updatedAt)
-            : context.branch.rootComposition.updatedAt,
+          createdAt: resolveBranchCreatedAt(
+            context.branch.branchSummary,
+            context.branch.branchListeningSessions,
+            context.branch.rootComposition.updatedAt,
+          ),
           explanation:
             "Multiple low-yield listening outcomes across this revision branch suggest the branch should remain archived.",
           title: context.branch.rootComposition.title,
@@ -648,15 +657,11 @@ async function deriveEntryByKey(
       return makeFailureEntry({
         key,
         reason: "repeat_no_expand_composition",
-        createdAt: context.branch.branchSummary.latestListeningSessionId
-          ? ((
-              context.branch.branchListeningSessions.find(
-                (session) =>
-                  session._id ===
-                  context.branch.branchSummary.latestListeningSessionId,
-              ) ?? context.branch.branchListeningSessions[0]
-            )?.createdAt ?? context.branch.rootComposition.updatedAt)
-          : context.branch.rootComposition.updatedAt,
+        createdAt: resolveBranchCreatedAt(
+          context.branch.branchSummary,
+          context.branch.branchListeningSessions,
+          context.branch.rootComposition.updatedAt,
+        ),
         explanation:
           "Multiple low-yield listening outcomes across this revision branch suggest the branch should remain archived.",
         title: context.branch.rootComposition.title,

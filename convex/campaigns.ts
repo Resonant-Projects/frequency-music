@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
+import type { DatabaseReader, DatabaseWriter } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import {
@@ -47,7 +48,10 @@ const recommendedActionsReturnValidator = v.object({
   actions: v.array(recommendedActionValidator),
 });
 
-async function getThesisOrThrow(ctx: { db: any }, thesisId: Id<"theses">) {
+async function getThesisOrThrow(
+  ctx: { db: DatabaseReader },
+  thesisId: Id<"theses">,
+) {
   const thesis = await ctx.db.get("theses", thesisId);
   if (!thesis) {
     throw new ConvexError({
@@ -59,19 +63,19 @@ async function getThesisOrThrow(ctx: { db: any }, thesisId: Id<"theses">) {
 }
 
 async function pauseOtherCampaigns(
-  ctx: { db: any },
+  ctx: { db: DatabaseWriter },
   exceptId?: Id<"campaigns">,
 ): Promise<void> {
   const activeCampaigns = await ctx.db
     .query("campaigns")
-    .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
+    .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
     .collect();
 
   const now = Date.now();
   await Promise.all(
     activeCampaigns
-      .filter((campaign: Doc<"campaigns">) => campaign._id !== exceptId)
-      .map((campaign: Doc<"campaigns">) =>
+      .filter((campaign) => campaign._id !== exceptId)
+      .map((campaign) =>
         ctx.db.patch(campaign._id, {
           status: "paused",
           updatedAt: now,
@@ -80,16 +84,18 @@ async function pauseOtherCampaigns(
   );
 }
 
-async function getActiveCampaignDoc(db: any): Promise<Doc<"campaigns"> | null> {
+async function getActiveCampaignDoc(
+  db: DatabaseReader,
+): Promise<Doc<"campaigns"> | null> {
   return await db
     .query("campaigns")
-    .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
+    .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
     .order("desc")
     .first();
 }
 
 async function loadScopedHypotheses(
-  db: any,
+  db: DatabaseReader,
   thesisIds: Id<"theses">[],
 ): Promise<Doc<"hypotheses">[]> {
   if (thesisIds.length === 0) return [];
@@ -97,16 +103,14 @@ async function loadScopedHypotheses(
     thesisIds.map((thesisId) =>
       db
         .query("hypotheses")
-        .withIndex("by_thesisId_updatedAt", (q: any) =>
-          q.eq("thesisId", thesisId),
-        )
+        .withIndex("by_thesisId_updatedAt", (q) => q.eq("thesisId", thesisId))
         .collect(),
     ),
   );
 
   const seen = new Set<string>();
   const rows: Doc<"hypotheses">[] = [];
-  for (const list of lists as Doc<"hypotheses">[][]) {
+  for (const list of lists) {
     for (const hypothesis of list) {
       if (seen.has(String(hypothesis._id))) continue;
       seen.add(String(hypothesis._id));
@@ -117,7 +121,7 @@ async function loadScopedHypotheses(
 }
 
 async function loadRecipesForHypotheses(
-  db: any,
+  db: DatabaseReader,
   hypotheses: Doc<"hypotheses">[],
 ): Promise<Doc<"recipes">[]> {
   if (hypotheses.length === 0) return [];
@@ -125,29 +129,27 @@ async function loadRecipesForHypotheses(
     hypotheses.map((hypothesis) =>
       db
         .query("recipes")
-        .withIndex("by_hypothesisId_updatedAt", (q: any) =>
+        .withIndex("by_hypothesisId_updatedAt", (q) =>
           q.eq("hypothesisId", hypothesis._id),
         )
         .collect(),
     ),
   );
-  return lists
-    .flat()
-    .toSorted(
-      (a: Doc<"recipes">, b: Doc<"recipes">) => b.updatedAt - a.updatedAt,
-    );
+  return lists.flat().toSorted((a, b) => b.updatedAt - a.updatedAt);
 }
 
-async function loadFallbackHypotheses(db: any): Promise<Doc<"hypotheses">[]> {
+async function loadFallbackHypotheses(
+  db: DatabaseReader,
+): Promise<Doc<"hypotheses">[]> {
   return await db
     .query("hypotheses")
-    .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
+    .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
     .order("desc")
     .take(12);
 }
 
 async function loadScope(
-  db: any,
+  db: DatabaseReader,
   campaignId?: Id<"campaigns"> | null,
 ): Promise<{
   campaign: Doc<"campaigns"> | null;
@@ -173,13 +175,12 @@ async function loadScope(
     campaign && campaign.thesisIds.length > 0
       ? (
           await Promise.all(
-            campaign.thesisIds.map((thesisId: Id<"theses">) =>
+            campaign.thesisIds.map((thesisId) =>
               db.get("theses", thesisId),
             ),
           )
         ).filter(
-          (thesis: Doc<"theses"> | null): thesis is Doc<"theses"> =>
-            thesis !== null,
+          (thesis): thesis is Doc<"theses"> => thesis !== null,
         )
       : [];
 
@@ -211,7 +212,7 @@ function distinctById<T extends { _id: string }>(rows: T[]): T[] {
 }
 
 export async function computeRecommendedActionContext(
-  db: any,
+  db: DatabaseReader,
   args?: {
     campaignId?: Id<"campaigns"> | null;
     limit?: number;
@@ -288,11 +289,9 @@ export async function computeRecommendedActionContext(
 
     const compositions = await db
       .query("compositions")
-      .withIndex("by_recipeId_updatedAt", (q: any) =>
-        q.eq("recipeId", recipe._id),
-      )
+      .withIndex("by_recipeId_updatedAt", (q) => q.eq("recipeId", recipe._id))
       .collect();
-    const sortedCompositions = (compositions as Doc<"compositions">[]).toSorted(
+    const sortedCompositions = compositions.toSorted(
       (a, b) => b.updatedAt - a.updatedAt,
     );
 
@@ -313,13 +312,11 @@ export async function computeRecommendedActionContext(
     if (!latestComposition) continue;
     const latestSessions = await db
       .query("listeningSessions")
-      .withIndex("by_compositionId_createdAt", (q: any) =>
+      .withIndex("by_compositionId_createdAt", (q) =>
         q.eq("compositionId", latestComposition._id),
       )
       .collect();
-    const summary = summarizeListeningSessions(
-      latestSessions as Doc<"listeningSessions">[],
-    );
+    const summary = summarizeListeningSessions(latestSessions);
 
     const compositionFailures = failureEntries.filter(
       (entry) =>
@@ -398,9 +395,13 @@ export async function computeRecommendedActionContext(
 }
 
 export async function listCampaignSelectionRows(
-  db: any,
+  db: DatabaseReader,
 ): Promise<Doc<"campaigns">[]> {
-  return await db.query("campaigns").order("desc").take(200);
+  return await db
+    .query("campaigns")
+    .withIndex("by_visibility_updatedAt", (q) => q.eq("visibility", "public"))
+    .order("desc")
+    .take(200);
 }
 
 export const list = query({
@@ -452,7 +453,9 @@ export const getActive = query({
   args: {},
   returns: v.union(campaignReturnValidator, v.null()),
   handler: async (ctx) => {
-    return await getActiveCampaignDoc(ctx.db);
+    const campaign = await getActiveCampaignDoc(ctx.db);
+    if (!campaign || campaign.visibility !== "public") return null;
+    return campaign;
   },
 });
 

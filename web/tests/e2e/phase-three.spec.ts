@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
 import { createRunId, expectNoticeToMatch, waitForRowByText } from "./helpers";
 
@@ -175,12 +176,15 @@ test.describe("phase three weekly turns", () => {
     });
 
     await createCampaignViaUi(page, oldestCampaignTitle);
-    for (let index = 0; index < 20; index += 1) {
-      await createCampaignViaUi(
-        page,
-        `E2E Newer Campaign ${index + 1} ${runId}`,
-      );
-    }
+    execSync(
+      `bunx convex run testing:seedCampaigns '${JSON.stringify({
+        count: 20,
+        titlePrefix: `E2E Newer Campaign ${runId}`,
+        devBypassSecret:
+          process.env.AUTH_BYPASS_SECRET ?? "freq-opus-extract-2026",
+      })}'`,
+      { timeout: 30_000 },
+    );
 
     await page.goto("/theses");
     await page.getByRole("link", { name: thesisTitle }).click();
