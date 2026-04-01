@@ -14,7 +14,6 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createMutation,
   createQuery,
@@ -91,20 +90,18 @@ export function HypothesesPage() {
     setNotice(null);
 
     try {
-      await createHypothesis(
-        withDevBypassSecret({
-          title: title().trim(),
-          question: question().trim(),
-          hypothesis: statement().trim(),
-          whyThisMatters: whyThisMatters().trim(),
-          rationaleMd: rationale().trim() || "Draft rationale.",
-          thesisId: thesisId().trim()
-            ? (thesisId().trim() as Doc<"theses">["_id"])
-            : undefined,
-          sourceIds: selectedSources(),
-          concepts: [],
-        }),
-      );
+      await createHypothesis({
+        title: title().trim(),
+        question: question().trim(),
+        hypothesis: statement().trim(),
+        whyThisMatters: whyThisMatters().trim(),
+        rationaleMd: rationale().trim() || "Draft rationale.",
+        thesisId: thesisId().trim()
+          ? (thesisId().trim() as Doc<"theses">["_id"])
+          : undefined,
+        sourceIds: selectedSources(),
+        concepts: [],
+      });
 
       setTitle("");
       setQuestion("");

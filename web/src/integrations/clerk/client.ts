@@ -1,6 +1,5 @@
 import { Clerk } from "@clerk/clerk-js";
 import { createSignal } from "solid-js";
-import { isLocalAuthBypassEnabled } from "../authBypass";
 import type { AuthAdapter } from "../convex";
 
 interface ClerkAuthSnapshot {
@@ -37,17 +36,6 @@ function updateAuthSnapshotFromClerk(clerk: Clerk) {
 }
 
 export async function initializeClerk() {
-  if (isLocalAuthBypassEnabled()) {
-    setAuthSnapshot({
-      isLoaded: true,
-      isSignedIn: true,
-      orgId: null,
-      orgRole: null,
-    });
-    clerkClient = null;
-    return;
-  }
-
   const publishableKey = getRequiredEnv("VITE_CLERK_PUBLISHABLE_KEY");
 
   const clerk = new Clerk(publishableKey);

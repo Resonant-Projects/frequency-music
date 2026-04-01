@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
+  globalSetup: "./tests/e2e/global-setup.ts",
   retries: 1,
   timeout: 90_000,
   expect: {
@@ -11,6 +12,7 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://127.0.0.1:4173",
+    storageState: "./tests/e2e/.auth/user.json",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",

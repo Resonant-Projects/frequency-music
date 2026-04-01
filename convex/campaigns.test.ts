@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { Doc } from "./_generated/dataModel";
 import {
   computeRecommendedActionContext,
+  isCampaignVisibleToViewer,
   listCampaignSelectionRows,
 } from "./campaigns";
 import { makeDb } from "./testHelpers";
@@ -135,7 +136,7 @@ describe("campaign recommendation context", () => {
       question: `Question ${index + 1}`,
       thesisIds: [],
       status: "paused" as const,
-      visibility: "private" as const,
+      visibility: "public" as const,
       createdBy: "system" as const,
       createdAt: index + 1,
       updatedAt: index + 1,
@@ -155,5 +156,112 @@ describe("campaign recommendation context", () => {
     expect(result).toHaveLength(24);
     expect(result[0]?._id).toBe("campaign-24");
     expect(result.at(-1)?._id).toBe("campaign-1");
+  });
+
+  test("keeps active campaigns with no theses empty-scoped", async () => {
+    const campaignId = "campaign-empty" as Doc<"campaigns">["_id"];
+    const unrelatedHypothesisId = "hyp-unrelated" as Doc<"hypotheses">["_id"];
+
+    const db = makeDb({
+      campaigns: [
+        {
+          _id: campaignId,
+          title: "Empty campaign",
+          question: "What should I attach?",
+          thesisIds: [],
+          status: "active",
+          visibility: "public",
+          createdBy: "system",
+          createdAt: 1,
+          updatedAt: 10,
+        },
+      ],
+      theses: [],
+      hypotheses: [
+        {
+          _id: unrelatedHypothesisId,
+          title: "Unrelated hypothesis",
+          question: "Q1",
+          hypothesis: "H1",
+          rationaleMd: "R1",
+          sourceIds: [],
+          status: "active",
+          visibility: "public",
+          createdBy: "system",
+          createdAt: 2,
+          updatedAt: 11,
+        },
+      ],
+      recipes: [],
+      compositions: [],
+      listeningSessions: [],
+    });
+
+    const result = await computeRecommendedActionContext(db as any);
+
+    expect(result.campaign?._id).toBe(campaignId);
+    expect(result.theses).toHaveLength(0);
+    expect(result.hypotheses).toHaveLength(0);
+    expect(result.recipes).toHaveLength(0);
+    expect(result.actions).toHaveLength(0);
+  });
+});
+
+describe("campaign visibility", () => {
+  const publicCampaign = {
+    visibility: "public",
+    createdBy: "system",
+  } as const;
+  const followersCampaign = {
+    visibility: "followers",
+    createdBy: "system",
+  } as const;
+  const privateCampaign = {
+    visibility: "private",
+    createdBy: "user-1",
+  } as const;
+
+  test("allows anonymous viewers to read public campaigns", () => {
+    expect(isCampaignVisibleToViewer(publicCampaign as any, null)).toBe(true);
+  });
+
+  test("blocks anonymous viewers from follower and private campaigns", () => {
+    expect(isCampaignVisibleToViewer(followersCampaign as any, null)).toBe(
+      false,
+    );
+    expect(isCampaignVisibleToViewer(privateCampaign as any, null)).toBe(false);
+  });
+
+  test("allows authenticated non-owners to read follower campaigns", () => {
+    expect(
+      isCampaignVisibleToViewer(followersCampaign as any, {
+        subject: "user-2",
+        isBypass: false,
+      }),
+    ).toBe(true);
+  });
+
+  test("blocks authenticated non-owners from private campaigns", () => {
+    expect(
+      isCampaignVisibleToViewer(privateCampaign as any, {
+        subject: "user-2",
+        isBypass: false,
+      }),
+    ).toBe(false);
+  });
+
+  test("allows private campaign owners and bypass viewers", () => {
+    expect(
+      isCampaignVisibleToViewer(privateCampaign as any, {
+        subject: "user-1",
+        isBypass: false,
+      }),
+    ).toBe(true);
+    expect(
+      isCampaignVisibleToViewer(privateCampaign as any, {
+        subject: "system",
+        isBypass: true,
+      }),
+    ).toBe(true);
   });
 });

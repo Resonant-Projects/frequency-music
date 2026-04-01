@@ -13,7 +13,6 @@ import {
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import { createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
@@ -61,12 +60,10 @@ export function ThesisDetailPage() {
       return;
     }
     try {
-      await attachThesis(
-        withDevBypassSecret({
-          campaignId: selectedCampaignId() as Id<"campaigns">,
-          thesisId: params().thesisId as Id<"theses">,
-        }),
-      );
+      await attachThesis({
+        campaignId: selectedCampaignId() as Id<"campaigns">,
+        thesisId: params().thesisId as Id<"theses">,
+      });
       setNotice("Thesis attached to campaign.");
       setSelectedCampaignId("");
     } catch (error) {
@@ -76,12 +73,10 @@ export function ThesisDetailPage() {
 
   async function handleDetach(campaignId: Id<"campaigns">) {
     try {
-      await detachThesis(
-        withDevBypassSecret({
-          campaignId,
-          thesisId: params().thesisId as Id<"theses">,
-        }),
-      );
+      await detachThesis({
+        campaignId,
+        thesisId: params().thesisId as Id<"theses">,
+      });
       setNotice("Thesis detached from campaign.");
     } catch (error) {
       setNotice(`Detach failed: ${String(error)}`);

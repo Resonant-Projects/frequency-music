@@ -21,7 +21,6 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
   createMutation,
@@ -347,7 +346,7 @@ export function WeeklyTurnsPage() {
   async function runGenerate() {
     setNotice(null);
     try {
-      const result = await generateBrief(withDevBypassSecret({ daysBack: 7 }));
+      const result = await generateBrief({ daysBack: 7 });
       setNotice(`Weekly turn generated for ${result.weekOf}.`);
     } catch (error) {
       setNotice(`Generation failed: ${String(error)}`);
@@ -362,14 +361,12 @@ export function WeeklyTurnsPage() {
     }
 
     try {
-      await createCampaign(
-        withDevBypassSecret({
-          title: title().trim(),
-          question: question().trim(),
-          descriptionMd: descriptionMd().trim() || undefined,
-          status: status(),
-        }),
-      );
+      await createCampaign({
+        title: title().trim(),
+        question: question().trim(),
+        descriptionMd: descriptionMd().trim() || undefined,
+        status: status(),
+      });
       setTitle("");
       setQuestion("");
       setDescriptionMd("");
@@ -382,10 +379,11 @@ export function WeeklyTurnsPage() {
 
   async function handleActivateCampaign(id: Id<"campaigns">) {
     try {
-      await setActiveCampaign(withDevBypassSecret({ id }));
+      await setActiveCampaign({ id });
       setNotice("Active campaign updated.");
     } catch (error) {
       setNotice(`Campaign activation failed: ${String(error)}`);
+      throw error;
     }
   }
 
@@ -397,10 +395,11 @@ export function WeeklyTurnsPage() {
     status: "active" | "paused" | "completed";
   }) {
     try {
-      await updateCampaign(withDevBypassSecret(args));
+      await updateCampaign(args);
       setNotice("Campaign updated.");
     } catch (error) {
       setNotice(`Campaign update failed: ${String(error)}`);
+      throw error;
     }
   }
 

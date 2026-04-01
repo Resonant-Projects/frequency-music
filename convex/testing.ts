@@ -1,6 +1,16 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "./_generated/server";
-import { requireAuth } from "./auth";
+import { requireAuth, type AppIdentity } from "./auth";
+
+export function assertBypassIdentity(
+  identity: Pick<AppIdentity, "isBypass">,
+): void {
+  if (identity.isBypass) return;
+  throw new ConvexError({
+    code: "UNAUTHORIZED",
+    message: "Bypass authentication is required for seedCampaigns",
+  });
+}
 
 export const seedCampaigns = mutation({
   args: {
@@ -10,7 +20,8 @@ export const seedCampaigns = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
+    const identity = await requireAuth(ctx, args);
+    assertBypassIdentity(identity);
     const now = Date.now();
     for (let i = 0; i < args.count; i++) {
       await ctx.db.insert("campaigns", {

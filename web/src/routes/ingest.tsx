@@ -13,7 +13,6 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
   createMutation,
@@ -111,17 +110,15 @@ export function IngestPage() {
     setNotice(null);
 
     try {
-      const result = await createFromUrlInput(
-        withDevBypassSecret({
-          url: urlValue().trim(),
-          title: urlTitle().trim() || undefined,
-          rawText: urlRawText().trim() || undefined,
-          tags: urlTags()
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-        }),
-      );
+      const result = await createFromUrlInput({
+        url: urlValue().trim(),
+        title: urlTitle().trim() || undefined,
+        rawText: urlRawText().trim() || undefined,
+        tags: urlTags()
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      });
 
       setNotice(
         result.queued
@@ -155,17 +152,15 @@ export function IngestPage() {
     setNotice(null);
 
     try {
-      const result = await createFromYouTubeInput(
-        withDevBypassSecret({
-          url: ytValue().trim(),
-          title: ytTitle().trim() || undefined,
-          transcript: ytTranscript().trim() || undefined,
-          tags: ytTags()
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-        }),
-      );
+      const result = await createFromYouTubeInput({
+        url: ytValue().trim(),
+        title: ytTitle().trim() || undefined,
+        transcript: ytTranscript().trim() || undefined,
+        tags: ytTags()
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      });
 
       setNotice(
         result.queued
@@ -198,13 +193,11 @@ export function IngestPage() {
     setIsSubmitting(true);
 
     try {
-      await createFeed(
-        withDevBypassSecret({
-          name: feedName().trim(),
-          url: feedUrl().trim(),
-          type: feedType() as "rss" | "podcast" | "youtube",
-        }),
-      );
+      await createFeed({
+        name: feedName().trim(),
+        url: feedUrl().trim(),
+        type: feedType() as "rss" | "podcast" | "youtube",
+      });
       setFeedName("");
       setFeedUrl("");
       setNotice("Feed created.");
@@ -217,9 +210,7 @@ export function IngestPage() {
 
   async function toggleFeed(id: string, enabled: boolean) {
     try {
-      await setFeedEnabled(
-        withDevBypassSecret({ id: id as Id<"feeds">, enabled: !enabled }),
-      );
+      await setFeedEnabled({ id: id as Id<"feeds">, enabled: !enabled });
       setNotice("Feed state updated.");
     } catch (error) {
       setNotice(`Failed to toggle feed: ${String(error)}`);
@@ -228,7 +219,7 @@ export function IngestPage() {
 
   async function runPoll() {
     try {
-      await pollFeedsNow(withDevBypassSecret({}));
+      await pollFeedsNow({});
       setNotice("Feed poll started.");
     } catch (error) {
       setNotice(`Feed poll failed: ${String(error)}`);

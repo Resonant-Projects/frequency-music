@@ -13,7 +13,6 @@ import {
   UIInput,
   UITextarea,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
@@ -107,13 +106,11 @@ export function ThesesPage() {
       return;
     }
     try {
-      await createThesis(
-        withDevBypassSecret({
-          title: title().trim(),
-          statement: statement().trim(),
-          descriptionMd: descriptionMd().trim() || undefined,
-        }),
-      );
+      await createThesis({
+        title: title().trim(),
+        statement: statement().trim(),
+        descriptionMd: descriptionMd().trim() || undefined,
+      });
       setTitle("");
       setStatement("");
       setDescriptionMd("");

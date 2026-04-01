@@ -13,7 +13,6 @@ import {
   UIInput,
   UISelect,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createMutation,
   createQuery,
@@ -59,20 +58,18 @@ export function CompositionsPage() {
     }
 
     try {
-      await createComposition(
-        withDevBypassSecret({
-          title: title().trim(),
-          recipeId: recipeId() as Id<"recipes">,
-          artifactType: artifactType() as
-            | "microStudy"
-            | "expandedStudy"
-            | "fullTrack",
-          revisionParentId: revisionParentId().trim()
-            ? (revisionParentId().trim() as Id<"compositions">)
-            : undefined,
-          revisionVariable: revisionVariable().trim() || undefined,
-        }),
-      );
+      await createComposition({
+        title: title().trim(),
+        recipeId: recipeId() as Id<"recipes">,
+        artifactType: artifactType() as
+          | "microStudy"
+          | "expandedStudy"
+          | "fullTrack",
+        revisionParentId: revisionParentId().trim()
+          ? (revisionParentId().trim() as Id<"compositions">)
+          : undefined,
+        revisionVariable: revisionVariable().trim() || undefined,
+      });
       setTitle("");
       setRevisionParentId("");
       setRevisionVariable("");
@@ -84,12 +81,10 @@ export function CompositionsPage() {
 
   async function setStatus(id: string, status: string) {
     try {
-      await updateComposition(
-        withDevBypassSecret({
-          id: id as Id<"compositions">,
-          status: status as "idea" | "in_progress" | "rendered" | "published",
-        }),
-      );
+      await updateComposition({
+        id: id as Id<"compositions">,
+        status: status as "idea" | "in_progress" | "rendered" | "published",
+      });
       setNotice(`Composition set to ${status}.`);
     } catch (error) {
       setNotice(`Status update failed: ${String(error)}`);

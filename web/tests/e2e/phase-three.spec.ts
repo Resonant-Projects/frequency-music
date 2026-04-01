@@ -160,6 +160,9 @@ test.describe("phase three weekly turns", () => {
   test("older campaigns remain selectable from thesis detail", async ({
     page,
   }) => {
+    const bypassSecret = process.env.AUTH_BYPASS_SECRET;
+    test.skip(!bypassSecret, "Requires AUTH_BYPASS_SECRET for CLI seedCampaigns.");
+
     const runId = createRunId();
     const thesisTitle = `E2E Selection Thesis ${runId}`;
     const oldestCampaignTitle = `E2E Oldest Campaign ${runId}`;
@@ -180,8 +183,7 @@ test.describe("phase three weekly turns", () => {
       `bunx convex run testing:seedCampaigns '${JSON.stringify({
         count: 20,
         titlePrefix: `E2E Newer Campaign ${runId}`,
-        devBypassSecret:
-          process.env.AUTH_BYPASS_SECRET ?? "freq-opus-extract-2026",
+        devBypassSecret: bypassSecret,
       })}'`,
       { timeout: 30_000 },
     );

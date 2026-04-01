@@ -9,7 +9,6 @@ import {
   UIButton,
   UICard,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
   createMutation,
@@ -83,7 +82,7 @@ export function DisplayPage() {
 
   async function runRowExtraction(sourceId: Id<"sources">) {
     try {
-      await runExtraction(withDevBypassSecret({ sourceId }));
+      await runExtraction({ sourceId });
       setNotice("Extraction started.");
     } catch (error) {
       setNotice(`Extraction failed: ${String(error)}`);
@@ -92,12 +91,10 @@ export function DisplayPage() {
 
   async function markTriaged(sourceId: Id<"sources">) {
     try {
-      await updateStatus(
-        withDevBypassSecret({
-          id: sourceId,
-          status: "triaged" as const,
-        }),
-      );
+      await updateStatus({
+        id: sourceId,
+        status: "triaged" as const,
+      });
       setNotice("Source marked as triaged.");
     } catch (error) {
       setNotice(`Status update failed: ${String(error)}`);
@@ -106,12 +103,10 @@ export function DisplayPage() {
 
   async function promoteFollowers(sourceId: Id<"sources">) {
     try {
-      await setVisibility(
-        withDevBypassSecret({
-          id: sourceId,
-          visibility: "followers",
-        }),
-      );
+      await setVisibility({
+        id: sourceId,
+        visibility: "followers",
+      });
       setNotice("Visibility promoted to followers.");
     } catch (error) {
       setNotice(`Promotion failed: ${String(error)}`);

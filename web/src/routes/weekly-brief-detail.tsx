@@ -14,7 +14,6 @@ import {
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import { createAction, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import { extractTitle } from "../lib/markdown-utils";
@@ -61,9 +60,7 @@ export function WeeklyBriefDetailPage() {
     setPublishing(true);
     setNotice(null);
     try {
-      const result = await publishToNotion(
-        withDevBypassSecret({ id: b._id as Id<"weeklyBriefs"> }),
-      );
+      const result = await publishToNotion({ id: b._id as Id<"weeklyBriefs"> });
       setNotice(`Published to Notion: ${result.notionUrl ?? "success"}`);
     } catch (error) {
       console.error("Weekly brief publish failed", error);

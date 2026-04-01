@@ -16,7 +16,6 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import { createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
@@ -91,21 +90,17 @@ export function HypothesisDetailPage() {
   });
 
   async function setStatus(status: Status) {
-    await updateHypothesis(
-      withDevBypassSecret({
-        id: params().hypothesisId as Id<"hypotheses">,
-        status,
-      }),
-    );
+    await updateHypothesis({
+      id: params().hypothesisId as Id<"hypotheses">,
+      status,
+    });
   }
 
   async function setResolution(resolution: Resolution) {
-    await updateHypothesis(
-      withDevBypassSecret({
-        id: params().hypothesisId as Id<"hypotheses">,
-        resolution,
-      }),
-    );
+    await updateHypothesis({
+      id: params().hypothesisId as Id<"hypotheses">,
+      resolution,
+    });
   }
 
   async function handleStatusClick(status: Status) {
@@ -144,13 +139,11 @@ export function HypothesisDetailPage() {
     setSaving(true);
     setNotice(null);
     try {
-      await updateHypothesis(
-        withDevBypassSecret({
-          id: params().hypothesisId as Id<"hypotheses">,
-          whyThisMatters: whyThisMattersDraft().trim() || undefined,
-          thesisId: thesisIdDraft() ? (thesisIdDraft() as Id<"theses">) : null,
-        }),
-      );
+      await updateHypothesis({
+        id: params().hypothesisId as Id<"hypotheses">,
+        whyThisMatters: whyThisMattersDraft().trim() || undefined,
+        thesisId: thesisIdDraft() ? (thesisIdDraft() as Id<"theses">) : null,
+      });
       setNotice("Meaning metadata updated.");
     } catch (error) {
       setNotice(

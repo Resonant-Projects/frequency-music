@@ -8,7 +8,6 @@ import {
 } from "@tanstack/solid-router";
 import { type Component, createEffect, createSignal, lazy } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
-import { isLocalAuthBypassEnabled } from "./integrations/authBypass";
 import {
   buildHostedSignInUrl,
   useClerkAuthSnapshot,
@@ -115,10 +114,6 @@ const AppShell: Component = () => {
 };
 
 const RootLayout: Component = () => {
-  if (isLocalAuthBypassEnabled()) {
-    return <AppShell />;
-  }
-
   const auth = useClerkAuthSnapshot();
 
   createEffect(() => {

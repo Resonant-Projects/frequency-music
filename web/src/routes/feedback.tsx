@@ -13,7 +13,6 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createMutation,
   createQuery,
@@ -105,28 +104,23 @@ export function FeedbackPage() {
       const parsedStandoutMoments = parseLineSeparated(standoutMoments());
 
       setNotice(null);
-      await createSession(
-        withDevBypassSecret({
-          compositionId: compositionId() as Id<"compositions">,
-          participants: parseParticipants(participants()),
-          contextMd: contextMd().trim() || undefined,
-          feedbackMd: feedbackMd().trim(),
-          ratings: {
-            bodilyPleasantness: Number(pleasantness()),
-            goosebumps: Number(goosebumps()),
-            musicality: Number(musicality()),
-            expandability: parseOptionalRating(expandability()),
-          },
-          feltQualities:
-            parsedFeltQualities.length > 0 ? parsedFeltQualities : undefined,
-          bodyMapTags:
-            parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
-          standoutMoments:
-            parsedStandoutMoments.length > 0
-              ? parsedStandoutMoments
-              : undefined,
-        }),
-      );
+      await createSession({
+        compositionId: compositionId() as Id<"compositions">,
+        participants: parseParticipants(participants()),
+        contextMd: contextMd().trim() || undefined,
+        feedbackMd: feedbackMd().trim(),
+        ratings: {
+          bodilyPleasantness: Number(pleasantness()),
+          goosebumps: Number(goosebumps()),
+          musicality: Number(musicality()),
+          expandability: parseOptionalRating(expandability()),
+        },
+        feltQualities:
+          parsedFeltQualities.length > 0 ? parsedFeltQualities : undefined,
+        bodyMapTags: parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
+        standoutMoments:
+          parsedStandoutMoments.length > 0 ? parsedStandoutMoments : undefined,
+      });
 
       setParticipants("");
       setContextMd("");

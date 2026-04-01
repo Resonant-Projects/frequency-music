@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { DatabaseReader, DatabaseWriter } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { requireAuth } from "./auth";
+import { requireAuth, type AppIdentity } from "./auth";
 import {
   deriveFailureArchiveEntries,
   type FailureArchiveEntry,
@@ -47,6 +47,8 @@ const recommendedActionsReturnValidator = v.object({
   theses: v.array(thesisReturnValidator),
   actions: v.array(recommendedActionValidator),
 });
+
+type CampaignViewerIdentity = Pick<AppIdentity, "subject" | "isBypass"> | null;
 
 async function getThesisOrThrow(
   ctx: { db: DatabaseReader },
@@ -185,12 +187,14 @@ async function loadScope(
       : [];
 
   const hypotheses =
-    theses.length > 0
+    campaign === null
+      ? await loadFallbackHypotheses(db)
+      : theses.length > 0
       ? await loadScopedHypotheses(
           db,
           theses.map((thesis) => thesis._id),
         )
-      : await loadFallbackHypotheses(db);
+      : [];
 
   const recipes = await loadRecipesForHypotheses(db, hypotheses);
 
@@ -209,6 +213,17 @@ function distinctById<T extends { _id: string }>(rows: T[]): T[] {
     seen.add(String(row._id));
     return true;
   });
+}
+
+export function isCampaignVisibleToViewer(
+  campaign: Pick<Doc<"campaigns">, "visibility" | "createdBy">,
+  identity: CampaignViewerIdentity,
+): boolean {
+  if (campaign.visibility === "public") return true;
+  if (campaign.visibility === "followers") return identity !== null;
+  if (!identity) return false;
+  if (identity.isBypass) return true;
+  return campaign.createdBy !== "system" && identity.subject === campaign.createdBy;
 }
 
 export async function computeRecommendedActionContext(
@@ -463,8 +478,35 @@ export const getRecommendedActions = query({
   args: { campaignId: v.optional(v.id("campaigns")) },
   returns: recommendedActionsReturnValidator,
   handler: async (ctx, args) => {
+    const campaign =
+      args.campaignId !== undefined
+        ? await ctx.db.get("campaigns", args.campaignId)
+        : await getActiveCampaignDoc(ctx.db);
+
+    if (args.campaignId !== undefined && campaign === null) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Campaign not found",
+      });
+    }
+
+    const authIdentity = await ctx.auth.getUserIdentity();
+    const viewerIdentity: CampaignViewerIdentity = authIdentity
+      ? {
+          subject: authIdentity.subject,
+          isBypass: false,
+        }
+      : null;
+
+    if (campaign && !isCampaignVisibleToViewer(campaign, viewerIdentity)) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "You do not have access to this campaign",
+      });
+    }
+
     const result = await computeRecommendedActionContext(ctx.db, {
-      campaignId: args.campaignId,
+      campaignId: campaign?._id ?? null,
     });
 
     return {
@@ -510,7 +552,7 @@ export const create = mutation({
       startedAt: status === "active" ? now : undefined,
       endedAt: status === "completed" ? now : undefined,
       summaryMd: createArgs.summaryMd,
-      visibility: "private",
+      visibility: "public",
       createdBy:
         identity.subject === "system"
           ? "system"
