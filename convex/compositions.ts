@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import type { DatabaseReader } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import {
@@ -14,21 +15,8 @@ import {
   recipeReturnValidator,
 } from "./validators";
 
-type ExtractionQueryDb = {
-  query: (table: "extractions") => {
-    withIndex: (
-      name: "by_sourceId_createdAt",
-      apply: (q: { eq: (field: "sourceId", value: Id<"sources">) => unknown }) => unknown,
-    ) => {
-      order: (direction: "desc") => {
-        collect: () => Promise<any[]>;
-      };
-    };
-  };
-};
-
 export async function loadExtractionsForHypothesisSourceIds(
-  db: ExtractionQueryDb,
+  db: Pick<DatabaseReader, "query">,
   sourceIds: Id<"sources">[],
 ) {
   const extractionLists = await Promise.all(

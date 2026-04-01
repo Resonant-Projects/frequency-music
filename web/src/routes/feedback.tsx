@@ -76,8 +76,9 @@ function appendCommaValue(
   next: string,
 ): string {
   const values = parseCommaSeparated(current);
-  if (values.includes(next)) return current;
-  return values.length > 0 ? `${current}, ${next}` : next;
+  return values.includes(next)
+    ? values.join(", ")
+    : [...values, next].join(", ");
 }
 
 export function FeedbackPage() {
@@ -496,9 +497,11 @@ export function FeedbackPage() {
                         color: "rgba(245, 240, 232, 0.55)",
                         fontFamily: "mono",
                         fontSize: "xs",
-                        marginBottom:
-                          session.ratings?.expandability !== undefined ||
-                          (session.feltQualities?.length ?? 0) > 0
+                          marginBottom:
+                            session.ratings?.expandability !== undefined ||
+                            (session.feltQualities?.length ?? 0) > 0 ||
+                            (session.bodyMapTags?.length ?? 0) > 0 ||
+                            Boolean(session.bodyMapNotes)
                             ? "2"
                             : "0",
                       })}
@@ -515,7 +518,9 @@ export function FeedbackPage() {
                           fontSize: "xs",
                           marginBottom:
                             (session.feltQualities?.length ?? 0) > 0 ||
-                            (session.standoutMoments?.length ?? 0) > 0
+                            (session.standoutMoments?.length ?? 0) > 0 ||
+                            (session.bodyMapTags?.length ?? 0) > 0 ||
+                            Boolean(session.bodyMapNotes)
                               ? "2"
                               : "0",
                         })}
@@ -545,8 +550,8 @@ export function FeedbackPage() {
                           color: "rgba(245, 240, 232, 0.62)",
                           fontSize: "sm",
                           marginBottom:
-                            (session.standoutMoments?.length ?? 0) > 0 ||
-                            Boolean(session.bodyMapNotes)
+                            Boolean(session.bodyMapNotes) ||
+                            (session.standoutMoments?.length ?? 0) > 0
                               ? "2"
                               : "0",
                         })}
@@ -560,7 +565,7 @@ export function FeedbackPage() {
                           class={css({
                             color: "rgba(245, 240, 232, 0.62)",
                             fontSize: "sm",
-                            marginBottom:
+                          marginBottom:
                               (session.standoutMoments?.length ?? 0) > 0
                                 ? "2"
                                 : "0",

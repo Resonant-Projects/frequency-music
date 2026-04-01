@@ -146,7 +146,7 @@ function CampaignCard(props: {
     const question = currentDraft.question.trim();
     if (!title || !question) {
       props.onNotice?.("Campaign title and question are required.");
-      return;
+      return false;
     }
     setSaving(true);
     try {
@@ -158,6 +158,7 @@ function CampaignCard(props: {
         status: currentDraft.status,
       });
       setDirty(false);
+      return true;
     } finally {
       setSaving(false);
     }
@@ -176,6 +177,7 @@ function CampaignCard(props: {
   async function handleCreateRecap() {
     setCreatingRecap(true);
     try {
+      if (dirty() && !(await saveCampaign())) return;
       await props.onCreateRecap(props.campaign._id);
     } finally {
       setCreatingRecap(false);

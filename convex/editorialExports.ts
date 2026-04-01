@@ -1,7 +1,7 @@
 "use node";
 
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
@@ -34,6 +34,7 @@ export const exportForAstroInternal = internalAction({
       evidenceStatus: Doc<"editorialArtifacts">["evidenceStatus"];
     }> = [];
 
+    await rm(outputDir, { recursive: true, force: true });
     await mkdir(outputDir, { recursive: true });
 
     for (const item of exportBundle) {

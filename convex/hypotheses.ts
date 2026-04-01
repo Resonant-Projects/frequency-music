@@ -182,8 +182,9 @@ export const listMissingWhyThisMatters = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(hypothesisReturnValidator),
   handler: async (ctx, args) => {
-    const rows = await ctx.db.query("hypotheses").order("desc").take(500);
+    const rows = await ctx.db.query("hypotheses").collect();
     return rows
+      .toSorted((a, b) => b.updatedAt - a.updatedAt)
       .filter((row) => !row.whyThisMatters?.trim())
       .slice(0, args.limit ?? 50);
   },
@@ -279,8 +280,16 @@ export const update = mutation({
       await loadThesisOrThrow(ctx, thesisId);
     }
 
+    const whyThisMatters =
+      updates.whyThisMatters !== undefined
+        ? assertWhyThisMatters(updates.whyThisMatters)
+        : hypothesis.whyThisMatters !== undefined
+          ? assertWhyThisMatters(hypothesis.whyThisMatters)
+          : undefined;
+
     const patch = {
       ...updates,
+      ...(whyThisMatters !== undefined ? { whyThisMatters } : {}),
       ...(thesisId !== undefined
         ? { thesisId: thesisId === null ? undefined : thesisId }
         : {}),

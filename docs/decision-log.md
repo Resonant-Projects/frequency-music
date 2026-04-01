@@ -227,6 +227,7 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 **Revisit trigger**
 - Revisit if weekly briefs need explicit regeneration flows, if parallel campaign work becomes common, or if "theme" semantics diverge from campaign semantics in practice.
 
+
 ## 2026-04-01 — Phase 4 public narrative export contract
 
 **Decision**

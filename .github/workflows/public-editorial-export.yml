@@ -25,7 +25,11 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Generate public editorial snapshot
-        run: bunx convex run editorialArtifacts:exportForAstro '{"outputDir":"exports/public-editorial/v1"}'
+        env:
+          DEV_BYPASS_SECRET: ${{ secrets.AUTH_BYPASS_SECRET }}
+        run: |
+          test -n "${DEV_BYPASS_SECRET}"
+          bunx convex run editorialArtifacts:exportForAstro "{\"outputDir\":\"exports/public-editorial/v1\",\"devBypassSecret\":\"${DEV_BYPASS_SECRET}\"}"
 
       - name: Publish snapshot branch
         env:

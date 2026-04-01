@@ -167,6 +167,91 @@ describe("phase 4 editorial artifacts", () => {
     ).toBe(false);
   });
 
+  test("treats follower-only source material as non-public during publish validation", async () => {
+    const artifact = {
+      _id: "artifact-followers",
+      _creationTime: 1,
+      kind: "experiment_recap",
+      slug: "artifact-followers",
+      title: "Follower Notes",
+      dek: "Draft",
+      bodyMd: "This cites follower-only field notes directly.",
+      whyItMattersMd: "Why this matters.",
+      uncertaintyMd: "Still uncertain.",
+      evidenceStatus: "mixed",
+      status: "approved",
+      visibility: "public",
+      primaryRef: { type: "hypothesis", id: "hyp-followers" },
+      linkedIds: {
+        thesisIds: [],
+        hypothesisIds: ["hyp-followers"],
+        recipeIds: [],
+        compositionIds: [],
+        listeningSessionIds: [],
+        failureKeys: [],
+      },
+      publicEvidenceCards: [],
+      createdBy: "system",
+      createdAt: 1,
+      updatedAt: 2,
+      publishedAt: 3,
+    } as Doc<"editorialArtifacts">;
+
+    const db = makeDb({
+      campaigns: [],
+      theses: [],
+      hypotheses: [
+        {
+          _id: "hyp-followers",
+          title: "Hypothesis",
+          question: "Q",
+          hypothesis: "H",
+          whyThisMatters: "W",
+          rationaleMd: "R",
+          sourceIds: ["source-followers"],
+          status: "active",
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      recipes: [],
+      compositions: [],
+      listeningSessions: [],
+      weeklyBriefs: [],
+      editorialArtifacts: [artifact],
+      sources: [
+        {
+          _id: "source-followers",
+          title: "Follower-only field notes",
+          visibility: "followers",
+          createdBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      extractions: [
+        {
+          _id: "extract-followers",
+          sourceId: "source-followers",
+          summary: "This cites follower-only field notes directly.",
+          createdAt: 1,
+          claims: [],
+          compositionParameters: [],
+          topics: [],
+        },
+      ],
+    });
+
+    const validation = await validateArtifactForPublish(db as any, artifact);
+
+    expect(validation.canPublish).toBe(false);
+    expect(
+      validation.checks.find((check) => check.key === "privateExtractions")?.ok,
+    ).toBe(false);
+  });
+
   test("exports deterministic markdown with optional campaign and thesis slugs", async () => {
     const artifact = {
       _id: "artifact-2",

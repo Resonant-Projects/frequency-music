@@ -114,55 +114,14 @@ export function EditorialDetailPage() {
   const validation = createMemo(() => {
     const row = detail();
     const current = draft();
-    const checks = [
-      {
-        key: "body",
-        ok: (current?.bodyMd.trim().length ?? 0) > 0,
-        message: "Narrative body is required.",
-      },
-      {
-        key: "why",
-        ok: (current?.whyItMattersMd.trim().length ?? 0) > 0,
-        message: "Why-it-matters section is required.",
-      },
-      {
-        key: "uncertainty",
-        ok: (current?.uncertaintyMd.trim().length ?? 0) > 0,
-        message: "Uncertainty section is required.",
-      },
-      {
-        key: "evidenceStatus",
-        ok: Boolean(current?.evidenceStatus),
-        message: "Evidence status is required.",
-      },
-      {
-        key: "visibility",
-        ok: current?.visibility === "public",
-        message: "Artifact must be public before publishing/export.",
-      },
-      {
-        key: "privateSources",
-        ok:
-          row?.validation.checks.find(
-            (check: ChecklistItem) => check.key === "privateSources",
-          )?.ok ?? true,
-        message: "Private source titles must not appear directly.",
-      },
-      {
-        key: "privateExtractions",
-        ok:
-          row?.validation.checks.find(
-            (check: ChecklistItem) => check.key === "privateExtractions",
-          )?.ok ?? true,
-        message: "Private extraction summaries must not be copied directly.",
-      },
-    ];
+    const checks = row?.validation.checks ?? [];
     return {
       checks,
-      canSubmitForReview: checks
-        .filter((check) => ["body", "why", "uncertainty"].includes(check.key))
-        .every((check) => check.ok),
-      canPublish: checks.every((check) => check.ok),
+      canSubmitForReview:
+        (current?.bodyMd.trim().length ?? 0) > 0 &&
+        (current?.whyItMattersMd.trim().length ?? 0) > 0 &&
+        (current?.uncertaintyMd.trim().length ?? 0) > 0,
+      canPublish: row?.validation.canPublish ?? false,
     };
   });
 
@@ -246,7 +205,7 @@ export function EditorialDetailPage() {
   async function handleSave() {
     const current = draft();
     const row = detail();
-    if (!current || !row) return;
+    if (!current || !row) return false;
     setSaving(true);
     setNotice(null);
     try {
@@ -272,8 +231,10 @@ export function EditorialDetailPage() {
         })),
       });
       setNotice("Editorial artifact saved.");
+      return true;
     } catch (error) {
       setNotice(`Save failed: ${String(error)}`);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -285,7 +246,7 @@ export function EditorialDetailPage() {
     setSubmitting(true);
     setNotice(null);
     try {
-      await handleSave();
+      if (!(await handleSave())) return;
       await submitForReview({ id: row.artifact._id });
       setNotice("Artifact moved to in review.");
     } catch (error) {
@@ -301,7 +262,7 @@ export function EditorialDetailPage() {
     setApproving(true);
     setNotice(null);
     try {
-      await handleSave();
+      if (!(await handleSave())) return;
       await approveArtifact({ id: row.artifact._id });
       setNotice("Artifact approved.");
     } catch (error) {
@@ -317,7 +278,7 @@ export function EditorialDetailPage() {
     setPublishing(true);
     setNotice(null);
     try {
-      await handleSave();
+      if (!(await handleSave())) return;
       await publishArtifact({ id: row.artifact._id });
       setNotice("Artifact published and ready for export.");
     } catch (error) {
@@ -635,8 +596,14 @@ export function EditorialDetailPage() {
                           </UIButton>
                         </div>
 
-                        <label class={fieldLabelClass}>Source Title</label>
+                        <label
+                          class={fieldLabelClass}
+                          for={`evidence-${index()}-source-title`}
+                        >
+                          Source Title
+                        </label>
                         <UIInput
+                          id={`evidence-${index()}-source-title`}
                           value={card.sourceTitle}
                           onInput={(event) =>
                             updateEvidenceCard(
@@ -647,8 +614,14 @@ export function EditorialDetailPage() {
                           }
                         />
 
-                        <label class={fieldLabelClass}>Canonical URL</label>
+                        <label
+                          class={fieldLabelClass}
+                          for={`evidence-${index()}-canonical-url`}
+                        >
+                          Canonical URL
+                        </label>
                         <UIInput
+                          id={`evidence-${index()}-canonical-url`}
                           value={card.sourceCanonicalUrl ?? ""}
                           onInput={(event) =>
                             updateEvidenceCard(
@@ -659,8 +632,14 @@ export function EditorialDetailPage() {
                           }
                         />
 
-                        <label class={fieldLabelClass}>Summary</label>
+                        <label
+                          class={fieldLabelClass}
+                          for={`evidence-${index()}-summary`}
+                        >
+                          Summary
+                        </label>
                         <UITextarea
+                          id={`evidence-${index()}-summary`}
                           rows={5}
                           value={card.summary}
                           onInput={(event) =>
@@ -683,8 +662,14 @@ export function EditorialDetailPage() {
                           })}
                         >
                           <div>
-                            <label class={fieldLabelClass}>Evidence Level</label>
+                            <label
+                              class={fieldLabelClass}
+                              for={`evidence-${index()}-evidence-level`}
+                            >
+                              Evidence Level
+                            </label>
                             <UISelect
+                              id={`evidence-${index()}-evidence-level`}
                               value={card.evidenceLevel}
                               onChange={(event) =>
                                 updateEvidenceCard(
@@ -702,8 +687,14 @@ export function EditorialDetailPage() {
                             </UISelect>
                           </div>
                           <div>
-                            <label class={fieldLabelClass}>Truth Confidence</label>
+                            <label
+                              class={fieldLabelClass}
+                              for={`evidence-${index()}-truth-confidence`}
+                            >
+                              Truth Confidence
+                            </label>
                             <UISelect
+                              id={`evidence-${index()}-truth-confidence`}
                               value={card.truthConfidence ?? ""}
                               onChange={(event) =>
                                 updateEvidenceCard(
@@ -721,8 +712,14 @@ export function EditorialDetailPage() {
                             </UISelect>
                           </div>
                           <div>
-                            <label class={fieldLabelClass}>Interest Level</label>
+                            <label
+                              class={fieldLabelClass}
+                              for={`evidence-${index()}-interest-level`}
+                            >
+                              Interest Level
+                            </label>
                             <UISelect
+                              id={`evidence-${index()}-interest-level`}
                               value={card.interestLevel ?? ""}
                               onChange={(event) =>
                                 updateEvidenceCard(

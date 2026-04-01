@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "@tanstack/solid-router";
-import { createEffect, createSignal, For, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
@@ -54,6 +54,13 @@ export function ThesisDetailPage() {
   const [notice, setNotice] = createSignal<string | null>(null);
   const [creatingSummary, setCreatingSummary] = createSignal(false);
   const [creatingChangedMind, setCreatingChangedMind] = createSignal(false);
+  const contradictedHypotheses = createMemo(
+    () =>
+      detail()?.hypotheses.filter(
+        (hypothesis: Doc<"hypotheses">) =>
+          hypothesis.resolution === "contradicted",
+      ) ?? [],
+  );
 
   createEffect(() => {
     const thesis = detail()?.thesis;
@@ -194,27 +201,19 @@ export function ThesisDetailPage() {
                     ? "Creating summary..."
                     : "Create thesis summary"}
                 </UIButton>
-                <Show
-                  when={
-                    row()
-                      .hypotheses.find(
-                        (hypothesis: Doc<"hypotheses">) =>
-                          hypothesis.resolution === "contradicted",
-                      )
-                  }
-                >
+                <For each={contradictedHypotheses()}>
                   {(hypothesis) => (
                     <UIButton
                       variant="outline"
-                      onClick={() => handleCreateChangedMind(hypothesis()._id)}
+                      onClick={() => handleCreateChangedMind(hypothesis._id)}
                       disabled={creatingChangedMind()}
                     >
                       {creatingChangedMind()
                         ? "Creating changed-mind draft..."
-                        : "Create what changed my mind"}
+                        : `Create changed-mind draft for ${hypothesis.title}`}
                     </UIButton>
                   )}
-                </Show>
+                </For>
               </div>
 
               <Show when={row().thesis.descriptionMd}>

@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import {
   action,
+  type DatabaseReader,
   internalMutation,
   internalQuery,
   mutation,
@@ -58,23 +59,6 @@ const publishValidationValidator = v.object({
   ),
 });
 
-type DbReader = {
-  get: <T extends TableName>(table: T, id: Id<T>) => Promise<Doc<T> | null>;
-  query: <T extends TableName>(table: T) => any;
-};
-
-type TableName =
-  | "campaigns"
-  | "compositions"
-  | "editorialArtifacts"
-  | "extractions"
-  | "hypotheses"
-  | "listeningSessions"
-  | "recipes"
-  | "sources"
-  | "theses"
-  | "weeklyBriefs";
-
 type PublishValidation = {
   canSubmitForReview: boolean;
   canPublish: boolean;
@@ -84,6 +68,8 @@ type PublishValidation = {
 type ArtifactKind = Doc<"editorialArtifacts">["kind"];
 type ArtifactEvidenceStatus = Doc<"editorialArtifacts">["evidenceStatus"];
 type ArtifactStatus = Doc<"editorialArtifacts">["status"];
+type ArtifactPrimaryRef = Doc<"editorialArtifacts">["primaryRef"];
+type ArtifactLinkedIds = Doc<"editorialArtifacts">["linkedIds"];
 type DraftPayload = {
   title: string;
   dek: string;
@@ -92,15 +78,8 @@ type DraftPayload = {
   uncertaintyMd: string;
   whatChangedMd?: string;
   evidenceStatus: ArtifactEvidenceStatus;
-  primaryRef: { type: "weeklyBrief" | "campaign" | "thesis" | "hypothesis"; id: string };
-  linkedIds: {
-    thesisIds: string[];
-    hypothesisIds: string[];
-    recipeIds: string[];
-    compositionIds: string[];
-    listeningSessionIds: string[];
-    failureKeys: string[];
-  };
+  primaryRef: ArtifactPrimaryRef;
+  linkedIds: ArtifactLinkedIds;
   publicEvidenceCards: Array<{
     sourceTitle: string;
     sourceCanonicalUrl?: string;
@@ -125,12 +104,12 @@ function slugify(input: string): string {
     .slice(0, 80);
 }
 
-function uniqueStrings(values: Array<string | undefined | null>): string[] {
-  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+function uniqueDefined<T>(values: Array<T | undefined | null>): T[] {
+  return [...new Set(values.filter((value): value is T => value != null))];
 }
 
 async function uniqueSlug(
-  db: DbReader,
+  db: DatabaseReader,
   seed: string,
   excludeId?: Id<"editorialArtifacts">,
 ): Promise<string> {
@@ -140,7 +119,7 @@ async function uniqueSlug(
   while (true) {
     const existing = await db
       .query("editorialArtifacts")
-      .withIndex("by_slug", (q: any) => q.eq("slug", candidate))
+      .withIndex("by_slug", (q) => q.eq("slug", candidate))
       .first();
     if (!existing || existing._id === excludeId) return candidate;
     candidate = `${base}-${suffix}`;
@@ -149,14 +128,14 @@ async function uniqueSlug(
 }
 
 async function loadRecipesForHypotheses(
-  db: DbReader,
-  hypothesisIds: string[],
+  db: DatabaseReader,
+  hypothesisIds: Id<"hypotheses">[],
 ): Promise<Doc<"recipes">[]> {
   const lists = await Promise.all(
     hypothesisIds.map((hypothesisId) =>
       db
         .query("recipes")
-        .withIndex("by_hypothesisId_updatedAt", (q: any) =>
+        .withIndex("by_hypothesisId_updatedAt", (q) =>
           q.eq("hypothesisId", hypothesisId),
         )
         .collect(),
@@ -166,14 +145,14 @@ async function loadRecipesForHypotheses(
 }
 
 async function loadCompositionsForRecipes(
-  db: DbReader,
-  recipeIds: string[],
+  db: DatabaseReader,
+  recipeIds: Id<"recipes">[],
 ): Promise<Doc<"compositions">[]> {
   const lists = await Promise.all(
     recipeIds.map((recipeId) =>
       db
         .query("compositions")
-        .withIndex("by_recipeId_updatedAt", (q: any) => q.eq("recipeId", recipeId))
+        .withIndex("by_recipeId_updatedAt", (q) => q.eq("recipeId", recipeId))
         .collect(),
     ),
   );
@@ -181,14 +160,14 @@ async function loadCompositionsForRecipes(
 }
 
 async function loadListeningSessionsForCompositions(
-  db: DbReader,
-  compositionIds: string[],
+  db: DatabaseReader,
+  compositionIds: Id<"compositions">[],
 ): Promise<Doc<"listeningSessions">[]> {
   const lists = await Promise.all(
     compositionIds.map((compositionId) =>
       db
         .query("listeningSessions")
-        .withIndex("by_compositionId_createdAt", (q: any) =>
+        .withIndex("by_compositionId_createdAt", (q) =>
           q.eq("compositionId", compositionId),
         )
         .collect(),
@@ -198,17 +177,17 @@ async function loadListeningSessionsForCompositions(
 }
 
 async function buildPublicEvidenceCards(
-  db: DbReader,
-  sourceIds: string[],
+  db: DatabaseReader,
+  sourceIds: Id<"sources">[],
 ): Promise<Doc<"editorialArtifacts">["publicEvidenceCards"]> {
-  const uniqueIds = uniqueStrings(sourceIds);
+  const uniqueIds = uniqueDefined(sourceIds);
   const cards = await Promise.all(
     uniqueIds.map(async (sourceId) => {
-      const source = await db.get("sources", sourceId as Id<"sources">);
+      const source = await db.get("sources", sourceId);
       if (!source || source.visibility !== "public") return null;
       const extraction = await db
         .query("extractions")
-        .withIndex("by_sourceId_createdAt", (q: any) => q.eq("sourceId", source._id))
+        .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
         .order("desc")
         .first();
       const featuredClaim = extraction?.claims[0];
@@ -226,29 +205,24 @@ async function buildPublicEvidenceCards(
 }
 
 async function collectSourceIdsForArtifact(
-  db: DbReader,
+  db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
-): Promise<string[]> {
-  const sourceIds = new Set<string>();
+): Promise<Id<"sources">[]> {
+  const sourceIds = new Set<Id<"sources">>();
 
   if (artifact.primaryRef.type === "weeklyBrief") {
-    const brief = await db.get(
-      "weeklyBriefs",
-      artifact.primaryRef.id as Id<"weeklyBriefs">,
-    );
+    const brief = await db.get("weeklyBriefs", artifact.primaryRef.id);
     for (const sourceId of brief?.sourceIds ?? []) {
-      sourceIds.add(String(sourceId));
+      sourceIds.add(sourceId);
     }
   }
 
   const hypotheses = await Promise.all(
-    artifact.linkedIds.hypothesisIds.map((id) =>
-      db.get("hypotheses", id as Id<"hypotheses">),
-    ),
+    artifact.linkedIds.hypothesisIds.map((id) => db.get("hypotheses", id)),
   );
   for (const hypothesis of hypotheses) {
     for (const sourceId of hypothesis?.sourceIds ?? []) {
-      sourceIds.add(String(sourceId));
+      sourceIds.add(sourceId);
     }
   }
 
@@ -256,7 +230,7 @@ async function collectSourceIdsForArtifact(
 }
 
 async function findPrivacyViolations(
-  db: DbReader,
+  db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
 ): Promise<{ privateSourceMentions: string[]; privateExtractionMentions: string[] }> {
   const sourceIds = await collectSourceIdsForArtifact(db, artifact);
@@ -275,15 +249,15 @@ async function findPrivacyViolations(
   const privateExtractionMentions: string[] = [];
 
   for (const sourceId of sourceIds) {
-    const source = await db.get("sources", sourceId as Id<"sources">);
-    if (!source || source.visibility !== "private") continue;
+    const source = await db.get("sources", sourceId);
+    if (!source || source.visibility === "public") continue;
     const title = source.title?.trim();
     if (title && text.includes(title.toLowerCase())) {
       privateSourceMentions.push(title);
     }
     const extraction = await db
       .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q: any) => q.eq("sourceId", source._id))
+      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
       .order("desc")
       .first();
     const summary = extraction?.summary?.trim();
@@ -296,7 +270,7 @@ async function findPrivacyViolations(
 }
 
 export async function validateArtifactForPublish(
-  db: DbReader,
+  db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
 ): Promise<PublishValidation> {
   const bodyOk = artifact.bodyMd.trim().length > 0;
@@ -371,7 +345,7 @@ function renderList(items: string[], empty = "None yet."): string {
 }
 
 export async function buildWeeklyBriefDraft(
-  db: DbReader,
+  db: DatabaseReader,
   brief: Doc<"weeklyBriefs">,
 ): Promise<DraftPayload> {
   const theses = await Promise.all(
@@ -387,10 +361,7 @@ export async function buildWeeklyBriefDraft(
   const referencedFailures = failures.filter((failure) =>
     (brief.referencedFailureKeys ?? []).includes(failure.key),
   );
-  const publicEvidenceCards = await buildPublicEvidenceCards(
-    db,
-    brief.sourceIds.map(String),
-  );
+  const publicEvidenceCards = await buildPublicEvidenceCards(db, brief.sourceIds);
 
   return {
     title: `Experiment Recap: Week of ${brief.weekOf}`,
@@ -433,22 +404,37 @@ export async function buildWeeklyBriefDraft(
     evidenceStatus: publicEvidenceCards.length > 0 ? "mixed" : "speculative",
     primaryRef: {
       type: "weeklyBrief",
-      id: String(brief._id),
+      id: brief._id,
     },
     linkedIds: {
-      thesisIds: uniqueStrings((brief.activeThesisIds ?? []).map(String)),
-      hypothesisIds: uniqueStrings(brief.recommendedHypothesisIds.map(String)),
-      recipeIds: uniqueStrings(brief.recommendedRecipeIds.map(String)),
+      thesisIds: uniqueDefined(brief.activeThesisIds ?? []),
+      hypothesisIds: uniqueDefined(brief.recommendedHypothesisIds),
+      recipeIds: uniqueDefined(brief.recommendedRecipeIds),
       compositionIds: [],
       listeningSessionIds: [],
-      failureKeys: uniqueStrings(brief.referencedFailureKeys ?? []),
+      failureKeys: uniqueDefined(brief.referencedFailureKeys ?? []),
     },
     publicEvidenceCards,
   };
 }
 
+function evidenceCardsEqual(
+  left: Doc<"editorialArtifacts">["publicEvidenceCards"],
+  right: Doc<"editorialArtifacts">["publicEvidenceCards"],
+): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function linkedIdsEqual(left: ArtifactLinkedIds, right: ArtifactLinkedIds): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function primaryRefEqual(left: ArtifactPrimaryRef, right: ArtifactPrimaryRef): boolean {
+  return left.type === right.type && left.id === right.id;
+}
+
 export async function buildCampaignDraft(
-  db: DbReader,
+  db: DatabaseReader,
   campaign: Doc<"campaigns">,
 ): Promise<DraftPayload> {
   const theses = (
@@ -459,22 +445,22 @@ export async function buildCampaignDraft(
       theses.map((thesis) =>
         db
           .query("hypotheses")
-          .withIndex("by_thesisId_updatedAt", (q: any) => q.eq("thesisId", thesis._id))
+          .withIndex("by_thesisId_updatedAt", (q) => q.eq("thesisId", thesis._id))
           .collect(),
       ),
     )
   ).flat();
   const recipes = await loadRecipesForHypotheses(
     db,
-    hypotheses.map((row) => String(row._id)),
+    hypotheses.map((row) => row._id),
   );
   const compositions = await loadCompositionsForRecipes(
     db,
-    recipes.map((row) => String(row._id)),
+    recipes.map((row) => row._id),
   );
   const listeningSessions = await loadListeningSessionsForCompositions(
     db,
-    compositions.map((row) => String(row._id)),
+    compositions.map((row) => row._id),
   );
   const failures = await deriveFailureArchiveEntries(db as any);
   const relevantFailures = failures.filter((failure) =>
@@ -482,9 +468,7 @@ export async function buildCampaignDraft(
       campaign.thesisIds.includes(id),
     ),
   );
-  const sourceIds = hypotheses.flatMap((hypothesis) =>
-    hypothesis.sourceIds.map(String),
-  );
+  const sourceIds = hypotheses.flatMap((hypothesis) => hypothesis.sourceIds);
   const publicEvidenceCards = await buildPublicEvidenceCards(db, sourceIds);
 
   return {
@@ -530,22 +514,22 @@ export async function buildCampaignDraft(
       relevantFailures.length > 0 || publicEvidenceCards.length > 0 ? "mixed" : "speculative",
     primaryRef: {
       type: "campaign",
-      id: String(campaign._id),
+      id: campaign._id,
     },
     linkedIds: {
-      thesisIds: uniqueStrings(theses.map((row) => String(row._id))),
-      hypothesisIds: uniqueStrings(hypotheses.map((row) => String(row._id))),
-      recipeIds: uniqueStrings(recipes.map((row) => String(row._id))),
-      compositionIds: uniqueStrings(compositions.map((row) => String(row._id))),
-      listeningSessionIds: uniqueStrings(listeningSessions.map((row) => String(row._id))),
-      failureKeys: uniqueStrings(relevantFailures.map((row) => row.key)),
+      thesisIds: uniqueDefined(theses.map((row) => row._id)),
+      hypothesisIds: uniqueDefined(hypotheses.map((row) => row._id)),
+      recipeIds: uniqueDefined(recipes.map((row) => row._id)),
+      compositionIds: uniqueDefined(compositions.map((row) => row._id)),
+      listeningSessionIds: uniqueDefined(listeningSessions.map((row) => row._id)),
+      failureKeys: uniqueDefined(relevantFailures.map((row) => row.key)),
     },
     publicEvidenceCards,
   };
 }
 
 export async function buildThesisDraft(
-  db: DbReader,
+  db: DatabaseReader,
   thesis: Doc<"theses">,
   args?: {
     kind?: "thesis_summary" | "what_changed_my_mind";
@@ -554,19 +538,19 @@ export async function buildThesisDraft(
 ): Promise<DraftPayload> {
   const hypotheses = await db
     .query("hypotheses")
-    .withIndex("by_thesisId_updatedAt", (q: any) => q.eq("thesisId", thesis._id))
+    .withIndex("by_thesisId_updatedAt", (q) => q.eq("thesisId", thesis._id))
     .collect();
   const recipes = await loadRecipesForHypotheses(
     db,
-    hypotheses.map((row) => String(row._id)),
+    hypotheses.map((row) => row._id),
   );
   const compositions = await loadCompositionsForRecipes(
     db,
-    recipes.map((row) => String(row._id)),
+    recipes.map((row) => row._id),
   );
   const listeningSessions = await loadListeningSessionsForCompositions(
     db,
-    compositions.map((row) => String(row._id)),
+    compositions.map((row) => row._id),
   );
   const failures = await deriveFailureArchiveEntries(db as any);
   const relevantFailures = failures.filter((failure) =>
@@ -581,9 +565,7 @@ export async function buildThesisDraft(
           (hypothesis: Doc<"hypotheses">) =>
             hypothesis.resolution === "contradicted",
         );
-  const sourceIds = hypotheses.flatMap((hypothesis) =>
-    hypothesis.sourceIds.map(String),
-  );
+  const sourceIds = hypotheses.flatMap((hypothesis) => hypothesis.sourceIds);
   const publicEvidenceCards = await buildPublicEvidenceCards(db, sourceIds);
   const kind = args?.kind ?? "thesis_summary";
   const isChangedMind = kind === "what_changed_my_mind" && contradictedHypothesis;
@@ -657,33 +639,30 @@ export async function buildThesisDraft(
           : "speculative",
     primaryRef: {
       type: isChangedMind ? "hypothesis" : "thesis",
-      id: String(isChangedMind ? contradictedHypothesis._id : thesis._id),
+      id: isChangedMind ? contradictedHypothesis._id : thesis._id,
     },
     linkedIds: {
-      thesisIds: [String(thesis._id)],
-      hypothesisIds: uniqueStrings(hypotheses.map((row) => String(row._id))),
-      recipeIds: uniqueStrings(recipes.map((row) => String(row._id))),
-      compositionIds: uniqueStrings(compositions.map((row) => String(row._id))),
-      listeningSessionIds: uniqueStrings(listeningSessions.map((row) => String(row._id))),
-      failureKeys: uniqueStrings(relevantFailures.map((row) => row.key)),
+      thesisIds: [thesis._id],
+      hypothesisIds: uniqueDefined(hypotheses.map((row) => row._id)),
+      recipeIds: uniqueDefined(recipes.map((row) => row._id)),
+      compositionIds: uniqueDefined(compositions.map((row) => row._id)),
+      listeningSessionIds: uniqueDefined(listeningSessions.map((row) => row._id)),
+      failureKeys: uniqueDefined(relevantFailures.map((row) => row.key)),
     },
     publicEvidenceCards,
   };
 }
 
 async function resolveExportContext(
-  db: DbReader,
+  db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
 ): Promise<{ campaignSlug?: string; thesisSlugs: string[] }> {
   let campaignSlug: string | undefined;
   if (artifact.primaryRef.type === "campaign") {
-    const campaign = await db.get("campaigns", artifact.primaryRef.id as Id<"campaigns">);
+    const campaign = await db.get("campaigns", artifact.primaryRef.id);
     campaignSlug = campaign ? slugify(campaign.title) : undefined;
   } else if (artifact.primaryRef.type === "weeklyBrief") {
-    const brief = await db.get(
-      "weeklyBriefs",
-      artifact.primaryRef.id as Id<"weeklyBriefs">,
-    );
+    const brief = await db.get("weeklyBriefs", artifact.primaryRef.id);
     if (brief?.campaignId) {
       const campaign = await db.get("campaigns", brief.campaignId);
       campaignSlug = campaign ? slugify(campaign.title) : undefined;
@@ -691,12 +670,12 @@ async function resolveExportContext(
   }
 
   const theses = await Promise.all(
-    artifact.linkedIds.thesisIds.map((id) => db.get("theses", id as Id<"theses">)),
+    artifact.linkedIds.thesisIds.map((id) => db.get("theses", id)),
   );
 
   return {
     campaignSlug,
-    thesisSlugs: uniqueStrings(
+    thesisSlugs: uniqueDefined(
       theses.map((row: Doc<"theses"> | null) =>
         row ? slugify(row.title) : undefined,
       ),
@@ -778,9 +757,11 @@ export const list = query({
     kind: v.optional(kindValidator),
     status: v.optional(statusValidator),
     limit: v.optional(v.number()),
+    devBypassSecret: v.optional(v.string()),
   },
   returns: v.array(editorialArtifactReturnValidator),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     let rows: Doc<"editorialArtifacts">[];
     if (args.kind !== undefined) {
       const kind = args.kind;
@@ -804,7 +785,7 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id("editorialArtifacts") },
+  args: { id: v.id("editorialArtifacts"), devBypassSecret: v.optional(v.string()) },
   returns: v.union(
     v.object({
       artifact: editorialArtifactReturnValidator,
@@ -813,9 +794,10 @@ export const get = query({
     v.null(),
   ),
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
     const artifact = await ctx.db.get("editorialArtifacts", args.id);
     if (!artifact) return null;
-    const validation = await validateArtifactForPublish(ctx.db as DbReader, artifact);
+    const validation = await validateArtifactForPublish(ctx.db, artifact);
     return { artifact, validation };
   },
 });
@@ -827,7 +809,7 @@ async function insertDraftArtifact(
   payload: DraftPayload,
 ): Promise<Id<"editorialArtifacts">> {
   const now = Date.now();
-  const slug = await uniqueSlug(ctx.db as DbReader, payload.title);
+  const slug = await uniqueSlug(ctx.db, payload.title);
   return await ctx.db.insert("editorialArtifacts", {
     kind,
     slug,
@@ -864,7 +846,7 @@ export const createDraftFromWeeklyBrief = mutation({
         message: "Weekly brief not found",
       });
     }
-    const payload = await buildWeeklyBriefDraft(ctx.db as DbReader, brief);
+    const payload = await buildWeeklyBriefDraft(ctx.db, brief);
     return await insertDraftArtifact(ctx, identity, "experiment_recap", payload);
   },
 });
@@ -884,7 +866,7 @@ export const createDraftFromCampaign = mutation({
         message: "Campaign not found",
       });
     }
-    const payload = await buildCampaignDraft(ctx.db as DbReader, campaign);
+    const payload = await buildCampaignDraft(ctx.db, campaign);
     return await insertDraftArtifact(ctx, identity, "campaign_summary", payload);
   },
 });
@@ -906,7 +888,7 @@ export const createDraftFromThesis = mutation({
         message: "Thesis not found",
       });
     }
-    const payload = await buildThesisDraft(ctx.db as DbReader, thesis, {
+    const payload = await buildThesisDraft(ctx.db, thesis, {
       kind: args.kind,
       hypothesisId: args.hypothesisId,
     });
@@ -949,8 +931,31 @@ export const update = mutation({
     }
     const slug =
       args.slug !== undefined
-        ? await uniqueSlug(ctx.db as DbReader, args.slug, args.id)
+        ? await uniqueSlug(ctx.db, args.slug, args.id)
         : undefined;
+    const normalizedWhatChanged =
+      args.whatChangedMd !== undefined ? args.whatChangedMd ?? undefined : undefined;
+    const reviewSensitiveChanged =
+      (args.kind !== undefined && args.kind !== artifact.kind) ||
+      (args.title !== undefined && args.title.trim() !== artifact.title) ||
+      (args.dek !== undefined && args.dek.trim() !== artifact.dek) ||
+      (slug !== undefined && slug !== artifact.slug) ||
+      (args.bodyMd !== undefined && args.bodyMd !== artifact.bodyMd) ||
+      (args.whyItMattersMd !== undefined &&
+        args.whyItMattersMd !== artifact.whyItMattersMd) ||
+      (args.uncertaintyMd !== undefined &&
+        args.uncertaintyMd !== artifact.uncertaintyMd) ||
+      (args.whatChangedMd !== undefined &&
+        normalizedWhatChanged !== artifact.whatChangedMd) ||
+      (args.evidenceStatus !== undefined &&
+        args.evidenceStatus !== artifact.evidenceStatus) ||
+      (args.visibility !== undefined && args.visibility !== artifact.visibility) ||
+      (args.publicEvidenceCards !== undefined &&
+        !evidenceCardsEqual(args.publicEvidenceCards, artifact.publicEvidenceCards)) ||
+      (args.linkedIds !== undefined &&
+        !linkedIdsEqual(args.linkedIds, artifact.linkedIds)) ||
+      (args.primaryRef !== undefined &&
+        !primaryRefEqual(args.primaryRef, artifact.primaryRef));
     await ctx.db.patch(args.id, {
       ...(args.kind !== undefined ? { kind: args.kind } : {}),
       ...(args.title !== undefined ? { title: args.title.trim() } : {}),
@@ -964,7 +969,7 @@ export const update = mutation({
         ? { uncertaintyMd: args.uncertaintyMd }
         : {}),
       ...(args.whatChangedMd !== undefined
-        ? { whatChangedMd: args.whatChangedMd ?? undefined }
+        ? { whatChangedMd: normalizedWhatChanged }
         : {}),
       ...(args.evidenceStatus !== undefined
         ? { evidenceStatus: args.evidenceStatus }
@@ -975,6 +980,12 @@ export const update = mutation({
         : {}),
       ...(args.linkedIds !== undefined ? { linkedIds: args.linkedIds } : {}),
       ...(args.primaryRef !== undefined ? { primaryRef: args.primaryRef } : {}),
+      ...(reviewSensitiveChanged && artifact.status !== "draft"
+        ? {
+            status: "draft" as ArtifactStatus,
+            ...(artifact.status === "published" ? { publishedAt: undefined } : {}),
+          }
+        : {}),
       updatedAt: Date.now(),
     });
     return null;
@@ -999,7 +1010,13 @@ export const submitForReview = mutation({
         message: "Editorial artifact not found",
       });
     }
-    const validation = await validateArtifactForPublish(ctx.db as DbReader, artifact);
+    if (artifact.status !== "draft") {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "Only draft artifacts can be submitted for review",
+      });
+    }
+    const validation = await validateArtifactForPublish(ctx.db, artifact);
     if (!validation.canSubmitForReview) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
@@ -1032,7 +1049,13 @@ export const approve = mutation({
         message: "Editorial artifact not found",
       });
     }
-    const validation = await validateArtifactForPublish(ctx.db as DbReader, artifact);
+    if (artifact.status !== "in_review") {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "Only in-review artifacts can be approved",
+      });
+    }
+    const validation = await validateArtifactForPublish(ctx.db, artifact);
     await ctx.db.patch(args.id, {
       status: "approved",
       updatedAt: Date.now(),
@@ -1059,7 +1082,13 @@ export const publish = mutation({
         message: "Editorial artifact not found",
       });
     }
-    const validation = await validateArtifactForPublish(ctx.db as DbReader, artifact);
+    if (artifact.status !== "approved") {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "Only approved artifacts can be published",
+      });
+    }
+    const validation = await validateArtifactForPublish(ctx.db, artifact);
     if (!validation.canPublish) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
@@ -1121,7 +1150,6 @@ export const setAstroExportMetadataInternal = internalMutation({
         exportSha: args.exportSha,
         exportedAt: args.exportedAt,
       },
-      updatedAt: args.exportedAt,
     });
     return null;
   },
@@ -1150,8 +1178,8 @@ export const getExportBundleInternal = internalQuery({
     return await Promise.all(
       publishedArtifacts.map(async (artifact) => ({
         artifact,
-        validation: await validateArtifactForPublish(ctx.db as DbReader, artifact),
-        ...(await resolveExportContext(ctx.db as DbReader, artifact)),
+        validation: await validateArtifactForPublish(ctx.db, artifact),
+        ...(await resolveExportContext(ctx.db, artifact)),
       })),
     );
   },

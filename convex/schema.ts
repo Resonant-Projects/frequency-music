@@ -520,21 +520,30 @@ export default defineSchema({
     evidenceStatus: editorialEvidenceStatusValidator,
     status: editorialArtifactStatusValidator,
     visibility: visibilityValidator,
-    primaryRef: v.object({
-      type: v.union(
-        v.literal("weeklyBrief"),
-        v.literal("campaign"),
-        v.literal("thesis"),
-        v.literal("hypothesis"),
-      ),
-      id: v.string(),
-    }),
+    primaryRef: v.union(
+      v.object({
+        type: v.literal("weeklyBrief"),
+        id: v.id("weeklyBriefs"),
+      }),
+      v.object({
+        type: v.literal("campaign"),
+        id: v.id("campaigns"),
+      }),
+      v.object({
+        type: v.literal("thesis"),
+        id: v.id("theses"),
+      }),
+      v.object({
+        type: v.literal("hypothesis"),
+        id: v.id("hypotheses"),
+      }),
+    ),
     linkedIds: v.object({
-      thesisIds: v.array(v.string()),
-      hypothesisIds: v.array(v.string()),
-      recipeIds: v.array(v.string()),
-      compositionIds: v.array(v.string()),
-      listeningSessionIds: v.array(v.string()),
+      thesisIds: v.array(v.id("theses")),
+      hypothesisIds: v.array(v.id("hypotheses")),
+      recipeIds: v.array(v.id("recipes")),
+      compositionIds: v.array(v.id("compositions")),
+      listeningSessionIds: v.array(v.id("listeningSessions")),
       failureKeys: v.array(v.string()),
     }),
     publicEvidenceCards: v.array(
