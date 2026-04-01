@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/solid-router";
+import { Link, useNavigate, useParams } from "@tanstack/solid-router";
 import { createEffect, createSignal, For, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -40,14 +40,20 @@ const linkList = css({
 
 export function ThesisDetailPage() {
   const params = useParams({ from: "/theses/$thesisId" });
+  const navigate = useNavigate();
   const detail = createQuery(convexApi.theses.getDetail, () => ({
     id: params().thesisId as Id<"theses">,
   }));
   const campaigns = createQuery(convexApi.campaigns.listForSelection);
   const attachThesis = createMutation(convexApi.campaigns.attachThesis);
   const detachThesis = createMutation(convexApi.campaigns.detachThesis);
+  const createDraftFromThesis = createMutation(
+    convexApi.editorialArtifacts.createDraftFromThesis,
+  );
   const [selectedCampaignId, setSelectedCampaignId] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [creatingSummary, setCreatingSummary] = createSignal(false);
+  const [creatingChangedMind, setCreatingChangedMind] = createSignal(false);
 
   createEffect(() => {
     const thesis = detail()?.thesis;
@@ -80,6 +86,45 @@ export function ThesisDetailPage() {
       setNotice("Thesis detached from campaign.");
     } catch (error) {
       setNotice(`Detach failed: ${String(error)}`);
+    }
+  }
+
+  async function handleCreateSummary() {
+    setCreatingSummary(true);
+    setNotice(null);
+    try {
+      const artifactId = await createDraftFromThesis({
+        thesisId: params().thesisId as Id<"theses">,
+        kind: "thesis_summary",
+      });
+      navigate({
+        to: "/editorial/$artifactId",
+        params: { artifactId: String(artifactId) },
+      });
+    } catch (error) {
+      setNotice(`Summary draft failed: ${String(error)}`);
+    } finally {
+      setCreatingSummary(false);
+    }
+  }
+
+  async function handleCreateChangedMind(hypothesisId: Id<"hypotheses">) {
+    setCreatingChangedMind(true);
+    setNotice(null);
+    try {
+      const artifactId = await createDraftFromThesis({
+        thesisId: params().thesisId as Id<"theses">,
+        kind: "what_changed_my_mind",
+        hypothesisId,
+      });
+      navigate({
+        to: "/editorial/$artifactId",
+        params: { artifactId: String(artifactId) },
+      });
+    } catch (error) {
+      setNotice(`Changed-mind draft failed: ${String(error)}`);
+    } finally {
+      setCreatingChangedMind(false);
     }
   }
 
@@ -131,6 +176,46 @@ export function ThesisDetailPage() {
               >
                 {row().thesis.statement}
               </p>
+
+              <div
+                class={css({
+                  display: "flex",
+                  gap: "2",
+                  flexWrap: "wrap",
+                  mt: "3",
+                })}
+              >
+                <UIButton
+                  variant="outline"
+                  onClick={handleCreateSummary}
+                  disabled={creatingSummary()}
+                >
+                  {creatingSummary()
+                    ? "Creating summary..."
+                    : "Create thesis summary"}
+                </UIButton>
+                <Show
+                  when={
+                    row()
+                      .hypotheses.find(
+                        (hypothesis: Doc<"hypotheses">) =>
+                          hypothesis.resolution === "contradicted",
+                      )
+                  }
+                >
+                  {(hypothesis) => (
+                    <UIButton
+                      variant="outline"
+                      onClick={() => handleCreateChangedMind(hypothesis()._id)}
+                      disabled={creatingChangedMind()}
+                    >
+                      {creatingChangedMind()
+                        ? "Creating changed-mind draft..."
+                        : "Create what changed my mind"}
+                    </UIButton>
+                  )}
+                </Show>
+              </div>
 
               <Show when={row().thesis.descriptionMd}>
                 {(description) => (

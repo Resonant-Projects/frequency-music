@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/solid-router";
+import { Link, useNavigate } from "@tanstack/solid-router";
 import {
   createEffect,
   createMemo,
@@ -76,6 +76,7 @@ function CampaignCard(props: {
   campaign: Doc<"campaigns">;
   thesisTitleById: Map<string, string>;
   onActivate: (id: Id<"campaigns">) => Promise<void>;
+  onCreateRecap: (id: Id<"campaigns">) => Promise<void>;
   onSave: (args: {
     id: Id<"campaigns">;
     title: string;
@@ -107,6 +108,7 @@ function CampaignCard(props: {
   const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [activating, setActivating] = createSignal(false);
+  const [creatingRecap, setCreatingRecap] = createSignal(false);
 
   function resetDraftFromCampaign(campaign: Doc<"campaigns">) {
     setDraft(buildDraft(campaign));
@@ -171,6 +173,15 @@ function CampaignCard(props: {
     }
   }
 
+  async function handleCreateRecap() {
+    setCreatingRecap(true);
+    try {
+      await props.onCreateRecap(props.campaign._id);
+    } finally {
+      setCreatingRecap(false);
+    }
+  }
+
   return (
     <div
       data-testid="campaign-card"
@@ -203,11 +214,18 @@ function CampaignCard(props: {
           <UIButton
             variant="outline"
             onClick={handleActivate}
-            disabled={saving() || activating()}
+            disabled={saving() || activating() || creatingRecap()}
           >
             {activating() ? "Activating..." : "Set Active"}
           </UIButton>
         </Show>
+        <UIButton
+          variant="outline"
+          onClick={handleCreateRecap}
+          disabled={saving() || activating() || creatingRecap()}
+        >
+          {creatingRecap() ? "Creating summary..." : "Create summary"}
+        </UIButton>
       </div>
 
       <label
@@ -301,6 +319,7 @@ function CampaignCard(props: {
 }
 
 export function WeeklyTurnsPage() {
+  const navigate = useNavigate();
   onMount(() => {
     document.title = "Weekly Turns — Frequency Music";
   });
@@ -334,6 +353,9 @@ export function WeeklyTurnsPage() {
   const createCampaign = createMutation(convexApi.campaigns.create);
   const updateCampaign = createMutation(convexApi.campaigns.update);
   const setActiveCampaign = createMutation(convexApi.campaigns.setActive);
+  const createCampaignDraft = createMutation(
+    convexApi.editorialArtifacts.createDraftFromCampaign,
+  );
 
   const [title, setTitle] = createSignal("");
   const [question, setQuestion] = createSignal("");
@@ -399,6 +421,19 @@ export function WeeklyTurnsPage() {
       setNotice("Campaign updated.");
     } catch (error) {
       setNotice(`Campaign update failed: ${String(error)}`);
+      throw error;
+    }
+  }
+
+  async function handleCreateCampaignRecap(id: Id<"campaigns">) {
+    try {
+      const artifactId = await createCampaignDraft({ campaignId: id });
+      navigate({
+        to: "/editorial/$artifactId",
+        params: { artifactId: String(artifactId) },
+      });
+    } catch (error) {
+      setNotice(`Campaign summary draft failed: ${String(error)}`);
       throw error;
     }
   }
@@ -632,6 +667,7 @@ export function WeeklyTurnsPage() {
                     campaign={campaign}
                     thesisTitleById={thesisTitleById()}
                     onActivate={handleActivateCampaign}
+                    onCreateRecap={handleCreateCampaignRecap}
                     onSave={handleSaveCampaign}
                     onNotice={setNotice}
                   />

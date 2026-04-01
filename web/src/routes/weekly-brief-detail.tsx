@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/solid-router";
+import { Link, useNavigate, useParams } from "@tanstack/solid-router";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -14,12 +14,13 @@ import {
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { createAction, createQuery } from "../integrations/convex";
+import { createAction, createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import { extractTitle } from "../lib/markdown-utils";
 
 export function WeeklyBriefDetailPage() {
   const params = useParams({ from: "/weekly-turns/$briefId" });
+  const navigate = useNavigate();
 
   const brief = createQuery(convexApi.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
@@ -51,8 +52,12 @@ export function WeeklyBriefDetailPage() {
   });
 
   const publishToNotion = createAction(convexApi.weeklyBriefs.publishToNotion);
+  const createRecapDraft = createMutation(
+    convexApi.editorialArtifacts.createDraftFromWeeklyBrief,
+  );
   const [notice, setNotice] = createSignal<string | null>(null);
   const [publishing, setPublishing] = createSignal(false);
+  const [creatingRecap, setCreatingRecap] = createSignal(false);
 
   async function handlePublish() {
     const b = brief();
@@ -67,6 +72,27 @@ export function WeeklyBriefDetailPage() {
       setNotice("Publish failed. Please try again or contact support.");
     } finally {
       setPublishing(false);
+    }
+  }
+
+  async function handleCreateRecap() {
+    const b = brief();
+    if (!b) return;
+    setCreatingRecap(true);
+    setNotice(null);
+    try {
+      const artifactId = await createRecapDraft({
+        weeklyBriefId: b._id as Id<"weeklyBriefs">,
+      });
+      navigate({
+        to: "/editorial/$artifactId",
+        params: { artifactId: String(artifactId) },
+      });
+    } catch (error) {
+      console.error("Editorial draft creation failed", error);
+      setNotice("Could not create an editorial recap draft.");
+    } finally {
+      setCreatingRecap(false);
     }
   }
 
@@ -142,9 +168,22 @@ export function WeeklyBriefDetailPage() {
               </Show>
             </p>
 
-            {/* Publish button */}
-            <Show when={b().visibility === "private"}>
-              <div class={css({ mt: "3" })}>
+            <div
+              class={css({
+                mt: "3",
+                display: "flex",
+                gap: "2",
+                flexWrap: "wrap",
+              })}
+            >
+              <UIButton
+                variant="outline"
+                onClick={handleCreateRecap}
+                disabled={creatingRecap()}
+              >
+                {creatingRecap() ? "Creating recap..." : "Create recap draft"}
+              </UIButton>
+              <Show when={b().visibility === "private"}>
                 <UIButton
                   variant="solid"
                   onClick={handlePublish}
@@ -152,8 +191,8 @@ export function WeeklyBriefDetailPage() {
                 >
                   {publishing() ? "Publishing..." : "Publish to Notion"}
                 </UIButton>
-              </div>
-            </Show>
+              </Show>
+            </div>
 
             <Show when={notice()}>
               {(msg) => (
