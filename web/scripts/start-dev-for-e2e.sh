@@ -33,32 +33,41 @@ if [[ -z "${VITE_CONVEX_URL:-}" ]]; then
   fi
 fi
 
-if [[ -z "${VITE_AUTH_BYPASS:-}" ]]; then
-  value="$(read_env_var "VITE_AUTH_BYPASS" "${web_env_file}")"
-  if [[ -n "${value}" ]]; then
-    export VITE_AUTH_BYPASS="${value}"
+for key in \
+  VITE_CLERK_PUBLISHABLE_KEY \
+  VITE_CLERK_SIGN_IN_URL \
+  VITE_CLERK_SIGN_UP_URL \
+  E2E_CLERK_EMAIL \
+  E2E_CLERK_PASSWORD
+do
+  if [[ -z "${!key:-}" ]]; then
+    value="$(read_env_var "${key}" "${web_env_file}")"
+    if [[ -z "${value}" ]]; then
+      value="$(read_env_var "${key}" "${root_env_file}")"
+    fi
+    if [[ -n "${value}" ]]; then
+      export "${key}=${value}"
+    fi
   fi
-fi
-
-if [[ "${VITE_AUTH_BYPASS:-0}" == "1" && -z "${VITE_AUTH_BYPASS_SECRET:-}" ]]; then
-  value="$(read_env_var "VITE_AUTH_BYPASS_SECRET" "${web_env_file}")"
-  if [[ -z "${value}" ]]; then
-    value="$(read_env_var "AUTH_BYPASS_SECRET" "${root_env_file}")"
-  fi
-  if [[ -n "${value}" ]]; then
-    export VITE_AUTH_BYPASS_SECRET="${value}"
-  fi
-fi
+done
 
 if [[ -z "${VITE_CONVEX_URL:-}" ]]; then
   echo "Missing VITE_CONVEX_URL. Define it in ${web_env_file}, ${root_env_file}, or env." >&2
   exit 1
 fi
 
-if [[ "${VITE_AUTH_BYPASS:-0}" == "1" && -z "${VITE_AUTH_BYPASS_SECRET:-}" ]]; then
-  echo "VITE_AUTH_BYPASS=1 requires VITE_AUTH_BYPASS_SECRET for e2e mutations." >&2
-  exit 1
-fi
+for key in \
+  VITE_CLERK_PUBLISHABLE_KEY \
+  VITE_CLERK_SIGN_IN_URL \
+  VITE_CLERK_SIGN_UP_URL \
+  E2E_CLERK_EMAIL \
+  E2E_CLERK_PASSWORD
+do
+  if [[ -z "${!key:-}" ]]; then
+    echo "Missing ${key}. Define it in ${web_env_file}, ${root_env_file}, or env for Clerk-authenticated e2e." >&2
+    exit 1
+  fi
+done
 
 export VITE_E2E_MODE="${VITE_E2E_MODE:-1}"
 

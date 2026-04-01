@@ -14,7 +14,6 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import {
   createAction,
   createMutation,
@@ -94,16 +93,14 @@ export function RecipesPage() {
 
     try {
       setNotice(null);
-      await createRecipe(
-        withDevBypassSecret({
-          hypothesisId: hypothesisId() as Id<"hypotheses">,
-          title: title().trim(),
-          whyThisMatters: whyThisMatters().trim(),
-          bodyMd: bodyMd().trim(),
-          parameters: parseParameters(parameters()),
-          dawChecklist: parseChecklist(checklist()),
-        }),
-      );
+      await createRecipe({
+        hypothesisId: hypothesisId() as Id<"hypotheses">,
+        title: title().trim(),
+        whyThisMatters: whyThisMatters().trim(),
+        bodyMd: bodyMd().trim(),
+        parameters: parseParameters(parameters()),
+        dawChecklist: parseChecklist(checklist()),
+      });
 
       setTitle("");
       setWhyThisMatters("");
@@ -123,11 +120,9 @@ export function RecipesPage() {
     }
 
     try {
-      await generateFromHypothesis(
-        withDevBypassSecret({
-          hypothesisId: hypothesisId() as Id<"hypotheses">,
-        }),
-      );
+      await generateFromHypothesis({
+        hypothesisId: hypothesisId() as Id<"hypotheses">,
+      });
       setNotice("Auto recipe generation started.");
     } catch (error) {
       setNotice(`Auto generation failed: ${String(error)}`);

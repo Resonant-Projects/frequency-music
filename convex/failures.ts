@@ -8,6 +8,7 @@ import {
   isLowYieldListeningSession,
   summarizeListeningSessions,
 } from "./phase2";
+export type { FailureArchiveEntry };
 import { failureArchiveEntryValidator } from "./validators";
 
 export type DbReader = {
@@ -25,6 +26,19 @@ export type DataModelMap = {
   compositions: Doc<"compositions">;
   listeningSessions: Doc<"listeningSessions">;
 };
+
+function resolveBranchCreatedAt(
+  branchSummary: ReturnType<typeof summarizeListeningSessions>,
+  branchListeningSessions: Doc<"listeningSessions">[],
+  fallbackTimestamp: number,
+): number {
+  if (!branchSummary.latestListeningSessionId) return fallbackTimestamp;
+  const session =
+    branchListeningSessions.find(
+      (s) => s._id === branchSummary.latestListeningSessionId,
+    ) ?? branchListeningSessions[0];
+  return session?.createdAt ?? fallbackTimestamp;
+}
 
 type BranchFailureContext = {
   rootComposition: Doc<"compositions">;
@@ -121,7 +135,9 @@ async function getListeningSessionsForComposition(
 function getLocalFailureStatus(
   sessions: Doc<"listeningSessions">[],
 ): FailureReason | undefined {
-  const latestSession = [...sessions].toSorted((a, b) => b.createdAt - a.createdAt)[0];
+  const latestSession = [...sessions].toSorted(
+    (a, b) => b.createdAt - a.createdAt,
+  )[0];
   if (latestSession && isLowYieldListeningSession(latestSession)) {
     return "low_expandability_composition";
   }
@@ -216,15 +232,15 @@ type FailureDerivationFilter = {
   thesisId?: Id<"theses">;
 };
 
-const HYPOTHESIS_REASONS: FailureReason[] = [
+const HYPOTHESIS_REASONS: Set<FailureReason> = new Set([
   "contradicted_hypothesis",
   "retired_hypothesis",
-];
-const RECIPE_REASONS: FailureReason[] = ["archived_recipe"];
-const COMPOSITION_REASONS: FailureReason[] = [
+]);
+const RECIPE_REASONS: Set<FailureReason> = new Set(["archived_recipe"]);
+const COMPOSITION_REASONS: Set<FailureReason> = new Set([
   "low_expandability_composition",
   "repeat_no_expand_composition",
-];
+]);
 
 function buildHypothesisEntry(
   hypothesis: Doc<"hypotheses">,
@@ -412,16 +428,11 @@ async function deriveCompositionFailures(
         makeFailureEntry({
           key: `composition:${context.branch.revisionBranchRootId}:repeat_no_expand`,
           reason: "repeat_no_expand_composition",
-          createdAt:
-            context.branch.branchSummary.latestListeningSessionId
-              ? (
-                  context.branch.branchListeningSessions.find(
-                    (session) =>
-                      session._id ===
-                      context.branch.branchSummary.latestListeningSessionId,
-                  ) ?? context.branch.branchListeningSessions[0]
-                )?.createdAt ?? context.branch.rootComposition.updatedAt
-              : context.branch.rootComposition.updatedAt,
+          createdAt: resolveBranchCreatedAt(
+            context.branch.branchSummary,
+            context.branch.branchListeningSessions,
+            context.branch.rootComposition.updatedAt,
+          ),
           explanation:
             "Multiple low-yield listening outcomes across this revision branch suggest the branch should remain archived.",
           title: context.branch.rootComposition.title,
@@ -457,11 +468,10 @@ async function deriveFilteredFailureArchive(
   filter: FailureDerivationFilter = {},
 ): Promise<FailureArchiveEntry[]> {
   const needHypotheses =
-    !filter.reason || HYPOTHESIS_REASONS.includes(filter.reason);
-  const needRecipes =
-    !filter.reason || RECIPE_REASONS.includes(filter.reason);
+    !filter.reason || HYPOTHESIS_REASONS.has(filter.reason);
+  const needRecipes = !filter.reason || RECIPE_REASONS.has(filter.reason);
   const needCompositions =
-    !filter.reason || COMPOSITION_REASONS.includes(filter.reason);
+    !filter.reason || COMPOSITION_REASONS.has(filter.reason);
 
   const parts = await Promise.all([
     needHypotheses ? deriveHypothesisFailures(db, filter) : [],
@@ -504,7 +514,6 @@ export async function getBranchFailureStatusForComposition(
   );
   return getBranchFailureStatus(branch.branchListeningSessions);
 }
-
 
 export const listArchive = query({
   args: {
@@ -592,17 +601,10 @@ async function deriveEntryByKey(
   }
 
   if (type === "composition") {
-    const composition = await db.get(
-      "compositions",
-      id as Id<"compositions">,
-    );
+    const composition = await db.get("compositions", id as Id<"compositions">);
     if (!composition) return null;
     const branchCache = new Map<string, BranchFailureContext>();
-    const context = await loadCompositionContext(
-      db,
-      composition,
-      branchCache,
-    );
+    const context = await loadCompositionContext(db, composition, branchCache);
 
     if (suffix === "low_expandability") {
       const status = getLocalFailureStatus(context.localListeningSessions);
@@ -625,18 +627,13 @@ async function deriveEntryByKey(
         hypothesisId: context.hypothesis?._id,
         recipeId: context.recipe?._id,
         compositionId: composition._id,
-        latestListeningSessionId:
-          context.localSummary.latestListeningSessionId,
+        latestListeningSessionId: context.localSummary.latestListeningSessionId,
         revisionBranchRootId: context.branch.revisionBranchRootId,
         supportingIds: {
-          hypothesisIds: context.hypothesis
-            ? [context.hypothesis._id]
-            : [],
+          hypothesisIds: context.hypothesis ? [context.hypothesis._id] : [],
           recipeIds: context.recipe ? [context.recipe._id] : [],
           compositionIds: [composition._id],
-          listeningSessionIds: context.localListeningSessions.map(
-            (s) => s._id,
-          ),
+          listeningSessionIds: context.localListeningSessions.map((s) => s._id),
           thesisIds: context.thesis ? [context.thesis._id] : [],
         },
       });
@@ -660,16 +657,11 @@ async function deriveEntryByKey(
       return makeFailureEntry({
         key,
         reason: "repeat_no_expand_composition",
-        createdAt:
-          context.branch.branchSummary.latestListeningSessionId
-            ? (
-                context.branch.branchListeningSessions.find(
-                  (session) =>
-                    session._id ===
-                    context.branch.branchSummary.latestListeningSessionId,
-                ) ?? context.branch.branchListeningSessions[0]
-              )?.createdAt ?? context.branch.rootComposition.updatedAt
-            : context.branch.rootComposition.updatedAt,
+        createdAt: resolveBranchCreatedAt(
+          context.branch.branchSummary,
+          context.branch.branchListeningSessions,
+          context.branch.rootComposition.updatedAt,
+        ),
         explanation:
           "Multiple low-yield listening outcomes across this revision branch suggest the branch should remain archived.",
         title: context.branch.rootComposition.title,
@@ -720,10 +712,7 @@ export const getByKey = query({
     if (!composition) return null;
     const rootId = await getBranchRootId(db, composition);
     if (rootId === (legacyMatch[1] as Id<"compositions">)) return null;
-    return deriveEntryByKey(
-      db,
-      `composition:${rootId}:repeat_no_expand`,
-    );
+    return deriveEntryByKey(db, `composition:${rootId}:repeat_no_expand`);
   },
 });
 
@@ -737,9 +726,7 @@ export const getByKeys = query({
         const direct = await deriveEntryByKey(db, key);
         if (direct) return direct;
 
-        const legacyMatch = key.match(
-          /^composition:([^:]+):repeat_no_expand$/,
-        );
+        const legacyMatch = key.match(/^composition:([^:]+):repeat_no_expand$/);
         if (!legacyMatch?.[1]) return null;
         const composition = await db.get(
           "compositions",
@@ -748,10 +735,7 @@ export const getByKeys = query({
         if (!composition) return null;
         const rootId = await getBranchRootId(db, composition);
         if (rootId === (legacyMatch[1] as Id<"compositions">)) return null;
-        return deriveEntryByKey(
-          db,
-          `composition:${rootId}:repeat_no_expand`,
-        );
+        return deriveEntryByKey(db, `composition:${rootId}:repeat_no_expand`);
       }),
     );
 

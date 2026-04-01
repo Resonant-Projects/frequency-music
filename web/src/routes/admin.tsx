@@ -12,7 +12,6 @@ import {
   UIInput,
   UISelect,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import { createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
@@ -48,12 +47,10 @@ export function AdminPage() {
     }
 
     try {
-      await setSourceStatus(
-        withDevBypassSecret({
-          id: sourceId().trim() as Id<"sources">,
-          status: sourceStatus(),
-        }),
-      );
+      await setSourceStatus({
+        id: sourceId().trim() as Id<"sources">,
+        status: sourceStatus(),
+      });
       setNotice("Source status updated.");
     } catch (error) {
       setNotice(`Source status update failed: ${String(error)}`);
@@ -64,11 +61,9 @@ export function AdminPage() {
     event.preventDefault();
 
     try {
-      const result = await startBatchExtraction(
-        withDevBypassSecret({
-          limit: Number(batchLimit()) || 25,
-        }),
-      );
+      const result = await startBatchExtraction({
+        limit: Number(batchLimit()) || 25,
+      });
       setNotice(`Batch extraction queued: ${result.workflowId}`);
     } catch (error) {
       setNotice(`Batch extraction failed: ${String(error)}`);

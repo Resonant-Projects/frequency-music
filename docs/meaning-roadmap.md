@@ -207,6 +207,7 @@ Weeks 7-9
 - add campaigns and themes
 - connect briefs, theses, and campaigns
 - use listening and expandability signals to steer next actions
+- current implementation path: campaigns act as themes, and each generated weekly brief persists prompt variants plus deterministic recommended actions
 
 Why this phase third:
 

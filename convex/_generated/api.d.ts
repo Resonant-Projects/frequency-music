@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as aggregates from "../aggregates.js";
 import type * as auth from "../auth.js";
+import type * as campaigns from "../campaigns.js";
 import type * as components_ from "../components.js";
 import type * as compositions from "../compositions.js";
 import type * as crons from "../crons.js";
@@ -31,6 +32,7 @@ import type * as phase2 from "../phase2.js";
 import type * as recipes from "../recipes.js";
 import type * as sourceUtils from "../sourceUtils.js";
 import type * as sources from "../sources.js";
+import type * as testHelpers from "../testHelpers.js";
 import type * as theses from "../theses.js";
 import type * as validators from "../validators.js";
 import type * as vocabulary from "../vocabulary.js";
@@ -47,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   aggregates: typeof aggregates;
   auth: typeof auth;
+  campaigns: typeof campaigns;
   components: typeof components_;
   compositions: typeof compositions;
   crons: typeof crons;
@@ -67,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   recipes: typeof recipes;
   sourceUtils: typeof sourceUtils;
   sources: typeof sources;
+  testHelpers: typeof testHelpers;
   theses: typeof theses;
   validators: typeof validators;
   vocabulary: typeof vocabulary;

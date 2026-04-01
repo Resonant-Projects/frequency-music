@@ -14,7 +14,6 @@ import {
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { withDevBypassSecret } from "../integrations/authBypass";
 import { createAction, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import { extractTitle } from "../lib/markdown-utils";
@@ -25,14 +24,24 @@ export function WeeklyBriefDetailPage() {
   const brief = createQuery(convexApi.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
+  const campaignQuery = createQuery(convexApi.campaigns.get, () => {
+    const campaignId = brief()?.campaignId;
+    return campaignId ? { id: campaignId } : "skip";
+  });
   const activeThesesQuery = createQuery(convexApi.theses.getByIds, () => ({
     ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
-  const referencedFailureEntries = createQuery(convexApi.failures.getByKeys, () => ({
-    keys: brief()?.referencedFailureKeys ?? [],
-  }));
+  const referencedFailureEntries = createQuery(
+    convexApi.failures.getByKeys,
+    () => ({
+      keys: brief()?.referencedFailureKeys ?? [],
+    }),
+  );
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
+  );
+  const campaign = createMemo<Doc<"campaigns"> | null>(
+    () => (campaignQuery() as Doc<"campaigns"> | null) ?? null,
   );
   const referencedFailures = createMemo(() => referencedFailureEntries() ?? []);
 
@@ -51,9 +60,7 @@ export function WeeklyBriefDetailPage() {
     setPublishing(true);
     setNotice(null);
     try {
-      const result = await publishToNotion(
-        withDevBypassSecret({ id: b._id as Id<"weeklyBriefs"> }),
-      );
+      const result = await publishToNotion({ id: b._id as Id<"weeklyBriefs"> });
       setNotice(`Published to Notion: ${result.notionUrl ?? "success"}`);
     } catch (error) {
       console.error("Weekly brief publish failed", error);
@@ -100,6 +107,9 @@ export function WeeklyBriefDetailPage() {
                 {b().recommendedRecipeIds.length} recipes
               </UIBadge>
               <UIBadge tone="violet">{b().sourceIds.length} sources</UIBadge>
+              <Show when={b().campaignId}>
+                <UIBadge tone="gold">campaign</UIBadge>
+              </Show>
               <Show when={(b().activeThesisIds ?? []).length > 0}>
                 <UIBadge tone="violet">
                   {(b().activeThesisIds ?? []).length} theses
@@ -151,6 +161,165 @@ export function WeeklyBriefDetailPage() {
               )}
             </Show>
 
+            <Show when={campaign()}>
+              {(row) => (
+                <>
+                  <hr class={goldDivider} />
+                  <div class={sectionLabel}>Campaign Context</div>
+                  <div
+                    class={css({
+                      borderColor: "rgba(200, 168, 75, 0.18)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      p: "3",
+                    })}
+                  >
+                    <div
+                      class={css({
+                        display: "flex",
+                        gap: "2",
+                        flexWrap: "wrap",
+                        mb: "2",
+                      })}
+                    >
+                      <UIBadge tone="gold">{row().title}</UIBadge>
+                      <UIBadge tone="cream">{row().status}</UIBadge>
+                    </div>
+                    <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>
+                      {row().question}
+                    </p>
+                  </div>
+                </>
+              )}
+            </Show>
+
+            <hr class={goldDivider} />
+            <div class={sectionLabel}>Studio Prompts</div>
+            <div class={css({ display: "grid", gap: "3" })}>
+              <div
+                class={css({
+                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  p: "3",
+                })}
+              >
+                <UIBadge tone="gold">10-minute</UIBadge>
+                <div class={css({ mt: "2" })}>
+                  <Markdown
+                    content={
+                      b().studioPrompts?.tenMinuteMd ??
+                      "No 10-minute prompt was stored for this older brief."
+                    }
+                  />
+                </div>
+              </div>
+              <div
+                class={css({
+                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  p: "3",
+                })}
+              >
+                <UIBadge tone="gold">30-minute</UIBadge>
+                <div class={css({ mt: "2" })}>
+                  <Markdown
+                    content={
+                      b().studioPrompts?.thirtyMinuteMd ??
+                      "No 30-minute prompt was stored for this older brief."
+                    }
+                  />
+                </div>
+              </div>
+              <div
+                class={css({
+                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  p: "3",
+                })}
+              >
+                <UIBadge tone="gold">90-minute</UIBadge>
+                <div class={css({ mt: "2" })}>
+                  <Markdown
+                    content={
+                      b().studioPrompts?.ninetyMinuteMd ??
+                      "No 90-minute prompt was stored for this older brief."
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Show when={(b().recommendedActions ?? []).length > 0}>
+              <hr class={goldDivider} />
+              <div class={sectionLabel}>Recommended Actions</div>
+              <div class={css({ display: "grid", gap: "2" })}>
+                <For each={b().recommendedActions ?? []}>
+                  {(action) => {
+                    const linkClass = css({
+                      borderColor: "rgba(200, 168, 75, 0.18)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      color: "inherit",
+                      display: "block",
+                      p: "3",
+                      textDecoration: "none",
+                    });
+                    const cardBody = (
+                      <>
+                        <div
+                          class={css({
+                            display: "flex",
+                            gap: "2",
+                            flexWrap: "wrap",
+                            mb: "1",
+                          })}
+                        >
+                          <UIBadge tone="gold">{action.durationBucket}</UIBadge>
+                          <UIBadge tone="cream">{action.kind}</UIBadge>
+                        </div>
+                        <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                          {action.targetType} {action.targetId.slice(-6)}
+                        </div>
+                        <div
+                          class={css({ color: "rgba(245, 240, 232, 0.68)" })}
+                        >
+                          {action.reason}
+                        </div>
+                      </>
+                    );
+                    return action.targetType === "hypothesis" ? (
+                      <Link
+                        to="/hypotheses/$hypothesisId"
+                        params={{ hypothesisId: action.targetId }}
+                        class={linkClass}
+                      >
+                        {cardBody}
+                      </Link>
+                    ) : action.targetType === "recipe" ? (
+                      <Link
+                        to="/recipes/$recipeId"
+                        params={{ recipeId: action.targetId }}
+                        class={linkClass}
+                      >
+                        {cardBody}
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/compositions/$compositionId"
+                        params={{ compositionId: action.targetId }}
+                        class={linkClass}
+                      >
+                        {cardBody}
+                      </Link>
+                    );
+                  }}
+                </For>
+              </div>
+            </Show>
+
             {/* Rendered Markdown Body */}
             <hr class={goldDivider} />
             <Markdown content={b().bodyMd} />
@@ -197,8 +366,9 @@ export function WeeklyBriefDetailPage() {
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={referencedFailures()}>
                   {(failure) => (
-                    <a
-                      href={`/failures#${failure.key}`}
+                    <Link
+                      to="/failures"
+                      hash={failure.key}
                       class={css({
                         borderColor: "rgba(200, 168, 75, 0.18)",
                         borderRadius: "l2",
@@ -223,7 +393,7 @@ export function WeeklyBriefDetailPage() {
                         </UIBadge>
                       </div>
                       <div>{failure.title}</div>
-                    </a>
+                    </Link>
                   )}
                 </For>
               </div>

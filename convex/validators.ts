@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import {
+  campaignStatusValidator,
   compositionParameterValidator,
   registryStatusValidator,
   visibilityValidator,
@@ -178,6 +179,23 @@ export const thesisReturnValidator = v.object({
   updatedAt: v.number(),
 });
 
+export const campaignReturnValidator = v.object({
+  _id: v.id("campaigns"),
+  _creationTime: v.number(),
+  title: v.string(),
+  question: v.string(),
+  descriptionMd: v.optional(v.string()),
+  status: campaignStatusValidator,
+  thesisIds: v.array(v.id("theses")),
+  startedAt: v.optional(v.number()),
+  endedAt: v.optional(v.number()),
+  summaryMd: v.optional(v.string()),
+  visibility: visibilityValidator,
+  createdBy: createdByValidator,
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
 const hypothesisStatusValidator = v.union(
   v.literal("draft"),
   v.literal("queued"),
@@ -336,6 +354,34 @@ export const listeningSessionReturnValidator = v.object({
 // WEEKLY BRIEF
 // ============================================================================
 
+export const studioPromptVariantsValidator = v.object({
+  tenMinuteMd: v.string(),
+  thirtyMinuteMd: v.string(),
+  ninetyMinuteMd: v.string(),
+});
+
+export const recommendedActionValidator = v.object({
+  kind: v.union(
+    v.literal("advance_recipe"),
+    v.literal("revive_recipe"),
+    v.literal("expand_composition"),
+    v.literal("compare_branch"),
+    v.literal("prototype_hypothesis"),
+  ),
+  targetType: v.union(
+    v.literal("hypothesis"),
+    v.literal("recipe"),
+    v.literal("composition"),
+  ),
+  targetId: v.string(),
+  durationBucket: v.union(
+    v.literal("10-minute"),
+    v.literal("30-minute"),
+    v.literal("90-minute"),
+  ),
+  reason: v.string(),
+});
+
 export const weeklyBriefReturnValidator = v.object({
   _id: v.id("weeklyBriefs"),
   _creationTime: v.number(),
@@ -344,10 +390,13 @@ export const weeklyBriefReturnValidator = v.object({
   promptVersion: v.string(),
   bodyMd: v.string(),
   sourceIds: v.array(v.id("sources")),
+  campaignId: v.optional(v.id("campaigns")),
   recommendedHypothesisIds: v.array(v.id("hypotheses")),
   recommendedRecipeIds: v.array(v.id("recipes")),
   activeThesisIds: v.optional(v.array(v.id("theses"))),
   referencedFailureKeys: v.optional(v.array(v.string())),
+  studioPrompts: v.optional(studioPromptVariantsValidator),
+  recommendedActions: v.optional(v.array(recommendedActionValidator)),
   todo: v.optional(v.array(v.string())),
   visibility: visibilityValidator,
   publishedAt: v.optional(v.number()),
@@ -427,6 +476,7 @@ export const thesisDetailValidator = v.object({
   hypotheses: v.array(hypothesisReturnValidator),
   recipes: v.array(recipeReturnValidator),
   compositions: v.array(compositionReturnValidator),
+  campaigns: v.array(campaignReturnValidator),
   stats: v.object({
     contradictionCount: v.number(),
     activeCount: v.number(),

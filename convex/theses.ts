@@ -100,12 +100,22 @@ export const getDetail = query({
       .filter((brief) => brief.activeThesisIds?.includes(args.id))
       .slice(0, 5)
       .map((brief) => brief._id);
+    const campaigns = (
+      await ctx.db
+        .query("campaigns")
+        .withIndex("by_visibility_updatedAt", (q) =>
+          q.eq("visibility", "public"),
+        )
+        .order("desc")
+        .collect()
+    ).filter((campaign) => campaign.thesisIds.includes(args.id));
 
     return {
       thesis,
       hypotheses,
       recipes,
       compositions,
+      campaigns,
       stats: {
         contradictionCount: hypotheses.filter(
           (hypothesis) => hypothesis.resolution === "contradicted",

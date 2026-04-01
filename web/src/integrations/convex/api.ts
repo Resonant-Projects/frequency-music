@@ -29,6 +29,18 @@ export const convexApi = {
     create: mutationRef("theses:create"),
     update: mutationRef("theses:update"),
   },
+  campaigns: {
+    list: queryRef("campaigns:list"),
+    listForSelection: queryRef("campaigns:listForSelection"),
+    get: queryRef("campaigns:get"),
+    getActive: queryRef("campaigns:getActive"),
+    getRecommendedActions: queryRef("campaigns:getRecommendedActions"),
+    create: mutationRef("campaigns:create"),
+    update: mutationRef("campaigns:update"),
+    setActive: mutationRef("campaigns:setActive"),
+    attachThesis: mutationRef("campaigns:attachThesis"),
+    detachThesis: mutationRef("campaigns:detachThesis"),
+  },
   hypotheses: {
     get: queryRef("hypotheses:get"),
     listByStatus: queryRef("hypotheses:listByStatus"),

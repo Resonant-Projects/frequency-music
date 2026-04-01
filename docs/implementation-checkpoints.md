@@ -109,19 +109,22 @@ Status:
 
 - add `campaigns` table
 - link weekly briefs and theses to campaigns
-- optionally store studio prompts on weekly briefs or a related structure
+- store 10/30/90-minute studio prompts directly on weekly briefs
+- persist deterministic recommended actions on weekly briefs so brief detail stays reviewable
 
 #### Query and API
 
 - campaign list/detail queries
 - weekly brief query includes studio prompts and active campaign context
 - query for next recommended actions based on expandability and recent outcomes
+- enforce a single active campaign at a time
 
 #### UI and workflow
 
 - campaign creation and overview surface
 - weekly brief UI adds short-form studio prompt modes
 - app surfaces should help move from brief -> recipe -> composition without losing context
+- thesis detail can attach or detach the current thesis from campaigns
 
 #### AI prompt and generation
 
@@ -135,6 +138,7 @@ Status:
 
 - add campaign guidance once the shape is stable
 - log decisions about campaign scope and completion rules
+- document that campaigns currently absorb the "theme" concept instead of using a separate themes table
 
 #### Test expectations
 

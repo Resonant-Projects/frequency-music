@@ -54,28 +54,29 @@ vercel env add VITE_CONVEX_URL production
 - Sign in redirects back to the originating `app.resonantrhythm.com` URL.
 - Convex auth uses Clerk token template `convex`.
 
-## 5) Local auth bypass (single Convex instance)
+## 5) Local CLI bypass and e2e auth
 
-Use this only for localhost development when you explicitly need to skip Clerk.
+Browser access now always goes through Clerk. Do not expose a bypass secret to
+the web client.
 
-Web env (`web/.env.local`):
-
-- `VITE_AUTH_BYPASS=1`
-- `VITE_AUTH_BYPASS_SECRET=<same-shared-secret-as-convex>`
-
-Convex runtime env:
+For CLI/server-side development helpers only:
 
 - `AUTH_BYPASS_ENABLED=true`
-- `AUTH_BYPASS_SECRET=<same-shared-secret-as-web>`
+- `AUTH_BYPASS_SECRET=<server-side-only-shared-secret>`
+
+Playwright e2e auth:
+
+- `E2E_CLERK_EMAIL=<test-account-email>`
+- `E2E_CLERK_PASSWORD=<test-account-password>`
 
 How it works:
 
-- Local web skips Clerk bootstrap and auth redirect.
-- Protected Convex mutations/actions accept local bypass only when the provided
-  bypass secret matches server-side `AUTH_BYPASS_SECRET`.
+- The web app always boots Clerk and redirects unauthenticated users to hosted sign in.
+- Playwright signs into Clerk during global setup and reuses the saved storage state.
+- Protected Convex CLI mutations/actions may still accept `devBypassSecret`, but only from trusted server-side or CLI callers.
 
 Production safety:
 
+- Never expose `AUTH_BYPASS_SECRET` through `VITE_*` env vars or browser code.
 - Never set `AUTH_BYPASS_ENABLED=true` in production.
-- Keep `VITE_AUTH_BYPASS=0` (or unset) in production builds.
 - Rotate `AUTH_BYPASS_SECRET` immediately if it is exposed.

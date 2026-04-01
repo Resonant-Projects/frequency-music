@@ -108,9 +108,7 @@ export function resolveDomainsForSector(
         const entrySector = entry.sectorMapping
           ? normalizeSectorId(entry.sectorMapping)
           : inferDisplaySectorFromDomain(name);
-        return entrySector === sector
-          ? [name]
-          : [];
+        return entrySector === sector ? [name] : [];
       }),
     ),
   );
