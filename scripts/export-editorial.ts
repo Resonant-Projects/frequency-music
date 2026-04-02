@@ -22,10 +22,11 @@ import {
   PUBLIC_EDITORIAL_EXPORT_VERSION,
 } from "../convex/editorialArtifacts";
 
-const CONVEX_URL =
-  process.env.CONVEX_URL ||
-  process.env.CONVEX_SELF_HOSTED_URL ||
-  "http://convex-backend.paas.rproj.art";
+const CONVEX_URL = process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL;
+if (!CONVEX_URL) {
+  console.error("CONVEX_URL or CONVEX_SELF_HOSTED_URL env var is required");
+  process.exit(1);
+}
 const DEV_BYPASS_SECRET = process.env.DEV_BYPASS_SECRET;
 if (!DEV_BYPASS_SECRET) {
   console.error("DEV_BYPASS_SECRET env var is required");
@@ -112,12 +113,18 @@ async function main() {
       }),
     ),
   );
-  const failures = results.filter(
-    (r): r is PromiseRejectedResult => r.status === "rejected",
-  );
-  if (failures.length > 0) {
-    console.error(`${failures.length} metadata update(s) failed:`);
-    for (const f of failures) console.error("  ", f.reason);
+  const failedEntries = results
+    .map((r, i) =>
+      r.status === "rejected"
+        ? { ...metadataUpdates[i], reason: r.reason }
+        : null,
+    )
+    .filter(Boolean);
+  if (failedEntries.length > 0) {
+    console.error(`${failedEntries.length} metadata update(s) failed:`);
+    for (const f of failedEntries) {
+      console.error(`  ${f.id} (${f.exportPath}):`, f.reason);
+    }
     process.exit(1);
   }
 
