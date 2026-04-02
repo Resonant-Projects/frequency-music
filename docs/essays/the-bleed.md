@@ -26,7 +26,7 @@ Consider what we know about coupled oscillators. When two oscillators share a co
 
 Musicians in a room are coupled oscillators. Each player has their own internal timing — a natural rhythmic frequency shaped by their instrument, training, and musical intention. The acoustic bleed between them is the coupling force. When a drummer's hit reaches the bassist's ears 5 milliseconds later (roughly 1.7 meters of air path), it exerts a synchronizing influence. The bassist adjusts — not consciously, but through the same auditory-motor feedback loop that keeps a solo player locked to their own pulse.
 
-The tighter the coupling (louder room, more reflective surfaces, closer proximity), the stronger the synchronizing force. This is why musicians who play in the same room together sound different from musicians who overdub in isolation. It's not just "vibe." It's physics. The coupling channel is real, and bleed is its carrier signal.
+The tighter the coupling (louder room, closer proximity, and — up to a point — more reflective surfaces), the stronger the synchronizing force. (Though past a threshold, highly reverberant rooms like cathedrals actually *weaken* precise rhythmic coupling by smearing transients, which is why cathedral choirs sing slowly.) This is why musicians who play in the same room together sound different from musicians who overdub in isolation. It's not just "vibe." It's physics. The coupling channel is real, and bleed is its carrier signal.
 
 ---
 
