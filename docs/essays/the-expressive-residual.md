@@ -70,7 +70,7 @@ These four findings — prosodic disentanglement, emotion-sensitive neurons, the
 
 This isn't merely an engineering insight. It connects to fundamental questions about why music exists.
 
-If expression were just a surface property of content — ornamentation on a melody, rubato on a rhythm — then symbolic notation would be a near-complete representation of music. But it isn't, and we've always known it isn't. The expressive residual is where the *meaning* of a performance lives. The notes are the medium; the expression is the message.
+If expression were just a surface property of content — ornamentation on a melody, rubato on a rhythm — then symbolic notation would be a near-complete representation of music. But it isn't, and we've always known it isn't. The expressive residual carries crucial *meaning* in performance — but it's not the whole story. Play the "wrong" notes with incredible expression and it's still wrong. The meaning lives in the *interaction* between structure and residual, not exclusively in one or the other. What AI models reveal is that these components are *computationally* separable in latent space, even though they're *acoustically* entangled in the physical signal — a pianist's velocity literally changes the harmonic spectrum of the string, making expression and content physically inseparable at the waveform level.
 
 The Smart Embedding architecture, which exploits the mathematical independence of pitch and hand attributes in Beethoven's piano sonatas, provides yet another data point. Even within the symbolic domain, musical parameters factor into independent dimensions. The factorability goes all the way down.
 
