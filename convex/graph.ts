@@ -809,11 +809,11 @@ export const exportForVisualization = query({
 
     const maxDepth = Math.max(0, Math.floor(args.depth ?? 2));
 
-    // Get all concepts as nodes
-    const concepts = await ctx.db.query("concepts").take(100);
+    // Get all concepts as nodes (increased from 100 to 2000)
+    const concepts = await ctx.db.query("concepts").take(2000);
 
-    // Get all edges
-    const edges = await ctx.db.query("edges").take(500);
+    // Get all edges (increased from 500 to 10000)
+    const edges = await ctx.db.query("edges").take(10000);
 
     const allNodes = new Map<
       string,

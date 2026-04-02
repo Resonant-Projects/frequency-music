@@ -33,6 +33,7 @@ import type * as recipes from "../recipes.js";
 import type * as sourceUtils from "../sourceUtils.js";
 import type * as sources from "../sources.js";
 import type * as testHelpers from "../testHelpers.js";
+import type * as testing from "../testing.js";
 import type * as theses from "../theses.js";
 import type * as validators from "../validators.js";
 import type * as vocabulary from "../vocabulary.js";
@@ -71,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   sourceUtils: typeof sourceUtils;
   sources: typeof sources;
   testHelpers: typeof testHelpers;
+  testing: typeof testing;
   theses: typeof theses;
   validators: typeof validators;
   vocabulary: typeof vocabulary;
