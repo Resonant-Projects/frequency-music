@@ -182,11 +182,12 @@ export const listMissingWhyThisMatters = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(hypothesisReturnValidator),
   handler: async (ctx, args) => {
-    const rows = await ctx.db.query("hypotheses").collect();
-    return rows
-      .toSorted((a, b) => b.updatedAt - a.updatedAt)
-      .filter((row) => !row.whyThisMatters?.trim())
-      .slice(0, args.limit ?? 50);
+    const limit = args.limit ?? 50;
+    const rows = await ctx.db
+      .query("hypotheses")
+      .filter((q) => q.eq(q.field("whyThisMatters"), undefined))
+      .collect();
+    return rows.toSorted((a, b) => b.updatedAt - a.updatedAt).slice(0, limit);
   },
 });
 

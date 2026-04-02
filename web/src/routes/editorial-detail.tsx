@@ -100,6 +100,7 @@ export function EditorialDetailPage() {
   const [submitting, setSubmitting] = createSignal(false);
   const [approving, setApproving] = createSignal(false);
   const [publishing, setPublishing] = createSignal(false);
+  const isBusy = () => saving() || submitting() || approving() || publishing();
 
   createEffect(() => {
     const row = detail();
@@ -205,7 +206,7 @@ export function EditorialDetailPage() {
   async function handleSave() {
     const current = draft();
     const row = detail();
-    if (!current || !row) return false;
+    if (!current || !row || isBusy()) return false;
     setSaving(true);
     setNotice(null);
     try {
@@ -242,7 +243,7 @@ export function EditorialDetailPage() {
 
   async function handleSubmitForReview() {
     const row = detail();
-    if (!row) return;
+    if (!row || isBusy()) return;
     setSubmitting(true);
     setNotice(null);
     try {
@@ -258,7 +259,7 @@ export function EditorialDetailPage() {
 
   async function handleApprove() {
     const row = detail();
-    if (!row) return;
+    if (!row || isBusy()) return;
     setApproving(true);
     setNotice(null);
     try {
@@ -274,7 +275,7 @@ export function EditorialDetailPage() {
 
   async function handlePublish() {
     const row = detail();
-    if (!row) return;
+    if (!row || isBusy()) return;
     setPublishing(true);
     setNotice(null);
     try {
@@ -318,7 +319,7 @@ export function EditorialDetailPage() {
               </UICard>
             );
           }
-          const currentDraft = current()!;
+          const d = () => current()!;
           return (
             <>
               <UICard>
@@ -366,28 +367,28 @@ export function EditorialDetailPage() {
                   <UIButton
                     variant="outline"
                     onClick={handleSave}
-                    disabled={saving()}
+                    disabled={isBusy()}
                   >
                     {saving() ? "Saving..." : "Save draft"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleSubmitForReview}
-                    disabled={submitting() || !validation().canSubmitForReview}
+                    disabled={isBusy() || !validation().canSubmitForReview}
                   >
                     {submitting() ? "Submitting..." : "Submit for review"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleApprove}
-                    disabled={approving()}
+                    disabled={isBusy()}
                   >
                     {approving() ? "Approving..." : "Approve"}
                   </UIButton>
                   <UIButton
                     variant="solid"
                     onClick={handlePublish}
-                    disabled={publishing() || !validation().canPublish}
+                    disabled={isBusy() || !validation().canPublish}
                   >
                     {publishing() ? "Publishing..." : "Publish"}
                   </UIButton>
@@ -410,7 +411,7 @@ export function EditorialDetailPage() {
                 </label>
                 <UISelect
                   id="artifact-kind"
-                  value={currentDraft.kind}
+                  value={d().kind}
                   onChange={(event) =>
                     updateField(
                       "kind",
@@ -431,7 +432,7 @@ export function EditorialDetailPage() {
                 </label>
                 <UIInput
                   id="artifact-title"
-                  value={currentDraft.title}
+                  value={d().title}
                   onInput={(event) =>
                     updateField("title", event.currentTarget.value)
                   }
@@ -442,7 +443,7 @@ export function EditorialDetailPage() {
                 </label>
                 <UITextarea
                   id="artifact-dek"
-                  value={currentDraft.dek}
+                  value={d().dek}
                   onInput={(event) =>
                     updateField("dek", event.currentTarget.value)
                   }
@@ -461,7 +462,7 @@ export function EditorialDetailPage() {
                     </label>
                     <UIInput
                       id="artifact-slug"
-                      value={currentDraft.slug}
+                      value={d().slug}
                       onInput={(event) =>
                         updateField("slug", event.currentTarget.value)
                       }
@@ -476,7 +477,7 @@ export function EditorialDetailPage() {
                     </label>
                     <UISelect
                       id="artifact-evidence-status"
-                      value={currentDraft.evidenceStatus}
+                      value={d().evidenceStatus}
                       onChange={(event) =>
                         updateField(
                           "evidenceStatus",
@@ -496,7 +497,7 @@ export function EditorialDetailPage() {
                     </label>
                     <UISelect
                       id="artifact-visibility"
-                      value={currentDraft.visibility}
+                      value={d().visibility}
                       onChange={(event) =>
                         updateField(
                           "visibility",
@@ -518,7 +519,7 @@ export function EditorialDetailPage() {
                 <UITextarea
                   id="artifact-body"
                   rows={18}
-                  value={currentDraft.bodyMd}
+                  value={d().bodyMd}
                   onInput={(event) =>
                     updateField("bodyMd", event.currentTarget.value)
                   }
@@ -530,7 +531,7 @@ export function EditorialDetailPage() {
                 <UITextarea
                   id="artifact-why"
                   rows={8}
-                  value={currentDraft.whyItMattersMd}
+                  value={d().whyItMattersMd}
                   onInput={(event) =>
                     updateField("whyItMattersMd", event.currentTarget.value)
                   }
@@ -542,7 +543,7 @@ export function EditorialDetailPage() {
                 <UITextarea
                   id="artifact-uncertainty"
                   rows={8}
-                  value={currentDraft.uncertaintyMd}
+                  value={d().uncertaintyMd}
                   onInput={(event) =>
                     updateField("uncertaintyMd", event.currentTarget.value)
                   }
@@ -554,7 +555,7 @@ export function EditorialDetailPage() {
                 <UITextarea
                   id="artifact-what-changed"
                   rows={6}
-                  value={currentDraft.whatChangedMd}
+                  value={d().whatChangedMd}
                   onInput={(event) =>
                     updateField("whatChangedMd", event.currentTarget.value)
                   }
@@ -578,7 +579,7 @@ export function EditorialDetailPage() {
                 </div>
 
                 <div class={css({ display: "grid", gap: "3", mt: "3" })}>
-                  <For each={currentDraft.publicEvidenceCards}>
+                  <For each={d().publicEvidenceCards}>
                     {(card, index) => (
                       <div
                         class={css({

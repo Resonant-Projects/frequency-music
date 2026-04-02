@@ -13,9 +13,14 @@
 
 import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
+import type { Doc } from "../convex/_generated/dataModel";
 import { api } from "../convex/_generated/api";
+import {
+  buildExportEntry,
+  PUBLIC_EDITORIAL_EXPORT_VERSION,
+} from "../convex/editorialArtifacts";
 
 const CONVEX_URL =
   process.env.CONVEX_URL ||
@@ -25,7 +30,6 @@ const DEV_BYPASS_SECRET =
   process.env.DEV_BYPASS_SECRET || "freq-opus-extract-2026";
 const APP_BASE_URL =
   process.env.PUBLIC_APP_BASE_URL || "https://app.resonantprojects.art";
-const PUBLIC_EDITORIAL_EXPORT_VERSION = "public_editorial_v1" as const;
 
 function parseArgs(): { outputDir: string } {
   const args = process.argv.slice(2);
@@ -37,64 +41,6 @@ function parseArgs(): { outputDir: string } {
     }
   }
   return { outputDir };
-}
-
-function renderMarkdown(
-  artifact: {
-    _id: string;
-    title: string;
-    slug: string;
-    kind: string;
-    dek: string;
-    bodyMd: string;
-    whyItMattersMd: string;
-    uncertaintyMd: string;
-    whatChangedMd?: string | null;
-    evidenceStatus: string;
-    publishedAt?: number | null;
-    updatedAt: number;
-  },
-  appBaseUrl: string,
-  linkedMeta?: { campaignSlug?: string; thesisSlugs?: string[] },
-): string {
-  const frontmatter = [
-    "---",
-    `title: ${JSON.stringify(artifact.title)}`,
-    `slug: ${JSON.stringify(artifact.slug)}`,
-    `kind: ${JSON.stringify(artifact.kind)}`,
-    `publishedAt: ${JSON.stringify(
-      new Date(artifact.publishedAt ?? artifact.updatedAt).toISOString(),
-    )}`,
-    `dek: ${JSON.stringify(artifact.dek)}`,
-    `evidenceStatus: ${JSON.stringify(artifact.evidenceStatus)}`,
-    `uncertaintySummary: ${JSON.stringify(artifact.uncertaintyMd)}`,
-    `whyItMatters: ${JSON.stringify(artifact.whyItMattersMd)}`,
-    ...(linkedMeta?.campaignSlug
-      ? [`campaignSlug: ${JSON.stringify(linkedMeta.campaignSlug)}`]
-      : []),
-    ...(linkedMeta?.thesisSlugs?.length
-      ? [`thesisSlugs: ${JSON.stringify(linkedMeta.thesisSlugs)}`]
-      : []),
-    `canonicalAppUrl: ${JSON.stringify(
-      `${appBaseUrl.replace(/\/$/, "")}/editorial/${artifact._id}`,
-    )}`,
-    "---",
-    "",
-  ].join("\n");
-
-  return [
-    frontmatter,
-    artifact.bodyMd,
-    "",
-    "## Why It Matters",
-    artifact.whyItMattersMd,
-    "",
-    "## Uncertainty",
-    artifact.uncertaintyMd,
-    artifact.whatChangedMd
-      ? `\n## What Changed\n${artifact.whatChangedMd}\n`
-      : "",
-  ].join("\n");
 }
 
 async function main() {
@@ -130,26 +76,25 @@ async function main() {
     const { artifact, validation, campaignSlug, thesisSlugs } = item;
     if (!validation.canPublish) continue;
 
-    const path = `${artifact.slug}.md`;
-    const markdown = renderMarkdown(artifact, APP_BASE_URL, {
-      campaignSlug,
-      thesisSlugs,
+    const rendered = await buildExportEntry(
+      artifact as unknown as Doc<"editorialArtifacts">,
+      APP_BASE_URL,
+      { campaignSlug, thesisSlugs },
+    );
+
+    await writeFile(join(outputDir, rendered.path), rendered.markdown, "utf8");
+    const exportSha = createHash("sha256")
+      .update(rendered.markdown)
+      .digest("hex");
+
+    metadataUpdates.push({
+      id: artifact._id,
+      exportPath: rendered.path,
+      exportSha,
     });
+    manifestItems.push(rendered.manifestEntry);
 
-    await writeFile(join(outputDir, path), markdown, "utf8");
-    const exportSha = createHash("sha256").update(markdown).digest("hex");
-
-    metadataUpdates.push({ id: artifact._id, exportPath: path, exportSha });
-    manifestItems.push({
-      slug: artifact.slug,
-      path,
-      title: artifact.title,
-      kind: artifact.kind,
-      publishedAt: artifact.publishedAt ?? artifact.updatedAt,
-      evidenceStatus: artifact.evidenceStatus,
-    });
-
-    console.log(`  Exported: ${path}`);
+    console.log(`  Exported: ${rendered.path}`);
   }
 
   const exportedAt = Date.now();

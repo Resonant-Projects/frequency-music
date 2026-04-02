@@ -498,6 +498,7 @@ export function FeedbackPage() {
                         marginBottom:
                           session.ratings?.expandability !== undefined ||
                           (session.feltQualities?.length ?? 0) > 0 ||
+                          (session.standoutMoments?.length ?? 0) > 0 ||
                           (session.bodyMapTags?.length ?? 0) > 0 ||
                           Boolean(session.bodyMapNotes)
                             ? "2"
