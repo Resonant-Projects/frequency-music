@@ -36,7 +36,7 @@ Composers and mixing engineers have known this intuitively for centuries, though
 
 **Bleed is glue.** When instruments are recorded in the same room, their microphones pick up each other — drum bleed in the piano mic, vocal bleed in the guitar mic. This "crosstalk" is technically noise, but it's what gives a recording its sense of shared space. Heavily isolated tracks, perfectly separated, can sound lifeless when combined.
 
-**Overprocessing kills musicality.** The loudness war, excessive noise gating, aggressive EQ — all forms of signal purification that can strip the life from a mix. The most celebrated recordings often have "flaws" that purist signal processing would remove: tape hiss, room ambience, performer breath sounds, string buzz.
+**Overprocessing kills musicality.** The loudness war, excessive noise gating, aggressive EQ — all forms of signal purification that can strip the life from a mix. Many celebrated recordings have "flaws" that purist signal processing would remove: tape hiss, room ambience, performer breath sounds, string buzz. (Though this is partly generational — what sounds "warm" to someone raised on vinyl may just sound broken to someone raised on Soundcloud. Be careful not to mistake aesthetic preference for acoustic law.)
 
 **Arrangement as managed impurity.** A good arrangement doesn't isolate each instrument into its own spectral lane. It creates controlled overlaps — bass and kick sharing low frequencies, vocals and guitar competing in the midrange — and the listener's auditory system separates them using contextual cues. Perfect spectral isolation would be aurally sterile.
 
