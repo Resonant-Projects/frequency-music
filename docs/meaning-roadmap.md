@@ -159,6 +159,9 @@ Includes:
 ### Phase 1: Rigor and Interpretation
 Weeks 1-3
 
+Status:
+- Implemented, with hardening now enforced for new work: new hypotheses require `whyThisMatters`, listening feedback captures embodied notes and expand verdicts, and Phase 1 regression coverage exists for the critical paths.
+
 Quick wins first:
 
 - add `why this matters` to hypotheses, recipes, and briefs
@@ -184,6 +187,9 @@ Success criteria:
 ### Phase 2: Represent Accumulated Learning
 Weeks 4-6
 
+Status:
+- Implemented. Composition lineage now includes source -> extraction -> hypothesis -> recipe -> composition -> listening, and the failure archive continues to derive from those relationships.
+
 - add lineage views for compositions
 - add a failure archive or anti-library
 - upgrade the graph with editorial signals
@@ -202,6 +208,9 @@ Success criteria:
 
 ### Phase 3: Tighten the Studio Loop
 Weeks 7-9
+
+Status:
+- Implemented. Campaigns steer the weekly loop, weekly briefs persist 10/30/90-minute prompts plus deterministic recommended actions, and negative evidence remains part of campaign steering.
 
 - add studio prompt modes
 - add campaigns and themes
@@ -227,6 +236,9 @@ Weeks 10-12
 - support experiment recaps and "what changed my mind" pieces
 - publish selected thesis and campaign summaries
 - improve public-safe visibility and synthesis workflows
+- implement curated `editorialArtifacts` inside Frequency Music rather than publishing raw linked records directly
+- export only approved public snapshots through the `public_editorial_v1` contract
+- feed the anonymous public surface from Astro content collections backed by exported markdown snapshots
 
 Why this phase last:
 
@@ -237,6 +249,8 @@ Success criteria:
 
 - public outputs are regular, legible, and honest about uncertainty
 - the project feels like a sustained inquiry rather than isolated posts
+- publishing uses explicit review states and public-safe evidence cards
+- Astro consumes snapshot exports rather than live private joins
 
 ## Quick Wins First
 

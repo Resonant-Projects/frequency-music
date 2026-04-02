@@ -4,7 +4,11 @@ export type TableName =
   | "hypotheses"
   | "recipes"
   | "compositions"
-  | "listeningSessions";
+  | "listeningSessions"
+  | "sources"
+  | "extractions"
+  | "weeklyBriefs"
+  | "editorialArtifacts";
 
 export type Tables = Record<TableName, any[]>;
 

@@ -53,6 +53,31 @@ function truncate(text: string, maxLength: number) {
   return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
 }
 
+const FELT_QUALITY_HELPERS = [
+  "weightless",
+  "suspended",
+  "glassy",
+  "gritty",
+  "settling",
+  "pressurized",
+] as const;
+
+const BODY_MAP_HELPERS = [
+  "chest",
+  "jaw",
+  "spine",
+  "stomach",
+  "throat",
+  "forehead",
+] as const;
+
+function appendCommaValue(current: string, next: string): string {
+  const values = parseCommaSeparated(current);
+  return values.includes(next)
+    ? values.join(", ")
+    : [...values, next].join(", ");
+}
+
 export function FeedbackPage() {
   onMount(() => {
     document.title = "Feedback — Frequency Music";
@@ -85,8 +110,10 @@ export function FeedbackPage() {
   const [goosebumps, setGoosebumps] = createSignal("2");
   const [musicality, setMusicality] = createSignal("3");
   const [expandability, setExpandability] = createSignal("");
+  const [expandVerdict, setExpandVerdict] = createSignal("");
   const [feltQualities, setFeltQualities] = createSignal("");
   const [bodyMapTags, setBodyMapTags] = createSignal("");
+  const [bodyMapNotes, setBodyMapNotes] = createSignal("");
   const [standoutMoments, setStandoutMoments] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
 
@@ -115,19 +142,26 @@ export function FeedbackPage() {
           musicality: Number(musicality()),
           expandability: parseOptionalRating(expandability()),
         },
+        bodyMapNotes: bodyMapNotes().trim() || undefined,
         feltQualities:
           parsedFeltQualities.length > 0 ? parsedFeltQualities : undefined,
-        bodyMapTags: parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
+        bodyMapTags:
+          parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
         standoutMoments:
           parsedStandoutMoments.length > 0 ? parsedStandoutMoments : undefined,
+        expandVerdict: expandVerdict()
+          ? (expandVerdict() as "yes" | "maybe" | "no")
+          : undefined,
       });
 
       setParticipants("");
       setContextMd("");
       setFeedbackMd("");
       setExpandability("");
+      setExpandVerdict("");
       setFeltQualities("");
       setBodyMapTags("");
+      setBodyMapNotes("");
       setStandoutMoments("");
       setNotice("Listening session logged.");
     } catch (error) {
@@ -192,7 +226,7 @@ export function FeedbackPage() {
             gap: "3",
             gridTemplateColumns: {
               base: "1fr",
-              md: "repeat(4, minmax(0, 1fr))",
+              md: "repeat(5, minmax(0, 1fr))",
             },
           })}
         >
@@ -249,6 +283,21 @@ export function FeedbackPage() {
               placeholder="4"
             />
           </div>
+          <div>
+            <label class={fieldLabelClass} for="feedback-expand-verdict">
+              Expand Verdict
+            </label>
+            <UISelect
+              id="feedback-expand-verdict"
+              value={expandVerdict()}
+              onChange={(event) => setExpandVerdict(event.currentTarget.value)}
+            >
+              <option value="">Not set</option>
+              <option value="yes">yes</option>
+              <option value="maybe">maybe</option>
+              <option value="no">no</option>
+            </UISelect>
+          </div>
         </div>
 
         <div
@@ -272,6 +321,38 @@ export function FeedbackPage() {
               onInput={(event) => setFeltQualities(event.currentTarget.value)}
               placeholder="weightless, suspended, glassy"
             />
+            <div
+              class={css({
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "2",
+                mt: "2",
+              })}
+            >
+              <For each={FELT_QUALITY_HELPERS}>
+                {(helper) => (
+                  <button
+                    type="button"
+                    class={css({
+                      borderColor: "rgba(200, 168, 75, 0.22)",
+                      borderRadius: "full",
+                      borderWidth: "1px",
+                      color: "rgba(245, 240, 232, 0.72)",
+                      fontSize: "xs",
+                      px: "2.5",
+                      py: "1",
+                    })}
+                    onClick={() =>
+                      setFeltQualities((current) =>
+                        appendCommaValue(current, helper),
+                      )
+                    }
+                  >
+                    {helper}
+                  </button>
+                )}
+              </For>
+            </div>
           </div>
           <div>
             <label class={fieldLabelClass} for="feedback-body-tags">
@@ -283,8 +364,50 @@ export function FeedbackPage() {
               onInput={(event) => setBodyMapTags(event.currentTarget.value)}
               placeholder="chest, jaw, spine"
             />
+            <div
+              class={css({
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "2",
+                mt: "2",
+              })}
+            >
+              <For each={BODY_MAP_HELPERS}>
+                {(helper) => (
+                  <button
+                    type="button"
+                    class={css({
+                      borderColor: "rgba(200, 168, 75, 0.22)",
+                      borderRadius: "full",
+                      borderWidth: "1px",
+                      color: "rgba(245, 240, 232, 0.72)",
+                      fontSize: "xs",
+                      px: "2.5",
+                      py: "1",
+                    })}
+                    onClick={() =>
+                      setBodyMapTags((current) =>
+                        appendCommaValue(current, helper),
+                      )
+                    }
+                  >
+                    {helper}
+                  </button>
+                )}
+              </For>
+            </div>
           </div>
         </div>
+
+        <label class={fieldLabelClass} for="feedback-body-notes">
+          Body Map Notes
+        </label>
+        <UITextarea
+          id="feedback-body-notes"
+          value={bodyMapNotes()}
+          onInput={(event) => setBodyMapNotes(event.currentTarget.value)}
+          placeholder="Pressure in the sternum on the low swell, then release into the jaw and face."
+        />
 
         <label class={fieldLabelClass} for="feedback-standout">
           Standout Moments
@@ -345,6 +468,7 @@ export function FeedbackPage() {
                         display: "flex",
                         gap: "2",
                         marginBottom: "2",
+                        flexWrap: "wrap",
                       })}
                     >
                       <UIBadge tone="gold">
@@ -354,6 +478,9 @@ export function FeedbackPage() {
                       <UIBadge tone="cream">
                         {session.participants.length} listeners
                       </UIBadge>
+                      <Show when={session.expandVerdict}>
+                        {(value) => <UIBadge tone="violet">{value()}</UIBadge>}
+                      </Show>
                     </div>
                     <p
                       class={css({
@@ -370,7 +497,10 @@ export function FeedbackPage() {
                         fontSize: "xs",
                         marginBottom:
                           session.ratings?.expandability !== undefined ||
-                          (session.feltQualities?.length ?? 0) > 0
+                          (session.feltQualities?.length ?? 0) > 0 ||
+                          (session.standoutMoments?.length ?? 0) > 0 ||
+                          (session.bodyMapTags?.length ?? 0) > 0 ||
+                          Boolean(session.bodyMapNotes)
                             ? "2"
                             : "0",
                       })}
@@ -387,7 +517,9 @@ export function FeedbackPage() {
                           fontSize: "xs",
                           marginBottom:
                             (session.feltQualities?.length ?? 0) > 0 ||
-                            (session.standoutMoments?.length ?? 0) > 0
+                            (session.standoutMoments?.length ?? 0) > 0 ||
+                            (session.bodyMapTags?.length ?? 0) > 0 ||
+                            Boolean(session.bodyMapNotes)
                               ? "2"
                               : "0",
                         })}
@@ -401,13 +533,47 @@ export function FeedbackPage() {
                           color: "rgba(245, 240, 232, 0.62)",
                           fontSize: "sm",
                           marginBottom:
-                            (session.standoutMoments?.length ?? 0) > 0
+                            (session.standoutMoments?.length ?? 0) > 0 ||
+                            (session.bodyMapTags?.length ?? 0) > 0 ||
+                            Boolean(session.bodyMapNotes)
                               ? "2"
                               : "0",
                         })}
                       >
                         Felt: {session.feltQualities?.join(", ")}
                       </p>
+                    </Show>
+                    <Show when={(session.bodyMapTags?.length ?? 0) > 0}>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.62)",
+                          fontSize: "sm",
+                          marginBottom:
+                            Boolean(session.bodyMapNotes) ||
+                            (session.standoutMoments?.length ?? 0) > 0
+                              ? "2"
+                              : "0",
+                        })}
+                      >
+                        Body map: {session.bodyMapTags?.join(", ")}
+                      </p>
+                    </Show>
+                    <Show when={session.bodyMapNotes}>
+                      {(value) => (
+                        <p
+                          class={css({
+                            color: "rgba(245, 240, 232, 0.62)",
+                            fontSize: "sm",
+                            whiteSpace: "pre-wrap",
+                            marginBottom:
+                              (session.standoutMoments?.length ?? 0) > 0
+                                ? "2"
+                                : "0",
+                          })}
+                        >
+                          Body notes: {value()}
+                        </p>
+                      )}
                     </Show>
                     <Show when={(session.standoutMoments?.length ?? 0) > 0}>
                       <p

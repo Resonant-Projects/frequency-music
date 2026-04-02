@@ -25,7 +25,7 @@ interface GeneratedHypothesisPayload {
   title: string;
   question: string;
   hypothesis: string;
-  whyThisMatters?: string;
+  whyThisMatters: string;
   rationaleMd: string;
   concepts?: string[];
 }
@@ -69,6 +69,21 @@ async function loadThesisOrThrow(
     });
   }
   return thesis;
+}
+
+export function assertWhyThisMatters(
+  value: string,
+  field = "whyThisMatters",
+): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: `${field} is required`,
+      field,
+    });
+  }
+  return trimmed;
 }
 
 // ============================================================================
@@ -163,6 +178,19 @@ export const listByThesis = query({
   },
 });
 
+export const listMissingWhyThisMatters = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(hypothesisReturnValidator),
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+    const rows = await ctx.db
+      .query("hypotheses")
+      .filter((q) => q.eq(q.field("whyThisMatters"), undefined))
+      .collect();
+    return rows.toSorted((a, b) => b.updatedAt - a.updatedAt).slice(0, limit);
+  },
+});
+
 // ============================================================================
 // MUTATIONS
 // ============================================================================
@@ -187,12 +215,16 @@ export const create = mutation({
     const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
     const identity = await requireAuth(ctx, args);
     const now = Date.now();
+    const whyThisMatters = assertWhyThisMatters(
+      createArgs.whyThisMatters ?? createArgs.rationaleMd,
+    );
     if (createArgs.thesisId) {
       await loadThesisOrThrow(ctx, createArgs.thesisId);
     }
 
     return await ctx.db.insert("hypotheses", {
       ...createArgs,
+      whyThisMatters,
       status: "draft",
       visibility: "private",
       createdBy:
@@ -251,8 +283,16 @@ export const update = mutation({
       await loadThesisOrThrow(ctx, thesisId);
     }
 
+    const whyThisMatters =
+      updates.whyThisMatters !== undefined
+        ? assertWhyThisMatters(updates.whyThisMatters)
+        : hypothesis.whyThisMatters !== undefined
+          ? assertWhyThisMatters(hypothesis.whyThisMatters)
+          : undefined;
+
     const patch = {
       ...updates,
+      ...(whyThisMatters !== undefined ? { whyThisMatters } : {}),
       ...(thesisId !== undefined
         ? { thesisId: thesisId === null ? undefined : thesisId }
         : {}),
@@ -356,7 +396,7 @@ export const generateFromExtraction = action({
       title: v.string(),
       question: v.string(),
       hypothesis: v.string(),
-      whyThisMatters: v.optional(v.string()),
+      whyThisMatters: v.string(),
       rationaleMd: v.string(),
       concepts: v.optional(v.array(v.string())),
     }),
@@ -428,6 +468,10 @@ export const generateFromExtraction = action({
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
       parsed = JSON.parse(jsonMatch[0]) as GeneratedHypothesisPayload;
+      parsed.whyThisMatters = assertWhyThisMatters(
+        parsed.whyThisMatters,
+        "generated.whyThisMatters",
+      );
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown parse error";
       throw new Error(`Failed to parse AI response: ${message}`, { cause: e });
@@ -476,7 +520,7 @@ export const generateBatch = action({
           title: v.string(),
           question: v.string(),
           hypothesis: v.string(),
-          whyThisMatters: v.optional(v.string()),
+          whyThisMatters: v.string(),
           rationaleMd: v.string(),
           concepts: v.optional(v.array(v.string())),
         }),

@@ -314,6 +314,31 @@ export function CompositionDetailPage() {
               </div>
             </Show>
 
+            <Show when={row().extractions.length > 0}>
+              <hr class={goldDivider} />
+              <div class={sectionLabel}>Extractions</div>
+              <div class={css({ display: "grid", gap: "2" })}>
+                <For each={row().extractions}>
+                  {(extraction) => (
+                    <div class={lineItem}>
+                      <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                        {extraction.summary}
+                      </div>
+                      <p
+                        class={css({
+                          color: "rgba(245, 240, 232, 0.55)",
+                          fontSize: "sm",
+                        })}
+                      >
+                        {extraction.claims.length} claims ·{" "}
+                        {extraction.compositionParameters.length} parameters
+                      </p>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </Show>
+
             <hr class={goldDivider} />
             <div class={sectionLabel}>Listening History</div>
             <Show
@@ -355,10 +380,67 @@ export function CompositionDetailPage() {
                         class={css({
                           color: "rgba(245, 240, 232, 0.7)",
                           lineHeight: "1.7",
+                          marginBottom:
+                            (session.feltQualities?.length ?? 0) > 0 ||
+                            (session.bodyMapTags?.length ?? 0) > 0 ||
+                            Boolean(session.bodyMapNotes) ||
+                            (session.standoutMoments?.length ?? 0) > 0
+                              ? "2"
+                              : "0",
                         })}
                       >
                         <Markdown content={session.feedbackMd} />
                       </div>
+                      <Show
+                        when={
+                          (session.feltQualities?.length ?? 0) > 0 ||
+                          (session.bodyMapTags?.length ?? 0) > 0 ||
+                          Boolean(session.bodyMapNotes)
+                        }
+                      >
+                        <div
+                          class={css({
+                            color: "rgba(245, 240, 232, 0.62)",
+                            fontSize: "sm",
+                            lineHeight: "1.7",
+                            marginBottom:
+                              (session.standoutMoments?.length ?? 0) > 0
+                                ? "2"
+                                : "0",
+                          })}
+                        >
+                          <Show when={(session.feltQualities?.length ?? 0) > 0}>
+                            <p>Felt: {session.feltQualities?.join(", ")}</p>
+                          </Show>
+                          <Show when={(session.bodyMapTags?.length ?? 0) > 0}>
+                            <p>Body map: {session.bodyMapTags?.join(", ")}</p>
+                          </Show>
+                          <Show when={session.bodyMapNotes}>
+                            {(value) => <p>Body notes: {value()}</p>}
+                          </Show>
+                        </div>
+                      </Show>
+                      <Show when={(session.standoutMoments?.length ?? 0) > 0}>
+                        <div
+                          class={css({
+                            color: "rgba(245, 240, 232, 0.58)",
+                            fontSize: "sm",
+                            lineHeight: "1.7",
+                          })}
+                        >
+                          <p>Standout moments:</p>
+                          <ul
+                            class={css({
+                              paddingLeft: "5",
+                              listStyleType: "disc",
+                            })}
+                          >
+                            <For each={session.standoutMoments}>
+                              {(moment) => <li>{moment}</li>}
+                            </For>
+                          </ul>
+                        </div>
+                      </Show>
                     </div>
                   )}
                 </For>

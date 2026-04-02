@@ -1,18 +1,21 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium, type FullConfig, type Locator, type Page } from "@playwright/test";
+import {
+  chromium,
+  type FullConfig,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
 function readEnvVarFromFile(filePath: string, key: string): string | undefined {
   try {
     const contents = readFileSync(filePath, "utf8");
-    const match = contents.match(
-      new RegExp(`^${key}=(.*)$`, "m"),
-    );
+    const match = contents.match(new RegExp(`^${key}=(.*)$`, "m"));
     if (!match?.[1]) return undefined;
-    return match[1].trim().replace(/^['"]|['"]$/g, "");
+    return match[1].trim().replaceAll(/^['"]|['"]$/g, "");
   } catch {
     return undefined;
   }
@@ -33,7 +36,12 @@ async function findVisibleLocator(
   locators: Locator[],
 ): Promise<Locator> {
   for (const locator of locators) {
-    if (await locator.first().isVisible().catch(() => false)) {
+    if (
+      await locator
+        .first()
+        .isVisible()
+        .catch(() => false)
+    ) {
       return locator.first();
     }
   }
@@ -92,17 +100,22 @@ export default async function globalSetup(config: FullConfig) {
 
   await fillIdentifier(page, email);
 
-  if (!(await page.locator('input[type="password"]').first().isVisible().catch(() => false))) {
+  if (
+    !(await page
+      .locator('input[type="password"]')
+      .first()
+      .isVisible()
+      .catch(() => false))
+  ) {
     await clickPrimaryAction(page, [/continue/i, /next/i, /sign in/i]);
   }
 
   await fillPassword(page, password);
   await clickPrimaryAction(page, [/sign in/i, /continue/i]);
 
-  await page.waitForURL(
-    (url) => url.toString().startsWith(baseURL),
-    { timeout: 60_000 },
-  );
+  await page.waitForURL((url) => url.toString().startsWith(baseURL), {
+    timeout: 60_000,
+  });
   await context.storageState({ path: storageStatePath });
   await browser.close();
 }

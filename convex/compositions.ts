@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import type { DatabaseReader } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import {
@@ -13,6 +14,23 @@ import {
   listeningSessionReturnValidator,
   recipeReturnValidator,
 } from "./validators";
+
+export async function loadExtractionsForHypothesisSourceIds(
+  db: Pick<DatabaseReader, "query">,
+  sourceIds: Id<"sources">[],
+) {
+  const extractionLists = await Promise.all(
+    sourceIds.map((sourceId) =>
+      db
+        .query("extractions")
+        .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", sourceId))
+        .order("desc")
+        .collect(),
+    ),
+  );
+
+  return extractionLists.flat().toSorted((a, b) => b.createdAt - a.createdAt);
+}
 
 export const list = query({
   args: {
@@ -119,6 +137,12 @@ export const getLineage = query({
           (source): source is NonNullable<typeof source> => source !== null,
         )
       : [];
+    const extractions = hypothesis
+      ? await loadExtractionsForHypothesisSourceIds(
+          ctx.db,
+          hypothesis.sourceIds,
+        )
+      : [];
     const listeningSessions = await ctx.db
       .query("listeningSessions")
       .withIndex("by_compositionId_createdAt", (q) =>
@@ -145,6 +169,7 @@ export const getLineage = query({
       hypothesis,
       thesis,
       sources,
+      extractions,
       listeningSessions,
       summary: {
         depth: ancestry.length,

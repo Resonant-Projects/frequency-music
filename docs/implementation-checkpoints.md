@@ -20,8 +20,8 @@ Read this alongside:
 ### Phase 1: Rigor and Interpretation
 
 Status:
-- Phase 1A is landed in the current codebase: `whyThisMatters` on hypotheses and recipes, richer listening-session language, and weekly-brief / generation prompt support.
-- Phase 1B completes the remaining foundation: lightweight theses, claim-level confidence-vs-interest metadata, composition revision discipline, and UI/doc parity.
+- Phase 1 is now closed as a contract for new work: new hypotheses require `whyThisMatters`, feedback captures embodied listening signals including `bodyMapNotes` and `expandVerdict`, and direct regression coverage exists for the enforcement path.
+- Backward-compatibility remains for legacy rows, with an explicit audit query for hypotheses missing `whyThisMatters`.
 
 #### Backend and schema
 
@@ -64,8 +64,12 @@ Status:
 - listening session validates expandability range
 - revision flows cannot silently mutate multiple variables without recording the revision note
 - extraction/source displays can distinguish creative fertility from evidential confidence
+- blank `whyThisMatters` is rejected for new hypotheses and generated hypotheses
 
 ### Phase 2: Represent Accumulated Learning
+
+Status:
+- Implemented. Composition lineage now includes extraction nodes in addition to sources, hypotheses, recipes, compositions, and listening sessions.
 
 #### Backend and schema
 
@@ -102,8 +106,12 @@ Status:
 - lineage view resolves correct ancestry
 - contradicted items appear in the archive
 - graph signals do not surface private/public content incorrectly if visibility is applied later
+- lineage helpers resolve extraction records for every hypothesis source
 
 ### Phase 3: Tighten the Studio Loop
+
+Status:
+- Implemented. Weekly briefs persist prompt variants and deterministic recommended actions, campaigns remain single-active, and steering logic continues to account for negative evidence.
 
 #### Backend and schema
 
@@ -148,15 +156,29 @@ Status:
 
 ### Phase 4: Strengthen Public Narrative
 
+Status:
+- Implemented as a curated editorial workflow inside Frequency Music, with snapshot export to Astro rather than direct public rendering from private records.
+
 #### Backend and schema
 
-- extend visibility and publishing workflows for thesis summaries, campaign summaries, or recap artifacts if needed
+- add `editorialArtifacts`
+- store curated public-safe artifact bodies, uncertainty text, and sanitized evidence cards on the artifact itself
+- add export metadata and the `public_editorial_v1` snapshot contract
 - do not expose raw private material by default
 
 #### Query and API
 
-- public-safe summary queries
-- recap-oriented content projection queries if needed
+- `editorialArtifacts:list`
+- `editorialArtifacts:get`
+- `editorialArtifacts:createDraftFromWeeklyBrief`
+- `editorialArtifacts:createDraftFromCampaign`
+- `editorialArtifacts:createDraftFromThesis`
+- `editorialArtifacts:update`
+- `editorialArtifacts:submitForReview`
+- `editorialArtifacts:approve`
+- `editorialArtifacts:publish`
+- `editorialArtifacts:listPublicExport`
+- `editorialArtifacts:exportForAstro`
 
 #### UI and workflow
 
@@ -165,6 +187,10 @@ Status:
   - what changed my mind
   - campaign summary
 - public-safe visibility review before publish
+- route pair:
+  - `/editorial`
+  - `/editorial/$artifactId`
+- create-recap entry points from weekly brief detail, thesis detail, and the campaign section in weekly turns
 
 #### AI prompt and generation
 
@@ -175,12 +201,14 @@ Status:
 
 - document editorial formats and review criteria
 - log any shift in public publishing doctrine
+- record the rejection of repo-metadata loaders as the main Astro ingestion path
 
 #### Test expectations
 
 - public output never overstates evidence
 - publishing workflow cannot accidentally expose private raw inputs
 - recap formats consistently include what was tried, what changed, and why it matters
+- exported markdown and manifest are deterministic enough for cross-repo consumption
 
 ## Data Model Changes
 

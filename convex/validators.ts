@@ -2,6 +2,9 @@ import { v } from "convex/values";
 import {
   campaignStatusValidator,
   compositionParameterValidator,
+  editorialArtifactKindValidator,
+  editorialArtifactStatusValidator,
+  editorialEvidenceStatusValidator,
   registryStatusValidator,
   visibilityValidator,
 } from "./schema";
@@ -406,6 +409,87 @@ export const weeklyBriefReturnValidator = v.object({
 });
 
 // ============================================================================
+// EDITORIAL ARTIFACT
+// ============================================================================
+
+export const editorialPrimaryRefValidator = v.union(
+  v.object({
+    type: v.literal("weeklyBrief"),
+    id: v.id("weeklyBriefs"),
+  }),
+  v.object({
+    type: v.literal("campaign"),
+    id: v.id("campaigns"),
+  }),
+  v.object({
+    type: v.literal("thesis"),
+    id: v.id("theses"),
+  }),
+  v.object({
+    type: v.literal("hypothesis"),
+    id: v.id("hypotheses"),
+  }),
+);
+
+export const editorialLinkedIdsValidator = v.object({
+  thesisIds: v.array(v.id("theses")),
+  hypothesisIds: v.array(v.id("hypotheses")),
+  recipeIds: v.array(v.id("recipes")),
+  compositionIds: v.array(v.id("compositions")),
+  listeningSessionIds: v.array(v.id("listeningSessions")),
+  failureKeys: v.array(v.string()),
+});
+
+export const publicEvidenceCardValidator = v.object({
+  sourceTitle: v.string(),
+  sourceCanonicalUrl: v.optional(v.string()),
+  summary: v.string(),
+  evidenceLevel: evidenceLevelValidator,
+  truthConfidence: v.optional(confidenceBandValidator),
+  interestLevel: v.optional(confidenceBandValidator),
+});
+
+export const editorialArtifactReturnValidator = v.object({
+  _id: v.id("editorialArtifacts"),
+  _creationTime: v.number(),
+  kind: editorialArtifactKindValidator,
+  slug: v.string(),
+  title: v.string(),
+  dek: v.string(),
+  bodyMd: v.string(),
+  whyItMattersMd: v.string(),
+  uncertaintyMd: v.string(),
+  whatChangedMd: v.optional(v.string()),
+  evidenceStatus: editorialEvidenceStatusValidator,
+  status: editorialArtifactStatusValidator,
+  visibility: visibilityValidator,
+  primaryRef: editorialPrimaryRefValidator,
+  linkedIds: editorialLinkedIdsValidator,
+  publicEvidenceCards: v.array(publicEvidenceCardValidator),
+  astro: v.optional(
+    v.object({
+      exportPath: v.optional(v.string()),
+      exportSha: v.optional(v.string()),
+      exportedAt: v.optional(v.number()),
+    }),
+  ),
+  notionPageId: v.optional(v.string()),
+  publishedAt: v.optional(v.number()),
+  createdBy: createdByValidator,
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
+export const editorialArtifactExportEntryValidator = v.object({
+  slug: v.string(),
+  path: v.string(),
+  title: v.string(),
+  kind: editorialArtifactKindValidator,
+  publishedAt: v.number(),
+  evidenceStatus: editorialEvidenceStatusValidator,
+});
+
+// ============================================================================
 // KNOWLEDGE GRAPH: CONCEPT
 // ============================================================================
 
@@ -457,6 +541,7 @@ export const compositionLineageValidator = v.object({
   hypothesis: v.union(hypothesisReturnValidator, v.null()),
   thesis: v.union(thesisReturnValidator, v.null()),
   sources: v.array(sourceReturnValidator),
+  extractions: v.array(extractionReturnValidator),
   listeningSessions: v.array(listeningSessionReturnValidator),
   summary: v.object({
     depth: v.number(),

@@ -227,6 +227,32 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 **Revisit trigger**
 - Revisit if weekly briefs need explicit regeneration flows, if parallel campaign work becomes common, or if "theme" semantics diverge from campaign semantics in practice.
 
+
+## 2026-04-01 — Phase 4 public narrative export contract
+
+**Decision**
+- Implement public narrative as curated `editorialArtifacts` inside Frequency Music, then export only approved public artifacts as markdown snapshots via `public_editorial_v1`.
+- Keep the app auth-gated and treat Astro as the anonymous public surface.
+- Reject repo-metadata loaders as the primary Astro ingestion path for editorial writing.
+
+**Rationale**
+- Public narrative needs explicit curation, uncertainty language, and evidence review instead of live joins over mutable internal records.
+- Snapshot export prevents accidental leakage if linked private rows later change visibility or content.
+- The evaluated repo-metadata loader pattern fits repository listings, not markdown article ingestion from an editorial export.
+
+**Alternatives considered**
+- Render public editorial pages directly from Convex at request time.
+- Make weekly briefs, theses, or campaigns public by virtue of existing.
+- Use a GitHub repository metadata loader as the site’s article source.
+
+**Downstream implications**
+- Publishing now requires explicit states: draft -> in review -> approved -> published.
+- Public evidence is carried as sanitized cards on the artifact, not reconstructed from private rows at render time.
+- Astro content collections should read exported markdown snapshots through a dedicated loader, ideally GitHub-backed with local fallback for smoke tests.
+
+**Revisit trigger**
+- Revisit if the public site needs live data instead of snapshots, or if editorial publishing grows into a richer CMS workflow than markdown export can support.
+
 ## Reversals / What Changed Our Mind
 
 No strategic reversals recorded yet. Add entries here when a prior roadmap or doctrine assumption is intentionally changed rather than merely extended.

@@ -16,6 +16,8 @@ import { AdminPage } from "./routes/admin";
 import { CompositionDetailPage } from "./routes/composition-detail";
 import { CompositionsPage } from "./routes/compositions";
 import { DisplayPage } from "./routes/display";
+import { EditorialDetailPage } from "./routes/editorial-detail";
+import { EditorialPage } from "./routes/editorial";
 import { EssaysPage } from "./routes/essays";
 import { FailuresPage } from "./routes/failures";
 import { FeedbackPage } from "./routes/feedback";
@@ -62,6 +64,7 @@ const appLinks = [
   { to: "/recipes", label: "Recipes" },
   { to: "/weekly-turns", label: "Weekly Turns" },
   { to: "/compositions", label: "Compositions" },
+  { to: "/editorial", label: "Editorial" },
   { to: "/failures", label: "Failures" },
   { to: "/feedback", label: "Feedback" },
   { to: "/admin", label: "Admin" },
@@ -249,6 +252,18 @@ const compositionsRoute = createRoute({
   component: CompositionsPage,
 });
 
+const editorialRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/editorial",
+  component: EditorialPage,
+});
+
+const editorialDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/editorial/$artifactId",
+  component: EditorialDetailPage,
+});
+
 const compositionDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/compositions/$compositionId",
@@ -288,6 +303,8 @@ const routeTree = rootRoute.addChildren([
   weeklyTurnsRoute,
   weeklyBriefDetailRoute,
   compositionsRoute,
+  editorialRoute,
+  editorialDetailRoute,
   compositionDetailRoute,
   failuresRoute,
   feedbackRoute,

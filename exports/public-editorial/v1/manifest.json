@@ -1,0 +1,13 @@
+{
+  "version": "public_editorial_v1",
+  "items": [
+    {
+      "slug": "phase-four-fixture",
+      "path": "phase-four-fixture.md",
+      "title": "Phase Four Fixture",
+      "kind": "experiment_recap",
+      "publishedAt": 1774915200000,
+      "evidenceStatus": "mixed"
+    }
+  ]
+}

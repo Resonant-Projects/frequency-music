@@ -27,6 +27,26 @@ export const campaignStatusValidator = v.union(
   v.literal("completed"),
 );
 
+export const editorialArtifactKindValidator = v.union(
+  v.literal("experiment_recap"),
+  v.literal("what_changed_my_mind"),
+  v.literal("campaign_summary"),
+  v.literal("thesis_summary"),
+);
+
+export const editorialEvidenceStatusValidator = v.union(
+  v.literal("supported"),
+  v.literal("mixed"),
+  v.literal("speculative"),
+);
+
+export const editorialArtifactStatusValidator = v.union(
+  v.literal("draft"),
+  v.literal("in_review"),
+  v.literal("approved"),
+  v.literal("published"),
+);
+
 const evidenceLevelValidator = v.union(
   v.literal("peer_reviewed"),
   v.literal("preprint"),
@@ -487,6 +507,72 @@ export default defineSchema({
   })
     .index("by_weekOf", ["weekOf"])
     .index("by_visibility_createdAt", ["visibility", "createdAt"]),
+
+  editorialArtifacts: defineTable({
+    kind: editorialArtifactKindValidator,
+    slug: v.string(),
+    title: v.string(),
+    dek: v.string(),
+    bodyMd: v.string(),
+    whyItMattersMd: v.string(),
+    uncertaintyMd: v.string(),
+    whatChangedMd: v.optional(v.string()),
+    evidenceStatus: editorialEvidenceStatusValidator,
+    status: editorialArtifactStatusValidator,
+    visibility: visibilityValidator,
+    primaryRef: v.union(
+      v.object({
+        type: v.literal("weeklyBrief"),
+        id: v.id("weeklyBriefs"),
+      }),
+      v.object({
+        type: v.literal("campaign"),
+        id: v.id("campaigns"),
+      }),
+      v.object({
+        type: v.literal("thesis"),
+        id: v.id("theses"),
+      }),
+      v.object({
+        type: v.literal("hypothesis"),
+        id: v.id("hypotheses"),
+      }),
+    ),
+    linkedIds: v.object({
+      thesisIds: v.array(v.id("theses")),
+      hypothesisIds: v.array(v.id("hypotheses")),
+      recipeIds: v.array(v.id("recipes")),
+      compositionIds: v.array(v.id("compositions")),
+      listeningSessionIds: v.array(v.id("listeningSessions")),
+      failureKeys: v.array(v.string()),
+    }),
+    publicEvidenceCards: v.array(
+      v.object({
+        sourceTitle: v.string(),
+        sourceCanonicalUrl: v.optional(v.string()),
+        summary: v.string(),
+        evidenceLevel: evidenceLevelValidator,
+        truthConfidence: v.optional(confidenceBandValidator),
+        interestLevel: v.optional(confidenceBandValidator),
+      }),
+    ),
+    astro: v.optional(
+      v.object({
+        exportPath: v.optional(v.string()),
+        exportSha: v.optional(v.string()),
+        exportedAt: v.optional(v.number()),
+      }),
+    ),
+    notionPageId: v.optional(v.string()),
+    publishedAt: v.optional(v.number()),
+    createdBy: v.union(v.id("users"), v.literal("system")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_visibility_updatedAt", ["visibility", "updatedAt"])
+    .index("by_kind_updatedAt", ["kind", "updatedAt"]),
 
   // ==========================================================================
   // VOCABULARY REGISTRIES - extensible graph and extraction vocabulary

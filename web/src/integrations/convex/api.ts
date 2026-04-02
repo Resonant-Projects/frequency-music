@@ -45,6 +45,7 @@ export const convexApi = {
     get: queryRef("hypotheses:get"),
     listByStatus: queryRef("hypotheses:listByStatus"),
     listByThesis: queryRef("hypotheses:listByThesis"),
+    listMissingWhyThisMatters: queryRef("hypotheses:listMissingWhyThisMatters"),
     create: mutationRef("hypotheses:create"),
     update: mutationRef("hypotheses:update"),
     deleteById: mutationRef("hypotheses:deleteById"),
@@ -76,6 +77,25 @@ export const convexApi = {
   listening: {
     listRecent: queryRef("listening:listRecent"),
     create: mutationRef("listening:create"),
+  },
+  editorialArtifacts: {
+    list: queryRef("editorialArtifacts:list"),
+    get: queryRef("editorialArtifacts:get"),
+    createDraftFromWeeklyBrief: mutationRef(
+      "editorialArtifacts:createDraftFromWeeklyBrief",
+    ),
+    createDraftFromCampaign: mutationRef(
+      "editorialArtifacts:createDraftFromCampaign",
+    ),
+    createDraftFromThesis: mutationRef(
+      "editorialArtifacts:createDraftFromThesis",
+    ),
+    update: mutationRef("editorialArtifacts:update"),
+    submitForReview: mutationRef("editorialArtifacts:submitForReview"),
+    approve: mutationRef("editorialArtifacts:approve"),
+    publish: mutationRef("editorialArtifacts:publish"),
+    listPublicExport: queryRef("editorialArtifacts:listPublicExport"),
+    exportForAstro: actionRef("editorialArtifacts:exportForAstro"),
   },
   admin: {
     workspaceSnapshot: queryRef("admin:workspaceSnapshot"),
