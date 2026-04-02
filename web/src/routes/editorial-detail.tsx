@@ -381,7 +381,9 @@ export function EditorialDetailPage() {
                   <UIButton
                     variant="outline"
                     onClick={handleApprove}
-                    disabled={isBusy()}
+                    disabled={
+                      isBusy() || detailRow.artifact.status !== "in_review"
+                    }
                   >
                     {approving() ? "Approving..." : "Approve"}
                   </UIButton>

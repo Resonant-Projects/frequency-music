@@ -564,6 +564,7 @@ export function FeedbackPage() {
                           class={css({
                             color: "rgba(245, 240, 232, 0.62)",
                             fontSize: "sm",
+                            whiteSpace: "pre-wrap",
                             marginBottom:
                               (session.standoutMoments?.length ?? 0) > 0
                                 ? "2"

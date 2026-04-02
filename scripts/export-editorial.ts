@@ -26,8 +26,11 @@ const CONVEX_URL =
   process.env.CONVEX_URL ||
   process.env.CONVEX_SELF_HOSTED_URL ||
   "http://convex-backend.paas.rproj.art";
-const DEV_BYPASS_SECRET =
-  process.env.DEV_BYPASS_SECRET || "freq-opus-extract-2026";
+const DEV_BYPASS_SECRET = process.env.DEV_BYPASS_SECRET;
+if (!DEV_BYPASS_SECRET) {
+  console.error("DEV_BYPASS_SECRET env var is required");
+  process.exit(1);
+}
 const APP_BASE_URL =
   process.env.PUBLIC_APP_BASE_URL || "https://app.resonantprojects.art";
 
@@ -98,7 +101,7 @@ async function main() {
   }
 
   const exportedAt = Date.now();
-  await Promise.all(
+  const results = await Promise.allSettled(
     metadataUpdates.map(({ id, exportPath, exportSha }) =>
       client.mutation(api.editorialArtifacts.setAstroExportMetadata, {
         id,
@@ -109,6 +112,14 @@ async function main() {
       }),
     ),
   );
+  const failures = results.filter(
+    (r): r is PromiseRejectedResult => r.status === "rejected",
+  );
+  if (failures.length > 0) {
+    console.error(`${failures.length} metadata update(s) failed:`);
+    for (const f of failures) console.error("  ", f.reason);
+    process.exit(1);
+  }
 
   const manifestPath = join(outputDir, "manifest.json");
   await writeFile(
