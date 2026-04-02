@@ -71,10 +71,7 @@ const BODY_MAP_HELPERS = [
   "forehead",
 ] as const;
 
-function appendCommaValue(
-  current: string,
-  next: string,
-): string {
+function appendCommaValue(current: string, next: string): string {
   const values = parseCommaSeparated(current);
   return values.includes(next)
     ? values.join(", ")
@@ -148,7 +145,8 @@ export function FeedbackPage() {
         bodyMapNotes: bodyMapNotes().trim() || undefined,
         feltQualities:
           parsedFeltQualities.length > 0 ? parsedFeltQualities : undefined,
-        bodyMapTags: parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
+        bodyMapTags:
+          parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
         standoutMoments:
           parsedStandoutMoments.length > 0 ? parsedStandoutMoments : undefined,
         expandVerdict: expandVerdict()
@@ -497,11 +495,11 @@ export function FeedbackPage() {
                         color: "rgba(245, 240, 232, 0.55)",
                         fontFamily: "mono",
                         fontSize: "xs",
-                          marginBottom:
-                            session.ratings?.expandability !== undefined ||
-                            (session.feltQualities?.length ?? 0) > 0 ||
-                            (session.bodyMapTags?.length ?? 0) > 0 ||
-                            Boolean(session.bodyMapNotes)
+                        marginBottom:
+                          session.ratings?.expandability !== undefined ||
+                          (session.feltQualities?.length ?? 0) > 0 ||
+                          (session.bodyMapTags?.length ?? 0) > 0 ||
+                          Boolean(session.bodyMapNotes)
                             ? "2"
                             : "0",
                       })}
@@ -565,7 +563,7 @@ export function FeedbackPage() {
                           class={css({
                             color: "rgba(245, 240, 232, 0.62)",
                             fontSize: "sm",
-                          marginBottom:
+                            marginBottom:
                               (session.standoutMoments?.length ?? 0) > 0
                                 ? "2"
                                 : "0",

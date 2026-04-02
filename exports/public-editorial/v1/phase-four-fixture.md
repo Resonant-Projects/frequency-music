@@ -9,7 +9,7 @@ uncertaintySummary: "The fixture proves the export contract shape, not the edito
 whyItMatters: "This keeps the public pipeline testable without depending on a live publishing run."
 campaignSlug: "fixtures-and-smoke-tests"
 thesisSlugs: ["public-export-contract"]
-canonicalAppUrl: "https://app.resonantprojects.art/editorial/phase-four-fixture"
+canonicalAppUrl: "https://app.resonantprojects.art/editorial/fixture-phase-four-id"
 ---
 
 ## What We Tried

@@ -50,12 +50,15 @@ export const exportForAstroInternal = internalAction({
       const exportSha = createHash("sha256")
         .update(rendered.markdown)
         .digest("hex");
-      await ctx.runMutation(internal.editorialArtifacts.setAstroExportMetadataInternal, {
-        id: artifact._id,
-        exportPath: rendered.path,
-        exportSha,
-        exportedAt: Date.now(),
-      });
+      await ctx.runMutation(
+        internal.editorialArtifacts.setAstroExportMetadataInternal,
+        {
+          id: artifact._id,
+          exportPath: rendered.path,
+          exportSha,
+          exportedAt: Date.now(),
+        },
+      );
       manifestItems.push(rendered.manifestEntry);
     }
 
@@ -65,7 +68,6 @@ export const exportForAstroInternal = internalAction({
       JSON.stringify(
         {
           version: PUBLIC_EDITORIAL_EXPORT_VERSION,
-          generatedAt: new Date().toISOString(),
           items: manifestItems,
         },
         null,

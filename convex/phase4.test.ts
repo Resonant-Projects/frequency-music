@@ -282,10 +282,14 @@ describe("phase 4 editorial artifacts", () => {
       publishedAt: 3,
     } as Doc<"editorialArtifacts">;
 
-    const rendered = await buildExportEntry(artifact, "https://app.example.com", {
-      campaignSlug: "harmonic-drift",
-      thesisSlugs: ["drift-as-form"],
-    });
+    const rendered = await buildExportEntry(
+      artifact,
+      "https://app.example.com",
+      {
+        campaignSlug: "harmonic-drift",
+        thesisSlugs: ["drift-as-form"],
+      },
+    );
 
     expect(rendered.path).toBe("campaign-summary.md");
     expect(rendered.markdown).toContain('campaignSlug: "harmonic-drift"');

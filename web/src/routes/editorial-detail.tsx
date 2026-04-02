@@ -44,8 +44,8 @@ function slugify(input: string): string {
   return input
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-+|-+$/g, "")
     .slice(0, 80);
 }
 
@@ -334,7 +334,9 @@ export function EditorialDetailPage() {
                     {formatKind(detailRow.artifact.kind)}
                   </UIBadge>
                   <UIBadge tone="cream">{detailRow.artifact.status}</UIBadge>
-                  <UIBadge tone="cream">{detailRow.artifact.visibility}</UIBadge>
+                  <UIBadge tone="cream">
+                    {detailRow.artifact.visibility}
+                  </UIBadge>
                   <UIBadge tone="violet">
                     {detailRow.artifact.evidenceStatus}
                   </UIBadge>
@@ -347,9 +349,10 @@ export function EditorialDetailPage() {
                 </p>
                 <p class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}>
                   linked: {detailRow.artifact.linkedIds.thesisIds.length} theses
-                  · {detailRow.artifact.linkedIds.hypothesisIds.length} hypotheses
-                  · {detailRow.artifact.linkedIds.recipeIds.length} recipes ·{" "}
-                  {detailRow.artifact.linkedIds.compositionIds.length} compositions
+                  · {detailRow.artifact.linkedIds.hypothesisIds.length}{" "}
+                  hypotheses · {detailRow.artifact.linkedIds.recipeIds.length}{" "}
+                  recipes · {detailRow.artifact.linkedIds.compositionIds.length}{" "}
+                  compositions
                 </p>
 
                 <div
@@ -360,7 +363,11 @@ export function EditorialDetailPage() {
                     mt: "4",
                   })}
                 >
-                  <UIButton variant="outline" onClick={handleSave} disabled={saving()}>
+                  <UIButton
+                    variant="outline"
+                    onClick={handleSave}
+                    disabled={saving()}
+                  >
                     {saving() ? "Saving..." : "Save draft"}
                   </UIButton>
                   <UIButton
@@ -461,7 +468,10 @@ export function EditorialDetailPage() {
                     />
                   </div>
                   <div>
-                    <label class={fieldLabelClass} for="artifact-evidence-status">
+                    <label
+                      class={fieldLabelClass}
+                      for="artifact-evidence-status"
+                    >
                       Evidence Status
                     </label>
                     <UISelect
@@ -490,7 +500,8 @@ export function EditorialDetailPage() {
                       onChange={(event) =>
                         updateField(
                           "visibility",
-                          event.currentTarget.value as EditorialArtifact["visibility"],
+                          event.currentTarget
+                            .value as EditorialArtifact["visibility"],
                         )
                       }
                     >
@@ -675,11 +686,14 @@ export function EditorialDetailPage() {
                                 updateEvidenceCard(
                                   index(),
                                   "evidenceLevel",
-                                  event.currentTarget.value as EvidenceCard["evidenceLevel"],
+                                  event.currentTarget
+                                    .value as EvidenceCard["evidenceLevel"],
                                 )
                               }
                             >
-                              <option value="peer_reviewed">peer_reviewed</option>
+                              <option value="peer_reviewed">
+                                peer_reviewed
+                              </option>
                               <option value="preprint">preprint</option>
                               <option value="anecdotal">anecdotal</option>
                               <option value="speculative">speculative</option>
@@ -761,7 +775,9 @@ export function EditorialDetailPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {check.ok ? "Pass" : "Block"}
                         </div>
-                        <div class={css({ color: "rgba(245, 240, 232, 0.64)" })}>
+                        <div
+                          class={css({ color: "rgba(245, 240, 232, 0.64)" })}
+                        >
                           {check.message}
                         </div>
                       </div>

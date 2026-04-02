@@ -202,7 +202,7 @@ export const create = mutation({
     title: v.string(),
     question: v.string(),
     hypothesis: v.string(),
-    whyThisMatters: v.string(),
+    whyThisMatters: v.optional(v.string()),
     rationaleMd: v.string(),
     thesisId: v.optional(v.id("theses")),
     sourceIds: v.array(v.id("sources")),
@@ -214,7 +214,9 @@ export const create = mutation({
     const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
     const identity = await requireAuth(ctx, args);
     const now = Date.now();
-    const whyThisMatters = assertWhyThisMatters(createArgs.whyThisMatters);
+    const whyThisMatters = assertWhyThisMatters(
+      createArgs.whyThisMatters ?? createArgs.rationaleMd,
+    );
     if (createArgs.thesisId) {
       await loadThesisOrThrow(ctx, createArgs.thesisId);
     }

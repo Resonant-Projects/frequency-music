@@ -161,7 +161,10 @@ test.describe("phase three weekly turns", () => {
     page,
   }) => {
     const bypassSecret = process.env.AUTH_BYPASS_SECRET;
-    test.skip(!bypassSecret, "Requires AUTH_BYPASS_SECRET for CLI seedCampaigns.");
+    test.skip(
+      !bypassSecret,
+      "Requires AUTH_BYPASS_SECRET for CLI seedCampaigns.",
+    );
 
     const runId = createRunId();
     const thesisTitle = `E2E Selection Thesis ${runId}`;

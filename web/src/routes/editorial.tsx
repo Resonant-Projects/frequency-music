@@ -35,14 +35,19 @@ export function EditorialPage() {
     document.title = "Editorial — Frequency Music";
   });
 
-  const artifacts = createQueryWithStatus(convexApi.editorialArtifacts.list, () => ({
-    limit: 50,
-  }));
+  const artifacts = createQueryWithStatus(
+    convexApi.editorialArtifacts.list,
+    () => ({
+      limit: 50,
+    }),
+  );
   const missingWhyThisMatters = createQuery(
     convexApi.hypotheses.listMissingWhyThisMatters,
     () => ({ limit: 20 }),
   );
-  const exportForAstro = createAction(convexApi.editorialArtifacts.exportForAstro);
+  const exportForAstro = createAction(
+    convexApi.editorialArtifacts.exportForAstro,
+  );
 
   const [notice, setNotice] = createSignal<string | null>(null);
   const [exporting, setExporting] = createSignal(false);
@@ -96,7 +101,14 @@ export function EditorialPage() {
               Curate public-safe narrative artifacts here, then export only
               approved public snapshots for Astro consumption.
             </p>
-            <div class={css({ display: "flex", gap: "2", flexWrap: "wrap", mt: "3" })}>
+            <div
+              class={css({
+                display: "flex",
+                gap: "2",
+                flexWrap: "wrap",
+                mt: "3",
+              })}
+            >
               <UIBadge tone="gold">{rows().length} artifacts</UIBadge>
               <UIBadge tone="violet">
                 {publishedPublicCount()} ready for export
@@ -144,7 +156,9 @@ export function EditorialPage() {
                   <div class={css({ color: "zodiac.cream" })}>
                     {hypothesis.title}
                   </div>
-                  <div class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}>
+                  <div
+                    class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}
+                  >
                     {hypothesis.question}
                   </div>
                 </Link>
@@ -156,7 +170,10 @@ export function EditorialPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Artifacts</h2>
-        <Show when={!artifacts.isLoading()} fallback={<p>Loading artifacts...</p>}>
+        <Show
+          when={!artifacts.isLoading()}
+          fallback={<p>Loading artifacts...</p>}
+        >
           <Show
             when={rows().length > 0}
             fallback={

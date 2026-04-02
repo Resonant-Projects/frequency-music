@@ -99,8 +99,8 @@ function slugify(input: string): string {
   return input
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-+|-+$/g, "")
     .slice(0, 80);
 }
 
@@ -194,14 +194,19 @@ async function buildPublicEvidenceCards(
       return {
         sourceTitle: source.title ?? "Untitled source",
         sourceCanonicalUrl: source.canonicalUrl,
-        summary: extraction?.summary ?? featuredClaim?.text ?? "Public evidence summary pending.",
+        summary:
+          extraction?.summary ??
+          featuredClaim?.text ??
+          "Public evidence summary pending.",
         evidenceLevel: featuredClaim?.evidenceLevel ?? "speculative",
         truthConfidence: featuredClaim?.truthConfidence,
         interestLevel: featuredClaim?.interestLevel,
       };
     }),
   );
-  return cards.filter((card): card is NonNullable<typeof card> => card !== null);
+  return cards.filter(
+    (card): card is NonNullable<typeof card> => card !== null,
+  );
 }
 
 async function collectSourceIdsForArtifact(
@@ -232,7 +237,10 @@ async function collectSourceIdsForArtifact(
 async function findPrivacyViolations(
   db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
-): Promise<{ privateSourceMentions: string[]; privateExtractionMentions: string[] }> {
+): Promise<{
+  privateSourceMentions: string[];
+  privateExtractionMentions: string[];
+}> {
   const sourceIds = await collectSourceIdsForArtifact(db, artifact);
   const text = [
     artifact.title,
@@ -277,16 +285,20 @@ export async function validateArtifactForPublish(
   const whyOk = artifact.whyItMattersMd.trim().length > 0;
   const uncertaintyOk = artifact.uncertaintyMd.trim().length > 0;
   const visibilityOk = artifact.visibility === "public";
-  const statusOk = artifact.status === "approved" || artifact.status === "published";
+  const statusOk =
+    artifact.status === "approved" || artifact.status === "published";
   const privacy = await findPrivacyViolations(db, artifact);
   const noPrivateSourceMentions = privacy.privateSourceMentions.length === 0;
-  const noPrivateExtractionMentions = privacy.privateExtractionMentions.length === 0;
+  const noPrivateExtractionMentions =
+    privacy.privateExtractionMentions.length === 0;
 
   const checks = [
     {
       key: "body",
       ok: bodyOk,
-      message: bodyOk ? "Narrative body is present." : "Narrative body is required.",
+      message: bodyOk
+        ? "Narrative body is present."
+        : "Narrative body is required.",
     },
     {
       key: "why",
@@ -361,7 +373,10 @@ export async function buildWeeklyBriefDraft(
   const referencedFailures = failures.filter((failure) =>
     (brief.referencedFailureKeys ?? []).includes(failure.key),
   );
-  const publicEvidenceCards = await buildPublicEvidenceCards(db, brief.sourceIds);
+  const publicEvidenceCards = await buildPublicEvidenceCards(
+    db,
+    brief.sourceIds,
+  );
 
   return {
     title: `Experiment Recap: Week of ${brief.weekOf}`,
@@ -396,7 +411,10 @@ export async function buildWeeklyBriefDraft(
       renderList(
         hypotheses
           .filter((row): row is NonNullable<typeof row> => row !== null)
-          .map((row) => `${row.title}: ${row.whyThisMatters ?? "Why-this-matters still needs cleanup."}`),
+          .map(
+            (row) =>
+              `${row.title}: ${row.whyThisMatters ?? "Why-this-matters still needs cleanup."}`,
+          ),
       ),
     ].join("\n"),
     uncertaintyMd:
@@ -425,11 +443,17 @@ function evidenceCardsEqual(
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function linkedIdsEqual(left: ArtifactLinkedIds, right: ArtifactLinkedIds): boolean {
+function linkedIdsEqual(
+  left: ArtifactLinkedIds,
+  right: ArtifactLinkedIds,
+): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function primaryRefEqual(left: ArtifactPrimaryRef, right: ArtifactPrimaryRef): boolean {
+function primaryRefEqual(
+  left: ArtifactPrimaryRef,
+  right: ArtifactPrimaryRef,
+): boolean {
   return left.type === right.type && left.id === right.id;
 }
 
@@ -445,7 +469,9 @@ export async function buildCampaignDraft(
       theses.map((thesis) =>
         db
           .query("hypotheses")
-          .withIndex("by_thesisId_updatedAt", (q) => q.eq("thesisId", thesis._id))
+          .withIndex("by_thesisId_updatedAt", (q) =>
+            q.eq("thesisId", thesis._id),
+          )
           .collect(),
       ),
     )
@@ -486,9 +512,9 @@ export async function buildCampaignDraft(
       "",
       "## What Changed",
       renderList(
-        relevantFailures.slice(0, 6).map(
-          (failure) => `${failure.title}: ${failure.explanation}`,
-        ),
+        relevantFailures
+          .slice(0, 6)
+          .map((failure) => `${failure.title}: ${failure.explanation}`),
         "No contradictions or low-yield turns have been summarized yet.",
       ),
       "",
@@ -511,7 +537,9 @@ export async function buildCampaignDraft(
     uncertaintyMd:
       "This summary should distinguish between campaign momentum, actual evidence, and the places where the work is still exploratory or musically unresolved.",
     evidenceStatus:
-      relevantFailures.length > 0 || publicEvidenceCards.length > 0 ? "mixed" : "speculative",
+      relevantFailures.length > 0 || publicEvidenceCards.length > 0
+        ? "mixed"
+        : "speculative",
     primaryRef: {
       type: "campaign",
       id: campaign._id,
@@ -521,7 +549,9 @@ export async function buildCampaignDraft(
       hypothesisIds: uniqueDefined(hypotheses.map((row) => row._id)),
       recipeIds: uniqueDefined(recipes.map((row) => row._id)),
       compositionIds: uniqueDefined(compositions.map((row) => row._id)),
-      listeningSessionIds: uniqueDefined(listeningSessions.map((row) => row._id)),
+      listeningSessionIds: uniqueDefined(
+        listeningSessions.map((row) => row._id),
+      ),
       failureKeys: uniqueDefined(relevantFailures.map((row) => row.key)),
     },
     publicEvidenceCards,
@@ -559,7 +589,8 @@ export async function buildThesisDraft(
   const contradictedHypothesis =
     args?.hypothesisId !== undefined
       ? hypotheses.find(
-          (hypothesis: Doc<"hypotheses">) => hypothesis._id === args.hypothesisId,
+          (hypothesis: Doc<"hypotheses">) =>
+            hypothesis._id === args.hypothesisId,
         )
       : hypotheses.find(
           (hypothesis: Doc<"hypotheses">) =>
@@ -568,7 +599,8 @@ export async function buildThesisDraft(
   const sourceIds = hypotheses.flatMap((hypothesis) => hypothesis.sourceIds);
   const publicEvidenceCards = await buildPublicEvidenceCards(db, sourceIds);
   const kind = args?.kind ?? "thesis_summary";
-  const isChangedMind = kind === "what_changed_my_mind" && contradictedHypothesis;
+  const isChangedMind =
+    kind === "what_changed_my_mind" && contradictedHypothesis;
   if (kind === "what_changed_my_mind" && !contradictedHypothesis) {
     throw new ConvexError({
       code: "INVALID_ARGUMENT",
@@ -581,9 +613,7 @@ export async function buildThesisDraft(
     title: isChangedMind
       ? `What Changed My Mind: ${contradictedHypothesis.title}`
       : `Thesis Summary: ${thesis.title}`,
-    dek: isChangedMind
-      ? contradictedHypothesis.question
-      : thesis.statement,
+    dek: isChangedMind ? contradictedHypothesis.question : thesis.statement,
     bodyMd: [
       "## What We Tried",
       renderList(
@@ -598,9 +628,14 @@ export async function buildThesisDraft(
       renderList(
         isChangedMind
           ? relevantFailures
-              .filter((failure) => failure.hypothesisId === contradictedHypothesis?._id)
+              .filter(
+                (failure) =>
+                  failure.hypothesisId === contradictedHypothesis?._id,
+              )
               .map((failure) => `${failure.title}: ${failure.explanation}`)
-          : relevantFailures.map((failure) => `${failure.title}: ${failure.explanation}`),
+          : relevantFailures.map(
+              (failure) => `${failure.title}: ${failure.explanation}`,
+            ),
         "No clear reversal has been documented yet.",
       ),
       "",
@@ -615,7 +650,8 @@ export async function buildThesisDraft(
       ),
     ].join("\n"),
     whyItMattersMd: isChangedMind
-      ? contradictedHypothesis.whyThisMatters
+      ? (contradictedHypothesis.whyThisMatters ??
+        "Why-this-matters still needs cleanup for this contradicted hypothesis.")
       : [
           thesis.statement,
           "",
@@ -646,7 +682,9 @@ export async function buildThesisDraft(
       hypothesisIds: uniqueDefined(hypotheses.map((row) => row._id)),
       recipeIds: uniqueDefined(recipes.map((row) => row._id)),
       compositionIds: uniqueDefined(compositions.map((row) => row._id)),
-      listeningSessionIds: uniqueDefined(listeningSessions.map((row) => row._id)),
+      listeningSessionIds: uniqueDefined(
+        listeningSessions.map((row) => row._id),
+      ),
       failureKeys: uniqueDefined(relevantFailures.map((row) => row.key)),
     },
     publicEvidenceCards,
@@ -778,14 +816,20 @@ export const list = query({
         .order("desc")
         .take(args.limit ?? 50);
     } else {
-      rows = await ctx.db.query("editorialArtifacts").order("desc").take(args.limit ?? 50);
+      rows = await ctx.db
+        .query("editorialArtifacts")
+        .order("desc")
+        .take(args.limit ?? 50);
     }
     return rows;
   },
 });
 
 export const get = query({
-  args: { id: v.id("editorialArtifacts"), devBypassSecret: v.optional(v.string()) },
+  args: {
+    id: v.id("editorialArtifacts"),
+    devBypassSecret: v.optional(v.string()),
+  },
   returns: v.union(
     v.object({
       artifact: editorialArtifactReturnValidator,
@@ -825,7 +869,10 @@ async function insertDraftArtifact(
     primaryRef: payload.primaryRef,
     linkedIds: payload.linkedIds,
     publicEvidenceCards: payload.publicEvidenceCards,
-    createdBy: identity.subject === "system" ? "system" : (identity.subject as Id<"users">),
+    createdBy:
+      identity.subject === "system"
+        ? "system"
+        : (identity.subject as Id<"users">),
     createdAt: now,
     updatedAt: now,
   });
@@ -847,7 +894,12 @@ export const createDraftFromWeeklyBrief = mutation({
       });
     }
     const payload = await buildWeeklyBriefDraft(ctx.db, brief);
-    return await insertDraftArtifact(ctx, identity, "experiment_recap", payload);
+    return await insertDraftArtifact(
+      ctx,
+      identity,
+      "experiment_recap",
+      payload,
+    );
   },
 });
 
@@ -867,14 +919,21 @@ export const createDraftFromCampaign = mutation({
       });
     }
     const payload = await buildCampaignDraft(ctx.db, campaign);
-    return await insertDraftArtifact(ctx, identity, "campaign_summary", payload);
+    return await insertDraftArtifact(
+      ctx,
+      identity,
+      "campaign_summary",
+      payload,
+    );
   },
 });
 
 export const createDraftFromThesis = mutation({
   args: {
     thesisId: v.id("theses"),
-    kind: v.optional(v.union(v.literal("thesis_summary"), v.literal("what_changed_my_mind"))),
+    kind: v.optional(
+      v.union(v.literal("thesis_summary"), v.literal("what_changed_my_mind")),
+    ),
     hypothesisId: v.optional(v.id("hypotheses")),
     devBypassSecret: v.optional(v.string()),
   },
@@ -934,7 +993,9 @@ export const update = mutation({
         ? await uniqueSlug(ctx.db, args.slug, args.id)
         : undefined;
     const normalizedWhatChanged =
-      args.whatChangedMd !== undefined ? args.whatChangedMd ?? undefined : undefined;
+      args.whatChangedMd !== undefined
+        ? (args.whatChangedMd ?? undefined)
+        : undefined;
     const reviewSensitiveChanged =
       (args.kind !== undefined && args.kind !== artifact.kind) ||
       (args.title !== undefined && args.title.trim() !== artifact.title) ||
@@ -949,9 +1010,13 @@ export const update = mutation({
         normalizedWhatChanged !== artifact.whatChangedMd) ||
       (args.evidenceStatus !== undefined &&
         args.evidenceStatus !== artifact.evidenceStatus) ||
-      (args.visibility !== undefined && args.visibility !== artifact.visibility) ||
+      (args.visibility !== undefined &&
+        args.visibility !== artifact.visibility) ||
       (args.publicEvidenceCards !== undefined &&
-        !evidenceCardsEqual(args.publicEvidenceCards, artifact.publicEvidenceCards)) ||
+        !evidenceCardsEqual(
+          args.publicEvidenceCards,
+          artifact.publicEvidenceCards,
+        )) ||
       (args.linkedIds !== undefined &&
         !linkedIdsEqual(args.linkedIds, artifact.linkedIds)) ||
       (args.primaryRef !== undefined &&
@@ -983,7 +1048,9 @@ export const update = mutation({
       ...(reviewSensitiveChanged && artifact.status !== "draft"
         ? {
             status: "draft" as ArtifactStatus,
-            ...(artifact.status === "published" ? { publishedAt: undefined } : {}),
+            ...(artifact.status === "published"
+              ? { publishedAt: undefined }
+              : {}),
           }
         : {}),
       updatedAt: Date.now(),
@@ -1133,6 +1200,88 @@ export const listPublicExport = query({
   },
 });
 
+async function loadPublishedExportBundle(db: DatabaseReader) {
+  const artifacts = await db
+    .query("editorialArtifacts")
+    .withIndex("by_visibility_updatedAt", (q) => q.eq("visibility", "public"))
+    .order("desc")
+    .collect();
+  const publishedArtifacts = artifacts.filter(
+    (artifact) => artifact.status === "published",
+  );
+  return await Promise.all(
+    publishedArtifacts.map(async (artifact) => ({
+      artifact,
+      validation: await validateArtifactForPublish(db, artifact),
+      ...(await resolveExportContext(db, artifact)),
+    })),
+  );
+}
+
+async function patchAstroExportMetadata(
+  ctx: {
+    db: {
+      get: (
+        id: Id<"editorialArtifacts">,
+      ) => Promise<Doc<"editorialArtifacts"> | null>;
+      patch: (
+        id: Id<"editorialArtifacts">,
+        fields: Partial<Doc<"editorialArtifacts">>,
+      ) => Promise<void>;
+    };
+  },
+  args: {
+    id: Id<"editorialArtifacts">;
+    exportPath: string;
+    exportSha: string;
+    exportedAt: number;
+  },
+) {
+  const artifact = await ctx.db.get(args.id);
+  if (!artifact) return null;
+  await ctx.db.patch(args.id, {
+    astro: {
+      exportPath: args.exportPath,
+      exportSha: args.exportSha,
+      exportedAt: args.exportedAt,
+    },
+  });
+  return null;
+}
+
+const exportBundleReturnValidator = v.array(
+  v.object({
+    artifact: editorialArtifactReturnValidator,
+    validation: publishValidationValidator,
+    campaignSlug: v.optional(v.string()),
+    thesisSlugs: v.array(v.string()),
+  }),
+);
+
+export const getPublicExportBundle = query({
+  args: { devBypassSecret: v.optional(v.string()) },
+  returns: exportBundleReturnValidator,
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    return await loadPublishedExportBundle(ctx.db);
+  },
+});
+
+export const setAstroExportMetadata = mutation({
+  args: {
+    id: v.id("editorialArtifacts"),
+    exportPath: v.string(),
+    exportSha: v.string(),
+    exportedAt: v.number(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    return await patchAstroExportMetadata(ctx, args);
+  },
+});
+
 export const setAstroExportMetadataInternal = internalMutation({
   args: {
     id: v.id("editorialArtifacts"),
@@ -1142,46 +1291,15 @@ export const setAstroExportMetadataInternal = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const artifact = await ctx.db.get("editorialArtifacts", args.id);
-    if (!artifact) return null;
-    await ctx.db.patch(args.id, {
-      astro: {
-        exportPath: args.exportPath,
-        exportSha: args.exportSha,
-        exportedAt: args.exportedAt,
-      },
-    });
-    return null;
+    return await patchAstroExportMetadata(ctx, args);
   },
 });
 
 export const getExportBundleInternal = internalQuery({
   args: {},
-  returns: v.array(
-    v.object({
-      artifact: editorialArtifactReturnValidator,
-      validation: publishValidationValidator,
-      campaignSlug: v.optional(v.string()),
-      thesisSlugs: v.array(v.string()),
-    }),
-  ),
+  returns: exportBundleReturnValidator,
   handler: async (ctx) => {
-    const artifacts = await ctx.db
-      .query("editorialArtifacts")
-      .withIndex("by_visibility_updatedAt", (q) => q.eq("visibility", "public"))
-      .order("desc")
-      .collect();
-    const publishedArtifacts = artifacts.filter(
-      (artifact) => artifact.status === "published",
-    );
-
-    return await Promise.all(
-      publishedArtifacts.map(async (artifact) => ({
-        artifact,
-        validation: await validateArtifactForPublish(ctx.db, artifact),
-        ...(await resolveExportContext(ctx.db, artifact)),
-      })),
-    );
+    return await loadPublishedExportBundle(ctx.db);
   },
 });
 
@@ -1198,8 +1316,11 @@ export const exportForAstro = action({
   }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    return await ctx.runAction(internal.editorialExports.exportForAstroInternal, {
-      outputDir: args.outputDir,
-    });
+    return await ctx.runAction(
+      internal.editorialExports.exportForAstroInternal,
+      {
+        outputDir: args.outputDir,
+      },
+    );
   },
 });

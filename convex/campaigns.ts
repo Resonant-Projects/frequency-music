@@ -177,24 +177,20 @@ async function loadScope(
     campaign && campaign.thesisIds.length > 0
       ? (
           await Promise.all(
-            campaign.thesisIds.map((thesisId) =>
-              db.get("theses", thesisId),
-            ),
+            campaign.thesisIds.map((thesisId) => db.get("theses", thesisId)),
           )
-        ).filter(
-          (thesis): thesis is Doc<"theses"> => thesis !== null,
-        )
+        ).filter((thesis): thesis is Doc<"theses"> => thesis !== null)
       : [];
 
   const hypotheses =
     campaign === null
       ? await loadFallbackHypotheses(db)
       : theses.length > 0
-      ? await loadScopedHypotheses(
-          db,
-          theses.map((thesis) => thesis._id),
-        )
-      : [];
+        ? await loadScopedHypotheses(
+            db,
+            theses.map((thesis) => thesis._id),
+          )
+        : [];
 
   const recipes = await loadRecipesForHypotheses(db, hypotheses);
 
@@ -223,7 +219,9 @@ export function isCampaignVisibleToViewer(
   if (campaign.visibility === "followers") return identity !== null;
   if (!identity) return false;
   if (identity.isBypass) return true;
-  return campaign.createdBy !== "system" && identity.subject === campaign.createdBy;
+  return (
+    campaign.createdBy !== "system" && identity.subject === campaign.createdBy
+  );
 }
 
 export async function computeRecommendedActionContext(
@@ -438,9 +436,7 @@ export const list = query({
     }
     return await ctx.db
       .query("campaigns")
-      .withIndex("by_visibility_updatedAt", (q) =>
-        q.eq("visibility", "public"),
-      )
+      .withIndex("by_visibility_updatedAt", (q) => q.eq("visibility", "public"))
       .order("desc")
       .take(limit);
   },

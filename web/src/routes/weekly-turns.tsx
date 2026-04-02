@@ -407,7 +407,6 @@ export function WeeklyTurnsPage() {
       setNotice("Active campaign updated.");
     } catch (error) {
       setNotice(`Campaign activation failed: ${String(error)}`);
-      throw error;
     }
   }
 
@@ -423,7 +422,6 @@ export function WeeklyTurnsPage() {
       setNotice("Campaign updated.");
     } catch (error) {
       setNotice(`Campaign update failed: ${String(error)}`);
-      throw error;
     }
   }
 
@@ -436,7 +434,6 @@ export function WeeklyTurnsPage() {
       });
     } catch (error) {
       setNotice(`Campaign summary draft failed: ${String(error)}`);
-      throw error;
     }
   }
 

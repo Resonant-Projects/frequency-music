@@ -138,7 +138,10 @@ export const getLineage = query({
         )
       : [];
     const extractions = hypothesis
-      ? await loadExtractionsForHypothesisSourceIds(ctx.db, hypothesis.sourceIds)
+      ? await loadExtractionsForHypothesisSourceIds(
+          ctx.db,
+          hypothesis.sourceIds,
+        )
       : [];
     const listeningSessions = await ctx.db
       .query("listeningSessions")

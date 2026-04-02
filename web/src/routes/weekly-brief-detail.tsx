@@ -14,7 +14,11 @@ import {
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { createAction, createMutation, createQuery } from "../integrations/convex";
+import {
+  createAction,
+  createMutation,
+  createQuery,
+} from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import { extractTitle } from "../lib/markdown-utils";
 

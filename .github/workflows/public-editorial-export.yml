@@ -26,10 +26,12 @@ jobs:
 
       - name: Generate public editorial snapshot
         env:
+          CONVEX_URL: ${{ vars.CONVEX_SELF_HOSTED_URL || 'http://convex-backend.paas.rproj.art' }}
           DEV_BYPASS_SECRET: ${{ secrets.AUTH_BYPASS_SECRET }}
+          PUBLIC_APP_BASE_URL: ${{ vars.PUBLIC_APP_BASE_URL || 'https://app.resonantprojects.art' }}
         run: |
           test -n "${DEV_BYPASS_SECRET}"
-          bunx convex run editorialArtifacts:exportForAstro "{\"outputDir\":\"exports/public-editorial/v1\",\"devBypassSecret\":\"${DEV_BYPASS_SECRET}\"}"
+          bun run scripts/export-editorial.ts --output-dir exports/public-editorial/v1
 
       - name: Publish snapshot branch
         env:
@@ -48,7 +50,7 @@ jobs:
             cd ..
           fi
 
-          rm -rf .editorial-export/*
+          find .editorial-export -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -R exports/public-editorial/v1/. .editorial-export/
 
           cd .editorial-export
