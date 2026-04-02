@@ -745,3 +745,19 @@ export const publishToNotion = action({
     return { notionPageId: page.id, notionUrl: page.url };
   },
 });
+
+/**
+ * Delete a weekly brief by ID
+ */
+export const deleteById = mutation({
+  args: {
+    id: v.id("weeklyBriefs"),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    await ctx.db.delete(args.id);
+    return null;
+  },
+});
