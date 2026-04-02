@@ -1,11 +1,22 @@
 import { expect, test } from "@playwright/test";
 import { createRunId, expectNoticeToMatch, waitForRowByText } from "./helpers";
+import { cleanupByRunId } from "./cleanup";
 
 test.describe("pipeline happy path", () => {
   test.describe.configure({ mode: "serial" });
 
+  let testRunId: string;
+
+  test.afterAll(async () => {
+    if (testRunId) {
+      const deleted = await cleanupByRunId(testRunId);
+      console.log(`[E2E Cleanup] Deleted ${deleted} artifacts for ${testRunId}`);
+    }
+  });
+
   test("creates and advances core records across routes", async ({ page }) => {
     const runId = createRunId();
+    testRunId = runId;
     const sourceTitle = `E2E Source ${runId}`;
     const sourceUrl = `https://example.com/${runId}`;
     const hypothesisTitle = `E2E Hypothesis ${runId}`;

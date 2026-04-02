@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
 import { createRunId, expectNoticeToMatch, waitForRowByText } from "./helpers";
+import { cleanupByRunId } from "./cleanup";
 
 async function createCampaignViaUi(page: Page, title: string) {
   await page.goto("/weekly-turns");
@@ -24,6 +25,15 @@ async function createCampaignViaUi(page: Page, title: string) {
 test.describe("phase three weekly turns", () => {
   test.describe.configure({ mode: "serial" });
 
+  const runIds: string[] = [];
+
+  test.afterAll(async () => {
+    for (const runId of runIds) {
+      const deleted = await cleanupByRunId(runId);
+      console.log(`[E2E Cleanup] Deleted ${deleted} artifacts for ${runId}`);
+    }
+  });
+
   test("creates a campaign-guided brief with persisted studio prompts", async ({
     page,
   }) => {
@@ -33,6 +43,7 @@ test.describe("phase three weekly turns", () => {
     );
 
     const runId = createRunId();
+    runIds.push(runId);
     const thesisTitle = `E2E Thesis ${runId}`;
     const hypothesisTitle = `E2E Phase3 Hypothesis ${runId}`;
     const recipeTitle = `E2E Phase3 Recipe ${runId}`;
@@ -133,6 +144,7 @@ test.describe("phase three weekly turns", () => {
 
   test("saving an activated campaign keeps it active", async ({ page }) => {
     const runId = createRunId();
+    runIds.push(runId);
     const firstCampaignTitle = `E2E Campaign First ${runId}`;
     const secondCampaignTitle = `E2E Campaign Second ${runId}`;
 
@@ -164,6 +176,7 @@ test.describe("phase three weekly turns", () => {
     test.skip(!bypassSecret, "Requires AUTH_BYPASS_SECRET for CLI seedCampaigns.");
 
     const runId = createRunId();
+    runIds.push(runId);
     const thesisTitle = `E2E Selection Thesis ${runId}`;
     const oldestCampaignTitle = `E2E Oldest Campaign ${runId}`;
 
