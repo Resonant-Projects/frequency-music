@@ -14,9 +14,7 @@ import { makeDb } from "./testHelpers";
 describe("phase 1 hardening", () => {
   test("rejects blank whyThisMatters for new hypotheses", () => {
     expect(() => assertWhyThisMatters("   ")).toThrow(ConvexError);
-    expect(assertWhyThisMatters("Musically consequential.")).toBe(
-      "Musically consequential.",
-    );
+    expect(assertWhyThisMatters("Musically consequential.")).toBe("Musically consequential.");
   });
 });
 
@@ -68,11 +66,7 @@ describe("phase 2 lineage", () => {
       "source-b" as any,
     ]);
 
-    expect(result.map((row) => row._id)).toEqual([
-      "extract-newer",
-      "extract-b",
-      "extract-older",
-    ]);
+    expect(result.map((row) => row._id)).toEqual(["extract-newer", "extract-b", "extract-older"]);
   });
 });
 
@@ -159,12 +153,8 @@ describe("phase 4 editorial artifacts", () => {
     const validation = await validateArtifactForPublish(db as any, artifact);
 
     expect(validation.canPublish).toBe(false);
-    expect(
-      validation.checks.find((check) => check.key === "privateSources")?.ok,
-    ).toBe(false);
-    expect(
-      validation.checks.find((check) => check.key === "privateExtractions")?.ok,
-    ).toBe(false);
+    expect(validation.checks.find((check) => check.key === "privateSources")?.ok).toBe(false);
+    expect(validation.checks.find((check) => check.key === "privateExtractions")?.ok).toBe(false);
   });
 
   test("treats follower-only source material as non-public during publish validation", async () => {
@@ -247,9 +237,7 @@ describe("phase 4 editorial artifacts", () => {
     const validation = await validateArtifactForPublish(db as any, artifact);
 
     expect(validation.canPublish).toBe(false);
-    expect(
-      validation.checks.find((check) => check.key === "privateExtractions")?.ok,
-    ).toBe(false);
+    expect(validation.checks.find((check) => check.key === "privateExtractions")?.ok).toBe(false);
   });
 
   test("exports deterministic markdown with optional campaign and thesis slugs", async () => {
@@ -282,14 +270,10 @@ describe("phase 4 editorial artifacts", () => {
       publishedAt: 3,
     } as Doc<"editorialArtifacts">;
 
-    const rendered = await buildExportEntry(
-      artifact,
-      "https://app.example.com",
-      {
-        campaignSlug: "harmonic-drift",
-        thesisSlugs: ["drift-as-form"],
-      },
-    );
+    const rendered = buildExportEntry(artifact, "https://app.example.com", {
+      campaignSlug: "harmonic-drift",
+      thesisSlugs: ["drift-as-form"],
+    });
 
     expect(rendered.path).toBe("campaign-summary.md");
     expect(rendered.markdown).toContain('campaignSlug: "harmonic-drift"');

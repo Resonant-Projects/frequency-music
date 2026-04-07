@@ -1,12 +1,15 @@
 # Convex Schema (MVP+) — Tables, Fields, Indexes (Specific)
 
 > Notes:
+>
 > - Convex uses `defineSchema` with `v` validators.
 > - Indexes matter: build for Inbox, dedupe, week ranges, and role-based queries.
 > - Store timestamps as `v.number()` (ms since epoch) for easy range queries.
 
 ## 1) users
+
 Fields:
+
 - `clerkUserId: string` (unique)
 - `email?: string`
 - `displayName?: string`
@@ -15,10 +18,13 @@ Fields:
 - `updatedAt: number`
 
 Indexes:
+
 - `by_clerkUserId (clerkUserId)`
 
 ## 2) sources
+
 Fields:
+
 - `type: "notion" | "rss" | "url" | "youtube" | "pdf"`
 - `title?: string`
 - `author?: string`
@@ -33,11 +39,11 @@ Fields:
 - `metadata?: any` (json blob; keep small)
 - `visibility: "private" | "followers" | "public"`
 - `status:
-   "ingested" | "text_ready" | "extracted" | "review_needed" | "triaged" |
-   "promoted_followers" | "promoted_public" | "archived"`
+"ingested" | "text_ready" | "extracted" | "review_needed" | "triaged" |
+"promoted_followers" | "promoted_public" | "archived"`
 - `blockedReason?:
-   "no_text" | "copyright" | "needs_metadata" | "needs_tagging" |
-   "ai_error" | "needs_human_review" | "duplicate"`
+"no_text" | "copyright" | "needs_metadata" | "needs_tagging" |
+"ai_error" | "needs_human_review" | "duplicate"`
 - `blockedDetails?: string`
 - `openQuestions?: string[]`
 - `tags?: string[]` (fast filter; e.g. ["ResonantProjects"])
@@ -49,35 +55,38 @@ Fields:
 - `updatedAt: number`
 
 Indexes (critical):
-- `by_status_updatedAt (status, updatedAt)`  // Inbox queries
+
+- `by_status_updatedAt (status, updatedAt)` // Inbox queries
 - `by_visibility_updatedAt (visibility, updatedAt)`
 - `by_type_updatedAt (type, updatedAt)`
-- `by_dedupeKey (dedupeKey)`                 // hard dedupe
+- `by_dedupeKey (dedupeKey)` // hard dedupe
 - `by_notionPageId (notionPageId)`
 - `by_canonicalUrl (canonicalUrl)`
-- `by_tag_updatedAt (tags, updatedAt)`       // if using array indexes isn’t ideal, store `primaryTag`
+- `by_tag_updatedAt (tags, updatedAt)` // if using array indexes isn’t ideal, store `primaryTag`
 - `by_createdAt (createdAt)`
 
 ## 3) extractions
+
 Fields:
+
 - `sourceId: Id<sources>`
 - `model: string` (e.g. "claude-3-5-sonnet")
 - `promptVersion: "extract_v1" | ...`
 - `summary: string`
 - `claims: {
-    text: string,
-    evidenceLevel: "peer_reviewed"|"preprint"|"anecdotal"|"speculative"|"personal",
-    truthConfidence?: "low"|"medium"|"high",
-    interestLevel?: "low"|"medium"|"high",
-    citations: { label?: string, url?: string, quote?: string }[]
-  }[]`
+  text: string,
+  evidenceLevel: "peer_reviewed"|"preprint"|"anecdotal"|"speculative"|"personal",
+  truthConfidence?: "low"|"medium"|"high",
+  interestLevel?: "low"|"medium"|"high",
+  citations: { label?: string, url?: string, quote?: string }[]
+}[]`
 - `compositionParameters: {
-    type: "tempo"|"key"|"tuningSystem"|"rootNote"|"chordProgression"|
-          "rhythm"|"instrument"|"synthWaveform"|"harmonicProfile"|
-          "frequency"|"note",
-    value: string,
-    details?: any
-  }[]`
+  type: "tempo"|"key"|"tuningSystem"|"rootNote"|"chordProgression"|
+        "rhythm"|"instrument"|"synthWaveform"|"harmonicProfile"|
+        "frequency"|"note",
+  value: string,
+  details?: any
+}[]`
 - `topics: string[]`
 - `openQuestions: string[]`
 - `confidence: number`
@@ -86,11 +95,14 @@ Fields:
 - `createdBy: Id<users> | "system"`
 
 Indexes:
+
 - `by_sourceId_createdAt (sourceId, createdAt)`
 - `by_inputHash (inputHash)` // prevent re-run duplicates
 
 ## 4) theses
+
 Fields:
+
 - `title: string`
 - `statement: string`
 - `descriptionMd?: string`
@@ -101,11 +113,14 @@ Fields:
 - `updatedAt: number`
 
 Indexes:
+
 - `by_status_updatedAt (status, updatedAt)`
 - `by_visibility_updatedAt (visibility, updatedAt)`
 
 ## 5) hypotheses
+
 Fields:
+
 - `title: string`
 - `question: string`
 - `hypothesis: string`
@@ -124,12 +139,15 @@ Fields:
 - `createdBy: Id<users> | "system"`
 
 Indexes:
+
 - `by_status_updatedAt (status, updatedAt)`
 - `by_visibility_updatedAt (visibility, updatedAt)`
 - `by_thesisId_updatedAt (thesisId, updatedAt)`
 
 ## 6) recipes
+
 Fields:
+
 - `hypothesisId: Id<hypotheses>`
 - `title: string`
 - `whyThisMatters?: string`
@@ -137,15 +155,15 @@ Fields:
 - `parameters: (same schema as extraction params)[]`
 - `dawChecklist: string[]`
 - `protocol?: {
-    studyType: "litmus" | "comparison",
-    durationSecs: number,
-    panelPlanned: string[],
-    listeningContext?: string,
-    listeningMethod?: string,
-    baselineArtifactId?: Id<compositions>,
-    whatVaries: string[],
-    whatStaysConstant: string[]
-  }`
+  studyType: "litmus" | "comparison",
+  durationSecs: number,
+  panelPlanned: string[],
+  listeningContext?: string,
+  listeningMethod?: string,
+  baselineArtifactId?: Id<compositions>,
+  whatVaries: string[],
+  whatStaysConstant: string[]
+}`
 - `status: "draft" | "in_use" | "archived"`
 - `visibility: "private" | "followers" | "public"`
 - `createdAt: number`
@@ -153,11 +171,14 @@ Fields:
 - `createdBy: Id<users> | "system"`
 
 Indexes:
+
 - `by_hypothesisId_updatedAt (hypothesisId, updatedAt)`
 - `by_status_updatedAt (status, updatedAt)`
 
 ## 7) compositions
+
 Fields:
+
 - `title: string`
 - `recipeId: Id<recipes>`
 - `artifactType: "microStudy" | "expandedStudy" | "fullTrack"`
@@ -175,25 +196,28 @@ Fields:
 - `createdBy: Id<users> | "system"`
 
 Indexes:
+
 - `by_recipeId_updatedAt (recipeId, updatedAt)`
 - `by_status_updatedAt (status, updatedAt)`
 - `by_revisionParentId_updatedAt (revisionParentId, updatedAt)`
 
 ## 8) listeningSessions
+
 Fields:
+
 - `compositionId: Id<compositions>`
 - `participants: { name?: string, userId?: Id<users> }[]`
 - `contextMd?: string`
 - `feedbackMd: string`
 - `ratings: {
-    bodilyPleasantness?: number,
-    goosebumps?: number,
-    perceivedConsonance?: number,
-    musicality?: number,
-    easeOfComposability?: number,
-    consonanceComputed?: number,
-    expandability?: number
-  }`
+  bodilyPleasantness?: number,
+  goosebumps?: number,
+  perceivedConsonance?: number,
+  musicality?: number,
+  easeOfComposability?: number,
+  consonanceComputed?: number,
+  expandability?: number
+}`
 - `bodyMapNotes?: string`
 - `feltQualities?: string[]`
 - `bodyMapTags?: string[]`
@@ -204,10 +228,13 @@ Fields:
 - `createdBy: Id<users>`
 
 Indexes:
+
 - `by_compositionId_createdAt (compositionId, createdAt)`
 
 ## 9) weeklyBriefs
+
 Fields:
+
 - `weekOf: string` (e.g. "2026-02-02" Monday)
 - `model: string`
 - `promptVersion: "brief_v1" | ...`
@@ -224,6 +251,7 @@ Fields:
 - `createdBy: Id<users> | "system"`
 
 Indexes:
+
 - `by_weekOf (weekOf)`
 - `by_visibility_createdAt (visibility, createdAt)`
 
@@ -241,7 +269,9 @@ Indexes:
   Returns concept-level yield scoring and grouped high-yield/low-yield domain clusters.
 
 ## DedupeKey strategy (concrete)
+
 Set `sources.dedupeKey` using first available:
+
 - Notion: `notion:<pageId>`
 - RSS: `rss:<feedUrl>:<guid-or-url>`
 - URL: `url:<canonicalUrlNormalized>`
@@ -249,4 +279,5 @@ Set `sources.dedupeKey` using first available:
 - PDF: `pdf:<sha256(file)>`
 
 If a new item comes in with existing dedupeKey:
+
 - mark new attempt as `blockedReason="duplicate"` OR update the existing record’s metadata.

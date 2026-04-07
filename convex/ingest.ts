@@ -50,23 +50,18 @@ function parseRSSXML(xml: string): ParsedFeed {
   const items: RSSItem[] = [];
 
   // Get feed title
-  const feedTitleMatch = xml.match(
-    /<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i,
-  );
+  const feedTitleMatch = xml.match(/<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i);
   const feedTitle = feedTitleMatch ? feedTitleMatch[1].trim() : "Unknown Feed";
 
   // Match RSS items or Atom entries
-  const itemRegex =
-    /<item[^>]*>([\s\S]*?)<\/item>|<entry[^>]*>([\s\S]*?)<\/entry>/gi;
+  const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>|<entry[^>]*>([\s\S]*?)<\/entry>/gi;
   while (true) {
     const match = itemRegex.exec(xml);
     if (match === null) break;
     const itemXml = match[1] || match[2];
 
     // Extract fields
-    const titleMatch = itemXml.match(
-      /<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i,
-    );
+    const titleMatch = itemXml.match(/<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i);
     const linkMatch = itemXml.match(
       /<link[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>|<link[^>]*href="([^"]+)"/i,
     );
@@ -93,15 +88,9 @@ function parseRSSXML(xml: string): ParsedFeed {
         pubDate: pubDateMatch
           ? (pubDateMatch[1] || pubDateMatch[2] || pubDateMatch[3] || "").trim()
           : undefined,
-        description: descMatch
-          ? (descMatch[1] || descMatch[2] || "").trim()
-          : undefined,
-        guid: guidMatch
-          ? (guidMatch[1] || guidMatch[2] || "").trim()
-          : undefined,
-        content: contentMatch
-          ? (contentMatch[1] || contentMatch[2] || "").trim()
-          : undefined,
+        description: descMatch ? (descMatch[1] || descMatch[2] || "").trim() : undefined,
+        guid: guidMatch ? (guidMatch[1] || guidMatch[2] || "").trim() : undefined,
+        content: contentMatch ? (contentMatch[1] || contentMatch[2] || "").trim() : undefined,
       });
     }
   }
@@ -140,10 +129,7 @@ export const pollFeed = internalAction({
   args: {
     feedId: v.id("feeds"),
   },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<{ processed: number; errors: string[] }> => {
+  handler: async (ctx, args): Promise<{ processed: number; errors: string[] }> => {
     // Get feed config
     const feed = await ctx.runQuery(api.feeds.get, { id: args.feedId });
     if (!feed || !feed.enabled) {
@@ -159,8 +145,7 @@ export const pollFeed = internalAction({
       const response = await fetchWithTimeout(feed.url, {
         headers: {
           "User-Agent": "ResonantProjects/1.0 (research aggregator)",
-          Accept:
-            "application/rss+xml, application/atom+xml, application/xml, text/xml",
+          Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml",
         },
       });
 
@@ -187,11 +172,11 @@ export const pollFeed = internalAction({
           // Parse publish date
           let publishedAt: number | undefined;
           if (item.pubDate) {
-            const parsed = Date.parse(item.pubDate);
-            if (!Number.isNaN(parsed)) {
-              publishedAt = parsed;
-              if (!latestItemDate || parsed > latestItemDate) {
-                latestItemDate = parsed;
+            const parsedDate = Date.parse(item.pubDate);
+            if (!Number.isNaN(parsedDate)) {
+              publishedAt = parsedDate;
+              if (!latestItemDate || parsedDate > latestItemDate) {
+                latestItemDate = parsedDate;
               }
             }
           }
@@ -345,9 +330,7 @@ export const ingestUrl = action({
     // Extract main content (simplified - could use readability library)
     // For now, just strip HTML from body
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    const rawText = bodyMatch
-      ? stripHtml(bodyMatch[1]).slice(0, 50000)
-      : undefined;
+    const rawText = bodyMatch ? stripHtml(bodyMatch[1]).slice(0, 50000) : undefined;
 
     // Create source
     const result = await ctx.runMutation(api.sources.create, {
@@ -416,14 +399,11 @@ export const ingestYouTube = action({
     }
 
     // Fetch video page for metadata
-    const response = await fetchWithTimeout(
-      `https://www.youtube.com/watch?v=${videoId}`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; ResonantProjects/1.0)",
-        },
+    const response = await fetchWithTimeout(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ResonantProjects/1.0)",
       },
-    );
+    });
 
     let title = `YouTube: ${videoId}`;
     let author: string | undefined;

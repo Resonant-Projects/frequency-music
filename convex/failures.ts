@@ -12,10 +12,7 @@ export type { FailureArchiveEntry };
 import { failureArchiveEntryValidator } from "./validators";
 
 export type DbReader = {
-  get: <T extends keyof DataModelMap>(
-    table: T,
-    id: Id<T>,
-  ) => Promise<DataModelMap[T] | null>;
+  get: <T extends keyof DataModelMap>(table: T, id: Id<T>) => Promise<DataModelMap[T] | null>;
   query: <T extends keyof DataModelMap>(table: T) => any;
 };
 
@@ -34,9 +31,8 @@ function resolveBranchCreatedAt(
 ): number {
   if (!branchSummary.latestListeningSessionId) return fallbackTimestamp;
   const session =
-    branchListeningSessions.find(
-      (s) => s._id === branchSummary.latestListeningSessionId,
-    ) ?? branchListeningSessions[0];
+    branchListeningSessions.find((s) => s._id === branchSummary.latestListeningSessionId) ??
+    branchListeningSessions[0];
   return session?.createdAt ?? fallbackTimestamp;
 }
 
@@ -89,9 +85,7 @@ async function getBranchCompositionIds(
 
     const children = await db
       .query("compositions")
-      .withIndex("by_revisionParentId_updatedAt", (q: any) =>
-        q.eq("revisionParentId", nextId),
-      )
+      .withIndex("by_revisionParentId_updatedAt", (q: any) => q.eq("revisionParentId", nextId))
       .collect();
 
     for (const child of children) {
@@ -110,9 +104,7 @@ async function getListeningSessionsForCompositionIds(
     compositionIds.map((compositionId) =>
       db
         .query("listeningSessions")
-        .withIndex("by_compositionId_createdAt", (q: any) =>
-          q.eq("compositionId", compositionId),
-        )
+        .withIndex("by_compositionId_createdAt", (q: any) => q.eq("compositionId", compositionId))
         .collect(),
     ),
   );
@@ -126,27 +118,19 @@ async function getListeningSessionsForComposition(
 ): Promise<Doc<"listeningSessions">[]> {
   return await db
     .query("listeningSessions")
-    .withIndex("by_compositionId_createdAt", (q: any) =>
-      q.eq("compositionId", compositionId),
-    )
+    .withIndex("by_compositionId_createdAt", (q: any) => q.eq("compositionId", compositionId))
     .collect();
 }
 
-function getLocalFailureStatus(
-  sessions: Doc<"listeningSessions">[],
-): FailureReason | undefined {
-  const latestSession = [...sessions].toSorted(
-    (a, b) => b.createdAt - a.createdAt,
-  )[0];
+function getLocalFailureStatus(sessions: Doc<"listeningSessions">[]): FailureReason | undefined {
+  const latestSession = [...sessions].toSorted((a, b) => b.createdAt - a.createdAt)[0];
   if (latestSession && isLowYieldListeningSession(latestSession)) {
     return "low_expandability_composition";
   }
   return undefined;
 }
 
-function getBranchFailureStatus(
-  sessions: Doc<"listeningSessions">[],
-): FailureReason | undefined {
+function getBranchFailureStatus(sessions: Doc<"listeningSessions">[]): FailureReason | undefined {
   const summary = summarizeListeningSessions(sessions);
   if (summary.lowOutcomeCount >= 2) {
     return "repeat_no_expand_composition";
@@ -171,10 +155,7 @@ async function loadBranchFailureContext(
     throw new Error("Branch root composition not found");
   }
 
-  const branchCompositionIds = await getBranchCompositionIds(
-    db,
-    revisionBranchRootId,
-  );
+  const branchCompositionIds = await getBranchCompositionIds(db, revisionBranchRootId);
   const branchListeningSessions = await getListeningSessionsForCompositionIds(
     db,
     branchCompositionIds,
@@ -196,16 +177,9 @@ async function loadCompositionContext(
   branchCache: Map<string, BranchFailureContext>,
 ): Promise<CompositionFailureContext> {
   const recipe = await db.get("recipes", composition.recipeId);
-  const hypothesis = recipe
-    ? await db.get("hypotheses", recipe.hypothesisId)
-    : null;
-  const thesis = hypothesis?.thesisId
-    ? await db.get("theses", hypothesis.thesisId)
-    : null;
-  const localListeningSessions = await getListeningSessionsForComposition(
-    db,
-    composition._id,
-  );
+  const hypothesis = recipe ? await db.get("hypotheses", recipe.hypothesisId) : null;
+  const thesis = hypothesis?.thesisId ? await db.get("theses", hypothesis.thesisId) : null;
+  const localListeningSessions = await getListeningSessionsForComposition(db, composition._id);
   const branch = await loadBranchFailureContext(db, composition, branchCache);
 
   return {
@@ -218,9 +192,7 @@ async function loadCompositionContext(
   };
 }
 
-function makeFailureEntry(
-  args: Omit<FailureArchiveEntry, "recommendedNextAction">,
-) {
+function makeFailureEntry(args: Omit<FailureArchiveEntry, "recommendedNextAction">) {
   return {
     ...args,
     recommendedNextAction: inferFailureAction(args.reason),
@@ -277,31 +249,23 @@ async function deriveHypothesisFailures(
   const hypotheses = filter.thesisId
     ? await db
         .query("hypotheses")
-        .withIndex("by_thesisId_updatedAt", (q: any) =>
-          q.eq("thesisId", filter.thesisId),
-        )
+        .withIndex("by_thesisId_updatedAt", (q: any) => q.eq("thesisId", filter.thesisId))
         .collect()
     : await db.query("hypotheses").collect();
 
   for (const hypothesis of hypotheses) {
-    const thesis = hypothesis.thesisId
-      ? await db.get("theses", hypothesis.thesisId)
-      : null;
+    const thesis = hypothesis.thesisId ? await db.get("theses", hypothesis.thesisId) : null;
     if (
       hypothesis.resolution === "contradicted" &&
       (!filter.reason || filter.reason === "contradicted_hypothesis")
     ) {
-      entries.push(
-        buildHypothesisEntry(hypothesis, thesis, "contradicted_hypothesis"),
-      );
+      entries.push(buildHypothesisEntry(hypothesis, thesis, "contradicted_hypothesis"));
     }
     if (
       hypothesis.status === "retired" &&
       (!filter.reason || filter.reason === "retired_hypothesis")
     ) {
-      entries.push(
-        buildHypothesisEntry(hypothesis, thesis, "retired_hypothesis"),
-      );
+      entries.push(buildHypothesisEntry(hypothesis, thesis, "retired_hypothesis"));
     }
   }
   return entries;
@@ -318,9 +282,7 @@ async function deriveRecipeFailures(
     if (recipe.status !== "archived") continue;
     const hypothesis = await db.get("hypotheses", recipe.hypothesisId);
     if (filter.thesisId && hypothesis?.thesisId !== filter.thesisId) continue;
-    const thesis = hypothesis?.thesisId
-      ? await db.get("theses", hypothesis.thesisId)
-      : null;
+    const thesis = hypothesis?.thesisId ? await db.get("theses", hypothesis.thesisId) : null;
     entries.push(
       makeFailureEntry({
         key: `recipe:${recipe._id}:archived`,
@@ -359,12 +321,8 @@ async function deriveCompositionFailures(
     const context = await loadCompositionContext(db, composition, branchCache);
     if (filter.thesisId && context.thesis?._id !== filter.thesisId) continue;
 
-    const localFailureStatus = getLocalFailureStatus(
-      context.localListeningSessions,
-    );
-    const branchFailureStatus = getBranchFailureStatus(
-      context.branch.branchListeningSessions,
-    );
+    const localFailureStatus = getLocalFailureStatus(context.localListeningSessions);
+    const branchFailureStatus = getBranchFailureStatus(context.branch.branchListeningSessions);
     const baseEntry = {
       title: composition.title,
       summary:
@@ -381,9 +339,7 @@ async function deriveCompositionFailures(
         hypothesisIds: context.hypothesis ? [context.hypothesis._id] : [],
         recipeIds: context.recipe ? [context.recipe._id] : [],
         compositionIds: [composition._id],
-        listeningSessionIds: context.localListeningSessions.map(
-          (session) => session._id,
-        ),
+        listeningSessionIds: context.localListeningSessions.map((session) => session._id),
         thesisIds: context.thesis ? [context.thesis._id] : [],
       },
     };
@@ -414,10 +370,7 @@ async function deriveCompositionFailures(
       (!filter.reason || filter.reason === "repeat_no_expand_composition")
     ) {
       emittedBranchRoots.add(branchRootKey);
-      const branchRecipe = await db.get(
-        "recipes",
-        context.branch.rootComposition.recipeId,
-      );
+      const branchRecipe = await db.get("recipes", context.branch.rootComposition.recipeId);
       const branchHypothesis = branchRecipe
         ? await db.get("hypotheses", branchRecipe.hypothesisId)
         : null;
@@ -444,8 +397,7 @@ async function deriveCompositionFailures(
           hypothesisId: branchHypothesis?._id,
           recipeId: branchRecipe?._id,
           compositionId: context.branch.revisionBranchRootId,
-          latestListeningSessionId:
-            context.branch.branchSummary.latestListeningSessionId,
+          latestListeningSessionId: context.branch.branchSummary.latestListeningSessionId,
           revisionBranchRootId: context.branch.revisionBranchRootId,
           supportingIds: {
             hypothesisIds: branchHypothesis ? [branchHypothesis._id] : [],
@@ -467,11 +419,9 @@ async function deriveFilteredFailureArchive(
   db: DbReader,
   filter: FailureDerivationFilter = {},
 ): Promise<FailureArchiveEntry[]> {
-  const needHypotheses =
-    !filter.reason || HYPOTHESIS_REASONS.has(filter.reason);
+  const needHypotheses = !filter.reason || HYPOTHESIS_REASONS.has(filter.reason);
   const needRecipes = !filter.reason || RECIPE_REASONS.has(filter.reason);
-  const needCompositions =
-    !filter.reason || COMPOSITION_REASONS.has(filter.reason);
+  const needCompositions = !filter.reason || COMPOSITION_REASONS.has(filter.reason);
 
   const parts = await Promise.all([
     needHypotheses ? deriveHypothesisFailures(db, filter) : [],
@@ -482,9 +432,7 @@ async function deriveFilteredFailureArchive(
   return parts.flat().toSorted((a, b) => b.createdAt - a.createdAt);
 }
 
-export async function deriveFailureArchiveEntries(
-  db: DbReader,
-): Promise<FailureArchiveEntry[]> {
+export function deriveFailureArchiveEntries(db: DbReader): Promise<FailureArchiveEntry[]> {
   return deriveFilteredFailureArchive(db);
 }
 
@@ -539,10 +487,7 @@ export const listArchive = query({
   },
 });
 
-async function deriveEntryByKey(
-  db: DbReader,
-  key: string,
-): Promise<FailureArchiveEntry | null> {
+async function deriveEntryByKey(db: DbReader, key: string): Promise<FailureArchiveEntry | null> {
   const [type, id, suffix] = key.split(":");
   if (!type || !id || !suffix) return null;
 
@@ -557,14 +502,11 @@ async function deriveEntryByKey(
           : null;
     if (!reason) return null;
     if (
-      (reason === "contradicted_hypothesis" &&
-        hypothesis.resolution !== "contradicted") ||
+      (reason === "contradicted_hypothesis" && hypothesis.resolution !== "contradicted") ||
       (reason === "retired_hypothesis" && hypothesis.status !== "retired")
     )
       return null;
-    const thesis = hypothesis.thesisId
-      ? await db.get("theses", hypothesis.thesisId)
-      : null;
+    const thesis = hypothesis.thesisId ? await db.get("theses", hypothesis.thesisId) : null;
     return buildHypothesisEntry(
       hypothesis,
       thesis,
@@ -576,9 +518,7 @@ async function deriveEntryByKey(
     const recipe = await db.get("recipes", id as Id<"recipes">);
     if (!recipe || recipe.status !== "archived") return null;
     const hypothesis = await db.get("hypotheses", recipe.hypothesisId);
-    const thesis = hypothesis?.thesisId
-      ? await db.get("theses", hypothesis.thesisId)
-      : null;
+    const thesis = hypothesis?.thesisId ? await db.get("theses", hypothesis.thesisId) : null;
     return makeFailureEntry({
       key,
       reason: "archived_recipe",
@@ -640,14 +580,9 @@ async function deriveEntryByKey(
     }
 
     if (suffix === "repeat_no_expand") {
-      const status = getBranchFailureStatus(
-        context.branch.branchListeningSessions,
-      );
+      const status = getBranchFailureStatus(context.branch.branchListeningSessions);
       if (status !== "repeat_no_expand_composition") return null;
-      const branchRecipe = await db.get(
-        "recipes",
-        context.branch.rootComposition.recipeId,
-      );
+      const branchRecipe = await db.get("recipes", context.branch.rootComposition.recipeId);
       const branchHypothesis = branchRecipe
         ? await db.get("hypotheses", branchRecipe.hypothesisId)
         : null;
@@ -673,16 +608,13 @@ async function deriveEntryByKey(
         hypothesisId: branchHypothesis?._id,
         recipeId: branchRecipe?._id,
         compositionId: context.branch.revisionBranchRootId,
-        latestListeningSessionId:
-          context.branch.branchSummary.latestListeningSessionId,
+        latestListeningSessionId: context.branch.branchSummary.latestListeningSessionId,
         revisionBranchRootId: context.branch.revisionBranchRootId,
         supportingIds: {
           hypothesisIds: branchHypothesis ? [branchHypothesis._id] : [],
           recipeIds: branchRecipe ? [branchRecipe._id] : [],
           compositionIds: context.branch.branchCompositionIds,
-          listeningSessionIds: context.branch.branchListeningSessions.map(
-            (s) => s._id,
-          ),
+          listeningSessionIds: context.branch.branchListeningSessions.map((s) => s._id),
           thesisIds: branchThesis ? [branchThesis._id] : [],
         },
       });
@@ -701,14 +633,9 @@ export const getByKey = query({
     if (direct) return direct;
 
     // Legacy key resolution: try mapping to branch root
-    const legacyMatch = args.key.match(
-      /^composition:([^:]+):repeat_no_expand$/,
-    );
+    const legacyMatch = args.key.match(/^composition:([^:]+):repeat_no_expand$/);
     if (!legacyMatch?.[1]) return null;
-    const composition = await db.get(
-      "compositions",
-      legacyMatch[1] as Id<"compositions">,
-    );
+    const composition = await db.get("compositions", legacyMatch[1] as Id<"compositions">);
     if (!composition) return null;
     const rootId = await getBranchRootId(db, composition);
     if (rootId === (legacyMatch[1] as Id<"compositions">)) return null;
@@ -728,10 +655,7 @@ export const getByKeys = query({
 
         const legacyMatch = key.match(/^composition:([^:]+):repeat_no_expand$/);
         if (!legacyMatch?.[1]) return null;
-        const composition = await db.get(
-          "compositions",
-          legacyMatch[1] as Id<"compositions">,
-        );
+        const composition = await db.get("compositions", legacyMatch[1] as Id<"compositions">);
         if (!composition) return null;
         const rootId = await getBranchRootId(db, composition);
         if (rootId === (legacyMatch[1] as Id<"compositions">)) return null;

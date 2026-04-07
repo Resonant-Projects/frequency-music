@@ -10,8 +10,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import { writeFileSync, mkdirSync } from "fs";
 
-const CONVEX_URL =
-  process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
+const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
 
 interface BibEntry {
   id: string;
@@ -79,30 +78,19 @@ function categorize(tags: string[], url: string, title: string): string[] {
     if (u.includes("arxiv.org")) topics.add("AI & Computational Audio (arXiv)");
     else if (u.includes("tandfonline.com") || u.includes("jmm"))
       topics.add("Journal of Mathematics & Music");
-    else if (u.includes("youtube.com") || u.includes("youtu.be"))
-      topics.add("YouTube & Video");
+    else if (u.includes("youtube.com") || u.includes("youtu.be")) topics.add("YouTube & Video");
     else if (u.includes("pmc.ncbi.nlm.nih.gov") || u.includes("pubmed.ncbi"))
       topics.add("Biomedical Research (PMC/PubMed)");
-    else if (u.includes("researchgate.net"))
-      topics.add("Academic Papers (ResearchGate)");
+    else if (u.includes("researchgate.net")) topics.add("Academic Papers (ResearchGate)");
     else if (u.includes("archive.org")) topics.add("Books & Archives");
     else if (u.includes("quantamagazine.org")) topics.add("Science Journalism");
     else if (u.includes("nautil.us")) topics.add("Science Journalism");
-    else if (u.includes("robertedwardgrant.com"))
-      topics.add("Geometric Music Theory");
+    else if (u.includes("robertedwardgrant.com")) topics.add("Geometric Music Theory");
     else if (u.includes("wikipedia.org")) topics.add("Reference (Wikipedia)");
     // Title-based fallback
-    else if (
-      t.includes("speech") ||
-      t.includes("audio") ||
-      t.includes("music generation")
-    )
+    else if (t.includes("speech") || t.includes("audio") || t.includes("music generation"))
       topics.add("AI & Computational Audio");
-    else if (
-      t.includes("tuning") ||
-      t.includes("temperament") ||
-      t.includes("intonation")
-    )
+    else if (t.includes("tuning") || t.includes("temperament") || t.includes("intonation"))
       topics.add("Tuning Systems & Temperament");
     else topics.add("General / Uncategorized");
   }
@@ -127,7 +115,7 @@ async function main() {
   console.log(`Processing ${allSources.length} sources...`);
 
   // Build bibliography entries
-  const entries: BibEntry[] = allSources.map((s: any) => ({
+  const bibEntries: BibEntry[] = allSources.map((s: any) => ({
     id: s._id,
     title: s.title || "Untitled",
     url: s.canonicalUrl || "",
@@ -143,7 +131,7 @@ async function main() {
 
   // Group by topic
   const topicMap = new Map<string, BibEntry[]>();
-  for (const entry of entries) {
+  for (const entry of bibEntries) {
     for (const topic of entry.topics) {
       if (!topicMap.has(topic)) topicMap.set(topic, []);
       topicMap.get(topic)!.push(entry);
@@ -160,11 +148,11 @@ async function main() {
 
   // Summary stats
   const stats = {
-    totalSources: entries.length,
-    extracted: entries.filter((e) => e.status === "extracted").length,
-    textReady: entries.filter((e) => e.status === "text_ready").length,
-    ingested: entries.filter((e) => e.status === "ingested").length,
-    withText: entries.filter((e) => e.textLength > 200).length,
+    totalSources: bibEntries.length,
+    extracted: bibEntries.filter((e) => e.status === "extracted").length,
+    textReady: bibEntries.filter((e) => e.status === "text_ready").length,
+    ingested: bibEntries.filter((e) => e.status === "ingested").length,
+    withText: bibEntries.filter((e) => e.textLength > 200).length,
     topicCount: groups.length,
     generatedAt: new Date().toISOString(),
   };
@@ -173,7 +161,7 @@ async function main() {
   const jsonOutput = { stats, groups };
   writeFileSync("data/bibliography.json", JSON.stringify(jsonOutput, null, 2));
   console.log(
-    `Wrote data/bibliography.json (${groups.length} topics, ${entries.length} entries)`,
+    `Wrote data/bibliography.json (${groups.length} topics, ${bibEntries.length} entries)`,
   );
 
   // Write Markdown bibliography
@@ -190,15 +178,9 @@ async function main() {
     md += `## ${group.topic} (${group.count})\n\n`;
     for (const entry of group.entries) {
       const statusIcon =
-        entry.status === "extracted"
-          ? "✅"
-          : entry.status === "text_ready"
-            ? "📄"
-            : "📌";
+        entry.status === "extracted" ? "✅" : entry.status === "text_ready" ? "📄" : "📌";
       const textInfo =
-        entry.textLength > 0
-          ? ` (${Math.round(entry.textLength / 1000)}k chars)`
-          : "";
+        entry.textLength > 0 ? ` (${Math.round(entry.textLength / 1000)}k chars)` : "";
       if (entry.url) {
         md += `- ${statusIcon} [${entry.title}](${entry.url})${textInfo}\n`;
       } else {
