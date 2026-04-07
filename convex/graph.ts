@@ -3,6 +3,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, mutation, query } from "./_generated/server";
 import { inferDisplaySectorFromDomain, resolveDomainsForSector } from "./domainMappings";
+import { entityTypeValidator } from "./schema";
 import { conceptReturnValidator, edgeReturnValidator } from "./validators";
 
 function parseNodeId(nodeId: string): { type: string; id: string } {
@@ -174,7 +175,7 @@ export const incrementMentions = mutation({
  */
 export const getEdgesFrom = query({
   args: {
-    fromType: v.string(),
+    fromType: entityTypeValidator,
     fromId: v.string(),
     relationship: v.optional(v.string()),
   },
@@ -183,7 +184,7 @@ export const getEdgesFrom = query({
     const edgeQuery = ctx.db
       .query("edges")
       .withIndex("by_from", (q) =>
-        q.eq("fromType", args.fromType as any).eq("fromId", args.fromId),
+        q.eq("fromType", args.fromType).eq("fromId", args.fromId),
       );
 
     const edges = await edgeQuery.collect();
@@ -201,7 +202,7 @@ export const getEdgesFrom = query({
  */
 export const getEdgesTo = query({
   args: {
-    toType: v.string(),
+    toType: entityTypeValidator,
     toId: v.string(),
     relationship: v.optional(v.string()),
   },
@@ -209,7 +210,7 @@ export const getEdgesTo = query({
   handler: async (ctx, args) => {
     const edgeQuery = ctx.db
       .query("edges")
-      .withIndex("by_to", (q) => q.eq("toType", args.toType as any).eq("toId", args.toId));
+      .withIndex("by_to", (q) => q.eq("toType", args.toType).eq("toId", args.toId));
 
     const edges = await edgeQuery.collect();
 
@@ -277,7 +278,7 @@ export const getRelatedSources = query({
  */
 export const getConceptsFor = query({
   args: {
-    entityType: v.string(),
+    entityType: entityTypeValidator,
     entityId: v.string(),
   },
   returns: v.array(
@@ -290,7 +291,7 @@ export const getConceptsFor = query({
     const edges = await ctx.db
       .query("edges")
       .withIndex("by_from", (q) =>
-        q.eq("fromType", args.entityType as any).eq("fromId", args.entityId),
+        q.eq("fromType", args.entityType).eq("fromId", args.entityId),
       )
       .filter((q) => q.eq(q.field("toType"), "concept"))
       .collect();
@@ -319,9 +320,9 @@ export const getConceptsFor = query({
  */
 export const createEdge = mutation({
   args: {
-    fromType: v.string(),
+    fromType: entityTypeValidator,
     fromId: v.string(),
-    toType: v.string(),
+    toType: entityTypeValidator,
     toId: v.string(),
     relationship: v.string(),
     weight: v.optional(v.number()),
@@ -339,7 +340,7 @@ export const createEdge = mutation({
     // Check if edge already exists
     const existing = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) => q.eq("fromType", args.fromType as any).eq("fromId", args.fromId))
+      .withIndex("by_from", (q) => q.eq("fromType", args.fromType).eq("fromId", args.fromId))
       .filter((q) =>
         q.and(
           q.eq(q.field("toType"), args.toType),
@@ -358,9 +359,9 @@ export const createEdge = mutation({
     }
 
     return await ctx.db.insert("edges", {
-      fromType: args.fromType as any,
+      fromType: args.fromType,
       fromId: args.fromId,
-      toType: args.toType as any,
+      toType: args.toType,
       toId: args.toId,
       relationship,
       weight: args.weight,

@@ -579,6 +579,11 @@ export function WeeklyTurnsPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Campaigns</h2>
         <Show when={!campaigns.isLoading()} fallback={<p>Loading campaigns...</p>}>
+          <Show when={!campaigns.isError()} fallback={
+            <p class={css({ color: "rgba(220, 100, 100, 0.85)", lineHeight: "1.6" })}>
+              Failed to load campaigns. {campaigns.error()?.message}
+            </p>
+          }>
           <Show
             when={campaignRows().length > 0}
             fallback={
@@ -607,6 +612,7 @@ export function WeeklyTurnsPage() {
               </For>
             </div>
           </Show>
+          </Show>
         </Show>
       </UICard>
 
@@ -614,6 +620,11 @@ export function WeeklyTurnsPage() {
         <h2 class={sectionTitleClass}>Generated Briefs</h2>
 
         <Show when={!briefs.isLoading()} fallback={<p>Loading weekly turns...</p>}>
+          <Show when={!briefs.isError()} fallback={
+            <p class={css({ color: "rgba(220, 100, 100, 0.85)", lineHeight: "1.6" })}>
+              Failed to load briefs. {briefs.error()?.message}
+            </p>
+          }>
           <Show
             when={briefRows().length > 0}
             fallback={
@@ -734,6 +745,7 @@ export function WeeklyTurnsPage() {
                 )}
               </For>
             </div>
+          </Show>
           </Show>
         </Show>
       </UICard>

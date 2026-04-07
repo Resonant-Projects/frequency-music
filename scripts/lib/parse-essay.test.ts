@@ -14,9 +14,7 @@ describe("parseEssay", () => {
 First paragraph here.`;
 
     const result = parseEssay(input, "the-ground-note.md");
-    expect(result.title).toBe(
-      "The Ground Note: Why Everything in Music Is Relative",
-    );
+    expect(result.title).toBe("The Ground Note: Why Everything in Music Is Relative");
     expect(result.slug).toBe("the-ground-note");
     expect(result.publishDate).toBe("2026-03-20");
     expect(result.draft).toBe(false);
@@ -150,6 +148,17 @@ Paragraph.`;
 
     const result = parseEssay(input, "test.md");
     expect(result.body).toBe("## First Section\n\nParagraph.");
+  });
+
+  test("parses underscore-emphasized byline", () => {
+    const input = `# The Mirror in the Chord
+
+_Freq — March 20, 2026_
+
+## Content`;
+
+    const result = parseEssay(input, "the-mirror-in-the-chord.md");
+    expect(result.publishDate).toBe("2026-03-20");
   });
 
   test("derives slug from filename", () => {

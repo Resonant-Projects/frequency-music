@@ -1,6 +1,6 @@
 # The Mirror in the Chord
 
-_Frequency and period are reciprocals. Major and minor are reflections. These aren't metaphors — they're the same mathematical fact, viewed from two angles._
+*Frequency and period are reciprocals. Major and minor are reflections. These aren't metaphors — they're the same mathematical fact, viewed from two angles.*
 
 ## The Dual Nature of Sound
 
@@ -36,7 +36,7 @@ The s_f–s_p representation suggests two more speculative but tantalizing conne
 
 **The diagonal component predicts consonance.** If you project a chord's position onto the diagonal (s_f + s_p), you get a value that tracks well with subjective consonance ratings: major > minor > suspended > diminished > augmented. The further you are from the origin along the diagonal, the more "consonant" the chord sounds.
 
-**The perpendicular component correlates with emotional valence — in Western listeners.** The component perpendicular to the diagonal (s*f - s_p) correlates with Western listeners' ratings of melancholy and sadness. Minor chords, which sit in the "subharmonic region" (s_p > s_f), score higher on melancholy; major chords score lower. Recent cross-cultural research suggests this is culturally learned, not universal. Athanasopoulos et al. (2021, \_PLOS ONE*) showed that when tempo, timbre, and articulation are controlled, the major-happy/minor-sad distinction does not transfer to listeners from the Khow and Kalash tribes of Northwest Pakistan. Even more strikingly, Lahdelma et al. (2021, _Ann. N.Y. Acad. Sci._) found that these Pakistani tribal members _preferred_ minor chords over major — the inverse of Western patterns. The one element that does appear universal is acoustic roughness: extreme dissonance triggers negative/angry affect across cultures, likely from basic auditory processing rather than learned associations.
+**The perpendicular component correlates with emotional valence — in Western listeners.** The component perpendicular to the diagonal (s_f − s_p) correlates with Western listeners' ratings of melancholy and sadness. Minor chords, which sit in the "subharmonic region" (s_p > s_f), score higher on melancholy; major chords score lower. Recent cross-cultural research suggests this is culturally learned, not universal. Athanasopoulos et al. (2021, _PLOS ONE_) showed that when tempo, timbre, and articulation are controlled, the major-happy/minor-sad distinction does not transfer to listeners from the Khow and Kalash tribes of Northwest Pakistan. Even more strikingly, Lahdelma et al. (2021, _Ann. N.Y. Acad. Sci._) found that these Pakistani tribal members _preferred_ minor chords over major — the inverse of Western patterns. The one element that does appear universal is acoustic roughness: extreme dissonance triggers negative/angry affect across cultures, likely from basic auditory processing rather than learned associations.
 
 If this holds up, it means the emotional character of a chord isn't arbitrary — it's geometrically encoded in the balance between its harmonic and subharmonic simplicity. Sadness lives on one side of the mirror; brightness on the other.
 
@@ -48,7 +48,7 @@ The major seventh chord (M7) turns out to have identical frequency and period ra
 
 ## What This Means for Composition
 
-The practical takeaway: **voice leading between dual chords should feel like crossing a mirror.** When you move from a major chord to its minor reflection (or from a dominant seventh to a half-diminished seventh), you're traversing the full width of the s*f–s_p plane while staying at roughly the same "consonance level" along the diagonal. This might explain why such progressions feel emotionally charged without feeling dissonant — you're changing the \_character* of the sound without changing its _stability_.
+The practical takeaway: **voice leading between dual chords should feel like crossing a mirror.** When you move from a major chord to its minor reflection (or from a dominant seventh to a half-diminished seventh), you're traversing the full width of the s_f–s_p plane while staying at roughly the same "consonance level" along the diagonal. This might explain why such progressions feel emotionally charged without feeling dissonant — you're changing the _character_ of the sound without changing its _stability_.
 
 For microtonalists and those working with just intonation, the s_f–s_p plane offers a way to visualize chord relationships that equal temperament obscures. In ET, every chord is an approximation of multiple just versions; the plane shows which version your tuning is actually closest to, and what its dual looks like.
 

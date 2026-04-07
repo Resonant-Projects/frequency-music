@@ -8,14 +8,26 @@ export type ParsedEssay = {
 };
 
 const MONTHS: Record<string, string> = {
-  january: "01", february: "02", march: "03", april: "04",
-  may: "05", june: "06", july: "07", august: "08",
-  september: "09", october: "10", november: "11", december: "12",
+  january: "01",
+  february: "02",
+  march: "03",
+  april: "04",
+  may: "05",
+  june: "06",
+  july: "07",
+  august: "08",
+  september: "09",
+  october: "10",
+  november: "11",
+  december: "12",
 };
 
-function parseDate(line: string): { date: string | null; essayNumber: number | null } {
-  // Strip markdown emphasis
-  const clean = line.replace(/^\*{1,2}|\*{1,2}$/g, "").trim();
+function parseDate(line: string): {
+  date: string | null;
+  essayNumber: number | null;
+} {
+  // Strip markdown emphasis (asterisks or underscores)
+  const clean = line.replaceAll(/^[*_]{1,2}|[*_]{1,2}$/g, "").trim();
 
   // Extract essay number if present: "Essay #87" or "Essay #80"
   let essayNumber: number | null = null;
@@ -25,7 +37,8 @@ function parseDate(line: string): { date: string | null; essayNumber: number | n
   }
 
   // Try full date: "Month DD, YYYY"
-  const fullDateRe = /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})\b/i;
+  const fullDateRe =
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})\b/i;
   const fullMatch = clean.match(fullDateRe);
   if (fullMatch) {
     const month = MONTHS[fullMatch[1].toLowerCase()];
@@ -34,7 +47,8 @@ function parseDate(line: string): { date: string | null; essayNumber: number | n
   }
 
   // Try month-only: "Month YYYY"
-  const monthOnlyRe = /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})\b/i;
+  const monthOnlyRe =
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})\b/i;
   const monthMatch = clean.match(monthOnlyRe);
   if (monthMatch) {
     const month = MONTHS[monthMatch[1].toLowerCase()];
@@ -42,6 +56,16 @@ function parseDate(line: string): { date: string | null; essayNumber: number | n
   }
 
   return { date: null, essayNumber };
+}
+
+function isEmphasisLine(line: string): boolean {
+  const t = line.trim();
+  return (
+    (t.startsWith("*") && t.endsWith("*") && !t.startsWith("* ")) ||
+    (t.startsWith("**") && t.endsWith("**")) ||
+    (t.startsWith("_") && t.endsWith("_") && !t.startsWith("_ ")) ||
+    (t.startsWith("__") && t.endsWith("__"))
+  );
 }
 
 function extractFrontmatter(content: string): {
@@ -95,7 +119,7 @@ export function parseEssay(content: string, filename: string): ParsedEssay {
     }
 
     // Check if this is a non-date italic line (subtitle/dek) — keep searching
-    if (line.startsWith("*") || line.startsWith("**")) {
+    if (isEmphasisLine(line)) {
       // Could be a dek line; check if it contains a date
       const dekParsed = parseDate(line);
       if (dekParsed.date !== null || dekParsed.essayNumber !== null) {
@@ -135,8 +159,7 @@ export function parseEssay(content: string, filename: string): ParsedEssay {
         bodyStartIndex++;
         continue;
       }
-      if ((line.startsWith("*") && line.endsWith("*") && !line.startsWith("* ")) ||
-          (line.startsWith("**") && line.endsWith("**"))) {
+      if (isEmphasisLine(line)) {
         // This is a dek/subtitle italic line after the separator — skip it
         bodyStartIndex++;
         continue;

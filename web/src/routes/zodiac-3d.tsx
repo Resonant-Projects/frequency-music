@@ -733,10 +733,11 @@ export function Zodiac3D() {
     const mode = sidebarMode();
     return mode.kind === "item-detail" ? { id: mode.itemId, type: mode.itemType } : undefined;
   });
-  const itemRelationsQ = createQueryWithStatus(convexApi.dashboard.itemRelations, () => ({
-    itemId: activeItem()?.id ?? "",
-    itemType: activeItem()?.type ?? "source",
-  }));
+  const itemRelationsQ = createQueryWithStatus(convexApi.dashboard.itemRelations, () => {
+    const item = activeItem();
+    if (!item?.id) return "skip" as const;
+    return { itemId: item.id, itemType: item.type };
+  });
   const itemRelations = createMemo<ItemRelation[] | undefined>(() =>
     activeItem() ? (itemRelationsQ.data() as ItemRelation[] | undefined) : undefined,
   );

@@ -27,6 +27,15 @@ export const campaignStatusValidator = v.union(
   v.literal("completed"),
 );
 
+export const entityTypeValidator = v.union(
+  v.literal("source"),
+  v.literal("extraction"),
+  v.literal("hypothesis"),
+  v.literal("recipe"),
+  v.literal("concept"),
+  v.literal("composition"),
+);
+
 export const editorialArtifactKindValidator = v.union(
   v.literal("experiment_recap"),
   v.literal("what_changed_my_mind"),
@@ -55,11 +64,7 @@ const evidenceLevelValidator = v.union(
   v.literal("personal"),
 );
 
-const confidenceBandValidator = v.union(
-  v.literal("low"),
-  v.literal("medium"),
-  v.literal("high"),
-);
+const confidenceBandValidator = v.union(v.literal("low"), v.literal("medium"), v.literal("high"));
 
 // Parameter types - extensible string for AI flexibility
 // Common types: tempo, key, tuningSystem, rootNote, chordProgression,
@@ -96,11 +101,7 @@ export default defineSchema({
     clerkUserId: v.string(),
     email: v.optional(v.string()),
     displayName: v.optional(v.string()),
-    role: v.union(
-      v.literal("admin"),
-      v.literal("collaborator"),
-      v.literal("follower"),
-    ),
+    role: v.union(v.literal("admin"), v.literal("collaborator"), v.literal("follower")),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerkUserId", ["clerkUserId"]),
@@ -239,11 +240,7 @@ export default defineSchema({
     title: v.string(),
     statement: v.string(),
     descriptionMd: v.optional(v.string()),
-    status: v.union(
-      v.literal("active"),
-      v.literal("paused"),
-      v.literal("retired"),
-    ),
+    status: v.union(v.literal("active"), v.literal("paused"), v.literal("retired")),
     visibility: visibilityValidator,
     createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
@@ -295,11 +292,7 @@ export default defineSchema({
       v.literal("retired"),
     ),
     resolution: v.optional(
-      v.union(
-        v.literal("supported"),
-        v.literal("inconclusive"),
-        v.literal("contradicted"),
-      ),
+      v.union(v.literal("supported"), v.literal("inconclusive"), v.literal("contradicted")),
     ),
 
     // Versioning
@@ -342,11 +335,7 @@ export default defineSchema({
     ),
 
     // Lifecycle
-    status: v.union(
-      v.literal("draft"),
-      v.literal("in_use"),
-      v.literal("archived"),
-    ),
+    status: v.union(v.literal("draft"), v.literal("in_use"), v.literal("archived")),
     visibility: visibilityValidator,
     createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
@@ -436,9 +425,7 @@ export default defineSchema({
     feltQualities: v.optional(v.array(v.string())),
     bodyMapTags: v.optional(v.array(v.string())),
     standoutMoments: v.optional(v.array(v.string())),
-    expandVerdict: v.optional(
-      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
-    ),
+    expandVerdict: v.optional(v.union(v.literal("yes"), v.literal("maybe"), v.literal("no"))),
 
     // Ownership
     visibility: visibilityValidator,
@@ -667,25 +654,11 @@ export default defineSchema({
    */
   edges: defineTable({
     // Source node
-    fromType: v.union(
-      v.literal("source"),
-      v.literal("extraction"),
-      v.literal("hypothesis"),
-      v.literal("recipe"),
-      v.literal("concept"),
-      v.literal("composition"),
-    ),
+    fromType: entityTypeValidator,
     fromId: v.string(), // ID of the source entity
 
     // Target node
-    toType: v.union(
-      v.literal("source"),
-      v.literal("extraction"),
-      v.literal("hypothesis"),
-      v.literal("recipe"),
-      v.literal("concept"),
-      v.literal("composition"),
-    ),
+    toType: entityTypeValidator,
     toId: v.string(), // ID of the target entity
 
     // Relationship type

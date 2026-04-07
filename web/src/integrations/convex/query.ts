@@ -68,41 +68,47 @@ export function createQuery<Query extends FunctionReference<"query">>(
 
 export function createQueryWithStatus<Query extends FunctionReference<"query">>(
   query: Query,
-  args?: FunctionArgs<Query> | (() => FunctionArgs<Query>),
+  args?: FunctionArgs<Query> | (() => FunctionArgs<Query> | "skip"),
 ): QueryStatus<FunctionReturnType<Query>> {
   const convex = useConvexClient();
 
   const [data, setData] = createSignal<FunctionReturnType<Query> | undefined>(undefined);
   const [error, setError] = createSignal<Error | null>(null);
 
-  const resolvedArgs = createMemo(
-    () =>
-      (typeof args === "function" ? (args as () => FunctionArgs<Query>)() : args) ??
-      ({} as FunctionArgs<Query>),
-  );
+  const resolvedArgs = createMemo(() => {
+    const raw = typeof args === "function" ? (args as () => FunctionArgs<Query> | "skip")() : args;
+    if (raw === "skip") return "skip" as const;
+    return raw ?? ({} as FunctionArgs<Query>);
+  });
 
   let unsubscribe: (() => void) | null = null;
-  let hasReceivedData = false;
   let isMounted = true;
+  let requestVersion = 0;
 
   createEffect(() => {
     const nextArgs = resolvedArgs();
+    const version = ++requestVersion;
+    let hasReceivedData = false;
 
-    hasReceivedData = false;
     setData(() => undefined);
     setError(() => null);
 
     unsubscribe?.();
+    unsubscribe = null;
+
+    if (nextArgs === "skip") return;
+
     unsubscribe = convex.onUpdate(
       query,
       nextArgs,
       (result: FunctionReturnType<Query>) => {
+        if (version !== requestVersion || !isMounted) return;
         hasReceivedData = true;
         setData(() => result);
         setError(() => null);
       },
       (err: unknown) => {
-        if (!isMounted) return;
+        if (version !== requestVersion || !isMounted) return;
         setError(() => toError(err));
       },
     );
@@ -110,13 +116,13 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
     convex
       .query(query, nextArgs)
       .then((result: FunctionReturnType<Query>) => {
-        if (!isMounted || hasReceivedData) return undefined;
+        if (version !== requestVersion || !isMounted || hasReceivedData) return undefined;
         hasReceivedData = true;
         setData(() => result);
         return undefined;
       })
       .catch((err: unknown) => {
-        if (!isMounted || hasReceivedData) return;
+        if (version !== requestVersion || !isMounted || hasReceivedData) return;
         setError(() => toError(err));
       });
   });

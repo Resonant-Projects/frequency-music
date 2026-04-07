@@ -340,13 +340,9 @@ export async function buildWeeklyBriefDraft(
   db: DatabaseReader,
   brief: Doc<"weeklyBriefs">,
 ): Promise<DraftPayload> {
-  const _theses = await Promise.all(
-    (brief.activeThesisIds ?? []).map((id) => db.get("theses", id)),
-  );
   const hypotheses = await Promise.all(
     brief.recommendedHypothesisIds.map((id) => db.get("hypotheses", id)),
   );
-  const _recipes = await Promise.all(brief.recommendedRecipeIds.map((id) => db.get("recipes", id)));
   const failures = await deriveFailureArchiveEntries(db as any);
   const referencedFailures = failures.filter((failure) =>
     (brief.referencedFailureKeys ?? []).includes(failure.key),
