@@ -26,9 +26,7 @@ export class FakeQuery<T extends Record<string, any>> {
     };
     apply(q);
     return new FakeQuery(
-      this.rows.filter((row) =>
-        conditions.every(([field, value]) => row[field] === value),
-      ),
+      this.rows.filter((row) => conditions.every(([field, value]) => row[field] === value)),
     );
   }
 
@@ -57,9 +55,7 @@ export class FakeQuery<T extends Record<string, any>> {
 export function makeDb(tables: Tables) {
   return {
     get(table: TableName, id: string) {
-      return Promise.resolve(
-        (tables[table] ?? []).find((row) => row._id === id) ?? null,
-      );
+      return Promise.resolve((tables[table] ?? []).find((row) => row._id === id) ?? null);
     },
     query(table: TableName) {
       return new FakeQuery(tables[table] ?? []);

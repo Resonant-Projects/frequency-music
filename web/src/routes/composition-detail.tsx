@@ -66,9 +66,7 @@ export function CompositionDetailPage() {
                 {(status) => <UIBadge tone="violet">local: {status()}</UIBadge>}
               </Show>
               <Show when={row().summary.branchFailureStatus}>
-                {(status) => (
-                  <UIBadge tone="violet">branch: {status()}</UIBadge>
-                )}
+                {(status) => <UIBadge tone="violet">branch: {status()}</UIBadge>}
               </Show>
             </div>
 
@@ -90,12 +88,7 @@ export function CompositionDetailPage() {
               </Show>
             </p>
 
-            <Show
-              when={
-                row().summary.localFailureStatus ||
-                row().summary.branchFailureStatus
-              }
-            >
+            <Show when={row().summary.localFailureStatus || row().summary.branchFailureStatus}>
               <hr class={goldDivider} />
               <div class={sectionLabel}>Archive Signal</div>
               <Show when={row().summary.localFailureStatus}>
@@ -107,8 +100,8 @@ export function CompositionDetailPage() {
                       mb: "2",
                     })}
                   >
-                    This composition is currently classified locally as{" "}
-                    <code>{status()}</code> based on its own listening history.
+                    This composition is currently classified locally as <code>{status()}</code>{" "}
+                    based on its own listening history.
                   </p>
                 )}
               </Show>
@@ -120,8 +113,8 @@ export function CompositionDetailPage() {
                       lineHeight: "1.7",
                     })}
                   >
-                    This revision branch is currently classified as{" "}
-                    <code>{status()}</code> in the derived failure archive.
+                    This revision branch is currently classified as <code>{status()}</code> in the
+                    derived failure archive.
                   </p>
                 )}
               </Show>
@@ -159,9 +152,7 @@ export function CompositionDetailPage() {
                 )}
               </For>
               <div class={lineItem}>
-                <div class={css({ color: "zodiac.gold" })}>
-                  {row().composition.title}
-                </div>
+                <div class={css({ color: "zodiac.gold" })}>{row().composition.title}</div>
                 <p
                   class={css({
                     color: "rgba(245, 240, 232, 0.55)",
@@ -362,18 +353,10 @@ export function CompositionDetailPage() {
                         })}
                       >
                         <Show when={session.expandVerdict}>
-                          {(verdict) => (
-                            <UIBadge tone="gold">{verdict()}</UIBadge>
-                          )}
+                          {(verdict) => <UIBadge tone="gold">{verdict()}</UIBadge>}
                         </Show>
-                        <Show
-                          when={session.ratings.expandability !== undefined}
-                        >
-                          {(score) => (
-                            <UIBadge tone="cream">
-                              expandability {score()}
-                            </UIBadge>
-                          )}
+                        <Show when={session.ratings.expandability !== undefined}>
+                          {(score) => <UIBadge tone="cream">expandability {score()}</UIBadge>}
                         </Show>
                       </div>
                       <div
@@ -403,10 +386,7 @@ export function CompositionDetailPage() {
                             color: "rgba(245, 240, 232, 0.62)",
                             fontSize: "sm",
                             lineHeight: "1.7",
-                            marginBottom:
-                              (session.standoutMoments?.length ?? 0) > 0
-                                ? "2"
-                                : "0",
+                            marginBottom: (session.standoutMoments?.length ?? 0) > 0 ? "2" : "0",
                           })}
                         >
                           <Show when={(session.feltQualities?.length ?? 0) > 0}>

@@ -44,12 +44,8 @@ export const getByIds = query({
   args: { ids: v.array(v.id("theses")) },
   returns: v.array(thesisReturnValidator),
   handler: async (ctx, args) => {
-    const results = await Promise.all(
-      args.ids.map((id) => ctx.db.get("theses", id)),
-    );
-    return results.filter(
-      (thesis): thesis is NonNullable<typeof thesis> => thesis !== null,
-    );
+    const results = await Promise.all(args.ids.map((id) => ctx.db.get("theses", id)));
+    return results.filter((thesis): thesis is NonNullable<typeof thesis> => thesis !== null);
   },
 });
 
@@ -70,9 +66,7 @@ export const getDetail = query({
       hypotheses.map((hypothesis) =>
         ctx.db
           .query("recipes")
-          .withIndex("by_hypothesisId_updatedAt", (q) =>
-            q.eq("hypothesisId", hypothesis._id),
-          )
+          .withIndex("by_hypothesisId_updatedAt", (q) => q.eq("hypothesisId", hypothesis._id))
           .order("desc")
           .take(50),
       ),
@@ -83,19 +77,14 @@ export const getDetail = query({
       recipes.map((recipe) =>
         ctx.db
           .query("compositions")
-          .withIndex("by_recipeId_updatedAt", (q) =>
-            q.eq("recipeId", recipe._id),
-          )
+          .withIndex("by_recipeId_updatedAt", (q) => q.eq("recipeId", recipe._id))
           .order("desc")
           .take(50),
       ),
     );
     const compositions = compositionLists.flat();
 
-    const weeklyBriefs = await ctx.db
-      .query("weeklyBriefs")
-      .order("desc")
-      .take(20);
+    const weeklyBriefs = await ctx.db.query("weeklyBriefs").order("desc").take(20);
     const recentWeeklyBriefIds = weeklyBriefs
       .filter((brief) => brief.activeThesisIds?.includes(args.id))
       .slice(0, 5)
@@ -103,9 +92,7 @@ export const getDetail = query({
     const campaigns = (
       await ctx.db
         .query("campaigns")
-        .withIndex("by_visibility_updatedAt", (q) =>
-          q.eq("visibility", "public"),
-        )
+        .withIndex("by_visibility_updatedAt", (q) => q.eq("visibility", "public"))
         .order("desc")
         .collect()
     ).filter((campaign) => campaign.thesisIds.includes(args.id));
@@ -120,15 +107,9 @@ export const getDetail = query({
         contradictionCount: hypotheses.filter(
           (hypothesis) => hypothesis.resolution === "contradicted",
         ).length,
-        activeCount: hypotheses.filter(
-          (hypothesis) => hypothesis.status === "active",
-        ).length,
-        evaluatedCount: hypotheses.filter(
-          (hypothesis) => hypothesis.status === "evaluated",
-        ).length,
-        retiredCount: hypotheses.filter(
-          (hypothesis) => hypothesis.status === "retired",
-        ).length,
+        activeCount: hypotheses.filter((hypothesis) => hypothesis.status === "active").length,
+        evaluatedCount: hypotheses.filter((hypothesis) => hypothesis.status === "evaluated").length,
+        retiredCount: hypotheses.filter((hypothesis) => hypothesis.status === "retired").length,
       },
       recentWeeklyBriefIds,
     };
@@ -153,10 +134,7 @@ export const create = mutation({
       ...createArgs,
       status: createArgs.status ?? "active",
       visibility: "private",
-      createdBy:
-        identity.subject === "system"
-          ? "system"
-          : (identity.subject as Id<"users">),
+      createdBy: identity.subject === "system" ? "system" : (identity.subject as Id<"users">),
       createdAt: now,
       updatedAt: now,
     });
@@ -171,11 +149,7 @@ export const update = mutation({
     descriptionMd: v.optional(v.string()),
     status: v.optional(thesisStatusValidator),
     visibility: v.optional(
-      v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
+      v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
     ),
     devBypassSecret: v.optional(v.string()),
   },

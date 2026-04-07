@@ -99,10 +99,7 @@ function createSectorFillGeometry(sector: SectorDef): THREE.BufferGeometry {
   return geo;
 }
 
-export function buildSectorGroup(
-  sector: SectorDef,
-  active = false,
-): THREE.Group {
+export function buildSectorGroup(sector: SectorDef, active = false): THREE.Group {
   const g = new THREE.Group();
 
   // Fill mesh (userData.sectorId enables O(1) raycast hit identification)
@@ -258,11 +255,7 @@ export function getLabelPositions(): Array<{
 
 // --- Sector midpoint for edge targets ----------------------------------------
 
-export function getSectorMidArc(
-  sector: SectorDef,
-  r: number,
-  z = 0,
-): THREE.Vector3 {
+export function getSectorMidArc(sector: SectorDef, r: number, z = 0): THREE.Vector3 {
   const m = arcMidpoint(r, sector.startAngle, sector.endAngle, z);
   return new THREE.Vector3(m.x, m.y, m.z);
 }

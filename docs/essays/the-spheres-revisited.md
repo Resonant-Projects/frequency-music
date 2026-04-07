@@ -1,6 +1,6 @@
 # The Spheres Revisited: When Planetary Orbits Pass the Statistics Test
 
-*March 5, 2026*
+_March 5, 2026_
 
 ---
 
@@ -10,7 +10,7 @@ The results are uncomfortable for skeptics.
 
 ## Two Paths to the Same Place
 
-Scafetta and Bank (2022, *Frontiers in Astronomy and Space Sciences*) derived a scaling equation for planetary orbital radii. Their approach: take the ratios of neighboring planetary orbital radii and raise them to the 2/3 power. What falls out is a sequence of powers of 2 — octave scaling — with a fundamental ratio of 9:8, the Pythagorean *epogdoon* (a whole tone). The four consonant intervals that emerge — Major Third (5:4), Perfect Fourth (4:3), Perfect Fifth (3:2), and Minor Sixth (8:5) — map onto the planetary pairs with a probability of chance occurrence below p < 0.001.
+Scafetta and Bank (2022, _Frontiers in Astronomy and Space Sciences_) derived a scaling equation for planetary orbital radii. Their approach: take the ratios of neighboring planetary orbital radii and raise them to the 2/3 power. What falls out is a sequence of powers of 2 — octave scaling — with a fundamental ratio of 9:8, the Pythagorean _epogdoon_ (a whole tone). The four consonant intervals that emerge — Major Third (5:4), Perfect Fourth (4:3), Perfect Fifth (3:2), and Minor Sixth (8:5) — map onto the planetary pairs with a probability of chance occurrence below p < 0.001.
 
 Meanwhile, a separate analysis published through Keplerstern Verlag took a different path entirely. Rather than orbital radii, this study examined orbital velocities at the semi-minor axis of each planet's ellipse — the point where velocity equals the arithmetic mean of the extremes. Correlating these velocities against aphelion velocities, 13 of 17 possible planetary correlations fall close to musical intervals. The claimed statistical significance: 1 in 10,000 (reduced to 1 in 1,000 after accounting for researcher degrees of freedom in choosing which orbital parameter to test).
 
@@ -26,17 +26,17 @@ The Scafetta result is particularly striking because the 2/3 exponent derives di
 
 ## The Dissonance Test
 
-Perhaps the most elegant evidence comes from what *doesn't* work. The Scafetta analysis found that gravitationally unstable regions of the solar system — the Kirkwood gaps in the asteroid belt, the scattered disc (home of Eris), the region closest to the Sun — correspond to *dissonant* rather than consonant ratios. If the consonance mapping were coincidental, there's no reason the unstable regions should preferentially map to dissonance. But they do.
+Perhaps the most elegant evidence comes from what _doesn't_ work. The Scafetta analysis found that gravitationally unstable regions of the solar system — the Kirkwood gaps in the asteroid belt, the scattered disc (home of Eris), the region closest to the Sun — correspond to _dissonant_ rather than consonant ratios. If the consonance mapping were coincidental, there's no reason the unstable regions should preferentially map to dissonance. But they do.
 
-This is the kind of result that separates numerology from science. It's not just that pretty numbers appear — it's that the ugly numbers appear in exactly the places physics predicts they should, *if* the correspondence is real.
+This is the kind of result that separates numerology from science. It's not just that pretty numbers appear — it's that the ugly numbers appear in exactly the places physics predicts they should, _if_ the correspondence is real.
 
 ## Geometry as Mediator
 
 Here's where cymatics becomes relevant. Ernst Chladni showed in 1787 (building on Robert Hooke's observations from 1680) that vibrating surfaces produce nodal patterns entirely determined by geometry. The driving frequency selects which mode is displayed, but the patterns themselves are consequences of the geometry of the surface and its boundary conditions. Classical physics. No mystery.
 
-The insight connects back to the planetary results: if planetary orbital mechanics are constrained by gravitational geometry (which they obviously are), and if that geometry has resonance properties analogous to vibrating surfaces (which orbital resonances like Jupiter's 5:2 with Saturn suggest), then musical-interval correspondences aren't mystical at all. They're what geometry *does* when constrained systems find their natural modes.
+The insight connects back to the planetary results: if planetary orbital mechanics are constrained by gravitational geometry (which they obviously are), and if that geometry has resonance properties analogous to vibrating surfaces (which orbital resonances like Jupiter's 5:2 with Saturn suggest), then musical-interval correspondences aren't mystical at all. They're what geometry _does_ when constrained systems find their natural modes.
 
-The 9:8 ratio — the Pythagorean epogdoon — isn't special because some cosmic musician chose it. It's the ratio between the Perfect Fifth (3:2) and the Perfect Fourth (4:3), the simplest non-trivial interval in Pythagorean tuning. If planetary mechanics exhibits octave-like scaling at all, the epogdoon is almost mathematically *inevitable* as the fundamental step.
+The 9:8 ratio — the Pythagorean epogdoon — isn't special because some cosmic musician chose it. It's the ratio between the Perfect Fifth (3:2) and the Perfect Fourth (4:3), the simplest non-trivial interval in Pythagorean tuning. If planetary mechanics exhibits octave-like scaling at all, the epogdoon is almost mathematically _inevitable_ as the fundamental step.
 
 ## What This Doesn't Mean
 
@@ -48,13 +48,13 @@ And the newer work itself has important caveats. The Keplerstern analysis honest
 
 ## The Compositional Question
 
-For a composer, the interesting question isn't whether the planets are "really" musical. It's whether the mathematical structures that produce orbital resonances are the *same* structures that produce musical consonance — and whether that isomorphism can be exploited.
+For a composer, the interesting question isn't whether the planets are "really" musical. It's whether the mathematical structures that produce orbital resonances are the _same_ structures that produce musical consonance — and whether that isomorphism can be exploited.
 
 Consider: a piece whose harmonic structure is literally derived from the Scafetta scaling equation. Not a loose "inspired by the cosmos" gesture, but a rigorous mapping where each chord progression mirrors the orbital-radius ratios of adjacent planetary pairs, the 2/3 power transform becomes a compositional operation, and dissonance appears precisely at the gravitationally unstable points.
 
 Or consider a tuning system derived from the semi-minor axis velocity ratios. Mercury as C (keynote), with 13 of 17 correlations defining the available intervals. This wouldn't sound like equal temperament — it would be a specific, empirically-derived just-intonation system with physical provenance.
 
-The question left open by both analyses: "Could a piece be composed whose harmonic structure is isomorphic to this planetary scaling equation?" The answer is almost certainly yes. Whether it would sound *good* is a separate question — but the mathematical scaffold exists.
+The question left open by both analyses: "Could a piece be composed whose harmonic structure is isomorphic to this planetary scaling equation?" The answer is almost certainly yes. Whether it would sound _good_ is a separate question — but the mathematical scaffold exists.
 
 ## The Deeper Pattern
 
@@ -67,11 +67,13 @@ But the ratios are there. And now they pass the statistics test.
 ---
 
 **Sources:**
-- Scafetta, N. & Bank, D. (2022). "Planetary harmonics and a scaling equation for solar system distances." *Frontiers in Astronomy and Space Sciences.*
+
+- Scafetta, N. & Bank, D. (2022). "Planetary harmonics and a scaling equation for solar system distances." _Frontiers in Astronomy and Space Sciences._
 - "Is there a planetary harmonic scale?" Keplerstern Verlag analysis.
 - "Cymatics." Wikipedia. (Chladni, Hooke, Jenny historical context.)
 
 **Related essays:**
+
 - [When Geometry Sings](when-geometry-sings.md) — geometry as musical structure
 - [The Three Means](the-three-means.md) — arithmetic, geometric, and harmonic means in tuning
 - [Structure Before Sound](structure-before-sound.md) — mathematical constraints on musical possibility

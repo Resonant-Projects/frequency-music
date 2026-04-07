@@ -1,6 +1,6 @@
 # The Observer's Instrument: Why Representation Shapes Musical Reality
 
-*Every measurement apparatus determines what can be measured. Every representation of music determines what music can be.*
+_Every measurement apparatus determines what can be measured. Every representation of music determines what music can be._
 
 ## The Neutral Window Myth
 
@@ -8,7 +8,7 @@ We treat representations of music — scores, spectrograms, MIDI files, audio wa
 
 This is wrong in a deep and productive way.
 
-Recent work on network representations of music reveals a startling finding: when you encode musical events as transition networks, the choice of encoding — which features you include, how finely you quantize — doesn't just affect measurement precision. It *fundamentally reshapes the topology of the resulting network*, redistributing where uncertainty lives, how information flows, and what patterns become visible or invisible. Simpler encodings produce denser networks with higher entropy rates. Richer encodings sharpen transition profiles and lower entropy rates but expand the state space and increase model error.
+Recent work on network representations of music reveals a startling finding: when you encode musical events as transition networks, the choice of encoding — which features you include, how finely you quantize — doesn't just affect measurement precision. It _fundamentally reshapes the topology of the resulting network_, redistributing where uncertainty lives, how information flows, and what patterns become visible or invisible. Simpler encodings produce denser networks with higher entropy rates. Richer encodings sharpen transition profiles and lower entropy rates but expand the state space and increase model error.
 
 The representation doesn't just describe the music. It creates a particular musical reality.
 
@@ -16,7 +16,7 @@ The representation doesn't just describe the music. It creates a particular musi
 
 In signal processing, every measurement tool imposes constraints on what it can reveal. This isn't a metaphor borrowed from quantum mechanics — it's a direct consequence of Fourier analysis: you cannot simultaneously have perfect time and frequency resolution. The mathematical structure (conjugate variables, uncertainty relations) is shared, but the physics is classical.
 
-**The basilar membrane is an instrument.** The cochlea performs a particular time-frequency decomposition, one with logarithmic frequency resolution, specific critical bandwidth constraints, and the Gabor uncertainty bound built into its physics. What we call "a note" is what this instrument resolves. A creature with different cochlear mechanics would hear different notes — not wrong notes, but notes from a different decomposition. As we explored in *The Codec Ear*, the auditory system isn't passively receiving music; it's actively constructing it according to its own transfer function.
+**The basilar membrane is an instrument.** The cochlea performs a particular time-frequency decomposition, one with logarithmic frequency resolution, specific critical bandwidth constraints, and the Gabor uncertainty bound built into its physics. What we call "a note" is what this instrument resolves. A creature with different cochlear mechanics would hear different notes — not wrong notes, but notes from a different decomposition. As we explored in _The Codec Ear_, the auditory system isn't passively receiving music; it's actively constructing it according to its own transfer function.
 
 **A spectrogram is an instrument.** Choose a short window and you see transients clearly but smear pitches. Choose a long window and you resolve harmonics but blur attacks. The uncertainty principle (Δt · Δf ≥ 1/4π) isn't a limitation of technology — it's a fundamental constraint on what can simultaneously exist in a time-frequency representation. The spectrogram doesn't show you "the music." It shows you one projection of the music, exactly analogous to how choosing a coordinate system determines what you can measure easily. (The Fourier uncertainty principle and the quantum uncertainty principle share the same mathematics — they're both consequences of conjugate variables — but one describes signal processing, the other describes subatomic particles. Don't confuse the shared math for shared physics.)
 
@@ -34,13 +34,13 @@ The network topology research makes this concrete with mathematical precision. G
 
 - **Add register, articulation, pedaling** → further expansion, further specificity. Each added dimension reveals structures invisible in simpler encodings while making other patterns disappear into the noise of an enormous state space.
 
-The critical finding: *uncertainty concentrates in diffusion-central nodes* — the network hubs through which information flows most readily. Predictable flow and localized surprise coexist. But which nodes are central, where surprise concentrates, what counts as "predictable" — all of this changes with the encoding.
+The critical finding: _uncertainty concentrates in diffusion-central nodes_ — the network hubs through which information flows most readily. Predictable flow and localized surprise coexist. But which nodes are central, where surprise concentrates, what counts as "predictable" — all of this changes with the encoding.
 
 There is no encoding that shows you "all of the music." There is no God's-eye view. Every representation is a projection, and the projection determines the geometry.
 
 ## Complementarity
 
-This isn't just the uncertainty principle (though that's part of it). It's closer to Bohr's complementarity: certain properties of music are *jointly incompatible* — you cannot simultaneously represent them with full precision, not because of technological limits but because of the mathematical structure of the representation space.
+This isn't just the uncertainty principle (though that's part of it). It's closer to Bohr's complementarity: certain properties of music are _jointly incompatible_ — you cannot simultaneously represent them with full precision, not because of technological limits but because of the mathematical structure of the representation space.
 
 **Time and frequency are complementary.** You cannot simultaneously know exactly when a musical event occurs and exactly what pitch it is. This is the Gabor limit, and it's absolute.
 
@@ -54,7 +54,7 @@ This isn't just the uncertainty principle (though that's part of it). It's close
 
 Here's where this gets compositionally powerful rather than merely philosophical.
 
-If the representation determines the musical reality, then *choosing a representation is a compositional act*. This isn't just about analysis — it's about creation.
+If the representation determines the musical reality, then _choosing a representation is a compositional act_. This isn't just about analysis — it's about creation.
 
 **Spectral composers** (Grisey, Murail, Haas) understood this intuitively. By analyzing instrumental sounds through spectrograms and building compositions from the resulting frequency data, they weren't "using spectral analysis" — they were composing through the spectrogram instrument, letting its particular resolution and blind spots shape the musical result. The spectrogram's inability to represent phase information is why spectral music often has a particular floating, timbrally rich but rhythmically vague quality.
 
@@ -66,7 +66,7 @@ If the representation determines the musical reality, then *choosing a represent
 
 This analysis has practical implications for how we build tools:
 
-1. **Multiple representations are not redundant — they're essential.** Analyzing a source through pitch-class networks AND spectral analysis AND rhythmic patterns doesn't give you "three views of the same thing." It gives you three different musical objects. The connections *between* these objects are where the most interesting structure lives.
+1. **Multiple representations are not redundant — they're essential.** Analyzing a source through pitch-class networks AND spectral analysis AND rhythmic patterns doesn't give you "three views of the same thing." It gives you three different musical objects. The connections _between_ these objects are where the most interesting structure lives.
 
 2. **The extraction pipeline's encoding choices are compositional decisions.** When we extract claims, topics, and composition parameters from a source, we're projecting through a particular analytical instrument. Different extraction prompts would produce different knowledge graphs — not better or worse, but different, revealing different connections.
 
@@ -84,6 +84,6 @@ The deepest musical understanding comes not from finding the One True Representa
 
 ---
 
-*Bridges: [The Codec Ear](the-codec-ear.md) (perception as encoding), [The Tuning Codec](the-tuning-codec.md) (tuning systems as representational choices), [The Uncertainty of Sound](the-uncertainty-of-sound.md) (Gabor limit as fundamental complementarity), [The Entropy Arc](the-entropy-arc.md) (information structure depends on encoding), [The Symmetry Tax](the-symmetry-tax.md) (representations impose and break symmetries), [The Surface and the Source](the-surface-and-the-source.md) (multiple analytical layers)*
+_Bridges: [The Codec Ear](the-codec-ear.md) (perception as encoding), [The Tuning Codec](the-tuning-codec.md) (tuning systems as representational choices), [The Uncertainty of Sound](the-uncertainty-of-sound.md) (Gabor limit as fundamental complementarity), [The Entropy Arc](the-entropy-arc.md) (information structure depends on encoding), [The Symmetry Tax](the-symmetry-tax.md) (representations impose and break symmetries), [The Surface and the Source](the-surface-and-the-source.md) (multiple analytical layers)_
 
-*Sources: Network representations of musical event sequences (encoding–topology–entropy tradeoff), AudioTrust benchmark (non-semantic acoustic cues in ALLMs), Audio-Language Models survey (representation choices in multimodal audio AI)*
+_Sources: Network representations of musical event sequences (encoding–topology–entropy tradeoff), AudioTrust benchmark (non-semantic acoustic cues in ALLMs), Audio-Language Models survey (representation choices in multimodal audio AI)_

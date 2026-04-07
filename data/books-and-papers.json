@@ -22,13 +22,7 @@
         "author": "David Lapp",
         "url": "https://www.e-booksdirectory.com/details.php?ebook=2276",
         "pdf": "https://kellerphysics.com/acoustics/Lapp.pdf",
-        "topics": [
-          "physics",
-          "waves",
-          "sound",
-          "musical instruments",
-          "acoustics"
-        ],
+        "topics": ["physics", "waves", "sound", "musical instruments", "acoustics"],
         "category": "physics"
       },
       {
@@ -58,12 +52,7 @@
         "title": "The Theory of Sound, Volume One",
         "author": "Lord Rayleigh (J.W.S. Strutt)",
         "url": "https://archive.org/details/theorysound03telerich",
-        "topics": [
-          "acoustics",
-          "classical physics",
-          "wave theory",
-          "historical"
-        ],
+        "topics": ["acoustics", "classical physics", "wave theory", "historical"],
         "category": "classical"
       },
       {
@@ -79,14 +68,7 @@
         "url": "https://www.math.wustl.edu/~wright/Math109/00Book.pdf",
         "pdf": "https://www.math.wustl.edu/~wright/Math109/00Book.pdf",
         "local_file": "data/pdfs/wright-mathematics-and-music.pdf",
-        "topics": [
-          "mathematics",
-          "music theory",
-          "scales",
-          "harmony",
-          "tuning",
-          "introductory"
-        ],
+        "topics": ["mathematics", "music theory", "scales", "harmony", "tuning", "introductory"],
         "category": "core",
         "notes": "Free textbook from Washington University math course"
       },
@@ -133,13 +115,7 @@
         "author": "Dmitri Tymoczko",
         "url": "https://dmitri.mycpanel.princeton.edu/geometry-of-music.html",
         "isbn": "9780195336672",
-        "topics": [
-          "geometry",
-          "voice leading",
-          "chord spaces",
-          "topology",
-          "orbifolds"
-        ],
+        "topics": ["geometry", "voice leading", "chord spaces", "topology", "orbifolds"],
         "category": "core"
       },
       {
@@ -161,13 +137,7 @@
         "amazon_vol1": "https://www.amazon.com/dp/0262516551/",
         "isbn_vol2": "9780262516563",
         "amazon_vol2": "https://www.amazon.com/dp/026251656X/",
-        "topics": [
-          "mathematics",
-          "music theory",
-          "DSP",
-          "synthesis",
-          "comprehensive"
-        ],
+        "topics": ["mathematics", "music theory", "DSP", "synthesis", "comprehensive"],
         "category": "core"
       },
       {
@@ -217,12 +187,7 @@
         "author": "Various (Dover reprint)",
         "isbn": "9780486779348",
         "amazon": "https://www.amazon.com/dp/0486779343/",
-        "topics": [
-          "physics",
-          "acoustics",
-          "musical instruments",
-          "sound science"
-        ],
+        "topics": ["physics", "acoustics", "musical instruments", "sound science"],
         "category": "physics",
         "notes": "Dover Publications reprint — affordable classic on musical acoustics."
       },
@@ -231,13 +196,7 @@
         "author": "Lawrence Sherman & Dennis Plies",
         "isbn": "9780231209106",
         "amazon": "https://www.amazon.com/dp/023120910X/",
-        "topics": [
-          "neuroscience",
-          "psychoacoustics",
-          "music cognition",
-          "perception",
-          "brain"
-        ],
+        "topics": ["neuroscience", "psychoacoustics", "music cognition", "perception", "brain"],
         "category": "neuroscience",
         "notes": "Columbia UP, 2023. Covers the neurological basis of music perception."
       },
@@ -386,13 +345,7 @@
         "title": "The Structure of Recognizable Diatonic Tunings",
         "author": "Easley Blackwood",
         "isbn": "9780691091228",
-        "topics": [
-          "equal temperament",
-          "diatonic tuning",
-          "recognizability",
-          "microtonal",
-          "EDO"
-        ],
+        "topics": ["equal temperament", "diatonic tuning", "recognizability", "microtonal", "EDO"],
         "category": "microtuning",
         "notes": "Princeton UP, 1985. Theoretical analysis of EDO systems from 12 to 24 tones. Key reference in xenharmonic theory."
       },
@@ -431,13 +384,7 @@
         "title": "Mathematical Theory of Music",
         "author": "Franck Jedrzejewski",
         "isbn": "9782855750644",
-        "topics": [
-          "group theory",
-          "set theory",
-          "algebra",
-          "topology",
-          "formal music theory"
-        ],
+        "topics": ["group theory", "set theory", "algebra", "topology", "formal music theory"],
         "category": "advanced",
         "notes": "Delatour France / IRCAM, 2006. Advanced mathematical treatment of music theory. Referenced on the Xenharmonic Wiki."
       },
@@ -446,14 +393,7 @@
         "author": "Leon Harkleroad",
         "isbn": "9780521009355",
         "url": "https://www.amazon.com/dp/0521009359/",
-        "topics": [
-          "mathematics",
-          "scales",
-          "tuning",
-          "rhythm",
-          "twelve-tone",
-          "accessible"
-        ],
+        "topics": ["mathematics", "scales", "tuning", "rhythm", "twelve-tone", "accessible"],
         "category": "core",
         "notes": "Cambridge UP / MAA Outlooks series. Concise, accessible overview of mathematics in music for general audiences."
       },
@@ -514,12 +454,7 @@
       "title": "Computational Extraction of Intonation and Tuning Systems",
       "url": "https://arxiv.org/abs/2503.11956",
       "pdf": "https://arxiv.org/pdf/2503.11956.pdf",
-      "topics": [
-        "microtonal",
-        "intonation",
-        "computational analysis",
-        "pitch histograms"
-      ],
+      "topics": ["microtonal", "intonation", "computational analysis", "pitch histograms"],
       "category": "computational"
     }
   ],
@@ -542,13 +477,7 @@
       "category": "journal",
       "rss_advance": "https://academic.oup.com/mts/rss/advance",
       "publisher": "Oxford University Press / Society for Music Theory",
-      "topics": [
-        "music theory",
-        "analysis",
-        "harmony",
-        "voice leading",
-        "form"
-      ],
+      "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
       "access": "hybrid"
     },
     "music-theory-online": {
@@ -693,12 +622,7 @@
       "type": "rss",
       "category": "arxiv",
       "rss": "https://arxiv.org/rss/math.CO",
-      "topics": [
-        "combinatorics",
-        "Euclidean rhythms",
-        "pitch class sets",
-        "geometry of music"
-      ]
+      "topics": ["combinatorics", "Euclidean rhythms", "pitch class sets", "geometry of music"]
     },
     "arxiv-physics-pop-ph": {
       "name": "arXiv — physics.pop-ph (Popular Physics)",
@@ -722,13 +646,7 @@
       "url": "https://academic.oup.com/mts",
       "canonical_feed_ids": ["music-theory-spectrum-advance"],
       "publisher": "Oxford University Press / Society for Music Theory",
-      "topics": [
-        "music theory",
-        "analysis",
-        "harmony",
-        "voice leading",
-        "form"
-      ],
+      "topics": ["music theory", "analysis", "harmony", "voice leading", "form"],
       "access": "hybrid",
       "notes": "Premier peer-reviewed journal of the Society for Music Theory. Track advance articles and issue releases through the canonical feed registry."
     },
@@ -767,13 +685,7 @@
       "name": "Psychomusicology: Music, Mind, and Brain",
       "url": "https://www.apa.org/pubs/journals/pmu/",
       "publisher": "APA",
-      "topics": [
-        "music cognition",
-        "neuroscience",
-        "psychology",
-        "perception",
-        "emotion"
-      ],
+      "topics": ["music cognition", "neuroscience", "psychology", "perception", "emotion"],
       "access": "subscription",
       "notes": "APA journal covering cognitive and neuroscientific aspects of music. Companion to Music Perception."
     },
@@ -896,12 +808,7 @@
     {
       "name": "Sound American — Just Intonation Issue",
       "url": "https://soundamerican.org/issues/just-intonation/just-intonation-issue",
-      "topics": [
-        "just intonation",
-        "composition",
-        "tuning",
-        "contemporary music"
-      ],
+      "topics": ["just intonation", "composition", "tuning", "contemporary music"],
       "notes": "Deep-dive editorial collection on just intonation in contemporary composition."
     },
     {
@@ -981,13 +888,7 @@
     {
       "name": "Cosmic Core — Sound, Waves & Cymatics Articles",
       "url": "https://www.cosmic-core.org/free/article-121-physics-sound-waves-part-2-cymatics-the-geometry-of-sound/",
-      "topics": [
-        "cymatics",
-        "sacred geometry",
-        "wave physics",
-        "vibration",
-        "universal patterns"
-      ],
+      "topics": ["cymatics", "sacred geometry", "wave physics", "vibration", "universal patterns"],
       "notes": "Deep exploration of how vibrations create geometry. Aligns with Robert Edward Grant's polygon-angle research."
     }
   ],
@@ -1028,12 +929,7 @@
     {
       "name": "Xenharmonic Wiki — The Library",
       "url": "https://en.xen.wiki/w/The_Library",
-      "topics": [
-        "xenharmonic",
-        "microtonality",
-        "tuning theory",
-        "bibliography"
-      ],
+      "topics": ["xenharmonic", "microtonality", "tuning theory", "bibliography"],
       "notes": "Curated bibliography of microtonal and xenharmonic literature"
     },
     {

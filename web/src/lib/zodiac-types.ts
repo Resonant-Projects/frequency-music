@@ -27,15 +27,9 @@ export type OrbitalExtraction = Pick<
   "_id" | "sourceId" | "confidence" | "topics"
 >;
 
-export type OrbitalHypothesis = Pick<
-  Doc<"hypotheses">,
-  "_id" | "title" | "status" | "concepts"
->;
+export type OrbitalHypothesis = Pick<Doc<"hypotheses">, "_id" | "title" | "status" | "concepts">;
 
-export type OrbitalRecipe = Pick<
-  Doc<"recipes">,
-  "_id" | "title" | "hypothesisId" | "status"
->;
+export type OrbitalRecipe = Pick<Doc<"recipes">, "_id" | "title" | "hypothesisId" | "status">;
 
 export interface ItemRelation {
   id: string;

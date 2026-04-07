@@ -2,7 +2,7 @@
 
 **Essay #80** — March 31, 2026
 
-*How rooms, faces, chips, and neural networks all act as transfer functions — and what that means for composition.*
+_How rooms, faces, chips, and neural networks all act as transfer functions — and what that means for composition._
 
 ---
 
@@ -10,7 +10,7 @@
 
 A violin body takes string vibration and transforms it. A concert hall takes the violin's output and transforms it again. Your skull takes the hall's output and transforms it once more before it reaches your cochlea. At every stage, a physical structure imposes its own transfer function on sound — amplifying some frequencies, damping others, adding resonances, shaping the temporal envelope.
 
-This is obvious when we're talking about instruments and rooms. What's less obvious is that this same principle — *input signal × resonant body = colored output* — operates at every level of audio processing, from neuromorphic chips to neural networks to the human face.
+This is obvious when we're talking about instruments and rooms. What's less obvious is that this same principle — _input signal × resonant body = colored output_ — operates at every level of audio processing, from neuromorphic chips to neural networks to the human face.
 
 ## Four Resonant Bodies
 
@@ -18,7 +18,7 @@ This is obvious when we're talking about instruments and rooms. What's less obvi
 
 A room impulse response is the acoustic fingerprint of a space. The UPV_RIR_DB dataset contains 18,976 individual impulse responses across three rooms, systematically catalogued with spatial metadata. Each response encodes the full acoustic behavior of a specific location within a specific space: reverberation time, early reflections, modal resonances, the lot.
 
-The key insight is that a room *is* its impulse response. You don't need to describe a room's geometry, materials, and furnishings to characterize its acoustic behavior — you just need the transfer function. The room is a resonant body, and convolution with its impulse response is the complete description of what it does to sound.
+The key insight is that a room _is_ its impulse response. You don't need to describe a room's geometry, materials, and furnishings to characterize its acoustic behavior — you just need the transfer function. The room is a resonant body, and convolution with its impulse response is the complete description of what it does to sound.
 
 ### 2. The Face (DiFlowDubber)
 
@@ -26,13 +26,13 @@ DiFlowDubber generates dubbed speech synchronized to lip movements in video. Its
 
 This is literally true in a physical sense. The vocal tract, nasal cavity, and oral cavity form a coupled system of resonant chambers. When you change your facial expression, you change the geometry of these chambers, which changes the transfer function applied to the glottal source signal. Vowel formants are the resonant frequencies of this system. A smile literally changes the resonant body.
 
-But DiFlowDubber suggests something deeper: the visual configuration of the face is so tightly coupled to the acoustic transfer function that you can *infer* the sound from the shape. The resonant body's geometry predicts its output.
+But DiFlowDubber suggests something deeper: the visual configuration of the face is so tightly coupled to the acoustic transfer function that you can _infer_ the sound from the shape. The resonant body's geometry predicts its output.
 
 ### 3. The Chip (Neuromorphic MFCC)
 
 The neuromorphic MFCC paper replaces traditional frequency-domain transforms (FFT → mel filterbank → DCT) with reservoir computing — a system where a fixed, randomly connected network of nodes acts as a dynamical system that naturally separates input signals into discriminable features.
 
-A reservoir computer is a resonant body. Its internal dynamics — the way signals reverberate, interfere, and decay through its network of connections — impose a transfer function on the input. The paper's core claim is that this physical resonance can replace the carefully engineered mathematical pipeline that mimics human auditory processing. The chip's structure *is* the analysis.
+A reservoir computer is a resonant body. Its internal dynamics — the way signals reverberate, interfere, and decay through its network of connections — impose a transfer function on the input. The paper's core claim is that this physical resonance can replace the carefully engineered mathematical pipeline that mimics human auditory processing. The chip's structure _is_ the analysis.
 
 What's remarkable is the biological connection: the cochlea itself is a resonant body. Hair cells along the basilar membrane respond to different frequencies based on their position and mechanical properties. The neuromorphic chip replaces one resonant body (the mathematical model of the cochlea) with another (the physical dynamics of the reservoir).
 
@@ -61,11 +61,11 @@ This framework suggests several compositional strategies:
 
 ### Resonant Body as Instrument
 
-Use rooms, objects, and spaces as instruments rather than containers. Alvin Lucier's *I Am Sitting in a Room* (1969) is the canonical example: the room's transfer function is the composition. Each iteration of re-recording filters the speech further through the room's resonances until only the room's eigenfrequencies remain. The room speaks.
+Use rooms, objects, and spaces as instruments rather than containers. Alvin Lucier's _I Am Sitting in a Room_ (1969) is the canonical example: the room's transfer function is the composition. Each iteration of re-recording filters the speech further through the room's resonances until only the room's eigenfrequencies remain. The room speaks.
 
 ### Transfer Function Morphing
 
-If you can smoothly vary a transfer function over time, you get a new kind of musical gesture — not a change in pitch or rhythm, but a change in *resonant character*. Spectral composers like Grisey and Murail work in this space, treating the evolving spectrum as the primary musical parameter. Digital convolution makes this explicit: crossfade between two impulse responses and you've morphed one resonant body into another.
+If you can smoothly vary a transfer function over time, you get a new kind of musical gesture — not a change in pitch or rhythm, but a change in _resonant character_. Spectral composers like Grisey and Murail work in this space, treating the evolving spectrum as the primary musical parameter. Digital convolution makes this explicit: crossfade between two impulse responses and you've morphed one resonant body into another.
 
 ### Sympathetic Selection
 
@@ -73,7 +73,7 @@ Like SELVA's text-conditioned source selection, you can design resonant systems 
 
 ### Impulse Response as Score
 
-If a room's impulse response fully characterizes its acoustic behavior, then an impulse response *is* a kind of score — a complete specification of how the resonant body will transform any input. You could compose by designing impulse responses: sculpting the temporal and spectral shape of the room's response as a creative act, then "performing" by choosing what signals to send through it.
+If a room's impulse response fully characterizes its acoustic behavior, then an impulse response _is_ a kind of score — a complete specification of how the resonant body will transform any input. You could compose by designing impulse responses: sculpting the temporal and spectral shape of the room's response as a creative act, then "performing" by choosing what signals to send through it.
 
 ## The Deeper Pattern
 
@@ -81,7 +81,7 @@ Why does the resonant body metaphor work at so many levels? Because resonance is
 
 Memory + periodic input = selective amplification = resonance.
 
-This is why transfer functions appear everywhere in audio: any system that has temporal memory will inevitably act as a frequency-selective filter. It's not a design choice — it's a physical necessity. And if every system in the audio chain is a resonant body, then the compositional question becomes: *which memories do you want your sound to pass through?*
+This is why transfer functions appear everywhere in audio: any system that has temporal memory will inevitably act as a frequency-selective filter. It's not a design choice — it's a physical necessity. And if every system in the audio chain is a resonant body, then the compositional question becomes: _which memories do you want your sound to pass through?_
 
 ---
 

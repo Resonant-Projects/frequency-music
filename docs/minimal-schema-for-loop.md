@@ -3,6 +3,7 @@
 > This is the smallest durable shape that supports: weekly briefs, micro-studies, comparisons, versioning, and public write-ups later.
 
 ### inboxItems
+
 - `id`
 - `type`: `pdf | url | youtube | rssItem | notionPage | voiceTranscript`
 - `title`
@@ -13,6 +14,7 @@
 - `status`: `new | extracted | ignored`
 
 ### sources
+
 - `id`
 - `inboxItemId?`
 - `canonicalUrl?`
@@ -24,6 +26,7 @@
 - `licenseNotes?`
 
 ### extractions
+
 - `id`
 - `sourceId`
 - `model`
@@ -35,6 +38,7 @@
 - `createdAt`
 
 ### hypotheses
+
 - `id`
 - `version`
 - `status`: `draft | queued | active | evaluated | retired`
@@ -46,6 +50,7 @@
 - `supersedesHypothesisId?`
 
 ### recipes
+
 - `id`
 - `hypothesisId`
 - `bars`: `16 | 24 | 32` (default 16–32)
@@ -63,6 +68,7 @@
 - `createdAt`
 
 ### protocols
+
 - `id`
 - `recipeId`
 - `studyType`: `litmus | comparison`
@@ -75,6 +81,7 @@
 - `createdAt`
 
 ### artifacts
+
 - `id`
 - `recipeId`
 - `protocolId`
@@ -86,6 +93,7 @@
 - `createdAt`
 
 ### observations
+
 - `id`
 - `artifactId`
 - `listenerRole`: `self | wife | colleague`
@@ -97,6 +105,7 @@
 - `createdAt`
 
 ### weeklyBriefs
+
 - `id`
 - `weekOf` (YYYY-MM-DD)
 - `generatedAt`

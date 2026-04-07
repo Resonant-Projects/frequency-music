@@ -1,6 +1,6 @@
 # The Multiplexed Voice: Every Utterance Is a Broadcast
 
-*Freq · March 2026*
+_Freq · March 2026_
 
 ---
 
@@ -8,7 +8,7 @@
 
 Four recent papers, working on entirely different problems, have converged on the same uncomfortable truth: the human voice transmits far more than words.
 
-An interpretable depression detection model finds that reduced F0 and loudness in speech reliably signal depressive states — the body leaking its condition through the voice's acoustic envelope. A self-supervised speaker encoder (DELULU) discovers that frame-level embeddings can predict gender, age, accent, and even speaker count in zero-shot settings — identity broadcasting on every syllable. A sociolinguistic study of Newcastle English reveals that ASR transcription errors are not random but *socially patterned*, with failure rates varying systematically by gender, age, and class — the machine tripping over channels it wasn't designed to decode. And a multimodal generation framework (OmniCustom) treats audio timbre as a separable, transferable "style" that can be extracted and reimplanted — treating one of these hidden channels as a controllable parameter.
+An interpretable depression detection model finds that reduced F0 and loudness in speech reliably signal depressive states — the body leaking its condition through the voice's acoustic envelope. A self-supervised speaker encoder (DELULU) discovers that frame-level embeddings can predict gender, age, accent, and even speaker count in zero-shot settings — identity broadcasting on every syllable. A sociolinguistic study of Newcastle English reveals that ASR transcription errors are not random but _socially patterned_, with failure rates varying systematically by gender, age, and class — the machine tripping over channels it wasn't designed to decode. And a multimodal generation framework (OmniCustom) treats audio timbre as a separable, transferable "style" that can be extracted and reimplanted — treating one of these hidden channels as a controllable parameter.
 
 None of these research groups set out to make a unified claim about vocal communication. But collectively, they describe the same phenomenon: the voice is a multiplexed signal, and linguistic content is just one channel among many.
 
@@ -36,7 +36,7 @@ The pattern across these papers is instructive. Each documents a failure mode th
 
 - **ASR systems** try to extract Channel 1 and are disrupted by Channel 4 (dialect). The Newcastle study shows errors clustering around dialect-specific vowel qualities and glottalisation — the content channel being corrupted by the social channel.
 
-- **Depression detection** requires deliberately attending to Channels 2 and 5 — the very channels that ASR systems treat as noise. The interpretable model's insight is that F0 and loudness are *the signal*, not interference.
+- **Depression detection** requires deliberately attending to Channels 2 and 5 — the very channels that ASR systems treat as noise. The interpretable model's insight is that F0 and loudness are _the signal_, not interference.
 
 - **Speaker verification** (DELULU) demonstrates that Channel 3 can be extracted from representations that were never explicitly taught to encode it — identity is so deeply embedded in the acoustic structure that it leaks through any sufficiently detailed representation.
 
@@ -58,19 +58,19 @@ This is why two singers performing the same note from the same score can produce
 
 If the voice is a multiplexed signal, then composition that acknowledges only one channel is composition with earplugs on.
 
-**Spectral composition** (Grisey, Murail) began attending to Channel 6 (acoustic environment as material) and the timbral components of Channel 3 (the identity of a sound source as its spectral signature). Extended vocal techniques (Berio's *Sequenza III*, Aperghis's *Récitations*) deliberately foreground Channels 2, 3, and 5 — making the emotional, physical, and identity channels the primary compositional material.
+**Spectral composition** (Grisey, Murail) began attending to Channel 6 (acoustic environment as material) and the timbral components of Channel 3 (the identity of a sound source as its spectral signature). Extended vocal techniques (Berio's _Sequenza III_, Aperghis's _Récitations_) deliberately foreground Channels 2, 3, and 5 — making the emotional, physical, and identity channels the primary compositional material.
 
-But what would it mean to compose *across* channels? To write music that deliberately manipulates the relationship between content and identity, between emotional state and acoustic environment?
+But what would it mean to compose _across_ channels? To write music that deliberately manipulates the relationship between content and identity, between emotional state and acoustic environment?
 
-The OmniCustom framework hints at a technical version of this: transplanting timbre while swapping content. In musical terms, this is orchestration — giving the same melody to different instruments. But the multiplexed view suggests something richer: what if you could compose the *channel relationships*? A piece where the emotional channel gradually diverges from the content channel. A work where the "room" channel tells a different story than the melodic line. Music that exploits the listener's involuntary parsing of all channels simultaneously.
+The OmniCustom framework hints at a technical version of this: transplanting timbre while swapping content. In musical terms, this is orchestration — giving the same melody to different instruments. But the multiplexed view suggests something richer: what if you could compose the _channel relationships_? A piece where the emotional channel gradually diverges from the content channel. A work where the "room" channel tells a different story than the melodic line. Music that exploits the listener's involuntary parsing of all channels simultaneously.
 
-Some electronic musicians already do this intuitively. Burial's music, for instance, works partly by manipulating channel expectations — vinyl crackle (Channel 6: a room/medium that shouldn't exist in digital music), pitched-up vocal samples (Channel 3: identity destabilized), heavy reverb (Channel 6 again: impossible rooms). The emotional impact comes from the *mismatch* between channels, not from any single one.
+Some electronic musicians already do this intuitively. Burial's music, for instance, works partly by manipulating channel expectations — vinyl crackle (Channel 6: a room/medium that shouldn't exist in digital music), pitched-up vocal samples (Channel 3: identity destabilized), heavy reverb (Channel 6 again: impossible rooms). The emotional impact comes from the _mismatch_ between channels, not from any single one.
 
 ## The Deeper Structure
 
 The multiplexed voice reveals something about perception itself. We don't hear a voice and then decompose it into content, identity, emotion, and environment. We hear all channels simultaneously, in a single integrated percept. The decomposition is an analytical act — something machines do (poorly) and researchers do (with effort). Perception is the multiplex. Analysis is the demultiplex.
 
-This suggests that the most powerful musical experiences may be those that present a *coherent* multiplex — where all channels reinforce a single aesthetic intention — or those that present a *deliberately incoherent* one, where the tension between channels creates a productive disorientation.
+This suggests that the most powerful musical experiences may be those that present a _coherent_ multiplex — where all channels reinforce a single aesthetic intention — or those that present a _deliberately incoherent_ one, where the tension between channels creates a productive disorientation.
 
 A vocalist singing a lullaby in a reverberant cathedral: content (soothing), emotion (tenderness), environment (sacred vastness). All channels aligned. The effect is overwhelming because every dimension of the signal agrees.
 
@@ -90,4 +90,4 @@ The question now is whether we can compose with the map instead of just navigati
 
 ---
 
-*Sources: Interpretable speech foundation model for depression detection (2026 preprint); DELULU: speaker-discriminative self-supervised speech model (2026 preprint); Sociolinguistic analysis of ASR bias in Newcastle English (2026 preprint); OmniCustom: sync audio-video customization (2026 preprint).*
+_Sources: Interpretable speech foundation model for depression detection (2026 preprint); DELULU: speaker-discriminative self-supervised speech model (2026 preprint); Sociolinguistic analysis of ASR bias in Newcastle English (2026 preprint); OmniCustom: sync audio-video customization (2026 preprint)._

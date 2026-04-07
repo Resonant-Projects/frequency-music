@@ -1,11 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Doc } from "./_generated/dataModel";
 import { makeDb } from "./testHelpers";
-import {
-  generateBriefCore,
-  parseBriefResponse,
-  selectRecentBriefInputs,
-} from "./weeklyBriefs";
+import { generateBriefCore, parseBriefResponse, selectRecentBriefInputs } from "./weeklyBriefs";
 
 describe("weekly brief response parsing", () => {
   test("extracts todo items and prompt variants while stripping the JSON block", () => {
@@ -65,12 +61,10 @@ Research summary.
       ],
     });
 
-    expect(result.recentHypotheses.map((hypothesis) => hypothesis._id)).toEqual(
-      [recentHypothesisId],
-    );
-    expect(result.recentRecipes.map((recipe) => recipe._id)).toEqual([
-      "recipe-recent",
+    expect(result.recentHypotheses.map((hypothesis) => hypothesis._id)).toEqual([
+      recentHypothesisId,
     ]);
+    expect(result.recentRecipes.map((recipe) => recipe._id)).toEqual(["recipe-recent"]);
     expect(result.sourceIds).toEqual([recentSourceId]);
   });
 
@@ -105,8 +99,6 @@ Research summary.
       generateBriefCore({ db } as any, {
         daysBack: 7,
       }),
-    ).rejects.toThrow(
-      "No recent hypotheses or recipes found. Generate some first.",
-    );
+    ).rejects.toThrow("No recent hypotheses or recipes found. Generate some first.");
   });
 });

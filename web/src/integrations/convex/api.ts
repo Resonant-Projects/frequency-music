@@ -81,15 +81,9 @@ export const convexApi = {
   editorialArtifacts: {
     list: queryRef("editorialArtifacts:list"),
     get: queryRef("editorialArtifacts:get"),
-    createDraftFromWeeklyBrief: mutationRef(
-      "editorialArtifacts:createDraftFromWeeklyBrief",
-    ),
-    createDraftFromCampaign: mutationRef(
-      "editorialArtifacts:createDraftFromCampaign",
-    ),
-    createDraftFromThesis: mutationRef(
-      "editorialArtifacts:createDraftFromThesis",
-    ),
+    createDraftFromWeeklyBrief: mutationRef("editorialArtifacts:createDraftFromWeeklyBrief"),
+    createDraftFromCampaign: mutationRef("editorialArtifacts:createDraftFromCampaign"),
+    createDraftFromThesis: mutationRef("editorialArtifacts:createDraftFromThesis"),
     update: mutationRef("editorialArtifacts:update"),
     submitForReview: mutationRef("editorialArtifacts:submitForReview"),
     approve: mutationRef("editorialArtifacts:approve"),
@@ -125,8 +119,6 @@ export const convexApi = {
   },
   workflows: {
     startBatchExtraction: mutationRef("workflows:startBatchExtraction"),
-    startSingleSourceExtraction: mutationRef(
-      "workflows:startSingleSourceExtraction",
-    ),
+    startSingleSourceExtraction: mutationRef("workflows:startSingleSourceExtraction"),
   },
 };

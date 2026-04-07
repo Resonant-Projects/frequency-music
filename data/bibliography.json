@@ -4868,10 +4868,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 55495,
@@ -4883,12 +4880,7 @@
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7457064/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "vibroacoustic-therapy",
-            "parkinsons",
-            "acoustic-therapy",
-            "esoteric-research"
-          ],
+          "tags": ["vibroacoustic-therapy", "parkinsons", "acoustic-therapy", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -4902,10 +4894,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 62797,
@@ -4917,12 +4906,7 @@
           "url": "https://www.frontiersin.org/journals/neurology/articles/10.3389/fneur.2023.1167006/full",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "binaural-beats",
-            "parkinsons",
-            "acoustic-stimulation",
-            "esoteric-research"
-          ],
+          "tags": ["binaural-beats", "parkinsons", "acoustic-stimulation", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -4936,10 +4920,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 84376,
@@ -4952,10 +4933,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -4967,12 +4945,7 @@
           "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0286023",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "binaural-beats",
-            "brainwave-entrainment",
-            "eeg",
-            "esoteric-research"
-          ],
+          "tags": ["binaural-beats", "brainwave-entrainment", "eeg", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5025,10 +4998,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 24469,
@@ -5060,10 +5030,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -5076,10 +5043,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["crystal bowls", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 54701,
@@ -5111,10 +5075,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 23412,
@@ -5134,10 +5095,7 @@
             "bjork",
             "esoteric-research"
           ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2338,
@@ -5156,10 +5114,7 @@
             "quantum-mechanics",
             "esoteric-research"
           ],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2027,
@@ -5172,10 +5127,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["noetic science", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 71816,
@@ -5187,16 +5139,8 @@
           "url": "https://waterjournal.org/archives/sheldrake/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "faraday-waves",
-            "cymatics",
-            "pattern-formation",
-            "esoteric-research"
-          ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "tags": ["faraday-waves", "cymatics", "pattern-formation", "esoteric-research"],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1077,
@@ -5228,10 +5172,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3521,
@@ -5244,10 +5185,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -5260,10 +5198,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 7494,
@@ -5275,12 +5210,7 @@
           "url": "https://en.wikipedia.org/wiki/Ernst_Chladni",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "chladni-plates",
-            "acoustics-history",
-            "chladni-figures",
-            "esoteric-research"
-          ],
+          "tags": ["chladni-plates", "acoustics-history", "chladni-figures", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5293,12 +5223,7 @@
           "url": "https://news.mit.edu/2025/evidence-40hz-gamma-stimulation-promotes-brain-health-expanding-0314",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "binaural-beats",
-            "gamma-entrainment",
-            "alzheimers",
-            "esoteric-research"
-          ],
+          "tags": ["binaural-beats", "gamma-entrainment", "alzheimers", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5312,10 +5237,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["crystal bowls", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 20375,
@@ -5328,10 +5250,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3294,
@@ -5344,10 +5263,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 50012,
@@ -5360,10 +5276,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5162,
@@ -5376,10 +5289,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 11347,
@@ -5392,10 +5302,7 @@
           "type": "url",
           "status": "ingested",
           "tags": ["cymatics", "esoteric-research"],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -5408,10 +5315,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 12209,
@@ -5467,12 +5371,7 @@
           "url": "https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3003046",
           "type": "url",
           "status": "extracted",
-          "tags": [
-            "gamma-entrainment",
-            "alzheimers",
-            "GENUS",
-            "esoteric-research"
-          ],
+          "tags": ["gamma-entrainment", "alzheimers", "GENUS", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5486,10 +5385,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["noetic science", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 26903,
@@ -5509,10 +5405,7 @@
             "double-slit",
             "esoteric-research"
           ],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2204,
@@ -5543,12 +5436,7 @@
           "url": "https://musicoftheperiodictable.com/healing-sounds/",
           "type": "url",
           "status": "extracted",
-          "tags": [
-            "jonathan-goldman",
-            "sound-healing",
-            "frequency-intention",
-            "esoteric-research"
-          ],
+          "tags": ["jonathan-goldman", "sound-healing", "frequency-intention", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5561,12 +5449,7 @@
           "url": "https://www.healingsounds.com/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "jonathan-goldman",
-            "sound-healing",
-            "harmonics",
-            "esoteric-research"
-          ],
+          "tags": ["jonathan-goldman", "sound-healing", "harmonics", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5579,12 +5462,7 @@
           "url": "https://www.healingsounds.com/sonic-entrainment/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "jonathan-goldman",
-            "sound-healing",
-            "entrainment",
-            "esoteric-research"
-          ],
+          "tags": ["jonathan-goldman", "sound-healing", "entrainment", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5617,10 +5495,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 11953,
@@ -5632,12 +5507,7 @@
           "url": "https://en.wikipedia.org/wiki/Masaru_Emoto",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "masaru-emoto",
-            "water-crystals",
-            "pseudoscience-critique",
-            "esoteric-research"
-          ],
+          "tags": ["masaru-emoto", "water-crystals", "pseudoscience-critique", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5650,12 +5520,7 @@
           "url": "https://www.nature.com/articles/s41586-024-07132-6",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "gamma-entrainment",
-            "alzheimers",
-            "glymphatic",
-            "esoteric-research"
-          ],
+          "tags": ["gamma-entrainment", "alzheimers", "glymphatic", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5669,10 +5534,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 8670,
@@ -5685,10 +5547,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2961,
@@ -5701,10 +5560,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 34504,
@@ -5717,10 +5573,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -5732,16 +5585,8 @@
           "url": "https://nigelstanford.com/cymatics/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "nigel-stanford",
-            "cymatics",
-            "music-visualization",
-            "esoteric-research"
-          ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "tags": ["nigel-stanford", "cymatics", "music-visualization", "esoteric-research"],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1744,
@@ -5754,10 +5599,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 4586,
@@ -5770,10 +5612,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 89304,
@@ -5786,10 +5625,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 49122,
@@ -5814,12 +5650,7 @@
           "url": "https://www.auroraorchestra.com/2019/05/pythagoras-the-music-of-the-spheres/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "pythagoras",
-            "music-of-spheres",
-            "sacred-mathematics",
-            "esoteric-research"
-          ],
+          "tags": ["pythagoras", "music-of-spheres", "sacred-mathematics", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5833,10 +5664,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -5855,10 +5683,7 @@
             "quantum-mechanics",
             "esoteric-research"
           ],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2594,
@@ -5896,10 +5721,7 @@
             "pattern-formation",
             "esoteric-research"
           ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1387,
@@ -5911,12 +5733,7 @@
           "url": "https://www.cancerresearchuk.org/about-cancer/treatment/complementary-alternative-therapies/individual-therapies/rife-machine-and-cancer",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "rife-frequencies",
-            "cancer",
-            "evidence-assessment",
-            "esoteric-research"
-          ],
+          "tags": ["rife-frequencies", "cancer", "evidence-assessment", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -5930,10 +5747,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3376,
@@ -5946,10 +5760,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3464,
@@ -5961,12 +5772,7 @@
           "url": "https://poddtoppen.se/podcast/1451566598/passion-harvest/ley-lines-earth-energy-quantum-frequencies-universal-consciousness-with-rory-duff",
           "type": "url",
           "status": "ingested",
-          "tags": [
-            "ley lines",
-            "consciousness",
-            "esoteric-research",
-            "rory-duff"
-          ],
+          "tags": ["ley lines", "consciousness", "esoteric-research", "rory-duff"],
           "topics": [
             "Earth Energy & Ley Lines",
             "Consciousness & Perception",
@@ -5984,10 +5790,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 6674,
@@ -5999,12 +5802,7 @@
           "url": "https://en.wikipedia.org/wiki/Royal_Rife",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "rife-frequencies",
-            "frequency-healing",
-            "pseudoscience",
-            "esoteric-research"
-          ],
+          "tags": ["rife-frequencies", "frequency-healing", "pseudoscience", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -6017,12 +5815,7 @@
           "url": "https://rsarchive.org/Lectures/GA283/English/AP1983/19230307p01.html",
           "type": "url",
           "status": "extracted",
-          "tags": [
-            "rudolf-steiner",
-            "anthroposophy",
-            "music-intervals",
-            "esoteric-research"
-          ],
+          "tags": ["rudolf-steiner", "anthroposophy", "music-intervals", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -6055,10 +5848,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 47921,
@@ -6084,10 +5874,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["cymatics", "esoteric-research"],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -6100,10 +5887,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5661,
@@ -6141,10 +5925,7 @@
             "sacred-geometry",
             "esoteric-research"
           ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1115,
@@ -6157,10 +5938,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 7229,
@@ -6173,10 +5951,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 18220,
@@ -6221,10 +5996,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 15924,
@@ -6249,12 +6021,7 @@
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3845545/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "rife-frequencies",
-            "electromagnetic-therapy",
-            "cancer",
-            "esoteric-research"
-          ],
+          "tags": ["rife-frequencies", "electromagnetic-therapy", "cancer", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -6294,10 +6061,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5187,
@@ -6310,10 +6074,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 98177,
@@ -6326,10 +6087,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -6342,10 +6100,7 @@
           "type": "url",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -6396,10 +6151,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["noetic science", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -6412,10 +6164,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5263,
@@ -6428,10 +6177,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -6444,10 +6190,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -6460,10 +6203,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["crystal bowls", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 52831,
@@ -6476,10 +6216,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 44416,
@@ -6504,13 +6241,7 @@
           "url": "https://www.vibro-therapy.com/post/vibroacoustic-therapy-for-anxiety-and-stress-evidence-benefits-and-how-it-works",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "vibroacoustic-therapy",
-            "VAT",
-            "olav-skille",
-            "anxiety",
-            "esoteric-research"
-          ],
+          "tags": ["vibroacoustic-therapy", "VAT", "olav-skille", "anxiety", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -6523,12 +6254,7 @@
           "url": "https://innersoulutions.com/studies/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "vibroacoustic-therapy",
-            "VAT",
-            "sound-healing",
-            "esoteric-research"
-          ],
+          "tags": ["vibroacoustic-therapy", "VAT", "sound-healing", "esoteric-research"],
           "topics": ["Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
@@ -6541,16 +6267,8 @@
           "url": "https://www.cymaticsource.com/product-page/water-sound-images",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "alexander-lauterwasser",
-            "cymatics",
-            "water-sound-images",
-            "esoteric-research"
-          ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "tags": ["alexander-lauterwasser", "cymatics", "water-sound-images", "esoteric-research"],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1950,
@@ -6563,10 +6281,7 @@
           "type": "url",
           "status": "ingested",
           "tags": ["ley lines", "esoteric-research"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -6579,10 +6294,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 51355,
@@ -8608,10 +8320,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 62797,
@@ -8624,10 +8333,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 24469,
@@ -8640,10 +8346,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -8656,10 +8359,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 23412,
@@ -8672,10 +8372,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -8688,10 +8385,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 7494,
@@ -8704,10 +8398,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5162,
@@ -8720,10 +8411,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 11347,
@@ -8736,10 +8424,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2961,
@@ -8752,10 +8437,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -8768,10 +8450,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 47921,
@@ -8784,10 +8463,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5187,
@@ -8800,10 +8476,7 @@
           "type": "url",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -8816,10 +8489,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5263,
@@ -8832,10 +8502,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -8848,10 +8515,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 44416,
@@ -8864,10 +8528,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["sacred geometry", "esoteric-research"],
-          "topics": [
-            "Sacred Geometry & Architecture",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sacred Geometry & Architecture", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 51355,
@@ -8886,10 +8547,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 55495,
@@ -8902,10 +8560,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 84376,
@@ -8918,10 +8573,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -8940,10 +8592,7 @@
             "quantum-mechanics",
             "esoteric-research"
           ],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2027,
@@ -8956,10 +8605,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["noetic science", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 71816,
@@ -8972,10 +8618,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3294,
@@ -8988,10 +8631,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 50012,
@@ -9004,10 +8644,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["noetic science", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 26903,
@@ -9027,10 +8664,7 @@
             "double-slit",
             "esoteric-research"
           ],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2204,
@@ -9043,10 +8677,7 @@
           "type": "url",
           "status": "text_ready",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -9059,10 +8690,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 49122,
@@ -9081,10 +8709,7 @@
             "quantum-mechanics",
             "esoteric-research"
           ],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2594,
@@ -9096,12 +8721,7 @@
           "url": "https://poddtoppen.se/podcast/1451566598/passion-harvest/ley-lines-earth-energy-quantum-frequencies-universal-consciousness-with-rory-duff",
           "type": "url",
           "status": "ingested",
-          "tags": [
-            "ley lines",
-            "consciousness",
-            "esoteric-research",
-            "rory-duff"
-          ],
+          "tags": ["ley lines", "consciousness", "esoteric-research", "rory-duff"],
           "topics": [
             "Earth Energy & Ley Lines",
             "Consciousness & Perception",
@@ -9119,10 +8739,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 98177,
@@ -9135,10 +8752,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["noetic science", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -9151,10 +8765,7 @@
           "type": "pdf",
           "status": "extracted",
           "tags": ["consciousness", "esoteric-research"],
-          "topics": [
-            "Consciousness & Perception",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Consciousness & Perception", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 100000,
@@ -9445,10 +9056,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3521,
@@ -9461,10 +9069,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 11953,
@@ -9477,10 +9082,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3376,
@@ -9493,10 +9095,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 3464,
@@ -9508,12 +9107,7 @@
           "url": "https://poddtoppen.se/podcast/1451566598/passion-harvest/ley-lines-earth-energy-quantum-frequencies-universal-consciousness-with-rory-duff",
           "type": "url",
           "status": "ingested",
-          "tags": [
-            "ley lines",
-            "consciousness",
-            "esoteric-research",
-            "rory-duff"
-          ],
+          "tags": ["ley lines", "consciousness", "esoteric-research", "rory-duff"],
           "topics": [
             "Earth Energy & Ley Lines",
             "Consciousness & Perception",
@@ -9531,10 +9125,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 6674,
@@ -9547,10 +9138,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["ley lines", "esoteric-research", "rory-duff"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -9563,10 +9151,7 @@
           "type": "url",
           "status": "ingested",
           "tags": ["ley lines", "esoteric-research"],
-          "topics": [
-            "Earth Energy & Ley Lines",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Earth Energy & Ley Lines", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -9592,10 +9177,7 @@
             "bjork",
             "esoteric-research"
           ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 2338,
@@ -9607,16 +9189,8 @@
           "url": "https://waterjournal.org/archives/sheldrake/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "faraday-waves",
-            "cymatics",
-            "pattern-formation",
-            "esoteric-research"
-          ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "tags": ["faraday-waves", "cymatics", "pattern-formation", "esoteric-research"],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1077,
@@ -9629,10 +9203,7 @@
           "type": "url",
           "status": "ingested",
           "tags": ["cymatics", "esoteric-research"],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -9644,16 +9215,8 @@
           "url": "https://nigelstanford.com/cymatics/",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "nigel-stanford",
-            "cymatics",
-            "music-visualization",
-            "esoteric-research"
-          ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "tags": ["nigel-stanford", "cymatics", "music-visualization", "esoteric-research"],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1744,
@@ -9672,10 +9235,7 @@
             "pattern-formation",
             "esoteric-research"
           ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1387,
@@ -9688,10 +9248,7 @@
           "type": "pdf",
           "status": "ingested",
           "tags": ["cymatics", "esoteric-research"],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 0,
@@ -9710,10 +9267,7 @@
             "sacred-geometry",
             "esoteric-research"
           ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1115,
@@ -9725,16 +9279,8 @@
           "url": "https://www.cymaticsource.com/product-page/water-sound-images",
           "type": "url",
           "status": "text_ready",
-          "tags": [
-            "alexander-lauterwasser",
-            "cymatics",
-            "water-sound-images",
-            "esoteric-research"
-          ],
-          "topics": [
-            "Cymatics & Wave Physics",
-            "Esoteric & Complementary Research"
-          ],
+          "tags": ["alexander-lauterwasser", "cymatics", "water-sound-images", "esoteric-research"],
+          "topics": ["Cymatics & Wave Physics", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 1950,
@@ -9753,10 +9299,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["crystal bowls", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 54701,
@@ -9769,10 +9312,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["crystal bowls", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 20375,
@@ -9785,10 +9325,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 12209,
@@ -9801,10 +9338,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 89304,
@@ -9817,10 +9351,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 7229,
@@ -9833,10 +9364,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["toning/chanting", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 18220,
@@ -9849,10 +9377,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["crystal bowls", "esoteric-research"],
-          "topics": [
-            "Sound Healing & Therapy",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Sound Healing & Therapy", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 52831,
@@ -9871,10 +9396,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 8670,
@@ -9887,10 +9409,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 34504,
@@ -9903,10 +9422,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 4586,
@@ -9919,10 +9435,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 5661,
@@ -9935,10 +9448,7 @@
           "type": "url",
           "status": "extracted",
           "tags": ["multi-dimensional cosmos", "esoteric-research"],
-          "topics": [
-            "Physics & Cosmology",
-            "Esoteric & Complementary Research"
-          ],
+          "topics": ["Physics & Cosmology", "Esoteric & Complementary Research"],
           "claimCount": 0,
           "paramCount": 0,
           "textLength": 15924,

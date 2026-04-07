@@ -1,6 +1,6 @@
 # Geometric Microtuning: From Sacred Geometry to Composition
 
-*Synthesizing Robert Edward Grant's geometric music theory with practical microtuning and compositional technique*
+_Synthesizing Robert Edward Grant's geometric music theory with practical microtuning and compositional technique_
 
 ---
 
@@ -18,24 +18,25 @@ Grant's research reveals that when music is tuned to A=432Hz (rather than A=440H
 
 **Key Relationships at 432Hz:**
 
-| Note | Frequency (Hz) | Polygon Angle | Polygon |
-|------|----------------|---------------|---------|
-| C | 256 | 0° (360°) | Circle/Unity |
-| C# | 272 | 30° | Dodecagon (12) |
-| D | 288 | 60° | Hexagon (6) |
-| D# | 304 | 90° | Square (4) |
-| E | 324 | 120° | Triangle (3) |
-| F | 341.3 | 150° | Dodecagon |
-| F# | 362.4 | 180° | Line/Axis |
-| G | 384 | 210° | - |
-| G# | 406.4 | 240° | - |
-| A | 432 | 270° | Square |
-| A# | 456 | 300° | Hexagon |
-| B | 483.3 | 330° | Dodecagon |
+| Note | Frequency (Hz) | Polygon Angle | Polygon        |
+| ---- | -------------- | ------------- | -------------- |
+| C    | 256            | 0° (360°)     | Circle/Unity   |
+| C#   | 272            | 30°           | Dodecagon (12) |
+| D    | 288            | 60°           | Hexagon (6)    |
+| D#   | 304            | 90°           | Square (4)     |
+| E    | 324            | 120°          | Triangle (3)   |
+| F    | 341.3          | 150°          | Dodecagon      |
+| F#   | 362.4          | 180°          | Line/Axis      |
+| G    | 384            | 210°          | -              |
+| G#   | 406.4          | 240°          | -              |
+| A    | 432            | 270°          | Square         |
+| A#   | 456            | 300°          | Hexagon        |
+| B    | 483.3          | 330°          | Dodecagon      |
 
 ### The Perfect Fifth as Geometric Generator
 
 Grant emphasizes that the **Perfect 5th (3:2 ratio)** is the geometric generator of musical structure. At 432Hz:
+
 - The 5th spans 702 cents (vs. 700 in 12-EDO)
 - This creates spiral geometry when stacked
 - The Pythagorean comma (23.46 cents) represents the "gap" in the spiral
@@ -43,6 +44,7 @@ Grant emphasizes that the **Perfect 5th (3:2 ratio)** is the geometric generator
 ### Precise Temperament Tuning (PTT)
 
 Grant proposes an alternative to equal temperament:
+
 - **Major 3rd**: 1.26 ratio (vs. 1.25 in just intonation)
 - **Minor 3rd**: 1.19 (falls from 1.2)
 - **Perfect 5th**: 1.5 (pure 3:2)
@@ -62,6 +64,7 @@ cents = (angle / 360) × 1200
 ```
 
 For a polygon with n sides, the internal angle is:
+
 ```
 internal_angle = (n - 2) × 180 / n
 ```
@@ -70,22 +73,23 @@ internal_angle = (n - 2) × 180 / n
 
 Using polygon internal angles as scale degrees:
 
-| Polygon | Sides | Internal Angle | Cents | Nearest 12-EDO |
-|---------|-------|----------------|-------|----------------|
-| Equilateral Triangle | 3 | 60° | 200 | D (whole tone) |
-| Square | 4 | 90° | 300 | Eb (minor 3rd) |
-| Pentagon | 5 | 108° | 360 | E-ish (between m3 & M3) |
-| Hexagon | 6 | 120° | 400 | E (major 3rd) |
-| Heptagon | 7 | 128.57° | 428.6 | E+ (wide major 3rd) |
-| Octagon | 8 | 135° | 450 | F-ish (tritone region) |
-| Nonagon | 9 | 140° | 466.7 | F- (narrow 4th) |
-| Decagon | 10 | 144° | 480 | F (narrow 4th) |
-| Hendecagon | 11 | 147.27° | 490.9 | F (4th) |
-| Dodecagon | 12 | 150° | 500 | F (perfect 4th) |
+| Polygon              | Sides | Internal Angle | Cents | Nearest 12-EDO          |
+| -------------------- | ----- | -------------- | ----- | ----------------------- |
+| Equilateral Triangle | 3     | 60°            | 200   | D (whole tone)          |
+| Square               | 4     | 90°            | 300   | Eb (minor 3rd)          |
+| Pentagon             | 5     | 108°           | 360   | E-ish (between m3 & M3) |
+| Hexagon              | 6     | 120°           | 400   | E (major 3rd)           |
+| Heptagon             | 7     | 128.57°        | 428.6 | E+ (wide major 3rd)     |
+| Octagon              | 8     | 135°           | 450   | F-ish (tritone region)  |
+| Nonagon              | 9     | 140°           | 466.7 | F- (narrow 4th)         |
+| Decagon              | 10    | 144°           | 480   | F (narrow 4th)          |
+| Hendecagon           | 11    | 147.27°        | 490.9 | F (4th)                 |
+| Dodecagon            | 12    | 150°           | 500   | F (perfect 4th)         |
 
 ### Deriving a 12-Note Geometric Scale
 
 We can create a complete 12-note scale by:
+
 1. Using polygon angles for primary intervals
 2. Filling gaps with golden ratio (φ) divisions
 3. Maintaining the pure 3:2 fifth
@@ -116,24 +120,25 @@ C':   1200
 
 **Primary Triads** (using pure intervals):
 
-| Chord | Notes | Intervals (cents) | Character |
-|-------|-------|-------------------|-----------|
-| C Major | C-E-G | 0-386-702 | Bright, stable |
-| C minor | C-Eb-G | 0-300-702 | Square geometry |
-| F Major | F-A-C | 498-884-1200 | Pure, warm |
-| G Major | G-B-D | 702-1088-1402 | Brilliant |
+| Chord   | Notes  | Intervals (cents) | Character       |
+| ------- | ------ | ----------------- | --------------- |
+| C Major | C-E-G  | 0-386-702         | Bright, stable  |
+| C minor | C-Eb-G | 0-300-702         | Square geometry |
+| F Major | F-A-C  | 498-884-1200      | Pure, warm      |
+| G Major | G-B-D  | 702-1088-1402     | Brilliant       |
 
 **Extended Harmonies** (incorporating geometric intervals):
 
-| Chord | Notes | Intervals | Geometric Source |
-|-------|-------|-----------|------------------|
+| Chord          | Notes    | Intervals      | Geometric Source      |
+| -------------- | -------- | -------------- | --------------------- |
 | Pentagon Chord | C-E-G-Bb | 0-386-702-1000 | Dom7 with decagon 7th |
-| Square Stack | C-Eb-Ab | 0-300-800 | All square-derived |
-| Hexagon Triad | C-E-G# | 0-400-800 | Augmented (hexagon) |
+| Square Stack   | C-Eb-Ab  | 0-300-800      | All square-derived    |
+| Hexagon Triad  | C-E-G#   | 0-400-800      | Augmented (hexagon)   |
 
 ### Melodic Patterns
 
 **Triangle Melody** (whole-tone based):
+
 - Uses D (200¢) as primary interval
 - Creates bright, ascending patterns
 - Works well for uplifting themes
@@ -144,6 +149,7 @@ Cents:   0   200  400  600  800...
 ```
 
 **Square Melody** (minor 3rd based):
+
 - Uses Eb (300¢) intervals
 - Creates diminished-feeling sequences
 - Evokes mystery, tension
@@ -154,6 +160,7 @@ Cents:   0   300   600  900...
 ```
 
 **Pentagon Melody** (golden ratio flavored):
+
 - Alternates triangle and square intervals
 - Creates organic, flowing lines
 
@@ -166,14 +173,15 @@ Cents:   0   200  300  500  700  800...
 
 Grant's work connects geometry to time. Apply polygon symmetries to rhythm:
 
-| Polygon | Symmetry | Rhythmic Application |
-|---------|----------|---------------------|
-| Triangle (3) | 3-fold | Triplets, 3/4 time, waltz |
-| Square (4) | 4-fold | Standard 4/4, rock beat |
-| Pentagon (5) | 5-fold | 5/4 time, 5-tuplets |
-| Hexagon (6) | 6-fold | 6/8 compound, two-beat triplets |
+| Polygon      | Symmetry | Rhythmic Application            |
+| ------------ | -------- | ------------------------------- |
+| Triangle (3) | 3-fold   | Triplets, 3/4 time, waltz       |
+| Square (4)   | 4-fold   | Standard 4/4, rock beat         |
+| Pentagon (5) | 5-fold   | 5/4 time, 5-tuplets             |
+| Hexagon (6)  | 6-fold   | 6/8 compound, two-beat triplets |
 
 **Example: Triangle-Square Polyrhythm**
+
 - Melody in triplets (triangle geometry)
 - Harmony changes on square beat grid
 - Creates 3:4 polyrhythm with geometric meaning
@@ -182,12 +190,12 @@ Grant's work connects geometry to time. Apply polygon symmetries to rhythm:
 
 If 432Hz = A, then octave-related tempos maintain resonance:
 
-| BPM | Frequency (Hz) | Musical Relationship |
-|-----|----------------|---------------------|
-| 54 | - | A ÷ 8 (three octaves below) |
-| 108 | - | A ÷ 4 (two octaves below) |
-| 216 | - | A ÷ 2 (one octave below) |
-| 432 | A4 | Reference pitch |
+| BPM | Frequency (Hz) | Musical Relationship        |
+| --- | -------------- | --------------------------- |
+| 54  | -              | A ÷ 8 (three octaves below) |
+| 108 | -              | A ÷ 4 (two octaves below)   |
+| 216 | -              | A ÷ 2 (one octave below)    |
+| 432 | A4             | Reference pitch             |
 
 Using **108 BPM** or **72 BPM** (432 ÷ 6) maintains geometric coherence with the 432Hz tuning.
 
@@ -239,18 +247,21 @@ Geometric Temperament based on Grant's polygon-angle theory
 **"Polygon Meditation"** - A Short Study
 
 **Section A: Triangle Invocation** (measures 1-8)
+
 - Time: 3/4 at 108 BPM
 - Drone: C (256 Hz)
 - Melody: C → D → E → D → C (triangle ascent/descent)
 - Harmony: C major → G major (pure 5ths)
 
 **Section B: Square Grounding** (measures 9-16)
+
 - Time: 4/4 at 108 BPM
 - Bass: C → Eb → Ab → G (square movement)
 - Melody: Sustained E over changing bass
 - Harmony: Cm → Ab → G → C
 
 **Section C: Pentagon Flowering** (measures 17-24)
+
 - Time: 5/4 at 108 BPM
 - Arpeggios: C-E-G-Bb-D (pentagon extended chord)
 - Melody: Incorporates golden-ratio intervals
@@ -267,10 +278,11 @@ Robert Edward Grant's geometric music theory provides a framework for understand
 This isn't about mystical claims—it's about using geometric constraints as a compositional tool, the way a poet uses meter or a painter uses the golden ratio. The pure intervals create a different sonic character than equal temperament, and the geometric framework gives compositional decisions a structural logic.
 
 **Next Steps for Exploration:**
+
 - Extend to 24-note quartertone system (Grant's pyramid research)
 - Map Unity Harmonica polyhedra to harmonic progressions
 - Explore non-octave scales using Grant's spiral geometry
 
 ---
 
-*Draft v1.0 — Synthesized from Robert Edward Grant's publications and standard microtuning practice*
+_Draft v1.0 — Synthesized from Robert Edward Grant's publications and standard microtuning practice_

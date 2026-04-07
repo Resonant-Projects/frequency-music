@@ -1,18 +1,22 @@
 # Data Model (Convex) — MVP Schema
 
 ## Conventions
+
 - Every record has: `createdAt`, `updatedAt`, `createdBy`, `visibility` (`private|followers|public`)
 - Prefer append-only versioning for generated artifacts (store `promptVersion`, `model`, `inputHash`)
 
 ## Tables
 
 ### users
+
 - `clerkUserId`
 - `role`: `admin|collaborator|follower`
 - `email`, `displayName`
 
 ### sources
+
 Represents an ingested item.
+
 - `type`: `notion|rss|url|youtube|pdf`
 - `title`
 - `author` (optional)
@@ -25,7 +29,9 @@ Represents an ingested item.
 - `ingestedAt`
 
 ### extractions
+
 Structured AI output derived from `sources`.
+
 - `sourceId`
 - `model`
 - `promptVersion`
@@ -40,18 +46,22 @@ Structured AI output derived from `sources`.
 - `inputHash`
 
 ### compositionParameters
+
 Represent as structured objects (store inside extractions for MVP; can normalize later):
+
 - `type`: `tempo|key|tuningSystem|rootNote|chordProgression|rhythm|instrument|synthWaveform|harmonicProfile|frequency|note`
 - `value` (string)
 - `details` (json; e.g. bpm number, tuning ratios, interval sets, note lengths)
 
 ### concepts (optional in MVP; can start lightweight)
+
 - `name`
 - `domain`: `math|physics|music|other`
 - `description`
 - `sourceIds[]`
 
 ### hypotheses
+
 - `title`
 - `question`
 - `hypothesis`
@@ -61,6 +71,7 @@ Represent as structured objects (store inside extractions for MVP; can normalize
 - `versionOfId` (optional)
 
 ### recipes
+
 - `hypothesisId`
 - `title`
 - `body` (markdown narrative + bullet parameters)
@@ -69,6 +80,7 @@ Represent as structured objects (store inside extractions for MVP; can normalize
 - `status`: `draft|in_use|archived`
 
 ### compositions
+
 - `title`
 - `recipeId`
 - `projectNotes` (markdown)
@@ -76,6 +88,7 @@ Represent as structured objects (store inside extractions for MVP; can normalize
 - `status`: `idea|in_progress|rendered|published`
 
 ### listeningSessions
+
 - `compositionId`
 - `participants[]` (names or anonymized ids)
 - `context` (markdown: room, headphones, etc.)
@@ -84,6 +97,7 @@ Represent as structured objects (store inside extractions for MVP; can normalize
 - `createdAt`
 
 ### weeklyBriefs
+
 - `weekOf` (ISO date)
 - `model`
 - `promptVersion`
@@ -94,6 +108,7 @@ Represent as structured objects (store inside extractions for MVP; can normalize
 - `publishedAt` (optional)
 
 ## Visibility rules (suggested)
+
 - Default: everything private
 - Promote to `followers` when coherent
 - Promote to `public` when edited/curated

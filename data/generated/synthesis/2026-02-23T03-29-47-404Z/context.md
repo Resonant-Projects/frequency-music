@@ -24,6 +24,7 @@ Selected 8/8 from 41 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - frequency-research: 5
 - topic research: 4
 - equal temperament: 3
@@ -143,6 +144,7 @@ Selected 8/8 from 41 eligible candidates.
 - microtubules: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 21
 - frequency: 11
 - harmonicprofile: 3
@@ -150,6 +152,7 @@ Selected 8/8 from 41 eligible candidates.
 - note: 2
 
 ### Evidence Distribution
+
 - peer_reviewed: 40
 - personal: 5
 - anecdotal: 3
@@ -174,6 +177,7 @@ Summary:
 This paper presents a mathematical framework for embedding familiar pitch-class spaces (like 12-tone equal temperament) into larger microtonal systems while preserving their structural relationships. The approach uses group homomorphisms to systematically 'lift' smaller pitch spaces into ambient temperaments, allowing composers to explore microtonality without abandoning familiar harmonic intuitions. The framework introduces tuning spaces as collections of possible detunings and establishes categories with functors to study relationships between different tuning systems.
 
 Claims:
+
 - [1] [peer_reviewed] 72-EDO provides excellent approximations of many just intervals and contains 12-EDO as a subset, making it ideal for composers exploring microtonality while maintaining connection to 12-tone music
 - [2] [peer_reviewed] Equal divisions like 19-EDO and 31-EDO approximate just intervals with varying degrees of accuracy and are particularly well suited to certain harmonic resources
 - [3] [personal] Embedding pitch-class spaces into structured larger tuning systems provides systematic constraints that are more compositionally useful than arbitrary detunings
@@ -181,12 +185,14 @@ Claims:
 - [5] [peer_reviewed] Higher pitch-class spaces contain unique intervals and harmonic possibilities unavailable in 12-tone equal temperament
 
 Composition Parameters:
+
 - tuningSystem: 72-EDO
 - tuningSystem: 19-EDO
 - tuningSystem: 31-EDO
 - tuningSystem: 12-EDO
 
 Open Questions:
+
 - What systematic strategies exist for designing optimal tunings within specific ambient temperaments?
 - How do perceptual factors influence the effectiveness of different EDO approximations to just intervals?
 - What are the compositional implications of functors between different categories of tuning spaces?
@@ -211,6 +217,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -221,6 +228,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -233,6 +241,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -254,6 +263,7 @@ Summary:
 Research shows living human cells have natural mechanical resonance frequencies at 10-30 kHz and 150-180 kHz. Musical frequencies may interact with cellular vibrations and brain activity, triggering emotional responses through activation of reward circuits and dopamine release. Mathematical models can predict emotional responses to music with varying accuracy (13-82% variance explained). The connection between music, cellular resonance, and physiology suggests potential applications in targeted sound-based therapies.
 
 Claims:
+
 - [1] [peer_reviewed] Living human cells exhibit mechanical resonances at specific frequency ranges
 - [2] [peer_reviewed] Listening to pleasurable music activates brain regions associated with emotion and reward, specifically the dorsal amygdala, ventral striatum, and orbitofrontal cortex
 - [3] [peer_reviewed] Musical attributes can predict specific emotional qualities with quantifiable accuracy levels
@@ -261,11 +271,13 @@ Claims:
 - [5] [peer_reviewed] Dopamine release occurs in the striatum during both anticipation and experience of peak emotional moments in music
 
 Composition Parameters:
+
 - frequency: 10-30 kHz
 - frequency: 150-180 kHz
 - frequency: 7.5-8 Hz
 
 Open Questions:
+
 - How do musical frequencies in the audible range (20 Hz - 20 kHz) specifically interact with cellular resonance frequencies?
 - Can targeted sound frequencies at cellular resonance ranges be used therapeutically?
 - What is the mechanism by which brain activity synchronizes with Schumann resonance frequencies?
@@ -289,6 +301,7 @@ Summary:
 This article explores tension and energy as fundamental musical concepts for electronic music producers. It categorizes tension into macro-tension (large-scale builds and transitions) and micro-tension (small details that maintain engagement). The author emphasizes these concepts are particularly crucial for dance music, where tension and energy directly impact whether listeners feel excited and want to dance.
 
 Claims:
+
 - [1] [personal] Tension and energy are among the two most fundamental musical concepts in music
 - [2] [anecdotal] In a I-IV-V-I chord progression, the dominant chord (V) creates strong tension that demands resolution to the I chord
 - [3] [personal] Dance music relies particularly heavily on tension and energy - lack of tension means listeners won't feel excited, lack of energy means they won't dance
@@ -296,9 +309,11 @@ Claims:
 - [5] [personal] Well-crafted tension keeps listeners engaged throughout a song because they want to hear resolution
 
 Composition Parameters:
+
 - chordProgression: I-IV-V-I progression
 
 Open Questions:
+
 - What are the measurable psychological and physiological effects of musical tension on listeners?
 - Are there optimal ratios or patterns for tension/release cycles in different musical genres?
 - How do cultural differences affect the perception of musical tension and energy?
@@ -322,15 +337,18 @@ Summary:
 This academic article examines composer Iannis Xenakis's use of Boolean algebra and mathematical set theory in his compositional process, particularly for the piece Herma (1959-1961). The research traces how Xenakis integrated algebraic concepts with musical time and perception theory, drawing from sources like George Boole's mathematical logic and Jean Piaget's developmental psychology. The analysis reveals how Xenakis attempted to formalize musical structures through Boolean operations, creating pitch reservoirs and sequential forms based on mathematical functions.
 
 Claims:
+
 - [1] [peer_reviewed] Xenakis defined 'temporal operators' in Boolean algebra for music: simultaneity as logical union and succession as logical intersection, where sound events are not simultaneous but without specified sequential order
 - [2] [peer_reviewed] Musical time perception develops through three stages according to Piaget's theory: distinguishing events, recognizing temporal succession (non-commutativity), and metric time with commutative properties
 - [3] [peer_reviewed] For the composition of Herma, Xenakis conceived three sets of pitches (A, B, and C) to build sequential form based on Boolean operations, with each section having a related pitch reservoir derived from these calculations
 - [4] [peer_reviewed] A Boolean function with n variables can be written with a maximum of 2^(2^n) - 1 operations using union, intersection, and negation; for n=3 this equals 17 operations
 
 Composition Parameters:
+
 - chordProgression: Three pitch sets A, B, C with Boolean operations
 
 Open Questions:
+
 - How do Boolean algebraic structures actually correspond to perceptual experiences of musical time and simultaneity?
 - What are the practical compositional advantages of using Boolean operations versus traditional harmonic progressions for organizing pitch materials?
 - How do the mathematical constraints of Boolean algebra influence the aesthetic outcomes in pieces like Herma?
@@ -353,6 +371,7 @@ Summary:
 Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.
 
 Claims:
+
 - [1] [peer_reviewed] 12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century
 - [2] [peer_reviewed] In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463
 - [3] [peer_reviewed] Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament
@@ -362,6 +381,7 @@ Claims:
 - [7] [peer_reviewed] Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: 12-tone equal temperament
 - frequency: 261.626 Hz
@@ -372,6 +392,7 @@ Composition Parameters:
 - tuningSystem: 7 TET
 
 Open Questions:
+
 - How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?
 - What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?
 - How do performers in practice deviate from theoretical equal temperament when playing?
@@ -394,6 +415,7 @@ Summary:
 This is a comprehensive scientific examination of music theory, covering the physics of sound production in musical instruments, various tuning systems (just intonation, equal temperament, Pythagorean), and psychoacoustic principles of human sound perception. The work systematically explains how vibrating strings produce overtones, how different tuning systems create frequency ratios between musical notes, and how instruments generate sound through various physical mechanisms. It bridges the gap between the mathematical/physical foundations of music and the artistic experience.
 
 Claims:
+
 - [1] [peer_reviewed] A vibrating string with fixed ends can only vibrate at certain frequencies determined by the wave equation, producing a fundamental frequency and overtones at integer multiples
 - [2] [peer_reviewed] The speed of sound in air is approximately 340 meters per second under standard atmospheric conditions and is independent of frequency and intensity within a wide range
 - [3] [peer_reviewed] High frequency components of sound decay faster with distance than low frequency components due to absorption coefficient being proportional to frequency squared
@@ -405,12 +427,14 @@ Claims:
 - [9] [anecdotal] Music appears to serve no obvious adaptive purpose, with Darwin noting it has no direct use in ordinary life habits
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: Just Intonation
 - tuningSystem: Equal Temperament
 - tuningSystem: Pythagorean Tuning
 
 Open Questions:
+
 - How do individual differences in auditory processing affect perception of different tuning systems?
 - What is the optimal tuning system for different musical contexts and instruments?
 - How do environmental factors like temperature and humidity quantitatively affect instrument tuning?
@@ -432,6 +456,7 @@ Summary:
 This comprehensive survey presents frequency as a unifying principle connecting physics, music, mathematics, and biology. It traces how vibration manifests from acoustic wave mechanics through musical harmony to consciousness theories, arguing that 'everything is frequency.' The document synthesizes rigorous acoustics research with frontier theories in quantum biology and vibrational medicine, providing an extensive academic source ecosystem for interdisciplinary study.
 
 Claims:
+
 - [1] [peer_reviewed] Soprano singers use 'tract tuning' technique, actively modifying vocal tract shape to match its first resonant frequency to the fundamental frequency of notes, creating massive resonant boost for projection over orchestras
 - [2] [peer_reviewed] The Pythagorean Comma creates a mathematical impossibility where 12 perfect fifths (3:2 ratio) do not equal 7 octaves, creating a 23.5 cent discrepancy that prevents perfect tuning across all keys
 - [3] [peer_reviewed] Biological macromolecules possess longitudinal vibrational modes in the Terahertz range and can undergo Fröhlich Condensation, channeling energy into coherent vibrational modes for long-range cellular communication
@@ -442,6 +467,7 @@ Claims:
 - [8] [preprint] Exposing cancer cells to specific acoustic frequencies can inhibit their viability through resonance mechanisms similar to shattering glass
 
 Composition Parameters:
+
 - frequency: 30-120 Hz
 - frequency: 20-100 Hz
 - frequency: Terahertz range (10¹² Hz)
@@ -452,6 +478,7 @@ Composition Parameters:
 - note: Octave (2:1 ratio)
 
 Open Questions:
+
 - How do specific frequencies trigger nitric oxide release in cells and what are the optimal parameters?
 - Can Sethares' adaptive tuning algorithms be applied to therapeutic sound design for specific biological systems?
 - What is the relationship between Fröhlich condensation frequencies and traditional healing sound frequencies?
@@ -460,4 +487,3 @@ Open Questions:
 - What are the specific frequency ranges that inhibit cancer cell viability and how do they relate to healthy cell resonances?
 - How does the liquid crystalline matrix of the body respond to different acoustic frequency ranges?
 - Can neural entrainment be optimized for specific therapeutic outcomes by matching brainwave frequencies?
-

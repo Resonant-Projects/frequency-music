@@ -1,16 +1,11 @@
 import type { Accessor } from "solid-js";
 
-export type AuthTokenFetcher = (args: {
-  forceRefreshToken: boolean;
-}) => Promise<string | null>;
+export type AuthTokenFetcher = (args: { forceRefreshToken: boolean }) => Promise<string | null>;
 
 export interface AuthAdapter {
   isLoaded: boolean | Accessor<boolean>;
   isSignedIn: boolean | undefined | Accessor<boolean | undefined>;
-  getToken: (opts: {
-    template?: string;
-    skipCache?: boolean;
-  }) => Promise<string | null>;
+  getToken: (opts: { template?: string; skipCache?: boolean }) => Promise<string | null>;
   orgId?: string | null | Accessor<string | null>;
   orgRole?: string | null | Accessor<string | null>;
 }

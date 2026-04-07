@@ -167,16 +167,13 @@ export const create = mutation({
       const data = encoder.encode(text);
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      rawTextSha256 = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      rawTextSha256 = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
     }
 
     const id = await ctx.db.insert("sources", {
       ...createArgs,
       rawTextSha256,
-      status:
-        createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
+      status: createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
       visibility: "private",
       createdBy: identity.subject,
       createdAt: now,
@@ -267,9 +264,7 @@ export const updateText = mutation({
     const data = encoder.encode(text);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const rawTextSha256 = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const rawTextSha256 = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 
     await ctx.db.patch("sources", args.id, {
       rawText: args.rawText,
@@ -300,10 +295,7 @@ type ExternalUpsertArgs = {
   createdBy?: string;
 };
 
-async function upsertExternalSource(
-  ctx: MutationCtx,
-  args: ExternalUpsertArgs,
-) {
+async function upsertExternalSource(ctx: MutationCtx, args: ExternalUpsertArgs) {
   const now = Date.now();
 
   const existing = await ctx.db
@@ -319,9 +311,7 @@ async function upsertExternalSource(
     const data = encoder.encode(text);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    rawTextSha256 = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    rawTextSha256 = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
   if (!existing) {
@@ -339,9 +329,8 @@ async function upsertExternalSource(
 
   const contentChanged = Boolean(
     text &&
-      rawTextSha256 &&
-      (rawTextSha256 !== existing.rawTextSha256 ||
-        existing.status === "ingested"),
+    rawTextSha256 &&
+    (rawTextSha256 !== existing.rawTextSha256 || existing.status === "ingested"),
   );
 
   await ctx.db.patch("sources", existing._id, {
@@ -402,11 +391,7 @@ export const upsertExternal = internalMutation({
 export const setVisibility = mutation({
   args: {
     id: v.id("sources"),
-    visibility: v.union(
-      v.literal("private"),
-      v.literal("followers"),
-      v.literal("public"),
-    ),
+    visibility: v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -533,14 +518,11 @@ export const createFromUrlAndQueue = action({
       return { ...result, queued: false };
     }
 
-    const workflow = await ctx.runMutation(
-      api.workflows.startSingleSourceExtraction,
-      {
-        sourceId: result.id,
-        model: args.model,
-        devBypassSecret: args.devBypassSecret,
-      },
-    );
+    const workflow = await ctx.runMutation(api.workflows.startSingleSourceExtraction, {
+      sourceId: result.id,
+      model: args.model,
+      devBypassSecret: args.devBypassSecret,
+    });
 
     return {
       ...result,
@@ -580,14 +562,11 @@ export const createFromYouTubeAndQueue = action({
       return { ...result, queued: false };
     }
 
-    const workflow = await ctx.runMutation(
-      api.workflows.startSingleSourceExtraction,
-      {
-        sourceId: result.id,
-        model: args.model,
-        devBypassSecret: args.devBypassSecret,
-      },
-    );
+    const workflow = await ctx.runMutation(api.workflows.startSingleSourceExtraction, {
+      sourceId: result.id,
+      model: args.model,
+      devBypassSecret: args.devBypassSecret,
+    });
 
     return {
       ...result,

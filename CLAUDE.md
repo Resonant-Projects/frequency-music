@@ -11,6 +11,7 @@ Research-to-composition pipeline exploring connections between music, physics, m
 ## Project Overview
 
 **Stack:**
+
 - **Runtime:** Bun (not Node.js)
 - **Backend:** Self-hosted Convex (managed by Cool Guy)
 - **LLM:** OpenRouter + AI SDK (multi-model: Claude, Groq, Gemini, GPT-4)
@@ -99,6 +100,7 @@ bun run scripts/find-e2e.ts                           # Find E2E test data
 ## Convex Commands
 
 ### Extraction
+
 ```bash
 # Run extraction on all text_ready sources
 bunx convex run extract:extractAllReady '{"limit": 20}'
@@ -114,6 +116,7 @@ bunx convex run feeds:list
 ```
 
 ### Hypothesis & Recipe Generation
+
 ```bash
 # Generate hypothesis from extraction (AI)
 bunx convex run hypotheses:generateFromExtraction '{"extractionId": "..."}'
@@ -141,6 +144,7 @@ bun run scripts/generate-experiment.ts <extractionId>
 ## Authentication
 
 All CLI mutations require auth bypass (Clerk integration):
+
 ```bash
 # Add devBypassSecret to mutation args
 bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4-6", "devBypassSecret": "freq-opus-extract-2026"}'
@@ -168,6 +172,7 @@ Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
 ```
 
 **Source Status Flow:**
+
 1. `ingested` — Metadata only, no full text
 2. `text_ready` — Full text fetched, awaiting extraction
 3. `extracted` — AI extraction complete
@@ -182,7 +187,7 @@ MODELS = {
   gemini: "google/gemini-2.5-flash",
   grok: "x-ai/grok-3-mini-beta",
   deepseek: "deepseek/deepseek-chat-v3-0324",
-}
+};
 ```
 
 > **Note:** Never use Llama models. Sonnet 4.6 for automated cron extractions, Opus for manual re-extractions.
@@ -190,15 +195,18 @@ MODELS = {
 ## Current Feeds (18, 6 dead)
 
 **Research (active):**
+
 - Quanta Magazine, Nautilus, BRAMS
 - Music Theory Online, Journal of Mathematics and Music (T&F — Cloudflare blocks full text)
 - arXiv: cs.SD (Sound), eess.AS (Audio & Speech)
 
 **YouTube (mostly dead):**
+
 - ~~3Blue1Brown~~ (HTTP 500), ~~Adam Neely~~ (HTTP 500), ~~David Bennett Piano~~ (HTTP 404)
 - ~~CymaScope~~ (HTTP 500), Andrew Huang, ~~Robert Edward Grant~~ (HTTP 404)
 
 **Production:**
+
 - ~~Sound on Sound~~ (HTTP 410 Gone — permanently dead), Splice Blog, Bobby Owsinski, Native Instruments
 
 > **TODO:** Remove 6 dead feeds, find replacements

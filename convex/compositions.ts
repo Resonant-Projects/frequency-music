@@ -78,9 +78,7 @@ export const get = query({
     const recipe = await ctx.db.get("recipes", composition.recipeId);
     const listeningSessions = await ctx.db
       .query("listeningSessions")
-      .withIndex("by_compositionId_createdAt", (q) =>
-        q.eq("compositionId", composition._id),
-      )
+      .withIndex("by_compositionId_createdAt", (q) => q.eq("compositionId", composition._id))
       .order("desc")
       .collect();
 
@@ -113,41 +111,24 @@ export const getLineage = query({
 
     const children = await ctx.db
       .query("compositions")
-      .withIndex("by_revisionParentId_updatedAt", (q) =>
-        q.eq("revisionParentId", composition._id),
-      )
+      .withIndex("by_revisionParentId_updatedAt", (q) => q.eq("revisionParentId", composition._id))
       .order("desc")
       .collect();
 
     const recipe = await ctx.db.get("recipes", composition.recipeId);
-    const hypothesis = recipe
-      ? await ctx.db.get("hypotheses", recipe.hypothesisId)
-      : null;
-    const thesis = hypothesis?.thesisId
-      ? await ctx.db.get("theses", hypothesis.thesisId)
-      : null;
+    const hypothesis = recipe ? await ctx.db.get("hypotheses", recipe.hypothesisId) : null;
+    const thesis = hypothesis?.thesisId ? await ctx.db.get("theses", hypothesis.thesisId) : null;
     const sources = hypothesis
       ? (
-          await Promise.all(
-            hypothesis.sourceIds.map((sourceId) =>
-              ctx.db.get("sources", sourceId),
-            ),
-          )
-        ).filter(
-          (source): source is NonNullable<typeof source> => source !== null,
-        )
+          await Promise.all(hypothesis.sourceIds.map((sourceId) => ctx.db.get("sources", sourceId)))
+        ).filter((source): source is NonNullable<typeof source> => source !== null)
       : [];
     const extractions = hypothesis
-      ? await loadExtractionsForHypothesisSourceIds(
-          ctx.db,
-          hypothesis.sourceIds,
-        )
+      ? await loadExtractionsForHypothesisSourceIds(ctx.db, hypothesis.sourceIds)
       : [];
     const listeningSessions = await ctx.db
       .query("listeningSessions")
-      .withIndex("by_compositionId_createdAt", (q) =>
-        q.eq("compositionId", composition._id),
-      )
+      .withIndex("by_compositionId_createdAt", (q) => q.eq("compositionId", composition._id))
       .order("desc")
       .collect();
 
@@ -189,11 +170,7 @@ export const create = mutation({
     title: v.string(),
     recipeId: v.id("recipes"),
     artifactType: v.optional(
-      v.union(
-        v.literal("microStudy"),
-        v.literal("expandedStudy"),
-        v.literal("fullTrack"),
-      ),
+      v.union(v.literal("microStudy"), v.literal("expandedStudy"), v.literal("fullTrack")),
     ),
     projectNotesMd: v.optional(v.string()),
     version: v.optional(v.string()),
@@ -210,30 +187,20 @@ export const create = mutation({
     if (!recipe) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Recipe not found" });
     }
-    if (
-      createArgs.revisionParentId &&
-      !createArgs.revisionVariable?.trim().length
-    ) {
+    if (createArgs.revisionParentId && !createArgs.revisionVariable?.trim().length) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
         message: "revisionVariable is required when revisionParentId is set",
       });
     }
-    if (
-      !createArgs.revisionParentId &&
-      createArgs.revisionVariable?.trim().length
-    ) {
+    if (!createArgs.revisionParentId && createArgs.revisionVariable?.trim().length) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
-        message:
-          "revisionParentId is required when revisionVariable is provided",
+        message: "revisionParentId is required when revisionVariable is provided",
       });
     }
     if (createArgs.revisionParentId) {
-      const parent = await ctx.db.get(
-        "compositions",
-        createArgs.revisionParentId,
-      );
+      const parent = await ctx.db.get("compositions", createArgs.revisionParentId);
       if (!parent) {
         throw new ConvexError({
           code: "NOT_FOUND",
@@ -253,10 +220,7 @@ export const create = mutation({
       revisionVariable: createArgs.revisionVariable?.trim() || undefined,
       status: "idea",
       visibility: "private",
-      createdBy:
-        identity.subject === "system"
-          ? "system"
-          : (identity.subject as Id<"users">),
+      createdBy: identity.subject === "system" ? "system" : (identity.subject as Id<"users">),
       createdAt: now,
       updatedAt: now,
     });
@@ -268,11 +232,7 @@ export const update = mutation({
     id: v.id("compositions"),
     title: v.optional(v.string()),
     artifactType: v.optional(
-      v.union(
-        v.literal("microStudy"),
-        v.literal("expandedStudy"),
-        v.literal("fullTrack"),
-      ),
+      v.union(v.literal("microStudy"), v.literal("expandedStudy"), v.literal("fullTrack")),
     ),
     projectNotesMd: v.optional(v.string()),
     links: v.optional(
@@ -296,11 +256,7 @@ export const update = mutation({
       ),
     ),
     visibility: v.optional(
-      v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
+      v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
     ),
     devBypassSecret: v.optional(v.string()),
   },
@@ -335,8 +291,7 @@ export const update = mutation({
     ) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
-        message:
-          "revisionParentId is required when revisionVariable is provided",
+        message: "revisionParentId is required when revisionVariable is provided",
       });
     }
     if (
@@ -346,8 +301,7 @@ export const update = mutation({
     ) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
-        message:
-          "revisionParentId is required when revisionVariable is provided",
+        message: "revisionParentId is required when revisionVariable is provided",
       });
     }
     if (revisionParentId) {
@@ -363,8 +317,7 @@ export const update = mutation({
       ...patch,
       ...(revisionParentId !== undefined
         ? {
-            revisionParentId:
-              revisionParentId === null ? undefined : revisionParentId,
+            revisionParentId: revisionParentId === null ? undefined : revisionParentId,
           }
         : {}),
       ...(revisionVariable !== undefined

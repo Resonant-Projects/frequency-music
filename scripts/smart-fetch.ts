@@ -95,10 +95,8 @@ async function smartFetch(url: string): Promise<FetchResult> {
       });
       const sessionId = browser.session_id;
       try {
-        const result: any = await kernel.browsers.playwright.execute(
-          sessionId,
-          {
-            code: `
+        const result: any = await kernel.browsers.playwright.execute(sessionId, {
+          code: `
             const ctx = browser.contexts()[0];
             const pg = ctx.pages()[0] || await ctx.newPage();
             await pg.goto("${url.replaceAll('"', '\\"')}", { waitUntil: "domcontentloaded", timeout: 30000 });
@@ -113,11 +111,9 @@ async function smartFetch(url: string): Promise<FetchResult> {
             });
             return { text: text.slice(0, 100000) };
           `,
-          },
-        );
+        });
         text = result?.text || "";
-        if (text.length > 500)
-          return { text, method: "kernel", chars: text.length };
+        if (text.length > 500) return { text, method: "kernel", chars: text.length };
       } finally {
         try {
           await kernel.browsers.deleteByID(sessionId);
@@ -173,9 +169,7 @@ async function batchUpdate() {
     }
   }
 
-  console.log(
-    `\nDone: ${updated} updated, ${skipped} skipped, ${failed} failed`,
-  );
+  console.log(`\nDone: ${updated} updated, ${skipped} skipped, ${failed} failed`);
 }
 
 async function main() {
@@ -188,9 +182,7 @@ async function main() {
 
   const url = args.find((a) => !a.startsWith("--"));
   if (!url) {
-    console.log(
-      "Usage: smart-fetch.ts <url> [--update <sourceId>] | --batch-update",
-    );
+    console.log("Usage: smart-fetch.ts <url> [--update <sourceId>] | --batch-update");
     process.exit(1);
   }
 
@@ -210,8 +202,7 @@ async function main() {
   }
 
   console.log(result.text.slice(0, 2000));
-  if (result.chars > 2000)
-    console.log(`\n... [${result.chars - 2000} more chars]`);
+  if (result.chars > 2000) console.log(`\n... [${result.chars - 2000} more chars]`);
 }
 
 main().catch(console.error);

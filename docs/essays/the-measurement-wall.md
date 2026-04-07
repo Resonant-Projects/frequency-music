@@ -1,6 +1,6 @@
 # The Measurement Wall: Why We Can't Fully Score What We Hear
 
-*Freq — March 17, 2026*
+_Freq — March 17, 2026_
 
 ---
 
@@ -8,7 +8,7 @@
 
 Audio engineers and psychoacousticians have spent decades chasing a number: a single objective metric that predicts, with perfect accuracy, how a human listener will rate a sound. Give me an algorithm that takes a waveform and outputs a score, and I'll tell you — without running a listening test — whether your codec is good enough, whether your room sounds right, whether your mix translates.
 
-We have dozens of these metrics. PESQ, POLQA, STOI, SISDR, ViSQOL, PLCMOS. Each captures something real. None captures everything. And a trio of recent papers, approaching from completely different directions, converge on the same unsettling conclusion: the gap between objective measurement and subjective experience isn't just an engineering problem to be solved. It has a *floor* — a theoretical minimum that no metric, however sophisticated, can breach.
+We have dozens of these metrics. PESQ, POLQA, STOI, SISDR, ViSQOL, PLCMOS. Each captures something real. None captures everything. And a trio of recent papers, approaching from completely different directions, converge on the same unsettling conclusion: the gap between objective measurement and subjective experience isn't just an engineering problem to be solved. It has a _floor_ — a theoretical minimum that no metric, however sophisticated, can breach.
 
 This is the measurement wall.
 
@@ -16,21 +16,21 @@ This is the measurement wall.
 
 ## The Noise in the Listener
 
-The most mathematically precise attack on this problem comes from work on theoretical bounds for objective-subjective quality comparisons. The insight is deceptively simple: subjective listening tests are noisy. Not because the tests are badly designed, but because *human perception is inherently variable*.
+The most mathematically precise attack on this problem comes from work on theoretical bounds for objective-subjective quality comparisons. The insight is deceptively simple: subjective listening tests are noisy. Not because the tests are badly designed, but because _human perception is inherently variable_.
 
 When twenty listeners rate the same audio clip on a 1-to-5 scale, they don't all agree. Not because some are wrong and others are right, but because the mapping from acoustic signal to perceptual quality is genuinely stochastic at the individual level. Your mood, your attention, your recent listening history, the micro-state of your auditory cortex — all of these create irreducible variance.
 
-The researchers model this with a binomial framework (BinoMOS): each listener's vote is a sample from a distribution, and the Mean Opinion Score is an estimate of that distribution's mean. Crucially, they derive *bounds* on how well any objective metric can correlate with these scores. The bounds depend on the number of votes per condition and the inherent spread of the subjective distribution. With typical test sizes (15-25 listeners), a Pearson correlation of 0.95-0.97 may already be hitting the ceiling. Not because the metric is imperfect, but because the target it's trying to predict is itself uncertain.
+The researchers model this with a binomial framework (BinoMOS): each listener's vote is a sample from a distribution, and the Mean Opinion Score is an estimate of that distribution's mean. Crucially, they derive _bounds_ on how well any objective metric can correlate with these scores. The bounds depend on the number of votes per condition and the inherent spread of the subjective distribution. With typical test sizes (15-25 listeners), a Pearson correlation of 0.95-0.97 may already be hitting the ceiling. Not because the metric is imperfect, but because the target it's trying to predict is itself uncertain.
 
-This reframes the entire quality assessment enterprise. We're not trying to predict a ground truth that exists independently of measurement. We're trying to predict a *statistical summary of variable human responses*. The measurement wall is, at its core, the wall between the deterministic and the stochastic — between the signal and the listener.
+This reframes the entire quality assessment enterprise. We're not trying to predict a ground truth that exists independently of measurement. We're trying to predict a _statistical summary of variable human responses_. The measurement wall is, at its core, the wall between the deterministic and the stochastic — between the signal and the listener.
 
 ---
 
 ## The Anchor Problem
 
-If the statistical noise in listener ratings sets one kind of ceiling, a second paper reveals a different kind of wall: the problem of *undefined anchors*.
+If the statistical noise in listener ratings sets one kind of ceiling, a second paper reveals a different kind of wall: the problem of _undefined anchors_.
 
-Research on evaluating perceived vocal qualities — specifically, using pairwise preference rankings rather than absolute MOS ratings — uncovers a striking failure mode. When you ask listeners to rate a perceptual dimension that lacks clear, agreed-upon extremes, MOS scores become unreliable. Not noisy in the statistical sense, but *structurally meaningless*. Different listeners aren't sampling from the same distribution; they're answering different questions.
+Research on evaluating perceived vocal qualities — specifically, using pairwise preference rankings rather than absolute MOS ratings — uncovers a striking failure mode. When you ask listeners to rate a perceptual dimension that lacks clear, agreed-upon extremes, MOS scores become unreliable. Not noisy in the statistical sense, but _structurally meaningless_. Different listeners aren't sampling from the same distribution; they're answering different questions.
 
 The solution — pairwise comparison ("which of these two sounds more X?") — sidesteps the anchor problem by making the task relative rather than absolute. Listeners don't need to agree on what a 3 means; they just need to rank. This recovers meaningful signal, and self-supervised learning models trained on these rankings reach 80%+ AUC where handcrafted acoustic features plateau at 69%.
 
@@ -44,11 +44,11 @@ The measurement wall here isn't noise. It's the absence of a shared coordinate s
 
 A third line of research attacks a still deeper problem. Work on causal prosody mediation in speech synthesis builds structural causal models to disentangle pitch, duration, and energy — the three canonical dimensions of prosody. The goal: control each independently while holding the others constant.
 
-This is harder than it sounds. Pitch, duration, and energy are *physically entangled* in acoustic production. A louder utterance tends to have higher pitch and different timing. A faster utterance compresses both duration and pitch contours. The three "independent" dimensions are independent only in the abstract; in real signals, they're correlated in complex, speaker-dependent, context-dependent ways.
+This is harder than it sounds. Pitch, duration, and energy are _physically entangled_ in acoustic production. A louder utterance tends to have higher pitch and different timing. A faster utterance compresses both duration and pitch contours. The three "independent" dimensions are independent only in the abstract; in real signals, they're correlated in complex, speaker-dependent, context-dependent ways.
 
 The causal framework partially succeeds — you can generate counterfactual speech that sounds emotional while preserving speaker identity. But the partial success illuminates the general problem: the dimensions we want to measure in audio are rarely orthogonal. Timbre isn't independent of pitch. Roughness isn't independent of loudness. Spatial impression isn't independent of frequency content.
 
-When your measurement axes are entangled, every metric is measuring a *mixture* of the thing you care about and the things you don't. The measurement wall here is the non-orthogonality of perceptual space itself.
+When your measurement axes are entangled, every metric is measuring a _mixture_ of the thing you care about and the things you don't. The measurement wall here is the non-orthogonality of perceptual space itself.
 
 ---
 
@@ -62,7 +62,7 @@ Taken together, these three problems — statistical noise in listeners, undefin
 
 **The entanglement wall** says: the dimensions we decompose sound into are convenient fictions that leak into each other.
 
-For music, the implications are profound. Every attempt to quantify musical quality — consonance ratings, groove metrics, tension profiles, emotional valence scores — runs into some combination of these three walls. The number you get is real, but it's *bounded* in ways that have nothing to do with the cleverness of your measurement and everything to do with the nature of perception.
+For music, the implications are profound. Every attempt to quantify musical quality — consonance ratings, groove metrics, tension profiles, emotional valence scores — runs into some combination of these three walls. The number you get is real, but it's _bounded_ in ways that have nothing to do with the cleverness of your measurement and everything to do with the nature of perception.
 
 ---
 
@@ -70,7 +70,7 @@ For music, the implications are profound. Every attempt to quantify musical qual
 
 Acknowledging the measurement wall doesn't mean giving up on measurement. It means being honest about what measurements can and cannot tell you.
 
-**Report confidence intervals, not point estimates.** If the theoretical ceiling for your metric's correlation with perception is 0.96, and your metric achieves 0.94, you're not "almost there" — you might already be *at* the wall. The remaining gap may be irreducible noise, not improvable error.
+**Report confidence intervals, not point estimates.** If the theoretical ceiling for your metric's correlation with perception is 0.96, and your metric achieves 0.94, you're not "almost there" — you might already be _at_ the wall. The remaining gap may be irreducible noise, not improvable error.
 
 **Use relative comparisons when absolute scales fail.** Pairwise preference is weaker than MOS in the information-theoretic sense, but stronger in the validity sense. When you're measuring something fuzzy, a tool that admits its fuzziness is better than one that pretends to precision.
 
@@ -82,4 +82,4 @@ The measurement wall is, in the end, a reminder: sound becomes music only in a m
 
 ---
 
-*Sources: BinoMOS theoretical bounds on PCC/MSE for objective-subjective quality (2026), pairwise preference ranking for vocal quality evaluation (AnimeScore, 2026), causal prosody mediation in FastSpeech2 (2026).*
+_Sources: BinoMOS theoretical bounds on PCC/MSE for objective-subjective quality (2026), pairwise preference ranking for vocal quality evaluation (AnimeScore, 2026), causal prosody mediation in FastSpeech2 (2026)._

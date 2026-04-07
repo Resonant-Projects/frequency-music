@@ -1,10 +1,4 @@
-export type DisplaySectorId =
-  | "math"
-  | "wave"
-  | "music"
-  | "psycho"
-  | "geometry"
-  | "synthesis";
+export type DisplaySectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
 
 export type ConceptDomainRegistryEntry = {
   name: string;
@@ -72,21 +66,14 @@ export function getSeedConceptDomainEntries(): ConceptDomainRegistryEntry[] {
   return seedConceptDomainEntries.map((entry) => ({ ...entry }));
 }
 
-export function isConceptDomainRegistrySeeded(
-  entries: ConceptDomainRegistryEntry[],
-): boolean {
+export function isConceptDomainRegistrySeeded(entries: ConceptDomainRegistryEntry[]): boolean {
   const names = new Set(
-    entries
-      .map((entry) => entry.name.toLowerCase().trim())
-      .filter((name) => name.length > 0),
+    entries.map((entry) => entry.name.toLowerCase().trim()).filter((name) => name.length > 0),
   );
   return seedConceptDomainEntries.every((entry) => names.has(entry.name));
 }
 
-export function resolveDomainsForSector(
-  entries: ConceptDomainRegistryEntry[],
-  sectorId: string,
-) {
+export function resolveDomainsForSector(entries: ConceptDomainRegistryEntry[], sectorId: string) {
   const sector = normalizeSectorId(sectorId);
   const registrySeeded = isConceptDomainRegistrySeeded(entries);
   if (!registrySeeded) {

@@ -1,10 +1,13 @@
 ## Weekly Brief — Template (Friday Output)
 
 ### Week of: YYYY-MM-DD
+
 #### Highlights (5 bullets max)
+
 - [ ] …
 
 #### New Inputs
+
 - Sources ingested: N
 - Notes ingested (Notion/manual): N
 - Items needing review: N
@@ -14,16 +17,20 @@
 ## Experiment Card 1 (max 3 cards per brief)
 
 ### 1) Hypothesis
-**Statement:**  
+
+**Statement:**
+
 > If (mechanism/structure) then (bodily/musical effect) under (conditions).
 
 **Targets (0–5):**
-- Bodily pleasantness: ≥ _
-- Goosebumps: ≥ _
-- Ear consonance: ≥ _
-- Ease of composability: ≥ _
+
+- Bodily pleasantness: ≥ \_
+- Goosebumps: ≥ \_
+- Ear consonance: ≥ \_
+- Ease of composability: ≥ \_
 
 ### 2) Rationale (traceability)
+
 - Key claims:
   - Claim A (EvidenceType, Actionability) — Source link
   - Claim B (EvidenceType, Actionability) — Source link
@@ -31,8 +38,9 @@
   - Your relevant Notion note(s)
 
 ### 3) Protocol (test plan)
+
 - Study type: `litmus` or `comparison (A/B)`
-- Duration: __ seconds
+- Duration: \_\_ seconds
 - Panel: self / wife / colleague
 - Listening context plan:
   - monitors/headphones:
@@ -46,11 +54,12 @@
   - Artifact ID / link:
 
 ### 4) Micro-Study Recipe (DAW-ready)
+
 Default canvas: **16–32 bars, 4/4**
 
-- BPM: __ (or range __–__)
-- Tuning system: __
-- Reference pitch: A4 = __ Hz (if applicable)
+- BPM: ** (or range **–\_\_)
+- Tuning system: \_\_
+- Reference pitch: A4 = \_\_ Hz (if applicable)
 - Pitch/harmony rules:
   - Allowed intervals/ratios:
   - Avoid:
@@ -66,15 +75,18 @@ Default canvas: **16–32 bars, 4/4**
   - “If promising, expand by …”
 
 ### 5) Exit Criteria (decision rules)
+
 - Expand if: …
 - Revise if: …
 - Retire if: …
 
 ### 6) Publishing note (optional)
+
 - Safe-to-publish now? `yes/no`
 - If yes: public summary angle + citations
 
 ---
 
 ## Backlog (Do not exceed 5)
+
 - [ ] Hypothesis ideas queued for next week

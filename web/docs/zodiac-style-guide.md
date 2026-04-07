@@ -16,7 +16,7 @@ The ZODIAC design distills the frequency-music project's aesthetic into an astro
 
 ## 1. Design Philosophy
 
-**Name:** *Illuminated Astrolabe*
+**Name:** _Illuminated Astrolabe_
 
 The ZODIAC is neither a chart nor a graph — it is an instrument. Medieval astrolabes were precision tools for navigating the cosmos; this design treats a knowledge graph with the same gravity. Every visual decision follows from three principles:
 
@@ -30,73 +30,73 @@ The ZODIAC is neither a chart nor a graph — it is an instrument. Medieval astr
 
 ### Primary Palette
 
-| Token | Hex | Role |
-|---|---|---|
-| `void` | `#0d0620` | Background, deep space canvas |
-| `gold` | `#c8a84b` | Primary accent — pipeline, connections, hub, tick marks |
-| `violet` | `#8b5cf6` | Secondary — hypothesis domains, speculation, inner rings |
-| `cream` | `#f5f0e8` | Tertiary — established knowledge domains, body text |
-| `glow-inner` | `#1a0f35` | Radial gradient inner glow (slightly lighter void) |
+| Token        | Hex       | Role                                                     |
+| ------------ | --------- | -------------------------------------------------------- |
+| `void`       | `#0d0620` | Background, deep space canvas                            |
+| `gold`       | `#c8a84b` | Primary accent — pipeline, connections, hub, tick marks  |
+| `violet`     | `#8b5cf6` | Secondary — hypothesis domains, speculation, inner rings |
+| `cream`      | `#f5f0e8` | Tertiary — established knowledge domains, body text      |
+| `glow-inner` | `#1a0f35` | Radial gradient inner glow (slightly lighter void)       |
 
 ### Domain Color Assignments
 
-| Domain | Color Token | Hex |
-|---|---|---|
-| Mathematics | `violet` | `#8b5cf6` |
-| Wave Physics | `gold` | `#c8a84b` |
-| Music Theory | `cream` | `#f5f0e8` |
-| Psychoacoustics | `violet` | `#8b5cf6` |
-| Geometry | `gold` | `#c8a84b` |
-| Synthesis | `cream` | `#f5f0e8` |
+| Domain          | Color Token | Hex       |
+| --------------- | ----------- | --------- |
+| Mathematics     | `violet`    | `#8b5cf6` |
+| Wave Physics    | `gold`      | `#c8a84b` |
+| Music Theory    | `cream`     | `#f5f0e8` |
+| Psychoacoustics | `violet`    | `#8b5cf6` |
+| Geometry        | `gold`      | `#c8a84b` |
+| Synthesis       | `cream`     | `#f5f0e8` |
 
-*Pattern: violet for the speculative/mathematical, gold for the physical/structural, cream for the practiced/compositional.*
+_Pattern: violet for the speculative/mathematical, gold for the physical/structural, cream for the practiced/compositional._
 
 ### Opacity Scale
 
 Opacity communicates state, not style. These are the semantic vocabulary:
 
-| State | Opacity | Applied to |
-|---|---|---|
-| Background dot grid | 0.022 | Radial-gradient dot pattern |
-| Pipeline rings | 0.22 | Dashed concentric inner rings |
-| Sector fill (resting) | 0.03 | Sector ring-arc fill |
-| Sector arcs (resting) | 0.30–0.38 | Inner and outer arc strokes |
-| Spoke lines (resting) | 0.22 | Radial sector boundary lines |
-| Source dots (pulse low) | 0.40 | Pulsing scatter dots (trough) |
-| Arc labels (resting) | 0.58 | Curved domain name text |
-| Tick marks (minor) | 0.18 | 5° degree marks |
-| Tick marks (major) | 0.45 | 30° degree marks |
-| Ring labels | 0.38 | SOURCES/EXTRACT/etc. text |
-| Sector fill (active) | 0.10 | Sector ring-arc fill on hover/select |
-| Sector arcs (active) | 0.75–0.85 | Arc strokes on hover/select |
-| Arc labels (active) | 1.00 | Curved text on hover/select |
-| Source dots (pulse high) | 0.90 | Pulsing scatter dots (peak) |
-| Hub dot | 0.90 | Center gold circle |
-| Hub outer ring | 0.88 | Outer hub circle |
+| State                    | Opacity   | Applied to                           |
+| ------------------------ | --------- | ------------------------------------ |
+| Background dot grid      | 0.022     | Radial-gradient dot pattern          |
+| Pipeline rings           | 0.22      | Dashed concentric inner rings        |
+| Sector fill (resting)    | 0.03      | Sector ring-arc fill                 |
+| Sector arcs (resting)    | 0.30–0.38 | Inner and outer arc strokes          |
+| Spoke lines (resting)    | 0.22      | Radial sector boundary lines         |
+| Source dots (pulse low)  | 0.40      | Pulsing scatter dots (trough)        |
+| Arc labels (resting)     | 0.58      | Curved domain name text              |
+| Tick marks (minor)       | 0.18      | 5° degree marks                      |
+| Tick marks (major)       | 0.45      | 30° degree marks                     |
+| Ring labels              | 0.38      | SOURCES/EXTRACT/etc. text            |
+| Sector fill (active)     | 0.10      | Sector ring-arc fill on hover/select |
+| Sector arcs (active)     | 0.75–0.85 | Arc strokes on hover/select          |
+| Arc labels (active)      | 1.00      | Curved text on hover/select          |
+| Source dots (pulse high) | 0.90      | Pulsing scatter dots (peak)          |
+| Hub dot                  | 0.90      | Center gold circle                   |
+| Hub outer ring           | 0.88      | Outer hub circle                     |
 
 ---
 
 ## 3. Typography
 
 **Primary typeface:** `'Cormorant Garamond', Georgia, serif`
-*Used for all labels, panel text, arc labels, and micro-typography.*
+_Used for all labels, panel text, arc labels, and micro-typography._
 
 ### Type Scale
 
-| Use | Size | Weight | Letter-spacing | Case |
-|---|---|---|---|---|
-| Panel title | 34px | 300 (light) | default | mixed |
-| Panel em highlight | 34px | 300 | default | italic |
-| Domain label (panel) | 22px | 300 | default | title |
-| Panel body | 13px | 300 | default | sentence |
-| Domain list items | 12.5px | 400 | default | title |
-| Panel subheads | 12.5px | 400 | default | sentence |
-| Sector arc labels | 10.5px | 400 | 0.20em | **ALL CAPS** |
-| Source count (midpoint) | 9.5px | 400 | default | numeric |
-| Micro section labels | 9px | 400 | 0.40em | **ALL CAPS** |
-| Hub label | 9px | 400 | 0.28em | **ALL CAPS** |
-| Ring labels | 7px | 400 | 0.18em | **ALL CAPS** |
-| Pipeline codes | 7.5px | 400 | 0.20em | **ALL CAPS** |
+| Use                     | Size   | Weight      | Letter-spacing | Case         |
+| ----------------------- | ------ | ----------- | -------------- | ------------ |
+| Panel title             | 34px   | 300 (light) | default        | mixed        |
+| Panel em highlight      | 34px   | 300         | default        | italic       |
+| Domain label (panel)    | 22px   | 300         | default        | title        |
+| Panel body              | 13px   | 300         | default        | sentence     |
+| Domain list items       | 12.5px | 400         | default        | title        |
+| Panel subheads          | 12.5px | 400         | default        | sentence     |
+| Sector arc labels       | 10.5px | 400         | 0.20em         | **ALL CAPS** |
+| Source count (midpoint) | 9.5px  | 400         | default        | numeric      |
+| Micro section labels    | 9px    | 400         | 0.40em         | **ALL CAPS** |
+| Hub label               | 9px    | 400         | 0.28em         | **ALL CAPS** |
+| Ring labels             | 7px    | 400         | 0.18em         | **ALL CAPS** |
+| Pipeline codes          | 7.5px  | 400         | 0.20em         | **ALL CAPS** |
 
 ### Typographic Rules
 
@@ -163,12 +163,12 @@ All ticks: stroke color #c8a84b
 
 Four node types exist in the system:
 
-| Node Type | Shape | Size | Z-position (3D) | Color |
-|---|---|---|---|---|
-| **Hub** | Circle + center dot | r=36 outer / r=6 dot | Z=0 | `#c8a84b` gold |
-| **Domain** | Arc-bounded sector | r=175–265 | Z=0 | Per-domain color |
-| **Source** | Circle scatter dot | r=3.2 | Z=30–60 (above disc) | Per-domain color |
-| **Pipeline stage** | Dashed ring | r=58–160 | Z=-10 to Z=-40 (below disc) | Alternating gold/violet |
+| Node Type          | Shape               | Size                 | Z-position (3D)             | Color                   |
+| ------------------ | ------------------- | -------------------- | --------------------------- | ----------------------- |
+| **Hub**            | Circle + center dot | r=36 outer / r=6 dot | Z=0                         | `#c8a84b` gold          |
+| **Domain**         | Arc-bounded sector  | r=175–265            | Z=0                         | Per-domain color        |
+| **Source**         | Circle scatter dot  | r=3.2                | Z=30–60 (above disc)        | Per-domain color        |
+| **Pipeline stage** | Dashed ring         | r=58–160             | Z=-10 to Z=-40 (below disc) | Alternating gold/violet |
 
 ### Source Dot Placement
 
@@ -191,8 +191,13 @@ y = cy + dot.r × sin(angle)
 
 ```css
 @keyframes z3-pulse {
-  0%, 100% { opacity: 0.40 }
-  50%       { opacity: 0.90 }
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
 .z3-dot {
   animation: z3-pulse ease-in-out infinite alternate;
@@ -201,7 +206,7 @@ y = cy + dot.r × sin(angle)
 
 **Duration:** `2.0 + (dotIndex × 0.5) + (sectorIndex × 0.1)` seconds
 **Delay:** `(dotIndex × 0.35) + (sectorIndex × 0.2)` seconds
-*Staggered so no two dots pulse identically — creates organic breathing.*
+_Staggered so no two dots pulse identically — creates organic breathing._
 
 ### Transition Timing
 
@@ -237,7 +242,7 @@ Two SVG blur-merge filters define the glow vocabulary:
 </filter>
 ```
 
-*Rule: `z3-glow` (σ=5) for hub and permanent glow elements. `z3-sm` (σ=2.5) for interaction-triggered glow on hover/select only.*
+_Rule: `z3-glow` (σ=5) for hub and permanent glow elements. `z3-sm` (σ=2.5) for interaction-triggered glow on hover/select only._
 
 ---
 
@@ -315,31 +320,31 @@ SVG angle θ   → Three.js: x = r·cos(θ), y = -r·sin(θ)
 ### Scene Setup
 
 ```typescript
-scene.background = new THREE.Color('#0d0620')
-scene.fog = new THREE.FogExp2('#0d0620', 0.0008)
+scene.background = new THREE.Color("#0d0620");
+scene.fog = new THREE.FogExp2("#0d0620", 0.0008);
 
-camera.position.set(0, -120, 520)  // slightly below and in front
+camera.position.set(0, -120, 520); // slightly below and in front
 
 // Post-processing: RenderPass → UnrealBloomPass
-UnrealBloomPass: strength=1.2, radius=0.6, threshold=0.3
+UnrealBloomPass: ((strength = 1.2), (radius = 0.6), (threshold = 0.3));
 ```
 
 ### 3D Edge Types
 
-| Edge | Geometry | Z control |
-|---|---|---|
-| Hub → Domain | Straight Line | Z=0 |
+| Edge            | Geometry                                  | Z control   |
+| --------------- | ----------------------------------------- | ----------- |
+| Hub → Domain    | Straight Line                             | Z=0         |
 | Domain → Source | QuadraticBezierCurve3, control point Z=80 | Arcs upward |
-| Source → Claim | Dashed Line2 (zoom-unlocked) | Z=50–80 |
+| Source → Claim  | Dashed Line2 (zoom-unlocked)              | Z=50–80     |
 
 ### OrbitControls Defaults
 
 ```typescript
-controls.autoRotate = true
-controls.autoRotateSpeed = 0.15   // slow drift
-controls.minDistance = 200
-controls.maxDistance = 1200
-controls.maxPolarAngle = Math.PI * 0.72  // don't go under disc
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.15; // slow drift
+controls.minDistance = 200;
+controls.maxDistance = 1200;
+controls.maxPolarAngle = Math.PI * 0.72; // don't go under disc
 ```
 
 ### CSS3DRenderer for Labels
@@ -384,6 +389,7 @@ cd web && bun run dev     # navigate to /
 ```
 
 Visual checklist:
+
 - [ ] Deep indigo void background with faint dot grid
 - [ ] 6 sector arcs glow in domain colors on hover
 - [ ] Source spheres float above the disc plane

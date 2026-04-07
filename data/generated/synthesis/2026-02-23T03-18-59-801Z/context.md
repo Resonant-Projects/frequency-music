@@ -23,6 +23,7 @@ Selected 8/8 from 35 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - equal temperament: 2
 - just intonation: 2
 - frequency ratios: 2
@@ -127,6 +128,7 @@ Selected 8/8 from 35 eligible candidates.
 - mathematics: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 12
 - harmonicprofile: 5
 - frequency: 4
@@ -135,6 +137,7 @@ Selected 8/8 from 35 eligible candidates.
 - rhythm: 1
 
 ### Evidence Distribution
+
 - peer_reviewed: 15
 - anecdotal: 7
 - speculative: 6
@@ -159,6 +162,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -169,6 +173,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -181,6 +186,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -204,15 +210,18 @@ Summary:
 Walter Everton shares his workflow for low-budget independent film post-production audio work, covering the transition from music recording to post-production audio engineering. The article details a systematic approach including dialogue editing, music composition/editing, sound effects placement, and final mixing. Key technical aspects include proper timecode management, sync procedures, and the use of industry standards like 2-pop sync tones. The workflow emphasizes making audio sound natural and supporting the narrative through careful balance and spatial placement of audio elements.
 
 Claims:
+
 - [1] [anecdotal] 2 pop (sync plop) is an industry-standard 1kHz tone that is one frame long used to confirm sync with picture
 - [2] [personal] In mixing, the goal should be to make audio sound as if captured naturally in real life, avoiding elements that stick out and distract through panning or volume
 - [3] [anecdotal] Audio elements can help indicate unreality through techniques like over-the-top reverb and dramatic tonal changes
 
 Composition Parameters:
+
 - frequency: 1 kHz
 - chordProgression: tremolo diminished chord
 
 Open Questions:
+
 - How do different reverb characteristics specifically contribute to perceived reality vs unreality in audio?
 - What are the optimal loudness targets for different types of independent film content?
 - How does spatial audio placement affect narrative perception and emotional response?
@@ -234,14 +243,17 @@ Summary:
 This paper presents a structure-aware approach to automatic piano accompaniment generation that separates high-level musical planning from detailed note realization. The system uses a transformer to predict interpretable style plans based on musical structure and harmony, then retrieves and adapts human-performed patterns from a corpus. The approach addresses harmonic feasibility, voice-leading continuity, and style consistency in generating MIDI piano accompaniments from lead sheets.
 
 Claims:
+
 - [1] [preprint] Decoupling high-level planning from note-level realization improves symbolic piano accompaniment generation
 - [2] [preprint] Pattern matching can be formulated with explicit energy terms for harmonic feasibility, structural-role compatibility, voice-leading continuity, style preferences, and repetition control
 - [3] [preprint] Transformer style-planner-guided retrieval produces diverse long-form accompaniments with strong style realization
 
 Composition Parameters:
+
 - instrument: piano
 
 Open Questions:
+
 - How do the energy terms for harmonic feasibility and voice-leading continuity relate to established music theory principles?
 - What specific harmonic constraints are most effective for maintaining musical coherence in automated accompaniment?
 - How does the system's understanding of musical structure compare to human pianists' structural awareness?
@@ -264,16 +276,19 @@ Summary:
 The Korg Phase8 is an acoustic synthesizer with eight physical resonators, each with pickups that can be played manually or sequenced. Notes are determined by the physical length of resonating portions, which can be tuned by repositioning or swapping different sized resonators. The 8-step sequencer supports complex polymeters through step skipping, and includes velocity control, envelope shaping, and modulation options.
 
 Claims:
+
 - [1] [anecdotal] Musical notes can be determined by the physical length of resonating portions in acoustic instruments
 - [2] [anecdotal] Physical repositioning or swapping of resonators of different sizes can be used for tuning
 - [3] [anecdotal] Skipping steps in a sequencer can create complex polymeters
 - [4] [anecdotal] Raw pickup signals can add character to acoustic synthesizer sounds
 
 Composition Parameters:
+
 - instrument: 8-resonator acoustic synthesizer
 - rhythm: 8-step sequencer
 
 Open Questions:
+
 - What is the relationship between resonator length and fundamental frequency in this system?
 - How do the different modulation types affect the harmonic content of the resonators?
 - What frequency ranges can be achieved through resonator repositioning and swapping?
@@ -295,15 +310,18 @@ Summary:
 This interview with producer Snipe Young discusses the distinctive Virginia Beach hip hop sound of the late 1990s/early 2000s, pioneered by Timbaland and The Neptunes. The sound is characterized by 'off-the-grid' syncopation, minimalist funk arrangements, and strategic sound selection rather than quantity. Young emphasizes that the 'boom' effect comes from making 'expensive sound choices' with minimal elements, and advocates for a 'song-first' philosophy where melody takes precedence over production complexity.
 
 Claims:
+
 - [1] [anecdotal] The Virginia Beach sound of late 1990s/early 2000s replaced lush samples with jagged, futuristic synths and 'off-the-grid' syncopation
 - [2] [personal] The 'boom' effect in hip hop production can be achieved with minimal arrangements rather than quantity of sounds
 - [3] [personal] Melody should take precedence over other production elements in song creation
 - [4] [personal] Timbaland's production technique was characterized as 'complex but simple and effective'
 
 Composition Parameters:
+
 - chordProgression: two-piece chord progression
 
 Open Questions:
+
 - What specific rhythmic patterns define 'off-the-grid' syncopation in Virginia Beach hip hop?
 - How do 'expensive sound choices' translate to specific technical production decisions?
 - What are the acoustic characteristics that create the 'organic sonic boom' effect?
@@ -326,14 +344,17 @@ Summary:
 This paper by Robert E. Grant proposes a method for predicting prime numbers using a 24-sided polygon (icositetragon) pattern. The author claims that primes (except 2 and 3) only appear in specific moduli (1, 5, 7, 11, 13, 17, 19, 23) when integers are arranged around this geometric figure. While primarily mathematical, this work relates to music theory through the use of the number 24, which corresponds to the chromatic scale's division of the octave.
 
 Claims:
+
 - [1] [speculative] Prime numbers arrange uniformly within modulus 1, 5, 7, 11, 13, 17, 19, and 23 when plotted around a 24-sided polygon
 - [2] [speculative] The icositetragon (24-sided polygon) pattern can predict prime number incidence infinitely without factorization calculations
 - [3] [speculative] Mathematical patterns associated with the 24-sided geometric alignment may have implications for physics and other fields
 
 Composition Parameters:
+
 - harmonicProfile: 24-fold division
 
 Open Questions:
+
 - How might the 24-fold geometric pattern relate to the 24-semitone chromatic scale in music?
 - Could this mathematical pattern have acoustic or harmonic implications?
 - What other mathematical constants or patterns might emerge from geometric integer arrangements?
@@ -355,14 +376,17 @@ Summary:
 The Grant Projection Theorem proposes that 3D polyhedral topology can be generated deterministically from 2D right triangles through harmonic cascade mechanics. The framework suggests polyhedral geometry is discrete rather than continuous, with valid topologies forming quantized sequences. A special case involves the golden right triangle (Kepler triangle) with sides φ⁻¹, 1, and φ generating the 120-cell polytope through inward self-similar projection. The work claims Euler's formula emerges automatically rather than being an external constraint.
 
 Claims:
+
 - [1] [speculative] The 120-cell polytope is generated by the golden right triangle (Kepler triangle) with sides φ⁻¹, 1, and φ through harmonic cascade projection
 - [2] [speculative] Polyhedral geometry is discrete rather than continuous, with valid topologies forming quantized sequences
 - [3] [speculative] Three-dimensional polyhedral topology can be generated entirely from two-dimensional right triangles through harmonic cascade mechanics
 
 Composition Parameters:
+
 - harmonicProfile: Golden ratio harmonic cascade (φ⁻¹, 1, φ)
 
 Open Questions:
+
 - How do harmonic cascade mechanics actually generate polyhedral topology from triangles?
 - What is the mathematical relationship between golden ratio triangles and higher-dimensional polytopes?
 - Can the discrete/quantized nature of polyhedral geometry be experimentally verified?
@@ -385,6 +409,7 @@ Summary:
 Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.
 
 Claims:
+
 - [1] [peer_reviewed] 12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century
 - [2] [peer_reviewed] In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463
 - [3] [peer_reviewed] Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament
@@ -394,6 +419,7 @@ Claims:
 - [7] [peer_reviewed] Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: 12-tone equal temperament
 - frequency: 261.626 Hz
@@ -404,9 +430,9 @@ Composition Parameters:
 - tuningSystem: 7 TET
 
 Open Questions:
+
 - How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?
 - What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?
 - How do performers in practice deviate from theoretical equal temperament when playing?
 - What role does cultural conditioning play in preference for 12 TET versus other tuning systems?
 - How do the mathematical properties of different equal temperaments affect compositional possibilities?
-

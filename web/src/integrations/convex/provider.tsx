@@ -8,16 +8,10 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
-import type {
-  AuthStateSnapshot,
-  AuthTokenFetcher,
-  ConvexAuthState,
-  UseAuthAdapter,
-} from "./types";
+import type { AuthStateSnapshot, AuthTokenFetcher, ConvexAuthState, UseAuthAdapter } from "./types";
 import { safeAccess } from "./utils";
 
-const ConvexClientContext: Context<ConvexClient | undefined> =
-  createContext<ConvexClient>();
+const ConvexClientContext: Context<ConvexClient | undefined> = createContext<ConvexClient>();
 const ConvexAuthContext = createContext<ConvexAuthState>();
 
 export interface ConvexProviderProps {
@@ -44,9 +38,9 @@ export function useConvexAuth(): ConvexAuthState {
 
 export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
   // In admin-open mode we skip auth wiring and mark as ready.
-  const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<
-    boolean | null
-  >(props.useAuth ? null : true);
+  const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(
+    props.useAuth ? null : true,
+  );
 
   let previousAuthState: AuthStateSnapshot | null = null;
 
@@ -57,9 +51,7 @@ export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
       const auth = props.useAuth?.();
       if (!auth) return null;
 
-      const fetchAccessToken: AuthTokenFetcher = async ({
-        forceRefreshToken,
-      }) => {
+      const fetchAccessToken: AuthTokenFetcher = async ({ forceRefreshToken }) => {
         try {
           return await auth.getToken({
             template: "convex",
@@ -102,9 +94,7 @@ export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
         orgRole: current.orgRole ? safeAccess(current.orgRole) : undefined,
       };
 
-      if (
-        JSON.stringify(previousAuthState) === JSON.stringify(currentAuthState)
-      ) {
+      if (JSON.stringify(previousAuthState) === JSON.stringify(currentAuthState)) {
         return;
       }
 
@@ -150,9 +140,7 @@ export const ConvexProvider: Component<ConvexProviderProps> = (props) => {
 
   return (
     <ConvexClientContext.Provider value={client()}>
-      <ConvexAuthContext.Provider value={authState()}>
-        {props.children}
-      </ConvexAuthContext.Provider>
+      <ConvexAuthContext.Provider value={authState()}>{props.children}</ConvexAuthContext.Provider>
     </ConvexClientContext.Provider>
   );
 };

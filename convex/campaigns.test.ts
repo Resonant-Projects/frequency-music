@@ -112,21 +112,16 @@ describe("campaign recommendation context", () => {
     });
 
     expect(result.campaign?._id).toBe(campaignId);
-    expect(
-      result.actions.some((action) => action.kind === "advance_recipe"),
-    ).toBe(true);
+    expect(result.actions.some((action) => action.kind === "advance_recipe")).toBe(true);
     expect(
       result.actions.some(
         (action) =>
-          action.kind === "prototype_hypothesis" &&
-          action.targetId === hypothesisWithoutRecipeId,
+          action.kind === "prototype_hypothesis" && action.targetId === hypothesisWithoutRecipeId,
       ),
     ).toBe(true);
-    expect(
-      result.actions.some(
-        (action) => action.targetId === contradictedHypothesisId,
-      ),
-    ).toBe(false);
+    expect(result.actions.some((action) => action.targetId === contradictedHypothesisId)).toBe(
+      false,
+    );
   });
 
   test("returns every campaign for selection instead of truncating at twenty", async () => {
@@ -226,9 +221,7 @@ describe("campaign visibility", () => {
   });
 
   test("blocks anonymous viewers from follower and private campaigns", () => {
-    expect(isCampaignVisibleToViewer(followersCampaign as any, null)).toBe(
-      false,
-    );
+    expect(isCampaignVisibleToViewer(followersCampaign as any, null)).toBe(false);
     expect(isCampaignVisibleToViewer(privateCampaign as any, null)).toBe(false);
   });
 

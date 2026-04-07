@@ -51,11 +51,7 @@ export async function requireAuth(
     }
     const providedSecret = options?.devBypassSecret;
 
-    if (
-      configuredSecret &&
-      providedSecret &&
-      providedSecret === configuredSecret
-    ) {
+    if (configuredSecret && providedSecret && providedSecret === configuredSecret) {
       return {
         // Schema requires createdBy to be either a users table id or "system".
         // In bypass mode we intentionally persist writes as system-authored.

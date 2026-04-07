@@ -71,10 +71,7 @@ async function loadThesisOrThrow(
   return thesis;
 }
 
-export function assertWhyThisMatters(
-  value: string,
-  field = "whyThisMatters",
-): string {
+export function assertWhyThisMatters(value: string, field = "whyThisMatters"): string {
   const trimmed = value.trim();
   if (!trimmed) {
     throw new ConvexError({
@@ -133,12 +130,8 @@ export const get = query({
     if (!hypothesis) return null;
 
     // Fetch linked sources
-    const sources = await Promise.all(
-      hypothesis.sourceIds.map((id) => ctx.db.get("sources", id)),
-    );
-    const thesis = hypothesis.thesisId
-      ? await ctx.db.get("theses", hypothesis.thesisId)
-      : null;
+    const sources = await Promise.all(hypothesis.sourceIds.map((id) => ctx.db.get("sources", id)));
+    const thesis = hypothesis.thesisId ? await ctx.db.get("theses", hypothesis.thesisId) : null;
 
     return {
       ...hypothesis,
@@ -170,9 +163,7 @@ export const listByThesis = query({
     const limit = args.limit ?? 20;
     return await ctx.db
       .query("hypotheses")
-      .withIndex("by_thesisId_updatedAt", (q) =>
-        q.eq("thesisId", args.thesisId),
-      )
+      .withIndex("by_thesisId_updatedAt", (q) => q.eq("thesisId", args.thesisId))
       .order("desc")
       .take(limit);
   },
@@ -227,10 +218,7 @@ export const create = mutation({
       whyThisMatters,
       status: "draft",
       visibility: "private",
-      createdBy:
-        identity.subject === "system"
-          ? "system"
-          : (identity.subject as Id<"users">),
+      createdBy: identity.subject === "system" ? "system" : (identity.subject as Id<"users">),
       createdAt: now,
       updatedAt: now,
     });
@@ -253,23 +241,14 @@ export const update = mutation({
     concepts: v.optional(v.array(v.string())),
     status: v.optional(hypothesisStatusValidator),
     resolution: v.optional(
-      v.union(
-        v.literal("supported"),
-        v.literal("inconclusive"),
-        v.literal("contradicted"),
-      ),
+      v.union(v.literal("supported"), v.literal("inconclusive"), v.literal("contradicted")),
     ),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const {
-      id,
-      devBypassSecret: _devBypassSecret,
-      thesisId,
-      ...updates
-    } = args;
+    const { id, devBypassSecret: _devBypassSecret, thesisId, ...updates } = args;
 
     const hypothesis = await ctx.db.get("hypotheses", id);
     if (!hypothesis) {
@@ -293,9 +272,7 @@ export const update = mutation({
     const patch = {
       ...updates,
       ...(whyThisMatters !== undefined ? { whyThisMatters } : {}),
-      ...(thesisId !== undefined
-        ? { thesisId: thesisId === null ? undefined : thesisId }
-        : {}),
+      ...(thesisId !== undefined ? { thesisId: thesisId === null ? undefined : thesisId } : {}),
       updatedAt: Date.now(),
     };
 
@@ -312,11 +289,7 @@ export const updateStatus = mutation({
     id: v.id("hypotheses"),
     status: hypothesisStatusValidator,
     resolution: v.optional(
-      v.union(
-        v.literal("supported"),
-        v.literal("inconclusive"),
-        v.literal("contradicted"),
-      ),
+      v.union(v.literal("supported"), v.literal("inconclusive"), v.literal("contradicted")),
     ),
     devBypassSecret: v.optional(v.string()),
   },
@@ -404,12 +377,9 @@ export const generateFromExtraction = action({
   handler: async (ctx, args): Promise<GenerateFromExtractionResult> => {
     await requireAuth(ctx, args);
     // Get extraction
-    const extraction: Doc<"extractions"> | null = await ctx.runQuery(
-      api.extractions.get,
-      {
-        id: args.extractionId,
-      },
-    );
+    const extraction: Doc<"extractions"> | null = await ctx.runQuery(api.extractions.get, {
+      id: args.extractionId,
+    });
 
     if (!extraction) {
       throw new Error("Extraction not found");
@@ -440,10 +410,7 @@ export const generateFromExtraction = action({
         )
         .join("\n") || "None specified";
 
-    const prompt = HYPOTHESIS_USER_PROMPT.replace(
-      "{{sourceTitle}}",
-      source.title || "Untitled",
-    )
+    const prompt = HYPOTHESIS_USER_PROMPT.replace("{{sourceTitle}}", source.title || "Untitled")
       .replace("{{claims}}", claimsText)
       .replace("{{parameters}}", paramsText)
       .replace("{{topics}}", extraction.topics.join(", "));
@@ -478,19 +445,16 @@ export const generateFromExtraction = action({
     }
 
     // Create hypothesis
-    const hypothesisId: Id<"hypotheses"> = await ctx.runMutation(
-      api.hypotheses.create,
-      {
-        title: parsed.title,
-        question: parsed.question,
-        hypothesis: parsed.hypothesis,
-        whyThisMatters: parsed.whyThisMatters,
-        rationaleMd: parsed.rationaleMd,
-        sourceIds: [extraction.sourceId],
-        concepts: parsed.concepts,
-        devBypassSecret: args.devBypassSecret,
-      },
-    );
+    const hypothesisId: Id<"hypotheses"> = await ctx.runMutation(api.hypotheses.create, {
+      title: parsed.title,
+      question: parsed.question,
+      hypothesis: parsed.hypothesis,
+      whyThisMatters: parsed.whyThisMatters,
+      rationaleMd: parsed.rationaleMd,
+      sourceIds: [extraction.sourceId],
+      concepts: parsed.concepts,
+      devBypassSecret: args.devBypassSecret,
+    });
 
     return {
       hypothesisId,
@@ -538,16 +502,12 @@ export const generateBatch = action({
     const minClaims = args.minClaims ?? 2;
 
     // Get extractions with enough claims
-    const extractions: Doc<"extractions">[] = await ctx.runQuery(
-      api.extractions.listRecent,
-      {
-        limit: 50,
-      },
-    );
+    const extractions: Doc<"extractions">[] = await ctx.runQuery(api.extractions.listRecent, {
+      limit: 50,
+    });
 
     const candidates: Doc<"extractions">[] = extractions.filter(
-      (e: Doc<"extractions">) =>
-        e.claims.length >= minClaims && e.compositionParameters.length > 0,
+      (e: Doc<"extractions">) => e.claims.length >= minClaims && e.compositionParameters.length > 0,
     );
 
     const results: BatchGenerationResult[] = [];

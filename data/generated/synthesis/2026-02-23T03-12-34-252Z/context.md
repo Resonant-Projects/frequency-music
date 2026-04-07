@@ -22,6 +22,7 @@ Selected 7/7 from 35 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - equal temperament: 7
 - just intonation: 7
 - meantone temperament: 3
@@ -111,11 +112,13 @@ Selected 7/7 from 35 eligible candidates.
 - microtonal composition: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 27
 - frequency: 8
 - harmonicprofile: 3
 
 ### Evidence Distribution
+
 - peer_reviewed: 23
 - anecdotal: 10
 - personal: 8
@@ -139,6 +142,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -149,6 +153,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -161,6 +166,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -183,6 +189,7 @@ Summary:
 Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.
 
 Claims:
+
 - [1] [peer_reviewed] 12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century
 - [2] [peer_reviewed] In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463
 - [3] [peer_reviewed] Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament
@@ -192,6 +199,7 @@ Claims:
 - [7] [peer_reviewed] Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: 12-tone equal temperament
 - frequency: 261.626 Hz
@@ -202,6 +210,7 @@ Composition Parameters:
 - tuningSystem: 7 TET
 
 Open Questions:
+
 - How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?
 - What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?
 - How do performers in practice deviate from theoretical equal temperament when playing?
@@ -224,6 +233,7 @@ Summary:
 Robert Edward Grant proposes 'Precise Temperament Tuning' as an alternative to equal temperament, using a base frequency of 432.081 Hz instead of 432 Hz. The system modifies the major third interval from 1.25 to 1.26 while keeping the perfect fifth at 1.5, claiming this creates a more 'geometrically perfect' tuning system. The approach reportedly connects musical intervals to geometric principles and has generated positive listener responses, though the evidence presented is primarily anecdotal.
 
 Claims:
+
 - [1] [personal] Precise Temperament Tuning uses 432.081 Hz as the base frequency instead of the commonly used 432 Hz
 - [2] [personal] The system replaces the Just Intonation major third interval of 1.25 (5/4) with 1.26
 - [3] [personal] In this tuning system, the minor third interval decreases from 1.2 to 1.19 while the major third increases from 1.25 to 1.26
@@ -232,12 +242,14 @@ Claims:
 - [6] [anecdotal] Listeners report the tuning feels 'more natural' and 'satisfying' compared to standard tuning
 
 Composition Parameters:
+
 - frequency: 432.081 Hz
 - tuningSystem: Precise Temperament Tuning
 - frequency: 432 Hz
 - frequency: 528 Hz
 
 Open Questions:
+
 - What is the mathematical basis for choosing 432.081 Hz specifically over 432 Hz?
 - How does the 1.26 major third ratio relate to geometric principles?
 - Are there measurable acoustic differences between this system and standard temperaments?
@@ -262,6 +274,7 @@ Summary:
 This is a comprehensive scientific examination of music theory, covering the physics of sound production in musical instruments, various tuning systems (just intonation, equal temperament, Pythagorean), and psychoacoustic principles of human sound perception. The work systematically explains how vibrating strings produce overtones, how different tuning systems create frequency ratios between musical notes, and how instruments generate sound through various physical mechanisms. It bridges the gap between the mathematical/physical foundations of music and the artistic experience.
 
 Claims:
+
 - [1] [peer_reviewed] A vibrating string with fixed ends can only vibrate at certain frequencies determined by the wave equation, producing a fundamental frequency and overtones at integer multiples
 - [2] [peer_reviewed] The speed of sound in air is approximately 340 meters per second under standard atmospheric conditions and is independent of frequency and intensity within a wide range
 - [3] [peer_reviewed] High frequency components of sound decay faster with distance than low frequency components due to absorption coefficient being proportional to frequency squared
@@ -273,12 +286,14 @@ Claims:
 - [9] [anecdotal] Music appears to serve no obvious adaptive purpose, with Darwin noting it has no direct use in ordinary life habits
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: Just Intonation
 - tuningSystem: Equal Temperament
 - tuningSystem: Pythagorean Tuning
 
 Open Questions:
+
 - How do individual differences in auditory processing affect perception of different tuning systems?
 - What is the optimal tuning system for different musical contexts and instruments?
 - How do environmental factors like temperature and humidity quantitatively affect instrument tuning?
@@ -301,6 +316,7 @@ Summary:
 Microtonality is the use of musical intervals smaller than a semitone, or any tuning system that differs from Western twelve-tone equal temperament. The term 'microtone' was coined by Maud MacCarthy Mann before 1912 to describe intervals in Indian music, replacing the confusing term 'quarter tone.' Microtonal music encompasses traditional systems like Indian śruti, gamelan, and African-American musical forms including blues and jazz. Various alternative terminologies have been proposed by different theorists and cultural traditions.
 
 Claims:
+
 - [1] [anecdotal] The terms 'microtone' and 'microtonal' were coined before 1912 by Maud MacCarthy Mann to avoid the misnomer 'quarter tone' when speaking of the srutis of Indian music
 - [2] [anecdotal] Traditional Indian systems use 22 śruti intervals, which are considered microtonal
 - [3] [anecdotal] Microtonal variation of intervals is standard practice in African-American musical forms including spirituals, blues, and jazz
@@ -308,11 +324,13 @@ Claims:
 - [5] [anecdotal] Charles Ives proposed specific quarter tone chords as fundamental structures in microtonal harmony
 
 Composition Parameters:
+
 - tuningSystem: 22 śruti system
 - tuningSystem: quarter tone scale
 - tuningSystem: 12 tone equal temperament
 
 Open Questions:
+
 - What are the specific frequency ratios used in traditional 22 śruti systems?
 - How do the three microtonal 'blue notes' in blues music relate to African musical traditions?
 - What acoustic properties make quarter tone chords effective as 'fundamental' harmonic structures?
@@ -336,12 +354,14 @@ Summary:
 This article explains the difference between ET (Equal Temperament) and EDO (Equal Divisions of the Octave) terminology in microtonal music theory. While practically interchangeable, ET implies tempering of just intervals, while EDO simply describes equal divisions without tempering implications. The author notes that certain tuning systems like 12-ET, 19-ET, and 31-ET are considered meantone temperaments, while others like 8-EDO and 13-EDO are not typically viewed as temperaments.
 
 Claims:
+
 - [1] [personal] 12-ET and 12-EDO refer to the exact same tuning which has 12 equal notes per octave
 - [2] [personal] 12-ET tempers the syntonic comma (81/80) and other intervals
 - [3] [personal] 12-ET, 19-ET and 31-ET are useful meantone temperaments
 - [4] [personal] The octave equals the ratio 2/1
 
 Composition Parameters:
+
 - tuningSystem: 12-ET/12-EDO
 - tuningSystem: 19-ET
 - tuningSystem: 31-ET
@@ -350,6 +370,7 @@ Composition Parameters:
 - frequency: syntonic comma (81/80)
 
 Open Questions:
+
 - What are the acoustic and perceptual differences between tuning systems that are considered temperaments versus those that are just equal divisions?
 - How do the specific comma relationships in meantone temperaments like 19-ET and 31-ET affect musical harmony and composition?
 - What are the practical applications of generalized equal division notation (ED2, ED3/2, etc.) in contemporary microtonal composition?
@@ -370,19 +391,21 @@ Summary:
 This textbook chapter explores microtonality as a diverse compositional approach that uses intervals smaller than semitones. It discusses various historical approaches including just intonation based on the harmonic series, equal subdivision of the octave into quarter/eighth-tones, and microtones for expressive enhancement. The text covers notation systems, performance techniques across instruments, and compositional strategies for both melodic and harmonic microtonal writing.
 
 Claims:
+
 - [1] [anecdotal] American composers like Harry Partch, Benjamin Johnston, LaMonte Young, and Kyle Gann seek to utilize scientifically accurate acoustical relationships between pitches based on the natural harmonic series
 - [2] [anecdotal] Xenakis and Scelsi use microtones to create specific harmonic beating patterns between closely spaced pitches
 - [3] [anecdotal] All non-percussive orchestral instruments (except timpani) can play microtonal gradations with varying degrees of facility using specific techniques
 
 Composition Parameters:
+
 - tuningSystem: quarter-tone (24-step octave)
 - tuningSystem: eighth-tone (48-step octave)
 - tuningSystem: just intonation based on harmonic series
 
 Open Questions:
+
 - What are the specific mathematical relationships in the harmonic series-based tuning systems used by American microtonal composers?
 - How do the acoustic beating patterns created by microtonal intervals affect perception and emotional response?
 - What are the measurable differences in intonational accuracy between different instrumental techniques for producing microtones?
 - How do different microtonal notation systems affect performer accuracy and interpretation?
 - What is the relationship between microtonal intervals and the psychoacoustics of consonance/dissonance perception?
-

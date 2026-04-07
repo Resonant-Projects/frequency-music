@@ -1,16 +1,16 @@
 # The Attractor Landscape: Music as Dynamical System
 
-*Freq — March 10, 2026*
+_Freq — March 10, 2026_
 
 ---
 
 ## Convergence, Not Construction
 
-Here's a thought experiment. You're listening to a piece in C major. The harmony moves to G major — the dominant. You haven't studied music theory. You've never heard of "resolution." But you *feel* it: the G chord is going somewhere. It wants to go back to C. Not because of a rule, not because of convention, but because your auditory system has been pulled into a basin of attraction, and the G chord sits on the basin's slope, not its floor.
+Here's a thought experiment. You're listening to a piece in C major. The harmony moves to G major — the dominant. You haven't studied music theory. You've never heard of "resolution." But you _feel_ it: the G chord is going somewhere. It wants to go back to C. Not because of a rule, not because of convention, but because your auditory system has been pulled into a basin of attraction, and the G chord sits on the basin's slope, not its floor.
 
 This isn't a metaphor. It's a precise mathematical claim: **tonal music behaves as a dissipative dynamical system, and the structures we call "keys," "cadences," "modulations," and "form" correspond to attractors, trajectories, bifurcations, and the topology of phase space.**
 
-The framework isn't new — the language of dynamical systems has been applied to music before, usually in the context of rhythm (coupled oscillators, entrainment). But the deeper claim is that dynamical systems theory provides the *unifying mathematics* connecting perception, composition, physics, and information theory in music. It's the scaffold on which several of this project's earlier essays turn out to be hanging.
+The framework isn't new — the language of dynamical systems has been applied to music before, usually in the context of rhythm (coupled oscillators, entrainment). But the deeper claim is that dynamical systems theory provides the _unifying mathematics_ connecting perception, composition, physics, and information theory in music. It's the scaffold on which several of this project's earlier essays turn out to be hanging.
 
 ---
 
@@ -25,7 +25,7 @@ For a listener, the "state" at any moment is not just the sound currently in the
 - The accumulated statistical model of the piece so far (the listener's predictive prior)
 - The embodied state (tension in the body, breath, readiness to move)
 
-This is a high-dimensional space. But high-dimensional spaces are exactly where dynamical systems theory earns its keep, because the *behavior* of such systems is often governed by low-dimensional structures within them — attractors.
+This is a high-dimensional space. But high-dimensional spaces are exactly where dynamical systems theory earns its keep, because the _behavior_ of such systems is often governed by low-dimensional structures within them — attractors.
 
 ### What Is an Attractor?
 
@@ -53,7 +53,7 @@ This explains several things that are otherwise puzzling:
 
 **Why do some modulations feel smooth and others feel abrupt?** In dynamical systems, the topology of basin boundaries matters. Closely related keys (C major and G major) have basins that share a large boundary surface — the transition is gradual, with many states that could belong to either basin. Distant keys (C major and F♯ major) have basins that barely touch — the transition is a discontinuous jump, a **bifurcation** in the technical sense.
 
-**Why does the tonic feel like "rest"?** In the dynamical systems metaphor, the tonic functions like a fixed-point attractor — a state where trajectories converge and stop. This is a *descriptive model* of the subjective experience of tonal gravity, not an explanation of its cause. The model doesn't tell us *why* the tonic is restful; it gives us a mathematical vocabulary for *describing* the patterns of tension and resolution that listeners report. The "why" requires psychoacoustic and cultural explanations that the dynamical metaphor alone can't provide.
+**Why does the tonic feel like "rest"?** In the dynamical systems metaphor, the tonic functions like a fixed-point attractor — a state where trajectories converge and stop. This is a _descriptive model_ of the subjective experience of tonal gravity, not an explanation of its cause. The model doesn't tell us _why_ the tonic is restful; it gives us a mathematical vocabulary for _describing_ the patterns of tension and resolution that listeners report. The "why" requires psychoacoustic and cultural explanations that the dynamical metaphor alone can't provide.
 
 ### Scale Degrees as Gradient
 
@@ -71,9 +71,9 @@ A limit cycle is a periodic orbit that nearby trajectories converge to. Perturb 
 
 - A drummer plays a pattern. The listener's body entrains to it — feet tap, head nods, the whole motor system locks into a periodic orbit.
 - Perturbations happen constantly: the drummer pushes a snare slightly ahead, pulls a hi-hat slightly back (swing, feel, microtiming). But the listener's entrained state doesn't collapse. It absorbs the perturbation and returns to the cycle.
-- The perturbations are *part of the attractor's structure*. The limit cycle isn't a perfect circle in phase space — it's a slightly wobbly orbit, and the specific shape of the wobble is what distinguishes one groove from another.
+- The perturbations are _part of the attractor's structure_. The limit cycle isn't a perfect circle in phase space — it's a slightly wobbly orbit, and the specific shape of the wobble is what distinguishes one groove from another.
 
-This is why quantized music feels lifeless. Perfect quantization replaces the natural limit cycle (with its characteristic wobble) with an idealized mathematical circle. The attractor changes shape, and the body knows. The entrainment still works — you can tap your foot to a drum machine — but the *quality* of the attractor is different. It's a limit cycle with zero character.
+This is why quantized music feels lifeless. Perfect quantization replaces the natural limit cycle (with its characteristic wobble) with an idealized mathematical circle. The attractor changes shape, and the body knows. The entrainment still works — you can tap your foot to a drum machine — but the _quality_ of the attractor is different. It's a limit cycle with zero character.
 
 ### Polyrhythm as Torus Attractor
 
@@ -95,9 +95,9 @@ The listener's predictive model maintains a tonal attractor (the current key). A
 
 Different modulation types correspond to different bifurcation types:
 
-- **Pivot chord modulation** is a *saddle-node bifurcation*: a chord that belongs to both keys sits at the boundary between two basins. The old attractor doesn't disappear violently — it merges smoothly with the boundary, and the trajectory slides into the new basin. The listener may not even notice the exact moment of transition.
+- **Pivot chord modulation** is a _saddle-node bifurcation_: a chord that belongs to both keys sits at the boundary between two basins. The old attractor doesn't disappear violently — it merges smoothly with the boundary, and the trajectory slides into the new basin. The listener may not even notice the exact moment of transition.
 
-- **Direct modulation** (abrupt key change, no pivot) is a *subcritical bifurcation*: the old attractor vanishes suddenly, and the state jumps discontinuously to the nearest remaining attractor. The listener feels a jolt — the harmonic ground shifts under their feet.
+- **Direct modulation** (abrupt key change, no pivot) is a _subcritical bifurcation_: the old attractor vanishes suddenly, and the state jumps discontinuously to the nearest remaining attractor. The listener feels a jolt — the harmonic ground shifts under their feet.
 
 - **Enharmonic modulation** (exploiting the ambiguity of a chord's spelling — the German augmented sixth resolving as a dominant seventh) is something even more interesting: a **symmetry-breaking bifurcation**. The chord sits at a point of exact symmetry between two attractors. The resolution breaks the symmetry, choosing one basin over the other.
 
@@ -117,7 +117,7 @@ Different cadence types trace different paths through the same phase space:
 
 - **Deceptive cadence (V → vi):** The trajectory approaches the tonic along the authentic path but, at the last moment, the flow is deflected to a nearby secondary attractor (vi). The listener's prediction (convergence to I) is violated, but vi shares enough of I's basin structure (it's the relative minor, sharing two of three pitch classes) that the deflection doesn't feel chaotic — it feels like a near miss.
 
-- **Half cadence (→ V):** The trajectory *pauses* at a saddle point — a state that is stable in some directions but unstable in others. The dominant is a saddle because it's stable within the current phrase (it "holds" for the moment) but unstable globally (it will eventually resolve). This is why half cadences feel like questions: the system has reached a temporary equilibrium, but everyone in the room knows it won't last.
+- **Half cadence (→ V):** The trajectory _pauses_ at a saddle point — a state that is stable in some directions but unstable in others. The dominant is a saddle because it's stable within the current phrase (it "holds" for the moment) but unstable globally (it will eventually resolve). This is why half cadences feel like questions: the system has reached a temporary equilibrium, but everyone in the room knows it won't last.
 
 This saddle-point interpretation of the dominant is one of the framework's neatest results. A saddle point is neither an attractor nor a repeller — it's a point where stable and unstable manifolds intersect. Trajectories can approach it along the stable manifold and rest there temporarily, but any perturbation along the unstable manifold will send the system toward a true attractor. The dominant chord, harmonically, does exactly this.
 
@@ -129,9 +129,9 @@ In ["The Arrow of Sound"](/docs/essays/the-arrow-of-sound.md), we argued that mu
 
 **Tonal music is a dissipative system.** It has attractors — states that trajectories converge to. Dissipative systems are inherently irreversible: they contract phase-space volume over time. Run them backward, and the contraction becomes expansion — trajectories diverge from the attractor instead of converging to it. The attractor becomes a repeller. The entire qualitative behavior inverts.
 
-This is why reversed tonal music sounds uncanny rather than merely scrambled. The tonic, played in reverse context, *repels* the listener's perception instead of attracting it. Cadences feel like explosions rather than resolutions. Tension and release swap polarities. The system's phase portrait, viewed in reverse, is a *different system* — one with no natural analog in musical experience.
+This is why reversed tonal music sounds uncanny rather than merely scrambled. The tonic, played in reverse context, _repels_ the listener's perception instead of attracting it. Cadences feel like explosions rather than resolutions. Tension and release swap polarities. The system's phase portrait, viewed in reverse, is a _different system_ — one with no natural analog in musical experience.
 
-But not all music is strongly goal-directed. Minimalist music (Reich, Glass, Riley) deliberately weakens the attractor structure — the tonic is present but its pull is reduced, the harmonic gradient is flattened. This creates tolerance for repetition and near-stasis that strongly tonal music doesn't permit. (Note: calling minimalism "time-reversible" would be acoustically false — the physical envelope of every instrument, with sharp attacks and slow decays, makes all real audio fundamentally asymmetric in time. A piano note played backwards is a swell-then-click, not a note. The metaphor of "conservative dynamics" captures something about the *harmonic* stasis of minimalism while completely failing to describe its *acoustic* reality.)
+But not all music is strongly goal-directed. Minimalist music (Reich, Glass, Riley) deliberately weakens the attractor structure — the tonic is present but its pull is reduced, the harmonic gradient is flattened. This creates tolerance for repetition and near-stasis that strongly tonal music doesn't permit. (Note: calling minimalism "time-reversible" would be acoustically false — the physical envelope of every instrument, with sharp attacks and slow decays, makes all real audio fundamentally asymmetric in time. A piano note played backwards is a swell-then-click, not a note. The metaphor of "conservative dynamics" captures something about the _harmonic_ stasis of minimalism while completely failing to describe its _acoustic_ reality.)
 
 ---
 
@@ -154,7 +154,7 @@ This framework illuminates the difference between compositional styles as differ
 
 **Debussy** softens the basin boundaries. His whole-tone and pentatonic passages create regions of flat potential — states where no attractor dominates, where the trajectory drifts without urgency. The augmented triad, symmetric under transposition by major thirds, sits at a triple-point boundary where three basins meet. Debussy's music lingers at these boundary states, suspending the dynamical system in a condition of maximum ambiguity.
 
-**Schoenberg** (twelve-tone period) tries to *eliminate* attractors entirely — the twelve-tone row is an attempt to flatten the potential function to zero, creating a conservative system where no pitch is more "stable" than any other. The theoretical goal is a perfectly uniform landscape with no basins. In practice, this is impossible: the listener's ear will construct phantom attractors from any available cues (octave doublings, registral emphasis, duration). The ear evolved to find fixed points. It will hallucinate them if it must.
+**Schoenberg** (twelve-tone period) tries to _eliminate_ attractors entirely — the twelve-tone row is an attempt to flatten the potential function to zero, creating a conservative system where no pitch is more "stable" than any other. The theoretical goal is a perfectly uniform landscape with no basins. In practice, this is impossible: the listener's ear will construct phantom attractors from any available cues (octave doublings, registral emphasis, duration). The ear evolved to find fixed points. It will hallucinate them if it must.
 
 **Feldman** (late works) achieves something subtler: landscapes where attractors exist but are so weak and so numerous that the trajectory never reaches any of them. The piece ends not because a resolution occurs but because the system's energy dissipates below some threshold. This is what ["The Entropy Arc"](/docs/essays/the-entropy-arc.md) describes as entropy cessation — the entropy doesn't collapse to zero (confirmed prediction) but asymptotically approaches a floor.
 
@@ -162,13 +162,13 @@ This framework illuminates the difference between compositional styles as differ
 
 ## The Listener as Co-Author of the Dynamics
 
-The deepest implication of this framework is that the dynamical system is not in the music alone. It's in the *interaction* between music and listener.
+The deepest implication of this framework is that the dynamical system is not in the music alone. It's in the _interaction_ between music and listener.
 
 The attractor landscape is constructed from the listener's statistical model — their accumulated experience of music, updated in real time by the current piece. A jazz musician and a pop listener bring different landscapes to the same performance. Where the jazz ear hears a tritone substitution as a gentle trajectory (familiar path, near the attractor), the pop ear hears a bifurcation (the attractor landscape just shifted). Same sound, different dynamics.
 
-This echoes the frame problem from "Finding One," but now with mathematical precision. The frame *is* the attractor landscape. Changing the frame *is* changing the landscape. And the question of "which frame is correct" is ill-posed: there is no frame-independent dynamics, just as there is no observer-independent measurement in quantum mechanics.
+This echoes the frame problem from "Finding One," but now with mathematical precision. The frame _is_ the attractor landscape. Changing the frame _is_ changing the landscape. And the question of "which frame is correct" is ill-posed: there is no frame-independent dynamics, just as there is no observer-independent measurement in quantum mechanics.
 
-This is not relativism. Some landscapes are more consistent with the statistical structure of the sound than others. A listener who hears "Roll Out" with the downbeat on the wrong beat has a landscape that creates unnecessary tension at the wrong moments — they're fighting the dynamical system instead of riding it. Neely's physical rapping, which finally flipped his perception, was a way of *resetting his attractor landscape* through embodied entrainment. The body knows the right dynamics even when the ear is caught in the wrong basin.
+This is not relativism. Some landscapes are more consistent with the statistical structure of the sound than others. A listener who hears "Roll Out" with the downbeat on the wrong beat has a landscape that creates unnecessary tension at the wrong moments — they're fighting the dynamical system instead of riding it. Neely's physical rapping, which finally flipped his perception, was a way of _resetting his attractor landscape_ through embodied entrainment. The body knows the right dynamics even when the ear is caught in the wrong basin.
 
 ---
 
@@ -176,23 +176,23 @@ This is not relativism. Some landscapes are more consistent with the statistical
 
 Here's what this framework buys us — a table of correspondences that connects musical phenomena to precise mathematical objects:
 
-| Musical Concept | Dynamical Systems Object |
-|---|---|
-| Key / tonality | Basin of attraction |
-| Tonic | Fixed-point attractor |
-| Groove / meter | Limit-cycle attractor |
-| Free improvisation | Strange attractor (bounded chaos) |
-| Scale degree tension | Gradient of potential function |
-| Cadence | Phase portrait near fixed point |
-| Dominant chord | Saddle point |
-| Modulation | Bifurcation |
-| Pivot chord | Saddle-node bifurcation point |
-| Enharmonic reinterpretation | Symmetry-breaking bifurcation |
-| Minimalism | Conservative (non-dissipative) system |
-| Twelve-tone music | Attempted flat landscape |
-| Polyrhythm | Trajectory on a torus |
-| Temporal resolution of polyrhythm | Rational/irrational winding number |
-| The listener's musical experience | The potential function itself |
+| Musical Concept                   | Dynamical Systems Object              |
+| --------------------------------- | ------------------------------------- |
+| Key / tonality                    | Basin of attraction                   |
+| Tonic                             | Fixed-point attractor                 |
+| Groove / meter                    | Limit-cycle attractor                 |
+| Free improvisation                | Strange attractor (bounded chaos)     |
+| Scale degree tension              | Gradient of potential function        |
+| Cadence                           | Phase portrait near fixed point       |
+| Dominant chord                    | Saddle point                          |
+| Modulation                        | Bifurcation                           |
+| Pivot chord                       | Saddle-node bifurcation point         |
+| Enharmonic reinterpretation       | Symmetry-breaking bifurcation         |
+| Minimalism                        | Conservative (non-dissipative) system |
+| Twelve-tone music                 | Attempted flat landscape              |
+| Polyrhythm                        | Trajectory on a torus                 |
+| Temporal resolution of polyrhythm | Rational/irrational winding number    |
+| The listener's musical experience | The potential function itself         |
 
 This is not a metaphor catalog. Each correspondence is a mathematical claim that could, in principle, be formalized and tested. The potential function could be estimated from behavioral data (reaction times, prediction accuracy, tension ratings). The bifurcation structure of modulation could be modeled computationally. The limit-cycle properties of groove could be measured from motion-capture data of entrained listeners.
 
@@ -202,4 +202,4 @@ It was dynamical systems all along.
 
 ---
 
-*Connects to: ["Finding One"](/docs/essays/finding-one.md), ["The Arrow of Sound"](/docs/essays/the-arrow-of-sound.md), ["The Groove Equation"](/docs/essays/the-groove-equation.md), ["The Entropy Arc"](/docs/essays/the-entropy-arc.md), ["The Cost of Moving Sound"](/docs/essays/the-cost-of-moving-sound.md), ["The Lonely Runner"](/docs/essays/the-lonely-runner.md), ["The Shape of Musical Choice"](/docs/essays/the-shape-of-musical-choice.md), ["The Unwritten Laws"](/docs/essays/the-unwritten-laws.md)*
+_Connects to: ["Finding One"](/docs/essays/finding-one.md), ["The Arrow of Sound"](/docs/essays/the-arrow-of-sound.md), ["The Groove Equation"](/docs/essays/the-groove-equation.md), ["The Entropy Arc"](/docs/essays/the-entropy-arc.md), ["The Cost of Moving Sound"](/docs/essays/the-cost-of-moving-sound.md), ["The Lonely Runner"](/docs/essays/the-lonely-runner.md), ["The Shape of Musical Choice"](/docs/essays/the-shape-of-musical-choice.md), ["The Unwritten Laws"](/docs/essays/the-unwritten-laws.md)_

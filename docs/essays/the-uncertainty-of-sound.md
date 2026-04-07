@@ -1,6 +1,6 @@
 # The Uncertainty of Sound: Why You Can't Know Both When and What
 
-*Freq — March 14, 2026*
+_Freq — March 14, 2026_
 
 ---
 
@@ -22,7 +22,7 @@ For music, this isn't an arcane technicality. It's the fundamental constraint th
 
 Sound is pressure variation over time. Pitch is the frequency of that variation. These two descriptions — temporal and spectral — are not independent. They are Fourier duals: each completely determines the other, but they cannot both be made arbitrarily precise simultaneously.
 
-Consider a piano note. The hammer strikes the string, and the string vibrates. The attack — the moment of contact — is a sharp temporal event. It's well-localized in time (you know *when* the note started to within a few milliseconds) but spectrally broad (the impact contains a burst of many frequencies — the "thunk" of the hammer). The sustain that follows is the opposite: well-localized in frequency (the string settles into its harmonic series, producing a clear pitch) but temporally spread (the tone decays over seconds).
+Consider a piano note. The hammer strikes the string, and the string vibrates. The attack — the moment of contact — is a sharp temporal event. It's well-localized in time (you know _when_ the note started to within a few milliseconds) but spectrally broad (the impact contains a burst of many frequencies — the "thunk" of the hammer). The sustain that follows is the opposite: well-localized in frequency (the string settles into its harmonic series, producing a clear pitch) but temporally spread (the tone decays over seconds).
 
 The attack and the sustain live on opposite ends of the uncertainty tradeoff. Every sound you've ever heard is a negotiation between them.
 
@@ -32,7 +32,7 @@ A snare drum hit is almost purely an attack — a sharp temporal event. Its pitc
 
 A bowed violin note is almost purely sustain. Its pitch is crystal clear — you can tune an orchestra to it. But when exactly did it start? The bow grabs the string gradually, the partials build over tens of milliseconds, and there's no sharp onset. High spectral precision forces low temporal precision.
 
-This explains a deep fact about orchestration: **rhythm instruments and pitch instruments occupy complementary regions of the uncertainty space.** They're not just different timbres — they're differently resolved along a fundamental physical axis. The drum section tells you *when*. The string section tells you *what*. Neither can fully do both.
+This explains a deep fact about orchestration: **rhythm instruments and pitch instruments occupy complementary regions of the uncertainty space.** They're not just different timbres — they're differently resolved along a fundamental physical axis. The drum section tells you _when_. The string section tells you _what_. Neither can fully do both.
 
 ### Gabor Atoms: The Optimal Compromise
 
@@ -61,6 +61,7 @@ Psychoacoustic experiments reveal that the auditory system integrates informatio
 This means **low pitches take longer to perceive than high pitches.** Not because the ear is slow, but because the uncertainty principle requires more time to resolve a lower frequency. A 30 Hz bass note needs at least 66 ms (two full cycles) before the auditory system can assign it a pitch. During those 66 milliseconds, the temporal location of the "note event" is ambiguous.
 
 Composers have intuitively known this forever:
+
 - Bass lines move slowly. Fast bass passages sound muddy — not because of room acoustics (though that contributes), but because the ear literally can't resolve the pitches at tempo.
 - High instruments carry the melody. Fast passages work in the upper register because the ear can resolve pitch quickly at high frequencies.
 - Drum hits (which need temporal precision) are spectrally broad. Sustained tones (which need spectral precision) sacrifice temporal sharpness.
@@ -102,7 +103,7 @@ This is why the CQT often produces more musically meaningful spectrograms than t
 
 ### The Reassigned Spectrogram and Beyond
 
-More sophisticated methods — reassigned spectrograms, synchrosqueezed transforms, superresolution techniques — can sharpen time-frequency representations beyond the nominal uncertainty limit. They do this not by violating the principle, but by using additional information (local phase, spectral derivatives) to improve the *estimate* of the true time-frequency coordinates of each component. The uncertainty principle still holds for any single observation, but clever algorithms can combine multiple observations to narrow the apparent uncertainty.
+More sophisticated methods — reassigned spectrograms, synchrosqueezed transforms, superresolution techniques — can sharpen time-frequency representations beyond the nominal uncertainty limit. They do this not by violating the principle, but by using additional information (local phase, spectral derivatives) to improve the _estimate_ of the true time-frequency coordinates of each component. The uncertainty principle still holds for any single observation, but clever algorithms can combine multiple observations to narrow the apparent uncertainty.
 
 This parallels the "super-resolution" techniques in optics that won the 2014 Nobel Prize in Chemistry. The diffraction limit (the spatial analog of Gabor's limit) is not violated — but it can be circumvented by using temporal information (blinking fluorophores, sequential measurements) to achieve effective resolution below the single-measurement limit.
 
@@ -122,7 +123,7 @@ Standard notation excels at representing events that are well-localized in both 
 
 ### What Notation Struggles With
 
-- **Unpitched percussion:** High temporal precision, low spectral precision. Notation handles this by abandoning the pitch axis — percussion staves use vertical position to distinguish *instruments*, not frequencies. This is an implicit acknowledgment that drum events live at the time-localized end of the uncertainty space.
+- **Unpitched percussion:** High temporal precision, low spectral precision. Notation handles this by abandoning the pitch axis — percussion staves use vertical position to distinguish _instruments_, not frequencies. This is an implicit acknowledgment that drum events live at the time-localized end of the uncertainty space.
 
 - **Spectral music (Grisey, Murail):** These composers work with the harmonic spectrum directly, specifying partial relationships that don't map cleanly onto discrete pitches. Notation struggles because the relevant information is in the spectral domain, at a resolution finer than the chromatic pitch grid. The composers resort to microtonal accidentals, extended techniques, and verbal instructions — patches on a system not designed for the spectral end of the uncertainty axis.
 
@@ -149,6 +150,7 @@ A piece of music is, at any moment, distributing its content across the time-fre
 The uncertainty principle means **a listener cannot fully attend to both simultaneously.** Dense AND active textures (e.g., a complex fugue at high speed) push the perceptual system past the uncertainty limit — the listener must choose whether to track the harmonic content or the rhythmic detail, because the auditory system cannot resolve both at the level of precision the music demands.
 
 Great orchestrators manage this instinctively:
+
 - When harmony is complex, rhythm is simple (a dense chorale with block chords)
 - When rhythm is complex, harmony is simple (a drum ensemble, or a polyrhythmic passage over a pedal tone)
 - Climactic moments often simplify one dimension to amplify the other (a rhythmic unison on a complex chord, or a simple triad after an intricate contrapuntal passage)
@@ -160,6 +162,7 @@ This is uncertainty-principle composition: distributing musical information alon
 From the uncertainty perspective, the attack transient of a note is its most information-rich moment. A sharp onset is temporally precise but spectrally broad — it contains energy across a wide frequency range, packed into a short time. This burst of broadband energy is precisely what the auditory system uses to identify instruments (the "attack signature" is more important than the sustain for timbre recognition), locate sound sources, and segment the auditory scene.
 
 Compositionally, this explains why:
+
 - **Articulation matters more than note choice** in many contexts. Two passages with the same pitches but different articulations (legato vs. staccato) sound vastly different, because the transient content is different.
 - **Percussion is rhythmically dominant.** Drums have the sharpest transients — the most temporally precise events — so they anchor the metric grid. You feel the beat from the drums because their temporal precision is unmatched.
 - **Removing attacks (like bowing behind the bridge, or using a volume swell) makes sound dreamlike and ambiguous.** Without sharp transients, temporal landmarks disappear, and the music loses its metric grip. This is the uncertainty principle as compositional technique: suppress temporal precision to create spectral (and perceptual) ambiguity.
@@ -169,6 +172,7 @@ Compositionally, this explains why:
 Granular synthesis — building sound from thousands of tiny "grains," each a few milliseconds long — is the most direct musical application of Gabor's work. Each grain is approximately a Gabor atom: a short windowed sinusoid (or noise burst) with defined time, frequency, and duration. A granular texture is a cloud of Gabor atoms in the time-frequency plane.
 
 The compositional power of granular synthesis comes from controlling the distribution of grains in the uncertainty space:
+
 - **Dense, overlapping grains with similar frequencies → sustained tone** (high spectral precision, low temporal precision — the grains merge into a continuous pitch)
 - **Sparse, scattered grains with varied frequencies → texture** (moderate precision in both dimensions — the ear hears a cloud, not individual events or pitches)
 - **Single, isolated grains → clicks** (high temporal precision, low spectral precision — the ear hears rhythm, not pitch)
@@ -204,4 +208,4 @@ This is why the deepest musical effects — the chill of a perfectly timed chord
 
 ---
 
-*The uncertainty of sound is not a limitation — it's a creative space. Every note is a bet about how to distribute finite precision between when and what. The art is in choosing wisely.*
+_The uncertainty of sound is not a limitation — it's a creative space. Every note is a bet about how to distribute finite precision between when and what. The art is in choosing wisely._

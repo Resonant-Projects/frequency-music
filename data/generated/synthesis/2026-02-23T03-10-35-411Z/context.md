@@ -22,6 +22,7 @@ Selected 7/7 from 46 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - just intonation: 4
 - frequency ratios: 4
 - equal temperament: 3
@@ -117,6 +118,7 @@ Selected 7/7 from 46 eligible candidates.
 - pitch histograms: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 15
 - frequency: 9
 - harmonicprofile: 6
@@ -125,6 +127,7 @@ Selected 7/7 from 46 eligible candidates.
 - chordprogression: 3
 
 ### Evidence Distribution
+
 - peer_reviewed: 22
 - anecdotal: 11
 - speculative: 4
@@ -148,6 +151,7 @@ Summary:
 This academic paper develops mathematical functions to analyze harmony in Just Intonation, where frequencies are rational number ratios. The author introduces the 'Complexity' measure (ratio of LCM to GCD) and other invariant functions to quantify consonance, arguing that Just Intonation provides the fundamental basis for understanding harmony that 12-tone equal temperament only approximates. The paper presents tools for systematically exploring harmonies beyond traditional Western music.
 
 Claims:
+
 - [1] [peer_reviewed] Harmonies are more pleasing and consonant when frequency ratios use small whole numbers
 - [2] [speculative] 12-tone equal temperament has no explanatory power for harmony and only works because it approximates Just Intonation
 - [3] [peer_reviewed] The Benedetti Height function (product of numerator and denominator in lowest terms) measures consonance complexity
@@ -156,6 +160,7 @@ Claims:
 - [6] [anecdotal] Otonal and utonal versions of chords sound different despite being mathematically dual
 
 Composition Parameters:
+
 - chordProgression: 4:5:6 (major triad)
 - chordProgression: 10:12:15 (minor triad)
 - chordProgression: 4:5:6:7 (dominant seventh)
@@ -163,6 +168,7 @@ Composition Parameters:
 - frequency: 729:512 (diminished fifth)
 
 Open Questions:
+
 - How can mathematical complexity measures be validated against perceptual consonance studies?
 - What are the optimal complexity thresholds for different musical contexts?
 - How do higher prime limits (11, 13, etc.) affect harmonic perception in practice?
@@ -185,6 +191,7 @@ Summary:
 Just intonation is a tuning system where frequency intervals are whole number ratios, creating 'pure' intervals based on the harmonic series. Unlike equal temperament, these systems are categorized by 'limits' - the highest prime factor used in the ratios. The most common Western version is 5-limit tuning, exemplified by Ptolemy's intense diatonic scale, which creates perfect major and minor triads but introduces complications like wolf intervals.
 
 Claims:
+
 - [1] [peer_reviewed] Just intonation uses frequency intervals that are whole number ratios, making them 'pure' intervals from a single harmonic series
 - [2] [peer_reviewed] In just intonation, if notes G3 and C4 are tuned as members of the harmonic series, their frequency ratio is 4:3
 - [3] [anecdotal] Bowed string instruments are typically tuned using pure fifths or fourths, while keyboards use equal temperament
@@ -194,6 +201,7 @@ Claims:
 - [7] [peer_reviewed] In Ptolemy's intense diatonic scale, the interval from D to A creates a wolf fifth with ratio 40/27 (about 680 cents)
 
 Composition Parameters:
+
 - tuningSystem: Ptolemy's intense diatonic (5-limit just intonation)
 - tuningSystem: Pythagorean tuning (3-limit)
 - frequency: 5:4 major third = 386.314 cents
@@ -201,6 +209,7 @@ Composition Parameters:
 - frequency: 40:27 wolf fifth ≈ 680 cents
 
 Open Questions:
+
 - How do different just intonation systems affect emotional perception of music compared to equal temperament?
 - What are the practical challenges of implementing just intonation in ensemble playing with mixed instruments?
 - How do higher-limit just intonation systems (7-limit, 11-limit) sound in practice versus theoretical predictions?
@@ -219,18 +228,21 @@ Open Questions:
 - Topics: electromagnetic radiation, periodic signals, timing precision, frequency stability, gravitational effects on wave propagation, neutron stars, millisecond pulsars, spacetime physics, signal timing analysis, auto-ingested
 
 Summary:
-Researchers discovered an 8.19-millisecond pulsar near Sagittarius A*, the supermassive black hole at the center of the Milky Way. Pulsars are rapidly rotating neutron stars that emit regular electromagnetic radiation pulses, acting as cosmic timekeepers. This discovery could enable precise tests of Einstein's general relativity by measuring how the black hole's gravity affects the pulsar's regular timing patterns.
+Researchers discovered an 8.19-millisecond pulsar near Sagittarius A\*, the supermassive black hole at the center of the Milky Way. Pulsars are rapidly rotating neutron stars that emit regular electromagnetic radiation pulses, acting as cosmic timekeepers. This discovery could enable precise tests of Einstein's general relativity by measuring how the black hole's gravity affects the pulsar's regular timing patterns.
 
 Claims:
+
 - [1] [peer_reviewed] Pulsars emit bursts of electromagnetic radiation at regular intervals, making them function as precise cosmic timekeepers
 - [2] [peer_reviewed] Millisecond pulsars are especially regular in their timing compared to other pulsars
 - [3] [peer_reviewed] Gravitational influences from massive objects can introduce measurable timing anomalies in pulsar signals
 - [4] [peer_reviewed] Electromagnetic pulses traveling near massive objects experience deflection and time delays due to spacetime warping
 
 Composition Parameters:
+
 - frequency: 8.19 milliseconds (pulse period)
 
 Open Questions:
+
 - Could the precise timing patterns of pulsars inspire new approaches to musical rhythm and temporal structures?
 - How might the frequency characteristics of pulsar signals relate to harmonic principles in music?
 - Could gravitational effects on signal timing provide insights into how massive objects might affect acoustic wave propagation?
@@ -251,12 +263,14 @@ Summary:
 Robert Grant proposes a unified mathematical model connecting geometry and music through regular polygons inscribed in a unit circle. He advocates for Pythagorean tuning with A=432 Hz instead of the modern A=440 Hz standard, claiming this creates perfect geometric relationships where musical intervals correspond to specific polygon angles. The paper suggests these geometric-musical connections reveal fundamental relationships in nature, including a claimed connection between the F# frequency and the speed of light.
 
 Claims:
+
 - [1] [speculative] Pythagorean tuning originally set the note A to 432 Hz, while modern tuning uses 440 Hz
 - [2] [personal] Musical intervals can be mapped to regular polygons inscribed in a unit circle, with each note corresponding to specific angles
 - [3] [speculative] The frequency of F# (720 Hz) corresponds to an angle that relates to the speed of light
 - [4] [personal] Half steps in music correspond to 30° angles on the unit circle
 
 Composition Parameters:
+
 - rootNote: A4 = 432 Hz
 - rootNote: A4 = 216 Hz
 - rootNote: A5 = 432 Hz
@@ -267,6 +281,7 @@ Composition Parameters:
 - tuningSystem: Pythagorean
 
 Open Questions:
+
 - What is the historical evidence for Pythagorean tuning using A=432 Hz specifically?
 - How do these geometric relationships compare to established music theory and just intonation?
 - Is there any acoustic or perceptual significance to the proposed geometric mappings?
@@ -291,6 +306,7 @@ Summary:
 This historical overview demonstrates that equal temperament is a modern 20th-century phenomenon, while earlier European music (1500-1900) used various unequal temperaments like meantone and well temperament. Each tuning system created different sonic qualities for different keys, with meantone favoring sweet major thirds in certain keys while making others unusable, and well temperaments allowing all keys but with distinct character differences. The author argues that playing historical music in modern equal temperament obscures the original compositional intentions and tonal colors that composers relied upon.
 
 Claims:
+
 - [1] [anecdotal] Equal temperament was not widely used until the 20th century, with exact tuning methods only developed in 1917
 - [2] [anecdotal] Meantone tuning was Europe's most successful tuning system, lasting approximately 400 years from late 15th to early 18th century
 - [3] [anecdotal] Notes closer together in frequency create faster and more disturbing beats than notes farther apart when out of tune
@@ -300,6 +316,7 @@ Claims:
 - [7] [anecdotal] 1/4-comma meantone is closely approximated by 31 equal steps to the octave
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - frequency: 660 Hz
 - tuningSystem: 1/4-comma meantone
@@ -311,6 +328,7 @@ Composition Parameters:
 - harmonicProfile: pure minor third 6:5 ratio
 
 Open Questions:
+
 - How does playing historical music in original temperaments affect modern listener perception and appreciation?
 - What specific psychological and physiological mechanisms make certain frequency ratios more consonant than others?
 - Could modern digital instruments easily implement historical temperaments to restore original compositional intentions?
@@ -332,6 +350,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -342,6 +361,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -354,6 +374,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -375,6 +396,7 @@ Summary:
 This paper presents a computational methodology for analyzing microtonal intonation in oral music traditions, using pitch histograms, Dynamic Time Warping, and optimization techniques. The authors applied their approach to 145 pieces of Iranian Classical Vocal Music to extract tuning systems directly from vocal performances. The methodology reveals four distinct types of pitch histogram peaks and uses optimization to align intervals across multiple recordings, capturing both performance flexibility and underlying systematic tendencies.
 
 Claims:
+
 - [1] [anecdotal] Human voice provides a more authentic reference for Iranian musical intervals than musical instruments because instruments may introduce structural tuning constraints while the voice remains unbounded
 - [2] [peer_reviewed] pYIN algorithm achieves 91% Raw Pitch Accuracy for monophonic vocal pitch recognition, outperforming CREPE at 90.5%
 - [3] [anecdotal] Koron is a microtonal modification in Iranian Classical Music that lowers pitch by approximately a quarter-tone, though exact tuning varies by performance context
@@ -382,15 +404,16 @@ Claims:
 - [5] [preprint] Four distinct types of pitch histogram peaks can be identified in microtonal vocal music: well-defined Gaussian peaks, hidden secondary peaks, double-peaked mountains, and flattened/curved peaks
 
 Composition Parameters:
+
 - tuningSystem: Extended MIDI with microtonal resolution
 - frequency: 44.1 kHz sampling rate
 - note: Quarter-tone intervals (koron and sori)
 
 Open Questions:
+
 - How do microtonal intonation patterns vary across different Iranian vocal lineages and regional traditions?
 - What are the optimal computational methods for handling rapid expressive microtonal gestures that may require adaptive time-frequency representations?
 - How can gradient-based and probabilistic optimization strategies improve tuning alignment compared to the current greedy iterative approach?
 - What is the relationship between performer-specific intonation tendencies and broader modal interpretation traditions?
 - How do the four types of histogram peaks relate to specific musical contexts and expressive functions?
 - Can this methodology be effectively adapted to analyze microtonal traditions in other cultures with different vocal techniques?
-

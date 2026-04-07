@@ -98,17 +98,10 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 95,
-      "panelPlanned": [
-        "self",
-        "musician_peer_1",
-        "musician_peer_2",
-        "musician_peer_3"
-      ],
+      "panelPlanned": ["self", "musician_peer_1", "musician_peer_2", "musician_peer_3"],
       "listeningContext": "Quiet room at fixed SPL; run each listener on headphones first and monitors second.",
       "listeningMethod": "Blinded within-subject comparison with randomized order and window-level scoring sheet.",
-      "whatVaries": [
-        "Tuning arm (phi-octave Sbeta5 vs phi-octave SN vs 12TET)"
-      ],
+      "whatVaries": ["Tuning arm (phi-octave Sbeta5 vs phi-octave SN vs 12TET)"],
       "whatStaysConstant": [
         "MIDI note events",
         "section boundaries and bar count",

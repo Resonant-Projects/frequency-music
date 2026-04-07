@@ -24,10 +24,7 @@ interface FeedRow {
 }
 
 // Load source data
-const sourcesPath = join(
-  import.meta.dir,
-  "../data/robert-edward-grant-sources.json",
-);
+const sourcesPath = join(import.meta.dir, "../data/robert-edward-grant-sources.json");
 const sourceData = JSON.parse(readFileSync(sourcesPath, "utf-8"));
 
 // PDF storage directory
@@ -141,9 +138,7 @@ async function addYouTubeFeed(): Promise<void> {
   const feed = sourceData.youtube;
 
   const existing = (await client.query(api.feeds.list)) as FeedRow[];
-  const hasGrant = existing.some((f: FeedRow) =>
-    f.url.includes("UC2MN4AlpbY9NYxuYH-ecoCQ"),
-  );
+  const hasGrant = existing.some((f: FeedRow) => f.url.includes("UC2MN4AlpbY9NYxuYH-ecoCQ"));
 
   if (hasGrant) {
     console.log("YouTube feed already exists");
@@ -171,9 +166,7 @@ async function main() {
   const doYoutube = args.length === 0 || args.includes("--youtube");
 
   console.log("=== Robert Edward Grant Source Ingestion ===\n");
-  console.log(
-    `Options: pdfs=${doPdfs}, articles=${doArticles}, youtube=${doYoutube}\n`,
-  );
+  console.log(`Options: pdfs=${doPdfs}, articles=${doArticles}, youtube=${doYoutube}\n`);
 
   let ingested = 0;
   let skipped = 0;

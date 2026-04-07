@@ -63,18 +63,12 @@ async function main() {
   console.log(`Tier 3 (has content, 0 claims): ${tier3.length}`);
   console.log(`Tier 4 (no content):    ${tier4.length}`);
 
-  console.log(
-    `\n--- Tier 2: Have claims but missing params (re-extract priority) ---`,
-  );
+  console.log(`\n--- Tier 2: Have claims but missing params (re-extract priority) ---`);
   for (const r of tier2.slice(0, 20)) {
-    console.log(
-      `  ${r.claims}c/${r.params}p  ${r.title.slice(0, 70)}  (${r.contentLen} chars)`,
-    );
+    console.log(`  ${r.claims}c/${r.params}p  ${r.title.slice(0, 70)}  (${r.contentLen} chars)`);
   }
 
-  console.log(
-    `\n--- Tier 3: Have content but 0 claims (check if relevant) ---`,
-  );
+  console.log(`\n--- Tier 3: Have content but 0 claims (check if relevant) ---`);
   for (const r of tier3.slice(0, 20)) {
     console.log(`  ${r.title.slice(0, 70)}  (${r.contentLen} chars)`);
     if (r.summary) console.log(`    ${r.summary.slice(0, 100)}`);

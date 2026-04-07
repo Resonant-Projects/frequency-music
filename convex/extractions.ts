@@ -36,9 +36,7 @@ export const getBySourceId = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) =>
-        q.eq("sourceId", args.sourceId),
-      )
+      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", args.sourceId))
       .order("desc")
       .collect();
   },

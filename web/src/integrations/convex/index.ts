@@ -8,9 +8,4 @@ export { ConvexProvider } from "./provider";
 export type { QueryStatus } from "./query";
 export { createQuery, createQueryWithStatus } from "./query";
 
-export type {
-  AuthAdapter,
-  AuthTokenFetcher,
-  ConvexAuthState,
-  UseAuthAdapter,
-} from "./types";
+export type { AuthAdapter, AuthTokenFetcher, ConvexAuthState, UseAuthAdapter } from "./types";

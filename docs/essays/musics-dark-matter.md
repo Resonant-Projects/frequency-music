@@ -1,6 +1,6 @@
 # Music's Dark Matter: What Neural Networks Know That Theory Doesn't
 
-*When we peer inside the residual streams of music-generating transformers, we find the expected — chord progressions, key centers, rhythmic patterns. But we also find something else: coherent, recurring structures that have no name in any music theory tradition. Music, it turns out, has dark matter.*
+_When we peer inside the residual streams of music-generating transformers, we find the expected — chord progressions, key centers, rhythmic patterns. But we also find something else: coherent, recurring structures that have no name in any music theory tradition. Music, it turns out, has dark matter._
 
 ## The Observation
 
@@ -36,9 +36,9 @@ Neural networks have none of these constraints. They learn from the raw statisti
 
 The SAE interpretability work isn't the only signal that music's theoretical vocabulary is incomplete. Several other recent lines of research point in the same direction:
 
-**Structural inductive bias in polyphonic generation.** Recent work on Beethoven piano sonatas used normalized mutual information to demonstrate that pitch and hand assignment are nearly independent (NMI = 0.167). This isn't a surprise to experienced musicians — of course what you play and which hand plays it are somewhat independent. But the formalization reveals something: the degree of independence is a *measurable structural property* of polyphonic music. How many other such measurable structural properties exist that we've never quantified because we lack the conceptual vocabulary?
+**Structural inductive bias in polyphonic generation.** Recent work on Beethoven piano sonatas used normalized mutual information to demonstrate that pitch and hand assignment are nearly independent (NMI = 0.167). This isn't a surprise to experienced musicians — of course what you play and which hand plays it are somewhat independent. But the formalization reveals something: the degree of independence is a _measurable structural property_ of polyphonic music. How many other such measurable structural properties exist that we've never quantified because we lack the conceptual vocabulary?
 
-**Memory hierarchies mapping to musical hierarchies.** The Depth-Structured Music Recurrence work showed that assigning different memory horizons to different neural network layers is optimal for music modeling — long memory in lower layers, short memory in upper layers. This mirrors what we know about musical structure: large-scale form operates on long timescales, surface figuration on short ones. But the specific *budget allocation* that the network discovers — how much memory goes where — encodes a kind of quantitative structural theory that music analysis hasn't attempted.
+**Memory hierarchies mapping to musical hierarchies.** The Depth-Structured Music Recurrence work showed that assigning different memory horizons to different neural network layers is optimal for music modeling — long memory in lower layers, short memory in upper layers. This mirrors what we know about musical structure: large-scale form operates on long timescales, surface figuration on short ones. But the specific _budget allocation_ that the network discovers — how much memory goes where — encodes a kind of quantitative structural theory that music analysis hasn't attempted.
 
 **State space models and musical unfolding.** When structured state space models are applied to music, their mathematical apparatus (state vectors, eigenvalue spectra, selective gating) maps naturally onto musical processes. The eigenvalue spectrum of the A matrix corresponds to the timescales of musical memory. This isn't something anyone designed — it's an emergent correspondence between control theory mathematics and musical structure. It suggests that the formal structure of music has dimensions that are naturally described by mathematics we've had for decades but never thought to apply.
 
@@ -56,9 +56,9 @@ We can speculate about what kinds of patterns might live in music's uncodified s
 
 If music has dark matter — perceptually real patterns that traditional theory doesn't name — then composers have two new frontiers:
 
-**Conscious deployment.** If interpretability tools can identify what these uncodified patterns are, composers can learn to use them deliberately — at which point, of course, they stop being "dark matter" and become regular music theory. That's the paradox and the promise: dark matter is a *transitional* category. Every technique in music theory was once an unnamed intuition that someone formalized. SAE interpretability tools might simply be accelerating the eternal process by which felt patterns become teachable concepts.
+**Conscious deployment.** If interpretability tools can identify what these uncodified patterns are, composers can learn to use them deliberately — at which point, of course, they stop being "dark matter" and become regular music theory. That's the paradox and the promise: dark matter is a _transitional_ category. Every technique in music theory was once an unnamed intuition that someone formalized. SAE interpretability tools might simply be accelerating the eternal process by which felt patterns become teachable concepts.
 
-**Concept steering as composition.** The SAE paper shows that discovered concepts can be used to *steer* model outputs — turn features up or down to control what the model generates. This is essentially a new compositional interface: instead of specifying notes, you specify structural features and let the system realize them. But the interesting case is steering on *uncodified* features. You'd be shaping music along dimensions that have no name, producing effects that are perceptibly coherent but theoretically novel.
+**Concept steering as composition.** The SAE paper shows that discovered concepts can be used to _steer_ model outputs — turn features up or down to control what the model generates. This is essentially a new compositional interface: instead of specifying notes, you specify structural features and let the system realize them. But the interesting case is steering on _uncodified_ features. You'd be shaping music along dimensions that have no name, producing effects that are perceptibly coherent but theoretically novel.
 
 ## The Deeper Question
 
@@ -66,11 +66,11 @@ There's a philosophical tension here worth sitting with. Music theory was suppos
 
 One reading: theory is fine, just incomplete. The named concepts are real; there are just more concepts to name. This is the boring but probably correct answer.
 
-A more provocative reading: the gap between what networks learn and what theory describes reveals that music theory was never primarily a descriptive science. It was a *prescriptive* framework — a set of conceptual tools for teaching, analyzing, and composing within specific traditions. Its vocabulary doesn't reflect the full structure of music; it reflects what was useful to articulate within particular pedagogical and creative practices.
+A more provocative reading: the gap between what networks learn and what theory describes reveals that music theory was never primarily a descriptive science. It was a _prescriptive_ framework — a set of conceptual tools for teaching, analyzing, and composing within specific traditions. Its vocabulary doesn't reflect the full structure of music; it reflects what was useful to articulate within particular pedagogical and creative practices.
 
 On this reading, the uncodified patterns aren't missing from theory because theorists weren't smart enough. They're missing because naming them wouldn't have helped anyone compose a fugue or analyze a sonata. Music theory isn't physics — it isn't trying to describe everything. It's trying to describe what's useful.
 
-Neural networks, by contrast, learn *everything* that's statistically useful for prediction. No filter, no pedagogy, no tradition. The gap between their representations and ours is, in a sense, the gap between music's full statistical structure and the subset of that structure that became culturally useful to articulate.
+Neural networks, by contrast, learn _everything_ that's statistically useful for prediction. No filter, no pedagogy, no tradition. The gap between their representations and ours is, in a sense, the gap between music's full statistical structure and the subset of that structure that became culturally useful to articulate.
 
 ## Coda
 
@@ -80,4 +80,4 @@ The challenge now is building the bridge: taking what sparse autoencoders find i
 
 ---
 
-*Sources: "Discovering and Steering Interpretable Concepts in Large Generative Music Models" (2025); "Mathematical Foundations of Polyphonic Music Generation via Structural Inductive Bias" (2026); "Depth-Structured Music Recurrence" (2026); related extractions from the Frequency Music knowledge base.*
+_Sources: "Discovering and Steering Interpretable Concepts in Large Generative Music Models" (2025); "Mathematical Foundations of Polyphonic Music Generation via Structural Inductive Bias" (2026); "Depth-Structured Music Recurrence" (2026); related extractions from the Frequency Music knowledge base._

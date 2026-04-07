@@ -34,9 +34,7 @@ async function main() {
   // Read the summary file
   const rawSummary = JSON.parse(readFileSync("/tmp/ext-summary.json", "utf-8"));
   const summary = Array.isArray(rawSummary)
-    ? rawSummary.filter((entry): entry is ExtractionSummaryRow =>
-        isExtractionSummaryRow(entry),
-      )
+    ? rawSummary.filter((entry): entry is ExtractionSummaryRow => isExtractionSummaryRow(entry))
     : [];
 
   // If SOURCE_IDS env var is set, use those directly
@@ -47,21 +45,14 @@ async function main() {
     sourceIds.length > 0
       ? sourceIds
           .map((sid) =>
-            summary.find(
-              (entry: ExtractionSummaryRow) => entry.sourceId.trim() === sid,
-            ),
+            summary.find((entry: ExtractionSummaryRow) => entry.sourceId.trim() === sid),
           )
           .filter(Boolean)
       : summary
-          .filter(
-            (entry: ExtractionSummaryRow) =>
-              entry.claims === 0 || entry.params === 0,
-          )
+          .filter((entry: ExtractionSummaryRow) => entry.claims === 0 || entry.params === 0)
           .slice(offset, offset + limit);
 
-  console.log(
-    `Re-extracting ${needsWork.length} sources (offset=${offset}, limit=${limit})`,
-  );
+  console.log(`Re-extracting ${needsWork.length} sources (offset=${offset}, limit=${limit})`);
   console.log(
     `Total needing work: ${summary.filter((entry) => entry.claims === 0 || entry.params === 0).length}`,
   );

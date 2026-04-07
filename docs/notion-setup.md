@@ -14,11 +14,11 @@ The `publishToNotion` action in `convex/weeklyBriefs.ts` requires two environmen
 
 The Notion database needs these properties:
 
-| Property | Type | Notes |
-|----------|------|-------|
-| Name | Title | Auto-filled with "Weekly Brief — YYYY-MM-DD" |
-| Week Of | Date | ISO date of the Monday |
-| Model | Rich text | e.g. "anthropic/claude-sonnet-4-6" |
+| Property | Type      | Notes                                        |
+| -------- | --------- | -------------------------------------------- |
+| Name     | Title     | Auto-filled with "Weekly Brief — YYYY-MM-DD" |
+| Week Of  | Date      | ISO date of the Monday                       |
+| Model    | Rich text | e.g. "anthropic/claude-sonnet-4-6"           |
 
 Additional properties are optional -- the action only writes the three above plus the page body (headings, paragraphs, bullet lists converted from the brief's markdown).
 
@@ -32,9 +32,11 @@ Without this step the API will return a 403.
 ## 4. Get the Database ID
 
 From the database URL:
+
 ```
 https://www.notion.so/<workspace>/<database_id>?v=...
 ```
+
 The database ID is the 32-character hex string before the `?v=` query param. Format it with dashes or without -- Notion accepts both.
 
 ## 5. Set Convex Environment Variables

@@ -8,10 +8,7 @@ import {
 } from "@tanstack/solid-router";
 import { type Component, createEffect, createSignal, lazy } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
-import {
-  buildHostedSignInUrl,
-  useClerkAuthSnapshot,
-} from "./integrations/clerk";
+import { buildHostedSignInUrl, useClerkAuthSnapshot } from "./integrations/clerk";
 import { AdminPage } from "./routes/admin";
 import { CompositionDetailPage } from "./routes/composition-detail";
 import { CompositionsPage } from "./routes/compositions";
@@ -92,11 +89,7 @@ const AppShell: Component = () => {
         >
           ≡
         </button>
-        <nav
-          id="app-nav-menu"
-          class="app-nav"
-          classList={{ "is-open": menuOpen() }}
-        >
+        <nav id="app-nav-menu" class="app-nav" classList={{ "is-open": menuOpen() }}>
           {appLinks.map((link) => (
             <Link
               to={link.to}
@@ -116,10 +109,13 @@ const AppShell: Component = () => {
   );
 };
 
+const authBypass = import.meta.env.VITE_AUTH_BYPASS === "1";
+
 const RootLayout: Component = () => {
   const auth = useClerkAuthSnapshot();
 
   createEffect(() => {
+    if (authBypass) return;
     const state = auth();
     if (!state.isLoaded || state.isSignedIn) return;
 
@@ -127,15 +123,14 @@ const RootLayout: Component = () => {
     window.location.assign(buildHostedSignInUrl(returnTo));
   });
 
-  if (!auth().isLoaded || !auth().isSignedIn) {
+  if (!authBypass && (!auth().isLoaded || !auth().isSignedIn)) {
     return (
       <div class="route-placeholder">
         <UICard class="route-placeholder-card">
           <UIBadge tone="violet">Authentication</UIBadge>
           <h1>Redirecting to sign in...</h1>
           <p>
-            This app requires authentication. You&apos;ll be redirected to
-            login.resonantrhythm.com.
+            This app requires authentication. You&apos;ll be redirected to login.resonantrhythm.com.
           </p>
         </UICard>
       </div>
@@ -145,10 +140,7 @@ const RootLayout: Component = () => {
   return <AppShell />;
 };
 
-const _PlaceholderPage = (props: {
-  title: string;
-  body: string;
-}): Component => {
+const _PlaceholderPage = (props: { title: string; body: string }): Component => {
   const Page: Component = () => (
     <div class="route-placeholder">
       <UICard class="route-placeholder-card">

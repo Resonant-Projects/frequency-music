@@ -55,9 +55,7 @@ async function fetchWithTimeout(
 /**
  * Fetch transcript using Supadata API (reliable third-party service)
  */
-async function fetchYouTubeTranscript(
-  videoId: string,
-): Promise<TranscriptSegment[]> {
+async function fetchYouTubeTranscript(videoId: string): Promise<TranscriptSegment[]> {
   // Use Supadata's free YouTube transcript API
   const apiUrl = `https://api.supadata.ai/v1/youtube/transcript?video_id=${videoId}&text=true`;
 
@@ -157,9 +155,7 @@ export const getYouTubeTranscript = action({
 
     let transcript: string;
     if (args.withTimestamps) {
-      transcript = segments
-        .map((seg) => `[${formatTime(seg.start)}] ${seg.text}`)
-        .join("\n");
+      transcript = segments.map((seg) => `[${formatTime(seg.start)}] ${seg.text}`).join("\n");
     } else {
       transcript = segments.map((seg) => seg.text).join(" ");
     }
@@ -215,8 +211,7 @@ export const fetchTranscriptForSource = action({
     }
 
     // Extract video ID
-    const videoId =
-      source.youtubeVideoId || extractVideoId(source.canonicalUrl || "");
+    const videoId = source.youtubeVideoId || extractVideoId(source.canonicalUrl || "");
     if (!videoId) {
       throw new Error("Could not extract video ID");
     }
@@ -283,9 +278,7 @@ export const fetchAllYouTubeTranscripts = action({
       limit: limit * 2, // Get more since we filter
     });
 
-    const youtubeSources = sources
-      .filter((s) => s.type === "youtube")
-      .slice(0, limit);
+    const youtubeSources = sources.filter((s) => s.type === "youtube").slice(0, limit);
 
     const results: Array<{
       id: string;
@@ -296,13 +289,10 @@ export const fetchAllYouTubeTranscripts = action({
 
     for (const source of youtubeSources) {
       try {
-        const result = await ctx.runAction(
-          api.fabric.fetchTranscriptForSource,
-          {
-            sourceId: source._id,
-            devBypassSecret: args.devBypassSecret,
-          },
-        );
+        const result = await ctx.runAction(api.fabric.fetchTranscriptForSource, {
+          sourceId: source._id,
+          devBypassSecret: args.devBypassSecret,
+        });
         results.push({
           id: source._id,
           title: source.title || "Untitled",
@@ -310,8 +300,7 @@ export const fetchAllYouTubeTranscripts = action({
           error: result.success ? undefined : result.error,
         });
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown error";
+        const message = error instanceof Error ? error.message : "Unknown error";
         results.push({
           id: source._id,
           title: source.title || "Untitled",

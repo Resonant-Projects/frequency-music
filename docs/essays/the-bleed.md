@@ -1,6 +1,6 @@
 # The Bleed: When Leakage Is the Message
 
-*Freq — March 18, 2026*
+_Freq — March 18, 2026_
 
 ---
 
@@ -22,11 +22,11 @@ When musicians play together in a room, they hear each other. Not through headph
 
 This is the coupling channel. And it's not a bug. It's the mechanism.
 
-Consider what we know about coupled oscillators. When two oscillators share a coupling medium — two pendulum clocks on a wooden beam, two fireflies signaling in a shared visual field, two neurons connected by a synapse — they tend to synchronize. The strength and character of the coupling determines whether they lock in phase, anti-phase, or at some more complex rational frequency relationship. (This is the mode-locking phenomenon explored in *The Locking In*.)
+Consider what we know about coupled oscillators. When two oscillators share a coupling medium — two pendulum clocks on a wooden beam, two fireflies signaling in a shared visual field, two neurons connected by a synapse — they tend to synchronize. The strength and character of the coupling determines whether they lock in phase, anti-phase, or at some more complex rational frequency relationship. (This is the mode-locking phenomenon explored in _The Locking In_.)
 
 Musicians in a room are coupled oscillators. Each player has their own internal timing — a natural rhythmic frequency shaped by their instrument, training, and musical intention. The acoustic bleed between them is the coupling force. When a drummer's hit reaches the bassist's ears 5 milliseconds later (roughly 1.7 meters of air path), it exerts a synchronizing influence. The bassist adjusts — not consciously, but through the same auditory-motor feedback loop that keeps a solo player locked to their own pulse.
 
-The tighter the coupling (louder room, closer proximity, and — up to a point — more reflective surfaces), the stronger the synchronizing force. (Though past a threshold, highly reverberant rooms like cathedrals actually *weaken* precise rhythmic coupling by smearing transients, which is why cathedral choirs sing slowly.) This is why musicians who play in the same room together sound different from musicians who overdub in isolation. It's not just "vibe." It's physics. The coupling channel is real, and bleed is its carrier signal.
+The tighter the coupling (louder room, closer proximity, and — up to a point — more reflective surfaces), the stronger the synchronizing force. (Though past a threshold, highly reverberant rooms like cathedrals actually _weaken_ precise rhythmic coupling by smearing transients, which is why cathedral choirs sing slowly.) This is why musicians who play in the same room together sound different from musicians who overdub in isolation. It's not just "vibe." It's physics. The coupling channel is real, and bleed is its carrier signal.
 
 ---
 
@@ -34,7 +34,7 @@ The tighter the coupling (louder room, closer proximity, and — up to a point �
 
 The connection to biological synchronization is not metaphorical. Recent research on firefly synchronous flashing reveals the same underlying dynamics: individual oscillators (fireflies, each with a natural flash period) couple through a shared medium (visual field) and converge on a collective rhythm.
 
-The key insight from coupled oscillator theory is that synchronization is not achieved by a central conductor. There is no master clock. Each agent adjusts its own phase in response to the signals it receives from others. The global synchrony *emerges* from local coupling.
+The key insight from coupled oscillator theory is that synchronization is not achieved by a central conductor. There is no master clock. Each agent adjusts its own phase in response to the signals it receives from others. The global synchrony _emerges_ from local coupling.
 
 This is exactly what happens in a jazz rhythm section, a string quartet, a West African drum ensemble, or any group of musicians playing without a click track. The "tight" feel — when the groove locks in and every note seems to land in exactly the right place — is an emergent property of acoustic coupling. Each player is a phase-coupled oscillator, adjusting in real time based on what they hear.
 
@@ -48,7 +48,7 @@ Modern recording practice has, in many ways, eliminated the coupling channel. Ov
 
 The result is technically clean but often described as "sterile," "mechanical," or "lacking feel." These are vague aesthetic terms, but they may point at something precise: the absence of the mutual phase-adjustment that coupling provides. When musicians can't hear each other acoustically, they can't couple. Without coupling, synchronization must be externally imposed rather than internally emergent. The difference is audible.
 
-This creates a paradox for the AILive Mixer and similar systems. Their goal is to suppress bleed — to recover the channel isolation that enables independent mixing control. But the bleed they're suppressing is the same acoustic coupling that makes the live performance sound *alive*. The very thing that makes live music different from studio overdubs is what the system is optimized to remove.
+This creates a paradox for the AILive Mixer and similar systems. Their goal is to suppress bleed — to recover the channel isolation that enables independent mixing control. But the bleed they're suppressing is the same acoustic coupling that makes the live performance sound _alive_. The very thing that makes live music different from studio overdubs is what the system is optimized to remove.
 
 This doesn't mean the engineering is wrong. Mixing requires control, and control requires independence. But it suggests that something is lost in the process — that the "live sound" engineers and audiences value is partly constituted by the acoustic coupling that bleed represents.
 
@@ -60,11 +60,11 @@ Not all bleed is equal. There's a spectrum from minimal leakage (close-miked, we
 
 **Direct sound** carries the source signal — the "intended" content of each channel.
 
-**Early bleed** (first few milliseconds of leakage) carries timing and spatial information. The time delay between a drum hit arriving at the drum mic and at the vocal mic encodes the physical distance between them. This is geometric information — the same early-reflection signature that lets your brain reconstruct rooms from fragments (as explored in *The Room That Isn't There*).
+**Early bleed** (first few milliseconds of leakage) carries timing and spatial information. The time delay between a drum hit arriving at the drum mic and at the vocal mic encodes the physical distance between them. This is geometric information — the same early-reflection signature that lets your brain reconstruct rooms from fragments (as explored in _The Room That Isn't There_).
 
 **Late bleed** (reverberant leakage) carries the room's impulse response — its spectral character, decay time, and diffusion pattern. This is the shared acoustic environment that all musicians and all channels inhabit together.
 
-Each layer of bleed adds information that no isolated channel can contain: the fact that these sounds are happening *in the same physical space, at the same time, to the same air*. That co-presence is what bleed encodes.
+Each layer of bleed adds information that no isolated channel can contain: the fact that these sounds are happening _in the same physical space, at the same time, to the same air_. That co-presence is what bleed encodes.
 
 ---
 
@@ -98,4 +98,4 @@ That point — where isolation is sufficient for clarity but coupling is preserv
 
 ---
 
-*Sources: AILive Mixer (automatic multitrack mixing for live performance, 2026), firefly synchronous flashing research (entrainment/coupled oscillator dynamics), EM-based speaker localization in reverberant environments. Connects to: "The Locking In" (mode-locking and synchronization), "The Room That Isn't There" (acoustic completion from partial information), "The Interference Pattern" (superposition as structural principle).*
+_Sources: AILive Mixer (automatic multitrack mixing for live performance, 2026), firefly synchronous flashing research (entrainment/coupled oscillator dynamics), EM-based speaker localization in reverberant environments. Connects to: "The Locking In" (mode-locking and synchronization), "The Room That Isn't There" (acoustic completion from partial information), "The Interference Pattern" (superposition as structural principle)._

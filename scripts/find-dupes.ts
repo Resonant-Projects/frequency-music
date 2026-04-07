@@ -7,8 +7,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL =
-  process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
+const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
 const BYPASS = "freq-opus-extract-2026";
 
 function normalizeUrl(url: string): string {
@@ -71,9 +70,7 @@ async function main() {
   }
 
   // Find URL dupes
-  const urlDupes = [...byUrl.entries()].filter(
-    ([_, sources]) => sources.length > 1,
-  );
+  const urlDupes = [...byUrl.entries()].filter(([_, sources]) => sources.length > 1);
   if (urlDupes.length > 0) {
     console.log(`=== URL Duplicates (${urlDupes.length} groups) ===\n`);
     let archived = 0;
@@ -115,22 +112,16 @@ async function main() {
     .filter(([_, sources]) => sources.length > 1)
     .filter(([_, sources]) => {
       // Skip if all have the same URL (already caught above)
-      const urls = new Set(
-        sources.map((s: any) => normalizeUrl(s.canonicalUrl || "")),
-      );
+      const urls = new Set(sources.map((s: any) => normalizeUrl(s.canonicalUrl || "")));
       return urls.size > 1;
     });
 
   if (titleDupes.length > 0) {
-    console.log(
-      `=== Title-Similar Duplicates (${titleDupes.length} groups) ===\n`,
-    );
+    console.log(`=== Title-Similar Duplicates (${titleDupes.length} groups) ===\n`);
     for (const [title, sources] of titleDupes.slice(0, 20)) {
       console.log(`Title: "${title.slice(0, 60)}"`);
       for (const s of sources) {
-        console.log(
-          `  ${s._id} | ${s.status} | ${s.canonicalUrl?.slice(0, 60)}`,
-        );
+        console.log(`  ${s._id} | ${s.status} | ${s.canonicalUrl?.slice(0, 60)}`);
       }
       console.log();
     }

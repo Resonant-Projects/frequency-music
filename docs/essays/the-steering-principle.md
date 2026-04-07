@@ -1,20 +1,20 @@
 # The Steering Principle: When Guidance Preserves What Control Destroys
 
-*Essay #65 — March 23, 2026*
+_Essay #65 — March 23, 2026_
 
 ## Two Modes of Influence
 
 There are two fundamentally different ways one information channel can affect another. It can **integrate** — fusing its features deeply into the other channel's processing, learning joint representations, sharing gradients. Or it can **steer** — providing directional guidance while leaving the other channel's internal dynamics intact.
 
-The Dominant Channel essay (#64) identified the problem: in multimodal systems, the more structured channel overwhelms the less structured one. But three recent architectures reveal a more nuanced principle — the solution isn't always to protect the subordinate channel. Sometimes the solution is to *change the mode of influence* from integration to steering.
+The Dominant Channel essay (#64) identified the problem: in multimodal systems, the more structured channel overwhelms the less structured one. But three recent architectures reveal a more nuanced principle — the solution isn't always to protect the subordinate channel. Sometimes the solution is to _change the mode of influence_ from integration to steering.
 
 ## Plug-and-Steer: The Frozen Backbone
 
 Plug-and-Steer (Wang et al., 2026) attacks audio-visual target speaker extraction with a radical constraint: the audio separation backbone is **frozen**. The visual modality — the face of the target speaker — is not allowed to modify the separation process at all. Instead, it operates through a Latent Steering Matrix (LSM): a minimalist linear transformation that re-routes latent features within the frozen backbone to anchor the target speaker to a designated channel.
 
-Conventional AV-TSE systems integrate audio and visual features deeply, learning to re-do separation conditioned on both modalities. This works — until it doesn't. The authors identify a "fidelity ceiling": because audio-visual datasets recorded in the wild are inherently noisy (misaligned lips, occluded faces, varying conditions), deep integration forces the separation model to partially learn the *noise patterns* of the visual channel. The model's acoustic priors — the careful understanding of how speech signals mix and separate — get contaminated.
+Conventional AV-TSE systems integrate audio and visual features deeply, learning to re-do separation conditioned on both modalities. This works — until it doesn't. The authors identify a "fidelity ceiling": because audio-visual datasets recorded in the wild are inherently noisy (misaligned lips, occluded faces, varying conditions), deep integration forces the separation model to partially learn the _noise patterns_ of the visual channel. The model's acoustic priors — the careful understanding of how speech signals mix and separate — get contaminated.
 
-The steering approach sidesteps this entirely. The audio backbone retains its full acoustic prior. Vision just says "that one" — a direction, not a modification. Experiments across four representative architectures show perceptual quality comparable to the original audio-only backbones. The subordinate modality (vision) is *more effective* when it does less.
+The steering approach sidesteps this entirely. The audio backbone retains its full acoustic prior. Vision just says "that one" — a direction, not a modification. Experiments across four representative architectures show perceptual quality comparable to the original audio-only backbones. The subordinate modality (vision) is _more effective_ when it does less.
 
 ## FoleyDirector: Temporal Scripts as Steering Signals
 
@@ -22,15 +22,16 @@ FoleyDirector (2026) takes the steering principle into generative territory. The
 
 The solution: Structured Temporal Scripts (STS). Instead of a single global caption, the user provides time-aligned text descriptions ("0-2s: footsteps on gravel; 2-3.5s: door creaking; 3.5-5s: birdsong"). These are fused through a Script-Guided Temporal Fusion Module using Temporal Script Attention.
 
-The critical design choice: STS features don't replace the base DiT model's audio generation capabilities. They steer the *when* and *what* of generation while the base model handles the *how*. The distinction matters. The base model knows what gravel footsteps sound like — their spectral characteristics, temporal envelope, realistic variations. The temporal script just says "footsteps, here, now." Direction without overwrite.
+The critical design choice: STS features don't replace the base DiT model's audio generation capabilities. They steer the _when_ and _what_ of generation while the base model handles the _how_. The distinction matters. The base model knows what gravel footsteps sound like — their spectral characteristics, temporal envelope, realistic variations. The temporal script just says "footsteps, here, now." Direction without overwrite.
 
 Further, the "Bi-Frame Sound Synthesis" module separates in-frame and out-of-frame audio generation — parallel pathways for sounds that have visual grounding and sounds that don't. This is architectural protection again: off-screen sounds get their own pathway so they aren't suppressed by the visually-grounded (more structured, easier-to-learn) sounds.
 
 ## Borderless Long Speech: Text as Protocol Stack
 
-The Borderless Long Speech Synthesis framework (2026) makes the steering principle explicit in its architecture. Text is described as "an information-complete, wide-band control channel" — but crucially, it operates through a *layered protocol stack* that maps from scene semantics down to phonetic detail.
+The Borderless Long Speech Synthesis framework (2026) makes the steering principle explicit in its architecture. Text is described as "an information-complete, wide-band control channel" — but crucially, it operates through a _layered protocol stack_ that maps from scene semantics down to phonetic detail.
 
 The annotation schema — "Global-Sentence-Token" — creates three hierarchical layers of textual control:
+
 - **Global**: scene-level context (environment, emotional arc, speaker identities)
 - **Sentence**: utterance-level instructions (prosody, emphasis, pacing)
 - **Token**: phonetic-level guidance (pronunciation, timing)
@@ -65,4 +66,4 @@ A conductor doesn't sing. A score doesn't play. A temporal script doesn't synthe
 
 ---
 
-*Connects to: The Dominant Channel (#64), The Informative Noise (#63), The Orthogonal Unknown (#61), The Borrowed Structure (#60)*
+_Connects to: The Dominant Channel (#64), The Informative Noise (#63), The Orthogonal Unknown (#61), The Borrowed Structure (#60)_

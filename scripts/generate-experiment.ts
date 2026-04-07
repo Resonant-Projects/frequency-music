@@ -10,8 +10,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL =
-  process.env.CONVEX_URL || "https://righteous-marmot-892.convex.cloud";
+const CONVEX_URL = process.env.CONVEX_URL || "https://righteous-marmot-892.convex.cloud";
 
 const client = new ConvexHttpClient(CONVEX_URL);
 
@@ -35,9 +34,7 @@ async function main() {
           (c: any) => c.evidenceLevel === "peer_reviewed",
         ).length;
         const score =
-          e.claims.length * 2 +
-          e.compositionParameters.length * 3 +
-          peerReviewedClaims * 5;
+          e.claims.length * 2 + e.compositionParameters.length * 3 + peerReviewedClaims * 5;
         return { extraction: e, score };
       })
       .toSorted((a, b) => b.score - a.score);
@@ -52,9 +49,7 @@ async function main() {
 
     console.log(`📊 Selected: "${best.extraction.sourceId}"`);
     console.log(`   Claims: ${best.extraction.claims.length}`);
-    console.log(
-      `   Parameters: ${best.extraction.compositionParameters.length}`,
-    );
+    console.log(`   Parameters: ${best.extraction.compositionParameters.length}`);
     console.log(`   Score: ${best.score}\n`);
   } else if (args[0]) {
     extractionId = args[0];
@@ -69,12 +64,9 @@ async function main() {
   console.log("🧪 Generating hypothesis from extraction...\n");
 
   try {
-    const hypothesisResult = await client.action(
-      api.hypotheses.generateFromExtraction,
-      {
-        extractionId: extractionId as any,
-      },
-    );
+    const hypothesisResult = await client.action(api.hypotheses.generateFromExtraction, {
+      extractionId: extractionId as any,
+    });
 
     console.log("✅ Hypothesis created!");
     console.log(`   ID: ${hypothesisResult.hypothesisId}`);
@@ -84,20 +76,15 @@ async function main() {
     // Generate recipe
     console.log("📋 Generating recipe from hypothesis...\n");
 
-    const recipeResult = await client.action(
-      api.recipes.generateFromHypothesis,
-      {
-        hypothesisId: hypothesisResult.hypothesisId,
-      },
-    );
+    const recipeResult = await client.action(api.recipes.generateFromHypothesis, {
+      hypothesisId: hypothesisResult.hypothesisId,
+    });
 
     console.log("✅ Recipe created!");
     console.log(`   ID: ${recipeResult.recipeId}`);
     console.log(`   Title: ${recipeResult.generated.title}`);
     console.log(`   Parameters: ${recipeResult.generated.parameters.length}`);
-    console.log(
-      `   DAW Checklist: ${recipeResult.generated.dawChecklist.length} items\n`,
-    );
+    console.log(`   DAW Checklist: ${recipeResult.generated.dawChecklist.length} items\n`);
 
     // Output summary
     console.log("=".repeat(60));

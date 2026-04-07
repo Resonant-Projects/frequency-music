@@ -40,82 +40,107 @@ The sequence is therefore:
 ## The 12 Ideas
 
 ### 1. Thesis Tracker
+
 Add a layer above hypotheses for durable beliefs and long-running questions.
 
 ### 2. Why This Matters
+
 Require each experiment to state its artistic or conceptual stake explicitly.
 
 ### 3. Failure Archive
+
 Turn contradicted or low-yield work into durable knowledge rather than silent clutter.
 
 ### 4. Lineage Views
+
 Show the ancestry of every composition from source to observation.
 
 ### 5. Single-Variable Experiment Mode
+
 Make revisions more comparable by naming what changed.
 
 ### 6. Interesting vs True
+
 Separate creative fertility from evidential strength.
 
 ### 7. Editorial Graph
+
 Make the concept graph useful for decision-making, not just navigation.
 
 ### 8. Studio Prompts
+
 Add shorter, more actionable outputs alongside weekly briefs.
 
 ### 9. Embodied Listening Vocabulary
+
 Improve the language and structure used to capture felt response.
 
 ### 10. Public Editorial Cadence
+
 Establish recurring public formats for publishing what the system learns.
 
 ### 11. Expandability Score
+
 Track whether an experiment can become real music, not just whether it is interesting.
 
 ### 12. Seasonal Themes and Campaigns
+
 Group weekly work into larger arcs with memory and momentum.
 
 ## Meaning Contribution of Each Idea
 
 ### Thesis Tracker
+
 This turns isolated experiments into a coherent worldview. Meaning grows when many weekly turns can be seen as testing versions of the same underlying belief.
 
 ### Why This Matters
+
 This keeps the system connected to stakes instead of drifting into procedural activity. It forces every experiment to answer why anyone should care.
 
 ### Failure Archive
+
 This gives negative results dignity. The project becomes more honest and more cumulative when it remembers what did not work and why.
 
 ### Lineage Views
+
 These make artifacts legible as consequences of inquiry. A composition becomes more meaningful when its ancestry is visible.
 
 ### Single-Variable Experiment Mode
+
 This increases interpretability. Without it, the system records motion but learns less from comparison.
 
 ### Interesting vs True
+
 This protects both wonder and rigor. The project can preserve speculative material without letting it masquerade as proof.
 
 ### Editorial Graph
+
 This turns the graph into a mirror of the project's actual mind: recurring concepts, blind spots, and high-yield clusters.
 
 ### Studio Prompts
+
 These reduce the gap between synthesis and making. Meaning in this project must survive contact with practice.
 
 ### Embodied Listening Vocabulary
+
 This sharpens the language of felt response and allows subtle bodily knowledge to accumulate in comparable form.
 
 ### Public Editorial Cadence
+
 This turns private research into an identifiable public practice rather than a pile of internal notes.
 
 ### Expandability Score
+
 This keeps the system oriented toward music, not only experiments. It values ideas that can become pieces.
 
 ### Seasonal Themes and Campaigns
+
 These give the project chapters. Weeks create momentum; campaigns create significance.
 
 ## Four-Layer Architecture
 
 ### Knowledge Layer
+
 Focus: what the project believes, tracks, and distinguishes.
 
 Includes:
@@ -126,6 +151,7 @@ Includes:
 - seasonal themes and campaigns
 
 ### Experiment Layer
+
 Focus: how the project designs and evaluates work.
 
 Includes:
@@ -137,6 +163,7 @@ Includes:
 - studio prompts
 
 ### Representation Layer
+
 Focus: how accumulated learning becomes legible inside the product.
 
 Includes:
@@ -146,6 +173,7 @@ Includes:
 - thesis-linked weekly briefs
 
 ### Publishing Layer
+
 Focus: how selected learning becomes public.
 
 Includes:
@@ -157,9 +185,11 @@ Includes:
 ## 12-Week Phased Roadmap
 
 ### Phase 1: Rigor and Interpretation
+
 Weeks 1-3
 
 Status:
+
 - Implemented, with hardening now enforced for new work: new hypotheses require `whyThisMatters`, listening feedback captures embodied notes and expand verdicts, and Phase 1 regression coverage exists for the critical paths.
 
 Quick wins first:
@@ -185,9 +215,11 @@ Success criteria:
 - speculation is no longer flattened into the same category as stronger evidence
 
 ### Phase 2: Represent Accumulated Learning
+
 Weeks 4-6
 
 Status:
+
 - Implemented. Composition lineage now includes source -> extraction -> hypothesis -> recipe -> composition -> listening, and the failure archive continues to derive from those relationships.
 
 - add lineage views for compositions
@@ -207,9 +239,11 @@ Success criteria:
 - the graph helps select next work, not just browse content
 
 ### Phase 3: Tighten the Studio Loop
+
 Weeks 7-9
 
 Status:
+
 - Implemented. Campaigns steer the weekly loop, weekly briefs persist 10/30/90-minute prompts plus deterministic recommended actions, and negative evidence remains part of campaign steering.
 
 - add studio prompt modes
@@ -230,6 +264,7 @@ Success criteria:
 - the system helps choose what to compose next
 
 ### Phase 4: Strengthen Public Narrative
+
 Weeks 10-12
 
 - define a recurring editorial cadence
@@ -268,21 +303,25 @@ These all improve the value of future work without requiring major new surfaces.
 ## Success Criteria by Phase
 
 ### Phase 1
+
 - better signal quality
 - clearer artistic stakes
 - stronger separation between evidence and inspiration
 
 ### Phase 2
+
 - better memory and traceability
 - more visible contradictions
 - better decision support
 
 ### Phase 3
+
 - tighter connection between synthesis and making
 - longer thematic continuity
 - more useful weekly steering
 
 ### Phase 4
+
 - stronger public identity
 - more consistent editorial practice
 - more trustworthy outward-facing narrative

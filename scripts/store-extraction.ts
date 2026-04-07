@@ -48,9 +48,7 @@ async function main() {
   const hashData = encoder.encode(`${data.sourceId}opus_reextract_v1`);
   const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const inputHash = hashArray
-    .map((b: number) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const inputHash = hashArray.map((b: number) => b.toString(16).padStart(2, "0")).join("");
 
   const payload = JSON.stringify({
     sourceId: data.sourceId,
@@ -70,10 +68,7 @@ async function main() {
   console.log(`Stored: ${result.trim()}`);
 
   // Update source status
-  runConvex(
-    "sources:updateStatus",
-    JSON.stringify({ id: data.sourceId, status: "extracted" }),
-  );
+  runConvex("sources:updateStatus", JSON.stringify({ id: data.sourceId, status: "extracted" }));
   console.log(`Updated source status to extracted`);
 }
 

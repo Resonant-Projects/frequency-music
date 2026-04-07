@@ -1,8 +1,8 @@
 # What Survives: Five Proofs That Sound Is Structure
 
-*Essay #82 — April 1, 2026*
+_Essay #82 — April 1, 2026_
 
-*A synthesis of essays #77–81, connecting attractors, identity, the signal-structure gap, resonant bodies, and geometric duality into a single claim.*
+_A synthesis of essays #77–81, connecting attractors, identity, the signal-structure gap, resonant bodies, and geometric duality into a single claim._
 
 ---
 
@@ -16,9 +16,9 @@ Over the past few days, five essays circled the same question from different ang
 - What survives selective amplification? Resonance — the transfer function's preferred frequencies (#80).
 - What survives the forward-inverse cycle? Geometry — the physical shape that constrains both production and perception (#81).
 
-Read in isolation, each essay describes a different phenomenon in audio processing and music technology. Read together, they converge on a single claim: **what survives any process applied to sound reveals what that sound fundamentally is.** And the thing that fundamentally *is* — the invariant under all these different transformations — is structure.
+Read in isolation, each essay describes a different phenomenon in audio processing and music technology. Read together, they converge on a single claim: **what survives any process applied to sound reveals what that sound fundamentally is.** And the thing that fundamentally _is_ — the invariant under all these different transformations — is structure.
 
-Not signal. Not waveform. Not spectral content at a moment. *Structure*: the relational, geometric, temporally extended pattern that persists across representations.
+Not signal. Not waveform. Not spectral content at a moment. _Structure_: the relational, geometric, temporally extended pattern that persists across representations.
 
 ---
 
@@ -30,11 +30,11 @@ Think of each essay as proposing a different "survival test" for sound — a pro
 
 Feed a signal back through a channel repeatedly. What remains after convergence? Lucier's room reveals its resonant modes. A TTS model reveals its average voice. A tape loop reveals its frequency response curve. The attractor is the channel's self-portrait, and the rate of convergence measures how much the channel transforms versus how much it transmits.
 
-**What this test reveals:** the eigenstructure of the medium. The attractor is what the channel *is*, expressed as a sound.
+**What this test reveals:** the eigenstructure of the medium. The attractor is what the channel _is_, expressed as a sound.
 
 ### Test 2: Transform (The Identity Test)
 
-Apply transformations — transpose, time-stretch, compress, anonymize. What persists? Audio fingerprints survive distortion because they encode temporal trajectories, not moments. Voices survive anonymization because identity lives in the *correlation structure* between attributes, not in any single attribute. Identity, it turns out, is relational.
+Apply transformations — transpose, time-stretch, compress, anonymize. What persists? Audio fingerprints survive distortion because they encode temporal trajectories, not moments. Voices survive anonymization because identity lives in the _correlation structure_ between attributes, not in any single attribute. Identity, it turns out, is relational.
 
 **What this test reveals:** the invariant class. Identity is not a fixed point but an equivalence class — the set of all configurations reachable by continuous deformation that still "sound like" the same thing.
 
@@ -70,7 +70,7 @@ Now here's what happens when you stack these five tests:
 
 These are five different statements of the same underlying principle: **sound carries structure, and structure is what persists.**
 
-The attractor *is* the channel's geometry (Test 1 = Test 5). Identity *is* resonant compatibility — what survives transformation is what resonates across representations (Test 2 = Test 4). The signal-structure gap exists because compression targets the wrong invariant — it preserves what's stable under signal perturbation but not what's stable under structural perturbation (Test 3 illuminates why Tests 1-2 and Tests 4-5 capture different things).
+The attractor _is_ the channel's geometry (Test 1 = Test 5). Identity _is_ resonant compatibility — what survives transformation is what resonates across representations (Test 2 = Test 4). The signal-structure gap exists because compression targets the wrong invariant — it preserves what's stable under signal perturbation but not what's stable under structural perturbation (Test 3 illuminates why Tests 1-2 and Tests 4-5 capture different things).
 
 This isn't a metaphor. It's a mathematical relationship. Attractors are eigenstructures. Eigenstructures are geometric. Geometry determines resonance. Resonance determines identity. Identity is what survives.
 
@@ -98,7 +98,7 @@ For a composer, this means: **when you specify any one of these — a geometry, 
 
 If what survives any process is structure, and if geometry, resonance, identity, and attractors are all the same thing expressed in different coordinate systems, then composition at its deepest level is the design of structures that survive the chain of transformations from imagination → notation → performance → acoustics → perception.
 
-The notes on the page are an approximation. The performance is a physical realization. The room adds its transfer function. The listener's auditory system adds another. What survives all these transformations and arrives as *musical meaning* in the listener's mind is the structure — the relational pattern that is invariant under the entire chain.
+The notes on the page are an approximation. The performance is a physical realization. The room adds its transfer function. The listener's auditory system adds another. What survives all these transformations and arrives as _musical meaning_ in the listener's mind is the structure — the relational pattern that is invariant under the entire chain.
 
 This is why a melody is recognizable when transposed, re-orchestrated, and played in a different room. The structure — the pattern of intervals, the rhythmic relationships, the contour — survives all those transformations. It's the identity of the musical idea, in exactly the same sense that a voice's identity survives anonymization: it's the equivalence class, not any particular instantiation.
 
@@ -112,7 +112,7 @@ Closing the gap will require systems that can follow the chain: from signal surf
 
 Not all musical structures survive equally well. A stepwise melody is more robust to pitch quantization than a chromatic one. A steady pulse is more robust to temporal jitter than a rubato phrase. A harmonic-series timbre is more robust to resonant filtering than an inharmonic one.
 
-The *depth* of survival — how many tests a structure passes, how many transformations it endures — is itself a compositional parameter. Music that is deeply invariant (survives everything) tends toward the elemental: drones, pure intervals, steady pulses. Music that is shallowly invariant (destroyed by any transformation) tends toward the momentary: unique timbral events, unrepeatable gestures, site-specific installations.
+The _depth_ of survival — how many tests a structure passes, how many transformations it endures — is itself a compositional parameter. Music that is deeply invariant (survives everything) tends toward the elemental: drones, pure intervals, steady pulses. Music that is shallowly invariant (destroyed by any transformation) tends toward the momentary: unique timbral events, unrepeatable gestures, site-specific installations.
 
 Most interesting music lives between these extremes: structurally robust enough to carry meaning across the performance-listening chain, but fragile enough that the specific instantiation matters. The tension between what survives and what doesn't — between the structure and its shadow — is where musical expression lives.
 
@@ -133,10 +133,10 @@ Every survival test implies its complement: what gets destroyed. Iteration destr
 
 Music needs both — the surviving and the destroyed. The attack transient that doesn't survive the room's reverb is as musically important as the resonant frequencies that do. The performer's rubato that doesn't survive tempo normalization is as essential as the melodic contour that does. The specific instrument timbre that doesn't survive re-orchestration carries meaning precisely because it's fragile.
 
-What survives tells you what a sound *is*. What doesn't survive tells you what makes *this particular instance* of that sound irreplaceable. The structure is the universal. The shadow is the singular. Composition is the art of placing one against the other.
+What survives tells you what a sound _is_. What doesn't survive tells you what makes _this particular instance_ of that sound irreplaceable. The structure is the universal. The shadow is the singular. Composition is the art of placing one against the other.
 
 ---
 
-*Sources: Synthesizes essays #77 (attractors/iteration), #78 (identity/transformation), #79 (signal-structure gap), #80 (resonant bodies/transfer functions), #81 (geometry-sound duality). Primary papers: I2D iterative resynthesis, VLAFP fingerprinting, voice anonymization frameworks, MuQ-Eval quality metrics, SSATKD knowledge distillation, neuromorphic MFCC, SELVA selective audio, RT-MRI vocal tract inversion, DiFlowDubber, UPV_RIR_DB, DreamAudio.*
+_Sources: Synthesizes essays #77 (attractors/iteration), #78 (identity/transformation), #79 (signal-structure gap), #80 (resonant bodies/transfer functions), #81 (geometry-sound duality). Primary papers: I2D iterative resynthesis, VLAFP fingerprinting, voice anonymization frameworks, MuQ-Eval quality metrics, SSATKD knowledge distillation, neuromorphic MFCC, SELVA selective audio, RT-MRI vocal tract inversion, DiFlowDubber, UPV_RIR_DB, DreamAudio._
 
-*Connects to: Lucier "I Am Sitting in a Room," spectralism (Grisey/Murail), topology of musical spaces (Tymoczko), eigenvalue problems in acoustics, homotopy theory, Shannon information theory.*
+_Connects to: Lucier "I Am Sitting in a Room," spectralism (Grisey/Murail), topology of musical spaces (Tymoczko), eigenvalue problems in acoustics, homotopy theory, Shannon information theory._

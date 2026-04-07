@@ -46,11 +46,9 @@ export function FailuresPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Failure Archive</h1>
-        <p
-          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
-        >
-          Contradictions and low-yield paths stay visible here so the system can
-          learn honestly instead of silently discarding reversals.
+        <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
+          Contradictions and low-yield paths stay visible here so the system can learn honestly
+          instead of silently discarding reversals.
         </p>
       </UICard>
 
@@ -80,9 +78,7 @@ export function FailuresPage() {
               onChange={(event) => setReason(event.currentTarget.value)}
             >
               <option value="">All reasons</option>
-              <For each={REASONS}>
-                {(value) => <option value={value}>{value}</option>}
-              </For>
+              <For each={REASONS}>{(value) => <option value={value}>{value}</option>}</For>
             </UISelect>
           </div>
           <div>
@@ -137,9 +133,7 @@ export function FailuresPage() {
                     })}
                   >
                     <UIBadge tone="gold">{entry.reason}</UIBadge>
-                    <UIBadge tone="cream">
-                      {entry.recommendedNextAction}
-                    </UIBadge>
+                    <UIBadge tone="cream">{entry.recommendedNextAction}</UIBadge>
                   </div>
                   <h3
                     class={css({
@@ -201,10 +195,7 @@ export function FailuresPage() {
                       </a>
                     </Show>
                     <Show when={entry.thesisId}>
-                      <a
-                        href={`/theses/${entry.thesisId}`}
-                        class={css({ color: "zodiac.violet" })}
-                      >
+                      <a href={`/theses/${entry.thesisId}`} class={css({ color: "zodiac.violet" })}>
                         Thesis
                       </a>
                     </Show>

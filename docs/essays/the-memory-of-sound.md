@@ -1,6 +1,6 @@
 # The Memory of Sound: Why Music Is a Time Art of Prediction
 
-*Music exists in time, but it lives in memory. Every musical experience — from the recognition of a melodic interval to the emotional payoff of a recapitulation — depends on the listener holding the past in mind while predicting the future. The mathematics of memory at multiple timescales isn't just relevant to music perception; it IS the mechanism by which sound becomes music.*
+_Music exists in time, but it lives in memory. Every musical experience — from the recognition of a melodic interval to the emotional payoff of a recapitulation — depends on the listener holding the past in mind while predicting the future. The mathematics of memory at multiple timescales isn't just relevant to music perception; it IS the mechanism by which sound becomes music._
 
 ---
 
@@ -10,7 +10,7 @@ Here is a fundamental problem with sound: it doesn't persist. A painting hangs o
 
 And yet music — the most temporal of arts — creates structures of extraordinary complexity and emotional power. A symphony maintains coherence across forty minutes. A pop song's chorus feels inevitable on its fourth appearance. A jazz improviser quotes a melody from three choruses ago and the audience laughs in recognition.
 
-All of this requires memory. Not metaphorical memory — literal, computational memory, implemented in neural tissue, operating at multiple timescales simultaneously. Music is the art of *exploiting the listener's memory architecture*, and understanding that architecture reveals why music is structured the way it is.
+All of this requires memory. Not metaphorical memory — literal, computational memory, implemented in neural tissue, operating at multiple timescales simultaneously. Music is the art of _exploiting the listener's memory architecture_, and understanding that architecture reveals why music is structured the way it is.
 
 ## The Timescale Hierarchy
 
@@ -22,17 +22,17 @@ The auditory system maintains a high-fidelity, pre-attentive buffer of the most 
 
 This buffer defines the **perceptual present** in music: the window within which sounds are experienced as simultaneous or immediately sequential rather than recalled from the past. And it's not a coincidence that musical phrases tend to be 2–4 seconds long. Fraisse (1982) documented this across hundreds of musical traditions: the basic unit of musical utterance — a phrase, a breath, a gestural arc — fits within the echoic window.
 
-Why? Because within this window, the brain can perform *direct comparison* without retrieval. The beginning of a phrase is still "present" when its end arrives. Interval recognition, contour perception, and rhythmic grouping all operate on the raw echoic trace. Extend a phrase beyond ~4 seconds and the listener must begin retrieving from a different, lossy memory system — which changes the cognitive operation from perception to recall.
+Why? Because within this window, the brain can perform _direct comparison_ without retrieval. The beginning of a phrase is still "present" when its end arrives. Interval recognition, contour perception, and rhythmic grouping all operate on the raw echoic trace. Extend a phrase beyond ~4 seconds and the listener must begin retrieving from a different, lossy memory system — which changes the cognitive operation from perception to recall.
 
 This is the deepest reason why music has phrases at all. A phrase is the largest temporal unit that fits in the perceptual present.
 
 ### Working Memory (~15–30 seconds, 7±2 items)
 
-Miller's (1956) famous "magical number seven" applies to music with particular force. Working memory — the system that holds and manipulates information currently in use — can maintain roughly 4–7 musical "chunks" simultaneously. But the crucial insight is that *what counts as a chunk depends on expertise and context*.
+Miller's (1956) famous "magical number seven" applies to music with particular force. Working memory — the system that holds and manipulates information currently in use — can maintain roughly 4–7 musical "chunks" simultaneously. But the crucial insight is that _what counts as a chunk depends on expertise and context_.
 
 For a naive listener, a chunk might be a single note or a two-note interval. For an experienced musician, a chunk can be an entire chord progression, a rhythmic pattern, or a melodic phrase. This is why musical education literally increases the complexity of music you can perceive: it doesn't change the capacity of working memory but changes the compression ratio of encoding.
 
-Working memory is where *motific relationships* are tracked. When a composer presents a motif, develops it, and brings it back varied, the recognition depends on holding the original in working memory (or retrieving it efficiently from long-term memory). The standard 8-bar period in classical music — roughly 15–30 seconds at typical tempos — corresponds to the decay window of verbal/musical working memory. Longer than this, and the beginning of the section has faded from active maintenance.
+Working memory is where _motific relationships_ are tracked. When a composer presents a motif, develops it, and brings it back varied, the recognition depends on holding the original in working memory (or retrieving it efficiently from long-term memory). The standard 8-bar period in classical music — roughly 15–30 seconds at typical tempos — corresponds to the decay window of verbal/musical working memory. Longer than this, and the beginning of the section has faded from active maintenance.
 
 Here is the mathematical connection: working memory implements something like a **finite-state model** of the ongoing musical surface. At any moment, the listener has a compressed representation of the recent past (the state) and uses it to generate predictions about the immediate future. This is not metaphorical — EEG studies (Pearce & Wiggins 2012) show that the brain's electrical response to each note is modulated by its surprisal given the recent context, exactly as an information-theoretic model predicts.
 
@@ -62,11 +62,11 @@ This is the meta-explanation for many musical universals. Octave equivalence, sm
 
 There is a measurable optimal information rate for music, and it's constrained by echoic memory. Eerola and North (2000) found that across genres, the information content per unit time clusters around 2–6 bits per second. Below this, music feels boring (too predictable, the memory system is underloaded). Above it, music becomes noise (the memory system overflows and stops extracting structure).
 
-This connects directly to "The Entropy Arc": the information rate of music is not constant but varies systematically across a piece, creating arcs of tension and release. What the memory perspective adds is *why* these arcs work: they manipulate the load on working memory. A build-up gradually fills working memory with an increasing number of concurrent patterns; a drop clears most of them simultaneously, creating the sensation of release. The emotional effect is a memory phenomenon.
+This connects directly to "The Entropy Arc": the information rate of music is not constant but varies systematically across a piece, creating arcs of tension and release. What the memory perspective adds is _why_ these arcs work: they manipulate the load on working memory. A build-up gradually fills working memory with an increasing number of concurrent patterns; a drop clears most of them simultaneously, creating the sensation of release. The emotional effect is a memory phenomenon.
 
 ### The Statistics of Melody: Markov Models and Beyond
 
-The simplest mathematical model of melodic memory is a **Markov chain**: the probability of the next note depends only on the current note (or the last *n* notes, for an order-*n* chain). This captures the basic intuition that music has local statistical regularities — certain intervals are more likely after certain other intervals.
+The simplest mathematical model of melodic memory is a **Markov chain**: the probability of the next note depends only on the current note (or the last _n_ notes, for an order-_n_ chain). This captures the basic intuition that music has local statistical regularities — certain intervals are more likely after certain other intervals.
 
 But simple Markov models fail spectacularly at capturing musical structure beyond the very local level. A first-order Markov model of Bach chorales produces note-to-note transitions that sound plausibly Bachian but generates phrase structures that are nonsensical. The problem is that real music has **long-range dependencies** — the note at bar 32 depends on the note at bar 1, not through a chain of local transitions but through hierarchical structure.
 
@@ -82,24 +82,24 @@ The state-of-the-art model of musical cognition is **predictive processing** (Cl
 
 Applied to music, the hierarchy looks like this:
 
-| Level | Predicts | Timescale | Memory system |
-|-------|----------|-----------|---------------|
-| Beat | Next onset time | ~100–500 ms | Echoic |
-| Note | Next pitch/interval | ~200 ms – 2 s | Echoic/Working |
-| Motif | Next phrase shape | ~2–8 s | Working |
-| Harmony | Next chord function | ~1–4 s | Working |
-| Section | Next formal event | ~30 s – 5 min | Long-term |
-| Style | Idiom-level norms | Entire piece | Long-term/Cultural |
+| Level   | Predicts            | Timescale     | Memory system      |
+| ------- | ------------------- | ------------- | ------------------ |
+| Beat    | Next onset time     | ~100–500 ms   | Echoic             |
+| Note    | Next pitch/interval | ~200 ms – 2 s | Echoic/Working     |
+| Motif   | Next phrase shape   | ~2–8 s        | Working            |
+| Harmony | Next chord function | ~1–4 s        | Working            |
+| Section | Next formal event   | ~30 s – 5 min | Long-term          |
+| Style   | Idiom-level norms   | Entire piece  | Long-term/Cultural |
 
 Each level generates predictions based on its statistical model (built from accumulated exposure) and passes prediction errors up to the next level. A "wrong note" is a prediction error at the note level. A deceptive cadence is a prediction error at the harmony level. A recapitulation in the "wrong key" is a prediction error at the section level. A piece that defies genre expectations is a prediction error at the style level.
 
-The emotional and aesthetic response to music, in this framework, is substantially determined by the **pattern of prediction errors across levels**. The most compelling music generates *confirmation* at some levels (maintaining rhythmic regularity, staying in a recognizable style) while generating *surprise* at others (unexpected harmonies, novel melodic turns). This is what musicians intuitively call "playing inside and outside simultaneously."
+The emotional and aesthetic response to music, in this framework, is substantially determined by the **pattern of prediction errors across levels**. The most compelling music generates _confirmation_ at some levels (maintaining rhythmic regularity, staying in a recognizable style) while generating _surprise_ at others (unexpected harmonies, novel melodic turns). This is what musicians intuitively call "playing inside and outside simultaneously."
 
 Mathematically, each level of the hierarchy can be modeled as a Bayesian estimator maintaining a probability distribution over possible continuations and updating it with each new observation. The prediction error at each level is the **surprisal** (negative log probability) of the observed event given the model's prediction. The total surprisal across all levels, weighted by the precision (confidence) assigned to each level, determines the composite prediction error signal.
 
 ### Repetition and the Mere Exposure Effect
 
-Repetition is the most universal structural device in music — far more prevalent than in language, visual art, or any other cultural domain. Margulis (2014) has argued persuasively that repetition is not merely a structural convenience but is *constitutive* of the musical experience: it is what transforms sound into music.
+Repetition is the most universal structural device in music — far more prevalent than in language, visual art, or any other cultural domain. Margulis (2014) has argued persuasively that repetition is not merely a structural convenience but is _constitutive_ of the musical experience: it is what transforms sound into music.
 
 The memory explanation is straightforward. On first hearing, a passage is encoded into working memory as a novel pattern, generating high prediction error (surprise). On repetition, the passage is partially predicted from the now-existing memory trace, generating lower prediction error. This reduction in prediction error is experienced as increased fluency, familiarity, and — up to a point — pleasure.
 
@@ -131,7 +131,7 @@ Both are valid compositional choices, but they engage different memory systems a
 
 ### 4. Surprise Requires a Model
 
-You can't surprise someone who has no expectations. The power of a deceptive cadence depends entirely on the listener's having internalized the harmonic syntax that makes the expected cadence predictable. This means that compositional surprise is always *relative to a model*, and the composer's job includes building that model in the listener's memory before violating it.
+You can't surprise someone who has no expectations. The power of a deceptive cadence depends entirely on the listener's having internalized the harmonic syntax that makes the expected cadence predictable. This means that compositional surprise is always _relative to a model_, and the composer's job includes building that model in the listener's memory before violating it.
 
 This is why the most effective surprises in music come after extensive norm-establishment. Beethoven's harmonic disruptions are shocking because the classical style provides an extremely well-defined predictive model. A random note in an atonal piece generates less prediction error (at the harmonic level) because the listener's model for atonal music has high uncertainty already — there's less to violate.
 
@@ -151,10 +151,10 @@ Every essay in this series eventually arrives at the same meta-pattern: the math
 
 Here, the pattern is: **music has hierarchical structure because memory is hierarchical. Music has correlations at all timescales because memory operates at all timescales. Music uses repetition because repetition builds memory traces. Music uses variation because variation maintains prediction error. Musical form is memory management.**
 
-This is not to say that music is "nothing but" a memory phenomenon. The physics of resonance, the mathematics of harmony, the biomechanics of performance — all of these are real and independently interesting (as the other essays in this series explore). But the *temporal organization* of music — the thing that makes it an art that unfolds in time rather than existing all at once — is fundamentally an art of exploiting the listener's memory architecture.
+This is not to say that music is "nothing but" a memory phenomenon. The physics of resonance, the mathematics of harmony, the biomechanics of performance — all of these are real and independently interesting (as the other essays in this series explore). But the _temporal organization_ of music — the thing that makes it an art that unfolds in time rather than existing all at once — is fundamentally an art of exploiting the listener's memory architecture.
 
 The deepest sounds are the ones we carry with us after the air stops vibrating.
 
 ---
 
-*Bridges: "The Entropy Arc" (information rate, surprisal), "The Color of Chaos" (1/f correlations at all timescales), "The Codec Ear" (perceptual compression), "The Listener's Grid" (metric prediction), "The Groove Equation" (temporal entrainment and prediction), "The Attractor Landscape" (dynamical systems perspective on tension/resolution)*
+_Bridges: "The Entropy Arc" (information rate, surprisal), "The Color of Chaos" (1/f correlations at all timescales), "The Codec Ear" (perceptual compression), "The Listener's Grid" (metric prediction), "The Groove Equation" (temporal entrainment and prediction), "The Attractor Landscape" (dynamical systems perspective on tension/resolution)_

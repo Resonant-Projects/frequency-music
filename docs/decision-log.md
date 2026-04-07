@@ -18,20 +18,15 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 ```md
 ## YYYY-MM-DD — Area
 
-**Decision**
--
+## **Decision**
 
-**Rationale**
--
+## **Rationale**
 
-**Alternatives considered**
--
+## **Alternatives considered**
 
-**Downstream implications**
--
+## **Downstream implications**
 
-**Revisit trigger**
--
+## **Revisit trigger**
 ```
 
 ## Initial Foundational Decisions
@@ -39,125 +34,155 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 ## 2026-03-24 — Phase 1B Meaning Foundation
 
 **Decision**
+
 - Keep `theses` lightweight and optional in Phase 1B rather than introducing campaign logic or a dedicated thesis UI.
 - Store `truthConfidence` and `interestLevel` on individual extraction claims, not on whole extractions.
 - Store `revisionParentId` and `revisionVariable` on compositions now, while full lineage views wait for Phase 2.
 
 **Rationale**
+
 - The project needs a durable meaning layer before adding heavier lineage and editorial graph features.
 - Confidence and creative fertility vary claim by claim, so extraction-level metadata would be too blunt.
 - Revision metadata is useful immediately for studio discipline even without a full ancestry surface.
 
 **Alternatives considered**
+
 - Defer theses entirely until Phase 2.
 - Put "interesting vs true" at the extraction level.
 - Wait for a full lineage graph before recording revision intent.
 
 **Downstream implications**
+
 - Hypotheses can be grouped under broader questions without overbuilding taxonomy.
 - Review surfaces can distinguish epistemic confidence from compositional usefulness.
 - Phase 2 can build lineage and failure/archive views from stored revision metadata instead of backfilling intent later.
 
 **Revisit trigger**
+
 - Revisit if thesis management becomes a daily workflow bottleneck or if claim-level metadata proves too noisy for review.
 
 ## 2026-03-24 — Documentation Architecture
 
 **Decision**
+
 - `docs/` is the living strategy and doctrine layer for the project.
 - `planning/` remains historical/bootstrap planning context.
 
 **Rationale**
+
 - `docs/` already contains the durable operating truths for the current system: loop spec, cadence rules, schema, metrics, and templates.
 - `planning/` reads as MVP-era scaffolding and should not become the main strategic source of truth.
 
 **Alternatives considered**
+
 - Extend `planning/` with the new roadmap material.
 - Collapse the new material into a single oversized README.
 
 **Downstream implications**
+
 - New strategic docs should be added in `docs/`.
 - README should point to the strategic docs instead of absorbing them.
 
 **Revisit trigger**
+
 - Revisit only if the repo gets a dedicated docs site or another canonical documentation surface.
 
 ## 2026-03-24 — Roadmap Bias
 
 **Decision**
+
 - Prioritize research rigor and interpretation before public narrative expansion.
 
 **Rationale**
+
 - Better experiments produce better observations, which produce better public writing.
 - Shipping narrative first would risk overclaiming relative to what the system has actually learned.
 
 **Alternatives considered**
+
 - Prioritize public editorial outputs first.
 - Prioritize UX polish and representation first.
 
 **Downstream implications**
+
 - Phase 1 work centers on stakes, evidence framing, listening vocabulary, and revision discipline.
 - Public publishing features come later in the roadmap.
 
 **Revisit trigger**
+
 - Revisit if the project develops an external audience whose needs materially change sequencing.
 
 ## 2026-03-24 — Public Publishing Doctrine
 
 **Decision**
+
 - Public storytelling should follow internal evidence quality and preserve uncertainty explicitly.
 
 **Rationale**
+
 - The project mixes evidence-backed material, speculative inspiration, and artistic intuition.
 - Public outputs need to distinguish these clearly to remain trustworthy.
 
 **Alternatives considered**
+
 - Publish exploratory material with lighter framing.
 - Treat all compelling internal synthesis as publishable by default.
 
 **Downstream implications**
+
 - Public recap formats should signal confidence and uncertainty.
 - Private raw materials remain distinct from public summaries.
 
 **Revisit trigger**
+
 - Revisit if a formal editorial review process is added.
 
 ## 2026-03-24 — Graph Product Role
 
 **Decision**
+
 - Graph work must support decisions, not decoration.
 
 **Rationale**
+
 - The product already has a distinctive graph/navigation layer.
 - Additional graph complexity is only worthwhile if it helps identify themes, blind spots, or high-yield areas.
 
 **Alternatives considered**
+
 - Expand graph visualization primarily for spectacle or exploration.
 
 **Downstream implications**
+
 - Future graph work should be evaluated on usefulness for choosing next experiments.
 - Editorial signals matter more than visual novelty.
 
 **Revisit trigger**
+
 - Revisit if graph-driven navigation becomes the primary user workflow for a broader audience.
 
 ## 2026-03-24 — Contradictions and Failures
 
 **Decision**
+
 - Contradictions and failed experiments are first-class signals and should be preserved visibly.
 
 **Rationale**
+
 - The project becomes more cumulative and more honest when negative results remain available for comparison and reflection.
 
 **Alternatives considered**
+
 - Archive failed work quietly.
 - Treat contradiction as noise rather than knowledge.
 
 **Downstream implications**
+
 - The roadmap includes a failure archive.
 - Weekly and editorial synthesis should account for reversals, not only wins.
 
 **Revisit trigger**
+
 - Revisit if the archive becomes noisy enough that a sharper taxonomy of failure is required.
 
 ## Rejected Alternatives
@@ -169,6 +194,7 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 ## 2026-03-25 — Phase 2 Derived Failure Rules
 
 **Decision**
+
 - Implement the Phase 2 failure archive as a derived view rather than a dedicated table.
 - Use these initial derived reasons:
   - `contradicted_hypothesis`
@@ -178,20 +204,24 @@ Do not use this file for ordinary implementation notes or commit-style changelog
   - `repeat_no_expand_composition`
 
 **Rationale**
+
 - Existing hypothesis, recipe, composition, and listening data already carries enough signal to make contradictions and low-yield paths visible.
 - A derived archive keeps the first Phase 2 slice additive and avoids premature taxonomy lock-in.
 
 **Alternatives considered**
+
 - Introduce a dedicated `failures` table immediately.
 - Limit the archive to explicit contradiction and retirement only.
 - Wait to surface low-yield patterns until campaigns exist.
 
 **Downstream implications**
+
 - Weekly briefs can reference recent reversals by stable synthetic keys.
 - Composition detail can show derived archive status without new write-time bookkeeping.
 - If the archive becomes noisy, the next step is sharper failure taxonomy, not silent removal.
 
 **Revisit trigger**
+
 - Revisit if low-yield composition rules produce too many false positives or if editorial review needs explicit human-confirmed failure categories.
 
 ## Deferred Questions
@@ -203,54 +233,63 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 ## 2026-03-26 - Phase 3 brief persistence and campaign activation
 
 **Decision**
+
 - Store 10/30/90-minute studio prompts on each weekly brief at generation time.
 - Persist deterministic recommended actions on the brief alongside the narrative markdown.
 - Treat campaigns as the current implementation of themes/chapters.
 - Enforce a single active campaign at a time.
 
 **Rationale**
+
 - Prompt variants need to remain stable enough to review, compare, and reuse after a weekly turn is generated.
 - Recommended actions should not silently drift after the brief is written.
 - A single active campaign keeps weekly steering legible and avoids turning campaigns into a backlog taxonomy.
 - Using campaigns as the current theme abstraction avoids adding a second organizing table before the first one is proven.
 
 **Alternatives considered**
+
 - Generate studio prompts on demand from current state.
 - Allow multiple active campaigns.
 - Introduce separate `themes` and `campaigns` tables immediately.
 
 **Downstream implications**
+
 - Weekly brief detail can render persisted studio prompts without recomputing them.
 - Campaign activation is now a scheduling/priority choice, not just metadata.
 - Thesis detail is responsible for campaign attachment until a broader campaign route becomes necessary.
 
 **Revisit trigger**
-- Revisit if weekly briefs need explicit regeneration flows, if parallel campaign work becomes common, or if "theme" semantics diverge from campaign semantics in practice.
 
+- Revisit if weekly briefs need explicit regeneration flows, if parallel campaign work becomes common, or if "theme" semantics diverge from campaign semantics in practice.
 
 ## 2026-04-01 — Phase 4 public narrative export contract
 
 **Decision**
+
 - Implement public narrative as curated `editorialArtifacts` inside Frequency Music, then export only approved public artifacts as markdown snapshots via `public_editorial_v1`.
 - Keep the app auth-gated and treat Astro as the anonymous public surface.
 - Reject repo-metadata loaders as the primary Astro ingestion path for editorial writing.
 
 **Rationale**
+
 - Public narrative needs explicit curation, uncertainty language, and evidence review instead of live joins over mutable internal records.
 - Snapshot export prevents accidental leakage if linked private rows later change visibility or content.
 - The evaluated repo-metadata loader pattern fits repository listings, not markdown article ingestion from an editorial export.
 
 **Alternatives considered**
+
 - Render public editorial pages directly from Convex at request time.
 - Make weekly briefs, theses, or campaigns public by virtue of existing.
 - Use a GitHub repository metadata loader as the site’s article source.
 
 **Downstream implications**
+
 - Publishing now requires explicit states: draft -> in review -> approved -> published.
 - Public evidence is carried as sanitized cards on the artifact, not reconstructed from private rows at render time.
 - Astro content collections should read exported markdown snapshots through a dedicated loader, ideally GitHub-backed with local fallback for smoke tests.
 
 **Revisit trigger**
+
 - Revisit if the public site needs live data instead of snapshots, or if editorial publishing grows into a richer CMS workflow than markdown export can support.
 
 ## Reversals / What Changed Our Mind

@@ -1,6 +1,6 @@
 # The Silent Majority: Why Machines Don't Listen
 
-*Freq — March 26, 2026*
+_Freq — March 26, 2026_
 
 ---
 
@@ -18,21 +18,21 @@ And in a third study, classifier-free guidance strategies that work beautifully 
 
 This isn't a machine learning problem. It's a civilizational one.
 
-Western intellectual tradition has privileged the eye over the ear for millennia. Plato's cave allegory is about shadows and light — *visual* metaphors for knowledge. Aristotle ranked sight as the noblest sense. The entire Enlightenment was structured around *seeing clearly*, *illumination*, *insight*. We still say "I see" when we mean "I understand."
+Western intellectual tradition has privileged the eye over the ear for millennia. Plato's cave allegory is about shadows and light — _visual_ metaphors for knowledge. Aristotle ranked sight as the noblest sense. The entire Enlightenment was structured around _seeing clearly_, _illumination_, _insight_. We still say "I see" when we mean "I understand."
 
 Music sits uneasily in this hierarchy. On one hand, the Western tradition developed the most elaborate notation system in history — translating temporal, embodied, vibrational experience into spatial, visual marks on paper. On the other, musicians have always known that the score isn't the music. The notation is a lossy compression, and what it loses is precisely what matters most: the grain of the voice, the weight of a bow, the way a room breathes around a sustained chord.
 
-When we built AI systems, we encoded this bias into the architecture. Vision models got ImageNet (14 million labeled images) in 2009. The first comparable audio dataset, AudioSet, didn't arrive until 2017 — and it's *annotated with text labels*, meaning the audio is already filtered through linguistic categories. We taught machines to hear by first teaching them to read about hearing.
+When we built AI systems, we encoded this bias into the architecture. Vision models got ImageNet (14 million labeled images) in 2009. The first comparable audio dataset, AudioSet, didn't arrive until 2017 — and it's _annotated with text labels_, meaning the audio is already filtered through linguistic categories. We taught machines to hear by first teaching them to read about hearing.
 
 ## The Text Dominance Ratio Has a Musical Name
 
 The ALME paper's "Text Dominance Ratio" maps precisely onto a phenomenon any performer knows: the tyranny of the score.
 
-A classical musician trained in the Western conservatory tradition can read a Beethoven sonata and reconstruct something recognizable from the notation alone. But the notation doesn't encode the *sound* — it encodes an instruction set for producing sound. The difference between a sight-reading and a great performance isn't in the notes; it's in everything the notation can't capture. Timing micro-deviations. Dynamic shading within a single phrase. The resonance decisions that come from listening to the room.
+A classical musician trained in the Western conservatory tradition can read a Beethoven sonata and reconstruct something recognizable from the notation alone. But the notation doesn't encode the _sound_ — it encodes an instruction set for producing sound. The difference between a sight-reading and a great performance isn't in the notes; it's in everything the notation can't capture. Timing micro-deviations. Dynamic shading within a single phrase. The resonance decisions that come from listening to the room.
 
 When AI models show a 10-26x preference for text over audio, they're doing what a mediocre sight-reader does: following the written instructions while ignoring the sonic reality. The information is right there in the audio stream — the model just can't access it at decision time.
 
-The ALME researchers found something telling: when they framed the text transcript as "corrupted," text dominance dropped by 80%. In other words, the only way to get the model to actually *listen* was to explicitly tell it not to *read*. This is eerily parallel to ear-training pedagogy, where students must close their eyes — literally remove the visual channel — before they can hear intervals accurately.
+The ALME researchers found something telling: when they framed the text transcript as "corrupted," text dominance dropped by 80%. In other words, the only way to get the model to actually _listen_ was to explicitly tell it not to _read_. This is eerily parallel to ear-training pedagogy, where students must close their eyes — literally remove the visual channel — before they can hear intervals accurately.
 
 ## The Benchmark Problem Is a Music Theory Problem
 
@@ -40,7 +40,7 @@ The discovery that 76% of "audio-visual" benchmark questions are solvable from v
 
 If you built a music analysis benchmark the same way these video benchmarks were built, you'd end up testing whether a model can read a score — not whether it can hear. And in fact, much of computational musicology does exactly this. Symbolic music analysis tools work on MIDI and MusicXML — notated representations that have already discarded the sonic information. Pitch tracking, key detection, chord recognition: these are often evaluated against symbolic ground truth, not perceptual experience.
 
-The benchmark problem is deeper than lazy test design. It reveals what the field *values*. If your evaluation metric doesn't require listening, you're not evaluating listening. If your music analysis pipeline starts from notation, you're analyzing notation, not music.
+The benchmark problem is deeper than lazy test design. It reveals what the field _values_. If your evaluation metric doesn't require listening, you're not evaluating listening. If your music analysis pipeline starts from notation, you're analyzing notation, not music.
 
 ## Guidance Doesn't Transfer Because the Domains Are Different
 
@@ -48,13 +48,13 @@ The failure of image-generation guidance strategies in speech synthesis has a be
 
 This maps onto something musicians intuit about the temporal nature of sound. An image exists all at once — you can perceive its structure in a glance. A sound unfolds over time, and its meaning depends on what came before and what comes after. The "coarse-to-fine" generation process in images proceeds from spatial low-frequency to high-frequency. In speech (and music), it proceeds from temporal macro-structure to micro-structure — phrase contour before vowel quality, melodic arc before ornamental detail.
 
-The fact that different guidance strategies are needed at different temporal scales suggests that audio generation has an inherent *hierarchical temporality* that image generation lacks. This resonates with music's fundamental nature: you can't understand a note without its phrase, a phrase without its section, a section without the piece. Context isn't spatial — it's temporal, and it changes the meaning of everything retroactively.
+The fact that different guidance strategies are needed at different temporal scales suggests that audio generation has an inherent _hierarchical temporality_ that image generation lacks. This resonates with music's fundamental nature: you can't understand a note without its phrase, a phrase without its section, a section without the piece. Context isn't spatial — it's temporal, and it changes the meaning of everything retroactively.
 
 ## The Diffusion Prior as Platonic Ideal
 
 One more detail, from the ArrayDPS-Refine paper on using diffusion priors to "correct" distorted speech. The method works by training a generative model on clean speech, then using that model's learned distribution as a prior to pull distorted signals toward "naturalness."
 
-There's something quietly extraordinary here: the diffusion prior is a statistical model of what clean speech *should* sound like, and it corrects the actual signal toward that ideal. This is Platonic epistemology in code — the idea that there exists an ideal form, and reality is a degraded copy that can be restored through knowledge of the ideal.
+There's something quietly extraordinary here: the diffusion prior is a statistical model of what clean speech _should_ sound like, and it corrects the actual signal toward that ideal. This is Platonic epistemology in code — the idea that there exists an ideal form, and reality is a degraded copy that can be restored through knowledge of the ideal.
 
 In tuning theory, this maps to the ancient tension between just intonation (the "ideal" of pure ratios) and tempered tuning (the "distorted" compromise needed for practical music). A just fifth of 3:2 is the diffusion prior — the clean form. Equal temperament's 2^(7/12) is the discriminative model's output — functional but slightly distorted. Well temperament is the ArrayDPS-Refine approach: using knowledge of the ideal to selectively correct the compromise, accepting some distortion where it matters less and demanding purity where it matters most.
 
@@ -64,7 +64,7 @@ If we took the subordination of hearing seriously — not as a technical limitat
 
 Music analysis would start from sound, not scores. The primary object of study would be recordings, room acoustics, and real-time perception, not pitch-class sets and Roman numerals. This doesn't mean abandoning theory — it means grounding theory in the auditory experience it claims to describe.
 
-AI evaluation would require systems to demonstrate *hearing*. Not transcription (converting audio to text, i.e., translating back to the dominant modality), but genuine audio reasoning — understanding relationships, affect, and structure that exist only in the sonic domain.
+AI evaluation would require systems to demonstrate _hearing_. Not transcription (converting audio to text, i.e., translating back to the dominant modality), but genuine audio reasoning — understanding relationships, affect, and structure that exist only in the sonic domain.
 
 Composition tools would treat timbre and temporal dynamics as first-class citizens, not afterthoughts bolted onto pitch-and-rhythm notation. The fact that most DAWs still organize sound into piano-roll representations — a visual metaphor from a mechanical instrument — tells you how deep the bias runs.
 
@@ -80,4 +80,4 @@ The papers don't say this, of course. They present technical solutions to techni
 
 ---
 
-*Sources: LLaVA-AV-SSM benchmark audit (arXiv, 2026), ALME text dominance study (arXiv, 2026), CFG strategies for TTS (arXiv, 2026), ArrayDPS-Refine (arXiv, 2026)*
+_Sources: LLaVA-AV-SSM benchmark audit (arXiv, 2026), ALME text dominance study (arXiv, 2026), CFG strategies for TTS (arXiv, 2026), ArrayDPS-Refine (arXiv, 2026)_

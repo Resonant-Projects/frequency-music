@@ -13,6 +13,7 @@ Selected 7/7 from 46 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - equal temperament: 7
 - just intonation: 7
 - frequency ratios: 6
@@ -97,11 +98,13 @@ Selected 7/7 from 46 eligible candidates.
 - chords: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 26
 - frequency: 15
 - harmonicprofile: 6
 
 ### Evidence Distribution
+
 - peer_reviewed: 44
 - anecdotal: 3
 - speculative: 3
@@ -123,6 +126,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -133,6 +137,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -145,6 +150,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -165,6 +171,7 @@ Summary:
 Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.
 
 Claims:
+
 - [1] [peer_reviewed] 12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century
 - [2] [peer_reviewed] In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463
 - [3] [peer_reviewed] Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament
@@ -174,6 +181,7 @@ Claims:
 - [7] [peer_reviewed] Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: 12-tone equal temperament
 - frequency: 261.626 Hz
@@ -184,6 +192,7 @@ Composition Parameters:
 - tuningSystem: 7 TET
 
 Open Questions:
+
 - How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?
 - What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?
 - How do performers in practice deviate from theoretical equal temperament when playing?
@@ -204,6 +213,7 @@ Summary:
 This is a comprehensive scientific examination of music theory, covering the physics of sound production in musical instruments, various tuning systems (just intonation, equal temperament, Pythagorean), and psychoacoustic principles of human sound perception. The work systematically explains how vibrating strings produce overtones, how different tuning systems create frequency ratios between musical notes, and how instruments generate sound through various physical mechanisms. It bridges the gap between the mathematical/physical foundations of music and the artistic experience.
 
 Claims:
+
 - [1] [peer_reviewed] A vibrating string with fixed ends can only vibrate at certain frequencies determined by the wave equation, producing a fundamental frequency and overtones at integer multiples
 - [2] [peer_reviewed] The speed of sound in air is approximately 340 meters per second under standard atmospheric conditions and is independent of frequency and intensity within a wide range
 - [3] [peer_reviewed] High frequency components of sound decay faster with distance than low frequency components due to absorption coefficient being proportional to frequency squared
@@ -215,12 +225,14 @@ Claims:
 - [9] [anecdotal] Music appears to serve no obvious adaptive purpose, with Darwin noting it has no direct use in ordinary life habits
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: Just Intonation
 - tuningSystem: Equal Temperament
 - tuningSystem: Pythagorean Tuning
 
 Open Questions:
+
 - How do individual differences in auditory processing affect perception of different tuning systems?
 - What is the optimal tuning system for different musical contexts and instruments?
 - How do environmental factors like temperature and humidity quantitatively affect instrument tuning?
@@ -242,6 +254,7 @@ Summary:
 Kyle Gann explains just intonation tuning, where pitches are defined as frequency ratios (like 3/2 for a perfect fifth) rather than equal temperament's 12 equal divisions. He argues that equal temperament, while allowing easy transposition, creates buzzy, less pure intervals compared to the mathematically simple ratios of just intonation. The article provides detailed examples of various tuning systems and claims that just intonation creates more meditative, introspective music while equal temperament promotes nervous energy and action.
 
 Claims:
+
 - [1] [peer_reviewed] A 2-to-1 frequency ratio creates an octave interval
 - [2] [peer_reviewed] A 3/2 frequency ratio produces a perfect fifth interval
 - [3] [peer_reviewed] A 5/4 frequency ratio produces a major third interval
@@ -253,6 +266,7 @@ Claims:
 - [9] [peer_reviewed] In just intonation, to add intervals you multiply their ratios
 
 Composition Parameters:
+
 - tuningSystem: Ptolemaic Just Intonation
 - frequency: 200 Hz example
 - frequency: 300 Hz example
@@ -263,6 +277,7 @@ Composition Parameters:
 - tuningSystem: La Monte Young Well-Tuned Piano
 
 Open Questions:
+
 - Can the claimed psychological effects of different tuning systems be scientifically measured?
 - What is the neurological basis for perceiving frequency ratios as consonant or dissonant?
 - How accurately can trained vs. untrained listeners distinguish just intonation from equal temperament intervals?
@@ -283,6 +298,7 @@ Summary:
 This academic paper explores the physics behind modern music, particularly focusing on how guitar amplifier distortion creates new musical notes not played by the musician. The authors examine the harmonic series, tuning systems, and why equal temperament tuning is mathematically imperfect but practically necessary. They demonstrate how nonlinear amplification generates additional frequencies through trigonometric principles and explain why some distorted chords create the perception of low notes that aren't actually present.
 
 Claims:
+
 - [1] [peer_reviewed] When a musical note is played on an instrument, it vibrates not just at the fundamental frequency but also at integer multiples of that frequency (harmonics), producing overtones at 2x, 3x, 4x the fundamental frequency
 - [2] [peer_reviewed] Consonant chords are composed of notes with the most overlap between their overtone series
 - [3] [peer_reviewed] Equal temperament tuning is mathematically always out of tune because it uses irrational frequency ratios instead of the rational ratios found in natural harmonics
@@ -291,6 +307,7 @@ Claims:
 - [6] [speculative] Standard guitar tuners using equal temperament are incompatible with good sounding music when amplifier distortion is involved
 
 Composition Parameters:
+
 - frequency: 220 Hz
 - frequency: 440 Hz
 - frequency: 261.6 Hz
@@ -301,6 +318,7 @@ Composition Parameters:
 - harmonicProfile: Perfect Fourth
 
 Open Questions:
+
 - How exactly do the trigonometric identities create new frequencies in distorted amplifiers?
 - What specific tuning approach should musicians use when playing through distorted amplifiers?
 - How do humans perceive phantom fundamental frequencies in highly distorted chords?
@@ -323,6 +341,7 @@ Summary:
 This is a comprehensive reference chart containing over 1000 pitches within an octave, organized by various mathematical criteria including just intonation ratios, harmonic series relationships, and historically important intervals. The chart provides precise frequency ratios and cent measurements for microtonal tuning systems, covering ratios up to 64-limit, 31-limit numbers up to 96, harmonics up to 255, and significant mathematical intervals like the Pythagorean comma and syntonic comma.
 
 Claims:
+
 - [1] [peer_reviewed] The syntonic comma has a ratio of 81/80 and measures 21.506 cents
 - [2] [peer_reviewed] The Pythagorean comma has a ratio of 531441/524288 and measures 23.460 cents
 - [3] [peer_reviewed] The schisma has a ratio of 32805/32768 and measures 1.954 cents
@@ -331,6 +350,7 @@ Claims:
 - [6] [peer_reviewed] The major third in 5-limit just intonation has a ratio of 5/4 and measures 386.314 cents
 
 Composition Parameters:
+
 - tuningSystem: Equal Temperament
 - tuningSystem: 5-limit Just Intonation
 - tuningSystem: Pythagorean
@@ -338,6 +358,7 @@ Composition Parameters:
 - frequency: Pythagorean Comma: 23.460 cents
 
 Open Questions:
+
 - How do these microtonal intervals affect musical perception and harmony in practical composition?
 - What are the psychoacoustic implications of using higher-limit ratios (beyond 5-limit) in musical contexts?
 - How do different cultural musical traditions utilize these mathematical interval relationships?
@@ -359,6 +380,7 @@ Summary:
 This paper presents a dynamically adapting tuning scheme for just intonation that solves a system of linear equations rather than making procedural decisions about chord tuning. The method models intervals as a resistor network where each interval prefers its just ratio, automatically finding tempered compromises when perfect just intonation isn't possible. The authors implement this as open-source software and address both vertical tuning (within chords) and horizontal tuning (between successive chords) using intonational memory.
 
 Claims:
+
 - [1] [peer_reviewed] Consonance is caused by the circumstance that oscillators emit not only their fundamental frequency but also overtones with integer multiples, and consonance occurs when the m-th partial of one tone matches the n-th partial of another (mf = nf')
 - [2] [peer_reviewed] The Pythagorean comma represents a 1.4% difference (23.46 cents) when stacking twelve just fifths compared to seven octaves
 - [3] [peer_reviewed] The syntonic comma is 21.51 cents and represents the difference between four just fifths transposed back by two octaves and a major third of 5/4
@@ -367,15 +389,16 @@ Claims:
 - [6] [peer_reviewed] Humans can recognize intonation of sequentially played tones if the elapsed time between them is not too large
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: 5-limit just intonation
 - frequency: 110 Hz
 - frequency: 165 Hz
 
 Open Questions:
+
 - How does the choice of weight factors in the resistor network model affect the perceived quality of the tuning compromise?
 - What is the optimal balance between vertical tuning accuracy and horizontal tuning continuity?
 - How do different musical styles and harmonic complexities affect the performance of adaptive tuning schemes?
 - Can the three-second intonational memory timeframe be extended or optimized through training?
 - How does this mathematical approach compare perceptually to intuitive musician adjustments in ensemble playing?
-

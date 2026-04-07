@@ -3,10 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { DatabaseReader, DatabaseWriter } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuth, type AppIdentity } from "./auth";
-import {
-  deriveFailureArchiveEntries,
-  type FailureArchiveEntry,
-} from "./failures";
+import { deriveFailureArchiveEntries, type FailureArchiveEntry } from "./failures";
 import { summarizeListeningSessions } from "./phase2";
 import {
   campaignReturnValidator,
@@ -50,10 +47,7 @@ const recommendedActionsReturnValidator = v.object({
 
 type CampaignViewerIdentity = Pick<AppIdentity, "subject" | "isBypass"> | null;
 
-async function getThesisOrThrow(
-  ctx: { db: DatabaseReader },
-  thesisId: Id<"theses">,
-) {
+async function getThesisOrThrow(ctx: { db: DatabaseReader }, thesisId: Id<"theses">) {
   const thesis = await ctx.db.get("theses", thesisId);
   if (!thesis) {
     throw new ConvexError({
@@ -86,9 +80,7 @@ async function pauseOtherCampaigns(
   );
 }
 
-async function getActiveCampaignDoc(
-  db: DatabaseReader,
-): Promise<Doc<"campaigns"> | null> {
+async function getActiveCampaignDoc(db: DatabaseReader): Promise<Doc<"campaigns"> | null> {
   return await db
     .query("campaigns")
     .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
@@ -131,18 +123,14 @@ async function loadRecipesForHypotheses(
     hypotheses.map((hypothesis) =>
       db
         .query("recipes")
-        .withIndex("by_hypothesisId_updatedAt", (q) =>
-          q.eq("hypothesisId", hypothesis._id),
-        )
+        .withIndex("by_hypothesisId_updatedAt", (q) => q.eq("hypothesisId", hypothesis._id))
         .collect(),
     ),
   );
   return lists.flat().toSorted((a, b) => b.updatedAt - a.updatedAt);
 }
 
-async function loadFallbackHypotheses(
-  db: DatabaseReader,
-): Promise<Doc<"hypotheses">[]> {
+async function loadFallbackHypotheses(db: DatabaseReader): Promise<Doc<"hypotheses">[]> {
   return await db
     .query("hypotheses")
     .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
@@ -176,9 +164,7 @@ async function loadScope(
   const theses =
     campaign && campaign.thesisIds.length > 0
       ? (
-          await Promise.all(
-            campaign.thesisIds.map((thesisId) => db.get("theses", thesisId)),
-          )
+          await Promise.all(campaign.thesisIds.map((thesisId) => db.get("theses", thesisId)))
         ).filter((thesis): thesis is Doc<"theses"> => thesis !== null)
       : [];
 
@@ -219,9 +205,7 @@ export function isCampaignVisibleToViewer(
   if (campaign.visibility === "followers") return identity !== null;
   if (!identity) return false;
   if (identity.isBypass) return true;
-  return (
-    campaign.createdBy !== "system" && identity.subject === campaign.createdBy
-  );
+  return campaign.createdBy !== "system" && identity.subject === campaign.createdBy;
 }
 
 export async function computeRecommendedActionContext(
@@ -245,24 +229,20 @@ export async function computeRecommendedActionContext(
   }
 
   for (const hypothesis of scope.hypotheses) {
-    if (
-      hypothesis.status !== "active" ||
-      hypothesis.resolution === "contradicted"
-    ) {
+    if (hypothesis.status !== "active" || hypothesis.resolution === "contradicted") {
       continue;
     }
 
     const hypothesisFailures = failureEntries.filter(
       (entry) =>
         entry.hypothesisId === hypothesis._id &&
-        (entry.reason === "contradicted_hypothesis" ||
-          entry.reason === "retired_hypothesis"),
+        (entry.reason === "contradicted_hypothesis" || entry.reason === "retired_hypothesis"),
     );
     if (hypothesisFailures.length > 0) continue;
 
-    const linkedRecipes = (
-      recipesByHypothesis.get(String(hypothesis._id)) ?? []
-    ).filter((recipe) => recipe.status !== "archived");
+    const linkedRecipes = (recipesByHypothesis.get(String(hypothesis._id)) ?? []).filter(
+      (recipe) => recipe.status !== "archived",
+    );
 
     if (linkedRecipes.length === 0) {
       actions.push({
@@ -278,23 +258,19 @@ export async function computeRecommendedActionContext(
   }
 
   for (const recipe of distinctById(scope.recipes)) {
-    const hypothesis = scope.hypotheses.find(
-      (row) => row._id === recipe.hypothesisId,
-    );
+    const hypothesis = scope.hypotheses.find((row) => row._id === recipe.hypothesisId);
     if (!hypothesis || hypothesis.status === "retired") continue;
     if (hypothesis.resolution === "contradicted") continue;
     if (recipe.status === "archived") continue;
 
     const recipeFailures = failureEntries.filter(
       (entry) =>
-        entry.recipeId === recipe._id ||
-        entry.supportingIds.recipeIds.includes(recipe._id),
+        entry.recipeId === recipe._id || entry.supportingIds.recipeIds.includes(recipe._id),
     );
     if (
       recipeFailures.some(
         (entry) =>
-          entry.reason === "archived_recipe" ||
-          entry.reason === "repeat_no_expand_composition",
+          entry.reason === "archived_recipe" || entry.reason === "repeat_no_expand_composition",
       )
     ) {
       continue;
@@ -304,9 +280,7 @@ export async function computeRecommendedActionContext(
       .query("compositions")
       .withIndex("by_recipeId_updatedAt", (q) => q.eq("recipeId", recipe._id))
       .collect();
-    const sortedCompositions = compositions.toSorted(
-      (a, b) => b.updatedAt - a.updatedAt,
-    );
+    const sortedCompositions = compositions.toSorted((a, b) => b.updatedAt - a.updatedAt);
 
     if (sortedCompositions.length === 0) {
       actions.push({
@@ -325,9 +299,7 @@ export async function computeRecommendedActionContext(
     if (!latestComposition) continue;
     const latestSessions = await db
       .query("listeningSessions")
-      .withIndex("by_compositionId_createdAt", (q) =>
-        q.eq("compositionId", latestComposition._id),
-      )
+      .withIndex("by_compositionId_createdAt", (q) => q.eq("compositionId", latestComposition._id))
       .collect();
     const summary = summarizeListeningSessions(latestSessions);
 
@@ -337,18 +309,11 @@ export async function computeRecommendedActionContext(
         entry.revisionBranchRootId === latestComposition._id ||
         entry.supportingIds.compositionIds.includes(latestComposition._id),
     );
-    if (
-      compositionFailures.some(
-        (entry) => entry.reason === "repeat_no_expand_composition",
-      )
-    ) {
+    if (compositionFailures.some((entry) => entry.reason === "repeat_no_expand_composition")) {
       continue;
     }
 
-    if (
-      summary.latestExpandVerdict === "yes" ||
-      (summary.latestExpandability ?? 0) >= 4
-    ) {
+    if (summary.latestExpandVerdict === "yes" || (summary.latestExpandability ?? 0) >= 4) {
       actions.push({
         kind: "expand_composition",
         targetType: "composition",
@@ -361,28 +326,17 @@ export async function computeRecommendedActionContext(
       continue;
     }
 
-    if (
-      compositionFailures.some(
-        (entry) => entry.reason === "low_expandability_composition",
-      )
-    ) {
+    if (compositionFailures.some((entry) => entry.reason === "low_expandability_composition")) {
       continue;
     }
 
-    if (
-      summary.latestExpandVerdict === "maybe" ||
-      (summary.latestExpandability ?? 0) >= 3
-    ) {
+    if (summary.latestExpandVerdict === "maybe" || (summary.latestExpandability ?? 0) >= 3) {
       actions.push({
-        kind:
-          sortedCompositions.length > 1 ? "compare_branch" : "revive_recipe",
+        kind: sortedCompositions.length > 1 ? "compare_branch" : "revive_recipe",
         targetType: sortedCompositions.length > 1 ? "composition" : "recipe",
         targetId:
-          sortedCompositions.length > 1
-            ? String(latestComposition._id)
-            : String(recipe._id),
-        durationBucket:
-          sortedCompositions.length > 1 ? "30-minute" : "10-minute",
+          sortedCompositions.length > 1 ? String(latestComposition._id) : String(recipe._id),
+        durationBucket: sortedCompositions.length > 1 ? "30-minute" : "10-minute",
         reason:
           sortedCompositions.length > 1
             ? "This branch shows mixed promise, so a quick A/B comparison should clarify which direction is worth keeping."
@@ -407,9 +361,7 @@ export async function computeRecommendedActionContext(
   };
 }
 
-export async function listCampaignSelectionRows(
-  db: DatabaseReader,
-): Promise<Doc<"campaigns">[]> {
+export async function listCampaignSelectionRows(db: DatabaseReader): Promise<Doc<"campaigns">[]> {
   return await db
     .query("campaigns")
     .withIndex("by_visibility_updatedAt", (q) => q.eq("visibility", "public"))
@@ -530,9 +482,7 @@ export const create = mutation({
     const now = Date.now();
     const thesisIds = [...new Set(createArgs.thesisIds ?? [])];
 
-    await Promise.all(
-      thesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)),
-    );
+    await Promise.all(thesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)));
 
     const status = createArgs.status ?? "paused";
     if (status === "active") {
@@ -549,10 +499,7 @@ export const create = mutation({
       endedAt: status === "completed" ? now : undefined,
       summaryMd: createArgs.summaryMd,
       visibility: "public",
-      createdBy:
-        identity.subject === "system"
-          ? "system"
-          : (identity.subject as Id<"users">),
+      createdBy: identity.subject === "system" ? "system" : (identity.subject as Id<"users">),
       createdAt: now,
       updatedAt: now,
     });
@@ -569,24 +516,14 @@ export const update = mutation({
     thesisIds: v.optional(v.array(v.id("theses"))),
     summaryMd: v.optional(v.string()),
     visibility: v.optional(
-      v.union(
-        v.literal("private"),
-        v.literal("followers"),
-        v.literal("public"),
-      ),
+      v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
     ),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const {
-      id,
-      devBypassSecret: _devBypassSecret,
-      thesisIds,
-      status,
-      ...updates
-    } = args;
+    const { id, devBypassSecret: _devBypassSecret, thesisIds, status, ...updates } = args;
     if (
       (args.title !== undefined && !args.title.trim()) ||
       (args.question !== undefined && !args.question.trim())
@@ -604,11 +541,8 @@ export const update = mutation({
       });
     }
 
-    const nextThesisIds =
-      thesisIds !== undefined ? [...new Set(thesisIds)] : campaign.thesisIds;
-    await Promise.all(
-      nextThesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)),
-    );
+    const nextThesisIds = thesisIds !== undefined ? [...new Set(thesisIds)] : campaign.thesisIds;
+    await Promise.all(nextThesisIds.map((thesisId) => getThesisOrThrow(ctx, thesisId)));
 
     if (status === "active") {
       await pauseOtherCampaigns(ctx, id);

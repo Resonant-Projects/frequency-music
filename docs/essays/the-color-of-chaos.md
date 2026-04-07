@@ -1,6 +1,6 @@
 # The Color of Chaos: Why Music Lives at the Edge of Order
 
-*Why do some sequences of notes feel alive while others — equally "correct" — feel dead? The answer lies in a power law that appears everywhere from heartbeats to river floods, and it tells us something profound about where music sits in the space between perfect order and perfect randomness.*
+_Why do some sequences of notes feel alive while others — equally "correct" — feel dead? The answer lies in a power law that appears everywhere from heartbeats to river floods, and it tells us something profound about where music sits in the space between perfect order and perfect randomness._
 
 ## The Spectrum of Randomness
 
@@ -25,6 +25,7 @@ The extraordinary claim, supported by decades of evidence, is that **music acros
 Richard Voss and John Clarke at Berkeley performed the foundational measurements. They analyzed audio recordings across genres — Bach, Beatles, blues, radio broadcasts — by extracting pitch and loudness sequences and computing their power spectra. The result was striking: **both pitch and loudness fluctuations followed 1/f power laws** across several decades of frequency.
 
 This wasn't a subtle statistical effect. The 1/f signature was robust across:
+
 - Baroque fugues and rock songs
 - Classical symphonies and jazz improvisations
 - Different performers and different eras
@@ -53,6 +54,7 @@ Kenneth and Andrew Hsü analyzed pitch sequences of Bach and Mozart, finding 1/f
 Complex systems theory offers a deep explanation. Stuart Kauffman, Per Bak, and others have shown that systems at **phase transitions** — the boundary between ordered and disordered states — generically produce 1/f scaling. This is the regime of "self-organized criticality" (Bak, Tang, Wiesenfeld 1987), where systems spontaneously evolve to a critical state without external tuning.
 
 Music, on this view, is a system that has self-organized to criticality. The composer (or improviser, or tradition) navigates to the boundary where:
+
 - Enough order exists to create expectations, patterns, and structure
 - Enough disorder exists to create surprise, interest, and novelty
 - The balance between them generates long-range correlations without determinism
@@ -64,6 +66,7 @@ This is not metaphor. The mathematical signature — 1/f power spectrum — is t
 1/f noise has a unique property: **correlations at all timescales**. In a 1/f process, what happens at time t is correlated with what happened at t − 1, t − 10, t − 100, and t − 1000, with the correlation decaying as 1/τ.
 
 This maps beautifully onto musical structure:
+
 - **Beat-to-beat correlations** (adjacent notes tend to be close in pitch — melodic contour)
 - **Phrase-level correlations** (a phrase echoes and develops motifs from earlier phrases)
 - **Section-level correlations** (recapitulation, refrain, thematic return)
@@ -95,27 +98,30 @@ Manfred Schroeder (1991) demonstrated this directly: fractal melodies with dimen
 
 ## The Groove Connection
 
-This framework illuminates microtime — the subtle timing deviations that make music "groove" (see *The Groove Equation*). A perfectly quantized performance has β = ∞ in its timing deviations — pure order, zero randomness. A performance with uniformly random timing fluctuations has β = 0. Real grooves — the performances that make you move — have timing deviations with **1/f-like correlations**.
+This framework illuminates microtime — the subtle timing deviations that make music "groove" (see _The Groove Equation_). A perfectly quantized performance has β = ∞ in its timing deviations — pure order, zero randomness. A performance with uniformly random timing fluctuations has β = 0. Real grooves — the performances that make you move — have timing deviations with **1/f-like correlations**.
 
 Hennig et al. (2011) showed that human finger-tapping exhibits long-range correlations in inter-tap intervals with 1/f scaling. When these natural fluctuations are removed (by quantization) or replaced with uncorrelated jitter, listeners rate the rhythm as less engaging. The groove lives at 1/f.
 
-This has direct implications for electronic music production. The common technique of "humanization" — adding random timing offsets to quantized MIDI — produces β ≈ 0 deviations (white noise jitter). This sounds better than perfect quantization but worse than real human timing, because it has the right *amount* of variation but the wrong *structure*. True humanization would require 1/f-correlated timing offsets — each deviation remembering and building on previous deviations.
+This has direct implications for electronic music production. The common technique of "humanization" — adding random timing offsets to quantized MIDI — produces β ≈ 0 deviations (white noise jitter). This sounds better than perfect quantization but worse than real human timing, because it has the right _amount_ of variation but the wrong _structure_. True humanization would require 1/f-correlated timing offsets — each deviation remembering and building on previous deviations.
 
 ## The Compositional Spectrum
 
 Different musical traditions and composers explore different regions of the β spectrum, and understanding this reveals something about their aesthetic projects:
 
 ### Low β (toward randomness)
+
 - **John Cage:** Explicitly pursued randomness through chance operations. Music of Changes approaches β ≈ 0.
 - **Free improvisation:** Skilled improvisers still maintain some correlation structure, but the aesthetic explicitly values unpredictability.
 - **Total serialism:** Babbitt, Boulez (early works) — paradoxically, maximizing control over every parameter can produce pseudo-random perception, because the serial transformations destroy the correlational structure that listeners can track.
 
 ### β ≈ 1 (the sweet spot)
+
 - **Bach:** The canonical example. Fugues maintain extraordinary correlation structure across multiple timescales simultaneously — subject entries, episodes, tonal plan — while generating constant local surprise through counterpoint.
 - **Mozart:** Hsü found β ≈ 1.0 with remarkable precision. Mozart's genius may be partly a genius for maintaining correlations across scales while maximizing local variety.
 - **Most folk traditions:** Oral transmission acts as a filter: melodies that are too random can't be remembered; melodies that are too predictable aren't worth transmitting. Cultural evolution converges on 1/f.
 
 ### High β (toward order)
+
 - **Minimalism:** Reich's phase pieces explicitly explore the perceptual effects of near-perfect repetition with slow drift. β > 1.5 in many passages.
 - **Drone music:** Extreme β — almost all energy at the lowest frequencies, near-static.
 - **Ravel's Boléro:** A deliberate experiment in repetition, systematically increasing only orchestration while holding rhythm and melody nearly constant. β is very high.
@@ -124,7 +130,7 @@ The important observation: **each of these positions on the β spectrum can prod
 
 ## Information Theory Revisited
 
-The 1/f framework connects directly to the information-theoretic perspective developed in *The Entropy Arc*. Shannon entropy H measures the average surprise per event. For a 1/f process:
+The 1/f framework connects directly to the information-theoretic perspective developed in _The Entropy Arc_. Shannon entropy H measures the average surprise per event. For a 1/f process:
 
 - The entropy rate is intermediate between maximum (white noise) and minimum (deterministic signal)
 - The **mutual information** between past and future decays as 1/τ — slowly enough to maintain coherence, fast enough to permit surprise
@@ -156,7 +162,7 @@ What does this mean for making music?
 
 **2. Match timescales.** Ensure that your music has interesting structure at multiple timescales simultaneously — beat-level, phrase-level, section-level. Self-similar structure (similar patterns at different scales) is a concrete technique for achieving 1/f statistics.
 
-**3. Humanize correctly.** If working with electronic tools, don't just add random jitter. Add *correlated* jitter — timing deviations that remember previous deviations. Use 1/f noise generators rather than white noise for humanization parameters.
+**3. Humanize correctly.** If working with electronic tools, don't just add random jitter. Add _correlated_ jitter — timing deviations that remember previous deviations. Use 1/f noise generators rather than white noise for humanization parameters.
 
 **4. Navigate the spectrum.** Use β as a deliberate compositional parameter. A piece might begin in high-β territory (repetitive, hypnotic), gradually introduce disorder to approach β ≈ 1 (developing, dramatic), then return to order for resolution. The β trajectory is a meta-structural parameter.
 

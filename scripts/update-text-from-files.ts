@@ -10,9 +10,7 @@ const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 const BYPASS = "freq-opus-extract-2026";
 
 async function main() {
-  const files = readdirSync("/tmp").filter((f) =>
-    f.startsWith("kernel-text-jx7"),
-  );
+  const files = readdirSync("/tmp").filter((f) => f.startsWith("kernel-text-jx7"));
 
   for (const file of files) {
     const sourceId = file.replace("kernel-text-", "").replace(".txt", "");

@@ -10,11 +10,7 @@ import {
   UIButton,
   UICard,
 } from "../components/ui";
-import {
-  createAction,
-  createQuery,
-  createQueryWithStatus,
-} from "../integrations/convex";
+import { createAction, createQuery, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 function kindLabel(kind: Doc<"editorialArtifacts">["kind"]) {
@@ -35,19 +31,13 @@ export function EditorialPage() {
     document.title = "Editorial — Frequency Music";
   });
 
-  const artifacts = createQueryWithStatus(
-    convexApi.editorialArtifacts.list,
-    () => ({
-      limit: 50,
-    }),
-  );
-  const missingWhyThisMatters = createQuery(
-    convexApi.hypotheses.listMissingWhyThisMatters,
-    () => ({ limit: 20 }),
-  );
-  const exportForAstro = createAction(
-    convexApi.editorialArtifacts.exportForAstro,
-  );
+  const artifacts = createQueryWithStatus(convexApi.editorialArtifacts.list, () => ({
+    limit: 50,
+  }));
+  const missingWhyThisMatters = createQuery(convexApi.hypotheses.listMissingWhyThisMatters, () => ({
+    limit: 20,
+  }));
+  const exportForAstro = createAction(convexApi.editorialArtifacts.exportForAstro);
 
   const [notice, setNotice] = createSignal<string | null>(null);
   const [exporting, setExporting] = createSignal(false);
@@ -56,10 +46,7 @@ export function EditorialPage() {
     () => (artifacts.data() ?? []) as Doc<"editorialArtifacts">[],
   );
   const publishedPublicCount = createMemo(
-    () =>
-      rows().filter(
-        (row) => row.status === "published" && row.visibility === "public",
-      ).length,
+    () => rows().filter((row) => row.status === "published" && row.visibility === "public").length,
   );
 
   async function handleExport() {
@@ -67,9 +54,7 @@ export function EditorialPage() {
     setNotice(null);
     try {
       const result = await exportForAstro();
-      setNotice(
-        `Exported ${result.exportedCount} public artifact(s) to ${result.manifestPath}.`,
-      );
+      setNotice(`Exported ${result.exportedCount} public artifact(s) to ${result.manifestPath}.`);
     } catch (error) {
       setNotice(`Export failed: ${String(error)}`);
     } finally {
@@ -98,8 +83,8 @@ export function EditorialPage() {
                 maxWidth: "48rem",
               })}
             >
-              Curate public-safe narrative artifacts here, then export only
-              approved public snapshots for Astro consumption.
+              Curate public-safe narrative artifacts here, then export only approved public
+              snapshots for Astro consumption.
             </p>
             <div
               class={css({
@@ -110,9 +95,7 @@ export function EditorialPage() {
               })}
             >
               <UIBadge tone="gold">{rows().length} artifacts</UIBadge>
-              <UIBadge tone="violet">
-                {publishedPublicCount()} ready for export
-              </UIBadge>
+              <UIBadge tone="violet">{publishedPublicCount()} ready for export</UIBadge>
             </div>
           </div>
           <UIButton
@@ -124,9 +107,7 @@ export function EditorialPage() {
           </UIButton>
         </div>
         <Show when={notice()}>
-          {(message) => (
-            <p class={css({ color: "zodiac.cream", mt: "3" })}>{message()}</p>
-          )}
+          {(message) => <p class={css({ color: "zodiac.cream", mt: "3" })}>{message()}</p>}
         </Show>
       </UICard>
 
@@ -134,8 +115,8 @@ export function EditorialPage() {
         <UICard>
           <h2 class={sectionTitleClass}>Phase 1 Audit</h2>
           <p class={css({ color: "rgba(245, 240, 232, 0.64)", mb: "3" })}>
-            These hypotheses still have no <em>why this matters</em> copy and
-            should be cleaned up before they feed public artifacts.
+            These hypotheses still have no <em>why this matters</em> copy and should be cleaned up
+            before they feed public artifacts.
           </p>
           <div class={css({ display: "grid", gap: "2" })}>
             <For each={missingWhyThisMatters() ?? []}>
@@ -153,12 +134,8 @@ export function EditorialPage() {
                     textDecoration: "none",
                   })}
                 >
-                  <div class={css({ color: "zodiac.cream" })}>
-                    {hypothesis.title}
-                  </div>
-                  <div
-                    class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}
-                  >
+                  <div class={css({ color: "zodiac.cream" })}>{hypothesis.title}</div>
+                  <div class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}>
                     {hypothesis.question}
                   </div>
                 </Link>
@@ -170,16 +147,12 @@ export function EditorialPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Artifacts</h2>
-        <Show
-          when={!artifacts.isLoading()}
-          fallback={<p>Loading artifacts...</p>}
-        >
+        <Show when={!artifacts.isLoading()} fallback={<p>Loading artifacts...</p>}>
           <Show
             when={rows().length > 0}
             fallback={
               <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
-                No editorial artifacts yet. Create a recap from a weekly brief,
-                thesis, or campaign.
+                No editorial artifacts yet. Create a recap from a weekly brief, thesis, or campaign.
               </p>
             }
           >
@@ -226,9 +199,7 @@ export function EditorialPage() {
                     >
                       {artifact.title}
                     </h3>
-                    <p class={css({ color: "rgba(245, 240, 232, 0.64)" })}>
-                      {artifact.dek}
-                    </p>
+                    <p class={css({ color: "rgba(245, 240, 232, 0.64)" })}>{artifact.dek}</p>
                   </Link>
                 )}
               </For>

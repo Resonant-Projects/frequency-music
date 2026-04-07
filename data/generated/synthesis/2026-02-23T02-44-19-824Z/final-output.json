@@ -94,9 +94,7 @@
       "panelPlanned": ["self", "musician_peer_1", "musician_peer_2"],
       "listeningContext": "Quiet room; one pass on open-back headphones and one pass on nearfield monitors.",
       "listeningMethod": "Blind A/B/C with randomized labels and fixed playback level.",
-      "whatVaries": [
-        "tuning system only (JI vs quarter-comma meantone vs 12-TET)"
-      ],
+      "whatVaries": ["tuning system only (JI vs quarter-comma meantone vs 12-TET)"],
       "whatStaysConstant": [
         "MIDI notes",
         "progression",

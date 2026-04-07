@@ -22,6 +22,7 @@ Selected 7/7 from 46 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - equal temperament: 3
 - just intonation: 2
 - frequency ratios: 2
@@ -118,6 +119,7 @@ Selected 7/7 from 46 eligible candidates.
 - mathematics: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 15
 - frequency: 6
 - instrument: 4
@@ -127,6 +129,7 @@ Selected 7/7 from 46 eligible candidates.
 - note: 1
 
 ### Evidence Distribution
+
 - peer_reviewed: 17
 - preprint: 11
 - anecdotal: 8
@@ -149,6 +152,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -159,6 +163,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -171,6 +176,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -192,14 +198,17 @@ Summary:
 Physicists have successfully made electrons flow like water in ultra-pure graphene, creating electron fluids that exhibit hydrodynamic behavior including shock waves when electrons exceed the 'speed of sound' for electron fluids (hundreds of km/s). This represents a fundamental departure from normal electron behavior in wires, where electrons scatter individually rather than moving collectively. The research could lead to new electronic devices and provides a new framework for understanding quantum materials through fluid dynamics.
 
 Claims:
+
 - [1] [peer_reviewed] Electrons in ultra-pure graphene can flow like water molecules, exhibiting collective fluid behavior rather than individual particle motion
 - [2] [preprint] Electron fluids have a 'speed of sound' of a few hundred kilometers per second, and electrons can be accelerated past this threshold to create shock waves
 - [3] [peer_reviewed] The Gurzhi effect predicts that in momentum-conserving electron systems, warming increases conductivity (opposite to normal wire behavior)
 
 Composition Parameters:
+
 - frequency: few hundred km/s
 
 Open Questions:
+
 - Could electron fluid dynamics be used to create new types of acoustic or vibrational devices?
 - How might the frequency characteristics of electron fluids relate to audible sound or musical frequencies?
 - Could the collective oscillations in electron fluids generate measurable electromagnetic frequencies in audio ranges?
@@ -220,6 +229,7 @@ Summary:
 This paper introduces a generative-first neural autoencoder architecture for audio that achieves significantly higher temporal compression (3360x downsampling) compared to existing reconstruction-first approaches (2048x). The new architecture provides 10x faster encoding and 1.6x lower latent rates while supporting both continuous and discrete representations in a single model. For practical applications, a 60-second mono audio signal can be compressed to just 788 tokens, making generative audio modeling more computationally tractable.
 
 Claims:
+
 - [1] [preprint] Existing neural audio autoencoders achieve 2048x temporal downsampling
 - [2] [preprint] The new generative-first architecture achieves 3360x temporal downsampling
 - [3] [preprint] The new approach provides 10x faster encoding speed compared to existing methods
@@ -227,11 +237,13 @@ Claims:
 - [5] [preprint] A 60-second mono audio signal compresses to 788 tokens using this method
 
 Composition Parameters:
+
 - tempo: 2048x downsampling
 - tempo: 3360x downsampling
 - rhythm: 60-second duration → 788 tokens
 
 Open Questions:
+
 - How does the quality of audio reconstruction compare between 2048x and 3360x downsampling rates?
 - What are the perceptual implications of such high temporal compression for different types of audio content?
 - How does this compression ratio affect the preservation of musical timing and rhythmic accuracy?
@@ -252,17 +264,20 @@ Summary:
 This is a January livestream where Andrew Huang demonstrates his music production workflow, recording beats from a groove box (Side Drums) into Ableton Live. He discusses his approach to hardware vs. software production, provides feedback on patron-submitted tracks, and answers questions about his creative process, studio organization, and views on analog vs. digital production methods.
 
 Claims:
+
 - [1] [anecdotal] Physical hardware interaction produces different musical results than computer-based production, even with good MIDI controllers and low-latency plugins
 - [2] [anecdotal] Modern digital audio processing can achieve virtually identical results to analog processing in most cases
 - [3] [anecdotal] Real-time arrangement using mute controls creates different musical outcomes compared to timeline-based editing
 
 Composition Parameters:
+
 - instrument: Side Drums groove box
 - instrument: Eurorack modular synthesizer
 - instrument: Piano
 - instrument: Strings arrangement
 
 Open Questions:
+
 - What specific psychoacoustic factors make physical hardware interaction feel different from software control?
 - How does real-time arrangement decision-making affect musical creativity compared to timeline editing?
 - What are the measurable differences between analog and digital audio processing in modern production?
@@ -284,6 +299,7 @@ Summary:
 John Stuart Reid presents a hypothesis that sound and frequency patterns may have played a fundamental organizing role in the emergence of life. He demonstrates how bubbles in water create Faraday wave patterns when subjected to specific frequencies, and argues these sonic scaffolding effects could organize prebiotic molecules brought to Earth by meteorites. Reid draws connections between cymatic patterns and biological structures like radiolaria and diatoms, suggesting that sound's ability to create order from chaos may be a key mechanism in abiogenesis that doesn't require intelligent design.
 
 Claims:
+
 - [1] [anecdotal] Hydrothermal vents produce broadband sound containing thousands of audio frequencies extending into ultrasound ranges
 - [2] [anecdotal] Each bubble acts as a Helmholtz resonator, selecting specific frequencies from the environmental sound spectrum based on its size
 - [3] [anecdotal] Bubbles exhibit lifelike behavior when subjected to specific resonant frequencies
@@ -292,10 +308,12 @@ Claims:
 - [6] [anecdotal] Cymatic patterns can reproduce structures found in biological organisms like radiolaria and diatoms
 
 Composition Parameters:
+
 - frequency: 21 Hz
 - frequency: 43.43 Hz
 
 Open Questions:
+
 - Can specific frequency combinations reliably organize prebiotic molecules into proto-cellular structures?
 - What is the relationship between bubble resonance frequencies and the formation of biological patterns?
 - How do exclusion zones interact with sonic energy to create organizational effects?
@@ -319,6 +337,7 @@ Summary:
 This paper develops a unified mathematical framework for understanding music theory across different equal-temperament systems beyond the standard 12-tone system. Using abstract algebra and group theory, the authors propose axioms to determine keyboard configurations and key signatures for any n-equal temperament system. They redefine classical music theory concepts like the circle of fifths, dominant, and leading tone to work in general equal-temperament systems, showing how the arrangement of black and white keys follows mathematical principles.
 
 Claims:
+
 - [1] [preprint] The number of possible black/white key arrangements in an n-key octave follows a Fibonacci sequence
 - [2] [preprint] The circle of fifths relationship stems from the mathematical property that n_w^(-1) ≡ 7 (mod 12) where n_w is the number of white keys
 - [3] [preprint] Key signatures can be computed algebraically using modular arithmetic operations on scale sequences
@@ -326,12 +345,14 @@ Claims:
 - [5] [preprint] The dominant can be generalized across equal-temperament systems as the note with number n_w^(-1) above the tonic
 
 Composition Parameters:
+
 - tuningSystem: 12-TET (12-tone equal temperament)
 - tuningSystem: 19-TET
 - tuningSystem: 31-TET
 - note: Perfect fifth interval
 
 Open Questions:
+
 - How do these mathematical frameworks apply to microtonal composition in practice?
 - What are the perceptual implications of keyboard layouts derived from different equal-temperament systems?
 - Can these axioms be extended to non-equal temperament systems?
@@ -353,6 +374,7 @@ Summary:
 Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.
 
 Claims:
+
 - [1] [peer_reviewed] 12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century
 - [2] [peer_reviewed] In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463
 - [3] [peer_reviewed] Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament
@@ -362,6 +384,7 @@ Claims:
 - [7] [peer_reviewed] Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: 12-tone equal temperament
 - frequency: 261.626 Hz
@@ -372,9 +395,9 @@ Composition Parameters:
 - tuningSystem: 7 TET
 
 Open Questions:
+
 - How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?
 - What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?
 - How do performers in practice deviate from theoretical equal temperament when playing?
 - What role does cultural conditioning play in preference for 12 TET versus other tuning systems?
 - How do the mathematical properties of different equal temperaments affect compositional possibilities?
-

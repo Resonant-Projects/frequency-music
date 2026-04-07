@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  extractYouTubeVideoId,
-  generateDedupeKey,
-  normalizeUrl,
-} from "./sourceUtils";
+import { extractYouTubeVideoId, generateDedupeKey, normalizeUrl } from "./sourceUtils";
 
 describe("source utilities", () => {
   test("normalizes URLs for dedupe", () => {
@@ -28,12 +24,10 @@ describe("source utilities", () => {
   });
 
   test("extracts video ids from standard and shorts URLs", () => {
-    expect(
-      extractYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
-    ).toBe("dQw4w9WgXcQ");
-    expect(
-      extractYouTubeVideoId("https://www.youtube.com/shorts/dQw4w9WgXcQ"),
-    ).toBe("dQw4w9WgXcQ");
+    expect(extractYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(
+      "dQw4w9WgXcQ",
+    );
+    expect(extractYouTubeVideoId("https://www.youtube.com/shorts/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
     expect(extractYouTubeVideoId("https://example.com/video")).toBeNull();
   });
 });

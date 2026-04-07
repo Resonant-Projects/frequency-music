@@ -1,26 +1,26 @@
 # The Resonance Cascade
 
-*Resonance isn't just a property of strings and air columns. It's the organizing principle at every scale of musical experience — from the subatomic to the social. Each level amplifies, filters, and constrains the levels above and below it, creating a cascade that IS the phenomenon we call music.*
+_Resonance isn't just a property of strings and air columns. It's the organizing principle at every scale of musical experience — from the subatomic to the social. Each level amplifies, filters, and constrains the levels above and below it, creating a cascade that IS the phenomenon we call music._
 
 ## The Same Trick, Seven Times
 
 Here's a claim: the physical mechanism of resonance — the selective amplification of energy at particular frequencies — operates at no fewer than seven distinct scales in the musical experience, and at each scale it does essentially the same thing. It picks winners from a field of possibilities.
 
-| Scale | System | What resonates | What's selected |
-|-------|--------|---------------|-----------------|
-| Micro-physical | Vibrating body | Standing wave modes | The harmonic series |
-| Acoustic | Room/space | Room modes, reflections | The spectral envelope |
-| Cochlear | Basilar membrane | Mechanical frequency filters | Tonotopic decomposition |
-| Neural | Oscillatory networks | Phase-locked firing | Pitch, beat, meter |
-| Cognitive | Predictive models | Pattern-matching circuits | Expectation, memory |
-| Social | Ensemble interaction | Temporal coupling | Groove, synchrony |
-| Cultural | Shared conventions | Genre/style recognition | Meaning, affect |
+| Scale          | System               | What resonates               | What's selected         |
+| -------------- | -------------------- | ---------------------------- | ----------------------- |
+| Micro-physical | Vibrating body       | Standing wave modes          | The harmonic series     |
+| Acoustic       | Room/space           | Room modes, reflections      | The spectral envelope   |
+| Cochlear       | Basilar membrane     | Mechanical frequency filters | Tonotopic decomposition |
+| Neural         | Oscillatory networks | Phase-locked firing          | Pitch, beat, meter      |
+| Cognitive      | Predictive models    | Pattern-matching circuits    | Expectation, memory     |
+| Social         | Ensemble interaction | Temporal coupling            | Groove, synchrony       |
+| Cultural       | Shared conventions   | Genre/style recognition      | Meaning, affect         |
 
-At the physical levels (1-4), this is rigorous: each involves driven oscillators with frequency-dependent gain, preferentially amplifying inputs near natural frequencies. At the psychological and cultural levels (5-7), "resonance" becomes a *descriptive metaphor* for pattern-matching and preference — useful for seeing structural parallels, but not governed by the same differential equations. The honest claim is: resonance is a *recurring structural motif* across levels, not that the mathematics is literally identical at every scale.
+At the physical levels (1-4), this is rigorous: each involves driven oscillators with frequency-dependent gain, preferentially amplifying inputs near natural frequencies. At the psychological and cultural levels (5-7), "resonance" becomes a _descriptive metaphor_ for pattern-matching and preference — useful for seeing structural parallels, but not governed by the same differential equations. The honest claim is: resonance is a _recurring structural motif_ across levels, not that the mathematics is literally identical at every scale.
 
 ## Level 1: The String
 
-A vibrating string is the textbook resonator. Pluck it, and it decomposes the impulse into standing wave modes at integer multiples of the fundamental — the harmonic series. This isn't a mathematical idealization; it's what the string *physically does*. The boundary conditions (fixed endpoints) act as a filter that kills every frequency except those whose wavelengths divide evenly into the string length.
+A vibrating string is the textbook resonator. Pluck it, and it decomposes the impulse into standing wave modes at integer multiples of the fundamental — the harmonic series. This isn't a mathematical idealization; it's what the string _physically does_. The boundary conditions (fixed endpoints) act as a filter that kills every frequency except those whose wavelengths divide evenly into the string length.
 
 The harmonic series is the first cascade output: from the infinite-dimensional space of possible vibrations, the string selects a discrete, harmonically related set. This is already a lossy compression (see "The Tuning Codec") — the continuous space of frequencies is projected onto a one-dimensional lattice indexed by integers.
 
@@ -32,7 +32,7 @@ The acoustic space is the second resonator. Every room has resonant modes determ
 
 The room filters the string's harmonic series, boosting some partials and attenuating others. This is why the same instrument sounds different in different spaces. The guitar in a bathroom is brighter (small room, high-frequency modes dominant); in a concert hall, rounder (dense low-frequency modes smooth the spectrum).
 
-But the room does something more than equalize. Reverberation creates temporal smearing — each partial excites room modes that ring on after the source has stopped, blending successive notes into each other. This is resonance acting as a *temporal* filter, not just a spectral one. The room's resonant decay time determines the maximum musical tempo at which individual notes remain distinct. Pipe organ music is slow partly because Gothic cathedrals have 4-8 second reverb tails — play fast and the cascade from Level 2 smears the cascade from Level 1 into mud.
+But the room does something more than equalize. Reverberation creates temporal smearing — each partial excites room modes that ring on after the source has stopped, blending successive notes into each other. This is resonance acting as a _temporal_ filter, not just a spectral one. The room's resonant decay time determines the maximum musical tempo at which individual notes remain distinct. Pipe organ music is slow partly because Gothic cathedrals have 4-8 second reverb tails — play fast and the cascade from Level 2 smears the cascade from Level 1 into mud.
 
 ## Level 3: The Cochlea
 
@@ -40,7 +40,7 @@ The basilar membrane is a mechanical spectrum analyzer — a tapered, stiffened 
 
 This is resonance in the most literal sense: each point on the membrane is a tuned resonator, and the incoming signal excites the resonators whose natural frequencies match its components. The cochlea's output is a tonotopic map — frequency decomposed into spatial position, ready for neural processing.
 
-But the cochlea isn't a passive filter bank. The outer hair cells provide active amplification — they *motor*, physically expanding and contracting in response to stimulation, boosting the traveling wave peak by up to 40 dB. This is a resonance with gain, an amplifier tuned by the system's own output. The cochlear amplifier sharpens frequency resolution beyond what passive mechanics could achieve, at the cost of introducing nonlinear distortion products (combination tones, otoacoustic emissions) that feed back into the cascade.
+But the cochlea isn't a passive filter bank. The outer hair cells provide active amplification — they _motor_, physically expanding and contracting in response to stimulation, boosting the traveling wave peak by up to 40 dB. This is a resonance with gain, an amplifier tuned by the system's own output. The cochlear amplifier sharpens frequency resolution beyond what passive mechanics could achieve, at the cost of introducing nonlinear distortion products (combination tones, otoacoustic emissions) that feed back into the cascade.
 
 The critical bandwidth — the minimum frequency separation at which two tones are independently resolved — is a direct consequence of cochlear resonance. Two tones within one critical band (~1/3 octave in the midrange) excite overlapping regions of the membrane, creating the sensation of roughness or beating. This is the physical basis of sensory dissonance (see "The Locking In"), and it's set by the mechanical properties of the resonator, not by any higher-level processing.
 
@@ -62,7 +62,7 @@ Syncopation is the deliberate excitation of neural resonators at unexpected phas
 
 The brain doesn't passively receive music; it actively predicts it. The predictive processing framework (see "The Entropy Arc," "The Arrow of Sound") says that perception IS prediction — the brain maintains a generative model of incoming stimulation and experiences the world as the ongoing comparison between prediction and reality.
 
-This is resonance at the cognitive level. The predictive model is a *tuned system* — it has been shaped by years of exposure to a particular musical culture, and it resonates with patterns that match its learned statistics while generating surprise (prediction error) for patterns that don't. A dominant seventh chord is "tense" not because of any acoustic property in isolation, but because the predictive model, tuned by thousands of hours of tonal music, has a strong resonant response to that chord — it powerfully activates the prediction of tonic resolution.
+This is resonance at the cognitive level. The predictive model is a _tuned system_ — it has been shaped by years of exposure to a particular musical culture, and it resonates with patterns that match its learned statistics while generating surprise (prediction error) for patterns that don't. A dominant seventh chord is "tense" not because of any acoustic property in isolation, but because the predictive model, tuned by thousands of hours of tonal music, has a strong resonant response to that chord — it powerfully activates the prediction of tonic resolution.
 
 The model's "resonant frequencies" are the statistical regularities of its training data: the probability of V→I in Western tonal music, the expectation of a snare on beats 2 and 4 in rock, the anticipation of a rhyme at the end of a couplet. These aren't physical frequencies, but they behave mathematically like resonances — they have bandwidth (some deviations are tolerable, others aren't), they have Q-factor (some expectations are sharply tuned, others are broad), and they can be driven into oscillation by the right stimulus.
 
@@ -76,7 +76,7 @@ This is resonance at the social scale: individual nervous systems, each an oscil
 
 The "locked-in" state of a great ensemble performance — when the groove is undeniable, when the band is "in the pocket" — is mode-locking at the social scale. The coupling strength (how well the musicians hear each other, how responsive they are to timing cues) determines whether the ensemble locks into a shared groove or drifts into disconnection.
 
-Audiences experience this too. The shared rhythmic entrainment of a crowd at a concert — thousands of people clapping, swaying, or bouncing in near-synchrony — is a visible manifestation of social resonance. The sound waves couple the nervous systems; the nervous systems respond by generating rhythmic motor output; the motor output feeds back into the acoustic environment. The room behaves *as if* it were one resonator — though the mechanism is discrete motor synchronization (entrainment to a periodic pulse), not standing-wave physics.
+Audiences experience this too. The shared rhythmic entrainment of a crowd at a concert — thousands of people clapping, swaying, or bouncing in near-synchrony — is a visible manifestation of social resonance. The sound waves couple the nervous systems; the nervous systems respond by generating rhythmic motor output; the motor output feeds back into the acoustic environment. The room behaves _as if_ it were one resonator — though the mechanism is discrete motor synchronization (entrainment to a periodic pulse), not standing-wave physics.
 
 ## Level 7: Cultural Resonance
 
@@ -88,13 +88,13 @@ Cultural resonance has its own timescale: decades to centuries. Musical styles t
 
 ## The Cascade Is the Music
 
-What makes this a *cascade* rather than just a list? Each level's output is the next level's input, and each level both constrains and enables the levels above it:
+What makes this a _cascade_ rather than just a list? Each level's output is the next level's input, and each level both constrains and enables the levels above it:
 
 **Upward constraints:** The cochlea's critical bandwidth determines which intervals sound consonant, which constrains which scales are culturally viable, which constrains which prediction models listeners develop, which constrains what composers write. The physics of vibrating strings determines the harmonic series, which determines what the cochlea was optimized to detect, which determines what neural oscillators expect.
 
-**Downward constraints:** Cultural expectations determine what composers write, which determines what listeners hear, which shapes neural entrainment patterns, which modulates cochlear gain (attentional modulation of outer hair cell activity is real), which affects what we literally *hear* in the physical signal. A trained musician hearing a detuned note experiences a physical cochlear response that an untrained listener doesn't — their cognitive model is literally tuning their peripheral auditory system.
+**Downward constraints:** Cultural expectations determine what composers write, which determines what listeners hear, which shapes neural entrainment patterns, which modulates cochlear gain (attentional modulation of outer hair cell activity is real), which affects what we literally _hear_ in the physical signal. A trained musician hearing a detuned note experiences a physical cochlear response that an untrained listener doesn't — their cognitive model is literally tuning their peripheral auditory system.
 
-The bidirectional flow means the cascade is not a one-way pipeline but a **resonant loop**. The system self-organizes around frequencies that resonate at multiple levels simultaneously. The major triad is special in *Western music* because it engages multiple levels simultaneously: simple integer ratios (Level 1), efficient room coupling (Level 2), clean cochlear excitation (Level 3), robust neural phase-locking (Level 4), and strong predictive activation in tonally trained listeners (Level 5). But Level 7 (cultural universality) is where the argument breaks: many musical traditions (gamelan, certain maqam systems) don't use the major triad as a structural foundation, proving that the physical "cascade" doesn't deterministically dictate cultural practice.
+The bidirectional flow means the cascade is not a one-way pipeline but a **resonant loop**. The system self-organizes around frequencies that resonate at multiple levels simultaneously. The major triad is special in _Western music_ because it engages multiple levels simultaneously: simple integer ratios (Level 1), efficient room coupling (Level 2), clean cochlear excitation (Level 3), robust neural phase-locking (Level 4), and strong predictive activation in tonally trained listeners (Level 5). But Level 7 (cultural universality) is where the argument breaks: many musical traditions (gamelan, certain maqam systems) don't use the major triad as a structural foundation, proving that the physical "cascade" doesn't deterministically dictate cultural practice.
 
 Conversely, a truly alien sound — one that resonates at none of these levels — literally cannot become music. It would be filtered out at Level 3 (inaudible or painful), fail to entrain at Level 4 (metrically unintelligible), generate only noise in the predictive model at Level 5 (meaningless), resist social synchronization at Level 6, and fail to propagate culturally at Level 7.
 
@@ -132,4 +132,4 @@ The deepest lesson of the cascade: **music isn't a thing in the world. It's a re
 
 ---
 
-*Bridges: "The Locking In" (mode-locking as the Level 4-6 mechanism), "Finding One" (beat finding as Level 4 entrainment), "The Groove Equation" (groove as Level 4-6 synchronization), "The Codec Ear" (cochlear processing as Level 3 resonance), "The Listener's Grid" (cognitive framing as Level 5 tuning), "The Entropy Arc" (prediction as Level 5 resonance), "The Arrow of Sound" (temporal asymmetry as Level 4-5 constraint), "The Unwritten Laws" (implicit rules as Level 7 resonances), "The Attractor Landscape" (attractors as Level 5 resonant modes)*
+_Bridges: "The Locking In" (mode-locking as the Level 4-6 mechanism), "Finding One" (beat finding as Level 4 entrainment), "The Groove Equation" (groove as Level 4-6 synchronization), "The Codec Ear" (cochlear processing as Level 3 resonance), "The Listener's Grid" (cognitive framing as Level 5 tuning), "The Entropy Arc" (prediction as Level 5 resonance), "The Arrow of Sound" (temporal asymmetry as Level 4-5 constraint), "The Unwritten Laws" (implicit rules as Level 7 resonances), "The Attractor Landscape" (attractors as Level 5 resonant modes)_

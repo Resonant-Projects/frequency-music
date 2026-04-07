@@ -30,8 +30,7 @@ async function main() {
   console.log(`TEXT_LENGTH: ${text.length}`);
   console.log(`---TEXT---`);
   console.log(text.slice(0, 12000));
-  if (text.length > 12000)
-    console.log(`\n... [truncated, ${text.length - 12000} more chars]`);
+  if (text.length > 12000) console.log(`\n... [truncated, ${text.length - 12000} more chars]`);
 }
 
 main().catch(console.error);

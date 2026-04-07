@@ -4,10 +4,7 @@
 
 import * as THREE from "three";
 import { COLORS, type SectorDef } from "./zodiac-data";
-import type {
-  ConstellationConcept,
-  ZodiacConstellationEdge,
-} from "./zodiac-types";
+import type { ConstellationConcept, ZodiacConstellationEdge } from "./zodiac-types";
 
 export interface ConceptStar {
   name: string;
@@ -30,10 +27,7 @@ export interface ConstellationGroup {
 }
 
 // Simple force-repulsion to distribute concepts within a sector wedge
-function layoutConcepts(
-  sector: SectorDef,
-  concepts: ConstellationConcept[],
-): ConceptStar[] {
+function layoutConcepts(sector: SectorDef, concepts: ConstellationConcept[]): ConceptStar[] {
   const { startAngle, endAngle } = sector;
   const rMin = 185;
   const rMax = 255;
@@ -171,10 +165,7 @@ export function buildConstellations(
     const from = starMap.get(edge.from);
     const to = starMap.get(edge.to);
     if (from && to) {
-      linePts.push(
-        new THREE.Vector3(from.x, from.y, from.z),
-        new THREE.Vector3(to.x, to.y, to.z),
-      );
+      linePts.push(new THREE.Vector3(from.x, from.y, from.z), new THREE.Vector3(to.x, to.y, to.z));
     }
   }
 
@@ -241,10 +232,7 @@ export function animateConstellationFadeIn(
 }
 
 // Update twinkle animation (call every frame)
-export function updateConstellationTime(
-  constellation: ConstellationGroup,
-  time: number,
-): void {
+export function updateConstellationTime(constellation: ConstellationGroup, time: number): void {
   const mat = constellation.pointCloud.material as THREE.ShaderMaterial;
   if (mat.uniforms?.uTime) {
     mat.uniforms.uTime.value = time;

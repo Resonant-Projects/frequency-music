@@ -1,6 +1,6 @@
 # The Listener's Grid
 
-*When you hear a chord, your auditory system solves a geometric puzzle. The mathematics of that puzzle turns out to be the same mathematics that composers use to navigate between chords — seen from the other side of the mirror.*
+_When you hear a chord, your auditory system solves a geometric puzzle. The mathematics of that puzzle turns out to be the same mathematics that composers use to navigate between chords — seen from the other side of the mirror._
 
 ## The Problem of Hearing
 
@@ -12,9 +12,9 @@ A recent paper by Goodman and Batten proposes a geometric framework for this pro
 
 The key move is the choice of coordinate system. Instead of arranging pitches chromatically (C, C♯, D, D♯, ...), Goodman arranges them by fifths: C, G, D, A, E, B, F♯, C♯, G♯, D♯, A♯, F. The horizontal axis is this circle of fifths; the vertical axis is octave number. Since the circle of fifths wraps around after 12 steps, the left and right edges of the grid identify — the space is a **discrete cylinder**, formally ℤ₁₂ × ℤ.
 
-Why fifths? Because in this coordinate system, a fundamental and its first three harmonics (octave, fifth, second octave) land in a *spatially compact* pattern. If you'd used chromatic ordering, the harmonics would scatter across the grid. In fifth-ordering, they cluster into one of exactly two shapes depending on position: a **turnstile** (⊤) or a **gamma** (Γ).
+Why fifths? Because in this coordinate system, a fundamental and its first three harmonics (octave, fifth, second octave) land in a _spatially compact_ pattern. If you'd used chromatic ordering, the harmonics would scatter across the grid. In fifth-ordering, they cluster into one of exactly two shapes depending on position: a **turnstile** (⊤) or a **gamma** (Γ).
 
-This is already beautiful: the physics of the harmonic series, projected onto the geometry of the circle of fifths, produces just two templates. All of pitch estimation reduces to: *given a pattern of activated cells on the cylinder, decompose it into overlapping ⊤ and Γ shapes.*
+This is already beautiful: the physics of the harmonic series, projected onto the geometry of the circle of fifths, produces just two templates. All of pitch estimation reduces to: _given a pattern of activated cells on the cylinder, decompose it into overlapping ⊤ and Γ shapes._
 
 ## Group Actions and Shape Duality
 
@@ -28,7 +28,7 @@ This is not the major/minor duality of harmonic dualism, nor the long-root/short
 
 ## False Fundamentals: Where Geometry Gets Interesting
 
-The paper's deepest contribution is the theory of **false fundamentals** — tones that *look* like fundamentals (they sit at the apex of a ⊤ or Γ shape) but are actually harmonics of something else. The overlapping of harmonic series from multiple simultaneous notes creates patterns where harmonics accidentally form the shape of a fundamental they aren't.
+The paper's deepest contribution is the theory of **false fundamentals** — tones that _look_ like fundamentals (they sit at the apex of a ⊤ or Γ shape) but are actually harmonics of something else. The overlapping of harmonic series from multiple simultaneous notes creates patterns where harmonics accidentally form the shape of a fundamental they aren't.
 
 Goodman proves a remarkable boundedness result: to check whether any tone is a false fundamental, you only need to search a 4 × 4 region of the grid centered on it. No matter how complex the polyphony, the geometry constrains the search space. This is a direct consequence of the compactness of the ⊤ and Γ shapes — because harmonics don't scatter far in the fifth-ordered grid, neither can the sources of false fundamentals.
 
@@ -44,7 +44,7 @@ But they serve opposite purposes:
 
 - **Goodman's grid** is a listener's map. It shows how a sound field decomposes into sources. Moving on the grid is disambiguating fundamentals from harmonics — the perceptual inverse of the compositional problem.
 
-Tymoczko's OPTIC framework deepens this connection. His five operations — Octave shift, Permutation, Transposition, Inversion, and Cardinality change — define equivalence classes on collections of notes. The quotient spaces formed by these equivalences have remarkable topology: two-note chord space is a Möbius strip, three-note chord space is a twisted triangular prism. Goodman's cylinder is the space *before* these quotients are taken — the raw pitch space on which Tymoczko's operations act.
+Tymoczko's OPTIC framework deepens this connection. His five operations — Octave shift, Permutation, Transposition, Inversion, and Cardinality change — define equivalence classes on collections of notes. The quotient spaces formed by these equivalences have remarkable topology: two-note chord space is a Möbius strip, three-note chord space is a twisted triangular prism. Goodman's cylinder is the space _before_ these quotients are taken — the raw pitch space on which Tymoczko's operations act.
 
 In other words: **Goodman's grid is the universal cover of Tymoczko's chord spaces**, or close to it. The composer navigates the quotient (where inversions and transpositions are identified); the listener works in the cover (where every tone has a specific pitch height and chroma, and the job is to trace each one back to its source).
 
@@ -52,9 +52,10 @@ In other words: **Goodman's grid is the universal cover of Tymoczko's chord spac
 
 This connects to the duality theme that has run through these essays. In Essay 8 ("Duality All the Way Down"), I catalogued four distinct dualities — frequency/period, Langlands, constraint, and grid shape — and asked whether they might all be projections of a single underlying structure.
 
-The Goodman paper adds a crucial piece to this puzzle. The source/echo duality (fundamental vs. harmonic) is arguably the most *physical* of all the dualities we've encountered. It's not an abstract mathematical symmetry — it's what your cochlea deals with every time you hear polyphonic sound. And yet it manifests as a group-theoretic inversion on the same ℤ₁₂ that hosts all the other dualities.
+The Goodman paper adds a crucial piece to this puzzle. The source/echo duality (fundamental vs. harmonic) is arguably the most _physical_ of all the dualities we've encountered. It's not an abstract mathematical symmetry — it's what your cochlea deals with every time you hear polyphonic sound. And yet it manifests as a group-theoretic inversion on the same ℤ₁₂ that hosts all the other dualities.
 
 Consider the chain:
+
 1. **Physics** gives us the harmonic series (multiplicative structure of integer frequency ratios)
 2. **Perception** maps this through a logarithm into additive pitch space
 3. **Geometry** organizes this additive space into a cylinder (ℤ₁₂ × ℤ)
@@ -68,7 +69,7 @@ Steps 1–4 are determined by physics and mathematics. Steps 5 and 6 are the two
 
 **Exploit the false fundamental ambiguity.** When a set of notes creates a false fundamental — a phantom tone that the ear briefly interprets as real — you've created a moment of perceptual ambiguity. This is the geometric equivalent of a pun: two valid parsings of the same sound field. Composers have used this intuitively (Ravel's stacked thirds create phantom fundamentals; Spectralist composers like Grisey build entire pieces around the ambiguity between harmonic and fundamental). Goodman's framework makes it precise: you can calculate which combinations of notes create false fundamentals, in which register, and of what type.
 
-**Use the bounded search region as a voicing constraint.** The 4 × 4 search region — roughly four octaves vertically and four steps on the circle of fifths horizontally — tells you exactly how far apart voices can be before their harmonic series stop interfering. Voicings within this region maximize harmonic *interaction* between partials — but whether that interaction produces richness or mud depends entirely on register, critical bandwidth, and instrument. (A dense cluster of minor seconds in the bass register will produce nothing but masking, regardless of what the grid says.) The model describes *potential for interference*, not a recipe for good voicing. Acoustic reality — critical bands, low-frequency masking, instrument-specific spectra — determines the actual result. Use the grid as a diagnostic tool, not a prescriptive rule.
+**Use the bounded search region as a voicing constraint.** The 4 × 4 search region — roughly four octaves vertically and four steps on the circle of fifths horizontally — tells you exactly how far apart voices can be before their harmonic series stop interfering. Voicings within this region maximize harmonic _interaction_ between partials — but whether that interaction produces richness or mud depends entirely on register, critical bandwidth, and instrument. (A dense cluster of minor seconds in the bass register will produce nothing but masking, regardless of what the grid says.) The model describes _potential for interference_, not a recipe for good voicing. Acoustic reality — critical bands, low-frequency masking, instrument-specific spectra — determines the actual result. Use the grid as a diagnostic tool, not a prescriptive rule.
 
 **Navigate between the grid and its quotients.** A passage that begins in "listener space" (ambiguous fundamentals, fused harmonics, spectral chords) and gradually clarifies into "composer space" (distinct chord progressions, clear voice leading on the Tonnetz) enacts the transition from perception to cognition. This could be a formal principle for a piece: start in the harmonic series, end in functional harmony, with the geometry tracing the path between them.
 
@@ -78,8 +79,8 @@ The Goodman paper restricts to the first three harmonics, which is a simplificat
 
 The connection to Tymoczko's OPTIC spaces deserves formal treatment. If Goodman's grid really is (a discretization of) the universal cover of OPTIC quotient spaces, there should be explicit covering maps, and the false fundamental classification should have an interpretation in the quotient as some kind of singularity or branch point.
 
-And the big open question from Essay 8 remains: is there a single mathematical framework — perhaps something involving Pontryagin duality on the cylinder, or a fiber bundle structure relating Goodman's cover to Tymoczko's base — that produces *all* the observed dualities as special cases?
+And the big open question from Essay 8 remains: is there a single mathematical framework — perhaps something involving Pontryagin duality on the cylinder, or a fiber bundle structure relating Goodman's cover to Tymoczko's base — that produces _all_ the observed dualities as special cases?
 
 ---
 
-*Essay 9 in the Frequency Music research series. Primary source: Goodman & Batten, "A geometric framework for pitch estimation on acoustic musical signals." Connections to: Tymoczko, "A Geometry of Music"; Euler's Tonnetz; Grisey and the Spectralist school. Previous essays: "Duality All the Way Down" (Essay 8), "Symmetry as the Skeleton of Music" (Essay 4).*
+_Essay 9 in the Frequency Music research series. Primary source: Goodman & Batten, "A geometric framework for pitch estimation on acoustic musical signals." Connections to: Tymoczko, "A Geometry of Music"; Euler's Tonnetz; Grisey and the Spectralist school. Previous essays: "Duality All the Way Down" (Essay 8), "Symmetry as the Skeleton of Music" (Essay 4)._

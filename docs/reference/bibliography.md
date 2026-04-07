@@ -1,20 +1,20 @@
 # Research Bibliography
 
-*Generated 2026-03-06 — 649 sources across 18 topics*
+_Generated 2026-03-06 — 649 sources across 18 topics_
 
-| Status | Count |
-|--------|-------|
-| Extracted | 380 |
-| Text Ready | 62 |
-| Ingested (metadata only) | 207 |
-| **Total** | **649** |
+| Status                   | Count   |
+| ------------------------ | ------- |
+| Extracted                | 380     |
+| Text Ready               | 62      |
+| Ingested (metadata only) | 207     |
+| **Total**                | **649** |
 
 ---
 
 ## YouTube & Video (202)
 
 - 📌 [🔒Locked🔒 (sungazer live in Tokyo)](https://www.youtube.com/shorts/hMcgZiZK0y0)
-- 📌 [01jsreid03_23_-_invitation_to_course_-_john_stuart_reid (1080p)](https://www.youtube.com/watch?v=SnSh2nUq6EQ)
+- 📌 [01jsreid03*23*-_invitation_to_course_-\_john_stuart_reid (1080p)](https://www.youtube.com/watch?v=SnSh2nUq6EQ)
 - 📌 [1 Simple Tool for Catchier Electronic Music](https://www.youtube.com/watch?v=iDpPQ7bbUdI)
 - 📌 [10 Arrangement Tips: Make Full Tracks from Single Loop](https://www.youtube.com/watch?v=SvoAp1_pnGU)
 - 📌 [10 Production Techniques You NEED TO TRY FL Studio & Ableton Live | Splice](https://www.youtube.com/watch?v=94Y8gG1d62E)
@@ -41,7 +41,7 @@
 - 📌 [Acoustic CymaScope tutorial](https://www.youtube.com/watch?v=NaDn7VGBBZY)
 - 📌 [Advanced Drum Programming in Electronic Music](https://www.youtube.com/watch?v=6bfs5ajLTbA)
 - 📌 [Advanced Mixing Automation in Pro Tools with Brad Engleking](https://www.youtube.com/watch?v=nI9NYG9PqI8)
-- 📌 [AI Music is here... what the f**k do we do now?](https://www.youtube.com/watch?v=CrcUJI197Vs)
+- 📌 [AI Music is here... what the f\*\*k do we do now?](https://www.youtube.com/watch?v=CrcUJI197Vs)
 - 📌 [Apple Is Hiding Something…](https://www.youtube.com/watch?v=2GlbxfquG-U)
 - 📌 [Arpeggiators: 5 Simple Tips for More Interesting Patterns](https://www.youtube.com/watch?v=cIBcq1DJzG8)
 - 📌 [Auto Pan Secrets in Ableton Live: 5 Powerful Uses](https://www.youtube.com/watch?v=F-pAUN67dbo)
@@ -65,7 +65,7 @@
 - 📌 [DIY 10 Gig Networking for Our $60,000 Server!](https://www.youtube.com/watch?v=tMLIzedVvH8)
 - 📌 [Dolby Atmos Music: Mixing Workflows and Creative Techniques](https://www.youtube.com/watch?v=gd_KogP31kA)
 - 📌 [Don’t confuse “DEAD” and “DRY” room sound - What sound engineers NEED to know](https://www.youtube.com/watch?v=UaFFxyVHAL8)
-- 📌 [Dorkfest Part 1!  My Studio Workflow:  The Hardware](https://www.youtube.com/watch?v=JkhvVTDznJ0)
+- 📌 [Dorkfest Part 1! My Studio Workflow: The Hardware](https://www.youtube.com/watch?v=JkhvVTDznJ0)
 - 📌 [Double LFO technique for transitions🚀](https://www.youtube.com/watch?v=RBvN4EeINkI)
 - 📌 [Duet with Lau Noah](https://www.youtube.com/shorts/W-5tB4YsHho)
 - 📌 [EMC #10: Arrangement and Structure](https://www.youtube.com/watch?v=IF_gJDIa_Zw)
@@ -165,7 +165,7 @@
 - 📌 [Take Your Sound Design To The Next Level With Tools Inspired By Nature](https://www.youtube.com/watch?v=CSxfiUYp6FU)
 - 📌 [Taste Is Personal Not a Moral Standard](https://www.youtube.com/shorts/eh3W4CUl6a4)
 - 📌 [The “White Christmas” song structure](https://www.youtube.com/shorts/X9K5Gwrtd-w)
-- 📌 [THE 1 FIELD   ENGLISH  FOR PIVATE USE   A film by Tsipi Raz](https://www.youtube.com/watch?v=CTxJOvzafM0)
+- 📌 [THE 1 FIELD ENGLISH FOR PIVATE USE A film by Tsipi Raz](https://www.youtube.com/watch?v=CTxJOvzafM0)
 - 📌 [The AI that solved IMO Geometry Problems | Guest video by @Aleph0](https://www.youtube.com/watch?v=4NlrfOl0l8U)
 - 📌 [The Beatles copied this blues songs](https://www.youtube.com/shorts/XXlUfvN8WG0)
 - 📌 [The Beatles’ most complex song](https://www.youtube.com/watch?v=PcFK7U6qOs4)
@@ -501,7 +501,7 @@
 - ✅ [Article 102A: Physics - Aether Units - Part 6 - The Torus & Nassim Haramein](https://www.cosmic-core.org/free/article-102a-science-aether-units-part-6-the-torus-nassim-haramein/) (32k chars)
 - ✅ [Behind the bounce of Millennium Hip Hop: a conversation with Snipe Young](https://blog.native-instruments.com/snipe-young/) (5k chars)
 - ✅ [Ben Johnston's Notation](https://www.kylegann.com/BJnotation.html) (0k chars)
-- ✅ [Best plugins for Pro Tools (free and paid)](https://splice.com/blog/best-pro-tools-plugins/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=best-pro-tools-plugins) (0k chars)
+- ✅ [Best plugins for Pro Tools (free and paid)](https://splice.com/blog/best-pro-tools-plugins/?utm_source=rss&utm_medium=rss&utm_campaign=best-pro-tools-plugins) (0k chars)
 - ✅ [BRAMS-CRBLM Lecture Series – Conference by Dr. Steven Brown, McMaster University](https://brams.org/2026/01/14/brams-crblm-lecture-series-conference-by-dr-steven-brown-mcmaster-university/) (2k chars)
 - ✅ [BRAMS-CRBLM Lecture Series – Conference by Dr. Taylor Webb, Université de Montréal](https://brams.org/2026/01/14/brams-crblm-lecture-series-conference-by-dr-taylor-webb-universite-de-montreal/) (1k chars)
 - ✅ [Building Career Momentum With DJ Bander (Zach Schnall) On My Latest Podcast](https://bobbyowsinskiblog.com/building-career-momentum-with-dj-bander-zach-schnall-on-my-latest-podcast/) (1k chars)
@@ -510,22 +510,22 @@
 - ✅ [Experts Team Recommend Studio Management Tools And Software](https://www.production-expert.com/production-expert-1/expert-team-recommend-studio-management-software-and-tools?utm_source=convertkit&utm_medium=email&utm_campaign=Experts%20Team%20Recommend%20Studio%20Management%20Tools%20And%20Software%20-%2019437094) (13k chars)
 - ✅ [Exploring Frequency and Healing Through Music](https://drive.google.com/file/d/1io0jCut-_RD18v-d21tvUhChDyHZcZbV/view?usp=drivesdk) (3k chars)
 - ✅ [Four McGill studies make Québec Science’s list of the Top 10 Discoveries of the Year](https://brams.org/2026/01/19/four-mcgill-studies-make-quebec-sciences-list-of-the-top-10-discoveries-of-the-year/) (2k chars)
-- ✅ [Get a free soft piano for Splice INSTRUMENT](https://splice.com/blog/free-instrument-plugin-soft-piano/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=free-instrument-plugin-soft-piano) (0k chars)
-- ✅ [Get free haunting strings for Splice INSTRUMENT](https://splice.com/blog/free-instrument-plugin-haunting-strings/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=free-instrument-plugin-haunting-strings) (0k chars)
-- ✅ [Get free intimate woodwinds for Splice INSTRUMENT](https://splice.com/blog/free-instrument-plugin-intimate-woodwinds/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=free-instrument-plugin-intimate-woodwinds) (0k chars)
+- ✅ [Get a free soft piano for Splice INSTRUMENT](https://splice.com/blog/free-instrument-plugin-soft-piano/?utm_source=rss&utm_medium=rss&utm_campaign=free-instrument-plugin-soft-piano) (0k chars)
+- ✅ [Get free haunting strings for Splice INSTRUMENT](https://splice.com/blog/free-instrument-plugin-haunting-strings/?utm_source=rss&utm_medium=rss&utm_campaign=free-instrument-plugin-haunting-strings) (0k chars)
+- ✅ [Get free intimate woodwinds for Splice INSTRUMENT](https://splice.com/blog/free-instrument-plugin-intimate-woodwinds/?utm_source=rss&utm_medium=rss&utm_campaign=free-instrument-plugin-intimate-woodwinds) (0k chars)
 - ✅ [GitHub - ahujasid/ableton-mcp](https://github.com/ahujasid/ableton-mcp) (8k chars)
 - 📌 [Holiday Wishes 2025](https://brams.org/2025/12/22/holiday-wishes-2025/)
 - ✅ [How DJ T-1000 keeps Detroit hands-on with Maschine](https://blog.native-instruments.com/dj-t-1000/) (6k chars)
 - ✅ [How Massive helped Johnny Gorillas shape two creative worlds](https://blog.native-instruments.com/johnny-gorillas/) (7k chars)
 - ✅ [How Nova Wolf finds humanity in loudness with Ozone](https://blog.native-instruments.com/nova-wolf/) (8k chars)
-- ✅ [How to download MIDI on Splice Sounds](https://splice.com/blog/downloading-midi-and-sounds/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=downloading-midi-and-sounds) (0k chars)
+- ✅ [How to download MIDI on Splice Sounds](https://splice.com/blog/downloading-midi-and-sounds/?utm_source=rss&utm_medium=rss&utm_campaign=downloading-midi-and-sounds) (0k chars)
 - ✅ [How to Grow Professional Relationships](https://tej.as/blog/how-to-grow-professional-relationships-tjs-model?utm_source=tldrnewsletter) (0k chars)
-- ✅ [How to make a song instrumental: Stem separation explained](https://splice.com/blog/how-to-make-a-song-instrumental/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=how-to-make-a-song-instrumental) (0k chars)
-- 📄 [How to write better lyrics: 9 tips for your songwriting](https://splice.com/blog/tips-writing-better-lyrics/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=tips-writing-better-lyrics) (0k chars)
+- ✅ [How to make a song instrumental: Stem separation explained](https://splice.com/blog/how-to-make-a-song-instrumental/?utm_source=rss&utm_medium=rss&utm_campaign=how-to-make-a-song-instrumental) (0k chars)
+- 📄 [How to write better lyrics: 9 tips for your songwriting](https://splice.com/blog/tips-writing-better-lyrics/?utm_source=rss&utm_medium=rss&utm_campaign=tips-writing-better-lyrics) (0k chars)
 - ✅ [How to write moving, emotional melodies in 5 steps](https://blog.native-instruments.com/emotional-melodies/) (10k chars)
 - ✅ [Inside the spectral world of Oscillarys: a deep dive with Ocean Swift Synthesis](https://blog.native-instruments.com/oscillarys/) (7k chars)
 - ✅ [Introduction To Sound Processing](https://www.e-booksdirectory.com/details.php?ebook=29) (3k chars)
-- ✅ [Kris Bowers (Bridgerton, The Wild Robot) gives an intimate studio tour](https://splice.com/blog/kris-bowers-studio-tour/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=kris-bowers-studio-tour) (0k chars)
+- ✅ [Kris Bowers (Bridgerton, The Wild Robot) gives an intimate studio tour](https://splice.com/blog/kris-bowers-studio-tour/?utm_source=rss&utm_medium=rss&utm_campaign=kris-bowers-studio-tour) (0k chars)
 - ✅ [Legendary Engineer Ed Seay Talks The Nashville Sound And Its AI Influence On My Latest Podcast](https://bobbyowsinskiblog.com/legendary-engineer-ed-seay-talks-the-nashville-sound-and-its-ai-influence-on-my-latest-podcast/) (1k chars)
 - ✅ [Let&#8217;s Celebrate The 75th Anniversary Of The Telecaster](https://bobbyowsinskiblog.com/lets-celebrate-the-75th-anniversary-of-the-telecaster/) (0k chars)
 - ✅ [Low Budget Indie Film Post Production Workflow](https://www.production-expert.com/production-expert-1/low-budget-indie-post-workflow?utm_source=convertkit&utm_medium=email&utm_campaign=Low%20Budget%20Indie%20Film%20Post%20Production%20Workflow%20-%2016662392) (31k chars)
@@ -556,15 +556,15 @@
 - ✅ The Resonant Fabric: A Holistic Survey of Frequency, Music, Mathematics, and Physical Reality (17k chars)
 - ✅ [Universe of Resonance Cymatics Harmonics Sacred Geometry – Collected Links](https://soundquality.org/2021/03/universe-of-resonance-cymatics-harmonics-sacred-geometry/) (11k chars)
 - ✅ [Vibrations and Waves](https://www.lightandmatter.com/vw/) (0k chars)
-- ✅ Voice Note:  (0k chars)
+- ✅ Voice Note: (0k chars)
 - ✅ [We are looking for Musicians](https://brams.org/2026/02/17/we-are-looking-for-musicians/) (10k chars)
 - ✅ [Weird by design: HAAi on the limitless potential of Absynth 6](https://blog.native-instruments.com/haai/) (2k chars)
-- ✅ [What are parallel chords?](https://splice.com/blog/what-are-parallel-chords/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=what-are-parallel-chords) (0k chars)
-- ✅ [What is compression? A music production guide](https://splice.com/blog/what-is-compression/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=what-is-compression) (0k chars)
-- ✅ [What is frequency masking? Definition, causes, and how to fix it](https://splice.com/blog/what-is-frequency-masking/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=what-is-frequency-masking) (0k chars)
+- ✅ [What are parallel chords?](https://splice.com/blog/what-are-parallel-chords/?utm_source=rss&utm_medium=rss&utm_campaign=what-are-parallel-chords) (0k chars)
+- ✅ [What is compression? A music production guide](https://splice.com/blog/what-is-compression/?utm_source=rss&utm_medium=rss&utm_campaign=what-is-compression) (0k chars)
+- ✅ [What is frequency masking? Definition, causes, and how to fix it](https://splice.com/blog/what-is-frequency-masking/?utm_source=rss&utm_medium=rss&utm_campaign=what-is-frequency-masking) (0k chars)
 - ✅ [What's the difference between ET and EDO?](https://sevish.com/2016/whats-the-difference-between-et-and-edo/) (2k chars)
-- ✅ [Yaeji gives an exclusive tour of her inspiring multimedia studio](https://splice.com/blog/yaeji-studio-tour/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=yaeji-studio-tour) (0k chars)
-- ✅ [Yaeji reflects on With A Hammer, healing trauma through music, and her favorite video games](https://splice.com/blog/yaeji-interview/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=yaeji-interview) (0k chars)
+- ✅ [Yaeji gives an exclusive tour of her inspiring multimedia studio](https://splice.com/blog/yaeji-studio-tour/?utm_source=rss&utm_medium=rss&utm_campaign=yaeji-studio-tour) (0k chars)
+- ✅ [Yaeji reflects on With A Hammer, healing trauma through music, and her favorite video games](https://splice.com/blog/yaeji-interview/?utm_source=rss&utm_medium=rss&utm_campaign=yaeji-interview) (0k chars)
 
 ## Science Journalism (48)
 
@@ -784,4 +784,3 @@
 
 - ✅ [Acoustics and Architecture](https://archive.org/details/acousticsarchite00sabi) (10k chars)
 - ✅ [The Theory of Sound, Volume One](https://archive.org/details/theorysound03telerich) (10k chars)
-

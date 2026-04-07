@@ -95,9 +95,7 @@
       "panelPlanned": ["self", "musician_peer_1", "musician_peer_2"],
       "listeningContext": "Quiet room, two passes: open-back headphones then nearfield monitors.",
       "listeningMethod": "Blind P/Q/R evaluation with fixed playback level and repeated order permutations.",
-      "whatVaries": [
-        "tuning strategy (adaptive JI vs static meantone vs static 12-TET)"
-      ],
+      "whatVaries": ["tuning strategy (adaptive JI vs static meantone vs static 12-TET)"],
       "whatStaysConstant": [
         "MIDI notes",
         "harmonic rhythm",

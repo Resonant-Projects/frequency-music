@@ -1,6 +1,6 @@
 # The Unwritten Laws: How Genres Encode Ethics, Not Just Sound
 
-*Every genre is a court of law. The question is which crimes it prosecutes.*
+_Every genre is a court of law. The question is which crimes it prosecutes._
 
 ## The Claim
 
@@ -10,9 +10,9 @@ Genres are not primarily sonic categories. They are **ethical frameworks** — s
 
 Adam Neely's essay-length investigation into faked guitar performances ("The Ethics of Fake Guitar," 2025) arrives at a distinction so clean it deserves formal treatment: a musician can be "tried under rock law" or "under jazz law," and the verdict depends entirely on which court hears the case.
 
-Under **rock law**, the cardinal virtue is emotional authenticity. Did you *feel* it? Did the audience *feel* it? The means of production are secondary. Ghost singers in movies, lip-syncing on television, studio musicians playing the parts — these are not inherently sins, because rock's ethical center is the **experience delivered to the listener**. The performance is a vessel for feeling. If the vessel holds, the method doesn't matter.
+Under **rock law**, the cardinal virtue is emotional authenticity. Did you _feel_ it? Did the audience _feel_ it? The means of production are secondary. Ghost singers in movies, lip-syncing on television, studio musicians playing the parts — these are not inherently sins, because rock's ethical center is the **experience delivered to the listener**. The performance is a vessel for feeling. If the vessel holds, the method doesn't matter.
 
-Under **jazz law**, the cardinal virtue is demonstrated mastery. Can you *actually do it*? Right here, right now, in this room, with these people watching? Jazz demands the receipts. A faked jazz performance isn't just dishonest — it's a category error, like submitting a painting to a sculpture competition. The medium *is* the live, real-time, embodied demonstration of skill. The improvisation *must be happening* or nothing is happening at all.
+Under **jazz law**, the cardinal virtue is demonstrated mastery. Can you _actually do it_? Right here, right now, in this room, with these people watching? Jazz demands the receipts. A faked jazz performance isn't just dishonest — it's a category error, like submitting a painting to a sculpture competition. The medium _is_ the live, real-time, embodied demonstration of skill. The improvisation _must be happening_ or nothing is happening at all.
 
 These aren't just preferences. They're **complete ethical systems** with their own definitions of fraud, their own standards of evidence, their own hierarchies of virtue.
 
@@ -30,7 +30,7 @@ The Beatles sit at the exact fault line where these legal systems collide. David
 
 And yet: multiple commenters describe it as a song they loved as children, hearing it on their parents' stereos, with no idea it was complex at all. "The Beatles were always deceptively simple," one writes. "Their music has a quality of inevitability, that makes it appear simpler than it actually is." Another calls it "the origins of prog rock in 2 minutes and 45 seconds."
 
-This is the paradox: the song is simultaneously tried under multiple genre laws and acquitted in all of them. Under rock law, it delivers overwhelming emotional impact in under three minutes — verdict: innocent. Under the proto-prog law it helped create, it demonstrates formal ambition and compositional ingenuity — verdict: admirable. Under folk law (the White Album's dominant register), it sounds like something that *had to exist*, inevitable and organic — verdict: authentic.
+This is the paradox: the song is simultaneously tried under multiple genre laws and acquitted in all of them. Under rock law, it delivers overwhelming emotional impact in under three minutes — verdict: innocent. Under the proto-prog law it helped create, it demonstrates formal ambition and compositional ingenuity — verdict: admirable. Under folk law (the White Album's dominant register), it sounds like something that _had to exist_, inevitable and organic — verdict: authentic.
 
 The Beatles got away with being complex because they never advertised their complexity. They obeyed folk law's prime directive — **sound natural** — while smuggling in jazz-level harmonic sophistication and prog-level structural ambition. Lennon's "it's getting easier, it's just not fun" isn't a complaint about the song's difficulty. It's a recognition that naturalness requires unnatural effort.
 
@@ -44,13 +44,13 @@ If we take this framework seriously, several things follow:
 
 **3. Cross-genre fluency is moral bilingualism.** A musician who can operate under multiple genre laws — who understands that authenticity means different things in different contexts — has a richer ethical vocabulary than one who insists on a single standard. Lau Noah's refusal to name her chords isn't ignorance of jazz law; it's a deliberate choice to remain in a jurisdiction where her music can't be reduced to a pre-existing framework.
 
-**4. The "authenticity" crisis in AI-generated music is a jurisdictional crisis.** When listeners feel uneasy about AI-composed music, they're not just worried about job displacement. They're asking: under which laws should this music be tried? It can't be tried under jazz law (no embodied performer). It can't be tried under rock law in its strongest form (no *person* feeling the feeling). It can't be tried under folk law (no tradition, no community of practice). The unease comes from the absence of any applicable legal system. The music is extraterritorial — produced outside any genre's moral jurisdiction.
+**4. The "authenticity" crisis in AI-generated music is a jurisdictional crisis.** When listeners feel uneasy about AI-composed music, they're not just worried about job displacement. They're asking: under which laws should this music be tried? It can't be tried under jazz law (no embodied performer). It can't be tried under rock law in its strongest form (no _person_ feeling the feeling). It can't be tried under folk law (no tradition, no community of practice). The unease comes from the absence of any applicable legal system. The music is extraterritorial — produced outside any genre's moral jurisdiction.
 
 ## The Deeper Pattern
 
-There's something structurally interesting about genre-as-ethics that connects to the mathematical threads running through this research. A genre's value system is, in a formal sense, a **quotient structure** — it defines which differences matter and which don't. Under rock law, the difference between a live take and a studio composite doesn't matter (same quotient class), but the difference between authentic emotion and performative cynicism does. Under jazz law, exactly the opposite: a studio composite and a live take are in *different* equivalence classes, even if they sound identical.
+There's something structurally interesting about genre-as-ethics that connects to the mathematical threads running through this research. A genre's value system is, in a formal sense, a **quotient structure** — it defines which differences matter and which don't. Under rock law, the difference between a live take and a studio composite doesn't matter (same quotient class), but the difference between authentic emotion and performative cynicism does. Under jazz law, exactly the opposite: a studio composite and a live take are in _different_ equivalence classes, even if they sound identical.
 
-The analogy to mathematical quotient structures (octave equivalence, Burnside's set classes) is suggestive but imprecise. Mathematical equivalences are exhaustive and mutually exclusive — every pitch falls into exactly one class. Genres are neither: a song can be "kinda jazz" and "kinda rock," and vast stretches of music fall outside any genre. Still, the *cognitive function* is similar: genres compress an overwhelming space of possible aesthetic judgments into a navigable (if fuzzy) system of categories, much as mathematical quotients compress infinite structures into tractable ones.
+The analogy to mathematical quotient structures (octave equivalence, Burnside's set classes) is suggestive but imprecise. Mathematical equivalences are exhaustive and mutually exclusive — every pitch falls into exactly one class. Genres are neither: a song can be "kinda jazz" and "kinda rock," and vast stretches of music fall outside any genre. Still, the _cognitive function_ is similar: genres compress an overwhelming space of possible aesthetic judgments into a navigable (if fuzzy) system of categories, much as mathematical quotients compress infinite structures into tractable ones.
 
 The laws are unwritten because they have to be. Like the axioms of a mathematical system, they're not derived from anything more fundamental — they're the ground on which everything else stands. You can't prove that embodied mastery matters more than emotional impact, or vice versa. You can only choose which court you walk into, and accept its jurisdiction.
 
@@ -64,4 +64,4 @@ The laws are unwritten because they have to be. Like the axioms of a mathematica
 
 ---
 
-*Every genre says: "This is what matters." The radical act is hearing multiple courts in session simultaneously — and recognizing that the music itself is always richer than any single verdict.*
+_Every genre says: "This is what matters." The radical act is hearing multiple courts in session simultaneously — and recognizing that the music itself is always richer than any single verdict._

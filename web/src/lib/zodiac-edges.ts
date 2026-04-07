@@ -7,9 +7,7 @@ import { makeDomainEdgeMat, makeHubEdgeMat } from "./zodiac-materials";
 
 // --- Hub → Domain edges (straight lines from origin to sector inner midpoint) ---
 
-export function buildHubEdges(
-  scene: THREE.Scene,
-): Array<{ line: THREE.Line; sectorId: string }> {
+export function buildHubEdges(scene: THREE.Scene): Array<{ line: THREE.Line; sectorId: string }> {
   const edges: Array<{ line: THREE.Line; sectorId: string }> = [];
 
   SECTORS.forEach((sector) => {
@@ -34,11 +32,7 @@ function buildBezierEdge(
   mat: THREE.LineBasicMaterial,
   segments = 32,
 ): THREE.Line {
-  const control = new THREE.Vector3(
-    (start.x + end.x) / 2,
-    (start.y + end.y) / 2,
-    controlZ,
-  );
+  const control = new THREE.Vector3((start.x + end.x) / 2, (start.y + end.y) / 2, controlZ);
   const curve = new THREE.QuadraticBezierCurve3(start, control, end);
   const pts = curve.getPoints(segments);
   const geo = new THREE.BufferGeometry().setFromPoints(pts);

@@ -80,23 +80,16 @@ export function IngestPage() {
   const [notice, setNotice] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
-  const createFromUrlInput = createAction(
-    convexApi.sources.createFromUrlAndQueue,
-  );
-  const createFromYouTubeInput = createAction(
-    convexApi.sources.createFromYouTubeAndQueue,
-  );
+  const createFromUrlInput = createAction(convexApi.sources.createFromUrlAndQueue);
+  const createFromYouTubeInput = createAction(convexApi.sources.createFromYouTubeAndQueue);
   const createFeed = createMutation(convexApi.admin.createFeed);
   const setFeedEnabled = createMutation(convexApi.admin.setFeedEnabled);
   const pollFeedsNow = createAction(convexApi.admin.pollFeedsNow);
   const feeds = createQuery(convexApi.admin.listFeeds);
 
-  const recentSources = createQueryWithStatus(
-    convexApi.sources.listRecent,
-    () => ({
-      limit: 14,
-    }),
-  );
+  const recentSources = createQueryWithStatus(convexApi.sources.listRecent, () => ({
+    limit: 14,
+  }));
 
   async function submitUrl(event: SubmitEvent) {
     event.preventDefault();
@@ -231,16 +224,12 @@ export function IngestPage() {
       <UICard>
         <h1 class={pageTitleClass}>Ingest Console</h1>
         <p class={helperClass}>
-          Add research inputs directly into Convex. URL and YouTube entries are
-          dedupe-safe and land in the private inbox pipeline.
+          Add research inputs directly into Convex. URL and YouTube entries are dedupe-safe and land
+          in the private inbox pipeline.
         </p>
         <div aria-live="polite">
           <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-                {message()}
-              </p>
-            )}
+            {(message) => <p class={css({ color: "zodiac.cream", marginTop: "3" })}>{message()}</p>}
           </Show>
         </div>
       </UICard>
@@ -255,17 +244,13 @@ export function IngestPage() {
           })}
         >
           <h2 class={sectionTitleClass}>Feed Intake</h2>
-          <UIButton
-            data-testid="ingest-poll-feeds-btn"
-            variant="outline"
-            onClick={runPoll}
-          >
+          <UIButton data-testid="ingest-poll-feeds-btn" variant="outline" onClick={runPoll}>
             Poll Feeds Now
           </UIButton>
         </div>
         <p class={helperClass}>
-          Manage automated feed intake here. Add feeds, enable/disable them, and
-          trigger a poll when you need immediate refresh.
+          Manage automated feed intake here. Add feeds, enable/disable them, and trigger a poll when
+          you need immediate refresh.
         </p>
 
         <div class={twoColClass}>
@@ -377,9 +362,7 @@ export function IngestPage() {
                     </div>
                     <UIButton
                       variant="outline"
-                      onClick={() =>
-                        toggleFeed(String(feed._id), Boolean(feed.enabled))
-                      }
+                      onClick={() => toggleFeed(String(feed._id), Boolean(feed.enabled))}
                     >
                       {feed.enabled ? "Disable" : "Enable"}
                     </UIButton>

@@ -2,7 +2,7 @@
 
 **Essay #76 — March 29, 2026**
 
-*Sources: BEAM (sub-band anomaly detection), SCENEBench (LALM attention biases), LoRA TTS fine-tuning (loss-quality divergence), ID-LoRA (joint audio-video identity), Text-to-RIR (pretrained acoustic priors). Extends essays #74 (self-decomposing signals) and #75 (the frame is the signal).*
+_Sources: BEAM (sub-band anomaly detection), SCENEBench (LALM attention biases), LoRA TTS fine-tuning (loss-quality divergence), ID-LoRA (joint audio-video identity), Text-to-RIR (pretrained acoustic priors). Extends essays #74 (self-decomposing signals) and #75 (the frame is the signal)._
 
 ---
 
@@ -24,7 +24,7 @@ This has an exact musical parallel. A mix engineer listening on small speakers m
 
 SCENEBench reveals that Large Audio Language Models have a default listening granularity, and it's speech. When presented with audio containing both speech and background sounds, models transcribe the words and ignore everything else — 75% of background-sound errors are pure omission. The ambient world vanishes.
 
-But here's the key finding: this isn't a capability limitation. When explicitly prompted to listen for background sounds, performance jumps from as low as 2.9% to as high as 74.2%. The model *can* hear the background. It just doesn't, by default. Its trained granularity of attention is locked on the foreground.
+But here's the key finding: this isn't a capability limitation. When explicitly prompted to listen for background sounds, performance jumps from as low as 2.9% to as high as 74.2%. The model _can_ hear the background. It just doesn't, by default. Its trained granularity of attention is locked on the foreground.
 
 The musical implications are immediate. Do music AI models similarly prioritize melody and lyrics over texture, room tone, and spatial character? When a model analyzes a recording, does it hear the reverb tail, the tape hiss, the bleed between instruments — or does it "transcribe" the harmony and ignore the rest? If SCENEBench is any guide, models have a severe foreground bias that erases exactly the sonic details that recording engineers and producers spend their careers shaping.
 
@@ -36,7 +36,7 @@ The LoRA TTS study reveals a subtler granularity failure: **the wrong metric.** 
 
 This loss-quality divergence is the optimization equivalent of listening at the wrong scale. Token-level prediction accuracy is a fine-grained metric that doesn't capture the perceptual gestalt. A model can become locally precise — each token more probable — while the global percept deteriorates. The metric is measuring at the wrong granularity.
 
-The energy variability threshold (>13 dB for reliable adaptation) carries its own musical message: dynamic range isn't just an aesthetic preference; it's an *informational* property. Compressed, dynamically flat audio is literally harder for a model to learn from — not because it lacks data, but because it lacks the distributional diversity that adaptation requires. Loud and quiet, close and far, energetic and subdued: a voice needs to be heard at multiple scales to be learnable.
+The energy variability threshold (>13 dB for reliable adaptation) carries its own musical message: dynamic range isn't just an aesthetic preference; it's an _informational_ property. Compressed, dynamically flat audio is literally harder for a model to learn from — not because it lacks data, but because it lacks the distributional diversity that adaptation requires. Loud and quiet, close and far, energetic and subdued: a voice needs to be heard at multiple scales to be learnable.
 
 ## Identity Across Scales
 
@@ -44,7 +44,7 @@ ID-LoRA attacks the identity problem from the opposite direction: not decomposin
 
 The cascaded pipeline failure illustrates what happens when granularity is fragmented across stages. A voice-cloning module processes the reference audio without knowing the target scene. A video generator creates the visual without knowing the voice. Each stage optimizes at its own scale. The result: studio-quality voice in a described windstorm, because no stage has the granularity to see the whole picture.
 
-Joint generation — a single model attending to text, video, and audio simultaneously — works because it listens at the *right* scale: the multimodal identity scale where appearance, voice, and environment are inseparable aspects of a single phenomenon.
+Joint generation — a single model attending to text, video, and audio simultaneously — works because it listens at the _right_ scale: the multimodal identity scale where appearance, voice, and environment are inseparable aspects of a single phenomenon.
 
 ## Priors as Compressed Listening
 
@@ -76,4 +76,4 @@ Composition, at its deepest, is the art of building structures that reward liste
 
 ---
 
-*The signal is always richer than your attention. The question is never "what's in the sound?" but "at what scale am I listening?"*
+_The signal is always richer than your attention. The question is never "what's in the sound?" but "at what scale am I listening?"_

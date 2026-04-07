@@ -14,11 +14,7 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import {
-  createMutation,
-  createQuery,
-  createQueryWithStatus,
-} from "../integrations/convex";
+import { createMutation, createQuery, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 function truncate(text: string, maxLength: number) {
@@ -30,12 +26,9 @@ export function HypothesesPage() {
     document.title = "Hypotheses — Frequency Music";
   });
 
-  const hypotheses = createQueryWithStatus(
-    convexApi.hypotheses.listByStatus,
-    () => ({
-      limit: 24,
-    }),
-  );
+  const hypotheses = createQueryWithStatus(convexApi.hypotheses.listByStatus, () => ({
+    limit: 24,
+  }));
   const recentSources = createQuery(convexApi.sources.listRecent, () => ({
     limit: 20,
   }));
@@ -46,9 +39,7 @@ export function HypothesesPage() {
   const recentSourceRows = createMemo<Doc<"sources">[]>(
     () => (recentSources() ?? []) as Doc<"sources">[],
   );
-  const thesisRows = createMemo<Doc<"theses">[]>(
-    () => (activeTheses() ?? []) as Doc<"theses">[],
-  );
+  const thesisRows = createMemo<Doc<"theses">[]>(() => (activeTheses() ?? []) as Doc<"theses">[]);
   const hypothesisRows = createMemo<Doc<"hypotheses">[]>(
     () => (hypotheses.data() ?? []) as Doc<"hypotheses">[],
   );
@@ -66,24 +57,15 @@ export function HypothesesPage() {
 
   function toggleSource(sourceId: string) {
     setSelectedSources((prev) =>
-      prev.includes(sourceId)
-        ? prev.filter((id) => id !== sourceId)
-        : [...prev, sourceId],
+      prev.includes(sourceId) ? prev.filter((id) => id !== sourceId) : [...prev, sourceId],
     );
   }
 
   async function submitHypothesis(event: SubmitEvent) {
     event.preventDefault();
 
-    if (
-      !title().trim() ||
-      !question().trim() ||
-      !statement().trim() ||
-      !whyThisMatters().trim()
-    ) {
-      setNotice(
-        "Title, question, hypothesis statement, and why this matters are required.",
-      );
+    if (!title().trim() || !question().trim() || !statement().trim() || !whyThisMatters().trim()) {
+      setNotice("Title, question, hypothesis statement, and why this matters are required.");
       return;
     }
 
@@ -96,9 +78,7 @@ export function HypothesesPage() {
         hypothesis: statement().trim(),
         whyThisMatters: whyThisMatters().trim(),
         rationaleMd: rationale().trim() || "Draft rationale.",
-        thesisId: thesisId().trim()
-          ? (thesisId().trim() as Doc<"theses">["_id"])
-          : undefined,
+        thesisId: thesisId().trim() ? (thesisId().trim() as Doc<"theses">["_id"]) : undefined,
         sourceIds: selectedSources(),
         concepts: [],
       });
@@ -181,9 +161,7 @@ export function HypothesesPage() {
         >
           <option value="">No thesis yet</option>
           <For each={thesisRows()}>
-            {(thesis) => (
-              <option value={String(thesis._id)}>{thesis.title}</option>
-            )}
+            {(thesis) => <option value={String(thesis._id)}>{thesis.title}</option>}
           </For>
         </UISelect>
 
@@ -217,9 +195,7 @@ export function HypothesesPage() {
                     checked={selectedSources().includes(String(source._id))}
                     onChange={() => toggleSource(String(source._id))}
                   />
-                  <span class={css({ fontSize: "sm" })}>
-                    {source.title ?? "Untitled source"}
-                  </span>
+                  <span class={css({ fontSize: "sm" })}>{source.title ?? "Untitled source"}</span>
                 </label>
               )}
             </For>
@@ -235,9 +211,7 @@ export function HypothesesPage() {
         >
           <div aria-live="polite">
             <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
+              {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
             </Show>
           </div>
           <UIButton type="submit" variant="solid">
@@ -248,10 +222,7 @@ export function HypothesesPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Current Queue</h2>
-        <Show
-          when={!hypotheses.isLoading()}
-          fallback={<p>Loading hypotheses…</p>}
-        >
+        <Show when={!hypotheses.isLoading()} fallback={<p>Loading hypotheses…</p>}>
           <Show
             when={hypothesisRows().length > 0}
             fallback={
@@ -265,8 +236,7 @@ export function HypothesesPage() {
                   py: "8",
                 })}
               >
-                No hypotheses yet. Generate one from an extraction or create one
-                above.
+                No hypotheses yet. Generate one from an extraction or create one above.
               </p>
             }
           >
@@ -300,16 +270,12 @@ export function HypothesesPage() {
                         })}
                       >
                         <UIBadge tone="cream">{item.status}</UIBadge>
-                        <UIBadge tone="violet">
-                          {item.sourceIds.length} citations
-                        </UIBadge>
+                        <UIBadge tone="violet">{item.sourceIds.length} citations</UIBadge>
                         <Show when={item.thesisId}>
                           <UIBadge tone="gold">linked thesis</UIBadge>
                         </Show>
                       </div>
-                      <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
-                        {item.title}
-                      </h3>
+                      <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>{item.title}</h3>
                       <p
                         class={css({
                           color: "rgba(245, 240, 232, 0.7)",

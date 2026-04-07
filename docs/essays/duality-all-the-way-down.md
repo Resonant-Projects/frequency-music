@@ -1,18 +1,18 @@
 # Duality All the Way Down
 
-*Wherever you look in music theory, you find pairs. Major and minor. Frequency and period. Harmonic and subharmonic. The question isn't whether duality exists — it's why the same duality keeps showing up in completely different mathematical frameworks.*
+_Wherever you look in music theory, you find pairs. Major and minor. Frequency and period. Harmonic and subharmonic. The question isn't whether duality exists — it's why the same duality keeps showing up in completely different mathematical frameworks._
 
 ## A New Duality: Constraint Inversion
 
-A recent paper by Bier and Arjomandbigdeli ("Harmony and Duality: An Introduction to Music Theory") takes a startlingly fresh approach to an old question: *why these scales?* Instead of deriving scales from the harmonic series, historical practice, or perceptual experiments, they start with a simple constraint: **two voices shouldn't be only a semitone apart** (it's too dissonant).
+A recent paper by Bier and Arjomandbigdeli ("Harmony and Duality: An Introduction to Music Theory") takes a startlingly fresh approach to an old question: _why these scales?_ Instead of deriving scales from the harmonic series, historical practice, or perceptual experiments, they start with a simple constraint: **two voices shouldn't be only a semitone apart** (it's too dissonant).
 
-From this single prohibition, they ask: what are the *maximal* sets of pitch classes that satisfy this constraint? That is, which collections of notes are as large as possible while never placing two notes a semitone apart?
+From this single prohibition, they ask: what are the _maximal_ sets of pitch classes that satisfy this constraint? That is, which collections of notes are as large as possible while never placing two notes a semitone apart?
 
 The answer is familiar: the pentatonic scale and its modes. The 5-note pentatonic collection is the largest subset of 12 chromatic pitch classes where no two members are adjacent.
 
-But then they escalate: what about a *three-voice* constraint — no three consecutive semitones? The maximal sets satisfying this stronger constraint are the 7-note diatonic scales.
+But then they escalate: what about a _three-voice_ constraint — no three consecutive semitones? The maximal sets satisfying this stronger constraint are the 7-note diatonic scales.
 
-Here's the kicker: **there's a formal duality between the two-voice and three-voice constraint worlds.** Scales satisfying one type of constraint correspond systematically to scales satisfying the other. The pentatonic scale (5 notes from the 2-voice constraint) and the diatonic scale (7 notes from the 3-voice constraint) are dual partners — specifically, the *complementary* pairing (e.g., the black keys and the white keys on a piano), whose union covers all 12 pitch classes. Their structures are complementary, and one can be derived from the other by a well-defined inversion operation.
+Here's the kicker: **there's a formal duality between the two-voice and three-voice constraint worlds.** Scales satisfying one type of constraint correspond systematically to scales satisfying the other. The pentatonic scale (5 notes from the 2-voice constraint) and the diatonic scale (7 notes from the 3-voice constraint) are dual partners — specifically, the _complementary_ pairing (e.g., the black keys and the white keys on a piano), whose union covers all 12 pitch classes. Their structures are complementary, and one can be derived from the other by a well-defined inversion operation.
 
 This is not just a numerological coincidence (5 + 7 = 12). The paper proves that the correspondence is structural: the interval patterns of a scale and its dual are related by a specific transformation, and the harmonic properties of one predict the harmonic properties of the other.
 
@@ -30,7 +30,7 @@ In the generalized Tonnetz framework (explored in "Symmetry as the Skeleton of M
 
 ### 3. Constraint Duality (Scale Complementation)
 
-The new Bier-Arjomandbigdeli result adds a third: the duality between scales derived from 2-voice constraints and those from 3-voice constraints. Pentatonic and diatonic are duals. Where the first two dualities operate on *chords* (reflecting harmonic structures), this one operates on *scales* (reflecting constraint structures). Yet it produces the same pairing of complementary musical objects.
+The new Bier-Arjomandbigdeli result adds a third: the duality between scales derived from 2-voice constraints and those from 3-voice constraints. Pentatonic and diatonic are duals. Where the first two dualities operate on _chords_ (reflecting harmonic structures), this one operates on _scales_ (reflecting constraint structures). Yet it produces the same pairing of complementary musical objects.
 
 ### 4. Grid Duality (Pitch Estimation Geometry)
 
@@ -44,13 +44,13 @@ Why does the same dual structure keep appearing? Here's a hypothesis:
 
 Pitch perception is logarithmic: we hear intervals as ratios, and equal ratios sound like equal steps. The harmonic series is multiplicative: the nth harmonic has frequency n × f₀. When you take the logarithm of a multiplicative structure, you get an additive one — and additive structures on cyclic groups naturally produce dual pairs via the theory of Pontryagin duality (every locally compact abelian group has a dual group with the same structure).
 
-In less technical terms: because we hear *ratios* rather than differences, and because harmonic relationships are built from *multiplication*, the mathematical world of music is one where every structure has a natural mirror image. The frequency/period mirror, the harmonic/subharmonic mirror, the long-root/short-root mirror, and the 2-voice/3-voice constraint mirror are all reflections of this same basic fact.
+In less technical terms: because we hear _ratios_ rather than differences, and because harmonic relationships are built from _multiplication_, the mathematical world of music is one where every structure has a natural mirror image. The frequency/period mirror, the harmonic/subharmonic mirror, the long-root/short-root mirror, and the 2-voice/3-voice constraint mirror are all reflections of this same basic fact.
 
-The constraint duality is perhaps the most surprising instance, because it doesn't obviously involve harmonics or frequency ratios at all — it's purely combinatorial, about which subsets of a cyclic group avoid certain adjacency patterns. Yet the scales it produces (pentatonic and diatonic) are precisely the ones that *also* arise from harmonic series considerations. The combinatorial constraint and the acoustic physics converge on the same objects, suggesting that the duality isn't an artifact of any one mathematical framework but a genuine structural feature of how pitched sounds can be organized.
+The constraint duality is perhaps the most surprising instance, because it doesn't obviously involve harmonics or frequency ratios at all — it's purely combinatorial, about which subsets of a cyclic group avoid certain adjacency patterns. Yet the scales it produces (pentatonic and diatonic) are precisely the ones that _also_ arise from harmonic series considerations. The combinatorial constraint and the acoustic physics converge on the same objects, suggesting that the duality isn't an artifact of any one mathematical framework but a genuine structural feature of how pitched sounds can be organized.
 
 ## Compositional Implications
 
-What can a musician *do* with this?
+What can a musician _do_ with this?
 
 **Use duality as a compositional operator.** If you've written a passage in a diatonic mode, its constraint-dual is a pentatonic passage. The pentatonic isn't just "the diatonic with two notes removed" — it's the complementary structure that satisfies the dual constraint. Moving between a scale and its dual is moving between two fundamentally different ways of avoiding dissonance, and the transition has a characteristic sound: from richness to openness, from tonal specificity to modal ambiguity.
 
@@ -62,12 +62,12 @@ What can a musician *do* with this?
 
 ## The Deeper Question
 
-Seven essays in, a pattern has emerged in this research: the most interesting results aren't within any one domain (acoustics, algebra, topology, combinatorics) but at the *bridges* between them. The fact that Langlands duality, harmonic dualism, and constraint complementation all produce the same major/minor pairing is too persistent to be coincidence and too cross-disciplinary to be explained by any single framework.
+Seven essays in, a pattern has emerged in this research: the most interesting results aren't within any one domain (acoustics, algebra, topology, combinatorics) but at the _bridges_ between them. The fact that Langlands duality, harmonic dualism, and constraint complementation all produce the same major/minor pairing is too persistent to be coincidence and too cross-disciplinary to be explained by any single framework.
 
-The deeper question is whether there's a *unified* mathematical theory that produces all these dualities as special cases — a single structure from which the frequency/period mirror, the Langlands swap, and the constraint inversion all derive as projections. Pontryagin duality on the group ℤ₁₂ is a candidate, but it doesn't obviously capture the Lie-theoretic structure of the Tonnetz results or the geometric structure of the pitch estimation grid.
+The deeper question is whether there's a _unified_ mathematical theory that produces all these dualities as special cases — a single structure from which the frequency/period mirror, the Langlands swap, and the constraint inversion all derive as projections. Pontryagin duality on the group ℤ₁₂ is a candidate, but it doesn't obviously capture the Lie-theoretic structure of the Tonnetz results or the geometric structure of the pitch estimation grid.
 
 Finding that unified framework — or proving it doesn't exist — is perhaps the most interesting open problem at the intersection of music theory and mathematics.
 
 ---
 
-*Essay 8 in the Frequency Music research series. Sources: Bier & Arjomandbigdeli, "Harmony and Duality" (arXiv:2309.10719); Honingh & Murayama, "Two-dimensional representation of chords"; Goodman & Batten, "A geometric framework for pitch estimation"; generalized Tonnetz research on Langlands duality. Previous essays: "The Mirror in the Chord" (Essay 7), "Symmetry as the Skeleton of Music" (Essay 4).*
+_Essay 8 in the Frequency Music research series. Sources: Bier & Arjomandbigdeli, "Harmony and Duality" (arXiv:2309.10719); Honingh & Murayama, "Two-dimensional representation of chords"; Goodman & Batten, "A geometric framework for pitch estimation"; generalized Tonnetz research on Langlands duality. Previous essays: "The Mirror in the Chord" (Essay 7), "Symmetry as the Skeleton of Music" (Essay 4)._

@@ -2,7 +2,7 @@
 
 **Essay #75 — March 28, 2026**
 
-*Sources: Depression detection bias in clinical interviews (positional artifacts), CoDeTT turn-taking benchmark (structured decision disparities), prior essays on self-decomposing signals (#74) and multi-grained identity (#73)*
+_Sources: Depression detection bias in clinical interviews (positional artifacts), CoDeTT turn-taking benchmark (structured decision disparities), prior essays on self-decomposing signals (#74) and multi-grained identity (#73)_
 
 ---
 
@@ -14,11 +14,11 @@ This is typically framed as a failure mode. But from a musical perspective, it's
 
 ## Position as Information
 
-The depression models aren't wrong, exactly. They've discovered that position in a structured interaction *is* informative. The interviewer's questions follow a protocol. If you're hearing question #47, you're deep into the session, and that fact alone correlates with diagnostic outcomes. The frame — the structural scaffold of the conversation — carries signal even when the content doesn't.
+The depression models aren't wrong, exactly. They've discovered that position in a structured interaction _is_ informative. The interviewer's questions follow a protocol. If you're hearing question #47, you're deep into the session, and that fact alone correlates with diagnostic outcomes. The frame — the structural scaffold of the conversation — carries signal even when the content doesn't.
 
 Music has known this forever.
 
-A C major chord after a G7 means "resolution." The same C major chord after an Ab major means "surprise," or "deceptive arrival," or "Kubrick." The notes are identical. The meaning is entirely contextual. In tonal music, harmonic function isn't a property of a chord — it's a property of a chord *in a position*.
+A C major chord after a G7 means "resolution." The same C major chord after an Ab major means "surprise," or "deceptive arrival," or "Kubrick." The notes are identical. The meaning is entirely contextual. In tonal music, harmonic function isn't a property of a chord — it's a property of a chord _in a position_.
 
 Meter works the same way. A note on beat 1 is an arrival. The same note on the "and" of beat 4 is an anacrusis, a launching pad. Rhythm is positional meaning applied to time.
 
@@ -27,6 +27,7 @@ Meter works the same way. A note on beat 1 is an arrival. The same note on the "
 The CoDeTT benchmark on dialogue turn-taking reinforces this from another angle. Turn-taking — when one speaker stops and another begins — looks simple but is a structured decision problem with wildly variable performance across conditions. The "same" conversational event (a pause, a breath, a falling intonation) means different things depending on the interaction type, the position in the exchange, the social dynamics.
 
 Musical turn-taking exhibits the same structured ambiguity. In a jazz combo, a held note from the soloist can mean "I'm building tension" or "I'm handing off to you" depending on:
+
 - Where in the form you are (bar 31 of a 32-bar chorus: handoff)
 - What the rhythm section is doing (if they're ramping energy: handoff)
 - Eye contact and body language (not in the audio at all)
@@ -44,11 +45,11 @@ Film composers know this intuitively. A simple sustained chord becomes terrifyin
 
 **2. Subverting the frame is the most powerful gesture available.**
 
-The deceptive cadence is the simplest example. You set up a frame (dominant preparation) and deliver different content. The meaning doesn't come from the content — it comes from the *distance between expected and actual* within the frame. This is why the tritone substitution works: it respects the voice-leading frame while violating the root-motion frame.
+The deceptive cadence is the simplest example. You set up a frame (dominant preparation) and deliver different content. The meaning doesn't come from the content — it comes from the _distance between expected and actual_ within the frame. This is why the tritone substitution works: it respects the voice-leading frame while violating the root-motion frame.
 
 **3. Repetition creates frames faster than any other device.**
 
-The minimalist insight: repeat something enough times and it becomes a frame rather than a content. Steve Reich's phasing works because the repeated pattern stops being heard as material and becomes a *context* — a lattice through which the phase-shifted version creates new perceptual content that exists in neither part alone.
+The minimalist insight: repeat something enough times and it becomes a frame rather than a content. Steve Reich's phasing works because the repeated pattern stops being heard as material and becomes a _context_ — a lattice through which the phase-shifted version creates new perceptual content that exists in neither part alone.
 
 **4. Genre is a macro-frame.**
 
@@ -68,4 +69,4 @@ The ML researchers framed positional bias as a bug to be corrected. But for musi
 
 Composition, then, is not just the art of choosing sounds. It's the art of building frames within which sounds acquire meaning. And the deepest compositional moves — the ones that make listeners gasp or weep — are often frame operations: setting up an expectation so precisely that its fulfillment (or violation) carries more force than any raw acoustic event could.
 
-The depression detection models were brilliant, in their way. They found the strongest signal in the data. The problem was that their task was content analysis. In music, frame analysis *is* the task.
+The depression detection models were brilliant, in their way. They found the strongest signal in the data. The problem was that their task was content analysis. In music, frame analysis _is_ the task.

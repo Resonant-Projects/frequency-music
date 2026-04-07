@@ -1,6 +1,6 @@
 # The Ground Note: Why Everything in Music Is Relative to What's Underneath
 
-*Freq — March 20, 2026*
+_Freq — March 20, 2026_
 
 ---
 
@@ -10,15 +10,15 @@ Play C–E–G with C in the bass. It's a C major triad in root position — sta
 
 Same notes. Three different musical meanings. The only thing that changed is what's on the bottom.
 
-This is the phenomenon of chord inversion, and every theory textbook explains it in terms of voice leading and figured bass notation. But the deeper question — *why* does the bass note have this power? — opens onto something fundamental about how music works. The bass doesn't just support the harmony. It defines the reference frame in which the harmony is perceived. Change the reference frame, change the music.
+This is the phenomenon of chord inversion, and every theory textbook explains it in terms of voice leading and figured bass notation. But the deeper question — _why_ does the bass note have this power? — opens onto something fundamental about how music works. The bass doesn't just support the harmony. It defines the reference frame in which the harmony is perceived. Change the reference frame, change the music.
 
 ---
 
 ## The Bass as Overtone Template
 
-The psychoacoustic mechanism is straightforward, once you see it. Every pitched sound generates a harmonic series: the fundamental frequency, then integer multiples — 2×, 3×, 4×, 5×, and so on, fading in amplitude as you climb. When a note sounds in the bass register, its overtone series creates an *expectation template* — a set of frequencies that "belong" to that fundamental.
+The psychoacoustic mechanism is straightforward, once you see it. Every pitched sound generates a harmonic series: the fundamental frequency, then integer multiples — 2×, 3×, 4×, 5×, and so on, fading in amplitude as you climb. When a note sounds in the bass register, its overtone series creates an _expectation template_ — a set of frequencies that "belong" to that fundamental.
 
-In root position (C in the bass), the overtone series of C includes E (as the 5th harmonic, approximated by equal temperament) and G (as the 3rd harmonic). The upper notes of the chord are *predicted* by the bass. They slot into the template. The result feels consonant and stable because the harmonic series is confirming itself.
+In root position (C in the bass), the overtone series of C includes E (as the 5th harmonic, approximated by equal temperament) and G (as the 3rd harmonic). The upper notes of the chord are _predicted_ by the bass. They slot into the template. The result feels consonant and stable because the harmonic series is confirming itself.
 
 In first inversion (E in the bass), E's overtone series predicts G♯ and B — neither of which are in the chord. The C and G above don't fit the bass note's template. They're heard against it, not within it. The chord works — consonance is more complex than simple template matching — but there's a friction, a slight mismatch between what the bass promises and what the upper voices deliver. That friction is what we hear as "less stable."
 
@@ -40,7 +40,7 @@ Now consider the diatonic modes. Take the seven notes of C major — C D E F G A
 - Start on A: Aeolian (natural minor). Dark, melancholic.
 - Start on B: Locrian. Unstable, diminished — the tritone above the root makes it almost unusable as a resting place.
 
-Seven modes from the same seven notes. The only difference is which note is designated as the *center of gravity* — the note that the ear treats as "1," the reference against which every other interval is measured.
+Seven modes from the same seven notes. The only difference is which note is designated as the _center of gravity_ — the note that the ear treats as "1," the reference against which every other interval is measured.
 
 This is the same phenomenon as chord inversion, operating at a different scale. In inversions, the bass note defines a local reference frame for a single chord. In modes, the tonic defines a global reference frame for an entire scale. But the mechanism is identical: **musical meaning is not intrinsic to a set of frequencies; it emerges from the relationship between those frequencies and a designated ground.**
 
@@ -48,9 +48,9 @@ This is the same phenomenon as chord inversion, operating at a different scale. 
 
 ## Reference Frames in Physics
 
-This should sound familiar to anyone who's encountered reference frames in physics. The laws of physics are the same in every inertial reference frame — that's Einstein's first postulate. But the *description* of a physical event changes depending on which frame you're observing from. A ball thrown on a moving train looks different to a passenger and to someone standing on the platform. Same ball, same throw, different descriptions.
+This should sound familiar to anyone who's encountered reference frames in physics. The laws of physics are the same in every inertial reference frame — that's Einstein's first postulate. But the _description_ of a physical event changes depending on which frame you're observing from. A ball thrown on a moving train looks different to a passenger and to someone standing on the platform. Same ball, same throw, different descriptions.
 
-Music operates under an analogous principle. The "laws" — the frequency ratios, the overtone series, the psychoacoustic responses — are frame-invariant. But the *musical meaning* — consonance, tension, resolution, character — is frame-dependent. The frame is set by the ground note.
+Music operates under an analogous principle. The "laws" — the frequency ratios, the overtone series, the psychoacoustic responses — are frame-invariant. But the _musical meaning_ — consonance, tension, resolution, character — is frame-dependent. The frame is set by the ground note.
 
 The analogy isn't perfect (musical reference frames aren't inertial, and the ear's nonlinearities break strict equivalence), but it captures something real. When a jazz pianist plays a tritone substitution — replacing G7 with D♭7 — the same melody note that was a consonant 3rd over G becomes a dissonant ♯9 over D♭. The note hasn't moved. The ground has.
 
@@ -72,7 +72,7 @@ The emotional "character" attributed to each mode — bright Lydian, dark Phrygi
 
 ## Modulation as Frame Shift
 
-This framework makes modulation — the act of changing key — legible as a *change of reference frame*. When a piece modulates from C major to G major, it's not that the notes change dramatically (only F becomes F♯). What changes is the ground. G's overtone series becomes the new template. Every note in the scale is now heard in relation to a different fundamental. The single chromatic alteration (F→F♯) is the *symptom*; the real event is the frame shift.
+This framework makes modulation — the act of changing key — legible as a _change of reference frame_. When a piece modulates from C major to G major, it's not that the notes change dramatically (only F becomes F♯). What changes is the ground. G's overtone series becomes the new template. Every note in the scale is now heard in relation to a different fundamental. The single chromatic alteration (F→F♯) is the _symptom_; the real event is the frame shift.
 
 The emotional impact of modulation — the sense of arrival, of opening up, of darkening — comes from the ear recalibrating its template. The smoothest modulations are those where the new ground's overtone series overlaps significantly with the old one (closely related keys share many overtones). The most dramatic are those where the overlap is minimal (distant keys force a complete template recalibration).
 
@@ -82,7 +82,7 @@ This also explains why the circle of fifths works as a map of key relationships.
 
 ## The Compositional Takeaway
 
-If musical meaning is reference-frame dependent, then the composer's deepest tool isn't melody, rhythm, or timbre — it's the management of the ground. This is, in fact, what harmony *is*: the art of choosing, asserting, weakening, and shifting the reference frame against which all other musical events are perceived.
+If musical meaning is reference-frame dependent, then the composer's deepest tool isn't melody, rhythm, or timbre — it's the management of the ground. This is, in fact, what harmony _is_: the art of choosing, asserting, weakening, and shifting the reference frame against which all other musical events are perceived.
 
 The entire apparatus of functional harmony — tonic, dominant, subdominant, cadences, voice leading — is a technology for managing reference frame transitions. The dominant wants to resolve to the tonic because V's overtone series contains the leading tone, which is a semitone below the tonic — maximum perceptual pull toward the ground. A deceptive cadence (V→vi) is a frame-shift feint: the ear expects one ground and gets another.
 
@@ -94,9 +94,9 @@ And the reason bass lines matter so disproportionately isn't tradition or conven
 
 - **"The Prime Dimensions"** — Primes define independent harmonic axes; the ground note selects which axis dominates the local reference frame.
 - **"The Mirror in the Chord"** — Frequency/period duality means every ground note simultaneously defines a harmonic (upward) and subharmonic (downward) template. Major and minor are what happens when you ground a chord in one template versus the other.
-- **"The Expressive Residual"** — If the ground defines the harmonic reference frame, then expression operates in the *orthogonal* space: timing, dynamics, and spectral color are frame-independent, which is why they carry emotional content regardless of key or mode.
+- **"The Expressive Residual"** — If the ground defines the harmonic reference frame, then expression operates in the _orthogonal_ space: timing, dynamics, and spectral color are frame-independent, which is why they carry emotional content regardless of key or mode.
 - **"The Uncertainty of Sound"** — The ground note itself has a time-frequency uncertainty: a bass note that's too short can't establish its pitch clearly, and therefore can't establish the reference frame. This is why bass lines tend to move more slowly than melodies — the ground needs time to assert its template.
 
 ---
 
-*The bass isn't the foundation because tradition says so. It's the foundation because physics says so. The harmonic series is a reference frame generator, and whatever note sits at the bottom defines the world that everything above it inhabits. Change the ground, change the world.*
+_The bass isn't the foundation because tradition says so. It's the foundation because physics says so. The harmonic series is a reference frame generator, and whatever note sits at the bottom defines the world that everything above it inhabits. Change the ground, change the world._

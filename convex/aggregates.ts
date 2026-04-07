@@ -17,13 +17,10 @@ import { internalMutation, query } from "./_generated/server";
 /**
  * Aggregate for ranking concepts by mention count
  */
-export const conceptsAggregate = new TableAggregate<DataModel, "concepts">(
-  components.aggregate,
-  {
-    sortKey: (doc: Doc<"concepts">) => doc.mentionCount,
-    sumValue: (doc: Doc<"concepts">) => doc.mentionCount,
-  },
-);
+export const conceptsAggregate = new TableAggregate<DataModel, "concepts">(components.aggregate, {
+  sortKey: (doc: Doc<"concepts">) => doc.mentionCount,
+  sumValue: (doc: Doc<"concepts">) => doc.mentionCount,
+});
 
 // ============================================================================
 // AGGREGATE QUERIES
@@ -81,13 +78,13 @@ export const getTopConceptsRanked = query({
 /**
  * Aggregate for counting sources by status
  */
-export const sourcesByStatusAggregate = new TableAggregate<
-  DataModel,
-  "sources"
->(components.aggregate, {
-  namespace: (doc: Doc<"sources">) => doc.status,
-  sortKey: (doc: Doc<"sources">) => doc.createdAt,
-});
+export const sourcesByStatusAggregate = new TableAggregate<DataModel, "sources">(
+  components.aggregate,
+  {
+    namespace: (doc: Doc<"sources">) => doc.status,
+    sortKey: (doc: Doc<"sources">) => doc.createdAt,
+  },
+);
 
 /**
  * Get source counts by status (efficient dashboard stats)

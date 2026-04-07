@@ -1,8 +1,4 @@
-import type {
-  FunctionArgs,
-  FunctionReference,
-  FunctionReturnType,
-} from "convex/server";
+import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
 import { useConvexClient } from "./provider";
 
 export function createMutation<Mutation extends FunctionReference<"mutation">>(
@@ -11,9 +7,8 @@ export function createMutation<Mutation extends FunctionReference<"mutation">>(
   const convex = useConvexClient();
 
   return async (args?: FunctionArgs<Mutation>) => {
-    return convex.mutation(
-      mutation,
-      (args ?? {}) as FunctionArgs<Mutation>,
-    ) as Promise<FunctionReturnType<Mutation>>;
+    return convex.mutation(mutation, (args ?? {}) as FunctionArgs<Mutation>) as Promise<
+      FunctionReturnType<Mutation>
+    >;
   };
 }

@@ -20,6 +20,7 @@ Read this alongside:
 ### Phase 1: Rigor and Interpretation
 
 Status:
+
 - Phase 1 is now closed as a contract for new work: new hypotheses require `whyThisMatters`, feedback captures embodied listening signals including `bodyMapNotes` and `expandVerdict`, and direct regression coverage exists for the enforcement path.
 - Backward-compatibility remains for legacy rows, with an explicit audit query for hypotheses missing `whyThisMatters`.
 
@@ -69,6 +70,7 @@ Status:
 ### Phase 2: Represent Accumulated Learning
 
 Status:
+
 - Implemented. Composition lineage now includes extraction nodes in addition to sources, hypotheses, recipes, compositions, and listening sessions.
 
 #### Backend and schema
@@ -111,6 +113,7 @@ Status:
 ### Phase 3: Tighten the Studio Loop
 
 Status:
+
 - Implemented. Weekly briefs persist prompt variants and deterministic recommended actions, campaigns remain single-active, and steering logic continues to account for negative evidence.
 
 #### Backend and schema
@@ -157,6 +160,7 @@ Status:
 ### Phase 4: Strengthen Public Narrative
 
 Status:
+
 - Implemented as a curated editorial workflow inside Frequency Music, with snapshot export to Astro rather than direct public rendering from private records.
 
 #### Backend and schema
@@ -226,6 +230,7 @@ Status:
 ### Recommended field directions
 
 #### `theses`
+
 - `title`
 - `statement`
 - `descriptionMd`
@@ -234,29 +239,35 @@ Status:
 - `updatedAt`
 
 #### `hypotheses`
+
 - `thesisId?`
 - `whyThisMatters`
 
 #### `recipes`
+
 - `whyThisMatters`
 - `singleVariableFocus?`
 
 #### `compositions`
+
 - `revisionParentId?`
 - `revisionVariable?`
 - `diffNote?`
 
 #### `listeningSessions`
+
 - `expandability`
 - `bodyMapTags?`
 - `feltQualities?`
 - `standoutMoments?`
 
 #### `sources` or `extractions`
+
 - `interestLevel?`
 - `truthConfidence?`
 
 #### `campaigns`
+
 - `title`
 - `question`
 - `descriptionMd`
@@ -334,22 +345,26 @@ Likely files:
 ## Test Scenarios
 
 ### Phase 1
+
 - create hypothesis with stake
 - create listening session with embodied fields
 - revise composition and record changed variable
 - view truth vs interest distinction on source/extraction data
 
 ### Phase 2
+
 - open lineage for a composition
 - find a contradicted idea in the failure archive
 - use graph signals to identify a high-yield concept area
 
 ### Phase 3
+
 - generate a 10/30/90-minute studio prompt
 - connect a brief to an active campaign
 - use campaign context to steer next experiment
 
 ### Phase 4
+
 - draft a recap with clear uncertainty language
 - publish only public-safe material
 - generate a "what changed my mind" artifact tied to actual contradictions
@@ -357,20 +372,24 @@ Likely files:
 ## Acceptance Criteria
 
 ### Phase 1
+
 - new data captured is richer and more comparable than current state
 - artistic stakes are explicit in core experiment objects
 - evidence and inspiration are no longer flattened together
 
 ### Phase 2
+
 - the product can explain where an artifact came from
 - failed paths are visible and reusable
 - graph outputs influence decisions
 
 ### Phase 3
+
 - the system can steer short-form studio sessions
 - work can accumulate under larger themes without losing weekly cadence
 
 ### Phase 4
+
 - the project can publish recurring reflections without inventing them from scratch each time
 - public narrative tracks actual learning quality
 
@@ -414,15 +433,19 @@ These items are intentionally out of scope for the first roadmap pass:
 ## Definition of Done by Phase
 
 ### Phase 1 done
+
 When new hypotheses, recipes, compositions, and listening sessions capture stakes, richer felt response, and comparable revisions in the live app.
 
 ### Phase 2 done
+
 When the product can show ancestry, contradiction, and concept-level signals clearly enough to affect what gets worked on next.
 
 ### Phase 3 done
+
 When the weekly system produces actionable studio prompts and campaigns organize work over multiple weeks.
 
 ### Phase 4 done
+
 When public publishing flows can present selected findings with rigor, uncertainty, and continuity.
 
 ## Deferred Items

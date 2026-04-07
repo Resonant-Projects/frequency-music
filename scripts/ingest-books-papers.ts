@@ -184,9 +184,7 @@ async function main() {
   const doFeeds = args.length === 0 || args.includes("--feeds");
 
   console.log("=== Books & Papers Ingestion ===\n");
-  console.log(
-    `Options: books=${doBooks}, arxiv=${doArxiv}, feeds=${doFeeds}\n`,
-  );
+  console.log(`Options: books=${doBooks}, arxiv=${doArxiv}, feeds=${doFeeds}\n`);
 
   let ingested = 0;
   let skipped = 0;

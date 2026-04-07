@@ -66,9 +66,7 @@ export function RecipesPage() {
   }));
 
   const createRecipe = createMutation(convexApi.recipes.create);
-  const generateFromHypothesis = createAction(
-    convexApi.recipes.generateFromHypothesis,
-  );
+  const generateFromHypothesis = createAction(convexApi.recipes.generateFromHypothesis);
 
   const [hypothesisId, setHypothesisId] = createSignal("");
   const [title, setTitle] = createSignal("");
@@ -81,12 +79,7 @@ export function RecipesPage() {
   async function submitRecipe(event: SubmitEvent) {
     event.preventDefault();
 
-    if (
-      !hypothesisId() ||
-      !title().trim() ||
-      !whyThisMatters().trim() ||
-      !bodyMd().trim()
-    ) {
+    if (!hypothesisId() || !title().trim() || !whyThisMatters().trim() || !bodyMd().trim()) {
       setNotice("Hypothesis, title, why this matters, and body are required.");
       return;
     }
@@ -145,9 +138,7 @@ export function RecipesPage() {
         >
           <option value="">Select hypothesis</option>
           <For each={hypotheses() ?? []}>
-            {(item: HypothesisRow) => (
-              <option value={String(item._id)}>{item.title}</option>
-            )}
+            {(item: HypothesisRow) => <option value={String(item._id)}>{item.title}</option>}
           </For>
         </UISelect>
 
@@ -208,9 +199,7 @@ export function RecipesPage() {
               id="recipe-checklist"
               value={checklist()}
               onInput={(event) => setChecklist(event.currentTarget.value)}
-              placeholder={
-                "Set tempo\nCreate bass and lead buses\nPrint version A"
-              }
+              placeholder={"Set tempo\nCreate bass and lead buses\nPrint version A"}
             />
           </div>
         </div>
@@ -226,9 +215,7 @@ export function RecipesPage() {
         >
           <div aria-live="polite">
             <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
+              {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
             </Show>
           </div>
           <div class={css({ display: "flex", gap: "2" })}>
@@ -292,13 +279,9 @@ export function RecipesPage() {
                       })}
                     >
                       <UIBadge tone="gold">{recipe.status}</UIBadge>
-                      <UIBadge tone="violet">
-                        {recipe.parameters.length} params
-                      </UIBadge>
+                      <UIBadge tone="violet">{recipe.parameters.length} params</UIBadge>
                     </div>
-                    <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
-                      {recipe.title}
-                    </h3>
+                    <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>{recipe.title}</h3>
                     <p
                       class={css({
                         color: "rgba(245, 240, 232, 0.62)",

@@ -28,9 +28,7 @@ export function AdminPage() {
 
   const snapshot = createQuery(convexApi.admin.workspaceSnapshot);
   const setSourceStatus = createMutation(convexApi.admin.setSourceStatus);
-  const startBatchExtraction = createMutation(
-    convexApi.workflows.startBatchExtraction,
-  );
+  const startBatchExtraction = createMutation(convexApi.workflows.startBatchExtraction);
   const reviewSummary = createQuery(convexApi.vocabulary.reviewSummary);
 
   const [sourceId, setSourceId] = createSignal("");
@@ -96,11 +94,7 @@ export function AdminPage() {
 
         <div aria-live="polite">
           <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-                {message()}
-              </p>
-            )}
+            {(message) => <p class={css({ color: "zodiac.cream", marginTop: "3" })}>{message()}</p>}
           </Show>
         </div>
       </UICard>
@@ -147,8 +141,8 @@ export function AdminPage() {
       <UICard as="form" onSubmit={queueBatchExtraction}>
         <h2 class={sectionTitleClass}>Extraction Backlog</h2>
         <p class={helperClass}>
-          Queue extraction for existing `text_ready` sources so they can create
-          concepts and link into the graph.
+          Queue extraction for existing `text_ready` sources so they can create concepts and link
+          into the graph.
         </p>
         <label class={fieldLabelClass} for="admin-batch-limit">
           Batch Size
@@ -175,8 +169,8 @@ export function AdminPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Vocabulary Review</h2>
         <p class={helperClass}>
-          New parameter kinds, concept domains, and edge relationships are
-          stored provisionally instead of blocking extraction.
+          New parameter kinds, concept domains, and edge relationships are stored provisionally
+          instead of blocking extraction.
         </p>
         <div class={css({ display: "grid", gap: "4", marginTop: "3" })}>
           <div>
@@ -190,9 +184,7 @@ export function AdminPage() {
               })}
             >
               <Show
-                when={
-                  (reviewSummary()?.provisionalParameterKinds.length ?? 0) > 0
-                }
+                when={(reviewSummary()?.provisionalParameterKinds.length ?? 0) > 0}
                 fallback={<span class={helperClass}>None</span>}
               >
                 <For each={reviewSummary()?.provisionalParameterKinds ?? []}>
@@ -212,9 +204,7 @@ export function AdminPage() {
               })}
             >
               <Show
-                when={
-                  (reviewSummary()?.provisionalConceptDomains.length ?? 0) > 0
-                }
+                when={(reviewSummary()?.provisionalConceptDomains.length ?? 0) > 0}
                 fallback={<span class={helperClass}>None</span>}
               >
                 <For each={reviewSummary()?.provisionalConceptDomains ?? []}>
@@ -234,10 +224,7 @@ export function AdminPage() {
               })}
             >
               <Show
-                when={
-                  (reviewSummary()?.provisionalRelationshipKinds.length ?? 0) >
-                  0
-                }
+                when={(reviewSummary()?.provisionalRelationshipKinds.length ?? 0) > 0}
                 fallback={<span class={helperClass}>None</span>}
               >
                 <For each={reviewSummary()?.provisionalRelationshipKinds ?? []}>
@@ -251,11 +238,8 @@ export function AdminPage() {
 
       <UICard as="form" onSubmit={submitSourceStatus}>
         <h2 class={sectionTitleClass}>Source Override</h2>
-        <p
-          class={css({ color: "rgba(245, 240, 232, 0.62)", marginBottom: "3" })}
-        >
-          Emergency/manual override. For normal source workflow, use the Display
-          queue.
+        <p class={css({ color: "rgba(245, 240, 232, 0.62)", marginBottom: "3" })}>
+          Emergency/manual override. For normal source workflow, use the Display queue.
         </p>
         <p class={css({ marginBottom: "3" })}>
           <a

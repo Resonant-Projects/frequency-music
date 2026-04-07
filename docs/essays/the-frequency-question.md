@@ -1,10 +1,10 @@
 # The Frequency Question: What Specific Pitches Actually Do to Bodies
 
-*March 6, 2026*
+_March 6, 2026_
 
 ---
 
-Here is a claim that has been made for at least three thousand years: specific frequencies do specific things to living beings. Not "music is relaxing" — that's banal and well-established. The sharper claim: *this* frequency, measured in Hertz, produces *this* physiological effect, distinct from the effect of a frequency 88 cents away.
+Here is a claim that has been made for at least three thousand years: specific frequencies do specific things to living beings. Not "music is relaxing" — that's banal and well-established. The sharper claim: _this_ frequency, measured in Hertz, produces _this_ physiological effect, distinct from the effect of a frequency 88 cents away.
 
 The Nāda yoga tradition says vibration is the substrate of all existence. The solfeggio frequency community says 528 Hz repairs DNA. A peer-reviewed study from Juntendo University says 528 Hz doubles salivary oxytocin while 440 Hz does not. A standing-wave experiment says specific frequencies organize matter into geometric patterns.
 
@@ -12,11 +12,11 @@ Some of these claims are testable. Some have been tested. The results are more i
 
 ## The Ancient Framework
 
-Nāda yoga, rooted in the Vedas and elaborated in texts like the *Hatha Yoga Pradipika*, posits two categories of sound: *ahata* (struck, external, physically produced) and *anahata* (unstruck, internal, arising spontaneously in deep meditation). The tradition claims that practitioners progressing through meditative stages hear a sequence of ten distinct inner sounds — chini, chini-chini, bell, conch, lute, cymbal, flute, drum, mridanga, thunder — each marking a deeper level of absorption.
+Nāda yoga, rooted in the Vedas and elaborated in texts like the _Hatha Yoga Pradipika_, posits two categories of sound: _ahata_ (struck, external, physically produced) and _anahata_ (unstruck, internal, arising spontaneously in deep meditation). The tradition claims that practitioners progressing through meditative stages hear a sequence of ten distinct inner sounds — chini, chini-chini, bell, conch, lute, cymbal, flute, drum, mridanga, thunder — each marking a deeper level of absorption.
 
-The metaphysical claim is sweeping: sound is not merely a phenomenon in the world but the world's fundamental constituent. *Shabda-Brahman* — "word as ultimate reality" — places vibration at the base of ontology itself. The tradition specifies that "the eternal or original nada has the highest rate of frequency and vibration," and that when an object vibrates "at a tremendous speed" it becomes translucent, eventually dissolving into the primordial vibration.
+The metaphysical claim is sweeping: sound is not merely a phenomenon in the world but the world's fundamental constituent. _Shabda-Brahman_ — "word as ultimate reality" — places vibration at the base of ontology itself. The tradition specifies that "the eternal or original nada has the highest rate of frequency and vibration," and that when an object vibrates "at a tremendous speed" it becomes translucent, eventually dissolving into the primordial vibration.
 
-This is not science. It's metaphysics. But it's *specific* metaphysics — it makes claims about frequency, about progression, about the relationship between vibrational rate and material state. And it's been making these claims since before anyone had a way to measure frequency.
+This is not science. It's metaphysics. But it's _specific_ metaphysics — it makes claims about frequency, about progression, about the relationship between vibrational rate and material state. And it's been making these claims since before anyone had a way to measure frequency.
 
 ## The 528 Hz Experiment
 
@@ -31,7 +31,7 @@ The results were surprisingly asymmetric:
 
 The authors propose a pathway: 528 Hz music registers as more pleasant → activates the amygdala via the medial geniculate body → signals the hypothalamus → increases oxytocin release → suppresses HPA axis → reduces cortisol.
 
-This is a real study with real biomarkers. And it should make us neither credulous nor dismissive — it should make us *careful*.
+This is a real study with real biomarkers. And it should make us neither credulous nor dismissive — it should make us _careful_.
 
 ## Why Careful
 
@@ -45,11 +45,11 @@ The study also didn't independently measure perceived pleasantness. If the 444 H
 
 ## What Cymatics Actually Shows
 
-The solfeggio/528 Hz community often invokes cymatics — the visualization of sound vibration through patterns formed in sand, water, or other media on vibrating surfaces. And cymatics *is* real physics. Ernst Chladni demonstrated in the 18th century (preceded by Robert Hooke in 1680) that specific frequencies create specific nodal patterns on vibrating plates. Pour sand on a metal plate, bow the edge, and geometry appears.
+The solfeggio/528 Hz community often invokes cymatics — the visualization of sound vibration through patterns formed in sand, water, or other media on vibrating surfaces. And cymatics _is_ real physics. Ernst Chladni demonstrated in the 18th century (preceded by Robert Hooke in 1680) that specific frequencies create specific nodal patterns on vibrating plates. Pour sand on a metal plate, bow the edge, and geometry appears.
 
-But what cymatics actually demonstrates is not "frequencies have special powers." It demonstrates that *boundary conditions determine mode shapes.* A circular plate has different modes than a square plate. The same frequency produces different patterns on different plates. The pattern is a property of the *system* (plate geometry + frequency), not of the frequency alone.
+But what cymatics actually demonstrates is not "frequencies have special powers." It demonstrates that _boundary conditions determine mode shapes._ A circular plate has different modes than a square plate. The same frequency produces different patterns on different plates. The pattern is a property of the _system_ (plate geometry + frequency), not of the frequency alone.
 
-This is important because it cuts in both directions. Against the mystical reading: no, 528 Hz doesn't inherently create a "DNA repair" pattern. The pattern depends on the medium. But *for* a subtler version of the claim: yes, frequency-specific effects are real and physically grounded. A body is a medium. It has geometry. It has resonant modes. Different frequencies *will* excite different modes.
+This is important because it cuts in both directions. Against the mystical reading: no, 528 Hz doesn't inherently create a "DNA repair" pattern. The pattern depends on the medium. But _for_ a subtler version of the claim: yes, frequency-specific effects are real and physically grounded. A body is a medium. It has geometry. It has resonant modes. Different frequencies _will_ excite different modes.
 
 The question is whether those mode differences matter at the biological level — whether the difference between 440 Hz and 444 Hz excites different enough modes in the human body to produce different hormonal cascades. And that question is genuinely open.
 
@@ -61,17 +61,17 @@ A forced harmonic oscillator — one of the most studied systems in physics — 
 
 The human body contains coupled oscillatory systems at every scale: cellular membranes, neural oscillation networks, cardiac rhythms, respiratory cycles, cranial bone resonances, vocal tract modes. Each has natural frequencies. Each responds preferentially to specific driving frequencies.
 
-The gap between "coupled oscillators respond to specific frequencies" (established physics) and "528 Hz heals DNA" (unfounded marketing) is enormous — and honestly, it *is* partly a gap between physics and non-physics. DNA repair is a biochemical process, not an acoustic or mechanical one, and the leap from "cells on a vibrating plate respond to frequency" to "sound waves repair genetic damage" crosses a fundamental disciplinary boundary. The mechanism for frequency-specific *mechanical* effects on cells exists. But extrapolating this to genetic repair is a category error, not just an unmapped specificity.
+The gap between "coupled oscillators respond to specific frequencies" (established physics) and "528 Hz heals DNA" (unfounded marketing) is enormous — and honestly, it _is_ partly a gap between physics and non-physics. DNA repair is a biochemical process, not an acoustic or mechanical one, and the leap from "cells on a vibrating plate respond to frequency" to "sound waves repair genetic damage" crosses a fundamental disciplinary boundary. The mechanism for frequency-specific _mechanical_ effects on cells exists. But extrapolating this to genetic repair is a category error, not just an unmapped specificity.
 
 ## What Nāda Yoga Got Right (and Wrong)
 
 Return to the ancient framework. Nāda yoga claims that vibration is fundamental, that specific sound experiences correlate with specific states of consciousness, and that systematic auditory practice produces measurable changes in the practitioner.
 
-What it got right: sound *does* produce physiological changes. Auditory stimulation *does* modulate the autonomic nervous system, hormonal cascades, and neural synchronization. The ten progressive inner sounds might map (loosely, speculatively) onto stages of neural entrainment or changes in auditory processing during deepening meditation. The claim that "ahata" (external sound) can lead to "anahata" (internal sound) echoes the modern finding that musical training reshapes auditory cortical processing even in silence.
+What it got right: sound _does_ produce physiological changes. Auditory stimulation _does_ modulate the autonomic nervous system, hormonal cascades, and neural synchronization. The ten progressive inner sounds might map (loosely, speculatively) onto stages of neural entrainment or changes in auditory processing during deepening meditation. The claim that "ahata" (external sound) can lead to "anahata" (internal sound) echoes the modern finding that musical training reshapes auditory cortical processing even in silence.
 
-What it got wrong — or at least, what can't be substantiated: the ontological claim that vibration *is* reality's substrate. Quantum field theory describes reality in terms of field excitations, which *can* be described as vibrations in a mathematical sense, but the connection to audible sound frequencies is metaphorical at best. String theory's "vibrating strings" vibrate at the Planck scale, not at 528 Hz.
+What it got wrong — or at least, what can't be substantiated: the ontological claim that vibration _is_ reality's substrate. Quantum field theory describes reality in terms of field excitations, which _can_ be described as vibrations in a mathematical sense, but the connection to audible sound frequencies is metaphorical at best. String theory's "vibrating strings" vibrate at the Planck scale, not at 528 Hz.
 
-The deepest error is the conflation of *analogy* with *identity.* Yes, orbital mechanics involves periodic motion. Yes, atoms vibrate. Yes, sound is vibration. But "everything vibrates" doesn't mean everything is the same kind of vibration, responsive to the same interventions. A piano string's vibration is not the same phenomenon as an electron's orbital, even if both can be described with sinusoidal mathematics.
+The deepest error is the conflation of _analogy_ with _identity._ Yes, orbital mechanics involves periodic motion. Yes, atoms vibrate. Yes, sound is vibration. But "everything vibrates" doesn't mean everything is the same kind of vibration, responsive to the same interventions. A piano string's vibration is not the same phenomenon as an electron's orbital, even if both can be described with sinusoidal mathematics.
 
 ## The Honest Position
 
@@ -87,7 +87,7 @@ Here's what we can say with confidence:
 
 5. **The ancient traditions noticed something real — that sound systematically affects body and mind — and then built elaborate metaphysical structures that go far beyond the evidence.** This is neither surprising nor unique to sound; it's how pre-scientific traditions work.
 
-For a composer, the practical takeaway is this: tuning choices might matter more than we think, but not in the way the solfeggio community claims. The difference between A=440 and A=444 might produce measurably different physiological responses — not because 528 Hz is magic, but because the entire spectral content of the music shifts, and our bodies are coupled oscillatory systems that respond to spectral content. The effect is probably small, context-dependent, and highly individual. But it might be *real*, and that's worth investigating properly.
+For a composer, the practical takeaway is this: tuning choices might matter more than we think, but not in the way the solfeggio community claims. The difference between A=440 and A=444 might produce measurably different physiological responses — not because 528 Hz is magic, but because the entire spectral content of the music shifts, and our bodies are coupled oscillatory systems that respond to spectral content. The effect is probably small, context-dependent, and highly individual. But it might be _real_, and that's worth investigating properly.
 
 The frequency question isn't settled. It's barely been asked with adequate rigor. The Akimoto study, for all its limitations, is one of very few attempts to measure what specific frequencies do to specific biomarkers under controlled conditions. We need more studies like it — with larger samples, better controls, and the intellectual honesty to say "we found nothing" if that's what the data show.
 
@@ -95,4 +95,4 @@ Until then, the honest position is uncertainty. Not the comfortable uncertainty 
 
 ---
 
-*Sources: Akimoto et al. (2018) "Effect of 528 Hz Music on the Endocrine System and Autonomic Nervous System"; Nāda yoga traditions (Vedas, Hatha Yoga Pradipika, Sama Veda); Chladni/cymatics experimental literature; 3Blue1Brown Laplace transform and harmonic oscillator analysis (2025). Part of the Frequency Music research project.*
+_Sources: Akimoto et al. (2018) "Effect of 528 Hz Music on the Endocrine System and Autonomic Nervous System"; Nāda yoga traditions (Vedas, Hatha Yoga Pradipika, Sama Veda); Chladni/cymatics experimental literature; 3Blue1Brown Laplace transform and harmonic oscillator analysis (2025). Part of the Frequency Music research project._

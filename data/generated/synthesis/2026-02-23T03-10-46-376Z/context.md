@@ -22,6 +22,7 @@ Selected 7/7 from 46 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - meantone temperament: 2
 - microtonal music: 2
 - auto-ingested: 2
@@ -113,12 +114,14 @@ Selected 7/7 from 46 eligible candidates.
 - movement frequency: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 15
 - harmonicprofile: 7
 - frequency: 5
 - tempo: 2
 
 ### Evidence Distribution
+
 - peer_reviewed: 16
 - speculative: 6
 - anecdotal: 6
@@ -142,6 +145,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -152,6 +156,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -164,6 +169,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -185,15 +191,18 @@ Summary:
 McGill researchers discovered that music provides optimal pain relief when its tempo matches an individual's spontaneous production rate - their characteristic rhythm tied to circadian rhythms. The study, published in Pain journal, suggests personalizing musical tempo could reduce patient pain levels by aligning with natural neural oscillations and pulling them away from pain-associated frequencies.
 
 Claims:
+
 - [1] [peer_reviewed] Each person has their own characteristic rhythm called spontaneous production rate that applies whether they speak, sing, play an instrument, or tap along to music
 - [2] [peer_reviewed] Spontaneous production rate is tied to circadian rhythms
 - [3] [peer_reviewed] Music played at an individual's spontaneous production rate provides the best pain relief compared to other tempos
 - [4] [speculative] Neural oscillations responsible for preferred tempo can be pulled along more easily when musical tempo matches natural tempo, pulling them away from pain-associated neural frequencies
 
 Composition Parameters:
+
 - tempo: individualized to spontaneous production rate
 
 Open Questions:
+
 - What is the typical range of spontaneous production rates across individuals?
 - How can spontaneous production rate be accurately measured for clinical applications?
 - Do other musical parameters besides tempo affect pain relief when personalized?
@@ -217,11 +226,13 @@ Summary:
 This tutorial explains how to map microtonal scales to standard MIDI keyboards using Scala software, addressing the problem that linear mapping creates irregular fingering patterns. The author demonstrates mapping 7-note scales to white keys and extracting 12-note subsets from larger tuning systems like 31-EDO. The tutorial provides practical workflows for creating keyboard mapping files (.kbm) that can be combined with scale files (.scl) for use in various synthesizers.
 
 Claims:
+
 - [1] [anecdotal] Linear mapping of microtonal scales creates irregular fingering patterns as you move up and down by aural octaves
 - [2] [anecdotal] 31-EDO contains a 12-note meantone scale that sounds more in-tune than 12-equal in some keys but worse in others
 - [3] [anecdotal] Custom keyboard mappings create more familiar and navigable patterns compared to linear chromatic mapping
 
 Composition Parameters:
+
 - tuningSystem: 7-EDO
 - tuningSystem: 31-EDO
 - tuningSystem: 23-EDO
@@ -231,6 +242,7 @@ Composition Parameters:
 - tuningSystem: Mavila[7]
 
 Open Questions:
+
 - How do different keyboard mapping strategies affect musical expression and performance technique?
 - What are the optimal keyboard layouts for various microtonal scale families?
 - How does the choice of mapped notes from larger tuning systems affect harmonic progressions and voice leading?
@@ -252,15 +264,18 @@ Summary:
 This paper proposes a method for predicting prime numbers using geometric distributions around polygons, specifically focusing on the 24-sided icositetragon. The authors claim to have discovered patterns in prime number distribution and developed a deterministic method for primality testing without trial division. While the mathematical claims about prime distributions are largely correct, the paper's connection to music/acoustics is limited to mentioning digital root patterns and the number 24's significance.
 
 Claims:
+
 - [1] [speculative] Fibonacci numbers exhibit a 24-based digital root cycle that creates symmetric patterns when distributed around a circle
 - [2] [speculative] The icositetragon (24-sided polygon) has unique properties for prime number distribution and incidence
 - [3] [peer_reviewed] Ramanujan's Tau function is based on the number 24, suggesting mathematical significance of this value
 - [4] [peer_reviewed] Prime numbers create quasicrystal-like interference patterns when modeled as atom-like particles, showing previously unknown order
 
 Composition Parameters:
+
 - harmonicProfile: 24-based cyclic pattern
 
 Open Questions:
+
 - How do the 24-based mathematical patterns relate to musical harmonics or frequency relationships?
 - Could the quasicrystal-like patterns of primes have acoustic applications or correspondence to sound structures?
 - What is the relationship between Ramanujan's Tau function (based on 24) and musical mathematics?
@@ -282,12 +297,14 @@ Summary:
 Robert Edward Grant claims to have discovered a relationship between a 24-note quartertone musical scale and the geometric proportions of ancient pyramids at Giza. He proposes that musical intervals based on 432.081 Hz and 528.099 Hz 'Precise Temperament Tuning' correspond to pyramid slope angles and dimensional ratios. Specifically, he identifies the interval 11/9 (528/432 = 1.2222) as matching both the Giza Plateau perimeter ratio and Abu Rawash pyramid proportions. He suggests this 24-note system would better accommodate pentatonic and other indigenous musical scales compared to the standard 12-tone system.
 
 Claims:
+
 - [1] [speculative] A 24-note quartertone chromatic scale based on 432.081 Hz and 528.099 Hz corresponds to ancient pyramid proportions
 - [2] [personal] The ratio 11/9 equals 528/432 = 1.2222 and matches pyramid geometric proportions
 - [3] [speculative] A 24-note quartertone scale naturally allows for pentatonic and other indigenous scales while the 12-semitone scale does not
 - [4] [speculative] Musical intervals can be mapped to ancient pyramid structures and their geometric relationships
 
 Composition Parameters:
+
 - frequency: 432.081 Hz
 - frequency: 528.099 Hz
 - tuningSystem: 24-note quartertone chromatic scale
@@ -295,6 +312,7 @@ Composition Parameters:
 - tuningSystem: Precise Temperament Tuning
 
 Open Questions:
+
 - What is the mathematical basis for 'Precise Temperament Tuning' and how does it differ from established temperament systems?
 - Are there peer-reviewed studies validating connections between musical intervals and pyramid geometry?
 - How do quartertone systems compare acoustically and perceptually to 12-tone equal temperament?
@@ -316,18 +334,21 @@ Summary:
 This paper proposes a novel geometric model for natural spirals based on right triangle formations that create polygonal structures. The authors claim these triangular spirals match natural phenomena (hurricanes, galaxies, nautilus shells) better than traditional logarithmic spirals. They establish mathematical relationships where the 'mod' (number of triangles per rotation) correlates with physical properties like hurricane intensity. The work suggests fundamental geometric principles underlying natural spiral formation.
 
 Claims:
+
 - [1] [preprint] Triangular spirals based on right triangle formations match natural spirals better than hyperbolic logarithmic spirals (HLS) which use Euler's number e as expansion factor
 - [2] [anecdotal] Hurricane intensity correlates directly with the 'mod' number of matching triangular spirals - stronger hurricanes have higher mod numbers
 - [3] [anecdotal] Nautilus shells match mod(16) triangular spirals better than golden spirals, with 16 chambers per turn corresponding to triangle hypotenuses
 - [4] [anecdotal] Galaxy spiral arm tightness correlates with mass concentration and corresponds to higher mod numbers in triangular spirals
 
 Composition Parameters:
+
 - harmonicProfile: Right triangle ratios [1:√3:2]
 - harmonicProfile: Pentagon spiral ratios [1:1.37639:1.7013]
 - frequency: Growth rate 1.1547 = 1/cos(30°)
 - frequency: Growth rate 1.23606 = 1/cos(36°)
 
 Open Questions:
+
 - How do the harmonic ratios in these triangular spirals relate to musical intervals and acoustic phenomena?
 - Could the mod numbers correspond to harmonic series or overtone structures in sound?
 - Do the growth rates (like 1.1547, 1.23606) have acoustic significance or relate to frequency ratios?
@@ -350,16 +371,18 @@ Summary:
 A peer-reviewed study analyzed sexual behavior in bonobos to understand rhythm and tempo in evolutionary communication. Researchers found that bonobo sexual movements averaged seven movements per second, and while mutual grinning didn't affect tempo, sexual movements significantly slowed after grinning stopped. This research aims to understand how rhythm, tempo, and vocalization evolved in humans and animals by studying our closest evolutionary relatives.
 
 Claims:
+
 - [1] [peer_reviewed] Bonobo sexual movements averaged seven movements per second during sexual interactions
 - [2] [peer_reviewed] Mutual grinning (bared-teeth displays) had no correlation with the acceleration or deceleration of sexual tempo in bonobos
 - [3] [peer_reviewed] Sexual movement tempo decreased sharply after mutual grinning stopped, potentially linked to physiological processes like orgasm
 
 Composition Parameters:
+
 - tempo: 7 movements per second
 
 Open Questions:
+
 - How do biological rhythms in sexual behavior relate to musical tempo preferences in humans?
 - What is the evolutionary relationship between rhythmic movement in sexual contexts and musical rhythm?
 - How might the 7 movements per second tempo in bonobo behavior relate to human rhythmic preferences?
 - Could studying primate behavioral tempos inform our understanding of optimal musical tempos for human physiological response?
-

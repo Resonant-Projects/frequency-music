@@ -136,18 +136,13 @@ async function fetchWithKernel(
 async function main() {
   const kernel = new Kernel();
   const logFile = "/tmp/kernel-fetch-log.txt";
-  writeFileSync(
-    logFile,
-    `Kernel.sh fetch log — ${new Date().toISOString()}\n\n`,
-  );
+  writeFileSync(logFile, `Kernel.sh fetch log — ${new Date().toISOString()}\n\n`);
 
   const results: { src: BlockedSource; text: string; sessionId: string }[] = [];
 
   // Process sequentially to avoid rate limits
   for (const src of BLOCKED) {
-    console.log(
-      `\n[${BLOCKED.indexOf(src) + 1}/${BLOCKED.length}] ${src.title}`,
-    );
+    console.log(`\n[${BLOCKED.indexOf(src) + 1}/${BLOCKED.length}] ${src.title}`);
     const { text, sessionId } = await fetchWithKernel(kernel, src);
     console.log(`  Got ${text.length} chars (session: ${sessionId})`);
     results.push({ src, text, sessionId });
@@ -172,10 +167,7 @@ async function main() {
         console.log(`  ⚠ Convex update failed: ${e.message?.slice(0, 80)}`);
         // Save to file as fallback
         writeFileSync(`/tmp/kernel-text-${src.id}.txt`, text);
-        appendFileSync(
-          logFile,
-          `  → Saved to /tmp/kernel-text-${src.id}.txt\n`,
-        );
+        appendFileSync(logFile, `  → Saved to /tmp/kernel-text-${src.id}.txt\n`);
       }
     } else {
       appendFileSync(logFile, `  → Too short, needs manual clip\n`);
@@ -187,9 +179,7 @@ async function main() {
   const needClip = results.filter((r) => r.text.length <= 500);
 
   console.log(`\n${"=".repeat(60)}`);
-  console.log(
-    `RESULTS: ${fetched.length} fetched, ${needClip.length} need manual clip`,
-  );
+  console.log(`RESULTS: ${fetched.length} fetched, ${needClip.length} need manual clip`);
   console.log(`\nFetched OK:`);
   for (const r of fetched) {
     console.log(`  ✓ ${r.src.title} (${r.text.length} chars)`);
@@ -208,10 +198,7 @@ async function main() {
     console.log(`  ${r.sessionId} → ${r.src.url.slice(0, 70)}`);
   }
 
-  appendFileSync(
-    logFile,
-    `\n---\nFetched: ${fetched.length}, Need clip: ${needClip.length}\n`,
-  );
+  appendFileSync(logFile, `\n---\nFetched: ${fetched.length}, Need clip: ${needClip.length}\n`);
 }
 
 main().catch(console.error);

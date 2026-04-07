@@ -1,16 +1,20 @@
 # AI Prompts & Output Contracts (MVP)
 
 ## Principle
+
 LLM output must be:
+
 - structured
 - traceable (citations)
 - editable by humans
 - versioned (promptVersion + model stored)
 
 ## Prompt: Extraction (`extract_v1`)
+
 Input: source metadata + raw text (or transcript excerpt)
 
 Output JSON:
+
 - `summary` (5–10 sentences)
 - `claims[]`:
   - `text`
@@ -25,9 +29,11 @@ Output JSON:
 - `openQuestions[]` (what to investigate next)
 
 ## Prompt: Weekly Brief (`brief_v1`)
+
 Input: week range + list of new/updated extractions + your active hypotheses/compositions
 
 Output Markdown sections:
+
 1. **What came in**
 2. **Notable patterns / connections**
 3. **Candidate hypotheses (3–7)**
@@ -39,14 +45,17 @@ Output Markdown sections:
 6. **Citations** (sources list)
 
 ## Prompt: Recipe Generator (`recipe_v1`)
+
 Input: hypothesis + relevant claims + your preferences (style constraints optional)
 Output:
+
 - title
 - markdown recipe body
 - parameters list (typed)
 - DAW checklist
 
 ## Guardrails
+
 - Do not output medical advice.
 - Always phrase as hypotheses/experiments.
 - Encourage evidence labeling.

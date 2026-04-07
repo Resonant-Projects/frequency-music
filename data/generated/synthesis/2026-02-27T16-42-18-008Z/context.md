@@ -24,6 +24,7 @@ Selected 8/8 from 116 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - music cognition: 3
 - computational musicology: 2
 - circle of fifths: 2
@@ -195,6 +196,7 @@ Selected 8/8 from 116 eligible candidates.
 - ai transcription: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 12
 - harmonicprofile: 10
 - note: 4
@@ -204,6 +206,7 @@ Selected 8/8 from 116 eligible candidates.
 - instrument: 1
 
 ### Evidence Distribution
+
 - peer_reviewed: 60
 - speculative: 5
 - anecdotal: 2
@@ -227,6 +230,7 @@ Summary:
 This peer-reviewed paper proposes an axiomatic framework for mathematical scale theory using cyclic group theory and cyclic order relations. It formalizes scales as cyclic embeddings from a diatonic tone set into a chromatic tone set, unifying previous work on maximally even scales, well-formed scales, and Myhill's property. The paper argues that cross-cultural scale commonalities (5–7 tones, moderate interval sizes, asymmetry) arise from psychological and perceptual constraints. It establishes formal correspondences between cyclic ordered sets, generalized interval systems, and regular group actions as three equivalent viewpoints on pitch-class systems.
 
 Claims:
+
 - [1] [peer_reviewed] The concept of a musical scale as a collection of pitch classes is universal throughout the world, and the notion of the octave and octave equivalence are found universal across cultures.
 - [2] [peer_reviewed] Cross-culturally, scales typically contain between five and seven tones, with intervals between adjacent scale tones ranging between one and three semitones, and asymmetric scales being more common than symmetric ones.
 - [3] [peer_reviewed] The typical number of scale tones (5–7) relates to the amount of distinct pitches that a human can reliably keep track of, a psychologically-grounded constraint.
@@ -238,6 +242,7 @@ Claims:
 - [9] [peer_reviewed] The diminished-seventh chord is totally symmetric (every tone has the same relations to all other tones), whereas the octatonic scale, despite appearing symmetric, is not totally symmetric.
 
 Composition Parameters:
+
 - tuningSystem: 12-tone equal temperament
 - note: C major scale: C, D, E, F, G, A, B (diatonic size 7, chromatic size 12)
 - harmonicProfile: Octatonic scale (half-step/whole-step diminished): 8 tones, 4-fold rotational symmetry, maximally even
@@ -245,6 +250,7 @@ Composition Parameters:
 - harmonicProfile: Interval size range for adjacent scale degrees: 1–3 semitones (cross-cultural norm)
 
 Open Questions:
+
 - Can the axiomatic cyclic-order framework be extended to non-octave-equivalent tuning systems (e.g., Bohlen-Pierce) or microtonal scales?
 - What psychological mechanisms specifically underlie the preference for 5–7 tone scales—is it purely working memory capacity, or are there additional auditory processing constraints?
 - How do 'more sophisticated quantifications of asymmetry' beyond maximal asymmetry correlate with cross-cultural aesthetic preferences or learnability of scales?
@@ -269,6 +275,7 @@ Summary:
 This paper develops a gauge-theoretic model of tonal attraction in music cognition, applying concepts from quantum field theory (specifically SU(2) gauge symmetry) to explain both static and dynamic tonal attraction. The model unifies two earlier approaches: a phase model (U(1) symmetry) and a spatial deformation model (SO(2) symmetry). Tonal attraction is modeled using wave functions along the circle of fifths, with a polynomial spatial deformation function that produces excellent agreement with Krumhansl & Kessler's (1982) empirical tonal hierarchy data. The framework treats musical forces (gravity, magnetism, inertia) not as metaphors but as structurally real phenomena arising from symmetry-breaking, analogous to gauge forces in physics.
 
 Claims:
+
 - [1] [peer_reviewed] In Krumhansl & Kessler's (1982) probe-tone experiments, the tonic pitch received the highest tonal attraction rating, followed by the pitches completing the tonic triad (third and fifth), then the remaining scale degrees, and finally chromatic non-scale tones.
 - [2] [peer_reviewed] Lerdahl's hierarchical model of tonal attraction produces predictions in excellent agreement with experimental data for major keys, but shows significant deviations for minor keys.
 - [3] [peer_reviewed] The spatial deformation model using a fourth-order polynomial deformation function on the circle of fifths produces excellent agreement with static tonal attraction data from Krumhansl & Kessler (1982).
@@ -280,6 +287,7 @@ Claims:
 - [9] [peer_reviewed] In the force-free case, the qubit model, scalar Schrödinger wave function model, and spinor Pauli wave function model all yield identical predictions for tonal attraction.
 
 Composition Parameters:
+
 - tuningSystem: Equal temperament (12-tone)
 - harmonicProfile: Tonal hierarchy for C major (Lerdahl basic space)
 - harmonicProfile: Circle of fifths parameterization
@@ -287,6 +295,7 @@ Composition Parameters:
 - note: Tonic vector Ψ₀ = (1, 0) representing C in qubit Hilbert space
 
 Open Questions:
+
 - Can the SU(2) gauge model be extended to explain tonal attraction in non-Western tuning systems or microtonal music where Z_12 symmetry does not apply?
 - Why does the Lerdahl hierarchical model perform well for major keys but show significant deviations for minor keys — and can the gauge model resolve this discrepancy?
 - What is the physical or cognitive interpretation of the gauge field itself in the musical context — what does it correspond to neurologically or psychoacoustically?
@@ -314,6 +323,7 @@ Summary:
 This peer-reviewed paper presents a novel algorithm for discovering repeating patterns in polyphonic symbolic music under transposition and time-warp invariances. The algorithm uses an onset-time-pair representation to reduce the pattern discovery problem to instances of the classical longest increasing subsequence (LIS) problem, achieving O(n² log n) time complexity where n is the number of notes. The approach handles distortions common in live performance transcriptions (tempo variation, timing inaccuracy) better than prior methods like SIA/SIATEC, which only tolerate sporadic note-level distortions. The paper also presents windowed variants that restrict onset-time differences for more musically meaningful results, and notes that time-scaled (as opposed to time-warped) pattern discovery remains a significantly harder open problem.
 
 Claims:
+
 - [1] [peer_reviewed] Real music is almost inevitably polyphonic, meaning that a multitude of parallel tones may sound at any time, making musical pattern discovery significantly more complex than text or linear structure pattern matching.
 - [2] [peer_reviewed] Identical musical patterns may appear in different keys and/or at different written tempos, and these systematic distortions can be handled by examining relative rather than absolute pitch and duration values (transposition and time-scale invariance).
 - [3] [peer_reviewed] The SIA and SIATEC algorithms for maximal repeating pattern discovery under transposition and time-shifting invariances work in O(n² log n) and O(n³) time respectively, but fail to find musically meaningful repetitions in live performance transcriptions because they cannot tolerate systematic tempo variation.
@@ -324,9 +334,11 @@ Claims:
 - [8] [peer_reviewed] The paper uses Western equal-tempered polyphonic music as its domain, and by working in the symbolic music domain it explicitly avoids the hard problem of fundamental frequency estimation from polyphonic audio.
 
 Composition Parameters:
+
 - tuningSystem: Western equal temperament
 
 Open Questions:
+
 - Can an efficient (sub-quadratic) algorithm be developed for time-scaled repeating pattern discovery in polyphonic music, given that the current best approaches require quadratic time?
 - How can musically interesting patterns be automatically filtered from the large set of mathematically valid repeating patterns detected by time-warped algorithms?
 - Is there a time-warped equivalent of the SIATEC algorithm that finds all occurrences of each discovered maximal pattern (without relying on translation vectors)?
@@ -352,6 +364,7 @@ Summary:
 Meantone temperaments are tuning systems built from sequences of tempered fifths (slightly narrower than the just 3:2 ratio) designed to bring major or minor thirds closer to just intonation ratios of 5:4 or 6:5 respectively. Quarter-comma meantone, the most historically prominent variant, was dominant from the early 16th to early 18th centuries and produces pure just major thirds (5:4) by tempering each fifth by 1/4 of a syntonic comma. Twelve-tone equal temperament (12-TET) can be understood as approximately 1/11-syntonic-comma meantone, producing major thirds that are wide by about 13 cents compared to just intonation. Several equal temperament systems (19, 31, 53 TET, etc.) serve as close approximations to specific meantone variants. The whole tone in meantone systems is the geometric mean of the just major tone (9:8) and minor tone (10:9), hence the name 'meantone.'
 
 Claims:
+
 - [1] [peer_reviewed] A perfect fifth in just intonation has a frequency ratio of exactly 3:2.
 - [2] [peer_reviewed] A just major third has a frequency ratio of 5:4 and a just minor third has a ratio of 6:5.
 - [3] [peer_reviewed] In 12-TET, each semitone equals one-twelfth of an octave, with frequency ratio 2^(1/12):1, and the perfect fifth has ratio 2^(7/12):1.
@@ -373,6 +386,7 @@ Claims:
 - [19] [speculative] Tempering the partials of synthesizer tones to match non-12-TET tunings can restore harmonic coherence in tuning systems far from quarter-comma meantone.
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-TET (Twelve-tone equal temperament)
@@ -387,6 +401,7 @@ Composition Parameters:
 - harmonicProfile: Just major tone = 9:8 (≈ 203.91 cents), just minor tone = 10:9 (≈ 182.40 cents)
 
 Open Questions:
+
 - How perceptible is the 13-cent wide major third in 12-TET to trained vs. untrained listeners, and does context (harmonic vs. melodic) affect this perception?
 - What are the compositional implications of using 31-TET (near-perfect quarter-comma meantone) for contemporary music, given its availability on electronic instruments?
 - How does partial tempering on synthesizers (matching overtone series to non-12-TET tunings) affect timbral perception and psychoacoustic consonance?
@@ -413,6 +428,7 @@ Summary:
 This peer-reviewed study investigates inter-annotator agreement in musical pattern annotation using two digital tools (ANOMIC and PAF) applied to six monophonic excerpts from Bach, Beethoven, Haydn, and Mozart. The research finds significant disagreement between annotators even among musical experts, with agreement varying by educational background, tool interface, and musical excerpt. Feature-based analysis across 33 musical pattern attributes reveals that tool choice and annotator background both influence which patterns are identified, with 23 of 33 features showing significant differences between the two datasets. The study highlights the fundamental problem that there is no single comprehensive definition of a musical pattern, making ground-truth annotation for algorithm evaluation inherently ambiguous. Results suggest that richer, multi-annotator datasets are needed to properly evaluate automatic pattern discovery algorithms.
 
 Claims:
+
 - [1] [peer_reviewed] There is no clear single comprehensive definition of what constitutes a musical pattern or even repetition, making single-reference annotations problematic for algorithm evaluation.
 - [2] [peer_reviewed] Not all recurring sequences are perceived as patterns by listeners; perception depends on the structural position of the pattern, the listener's moment-to-moment perception, and the listener's musical background or music-theoretic education.
 - [3] [peer_reviewed] Inter-annotator agreement for musical pattern annotations is generally low, with ANOMIC musician annotators averaging an F-score of 0.61 and non-musicians averaging 0.63 at a 5-crotchet threshold, dropping to 0.47 and 0.38 respectively at a 1-crotchet threshold.
@@ -423,11 +439,13 @@ Claims:
 - [8] [peer_reviewed] The first occurrence of a pattern in a musical piece tends to have a more significant structural role than subsequent occurrences.
 
 Composition Parameters:
+
 - rhythm: Crotchet (quarter note) as unit of temporal measurement for pattern boundaries
 - instrument: Horn, Soprano voice, Violin I (monophonic melodic lines)
 - note: Pattern features include: duration (in crotchets), note range, pitch direction changes, intervallic leaps, root notes, last note duration, occurrences
 
 Open Questions:
+
 - How do dynamic or adaptive time-resolution thresholds affect inter-annotator agreement scores compared to fixed crotchet thresholds?
 - Can more sophisticated musical expertise indices (beyond simple 1-10 scoring) better predict annotation behavior and inter-annotator agreement?
 - To what extent does listening to music (vs. reading notation only) during annotation change which patterns are identified?
@@ -455,6 +473,7 @@ Summary:
 A study published in Current Biology reveals that horse whinnies consist of two simultaneously produced sounds: low-frequency vocal fold vibrations (~200 Hz) and high-frequency laryngeal whistles (>1,000 Hz). Researchers confirmed this dual mechanism by blowing helium through excised horse larynxes — helium raised the pitch of the whistle (which depends on airstream turbulence and sound speed) while leaving the vocal fold vibration frequency unchanged. Horses are the first large mammal known to produce laryngeal whistles, and the only animal known to combine them simultaneously with vocal fold vibrations. The two frequency components are hypothesized to convey distinct emotional messages, suggesting the whinny evolved as a multi-channel communication signal.
 
 Claims:
+
 - [1] [peer_reviewed] Horse whinnies contain two simultaneously produced sounds: low-frequency vocal fold vibrations at approximately 200 Hz and high-frequency laryngeal whistles exceeding 1,000 Hz.
 - [2] [peer_reviewed] Laryngeal whistles are produced by turbulent airstreams moving through the larynx, and their pitch is dependent on the speed of sound in the medium — unlike vocal fold vibration, whose frequency is independent of the medium.
 - [3] [peer_reviewed] Horses are the first large mammal known to produce laryngeal whistles, and the only animal known to produce them simultaneously with vocal fold vibration sounds.
@@ -462,10 +481,12 @@ Claims:
 - [5] [peer_reviewed] Vocal fold vibration in horses and humans share the same basic mechanism: folded vocal cords vibrate as air passes through them.
 
 Composition Parameters:
+
 - frequency: ~200 Hz
 - frequency: >1,000 Hz
 
 Open Questions:
+
 - What is the precise frequency range of horse laryngeal whistles, and how does it vary by individual horse, breed, or emotional state?
 - Could the dual-mechanism vocalization in horses inspire new approaches to electronic or synthesized sound design — e.g., layering turbulence-based noise with tonal oscillators?
 - Are there musical traditions or instruments that independently discovered the combination of turbulent-airstream tones with vibrating-membrane tones, analogous to the horse whinny?
@@ -490,6 +511,7 @@ Summary:
 This peer-reviewed paper proposes rigorous mathematical foundations for music theory and composition using topos theory and presheaf categories, extending Guerino Mazzola's framework from 'The Topos of Music.' The author argues that existing mathematical music theory (including pitch-class set theory) suffers from ad-hoc constructions and implicit definitions, and proposes a unified theory of 'structure' governed by three principles: comprehensive comprehension, explicit encoding, and minimal ontological commitments. The framework uses functor categories and presheaves to encode musical phenomena—including pitch spaces, duration spaces, groups, gestures, and synthesizer parameter spaces—within a single ontological system. A key motivation is enabling the synthesis of algebraically and topologically defined musical entities (formulae and gestures) without an ontological divide between them. The paper also identifies an open problem: formulating an analog to Mazzola's denotators within the new framework.
 
 Claims:
+
 - [1] [peer_reviewed] Pitch-class set theory, despite being a mathematical approach, relies on intuitive notions of sets and assembles advanced constructions in an ad-hoc manner, lacking rigorous mathematical foundations.
 - [2] [peer_reviewed] Classifying chords using group-theoretic invariance (transposition, inversion) provides a more scientifically agreeable and systematic basis than subjective criteria such as 'dissonant,' 'consonant,' or 'pretty.'
 - [3] [peer_reviewed] Forte's pitch-class set theory posits ordered and unordered sets as fundamentally distinct ontological categories declared 'by fiat' rather than deriving them systematically from a foundational framework, which is epistemologically problematic.
@@ -500,10 +522,12 @@ Claims:
 - [8] [peer_reviewed] Topos theory provides a unified and systematic approach to encoding musical phenomena, offering a rigorous foundation that supports product, coproduct, power, and function operations on musical structures.
 
 Composition Parameters:
+
 - note: Pitch-class sets (unordered collections of pitch classes mod 12)
 - tuningSystem: Twelve-tone equal temperament (implicit, via pitch-class set theory)
 
 Open Questions:
+
 - Can an analog to Mazzola's denotator formalism be rigorously formulated within the proposed presheaf-based structure theory framework?
 - Once a denotator analog is established, how can local and global compositions be classified within the new framework?
 - How does the proposed structure theory framework handle continuous (analog) musical parameters—such as microtonal pitch or continuous timbre—compared to the discrete pitch-class set approach?
@@ -529,17 +553,19 @@ Summary:
 A voice memo from Keith outlining his core research vision: exploring connections between music frequencies, emotional resonance, physical matter, light frequencies, and mathematics of harmonic frequencies of the Earth. He envisions creating music and healing modalities by combining these domains, drawing on Jack Cruz's work on frequency/health and Misati's exponential intelligence framework. He also proposes using functional programming as an analogy for understanding frequency patterns and programs.
 
 Claims:
+
 - [1] [personal] Music frequency, emotional frequency, matter frequency, and light frequency are interconnected and can be combined for healing and upliftment
 - [2] [speculative] Frequency patterns and programs can be understood through functional programming analogies
 
 Composition Parameters:
+
 - frequency: Earth harmonic frequencies
 - tuningSystem: Frequency-emotion mapping
 - harmonicProfile: Light-sound frequency correspondence
 
 Open Questions:
+
 - What rigorous evidence exists for specific frequency-emotion correspondences beyond cultural association?
 - How exactly do Schumann resonances interact with biological systems, and is this compositionally useful?
 - Can the functional programming analogy be formalized — what are the 'functions' and 'data types' of frequency patterns?
 - What is the precise mathematical relationship between audible and light frequency octaves?
-

@@ -168,13 +168,10 @@ export const batchHypothesisWorkflow = workflowManager.define({
     });
 
     const candidates = extractions.filter(
-      (e: MinimalExtraction) =>
-        e.claims.length >= minClaims && e.compositionParameters.length > 0,
+      (e: MinimalExtraction) => e.claims.length >= minClaims && e.compositionParameters.length > 0,
     );
 
-    console.log(
-      `Found ${candidates.length} candidates for hypothesis generation`,
-    );
+    console.log(`Found ${candidates.length} candidates for hypothesis generation`);
 
     for (const extraction of candidates.slice(0, limit)) {
       try {
@@ -241,8 +238,7 @@ export const fullPipelineWorkflow = workflowManager.define({
     });
 
     const candidates = extractions.filter(
-      (e: MinimalExtraction) =>
-        e.claims.length >= 2 && e.compositionParameters.length > 0,
+      (e: MinimalExtraction) => e.claims.length >= 2 && e.compositionParameters.length > 0,
     );
 
     for (const extraction of candidates.slice(0, hypothesisLimit)) {
@@ -315,15 +311,11 @@ export const startSingleSourceExtraction = mutation({
   returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const workflowId = await workflowManager.start(
-      ctx,
-      internal.workflows.extractSourceWorkflow,
-      {
-        sourceId: args.sourceId,
-        model: args.model,
-        devBypassSecret: args.devBypassSecret,
-      },
-    );
+    const workflowId = await workflowManager.start(ctx, internal.workflows.extractSourceWorkflow, {
+      sourceId: args.sourceId,
+      model: args.model,
+      devBypassSecret: args.devBypassSecret,
+    });
     return { workflowId };
   },
 });
@@ -339,14 +331,12 @@ export const startBatchExtractionInternal = internalMutation({
   handler: async (ctx, args) => {
     // Internal mutations can access process.env; pass bypass secret to workflow
     const devBypassSecret =
-      process.env.AUTH_BYPASS_ENABLED === "true"
-        ? process.env.AUTH_BYPASS_SECRET
-        : undefined;
-    await workflowManager.start(
-      ctx,
-      internal.workflows.batchExtractionWorkflow,
-      { limit: args.limit, model: args.model, devBypassSecret },
-    );
+      process.env.AUTH_BYPASS_ENABLED === "true" ? process.env.AUTH_BYPASS_SECRET : undefined;
+    await workflowManager.start(ctx, internal.workflows.batchExtractionWorkflow, {
+      limit: args.limit,
+      model: args.model,
+      devBypassSecret,
+    });
   },
 });
 
@@ -390,16 +380,12 @@ export const startFullPipeline = mutation({
   returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const workflowId = await workflowManager.start(
-      ctx,
-      internal.workflows.fullPipelineWorkflow,
-      {
-        extractLimit: args.extractLimit,
-        hypothesisLimit: args.hypothesisLimit,
-        model: args.model,
-        devBypassSecret: args.devBypassSecret,
-      },
-    );
+    const workflowId = await workflowManager.start(ctx, internal.workflows.fullPipelineWorkflow, {
+      extractLimit: args.extractLimit,
+      hypothesisLimit: args.hypothesisLimit,
+      model: args.model,
+      devBypassSecret: args.devBypassSecret,
+    });
     return { workflowId };
   },
 });

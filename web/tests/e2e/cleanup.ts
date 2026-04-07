@@ -24,13 +24,7 @@ function convexRun(fn: string, args: Record<string, unknown>): string {
  * Delete a single record by table and ID.
  */
 function deleteRecord(
-  table:
-    | "sources"
-    | "hypotheses"
-    | "recipes"
-    | "compositions"
-    | "listening"
-    | "weeklyBriefs",
+  table: "sources" | "hypotheses" | "recipes" | "compositions" | "listening" | "weeklyBriefs",
   id: string,
 ): boolean {
   try {
@@ -88,11 +82,9 @@ export class E2ECleanupTracker {
     let failed = 0;
 
     // Delete in reverse order (children before parents)
-    for (const record of this.records.reverse()) {
+    for (const record of this.records.toReversed()) {
       const success =
-        record.table === "feeds"
-          ? deleteFeed(record.id)
-          : deleteRecord(record.table, record.id);
+        record.table === "feeds" ? deleteFeed(record.id) : deleteRecord(record.table, record.id);
       if (success) deleted++;
       else failed++;
     }
@@ -117,10 +109,7 @@ export async function cleanupByRunId(runId: string): Promise<number> {
   try {
     const sources = JSON.parse(sourcesJson);
     for (const s of sources) {
-      if (
-        (s.title || "").includes(runId) ||
-        (s.dedupeKey || "").includes(runId)
-      ) {
+      if ((s.title || "").includes(runId) || (s.dedupeKey || "").includes(runId)) {
         if (deleteRecord("sources", s._id)) deleted++;
       }
     }
@@ -134,10 +123,7 @@ export async function cleanupByRunId(runId: string): Promise<number> {
     try {
       const sources = JSON.parse(json);
       for (const s of sources) {
-        if (
-          (s.title || "").includes(runId) ||
-          (s.dedupeKey || "").includes(runId)
-        ) {
+        if ((s.title || "").includes(runId) || (s.dedupeKey || "").includes(runId)) {
           if (deleteRecord("sources", s._id)) deleted++;
         }
       }

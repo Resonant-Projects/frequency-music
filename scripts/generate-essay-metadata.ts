@@ -23,17 +23,38 @@ const METADATA_PATH = join(ESSAYS_DIR, "metadata.json");
 const MODEL_ID = "anthropic/claude-haiku-4.5";
 
 const TAG_VOCABULARY = [
-  "microtuning", "xenharmonic", "psychoacoustics", "wave-physics",
-  "mathematical-music-theory", "sacred-geometry", "cymatics",
-  "consciousness", "biofield", "sound-healing", "group-theory",
-  "tuning-systems", "rhythm", "perception", "AI-music",
-  "information-theory", "acoustics", "composition", "signal-processing",
-  "temperament", "resonance", "geometry", "number-theory",
+  "microtuning",
+  "xenharmonic",
+  "psychoacoustics",
+  "wave-physics",
+  "mathematical-music-theory",
+  "sacred-geometry",
+  "cymatics",
+  "consciousness",
+  "biofield",
+  "sound-healing",
+  "group-theory",
+  "tuning-systems",
+  "rhythm",
+  "perception",
+  "AI-music",
+  "information-theory",
+  "acoustics",
+  "composition",
+  "signal-processing",
+  "temperament",
+  "resonance",
+  "geometry",
+  "number-theory",
 ] as const;
 
 const CATEGORIES = [
-  "music-theory", "physics-of-sound", "mathematics",
-  "perception", "composition", "interdisciplinary",
+  "music-theory",
+  "physics-of-sound",
+  "mathematics",
+  "perception",
+  "composition",
+  "interdisciplinary",
 ] as const;
 
 const metadataSchema = z.object({
@@ -45,9 +66,7 @@ const metadataSchema = z.object({
     .min(3)
     .max(6)
     .describe("3-6 tags from the controlled vocabulary"),
-  category: z
-    .enum(CATEGORIES)
-    .describe("Single best-fit category"),
+  category: z.enum(CATEGORIES).describe("Single best-fit category"),
 });
 
 type EssayMetadataEntry = z.infer<typeof metadataSchema> & {
@@ -135,15 +154,13 @@ async function main() {
 
   // Sort keys alphabetically for stable output
   const sorted: MetadataFile = {};
-  for (const key of Object.keys(metadata).sort()) {
+  for (const key of Object.keys(metadata).toSorted()) {
     sorted[key] = metadata[key];
   }
 
   await writeFile(METADATA_PATH, JSON.stringify(sorted, null, 2) + "\n", "utf8");
 
-  console.log(
-    `\nDone. Processed: ${processed}, Skipped: ${skipped}, Failed: ${failures.length}`,
-  );
+  console.log(`\nDone. Processed: ${processed}, Skipped: ${skipped}, Failed: ${failures.length}`);
   if (failures.length > 0) {
     console.error("Failures:", failures.join(", "));
     process.exit(1);

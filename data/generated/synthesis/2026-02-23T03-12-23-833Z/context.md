@@ -22,6 +22,7 @@ Selected 7/7 from 35 eligible candidates.
 ## Aggregate Signals
 
 ### Topic Frequency
+
 - just intonation: 6
 - equal temperament: 4
 - frequency ratios: 4
@@ -113,6 +114,7 @@ Selected 7/7 from 35 eligible candidates.
 - introductory: 1
 
 ### Parameter Type Frequency
+
 - tuningsystem: 20
 - frequency: 17
 - harmonicprofile: 3
@@ -120,6 +122,7 @@ Selected 7/7 from 35 eligible candidates.
 - rootnote: 1
 
 ### Evidence Distribution
+
 - peer_reviewed: 23
 - anecdotal: 14
 - speculative: 3
@@ -143,6 +146,7 @@ Summary:
 Meantone temperaments are musical tuning systems that use slightly flattened fifths to produce purer major and minor thirds compared to Pythagorean tuning. Quarter-comma meantone was the dominant keyboard tuning from the early 16th to early 18th centuries, producing perfect 5:4 major thirds by tempering fifths by 1/4 of a syntonic comma. These systems create wolf intervals when confined to 12-note keyboards, but can be approximated by various equal temperament divisions like 31-TET for quarter-comma meantone.
 
 Claims:
+
 - [1] [peer_reviewed] Perfect fifths in just intonation have a frequency ratio of 3:2
 - [2] [peer_reviewed] Quarter-comma meantone produces just major thirds with a 5:4 ratio
 - [3] [peer_reviewed] In quarter-comma meantone, the whole tone is the geometric mean of the major tone (9:8) and minor tone (10:9)
@@ -153,6 +157,7 @@ Claims:
 - [8] [peer_reviewed] Third-comma meantone produces just minor thirds with a 6:5 ratio
 
 Composition Parameters:
+
 - tuningSystem: Quarter-comma meantone
 - tuningSystem: Third-comma meantone
 - tuningSystem: 12-tone equal temperament
@@ -165,6 +170,7 @@ Composition Parameters:
 - harmonicProfile: 3:2 perfect fifth ratio
 
 Open Questions:
+
 - How did historical tuners reliably achieve quarter-comma tempering by ear without precise frequency measurement devices?
 - What are the perceptual differences between meantone and equal temperament for modern listeners?
 - How do wolf intervals affect musical composition and performance practice?
@@ -187,6 +193,7 @@ Summary:
 Harry Partch developed a 43-tone just intonation scale based on an 11-limit tonality diamond, incorporating all rational intervals with odd factors up to 11. The scale includes 29 core ratios plus 14 additional 'multiple-number ratios' to fill gaps and provide complete harmonic structures. Partch chose the 11-limit because the 11th harmonic (551.3 cents) falls between standard 12-tone equal temperament pitches and is unfamiliar to Western ears, while lower harmonics are better approximated by existing tuning systems.
 
 Claims:
+
 - [1] [anecdotal] The 11th harmonic falls at 551.3 cents, right in the middle between two pitches of 12-tone equal temperament
 - [2] [anecdotal] The 7th harmonic is poorly approximated by 12-tone equal temperament but appears in ancient Greek scales and barbershop quartet music
 - [3] [anecdotal] Consonance of intervals decreases as the odd numbers of their ratios increase
@@ -194,12 +201,14 @@ Claims:
 - [5] [anecdotal] The added tones in the 43-tone scale form a constant structure of 41 tones with two variables, providing harmonic and melodic symmetry
 
 Composition Parameters:
+
 - tuningSystem: 43-tone just intonation scale
 - frequency: 551.3 cents (11th harmonic)
 - tuningSystem: 11-limit tonality diamond (29 ratios)
 - note: Multiple specific ratios
 
 Open Questions:
+
 - How does the perceptual consonance/dissonance of intervals actually correlate with the complexity of their ratios?
 - What is the empirical evidence for the 11th harmonic being 'utterly foreign' to Western ears?
 - How do constant structures in microtonal scales affect melodic and harmonic perception?
@@ -222,12 +231,14 @@ Summary:
 This is a comprehensive guide to microtuning implementation in software synthesizers, focusing on two main methods: Scala SCL/KBM files and MTS-ESP. The guide documents how these systems work, their pros and cons, and provides extensive lists of compatible software. It also includes a factory library of 182 tuning systems covering just intonation, equal temperaments, non-octave scales, and linear temperaments.
 
 Claims:
+
 - [1] [anecdotal] By default, almost all software instruments are tuned to 12 equal divisions of an octave, with either C=261.626Hz or A=440Hz as reference frequency
 - [2] [anecdotal] MTS-ESP allows centralized tuning control where one master plugin controls the tuning of all connected instruments simultaneously
 - [3] [anecdotal] Scala SCL/KBM method requires loading tuning files into each instrument instance separately, making it repetitive for multiple instruments
 - [4] [anecdotal] Linear temperament fifth generators should lie between 4\7 (685.714 cents) and 3\5 (720 cents) for regular diatonic systems
 
 Composition Parameters:
+
 - frequency: 261.626 Hz
 - frequency: 440 Hz
 - tuningSystem: 12 equal temperament
@@ -236,6 +247,7 @@ Composition Parameters:
 - frequency: 701.955 cents
 
 Open Questions:
+
 - How do different tuning systems affect emotional perception in different musical keys?
 - What are the psychoacoustic differences between note-on and dynamic retuning behaviors?
 - How do multi-channel tuning capabilities expand microtonal composition possibilities?
@@ -258,6 +270,7 @@ Summary:
 Robert Edward Grant presents a geometric framework connecting 432 Hz Pythagorean tuning to circular geometry, claiming that musical notes map to specific angles on a circle that align with regular polygons and physical constants. He asserts that F# at 720 Hz corresponds to 186.32 degrees, which he connects to the speed of light (186.28 × 10³ miles/second). The work proposes geometric 'gap notes' between certain intervals and links musical relationships to fundamental forces. Grant also describes discovering that his meditation room's dimensions follow golden ratio proportions.
 
 Claims:
+
 - [1] [personal] 432 Hz Pythagorean tuning creates perfect geometric symmetry when mapped to a circle, with notes corresponding to specific degrees that form regular polygonal patterns
 - [2] [speculative] F# at 720 Hz lands at 186.32 degrees on the circle, which correlates to the speed of light (186.28 × 10³ miles/second) with 0.0001 accuracy
 - [3] [personal] B(5) note at 468 Hz (1.0833 × 432 Hz) creates an equilateral triangle when mapped to 300 degrees on the circle
@@ -265,12 +278,14 @@ Claims:
 - [5] [personal] All musical notes in this system have a digital root of 9, matching their geometric properties
 
 Composition Parameters:
+
 - rootNote: 432 Hz
 - tuningSystem: Pythagorean
 - frequency: 468 Hz
 - frequency: 720 Hz
 
 Open Questions:
+
 - Can the claimed geometric relationships between 432 Hz tuning and circular degrees be experimentally validated?
 - Is there any scientific basis for connecting F# at 720 Hz to the speed of light through angular measurements?
 - How do the proposed 'gap notes' relate to actual acoustic or psychoacoustic phenomena?
@@ -293,6 +308,7 @@ Summary:
 Equal temperament is a tuning system that divides the octave into equal steps, with 12-tone equal temperament (12 TET) being the dominant Western system since the 18th century. The mathematical foundation involves dividing the octave by the 12th root of 2 (≈1.059463), creating semitones of 100 cents each. While 12 TET approximates just intervals reasonably well, it introduces small tuning errors, with thirds being the most affected intervals.
 
 Claims:
+
 - [1] [peer_reviewed] 12-tone equal temperament has been the most common tuning system in classical music and Western music since the 18th century
 - [2] [peer_reviewed] In 12 TET, the frequency ratio between adjacent semitones is the 12th root of 2, approximately 1.059463
 - [3] [peer_reviewed] Zhu Zaiyu (1584) and Simon Stevin (1585) are credited with the mathematical calculation of equal temperament
@@ -302,6 +318,7 @@ Claims:
 - [7] [peer_reviewed] Unfretted string ensembles and vocal groups sometimes use tuning closer to just intonation for acoustic reasons
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: 12-tone equal temperament
 - frequency: 261.626 Hz
@@ -312,6 +329,7 @@ Composition Parameters:
 - tuningSystem: 7 TET
 
 Open Questions:
+
 - How do the small tuning errors in 12 TET affect harmonic perception in different musical contexts?
 - What are the practical advantages and disadvantages of alternative equal temperaments like 19 TET or 31 TET?
 - How do performers in practice deviate from theoretical equal temperament when playing?
@@ -334,6 +352,7 @@ Summary:
 The Scala Scale File (.scl) format is a standardized ASCII text format for storing and exchanging musical tuning systems and scales. Developed for the Scala program, it has become widely adopted across over 100 music software applications. The format supports both ratio-based (e.g., 5/4) and cents-based (e.g., 386.3) pitch representations, with an archive containing over 4,000 scales available for download.
 
 Claims:
+
 - [1] [anecdotal] The Scala scale archive contains over 4,000 scales available for download
 - [2] [anecdotal] Over 100 music software applications support the Scala .scl file format
 - [3] [anecdotal] Pitch values can be represented either as frequency ratios or as cents values, with periods distinguishing cents from ratios
@@ -341,6 +360,7 @@ Claims:
 - [5] [anecdotal] Numerators and denominators in ratios should be supported to at least 2^31-1 = 2147483647
 
 Composition Parameters:
+
 - tuningSystem: 1/4-comma meantone scale (Pietro Aaron's temperament, 1523)
 - frequency: 76.04900 cents
 - frequency: 193.15686 cents
@@ -349,6 +369,7 @@ Composition Parameters:
 - frequency: 2/1 ratio (octave)
 
 Open Questions:
+
 - How does the widespread adoption of Scala format affect microtonal music composition and performance?
 - What are the perceptual differences between scales stored as ratios versus cents in practical musical applications?
 - How do keyboard mapping (.kbm) files interact with scale files to create complete microtonal instruments?
@@ -371,6 +392,7 @@ Summary:
 This is a comprehensive scientific examination of music theory, covering the physics of sound production in musical instruments, various tuning systems (just intonation, equal temperament, Pythagorean), and psychoacoustic principles of human sound perception. The work systematically explains how vibrating strings produce overtones, how different tuning systems create frequency ratios between musical notes, and how instruments generate sound through various physical mechanisms. It bridges the gap between the mathematical/physical foundations of music and the artistic experience.
 
 Claims:
+
 - [1] [peer_reviewed] A vibrating string with fixed ends can only vibrate at certain frequencies determined by the wave equation, producing a fundamental frequency and overtones at integer multiples
 - [2] [peer_reviewed] The speed of sound in air is approximately 340 meters per second under standard atmospheric conditions and is independent of frequency and intensity within a wide range
 - [3] [peer_reviewed] High frequency components of sound decay faster with distance than low frequency components due to absorption coefficient being proportional to frequency squared
@@ -382,15 +404,16 @@ Claims:
 - [9] [anecdotal] Music appears to serve no obvious adaptive purpose, with Darwin noting it has no direct use in ordinary life habits
 
 Composition Parameters:
+
 - frequency: 440 Hz
 - tuningSystem: Just Intonation
 - tuningSystem: Equal Temperament
 - tuningSystem: Pythagorean Tuning
 
 Open Questions:
+
 - How do individual differences in auditory processing affect perception of different tuning systems?
 - What is the optimal tuning system for different musical contexts and instruments?
 - How do environmental factors like temperature and humidity quantitatively affect instrument tuning?
 - What are the neurological mechanisms behind the brain's ability to 'fill in' missing musical information?
 - How do cultural differences influence preference for different harmonic relationships and tuning systems?
-

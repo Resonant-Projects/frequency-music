@@ -1,6 +1,6 @@
 # The Tuning Codec: Temperament as Lossy Compression
 
-*Every tuning system is a codec. Every codec is a tuning system. The parallel isn't metaphorical — it's structural.*
+_Every tuning system is a codec. Every codec is a tuning system. The parallel isn't metaphorical — it's structural._
 
 ---
 
@@ -42,9 +42,9 @@ Well-temperament systems (Werckmeister, Kirnberger, Vallotti) are handcrafted co
 
 ## Critical Bandwidth Is the Masking Threshold
 
-Why does equal temperament work at all? Its major thirds are 14 cents sharp — objectively, measurably wrong, and audible as beating to anyone who listens for it. The answer is *not* that the ear can't hear the error. It can. The answer is **cultural tolerance** — a learned acceptance of a specific beating rate as the "normal" sound of a third, reinforced by centuries of keyboard-dominated music.
+Why does equal temperament work at all? Its major thirds are 14 cents sharp — objectively, measurably wrong, and audible as beating to anyone who listens for it. The answer is _not_ that the ear can't hear the error. It can. The answer is **cultural tolerance** — a learned acceptance of a specific beating rate as the "normal" sound of a third, reinforced by centuries of keyboard-dominated music.
 
-The critical band mechanism actually works *against* equal temperament here: because the partials of a tempered third fall within the same critical band but don't perfectly align, they produce audible roughness. A just major third (5:4) is noticeably smoother. Equal temperament succeeds not because the comma is "masked" (it isn't), but because — like a lossy codec whose artifacts you stop noticing after years of MP3 listening — the beating has become part of the expected sound. The codec analogy holds, but the mechanism is habituation, not perceptual invisibility.
+The critical band mechanism actually works _against_ equal temperament here: because the partials of a tempered third fall within the same critical band but don't perfectly align, they produce audible roughness. A just major third (5:4) is noticeably smoother. Equal temperament succeeds not because the comma is "masked" (it isn't), but because — like a lossy codec whose artifacts you stop noticing after years of MP3 listening — the beating has become part of the expected sound. The codec analogy holds, but the mechanism is habituation, not perceptual invisibility.
 
 This is why 12-TET conquered the world despite its measurable imperfections, exactly as MP3 conquered digital audio despite its measurable artifacts. Both are "good enough" compression for the dominant use case — and both have passionate communities of people who insist the artifacts are unacceptable (audiophiles and just intonation advocates, respectively, sometimes the same people).
 
@@ -66,15 +66,15 @@ The **Tenney height** of a comma (the log of its numerator times its denominator
 
 Information theory gives us the **rate-distortion function**: for a given source and distortion measure, there's a theoretical minimum bitrate needed to represent the source within that distortion tolerance. Below this rate, faithful representation is impossible. Above it, you're wasting bits.
 
-There should be an analogous function for tuning: given a harmonic lattice (the source), a perceptual distance measure (the distortion metric), and a number of notes per octave (the rate), what's the minimum achievable error? 
+There should be an analogous function for tuning: given a harmonic lattice (the source), a perceptual distance measure (the distortion metric), and a number of notes per octave (the rate), what's the minimum achievable error?
 
 This isn't speculative — it's calculable. For the 5-limit lattice with a distortion metric based on cents deviation weighted by interval simplicity, 12 notes per octave achieves a specific error profile. 19 notes does better in the 5-limit but requires more "bandwidth." 31 notes approximates the 7-limit well. 53 is nearly perceptually lossless for the 5-limit. 72 handles the 11-limit. Each step up the note count is like increasing the bitrate: more resolution, diminishing returns, a point beyond which you're spending capacity the ear can't use.
 
-The fascinating implication: there may be an information-theoretic proof that 12-TET is *optimal* (or near-optimal) for the 5-limit lattice under plausible perceptual weighting. Not merely convenient, not merely traditional — *information-theoretically efficient*. The historical convergence on 12 notes might reflect something deeper than cultural accident.
+The fascinating implication: there may be an information-theoretic proof that 12-TET is _optimal_ (or near-optimal) for the 5-limit lattice under plausible perceptual weighting. Not merely convenient, not merely traditional — _information-theoretically efficient_. The historical convergence on 12 notes might reflect something deeper than cultural accident.
 
 ## Timbral Codecs and Spectral Temperaments
 
-The parallel runs in the other direction too. The Equalizer paper's shape-gain decomposition — separating *what a sound sounds like* from *how loud it is* — mirrors the way tuning systems separate *harmonic function* from *absolute pitch*. In both cases, a factorization that respects perceptual independence leads to better compression.
+The parallel runs in the other direction too. The Equalizer paper's shape-gain decomposition — separating _what a sound sounds like_ from _how loud it is_ — mirrors the way tuning systems separate _harmonic function_ from _absolute pitch_. In both cases, a factorization that respects perceptual independence leads to better compression.
 
 William Sethares took this further than anyone with his work on tuning to timbre: the observation that consonance depends not on intervals alone but on the interaction between intervals and the spectrum of the instrument playing them. Stretched octaves sound right on a piano because the piano's overtones are themselves stretched (inharmonicity from string stiffness). Gamelan tunings match gamelan spectra. The "correct" tuning is the one whose codebook is matched to the spectral source — exactly as an audio codec performs best when its codebook is matched to the statistics of its training data.
 
@@ -84,16 +84,16 @@ A codec trained on speech develops codebook entries optimized for speech spectra
 
 Seeing temperament as compression and codecs as temperament isn't just a tidy analogy. It generates specific insights:
 
-1. **The "good enough" threshold is perceptual, not mathematical.** Just as there's no objectively correct bitrate for audio (it depends on the listener, the content, and the context), there's no objectively correct tuning. The question is always: *what errors can your ear tolerate in this musical situation?*
+1. **The "good enough" threshold is perceptual, not mathematical.** Just as there's no objectively correct bitrate for audio (it depends on the listener, the content, and the context), there's no objectively correct tuning. The question is always: _what errors can your ear tolerate in this musical situation?_
 
 2. **Compression artifacts are compositional features.** Equal temperament's slightly sharp thirds give major keys a brightness that pure thirds lack. Meantone's wolf gives remote keys a wildness that can be compositionally exploited. MP3's pre-echo artifacts in transients became an aesthetic of early-2000s electronic music. The errors aren't just tolerable — they become part of the sound.
 
-3. **The codec–temperament duality suggests new tuning strategies.** If neural codecs can *learn* optimal codebooks for audio, could a similar process discover optimal tuning systems for a given musical style? Train a system on a corpus of gamelan music and let it discover the tuning; train it on barbershop quartet recordings and let it find the temperament that minimizes perceptual roughness. The regular temperament paradigm already works this way conceptually — the neural approach would make it empirical.
+3. **The codec–temperament duality suggests new tuning strategies.** If neural codecs can _learn_ optimal codebooks for audio, could a similar process discover optimal tuning systems for a given musical style? Train a system on a corpus of gamelan music and let it discover the tuning; train it on barbershop quartet recordings and let it find the temperament that minimizes perceptual roughness. The regular temperament paradigm already works this way conceptually — the neural approach would make it empirical.
 
 4. **Both are fundamentally about respecting the ear.** The history of temperament is the history of understanding what the ear can and can't hear. The development of audio codecs is the same history, compressed into decades instead of centuries. They converge because they're solving the same problem: representing a rich, continuous reality through a sparse, discrete code, guided by the only distortion measure that matters — the one between your ears.
 
 ---
 
-*The Pythagorean comma is 23.46 cents. A 128 kbps MP3 discards about 90% of the audio data. In both cases, most people can't tell. The ear is the most forgiving critic — and the most demanding one. It forgives enormous quantitative losses as long as the qualitative structure is preserved. The art of temperament, like the art of compression, is knowing where structure lives.*
+_The Pythagorean comma is 23.46 cents. A 128 kbps MP3 discards about 90% of the audio data. In both cases, most people can't tell. The ear is the most forgiving critic — and the most demanding one. It forgives enormous quantitative losses as long as the qualitative structure is preserved. The art of temperament, like the art of compression, is knowing where structure lives._
 
-*Related: [The Comma Problem](the-comma-problem.md), [The Codec Ear](the-codec-ear.md), [The Spheres Revisited](the-spheres-revisited.md), [The Three Means](the-three-means.md)*
+_Related: [The Comma Problem](the-comma-problem.md), [The Codec Ear](the-codec-ear.md), [The Spheres Revisited](the-spheres-revisited.md), [The Three Means](the-three-means.md)_

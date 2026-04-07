@@ -14,11 +14,7 @@ import {
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import {
-  createAction,
-  createMutation,
-  createQuery,
-} from "../integrations/convex";
+import { createAction, createMutation, createQuery } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 import { extractTitle } from "../lib/markdown-utils";
 
@@ -36,12 +32,9 @@ export function WeeklyBriefDetailPage() {
   const activeThesesQuery = createQuery(convexApi.theses.getByIds, () => ({
     ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
-  const referencedFailureEntries = createQuery(
-    convexApi.failures.getByKeys,
-    () => ({
-      keys: brief()?.referencedFailureKeys ?? [],
-    }),
-  );
+  const referencedFailureEntries = createQuery(convexApi.failures.getByKeys, () => ({
+    keys: brief()?.referencedFailureKeys ?? [],
+  }));
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
@@ -56,9 +49,7 @@ export function WeeklyBriefDetailPage() {
   });
 
   const publishToNotion = createAction(convexApi.weeklyBriefs.publishToNotion);
-  const createRecapDraft = createMutation(
-    convexApi.editorialArtifacts.createDraftFromWeeklyBrief,
-  );
+  const createRecapDraft = createMutation(convexApi.editorialArtifacts.createDraftFromWeeklyBrief);
   const [notice, setNotice] = createSignal<string | null>(null);
   const [publishing, setPublishing] = createSignal(false);
   const [creatingRecap, setCreatingRecap] = createSignal(false);
@@ -130,20 +121,14 @@ export function WeeklyBriefDetailPage() {
             >
               <UIBadge tone="gold">Week {b().weekOf}</UIBadge>
               <UIBadge tone="cream">{b().visibility}</UIBadge>
-              <UIBadge tone="violet">
-                {b().recommendedHypothesisIds.length} hypotheses
-              </UIBadge>
-              <UIBadge tone="violet">
-                {b().recommendedRecipeIds.length} recipes
-              </UIBadge>
+              <UIBadge tone="violet">{b().recommendedHypothesisIds.length} hypotheses</UIBadge>
+              <UIBadge tone="violet">{b().recommendedRecipeIds.length} recipes</UIBadge>
               <UIBadge tone="violet">{b().sourceIds.length} sources</UIBadge>
               <Show when={b().campaignId}>
                 <UIBadge tone="gold">campaign</UIBadge>
               </Show>
               <Show when={(b().activeThesisIds ?? []).length > 0}>
-                <UIBadge tone="violet">
-                  {(b().activeThesisIds ?? []).length} theses
-                </UIBadge>
+                <UIBadge tone="violet">{(b().activeThesisIds ?? []).length} theses</UIBadge>
               </Show>
               <Show when={(b().referencedFailureKeys ?? []).length > 0}>
                 <UIBadge tone="violet">
@@ -180,28 +165,18 @@ export function WeeklyBriefDetailPage() {
                 flexWrap: "wrap",
               })}
             >
-              <UIButton
-                variant="outline"
-                onClick={handleCreateRecap}
-                disabled={creatingRecap()}
-              >
+              <UIButton variant="outline" onClick={handleCreateRecap} disabled={creatingRecap()}>
                 {creatingRecap() ? "Creating recap..." : "Create recap draft"}
               </UIButton>
               <Show when={b().visibility === "private"}>
-                <UIButton
-                  variant="solid"
-                  onClick={handlePublish}
-                  disabled={publishing()}
-                >
+                <UIButton variant="solid" onClick={handlePublish} disabled={publishing()}>
                   {publishing() ? "Publishing..." : "Publish to Notion"}
                 </UIButton>
               </Show>
             </div>
 
             <Show when={notice()}>
-              {(msg) => (
-                <p class={css({ color: "zodiac.cream", mt: "2" })}>{msg()}</p>
-              )}
+              {(msg) => <p class={css({ color: "zodiac.cream", mt: "2" })}>{msg()}</p>}
             </Show>
 
             <Show when={campaign()}>
@@ -228,9 +203,7 @@ export function WeeklyBriefDetailPage() {
                       <UIBadge tone="gold">{row().title}</UIBadge>
                       <UIBadge tone="cream">{row().status}</UIBadge>
                     </div>
-                    <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>
-                      {row().question}
-                    </p>
+                    <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>{row().question}</p>
                   </div>
                 </>
               )}
@@ -326,9 +299,7 @@ export function WeeklyBriefDetailPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {action.targetType} {action.targetId.slice(-6)}
                         </div>
-                        <div
-                          class={css({ color: "rgba(245, 240, 232, 0.68)" })}
-                        >
+                        <div class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
                           {action.reason}
                         </div>
                       </>
@@ -379,9 +350,7 @@ export function WeeklyBriefDetailPage() {
                   pl: "5",
                 })}
               >
-                <For each={b().todo}>
-                  {(item) => <li class={css({ py: "1" })}>{item}</li>}
-                </For>
+                <For each={b().todo}>{(item) => <li class={css({ py: "1" })}>{item}</li>}</For>
               </ul>
             </Show>
 
@@ -431,9 +400,7 @@ export function WeeklyBriefDetailPage() {
                         })}
                       >
                         <UIBadge tone="cream">{failure.reason}</UIBadge>
-                        <UIBadge tone="violet">
-                          {failure.recommendedNextAction}
-                        </UIBadge>
+                        <UIBadge tone="violet">{failure.recommendedNextAction}</UIBadge>
                       </div>
                       <div>{failure.title}</div>
                     </Link>

@@ -115,18 +115,12 @@ describe("editorial signals", () => {
 
     const result = await computeEditorialSignals(db as any, 10);
 
-    expect(
-      result.concepts.some((concept) => concept.conceptName === "late-high"),
-    ).toBe(true);
-    expect(
-      result.highYieldClusters.some(
-        (cluster) => cluster.domain === "late-high-domain",
-      ),
-    ).toBe(true);
-    expect(
-      result.lowYieldClusters.some(
-        (cluster) => cluster.domain === "late-low-domain",
-      ),
-    ).toBe(true);
+    expect(result.concepts.some((concept) => concept.conceptName === "late-high")).toBe(true);
+    expect(result.highYieldClusters.some((cluster) => cluster.domain === "late-high-domain")).toBe(
+      true,
+    );
+    expect(result.lowYieldClusters.some((cluster) => cluster.domain === "late-low-domain")).toBe(
+      true,
+    );
   });
 });
