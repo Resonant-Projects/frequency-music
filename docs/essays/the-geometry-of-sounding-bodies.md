@@ -1,12 +1,12 @@
 # The Geometry of Sounding Bodies: Shape as Score
 
-*Essay #81 — March 31, 2026*
+_Essay #81 — March 31, 2026_
 
 ---
 
 A vocalist opens their mouth. The larynx drops, the tongue rises toward the hard palate, the lips round. A vowel emerges. For centuries this process was understood in one direction only: shape makes sound. The composer writes a pitch. The performer shapes their instrument. The room adds its signature. Forward. Irreversible. Unrecoverable.
 
-A 2026 preprint quietly upended this assumption. Using real-time MRI data and audio embeddings, a team at Universitat Politècnica de València showed that complete acoustic-to-articulatory inversion of the vocal tract is feasible with 1.48mm average error — *below the pixel resolution of their MRI scanner*. From sound alone, they recover the glottis-to-lips geometry of the vocal tract: tongue position, lip aperture, larynx height, palate contour. The inverse problem, long considered intractable, is now solved.
+A 2026 preprint quietly upended this assumption. Using real-time MRI data and audio embeddings, a team at Universitat Politècnica de València showed that complete acoustic-to-articulatory inversion of the vocal tract is feasible with 1.48mm average error — _below the pixel resolution of their MRI scanner_. From sound alone, they recover the glottis-to-lips geometry of the vocal tract: tongue position, lip aperture, larynx height, palate contour. The inverse problem, long considered intractable, is now solved.
 
 This is not an isolated technical achievement. It's a symptom of something deeper: across multiple independent lines of research, we are discovering that the geometry of sounding bodies and the sound they produce are **dual descriptions of the same thing**. You can travel in either direction. And that duality has profound implications for how we think about composition.
 
@@ -16,7 +16,7 @@ This is not an isolated technical achievement. It's a symptom of something deepe
 
 Physics has always had a clean account of the forward direction. A cavity with a known shape has predictable resonant frequencies. The Helmholtz resonator formula — `f = (c/2π)√(A/VL)` — gives you the frequency from geometry (area, volume, neck length). The vocal tract is a tube of varying cross-section; changing its shape changes the formants and therefore the perceived vowel. A violin's body is a coupled resonator array; its internal geometry determines its response spectrum, which is why a Stradivarius sounds different from a student instrument of identical external dimensions.
 
-Room impulse responses (RIRs) make this vivid at architectural scale. The UPV_RIR_DB, a recently released corpus of 18,976 impulse responses measured across three rooms, encodes the complete acoustic behavior of each space: its reverberation time, reflection patterns, spatial decay curves. Each room has a unique acoustic fingerprint — a direct consequence of its geometry. Measure a room completely enough and you have its acoustic identity. The impulse response *is* the room, just compressed into a different representation.
+Room impulse responses (RIRs) make this vivid at architectural scale. The UPV_RIR_DB, a recently released corpus of 18,976 impulse responses measured across three rooms, encodes the complete acoustic behavior of each space: its reverberation time, reflection patterns, spatial decay curves. Each room has a unique acoustic fingerprint — a direct consequence of its geometry. Measure a room completely enough and you have its acoustic identity. The impulse response _is_ the room, just compressed into a different representation.
 
 This forward direction — geometry generates sound — is so intuitive that instrument makers work from it as engineers: carve a cavity here, add a resonating plate there, tune a port to shift the resonance peak. The Baroque organ builder is a physicist working with geometry.
 
@@ -32,7 +32,7 @@ DiFlowDubber, a video dubbing system, discovers an adjacent fact from a differen
 
 DreamAudio learns acoustic personality from a small number of reference samples — reproducing the timbre, spectral envelope, and transient character of a specific sound source in new generations. From a few examples of a sounding body (an instrument, a room, a voice), it recovers a generative model of that body's acoustic character. Object identity is latent in its sounds; you can extract and reinstantiate it.
 
-Even audio fingerprinting (VLAFP) participates in this logic: compress a recording into a low-dimensional representation that survives distortion. The compressed representation *is* the acoustic identity of the source — a kind of geometric essence, stripped of everything accidental. The fingerprint encodes what is intrinsic to the sounding body versus what is contextual.
+Even audio fingerprinting (VLAFP) participates in this logic: compress a recording into a low-dimensional representation that survives distortion. The compressed representation _is_ the acoustic identity of the source — a kind of geometric essence, stripped of everything accidental. The fingerprint encodes what is intrinsic to the sounding body versus what is contextual.
 
 The pattern across all these systems: **from the sounds a body makes, you can recover what kind of body it is**.
 
@@ -54,7 +54,7 @@ What does this mean for someone making music?
 
 **1. Geometry is a compositional parameter.**
 
-If you can specify a geometry — a resonant cavity, a room shape, a vocal tract configuration — you are specifying a sound. Not stochastically, not approximately: given enough precision, deterministically. Instrument design has always known this, but the loop is now closable in real time. Systems like those used in vocal tract inversion could, in principle, be inverted once more: specify a target sound, receive the geometry required to produce it. *Design backward from desired sound to required shape.*
+If you can specify a geometry — a resonant cavity, a room shape, a vocal tract configuration — you are specifying a sound. Not stochastically, not approximately: given enough precision, deterministically. Instrument design has always known this, but the loop is now closable in real time. Systems like those used in vocal tract inversion could, in principle, be inverted once more: specify a target sound, receive the geometry required to produce it. _Design backward from desired sound to required shape._
 
 This is already implicit in additive synthesis: specify frequency components, receive a waveform. But the geometry framing is physically richer. Geometric parameters (length, aperture, material stiffness) relate to sound through physics, not just signal processing, which means they respect physical constraints in ways that additive synthesis doesn't. You can't specify a room impulse response that violates energy conservation. Physical geometry operates in a constrained, coherent space.
 
@@ -62,13 +62,13 @@ This is already implicit in additive synthesis: specify frequency components, re
 
 The UPV_RIR_DB is a library of rooms understood as acoustic instruments. Each of the 166 multichannel RIRs is a complete characterization of a physical space's sonic contribution. Personal sound zones (25 cm² in scale) suggest a future where different regions of a shared room have individualized acoustic behavior — where a listener's position determines which resonant body they're inside.
 
-This is Alvin Lucier's "I Am Sitting in a Room" taken to its engineering extreme: instead of iteratively filtering through a room until the room's resonances dominate, you *choose* the room's resonances as compositional parameters. Convolving with a RIR is already standard practice in spatial audio and convolution reverb. The new possibility is designing the room itself — specifying the geometry to produce a target impulse response.
+This is Alvin Lucier's "I Am Sitting in a Room" taken to its engineering extreme: instead of iteratively filtering through a room until the room's resonances dominate, you _choose_ the room's resonances as compositional parameters. Convolving with a RIR is already standard practice in spatial audio and convolution reverb. The new possibility is designing the room itself — specifying the geometry to produce a target impulse response.
 
 **3. Timbre as recoverable geometry.**
 
 DreamAudio's ability to learn acoustic personality from few samples suggests that instrument timbres have stable geometric signatures that can be extracted, transferred, and composed. A "Stradivarius-ness" could in principle be isolated and applied to a synthesized ensemble. This is not mere reverb or EQ matching; it's geometry transfer — extracting the resonant character of one body and imposing it on another.
 
-Extended to music: you could compose in timbral "spaces" defined by acoustic geometry rather than by perceptual description. Instead of "warm" or "bright," the parameter is: *this degree of cavity opening*, *this degree of damping*, *this resonance ratio between modes 1 and 3*.
+Extended to music: you could compose in timbral "spaces" defined by acoustic geometry rather than by perceptual description. Instead of "warm" or "bright," the parameter is: _this degree of cavity opening_, _this degree of damping_, _this resonance ratio between modes 1 and 3_.
 
 **4. Listening as measurement.**
 
@@ -102,6 +102,6 @@ The inverse problem being tractable means we can, at last, read the geometry fro
 
 ---
 
-*Sources: RT-MRI Vocal Tract Inversion (complete acoustic-to-articulatory inversion, 2026); DiFlowDubber (facial prosody → speech synthesis); UPV_RIR_DB (room impulse response database, multichannel measurement); DreamAudio (customized text-to-audio, acoustic personality learning); VLAFP (variable-length audio fingerprinting, identity representation)*
+_Sources: RT-MRI Vocal Tract Inversion (complete acoustic-to-articulatory inversion, 2026); DiFlowDubber (facial prosody → speech synthesis); UPV_RIR_DB (room impulse response database, multichannel measurement); DreamAudio (customized text-to-audio, acoustic personality learning); VLAFP (variable-length audio fingerprinting, identity representation)_
 
-*Connects to: Essays #77 (resonant bodies), #78 (identity under transformation), Helmholtz resonator theory, Kelly-Lochbaum waveguide model, Lucier "I Am Sitting in a Room," spectralism (Grisey/Murail), architectural acoustics, instrument acoustics*
+_Connects to: Essays #77 (resonant bodies), #78 (identity under transformation), Helmholtz resonator theory, Kelly-Lochbaum waveguide model, Lucier "I Am Sitting in a Room," spectralism (Grisey/Murail), architectural acoustics, instrument acoustics_

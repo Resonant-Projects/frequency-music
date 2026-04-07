@@ -658,25 +658,19 @@ export function Zodiac3D() {
   // --- New queries (use createQueryWithStatus so errors don't crash the page) ---
 
   // Phase 1: Concepts for active sector
-  const domainConceptsQ = createQueryWithStatus(
-    convexApi.graph.getConceptsForDomain,
-    () => ({
-      domain: selSector(),
-      limit: 40,
-    }),
-  );
+  const domainConceptsQ = createQueryWithStatus(convexApi.graph.getConceptsForDomain, () => ({
+    domain: selSector(),
+    limit: 40,
+  }));
   const domainConcepts = createMemo<ConstellationConcept[]>(
     () => (domainConceptsQ.data() ?? []) as ConstellationConcept[],
   );
 
   // Phase 1: Edges between those concepts
   const conceptNames = createMemo(() => domainConcepts().map((c) => c.name));
-  const conceptEdgesQ = createQueryWithStatus(
-    convexApi.graph.getConceptEdges,
-    () => ({
-      conceptNames: conceptNames(),
-    }),
-  );
+  const conceptEdgesQ = createQueryWithStatus(convexApi.graph.getConceptEdges, () => ({
+    conceptNames: conceptNames(),
+  }));
   const conceptEdges = createMemo<ConstellationEdge[]>(() =>
     (
       (conceptEdgesQ.data() ?? []) as Array<{
@@ -696,34 +690,24 @@ export function Zodiac3D() {
     const mode = sidebarMode();
     return mode.kind === "concept-detail" ? mode.conceptId : undefined;
   });
-  const conceptDetailQ = createQueryWithStatus(
-    convexApi.graph.getConceptDetail,
-    () => {
-      const id = activeConceptId();
-      return id ? { conceptId: id } : {};
-    },
-  );
+  const conceptDetailQ = createQueryWithStatus(convexApi.graph.getConceptDetail, () => {
+    const id = activeConceptId();
+    return id ? { conceptId: id } : {};
+  });
   const conceptDetail = createMemo<ConceptDetailData | undefined>(() =>
-    activeConceptId()
-      ? (conceptDetailQ.data() as ConceptDetailData | undefined)
-      : undefined,
+    activeConceptId() ? (conceptDetailQ.data() as ConceptDetailData | undefined) : undefined,
   );
 
   // Phase 2: Sub-topics for active sector
-  const subTopicsQ = createQueryWithStatus(
-    convexApi.dashboard.domainSubTopics,
-    () => ({
-      domain: selSector(),
-    }),
-  );
+  const subTopicsQ = createQueryWithStatus(convexApi.dashboard.domainSubTopics, () => ({
+    domain: selSector(),
+  }));
   const subTopics = createMemo<ZodiacSubTopic[]>(
     () => (subTopicsQ.data() ?? []) as ZodiacSubTopic[],
   );
 
   // Phase 3: Pipeline items (loaded once)
-  const pipelineItemsQ = createQueryWithStatus(
-    convexApi.dashboard.pipelineItems,
-  );
+  const pipelineItemsQ = createQueryWithStatus(convexApi.dashboard.pipelineItems);
   const pipelineItems = createMemo<
     | {
         sources: OrbitalSource[];
@@ -747,21 +731,15 @@ export function Zodiac3D() {
   // Phase 3: Item relations — conditional
   const activeItem = createMemo(() => {
     const mode = sidebarMode();
-    return mode.kind === "item-detail"
-      ? { id: mode.itemId, type: mode.itemType }
-      : undefined;
+    return mode.kind === "item-detail" ? { id: mode.itemId, type: mode.itemType } : undefined;
   });
-  const itemRelationsQ = createQueryWithStatus(
-    convexApi.dashboard.itemRelations,
-    () => ({
-      itemId: activeItem()?.id ?? "",
-      itemType: activeItem()?.type ?? "source",
-    }),
-  );
+  const itemRelationsQ = createQueryWithStatus(convexApi.dashboard.itemRelations, () => {
+    const item = activeItem();
+    if (!item?.id) return "skip" as const;
+    return { itemId: item.id, itemType: item.type };
+  });
   const itemRelations = createMemo<ItemRelation[] | undefined>(() =>
-    activeItem()
-      ? (itemRelationsQ.data() as ItemRelation[] | undefined)
-      : undefined,
+    activeItem() ? (itemRelationsQ.data() as ItemRelation[] | undefined) : undefined,
   );
 
   const sectors = createMemo(() => {
@@ -826,8 +804,8 @@ export function Zodiac3D() {
           setSidebarMode({ kind: "item-detail", itemId, itemType, title });
         },
         // onArmillaryClick
-        (label, conceptNames) => {
-          setSidebarMode({ kind: "sub-topic", label, conceptNames });
+        (label, names) => {
+          setSidebarMode({ kind: "sub-topic", label, conceptNames: names });
         },
       );
     } catch (error) {
@@ -934,16 +912,13 @@ export function Zodiac3D() {
             Orrery
           </h1>
           <p class={sidebarBody}>
-            Drag to orbit. Click a sector to focus. Click stars for concept
-            details. Click orbiting bodies for pipeline items.
+            Drag to orbit. Click a sector to focus. Click stars for concept details. Click orbiting
+            bodies for pipeline items.
           </p>
         </div>
 
         <div class={sidebarSectionDomain}>
-          <div
-            class={sidebarEyebrowSmall}
-            style={{ color: activeSector().color }}
-          >
+          <div class={sidebarEyebrowSmall} style={{ color: activeSector().color }}>
             {activeSector().id.toUpperCase()} DOMAIN
           </div>
           <div class={sidebarTitleMd} style={{ color: activeSector().color }}>
@@ -990,11 +965,7 @@ export function Zodiac3D() {
             </div>
           </Show>
 
-          <button
-            type="button"
-            onClick={openDomainWorkspace}
-            class={openDomainBtn}
-          >
+          <button type="button" onClick={openDomainWorkspace} class={openDomainBtn}>
             Open Domain Workspace
           </button>
         </div>
@@ -1009,13 +980,8 @@ export function Zodiac3D() {
                 aria-pressed={selSector() === sector.id}
                 style={{
                   "border-color":
-                    selSector() === sector.id
-                      ? `${sector.color}55`
-                      : "rgba(200,168,75,0.1)",
-                  background:
-                    selSector() === sector.id
-                      ? "rgba(200,168,75,0.05)"
-                      : "transparent",
+                    selSector() === sector.id ? `${sector.color}55` : "rgba(200,168,75,0.1)",
+                  background: selSector() === sector.id ? "rgba(200,168,75,0.05)" : "transparent",
                 }}
                 onClick={() => handleSectorSelect(sector.id)}
                 onMouseEnter={() => handleSectorHover(sector.id)}
@@ -1086,9 +1052,7 @@ export function Zodiac3D() {
   }
 
   function SidebarConceptDetail() {
-    const detail = createMemo<ConceptDetailData | undefined>(() =>
-      conceptDetail(),
-    );
+    const detail = createMemo<ConceptDetailData | undefined>(() => conceptDetail());
     return (
       <>
         <div class={sidebarSectionCompact}>
@@ -1097,23 +1061,16 @@ export function Zodiac3D() {
             {(detailData) => (
               <>
                 <div class={sidebarEyebrowViolet}>CONCEPT</div>
-                <div class={sidebarTitleSm}>
-                  {detailData().concept.displayName}
-                </div>
+                <div class={sidebarTitleSm}>{detailData().concept.displayName}</div>
                 <div class={sidebarMeta}>
-                  {detailData().concept.domain} &middot;{" "}
-                  {detailData().concept.mentionCount} mentions &middot;{" "}
-                  {detailData().edgeCount} edges
+                  {detailData().concept.domain} &middot; {detailData().concept.mentionCount}{" "}
+                  mentions &middot; {detailData().edgeCount} edges
                 </div>
                 <Show when={detailData().concept.description}>
-                  <p class={sidebarBodyDetail}>
-                    {detailData().concept.description}
-                  </p>
+                  <p class={sidebarBodyDetail}>{detailData().concept.description}</p>
                 </Show>
                 <Show when={detailData().concept.aliases?.length > 0}>
-                  <div class={sidebarAliases}>
-                    Also: {detailData().concept.aliases.join(", ")}
-                  </div>
+                  <div class={sidebarAliases}>Also: {detailData().concept.aliases.join(", ")}</div>
                 </Show>
               </>
             )}
@@ -1124,11 +1081,7 @@ export function Zodiac3D() {
           {(detailData) => (
             <div class={sidebarSectionScrollable}>
               <Show when={detailData().linkedSources.length > 0}>
-                <PipelineSection
-                  label="SOURCES"
-                  items={detailData().linkedSources}
-                  type="source"
-                />
+                <PipelineSection label="SOURCES" items={detailData().linkedSources} type="source" />
               </Show>
               <Show when={detailData().linkedHypotheses.length > 0}>
                 <PipelineSection
@@ -1138,11 +1091,7 @@ export function Zodiac3D() {
                 />
               </Show>
               <Show when={detailData().linkedRecipes.length > 0}>
-                <PipelineSection
-                  label="RECIPES"
-                  items={detailData().linkedRecipes}
-                  type="recipe"
-                />
+                <PipelineSection label="RECIPES" items={detailData().linkedRecipes} type="recipe" />
               </Show>
             </div>
           )}
@@ -1177,8 +1126,7 @@ export function Zodiac3D() {
           <div class={sidebarEyebrowSection}>CONCEPTS IN CLUSTER</div>
           <For each={mode().conceptNames}>
             {(name) => {
-              const concept = () =>
-                domainConcepts().find((c) => c.name === name);
+              const concept = () => domainConcepts().find((c) => c.name === name);
               return (
                 <button
                   type="button"
@@ -1194,9 +1142,7 @@ export function Zodiac3D() {
                 >
                   {concept()?.displayName ?? name}
                   <Show when={concept()}>
-                    <span class={listButtonMentions}>
-                      {concept()?.mentionCount} mentions
-                    </span>
+                    <span class={listButtonMentions}>{concept()?.mentionCount} mentions</span>
                   </Show>
                 </button>
               );
@@ -1227,9 +1173,7 @@ export function Zodiac3D() {
 
         <div class={sidebarSectionScrollable}>
           <Show when={relations().length > 0}>
-            <div class={sidebarEyebrowSection}>
-              RELATED ITEMS ({relations().length})
-            </div>
+            <div class={sidebarEyebrowSection}>RELATED ITEMS ({relations().length})</div>
             <For each={relations()}>
               {(rel) => (
                 <button
@@ -1309,9 +1253,8 @@ export function Zodiac3D() {
             <div class={fallbackEyebrow}>HOME FALLBACK</div>
             <h1 class={fallbackTitle}>Workspace Navigator</h1>
             <p class={fallbackBody}>
-              3D mode is unavailable in this environment. Use direct workflow
-              links below to continue managing intake, research, production, and
-              participation.
+              3D mode is unavailable in this environment. Use direct workflow links below to
+              continue managing intake, research, production, and participation.
             </p>
           </div>
 

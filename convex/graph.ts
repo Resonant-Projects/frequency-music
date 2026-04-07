@@ -2,10 +2,8 @@ import { ConvexError, v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, mutation, query } from "./_generated/server";
-import {
-  inferDisplaySectorFromDomain,
-  resolveDomainsForSector,
-} from "./domainMappings";
+import { inferDisplaySectorFromDomain, resolveDomainsForSector } from "./domainMappings";
+import { entityTypeValidator } from "./schema";
 import { conceptReturnValidator, edgeReturnValidator } from "./validators";
 
 function parseNodeId(nodeId: string): { type: string; id: string } {
@@ -47,9 +45,7 @@ export const searchConcepts = query({
     // Use search index
     const results = await ctx.db
       .query("concepts")
-      .withSearchIndex("search_concepts", (q) =>
-        q.search("displayName", args.query),
-      )
+      .withSearchIndex("search_concepts", (q) => q.search("displayName", args.query))
       .take(limit);
 
     return results;
@@ -111,9 +107,7 @@ export const upsertConcept = mutation({
       .first();
 
     // Only default to "general" on insert; preserve existing domain on update
-    const domain = args.domain
-      ? args.domain.toLowerCase().trim()
-      : (existing?.domain ?? "general");
+    const domain = args.domain ? args.domain.toLowerCase().trim() : (existing?.domain ?? "general");
 
     await ctx.runMutation(internal.vocabulary.ensureConceptDomain, {
       name: domain,
@@ -124,9 +118,7 @@ export const upsertConcept = mutation({
       // Update existing — only change domain if explicitly provided
       const patchDomain = args.domain ? domain : existing.domain;
       const patchDomains = args.domain
-        ? Array.from(
-            new Set([...(existing.domains ?? [existing.domain]), domain]),
-          )
+        ? Array.from(new Set([...(existing.domains ?? [existing.domain]), domain]))
         : (existing.domains ?? [existing.domain]);
       await ctx.db.patch(existing._id, {
         displayName: args.displayName ?? existing.displayName,
@@ -183,19 +175,19 @@ export const incrementMentions = mutation({
  */
 export const getEdgesFrom = query({
   args: {
-    fromType: v.string(),
+    fromType: entityTypeValidator,
     fromId: v.string(),
     relationship: v.optional(v.string()),
   },
   returns: v.array(edgeReturnValidator),
   handler: async (ctx, args) => {
-    const q = ctx.db
+    const edgeQuery = ctx.db
       .query("edges")
       .withIndex("by_from", (q) =>
-        q.eq("fromType", args.fromType as any).eq("fromId", args.fromId),
+        q.eq("fromType", args.fromType).eq("fromId", args.fromId),
       );
 
-    const edges = await q.collect();
+    const edges = await edgeQuery.collect();
 
     if (args.relationship) {
       const normalized = args.relationship.toLowerCase().trim();
@@ -210,19 +202,17 @@ export const getEdgesFrom = query({
  */
 export const getEdgesTo = query({
   args: {
-    toType: v.string(),
+    toType: entityTypeValidator,
     toId: v.string(),
     relationship: v.optional(v.string()),
   },
   returns: v.array(edgeReturnValidator),
   handler: async (ctx, args) => {
-    const q = ctx.db
+    const edgeQuery = ctx.db
       .query("edges")
-      .withIndex("by_to", (q) =>
-        q.eq("toType", args.toType as any).eq("toId", args.toId),
-      );
+      .withIndex("by_to", (q) => q.eq("toType", args.toType).eq("toId", args.toId));
 
-    const edges = await q.collect();
+    const edges = await edgeQuery.collect();
 
     if (args.relationship) {
       const normalized = args.relationship.toLowerCase().trim();
@@ -244,18 +234,14 @@ export const getRelatedSources = query({
     // Get direct relationships
     const directEdges = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", "source").eq("fromId", args.sourceId),
-      )
+      .withIndex("by_from", (q) => q.eq("fromType", "source").eq("fromId", args.sourceId))
       .filter((q) => q.eq(q.field("toType"), "source"))
       .take(limit);
 
     // Get concepts this source mentions
     const conceptEdges = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", "source").eq("fromId", args.sourceId),
-      )
+      .withIndex("by_from", (q) => q.eq("fromType", "source").eq("fromId", args.sourceId))
       .filter((q) => q.eq(q.field("toType"), "concept"))
       .collect();
 
@@ -266,14 +252,9 @@ export const getRelatedSources = query({
     for (const conceptId of conceptIds.slice(0, 5)) {
       const otherSources = await ctx.db
         .query("edges")
-        .withIndex("by_to", (q) =>
-          q.eq("toType", "concept").eq("toId", conceptId),
-        )
+        .withIndex("by_to", (q) => q.eq("toType", "concept").eq("toId", conceptId))
         .filter((q) =>
-          q.and(
-            q.eq(q.field("fromType"), "source"),
-            q.neq(q.field("fromId"), args.sourceId),
-          ),
+          q.and(q.eq(q.field("fromType"), "source"), q.neq(q.field("fromId"), args.sourceId)),
         )
         .take(3);
       relatedViaConceptsEdges.push(...otherSources);
@@ -297,7 +278,7 @@ export const getRelatedSources = query({
  */
 export const getConceptsFor = query({
   args: {
-    entityType: v.string(),
+    entityType: entityTypeValidator,
     entityId: v.string(),
   },
   returns: v.array(
@@ -310,7 +291,7 @@ export const getConceptsFor = query({
     const edges = await ctx.db
       .query("edges")
       .withIndex("by_from", (q) =>
-        q.eq("fromType", args.entityType as any).eq("fromId", args.entityId),
+        q.eq("fromType", args.entityType).eq("fromId", args.entityId),
       )
       .filter((q) => q.eq(q.field("toType"), "concept"))
       .collect();
@@ -339,9 +320,9 @@ export const getConceptsFor = query({
  */
 export const createEdge = mutation({
   args: {
-    fromType: v.string(),
+    fromType: entityTypeValidator,
     fromId: v.string(),
-    toType: v.string(),
+    toType: entityTypeValidator,
     toId: v.string(),
     relationship: v.string(),
     weight: v.optional(v.number()),
@@ -359,9 +340,7 @@ export const createEdge = mutation({
     // Check if edge already exists
     const existing = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", args.fromType as any).eq("fromId", args.fromId),
-      )
+      .withIndex("by_from", (q) => q.eq("fromType", args.fromType).eq("fromId", args.fromId))
       .filter((q) =>
         q.and(
           q.eq(q.field("toType"), args.toType),
@@ -380,9 +359,9 @@ export const createEdge = mutation({
     }
 
     return await ctx.db.insert("edges", {
-      fromType: args.fromType as any,
+      fromType: args.fromType,
       fromId: args.fromId,
-      toType: args.toType as any,
+      toType: args.toType,
       toId: args.toId,
       relationship,
       weight: args.weight,
@@ -569,10 +548,7 @@ export const getConceptsForDomain = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
     const registeredDomains = await ctx.db.query("conceptDomains").collect();
-    const { domains, specificDomains } = resolveDomainsForSector(
-      registeredDomains,
-      args.domain,
-    );
+    const { domains, specificDomains } = resolveDomainsForSector(registeredDomains, args.domain);
 
     // Fetch concepts using by_domain index for each matching domain
     const conceptLists = await Promise.all(
@@ -615,18 +591,14 @@ export const getConceptEdges = query({
   args: { conceptNames: v.array(v.string()) },
   returns: v.array(edgeReturnValidator),
   handler: async (ctx, args) => {
-    const nameSet = new Set(
-      args.conceptNames.map((n) => n.toLowerCase().trim()),
-    );
+    const nameSet = new Set(args.conceptNames.map((n) => n.toLowerCase().trim()));
     const results: Doc<"edges">[] = [];
 
     // Get edges where both ends are in our concept set
     for (const name of nameSet) {
       const edges = await ctx.db
         .query("edges")
-        .withIndex("by_from", (q) =>
-          q.eq("fromType", "concept").eq("fromId", name),
-        )
+        .withIndex("by_from", (q) => q.eq("fromType", "concept").eq("fromId", name))
         .filter((q) => q.eq(q.field("toType"), "concept"))
         .collect();
       for (const edge of edges) {
@@ -681,16 +653,12 @@ export const getConceptDetail = query({
     // Get all edges mentioning this concept
     const edgesTo = await ctx.db
       .query("edges")
-      .withIndex("by_to", (q) =>
-        q.eq("toType", "concept").eq("toId", concept.name),
-      )
+      .withIndex("by_to", (q) => q.eq("toType", "concept").eq("toId", concept.name))
       .collect();
 
     const edgesFrom = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", "concept").eq("fromId", concept.name),
-      )
+      .withIndex("by_from", (q) => q.eq("fromType", "concept").eq("fromId", concept.name))
       .collect();
 
     const allEdges = [...edgesTo, ...edgesFrom];
@@ -702,8 +670,7 @@ export const getConceptDetail = query({
 
     for (const edge of allEdges) {
       const otherId = edge.fromType === "concept" ? edge.toId : edge.fromId;
-      const otherType =
-        edge.fromType === "concept" ? edge.toType : edge.fromType;
+      const otherType = edge.fromType === "concept" ? edge.toType : edge.fromType;
       if (otherType === "source") sourceIds.add(otherId as Id<"sources">);
       if (otherType === "hypothesis") {
         hypothesisIds.add(otherId as Id<"hypotheses">);
@@ -883,9 +850,7 @@ export const exportForVisualization = query({
     }
 
     const visitedDepth = new Map<string, number>([[centerNode, 0]]);
-    const queue: Array<{ node: string; depth: number }> = [
-      { node: centerNode, depth: 0 },
-    ];
+    const queue: Array<{ node: string; depth: number }> = [{ node: centerNode, depth: 0 }];
     while (queue.length > 0) {
       const next = queue.shift();
       if (!next) break;
@@ -900,9 +865,7 @@ export const exportForVisualization = query({
     }
 
     const allowedNodes = new Set(visitedDepth.keys());
-    const nodes = [...allNodes.values()].filter((node) =>
-      allowedNodes.has(node.id),
-    );
+    const nodes = [...allNodes.values()].filter((node) => allowedNodes.has(node.id));
     const links = allLinks.filter(
       (link) => allowedNodes.has(link.source) && allowedNodes.has(link.target),
     );

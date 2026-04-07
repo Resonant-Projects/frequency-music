@@ -1,12 +1,5 @@
 import { Link, useNavigate } from "@tanstack/solid-router";
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  For,
-  onMount,
-  Show,
-} from "solid-js";
+import { createEffect, createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
@@ -58,18 +51,20 @@ function extractExcerpt(bodyMd: string, maxLen = 180): string {
   return text.length > maxLen ? `${text.slice(0, maxLen)}...` : text;
 }
 
-function actionHref(action: {
-  targetType: "hypothesis" | "recipe" | "composition";
-  targetId: string;
-}) {
-  switch (action.targetType) {
-    case "hypothesis":
-      return `/hypotheses/${action.targetId}`;
-    case "recipe":
-      return `/recipes/${action.targetId}`;
-    case "composition":
-      return `/compositions/${action.targetId}`;
-  }
+type CampaignDraft = {
+  title: string;
+  question: string;
+  descriptionMd: string;
+  status: "active" | "paused" | "completed";
+};
+
+function buildDraft(campaign: Doc<"campaigns">): CampaignDraft {
+  return {
+    title: campaign.title,
+    question: campaign.question,
+    descriptionMd: campaign.descriptionMd ?? "",
+    status: campaign.status,
+  };
 }
 
 function CampaignCard(props: {
@@ -86,25 +81,7 @@ function CampaignCard(props: {
   }) => Promise<void>;
   onNotice?: (message: string) => void;
 }) {
-  type CampaignDraft = {
-    title: string;
-    question: string;
-    descriptionMd: string;
-    status: "active" | "paused" | "completed";
-  };
-
-  function buildDraft(campaign: Doc<"campaigns">): CampaignDraft {
-    return {
-      title: campaign.title,
-      question: campaign.question,
-      descriptionMd: campaign.descriptionMd ?? "",
-      status: campaign.status,
-    };
-  }
-
-  const [draft, setDraft] = createSignal<CampaignDraft>(
-    buildDraft(props.campaign),
-  );
+  const [draft, setDraft] = createSignal<CampaignDraft>(buildDraft(props.campaign));
   const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [activating, setActivating] = createSignal(false);
@@ -115,10 +92,7 @@ function CampaignCard(props: {
     setDirty(false);
   }
 
-  function updateDraft<K extends keyof CampaignDraft>(
-    key: K,
-    value: CampaignDraft[K],
-  ) {
+  function updateDraft<K extends keyof CampaignDraft>(key: K, value: CampaignDraft[K]) {
     setDirty(true);
     setDraft((current) => ({ ...current, [key]: value }));
   }
@@ -208,9 +182,7 @@ function CampaignCard(props: {
           <UIBadge tone={props.campaign.status === "active" ? "gold" : "cream"}>
             {props.campaign.status}
           </UIBadge>
-          <UIBadge tone="violet">
-            {props.campaign.thesisIds.length} theses
-          </UIBadge>
+          <UIBadge tone="violet">{props.campaign.thesisIds.length} theses</UIBadge>
         </div>
         <Show when={props.campaign.status !== "active"}>
           <UIButton
@@ -230,10 +202,7 @@ function CampaignCard(props: {
         </UIButton>
       </div>
 
-      <label
-        for={`campaign-${props.campaign._id}-title`}
-        class={fieldLabelClass}
-      >
+      <label for={`campaign-${props.campaign._id}-title`} class={fieldLabelClass}>
         Title
       </label>
       <UIInput
@@ -242,10 +211,7 @@ function CampaignCard(props: {
         onInput={(event) => updateDraft("title", event.currentTarget.value)}
       />
 
-      <label
-        for={`campaign-${props.campaign._id}-question`}
-        class={fieldLabelClass}
-      >
+      <label for={`campaign-${props.campaign._id}-question`} class={fieldLabelClass}>
         Question
       </label>
       <UITextarea
@@ -254,34 +220,23 @@ function CampaignCard(props: {
         onInput={(event) => updateDraft("question", event.currentTarget.value)}
       />
 
-      <label
-        for={`campaign-${props.campaign._id}-description`}
-        class={fieldLabelClass}
-      >
+      <label for={`campaign-${props.campaign._id}-description`} class={fieldLabelClass}>
         Description
       </label>
       <UITextarea
         id={`campaign-${props.campaign._id}-description`}
         value={draft().descriptionMd}
-        onInput={(event) =>
-          updateDraft("descriptionMd", event.currentTarget.value)
-        }
+        onInput={(event) => updateDraft("descriptionMd", event.currentTarget.value)}
       />
 
-      <label
-        for={`campaign-${props.campaign._id}-status`}
-        class={fieldLabelClass}
-      >
+      <label for={`campaign-${props.campaign._id}-status`} class={fieldLabelClass}>
         Status
       </label>
       <UISelect
         id={`campaign-${props.campaign._id}-status`}
         value={draft().status}
         onChange={(event) =>
-          updateDraft(
-            "status",
-            event.currentTarget.value as "active" | "paused" | "completed",
-          )
+          updateDraft("status", event.currentTarget.value as "active" | "paused" | "completed")
         }
       >
         <option value="active">active</option>
@@ -296,8 +251,7 @@ function CampaignCard(props: {
             <For each={props.campaign.thesisIds}>
               {(thesisId) => (
                 <UIBadge tone="cream">
-                  {props.thesisTitleById.get(String(thesisId)) ??
-                    String(thesisId).slice(-6)}
+                  {props.thesisTitleById.get(String(thesisId)) ?? String(thesisId).slice(-6)}
                 </UIBadge>
               )}
             </For>
@@ -305,14 +259,8 @@ function CampaignCard(props: {
         </div>
       </Show>
 
-      <div
-        class={css({ display: "flex", justifyContent: "flex-end", mt: "4" })}
-      >
-        <UIButton
-          variant="solid"
-          onClick={saveCampaign}
-          disabled={saving() || activating()}
-        >
+      <div class={css({ display: "flex", justifyContent: "flex-end", mt: "4" })}>
+        <UIButton variant="solid" onClick={saveCampaign} disabled={saving() || activating()}>
           {saving() ? "Saving..." : "Save Campaign"}
         </UIButton>
       </div>
@@ -355,16 +303,12 @@ export function WeeklyTurnsPage() {
   const createCampaign = createMutation(convexApi.campaigns.create);
   const updateCampaign = createMutation(convexApi.campaigns.update);
   const setActiveCampaign = createMutation(convexApi.campaigns.setActive);
-  const createCampaignDraft = createMutation(
-    convexApi.editorialArtifacts.createDraftFromCampaign,
-  );
+  const createCampaignDraft = createMutation(convexApi.editorialArtifacts.createDraftFromCampaign);
 
   const [title, setTitle] = createSignal("");
   const [question, setQuestion] = createSignal("");
   const [descriptionMd, setDescriptionMd] = createSignal("");
-  const [status, setStatus] = createSignal<"active" | "paused" | "completed">(
-    "paused",
-  );
+  const [status, setStatus] = createSignal<"active" | "paused" | "completed">("paused");
   const [notice, setNotice] = createSignal<string | null>(null);
 
   async function runGenerate() {
@@ -462,9 +406,8 @@ export function WeeklyTurnsPage() {
                 lineHeight: "1.6",
               })}
             >
-              Weekly briefs now steer against an active campaign, persisted
-              studio prompts, and recommendation signals drawn from listening
-              outcomes.
+              Weekly briefs now steer against an active campaign, persisted studio prompts, and
+              recommendation signals drawn from listening outcomes.
             </p>
           </div>
           <UIButton variant="solid" type="button" onClick={runGenerate}>
@@ -517,9 +460,7 @@ export function WeeklyTurnsPage() {
           id="campaign-status"
           value={status()}
           onChange={(event) =>
-            setStatus(
-              event.currentTarget.value as "active" | "paused" | "completed",
-            )
+            setStatus(event.currentTarget.value as "active" | "paused" | "completed")
           }
         >
           <option value="paused">paused</option>
@@ -538,9 +479,7 @@ export function WeeklyTurnsPage() {
         >
           <div aria-live="polite">
             <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
+              {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
             </Show>
           </div>
           <UIButton type="submit" variant="outline">
@@ -569,8 +508,8 @@ export function WeeklyTurnsPage() {
                 when={preview().actions.length > 0}
                 fallback={
                   <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
-                    No recommendation candidates yet. Create or attach a thesis
-                    to a campaign, then generate more hypotheses and recipes.
+                    No recommendation candidates yet. Create or attach a thesis to a campaign, then
+                    generate more hypotheses and recipes.
                   </p>
                 }
               >
@@ -601,9 +540,7 @@ export function WeeklyTurnsPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {action.targetType} {action.targetId.slice(-6)}
                         </div>
-                        <p class={css({ color: "rgba(245, 240, 232, 0.62)" })}>
-                          {action.reason}
-                        </p>
+                        <p class={css({ color: "rgba(245, 240, 232, 0.62)" })}>{action.reason}</p>
                       </>
                     );
                     return action.targetType === "hypothesis" ? (
@@ -641,10 +578,12 @@ export function WeeklyTurnsPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Campaigns</h2>
-        <Show
-          when={!campaigns.isLoading()}
-          fallback={<p>Loading campaigns...</p>}
-        >
+        <Show when={!campaigns.isLoading()} fallback={<p>Loading campaigns...</p>}>
+          <Show when={!campaigns.isError()} fallback={
+            <p class={css({ color: "rgba(220, 100, 100, 0.85)", lineHeight: "1.6" })}>
+              Failed to load campaigns. {campaigns.error()?.message}
+            </p>
+          }>
           <Show
             when={campaignRows().length > 0}
             fallback={
@@ -654,8 +593,7 @@ export function WeeklyTurnsPage() {
                   lineHeight: "1.6",
                 })}
               >
-                No campaigns yet. Create one above to start organizing weekly
-                work into longer arcs.
+                No campaigns yet. Create one above to start organizing weekly work into longer arcs.
               </p>
             }
           >
@@ -674,16 +612,19 @@ export function WeeklyTurnsPage() {
               </For>
             </div>
           </Show>
+          </Show>
         </Show>
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Generated Briefs</h2>
 
-        <Show
-          when={!briefs.isLoading()}
-          fallback={<p>Loading weekly turns...</p>}
-        >
+        <Show when={!briefs.isLoading()} fallback={<p>Loading weekly turns...</p>}>
+          <Show when={!briefs.isError()} fallback={
+            <p class={css({ color: "rgba(220, 100, 100, 0.85)", lineHeight: "1.6" })}>
+              Failed to load briefs. {briefs.error()?.message}
+            </p>
+          }>
           <Show
             when={briefRows().length > 0}
             fallback={
@@ -697,8 +638,7 @@ export function WeeklyTurnsPage() {
                   py: "8",
                 })}
               >
-                No weekly turns yet. Generate one to summarize the latest ingest
-                cycle.
+                No weekly turns yet. Generate one to summarize the latest ingest cycle.
               </p>
             }
           >
@@ -748,9 +688,7 @@ export function WeeklyTurnsPage() {
                             {(brief.activeThesisIds ?? []).length} theses
                           </UIBadge>
                         </Show>
-                        <Show
-                          when={(brief.recommendedActions ?? []).length > 0}
-                        >
+                        <Show when={(brief.recommendedActions ?? []).length > 0}>
                           <UIBadge tone="violet">
                             {(brief.recommendedActions ?? []).length} actions
                           </UIBadge>
@@ -807,6 +745,7 @@ export function WeeklyTurnsPage() {
                 )}
               </For>
             </div>
+          </Show>
           </Show>
         </Show>
       </UICard>
