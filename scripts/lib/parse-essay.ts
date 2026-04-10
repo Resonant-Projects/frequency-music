@@ -27,13 +27,16 @@ function parseDate(line: string): {
   essayNumber: number | null;
 } {
   // Strip markdown emphasis (asterisks or underscores)
-  const clean = line.replaceAll(/^[*_]{1,2}|[*_]{1,2}$/g, "").trim();
+  const clean = line.replace(/^[*_]{1,2}|[*_]{1,2}$/g, "").trim();
 
   // Extract essay number if present: "Essay #87" or "Essay #80"
   let essayNumber: number | null = null;
   const essayMatch = clean.match(/Essay\s*#(\d+)/i);
   if (essayMatch) {
-    essayNumber = Number.parseInt(essayMatch[1], 10);
+    const essayNumberRaw = essayMatch[1];
+    if (essayNumberRaw) {
+      essayNumber = Number.parseInt(essayNumberRaw, 10);
+    }
   }
 
   // Try full date: "Month DD, YYYY"
@@ -41,9 +44,14 @@ function parseDate(line: string): {
     /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})\b/i;
   const fullMatch = clean.match(fullDateRe);
   if (fullMatch) {
-    const month = MONTHS[fullMatch[1].toLowerCase()];
-    const day = fullMatch[2].padStart(2, "0");
-    return { date: `${fullMatch[3]}-${month}-${day}`, essayNumber };
+    const monthName = fullMatch[1];
+    const dayRaw = fullMatch[2];
+    const year = fullMatch[3];
+    if (monthName && dayRaw && year) {
+      const month = MONTHS[monthName.toLowerCase()];
+      const day = dayRaw.padStart(2, "0");
+      return { date: `${year}-${month}-${day}`, essayNumber };
+    }
   }
 
   // Try month-only: "Month YYYY"
@@ -51,8 +59,12 @@ function parseDate(line: string): {
     /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})\b/i;
   const monthMatch = clean.match(monthOnlyRe);
   if (monthMatch) {
-    const month = MONTHS[monthMatch[1].toLowerCase()];
-    return { date: `${monthMatch[2]}-${month}-01`, essayNumber };
+    const monthName = monthMatch[1];
+    const year = monthMatch[2];
+    if (monthName && year) {
+      const month = MONTHS[monthName.toLowerCase()];
+      return { date: `${year}-${month}-01`, essayNumber };
+    }
   }
 
   return { date: null, essayNumber };
@@ -76,7 +88,7 @@ function extractFrontmatter(content: string): {
   if (!fmMatch) {
     return { draft: false, contentAfterFrontmatter: content };
   }
-  const fmBlock = fmMatch[1];
+  const fmBlock = fmMatch[1] ?? "";
   const draft = /^\s*draft\s*:\s*true\s*$/m.test(fmBlock);
   return { draft, contentAfterFrontmatter: fmMatch[2] ?? "" };
 }
@@ -91,8 +103,9 @@ export function parseEssay(content: string, filename: string): ParsedEssay {
   let title = slug;
   let titleLineIndex = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith("# ")) {
-      title = lines[i].replace(/^#\s+/, "").trim();
+    const currentLine = lines[i];
+    if (currentLine?.startsWith("# ")) {
+      title = currentLine.replace(/^#\s+/, "").trim();
       titleLineIndex = i;
       break;
     }
@@ -107,7 +120,8 @@ export function parseEssay(content: string, filename: string): ParsedEssay {
   const searchEnd = Math.min(searchStart + 6, lines.length);
 
   for (let i = searchStart; i < searchEnd; i++) {
-    const line = lines[i].trim();
+    const line = lines[i]?.trim();
+    if (line === undefined) break;
     if (line === "" || line === "---") continue;
 
     const parsed = parseDate(line);
@@ -137,35 +151,25 @@ export function parseEssay(content: string, filename: string): ParsedEssay {
     break;
   }
 
-  // Build body: skip title, byline area, and first --- separator
+  // Build body: skip title, byline area, subtitle/dek lines, and the first separator.
   let bodyStartIndex = bylineEndIndex + 1;
 
-  // Skip blank lines and the first --- separator after the byline
   while (bodyStartIndex < lines.length) {
-    const line = lines[bodyStartIndex].trim();
+    const line = lines[bodyStartIndex]?.trim();
+    if (line === undefined) break;
     if (line === "" || line === "---") {
       bodyStartIndex++;
       continue;
     }
-    break;
-  }
 
-  // Also skip any dek/subtitle italic lines that come after the separator
-  // but only if we already found a date (they're not the byline)
-  if (publishDate !== null) {
-    while (bodyStartIndex < lines.length) {
-      const line = lines[bodyStartIndex].trim();
-      if (line === "") {
-        bodyStartIndex++;
-        continue;
-      }
-      if (isEmphasisLine(line)) {
-        // This is a dek/subtitle italic line after the separator — skip it
-        bodyStartIndex++;
-        continue;
-      }
-      break;
+    // If we already found a byline/date, any immediately following emphasis line
+    // is treated as a subtitle/dek rather than body content.
+    if (publishDate !== null && isEmphasisLine(line)) {
+      bodyStartIndex++;
+      continue;
     }
+
+    break;
   }
 
   const body = lines.slice(bodyStartIndex).join("\n").trim();

@@ -1,0 +1,1479 @@
+{
+  "against-dominance": {
+    "excerpt": "Three distinct strategies—subtraction, anchoring, and isolation—address how subordinate modalities can be heard in multimodal AI systems, each with direct parallels in musical composition and voice hierarchy.",
+    "tags": [
+      "perception",
+      "AI-music",
+      "signal-processing",
+      "composition",
+      "information-theory",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6df49c0becdf8503662e60b862662bdbfc4e0d50cd2abfff35b87c1bcac9786b",
+    "generatedAt": "2026-04-10T18:35:48.651Z"
+  },
+  "beyond-the-integers": {
+    "excerpt": "Discover how moving beyond integers and rationals to Gaussian integers, algebraic units, and modular arithmetic unlocks new musical structures—from integrating the tritone to closing tuning systems under difference tones.",
+    "tags": [
+      "number-theory",
+      "mathematical-music-theory",
+      "tuning-systems",
+      "microtuning",
+      "group-theory",
+      "xenharmonic"
+    ],
+    "category": "mathematics",
+    "contentHash": "45553e897ed539ef934d9da7e4fa0976dde7a13d726e04db30fd9ac913f55167",
+    "generatedAt": "2026-04-10T18:35:51.949Z"
+  },
+  "counting-the-cubes": {
+    "excerpt": "Burnside's lemma reveals why 4,096 chromatic subsets collapse to 352 pitch classes—and why Sol LeWitt's cube sculptures and musical structure obey the same counting laws.",
+    "tags": [
+      "group-theory",
+      "mathematical-music-theory",
+      "composition",
+      "tuning-systems",
+      "perception",
+      "geometry"
+    ],
+    "category": "mathematics",
+    "contentHash": "2836920cf1dadc3b0d577bf14fe89f37821048f0dc056b4bece35b2de7d784ab",
+    "generatedAt": "2026-04-10T18:35:55.080Z"
+  },
+  "duality-all-the-way-down": {
+    "excerpt": "Musical duality appears across harmonic, algebraic, combinatorial, and geometric frameworks—from pentatonic/diatonic complementarity to major/minor reflection—suggesting a unified mathematical structure underlying how pitched sounds organize.",
+    "tags": [
+      "mathematical-music-theory",
+      "group-theory",
+      "tuning-systems",
+      "geometry",
+      "composition",
+      "resonance"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "05ae7a448bbd4ee1c07de02e36889942d886d32f4db613988f1a3258fa32ec08",
+    "generatedAt": "2026-04-10T18:35:57.606Z"
+  },
+  "every-basis-has-a-bias": {
+    "excerpt": "The coordinate system you choose determines what's easy and impossible—a lesson from AI, signal processing, and centuries of musical temperament.",
+    "tags": [
+      "mathematical-music-theory",
+      "signal-processing",
+      "composition",
+      "tuning-systems",
+      "group-theory",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b0bc25a299711105203bf1f207ced0b38281fd60d4f7b5925a30aaced0973daf",
+    "generatedAt": "2026-04-10T18:36:03.701Z"
+  },
+  "everything-is-a-resonant-body": {
+    "excerpt": "Everything from rooms to neural networks acts as a resonant body imposing transfer functions on sound. Composition becomes the art of selecting and sequencing these transformations.",
+    "tags": [
+      "resonance",
+      "signal-processing",
+      "acoustics",
+      "composition",
+      "wave-physics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "265f88eb2e096d41e6c6fae0765828f5dfb812d797903ff543574e8573bf0463",
+    "generatedAt": "2026-04-10T18:36:06.641Z"
+  },
+  "finding-one": {
+    "excerpt": "Metric perception isn't purely auditory—it's an act of interpretation where the listener imposes structure on sound. This frame-dependent choice shapes what we hear, create, and understand about music.",
+    "tags": [
+      "rhythm",
+      "perception",
+      "mathematical-music-theory",
+      "geometry",
+      "composition",
+      "AI-music"
+    ],
+    "category": "perception",
+    "contentHash": "1eec1f0c18d135d654e0cf0f542a03f58332bf051afb6f621bd639f8bbe5c6f4",
+    "generatedAt": "2026-04-10T18:36:09.750Z"
+  },
+  "geometric-microtuning-composition": {
+    "excerpt": "Bridge Grant's geometric correspondence between musical intervals and polygons with practical microtuning systems, deriving a coherent temperament based on 432Hz tuning for composition.",
+    "tags": [
+      "microtuning",
+      "sacred-geometry",
+      "mathematical-music-theory",
+      "composition",
+      "tuning-systems",
+      "temperament"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7eabd8ce8520f2c34568e991c94010a5520b2f03503fac0e38284e710ae78162",
+    "generatedAt": "2026-04-10T18:36:12.501Z"
+  },
+  "hearing-backwards": {
+    "excerpt": "Sound encodes the geometry of its physical source—rooms, bodies, authenticity—and these geometric structures can be recovered from audio alone. Three recent papers reveal how the inverse problem of hearing backwards unlocks compositional implications.",
+    "tags": [
+      "acoustics",
+      "signal-processing",
+      "wave-physics",
+      "perception",
+      "composition",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7586f3baacd9ac4a556a55957d9f08f22943ae6da7e3d36f875f9f5d519cb749",
+    "generatedAt": "2026-04-10T18:36:15.123Z"
+  },
+  "musics-dark-matter": {
+    "excerpt": "Neural networks discover perceptually real patterns in music that music theory has never named—suggesting music's structure extends beyond our theoretical vocabulary, like dark matter in cosmology.",
+    "tags": [
+      "AI-music",
+      "mathematical-music-theory",
+      "perception",
+      "signal-processing",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "26599211cd31364ad40c84edb8abe7c1b64a649c5bf096388385347fa3e9e6e7",
+    "generatedAt": "2026-04-10T18:36:17.644Z"
+  },
+  "structure-before-sound": {
+    "excerpt": "Minimalist hip-hop beats and mathematical music share a surprising principle: maximum impact comes from structural clarity, not surface complexity. By compressing audio to its irreducible skeleton, we discover what truly matters in composition.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "signal-processing",
+      "resonance",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "0057a519340bc7080bd7ded7d8b58a687093864ddbfaece041904cb147dbc750",
+    "generatedAt": "2026-04-10T18:36:20.181Z"
+  },
+  "symmetry-as-the-skeleton-of-music": {
+    "excerpt": "Three convergent papers reveal that tonal music's essential features emerge from symmetry groups—whether geometric (Tonnetz), algebraic (scales), or dynamic (gauge theory)—suggesting that musical structure is fundamentally rooted in how symmetry breaks and reorganizes.",
+    "tags": [
+      "group-theory",
+      "mathematical-music-theory",
+      "tuning-systems",
+      "temperament",
+      "geometry",
+      "composition"
+    ],
+    "category": "mathematics",
+    "contentHash": "c88a07030ec0768a706d6bab6ea554d246f096c4800b4477e83b3a32b03629c8",
+    "generatedAt": "2026-04-10T18:36:23.693Z"
+  },
+  "the-anchor-that-moves": {
+    "excerpt": "Every effective system for analyzing sound needs a reference point—but the best ones recognize that these anchors inevitably drift. From speaker extraction to music analysis, stability itself becomes a parameter to manage.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "mathematical-music-theory",
+      "composition",
+      "acoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "14a150a912dd0f49fcf7a4dd97a236e185c54bf796a0e4f3972247d9e3e769a1",
+    "generatedAt": "2026-04-10T18:36:29.781Z"
+  },
+  "the-arrow-of-sound": {
+    "excerpt": "Music's arrow is fundamental: the auditory system predicts forward, entropy gradients encode causation, and temporal inversion annihilates musical meaning where spatial inversion preserves it.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "information-theory",
+      "mathematical-music-theory",
+      "rhythm",
+      "consciousness"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3e3204742d659c299eafcdfb4be5dbe19a41a0a7f4fa067aaf82ca9162d7f83b",
+    "generatedAt": "2026-04-10T18:36:32.030Z"
+  },
+  "the-attractor-in-the-copy": {
+    "excerpt": "Iterative degradation reveals what systems actually capture versus approximate—from Lucier's room feedback loops to modern TTS evaluation. The attractor emerges as both technical insight and compositional tool.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "resonance",
+      "acoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "63f6194eea091d921930c60dff7c83a38bf765f8c8493badc446f847f2114842",
+    "generatedAt": "2026-04-10T18:36:34.320Z"
+  },
+  "the-attractor-landscape": {
+    "excerpt": "Music operates as a dissipative dynamical system where keys, cadences, and modulations correspond to attractors, bifurcations, and phase-space topology—providing a unified mathematical framework connecting perception, composition, and the physics of tonal structure.",
+    "tags": [
+      "mathematical-music-theory",
+      "tuning-systems",
+      "perception",
+      "rhythm",
+      "resonance",
+      "composition"
+    ],
+    "category": "mathematics",
+    "contentHash": "c6957ea191bcfa6f87017112ec94c5ee12c6f2521f0a2f2402f92e563e8c13a0",
+    "generatedAt": "2026-04-10T18:36:37.407Z"
+  },
+  "the-bleed": {
+    "excerpt": "Acoustic bleed in live sound is not engineering failure but the coupling mechanism that enables emergent ensemble synchronization—the physics that makes live music sound alive.",
+    "tags": [
+      "acoustics",
+      "resonance",
+      "rhythm",
+      "perception",
+      "composition",
+      "signal-processing"
+    ],
+    "category": "physics-of-sound",
+    "contentHash": "4b2eae6f3b3351421a62827d2749596f375151d46c35b909b8b22b2e6597a5b7",
+    "generatedAt": "2026-04-10T18:36:39.688Z"
+  },
+  "the-borrowed-structure": {
+    "excerpt": "Text-to-audio diffusion models can reuse structural components from similar sounds, achieving 1.8–3.0× speedup while improving quality—revealing that all sounds cluster around ~1,000 acoustic archetypes.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "information-theory",
+      "acoustics",
+      "composition",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "65e4907a50fc30d9319be4e48c2ce6d4f9cbbb93d2602dd04a01159abb8f2c9f",
+    "generatedAt": "2026-04-10T18:36:44.411Z"
+  },
+  "the-codec-ear": {
+    "excerpt": "Neural audio codecs reveal what the ear truly tracks by compressing sound to extreme ratios—discovering that harmonic skeletons, spectral shape, and slow envelopes matter far more than noise texture and micro-timing.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "information-theory",
+      "acoustics",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c04619e9f18d66764314a3bb2867bc808a5d95467e0fafd10cab05c73918a0a0",
+    "generatedAt": "2026-04-10T18:36:46.764Z"
+  },
+  "the-coherence-imperative": {
+    "excerpt": "Sound resists atomistic analysis because its meaning lives in coherence—the smooth dependencies across time and frequency that define musical identity. Three recent papers rediscover why bin-independent processing fails.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "wave-physics",
+      "composition",
+      "psychoacoustics",
+      "resonance"
+    ],
+    "category": "physics-of-sound",
+    "contentHash": "36690161c8fada8432ee734751967f80c16c6eb0c650c1237cfb14b9ec92ef41",
+    "generatedAt": "2026-04-10T18:36:49.365Z"
+  },
+  "the-color-of-chaos": {
+    "excerpt": "Music across all genres clusters around pink noise (1/f scaling), occupying the critical boundary between order and chaos where prediction errors are maximally informative and structure exists at every timescale.",
+    "tags": [
+      "signal-processing",
+      "mathematical-music-theory",
+      "composition",
+      "perception",
+      "information-theory",
+      "resonance"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "fb54452239e750c13bcc36550386c7f476dac0d32a90d090f0974109ec87e5a5",
+    "generatedAt": "2026-04-10T18:36:51.926Z"
+  },
+  "the-comma-problem": {
+    "excerpt": "The Pythagorean comma proves perfect tuning is mathematically impossible—but history shows how composers weaponized this constraint into expressive power by strategically placing sonic impurity.",
+    "tags": [
+      "tuning-systems",
+      "temperament",
+      "mathematical-music-theory",
+      "composition",
+      "acoustics",
+      "microtuning"
+    ],
+    "category": "music-theory",
+    "contentHash": "afb551bd29d8811e65c8c78604b915a21e515c95ba71aebf46a0ad923106adf9",
+    "generatedAt": "2026-04-10T18:36:55.818Z"
+  },
+  "the-comparator-is-the-instrument": {
+    "excerpt": "Perceptual structure emerges through relational comparison, not absolute measurement—a principle reshaping how we understand musical meaning and design both algorithms and compositions.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "psychoacoustics",
+      "composition",
+      "mathematical-music-theory",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a9e3ff1fd3ee71e885482b644ed0947ca70ef2771d76666e302db639e283bbb2",
+    "generatedAt": "2026-04-10T18:36:59.365Z"
+  },
+  "the-compression-gradient": {
+    "excerpt": "Sounds range from nearly pure structure—like engine noise reconstructible from two parameters—to nearly pure surprise, with implications for music, compression, and AI listening.",
+    "tags": [
+      "information-theory",
+      "signal-processing",
+      "acoustics",
+      "perception",
+      "AI-music",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "e52f0d9e6545beca6a8c5b4c9a504d07f1eef1c9d971e7337da480878aee99e6",
+    "generatedAt": "2026-04-10T18:37:02.253Z"
+  },
+  "the-cost-of-moving": {
+    "excerpt": "Voice leading is optimal transport: the mathematical framework for moving sand efficiently also describes how composers transform chords. Scales, timbres, and rhythms all inhabit a Wasserstein manifold where distance equals transformation cost.",
+    "tags": [
+      "mathematical-music-theory",
+      "group-theory",
+      "tuning-systems",
+      "composition",
+      "geometry",
+      "information-theory"
+    ],
+    "category": "mathematics",
+    "contentHash": "881ff571481fa677e16b317d5544f7b6ffe1018fc21e09bf4ae76107f59349d5",
+    "generatedAt": "2026-04-10T18:37:07.491Z"
+  },
+  "the-cost-of-moving-sound": {
+    "excerpt": "Optimal transport theory, from Monge's 1781 soil-moving problem, unifies voice leading, timbral morphing, and rhythmic transformation as instances of minimizing cost across distributions—revealing a deep geometric principle underlying centuries of musical aesthetics.",
+    "tags": [
+      "mathematical-music-theory",
+      "composition",
+      "signal-processing",
+      "tuning-systems",
+      "psychoacoustics",
+      "geometry"
+    ],
+    "category": "mathematics",
+    "contentHash": "9a583a7439f5d25415f6f26c46d8f904074f34e42c14867ed7635eb2afa36bf4",
+    "generatedAt": "2026-04-10T18:37:04.571Z"
+  },
+  "the-covert-groove": {
+    "excerpt": "When targeted timing adjustments improve intelligibility without being consciously detected, they reveal how the auditory system trades off perception across temporal scales—and how performers and composers can optimize music accordingly.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "rhythm",
+      "composition",
+      "signal-processing",
+      "mathematical-music-theory"
+    ],
+    "category": "perception",
+    "contentHash": "99b6b2441da0e5dec449f9f47609f7682582999524c40642fe630fc356fc154d",
+    "generatedAt": "2026-04-10T18:37:10.972Z"
+  },
+  "the-critical-moment": {
+    "excerpt": "Musical transitions map precisely onto phase transitions from physics—order parameters, symmetry breaking, and critical phenomena reveal the deep mathematics of how music changes states.",
+    "tags": [
+      "mathematical-music-theory",
+      "group-theory",
+      "composition",
+      "resonance",
+      "perception",
+      "temperament"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a10a64ea5fa315367839322cdffdeb38bafc49580e138933f7ca67f7ad350108",
+    "generatedAt": "2026-04-10T18:37:15.787Z"
+  },
+  "the-density-horizon": {
+    "excerpt": "At ~24-30 notes per second, individual musical notes dissolve into continuous texture—a critical phase transition where discrete melodic perception gives way to statistical texture listening.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "wave-physics",
+      "composition",
+      "mathematical-music-theory",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7c660273a1e30f2301e8bc15ff724804a7959be51a830e3a69401afd829b25dd",
+    "generatedAt": "2026-04-10T18:37:18.447Z"
+  },
+  "the-dominant-channel": {
+    "excerpt": "When competing information channels converge, the more structured one always dominates unless subordinate channels receive explicit, temporally-protected coupling—a principle that explains why models ignore acoustic cues and suggests how composers can break this hierarchy.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "composition",
+      "information-theory",
+      "AI-music",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "be553bc1466eec3e122e28556d55993d9031926cd7a7eaacd86811848bd4f963",
+    "generatedAt": "2026-04-10T18:37:21.909Z"
+  },
+  "the-entangled-signal": {
+    "excerpt": "Musical perception dimensions like pitch and timbre aren't independent axes but entangled manifolds—and understanding this geometry reveals how composers can exploit shared acoustic dimensions for richer sound.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "mathematical-music-theory",
+      "composition",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "485fa7ea1691f90e687fbc1a9757286eff238080056f58d8cac2f3735030f39a",
+    "generatedAt": "2026-04-10T18:37:24.190Z"
+  },
+  "the-entropy-arc": {
+    "excerpt": "Form is the audible shape of information: an entropy arc that traces surprise across time, from exposition through development to resolution. Information theory makes the architecture of musical structure—and the mechanics of listening—precisely quantifiable.",
+    "tags": [
+      "information-theory",
+      "composition",
+      "mathematical-music-theory",
+      "perception",
+      "signal-processing",
+      "group-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a44209e89cc0cab7bad783f48b8577223805593d3a36254fe0f2e2a99ba7bbf4",
+    "generatedAt": "2026-04-10T18:37:26.844Z"
+  },
+  "the-euclidean-beat": {
+    "excerpt": "The Euclidean algorithm generates the world's most widespread rhythmic patterns across cultures—the same mathematical principle that organizes consonant intervals and scales reveals why humans everywhere converge on maximally even distributions of beats.",
+    "tags": [
+      "rhythm",
+      "mathematical-music-theory",
+      "group-theory",
+      "tuning-systems",
+      "geometry",
+      "number-theory"
+    ],
+    "category": "mathematics",
+    "contentHash": "c63d84f4aa5e06651febb7242c264f768d30d00c02983fc557e87edf33d002a9",
+    "generatedAt": "2026-04-10T18:37:31.523Z"
+  },
+  "the-expressive-residual": {
+    "excerpt": "Expression isn't decoration—it's a parallel dimension of sound that carries emotional meaning independently from content, separable in neural representations yet acoustically inseparable in performance.",
+    "tags": [
+      "perception",
+      "composition",
+      "signal-processing",
+      "psychoacoustics",
+      "AI-music",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "75822b377e16e63ce7cf6384f83a39c907da4ab76977b5dedf219874908c4294",
+    "generatedAt": "2026-04-10T18:37:34.662Z"
+  },
+  "the-fidelity-trade": {
+    "excerpt": "Audio codecs and tuning systems make identical fidelity trade-offs: sacrificing precision where the ear is least sensitive. MP3's frequency cutoff mirrors equal temperament's interval rounding; adaptive encoding mirrors adaptive just intonation.",
+    "tags": [
+      "signal-processing",
+      "tuning-systems",
+      "temperament",
+      "psychoacoustics",
+      "perception",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a1667642346ac7ea21ee9e734bdeb3d36dae9e23cb4b4c597506b91cfb8881b5",
+    "generatedAt": "2026-04-10T18:37:37.291Z"
+  },
+  "the-fourth-wall": {
+    "excerpt": "Listener identity—gender, training, age, and culture—systematically shapes perceptual measurements of audio quality, revealing a fourth wall beyond noise, anchors, and entanglement. Measurement doesn't reveal objective truth; it reveals whose truth.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "information-theory",
+      "mathematical-music-theory",
+      "consciousness"
+    ],
+    "category": "perception",
+    "contentHash": "79a22e7b44989f846fd4cc441bcde7f0a7831a4e29af150706c9cab32390677a",
+    "generatedAt": "2026-04-10T18:37:39.751Z"
+  },
+  "the-frame-is-the-signal": {
+    "excerpt": "Musical meaning emerges from context and position as much as from the notes themselves—a principle that machine learning reveals about how signals work in structured temporal media.",
+    "tags": [
+      "perception",
+      "composition",
+      "signal-processing",
+      "information-theory",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a46bba148211f500b464ca61869de71862ed4bb9c2f73cb6c83a9566ba2f7706",
+    "generatedAt": "2026-04-10T18:37:43.639Z"
+  },
+  "the-frequency-question": {
+    "excerpt": "Specific frequencies might produce measurable physiological effects, but claims like '528 Hz repairs DNA' vastly overstate evidence. This essay separates real science from mysticism while acknowledging genuine gaps in our understanding.",
+    "tags": [
+      "psychoacoustics",
+      "resonance",
+      "sound-healing",
+      "wave-physics",
+      "perception",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "66cb94952faf395b9a37ccb5ed245680ce8766d7eb9997da7e904b6bcbc2c5f3",
+    "generatedAt": "2026-04-10T18:37:46.018Z"
+  },
+  "the-geometry-inside-sound": {
+    "excerpt": "Sound encodes navigable internal geometry—revealed through signal curvature in RIFT and latent directions in MusicRFM—that transforms how we analyze, generate, and compose music.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "mathematical-music-theory",
+      "acoustics",
+      "geometry",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "221d337cfb262986f6d694370a686478c90dcbc74413e9466a9b82ceed880120",
+    "generatedAt": "2026-04-10T18:37:49.224Z"
+  },
+  "the-geometry-of-sounding-bodies": {
+    "excerpt": "Sound and geometry are dual descriptions of the same physical reality—modern machine learning now lets us translate freely between them, opening new possibilities for composition through acoustic geometry.",
+    "tags": [
+      "wave-physics",
+      "acoustics",
+      "composition",
+      "resonance",
+      "geometry",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "bfca00bf35022566f7d5f10d3884b248431eec93afbf506773fe502c4ac188ad",
+    "generatedAt": "2026-04-10T18:37:51.293Z"
+  },
+  "the-gesture-before-the-sound": {
+    "excerpt": "The acoustic signal is a projection of what came before it. Four papers on speech processing reveal a pattern: systems improve by modeling the gesture, breath, and cognition that generate sound, not just the sound itself. This changes how we think about musical expression and notation.",
+    "tags": [
+      "composition",
+      "perception",
+      "signal-processing",
+      "psychoacoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "9066bba46904d2d08dd04cde5f4006771f4f6297be7b69d445a9bc06e44758ca",
+    "generatedAt": "2026-04-10T18:37:54.198Z"
+  },
+  "the-ghost-at-the-grid-line": {
+    "excerpt": "Every representation has gaps—and what gets refused by the grid returns as artifact. Musical noise, transfer failures, lost articulation, and phantom tones are not errors but ghosts that reveal what discretization cannot encode.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "information-theory",
+      "composition",
+      "wave-physics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "532f8d8c095da779f7e1dd7bec04ee9b3caa91c61e4c18793894de9299534af3",
+    "generatedAt": "2026-04-10T18:37:56.960Z"
+  },
+  "the-ghost-in-the-spectrum": {
+    "excerpt": "Phase relationships—the temporal alignment of frequency components—carry half of spectral information yet remain invisible in standard music analysis. A new neural vocoder demonstrates why treating phase as structurally entangled with magnitude, rather than discarding it, reveals the hidden architecture of musical sound.",
+    "tags": [
+      "signal-processing",
+      "psychoacoustics",
+      "mathematical-music-theory",
+      "perception",
+      "composition",
+      "wave-physics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "33c42e10b5934b33ec6db20decc6a9b0d402c80e242dc2d7f3ab3f427223b3e3",
+    "generatedAt": "2026-04-10T18:38:15.368Z"
+  },
+  "the-grain-of-identity": {
+    "excerpt": "Musical identity isn't atomic—timbre crystallizes at the note, harmony at the spectral moment, and meaning in a separate layer. Three recent papers reveal music operates at multiple incommensurable grains simultaneously.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "composition",
+      "mathematical-music-theory",
+      "acoustics",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "bf93ea6e5083b3baa709e28c8dac64fcd906a69e1d8d564f7249e14091c57cf4",
+    "generatedAt": "2026-04-10T18:38:19.072Z"
+  },
+  "the-grain-of-listening": {
+    "excerpt": "Perception discretizes continuous signals into events at multiple grain sizes—from notes to phrases to forms. This essay explores why discrete representations carry more useful information than continuous ones, and what this means for composition and musical analysis.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "information-theory",
+      "composition",
+      "mathematical-music-theory",
+      "psychoacoustics"
+    ],
+    "category": "perception",
+    "contentHash": "0a2dd43ef6d8a44066113b4f360705ae899d3a3a0067aa6ba0875c9e0ca6fa5a",
+    "generatedAt": "2026-04-10T18:38:21.113Z"
+  },
+  "the-grain-of-the-signal": {
+    "excerpt": "The choice of analytical grain—whether we analyze signals at the level of atoms or gestalts—determines what we can perceive and explain. Music and speech systems must navigate competing scales simultaneously to capture meaning across multiple levels.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "mathematical-music-theory",
+      "rhythm"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f52288bbff8e5b2f8864acc97c4dbd5a6b8739d476003d7726cffde7948cb6eb",
+    "generatedAt": "2026-04-10T18:38:26.310Z"
+  },
+  "the-granularity-of-listening": {
+    "excerpt": "Five papers on anomaly detection, audio AI, voice cloning, and room acoustics reveal a universal principle: perception depends on listening at the right scale. When granularity mismatches the phenomenon, even advanced models fail.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "acoustics",
+      "AI-music",
+      "composition",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4a26247fd3b3fe8c190426821e5ffebd16eb3a9c99437b6a3c208bb3c95472d4",
+    "generatedAt": "2026-04-10T18:38:29.458Z"
+  },
+  "the-groove-equation": {
+    "excerpt": "Rhythm has deep mathematical structure beyond subdivision—from Sierpinski fractals and Boolean algebra to asymmetric meters—revealing how producers intuitively encode these ideas in groove.",
+    "tags": [
+      "rhythm",
+      "mathematical-music-theory",
+      "composition",
+      "group-theory",
+      "geometry",
+      "tuning-systems"
+    ],
+    "category": "mathematics",
+    "contentHash": "9213a7e75bbcd4ef85801160104d57f0af2c7254c4891377d8471894f21651ed",
+    "generatedAt": "2026-04-10T18:38:32.324Z"
+  },
+  "the-ground-note": {
+    "excerpt": "Musical meaning emerges not from frequencies themselves but from their relationship to a ground note—the bass defines a reference frame whose overtone series creates consonance templates that shape how we hear harmony, modes, and modulation.",
+    "tags": [
+      "resonance",
+      "psychoacoustics",
+      "mathematical-music-theory",
+      "tuning-systems",
+      "acoustics",
+      "composition"
+    ],
+    "category": "music-theory",
+    "contentHash": "7bf41060ac1451c2aed1b98a38d5544e6d5ae04e3bfbbd1b1624a94797d15400",
+    "generatedAt": "2026-04-10T18:38:34.869Z"
+  },
+  "the-hidden-scheduler": {
+    "excerpt": "Music and speech are controlled not by single clocks but by nested schedulers operating at different timescales—from micro-timing to phrase to form—each managing progress and return.",
+    "tags": [
+      "rhythm",
+      "perception",
+      "signal-processing",
+      "composition",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6f18d3b00d4ec4bc453f05388b93cccc880ee397d311d3ffb108ffe0494bed15",
+    "generatedAt": "2026-04-10T18:38:36.999Z"
+  },
+  "the-information-in-decay": {
+    "excerpt": "Decay reveals a system's identity through information-theoretic entropy. Musical sounds—like vibrating structures—communicate their essential character not through attack but through how they die.",
+    "tags": [
+      "information-theory",
+      "acoustics",
+      "psychoacoustics",
+      "resonance",
+      "composition",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "675d05346c0db6ce68791e69852cf40915dd32b7b5fedb0ad608d18f4cce50fb",
+    "generatedAt": "2026-04-10T18:38:39.311Z"
+  },
+  "the-informative-noise": {
+    "excerpt": "Signal purity paradoxically degrades AI perception—models achieve better performance with balanced noise rather than clean separation, revealing that context-embedded information outweighs clarity.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "information-theory",
+      "AI-music",
+      "acoustics",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4a467d5488284ad4a4ac1e926bb5dd0a66d37cae753e10c62f67cbe9e4a09118",
+    "generatedAt": "2026-04-10T18:38:41.803Z"
+  },
+  "the-instrument-as-equation": {
+    "excerpt": "Every musical instrument solves a specific differential equation with particular boundary conditions, generating unique eigenfrequencies that determine its timbre and shape the musical systems built around it.",
+    "tags": [
+      "wave-physics",
+      "acoustics",
+      "mathematical-music-theory",
+      "tuning-systems",
+      "temperament",
+      "resonance"
+    ],
+    "category": "physics-of-sound",
+    "contentHash": "093be923f33d099df36a2576417985fb33bd7aa53de3c982234e3d0e7e072a81",
+    "generatedAt": "2026-04-10T18:38:44.833Z"
+  },
+  "the-interference-pattern": {
+    "excerpt": "Superposition is music's deepest structural principle: timbre, harmony, rhythm, and form all emerge from interference patterns across different scales, unified by the mathematics of signal addition in vector spaces.",
+    "tags": [
+      "wave-physics",
+      "mathematical-music-theory",
+      "resonance",
+      "psychoacoustics",
+      "tuning-systems",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ecc668f2da0aa7a569c6b55426b2d7e4aebbfe9a446d3f73db5649fc6728b0e1",
+    "generatedAt": "2026-04-10T18:38:48.386Z"
+  },
+  "the-invariance-trap": {
+    "excerpt": "Audio encoders have blind spots dictated by their training objectives—an ASR model might miss pitch shifts while catching temporal shuffles. This analysis reveals the fundamental trade-off: representations designed to detect semantic changes often miss structural ones, and vice versa.",
+    "tags": [
+      "signal-processing",
+      "information-theory",
+      "AI-music",
+      "perception",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c3cd98b6d38de24a3093c319a4309cae70f2b52347a0b4483d3be5fc5a1f462d",
+    "generatedAt": "2026-04-10T18:38:50.986Z"
+  },
+  "the-invisible-hand-of-timing": {
+    "excerpt": "Micro-timing adjustments at specific temporal windows dramatically improve perceptual clarity while remaining unnoticed—revealing that timing effects operate across hierarchical scales with opposite effects at early versus late contexts.",
+    "tags": [
+      "rhythm",
+      "perception",
+      "psychoacoustics",
+      "composition",
+      "signal-processing",
+      "resonance"
+    ],
+    "category": "perception",
+    "contentHash": "a847bf3a08d80e6165b319cb0d2fa7992f3d2d772d98ac3c1557eceeb683101f",
+    "generatedAt": "2026-04-10T18:38:53.313Z"
+  },
+  "the-involuntary-broadcast": {
+    "excerpt": "Bodies broadcast their physiological and emotional state involuntarily through acoustic channels—a pre-linguistic communication system that music learned to compose for, where the deepest power lies in arousal rather than intentional expression.",
+    "tags": [
+      "psychoacoustics",
+      "signal-processing",
+      "perception",
+      "resonance",
+      "consciousness",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "0347016d5a02a197faa7ded5bc01b517b5c98ecbac41cb0f4df18211c3a012aa",
+    "generatedAt": "2026-04-10T18:38:57.284Z"
+  },
+  "the-listeners-grid": {
+    "excerpt": "Goodman's cylinder organizes pitch by fifths and octaves to model how listeners decompose polyphonic sound into fundamentals and harmonics—revealing a source/echo duality that mirrors the composer's harmonic navigation.",
+    "tags": [
+      "mathematical-music-theory",
+      "geometry",
+      "group-theory",
+      "psychoacoustics",
+      "perception",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "5f96b97861e09d0474b06ac67ab655dc6b5bab183c157bd8d3c27e39d2c3c175",
+    "generatedAt": "2026-04-10T18:39:00.050Z"
+  },
+  "the-listening-gap": {
+    "excerpt": "The gap between what we hear and what we can describe about sound is structural, not solvable—language's sequential, categorical nature can never fully capture hearing's parallel, analog richness, yet this irreducible gap is precisely what gives music its meaning.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "AI-music",
+      "information-theory",
+      "psychoacoustics",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "0ce092a809fd6c9d03bb86a784ffcbb68a392459d411dc0ab1bf68cc63b8edc3",
+    "generatedAt": "2026-04-10T18:39:04.632Z"
+  },
+  "the-locking-in": {
+    "excerpt": "Mode-locking explains how coupled oscillators snap into simple frequency ratios—from Huygens' pendulum clocks to cochlear consonance to groove. The physics beneath music's deepest structures.",
+    "tags": [
+      "resonance",
+      "wave-physics",
+      "mathematical-music-theory",
+      "rhythm",
+      "tuning-systems",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ec59ab19a8488d722f4a1fd0c36a6361dddd9f3ab89c489086bf9971885213f3",
+    "generatedAt": "2026-04-10T18:39:10.519Z"
+  },
+  "the-lonely-runner": {
+    "excerpt": "The Lonely Runner Conjecture from number theory reveals a hidden mathematical guarantee in music: every voice in a polyphonic texture will eventually achieve maximum independence from all others, connecting contrapuntal practice to Diophantine approximation.",
+    "tags": [
+      "number-theory",
+      "mathematical-music-theory",
+      "group-theory",
+      "rhythm",
+      "perception",
+      "composition"
+    ],
+    "category": "mathematics",
+    "contentHash": "423e526ce981044c395ddceed1c22028d495b1aec8669c0e9b327b147410037b",
+    "generatedAt": "2026-04-10T18:39:13.002Z"
+  },
+  "the-longer-way-home": {
+    "excerpt": "Modern audio systems and composition share a counterintuitive principle: working in over-resolved spaces—temporal, spectral, or relational—before returning to the final output produces clearer, more robust results.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "psychoacoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ea4a82536e4016b7c2cd52dc5be447683872207a71cc82afd31fb79935d5cd16",
+    "generatedAt": "2026-04-10T18:39:15.490Z"
+  },
+  "the-measurement-wall": {
+    "excerpt": "Three converging research areas reveal an inescapable ceiling on audio quality metrics: statistical noise in listeners, undefined perceptual anchors, and entangled measurement dimensions all create irreducible limits to predicting subjective experience from objective signals.",
+    "tags": [
+      "psychoacoustics",
+      "perception",
+      "signal-processing",
+      "acoustics",
+      "information-theory",
+      "composition"
+    ],
+    "category": "perception",
+    "contentHash": "d4a0983bda7b61617e280889f8c418753c513432d21fbab3262fc5bce5c9a5f6",
+    "generatedAt": "2026-04-10T18:39:18.041Z"
+  },
+  "the-memory-of-sound": {
+    "excerpt": "Music exploits the listener's hierarchical memory architecture—from echoic buffers to cultural transmission—to create temporal structures that match how humans remember, predict, and process information.",
+    "tags": [
+      "perception",
+      "mathematical-music-theory",
+      "psychoacoustics",
+      "composition",
+      "rhythm",
+      "information-theory"
+    ],
+    "category": "perception",
+    "contentHash": "e0bb51c0cfc354a762820b3a150fda4495705478ae168ef3131b27930343e3d0",
+    "generatedAt": "2026-04-10T18:39:19.994Z"
+  },
+  "the-metric-that-listens": {
+    "excerpt": "Metrics fail because they measure absolute values, but perception works through relationships across timescales. The best expressiveness measures learn these multi-scale relational patterns—explaining why musicians were right about tempo variation and why click tracks miss the music.",
+    "tags": [
+      "perception",
+      "rhythm",
+      "signal-processing",
+      "psychoacoustics",
+      "mathematical-music-theory",
+      "composition"
+    ],
+    "category": "perception",
+    "contentHash": "ad517eda793ec33274925c5f69729c71af0870c133182590262b791c276581b8",
+    "generatedAt": "2026-04-10T18:39:23.520Z"
+  },
+  "the-mirror-in-the-chord": {
+    "excerpt": "Major and minor chords are geometric reflections of each other across a symmetry axis in the frequency-period plane, revealing that music's emotional and perceptual character emerges from wave physics itself.",
+    "tags": [
+      "mathematical-music-theory",
+      "tuning-systems",
+      "temperament",
+      "psychoacoustics",
+      "group-theory",
+      "resonance"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "fa86bb09be5fd43696e96aaaef69e994f79bab9f97d0914f57bb7e4a7871a740",
+    "generatedAt": "2026-04-10T18:39:25.921Z"
+  },
+  "the-multiplexed-voice": {
+    "excerpt": "The human voice transmits six simultaneous channels—from linguistic content to emotional state, identity, social position, physical condition, and acoustic environment—all entangled in a single broadcast. Recent AI research reveals how machines stumble by treating this multiplexed signal as single-channel, while composers have always known the full spectrum.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "composition",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "64511d4adb8000cdaf3b568117ac935ff10c6627d0ce34296c186a3451b5e100",
+    "generatedAt": "2026-04-10T18:39:34.743Z"
+  },
+  "the-notation-constraint": {
+    "excerpt": "Musical notation isn't neutral transcription—it's a cognitive technology that shapes what composers can think. By factorizing sound into different representations, we enable specific operations while foreclosing others, determining both the music we create and our ability to understand it.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "perception",
+      "signal-processing",
+      "information-theory",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "e07aa7292b5739469a064e13f37c6d2795200a6ea426ddb46292fbf3de060cb7",
+    "generatedAt": "2026-04-10T18:39:38.125Z"
+  },
+  "the-observers-instrument": {
+    "excerpt": "Musical representations aren't neutral windows onto reality—they're instruments that fundamentally reshape what we perceive as music itself, determining which patterns become visible and where understanding can emerge.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "information-theory",
+      "mathematical-music-theory",
+      "composition",
+      "cymatics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1e309be3750bf500e7225afda2e667b2779f0aec0f48cfdacc81175171b1ad93",
+    "generatedAt": "2026-04-10T18:39:41.820Z"
+  },
+  "the-orthogonal-unknown": {
+    "excerpt": "When neural systems make the boundary between known and unknown information mathematically explicit—via orthogonal decomposition, frequency crossovers, or distributional ambiguity—they achieve better results with dramatically fewer parameters.",
+    "tags": [
+      "signal-processing",
+      "mathematical-music-theory",
+      "information-theory",
+      "acoustics",
+      "composition",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "d1f76961c661dcd2ecc4ec939ee53b542945a744a69c3189698a0807379380d7",
+    "generatedAt": "2026-04-10T18:39:45.281Z"
+  },
+  "the-periodic-signature": {
+    "excerpt": "Periodicity—not raw waveforms—is what makes sound recognizable. From neural network activations to whale songs, identity emerges from repeated patterns at multiple timescales.",
+    "tags": [
+      "mathematical-music-theory",
+      "signal-processing",
+      "composition",
+      "perception",
+      "tuning-systems",
+      "resonance"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "209af078091f2d5352efe634a770e5a41a7a4e756415a9fdb5ddac8ca80c1679",
+    "generatedAt": "2026-04-10T18:39:47.544Z"
+  },
+  "the-polyphony-problem": {
+    "excerpt": "Polyphony exposes a categorical gap in how AI—and music theory—represents simultaneity. When multiple voices overlap, the problem shifts from sequence modeling to configurational reasoning about what coexists meaningfully.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "perception",
+      "signal-processing",
+      "AI-music",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "14048509a2f314e329ef15762f1a09f78aa6b85b4d6b60c6e4f28c3506301afe",
+    "generatedAt": "2026-04-10T18:39:49.846Z"
+  },
+  "the-prime-dimensions": {
+    "excerpt": "Primes are the fundamental dimensions of harmonic space—each prime opens a new axis of musical possibility, from medieval fifths through Renaissance thirds to the blue notes of jazz and blues.",
+    "tags": [
+      "number-theory",
+      "mathematical-music-theory",
+      "tuning-systems",
+      "temperament",
+      "xenharmonic",
+      "psychoacoustics"
+    ],
+    "category": "mathematics",
+    "contentHash": "36394033f62c16d189ecabbacc361e440c02a6552bbe13d00d723d15000ed2b3",
+    "generatedAt": "2026-04-10T18:39:52.516Z"
+  },
+  "the-reconstruction-limit": {
+    "excerpt": "Three seemingly unrelated audio AI problems reveal a unified principle: when signal information becomes insufficient, recovery transforms into invention. Explores the reconstruction limit across frequency, sources, and perception.",
+    "tags": [
+      "signal-processing",
+      "information-theory",
+      "psychoacoustics",
+      "AI-music",
+      "perception",
+      "wave-physics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "df7c6c868d2f9db2e5ddde9d6a349e02a8ffe962fa871c032ef97bf194643475",
+    "generatedAt": "2026-04-10T18:39:56.291Z"
+  },
+  "the-representation-gap": {
+    "excerpt": "Every musical representation preserves something while destroying something else. New research reveals how AI systems develop hidden biases toward certain representations—and why understanding these gaps matters for music cognition and generation.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "information-theory",
+      "perception",
+      "mathematical-music-theory",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3f5e1a9edaa08523ee80a56eb48a9701dcd3f01f94052785af14243daef7b59f",
+    "generatedAt": "2026-04-10T18:39:58.558Z"
+  },
+  "the-resonance-cascade": {
+    "excerpt": "Resonance operates across seven scales—from vibrating strings to cultural convention—each level filtering and amplifying musical experience through the same fundamental mechanism of selective amplification.",
+    "tags": [
+      "resonance",
+      "psychoacoustics",
+      "wave-physics",
+      "mathematical-music-theory",
+      "perception",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "d353147037db289eb144278ddd41158a5802b1507495edf437e72500bdaa247f",
+    "generatedAt": "2026-04-10T18:40:01.572Z"
+  },
+  "the-room-that-isnt-there": {
+    "excerpt": "Listening is an act of completion—from spatial inference in rooms to spectral reconstruction in timbral perception. Diffusion models formalize what the auditory system does, offering composers new tools to control what listeners infer from partial acoustic information.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "acoustics",
+      "signal-processing",
+      "composition",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4ed2d201d04addc532900113523874ee6994b19a1e722d8f65d5b3a8eea864cb",
+    "generatedAt": "2026-04-10T18:40:06.923Z"
+  },
+  "the-self-teaching-signal": {
+    "excerpt": "When audio signals contain their own decomposition—from room acoustics to instrument timbres—machine learning and music composition reveal a shared principle: sound knows how to understand itself.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "acoustics",
+      "composition",
+      "psychoacoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "60351e95175860ff89e5653c1f91d15c5786251fb537df15afb39fddd1b9a9fa",
+    "generatedAt": "2026-04-10T18:40:09.559Z"
+  },
+  "the-semantic-split": {
+    "excerpt": "Perfect acoustic reproduction doesn't guarantee semantic understanding. Just as neural codecs separate acoustic fidelity from harmonic meaning, tuning systems encode either acoustic uniformity or semantic function—but rarely both.",
+    "tags": [
+      "tuning-systems",
+      "information-theory",
+      "signal-processing",
+      "mathematical-music-theory",
+      "perception",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "2576a2332d553110488f704bb5f78c727ace6faa7365523f1fd94b5233d8ac81",
+    "generatedAt": "2026-04-10T18:40:11.614Z"
+  },
+  "the-shape-of-musical-choice": {
+    "excerpt": "Mathematical constraints on chord spaces and melodic invention reveal how composers navigate fixed topological structures—orbifolds, low-dimensional attractors—while expressing individual style within them.",
+    "tags": [
+      "mathematical-music-theory",
+      "group-theory",
+      "geometry",
+      "composition",
+      "tuning-systems",
+      "perception"
+    ],
+    "category": "mathematics",
+    "contentHash": "337926c413a1fc7e3f369cb66f332c52e01ac657034d53bb28378e7c695aa092",
+    "generatedAt": "2026-04-10T18:40:15.925Z"
+  },
+  "the-ship-of-theseus-in-sound": {
+    "excerpt": "Four recent papers on audio fingerprinting, voice anonymization, speaker verification, and AI music detection reveal acoustic identity as a multi-dimensional, temporally distributed property that survives transformation but has a definable boundary—opening new compositional design spaces.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "mathematical-music-theory",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4ca5099e10a8b8faf5b0defb0473229da548d2b58bc4a4b89cf295cb801372f9",
+    "generatedAt": "2026-04-10T18:40:19.287Z"
+  },
+  "the-signal-structure-gap": {
+    "excerpt": "Machines excel at detecting acoustic surfaces—timbre, noise, spectral artifacts—while remaining blind to musical structure: harmony, form, and coherence. This signal-structure gap reveals where musical meaning actually lives.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "perception",
+      "mathematical-music-theory",
+      "composition",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b0cfe391e32a79cb33f2eeff35979f4a174e6d0a78ddee23234a71ef53e603c4",
+    "generatedAt": "2026-04-10T18:40:25.230Z"
+  },
+  "the-silent-majority": {
+    "excerpt": "AI systems inherit Western culture's visual bias, subordinating hearing to seeing—from benchmark design to model architecture. What would change if we took listening seriously?",
+    "tags": [
+      "perception",
+      "AI-music",
+      "psychoacoustics",
+      "composition",
+      "signal-processing",
+      "consciousness"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ac0d7287c28c735aa823ea69d3b27d64abf28e2c028351a937082f14962375b3",
+    "generatedAt": "2026-04-10T18:40:27.236Z"
+  },
+  "the-space-between": {
+    "excerpt": "Three 2026 papers reveal why AI struggles with music: it's not about generating individual elements, but capturing the relational properties—groove, spatial acoustics, cross-dimensional analysis—that live in the space between.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "composition",
+      "acoustics",
+      "mathematical-music-theory",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3533f07aeb71ce757d87cd5c19c5280c9e5675ac8e9f22ff076b26c06600f562",
+    "generatedAt": "2026-04-10T18:40:30.350Z"
+  },
+  "the-spectrum-as-score": {
+    "excerpt": "Pitch and timbre are the same physical phenomenon—spectral structure—perceived at different timescales. Fourier analysis, spectral composition, and the cochlea's time-frequency representation reveal how musical parameters dissolve into unified periodicity patterns.",
+    "tags": [
+      "microtuning",
+      "xenharmonic",
+      "psychoacoustics",
+      "wave-physics",
+      "mathematical-music-theory",
+      "resonance"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a9f37c1b2b27eaecd98c4bdd5a2a7bc005b0bbe6a6e6a731dad93764bb53f6b8",
+    "generatedAt": "2026-04-10T18:40:32.915Z"
+  },
+  "the-spheres-revisited": {
+    "excerpt": "Two independent research groups found statistically significant musical-interval correspondences in planetary orbital mechanics—suggesting the \"music of the spheres\" is less mysticism than universal mathematics of resonance.",
+    "tags": [
+      "resonance",
+      "mathematical-music-theory",
+      "sacred-geometry",
+      "cymatics",
+      "number-theory",
+      "tuning-systems"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "db321a0570c0ae03d3e9195ab233c9e9acbb76d5edc4ae0f7e436d24cda0300f",
+    "generatedAt": "2026-04-10T18:40:35.163Z"
+  },
+  "the-staircase-and-the-slope": {
+    "excerpt": "Music emerges at the boundary where continuous physics becomes discrete perception—a tension that generates structure through quantization, mode-locking, and the mathematical devil's staircase.",
+    "tags": [
+      "mathematical-music-theory",
+      "wave-physics",
+      "psychoacoustics",
+      "tuning-systems",
+      "rhythm",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "e003d8c05100a697cb56ecb3229202115c91d30b4360c230cc554504f8630bab",
+    "generatedAt": "2026-04-10T18:40:37.615Z"
+  },
+  "the-state-of-the-music": {
+    "excerpt": "State space models from control engineering reveal how music organizes temporal memory across multiple scales—from fast ornamental flourishes to slow harmonic evolution—offering new insights into composition and AI music generation.",
+    "tags": [
+      "mathematical-music-theory",
+      "signal-processing",
+      "AI-music",
+      "information-theory",
+      "composition",
+      "rhythm"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "34c0b4476b0a9b1e3ca6f6d91e43bee2a31ed82e43deaeb5c2447b08015c3851",
+    "generatedAt": "2026-04-10T18:40:40.085Z"
+  },
+  "the-steering-principle": {
+    "excerpt": "Steering guides systems through directional constraints while preserving internal dynamics, contrasting with integration that risks contaminating learned priors—a principle unifying audio-visual separation, generative video-to-audio, and musical composition.",
+    "tags": [
+      "signal-processing",
+      "information-theory",
+      "composition",
+      "perception",
+      "AI-music",
+      "consciousness"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "e75d87c3b294730968842df2248bf5d0c3475057c83c98200057de1570b24c25",
+    "generatedAt": "2026-04-10T18:40:42.617Z"
+  },
+  "the-surface-and-the-source": {
+    "excerpt": "Timbre perception maps cleanly to simple acoustic parameters, yet producing timbre requires understanding the hidden causal chain. Exploring the gap between what sounds like and what makes it.",
+    "tags": [
+      "signal-processing",
+      "acoustics",
+      "perception",
+      "composition",
+      "psychoacoustics",
+      "wave-physics"
+    ],
+    "category": "physics-of-sound",
+    "contentHash": "65eef34bad9c56809e9ad061d522e6256352f0f96a25048f734881aa8be79cb4",
+    "generatedAt": "2026-04-10T18:40:45.508Z"
+  },
+  "the-symmetry-tax": {
+    "excerpt": "Every musical symmetry—repetition, transposition, pattern—reduces information content but enables listener comprehension. Composers pay a 'symmetry tax' trading variety for intelligibility, optimized when asymmetry carries the meaning.",
+    "tags": [
+      "group-theory",
+      "information-theory",
+      "mathematical-music-theory",
+      "perception",
+      "composition",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1d50e123ffebffa191b015514f73799235dc10623c54e063cf37da521192267a",
+    "generatedAt": "2026-04-10T18:40:48.033Z"
+  },
+  "the-three-means": {
+    "excerpt": "Ancient mathematicians derived the three classical means—arithmetic, geometric, harmonic—from music itself, revealing how different division philosophies create distinct harmonic characters and tuning systems.",
+    "tags": [
+      "mathematical-music-theory",
+      "tuning-systems",
+      "temperament",
+      "sacred-geometry",
+      "number-theory",
+      "composition"
+    ],
+    "category": "mathematics",
+    "contentHash": "d687c121aa502ef3fbfd395205c6e775ae9ddb6db1e8e2f9fb53bb621e90d076",
+    "generatedAt": "2026-04-10T18:40:50.622Z"
+  },
+  "the-timing-engine": {
+    "excerpt": "Rhythm isn't just music—it's a motor timing system. When children with stuttering trained on rhythm games, their speech improved, revealing that the neural clock orchestrating music and speech is one and the same.",
+    "tags": [
+      "rhythm",
+      "perception",
+      "psychoacoustics",
+      "composition",
+      "signal-processing",
+      "consciousness"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "e0b570c5c555b2498991c2f46f819e9a264f86e907940b4fbd788387dd653128",
+    "generatedAt": "2026-04-10T18:40:54.036Z"
+  },
+  "the-topology-of-time": {
+    "excerpt": "Musical time isn't a line but a topological space with loops, hierarchical nesting, and identifications—a framework that explains form, repetition, and why theme returns feel like folding rather than forwarding.",
+    "tags": [
+      "mathematical-music-theory",
+      "group-theory",
+      "geometry",
+      "composition",
+      "perception",
+      "resonance"
+    ],
+    "category": "mathematics",
+    "contentHash": "93be8489646b223324ef7d25fd013fcfc251a0704b44100ad753e5fa9cfe75a2",
+    "generatedAt": "2026-04-10T18:40:56.085Z"
+  },
+  "the-trade-you-cannot-escape": {
+    "excerpt": "The time-frequency uncertainty principle isn't just physics—it's a compositional constraint. Learned representations, musical notation, and orchestration all navigate the inescapable trade-off between temporal precision and spectral richness.",
+    "tags": [
+      "wave-physics",
+      "signal-processing",
+      "perception",
+      "mathematical-music-theory",
+      "composition",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "69ae9f3b44b98b3750f63a5a03c70acc26b15ca77c786343f33c99ca20c2f2d1",
+    "generatedAt": "2026-04-10T18:40:59.313Z"
+  },
+  "the-tuning-codec": {
+    "excerpt": "Tuning systems and audio codecs solve the same problem: compressing infinite possibilities into finite, playable representations. Both distribute quantization error through perceptual weighting, making temperament the acoustic analog of lossy compression.",
+    "tags": [
+      "temperament",
+      "information-theory",
+      "tuning-systems",
+      "signal-processing",
+      "psychoacoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "093ac1c6628075b53490e92bd92c8f6f6e889cbe1a91237a12f114c69620eec8",
+    "generatedAt": "2026-04-10T18:41:02.659Z"
+  },
+  "the-uncertainty-of-sound": {
+    "excerpt": "The uncertainty principle constrains music at every level: physics dictates that sharp attacks sacrifice pitch clarity, perception integrates over windows inversely tied to frequency, and composition must navigate this fundamental tradeoff between temporal and spectral precision.",
+    "tags": [
+      "wave-physics",
+      "psychoacoustics",
+      "signal-processing",
+      "perception",
+      "composition",
+      "mathematical-music-theory"
+    ],
+    "category": "physics-of-sound",
+    "contentHash": "24bdf0301a58e2728f688594698152ac9f4e1a7f539893ed6a6293ee902b8a55",
+    "generatedAt": "2026-04-10T18:41:06.482Z"
+  },
+  "the-unwritten-laws": {
+    "excerpt": "Genres aren't sonic categories but ethical frameworks that define what counts as authenticity, craft, and virtue. The same musical act may be heroic under rock law but criminal under jazz law—and understanding these competing moral systems reframes how we judge music.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "perception",
+      "group-theory",
+      "tuning-systems"
+    ],
+    "category": "music-theory",
+    "contentHash": "a25ffb20e5281a6cd0d9a5b09e8edea70567ba75e4adc2169f6581f29ddf459b",
+    "generatedAt": "2026-04-10T18:41:09.464Z"
+  },
+  "the-voice-has-more-axes-than-the-metric": {
+    "excerpt": "Voice is not a single parameter but a multidimensional stack of identity, accent, prosody, and timing. Collapsing these into one metric erases the distinctions that matter for listening and composition.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "acoustics",
+      "composition",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "perception",
+    "contentHash": "009a41bcfda071f500a49afde719a52f8211b52885da90fbcf589ed81faf2197",
+    "generatedAt": "2026-04-10T18:41:12.025Z"
+  },
+  "what-comes-apart": {
+    "excerpt": "Separability of sound properties depends not on physics but on representation—whether you can pull pitch from rhythm, emotion from language, or signal from noise hinges on the dimensional space you choose to work in.",
+    "tags": [
+      "signal-processing",
+      "information-theory",
+      "composition",
+      "perception",
+      "mathematical-music-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7d2cd20908b657946d3865107217b91ab66c28cd4769df1e7dddcd02e7309d5b",
+    "generatedAt": "2026-04-10T18:41:19.026Z"
+  },
+  "what-survives": {
+    "excerpt": "Sound is structure: geometry, resonance, identity, and attractors form a closed loop where what survives any transformation reveals the invariant patterns that constitute music itself.",
+    "tags": [
+      "mathematical-music-theory",
+      "wave-physics",
+      "resonance",
+      "geometry",
+      "signal-processing",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4ec0a8af9978856f9b398a5434f2822a98042a5b2d0597451e03550be7e409e5",
+    "generatedAt": "2026-04-10T18:41:21.375Z"
+  },
+  "what-the-hierarchy-hides": {
+    "excerpt": "Hierarchical systems in audio and music hide their information at the top level—optimizing notes or fine details can degrade overall quality, while coarse properties like energy and form often carry more meaning than local spectral features.",
+    "tags": [
+      "composition",
+      "perception",
+      "signal-processing",
+      "information-theory",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a17829d97896c43e437f9c7c90f979e7c7ac6656d7dcbf9ba44f547d067adb3c",
+    "generatedAt": "2026-04-10T18:41:24.116Z"
+  },
+  "what-the-machine-hears": {
+    "excerpt": "When AI models learn to generate music, do they rediscover acoustic physics or encode cultural conventions? Exploring what concept directions in neural networks reveal about the boundary between universal sound physics and learned musical culture.",
+    "tags": [
+      "AI-music",
+      "mathematical-music-theory",
+      "tuning-systems",
+      "signal-processing",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a50a6e0bcbb74fa45c922ea7590bf8d296287421ca3a753a8e2fce968be61dcc",
+    "generatedAt": "2026-04-10T18:41:26.772Z"
+  },
+  "what-we-measure": {
+    "excerpt": "Audio quality metrics excel at detecting surface artifacts but miss structural musical elements entirely—revealing that what we measure systematically differs from what we actually hear.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "AI-music",
+      "acoustics",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "perception",
+    "contentHash": "a02c6ac91ab15834378d8455f78e9b2ee0dc96a2dc5b5d1b3979bb8531354a3a",
+    "generatedAt": "2026-04-10T18:41:28.933Z"
+  },
+  "when-geometry-sings": {
+    "excerpt": "Geometry transforms noise into pitch: from squeaking sneakers to horse larynxes, physical structure determines which frequencies emerge. Explores how mathematical music spaces arise from physics.",
+    "tags": [
+      "geometry",
+      "acoustics",
+      "wave-physics",
+      "resonance",
+      "sound-healing",
+      "psychoacoustics"
+    ],
+    "category": "physics-of-sound",
+    "contentHash": "ef902d0c3eda47039faea48f1d2069b65f56d02f850a3895a80db24ca4f2e3c4",
+    "generatedAt": "2026-04-10T18:41:31.359Z"
+  },
+  "where-the-signal-breaks": {
+    "excerpt": "Audio systems break at boundaries between regimes—precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "acoustics",
+      "AI-music",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
+    "generatedAt": "2026-04-10T18:41:33.937Z"
+  }
+}

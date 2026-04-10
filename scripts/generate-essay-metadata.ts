@@ -60,11 +60,11 @@ const CATEGORIES = [
 const metadataSchema = z.object({
   excerpt: z
     .string()
-    .describe("1-2 sentence summary suitable for a blog card, under 200 characters"),
+    .describe(
+      "1-2 sentence summary suitable for a blog card, under 200 characters",
+    ),
   tags: z
     .array(z.enum(TAG_VOCABULARY))
-    .min(3)
-    .max(6)
     .describe("3-6 tags from the controlled vocabulary"),
   category: z.enum(CATEGORIES).describe("Single best-fit category"),
 });
@@ -75,6 +75,26 @@ type EssayMetadataEntry = z.infer<typeof metadataSchema> & {
 };
 
 type MetadataFile = Record<string, EssayMetadataEntry>;
+
+function normalizeExcerpt(excerpt: string): string {
+  return excerpt.trim().replace(/\s+/g, " ");
+}
+
+function normalizeTags(tags: string[]): EssayMetadataEntry["tags"] {
+  const uniqueTags = Array.from(
+    new Set(
+      tags.filter((tag): tag is EssayMetadataEntry["tags"][number] =>
+        (TAG_VOCABULARY as readonly string[]).includes(tag),
+      ),
+    ),
+  );
+
+  if (uniqueTags.length < 3) {
+    throw new Error(`Expected at least 3 valid tags, got ${uniqueTags.length}`);
+  }
+
+  return uniqueTags.slice(0, 6);
+}
 
 function contentHash(content: string): string {
   return createHash("sha256").update(content).digest("hex");
@@ -101,7 +121,9 @@ async function main() {
   const openrouter = createOpenRouter({ apiKey });
   const model = openrouter(MODEL_ID);
 
-  const files = (await readdir(ESSAYS_DIR)).filter((f) => f.endsWith(".md"));
+  const files = (await readdir(ESSAYS_DIR))
+    .filter((f) => f.endsWith(".md"))
+    .sort();
   const metadata = await loadMetadata();
 
   let processed = 0;
@@ -139,8 +161,13 @@ async function main() {
         throw new Error("No structured output returned");
       }
 
+      const excerpt = normalizeExcerpt(output.excerpt);
+      const tags = normalizeTags(output.tags);
+
       metadata[slug] = {
-        ...output,
+        excerpt,
+        tags,
+        category: output.category,
         contentHash: hash,
         generatedAt: new Date().toISOString(),
       };
@@ -154,13 +181,22 @@ async function main() {
 
   // Sort keys alphabetically for stable output
   const sorted: MetadataFile = {};
-  for (const key of Object.keys(metadata).toSorted()) {
-    sorted[key] = metadata[key];
+  for (const key of Object.keys(metadata).sort()) {
+    const entry = metadata[key];
+    if (entry) {
+      sorted[key] = entry;
+    }
   }
 
-  await writeFile(METADATA_PATH, JSON.stringify(sorted, null, 2) + "\n", "utf8");
+  await writeFile(
+    METADATA_PATH,
+    JSON.stringify(sorted, null, 2) + "\n",
+    "utf8",
+  );
 
-  console.log(`\nDone. Processed: ${processed}, Skipped: ${skipped}, Failed: ${failures.length}`);
+  console.log(
+    `\nDone. Processed: ${processed}, Skipped: ${skipped}, Failed: ${failures.length}`,
+  );
   if (failures.length > 0) {
     console.error("Failures:", failures.join(", "));
     process.exit(1);

@@ -14,7 +14,9 @@ describe("parseEssay", () => {
 First paragraph here.`;
 
     const result = parseEssay(input, "the-ground-note.md");
-    expect(result.title).toBe("The Ground Note: Why Everything in Music Is Relative");
+    expect(result.title).toBe(
+      "The Ground Note: Why Everything in Music Is Relative",
+    );
     expect(result.slug).toBe("the-ground-note");
     expect(result.publishDate).toBe("2026-03-20");
     expect(result.draft).toBe(false);
@@ -147,6 +149,24 @@ draft: false
 Paragraph.`;
 
     const result = parseEssay(input, "test.md");
+    expect(result.body).toBe("## First Section\n\nParagraph.");
+  });
+
+  test("strips separator when a subtitle sits between byline and body", () => {
+    const input = `# Title
+
+**Essay #80** — March 31, 2026
+
+*Subtitle line here.*
+
+---
+
+## First Section
+
+Paragraph.`;
+
+    const result = parseEssay(input, "test.md");
+    expect(result.publishDate).toBe("2026-03-31");
     expect(result.body).toBe("## First Section\n\nParagraph.");
   });
 

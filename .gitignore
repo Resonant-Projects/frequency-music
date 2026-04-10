@@ -30,6 +30,7 @@ web/playwright-report
 web/artifacts
 web/test-results
 web/tests/e2e/.auth
+exports/blog/
 
 # IntelliJ based IDEs
 .idea
