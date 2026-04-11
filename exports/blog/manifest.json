@@ -1,0 +1,748 @@
+{
+  "version": "frequency_essays_v1",
+  "generatedAt": "2026-04-11T16:00:22.503Z",
+  "items": [
+    {
+      "slug": "the-ghost-at-the-grid-line",
+      "path": "essays/the-ghost-at-the-grid-line.md",
+      "title": "The Ghost at the Grid Line",
+      "publishDate": "2026-04-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-trade-you-cannot-escape",
+      "path": "essays/the-trade-you-cannot-escape.md",
+      "title": "The Trade You Cannot Escape",
+      "publishDate": "2026-04-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-anchor-that-moves",
+      "path": "essays/the-anchor-that-moves.md",
+      "title": "The Anchor That Moves",
+      "publishDate": "2026-04-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "what-comes-apart",
+      "path": "essays/what-comes-apart.md",
+      "title": "What Comes Apart",
+      "publishDate": "2026-04-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-grain-of-the-signal",
+      "path": "essays/the-grain-of-the-signal.md",
+      "title": "The Grain of the Signal",
+      "publishDate": "2026-04-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "what-the-machine-hears",
+      "path": "essays/what-the-machine-hears.md",
+      "title": "What the Machine Hears",
+      "publishDate": "2026-04-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "where-the-signal-breaks",
+      "path": "essays/where-the-signal-breaks.md",
+      "title": "Where the Signal Breaks",
+      "publishDate": "2026-04-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "every-basis-has-a-bias",
+      "path": "essays/every-basis-has-a-bias.md",
+      "title": "Every Basis Has a Bias",
+      "publishDate": "2026-04-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-geometry-inside-sound",
+      "path": "essays/the-geometry-inside-sound.md",
+      "title": "The Geometry Inside Sound",
+      "publishDate": "2026-04-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "what-the-hierarchy-hides",
+      "path": "essays/what-the-hierarchy-hides.md",
+      "title": "What the Hierarchy Hides",
+      "publishDate": "2026-04-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-gesture-before-the-sound",
+      "path": "essays/the-gesture-before-the-sound.md",
+      "title": "The Gesture Before the Sound",
+      "publishDate": "2026-04-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-voice-has-more-axes-than-the-metric",
+      "path": "essays/the-voice-has-more-axes-than-the-metric.md",
+      "title": "The Voice Has More Axes Than the Metric",
+      "publishDate": "2026-04-06",
+      "category": "perception"
+    },
+    {
+      "slug": "the-comparator-is-the-instrument",
+      "path": "essays/the-comparator-is-the-instrument.md",
+      "title": "The Comparator Is the Instrument",
+      "publishDate": "2026-04-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-longer-way-home",
+      "path": "essays/the-longer-way-home.md",
+      "title": "The Longer Way Home",
+      "publishDate": "2026-04-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-hidden-scheduler",
+      "path": "essays/the-hidden-scheduler.md",
+      "title": "The Hidden Scheduler",
+      "publishDate": "2026-04-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-involuntary-broadcast",
+      "path": "essays/the-involuntary-broadcast.md",
+      "title": "The Involuntary Broadcast",
+      "publishDate": "2026-04-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-covert-groove",
+      "path": "essays/the-covert-groove.md",
+      "title": "The Covert Groove",
+      "publishDate": "2026-04-03",
+      "category": "perception"
+    },
+    {
+      "slug": "the-entangled-signal",
+      "path": "essays/the-entangled-signal.md",
+      "title": "The Entangled Signal",
+      "publishDate": "2026-04-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-invisible-hand-of-timing",
+      "path": "essays/the-invisible-hand-of-timing.md",
+      "title": "The Invisible Hand of Timing",
+      "publishDate": "2026-04-03",
+      "category": "perception"
+    },
+    {
+      "slug": "the-metric-that-listens",
+      "path": "essays/the-metric-that-listens.md",
+      "title": "The Metric That Listens",
+      "publishDate": "2026-04-03",
+      "category": "perception"
+    },
+    {
+      "slug": "hearing-backwards",
+      "path": "essays/hearing-backwards.md",
+      "title": "Hearing Backwards",
+      "publishDate": "2026-04-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-cost-of-moving",
+      "path": "essays/the-cost-of-moving.md",
+      "title": "The Cost of Moving",
+      "publishDate": "2026-04-02",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-grain-of-listening",
+      "path": "essays/the-grain-of-listening.md",
+      "title": "The Grain of Listening",
+      "publishDate": "2026-04-02",
+      "category": "perception"
+    },
+    {
+      "slug": "the-information-in-decay",
+      "path": "essays/the-information-in-decay.md",
+      "title": "The Information in Decay",
+      "publishDate": "2026-04-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "what-survives",
+      "path": "essays/what-survives.md",
+      "title": "What Survives: Five Proofs That Sound Is Structure",
+      "publishDate": "2026-04-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "what-we-measure",
+      "path": "essays/what-we-measure.md",
+      "title": "What We Measure Isn't What We Hear",
+      "publishDate": "2026-04-01",
+      "category": "perception"
+    },
+    {
+      "slug": "everything-is-a-resonant-body",
+      "path": "essays/everything-is-a-resonant-body.md",
+      "title": "Everything Is a Resonant Body",
+      "publishDate": "2026-03-31",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-geometry-of-sounding-bodies",
+      "path": "essays/the-geometry-of-sounding-bodies.md",
+      "title": "The Geometry of Sounding Bodies: Shape as Score",
+      "publishDate": "2026-03-31",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-ship-of-theseus-in-sound",
+      "path": "essays/the-ship-of-theseus-in-sound.md",
+      "title": "The Ship of Theseus in Sound: What Survives Transformation?",
+      "publishDate": "2026-03-30",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-signal-structure-gap",
+      "path": "essays/the-signal-structure-gap.md",
+      "title": "The Signal-Structure Gap: Why Machines Hear Surfaces While Musicians Hear Shapes",
+      "publishDate": "2026-03-30",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-attractor-in-the-copy",
+      "path": "essays/the-attractor-in-the-copy.md",
+      "title": "The Attractor in the Copy: What Iterative Degradation Reveals About Sound",
+      "publishDate": "2026-03-29",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-granularity-of-listening",
+      "path": "essays/the-granularity-of-listening.md",
+      "title": "The Granularity of Listening: Why the Right Scale Changes Everything",
+      "publishDate": "2026-03-29",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-frame-is-the-signal",
+      "path": "essays/the-frame-is-the-signal.md",
+      "title": "The Frame Is the Signal: When Context Overpowers Content",
+      "publishDate": "2026-03-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-self-teaching-signal",
+      "path": "essays/the-self-teaching-signal.md",
+      "title": "The Self-Teaching Signal: When Sound Knows How to Decompose Itself",
+      "publishDate": "2026-03-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-silent-majority",
+      "path": "essays/the-silent-majority.md",
+      "title": "The Silent Majority: Why Machines Don't Listen",
+      "publishDate": "2026-03-26",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-fidelity-trade",
+      "path": "essays/the-fidelity-trade.md",
+      "title": "The Fidelity Trade: What Audio Codecs and Tuning Systems Sacrifice in the Same Way",
+      "publishDate": "2026-03-25",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-notation-constraint",
+      "path": "essays/the-notation-constraint.md",
+      "title": "The Notation Constraint: How Representation Shapes Musical Thought",
+      "publishDate": "2026-03-25",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-semantic-split",
+      "path": "essays/the-semantic-split.md",
+      "title": "The Semantic Split: Why Perfect Reproduction Isn't Understanding",
+      "publishDate": "2026-03-25",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "against-dominance",
+      "path": "essays/against-dominance.md",
+      "title": "Against Dominance: Three Strategies for Making Models Listen",
+      "publishDate": "2026-03-24",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-dominant-channel",
+      "path": "essays/the-dominant-channel.md",
+      "title": "The Dominant Channel: Why Structure Suppresses Signal",
+      "publishDate": "2026-03-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-informative-noise",
+      "path": "essays/the-informative-noise.md",
+      "title": "The Informative Noise: Why Purity Degrades Perception",
+      "publishDate": "2026-03-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-steering-principle",
+      "path": "essays/the-steering-principle.md",
+      "title": "The Steering Principle: When Guidance Preserves What Control Destroys",
+      "publishDate": "2026-03-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-borrowed-structure",
+      "path": "essays/the-borrowed-structure.md",
+      "title": "The Borrowed Structure: Why Similar Sounds Share Computation",
+      "publishDate": "2026-03-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-orthogonal-unknown",
+      "path": "essays/the-orthogonal-unknown.md",
+      "title": "The Orthogonal Unknown: Why Explicit Boundaries Beat Implicit Ones",
+      "publishDate": "2026-03-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-periodic-signature",
+      "path": "essays/the-periodic-signature.md",
+      "title": "The Periodic Signature: How Repetition Becomes Identity",
+      "publishDate": "2026-03-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-compression-gradient",
+      "path": "essays/the-compression-gradient.md",
+      "title": "The Compression Gradient: Why Some Sounds Are Almost All Structure and Others Are Almost All Surprise",
+      "publishDate": "2026-03-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-invariance-trap",
+      "path": "essays/the-invariance-trap.md",
+      "title": "The Invariance Trap: What Audio Representations Choose to Forget",
+      "publishDate": "2026-03-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-reconstruction-limit",
+      "path": "essays/the-reconstruction-limit.md",
+      "title": "The Reconstruction Limit: Where Recovery Becomes Invention",
+      "publishDate": "2026-03-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-density-horizon",
+      "path": "essays/the-density-horizon.md",
+      "title": "The Density Horizon: Where Notes Dissolve Into Texture",
+      "publishDate": "2026-03-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-ground-note",
+      "path": "essays/the-ground-note.md",
+      "title": "The Ground Note: Why Everything in Music Is Relative to What's Underneath",
+      "publishDate": "2026-03-20",
+      "category": "music-theory"
+    },
+    {
+      "slug": "the-listening-gap",
+      "path": "essays/the-listening-gap.md",
+      "title": "The Listening Gap: Why Describing Sound Destroys Information",
+      "publishDate": "2026-03-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-expressive-residual",
+      "path": "essays/the-expressive-residual.md",
+      "title": "The Expressive Residual",
+      "publishDate": "2026-03-19",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-timing-engine",
+      "path": "essays/the-timing-engine.md",
+      "title": "The Timing Engine: Why Rhythm Fixes Things It Shouldn't",
+      "publishDate": "2026-03-19",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-bleed",
+      "path": "essays/the-bleed.md",
+      "title": "The Bleed: When Leakage Is the Message",
+      "publishDate": "2026-03-18",
+      "category": "physics-of-sound"
+    },
+    {
+      "slug": "the-room-that-isnt-there",
+      "path": "essays/the-room-that-isnt-there.md",
+      "title": "The Room That Isn't There: Acoustic Inference and the Art of Completion",
+      "publishDate": "2026-03-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-coherence-imperative",
+      "path": "essays/the-coherence-imperative.md",
+      "title": "The Coherence Imperative: Why Sound Resists Being Divided",
+      "publishDate": "2026-03-17",
+      "category": "physics-of-sound"
+    },
+    {
+      "slug": "the-fourth-wall",
+      "path": "essays/the-fourth-wall.md",
+      "title": "The Fourth Wall: When the Listener Is the Variable",
+      "publishDate": "2026-03-17",
+      "category": "perception"
+    },
+    {
+      "slug": "the-measurement-wall",
+      "path": "essays/the-measurement-wall.md",
+      "title": "The Measurement Wall: Why We Can't Fully Score What We Hear",
+      "publishDate": "2026-03-17",
+      "category": "perception"
+    },
+    {
+      "slug": "the-ghost-in-the-spectrum",
+      "path": "essays/the-ghost-in-the-spectrum.md",
+      "title": "The Ghost in the Spectrum: Phase as Music's Invisible Architecture",
+      "publishDate": "2026-03-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-observers-instrument",
+      "path": "essays/the-observers-instrument.md",
+      "title": "The Observer's Instrument: Why Representation Shapes Musical Reality",
+      "publishDate": "2026-03-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-topology-of-time",
+      "path": "essays/the-topology-of-time.md",
+      "title": "The Topology of Time: Why Musical Time Isn't a Line",
+      "publishDate": "2026-03-15",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-critical-moment",
+      "path": "essays/the-critical-moment.md",
+      "title": "The Critical Moment: Phase Transitions in Musical Systems",
+      "publishDate": "2026-03-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-interference-pattern",
+      "path": "essays/the-interference-pattern.md",
+      "title": "The Interference Pattern: Superposition as Music's Deepest Structural Principle",
+      "publishDate": "2026-03-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-uncertainty-of-sound",
+      "path": "essays/the-uncertainty-of-sound.md",
+      "title": "The Uncertainty of Sound: Why You Can't Know Both When and What",
+      "publishDate": "2026-03-14",
+      "category": "physics-of-sound"
+    },
+    {
+      "slug": "the-memory-of-sound",
+      "path": "essays/the-memory-of-sound.md",
+      "title": "The Memory of Sound: Why Music Is a Time Art of Prediction",
+      "publishDate": "2026-03-13",
+      "category": "perception"
+    },
+    {
+      "slug": "the-symmetry-tax",
+      "path": "essays/the-symmetry-tax.md",
+      "title": "The Symmetry Tax: What Music Pays for Being Intelligible",
+      "publishDate": "2026-03-13",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-color-of-chaos",
+      "path": "essays/the-color-of-chaos.md",
+      "title": "The Color of Chaos: Why Music Lives at the Edge of Order",
+      "publishDate": "2026-03-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-instrument-as-equation",
+      "path": "essays/the-instrument-as-equation.md",
+      "title": "The Instrument as Equation: Boundary Conditions and the Shape of Music",
+      "publishDate": "2026-03-12",
+      "category": "physics-of-sound"
+    },
+    {
+      "slug": "the-spectrum-as-score",
+      "path": "essays/the-spectrum-as-score.md",
+      "title": "The Spectrum as Score: Why Pitch and Timbre Are the Same Thing",
+      "publishDate": "2026-03-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-euclidean-beat",
+      "path": "essays/the-euclidean-beat.md",
+      "title": "The Euclidean Beat: Why the World's Rhythms Are Solutions to a 2,300-Year-Old Algorithm",
+      "publishDate": "2026-03-11",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-prime-dimensions",
+      "path": "essays/the-prime-dimensions.md",
+      "title": "The Prime Dimensions: Why Primes Are the Atoms of Harmony",
+      "publishDate": "2026-03-11",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-staircase-and-the-slope",
+      "path": "essays/the-staircase-and-the-slope.md",
+      "title": "The Staircase and the Slope: Music at the Boundary of Discrete and Continuous",
+      "publishDate": "2026-03-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-attractor-landscape",
+      "path": "essays/the-attractor-landscape.md",
+      "title": "The Attractor Landscape: Music as Dynamical System",
+      "publishDate": "2026-03-10",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-locking-in",
+      "path": "essays/the-locking-in.md",
+      "title": "The Locking In: Mode-Locking and the Physics of Musical Affinity",
+      "publishDate": "2026-03-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-resonance-cascade",
+      "path": "essays/the-resonance-cascade.md",
+      "title": "The Resonance Cascade",
+      "publishDate": "2026-03-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-arrow-of-sound",
+      "path": "essays/the-arrow-of-sound.md",
+      "title": "The Arrow of Sound: Why Music Only Goes Forward",
+      "publishDate": "2026-03-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-entropy-arc",
+      "path": "essays/the-entropy-arc.md",
+      "title": "The Entropy Arc: Information Theory as Musical Form",
+      "publishDate": "2026-03-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-tuning-codec",
+      "path": "essays/the-tuning-codec.md",
+      "title": "The Tuning Codec: Temperament as Lossy Compression",
+      "publishDate": "2026-03-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "counting-the-cubes",
+      "path": "essays/counting-the-cubes.md",
+      "title": "Counting the Cubes: Burnside's Lemma and the Enumeration of Musical Objects",
+      "publishDate": "2026-03-08",
+      "category": "mathematics"
+    },
+    {
+      "slug": "finding-one",
+      "path": "essays/finding-one.md",
+      "title": "Finding One: The Frame Problem in Musical Perception",
+      "publishDate": "2026-03-08",
+      "category": "perception"
+    },
+    {
+      "slug": "the-unwritten-laws",
+      "path": "essays/the-unwritten-laws.md",
+      "title": "The Unwritten Laws: How Genres Encode Ethics, Not Just Sound",
+      "publishDate": "2026-03-08",
+      "category": "music-theory"
+    },
+    {
+      "slug": "the-lonely-runner",
+      "path": "essays/the-lonely-runner.md",
+      "title": "The Lonely Runner: What Number Theory Knows About Musical Independence",
+      "publishDate": "2026-03-07",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-polyphony-problem",
+      "path": "essays/the-polyphony-problem.md",
+      "title": "The Polyphony Problem: Why Simultaneity Is Music's Deepest Challenge",
+      "publishDate": "2026-03-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-frequency-question",
+      "path": "essays/the-frequency-question.md",
+      "title": "The Frequency Question: What Specific Pitches Actually Do to Bodies",
+      "publishDate": "2026-03-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-space-between",
+      "path": "essays/the-space-between.md",
+      "title": "The Space Between: Why Music's Relational Properties Resist AI",
+      "publishDate": "2026-03-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "musics-dark-matter",
+      "path": "essays/musics-dark-matter.md",
+      "title": "Music's Dark Matter: What Neural Networks Know That Theory Doesn't",
+      "publishDate": "2026-03-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-spheres-revisited",
+      "path": "essays/the-spheres-revisited.md",
+      "title": "The Spheres Revisited: When Planetary Orbits Pass the Statistics Test",
+      "publishDate": "2026-03-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-state-of-the-music",
+      "path": "essays/the-state-of-the-music.md",
+      "title": "The State of the Music",
+      "publishDate": "2026-03-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-three-means",
+      "path": "essays/the-three-means.md",
+      "title": "The Three Means: How Ancient Mathematics Built the Language of Harmony",
+      "publishDate": "2026-03-04",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-cost-of-moving-sound",
+      "path": "essays/the-cost-of-moving-sound.md",
+      "title": "The Cost of Moving Sound: Optimal Transport from Chords to Timbres",
+      "publishDate": "2026-03-02",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-representation-gap",
+      "path": "essays/the-representation-gap.md",
+      "title": "The Representation Gap",
+      "publishDate": "2026-03-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-grain-of-identity",
+      "path": "essays/the-grain-of-identity.md",
+      "title": "The Grain of Identity: Where Musical Meaning Becomes Indivisible",
+      "publishDate": "2026-03-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-multiplexed-voice",
+      "path": "essays/the-multiplexed-voice.md",
+      "title": "The Multiplexed Voice: Every Utterance Is a Broadcast",
+      "publishDate": "2026-03-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-surface-and-the-source",
+      "path": "essays/the-surface-and-the-source.md",
+      "title": "The Surface and the Source: Why Timbre Is Easier — and Harder — Than We Think",
+      "publishDate": "2026-03-01",
+      "category": "physics-of-sound"
+    },
+    {
+      "slug": "the-groove-equation",
+      "path": "essays/the-groove-equation.md",
+      "title": "The Groove Equation: From Asymmetric Meter to Fractal Rhythm",
+      "publishDate": "2026-02-28",
+      "category": "mathematics"
+    },
+    {
+      "slug": "the-listeners-grid",
+      "path": "essays/the-listeners-grid.md",
+      "title": "The Listener's Grid",
+      "publishDate": "2026-02-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "when-geometry-sings",
+      "path": "essays/when-geometry-sings.md",
+      "title": "When Geometry Sings",
+      "publishDate": "2026-02-28",
+      "category": "physics-of-sound"
+    },
+    {
+      "slug": "duality-all-the-way-down",
+      "path": "essays/duality-all-the-way-down.md",
+      "title": "Duality All the Way Down",
+      "publishDate": "2026-02-27",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-mirror-in-the-chord",
+      "path": "essays/the-mirror-in-the-chord.md",
+      "title": "The Mirror in the Chord",
+      "publishDate": "2026-02-27",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-shape-of-musical-choice",
+      "path": "essays/the-shape-of-musical-choice.md",
+      "title": "The Shape of Musical Choice",
+      "publishDate": "2026-02-26",
+      "category": "mathematics"
+    },
+    {
+      "slug": "beyond-the-integers",
+      "path": "essays/beyond-the-integers.md",
+      "title": "Beyond the Integers: How Richer Number Systems Unlock New Music",
+      "publishDate": "2026-02-25",
+      "category": "mathematics"
+    },
+    {
+      "slug": "symmetry-as-the-skeleton-of-music",
+      "path": "essays/symmetry-as-the-skeleton-of-music.md",
+      "title": "Symmetry as the Skeleton of Music",
+      "publishDate": "2026-02-25",
+      "category": "mathematics"
+    },
+    {
+      "slug": "structure-before-sound",
+      "path": "essays/structure-before-sound.md",
+      "title": "Structure Before Sound: What Minimalist Hip Hop and Mathematical Music Have in Common",
+      "publishDate": "2026-02-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-comma-problem",
+      "path": "essays/the-comma-problem.md",
+      "title": "The Comma Problem: Why Perfect Tuning Is Mathematically Impossible (And What Composers Did About It)",
+      "publishDate": "2026-02-21",
+      "category": "music-theory"
+    },
+    {
+      "slug": "geometric-microtuning-composition",
+      "path": "essays/geometric-microtuning-composition.md",
+      "title": "Geometric Microtuning: From Sacred Geometry to Composition",
+      "publishDate": "2026-02-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-codec-ear",
+      "path": "essays/the-codec-ear.md",
+      "title": "The Codec Ear: What Neural Audio Compression Reveals About Musical Perception",
+      "publishDate": "2026-02-01",
+      "category": "interdisciplinary"
+    }
+  ]
+}
