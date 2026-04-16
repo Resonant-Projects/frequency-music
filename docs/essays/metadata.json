@@ -334,6 +334,20 @@
     "contentHash": "e52f0d9e6545beca6a8c5b4c9a504d07f1eef1c9d971e7337da480878aee99e6",
     "generatedAt": "2026-04-10T18:37:02.253Z"
   },
+  "the-coordinate-that-survives": {
+    "excerpt": "Audio systems improve when time, prosody, class direction, quality, and modality stay on separate axes until the moment of fusion.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "speech",
+      "composition",
+      "perception",
+      "machine-learning"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "31a1d36c136506cfc7a3b0875e3e22bc622f65497659ba99432b393561b4d538",
+    "generatedAt": "2026-04-16T19:06:04.684Z"
+  },
   "the-cost-of-moving": {
     "excerpt": "Voice leading is optimal transport: the mathematical framework for moving sand efficiently also describes how composers transform chords. Scales, timbres, and rhythms all inhabit a Wasserstein manifold where distance equals transformation cost.",
     "tags": [
