@@ -1489,5 +1489,19 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
+  },
+  "the-category-that-leaks": {
+    "excerpt": "Leakage, contour, and timbre all show the same truth: in music, boundaries are useful approximations, not clean facts.",
+    "tags": [
+      "acoustics",
+      "perception",
+      "signal-processing",
+      "composition",
+      "music-cognition",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4c144ea1918b4020628bda5d3a5cf3c5d1eee00e29a19d8da414b6d695ba141e",
+    "generatedAt": "2026-04-17T03:05:51.834Z"
   }
 }
