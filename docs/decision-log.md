@@ -218,10 +218,10 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 
 - Weekly briefs can reference recent reversals by stable synthetic keys.
 - Composition detail can show derived archive status without new write-time bookkeeping.
-- If the archive becomes noisy, the next step is sharper failure taxonomy, not silent removal.
 
 **Revisit trigger**
 
+- If the archive becomes noisy, the next step is sharper failure taxonomy, not silent removal.
 - Revisit if low-yield composition rules produce too many false positives or if editorial review needs explicit human-confirmed failure categories.
 
 ## Deferred Questions
@@ -291,6 +291,36 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 **Revisit trigger**
 
 - Revisit if the public site needs live data instead of snapshots, or if editorial publishing grows into a richer CMS workflow than markdown export can support.
+
+## 2026-04-18 — Next-Wave Sequencing
+
+**Decision**
+
+- Prioritize automation and machine-readable music control surfaces before DAW connectors, explorer expansion, or more advanced analytics.
+- Treat native plugin work as a later validation step, not the first connector implementation.
+- Keep next-wave roadmap material in `docs/` as an extension of the existing strategic layer.
+
+**Rationale**
+
+- Better ingest automation increases throughput immediately.
+- DAW integration will be fragile if recipes and parameters remain prose-heavy or loosely typed.
+- Representation work becomes more meaningful after the underlying loop is more automatic and more executable.
+
+**Alternatives considered**
+
+- Start with the 3D explorer expansion because it is highly visible.
+- Build a native plugin first and shape the data contract around it later.
+- Capture this roadmap only in ad hoc issue notes or chat history.
+
+**Downstream implications**
+
+- Early next-wave work should focus on ingest automation, parameter normalization, experiment structure, and export contracts.
+- External connector work should start with a bridge or Max for Live path rather than a native plugin.
+- New strategic planning docs for this wave belong in `docs/next-wave-roadmap.md` and `docs/next-wave-workstreams.md`.
+
+**Revisit trigger**
+
+- Revisit if a compelling connector prototype proves that plugin-first work would now accelerate the project more than export and bridge hardening.
 
 ## Reversals / What Changed Our Mind
 

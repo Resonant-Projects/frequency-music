@@ -354,3 +354,4 @@ This is the primary strategic roadmap. It should be read alongside:
 - [vision-and-meaning.md](./vision-and-meaning.md) for doctrine
 - [implementation-checkpoints.md](./implementation-checkpoints.md) for build-facing detail
 - [decision-log.md](./decision-log.md) for strategic continuity
+- [next-wave-roadmap.md](./next-wave-roadmap.md) for the post-Phase-4 automation, connector, and representation sequence
