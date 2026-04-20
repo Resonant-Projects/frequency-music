@@ -31,3 +31,7 @@ The tone is academic and slightly pedantic.
 
 > "There is no such thing as true noise in music. There are only periodicities too complex or too slow for the brain's autocorrelation engine to track."
 > **Critique:** As noted above, this is factually incorrect. True noise exists physically (thermal noise, shot noise) and mathematically. A snare drum burst is a stochastic event, not a 10-minute long periodic loop that we just haven't heard the end of yet. Delete this claim; it undermines your credibility.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

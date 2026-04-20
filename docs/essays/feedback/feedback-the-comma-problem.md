@@ -25,3 +25,7 @@ The essay relies too heavily on italicized emphasis (_Impossible_, _different_) 
 
 > "What strikes me reading across these sources is that the comma problem isn't a bug — it's a feature of a universe where frequencies relate through multiplication... but our perception organizes them through addition."
 > **Critique:** This is biologically inaccurate. Human pitch perception is logarithmic, which is explicitly why we perceive multiplicative frequency ratios as additive, equal distances. The essay frames this as a "feature of the universe," but it is simply a feature of how mammalian cochleae process sound. Do not elevate basic biology to cosmic mystery.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

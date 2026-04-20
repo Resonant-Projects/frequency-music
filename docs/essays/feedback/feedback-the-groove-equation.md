@@ -27,3 +27,7 @@ The tone is characterized by unearned synthesis. Phrases like "The producers in 
 
 > "A swing of 25% on sixteenths... transforms a 1:1 ratio into approximately 5:3 — very close to the 3:2 ratios found in polska beat durations."
 > **Critique:** This math is highly misleading. A 3:2 ratio means the beats are _grossly unequal_ in length. A swung 16th note means the _subdivisions_ are unequal, but the beats themselves remain perfectly equal. You are confusing the metric level with the subdivision level. A techno track at 120bpm swung 25% still has perfectly isochronous quarter-note beats. A polska does not. The biomechanical implications are completely different.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

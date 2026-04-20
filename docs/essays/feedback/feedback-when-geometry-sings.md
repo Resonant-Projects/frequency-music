@@ -31,3 +31,7 @@ The tone is overly confident in its unifications. "Across these ten essays, a pa
 
 > "The simultaneous production of two independent frequency channels from a single source is essentially **spectral polyphony**... This has direct parallels in: Overtone singing..."
 > **Critique:** As noted above, this is factually incorrect. Overtone singing is a single source (vocal cords) being dynamically filtered by a resonant cavity (the mouth) to isolate a harmonic. The horse is using two distinct physical mechanisms (vocal folds and a laryngeal whistle). These are completely different acoustical phenomena. Do not sacrifice scientific accuracy for the sake of a neat musical metaphor.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

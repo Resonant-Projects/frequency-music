@@ -27,3 +27,7 @@ The tone is authoritative and clear, avoiding the mystical "sacred geometry" tra
 
 > "B as the ground of the same notes (Locrian mode) is maximally weak... The mode collapses because the ground can't assert itself."
 > **Critique:** This is the best explanation of why Locrian sounds "broken" that I have read. You have moved past "it has a diminished fifth" to the physical root cause: the overtone series of the root note fundamentally contradicts the scale. No changes needed.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

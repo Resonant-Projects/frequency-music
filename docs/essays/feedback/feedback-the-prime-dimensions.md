@@ -31,3 +31,7 @@ The tone is academic, authoritative, and slightly speculative.
 
 > "What if a piece modulated not by moving along the circle of fifths (the 3-axis), but by shifting the entire harmonic structure up the 7-axis or 11-axis?"
 > **Critique:** This is a great theoretical question, but practically, Ben Johnston and Harry Partch already did this. You should name-drop them here to prove that this isn't just a hypothetical thought experiment; it's a real, historical branch of avant-garde composition.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

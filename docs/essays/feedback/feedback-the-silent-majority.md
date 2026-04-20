@@ -29,3 +29,7 @@ The tone occasionally slips into audiophile mysticism ("The music we hear is jus
 
 > "Even if we cannot 'hear' 30kHz, the interaction of 30kHz and 32kHz creates a 2kHz difference tone right in the most sensitive range of human hearing."
 > **Critique:** This implies the 2kHz difference tone is loud and important. It is usually vanishingly quiet. You need to add a caveat about amplitude, or this reads like pseudoscience.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

@@ -31,3 +31,7 @@ The tone is authoritative, rhythmic, and philosophical.
 
 > "Total serialism: Babbitt, Boulez (early works) — paradoxically, maximizing control over every parameter can produce pseudo-random perception, because the serial transformations destroy the correlational structure that listeners can track."
 > **Critique:** This is a brilliant observation. It elegantly explains why highly structured, mathematical music often sounds like random white noise to a human ear. The _compositional_ β might be high (highly ordered), but the _perceptual_ β is low (unpredictable). Making this distinction explicit (compositional vs perceptual β) would be a great addition to the essay.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

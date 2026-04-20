@@ -31,3 +31,7 @@ The tone is authoritative, scientific, and exciting.
 
 > "The 12 notes of the chromatic scale are approximately the first 12 levels of the tree... The pentatonic scale is the first 5. The diatonic scale is the first 7."
 > **Critique:** "Approximately" is doing some heavy lifting here. The Stern-Brocot tree generates _all_ mediants. If you just take the "first 5 levels," you get many ratios that are not in a standard pentatonic scale (like 1/4, 4/1, 2/3, 3/4). You have to selectively filter the tree (by octave equivalence and specific branch paths) to get those scales. You need to acknowledge this filtering process, or the math looks sloppier than it actually is.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

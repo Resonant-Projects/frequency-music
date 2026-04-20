@@ -31,3 +31,7 @@ The tone is authoritative, but sometimes slips into hyperbole.
 
 > "Using the **swap distance**... you can quantify how 'far apart' two rhythmic patterns are... Applied to a corpus of traditional rhythms... these distances produce clustering that tracks known historical diffusion paths."
 > **Critique:** This is a fascinating claim. To make it bulletproof, you should provide one concrete example of the math proving the history. E.g., "The swap distance from West African bembé to Cuban tresillo is exactly X, reflecting the transatlantic slave trade's compression of the timeline." Give the reader one piece of hard data to prove the phylogenetic tree works.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

@@ -29,3 +29,7 @@ The tone is often overly dramatic about technical implementation details.
 
 > "Vevo2's notation-free approach suggests that the right representation for these trajectories might not be the symbolic one musicians have used for centuries... Maybe polyphonic reasoning requires a representation that lives closer to the phenomenon."
 > **Critique:** This is a massive leap in logic. Vevo2 generated _monophonic_ singing voices without notation. You cannot conclude from this that _polyphonic_ reasoning requires a notation-free approach. In fact, standard music notation was explicitly invented to solve the polyphony problem (aligning multiple voices in time). Claiming we should abandon it based on a monophonic speech model is illogical.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

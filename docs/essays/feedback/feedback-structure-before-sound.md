@@ -25,3 +25,7 @@ The tone oscillates awkwardly between academic jargon ("extreme temporal downsam
 
 > "A heavily orchestrated film score might have low structural density — many elements are decorative, adding color without changing the structural skeleton."
 > **Critique:** This is a terrible example. A John Williams score has incredibly high structural density, with complex motivic development, contrapuntal inner voices, and harmonic substitutions. Equating "orchestration" with "low structural density" betrays a lack of understanding of symphonic writing. Replace this with a better example, such as heavily-reverbed ambient drone music.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

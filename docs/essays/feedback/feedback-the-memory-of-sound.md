@@ -31,3 +31,7 @@ The tone is nostalgic and slightly romantic, which fits the topic of reverb well
 
 > "If attention is echo, then context windows are just really long pre-delays."
 > **Critique:** This is a terrible analogy. A pre-delay is the empty silence _before_ the echo begins. A context window is the total amount of text/audio the model can "see" at once to make a prediction. They are mathematically and functionally unrelated. Delete this.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

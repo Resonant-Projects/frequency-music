@@ -33,3 +33,7 @@ The tone is confident, but it occasionally mistakes technological summaries for 
 
 > "If you can reconstruct a 3D scene from photographs and derive its acoustic properties, you can — in principle — recreate the acoustic experience of historical spaces. What did music sound like in the Hagia Sophia before the Ottoman renovation?"
 > **Critique:** We have been doing this with convolution reverb and impulse responses for twenty years. Acoustic modeling of historical spaces is an entire subfield of archaeology (archaeoacoustics). DynFOA is doing it with Gaussian Splatting from video, which is computationally novel, but the _compositional implication_ (recreating historical acoustics) is not new at all. Do not present existing techniques as futuristic revelations.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

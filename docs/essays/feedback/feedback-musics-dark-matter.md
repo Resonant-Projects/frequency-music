@@ -20,3 +20,7 @@ The tone is still quite dramatic ("A recent paper... makes a claim that should s
 
 **Final Thoughts:**
 The essay is beautifully written and contains some excellent insights into the limitations of traditional music theory (the "Why Theory Has Gaps" section). However, it ultimately fails to deliver on its central premise. Until you can point to a specific, concrete example of an "uncodified pattern" discovered by an SAE and explain _why_ it is musically meaningful (rather than just a statistical quirk of the training data), the concept of "Music's Dark Matter" remains an intriguing hypothesis rather than a compelling argument. If the research hasn't published those specific examples yet, the essay might be premature.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

@@ -35,3 +35,7 @@ The tone is grandiose and frequently overstates its own rigor. "The mathematics 
 
 > "A Javanese gamelan piece might achieve full cascade resonance for a listener steeped in that tradition while failing at Level 5 for a Western listener — not because it's lesser music, but because the upper resonators aren't tuned to it."
 > **Critique:** This contradicts your previous point. If the physical "Levels 1-4" dictate the upper levels (as you claim in the "Upward Constraints" section), then a Western listener's lower-level acoustic/cochlear processing of the Gamelan's inharmonic spectra should be driving their upper-level response. You can't have it both ways: you can't claim that physics dictates culture, and then excuse cultural differences by saying the "upper resonators" are just tuned differently. It exposes the "cascade" as an arbitrary grouping of unrelated phenomena.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

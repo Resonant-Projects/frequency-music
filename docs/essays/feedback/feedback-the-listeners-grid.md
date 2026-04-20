@@ -25,3 +25,7 @@ The tone is overly reliant on mathematical mystique. Phrases like "unexpected co
 
 > "Use the bounded search region as a voicing constraint... Voicings that keep all notes within this region create maximum harmonic ambiguity... voicings that spread beyond it create clarity."
 > **Critique:** This is terrible compositional advice. If I play a dense cluster of minor seconds in the lowest octave of a piano, they might technically spread "beyond the region," but they will absolutely not create "clarity." Acoustic reality (like the critical band and low-frequency masking) dictates clarity far more than a 4x4 topological grid. You are prescribing rules based on an abstract map rather than the actual territory of sound.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

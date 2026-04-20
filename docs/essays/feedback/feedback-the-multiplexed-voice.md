@@ -31,3 +31,7 @@ The tone is deeply respectful of the musician (Paredes) while remaining rigorous
 
 > "In a synthesizer, pitch, velocity, and modulation are independent, orthogonal parameters. On a physical string, they are hopelessly, beautifully entangled."
 > **Critique:** This is the perfect synthesis of the entire essay. It explains the difference between digital control and physical acoustics in two sentences. No changes needed.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

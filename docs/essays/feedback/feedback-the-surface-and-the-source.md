@@ -27,3 +27,7 @@ The tone is somewhat pedantic. It reads like a textbook chapter explaining basic
 
 > "Imagine specifying a timbre not as 'clarinet' or 'bright' but as a trajectory through a space of spectral centroid × harmonics-to-noise ratio × spectral flux, evolving over time."
 > **Critique:** This already exists. It's called additive synthesis or spectral morphing (e.g., in synths like Serum, Pigments, or Iris). Composers have been drawing parameter trajectories for decades. You need to explain how this 2026 paper changes _how_ we do this, rather than suggesting we start doing something we've been doing since the 90s.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

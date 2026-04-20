@@ -31,3 +31,7 @@ The tone is authoritative and intellectually playful.
 
 > "If neural codecs can _learn_ optimal codebooks for audio, could a similar process discover optimal tuning systems for a given musical style? Train a system on a corpus of gamelan music and let it discover the tuning..."
 > **Critique:** This is a great thought experiment, but it misunderstands what the neural net would actually learn. If you train it on gamelan music, it will just output the gamelan tuning it was trained on. It won't "discover" a new optimal tuning; it will just overfit to the cultural artifact you fed it. You need to clarify what the objective function of this hypothetical network would be (e.g., "Train a system to minimize calculated roughness for a given set of source spectra...").
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

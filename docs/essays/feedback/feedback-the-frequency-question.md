@@ -27,3 +27,7 @@ The tone is forensic but fair. You treat the Nada Yoga tradition respectfully as
 
 > "The gap between 'coupled oscillators respond to specific frequencies' (established physics) and '528 Hz heals DNA' (unfounded marketing) is enormous. But it's not a gap between physics and non-physics."
 > **Critique:** Actually, it _is_ a gap between physics and non-physics. Healing DNA is a biochemical/genetic process, not an acoustic or mechanical oscillation. DNA does not "break" because of bad vibrations, and it is not "repaired" by resonant frequencies. You are giving the pseudoscience too much credit by treating it as an extreme extrapolation of physics rather than a fundamental misunderstanding of biology.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

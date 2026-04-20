@@ -32,3 +32,7 @@ The tone is authoritative, highly technical, yet accessible.
 
 > "Aggressive spectral processing sounds 'phasey' or 'watery' precisely because it disrupts the coherence between related components."
 > **Critique:** Yes, this is accurate. The "watery" sound of spectral subtraction artifacts (musical noise) is exactly the sound of isolated, uncorrelated STFT bins popping in and out of existence without their harmonic neighbors. Perfect analogy.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

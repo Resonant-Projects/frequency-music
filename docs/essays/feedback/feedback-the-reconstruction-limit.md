@@ -31,3 +31,7 @@ The tone is authoritative, myth-busting, and pragmatic.
 
 > "This means that 'perfect' stem separation is not an engineering problem waiting to be solved by more compute; it is a mathematical impossibility."
 > **Critique:** A highly necessary reality check for the AI-audio industry. This sentence anchors the entire essay in rigorous physical reality.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

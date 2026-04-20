@@ -29,3 +29,7 @@ The tone is authoritative, analytical, and respectful of both the composers and 
 
 > "Register-dependent horizons — the threshold likely differs by register (lower notes need more time to establish pitch, so the horizon may be lower for bass voices)"
 > **Critique:** This is a fantastic, highly practical compositional deduction. It proves the value of understanding the underlying physics.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

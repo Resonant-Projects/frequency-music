@@ -31,3 +31,7 @@ The tone is inquisitive and insightful. The realization that 1,000 cached sounds
 
 > "A string quartet playing Beethoven and a string quartet playing Bartók share enormous amounts of acoustic structure... What differs is the _compositional content_... This is why arrangement works."
 > **Critique:** As noted in the structural critique, you must rewrite this section. If you want to talk about arrangement, you need to acknowledge that in your AI analogy, the "arrangement" (the notes) is the high-frequency detail that cannot be cached, and the "orchestration" (the instruments) is the low-frequency structure that _can_ be cached. Currently, the analogy is backwards.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

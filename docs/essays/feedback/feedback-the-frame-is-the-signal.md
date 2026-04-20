@@ -29,3 +29,7 @@ The tone is inquisitive, authoritative, and slightly provocative.
 
 > "When we analyze a piece and find 'tension' and 'resolution', are we detecting properties of the sound, or are we detecting our own learned frames?"
 > **Critique:** This rhetorical question is the philosophical core of the entire repository. You correctly answer it by pointing out that roughness provides the acoustic grounding, but the _meaning_ (tension) is frame-dependent. This is the perfect synthesis of physics and psychology. No changes needed.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

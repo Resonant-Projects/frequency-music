@@ -29,3 +29,7 @@ The tone is authoritative, analytical, and respectful of the physics.
 
 > "A MIDI piano plays the right notes at the right times — pure structure, fully compressible. A human pianist adds micro-timing deviations... texture that resists compression."
 > **Critique:** This is a great compositional application. To make it slightly more accurate to actual MIDI data, you could note that even MIDI has a compression gradient: Note On/Off is pure structure, but continuous CC data (like a sustain pedal or mod wheel) acts more like the "texture" layer. It proves your point that the gradient exists even within symbolic formats.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

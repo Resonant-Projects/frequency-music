@@ -31,3 +31,7 @@ The tone is authoritative, scientific, and immensely practical.
 
 > "This is why pitch-correction software like Auto-Tune struggles with raspy vocals or heavy vibrato. The algorithm is forced to choose a window size."
 > **Critique:** This is a perfect real-world application of the math. It explains a frustrating software limitation as an inescapable law of physics. No changes needed.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

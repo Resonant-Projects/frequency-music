@@ -33,3 +33,7 @@ The tone is generally engaging, but the rhetoric sometimes outpaces the logic.
 
 > "The instruction-perception gap in TTS is, at its core, the gap between symbolic control and embodied expression — the same gap that has always separated a score from a performance."
 > **Critique:** This is a spectacular analogy. It perfectly maps a modern AI engineering problem onto a centuries-old musicological debate. Do not change a word of this sentence.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

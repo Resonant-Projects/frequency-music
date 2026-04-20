@@ -27,3 +27,7 @@ The tone is characterized by grand, unearned declarations. "The boundary isn't o
 
 > "A MIDI file is even more aggressively discrete: pitch is an integer (0-127), velocity is an integer (0-127), timing is quantized to ticks."
 > **Critique:** A minor technical point: MIDI timing is not inherently quantized to a musical grid (beats/bars); it is quantized to the clock resolution of the sequencer (PPQN, often 960 ticks per quarter note). At 120bpm, 960 PPQN is a resolution of roughly 0.5 milliseconds, which is well below the threshold of human timing perception. Therefore, MIDI timing is perceptually _continuous_ for human listeners. You are conflating mathematical discreteness with perceptual discreteness to force the narrative.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

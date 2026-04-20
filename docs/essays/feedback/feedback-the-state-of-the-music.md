@@ -25,3 +25,7 @@ The tone is overly deterministic. "Music figured this out first. The math is jus
 
 > "A dramatic silence, a sudden key change, or a textural rupture can be understood as a _state reset_ — zeroing out some dimensions of _x_ and forcing the listener to rebuild context."
 > **Critique:** This is terrible compositional advice derived from a bad metaphor. A dramatic silence is absolutely not a "state reset" for a human listener. The silence is _pregnant_ with the state that preceded it. If a silence zeroed out your memory, it wouldn't be dramatic; it would just be an ending. This proves exactly why you cannot map machine learning mechanics directly onto human psychology.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

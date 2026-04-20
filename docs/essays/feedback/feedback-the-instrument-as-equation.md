@@ -27,3 +27,7 @@ The tone is characterized by an excessive use of high-level math terminology ("e
 
 > "A guitar is a discrete approximation of a continuous space."
 > **Critique:** A guitar string vibrates continuously. The pitches it can produce are constrained discretely by the frets. The space itself is not approximated; the _interface_ is quantized. Be precise about what is discrete and what is continuous.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

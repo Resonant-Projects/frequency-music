@@ -31,3 +31,7 @@ The tone is characterized by profound-sounding platitudes that lack logical rigo
 
 > "What the codec throws away during compression, it can never generate during synthesis."
 > **Critique:** This is technically false. A diffusion model or a GAN using a compressed latent space _absolutely_ hallucinates and generates new high-frequency information during the decoding/upsampling process (this is the entire point of vocoders like HiFi-GAN). It doesn't generate the _original_ thrown-away data, but it absolutely generates _new_ acoustic data that was not in the compressed representation. Your understanding of how these codecs reconstruct audio is factually incorrect.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

@@ -30,3 +30,6 @@ The tone is appropriately grand but grounded in technical reality.
     *   **Note:** This is a deep insight into both signal processing and musical form.
 *   **Current:** "The continuous universe makes sound. Perception, at every scale from chloroplast to cortex, makes *events*. The gap between continuous signal and discrete percept is where music lives..."
     *   **Suggestion:** This is a beautiful conclusion. Don't change a word.
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.

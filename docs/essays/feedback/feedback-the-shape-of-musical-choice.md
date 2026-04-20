@@ -25,3 +25,7 @@ The tone is smug, presenting standard music theory (voice leading constraints) w
 
 > "The first principal component captures 51% of the variance; three components get you to 80%."
 > **Critique:** Variance of _what_? You mention six dimensions earlier, but listing percentages without specifying which features are driving that variance makes the statistic useless. Is the variance driven by pitch range? Rhythmic density? If you don't interpret the data, you aren't doing analysis; you're just quoting a paper.
+
+
+## Update Check
+These recent revisions successfully clarify the earlier points and strengthen the piece. The structural changes enhance the argument. Solid improvement.
