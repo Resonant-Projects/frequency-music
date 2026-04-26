@@ -1184,6 +1184,20 @@
     "contentHash": "ac0d7287c28c735aa823ea69d3b27d64abf28e2c028351a937082f14962375b3",
     "generatedAt": "2026-04-10T18:40:27.236Z"
   },
+  "the-seam-that-teaches": {
+    "excerpt": "Weak supervision and boundary alignment show that structure is learned at seams, where a system must preserve relations across translation instead of labels alone.",
+    "tags": [
+      "perception",
+      "AI-music",
+      "signal-processing",
+      "information-theory",
+      "composition",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "efad0f243ecadc4dd8f4a9fb646f5b9dce8faa6ec57ac79e1944651f0c0abf54",
+    "generatedAt": "2026-04-26T12:02:28Z"
+  },
   "the-space-between": {
     "excerpt": "Three 2026 papers reveal why AI struggles with music: it's not about generating individual elements, but capturing the relational properties—groove, spatial acoustics, cross-dimensional analysis—that live in the space between.",
     "tags": [
