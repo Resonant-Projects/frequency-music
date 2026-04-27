@@ -1545,5 +1545,19 @@
     "category": "interdisciplinary",
     "contentHash": "1ae6eee00752918b4da67b0b0c338e518b7cb91800e15a4b5612d75a54b3493d",
     "generatedAt": "2026-04-18T11:02:00.000Z"
+  },
+  "the-doubt-that-keeps-the-line-open": {
+    "excerpt": "Voice systems should preserve disagreement long enough for prosody, retrieval, and planning to resolve it into a better decision.",
+    "tags": [
+      "speech",
+      "dialogue",
+      "perception",
+      "AI-music",
+      "signal-processing",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "0439606f7eb66e9eba81d13b52c584c19c1692ab45b724e54c8ebfd100999c4b",
+    "generatedAt": "2026-04-27T20:03:13.053Z"
   }
 }
