@@ -1588,5 +1588,18 @@
     "category": "interdisciplinary",
     "contentHash": "78c62f0d652deaeb4c818b4bdbd2b901d91c1d73876ee3b12b50a96035658565",
     "generatedAt": "2026-05-01T12:07:02.000Z"
+  },
+  "the-realization-layer": {
+    "excerpt": "Musical structure becomes sound through a realization layer — the performer, model, or practice that turns possibility into expressive action.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "mathematical-music-theory",
+      "perception",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "18d66512f0ad9c408a63001310979e4bfe299f7a3e0a881a5945e05ce34d7d27",
+    "generatedAt": "2026-05-01T20:06:39.222Z"
   }
 }
