@@ -60,7 +60,7 @@ Music operates at multiple simultaneous temporal scales: the sub-beat (micro-tim
 
 Great performers navigate this hierarchy unconsciously. They know — in the body, not in the mind — which temporal level to serve at each moment. During a melody's high point, serve the phrase: stretch for clarity. During a rhythmic groove, serve the beat: lock the grid. During a cadence, serve the form: create the temporal envelope that signals resolution.
 
-The scissor pattern suggests this isn't just an aesthetic choice — it's a constraint of the auditory system. You *cannot* optimize all temporal levels simultaneously. The temporal influence function has opposite signs at different scales. Every timing decision is a trade-off between levels of the hierarchy.
+The scissor pattern suggests this isn't just an aesthetic choice — it's a constraint of the auditory system. You *cannot* optimize all temporal levels simultaneously. The temporal influence function has opposite signs at different scales. In practice, that means the same local timing move can help the listener parse an interval while still hurting the larger pulse if it sits inside the wrong phrase context. Every timing decision is a trade-off between levels of the hierarchy.
 
 ---
 

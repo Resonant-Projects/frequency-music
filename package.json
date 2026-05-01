@@ -8,7 +8,8 @@
     "lint": "oxlint . --fix --tsconfig tsconfig.json",
     "test": "bun test convex/*.test.ts",
     "build:web": "cd web && bun run build",
-    "typecheck:web": "cd web && bunx tsc --noEmit"
+    "typecheck:web": "cd web && bunx tsc --noEmit",
+    "convex:extract": "bunx convex run workflows:startBatchExtraction '{\"limit\": 3}'"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.34",

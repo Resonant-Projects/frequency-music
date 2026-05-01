@@ -53,7 +53,7 @@ The covert intelligibility result suggests the existence of **perceptual attract
 
 In music, the equivalent attractors might include:
 - **Steady tempo** (perceived as "tight" even when it obscures phrase structure)
-- **Uniform dynamics** (perceived as "powerful" even when it eliminates expressive variation)  
+- **Uniform dynamics** (perceived as "powerful" even when it eliminates expressive variation)
 - **Grid-quantized rhythm** (perceived as "professional" even when it kills groove)
 
 These are all global, symmetric transformations. The system prefers them because they're *simple to recognize*, not because they're *optimal for perception*.

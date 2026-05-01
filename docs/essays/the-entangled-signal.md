@@ -62,9 +62,9 @@ The model doesn't align "pitch" with "height" or "rhythm" with "footwork" in any
 
 Diff-VS (2026) approaches entanglement from the separation side. It uses diffusion models to separate vocals from instrumental accompaniment — a task where discriminative models have long dominated. The diffusion approach works differently: instead of learning a filter that extracts the voice, it learns to *generate* a plausible voice that matches the vocal component of the mixture.
 
-This distinction matters philosophically. A discriminative separator says: "Given this mixture, what's the voice?" A generative separator says: "Given this mixture, what voice *could produce* this pattern?" The discriminative model disentangles by subtraction; the generative model disentangles by imagination.
+This distinction matters because it makes the source model explicit. A discriminative separator says: "Given this mixture, what's the voice?" A generative separator says: "Given this mixture, what voice *could produce* this pattern?" The discriminative model disentangles by subtraction; the generative model disentangles by imagination. In both cases, the key point is that the mixture is not just a pile of independent pieces, it is the product of a coupled source process, so the separation method has to respect that coupling.
 
-Diff-VS shows that the generative approach now matches discriminative quality on objective metrics and may exceed it perceptually. This suggests that the entanglement between voice and accompaniment in a mix isn't just additive (signal + signal) — it's *generative* (one process producing both). To undo it, you need a model that understands the generative process, not just the resulting signal.
+Diff-VS shows that the generative approach now matches discriminative quality on objective metrics and may exceed it perceptually. That supports the entanglement thesis rather than distracting from it: the fact that a model has to learn the joint source process in order to separate the parts means the parts were never truly independent to begin with. The entanglement between voice and accompaniment in a mix isn't just additive (signal + signal) — it's *generative* (one process producing both). To undo it, you need a model that understands the generative process, not just the resulting signal.
 
 ---
 
@@ -75,6 +75,8 @@ These five studies converge on a single deep pattern:
 **Real-world signals carry information along axes that don't align with our perceptual categories.**
 
 We hear "pitch" and "timbre" and "rhythm" as separate things. But the acoustic features that carry pitch information overlap with the features that carry timbre information. A note's fundamental frequency is simultaneously a pitch cue, a timbre cue (bright vs. dark), and a loudness cue (Fletcher-Munson curves). The "axes" of musical perception are not the axes of acoustic physics.
+
+That matters because the case studies are not just descriptive, they are diagnostic. They show where the categories we use to talk about sound are too coarse for the signal geometry underneath them.
 
 This has three compositional consequences:
 

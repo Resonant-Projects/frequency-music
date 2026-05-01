@@ -1559,5 +1559,18 @@
     "category": "interdisciplinary",
     "contentHash": "0439606f7eb66e9eba81d13b52c584c19c1692ab45b724e54c8ebfd100999c4b",
     "generatedAt": "2026-04-27T20:03:13.053Z"
+  },
+  "the-listener-in-the-filter": {
+    "excerpt": "Every signal transformation implicitly chooses whose ears matter — from ultra-low-bitrate codecs that retire semantic priors above 6 kbps, to emotion embeddings contaminated by speaker identity, to speech enhancement that erases emotional cues while cleaning noise. The most robust systems model multiple listeners explicitly.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "AI-music",
+      "composition",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "generatedAt": "2026-05-01T04:03:00.000Z"
   }
 }
