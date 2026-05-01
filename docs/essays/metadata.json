@@ -1572,5 +1572,21 @@
     ],
     "category": "interdisciplinary",
     "generatedAt": "2026-05-01T04:03:00.000Z"
+  },
+  "the-configuration-is-the-score": {
+    "excerpt": "Before you write a note, you choose a geometry. Six systems — Tonnetz configurations, room acoustics, arousal modeling, rhythm analysis, FDN optimization, and mix layering — reveal the same principle: the mathematical configuration you choose determines which musical relationships can exist.",
+    "tags": [
+      "combinatorial-geometry",
+      "Tonnetz",
+      "acoustic-modeling",
+      "perception",
+      "mathematical-music-theory",
+      "composition",
+      "signal-processing",
+      "separability"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "78c62f0d652deaeb4c818b4bdbd2b901d91c1d73876ee3b12b50a96035658565",
+    "generatedAt": "2026-05-01T12:07:02.000Z"
   }
 }
