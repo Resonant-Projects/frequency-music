@@ -1601,5 +1601,19 @@
     "category": "interdisciplinary",
     "contentHash": "18d66512f0ad9c408a63001310979e4bfe299f7a3e0a881a5945e05ce34d7d27",
     "generatedAt": "2026-05-01T20:06:39.222Z"
+  },
+  "the-bandpass-principle": {
+    "excerpt": "Every listening system starts by choosing a passband; from ultrasonic bioacoustics to Bark-scale dynamics, infrasound, wavelet artifacts, and rhythm formants, the filter is already a theory of music.",
+    "tags": [
+      "signal-processing",
+      "psychoacoustics",
+      "acoustics",
+      "composition",
+      "AI-music",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6aca61ed2935f295296cfbb4824706211d448cb87bf40e0c192b60080292dbd7",
+    "generatedAt": "2026-05-02T04:03:00.000Z"
   }
 }
