@@ -1615,5 +1615,19 @@
     "category": "interdisciplinary",
     "contentHash": "6aca61ed2935f295296cfbb4824706211d448cb87bf40e0c192b60080292dbd7",
     "generatedAt": "2026-05-02T04:03:00.000Z"
+  },
+  "the-instrument-is-a-theory": {
+    "excerpt": "Every instrument encodes a theory of musical affordance, making some gestures natural and others invisible—from Tonnetz graphs to samplers, notation, and continuo style.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "AI-music",
+      "geometry",
+      "perception",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8790450df5986774be1fb91ceda617d0f1057611efc074e60334e47e0612dde2",
+    "generatedAt": "2026-05-02T12:03:00.000Z"
   }
 }

@@ -1,0 +1,970 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-02T12:05:02.193Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 12,
+    "fetch": 250,
+    "minClaims": 3,
+    "minParams": 1,
+    "noveltyWindow": 6,
+    "maxReusedSources": 2,
+    "requireTuningSignal": true,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 250,
+    "withSource": 250,
+    "eligibleCandidates": 4,
+    "selected": 4
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j970kk0ytq7v8ysttsph0pr8xx84m7tw",
+      "sourceId": "jx78aqwjys9tf8yxhz3sz4vmbn84kfdd",
+      "sourceTitle": "The 110 best free Kontakt instruments in 2026",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://blog.native-instruments.com/best-free-kontakt-instruments/",
+      "extractionCreatedAt": 1775876768459,
+      "extractionSummary": "This article is a curated list of free Kontakt instrument libraries spanning synths, vocals, pianos, percussion, guitars, and orchestral tools. It provides editorial descriptions of each instrument's sonic character and technical requirements. While primarily a product guide rather than an acoustics or theory resource, it contains scattered references to synthesis methods, historical instruments, and sound design techniques relevant to timbre, resonance, and spectral design. The content is anecdotal and commercial in nature, with no scientific citations, but offers practical composition parameters embedded in instrument descriptions.",
+      "topics": [
+        "wavetable synthesis",
+        "sample-based synthesis",
+        "tape saturation and flutter",
+        "sine wave acoustics",
+        "prepared piano",
+        "felt piano technique",
+        "Mellotron and tape sampling",
+        "harmonic content and timbre",
+        "velocity-dependent harmonic mapping",
+        "atonal orchestral texture",
+        "chiptune waveforms (pulse, triangle, saw)",
+        "detuning and oscillator drift",
+        "convolution reverb and impulse responses",
+        "round robin sample playback",
+        "polyphonic aftertouch",
+        "analogue drum machines (LinnDrum LM-2, Roland TR-808)",
+        "Taiko percussion and cultural acoustics",
+        "electric piano acoustics (Rhodes, Fender Rhodes)",
+        "orchestral ensemble sampling",
+        "vowel morphing in vocal synthesis",
+        "portamento and glide",
+        "world instruments (Yangqin, Ronroco, Vietnamese gongs)",
+        "cinematic scoring techniques",
+        "lo-fi aesthetics",
+        "harmonic distortion and saturation",
+        "SID chip sound synthesis"
+      ],
+      "topicTokens": [
+        "wavetable synthesis",
+        "sample-based synthesis",
+        "tape saturation and flutter",
+        "sine wave acoustics",
+        "prepared piano",
+        "felt piano technique",
+        "mellotron and tape sampling",
+        "harmonic content and timbre",
+        "velocity-dependent harmonic mapping",
+        "atonal orchestral texture",
+        "chiptune waveforms (pulse",
+        "triangle",
+        "detuning and oscillator drift",
+        "convolution reverb and impulse responses",
+        "round robin sample playback",
+        "polyphonic aftertouch",
+        "analogue drum machines (linndrum lm-2",
+        "roland tr-808)",
+        "taiko percussion and cultural acoustics",
+        "electric piano acoustics (rhodes",
+        "fender rhodes)",
+        "orchestral ensemble sampling",
+        "vowel morphing in vocal synthesis",
+        "portamento and glide",
+        "world instruments (yangqin",
+        "ronroco",
+        "vietnamese gongs)",
+        "cinematic scoring techniques",
+        "lo-fi aesthetics",
+        "harmonic distortion and saturation",
+        "sid chip sound synthesis"
+      ],
+      "claims": [
+        {
+          "text": "Wavetable synthesis allows stacked frames to morph from one wave shape to another, resulting in harmonically rich asymmetrical sounds with a dynamically morphing quality.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Wavetable Experiment Mini-Pack description",
+              "quote": "Unlike sample-based synths, which read a static waveform, wavetable synths allow stacked frames to morph from one wave shape to another as you play, resulting in harmonically rich asymmetrical sounds with a deeply textural and dynamically morphing quality"
+            }
+          ]
+        },
+        {
+          "text": "The Taiko drum was historically used to intimidate enemies during battles in feudal Japan, with roots dating to at least the 6th century.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Taiko instrument description",
+              "quote": "The Taiko is a traditional Japanese instrument whose percussive sound is so powerful that it was historically used to intimidate enemies during battles in feudal Japan... Prisma Sounds' Taiko brings these 6th century sounds into the 21st century"
+            }
+          ]
+        },
+        {
+          "text": "The sine wave, through subtle variations, can produce a wide range of stunning and beautiful sounds suitable for soundscape design.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Sine Beauty by Klang description",
+              "quote": "This instrument is a testament to the simple purity of the sine wave. It uses subtle variations to create stunning and beautiful sounds, perfect for crafting the essence of many soundscapes."
+            }
+          ]
+        },
+        {
+          "text": "Recording a synthesizer to cassette tape introduces warm saturation and flutter artifacts that produce a nostalgic timbral character distinct from clean digital recordings.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Cassette Bass by Wrongtools description",
+              "quote": "This instrument captures the warm, vintage character of a synthesizer recorded to cassette tape, giving you a uniquely nostalgic sound with all the tape saturation and flutter you could ask for."
+            }
+          ]
+        },
+        {
+          "text": "The chord quality (major or minor) of a sampled orchestral patch can be determined by note velocity, creating velocity-dependent harmonic content.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Free HD Orchestra Chords description",
+              "quote": "The unusual part is that the chord played is either major or minor depending on note velocity. This can lead to some interesting results."
+            }
+          ]
+        },
+        {
+          "text": "Tuning all 88 keys of a piano to the same pitch (E) and playing them simultaneously produces timbres ranging from horror stabs to subterranean pads.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "The 88E instrument description",
+              "quote": "Ever wondered what it might sound like if you tuned every single one of a piano's 88 keys to 'E' and played them all at once?... resulting in a truly massive sound that covers wide-ranging timbres from horror stabs to subterranean pads"
+            }
+          ]
+        },
+        {
+          "text": "Inserting felt between piano hammers and strings produces a warmer and more intimate tone than standard piano articulation.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "The Felt Seiler description",
+              "quote": "Strezov Sampling's Seiler was sampled from an upright piano with a layer of felt between the piano hammers and strings, giving it a warm and intimate tone."
+            }
+          ]
+        },
+        {
+          "text": "The Mellotron-style approach of recording vocalists singing sustained notes and playing them back via tape creates an organic but uncanny choir sound.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Tape Choir by Soniccouture description",
+              "quote": "Inspired by the tape-based proto-sampling of 10cc's 'I'm Not in Love', Tape Choir is a Mellotron-esque instrument based around samples of three male vocalists singing notes in unison. The result is an organic but uncanny choir sound"
+            }
+          ]
+        },
+        {
+          "text": "Detuning multiple analogue oscillators and blending them with early digital waveforms creates a gritty, primitive sound that contrasts with polished contemporary soft synths.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "NanoMod 7 description",
+              "quote": "NamoMod 7 allows you to morph between detuned multi-voice analogue oscillators and an early digital synth waveform that can provide you with a respite from the polished gloss of contemporary soft synths."
+            }
+          ]
+        },
+        {
+          "text": "Atonal orchestral textures (hits, stabs, crescendi, glissandi) recorded by a full symphony orchestra serve as effective accompaniment to chromatic melodic orchestral writing.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Tutti Free description",
+              "quote": "Predominantly an atonal instrument, this is the ideal accompaniment to more traditional chromatic orchestral patches."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "note",
+          "value": "E (all 88 piano keys tuned to E)",
+          "details": {
+            "pitchClass": "E",
+            "source": "The 88E by Impact Soundworks",
+            "technique": "all 88 keys retuned to unison E",
+            "voicing": "up to 3 stacked voices"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "24-bit audio resolution",
+          "details": {
+            "bitDepth": 24,
+            "context": "Heritage Percussion recording fidelity",
+            "source": "Heritage Percussion by Impact Soundworks"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "9 GB sample library size",
+          "details": {
+            "context": "ETI Roads MK II electric piano sample library",
+            "sizeGB": 9,
+            "source": "Roads MK II"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "1.5 GB+ sample library size",
+          "details": {
+            "context": "The Alpine Project orchestral library",
+            "sizeGB": 1.5,
+            "source": "The Alpine Project"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "450 MB Fender Stratocaster loops and one-shots",
+          "details": {
+            "contentType": "loops and one-shots",
+            "instrument": "Fender Stratocaster",
+            "sizeMB": 450,
+            "source": "Pettinhouse Funky Guitar"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Two-octave vocal range",
+          "details": {
+            "context": "Ancient Voices male choir range",
+            "octaves": 2,
+            "source": "Ancient Voices by Embertone"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Three-octave guitar articulation range",
+          "details": {
+            "articulations": [
+              "Sustains",
+              "Palm Mutes",
+              "Release Noises",
+              "Chokes"
+            ],
+            "dynamicLayers": 3,
+            "instrument": "Fender Stratocaster",
+            "octaves": 3,
+            "roundRobins": 4,
+            "source": "Shreddage 3 by Impact Soundworks"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Three-octave string range (Lite)",
+          "details": {
+            "context": "Intimate Strings LITE range",
+            "octaves": 3,
+            "source": "Embertone Intimate Strings LITE"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Four-octave jug drum range",
+          "details": {
+            "context": "Jug Drum Free patch range",
+            "octaves": 4,
+            "source": "Embertone Jug Drum Free"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "22 cities sampled for Jacob Collier Choir",
+          "details": {
+            "citiesCount": 22,
+            "context": "Audience samples from Jacob Collier's Djesse world tour",
+            "source": "Jacob Collier Audience Choir"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "12 velocity layers",
+          "details": {
+            "context": "LO.VE. Piano dynamic resolution",
+            "source": "VSTBuzz LO.VE. Piano",
+            "velocityLayers": 12
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "14 wavetable algorithm types",
+          "details": {
+            "algorithmCount": 14,
+            "context": "Wavesynth EP Glow wavetable electric piano",
+            "source": "Wavesynth EP Glow by Karanyi Sounds"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "30 sampled patches from 3 Commodore 64 iterations",
+          "details": {
+            "chipset": "SID Chip",
+            "hardwareVariants": 3,
+            "patchCount": 30,
+            "source": "Commodore 64 Sessions Deluxe by Rhythmic Robot Audio"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "26 impulse responses for convolution reverb",
+          "details": {
+            "context": "Gongster's Paradise reverb options",
+            "irCount": 26,
+            "source": "Bunker Samples Gongster's Paradise"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "18 IR convolution reverbs",
+          "details": {
+            "context": "LO.VE. Piano reverb options",
+            "irCount": 18,
+            "source": "VSTBuzz LO.VE. Piano"
+          }
+        },
+        {
+          "type": "key",
+          "value": "All 12 keys (major and minor chord loops)",
+          "details": {
+            "chordTypes": [
+              "major",
+              "minor"
+            ],
+            "context": "8dio Songwriting Guitar chord triggering",
+            "keyCount": 12,
+            "source": "8dio Songwriting Guitar"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What acoustic mechanisms make felt-dampened piano tones perceptually 'warmer' — is it a reduction in high-frequency partials, a change in attack transient, or both?",
+        "How does cassette tape flutter interact with fundamental frequency stability, and at what flutter rates does pitch instability become perceptually significant?",
+        "What is the spectral consequence of tuning all 88 piano strings to unison (E)? Would sympathetic resonance between strings create emergent overtones not present in standard tuning?",
+        "Does velocity-based major/minor chord switching (as in Free HD Orchestra Chords) have precedent in acoustic instrument behavior, or is it purely a digital design choice?",
+        "How do wavetable morphing artifacts (aliasing, spectral leakage) at frame boundaries contribute to the perceived 'character' of wavetable synthesis versus pure FM or additive synthesis?",
+        "What is the historical acoustic role of the Taiko drum's specific frequency profile in intimidation — does it exploit particular psychoacoustic thresholds (e.g., infrasound components, resonant chest frequencies)?",
+        "Can the 'uncanny' quality of Mellotron/tape choir be explained by micro-timing inconsistencies between samples, or is it primarily a timbral artifact of tape reproduction?",
+        "How do detuned multi-oscillator analogue stacks compare spectrally to single-oscillator sources — is the perceived 'width' and 'warmth' attributable to beating frequencies between oscillators?",
+        "What makes the SID chip's sound immediately recognizable — is it the waveform shapes, the limited bit-depth, the specific aliasing patterns, or the chip's particular filter characteristics?",
+        "How does polyphonic aftertouch interaction with organic pad textures (as in Hypha) map to acoustic instrument behavior — is there a natural analog, or is it a purely electronic expressive layer?"
+      ],
+      "scores": {
+        "base": 68,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 1,
+        "topicalBalance": 1,
+        "combined": 1,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 4
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j978wc8spg7xjg8v7d09pzw79985df6w",
+      "sourceId": "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "sourceTitle": "Tonnetz Theory, Classical Harmony, and the Combinatorial Geometry of Abstract Musical Resources",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.19960",
+      "extractionCreatedAt": 1776942387613,
+      "extractionSummary": "This arXiv preprint develops a formal mathematical framework connecting musical harmony to combinatorial geometry through the concept of the Tonnetz (tone network). The authors demonstrate that various musical systems — including diatonic triads, diatonic seventh chords, pentatonic scales, and the 12-tone system — each correspond to specific combinatorial configurations (e.g., Fano, Desargues, Cremona-Richmond). A key result is that the Eulerian tonnetz maps to a Daublebsky von Sterneck D222 configuration, and that this same structure describes the relationship between chromatic pitch classes and major triads. The paper also addresses the major/minor triad duality, showing it can be 'broken' by identifying minor triads with hexacycles in the Levi graph of the D222 configuration. The work frames music theory as an instance of abstract combinatorial geometry, offering these structures as explicit resources for composition.",
+      "topics": [
+        "Tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "Fano configuration",
+        "Desargues configuration",
+        "Cremona-Richmond configuration",
+        "Levi graphs",
+        "bipartite graphs",
+        "major/minor duality",
+        "Tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-Riemannian theory"
+      ],
+      "topicTokens": [
+        "tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "fano configuration",
+        "desargues configuration",
+        "cremona-richmond configuration",
+        "levi graphs",
+        "bipartite graphs",
+        "major",
+        "minor duality",
+        "tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-riemannian theory"
+      ],
+      "claims": [
+        {
+          "text": "The Eulerian tonnetz can be represented by a {12_3} combinatorial configuration of Daublebsky von Sterneck type D222.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core result from prior work, recapitulated here",
+              "quote": "It was shown that the Eulerian tonnetz can be represented by a {12_3} of Daublebsky von Sterneck type D222."
+            }
+          ]
+        },
+        {
+          "text": "The tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) can be represented by a {12_3} combinatorial configuration of type D228.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Tristan-genus tonnetz",
+              "quote": "We also constructed a tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) and we showed that this tonnetz can be represented by a {12_3} of type D228."
+            }
+          ]
+        },
+        {
+          "text": "The seven diatonic degrees and their pitch classes are related by a bipartite graph of type {7_3} with girth four.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "diatonic triads graph",
+              "quote": "In the case of diatonic triads, we show the existence of a bipartite graph of type {7_3} and girth four that represents the well-known relations between the seven diatonic degrees and their pitch classes."
+            }
+          ]
+        },
+        {
+          "text": "The voice-leading relations between diatonic seventh chords are completely characterized by a Fano configuration {7_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Fano configuration and seventh chords",
+              "quote": "In the case of diatonic seventh chords, we obtain a Fano configuration {7_3} which gives a complete characterization of the voice-leading relations that hold between such chords."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for pentatonic music can be constructed based on the Desargues configuration {10_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "pentatonic tonnetz",
+              "quote": "We construct a tonnetz for pentatonic music based on the Desargues configuration {10_3}."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for the 12-tone system can be constructed based on the Cremona-Richmond configuration {15_3}, and can serve as a compositional resource.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "12-tone tonnetz",
+              "quote": "We construct a tonnetz for the 12-tone system based on the Cremona-Richmond configuration {15_3}. Both can be used as a resource for musical compositions."
+            }
+          ]
+        },
+        {
+          "text": "The relationship between the chromatic pitch class set and the major triad set is represented by the same D222 configuration as the Eulerian tonnetz.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "chromatic–major triad correspondence",
+              "quote": "We show that the relation between the chromatic pitch class set and the major triad set is also represented by a D222."
+            }
+          ]
+        },
+        {
+          "text": "Minor triads correspond one-to-one with a certain class of hexacycles in the Levi graph of the D222 configuration, allowing the major/minor duality of the traditional tonnetz to be broken.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "minor triads and hexacycles",
+              "quote": "The minor triads are in one-to-one correspondence with the members of a certain class of hexacycles in the Levi graph of this configuration. In this way, the characteristic duality between major and minor triads in the tonnetz can be broken."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "scaleSystem",
+          "value": "Diatonic (7-note) scale",
+          "details": {
+            "chordTypes": [
+              "triads",
+              "seventh chords"
+            ],
+            "graphType": "{7_3} bipartite, girth 4",
+            "noteCount": 7
+          }
+        },
+        {
+          "type": "scaleSystem",
+          "value": "Pentatonic (5-note) scale",
+          "details": {
+            "configurationModel": "Desargues {10_3}",
+            "noteCount": 5
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal/chromatic system",
+          "details": {
+            "configurationModel": "Cremona-Richmond {15_3}",
+            "eulerianTonnetzModel": "D222 {12_3}",
+            "pitchClassCount": 12
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Tristan-genus chords: dominant seventh and half-diminished seventh",
+          "details": {
+            "chordTypes": [
+              "dominant seventh",
+              "half-diminished seventh"
+            ],
+            "configurationModel": "D228 {12_3}"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Diatonic seventh chords",
+          "details": {
+            "configurationModel": "Fano configuration {7_3}",
+            "property": "complete voice-leading characterization"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Desargues {10_3} pentatonic tonnetz be used to generate novel voice-leading rules analogous to those derived from the Fano configuration for diatonic seventh chords?",
+        "What are the perceptual or acoustic correlates of navigating paths through the Cremona-Richmond {15_3} 12-tone tonnetz — do certain paths correspond to recognizable harmonic progressions?",
+        "Since minor triads are modeled as hexacycles rather than as dual objects to major triads in this framework, what new compositional symmetries or asymmetries does this asymmetric treatment enable?",
+        "Are there analogous combinatorial configurations for microtonal or non-Western tuning systems (e.g., 19-TET, 31-TET, maqam scales)?",
+        "How does the D228 configuration for Tristan-genus chords relate acoustically to the harmonic series — is the dominant seventh's proximity to just intonation ratios reflected in the geometry?",
+        "Can these abstract graph structures be directly sonified or mapped to generative composition algorithms, and if so, what traversal strategies (e.g., Hamiltonian paths, shortest paths) yield musically coherent results?",
+        "What is the relationship between the girth-four constraint of the diatonic triad bipartite graph and perceptual properties like harmonic ambiguity or voice-leading efficiency?"
+      ],
+      "scores": {
+        "base": 31,
+        "normalizedBase": 0.32727272727272727,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "topicalBalance": 0.990771216612713,
+        "combined": 0.5767975006737251,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j97eag5wx2pp6czsd8rrs1b50x85n9ys",
+      "sourceId": "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "sourceTitle": "Beyond Rules: Towards Basso Continuo Personal Style Identification",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.21822",
+      "extractionCreatedAt": 1777259161758,
+      "extractionSummary": "This preprint investigates whether individual performers can be identified by their basso continuo realizations using machine learning. The study uses the Aligned Continuo Realization Dataset (ACoRD) and a structured pitch-content representation called 'griffs' combined with Support Vector Machines. Results show that player classification from performance data is achievable, suggesting measurable personal styles exist within the improvisatory tradition of basso continuo. The work highlights a gap in computational musicology: the theoretical rules of basso continuo have been studied, but the performance dimension has been neglected due to lack of suitable data.",
+      "topics": [
+        "basso continuo",
+        "historically informed performance practice",
+        "baroque music",
+        "computational musicology",
+        "performance style identification",
+        "machine learning in music",
+        "support vector machines",
+        "harmonic realization",
+        "voice leading",
+        "improvisation",
+        "personal style in performance",
+        "pitch content representation",
+        "keyboard performance",
+        "ACoRD dataset",
+        "griffs"
+      ],
+      "topicTokens": [
+        "basso continuo",
+        "historically informed performance practice",
+        "baroque music",
+        "computational musicology",
+        "performance style identification",
+        "machine learning in music",
+        "support vector machines",
+        "harmonic realization",
+        "voice leading",
+        "improvisation",
+        "personal style in performance",
+        "pitch content representation",
+        "keyboard performance",
+        "acord dataset",
+        "griffs"
+      ],
+      "claims": [
+        {
+          "text": "Individual basso continuo players can be computationally identified from their performances using pitch-content features ('griffs') and Support Vector Machines, indicating the presence of measurable personal performance styles.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "main finding",
+              "quote": "The results show that we can identify players from their performances."
+            }
+          ]
+        },
+        {
+          "text": "Basso continuo is an improvised accompaniment genre rooted in the baroque era that is still actively practiced by keyboard players today.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "genre description",
+              "quote": "an improvised accompaniment genre with its traditions originating in the baroque era and actively practiced by many keyboard players nowadays"
+            }
+          ]
+        },
+        {
+          "text": "Basso continuo playing is shaped both by stylistic traditions from historical treatises and by individual performer choices, suggesting a tension between rule-following and personal expression.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "tradition vs. individuality",
+              "quote": "Basso continuo playing is shaped by stylistic traditions coming from historical treatises, but it also may provide space for showcasing individual performance styles of its practitioners."
+            }
+          ]
+        },
+        {
+          "text": "Computational musicology has historically focused on the rule-based theoretical foundations of basso continuo (harmonic and voice-leading constraints) rather than on empirical performance data.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "gap in literature",
+              "quote": "computational musicology has studied the theoretical foundations of basso continuo expressed by harmonic and voice-leading rules and constraints, characteristics of basso continuo as an active performing art have been largely overlooked"
+            }
+          ]
+        },
+        {
+          "text": "A structured pitch-content representation called 'griffs' can serve as a historically informed feature set for analyzing basso continuo realization style.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "feature representation",
+              "quote": "a historically informed structured representation of basso continuo performance pitch content called griffs"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Historically Informed Practice (baroque conventions)",
+          "details": {
+            "era": "baroque",
+            "genre": "basso continuo",
+            "tradition": "historically informed performance practice"
+          }
+        },
+        {
+          "type": "note",
+          "value": "Griff (chord voicing unit in basso continuo realization)",
+          "details": {
+            "description": "A historically informed structured unit of pitch content representing a realized chord or voicing choice in basso continuo performance",
+            "source": "ACoRD dataset"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific pitch-content features (griffs) most strongly differentiate individual players — and could these serve as generative constraints for compositional systems?",
+        "Can the 'griff' representation be adapted to analyze improvisation styles in non-baroque genres (e.g., jazz piano comping, modal accompaniment)?",
+        "Is personal style in basso continuo realization correlated with the player's training lineage or the treatises they studied — and if so, can treatise-sourced rules be mapped to compositional parameters?",
+        "How does the improvisatory nature of basso continuo compare to other notated music in terms of measurable stylistic variance between performers?",
+        "Could machine-learning-identified personal style clusters inform the design of algorithmic accompaniment systems tuned to baroque conventions?",
+        "What is the minimum performance data needed to reliably identify a player — and does this threshold reveal anything about how quickly personal style asserts itself in improvisation?"
+      ],
+      "scores": {
+        "base": 21,
+        "normalizedBase": 0.14545454545454545,
+        "novelty": 0.9714285714285714,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.76,
+        "topicalBalance": 0.9441594065155965,
+        "combined": 0.474117417470846,
+        "peerReviewedClaims": 1,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j978mypywk23f3gtf3ykz84q4x85j102",
+      "sourceId": "jx70dhsw26kwd55qeh0xgyw3xx85fp1n",
+      "sourceTitle": "Musical Score Understanding Benchmark: Evaluating Large Language Models' Comprehension of Complete Musical Scores",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2511.20697",
+      "extractionCreatedAt": 1777201528572,
+      "extractionSummary": "MSU-Bench is a human-curated benchmark of 1,800 question-answer pairs designed to evaluate how well Large Language Models and Vision-Language Models understand complete musical scores. It covers works by Bach, Beethoven, Chopin, Debussy, and others, and tests comprehension across four difficulty levels—from basic onset information to texture and form—in both text (ABC notation) and visual (PDF) modalities. Evaluations of over fifteen state-of-the-art models reveal significant modality gaps, unstable performance across difficulty levels, and difficulty maintaining correctness across multiple levels simultaneously. Fine-tuning substantially improves model performance while preserving general knowledge, suggesting a path toward more robust multimodal music reasoning.",
+      "topics": [
+        "musical score understanding",
+        "large language models",
+        "vision-language models",
+        "ABC notation",
+        "music notation",
+        "pitch",
+        "rhythm",
+        "harmony",
+        "musical form",
+        "musical texture",
+        "multimodal reasoning",
+        "benchmark evaluation",
+        "fine-tuning",
+        "AI and music",
+        "computational musicology",
+        "score analysis"
+      ],
+      "topicTokens": [
+        "musical score understanding",
+        "large language models",
+        "vision-language models",
+        "abc notation",
+        "music notation",
+        "pitch",
+        "rhythm",
+        "harmony",
+        "musical form",
+        "musical texture",
+        "multimodal reasoning",
+        "benchmark evaluation",
+        "fine-tuning",
+        "ai and music",
+        "computational musicology",
+        "score analysis"
+      ],
+      "claims": [
+        {
+          "text": "Current Large Language Models and Vision-Language Models have insufficiently examined ability to interpret full musical notation, including pitch, rhythm, harmony, and large-scale structure.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "motivation for benchmark",
+              "quote": "the ability of Large Language Models and Vision--Language Models to interpret full musical notation remains insufficiently examined"
+            }
+          ]
+        },
+        {
+          "text": "Evaluations of more than fifteen state-of-the-art models reveal pronounced modality gaps between textual (ABC notation) and visual (PDF) score understanding.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "key empirical finding",
+              "quote": "Evaluations of more than fifteen state-of-the-art models, in both zero-shot and fine-tuned settings, reveal pronounced modality gaps"
+            }
+          ]
+        },
+        {
+          "text": "Fine-tuning on musical score data substantially improves LLM/VLM performance across modalities while preserving general knowledge.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "fine-tuning result",
+              "quote": "Fine-tuning substantially improves results across modalities while preserving general knowledge"
+            }
+          ]
+        },
+        {
+          "text": "Musical score understanding can be decomposed into at least four hierarchical levels of difficulty, from onset information up to texture and form.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "taxonomy of musical understanding",
+              "quote": "organised into four levels of increasing difficulty, ranging from onset information to texture and form"
+            }
+          ]
+        },
+        {
+          "text": "Models exhibit unstable level-wise performance and struggle to maintain multilevel correctness simultaneously, suggesting that integrated musical reasoning is not a simple sum of component skills.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "emergent difficulty finding",
+              "quote": "unstable level-wise performance, and challenges in maintaining multilevel correctness"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "note",
+          "value": "ABC notation (textual score representation)",
+          "details": {
+            "format": "ABC notation",
+            "modality": "text",
+            "use": "score encoding for LLM input"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific aspects of harmony and large-scale form are hardest for current models, and does this map onto known difficulties in human music theory pedagogy?",
+        "Does the modality gap between ABC notation and PDF scores reflect a fundamental representational difference, or is it an artifact of training data distribution?",
+        "Could a model that reliably understands musical scores be used generatively—e.g., to compose music that conforms to specific structural or harmonic constraints?",
+        "How do model failures at 'multilevel correctness' compare to human expert performance, and what does this reveal about the nature of integrated musical reasoning?",
+        "Would training on a broader corpus of non-Western scores reveal additional gaps, or would models transfer musical structural reasoning across traditions?",
+        "Is ABC notation a sufficient representation for capturing microtonal, spectral, or extended-technique music relevant to contemporary composition?"
+      ],
+      "scores": {
+        "base": 13,
+        "normalizedBase": 0,
+        "novelty": 0.9666666666666667,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.64,
+        "topicalBalance": 0.9618455551375191,
+        "combined": 0.4142768332706279,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "voice leading": 2,
+      "computational musicology": 2,
+      "wavetable synthesis": 1,
+      "sample-based synthesis": 1,
+      "tape saturation and flutter": 1,
+      "sine wave acoustics": 1,
+      "prepared piano": 1,
+      "felt piano technique": 1,
+      "mellotron and tape sampling": 1,
+      "harmonic content and timbre": 1,
+      "velocity-dependent harmonic mapping": 1,
+      "atonal orchestral texture": 1,
+      "chiptune waveforms (pulse": 1,
+      "triangle": 1,
+      "detuning and oscillator drift": 1,
+      "convolution reverb and impulse responses": 1,
+      "round robin sample playback": 1,
+      "polyphonic aftertouch": 1,
+      "analogue drum machines (linndrum lm-2": 1,
+      "roland tr-808)": 1,
+      "taiko percussion and cultural acoustics": 1,
+      "electric piano acoustics (rhodes": 1,
+      "fender rhodes)": 1,
+      "orchestral ensemble sampling": 1,
+      "vowel morphing in vocal synthesis": 1,
+      "portamento and glide": 1,
+      "world instruments (yangqin": 1,
+      "ronroco": 1,
+      "vietnamese gongs)": 1,
+      "cinematic scoring techniques": 1,
+      "lo-fi aesthetics": 1,
+      "harmonic distortion and saturation": 1,
+      "sid chip sound synthesis": 1,
+      "tonnetz": 1,
+      "combinatorial geometry": 1,
+      "music theory formalization": 1,
+      "diatonic harmony": 1,
+      "pentatonic scales": 1,
+      "12-tone system": 1,
+      "fano configuration": 1,
+      "desargues configuration": 1,
+      "cremona-richmond configuration": 1,
+      "levi graphs": 1,
+      "bipartite graphs": 1,
+      "major": 1,
+      "minor duality": 1,
+      "tristan chord": 1,
+      "dominant seventh chords": 1,
+      "half-diminished seventh chords": 1,
+      "pitch class sets": 1,
+      "hexacycles": 1,
+      "graph theory in music": 1,
+      "neo-riemannian theory": 1,
+      "basso continuo": 1,
+      "historically informed performance practice": 1,
+      "baroque music": 1,
+      "performance style identification": 1,
+      "machine learning in music": 1,
+      "support vector machines": 1,
+      "harmonic realization": 1,
+      "improvisation": 1,
+      "personal style in performance": 1,
+      "pitch content representation": 1,
+      "keyboard performance": 1,
+      "acord dataset": 1,
+      "griffs": 1,
+      "musical score understanding": 1,
+      "large language models": 1,
+      "vision-language models": 1,
+      "abc notation": 1,
+      "music notation": 1,
+      "pitch": 1,
+      "rhythm": 1,
+      "harmony": 1,
+      "musical form": 1,
+      "musical texture": 1,
+      "multimodal reasoning": 1,
+      "benchmark evaluation": 1,
+      "fine-tuning": 1,
+      "ai and music": 1,
+      "score analysis": 1
+    },
+    "parameterTypeFrequency": {
+      "measurement": 10,
+      "interval": 6,
+      "note": 3,
+      "scalesystem": 2,
+      "tuningsystem": 2,
+      "key": 1
+    },
+    "evidenceDistribution": {
+      "preprint": 17,
+      "anecdotal": 10,
+      "peer_reviewed": 1
+    },
+    "sourceTypeDistribution": {
+      "rss": 4
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 6,
+    "priorSourceIds": 32,
+    "priorTopicTokens": 535,
+    "priorVariablePhrases": 2,
+    "priorTitlePhrases": 4
+  }
+}
