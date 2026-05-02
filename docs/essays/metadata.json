@@ -1629,5 +1629,20 @@
     "category": "interdisciplinary",
     "contentHash": "8790450df5986774be1fb91ceda617d0f1057611efc074e60334e47e0612dde2",
     "generatedAt": "2026-05-02T12:03:00.000Z"
+  },
+  "the-control-layer": {
+    "excerpt": "Musical meaning often rides on a hidden control layer — modulation, envelope, timing, phase, silence, and prosodic alignment — that tells the listener how to parse pitch and timbre.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "psychoacoustics",
+      "AI-music",
+      "rhythm",
+      "timbre",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "858b99ee65c7f12c746c5fb82963e99ba5d9fe0dac5dbe7ff7513b3530a460bf",
+    "generatedAt": "2026-05-02T20:03:00.000Z"
   }
 }
