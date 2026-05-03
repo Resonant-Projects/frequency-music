@@ -1,0 +1,56 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "",
+    "question": "",
+    "hypothesis": "",
+    "rationaleMd": "Provide rationale with explicit S# citations, e.g. `Supported by S1 and S3.`",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx77032syzvp4nh8mcjf3ry8q584rg6q",
+      "jx7779wxwcwdf63tstnx1fx58584ybfq",
+      "jx7e069afwawf8v8pgrxex5y2s85w80e",
+      "jx728k53rhpv5ye61qsvb8b9fh85ayjd",
+      "jx754t1e95rr3bq5k38xt0183n851hks",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx71xbpfz79hvzv2tcas0khccx851gt6",
+      "jx762q5tm7md2f9znq4tykwkv985feka",
+      "jx7bq2ntex80n77x8ekzjqpv2184w66k",
+      "jx7dksf4rbz18hfpk7cj3nrzh5850j7c",
+      "jx7d318zzcx7e8cd6yrmvrgn7h859g7f"
+    ],
+    "concepts": []
+  },
+  "recipe": {
+    "title": "",
+    "bodyMd": "Describe arrangement, test method, and expected outcomes with S# citations.",
+    "parameters": [],
+    "dawChecklist": [],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "",
+      "listeningMethod": "",
+      "whatVaries": [],
+      "whatStaysConstant": []
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6",
+    "S7",
+    "S8",
+    "S9",
+    "S10",
+    "S11",
+    "S12"
+  ],
+  "notes": "Fill all required fields, then run publish mode with this file path."
+}

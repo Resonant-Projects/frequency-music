@@ -222,6 +222,20 @@
     "contentHash": "c6957ea191bcfa6f87017112ec94c5ee12c6f2521f0a2f2402f92e563e8c13a0",
     "generatedAt": "2026-04-10T18:36:37.407Z"
   },
+  "the-bandpass-principle": {
+    "excerpt": "Every listening system starts by choosing a passband; from ultrasonic bioacoustics to Bark-scale dynamics, infrasound, wavelet artifacts, and rhythm formants, the filter is already a theory of music.",
+    "tags": [
+      "signal-processing",
+      "psychoacoustics",
+      "acoustics",
+      "composition",
+      "AI-music",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6aca61ed2935f295296cfbb4824706211d448cb87bf40e0c192b60080292dbd7",
+    "generatedAt": "2026-05-02T04:03:00.000Z"
+  },
   "the-bleed": {
     "excerpt": "Acoustic bleed in live sound is not engineering failure but the coupling mechanism that enables emergent ensemble synchronization—the physics that makes live music sound alive.",
     "tags": [
@@ -249,6 +263,20 @@
     "category": "interdisciplinary",
     "contentHash": "65e4907a50fc30d9319be4e48c2ce6d4f9cbbb93d2602dd04a01159abb8f2c9f",
     "generatedAt": "2026-04-10T18:36:44.411Z"
+  },
+  "the-category-that-leaks": {
+    "excerpt": "Leakage, contour, and timbre all show the same truth: in music, boundaries are useful approximations, not clean facts.",
+    "tags": [
+      "acoustics",
+      "perception",
+      "signal-processing",
+      "composition",
+      "music-cognition",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4c144ea1918b4020628bda5d3a5cf3c5d1eee00e29a19d8da414b6d695ba141e",
+    "generatedAt": "2026-04-17T03:05:51.834Z"
   },
   "the-codec-ear": {
     "excerpt": "Neural audio codecs reveal what the ear truly tracks by compressing sound to extreme ratios—discovering that harmonic skeletons, spectral shape, and slow envelopes matter far more than noise texture and micro-timing.",
@@ -333,6 +361,66 @@
     "category": "interdisciplinary",
     "contentHash": "e52f0d9e6545beca6a8c5b4c9a504d07f1eef1c9d971e7337da480878aee99e6",
     "generatedAt": "2026-04-10T18:37:02.253Z"
+  },
+  "the-configuration-is-the-score": {
+    "excerpt": "Before you write a note, you choose a geometry. Six systems — Tonnetz configurations, room acoustics, arousal modeling, rhythm analysis, FDN optimization, and mix layering — reveal the same principle: the mathematical configuration you choose determines which musical relationships can exist.",
+    "tags": [
+      "combinatorial-geometry",
+      "Tonnetz",
+      "acoustic-modeling",
+      "perception",
+      "mathematical-music-theory",
+      "composition",
+      "signal-processing",
+      "separability"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "78c62f0d652deaeb4c818b4bdbd2b901d91c1d73876ee3b12b50a96035658565",
+    "generatedAt": "2026-05-01T12:07:02.000Z"
+  },
+  "the-constraint-that-calms": {
+    "excerpt": "Music calms when it becomes a constrained interface between intention and physiology, giving the body a shape it can inhabit.",
+    "tags": [
+      "music-therapy",
+      "composition",
+      "embodiment",
+      "workflow",
+      "perception",
+      "music-cognition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1ae6eee00752918b4da67b0b0c338e518b7cb91800e15a4b5612d75a54b3493d",
+    "generatedAt": "2026-04-18T11:02:00.000Z"
+  },
+  "the-control-layer": {
+    "excerpt": "Musical meaning often rides on a hidden control layer — modulation, envelope, timing, phase, silence, and prosodic alignment — that tells the listener how to parse pitch and timbre.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "psychoacoustics",
+      "AI-music",
+      "rhythm",
+      "timbre",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "858b99ee65c7f12c746c5fb82963e99ba5d9fe0dac5dbe7ff7513b3530a460bf",
+    "generatedAt": "2026-05-02T20:03:00.000Z"
+  },
+  "the-coordinate-system-hears-first": {
+    "excerpt": "Across Tonnetz geometry, geo-acoustic embeddings, sound-speed physics, spatial localization, and speech tokenization, sound becomes composable only after it is placed in a coordinate system that makes certain transformations meaningful.",
+    "tags": [
+      "mathematical-music-theory",
+      "geometry",
+      "acoustics",
+      "signal-processing",
+      "spatial-audio",
+      "composition",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "bfc8d0ee01ff07228d409ddd5980007732fc7ae766e5ed3e8699e56546864797",
+    "generatedAt": "2026-05-03T16:30:00.000Z"
   },
   "the-coordinate-that-survives": {
     "excerpt": "Audio systems improve when time, prosody, class direction, quality, and modality stay on separate axes until the moment of fusion.",
@@ -431,6 +519,20 @@
     "category": "interdisciplinary",
     "contentHash": "be553bc1466eec3e122e28556d55993d9031926cd7a7eaacd86811848bd4f963",
     "generatedAt": "2026-04-10T18:37:21.909Z"
+  },
+  "the-doubt-that-keeps-the-line-open": {
+    "excerpt": "Voice systems should preserve disagreement long enough for prosody, retrieval, and planning to resolve it into a better decision.",
+    "tags": [
+      "speech",
+      "dialogue",
+      "perception",
+      "AI-music",
+      "signal-processing",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "0439606f7eb66e9eba81d13b52c584c19c1692ab45b724e54c8ebfd100999c4b",
+    "generatedAt": "2026-04-27T20:03:13.053Z"
   },
   "the-entangled-signal": {
     "excerpt": "Musical perception dimensions like pitch and timbre aren't independent axes but entangled manifolds—and understanding this geometry reveals how composers can exploit shared acoustic dimensions for richer sound.",
@@ -751,6 +853,20 @@
     "contentHash": "093be923f33d099df36a2576417985fb33bd7aa53de3c982234e3d0e7e072a81",
     "generatedAt": "2026-04-10T18:38:44.833Z"
   },
+  "the-instrument-is-a-theory": {
+    "excerpt": "Every instrument encodes a theory of musical affordance, making some gestures natural and others invisible—from Tonnetz graphs to samplers, notation, and continuo style.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "AI-music",
+      "geometry",
+      "perception",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8790450df5986774be1fb91ceda617d0f1057611efc074e60334e47e0612dde2",
+    "generatedAt": "2026-05-02T12:03:00.000Z"
+  },
   "the-interference-pattern": {
     "excerpt": "Superposition is music's deepest structural principle: timbre, harmony, rhythm, and form all emerge from interference patterns across different scales, unified by the mathematics of signal addition in vector spaces.",
     "tags": [
@@ -805,6 +921,19 @@
     "category": "interdisciplinary",
     "contentHash": "0347016d5a02a197faa7ded5bc01b517b5c98ecbac41cb0f4df18211c3a012aa",
     "generatedAt": "2026-04-10T18:38:57.284Z"
+  },
+  "the-listener-in-the-filter": {
+    "excerpt": "Every signal transformation implicitly chooses whose ears matter — from ultra-low-bitrate codecs that retire semantic priors above 6 kbps, to emotion embeddings contaminated by speaker identity, to speech enhancement that erases emotional cues while cleaning noise. The most robust systems model multiple listeners explicitly.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "AI-music",
+      "composition",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "generatedAt": "2026-05-01T04:03:00.000Z"
   },
   "the-listeners-grid": {
     "excerpt": "Goodman's cylinder organizes pitch by fifths and octaves to model how listeners decompose polyphonic sound into fundamentals and harmonics—revealing a source/echo duality that mirrors the composer's harmonic navigation.",
@@ -1030,6 +1159,19 @@
     "contentHash": "36394033f62c16d189ecabbacc361e440c02a6552bbe13d00d723d15000ed2b3",
     "generatedAt": "2026-04-10T18:39:52.516Z"
   },
+  "the-realization-layer": {
+    "excerpt": "Musical structure becomes sound through a realization layer — the performer, model, or practice that turns possibility into expressive action.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "mathematical-music-theory",
+      "perception",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "18d66512f0ad9c408a63001310979e4bfe299f7a3e0a881a5945e05ce34d7d27",
+    "generatedAt": "2026-05-01T20:06:39.222Z"
+  },
   "the-reconstruction-limit": {
     "excerpt": "Three seemingly unrelated audio AI problems reveal a unified principle: when signal information becomes insufficient, recovery transforms into invention. Explores the reconstruction limit across frequency, sources, and perception.",
     "tags": [
@@ -1086,6 +1228,34 @@
     "contentHash": "4ed2d201d04addc532900113523874ee6994b19a1e722d8f65d5b3a8eea864cb",
     "generatedAt": "2026-04-10T18:40:06.923Z"
   },
+  "the-schema-is-the-score": {
+    "excerpt": "Recent audio systems are converging on explicit schemas, uncertainty bands, and layered representations, suggesting that good listening tools preserve distinctions instead of collapsing them into one flat score.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "0caad4305516144d4d2573abefb9a6eae6119d6cc81bb16a268b20fa90ada9aa",
+    "generatedAt": "2026-04-20T03:02:00.000Z"
+  },
+  "the-seam-that-teaches": {
+    "excerpt": "Weak supervision and boundary alignment show that structure is learned at seams, where a system must preserve relations across translation instead of labels alone.",
+    "tags": [
+      "perception",
+      "AI-music",
+      "signal-processing",
+      "information-theory",
+      "composition",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "efad0f243ecadc4dd8f4a9fb646f5b9dce8faa6ec57ac79e1944651f0c0abf54",
+    "generatedAt": "2026-04-26T12:02:28Z"
+  },
   "the-self-teaching-signal": {
     "excerpt": "When audio signals contain their own decomposition—from room acoustics to instrument timbres—machine learning and music composition reveal a shared principle: sound knows how to understand itself.",
     "tags": [
@@ -1113,20 +1283,6 @@
     "category": "interdisciplinary",
     "contentHash": "2576a2332d553110488f704bb5f78c727ace6faa7365523f1fd94b5233d8ac81",
     "generatedAt": "2026-04-10T18:40:11.614Z"
-  },
-  "the-schema-is-the-score": {
-    "excerpt": "Recent audio systems are converging on explicit schemas, uncertainty bands, and layered representations, suggesting that good listening tools preserve distinctions instead of collapsing them into one flat score.",
-    "tags": [
-      "AI-music",
-      "signal-processing",
-      "perception",
-      "composition",
-      "information-theory",
-      "acoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "0caad4305516144d4d2573abefb9a6eae6119d6cc81bb16a268b20fa90ada9aa",
-    "generatedAt": "2026-04-20T03:02:00.000Z"
   },
   "the-shape-of-musical-choice": {
     "excerpt": "Mathematical constraints on chord spaces and melodic invention reveal how composers navigate fixed topological structures—orbifolds, low-dimensional attractors—while expressing individual style within them.",
@@ -1183,20 +1339,6 @@
     "category": "interdisciplinary",
     "contentHash": "ac0d7287c28c735aa823ea69d3b27d64abf28e2c028351a937082f14962375b3",
     "generatedAt": "2026-04-10T18:40:27.236Z"
-  },
-  "the-seam-that-teaches": {
-    "excerpt": "Weak supervision and boundary alignment show that structure is learned at seams, where a system must preserve relations across translation instead of labels alone.",
-    "tags": [
-      "perception",
-      "AI-music",
-      "signal-processing",
-      "information-theory",
-      "composition",
-      "acoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "efad0f243ecadc4dd8f4a9fb646f5b9dce8faa6ec57ac79e1944651f0c0abf54",
-    "generatedAt": "2026-04-26T12:02:28Z"
   },
   "the-space-between": {
     "excerpt": "Three 2026 papers reveal why AI struggles with music: it's not about generating individual elements, but capturing the relational properties—groove, spatial acoustics, cross-dimensional analysis—that live in the space between.",
@@ -1517,132 +1659,5 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
-  },
-  "the-category-that-leaks": {
-    "excerpt": "Leakage, contour, and timbre all show the same truth: in music, boundaries are useful approximations, not clean facts.",
-    "tags": [
-      "acoustics",
-      "perception",
-      "signal-processing",
-      "composition",
-      "music-cognition",
-      "psychoacoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "4c144ea1918b4020628bda5d3a5cf3c5d1eee00e29a19d8da414b6d695ba141e",
-    "generatedAt": "2026-04-17T03:05:51.834Z"
-  },
-  "the-constraint-that-calms": {
-    "excerpt": "Music calms when it becomes a constrained interface between intention and physiology, giving the body a shape it can inhabit.",
-    "tags": [
-      "music-therapy",
-      "composition",
-      "embodiment",
-      "workflow",
-      "perception",
-      "music-cognition"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "1ae6eee00752918b4da67b0b0c338e518b7cb91800e15a4b5612d75a54b3493d",
-    "generatedAt": "2026-04-18T11:02:00.000Z"
-  },
-  "the-doubt-that-keeps-the-line-open": {
-    "excerpt": "Voice systems should preserve disagreement long enough for prosody, retrieval, and planning to resolve it into a better decision.",
-    "tags": [
-      "speech",
-      "dialogue",
-      "perception",
-      "AI-music",
-      "signal-processing",
-      "composition"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "0439606f7eb66e9eba81d13b52c584c19c1692ab45b724e54c8ebfd100999c4b",
-    "generatedAt": "2026-04-27T20:03:13.053Z"
-  },
-  "the-listener-in-the-filter": {
-    "excerpt": "Every signal transformation implicitly chooses whose ears matter — from ultra-low-bitrate codecs that retire semantic priors above 6 kbps, to emotion embeddings contaminated by speaker identity, to speech enhancement that erases emotional cues while cleaning noise. The most robust systems model multiple listeners explicitly.",
-    "tags": [
-      "signal-processing",
-      "perception",
-      "AI-music",
-      "composition",
-      "information-theory",
-      "psychoacoustics"
-    ],
-    "category": "interdisciplinary",
-    "generatedAt": "2026-05-01T04:03:00.000Z"
-  },
-  "the-configuration-is-the-score": {
-    "excerpt": "Before you write a note, you choose a geometry. Six systems — Tonnetz configurations, room acoustics, arousal modeling, rhythm analysis, FDN optimization, and mix layering — reveal the same principle: the mathematical configuration you choose determines which musical relationships can exist.",
-    "tags": [
-      "combinatorial-geometry",
-      "Tonnetz",
-      "acoustic-modeling",
-      "perception",
-      "mathematical-music-theory",
-      "composition",
-      "signal-processing",
-      "separability"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "78c62f0d652deaeb4c818b4bdbd2b901d91c1d73876ee3b12b50a96035658565",
-    "generatedAt": "2026-05-01T12:07:02.000Z"
-  },
-  "the-realization-layer": {
-    "excerpt": "Musical structure becomes sound through a realization layer — the performer, model, or practice that turns possibility into expressive action.",
-    "tags": [
-      "composition",
-      "AI-music",
-      "mathematical-music-theory",
-      "perception",
-      "signal-processing"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "18d66512f0ad9c408a63001310979e4bfe299f7a3e0a881a5945e05ce34d7d27",
-    "generatedAt": "2026-05-01T20:06:39.222Z"
-  },
-  "the-bandpass-principle": {
-    "excerpt": "Every listening system starts by choosing a passband; from ultrasonic bioacoustics to Bark-scale dynamics, infrasound, wavelet artifacts, and rhythm formants, the filter is already a theory of music.",
-    "tags": [
-      "signal-processing",
-      "psychoacoustics",
-      "acoustics",
-      "composition",
-      "AI-music",
-      "perception"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "6aca61ed2935f295296cfbb4824706211d448cb87bf40e0c192b60080292dbd7",
-    "generatedAt": "2026-05-02T04:03:00.000Z"
-  },
-  "the-instrument-is-a-theory": {
-    "excerpt": "Every instrument encodes a theory of musical affordance, making some gestures natural and others invisible—from Tonnetz graphs to samplers, notation, and continuo style.",
-    "tags": [
-      "composition",
-      "mathematical-music-theory",
-      "AI-music",
-      "geometry",
-      "perception",
-      "signal-processing"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "8790450df5986774be1fb91ceda617d0f1057611efc074e60334e47e0612dde2",
-    "generatedAt": "2026-05-02T12:03:00.000Z"
-  },
-  "the-control-layer": {
-    "excerpt": "Musical meaning often rides on a hidden control layer — modulation, envelope, timing, phase, silence, and prosodic alignment — that tells the listener how to parse pitch and timbre.",
-    "tags": [
-      "signal-processing",
-      "composition",
-      "psychoacoustics",
-      "AI-music",
-      "rhythm",
-      "timbre",
-      "perception"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "858b99ee65c7f12c746c5fb82963e99ba5d9fe0dac5dbe7ff7513b3530a460bf",
-    "generatedAt": "2026-05-02T20:03:00.000Z"
   }
 }
