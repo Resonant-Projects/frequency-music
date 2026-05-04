@@ -797,6 +797,20 @@
     "contentHash": "7bf41060ac1451c2aed1b98a38d5544e6d5ae04e3bfbbd1b1624a94797d15400",
     "generatedAt": "2026-04-10T18:38:34.869Z"
   },
+  "the-handoff-between-maps": {
+    "excerpt": "Tonnetz geometry, basso continuo griffs, and score-understanding benchmarks reveal a shared principle: musical representations matter most when they preserve action across handoffs between maps.",
+    "tags": [
+      "mathematical-music-theory",
+      "geometry",
+      "composition",
+      "AI-music",
+      "notation",
+      "performance-practice"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6ddcfdeb7a229987e61b6a7f4237ca24a523f35440f5c07e09c466142acc7ff1",
+    "generatedAt": "2026-05-04T08:34:00.000Z"
+  },
   "the-hidden-scheduler": {
     "excerpt": "Music and speech are controlled not by single clocks but by nested schedulers operating at different timescales—from micro-timing to phrase to form—each managing progress and return.",
     "tags": [
