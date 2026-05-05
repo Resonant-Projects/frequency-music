@@ -1,0 +1,64 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Aperture of Rules",
+    "question": "Does changing only the degrees of freedom left open by a fixed harmonic representation change perceived coherence and performer-style identity?",
+    "hypothesis": "If a fixed eight-node harmonic path is realized through medium-aperture constraints—harmony and rhythm fixed, voicing and spacing free under a style profile—then listeners will rate it as more balanced between coherent identity and expressive surprise than either a fully fixed realization or a wide-open realization, because the medium aperture preserves the structural relations of the Tonnetz while leaving the style-bearing choices that basso continuo griffs can measure and that score representations expose unevenly across modalities.",
+    "rationaleMd": "S1 frames harmonic materials as traversable combinatorial configurations, so a chord path can be fixed as a coherent structural variable. S2 shows that basso continuo realizations still carry measurable personal style despite strong harmonic and voice-leading conventions, suggesting that style appears in residual choices rather than total freedom. S3 shows that score understanding changes across ABC/PDF modalities and across pitch, rhythm, harmony, texture, and form levels, which supports treating representation as an aperture that opens some musical variables while narrowing others. Together, these imply a testable compositional mechanism: perceived musical agency may be strongest when the representation constrains harmonic identity but leaves style-bearing realization choices available. Disconfirming evidence would be no listener-rated difference between apertures, or a consistent preference for the narrow or wide condition under controlled mix and form.",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "jx70dhsw26kwd55qeh0xgyw3xx85fp1n"
+    ],
+    "concepts": [
+      "representation aperture",
+      "playable freedom",
+      "style-bearing constraint",
+      "Tonnetz traversal",
+      "griff style space",
+      "multimodal score reasoning"
+    ]
+  },
+  "recipe": {
+    "title": "Three Apertures over One Harmonic Path",
+    "bodyMd": "Build one 60-second study from a fixed eight-chord path. Use S1 as the model for treating the chord sequence as a graph traversal rather than a free progression. Use S2 as the model for preserving a constrained but style-bearing realization layer. Use S3 as the warning that notation/representation determines which musical levels are easy to preserve, so document each version both as chord symbols and MIDI/staff notation. Create three renders: narrow aperture, medium aperture, and wide aperture. The expected result is that the medium aperture should preserve enough harmonic identity to feel coherent while leaving enough voicing/spacing choice to feel performed rather than mechanically fixed.",
+    "parameters": [
+      { "type": "tempo", "value": "96 BPM", "details": { "bpm": 96 } },
+      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
+      { "type": "form", "value": "8 chords, each repeated for two bars", "details": { "chords": 8, "barsPerChord": 2 } },
+      { "type": "scaleSystem", "value": "12-tone equal/chromatic harmonic nodes", "details": { "source": "S1" } },
+      { "type": "note", "value": "Medium aperture varies voicing, spacing, and inner-voice motion only", "details": { "styleLayer": "griff-inspired realization choices", "source": "S2" } }
+    ],
+    "dawChecklist": [
+      "Create a 96 BPM session with one neutral keyboard or soft-piano instrument.",
+      "Choose an eight-chord path and freeze chord order, bar lengths, and bass rhythm for all versions.",
+      "Render Version A / narrow aperture: fixed voicing, fixed register, fixed rhythm; only velocity dynamics may vary.",
+      "Render Version B / medium aperture: fixed harmony and rhythm; vary voicing, spacing, common-tone retention, and inner-voice motion according to one consistent style profile.",
+      "Render Version C / wide aperture: preserve only the eight harmonic nodes; allow rhythm, register, voicing, and texture to vary.",
+      "Keep tempo, instrument, effects, loudness target, and total duration constant across versions.",
+      "Export A/B/C and take notes on coherence, surprise, perceived agency, and whether the harmonic path remains recognizable."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "DAW nearfields or headphones at matched loudness",
+      "listeningMethod": "Blind-shuffle A/B/C comparison after exporting all three renders",
+      "whatVaries": [
+        "degrees of freedom left open by the representation",
+        "voicing and spacing constraints",
+        "rhythmic and textural freedom in the wide-aperture condition"
+      ],
+      "whatStaysConstant": [
+        "eight-node harmonic path",
+        "tempo",
+        "duration",
+        "instrument patch",
+        "mix chain and loudness",
+        "bass rhythm in narrow and medium conditions"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3"],
+  "notes": "Companion essay written as docs/essays/the-aperture-of-rules.md. This run used existing recent extractions because workflows:startBatchExtraction failed with ConvexError request af182a6dd5c8e1da."
+}
