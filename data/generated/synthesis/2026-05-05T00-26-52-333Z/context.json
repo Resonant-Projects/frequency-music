@@ -1,0 +1,655 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-05T00:26:52.333Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 4,
+    "fetch": 80,
+    "minClaims": 1,
+    "minParams": 1,
+    "noveltyWindow": 20,
+    "maxReusedSources": 1,
+    "requireTuningSignal": false,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 80,
+    "withSource": 80,
+    "eligibleCandidates": 14,
+    "selected": 4
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j970nv2kdv5dtv1d1dc6ns2s5n863fv6",
+      "sourceId": "jx7dvwyahyzy5qvrgf7y1gvtnd85vkbp",
+      "sourceTitle": "Omni2Sound: Towards Unified Video-Text-to-Audio Generation",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2601.02731",
+      "extractionCreatedAt": 1777863965411,
+      "extractionSummary": "Omni2Sound is a unified diffusion model for generating audio from video, text, or both simultaneously. The paper introduces SoundAtlas, a 470k-pair dataset with high-quality audio captions and tight video-audio-text alignment, built using an agentic pipeline. The model addresses cross-task competition between video-to-audio and text-to-audio generation through a three-stage progressive training schedule. A new benchmark, VGGSound-Omni, is introduced to evaluate performance including off-screen audio generation. The work is primarily a machine learning systems paper with limited direct music theory or acoustics content.",
+      "topics": [
+        "audio generation",
+        "video-to-audio synthesis",
+        "text-to-audio synthesis",
+        "multimodal alignment",
+        "audio captioning",
+        "diffusion models",
+        "off-screen audio",
+        "audio-visual correspondence",
+        "dataset construction",
+        "machine learning for sound",
+        "semantic audio description",
+        "foley synthesis"
+      ],
+      "topicTokens": [
+        "audio generation",
+        "video-to-audio synthesis",
+        "text-to-audio synthesis",
+        "multimodal alignment",
+        "audio captioning",
+        "diffusion models",
+        "off-screen audio",
+        "audio-visual correspondence",
+        "dataset construction",
+        "machine learning for sound",
+        "semantic audio description",
+        "foley synthesis"
+      ],
+      "claims": [
+        {
+          "text": "High-quality audio captions with tight video-audio-text (V-A-T) alignment are scarce, and this scarcity causes semantic conflict when training multimodal audio generation models.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core problem statement",
+              "quote": "the scarcity of high-quality audio captions with tight V-A-T alignment, leading to severe semantic conflict between multimodal conditions"
+            }
+          ]
+        },
+        {
+          "text": "Unified models integrating video-to-audio, text-to-audio, and joint video-text-to-audio generation exhibit an adverse performance trade-off between the video-to-audio and text-to-audio tasks, as well as modality bias in the joint task.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "identified competition dynamics",
+              "quote": "cross-task and intra-task competition, manifesting as an adverse V2A-T2A performance trade-off and modality bias in the VT2A task"
+            }
+          ]
+        },
+        {
+          "text": "A three-stage multi-task progressive training schedule can convert cross-task competition into joint optimization, improving both audio-visual alignment and off-screen audio generation faithfulness.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "proposed solution",
+              "quote": "a three-stage multi-task progressive training schedule that converts cross-task competition into joint optimization and mitigates modality bias in the VT2A task, maintaining both audio-visual alignment and off-screen audio generation faithfulness"
+            }
+          ]
+        },
+        {
+          "text": "Large language/vision models (MLLMs) exhibit visual bias when generating audio captions, which can be mitigated through Vision-to-Language Compression techniques.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "dataset pipeline component",
+              "quote": "Vision-to-Language Compression to mitigate visual bias of MLLMs"
+            }
+          ]
+        },
+        {
+          "text": "Automated audio captioning pipelines using a Junior-Senior Agent Handoff architecture can achieve approximately 5× cost reduction compared to baseline approaches, while maintaining caption quality.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "efficiency claim",
+              "quote": "a Junior-Senior Agent Handoff for a 5× cost reduction"
+            }
+          ]
+        },
+        {
+          "text": "Off-screen audio generation — producing audio for sound sources not visually present in a video — is a meaningful and challenging task that existing audio generation benchmarks do not adequately address.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "benchmark motivation",
+              "quote": "VGGSound-Omni, a comprehensive benchmark for unified evaluation, including challenging off-screen tracks"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "470,000 video-audio-text pairs (SoundAtlas dataset)",
+          "details": {
+            "count": 470000,
+            "datasetName": "SoundAtlas",
+            "modalities": [
+              "video",
+              "audio",
+              "text"
+            ],
+            "unit": "pairs"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the temporal detail captured in SoundAtlas audio captions be leveraged for musically meaningful audio generation — e.g., capturing rhythm, timbre evolution, or harmonic content over time?",
+        "Does the modality bias observed in VT2A models reflect something deeper about how humans perceive the relationship between visual and auditory information — and could this inform multimodal music composition tools?",
+        "How does 'off-screen audio generation' relate to the compositional concept of acousmatic music, where sound sources are deliberately hidden from the listener?",
+        "Could the semantic richness of automatically generated audio captions (describing real-world sounds) be used to build structured ontologies of timbre and acoustic environment for composers?",
+        "What acoustic features (frequency content, onset timing, spatial positioning) are most reliably captured or lost in video-to-audio diffusion pipelines, and how does this constrain musical applications?",
+        "Is there a meaningful relationship between cross-task competition in multimodal models and the perceptual phenomenon of auditory-visual conflict (e.g., the McGurk effect)?"
+      ],
+      "scores": {
+        "base": 15,
+        "normalizedBase": 0.47058823529411764,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.4,
+        "topicalBalance": 0.9786701645991821,
+        "combined": 0.7479769952781126,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j97386jb54vcs64m90p3f621zs85nz45",
+      "sourceId": "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "sourceTitle": "HHL with a Coherent Fourier Oracle: A Proof-of-Concept Quantum Architecture for Joint Melody-Harmony Generation",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.20882",
+      "extractionCreatedAt": 1777259139224,
+      "extractionSummary": "This preprint proposes a quantum computing architecture for joint melody and harmony generation using the HHL algorithm, encoding music-cognition models (Narmour implication-realisation and Krumhansl-Kessler tonal stability) into a sparse linear system whose solution vector represents a weighted note-pair distribution. A coherent Fourier harmonic oracle is introduced as a unitary operator that applies chord-transition weights to the HHL amplitude vector, enabling a single quantum measurement to jointly select melody notes and a two-chord progression. To manage state-space complexity, generation is limited to 2-note/2-chord blocks chained classically. A four-block chain demonstration yields 8 notes over 8 chords, with 97% of generated chord progressions rated grammatically strong or acceptable by an independent rule-based validator. The primary theoretical motivation is preserving HHL's exponential speedup over classical linear solvers by consuming the output coherently rather than reading it classically.",
+      "topics": [
+        "quantum computing",
+        "HHL algorithm",
+        "algorithmic composition",
+        "music cognition",
+        "Narmour implication-realisation",
+        "Krumhansl-Kessler tonal hierarchy",
+        "tonal stability",
+        "harmony generation",
+        "melody generation",
+        "chord progressions",
+        "Fourier analysis in music",
+        "unitary operators",
+        "sparse linear systems",
+        "quantum speedup",
+        "coherent measurement",
+        "fault-tolerant quantum hardware",
+        "note-pair distributions",
+        "state space complexity"
+      ],
+      "topicTokens": [
+        "quantum computing",
+        "hhl algorithm",
+        "algorithmic composition",
+        "music cognition",
+        "narmour implication-realisation",
+        "krumhansl-kessler tonal hierarchy",
+        "tonal stability",
+        "harmony generation",
+        "melody generation",
+        "chord progressions",
+        "fourier analysis in music",
+        "unitary operators",
+        "sparse linear systems",
+        "quantum speedup",
+        "coherent measurement",
+        "fault-tolerant quantum hardware",
+        "note-pair distributions",
+        "state space complexity"
+      ],
+      "claims": [
+        {
+          "text": "The HHL algorithm carries a proven exponential speedup over classical linear solvers for sparse systems, which this architecture attempts to extend to musical generation.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Core theoretical claim about HHL speedup",
+              "quote": "The primary motivation is that HHL carries a proven exponential speedup over classical linear solvers; this work demonstrates that a coherent HHL+oracle pipeline - the prerequisite for that speedup to be realised in a musical setting - is mechanically achievable."
+            }
+          ]
+        },
+        {
+          "text": "Reading HHL output classically cancels the quantum speedup; the solution must be consumed coherently for the speedup to be realised.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Coherence requirement for quantum speedup",
+              "quote": "The key constraint of HHL is that reading its output classically cancels the quantum speedup; the solution must be consumed coherently."
+            }
+          ]
+        },
+        {
+          "text": "Narmour implication-realisation theory and Krumhansl-Kessler tonal stability can be encoded as a sparse system matrix, whose solution vector represents a music-cognition-weighted note-pair distribution.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Encoding of music cognition models into HHL matrix",
+              "quote": "the system matrix encodes Narmour implication-realisation and Krumhansl-Kessler tonal stability, so its solution vector is a music-cognition-weighted note-pair distribution."
+            }
+          ]
+        },
+        {
+          "text": "A coherent Fourier harmonic oracle — a unitary that applies chord-transition weights to the HHL amplitude vector — allows a single quantum measurement to jointly select both melody notes and a two-chord progression.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Coherent Fourier oracle mechanism",
+              "quote": "a unitary that applies chord-transition weights directly to the HHL amplitude vector, so that a single measurement jointly selects both melody notes and a two-chord progression."
+            }
+          ]
+        },
+        {
+          "text": "97% of chord progressions generated by a four-block chain were rated strong or acceptable by an independent rule-based harmony validator.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Validation result",
+              "quote": "Independent rule-based harmony validation confirms that 97% of generated chord progressions are rated strong or acceptable."
+            }
+          ]
+        },
+        {
+          "text": "Classical simulation of larger joint melody-harmony blocks becomes infeasible due to exponential growth of the joint state space, motivating a 2-note/2-chord block constraint.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Scalability constraint",
+              "quote": "A two-note/two-chord (2/2) block is used to contain the exponential growth of the joint state space that would otherwise make classical simulation of larger blocks infeasible."
+            }
+          ]
+        },
+        {
+          "text": "Classically chaining collapsed block outputs as conditioning inputs for subsequent blocks is a viable but temporary workaround until fault-tolerant quantum hardware permits larger monolithic circuits.",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "Classical chaining workaround",
+              "quote": "blocks are chained classically - each block's collapsed output conditions the next -- as a temporary workaround until fault-tolerant hardware permits larger monolithic circuits."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "note",
+          "value": "2 notes per quantum block",
+          "details": {
+            "blockSize": 2,
+            "context": "2-note/2-chord block constraint for quantum state space management",
+            "unit": "notes"
+          }
+        },
+        {
+          "type": "duration",
+          "value": "8 notes over 8 chords (4-block chain)",
+          "details": {
+            "blocks": 4,
+            "chordsPerBlock": 2,
+            "notesPerBlock": 2,
+            "totalChords": 8,
+            "totalNotes": 8
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "97% chord progressions rated strong or acceptable",
+          "details": {
+            "metric": "harmonic validity",
+            "percentage": 97,
+            "validator": "independent rule-based harmony validation"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Narmour and Krumhansl-Kessler encodings in the system matrix be validated against perceptual experiments — do listeners actually prefer the outputs over baseline algorithmic generation?",
+        "What musical and perceptual properties are lost or introduced by collapsing quantum state at each block boundary during classical chaining?",
+        "How does the rule-based harmony validator define 'strong or acceptable' — and does this align with human listener judgments or established music theory?",
+        "Is the Fourier basis a principled choice for representing chord-transition weights, or could other orthonormal bases (e.g., wavelet, cosine) yield musically different or perceptually superior results?",
+        "When fault-tolerant hardware permits larger monolithic circuits, how many notes/chords could theoretically be generated in a single coherent measurement, and what new musical structures might emerge?",
+        "Could this architecture be extended beyond two-voice (melody + harmony) to polyphonic or contrapuntal generation without exponential overhead?",
+        "Does the joint probability distribution produced by the HHL+oracle pipeline produce statistically different melodic contours than classical Markov chain or neural generative approaches?",
+        "What is the relationship between the quantum amplitude vector geometry and perceived consonance or tension in the resulting progressions?"
+      ],
+      "scores": {
+        "base": 23,
+        "normalizedBase": 0.9411764705882353,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.8600000000000001,
+        "topicalBalance": 1,
+        "combined": 0.7413529411764707,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j97f936205f9pg3twz7926pw7h85xz2e",
+      "sourceId": "jx78jqe2mp7zwykmbywha3mzrs85xyys",
+      "sourceTitle": "Beyond the Baseband: Adaptive Multi-Band Encoding for Full-Spectrum Bioacoustics Classification",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.27936",
+      "extractionCreatedAt": 1777633570978,
+      "extractionSummary": "This preprint investigates a multi-band encoding framework for classifying animal vocalizations across their full frequency spectrum, including ultrasonic ranges. Most existing computational bioacoustics systems are limited to 0–8 kHz because they use audio models pre-trained at 16 kHz, discarding higher-frequency information. The authors decompose animal calls into band-specific features and fuse them into a unified representation. Experiments across three datasets and eight pre-trained models show that fused multi-band representations consistently outperform single-band baselines, suggesting that spectral decomposition and fusion is a productive strategy for full-spectrum audio encoding.",
+      "topics": [
+        "bioacoustics",
+        "ultrasonic frequency",
+        "spectral decomposition",
+        "multi-band audio encoding",
+        "frequency bandwidth",
+        "animal vocalizations",
+        "audio classification",
+        "non-human hearing ranges",
+        "Nyquist limit",
+        "machine listening",
+        "representation learning",
+        "band fusion strategies"
+      ],
+      "topicTokens": [
+        "bioacoustics",
+        "ultrasonic frequency",
+        "spectral decomposition",
+        "multi-band audio encoding",
+        "frequency bandwidth",
+        "animal vocalizations",
+        "audio classification",
+        "non-human hearing ranges",
+        "nyquist limit",
+        "machine listening",
+        "representation learning",
+        "band fusion strategies"
+      ],
+      "claims": [
+        {
+          "text": "Most computational bioacoustics systems rely on audio models pre-trained at 16 kHz, restricting usable bandwidth to the 0–8 kHz baseband and discarding higher-frequency information present in many bioacoustic recordings.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Core limitation identified",
+              "quote": "most computational bioacoustics systems rely on audio models pre-trained at 16 kHz, restricting their usable bandwidth to the 0-8 kHz baseband and discarding higher-frequency information present in many bioacoustic recordings"
+            }
+          ]
+        },
+        {
+          "text": "Animals hear and vocalize across frequency ranges that extend substantially beyond the human range, often into the ultrasonic domain.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Non-human frequency range",
+              "quote": "Animals hear and vocalize across frequency ranges that differ substantially from humans, often extending into the ultrasonic domain."
+            }
+          ]
+        },
+        {
+          "text": "Certain encoder architectures produce decorrelated band embeddings — representations of different frequency bands that are statistically independent — and this decorrelation improves class separation after multi-band fusion.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Decorrelation as a useful property",
+              "quote": "certain encoders produce decorrelated band embeddings that improve class separation after fusion"
+            }
+          ]
+        },
+        {
+          "text": "Fused multi-band representations consistently outperform both the 0–8 kHz baseband baseline and time-expansion baselines on two of three tested bioacoustic datasets.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Performance result",
+              "quote": "fused representations consistently outperform the baseband and time-expansion baselines on two datasets"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "16 kHz sample rate (Nyquist limit: 8 kHz)",
+          "details": {
+            "note": "Standard pre-training sample rate for most audio ML models; defines the upper bound of the 'baseband'",
+            "nyquistHz": 8000,
+            "sampleRateHz": 16000
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "0–8 kHz baseband",
+          "details": {
+            "lowerHz": 0,
+            "note": "The frequency range preserved by 16 kHz audio models; considered a limiting constraint in this study",
+            "upperHz": 8000
+          }
+        }
+      ],
+      "openQuestions": [
+        "What is the upper frequency limit of the multi-band framework, and does it extend fully into the ultrasonic range (>20 kHz)? What implications does this have for composition with ultrasonic material?",
+        "Could decorrelated multi-band embedding strategies (as used here for classification) inform spectral composition techniques — e.g., designing musical textures where frequency bands are perceptually or mathematically independent?",
+        "Human hearing nominally extends to ~20 kHz; are there musical or psychoacoustic effects from sound energy just above or below this threshold that are routinely discarded by 16 kHz audio pipelines?",
+        "Time-expansion is a common technique for analyzing ultrasonic bat calls by slowing them down to audible ranges — could this technique be aesthetically productive as a compositional tool for transposing non-human vocalizations into human perceptual space?",
+        "What fusion strategies were tested, and do any of them correspond to known psychoacoustic models of how the human auditory system integrates across critical bands?"
+      ],
+      "scores": {
+        "base": 14,
+        "normalizedBase": 0.4117647058823529,
+        "novelty": 1,
+        "crossRunNovelty": 0.925,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.25,
+        "domainRelevance": 0.30000000000000004,
+        "topicalBalance": 1,
+        "combined": 0.7020294117647059,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j97618r3fm0es9esrds1zp2zsn85kknx",
+      "sourceId": "jx7awwpndbmcnas4926276wxfn85e65h",
+      "sourceTitle": "Video-Robin: Autoregressive Diffusion Planning for Intent-Grounded Video-to-Music Generation",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.17656",
+      "extractionCreatedAt": 1777172761081,
+      "extractionSummary": "Video-Robin is a text-conditioned video-to-music generation model that combines autoregressive planning with diffusion-based synthesis to create semantically aligned background music for video content. It introduces a two-stage architecture: an autoregressive module aligns visual and textual inputs to produce high-level music latents, which are then refined by local Diffusion Transformers into high-fidelity audio. The system claims superior performance over video-only and feature-conditioned baselines on both in-distribution and out-of-distribution benchmarks, with a 2.21x inference speed improvement over the current state of the art. The paper's core contribution to music theory and acoustics is the factoring of semantic meaning (via text) into the generative process, enabling user-controlled stylistic and structural music creation from visual context.",
+      "topics": [
+        "video-to-music generation",
+        "autoregressive modeling",
+        "diffusion models",
+        "music latent representations",
+        "audiovisual alignment",
+        "semantic music generation",
+        "text-conditioned audio synthesis",
+        "Diffusion Transformers",
+        "background music composition",
+        "multimodal AI",
+        "generative music systems",
+        "musical structure modeling"
+      ],
+      "topicTokens": [
+        "video-to-music generation",
+        "autoregressive modeling",
+        "diffusion models",
+        "music latent representations",
+        "audiovisual alignment",
+        "semantic music generation",
+        "text-conditioned audio synthesis",
+        "diffusion transformers",
+        "background music composition",
+        "multimodal ai",
+        "generative music systems",
+        "musical structure modeling"
+      ],
+      "claims": [
+        {
+          "text": "Recent video-to-music models achieve audiovisual alignment primarily through visual conditioning alone, limiting semantic and stylistic controllability for creators.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "motivation / gap in literature",
+              "quote": "Recent V2M models achieve audiovisual alignment by typically relying on visual conditioning alone and provide limited semantic and stylistic controllability to the end user."
+            }
+          ]
+        },
+        {
+          "text": "Separating high-level semantic planning (autoregressive) from low-level audio synthesis (diffusion) can improve both musical fidelity and semantic coherence in generative music systems.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "architectural claim",
+              "quote": "To balance musical fidelity and semantic understanding, Video-Robin integrates autoregressive planning with diffusion-based synthesis."
+            },
+            {
+              "label": "design rationale",
+              "quote": "By factoring semantically driven planning into diffusion-based synthesis, Video-Robin enables fine-grained creator control without sacrificing audio realism."
+            }
+          ]
+        },
+        {
+          "text": "The Video-Robin model achieves 2.21x inference speed improvement over the current state-of-the-art video-to-music generation model while outperforming it on standard benchmarks.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "performance claim",
+              "quote": "Our proposed model outperforms baselines that solely accept video input and additional feature conditioned baselines on both in-distribution and out-of-distribution benchmarks with a 2.21x speed in inference compared to SOTA."
+            }
+          ]
+        },
+        {
+          "text": "Global musical structure can be meaningfully represented as high-level latent variables that are amenable to semantic alignment with visual and textual inputs before fine-grained audio synthesis.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "latent structure hypothesis",
+              "quote": "an autoregressive module models global structure by semantically aligning visual and textual inputs to produce high-level music latents. These latents are subsequently refined into coherent, high-fidelity music using local Diffusion Transformers."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "2.21x inference speed over SOTA",
+          "details": {
+            "comparedTo": "state-of-the-art baseline (unspecified model)",
+            "context": "inference time for video-to-music generation",
+            "speedupFactor": 2.21
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific musical dimensions (tempo, key, instrumentation, mood) are captured in the 'high-level music latents,' and how do they map to perceptible compositional features?",
+        "How does the model perform on music with complex structural forms (e.g., theme-and-variation, sonata form) versus simpler loop-based background music?",
+        "Does the separation of semantic planning from synthesis introduce artifacts at the boundary of structural segments, and how does this affect perceived musical continuity?",
+        "Can the text-conditioning be used to specify music-theoretic parameters (e.g., 'in D minor,' 'at 90 BPM,' 'with Lydian mode') and how reliably does the model honor such instructions?",
+        "How is 'audiovisual alignment' measured in this context — is it perceptual, feature-based, or via human evaluation — and what does alignment mean musically?",
+        "What training data was used, and does it encode cultural or stylistic biases that affect the range of music the system can authentically generate?",
+        "Could the autoregressive latent planning stage be repurposed as a standalone tool for compositional sketching, independent of video input?"
+      ],
+      "scores": {
+        "base": 11,
+        "normalizedBase": 0.23529411764705882,
+        "novelty": 0.9565217391304348,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.30000000000000004,
+        "topicalBalance": 0.9556793518474096,
+        "combined": 0.6511140511147073,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "diffusion models": 2,
+      "audio generation": 1,
+      "video-to-audio synthesis": 1,
+      "text-to-audio synthesis": 1,
+      "multimodal alignment": 1,
+      "audio captioning": 1,
+      "off-screen audio": 1,
+      "audio-visual correspondence": 1,
+      "dataset construction": 1,
+      "machine learning for sound": 1,
+      "semantic audio description": 1,
+      "foley synthesis": 1,
+      "quantum computing": 1,
+      "hhl algorithm": 1,
+      "algorithmic composition": 1,
+      "music cognition": 1,
+      "narmour implication-realisation": 1,
+      "krumhansl-kessler tonal hierarchy": 1,
+      "tonal stability": 1,
+      "harmony generation": 1,
+      "melody generation": 1,
+      "chord progressions": 1,
+      "fourier analysis in music": 1,
+      "unitary operators": 1,
+      "sparse linear systems": 1,
+      "quantum speedup": 1,
+      "coherent measurement": 1,
+      "fault-tolerant quantum hardware": 1,
+      "note-pair distributions": 1,
+      "state space complexity": 1,
+      "bioacoustics": 1,
+      "ultrasonic frequency": 1,
+      "spectral decomposition": 1,
+      "multi-band audio encoding": 1,
+      "frequency bandwidth": 1,
+      "animal vocalizations": 1,
+      "audio classification": 1,
+      "non-human hearing ranges": 1,
+      "nyquist limit": 1,
+      "machine listening": 1,
+      "representation learning": 1,
+      "band fusion strategies": 1,
+      "video-to-music generation": 1,
+      "autoregressive modeling": 1,
+      "music latent representations": 1,
+      "audiovisual alignment": 1,
+      "semantic music generation": 1,
+      "text-conditioned audio synthesis": 1,
+      "diffusion transformers": 1,
+      "background music composition": 1,
+      "multimodal ai": 1,
+      "generative music systems": 1,
+      "musical structure modeling": 1
+    },
+    "parameterTypeFrequency": {
+      "measurement": 3,
+      "frequency": 2,
+      "note": 1,
+      "duration": 1
+    },
+    "evidenceDistribution": {
+      "preprint": 20,
+      "speculative": 1
+    },
+    "sourceTypeDistribution": {
+      "rss": 4
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 20,
+    "priorSourceIds": 87,
+    "priorTopicTokens": 1145,
+    "priorVariablePhrases": 4,
+    "priorTitlePhrases": 8
+  }
+}
