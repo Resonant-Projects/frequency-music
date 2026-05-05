@@ -1,0 +1,86 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Grid Bias",
+    "question": "Can changing the analysis/processing grid alone make one fixed audio source take on measurably different musical roles?",
+    "hypothesis": "If the same source is processed through different listening grids—low-frequency rhythm modulation, fine-scale artifact exposure, encoder degradation, and Bark-scale dynamics—then listeners will report different perceived musical roles and attention targets, because each grid preserves and emphasizes different acoustic distinctions.",
+    "rationaleMd": "S1 supports treating rhythm as low-frequency amplitude-modulation structure: rhythm formants and MFCCs encode complementary macro-temporal and spectral layers. S2 supports the scale premise: WST features depend on temporal averaging, frequency resolution, and directional resolution to expose subtle artifacts. S3 shows that encoder design and compression quality can dominate downstream behavior, with silence or masking able to trigger hallucination/repetition. S4 adds the perceptual-band angle: Bark-scale dynamics processing organizes frequency control around critical-band listening rather than arbitrary crossovers. Together, these sources imply that the chosen listening grid is not neutral; it changes which musical differences survive as salient structure. Disconfirming evidence would be listener reports or measurements showing that grid changes are heard only as surface effects, with no change in perceived groove, timbral role, masking, or attention.",
+    "sourceIds": [
+      "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "jx78nvpygk3a3ehen35mwswkhd85w0pt",
+      "jx74r61g2tqd5bcy6aam4aqwes85f9kt",
+      "jx7awge62ymkd5ywnpz9ddyymx85ntkj"
+    ],
+    "concepts": [
+      "listening grid",
+      "grid bias",
+      "rhythm formant composition",
+      "perceptual band orchestration",
+      "encoder bottleneck"
+    ]
+  },
+  "recipe": {
+    "title": "Grid Bias: One Source, Four Listening Grids",
+    "bodyMd": "Build a 60-second A/B/C/D study from one dry source loop. Version A emphasizes slow amplitude-modulation structure inspired by rhythm formants [S1]. Version B exposes a subtle synthetic artifact only in short windows, testing whether fine-scale resolution changes salience [S2]. Version C applies heavy codec/bandwidth degradation plus one masked or silent gap to test whether encoding loss changes perceived continuity or repetition pressure [S3]. Version D uses Bark-like multiband dynamics so spectral motion follows perceptual bands rather than broad arbitrary crossovers [S4]. Keep the source, pitch material, tempo, length, loudness target, and arrangement form constant. The expected result is not simply four effects, but four different perceived musical roles for the same material: groove carrier, unstable artifact, degraded/memory trace, and perceptual-band foreground/background shaper.",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "108 BPM",
+        "details": { "bpm": 108 }
+      },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": { "durationSecs": 60 }
+      },
+      {
+        "type": "frequency",
+        "value": "1–10 Hz low-frequency AM range",
+        "details": { "minHz": 1, "maxHz": 10, "target": "rhythm modulation" }
+      },
+      {
+        "type": "measurement",
+        "value": "4 grid conditions",
+        "details": { "conditions": ["rhythm formant AM", "fine-scale artifact", "encoder degradation", "Bark-band dynamics"] }
+      },
+      {
+        "type": "measurement",
+        "value": "24 Bark-scale critical-band target or closest available approximation",
+        "details": { "bands": 24, "fallback": "many log-spaced EQ/dynamics bands" }
+      }
+    ],
+    "dawChecklist": [
+      "Choose one dry 1- or 2-bar source loop with clear dynamics and render a 60-second baseline at 108 BPM.",
+      "Duplicate the baseline into four lanes named Rhythm Grid, Artifact Grid, Encoder Grid, and Bark Grid.",
+      "On Rhythm Grid, apply slow amplitude modulation between 1 and 10 Hz; automate one section with a stable dominant rate and one section with dispersed rates.",
+      "On Artifact Grid, add a barely audible synthetic edge such as bitcrush, aliasing, phase modulation, or spectral shimmer; automate it in brief windows under 500 ms.",
+      "On Encoder Grid, render a lossy or bandwidth-limited copy and insert one short masked/silent gap; keep loudness matched to the baseline.",
+      "On Bark Grid, split or approximate 24 perceptual bands and automate dynamics in one band while adjacent bands remain fixed.",
+      "Export all four versions at matched integrated loudness and compare blind if possible.",
+      "For each version, score perceived role from 1–5 across groove, timbre identity, foreground attention, masking, and continuity/repetition pressure."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "nearfield monitors or neutral headphones at matched loudness",
+      "listeningMethod": "blind A/B/C/D playback with notes after each pass",
+      "whatVaries": [
+        "low-frequency AM distribution",
+        "fine-scale artifact exposure",
+        "codec/bandwidth degradation and one silence/mask event",
+        "perceptual-band dynamics placement"
+      ],
+      "whatStaysConstant": [
+        "source audio",
+        "tempo",
+        "duration",
+        "pitch material",
+        "arrangement timeline",
+        "integrated loudness target"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4"],
+  "notes": "Evidence quality is mixed: S1–S3 are preprints; S4 is promotional/anecdotal except for the underlying critical-band premise. Treat the recipe as a studio litmus, not a validated psychoacoustic claim."
+}

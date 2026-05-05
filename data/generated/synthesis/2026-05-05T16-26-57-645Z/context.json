@@ -1,0 +1,644 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-05T16:26:57.645Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 4,
+    "fetch": 80,
+    "minClaims": 2,
+    "minParams": 1,
+    "noveltyWindow": 6,
+    "maxReusedSources": 1,
+    "requireTuningSignal": false,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 80,
+    "withSource": 80,
+    "eligibleCandidates": 12,
+    "selected": 4
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97dmcxraattrt4e9gsc7dsp4185rj2e",
+      "sourceId": "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "sourceTitle": "Cross-Linguistic Rhythmic and Spectral Feature-Based Analysis of Nyishi and Adi: Two Under-Resourced Languages of Arunachal Pradesh",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.25309",
+      "extractionCreatedAt": 1777489547200,
+      "extractionSummary": "This preprint investigates acoustic differentiation between two under-resourced Tani languages (Nyishi and Adi) spoken in Arunachal Pradesh using rhythm formant analysis (RFA) in the frequency domain. The study extracts low-frequency amplitude modulation features from speech signals to characterize speech rhythm, finding that Nyishi exhibits higher dominant modulation frequencies and greater dispersion than Adi. Combining rhythmic features with spectral features (MFCC) yields classification accuracies up to 93.96%, demonstrating that low-frequency modulation and spectral structure encode complementary and hierarchical levels of linguistic variation. The approach treats speech rhythm as a spectral phenomenon analyzable via amplitude modulation in the low-frequency range, which has direct relevance to acoustic and musical analysis frameworks.",
+      "topics": [
+        "rhythm formant analysis",
+        "amplitude modulation spectrum",
+        "low-frequency modulation",
+        "speech rhythm",
+        "Mel Frequency Cepstral Coefficients (MFCC)",
+        "Discrete Cosine Transform (DCT)",
+        "spectral modulation",
+        "acoustic phonetics",
+        "under-resourced languages",
+        "Tani language group",
+        "cross-linguistic acoustic differentiation",
+        "hierarchical feature encoding",
+        "temporal structure of sound",
+        "macro-temporal rhythm",
+        "support vector machines for audio classification",
+        "multilayer perceptron audio classification"
+      ],
+      "topicTokens": [
+        "rhythm formant analysis",
+        "amplitude modulation spectrum",
+        "low-frequency modulation",
+        "speech rhythm",
+        "mel frequency cepstral coefficients (mfcc)",
+        "discrete cosine transform (dct)",
+        "spectral modulation",
+        "acoustic phonetics",
+        "under-resourced languages",
+        "tani language group",
+        "cross-linguistic acoustic differentiation",
+        "hierarchical feature encoding",
+        "temporal structure of sound",
+        "macro-temporal rhythm",
+        "support vector machines for audio classification",
+        "multilayer perceptron audio classification"
+      ],
+      "claims": [
+        {
+          "text": "Speech rhythm can be quantified using low-frequency amplitude modulation (AM) spectrum analysis, where dominant spectral peaks in the LF modulation spectrum ('rhythm formants') encode language-specific rhythmic structure.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "RFA framework definition",
+              "quote": "examining speech rhythm in Nyishi and Adi...using a frequency domain framework based on amplitude modulation(AM) low-frequency(LF) spectrum analysis, commonly referred to as rhythm formant analysis(RFA)"
+            }
+          ]
+        },
+        {
+          "text": "Low-frequency amplitude modulation of speech signals captures macro-temporal rhythmic structure, while spectral features (MFCC) reflect finer phonological differentiation — these two domains encode complementary, hierarchical levels of variation.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "hierarchy of rhythmic vs. spectral encoding",
+              "quote": "rhythmic and spectral features encode complementary levels of linguistic variations, with low frequency modulation capturing constrained macro temporal structure and spectral features reflecting finer phonological differentiation"
+            }
+          ]
+        },
+        {
+          "text": "Rhythm-only low-frequency modulation features can classify two related languages with approximately 84–85% accuracy, suggesting that macro-temporal rhythmic structure alone is substantially language-discriminating.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "rhythm-only classification result",
+              "quote": "rhythm-only features achieved approximately 84-85% classification accuracy"
+            }
+          ]
+        },
+        {
+          "text": "Fusing low-frequency rhythm formant features with MFCC representations achieves classification accuracy of up to 93.96% (MLP) and 90.9% (SVM), indicating that spectral envelope information substantially augments rhythmic features for acoustic language modeling.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "fused feature classification accuracy",
+              "quote": "Fusion using MFCC representations improved performance to 90.9% classification accuracy using support vector machine (SVM) and 93.96% using multilayer perceptron (MLP)"
+            }
+          ]
+        },
+        {
+          "text": "Discrete Cosine Transform (DCT) coefficients can be used to characterize the spectral modulation structure of speech signals, complementing cepstral (MFCC) representations of broad spectral organization.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "DCT and MFCC as spectral descriptors",
+              "quote": "Discrete Cosine Transform (DCT) coefficients and Mel Frequency Cepstral Coefficient(MFCC) were extracted to characterise the spectral modulation structure and broad spectral organisation of the speech signal"
+            }
+          ]
+        },
+        {
+          "text": "Nyishi speech exhibits higher dominant modulation frequencies and greater frequency dispersion in the LF amplitude modulation spectrum compared to Adi, indicating a measurably faster or more varied rhythmic pulsation rate.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "cross-language rhythm formant comparison",
+              "quote": "Nyishi exhibiting higher dominant modulation frequencies as well as greater dispersion than Adi"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "Low-frequency amplitude modulation band (speech rhythm range, typically ~1–10 Hz)",
+          "details": {
+            "band": "low-frequency (LF)",
+            "description": "The spectral region of the AM envelope used for rhythm formant analysis; corresponds to syllabic and phrasal speech rate, overlapping with musical tempo and meter perception ranges",
+            "domain": "amplitude modulation spectrum"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Number of Dominant Peaks (NDP) in LF modulation spectrum",
+          "details": {
+            "description": "Count of dominant spectral peaks in the low-frequency AM spectrum; analogous to identifying multiple periodicities or metric layers in a musical signal",
+            "feature": "NDP"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Mean Frequency of Dominant Peaks (MFDP)",
+          "details": {
+            "description": "Average frequency (in Hz) of dominant AM modulation peaks; a direct analog to mean tempo or pulse rate in musical rhythm analysis",
+            "feature": "MFDP"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Variance of Dominant Frequencies (VFDP)",
+          "details": {
+            "description": "Spread/dispersion of dominant modulation frequencies; analogous to rhythmic variability or rubato in musical performance analysis",
+            "feature": "VFDP"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can rhythm formant analysis (RFA) — developed for speech — be meaningfully applied to musical signals to identify culturally distinct rhythmic 'signatures' or metric tendencies in folk music traditions?",
+        "What is the precise low-frequency range (in Hz) of the dominant AM modulation peaks found in Nyishi vs. Adi, and how do these compare to known musical tempo/meter ranges (e.g., ~0.5–4 Hz for beat perception)?",
+        "Could MFDP and VFDP serve as composition parameters — e.g., mapping mean modulation frequency to tempo or metric density, and VFDP to rhythmic variability / humanization amount?",
+        "How does the DCT-based spectral modulation characterization relate to timbre descriptors used in music information retrieval, and could it serve as a bridge between linguistic and musical acoustic analysis?",
+        "Are there analogous 'rhythm formants' detectable in instrumental music that would encode genre- or style-specific temporal structure the way speech rhythm formants encode language-specific rhythm?",
+        "Could the hierarchical separation of macro-temporal (rhythmic) vs. fine-grained (spectral/timbral) information inspire a layered compositional approach where rhythm and timbre are designed to vary independently across structural levels?",
+        "How might the languages of Arunachal Pradesh, including Nyishi and Adi, influence or be reflected in regional folk music rhythm patterns — is there a correlation between speech rhythm formants and musical rhythm in these communities?"
+      ],
+      "scores": {
+        "base": 24,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.5,
+        "topicalBalance": 1,
+        "combined": 0.9249999999999999,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j971a4crv4z7nqcz7v24yfgvjh85x5zq",
+      "sourceId": "jx78nvpygk3a3ehen35mwswkhd85w0pt",
+      "sourceTitle": "WST-X Series: Wavelet Scattering Transform for Interpretable Speech Deepfake Detection",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2602.02980",
+      "extractionCreatedAt": 1777633549187,
+      "extractionSummary": "This paper proposes WST-X, a feature extraction system for detecting AI-generated (deepfake) speech using the Wavelet Scattering Transform (WST). The WST cascades wavelet convolutions with modulus nonlinearities to produce deformation-stable, multi-scale acoustic representations. The authors find that small temporal averaging scales combined with high frequency and directional resolution are critical for capturing subtle spectral artifacts in synthetic speech. WST-X outperforms both hand-crafted filterbank features and self-supervised learning (SSL) features on multiple benchmarks. The work sits at the intersection of signal processing, acoustics, and machine learning.",
+      "topics": [
+        "wavelet scattering transform",
+        "speech deepfake detection",
+        "acoustic feature extraction",
+        "filterbank design",
+        "multi-scale signal analysis",
+        "spectral anomaly detection",
+        "translation invariance",
+        "deformation stability",
+        "self-supervised learning for audio",
+        "signal processing",
+        "modulus nonlinearity",
+        "synthetic speech artifacts"
+      ],
+      "topicTokens": [
+        "wavelet scattering transform",
+        "speech deepfake detection",
+        "acoustic feature extraction",
+        "filterbank design",
+        "multi-scale signal analysis",
+        "spectral anomaly detection",
+        "translation invariance",
+        "deformation stability",
+        "self-supervised learning for audio",
+        "signal processing",
+        "modulus nonlinearity",
+        "synthetic speech artifacts"
+      ],
+      "claims": [
+        {
+          "text": "Hand-crafted filterbank features are transparent but limited in capturing higher-level acoustic information.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "filterbank limitation",
+              "quote": "Hand-crafted filterbank features are transparent but limited in capturing higher-level information."
+            }
+          ]
+        },
+        {
+          "text": "Self-supervised learning (SSL) audio features lack interpretability and may overlook fine-grained spectral anomalies.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "SSL limitation",
+              "quote": "SSL features, in turn, lack interpretability and may overlook fine-grained spectral anomalies."
+            }
+          ]
+        },
+        {
+          "text": "The Wavelet Scattering Transform produces deformation-stable, multi-scale acoustic features by cascading wavelet convolutions with modulus nonlinearities.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "WST architecture",
+              "quote": "the wavelet scattering transform (WST), which cascades wavelet convolutions with modulus nonlinearities to produce deformation-stable, multi-scale features."
+            }
+          ]
+        },
+        {
+          "text": "A small temporal averaging scale (J), combined with high frequency resolution (Q) and directional resolution (L), is critical for capturing subtle spectral artifacts in synthetic speech.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "key scattering parameters",
+              "quote": "a small averaging scale (J), combined with high-frequency and directional resolutions (Q, L), is critical for capturing subtle artifacts."
+            }
+          ]
+        },
+        {
+          "text": "Translation-invariant and deformation-stable acoustic representations are valuable for distinguishing real from synthetic speech.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "invariance value",
+              "quote": "This underscores the value of stable and translation-invariant features for speech deepfake detection."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "J — temporal averaging scale (small values preferred)",
+          "details": {
+            "domain": "time",
+            "parameter": "J",
+            "preferredSetting": "small",
+            "role": "averaging scale in wavelet scattering transform"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Q — frequency resolution of wavelet filterbank",
+          "details": {
+            "domain": "frequency",
+            "parameter": "Q",
+            "preferredSetting": "high",
+            "role": "number of wavelets per octave / frequency resolution"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "L — directional resolution in scattering transform",
+          "details": {
+            "domain": "spectral",
+            "parameter": "L",
+            "preferredSetting": "high",
+            "role": "directional resolution in multi-scale decomposition"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Could the Wavelet Scattering Transform's multi-scale, deformation-stable features be useful for analyzing timbral or microtonal nuances in acoustic music performance?",
+        "How does the choice of wavelet basis (e.g., Morlet, Gabor) affect musical feature discrimination compared to its effect on speech deepfake detection?",
+        "What is the perceptual correlate of the 'fine-grained spectral anomalies' that WST captures — could these correspond to audible timbral artifacts in synthesis or digital audio processing?",
+        "Could translation-invariant scattering features offer a more robust representation of musical timbre across transpositions and tempo variations than standard spectrograms?",
+        "Is there a relationship between the WST parameters (J, Q, L) and perceptual dimensions of sound like roughness, sharpness, or brightness?",
+        "Could WST-based features detect subtle artifacts introduced by audio compression codecs or synthesis algorithms in musical production contexts?"
+      ],
+      "scores": {
+        "base": 19,
+        "normalizedBase": 0.7058823529411765,
+        "novelty": 1,
+        "crossRunNovelty": 0.975,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.08333333333333333,
+        "domainRelevance": 0.52,
+        "topicalBalance": 1,
+        "combined": 0.8342647058823529,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j97795a7x76skzbg4d8pcdhpqh85k5zb",
+      "sourceId": "jx74r61g2tqd5bcy6aam4aqwes85f9kt",
+      "sourceTitle": "Do LLM Decoders Listen Fairly? Benchmarking How Language Model Priors Shape Bias in Speech Recognition",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.21276",
+      "extractionCreatedAt": 1777230338737,
+      "extractionSummary": "This paper benchmarks speech recognition fairness across demographic groups using nine models and ~43,000 utterances. It finds that LLM-based decoders do not amplify racial bias and may outperform older architectures on ethnicity fairness. Critically, audio encoder design — not language model scale — is identified as the primary driver of both bias and robustness. Acoustic degradation conditions reveal pathological hallucination and repetition behaviors in certain architectures, particularly Whisper on accented or silence-injected speech.",
+      "topics": [
+        "audio encoding",
+        "acoustic degradation",
+        "speech perception",
+        "signal compression",
+        "hallucination in generative audio models",
+        "silence as acoustic input",
+        "reverberation",
+        "noise robustness",
+        "accent and acoustic variation",
+        "audio fidelity and representation"
+      ],
+      "topicTokens": [
+        "audio encoding",
+        "acoustic degradation",
+        "speech perception",
+        "signal compression",
+        "hallucination in generative audio models",
+        "silence as acoustic input",
+        "reverberation",
+        "noise robustness",
+        "accent and acoustic variation",
+        "audio fidelity and representation"
+      ],
+      "claims": [
+        {
+          "text": "Audio encoder design is a more significant lever for equitable and robust speech recognition than LLM scaling.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "main conclusion",
+              "quote": "audio encoder design, not LLM scaling, is the primary lever for equitable and robust speech recognition."
+            }
+          ]
+        },
+        {
+          "text": "Audio compression quality predicts accent fairness in speech recognition more than language model scale does.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "finding 3 of 3",
+              "quote": "audio compression predicts accent fairness more than LLM scale"
+            }
+          ]
+        },
+        {
+          "text": "Acoustic degradation (noise, reverberation, silence injection, chunk masking) can paradoxically compress fairness gaps by driving all demographic groups toward uniformly high error rates.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "degradation convergence effect",
+              "quote": "Severe degradation paradoxically compresses fairness gaps as all groups converge to high WER"
+            }
+          ]
+        },
+        {
+          "text": "Silence injection as an acoustic manipulation can selectively amplify demographic bias — specifically accent bias — in speech recognition systems by triggering hallucination.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "silence injection bias amplification",
+              "quote": "silence injection amplifies Whisper's accent bias up to 4.64x by triggering demographic-selective hallucination"
+            }
+          ]
+        },
+        {
+          "text": "High-compression audio encoding (Q-former architecture) reintroduces pathological repetition behavior even in otherwise robust LLM-based decoders.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "compression-induced pathology",
+              "quote": "high-compression audio encoding (Q-former) reintroduces repetition pathology even in LLM decoders"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "Insertion rate spike of 9.62% on Indian-accented speech (Whisper large-v3)",
+          "details": {
+            "behavior": "non-monotonic spike",
+            "condition": "Indian-accented speech, Whisper large-v3",
+            "metric": "insertion_rate_percentage",
+            "value": 9.62
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Silence injection amplifies accent bias up to 4.64x",
+          "details": {
+            "condition": "silence injection acoustic degradation",
+            "metric": "bias_amplification_factor",
+            "model": "Whisper",
+            "value": 4.64
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "86% of 51,797 insertions under masking are catastrophic repetitions (Whisper)",
+          "details": {
+            "condition": "chunk masking",
+            "metric": "repetition_insertion_percentage",
+            "model": "Whisper",
+            "total_insertions": 51797,
+            "value": 86
+          }
+        }
+      ],
+      "openQuestions": [
+        "Does the 'silence injection triggers hallucination' finding have analogs in music generation models — could silence or rest tokens cause generative loops or unexpected outputs?",
+        "How does audio compression codec choice (lossy vs. lossless) affect the downstream perceptual fidelity of AI-assisted music transcription or generation?",
+        "Could the 'convergence under severe degradation' effect be exploited compositionally — using noise or reverberation to flatten timbral or pitch distinctions intentionally?",
+        "What is the acoustic threshold at which a Q-former-style high-compression encoder begins to lose musically significant information (e.g., microtonal distinctions, vibrato, timbre)?",
+        "Are there parallels between demographic-selective hallucination in speech models and genre- or style-selective errors in music transcription AI?",
+        "Could 'catastrophic repetition loops' under masking inform or inspire algorithmic composition techniques involving looping and degraded input signals?"
+      ],
+      "scores": {
+        "base": 19,
+        "normalizedBase": 0.7058823529411765,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.42000000000000004,
+        "topicalBalance": 0.9635178491523118,
+        "combined": 0.8192923832551997,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j977tjh3ka74caprsf86d4e3y185maah",
+      "sourceId": "jx7awge62ymkd5ywnpz9ddyymx85ntkj",
+      "sourceTitle": "New Music Gear Monday: FSK Audio Bark24 &#124; Dyn Psychoacoustic Dynamics Plugin",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://bobbyowsinskiblog.com/new-music-gear-monday-fsk-audio-bark24-dyn-psychoacoustic-dynamics-plugin/",
+      "extractionCreatedAt": 1777316715967,
+      "extractionSummary": "The FSK Audio Bark24 | Dyn is a dynamics plugin that structures its frequency band processing around the Bark scale, a psychoacoustic model of how the human auditory system divides sound into critical bands. The article contrasts this approach with conventional multiband dynamics processors, which use arbitrary crossover points that only approximate human hearing. The implication is that aligning processing bands to perceptually meaningful boundaries produces more natural or musically appropriate results. The content is brief and promotional in nature, with limited technical depth provided in the excerpt.",
+      "topics": [
+        "psychoacoustics",
+        "critical band theory",
+        "Bark scale",
+        "multiband dynamics processing",
+        "auditory perception",
+        "frequency band decomposition",
+        "audio plugin design",
+        "cochlear frequency resolution",
+        "masking effects",
+        "dynamics compression"
+      ],
+      "topicTokens": [
+        "psychoacoustics",
+        "critical band theory",
+        "bark scale",
+        "multiband dynamics processing",
+        "auditory perception",
+        "frequency band decomposition",
+        "audio plugin design",
+        "cochlear frequency resolution",
+        "masking effects",
+        "dynamics compression"
+      ],
+      "claims": [
+        {
+          "text": "Most dynamics processors split audio into frequency bands using arbitrary crossover points that are mathematical approximations of how human hearing actually works.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Core contrast claim from product description",
+              "quote": "Most dynamics processors split your audio into a handful of frequency bands using arbitrary crossover points. It works well enough, but it's essentially a mathematical approximation of something our ears do in a much more nuanced way."
+            }
+          ]
+        },
+        {
+          "text": "Human auditory frequency processing is more nuanced than the band divisions used in conventional multiband dynamics processors.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Implicit reference to psychoacoustic critical band theory",
+              "quote": "it's essentially a mathematical approximation of something our ears do in a much more nuanced way"
+            }
+          ]
+        },
+        {
+          "text": "The Bark24 | Dyn plugin bases its band structure on the Bark scale, a psychoacoustic model of auditory critical bands.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Product claim — full sentence truncated in source",
+              "quote": "The new Bark24 | Dyn from FSK Audio takes a fundamentally different approach by basing its band structure"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "24 Bark-scale critical bands",
+          "details": {
+            "bandCount": 24,
+            "description": "The Bark scale divides the audible frequency range into approximately 24 critical bands corresponding to the frequency resolution of the human cochlea",
+            "scale": "Bark"
+          }
+        }
+      ],
+      "openQuestions": [
+        "How do the 24 Bark-scale critical band boundaries map to specific Hz crossover frequencies, and how do they differ from typical 3- or 5-band dynamic processor crossovers?",
+        "Does processing dynamics within perceptually meaningful critical bands produce measurably different (or listener-preferred) results compared to arbitrary crossover multiband processing?",
+        "Could the Bark scale band structure be used compositionally — e.g., to design spectral dynamics in music that mirror or counteract auditory masking effects?",
+        "How does the Bark scale relate to other psychoacoustic frequency scales (ERB, mel scale) and which is most relevant for musical timbre perception?",
+        "Are there compositional implications to structuring orchestration or synthesis layers along Bark-scale boundaries to maximize perceptual separation of simultaneous sounds?"
+      ],
+      "scores": {
+        "base": 14,
+        "normalizedBase": 0.4117647058823529,
+        "novelty": 1,
+        "crossRunNovelty": 0.94,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.2,
+        "domainRelevance": 0.8200000000000001,
+        "topicalBalance": 0.9756785661015412,
+        "combined": 0.7796811966799371,
+        "peerReviewedClaims": 1,
+        "distinctParameterTypes": 1
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "rhythm formant analysis": 1,
+      "amplitude modulation spectrum": 1,
+      "low-frequency modulation": 1,
+      "speech rhythm": 1,
+      "mel frequency cepstral coefficients (mfcc)": 1,
+      "discrete cosine transform (dct)": 1,
+      "spectral modulation": 1,
+      "acoustic phonetics": 1,
+      "under-resourced languages": 1,
+      "tani language group": 1,
+      "cross-linguistic acoustic differentiation": 1,
+      "hierarchical feature encoding": 1,
+      "temporal structure of sound": 1,
+      "macro-temporal rhythm": 1,
+      "support vector machines for audio classification": 1,
+      "multilayer perceptron audio classification": 1,
+      "wavelet scattering transform": 1,
+      "speech deepfake detection": 1,
+      "acoustic feature extraction": 1,
+      "filterbank design": 1,
+      "multi-scale signal analysis": 1,
+      "spectral anomaly detection": 1,
+      "translation invariance": 1,
+      "deformation stability": 1,
+      "self-supervised learning for audio": 1,
+      "signal processing": 1,
+      "modulus nonlinearity": 1,
+      "synthetic speech artifacts": 1,
+      "audio encoding": 1,
+      "acoustic degradation": 1,
+      "speech perception": 1,
+      "signal compression": 1,
+      "hallucination in generative audio models": 1,
+      "silence as acoustic input": 1,
+      "reverberation": 1,
+      "noise robustness": 1,
+      "accent and acoustic variation": 1,
+      "audio fidelity and representation": 1,
+      "psychoacoustics": 1,
+      "critical band theory": 1,
+      "bark scale": 1,
+      "multiband dynamics processing": 1,
+      "auditory perception": 1,
+      "frequency band decomposition": 1,
+      "audio plugin design": 1,
+      "cochlear frequency resolution": 1,
+      "masking effects": 1,
+      "dynamics compression": 1
+    },
+    "parameterTypeFrequency": {
+      "measurement": 10,
+      "frequency": 1
+    },
+    "evidenceDistribution": {
+      "preprint": 16,
+      "anecdotal": 2,
+      "peer_reviewed": 1
+    },
+    "sourceTypeDistribution": {
+      "rss": 4
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 6,
+    "priorSourceIds": 18,
+    "priorTopicTokens": 240,
+    "priorVariablePhrases": 3,
+    "priorTitlePhrases": 2
+  }
+}
