@@ -166,6 +166,20 @@
     "contentHash": "c88a07030ec0768a706d6bab6ea554d246f096c4800b4477e83b3a32b03629c8",
     "generatedAt": "2026-04-10T18:36:23.693Z"
   },
+  "the-adaptation-boundary": {
+    "excerpt": "Musical transformation succeeds when change is assigned to the right layer: preserve identity somewhere, let repair and variation happen somewhere else.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "composition",
+      "perception",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c31b5af65250f8d309cb4373b9efe60cb8c1bb48eccd8296d160814a149e91cb",
+    "generatedAt": "2026-05-06T08:30:00.000Z"
+  },
   "the-anchor-that-moves": {
     "excerpt": "Every effective system for analyzing sound needs a reference point\u2014but the best ones recognize that these anchors inevitably drift. From speaker extraction to music analysis, stability itself becomes a parameter to manage.",
     "tags": [
@@ -853,6 +867,20 @@
     "contentHash": "6f18d3b00d4ec4bc453f05388b93cccc880ee397d311d3ffb108ffe0494bed15",
     "generatedAt": "2026-04-10T18:38:36.999Z"
   },
+  "the-inference-chain": {
+    "excerpt": "Musical understanding behaves like an inference chain: graph paths, continuo realizations, and score-reading systems must carry constraints across layers while leaving style-bearing freedom intact.",
+    "tags": [
+      "mathematical-music-theory",
+      "composition",
+      "computational-musicology",
+      "AI-music",
+      "voice-leading",
+      "notation"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f7f1302f3ce142cfe81c930828dadb77cf5853acc503617d1ee74744ed5d2e6f",
+    "generatedAt": "2026-05-06T00:26:48.349Z"
+  },
   "the-information-in-decay": {
     "excerpt": "Decay reveals a system's identity through information-theoretic entropy. Musical sounds\u2014like vibrating structures\u2014communicate their essential character not through attack but through how they die.",
     "tags": [
@@ -1004,6 +1032,20 @@
     "category": "interdisciplinary",
     "contentHash": "0ce092a809fd6c9d03bb86a784ffcbb68a392459d411dc0ab1bf68cc63b8edc3",
     "generatedAt": "2026-04-10T18:39:04.632Z"
+  },
+  "the-listening-grid": {
+    "excerpt": "The listening grid\u2014rhythm formants, wavelet scales, encoder bottlenecks, and Bark critical bands\u2014shapes which musical differences become audible structure rather than surface effect.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "rhythm",
+      "AI-music",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "cc4a456bde9baee28f0731c89113340c37fbac0d119dd81adc3dcd8771f5f115",
+    "generatedAt": "2026-05-05T16:26:57.645Z"
   },
   "the-locking-in": {
     "excerpt": "Mode-locking explains how coupled oscillators snap into simple frequency ratios\u2014from Huygens' pendulum clocks to cochlear consonance to groove. The physics beneath music's deepest structures.",
@@ -1729,33 +1771,5 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
-  },
-  "the-listening-grid": {
-    "excerpt": "The listening grid—rhythm formants, wavelet scales, encoder bottlenecks, and Bark critical bands—shapes which musical differences become audible structure rather than surface effect.",
-    "tags": [
-      "signal-processing",
-      "perception",
-      "psychoacoustics",
-      "rhythm",
-      "AI-music",
-      "composition"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "cc4a456bde9baee28f0731c89113340c37fbac0d119dd81adc3dcd8771f5f115",
-    "generatedAt": "2026-05-05T16:26:57.645Z"
-  },
-  "the-inference-chain": {
-    "excerpt": "Musical understanding behaves like an inference chain: graph paths, continuo realizations, and score-reading systems must carry constraints across layers while leaving style-bearing freedom intact.",
-    "tags": [
-      "mathematical-music-theory",
-      "composition",
-      "computational-musicology",
-      "AI-music",
-      "voice-leading",
-      "notation"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "f7f1302f3ce142cfe81c930828dadb77cf5853acc503617d1ee74744ed5d2e6f",
-    "generatedAt": "2026-05-06T00:26:48.349Z"
   }
 }

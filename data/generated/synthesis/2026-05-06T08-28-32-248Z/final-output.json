@@ -1,0 +1,53 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Adaptation Boundary",
+    "question": "What makes a musical transformation preserve identity rather than destroy it?",
+    "hypothesis": "Musical transformations remain intelligible when adaptation is assigned to the layer or axis that can change while a separate identity-bearing layer remains invariant. If adaptation happens at the wrong boundary, context and labels cannot recover what the representation has already erased.",
+    "rationaleMd": "Supported by recent extractions on speech-enhancement layer asymmetry, representational geometry under perturbation, factor-partitioned speech embeddings, dysarthric ASR context failures, and vowel-distance alignment for dubbing. Together they suggest that musical variation is best treated as controlled adaptation: preserve identity in one layer while allowing repair or expressive change in another.",
+    "sourceIds": [
+      "jx764ke9nz50zaqrr0cjsbk149864vyj",
+      "jx74a1e53yb7484syhpf1rbv89864x4w",
+      "jx78c9nxt4j6jsj55k7bdqdcy1864cge",
+      "jx76qwwh4nna72zjvyvpv1scns8656aq",
+      "jx7b09fs5n5axpybnx2kscy1vd865btt"
+    ],
+    "concepts": [
+      "adaptation boundary",
+      "identity-bearing layer",
+      "representational geometry",
+      "axis-separated variation",
+      "late context failure",
+      "phonetic score"
+    ]
+  },
+  "recipe": {
+    "title": "Adaptation Boundary Study",
+    "bodyMd": "Create a one-minute phrase study. Keep phrase length constant while making five versions: stable core/adaptive surface, geometric perturbation, axis-separated variation, late-label failure, and vowel-aligned translation. Listen for which identity survives: phrase, speaker, instrument, groove, harmony, emotion, or mouth-shape.",
+    "parameters": [
+      { "type": "measurement", "value": "SNR or noise amount" },
+      { "type": "measurement", "value": "Reverb clarity / blur" },
+      { "type": "timing", "value": "Microtiming displacement" },
+      { "type": "axis", "value": "Timbre-preserving vs rhythm-preserving transformations" },
+      { "type": "formant", "value": "Vowel/formant trajectory alignment" }
+    ],
+    "dawChecklist": [
+      "Choose one short source phrase with strong identity",
+      "Create five duplicate tracks",
+      "Keep length and macro-form constant",
+      "Vary only one adaptation boundary per pass",
+      "Document which perceptual identity survives each pass"
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "Nearfield or headphones, level-matched passes",
+      "listeningMethod": "A/B compare each transformed pass against the source and write the surviving identity cues",
+      "whatVaries": ["adaptation layer", "degradation amount", "axis preserved", "vowel/formant alignment"],
+      "whatStaysConstant": ["source phrase", "duration", "macro-timing", "overall loudness target"]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5"],
+  "notes": "Essay written to docs/essays/the-adaptation-boundary.md. This synthesis extends beyond the auto-selected context because batch extraction failed and the recent extraction audit exposed a stronger new connection across the latest speech/audio-model sources."
+}
