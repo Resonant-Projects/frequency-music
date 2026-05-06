@@ -1743,5 +1743,19 @@
     "category": "interdisciplinary",
     "contentHash": "cc4a456bde9baee28f0731c89113340c37fbac0d119dd81adc3dcd8771f5f115",
     "generatedAt": "2026-05-05T16:26:57.645Z"
+  },
+  "the-inference-chain": {
+    "excerpt": "Musical understanding behaves like an inference chain: graph paths, continuo realizations, and score-reading systems must carry constraints across layers while leaving style-bearing freedom intact.",
+    "tags": [
+      "mathematical-music-theory",
+      "composition",
+      "computational-musicology",
+      "AI-music",
+      "voice-leading",
+      "notation"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f7f1302f3ce142cfe81c930828dadb77cf5853acc503617d1ee74744ed5d2e6f",
+    "generatedAt": "2026-05-06T00:26:48.349Z"
   }
 }

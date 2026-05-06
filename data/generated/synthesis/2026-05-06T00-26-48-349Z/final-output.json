@@ -1,0 +1,49 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Inference Chain",
+    "question": "Can musical systems preserve explicit constraints across graph, notation, realization, and listening layers without flattening them into surface labels?",
+    "hypothesis": "Musical understanding behaves like an inference chain: each representation becomes compositionally useful only when it can pass obligations to the next layer while leaving style-bearing degrees of freedom intact.",
+    "rationaleMd": "Supported by S1's explicit combinatorial harmonic obligations, S2's evidence that basso continuo performers satisfy shared constraints with identifiable personal realization styles, and S3's finding that models struggle with multilevel score correctness across notation, harmony, texture, and form.",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "jx70dhsw26kwd55qeh0xgyw3xx85fp1n"
+    ],
+    "concepts": [
+      "inference chain",
+      "musical obligation",
+      "realization proof",
+      "constraint ledger",
+      "obligation-preserving variation",
+      "multilevel correctness"
+    ]
+  },
+  "recipe": {
+    "title": "Obligation-Preserving Variations",
+    "bodyMd": "Choose an eight-node Tonnetz-like harmonic path (S1), imply it through a bass line, then render literal, continuo-style, and surface-obscured realizations. Use griff-like choices as the performer-style layer (S2), then annotate whether pitch, harmony, texture, and form remain coherent across levels as a practical version of multilevel correctness (S3).",
+    "parameters": [
+      { "type": "scaleSystem", "value": "Diatonic or 12-tone Tonnetz-like path" },
+      { "type": "note", "value": "Griff-style voicing unit" },
+      { "type": "analysis", "value": "Constraint ledger linking graph moves to surface events" }
+    ],
+    "dawChecklist": [
+      "Create an eight-node harmonic path and keep it fixed.",
+      "Render a literal chordal version.",
+      "Render a continuo-style version with varied griffs, spacing, and inner voices.",
+      "Render a surface-obscured version with arpeggiation, suspensions, register shifts, and textural masking.",
+      "Annotate each version with where the original obligations survive or break."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "Studio headphones or monitors, level-matched across renders.",
+      "listeningMethod": "Blind compare whether the hidden harmonic path can still be inferred in each realization.",
+      "whatVaries": ["voicing", "spacing", "inner-voice motion", "surface texture", "ornamentation"],
+      "whatStaysConstant": ["harmonic graph path", "bass implication", "tempo", "instrumentation", "overall duration"]
+    }
+  },
+  "citations": ["S1", "S2", "S3"],
+  "notes": "Essay saved as docs/essays/the-inference-chain.md. Publish may still fail if Convex server error persists."
+}
