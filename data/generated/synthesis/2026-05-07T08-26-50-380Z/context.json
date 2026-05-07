@@ -1,0 +1,344 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-07T08:26:50.380Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 6,
+    "fetch": 120,
+    "minClaims": 2,
+    "minParams": 1,
+    "noveltyWindow": 6,
+    "maxReusedSources": 2,
+    "requireTuningSignal": true,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 120,
+    "withSource": 120,
+    "eligibleCandidates": 2,
+    "selected": 2
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97eag5wx2pp6czsd8rrs1b50x85n9ys",
+      "sourceId": "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "sourceTitle": "Beyond Rules: Towards Basso Continuo Personal Style Identification",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.21822",
+      "extractionCreatedAt": 1777259161758,
+      "extractionSummary": "This preprint investigates whether individual performers can be identified by their basso continuo realizations using machine learning. The study uses the Aligned Continuo Realization Dataset (ACoRD) and a structured pitch-content representation called 'griffs' combined with Support Vector Machines. Results show that player classification from performance data is achievable, suggesting measurable personal styles exist within the improvisatory tradition of basso continuo. The work highlights a gap in computational musicology: the theoretical rules of basso continuo have been studied, but the performance dimension has been neglected due to lack of suitable data.",
+      "topics": [
+        "basso continuo",
+        "historically informed performance practice",
+        "baroque music",
+        "computational musicology",
+        "performance style identification",
+        "machine learning in music",
+        "support vector machines",
+        "harmonic realization",
+        "voice leading",
+        "improvisation",
+        "personal style in performance",
+        "pitch content representation",
+        "keyboard performance",
+        "ACoRD dataset",
+        "griffs"
+      ],
+      "topicTokens": [
+        "basso continuo",
+        "historically informed performance practice",
+        "baroque music",
+        "computational musicology",
+        "performance style identification",
+        "machine learning in music",
+        "support vector machines",
+        "harmonic realization",
+        "voice leading",
+        "improvisation",
+        "personal style in performance",
+        "pitch content representation",
+        "keyboard performance",
+        "acord dataset",
+        "griffs"
+      ],
+      "claims": [
+        {
+          "text": "Individual basso continuo players can be computationally identified from their performances using pitch-content features ('griffs') and Support Vector Machines, indicating the presence of measurable personal performance styles.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "main finding",
+              "quote": "The results show that we can identify players from their performances."
+            }
+          ]
+        },
+        {
+          "text": "Basso continuo is an improvised accompaniment genre rooted in the baroque era that is still actively practiced by keyboard players today.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "genre description",
+              "quote": "an improvised accompaniment genre with its traditions originating in the baroque era and actively practiced by many keyboard players nowadays"
+            }
+          ]
+        },
+        {
+          "text": "Basso continuo playing is shaped both by stylistic traditions from historical treatises and by individual performer choices, suggesting a tension between rule-following and personal expression.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "tradition vs. individuality",
+              "quote": "Basso continuo playing is shaped by stylistic traditions coming from historical treatises, but it also may provide space for showcasing individual performance styles of its practitioners."
+            }
+          ]
+        },
+        {
+          "text": "Computational musicology has historically focused on the rule-based theoretical foundations of basso continuo (harmonic and voice-leading constraints) rather than on empirical performance data.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "gap in literature",
+              "quote": "computational musicology has studied the theoretical foundations of basso continuo expressed by harmonic and voice-leading rules and constraints, characteristics of basso continuo as an active performing art have been largely overlooked"
+            }
+          ]
+        },
+        {
+          "text": "A structured pitch-content representation called 'griffs' can serve as a historically informed feature set for analyzing basso continuo realization style.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "feature representation",
+              "quote": "a historically informed structured representation of basso continuo performance pitch content called griffs"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Historically Informed Practice (baroque conventions)",
+          "details": {
+            "era": "baroque",
+            "genre": "basso continuo",
+            "tradition": "historically informed performance practice"
+          }
+        },
+        {
+          "type": "note",
+          "value": "Griff (chord voicing unit in basso continuo realization)",
+          "details": {
+            "description": "A historically informed structured unit of pitch content representing a realized chord or voicing choice in basso continuo performance",
+            "source": "ACoRD dataset"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific pitch-content features (griffs) most strongly differentiate individual players — and could these serve as generative constraints for compositional systems?",
+        "Can the 'griff' representation be adapted to analyze improvisation styles in non-baroque genres (e.g., jazz piano comping, modal accompaniment)?",
+        "Is personal style in basso continuo realization correlated with the player's training lineage or the treatises they studied — and if so, can treatise-sourced rules be mapped to compositional parameters?",
+        "How does the improvisatory nature of basso continuo compare to other notated music in terms of measurable stylistic variance between performers?",
+        "Could machine-learning-identified personal style clusters inform the design of algorithmic accompaniment systems tuned to baroque conventions?",
+        "What is the minimum performance data needed to reliably identify a player — and does this threshold reveal anything about how quickly personal style asserts itself in improvisation?"
+      ],
+      "scores": {
+        "base": 21,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.76,
+        "topicalBalance": 0.9579380164285695,
+        "combined": 0.7376907024642854,
+        "peerReviewedClaims": 1,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j978mypywk23f3gtf3ykz84q4x85j102",
+      "sourceId": "jx70dhsw26kwd55qeh0xgyw3xx85fp1n",
+      "sourceTitle": "Musical Score Understanding Benchmark: Evaluating Large Language Models' Comprehension of Complete Musical Scores",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2511.20697",
+      "extractionCreatedAt": 1777201528572,
+      "extractionSummary": "MSU-Bench is a human-curated benchmark of 1,800 question-answer pairs designed to evaluate how well Large Language Models and Vision-Language Models understand complete musical scores. It covers works by Bach, Beethoven, Chopin, Debussy, and others, and tests comprehension across four difficulty levels—from basic onset information to texture and form—in both text (ABC notation) and visual (PDF) modalities. Evaluations of over fifteen state-of-the-art models reveal significant modality gaps, unstable performance across difficulty levels, and difficulty maintaining correctness across multiple levels simultaneously. Fine-tuning substantially improves model performance while preserving general knowledge, suggesting a path toward more robust multimodal music reasoning.",
+      "topics": [
+        "musical score understanding",
+        "large language models",
+        "vision-language models",
+        "ABC notation",
+        "music notation",
+        "pitch",
+        "rhythm",
+        "harmony",
+        "musical form",
+        "musical texture",
+        "multimodal reasoning",
+        "benchmark evaluation",
+        "fine-tuning",
+        "AI and music",
+        "computational musicology",
+        "score analysis"
+      ],
+      "topicTokens": [
+        "musical score understanding",
+        "large language models",
+        "vision-language models",
+        "abc notation",
+        "music notation",
+        "pitch",
+        "rhythm",
+        "harmony",
+        "musical form",
+        "musical texture",
+        "multimodal reasoning",
+        "benchmark evaluation",
+        "fine-tuning",
+        "ai and music",
+        "computational musicology",
+        "score analysis"
+      ],
+      "claims": [
+        {
+          "text": "Current Large Language Models and Vision-Language Models have insufficiently examined ability to interpret full musical notation, including pitch, rhythm, harmony, and large-scale structure.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "motivation for benchmark",
+              "quote": "the ability of Large Language Models and Vision--Language Models to interpret full musical notation remains insufficiently examined"
+            }
+          ]
+        },
+        {
+          "text": "Evaluations of more than fifteen state-of-the-art models reveal pronounced modality gaps between textual (ABC notation) and visual (PDF) score understanding.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "key empirical finding",
+              "quote": "Evaluations of more than fifteen state-of-the-art models, in both zero-shot and fine-tuned settings, reveal pronounced modality gaps"
+            }
+          ]
+        },
+        {
+          "text": "Fine-tuning on musical score data substantially improves LLM/VLM performance across modalities while preserving general knowledge.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "fine-tuning result",
+              "quote": "Fine-tuning substantially improves results across modalities while preserving general knowledge"
+            }
+          ]
+        },
+        {
+          "text": "Musical score understanding can be decomposed into at least four hierarchical levels of difficulty, from onset information up to texture and form.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "taxonomy of musical understanding",
+              "quote": "organised into four levels of increasing difficulty, ranging from onset information to texture and form"
+            }
+          ]
+        },
+        {
+          "text": "Models exhibit unstable level-wise performance and struggle to maintain multilevel correctness simultaneously, suggesting that integrated musical reasoning is not a simple sum of component skills.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "emergent difficulty finding",
+              "quote": "unstable level-wise performance, and challenges in maintaining multilevel correctness"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "note",
+          "value": "ABC notation (textual score representation)",
+          "details": {
+            "format": "ABC notation",
+            "modality": "text",
+            "use": "score encoding for LLM input"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific aspects of harmony and large-scale form are hardest for current models, and does this map onto known difficulties in human music theory pedagogy?",
+        "Does the modality gap between ABC notation and PDF scores reflect a fundamental representational difference, or is it an artifact of training data distribution?",
+        "Could a model that reliably understands musical scores be used generatively—e.g., to compose music that conforms to specific structural or harmonic constraints?",
+        "How do model failures at 'multilevel correctness' compare to human expert performance, and what does this reveal about the nature of integrated musical reasoning?",
+        "Would training on a broader corpus of non-Western scores reveal additional gaps, or would models transfer musical structural reasoning across traditions?",
+        "Is ABC notation a sufficient representation for capturing microtonal, spectral, or extended-technique music relevant to contemporary composition?"
+      ],
+      "scores": {
+        "base": 13,
+        "normalizedBase": 0,
+        "novelty": 0.9666666666666667,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.64,
+        "topicalBalance": 0.9478801006808028,
+        "combined": 0.41218201510212044,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "computational musicology": 2,
+      "basso continuo": 1,
+      "historically informed performance practice": 1,
+      "baroque music": 1,
+      "performance style identification": 1,
+      "machine learning in music": 1,
+      "support vector machines": 1,
+      "harmonic realization": 1,
+      "voice leading": 1,
+      "improvisation": 1,
+      "personal style in performance": 1,
+      "pitch content representation": 1,
+      "keyboard performance": 1,
+      "acord dataset": 1,
+      "griffs": 1,
+      "musical score understanding": 1,
+      "large language models": 1,
+      "vision-language models": 1,
+      "abc notation": 1,
+      "music notation": 1,
+      "pitch": 1,
+      "rhythm": 1,
+      "harmony": 1,
+      "musical form": 1,
+      "musical texture": 1,
+      "multimodal reasoning": 1,
+      "benchmark evaluation": 1,
+      "fine-tuning": 1,
+      "ai and music": 1,
+      "score analysis": 1
+    },
+    "parameterTypeFrequency": {
+      "note": 2,
+      "tuningsystem": 1
+    },
+    "evidenceDistribution": {
+      "preprint": 9,
+      "peer_reviewed": 1
+    },
+    "sourceTypeDistribution": {
+      "rss": 2
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 6,
+    "priorSourceIds": 12,
+    "priorTopicTokens": 121,
+    "priorVariablePhrases": 16,
+    "priorTitlePhrases": 8
+  }
+}
