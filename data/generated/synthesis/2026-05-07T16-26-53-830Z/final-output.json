@@ -1,0 +1,56 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Thread That Survives",
+    "question": "Across audio compression, watermarking, speech synthesis alignment, harmonic geometry, and studio production, what determines whether a transformed musical object is still heard as itself?",
+    "hypothesis": "Musical identity survives transformation when the composer or system preserves a deliberately chosen invariant at the right representational layer: intelligibility, prosody, relational geometry, affective demo-energy, or surface timbre. Transformations fail when they optimize fidelity at one layer while breaking the layer that carries recognition or function.",
+    "rationaleMd": "ClariCodec separates intelligibility from acoustic reconstruction, showing that low surface fidelity can preserve high message value (S4). StreamMark operationalizes identity as semi-fragility: robust under benign transformations but broken by semantic edits (S5). Qwen3.5-Omni/ARIA frames prosody as an alignment problem across token systems (S3). Tonnetz geometry preserves relational continuity rather than waveform detail (S6). David Mayer's demo-referencing practice supplies the studio analogue: keep returning to the early emotional invariant while adding layers and polish (S1). The HHL architecture adds a related caution: once a state is collapsed into blocks, the downstream chain depends on what was preserved at the measurement boundary (S2).",
+    "sourceIds": [
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx7dc14cbm6v0cme1ymrv0mmzd8567ga",
+      "jx7ctrab09mtbkdbghq2qqhm75851vkc",
+      "jx7e7qw7dt6jtemah5bj363y2h84xrsq",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x"
+    ],
+    "concepts": [
+      "surviving thread",
+      "semi-fragile variation",
+      "musical invariant",
+      "identity layer",
+      "prosodic alignment",
+      "relational identity",
+      "intelligibility layer",
+      "affective watermark"
+    ]
+  },
+  "recipe": {
+    "title": "Semi-Fragile Variation Test",
+    "bodyMd": "Choose a four-bar musical object and define three layers: semantic recognition, prosodic feel, and surface timbre. Make five transformations: aggressive codec degradation, graph-adjacent reharmonization, timing/prosody drift, timbral replacement, and one deliberate semantic attack. Compare where the listener stops hearing variation and starts hearing replacement. The test borrows intelligibility-vs-detail separation from S4, benign-vs-identity-altering transformations from S5, alignment sensitivity from S3, relational continuity from S6, and demo-energy preservation from S1.",
+    "parameters": [
+      { "type": "duration", "value": "4 bars source material" },
+      { "type": "measurement", "value": "listener recognition threshold across five transformations" },
+      { "type": "structuralPattern", "value": "semantic/prosodic/surface layer separation" }
+    ],
+    "dawChecklist": [
+      "Bounce a rough demo/reference and keep it in the session as an identity anchor.",
+      "Create one heavily compressed/bitrate-reduced version while preserving contour and rhythm.",
+      "Create one reharmonized version constrained by close voice-leading or Tonnetz adjacency.",
+      "Create one timing-altered version that tests how far prosody can drift.",
+      "Create one timbre-swapped version that keeps rhythm and contour constant.",
+      "Create one deliberate semantic attack that breaks the named invariant.",
+      "A/B each against the demo and log which invariant actually carried recognition."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "Studio monitoring or headphones; compare each transformed excerpt against the original demo/reference.",
+      "listeningMethod": "Blind-shuffle transformed excerpts if possible, then label same/variation/replacement and note which musical feature carried the decision.",
+      "whatVaries": ["codec degradation", "harmonic geometry", "prosody/timing", "timbre", "semantic invariant"],
+      "whatStaysConstant": ["source phrase length", "overall tempo", "nominal melodic/rhythmic material except in the semantic attack condition"]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Essay written to docs/essays/the-thread-that-survives.md. Publish mode not attempted because recent Convex publish/updateText paths have repeatedly returned server errors; graph concept linking was done directly through graph mutations/actions."
+}

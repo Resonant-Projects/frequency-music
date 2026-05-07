@@ -1564,6 +1564,20 @@
     "contentHash": "1d50e123ffebffa191b015514f73799235dc10623c54e063cf37da521192267a",
     "generatedAt": "2026-04-10T18:40:48.033Z"
   },
+  "the-thread-that-survives": {
+    "excerpt": "Audio codecs, watermarks, speech alignment, Tonnetz geometry, and demo preservation all point to the same compositional rule: every transformation needs a deliberately chosen invariant.",
+    "tags": [
+      "signal-processing",
+      "information-theory",
+      "composition",
+      "perception",
+      "AI-music",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c9db113192c145b2eac7a85bd2b8517c7dfb79d0fc6b498ba7a2357e7b348f18",
+    "generatedAt": "2026-05-07T16:26:53.830Z"
+  },
   "the-three-means": {
     "excerpt": "Ancient mathematicians derived the three classical means\u2014arithmetic, geometric, harmonic\u2014from music itself, revealing how different division philosophies create distinct harmonic characters and tuning systems.",
     "tags": [

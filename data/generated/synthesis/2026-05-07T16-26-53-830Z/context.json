@@ -1,0 +1,1184 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-07T16:26:53.830Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 6,
+    "fetch": 200,
+    "minClaims": 1,
+    "minParams": 1,
+    "noveltyWindow": 6,
+    "maxReusedSources": 2,
+    "requireTuningSignal": false,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 200,
+    "withSource": 200,
+    "eligibleCandidates": 26,
+    "selected": 6
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j9792ckdpne6ycbt2nwccy5b7185d3rp",
+      "sourceId": "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "sourceTitle": "Building dialogue in electronic music with Kontakt, Monark, and David Mayer",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://blog.native-instruments.com/david-mayer/",
+      "extractionCreatedAt": 1776971137733,
+      "extractionSummary": "David Mayer discusses his production process for 'News Flash,' a track built around an Eastern-leaning lead sampled and manipulated in Kontakt. He describes a hybrid workflow combining Kontakt for textural, expressive realism and Monark for analog bass grit. Central to his compositional philosophy is the principle of 'call and response,' which he applies at the level of beats, melodic phrases, and arrangement sections. He also explores the tension between club functionality and symphonic layering, seeking to embed emotional complexity within dance music structures. The article is a promotional interview with Native Instruments and carries no academic or scientific rigor.",
+      "topics": [
+        "call and response",
+        "timbral layering",
+        "Eastern scales and non-Western tonality in electronic music",
+        "tension and release in melodic phrasing",
+        "analog synthesis (Monark / Minimoog modeling)",
+        "sample manipulation",
+        "hybrid synthesis workflows",
+        "club music vs. symphonic complexity",
+        "contrast as compositional principle",
+        "silence as compositional element",
+        "expressive identity vs. technical perfection",
+        "DAW session versioning and archiving",
+        "world percussion libraries",
+        "melodic dialogue between instrument layers"
+      ],
+      "topicTokens": [
+        "call and response",
+        "timbral layering",
+        "eastern scales and non-western tonality in electronic music",
+        "tension and release in melodic phrasing",
+        "analog synthesis (monark",
+        "minimoog modeling)",
+        "sample manipulation",
+        "hybrid synthesis workflows",
+        "club music vs. symphonic complexity",
+        "contrast as compositional principle",
+        "silence as compositional element",
+        "expressive identity vs. technical perfection",
+        "daw session versioning and archiving",
+        "world percussion libraries",
+        "melodic dialogue between instrument layers"
+      ],
+      "claims": [
+        {
+          "text": "The 'call and response' structural principle — alternating tension between a calling phrase and an answering phrase — can be applied at multiple levels: individual beats, melodic intervals, bassline/arpeggio pairings, and macro arrangement sections.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on call-and-response scope",
+              "quote": "one beat calls, the next hit responds, and so on. This can be used to two different sounds or two parts of a melody responding to each other, or to sections in an arrangement being brought into a dialogue."
+            },
+            {
+              "label": "Mayer on affective contrast in call-and-response",
+              "quote": "the call of a moody bassline might be answered with an uplifting arpeggio"
+            }
+          ]
+        },
+        {
+          "text": "Contrast between uplifting rhythmic elements and moody harmonic/melodic elements (e.g., uplifting beats vs. moody synth lines) is a functional compositional strategy for maintaining tension and emotional movement in electronic dance music.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on affective contrast",
+              "quote": "I try to find contrast – typically uplifting beats opposed by moody synth lines."
+            }
+          ]
+        },
+        {
+          "text": "Layering multiple differently-timbred presets or patches simultaneously can produce a composite sound perceived as more unique and expressive than any single source patch.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on timbral layering",
+              "quote": "Merging several different-sounding presets on top of each other to form a unique sound is definitely a habit I can't resist."
+            },
+            {
+              "label": "Mayer reiterating layering as core method",
+              "quote": "Merging several differently sounding presets on top of each other to create a new, unique sound is the most blissful part of my experience when I'm making something."
+            }
+          ]
+        },
+        {
+          "text": "Eastern-leaning melodic phrasing (scales, ornaments, or timbres associated with non-Western musical traditions) can create a distinctive atmospheric tension-and-release quality within a Western electronic club music context.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Editorial description of lead's affective function",
+              "quote": "The record opens around a distinctive Eastern-leaning lead that defines its atmosphere... its phrasing lends an air of tension and release that anchors the arrangement."
+            }
+          ]
+        },
+        {
+          "text": "Preserving and referencing an early 'demo' version of a track throughout the production process can help a producer maintain the original emotional quality and avoid over-refinement that erodes expressive distinctiveness.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on demo preservation",
+              "quote": "Keep your demo close. If it sparked something, it might contain something you don't want to lose in the process... Trying to improve the sound might kill the vibe."
+            },
+            {
+              "label": "Mayer on technical perfection vs. expressive identity",
+              "quote": "A technically perfect track is easy to forget. A track with a distinct fingerprint isn't."
+            }
+          ]
+        },
+        {
+          "text": "Silence and dynamic negative space ('the loud parts answered by the silent parts') function as compositional elements equivalent in weight to sounding material within an arrangement.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on silence as response",
+              "quote": "The loud parts are answered by the silent parts, and vice versa."
+            }
+          ]
+        },
+        {
+          "text": "It is possible to embed symphonic harmonic complexity (dense layering, emotionally contoured progressions) within a club-functional track structure without sacrificing dancefloor impact.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on symphonic-club hybrid aspiration",
+              "quote": "testing the limits of how much symphony could fit in a classic club track – embracing the particular, breathing, lively sound I've always been drawn to while simultaneously surrendering to my passion for classic club music elements."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "timbralSource",
+          "value": "Kontakt sampler — manipulated world/ethnic sample (Eastern-leaning lead)",
+          "details": {
+            "character": "Eastern-leaning, warm, gritty, tension-release phrasing",
+            "instrument": "Kontakt",
+            "origin": "manipulated sample from an organic live-performance clip",
+            "role": "lead melody"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "Monark analog-modeled synthesizer — bass parts",
+          "details": {
+            "character": "gritty, analog bite",
+            "instrument": "Monark",
+            "note": "specific Monark presets reused across multiple productions",
+            "role": "bass"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "Abbey Road Modern Drummer (Kontakt library) — cymbal layering",
+          "details": {
+            "character": "studio-recording realism",
+            "instrument": "Kontakt",
+            "library": "Abbey Road Modern Drummer",
+            "role": "cymbals"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "West Africa / Cuba Kontakt libraries — percussion fills",
+          "details": {
+            "character": "playful, world-music texture",
+            "instrument": "Kontakt",
+            "libraries": [
+              "West Africa",
+              "Cuba"
+            ],
+            "role": "percussion fills"
+          }
+        },
+        {
+          "type": "structuralPattern",
+          "value": "Call and response — alternating tension/release at beat, phrase, and section levels",
+          "details": {
+            "affectivePairing": "moody call / uplifting response (or vice versa)",
+            "levels": [
+              "beat-to-beat",
+              "melodic phrase",
+              "bassline vs. arpeggio",
+              "arrangement section"
+            ]
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific scales, modes, or ornamental techniques characterize 'Eastern-leaning' leads in electronic club music, and how do they map onto Western equal temperament or require microtonal deviation?",
+        "Is there measurable perceptual evidence that call-and-response phrasing at multiple structural levels (beat, phrase, section) increases listener engagement or emotional arousal compared to non-dialogic structures?",
+        "At what point does timbral layering of multiple patches begin to produce perceptual fusion (a single new timbre) vs. auditory stream segregation (multiple distinct sources)? What determines that threshold?",
+        "Can the tension between 'Eastern-leaning' melodic material and Western four-on-the-floor rhythm be analyzed in terms of polymodality or rhythmic/melodic cultural counterpoint?",
+        "What is the relationship between dynamic contrast (loud/silent alternation) and perceived groove or dancefloor functionality in electronic music?",
+        "How do Monark's analog-modeled filter and oscillator characteristics differ acoustically from Kontakt-sampled bass tones, and what compositional roles does each serve best?",
+        "Is there a compositional framework for quantifying 'symphonic density' (harmonic layers, voice count, timbral complexity) within club tracks without exceeding a functional loudness or frequency-masking threshold?"
+      ],
+      "scores": {
+        "base": 29,
+        "normalizedBase": 0.9166666666666666,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.64,
+        "topicalBalance": 1,
+        "combined": 0.9209999999999999,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j97386jb54vcs64m90p3f621zs85nz45",
+      "sourceId": "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "sourceTitle": "HHL with a Coherent Fourier Oracle: A Proof-of-Concept Quantum Architecture for Joint Melody-Harmony Generation",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.20882",
+      "extractionCreatedAt": 1777259139224,
+      "extractionSummary": "This preprint proposes a quantum computing architecture for joint melody and harmony generation using the HHL algorithm, encoding music-cognition models (Narmour implication-realisation and Krumhansl-Kessler tonal stability) into a sparse linear system whose solution vector represents a weighted note-pair distribution. A coherent Fourier harmonic oracle is introduced as a unitary operator that applies chord-transition weights to the HHL amplitude vector, enabling a single quantum measurement to jointly select melody notes and a two-chord progression. To manage state-space complexity, generation is limited to 2-note/2-chord blocks chained classically. A four-block chain demonstration yields 8 notes over 8 chords, with 97% of generated chord progressions rated grammatically strong or acceptable by an independent rule-based validator. The primary theoretical motivation is preserving HHL's exponential speedup over classical linear solvers by consuming the output coherently rather than reading it classically.",
+      "topics": [
+        "quantum computing",
+        "HHL algorithm",
+        "algorithmic composition",
+        "music cognition",
+        "Narmour implication-realisation",
+        "Krumhansl-Kessler tonal hierarchy",
+        "tonal stability",
+        "harmony generation",
+        "melody generation",
+        "chord progressions",
+        "Fourier analysis in music",
+        "unitary operators",
+        "sparse linear systems",
+        "quantum speedup",
+        "coherent measurement",
+        "fault-tolerant quantum hardware",
+        "note-pair distributions",
+        "state space complexity"
+      ],
+      "topicTokens": [
+        "quantum computing",
+        "hhl algorithm",
+        "algorithmic composition",
+        "music cognition",
+        "narmour implication-realisation",
+        "krumhansl-kessler tonal hierarchy",
+        "tonal stability",
+        "harmony generation",
+        "melody generation",
+        "chord progressions",
+        "fourier analysis in music",
+        "unitary operators",
+        "sparse linear systems",
+        "quantum speedup",
+        "coherent measurement",
+        "fault-tolerant quantum hardware",
+        "note-pair distributions",
+        "state space complexity"
+      ],
+      "claims": [
+        {
+          "text": "The HHL algorithm carries a proven exponential speedup over classical linear solvers for sparse systems, which this architecture attempts to extend to musical generation.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Core theoretical claim about HHL speedup",
+              "quote": "The primary motivation is that HHL carries a proven exponential speedup over classical linear solvers; this work demonstrates that a coherent HHL+oracle pipeline - the prerequisite for that speedup to be realised in a musical setting - is mechanically achievable."
+            }
+          ]
+        },
+        {
+          "text": "Reading HHL output classically cancels the quantum speedup; the solution must be consumed coherently for the speedup to be realised.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Coherence requirement for quantum speedup",
+              "quote": "The key constraint of HHL is that reading its output classically cancels the quantum speedup; the solution must be consumed coherently."
+            }
+          ]
+        },
+        {
+          "text": "Narmour implication-realisation theory and Krumhansl-Kessler tonal stability can be encoded as a sparse system matrix, whose solution vector represents a music-cognition-weighted note-pair distribution.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Encoding of music cognition models into HHL matrix",
+              "quote": "the system matrix encodes Narmour implication-realisation and Krumhansl-Kessler tonal stability, so its solution vector is a music-cognition-weighted note-pair distribution."
+            }
+          ]
+        },
+        {
+          "text": "A coherent Fourier harmonic oracle — a unitary that applies chord-transition weights to the HHL amplitude vector — allows a single quantum measurement to jointly select both melody notes and a two-chord progression.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Coherent Fourier oracle mechanism",
+              "quote": "a unitary that applies chord-transition weights directly to the HHL amplitude vector, so that a single measurement jointly selects both melody notes and a two-chord progression."
+            }
+          ]
+        },
+        {
+          "text": "97% of chord progressions generated by a four-block chain were rated strong or acceptable by an independent rule-based harmony validator.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Validation result",
+              "quote": "Independent rule-based harmony validation confirms that 97% of generated chord progressions are rated strong or acceptable."
+            }
+          ]
+        },
+        {
+          "text": "Classical simulation of larger joint melody-harmony blocks becomes infeasible due to exponential growth of the joint state space, motivating a 2-note/2-chord block constraint.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Scalability constraint",
+              "quote": "A two-note/two-chord (2/2) block is used to contain the exponential growth of the joint state space that would otherwise make classical simulation of larger blocks infeasible."
+            }
+          ]
+        },
+        {
+          "text": "Classically chaining collapsed block outputs as conditioning inputs for subsequent blocks is a viable but temporary workaround until fault-tolerant quantum hardware permits larger monolithic circuits.",
+          "evidenceLevel": "speculative",
+          "citations": [
+            {
+              "label": "Classical chaining workaround",
+              "quote": "blocks are chained classically - each block's collapsed output conditions the next -- as a temporary workaround until fault-tolerant hardware permits larger monolithic circuits."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "note",
+          "value": "2 notes per quantum block",
+          "details": {
+            "blockSize": 2,
+            "context": "2-note/2-chord block constraint for quantum state space management",
+            "unit": "notes"
+          }
+        },
+        {
+          "type": "duration",
+          "value": "8 notes over 8 chords (4-block chain)",
+          "details": {
+            "blocks": 4,
+            "chordsPerBlock": 2,
+            "notesPerBlock": 2,
+            "totalChords": 8,
+            "totalNotes": 8
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "97% chord progressions rated strong or acceptable",
+          "details": {
+            "metric": "harmonic validity",
+            "percentage": 97,
+            "validator": "independent rule-based harmony validation"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Narmour and Krumhansl-Kessler encodings in the system matrix be validated against perceptual experiments — do listeners actually prefer the outputs over baseline algorithmic generation?",
+        "What musical and perceptual properties are lost or introduced by collapsing quantum state at each block boundary during classical chaining?",
+        "How does the rule-based harmony validator define 'strong or acceptable' — and does this align with human listener judgments or established music theory?",
+        "Is the Fourier basis a principled choice for representing chord-transition weights, or could other orthonormal bases (e.g., wavelet, cosine) yield musically different or perceptually superior results?",
+        "When fault-tolerant hardware permits larger monolithic circuits, how many notes/chords could theoretically be generated in a single coherent measurement, and what new musical structures might emerge?",
+        "Could this architecture be extended beyond two-voice (melody + harmony) to polyphonic or contrapuntal generation without exponential overhead?",
+        "Does the joint probability distribution produced by the HHL+oracle pipeline produce statistically different melodic contours than classical Markov chain or neural generative approaches?",
+        "What is the relationship between the quantum amplitude vector geometry and perceived consonance or tension in the resulting progressions?"
+      ],
+      "scores": {
+        "base": 23,
+        "normalizedBase": 0.6666666666666666,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.8600000000000001,
+        "topicalBalance": 1,
+        "combined": 0.879,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j976p8wbe356x1qy5xtvfsjvvs856gj1",
+      "sourceId": "jx7dc14cbm6v0cme1ymrv0mmzd8567ga",
+      "sourceTitle": "Qwen3.5-Omni Technical Report",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.15804",
+      "extractionCreatedAt": 1776683140635,
+      "extractionSummary": "Qwen3.5-Omni is a large-scale multimodal AI model trained on over 100 million hours of audio-visual content, capable of understanding and generating speech across 10 languages with emotional nuance. The paper introduces ARIA, a system that dynamically aligns text and speech tokenization units to improve prosody and stability in streaming speech synthesis. The model supports extended audio understanding (10+ hours) and audio-visual grounding with temporal synchronization. While primarily an AI systems paper, it touches on speech synthesis, prosody modeling, and the acoustic-linguistic boundary between text and speech tokenization — areas with potential relevance to computational music and sound design.",
+      "topics": [
+        "speech synthesis",
+        "prosody modeling",
+        "audio tokenization",
+        "text-to-speech alignment",
+        "streaming audio generation",
+        "audio-visual synchronization",
+        "temporal grounding",
+        "multilingual speech",
+        "emotional speech synthesis",
+        "omnimodal AI",
+        "audio understanding at scale",
+        "speech tokenizers",
+        "acoustic-linguistic encoding"
+      ],
+      "topicTokens": [
+        "speech synthesis",
+        "prosody modeling",
+        "audio tokenization",
+        "text-to-speech alignment",
+        "streaming audio generation",
+        "audio-visual synchronization",
+        "temporal grounding",
+        "multilingual speech",
+        "emotional speech synthesis",
+        "omnimodal ai",
+        "audio understanding at scale",
+        "speech tokenizers",
+        "acoustic-linguistic encoding"
+      ],
+      "claims": [
+        {
+          "text": "Streaming speech synthesis suffers from instability and unnaturalness caused by encoding efficiency discrepancies between text and speech tokenizers.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Core motivation for ARIA system",
+              "quote": "To address the inherent instability and unnaturalness in streaming speech synthesis, often caused by encoding efficiency discrepancies between text and speech tokenizers, we introduce ARIA."
+            }
+          ]
+        },
+        {
+          "text": "Dynamic alignment of text and speech units can significantly enhance prosody and stability in conversational speech synthesis with minimal latency impact.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "ARIA prosody claim",
+              "quote": "ARIA dynamically aligns text and speech units, significantly enhancing the stability and prosody of conversational speech with minimal latency impact."
+            }
+          ]
+        },
+        {
+          "text": "Multilingual speech generation can be achieved with human-like emotional nuance across 10 languages within a single unified model.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Multilingual emotional speech claim",
+              "quote": "Qwen3.5-Omni expands linguistic boundaries, supporting multilingual understanding and speech generation across 10 languages with human-like emotional nuance."
+            }
+          ]
+        },
+        {
+          "text": "Audio-visual grounding capable of generating script-level structured captions with precise temporal synchronization suggests that temporal alignment between auditory and visual streams is computationally tractable at scale.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Temporal synchronization of audio-visual streams",
+              "quote": "Qwen3.5-Omni exhibits superior audio-visual grounding capabilities, generating script-level structured captions with precise temporal synchronization and automated scene segmentation."
+            }
+          ]
+        },
+        {
+          "text": "Omnimodal models trained at scale appear to spontaneously develop the ability to perform coding tasks from audio-visual instructions, suggesting emergent cross-modal competencies not explicitly trained.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Emergent Audio-Visual Vibe Coding capability",
+              "quote": "we observed the emergence of a new capability in omnimodal models: directly performing coding based on audio-visual instructions, which we call Audio-Visual Vibe Coding."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "duration",
+          "value": "10+ hours of continuous audio understanding",
+          "details": {
+            "context": "maximum supported audio context window for inference",
+            "hours": 10
+          }
+        },
+        {
+          "type": "duration",
+          "value": "400 seconds of 720P video at 1 FPS",
+          "details": {
+            "context": "video understanding context window",
+            "frameRate": 1,
+            "resolution": "720P",
+            "seconds": 400,
+            "unit": "FPS"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "256k token context length",
+          "details": {
+            "context": "maximum sequence length for multimodal inference",
+            "tokens": 256000
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "100 million hours of audio-visual training data",
+          "details": {
+            "context": "training corpus scale",
+            "dataType": "audio-visual",
+            "hours": 100000000
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific acoustic features (pitch contour, timbre, rhythm) are most sensitive to text-speech tokenizer misalignment, and can these be mapped to musical parameters?",
+        "Can the ARIA alignment mechanism be applied to music synthesis, where note duration and lyric syllable encoding face analogous efficiency discrepancies?",
+        "How does the model represent emotional nuance in speech — is it encoded in prosodic features (F0, timing, energy) that have direct analogues in musical expression?",
+        "Could audio-visual temporal synchronization techniques from this model be used to align generative music with visual scenes in compositional tools?",
+        "What does 'human-like emotional nuance' mean quantitatively — are there measurable acoustic correlates used as training targets that could inform emotionally expressive music generation?",
+        "Is there a musical analogue to 'Audio-Visual Vibe Coding' — i.e., generating musical notation or code from audio-visual performance input — and how might emergent capabilities enable this?",
+        "At what scale of audio training data do emergent prosodic or musical structure capabilities appear, and is 100 million hours a meaningful threshold?"
+      ],
+      "scores": {
+        "base": 22,
+        "normalizedBase": 0.625,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.62,
+        "topicalBalance": 0.9636002065247236,
+        "combined": 0.8250400309787085,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j9793cmwt6f6t1s819xdqpay7x854g86",
+      "sourceId": "jx7ctrab09mtbkdbghq2qqhm75851vkc",
+      "sourceTitle": "ClariCodec: Optimising Neural Speech Codes for 200bps Communication using Reinforcement Learning",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.14654",
+      "extractionCreatedAt": 1776567923711,
+      "extractionSummary": "ClariCodec is a neural speech codec designed for ultra-low bitrate communication (200 bps) that uses reinforcement learning to optimize for speech intelligibility rather than acoustic reconstruction fidelity. The system reformulates quantization as a stochastic policy, allowing RL-based rewards driven by word error rate (WER) to fine-tune the encoder while keeping the acoustic reconstruction pipeline frozen. Without RL, it achieves 3.68% WER on LibriSpeech test-clean; with RL fine-tuning, WER drops to 3.20% (test-clean) and 8.93% (test-other), a 13% relative reduction. This work highlights a fundamental tension between perceptual detail and intelligibility at extreme compression ratios. The approach is relevant to acoustics and audio engineering communities interested in how speech information is prioritized under severe bandwidth constraints.",
+      "topics": [
+        "neural speech codecs",
+        "ultra-low bitrate audio compression",
+        "speech intelligibility",
+        "acoustic reconstruction loss",
+        "reinforcement learning for audio",
+        "perceptual quality vs. intelligibility tradeoff",
+        "quantization in audio coding",
+        "word error rate as an acoustic metric",
+        "bandwidth-constrained communication",
+        "auditory perception and encoding"
+      ],
+      "topicTokens": [
+        "neural speech codecs",
+        "ultra-low bitrate audio compression",
+        "speech intelligibility",
+        "acoustic reconstruction loss",
+        "reinforcement learning for audio",
+        "perceptual quality vs. intelligibility tradeoff",
+        "quantization in audio coding",
+        "word error rate as an acoustic metric",
+        "bandwidth-constrained communication",
+        "auditory perception and encoding"
+      ],
+      "claims": [
+        {
+          "text": "Codecs trained with acoustic reconstruction losses tend to allocate bits to perceptual detail rather than intelligibility at ultra-low bitrates, leading to substantial degradation in word error rate.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core motivation claim",
+              "quote": "codecs trained with acoustic reconstruction losses tend to allocate bits to perceptual detail, leading to substantial degradation in word error rate (WER)"
+            }
+          ]
+        },
+        {
+          "text": "At 200 bps, neural speech codecs can achieve intelligibility comparable to codecs operating at higher bitrates, suggesting that intelligibility and bitrate are not strictly coupled above a certain threshold.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "intelligibility-bitrate decoupling",
+              "quote": "ClariCodec achieves 3.68% WER on the LibriSpeech test-clean set at 200 bps, already competitive with codecs operating at higher bitrates"
+            }
+          ]
+        },
+        {
+          "text": "Reinforcement learning fine-tuning using WER-driven rewards can reduce word error rate by approximately 13% relative without degrading perceptual quality, even when applied only to the encoder with a frozen decoder.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "RL improvement result",
+              "quote": "RL fine-tuning reduces WER to 3.20% on test-clean and 8.93% on test-other, corresponding to a 13% relative reduction while preserving perceptual quality"
+            }
+          ]
+        },
+        {
+          "text": "Intelligibility and perceptual quality (acoustic detail) are separable objectives in speech coding, and can be independently optimized to some degree through targeted training signals.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "separability of objectives",
+              "quote": "the encoder is fine-tuned using WER-driven rewards while the acoustic reconstruction pipeline remains frozen"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "200 bps (bits per second)",
+          "details": {
+            "bitrate_bps": 200,
+            "context": "ultra-low bitrate speech codec operating point",
+            "domain": "speech compression / audio engineering"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "3.68% Word Error Rate (baseline, test-clean)",
+          "details": {
+            "WER_percent": 3.68,
+            "bitrate_bps": 200,
+            "condition": "no RL fine-tuning",
+            "dataset": "LibriSpeech test-clean"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "3.20% Word Error Rate (RL fine-tuned, test-clean)",
+          "details": {
+            "WER_percent": 3.2,
+            "bitrate_bps": 200,
+            "condition": "RL fine-tuned",
+            "dataset": "LibriSpeech test-clean"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "8.93% Word Error Rate (RL fine-tuned, test-other)",
+          "details": {
+            "WER_percent": 8.93,
+            "bitrate_bps": 200,
+            "condition": "RL fine-tuned",
+            "dataset": "LibriSpeech test-other"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Is there a minimum bitrate threshold below which no amount of intelligent bit allocation can preserve phonemic intelligibility in natural speech?",
+        "Can the intelligibility-vs-perceptual-quality tradeoff identified here be mapped onto historical debates in musical tuning and timbre — e.g., does optimizing for 'intelligibility' in music (melodic contour, rhythm) similarly sacrifice timbral richness?",
+        "Could RL-driven reward shaping based on perceptual metrics (e.g., roughness, brightness, consonance) be used to train audio codecs or synthesizers that optimize for specific musical aesthetic properties?",
+        "What is the acoustic information-theoretic minimum for encoding a musical phrase at a given level of recognizability, and how does this compare to speech?",
+        "How do underwater or satellite acoustic channel constraints compare to the constraints of rooms or concert halls in terms of their effect on musical intelligibility and timbre?",
+        "Could the frozen-decoder / fine-tuned-encoder paradigm be applied to music generation models to steer output toward specific harmonic or rhythmic properties without retraining the full model?"
+      ],
+      "scores": {
+        "base": 20,
+        "normalizedBase": 0.5416666666666666,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.52,
+        "topicalBalance": 1,
+        "combined": 0.7905,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j97b5cq4em4evnpz1dzpjk37y1854ztc",
+      "sourceId": "jx7e7qw7dt6jtemah5bj363y2h84xrsq",
+      "sourceTitle": "StreamMark: A Deep Learning-Based Semi-Fragile Audio Watermarking for Proactive Deepfake Detection",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.11917",
+      "extractionCreatedAt": 1776625443762,
+      "extractionSummary": "StreamMark is a deep learning-based audio watermarking system designed for proactive deepfake audio detection. It embeds imperceptible watermarks into audio that survive benign transformations (compression, noise) but break under semantics-altering manipulations like voice conversion or speech editing. The system operates in the complex frequency domain using an Encoder-Distortion-Decoder architecture. Benchmarks show high audio quality preservation (SNR 24.16 dB, PESQ 4.20) and near-chance watermark recovery (~50% accuracy) after deepfake attacks, while maintaining >98% accuracy after benign transformations. The work is directly relevant to the question of how audio signals encode and preserve meaning across transformations.",
+      "topics": [
+        "audio watermarking",
+        "deepfake audio detection",
+        "perceptual audio quality",
+        "signal-to-noise ratio",
+        "complex-domain signal processing",
+        "speech synthesis",
+        "voice conversion",
+        "audio codec robustness (Opus)",
+        "semantic vs. acoustic properties of audio",
+        "AI style transfer for audio",
+        "semi-fragile watermarking",
+        "generative AI and audio identity",
+        "neural audio encoding"
+      ],
+      "topicTokens": [
+        "audio watermarking",
+        "deepfake audio detection",
+        "perceptual audio quality",
+        "signal-to-noise ratio",
+        "complex-domain signal processing",
+        "speech synthesis",
+        "voice conversion",
+        "audio codec robustness (opus)",
+        "semantic vs. acoustic properties of audio",
+        "ai style transfer for audio",
+        "semi-fragile watermarking",
+        "generative ai and audio identity",
+        "neural audio encoding"
+      ],
+      "claims": [
+        {
+          "text": "Audio watermarks can be embedded with imperceptibility meeting a signal-to-noise ratio of 24.16 dB and a PESQ score of 4.20, indicating near-transparent modification of the host audio signal.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "benchmark result",
+              "quote": "StreamMark achieves high imperceptibility (SNR 24.16 dB, PESQ 4.20)"
+            }
+          ]
+        },
+        {
+          "text": "Semantic meaning in audio can be operationally distinguished from surface-level acoustic properties: benign transformations (compression, noise addition) preserve meaning while voice conversion and speech editing alter it — and this distinction is learnable by a neural network.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core architectural assumption",
+              "quote": "robust against benign audio conversions that preserve semantic meaning (e.g., compression, noise) while remaining fragile to malicious, semantics-altering manipulations (e.g., voice conversion, speech editing)"
+            }
+          ]
+        },
+        {
+          "text": "Opus audio encoding (a lossy codec) is survivable by a well-trained audio watermark, suggesting that perceptually-motivated compression does not destroy all subband signal structure exploitable for data embedding.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "codec robustness",
+              "quote": "resilient to real-world distortions like Opus encoding"
+            }
+          ]
+        },
+        {
+          "text": "Complex-domain (as opposed to real-valued time-domain or magnitude-only spectral) signal representation provides a useful embedding space for audio watermarking that is both perceptually transparent and informationally robust.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "technical approach",
+              "quote": "Our method introduces a complex-domain embedding technique within a unique Encoder-Distortion-Decoder architecture"
+            }
+          ]
+        },
+        {
+          "text": "AI-based style transfer applied to audio is classifiable as a 'benign' transformation that preserves underlying signal identity, distinct from voice conversion which alters identity — a distinction with implications for how timbre and identity are encoded in audio signals.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "style transfer result",
+              "quote": "remaining robust to benign AI-based style transfers (ACC >98%)"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "SNR 24.16 dB (watermark imperceptibility threshold)",
+          "details": {
+            "context": "audio watermark embedding — human perceptual transparency benchmark",
+            "metric": "Signal-to-Noise Ratio",
+            "value_db": 24.16
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "PESQ 4.20 (perceptual speech quality score)",
+          "details": {
+            "context": "near-transparent watermark quality; 4.5 is maximum (reference quality)",
+            "metric": "Perceptual Evaluation of Speech Quality",
+            "scale": "1.0–4.5 (ITU-T P.862)",
+            "value": 4.2
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "~50% message recovery accuracy after deepfake attack (chance level)",
+          "details": {
+            "context": "fragility target",
+            "interpretation": "watermark fully destroyed by voice conversion / speech editing — binary chance",
+            "metric": "watermark bit accuracy",
+            "value_percent": 50
+          }
+        },
+        {
+          "type": "measurement",
+          "value": ">98% message recovery accuracy after benign transformation",
+          "details": {
+            "context": "robustness target for compression, noise, style transfer",
+            "metric": "watermark bit accuracy",
+            "value_percent": 98
+          }
+        }
+      ],
+      "openQuestions": [
+        "Could complex-domain watermarking techniques be inverted for compositional purposes — embedding hidden musical messages in audio that survive specific transformations (e.g., a melody that persists through reverb but vanishes after pitch-shifting)?",
+        "What does the 24.16 dB SNR threshold reveal about human auditory masking — at what spectral regions and amplitude envelopes does the embedding concentrate?",
+        "Is the learned distinction between 'benign' and 'malicious' audio transformations analogous to how listeners distinguish between variation (same piece, different performance) and transformation (arrangement, cover)? Could this model be used to study musical identity?",
+        "PESQ scores above 4.0 are considered 'good' for speech — would the same embedding survive in music signals where listeners are more sensitive to timbre and non-speech frequency content?",
+        "Could AI-based style transfer (robust, ACC >98%) be used as a proxy for 'same musical identity' in automated music analysis tasks — e.g., identifying that a jazz piano arrangement is the 'same' as an orchestral original?",
+        "The fragility to voice conversion suggests the watermark encodes something about formant structure or speaker identity. What acoustic features are being encoded, and are they related to pitch, timbre, or phonetic content?",
+        "How does Opus codec's perceptual model (which discards frequencies below auditory masking thresholds) interact with where the watermark is embedded — could watermark placement be guided by psychoacoustic masking curves?"
+      ],
+      "scores": {
+        "base": 22,
+        "normalizedBase": 0.625,
+        "novelty": 0.96,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.42000000000000004,
+        "topicalBalance": 0.9473908931456034,
+        "combined": 0.7854086339718405,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j978wc8spg7xjg8v7d09pzw79985df6w",
+      "sourceId": "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "sourceTitle": "Tonnetz Theory, Classical Harmony, and the Combinatorial Geometry of Abstract Musical Resources",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.19960",
+      "extractionCreatedAt": 1776942387613,
+      "extractionSummary": "This arXiv preprint develops a formal mathematical framework connecting musical harmony to combinatorial geometry through the concept of the Tonnetz (tone network). The authors demonstrate that various musical systems — including diatonic triads, diatonic seventh chords, pentatonic scales, and the 12-tone system — each correspond to specific combinatorial configurations (e.g., Fano, Desargues, Cremona-Richmond). A key result is that the Eulerian tonnetz maps to a Daublebsky von Sterneck D222 configuration, and that this same structure describes the relationship between chromatic pitch classes and major triads. The paper also addresses the major/minor triad duality, showing it can be 'broken' by identifying minor triads with hexacycles in the Levi graph of the D222 configuration. The work frames music theory as an instance of abstract combinatorial geometry, offering these structures as explicit resources for composition.",
+      "topics": [
+        "Tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "Fano configuration",
+        "Desargues configuration",
+        "Cremona-Richmond configuration",
+        "Levi graphs",
+        "bipartite graphs",
+        "major/minor duality",
+        "Tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-Riemannian theory"
+      ],
+      "topicTokens": [
+        "tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "fano configuration",
+        "desargues configuration",
+        "cremona-richmond configuration",
+        "levi graphs",
+        "bipartite graphs",
+        "major",
+        "minor duality",
+        "tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-riemannian theory"
+      ],
+      "claims": [
+        {
+          "text": "The Eulerian tonnetz can be represented by a {12_3} combinatorial configuration of Daublebsky von Sterneck type D222.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core result from prior work, recapitulated here",
+              "quote": "It was shown that the Eulerian tonnetz can be represented by a {12_3} of Daublebsky von Sterneck type D222."
+            }
+          ]
+        },
+        {
+          "text": "The tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) can be represented by a {12_3} combinatorial configuration of type D228.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Tristan-genus tonnetz",
+              "quote": "We also constructed a tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) and we showed that this tonnetz can be represented by a {12_3} of type D228."
+            }
+          ]
+        },
+        {
+          "text": "The seven diatonic degrees and their pitch classes are related by a bipartite graph of type {7_3} with girth four.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "diatonic triads graph",
+              "quote": "In the case of diatonic triads, we show the existence of a bipartite graph of type {7_3} and girth four that represents the well-known relations between the seven diatonic degrees and their pitch classes."
+            }
+          ]
+        },
+        {
+          "text": "The voice-leading relations between diatonic seventh chords are completely characterized by a Fano configuration {7_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Fano configuration and seventh chords",
+              "quote": "In the case of diatonic seventh chords, we obtain a Fano configuration {7_3} which gives a complete characterization of the voice-leading relations that hold between such chords."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for pentatonic music can be constructed based on the Desargues configuration {10_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "pentatonic tonnetz",
+              "quote": "We construct a tonnetz for pentatonic music based on the Desargues configuration {10_3}."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for the 12-tone system can be constructed based on the Cremona-Richmond configuration {15_3}, and can serve as a compositional resource.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "12-tone tonnetz",
+              "quote": "We construct a tonnetz for the 12-tone system based on the Cremona-Richmond configuration {15_3}. Both can be used as a resource for musical compositions."
+            }
+          ]
+        },
+        {
+          "text": "The relationship between the chromatic pitch class set and the major triad set is represented by the same D222 configuration as the Eulerian tonnetz.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "chromatic–major triad correspondence",
+              "quote": "We show that the relation between the chromatic pitch class set and the major triad set is also represented by a D222."
+            }
+          ]
+        },
+        {
+          "text": "Minor triads correspond one-to-one with a certain class of hexacycles in the Levi graph of the D222 configuration, allowing the major/minor duality of the traditional tonnetz to be broken.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "minor triads and hexacycles",
+              "quote": "The minor triads are in one-to-one correspondence with the members of a certain class of hexacycles in the Levi graph of this configuration. In this way, the characteristic duality between major and minor triads in the tonnetz can be broken."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "scaleSystem",
+          "value": "Diatonic (7-note) scale",
+          "details": {
+            "chordTypes": [
+              "triads",
+              "seventh chords"
+            ],
+            "graphType": "{7_3} bipartite, girth 4",
+            "noteCount": 7
+          }
+        },
+        {
+          "type": "scaleSystem",
+          "value": "Pentatonic (5-note) scale",
+          "details": {
+            "configurationModel": "Desargues {10_3}",
+            "noteCount": 5
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal/chromatic system",
+          "details": {
+            "configurationModel": "Cremona-Richmond {15_3}",
+            "eulerianTonnetzModel": "D222 {12_3}",
+            "pitchClassCount": 12
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Tristan-genus chords: dominant seventh and half-diminished seventh",
+          "details": {
+            "chordTypes": [
+              "dominant seventh",
+              "half-diminished seventh"
+            ],
+            "configurationModel": "D228 {12_3}"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Diatonic seventh chords",
+          "details": {
+            "configurationModel": "Fano configuration {7_3}",
+            "property": "complete voice-leading characterization"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Desargues {10_3} pentatonic tonnetz be used to generate novel voice-leading rules analogous to those derived from the Fano configuration for diatonic seventh chords?",
+        "What are the perceptual or acoustic correlates of navigating paths through the Cremona-Richmond {15_3} 12-tone tonnetz — do certain paths correspond to recognizable harmonic progressions?",
+        "Since minor triads are modeled as hexacycles rather than as dual objects to major triads in this framework, what new compositional symmetries or asymmetries does this asymmetric treatment enable?",
+        "Are there analogous combinatorial configurations for microtonal or non-Western tuning systems (e.g., 19-TET, 31-TET, maqam scales)?",
+        "How does the D228 configuration for Tristan-genus chords relate acoustically to the harmonic series — is the dominant seventh's proximity to just intonation ratios reflected in the geometry?",
+        "Can these abstract graph structures be directly sonified or mapped to generative composition algorithms, and if so, what traversal strategies (e.g., Hamiltonian paths, shortest paths) yield musically coherent results?",
+        "What is the relationship between the girth-four constraint of the diatonic triad bipartite graph and perceptual properties like harmonic ambiguity or voice-leading efficiency?"
+      ],
+      "scores": {
+        "base": 31,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "topicalBalance": 0.995493358903061,
+        "combined": 0.7793240038354592,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "speech synthesis": 2,
+      "call and response": 1,
+      "timbral layering": 1,
+      "eastern scales and non-western tonality in electronic music": 1,
+      "tension and release in melodic phrasing": 1,
+      "analog synthesis (monark": 1,
+      "minimoog modeling)": 1,
+      "sample manipulation": 1,
+      "hybrid synthesis workflows": 1,
+      "club music vs. symphonic complexity": 1,
+      "contrast as compositional principle": 1,
+      "silence as compositional element": 1,
+      "expressive identity vs. technical perfection": 1,
+      "daw session versioning and archiving": 1,
+      "world percussion libraries": 1,
+      "melodic dialogue between instrument layers": 1,
+      "quantum computing": 1,
+      "hhl algorithm": 1,
+      "algorithmic composition": 1,
+      "music cognition": 1,
+      "narmour implication-realisation": 1,
+      "krumhansl-kessler tonal hierarchy": 1,
+      "tonal stability": 1,
+      "harmony generation": 1,
+      "melody generation": 1,
+      "chord progressions": 1,
+      "fourier analysis in music": 1,
+      "unitary operators": 1,
+      "sparse linear systems": 1,
+      "quantum speedup": 1,
+      "coherent measurement": 1,
+      "fault-tolerant quantum hardware": 1,
+      "note-pair distributions": 1,
+      "state space complexity": 1,
+      "prosody modeling": 1,
+      "audio tokenization": 1,
+      "text-to-speech alignment": 1,
+      "streaming audio generation": 1,
+      "audio-visual synchronization": 1,
+      "temporal grounding": 1,
+      "multilingual speech": 1,
+      "emotional speech synthesis": 1,
+      "omnimodal ai": 1,
+      "audio understanding at scale": 1,
+      "speech tokenizers": 1,
+      "acoustic-linguistic encoding": 1,
+      "neural speech codecs": 1,
+      "ultra-low bitrate audio compression": 1,
+      "speech intelligibility": 1,
+      "acoustic reconstruction loss": 1,
+      "reinforcement learning for audio": 1,
+      "perceptual quality vs. intelligibility tradeoff": 1,
+      "quantization in audio coding": 1,
+      "word error rate as an acoustic metric": 1,
+      "bandwidth-constrained communication": 1,
+      "auditory perception and encoding": 1,
+      "audio watermarking": 1,
+      "deepfake audio detection": 1,
+      "perceptual audio quality": 1,
+      "signal-to-noise ratio": 1,
+      "complex-domain signal processing": 1,
+      "voice conversion": 1,
+      "audio codec robustness (opus)": 1,
+      "semantic vs. acoustic properties of audio": 1,
+      "ai style transfer for audio": 1,
+      "semi-fragile watermarking": 1,
+      "generative ai and audio identity": 1,
+      "neural audio encoding": 1,
+      "tonnetz": 1,
+      "combinatorial geometry": 1,
+      "music theory formalization": 1,
+      "diatonic harmony": 1,
+      "voice leading": 1,
+      "pentatonic scales": 1,
+      "12-tone system": 1,
+      "fano configuration": 1,
+      "desargues configuration": 1,
+      "cremona-richmond configuration": 1,
+      "levi graphs": 1,
+      "bipartite graphs": 1,
+      "major": 1,
+      "minor duality": 1,
+      "tristan chord": 1,
+      "dominant seventh chords": 1,
+      "half-diminished seventh chords": 1,
+      "pitch class sets": 1,
+      "hexacycles": 1,
+      "graph theory in music": 1,
+      "neo-riemannian theory": 1
+    },
+    "parameterTypeFrequency": {
+      "measurement": 11,
+      "timbralsource": 4,
+      "duration": 3,
+      "scalesystem": 2,
+      "interval": 2,
+      "structuralpattern": 1,
+      "note": 1,
+      "tuningsystem": 1
+    },
+    "evidenceDistribution": {
+      "preprint": 28,
+      "anecdotal": 7,
+      "speculative": 1
+    },
+    "sourceTypeDistribution": {
+      "rss": 6
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 6,
+    "priorSourceIds": 12,
+    "priorTopicTokens": 115,
+    "priorVariablePhrases": 13,
+    "priorTitlePhrases": 6
+  }
+}
