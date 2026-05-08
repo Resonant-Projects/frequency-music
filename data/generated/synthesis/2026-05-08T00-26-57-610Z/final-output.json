@@ -1,0 +1,96 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Scale That Holds",
+    "question": "When a short loop is transformed, which representation scale best predicts whether listeners still hear it as the same musical object: low-frequency modulation, critical-band separation, phase/pitch coherence, or harmonic graph adjacency?",
+    "hypothesis": "If a loop's identity is carried primarily by one representation scale, then damaging that scale while preserving the others will reduce perceived coherence and recognizability more than damaging a non-primary scale.",
+    "rationaleMd": "The selected sources converge on a resolution-contract problem: each useful representation preserves a different layer of musical information. Rhythm-formant analysis treats speech rhythm as low-frequency amplitude modulation and separates macro-temporal structure from finer spectral features [S1]. Tonnetz theory formalizes harmonic continuity as graph/geometric adjacency rather than waveform similarity [S2]. WST-X warns that too much temporal averaging can erase fine spectral artifacts, so stability must be balanced against sensitivity [S3]. Speech-recognition fairness results show that encoder design and compression can dominate downstream behavior, including hallucination under silence or masking [S4]. Bark-scale dynamics frames frequency processing around perceptual critical bands rather than arbitrary crossovers [S5]. PHALAR suggests pitch- and phase-equivariant representations preserve musical coherence better than phase-discarding semantic baselines [S6]. Together, these imply a testable compositional claim: the layer that carries identity in a given loop can be located by selectively damaging candidate representation scales while holding the others constant.",
+    "sourceIds": [
+      "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx78nvpygk3a3ehen35mwswkhd85w0pt",
+      "jx74r61g2tqd5bcy6aam4aqwes85f9kt",
+      "jx7awge62ymkd5ywnpz9ddyymx85ntkj",
+      "jx7fk4jg1jw1mbsnkfk8fckn01869sfn"
+    ],
+    "concepts": [
+      "resolution contract",
+      "representation scale",
+      "modulation-center frequency",
+      "critical-band orchestration",
+      "phase coherence",
+      "harmonic graph adjacency",
+      "selective invariance",
+      "musical identity layer"
+    ]
+  },
+  "recipe": {
+    "title": "Resolution Switching Loop Test",
+    "bodyMd": "Create one eight-bar loop whose identity could plausibly live at several scales: a tremolo or sidechained pad supplies a clear low-frequency modulation profile [S1], a two-voice midrange texture can either share or avoid Bark-like critical-band regions [S5], a kick/bass or doubled-synth pair exposes phase alignment [S6], and a four-chord progression moves by close harmonic adjacency [S2]. Render a control version, then four test versions that each damage only one scale. Version A smears the modulation profile while preserving notes, harmony, phase, and spectrum. Version B crowds the midrange voices into the same perceptual band while preserving rhythm and harmony. Version C offsets or rotates phase alignment while preserving spectral balance. Version D replaces graph-adjacent chord motion with arbitrary chord changes while preserving sound design and modulation. Disconfirming evidence: if listeners cannot reliably distinguish the targeted damage conditions from the control, or if all damage types reduce identity equally, then the loop does not have a dominant representation scale under this protocol. Keep degradation moderate; S3 and S4 both warn that excessive averaging or degradation can collapse distinctions globally rather than reveal the meaningful layer.",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "120 BPM",
+        "details": { "bpm": 120 }
+      },
+      {
+        "type": "duration",
+        "value": "8 bars / 16 seconds at 120 BPM",
+        "details": { "bars": 8, "seconds": 16 }
+      },
+      {
+        "type": "measurement",
+        "value": "Target modulation-center frequency: 2 Hz control, smeared to competing 1 Hz and 4 Hz pulses in Version A",
+        "details": { "controlHz": 2, "variantHz": [1, 4] }
+      },
+      {
+        "type": "measurement",
+        "value": "Critical-band condition: separate vs crowded midrange energy neighborhoods",
+        "details": { "basis": "Bark-scale critical-band listening check" }
+      },
+      {
+        "type": "measurement",
+        "value": "Phase condition: aligned control vs 90-degree and 180-degree offsets in low-frequency layer",
+        "details": { "phaseOffsetsDegrees": [0, 90, 180] }
+      },
+      {
+        "type": "interval",
+        "value": "Harmonic condition: close graph-adjacent chord motion vs arbitrary replacement progression",
+        "details": { "basis": "Tonnetz-style adjacency" }
+      }
+    ],
+    "dawChecklist": [
+      "Create an eight-bar loop at 120 BPM with drums, bass, pad/tremolo layer, two midrange voices, and four chords.",
+      "Render the control and write down the intended identity carrier before making variants.",
+      "Version A: keep MIDI/harmony fixed, but alter tremolo, sidechain, or gain automation so the dominant energy pulse no longer centers around the control rate.",
+      "Version B: keep notes/timing fixed, but EQ or transpose two midrange layers so they mask each other in the same perceptual frequency neighborhood.",
+      "Version C: keep levels/EQ fixed, but offset the phase of the bass/doubled layer by 90 degrees and 180 degrees; choose the strongest identity-changing render.",
+      "Version D: keep rhythm, timbre, phase, and mix fixed, but replace the chord path with non-adjacent/arbitrary moves.",
+      "Level-match all renders within 0.5 dB LUFS so loudness is not the cue.",
+      "Blind-rank the five renders for recognizability, coherence, and 'same loop' identity; note which damaged scale causes the largest drop."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 80,
+      "panelPlanned": ["self"],
+      "listeningContext": "Level-matched blind A/B/X-style listening on headphones and monitors.",
+      "listeningMethod": "Rate each render 1-5 for recognizability, coherence, and identity preservation; repeat after a ten-minute break.",
+      "whatVaries": [
+        "low-frequency modulation profile",
+        "critical-band crowding",
+        "phase alignment",
+        "harmonic graph adjacency"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "overall duration",
+        "source sounds except targeted manipulation",
+        "LUFS loudness",
+        "arrangement density",
+        "melodic contour outside the targeted harmonic condition"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Companion essay written to docs/essays/the-scale-that-holds.md. This run frames the connection as a representation-scale problem rather than a generic fidelity problem."
+}

@@ -1326,6 +1326,20 @@
     "contentHash": "4ed2d201d04addc532900113523874ee6994b19a1e722d8f65d5b3a8eea864cb",
     "generatedAt": "2026-04-10T18:40:06.923Z"
   },
+  "the-scale-that-holds": {
+    "excerpt": "Musical meaning survives at different scales: pulse, critical band, phase, or harmonic graph. The task is choosing the resolution that holds identity.",
+    "tags": [
+      "signal-processing",
+      "psychoacoustics",
+      "composition",
+      "AI-music",
+      "mathematical-music-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "756cf24814b0c59a15896c55718a5c5d65878571c6bc0dd707970bb305f732ed",
+    "generatedAt": "2026-05-08T00:26:57.610Z"
+  },
   "the-schema-is-the-score": {
     "excerpt": "Recent audio systems are converging on explicit schemas, uncertainty bands, and layered representations, suggesting that good listening tools preserve distinctions instead of collapsing them into one flat score.",
     "tags": [
