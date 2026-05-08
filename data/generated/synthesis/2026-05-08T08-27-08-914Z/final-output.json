@@ -1,0 +1,93 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Absent Cause",
+    "question": "Can musical coherence be strengthened by composing the hidden generators that listeners infer from sound rather than only the audible surface?",
+    "hypothesis": "Musical events feel deeper and more coherent when they imply an absent cause: a latent harmonic graph, an upcoming disruption, an unseen source, a geographic environment, a stable identity, or a dialogue partner. Designing those inferred causes first should make the same surface materials feel more world-like and less arbitrary.",
+    "rationaleMd": "Tonnetz geometry shows that a chord's meaning depends on latent adjacency relations rather than only its sounding pitch classes (S1). Stuttering prediction shows that future disruptions can leak into present prosodic features over a short temporal window (S2). Omni2Sound and Geo2Sound both generate sound from partially absent causes: off-screen sources, text, video, satellite geography, and inferred acoustic ecology (S3, S5). ATRIE separates stable vocal identity from dynamic prosody, suggesting a persistent inferred source behind changing expression (S4). David Mayer's call-and-response practice shows that even silence can act as an answer when the preceding phrase creates a strong enough implied dialogue (S6). Together these sources suggest that composition can operate directly on inferred generators: graph, future, place, body, and conversational role.",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7e069afwawf8v8pgrxex5y2s85w80e",
+      "jx7dvwyahyzy5qvrgf7y1gvtnd85vkbp",
+      "jx762q5tm7md2f9znq4tykwkv985feka",
+      "jx754t1e95rr3bq5k38xt0183n851hks",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c"
+    ],
+    "concepts": [
+      "absent cause",
+      "latent harmonic space",
+      "prosodic foreshadowing",
+      "off-screen sound",
+      "geographic orchestration",
+      "stable timbral identity",
+      "implied dialogue",
+      "negative-space response"
+    ]
+  },
+  "recipe": {
+    "title": "Write the Cause First",
+    "bodyMd": "Build a short loop by specifying four hidden causes before choosing notes: a latent harmonic graph, a future event foreshadowed three seconds early, a place that constrains timbre and density, and a stable timbral actor whose prosody changes. Then make a control version with the same sounds but scrambled hidden causes. The expected result is that the first version feels like a coherent world while the control feels like assembled assets. This tests the absent-cause hypothesis across harmonic geometry (S1), anticipatory prosody (S2), inferred/off-screen environments (S3, S5), stable identity under expressive change (S4), and call/response negative space (S6).",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "3-second prosodic foreshadowing window"
+      },
+      {
+        "type": "structuralPattern",
+        "value": "Tonnetz or graph-constrained harmonic traversal"
+      },
+      {
+        "type": "timbralSource",
+        "value": "one stable timbral fingerprint across changing articulations"
+      },
+      {
+        "type": "measurement",
+        "value": "geography-derived noise, density, reverb, and register palette"
+      },
+      {
+        "type": "structuralPattern",
+        "value": "alternating call/response phrases with at least one removed response"
+      }
+    ],
+    "dawChecklist": [
+      "Choose a latent harmonic path and mark one intentional violation.",
+      "Create a rupture and automate envelope/brightness/microtiming changes during the prior three seconds.",
+      "Define a place palette: environmental noise bands, transient density, reverb length, and spectral centroid.",
+      "Design one timbral fingerprint that survives across emotional/articulatory changes.",
+      "Remove selected responses and check whether the silence still feels charged.",
+      "Render a control version that preserves surfaces but scrambles the inferred causes."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "A/B comparison of cause-first loop against scrambled-cause control on studio monitors or headphones.",
+      "listeningMethod": "Blind or delayed A/B notes: rate which version feels more coherent, world-like, inevitable, and emotionally inhabited.",
+      "whatVaries": [
+        "consistency of latent harmonic graph",
+        "presence of prosodic foreshadowing",
+        "coherence of inferred place",
+        "stability of timbral identity",
+        "strength of implied dialogue in silence"
+      ],
+      "whatStaysConstant": [
+        "core sound sources",
+        "overall duration",
+        "tempo",
+        "rough loudness",
+        "main rhythmic grid"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Essay written to docs/essays/the-absent-cause.md. Publish may fail until the current Convex server errors are repaired."
+}
