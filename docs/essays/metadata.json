@@ -1813,5 +1813,19 @@
     "category": "interdisciplinary",
     "contentHash": "1d3ef1a04426e93026933710a301ec11970a6337efe1a2c83bb3fd8aebcea5bf",
     "generatedAt": "2026-05-08T08:27:08.914Z"
+  },
+  "the-coordinate-that-makes-motion": {
+    "excerpt": "Musical meaning depends on choosing coordinates where motion becomes intelligible: harmonic graphs, stable timbral invariants, prosodic alignment, dialogic roles, active media, and relational distance.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "acoustics",
+      "signal-processing",
+      "AI-music",
+      "spatial-audio"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "58d95f3e6bf4819b6c04efe3ced3badaaeb948853666d5e6df620ad51de09ca4",
+    "generatedAt": "2026-05-08T16:27:01.723Z"
   }
 }

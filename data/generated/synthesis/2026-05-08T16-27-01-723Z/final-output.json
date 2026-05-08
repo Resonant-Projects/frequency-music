@@ -1,0 +1,98 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Coordinate That Makes Motion",
+    "question": "Does musical coherence improve when a composer first chooses the coordinate system in which harmony, timbre, prosody, space, and arrangement motion will be measured?",
+    "hypothesis": "The same audible material can feel more intelligible and consequential when it is organized by explicit coordinates: graph distance for harmony, invariant/adaptive representation for timbre, dynamic alignment for prosody, call-response roles for arrangement, medium-defined propagation for space, and relational distance for source placement.",
+    "rationaleMd": "Tonnetz theory shows that harmonic meaning depends on the graph or combinatorial configuration that defines adjacency and distance (S1). Speech enhancement probing distinguishes stable encoder-like identity coordinates from decoder-like adaptive repair coordinates under noise and reverberation (S2). Qwen3.5-Omni's ARIA system treats prosody as a dynamic alignment problem between incompatible text and speech token grids (S3). David Mayer's call-and-response practice defines arrangement events relationally rather than as isolated surfaces (S4). Underwater sound-speed reconstruction shows that the medium itself supplies coordinates that determine acoustic propagation (S5). EDM localization demonstrates that relational distances can be a more tractable primitive than absolute 3D position (S6). Together these sources suggest a compositional principle: before writing motion, choose the space in which motion will mean something.",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx764ke9nz50zaqrr0cjsbk149864vyj",
+      "jx728k53rhpv5ye61qsvb8b9fh85ayjd",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx71xbpfz79hvzv2tcas0khccx851gt6",
+      "jx7d318zzcx7e8cd6yrmvrgn7h859g7f"
+    ],
+    "concepts": [
+      "coordinate discipline",
+      "harmonic coordinate system",
+      "identity coordinate",
+      "adaptive coordinate",
+      "prosodic alignment",
+      "dialogic arrangement",
+      "medium-defined propagation",
+      "relational distance"
+    ]
+  },
+  "recipe": {
+    "title": "Same Surface, Different Map",
+    "bodyMd": "Create two one-minute sketches using the same chords, samples, tempo, and sound sources. In version A, choose explicit coordinates first: a Tonnetz-like adjacency rule, one timbral fingerprint that must survive processing, an alignment map for melody/rhythm/breath/stress, call-response roles for gestures and silences, relational spatial distances, and one simulated medium that shapes filtering or delay. In version B, use the same material but choose effects, placements, and transitions moment-to-moment without coordinate discipline. Compare which version feels more like meaningful motion rather than assembled surfaces.",
+    "parameters": [
+      {
+        "type": "structuralPattern",
+        "value": "Tonnetz-like harmonic adjacency rule with two deliberate long-distance jumps"
+      },
+      {
+        "type": "timbralSource",
+        "value": "one stable timbral fingerprint preserved through processing"
+      },
+      {
+        "type": "measurement",
+        "value": "alignment points between semantic stress, breath, rhythm, and melodic contour"
+      },
+      {
+        "type": "structuralPattern",
+        "value": "call, response, echo, interruption, and withheld-answer roles"
+      },
+      {
+        "type": "measurement",
+        "value": "pairwise relational distances among sound sources rather than only absolute pan positions"
+      },
+      {
+        "type": "measurement",
+        "value": "medium-derived delay/filter/register behavior inspired by sound-speed profile layers"
+      }
+    ],
+    "dawChecklist": [
+      "Choose the harmonic graph and write the progression as a path through it.",
+      "Mark the invariant timbral feature that should survive effects and density.",
+      "Align or intentionally misalign lyric/phrase stress, breath, rhythm, and pitch contour.",
+      "Label each gesture as call, answer, echo, interruption, or withheld response.",
+      "Place sounds by desired relational distances: near/far timbrally, spatially, rhythmically, and harmonically.",
+      "Apply one environment or propagation model consistently across a section.",
+      "Render a control version with the same surfaces but scrambled or absent coordinate rules."
+    ],
+    "protocol": {
+      "studyType": "A/B compositional litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Compare coordinate-first version against surface-first control on headphones or studio monitors.",
+      "listeningMethod": "Delayed blind notes: rate which version has clearer motion, stronger expectation, more stable identity, and more spatial/harmonic intelligibility.",
+      "whatVaries": [
+        "presence of explicit harmonic coordinate system",
+        "stability of timbral invariant",
+        "quality of prosodic alignment",
+        "clarity of dialogic arrangement roles",
+        "use of relational distance and medium-defined propagation"
+      ],
+      "whatStaysConstant": [
+        "raw audio/MIDI materials",
+        "tempo",
+        "overall duration",
+        "rough loudness",
+        "main sound sources"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Essay written to docs/essays/the-coordinate-that-makes-motion.md. Extraction remains blocked by the recurring Convex workflows:startBatchExtraction server error."
+}
