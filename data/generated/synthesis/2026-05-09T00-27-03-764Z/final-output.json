@@ -1,0 +1,55 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Thick Boundary",
+    "question": "What changes when composers treat musical boundaries as zones with measurable width rather than point events?",
+    "hypothesis": "Musical transitions become more intelligible and expressive when their boundaries are composed as thick regions of overlap, uncertainty, handoff, or relational crossing rather than as instantaneous cuts.",
+    "rationaleMd": "Forced-alignment research models phoneme transitions as confidence intervals, suggesting that sound-category changes naturally occupy regions rather than instants. Bioacoustic work adds two complementary boundary cases: millisecond annotation for sparse animal calls, and multi-band encoding where spectral cutoffs define which acoustic worlds remain visible to a model or listener. Tonnetz geometry treats harmonic adjacency itself as a boundary rule determined by the chosen graph. Video-to-music generation exposes the seam between high-level semantic planning and rendered sound, while call-and-response production practice shows that the gap or overlap between gestures carries musical grammar. Together these sources suggest a composition method centered on boundary thickness.",
+    "sourceIds": [
+      "jx7dn2qe73n69wb2keprdw1xm984wjxd",
+      "jx7c7e1e75npm6wa6bzkzk0gq984xs82",
+      "jx78jqe2mp7zwykmbywha3mzrs85xyys",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7awwpndbmcnas4926276wxfn85e65h",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c"
+    ],
+    "concepts": [
+      "thick boundary",
+      "boundary thickness",
+      "gradient boundary",
+      "millisecond annotation",
+      "spectral handoff",
+      "harmonic adjacency",
+      "plan-render seam",
+      "call-response gap"
+    ]
+  },
+  "recipe": {
+    "title": "Boundary Thickness Study",
+    "bodyMd": "Create a one-minute sketch with three explicit boundary types: temporal, spectral, and relational. For the temporal boundary, morph one vocal or instrumental gesture over a measured window rather than cutting at the gridline. For the spectral boundary, split a sound into bands and let only some bands answer or anticipate the next gesture. For the relational boundary, define harmonic movement by a graph adjacency rule and include one deliberate long-distance crossing. Render a thin-boundary version and a thick-boundary version using the same source material, then compare which one makes transition, anticipation, and response more audible.",
+    "parameters": [
+      { "type": "measurement", "value": "Boundary width in milliseconds" },
+      { "type": "frequency", "value": "Spectral handoff band edges" },
+      { "type": "structuralPattern", "value": "Call-response gap/overlap" },
+      { "type": "interval", "value": "Tonnetz or graph-distance crossing" }
+    ],
+    "dawChecklist": [
+      "Choose one short call-response phrase and duplicate it into thin/thick versions.",
+      "Set temporal boundary widths explicitly, e.g. 0 ms, 80 ms, 180 ms, and 350 ms.",
+      "Split one layer into low/mid/high bands and stagger their entries independently.",
+      "Choose a harmonic adjacency rule, then mark one intentional long graph-distance jump.",
+      "A/B test whether listeners describe the thick version as morphing, anticipating, breathing, or blurring."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 60,
+      "panelPlanned": ["composer self-test", "2-3 trusted listeners"],
+      "listeningContext": "Nearfield monitors or headphones at moderate level",
+      "listeningMethod": "Blind A/B between thin-boundary and thick-boundary renders",
+      "whatVaries": ["boundary width", "spectral handoff timing", "call-response gap/overlap", "harmonic graph distance"],
+      "whatStaysConstant": ["source samples", "tempo", "primary pitch material", "overall duration", "mix loudness"]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Written as docs/essays/the-thick-boundary.md after extraction failed with Convex server error."
+}

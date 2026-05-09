@@ -1,0 +1,1030 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-09T00:27:03.764Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 6,
+    "fetch": 200,
+    "minClaims": 1,
+    "minParams": 1,
+    "noveltyWindow": 6,
+    "maxReusedSources": 2,
+    "requireTuningSignal": false,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 200,
+    "withSource": 200,
+    "eligibleCandidates": 27,
+    "selected": 6
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j978wc8spg7xjg8v7d09pzw79985df6w",
+      "sourceId": "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "sourceTitle": "Tonnetz Theory, Classical Harmony, and the Combinatorial Geometry of Abstract Musical Resources",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.19960",
+      "extractionCreatedAt": 1776942387613,
+      "extractionSummary": "This arXiv preprint develops a formal mathematical framework connecting musical harmony to combinatorial geometry through the concept of the Tonnetz (tone network). The authors demonstrate that various musical systems — including diatonic triads, diatonic seventh chords, pentatonic scales, and the 12-tone system — each correspond to specific combinatorial configurations (e.g., Fano, Desargues, Cremona-Richmond). A key result is that the Eulerian tonnetz maps to a Daublebsky von Sterneck D222 configuration, and that this same structure describes the relationship between chromatic pitch classes and major triads. The paper also addresses the major/minor triad duality, showing it can be 'broken' by identifying minor triads with hexacycles in the Levi graph of the D222 configuration. The work frames music theory as an instance of abstract combinatorial geometry, offering these structures as explicit resources for composition.",
+      "topics": [
+        "Tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "Fano configuration",
+        "Desargues configuration",
+        "Cremona-Richmond configuration",
+        "Levi graphs",
+        "bipartite graphs",
+        "major/minor duality",
+        "Tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-Riemannian theory"
+      ],
+      "topicTokens": [
+        "tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "fano configuration",
+        "desargues configuration",
+        "cremona-richmond configuration",
+        "levi graphs",
+        "bipartite graphs",
+        "major",
+        "minor duality",
+        "tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-riemannian theory"
+      ],
+      "claims": [
+        {
+          "text": "The Eulerian tonnetz can be represented by a {12_3} combinatorial configuration of Daublebsky von Sterneck type D222.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core result from prior work, recapitulated here",
+              "quote": "It was shown that the Eulerian tonnetz can be represented by a {12_3} of Daublebsky von Sterneck type D222."
+            }
+          ]
+        },
+        {
+          "text": "The tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) can be represented by a {12_3} combinatorial configuration of type D228.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Tristan-genus tonnetz",
+              "quote": "We also constructed a tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) and we showed that this tonnetz can be represented by a {12_3} of type D228."
+            }
+          ]
+        },
+        {
+          "text": "The seven diatonic degrees and their pitch classes are related by a bipartite graph of type {7_3} with girth four.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "diatonic triads graph",
+              "quote": "In the case of diatonic triads, we show the existence of a bipartite graph of type {7_3} and girth four that represents the well-known relations between the seven diatonic degrees and their pitch classes."
+            }
+          ]
+        },
+        {
+          "text": "The voice-leading relations between diatonic seventh chords are completely characterized by a Fano configuration {7_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Fano configuration and seventh chords",
+              "quote": "In the case of diatonic seventh chords, we obtain a Fano configuration {7_3} which gives a complete characterization of the voice-leading relations that hold between such chords."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for pentatonic music can be constructed based on the Desargues configuration {10_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "pentatonic tonnetz",
+              "quote": "We construct a tonnetz for pentatonic music based on the Desargues configuration {10_3}."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for the 12-tone system can be constructed based on the Cremona-Richmond configuration {15_3}, and can serve as a compositional resource.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "12-tone tonnetz",
+              "quote": "We construct a tonnetz for the 12-tone system based on the Cremona-Richmond configuration {15_3}. Both can be used as a resource for musical compositions."
+            }
+          ]
+        },
+        {
+          "text": "The relationship between the chromatic pitch class set and the major triad set is represented by the same D222 configuration as the Eulerian tonnetz.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "chromatic–major triad correspondence",
+              "quote": "We show that the relation between the chromatic pitch class set and the major triad set is also represented by a D222."
+            }
+          ]
+        },
+        {
+          "text": "Minor triads correspond one-to-one with a certain class of hexacycles in the Levi graph of the D222 configuration, allowing the major/minor duality of the traditional tonnetz to be broken.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "minor triads and hexacycles",
+              "quote": "The minor triads are in one-to-one correspondence with the members of a certain class of hexacycles in the Levi graph of this configuration. In this way, the characteristic duality between major and minor triads in the tonnetz can be broken."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "scaleSystem",
+          "value": "Diatonic (7-note) scale",
+          "details": {
+            "chordTypes": [
+              "triads",
+              "seventh chords"
+            ],
+            "graphType": "{7_3} bipartite, girth 4",
+            "noteCount": 7
+          }
+        },
+        {
+          "type": "scaleSystem",
+          "value": "Pentatonic (5-note) scale",
+          "details": {
+            "configurationModel": "Desargues {10_3}",
+            "noteCount": 5
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal/chromatic system",
+          "details": {
+            "configurationModel": "Cremona-Richmond {15_3}",
+            "eulerianTonnetzModel": "D222 {12_3}",
+            "pitchClassCount": 12
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Tristan-genus chords: dominant seventh and half-diminished seventh",
+          "details": {
+            "chordTypes": [
+              "dominant seventh",
+              "half-diminished seventh"
+            ],
+            "configurationModel": "D228 {12_3}"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Diatonic seventh chords",
+          "details": {
+            "configurationModel": "Fano configuration {7_3}",
+            "property": "complete voice-leading characterization"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Desargues {10_3} pentatonic tonnetz be used to generate novel voice-leading rules analogous to those derived from the Fano configuration for diatonic seventh chords?",
+        "What are the perceptual or acoustic correlates of navigating paths through the Cremona-Richmond {15_3} 12-tone tonnetz — do certain paths correspond to recognizable harmonic progressions?",
+        "Since minor triads are modeled as hexacycles rather than as dual objects to major triads in this framework, what new compositional symmetries or asymmetries does this asymmetric treatment enable?",
+        "Are there analogous combinatorial configurations for microtonal or non-Western tuning systems (e.g., 19-TET, 31-TET, maqam scales)?",
+        "How does the D228 configuration for Tristan-genus chords relate acoustically to the harmonic series — is the dominant seventh's proximity to just intonation ratios reflected in the geometry?",
+        "Can these abstract graph structures be directly sonified or mapped to generative composition algorithms, and if so, what traversal strategies (e.g., Hamiltonian paths, shortest paths) yield musically coherent results?",
+        "What is the relationship between the girth-four constraint of the diatonic triad bipartite graph and perceptual properties like harmonic ambiguity or voice-leading efficiency?"
+      ],
+      "scores": {
+        "base": 31,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "topicalBalance": 0.9900945429677852,
+        "combined": 0.7785141814451678,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j9792ckdpne6ycbt2nwccy5b7185d3rp",
+      "sourceId": "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "sourceTitle": "Building dialogue in electronic music with Kontakt, Monark, and David Mayer",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://blog.native-instruments.com/david-mayer/",
+      "extractionCreatedAt": 1776971137733,
+      "extractionSummary": "David Mayer discusses his production process for 'News Flash,' a track built around an Eastern-leaning lead sampled and manipulated in Kontakt. He describes a hybrid workflow combining Kontakt for textural, expressive realism and Monark for analog bass grit. Central to his compositional philosophy is the principle of 'call and response,' which he applies at the level of beats, melodic phrases, and arrangement sections. He also explores the tension between club functionality and symphonic layering, seeking to embed emotional complexity within dance music structures. The article is a promotional interview with Native Instruments and carries no academic or scientific rigor.",
+      "topics": [
+        "call and response",
+        "timbral layering",
+        "Eastern scales and non-Western tonality in electronic music",
+        "tension and release in melodic phrasing",
+        "analog synthesis (Monark / Minimoog modeling)",
+        "sample manipulation",
+        "hybrid synthesis workflows",
+        "club music vs. symphonic complexity",
+        "contrast as compositional principle",
+        "silence as compositional element",
+        "expressive identity vs. technical perfection",
+        "DAW session versioning and archiving",
+        "world percussion libraries",
+        "melodic dialogue between instrument layers"
+      ],
+      "topicTokens": [
+        "call and response",
+        "timbral layering",
+        "eastern scales and non-western tonality in electronic music",
+        "tension and release in melodic phrasing",
+        "analog synthesis (monark",
+        "minimoog modeling)",
+        "sample manipulation",
+        "hybrid synthesis workflows",
+        "club music vs. symphonic complexity",
+        "contrast as compositional principle",
+        "silence as compositional element",
+        "expressive identity vs. technical perfection",
+        "daw session versioning and archiving",
+        "world percussion libraries",
+        "melodic dialogue between instrument layers"
+      ],
+      "claims": [
+        {
+          "text": "The 'call and response' structural principle — alternating tension between a calling phrase and an answering phrase — can be applied at multiple levels: individual beats, melodic intervals, bassline/arpeggio pairings, and macro arrangement sections.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on call-and-response scope",
+              "quote": "one beat calls, the next hit responds, and so on. This can be used to two different sounds or two parts of a melody responding to each other, or to sections in an arrangement being brought into a dialogue."
+            },
+            {
+              "label": "Mayer on affective contrast in call-and-response",
+              "quote": "the call of a moody bassline might be answered with an uplifting arpeggio"
+            }
+          ]
+        },
+        {
+          "text": "Contrast between uplifting rhythmic elements and moody harmonic/melodic elements (e.g., uplifting beats vs. moody synth lines) is a functional compositional strategy for maintaining tension and emotional movement in electronic dance music.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on affective contrast",
+              "quote": "I try to find contrast – typically uplifting beats opposed by moody synth lines."
+            }
+          ]
+        },
+        {
+          "text": "Layering multiple differently-timbred presets or patches simultaneously can produce a composite sound perceived as more unique and expressive than any single source patch.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on timbral layering",
+              "quote": "Merging several different-sounding presets on top of each other to form a unique sound is definitely a habit I can't resist."
+            },
+            {
+              "label": "Mayer reiterating layering as core method",
+              "quote": "Merging several differently sounding presets on top of each other to create a new, unique sound is the most blissful part of my experience when I'm making something."
+            }
+          ]
+        },
+        {
+          "text": "Eastern-leaning melodic phrasing (scales, ornaments, or timbres associated with non-Western musical traditions) can create a distinctive atmospheric tension-and-release quality within a Western electronic club music context.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Editorial description of lead's affective function",
+              "quote": "The record opens around a distinctive Eastern-leaning lead that defines its atmosphere... its phrasing lends an air of tension and release that anchors the arrangement."
+            }
+          ]
+        },
+        {
+          "text": "Preserving and referencing an early 'demo' version of a track throughout the production process can help a producer maintain the original emotional quality and avoid over-refinement that erodes expressive distinctiveness.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on demo preservation",
+              "quote": "Keep your demo close. If it sparked something, it might contain something you don't want to lose in the process... Trying to improve the sound might kill the vibe."
+            },
+            {
+              "label": "Mayer on technical perfection vs. expressive identity",
+              "quote": "A technically perfect track is easy to forget. A track with a distinct fingerprint isn't."
+            }
+          ]
+        },
+        {
+          "text": "Silence and dynamic negative space ('the loud parts answered by the silent parts') function as compositional elements equivalent in weight to sounding material within an arrangement.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on silence as response",
+              "quote": "The loud parts are answered by the silent parts, and vice versa."
+            }
+          ]
+        },
+        {
+          "text": "It is possible to embed symphonic harmonic complexity (dense layering, emotionally contoured progressions) within a club-functional track structure without sacrificing dancefloor impact.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on symphonic-club hybrid aspiration",
+              "quote": "testing the limits of how much symphony could fit in a classic club track – embracing the particular, breathing, lively sound I've always been drawn to while simultaneously surrendering to my passion for classic club music elements."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "timbralSource",
+          "value": "Kontakt sampler — manipulated world/ethnic sample (Eastern-leaning lead)",
+          "details": {
+            "character": "Eastern-leaning, warm, gritty, tension-release phrasing",
+            "instrument": "Kontakt",
+            "origin": "manipulated sample from an organic live-performance clip",
+            "role": "lead melody"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "Monark analog-modeled synthesizer — bass parts",
+          "details": {
+            "character": "gritty, analog bite",
+            "instrument": "Monark",
+            "note": "specific Monark presets reused across multiple productions",
+            "role": "bass"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "Abbey Road Modern Drummer (Kontakt library) — cymbal layering",
+          "details": {
+            "character": "studio-recording realism",
+            "instrument": "Kontakt",
+            "library": "Abbey Road Modern Drummer",
+            "role": "cymbals"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "West Africa / Cuba Kontakt libraries — percussion fills",
+          "details": {
+            "character": "playful, world-music texture",
+            "instrument": "Kontakt",
+            "libraries": [
+              "West Africa",
+              "Cuba"
+            ],
+            "role": "percussion fills"
+          }
+        },
+        {
+          "type": "structuralPattern",
+          "value": "Call and response — alternating tension/release at beat, phrase, and section levels",
+          "details": {
+            "affectivePairing": "moody call / uplifting response (or vice versa)",
+            "levels": [
+              "beat-to-beat",
+              "melodic phrase",
+              "bassline vs. arpeggio",
+              "arrangement section"
+            ]
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific scales, modes, or ornamental techniques characterize 'Eastern-leaning' leads in electronic club music, and how do they map onto Western equal temperament or require microtonal deviation?",
+        "Is there measurable perceptual evidence that call-and-response phrasing at multiple structural levels (beat, phrase, section) increases listener engagement or emotional arousal compared to non-dialogic structures?",
+        "At what point does timbral layering of multiple patches begin to produce perceptual fusion (a single new timbre) vs. auditory stream segregation (multiple distinct sources)? What determines that threshold?",
+        "Can the tension between 'Eastern-leaning' melodic material and Western four-on-the-floor rhythm be analyzed in terms of polymodality or rhythmic/melodic cultural counterpoint?",
+        "What is the relationship between dynamic contrast (loud/silent alternation) and perceived groove or dancefloor functionality in electronic music?",
+        "How do Monark's analog-modeled filter and oscillator characteristics differ acoustically from Kontakt-sampled bass tones, and what compositional roles does each serve best?",
+        "Is there a compositional framework for quantifying 'symphonic density' (harmonic layers, voice count, timbral complexity) within club tracks without exceeding a functional loudness or frequency-masking threshold?"
+      ],
+      "scores": {
+        "base": 29,
+        "normalizedBase": 0.9166666666666666,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.64,
+        "topicalBalance": 1,
+        "combined": 0.701,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j97f936205f9pg3twz7926pw7h85xz2e",
+      "sourceId": "jx78jqe2mp7zwykmbywha3mzrs85xyys",
+      "sourceTitle": "Beyond the Baseband: Adaptive Multi-Band Encoding for Full-Spectrum Bioacoustics Classification",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.27936",
+      "extractionCreatedAt": 1777633570978,
+      "extractionSummary": "This preprint investigates a multi-band encoding framework for classifying animal vocalizations across their full frequency spectrum, including ultrasonic ranges. Most existing computational bioacoustics systems are limited to 0–8 kHz because they use audio models pre-trained at 16 kHz, discarding higher-frequency information. The authors decompose animal calls into band-specific features and fuse them into a unified representation. Experiments across three datasets and eight pre-trained models show that fused multi-band representations consistently outperform single-band baselines, suggesting that spectral decomposition and fusion is a productive strategy for full-spectrum audio encoding.",
+      "topics": [
+        "bioacoustics",
+        "ultrasonic frequency",
+        "spectral decomposition",
+        "multi-band audio encoding",
+        "frequency bandwidth",
+        "animal vocalizations",
+        "audio classification",
+        "non-human hearing ranges",
+        "Nyquist limit",
+        "machine listening",
+        "representation learning",
+        "band fusion strategies"
+      ],
+      "topicTokens": [
+        "bioacoustics",
+        "ultrasonic frequency",
+        "spectral decomposition",
+        "multi-band audio encoding",
+        "frequency bandwidth",
+        "animal vocalizations",
+        "audio classification",
+        "non-human hearing ranges",
+        "nyquist limit",
+        "machine listening",
+        "representation learning",
+        "band fusion strategies"
+      ],
+      "claims": [
+        {
+          "text": "Most computational bioacoustics systems rely on audio models pre-trained at 16 kHz, restricting usable bandwidth to the 0–8 kHz baseband and discarding higher-frequency information present in many bioacoustic recordings.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Core limitation identified",
+              "quote": "most computational bioacoustics systems rely on audio models pre-trained at 16 kHz, restricting their usable bandwidth to the 0-8 kHz baseband and discarding higher-frequency information present in many bioacoustic recordings"
+            }
+          ]
+        },
+        {
+          "text": "Animals hear and vocalize across frequency ranges that extend substantially beyond the human range, often into the ultrasonic domain.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Non-human frequency range",
+              "quote": "Animals hear and vocalize across frequency ranges that differ substantially from humans, often extending into the ultrasonic domain."
+            }
+          ]
+        },
+        {
+          "text": "Certain encoder architectures produce decorrelated band embeddings — representations of different frequency bands that are statistically independent — and this decorrelation improves class separation after multi-band fusion.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Decorrelation as a useful property",
+              "quote": "certain encoders produce decorrelated band embeddings that improve class separation after fusion"
+            }
+          ]
+        },
+        {
+          "text": "Fused multi-band representations consistently outperform both the 0–8 kHz baseband baseline and time-expansion baselines on two of three tested bioacoustic datasets.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Performance result",
+              "quote": "fused representations consistently outperform the baseband and time-expansion baselines on two datasets"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "16 kHz sample rate (Nyquist limit: 8 kHz)",
+          "details": {
+            "note": "Standard pre-training sample rate for most audio ML models; defines the upper bound of the 'baseband'",
+            "nyquistHz": 8000,
+            "sampleRateHz": 16000
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "0–8 kHz baseband",
+          "details": {
+            "lowerHz": 0,
+            "note": "The frequency range preserved by 16 kHz audio models; considered a limiting constraint in this study",
+            "upperHz": 8000
+          }
+        }
+      ],
+      "openQuestions": [
+        "What is the upper frequency limit of the multi-band framework, and does it extend fully into the ultrasonic range (>20 kHz)? What implications does this have for composition with ultrasonic material?",
+        "Could decorrelated multi-band embedding strategies (as used here for classification) inform spectral composition techniques — e.g., designing musical textures where frequency bands are perceptually or mathematically independent?",
+        "Human hearing nominally extends to ~20 kHz; are there musical or psychoacoustic effects from sound energy just above or below this threshold that are routinely discarded by 16 kHz audio pipelines?",
+        "Time-expansion is a common technique for analyzing ultrasonic bat calls by slowing them down to audible ranges — could this technique be aesthetically productive as a compositional tool for transposing non-human vocalizations into human perceptual space?",
+        "What fusion strategies were tested, and do any of them correspond to known psychoacoustic models of how the human auditory system integrates across critical bands?"
+      ],
+      "scores": {
+        "base": 14,
+        "normalizedBase": 0.2916666666666667,
+        "novelty": 1,
+        "crossRunNovelty": 0.975,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.08333333333333333,
+        "domainRelevance": 0.30000000000000004,
+        "topicalBalance": 0.9765983577613926,
+        "combined": 0.6734897536642089,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j97ckpv4ccacc1ct47ch9m0hf5855km4",
+      "sourceId": "jx7dn2qe73n69wb2keprdw1xm984wjxd",
+      "sourceTitle": "Gradient boundaries through confidence intervals for forced alignment estimates using model ensembles",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2506.01256",
+      "extractionCreatedAt": 1776625516920,
+      "extractionSummary": "This paper presents a method for producing gradient (probabilistic) phoneme/segment boundaries in forced alignment of audio to transcriptions, using an ensemble of 10 neural network classifiers. Rather than single point-estimates, boundaries are represented as confidence intervals derived via order statistics at a 97.85% level. The approach is evaluated on the Buckeye and TIMIT speech corpora, where ensemble boundaries slightly outperform single-model alignment. Output formats include JSON and Praat TextGrids, facilitating downstream phonetic and statistical analysis.",
+      "topics": [
+        "forced alignment",
+        "phoneme segmentation",
+        "speech acoustics",
+        "gradient phoneme boundaries",
+        "neural network ensembles",
+        "confidence intervals",
+        "order statistics",
+        "phonetic transcription",
+        "Praat TextGrid",
+        "segment transitions",
+        "model uncertainty",
+        "acoustic-phonetic boundary detection"
+      ],
+      "topicTokens": [
+        "forced alignment",
+        "phoneme segmentation",
+        "speech acoustics",
+        "gradient phoneme boundaries",
+        "neural network ensembles",
+        "confidence intervals",
+        "order statistics",
+        "phonetic transcription",
+        "praat textgrid",
+        "segment transitions",
+        "model uncertainty",
+        "acoustic-phonetic boundary detection"
+      ],
+      "claims": [
+        {
+          "text": "Forced alignment tools typically produce only point-estimates of phoneme/segment boundaries, which is an oversimplification of how speech segments actually transition into each other.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core motivation",
+              "quote": "Most forced alignment tools provide only point-estimates of boundaries."
+            },
+            {
+              "label": "interpretive claim",
+              "quote": "Gradient boundaries are taken here as a more realistic representation of how segments transition into each other."
+            }
+          ]
+        },
+        {
+          "text": "Using an ensemble of neural network classifiers improves forced alignment boundary accuracy slightly compared to using a single model, as measured on the Buckeye and TIMIT corpora.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "empirical result",
+              "quote": "on the Buckeye and TIMIT corpora, the ensemble boundaries show a slight overall improvement over using just a single model."
+            }
+          ]
+        },
+        {
+          "text": "Phoneme segment boundaries in speech are inherently gradient rather than discrete, meaning transitions between sounds occupy a continuous range rather than a single moment in time.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "theoretical framing",
+              "quote": "Gradient boundaries are taken here as a more realistic representation of how segments transition into each other."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "97.85% confidence interval",
+          "details": {
+            "context": "boundary uncertainty range for forced alignment",
+            "method": "order statistics around median of ensemble boundaries",
+            "percentile": 97.85,
+            "type": "confidence_interval"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "10 neural network classifiers (ensemble size)",
+          "details": {
+            "context": "number of segment classifier models used to derive gradient boundaries",
+            "ensembleSize": 10
+          }
+        }
+      ],
+      "openQuestions": [
+        "Could gradient boundary representations from forced alignment be used compositionally — e.g., to map phoneme transition zones to musical glissandi, microtonality, or timbral morphing?",
+        "How do gradient phoneme boundaries relate to perceptual thresholds in human hearing — is there a psychoacoustic analog to the confidence interval around a segment boundary?",
+        "Could the uncertainty ranges produced by ensemble alignment reveal something meaningful about the acoustic ambiguity of specific phonemes, and does this map onto perceptual difficulty or musical timbre?",
+        "Is there a musical analog to 'forced alignment' — e.g., aligning a performed melody to a score — and could gradient boundary methods improve score-following or onset detection tools?",
+        "The 97.85% confidence level is an unusual choice — what does this correspond to in terms of standard deviations, and why was it selected over 95% or 99%?"
+      ],
+      "scores": {
+        "base": 12,
+        "normalizedBase": 0.20833333333333334,
+        "novelty": 1,
+        "crossRunNovelty": 0.975,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.08333333333333333,
+        "domainRelevance": 0.42000000000000004,
+        "topicalBalance": 0.9921994525871309,
+        "combined": 0.6688299178880697,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j97618r3fm0es9esrds1zp2zsn85kknx",
+      "sourceId": "jx7awwpndbmcnas4926276wxfn85e65h",
+      "sourceTitle": "Video-Robin: Autoregressive Diffusion Planning for Intent-Grounded Video-to-Music Generation",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.17656",
+      "extractionCreatedAt": 1777172761081,
+      "extractionSummary": "Video-Robin is a text-conditioned video-to-music generation model that combines autoregressive planning with diffusion-based synthesis to create semantically aligned background music for video content. It introduces a two-stage architecture: an autoregressive module aligns visual and textual inputs to produce high-level music latents, which are then refined by local Diffusion Transformers into high-fidelity audio. The system claims superior performance over video-only and feature-conditioned baselines on both in-distribution and out-of-distribution benchmarks, with a 2.21x inference speed improvement over the current state of the art. The paper's core contribution to music theory and acoustics is the factoring of semantic meaning (via text) into the generative process, enabling user-controlled stylistic and structural music creation from visual context.",
+      "topics": [
+        "video-to-music generation",
+        "autoregressive modeling",
+        "diffusion models",
+        "music latent representations",
+        "audiovisual alignment",
+        "semantic music generation",
+        "text-conditioned audio synthesis",
+        "Diffusion Transformers",
+        "background music composition",
+        "multimodal AI",
+        "generative music systems",
+        "musical structure modeling"
+      ],
+      "topicTokens": [
+        "video-to-music generation",
+        "autoregressive modeling",
+        "diffusion models",
+        "music latent representations",
+        "audiovisual alignment",
+        "semantic music generation",
+        "text-conditioned audio synthesis",
+        "diffusion transformers",
+        "background music composition",
+        "multimodal ai",
+        "generative music systems",
+        "musical structure modeling"
+      ],
+      "claims": [
+        {
+          "text": "Recent video-to-music models achieve audiovisual alignment primarily through visual conditioning alone, limiting semantic and stylistic controllability for creators.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "motivation / gap in literature",
+              "quote": "Recent V2M models achieve audiovisual alignment by typically relying on visual conditioning alone and provide limited semantic and stylistic controllability to the end user."
+            }
+          ]
+        },
+        {
+          "text": "Separating high-level semantic planning (autoregressive) from low-level audio synthesis (diffusion) can improve both musical fidelity and semantic coherence in generative music systems.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "architectural claim",
+              "quote": "To balance musical fidelity and semantic understanding, Video-Robin integrates autoregressive planning with diffusion-based synthesis."
+            },
+            {
+              "label": "design rationale",
+              "quote": "By factoring semantically driven planning into diffusion-based synthesis, Video-Robin enables fine-grained creator control without sacrificing audio realism."
+            }
+          ]
+        },
+        {
+          "text": "The Video-Robin model achieves 2.21x inference speed improvement over the current state-of-the-art video-to-music generation model while outperforming it on standard benchmarks.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "performance claim",
+              "quote": "Our proposed model outperforms baselines that solely accept video input and additional feature conditioned baselines on both in-distribution and out-of-distribution benchmarks with a 2.21x speed in inference compared to SOTA."
+            }
+          ]
+        },
+        {
+          "text": "Global musical structure can be meaningfully represented as high-level latent variables that are amenable to semantic alignment with visual and textual inputs before fine-grained audio synthesis.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "latent structure hypothesis",
+              "quote": "an autoregressive module models global structure by semantically aligning visual and textual inputs to produce high-level music latents. These latents are subsequently refined into coherent, high-fidelity music using local Diffusion Transformers."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "2.21x inference speed over SOTA",
+          "details": {
+            "comparedTo": "state-of-the-art baseline (unspecified model)",
+            "context": "inference time for video-to-music generation",
+            "speedupFactor": 2.21
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific musical dimensions (tempo, key, instrumentation, mood) are captured in the 'high-level music latents,' and how do they map to perceptible compositional features?",
+        "How does the model perform on music with complex structural forms (e.g., theme-and-variation, sonata form) versus simpler loop-based background music?",
+        "Does the separation of semantic planning from synthesis introduce artifacts at the boundary of structural segments, and how does this affect perceived musical continuity?",
+        "Can the text-conditioning be used to specify music-theoretic parameters (e.g., 'in D minor,' 'at 90 BPM,' 'with Lydian mode') and how reliably does the model honor such instructions?",
+        "How is 'audiovisual alignment' measured in this context — is it perceptual, feature-based, or via human evaluation — and what does alignment mean musically?",
+        "What training data was used, and does it encode cultural or stylistic biases that affect the range of music the system can authentically generate?",
+        "Could the autoregressive latent planning stage be repurposed as a standalone tool for compositional sketching, independent of video input?"
+      ],
+      "scores": {
+        "base": 11,
+        "normalizedBase": 0.16666666666666666,
+        "novelty": 1,
+        "crossRunNovelty": 0.975,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.08333333333333333,
+        "domainRelevance": 0.30000000000000004,
+        "topicalBalance": 0.9921994525871309,
+        "combined": 0.6383299178880696,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j97cc4de2gqr1tqp4hz05p5mg5856q7k",
+      "sourceId": "jx7c7e1e75npm6wa6bzkzk0gq984xs82",
+      "sourceTitle": "animal2vec and MeerKAT: A self-supervised transformer for rare-event raw audio input and a large-scale reference dataset for bioacoustics",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2406.01253",
+      "extractionCreatedAt": 1776654235340,
+      "extractionSummary": "This paper introduces animal2vec, a self-supervised transformer model designed for bioacoustic analysis of rare animal vocalizations, alongside MeerKAT, a large labeled dataset of meerkat vocalizations with millisecond-resolution annotations. The model learns from unlabeled raw audio before refining with labeled data, making it effective even with scarce ground truth. It outperforms existing methods on both the MeerKAT dataset and the NIPS4Bplus birdsong dataset. The work is primarily a machine learning and conservation tool, but touches on acoustic event detection and temporal structure of non-human animal communication.",
+      "topics": [
+        "bioacoustics",
+        "animal vocalizations",
+        "self-supervised learning",
+        "transformer models",
+        "raw audio processing",
+        "acoustic event detection",
+        "few-shot learning",
+        "sparse audio data",
+        "temporal annotation",
+        "non-human animal communication",
+        "meerkat vocalizations",
+        "birdsong analysis",
+        "deep learning for audio"
+      ],
+      "topicTokens": [
+        "bioacoustics",
+        "animal vocalizations",
+        "self-supervised learning",
+        "transformer models",
+        "raw audio processing",
+        "acoustic event detection",
+        "few-shot learning",
+        "sparse audio data",
+        "temporal annotation",
+        "non-human animal communication",
+        "meerkat vocalizations",
+        "birdsong analysis",
+        "deep learning for audio"
+      ],
+      "claims": [
+        {
+          "text": "Animal vocalizations are temporally sparse and unbalanced within large audio datasets, posing a fundamental challenge for standard deep learning approaches.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core problem framing",
+              "quote": "analyzing vast datasets where animal vocalizations are rare"
+            },
+            {
+              "label": "design motivation",
+              "quote": "a self-supervised training scheme tailored for sparse and unbalanced bioacoustic data"
+            }
+          ]
+        },
+        {
+          "text": "Millisecond-resolution temporal annotation of animal vocalizations is achievable and scientifically meaningful for non-human terrestrial mammal communication.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "annotation granularity",
+              "quote": "a dataset of meerkat (Suricata suricatta) vocalizations with millisecond-resolution annotations"
+            }
+          ]
+        },
+        {
+          "text": "Self-supervised learning from raw audio — without labels — can yield representations sufficient to later distinguish rare acoustic events through few-shot refinement.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "training paradigm",
+              "quote": "It learns from unlabeled audio and then refines its understanding with labeled data."
+            },
+            {
+              "label": "few-shot capability",
+              "quote": "animal2vec performs well even with limited labeled data (few-shot learning)"
+            }
+          ]
+        },
+        {
+          "text": "Large transformer architectures can be adapted to raw waveform bioacoustic input and made interpretable, extending their utility beyond speech and music domains.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "model design claim",
+              "quote": "an interpretable large transformer model"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "duration",
+          "value": "Millisecond-resolution event boundaries",
+          "details": {
+            "context": "Annotation resolution for meerkat vocalization events in MeerKAT dataset",
+            "note": "Implies vocalization events are structured at sub-100ms timescales, relevant to micro-rhythmic and timbral gesture work",
+            "unit": "milliseconds"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What are the characteristic frequency ranges, temporal durations, and rhythmic structures of meerkat vocalizations — and could these serve as raw material or constraint systems for composition?",
+        "Could the self-supervised audio representations learned by animal2vec reveal latent acoustic similarity structures useful for organizing musical timbre spaces?",
+        "What does millisecond-resolution annotation of animal calls reveal about the minimum perceptually meaningful unit of non-human acoustic communication — and how does this compare to human musical gesture?",
+        "Could rare-event detection architectures like animal2vec be repurposed to identify rare or novel timbral events in field recordings or generative audio streams?",
+        "Are the acoustic features that distinguish meerkat call types (alarm, foraging, sentinel, etc.) structurally analogous to any musical categorical distinctions — e.g., articulation, register, or mode?",
+        "How does few-shot acoustic learning in machine models compare to how human musicians internalize rare or unfamiliar sonic idioms from limited exposure?"
+      ],
+      "scores": {
+        "base": 11,
+        "normalizedBase": 0.16666666666666666,
+        "novelty": 0.9130434782608696,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.42000000000000004,
+        "topicalBalance": 0.9255989893916263,
+        "combined": 0.6361876744957005,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "bioacoustics": 2,
+      "animal vocalizations": 2,
+      "tonnetz": 1,
+      "combinatorial geometry": 1,
+      "music theory formalization": 1,
+      "diatonic harmony": 1,
+      "voice leading": 1,
+      "pentatonic scales": 1,
+      "12-tone system": 1,
+      "fano configuration": 1,
+      "desargues configuration": 1,
+      "cremona-richmond configuration": 1,
+      "levi graphs": 1,
+      "bipartite graphs": 1,
+      "major": 1,
+      "minor duality": 1,
+      "tristan chord": 1,
+      "dominant seventh chords": 1,
+      "half-diminished seventh chords": 1,
+      "pitch class sets": 1,
+      "hexacycles": 1,
+      "graph theory in music": 1,
+      "neo-riemannian theory": 1,
+      "call and response": 1,
+      "timbral layering": 1,
+      "eastern scales and non-western tonality in electronic music": 1,
+      "tension and release in melodic phrasing": 1,
+      "analog synthesis (monark": 1,
+      "minimoog modeling)": 1,
+      "sample manipulation": 1,
+      "hybrid synthesis workflows": 1,
+      "club music vs. symphonic complexity": 1,
+      "contrast as compositional principle": 1,
+      "silence as compositional element": 1,
+      "expressive identity vs. technical perfection": 1,
+      "daw session versioning and archiving": 1,
+      "world percussion libraries": 1,
+      "melodic dialogue between instrument layers": 1,
+      "ultrasonic frequency": 1,
+      "spectral decomposition": 1,
+      "multi-band audio encoding": 1,
+      "frequency bandwidth": 1,
+      "audio classification": 1,
+      "non-human hearing ranges": 1,
+      "nyquist limit": 1,
+      "machine listening": 1,
+      "representation learning": 1,
+      "band fusion strategies": 1,
+      "forced alignment": 1,
+      "phoneme segmentation": 1,
+      "speech acoustics": 1,
+      "gradient phoneme boundaries": 1,
+      "neural network ensembles": 1,
+      "confidence intervals": 1,
+      "order statistics": 1,
+      "phonetic transcription": 1,
+      "praat textgrid": 1,
+      "segment transitions": 1,
+      "model uncertainty": 1,
+      "acoustic-phonetic boundary detection": 1,
+      "video-to-music generation": 1,
+      "autoregressive modeling": 1,
+      "diffusion models": 1,
+      "music latent representations": 1,
+      "audiovisual alignment": 1,
+      "semantic music generation": 1,
+      "text-conditioned audio synthesis": 1,
+      "diffusion transformers": 1,
+      "background music composition": 1,
+      "multimodal ai": 1,
+      "generative music systems": 1,
+      "musical structure modeling": 1,
+      "self-supervised learning": 1,
+      "transformer models": 1,
+      "raw audio processing": 1,
+      "acoustic event detection": 1,
+      "few-shot learning": 1,
+      "sparse audio data": 1,
+      "temporal annotation": 1,
+      "non-human animal communication": 1,
+      "meerkat vocalizations": 1,
+      "birdsong analysis": 1,
+      "deep learning for audio": 1
+    },
+    "parameterTypeFrequency": {
+      "timbralsource": 4,
+      "measurement": 3,
+      "scalesystem": 2,
+      "interval": 2,
+      "frequency": 2,
+      "tuningsystem": 1,
+      "structuralpattern": 1,
+      "duration": 1
+    },
+    "evidenceDistribution": {
+      "preprint": 23,
+      "anecdotal": 7
+    },
+    "sourceTypeDistribution": {
+      "rss": 6
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 6,
+    "priorSourceIds": 21,
+    "priorTopicTokens": 293,
+    "priorVariablePhrases": 19,
+    "priorTitlePhrases": 8
+  }
+}

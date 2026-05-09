@@ -166,6 +166,20 @@
     "contentHash": "c88a07030ec0768a706d6bab6ea554d246f096c4800b4477e83b3a32b03629c8",
     "generatedAt": "2026-04-10T18:36:23.693Z"
   },
+  "the-absent-cause": {
+    "excerpt": "Music gains depth when audible surfaces imply hidden generators: harmonic graphs, future disruptions, unseen sources, geographic environments, stable identities, and dialogue partners.",
+    "tags": [
+      "composition",
+      "perception",
+      "AI-music",
+      "acoustics",
+      "mathematical-music-theory",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1d3ef1a04426e93026933710a301ec11970a6337efe1a2c83bb3fd8aebcea5bf",
+    "generatedAt": "2026-05-08T08:27:08.914Z"
+  },
   "the-adaptation-boundary": {
     "excerpt": "Musical transformation succeeds when change is assigned to the right layer: preserve identity somewhere, let repair and variation happen somewhere else.",
     "tags": [
@@ -449,6 +463,20 @@
     "category": "interdisciplinary",
     "contentHash": "bfc8d0ee01ff07228d409ddd5980007732fc7ae766e5ed3e8699e56546864797",
     "generatedAt": "2026-05-03T16:30:00.000Z"
+  },
+  "the-coordinate-that-makes-motion": {
+    "excerpt": "Musical meaning depends on choosing coordinates where motion becomes intelligible: harmonic graphs, stable timbral invariants, prosodic alignment, dialogic roles, active media, and relational distance.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "acoustics",
+      "signal-processing",
+      "AI-music",
+      "spatial-audio"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "58d95f3e6bf4819b6c04efe3ced3badaaeb948853666d5e6df620ad51de09ca4",
+    "generatedAt": "2026-05-08T16:27:01.723Z"
   },
   "the-coordinate-that-survives": {
     "excerpt": "Audio systems improve when time, prosody, class direction, quality, and modality stay on separate axes until the moment of fusion.",
@@ -1578,6 +1606,20 @@
     "contentHash": "1d50e123ffebffa191b015514f73799235dc10623c54e063cf37da521192267a",
     "generatedAt": "2026-04-10T18:40:48.033Z"
   },
+  "the-thick-boundary": {
+    "excerpt": "Transitions are not filler: forced alignment, bioacoustics, Tonnetz geometry, and call-and-response all show that musical boundaries have thickness.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "acoustics",
+      "perception",
+      "AI-music",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "9b9289ec21b29e7af8764e5dcc2f8e2ebea03876758844120a5225e9d6332351",
+    "generatedAt": "2026-05-09T00:27:03.764Z"
+  },
   "the-thread-that-survives": {
     "excerpt": "Audio codecs, watermarks, speech alignment, Tonnetz geometry, and demo preservation all point to the same compositional rule: every transformation needs a deliberately chosen invariant.",
     "tags": [
@@ -1799,33 +1841,5 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
-  },
-  "the-absent-cause": {
-    "excerpt": "Music gains depth when audible surfaces imply hidden generators: harmonic graphs, future disruptions, unseen sources, geographic environments, stable identities, and dialogue partners.",
-    "tags": [
-      "composition",
-      "perception",
-      "AI-music",
-      "acoustics",
-      "mathematical-music-theory",
-      "signal-processing"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "1d3ef1a04426e93026933710a301ec11970a6337efe1a2c83bb3fd8aebcea5bf",
-    "generatedAt": "2026-05-08T08:27:08.914Z"
-  },
-  "the-coordinate-that-makes-motion": {
-    "excerpt": "Musical meaning depends on choosing coordinates where motion becomes intelligible: harmonic graphs, stable timbral invariants, prosodic alignment, dialogic roles, active media, and relational distance.",
-    "tags": [
-      "composition",
-      "mathematical-music-theory",
-      "acoustics",
-      "signal-processing",
-      "AI-music",
-      "spatial-audio"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "58d95f3e6bf4819b6c04efe3ced3badaaeb948853666d5e6df620ad51de09ca4",
-    "generatedAt": "2026-05-08T16:27:01.723Z"
   }
 }
