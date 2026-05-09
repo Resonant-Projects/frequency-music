@@ -1,0 +1,71 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Style Aperture",
+    "question": "When harmonic grammar and surface notes are held constant, do controlled changes in voicing choice, low-frequency amplitude modulation variance, and graph-traversal habit produce reliably recognizable musical identities?",
+    "hypothesis": "If a musical system preserves a constrained but perceptible set of degrees of freedom, then listeners will identify different stylistic personalities from changes inside that aperture even when the nominal melody, harmony, tempo, and palette are held constant.",
+    "rationaleMd": "Basso continuo provides a direct precedent: players operate inside shared historical and harmonic constraints, yet individual performers can reportedly be identified from pitch-content features called griffs [S1]. The Tonnetz source generalizes this to harmony as a structured field of possible moves, where different traversals through the same combinatorial resource can imply different harmonic behaviors [S2]. The rhythm-formant study shows that identity can also live below event transcription: low-frequency AM rhythm features classify related languages at approximately 84–85%, and rhythm plus MFCC features reach up to 93.96%, suggesting that macro-temporal energy and spectral envelope encode complementary signatures [S6]. Score-understanding modality gaps warn that these signatures are representation-sensitive rather than automatically preserved across ABC, PDF, MIDI, or audio views [S3]. The HHL source adds a useful mechanism metaphor: structured possibility matters before collapse, and block boundaries trade coherent global structure for tractable local choices [S5]. David Mayer's call-and-response practice supplies a production-facing version of the same principle: silence, contrast, layering, and demo preservation can carry expressive identity without changing the nominal note material [S4]. Disconfirming evidence would be a listening test in which versions differing only in these aperture choices are not distinguished above chance or are described with no consistent personality/tension differences.",
+    "sourceIds": [
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx70dhsw26kwd55qeh0xgyw3xx85fp1n",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx78j7ze7qdtvv1jzwvrgwt1as85smq1"
+    ],
+    "concepts": [
+      "style aperture",
+      "degrees of freedom",
+      "constraint residue",
+      "griff personality",
+      "rhythm-formant fingerprint",
+      "graph traversal habit",
+      "representation-sensitive signature"
+    ]
+  },
+  "recipe": {
+    "title": "Same Grammar, Different Fingerprint",
+    "bodyMd": "Create a 60-second loop whose melody contour, chord roots, tempo, and core sound palette never change. Version A varies only continuo-like voicing grips: close/dense, open/registral, and sparse/omissive, inspired by griff-based performer differences [S1]. Version B keeps MIDI events fixed but changes low-frequency amplitude modulation: a low-variance 2 Hz sidechain/tremolo layer, a higher-variance 1.5–5 Hz modulation layer, and a split layer where percussion carries faster modulation while pads carry slower modulation, adapting rhythm-formant parameters from speech analysis [S6]. Version C keeps destination chords fixed but changes harmonic traversal habit through a Tonnetz-like graph: shortest path, cyclic return, and one deliberate symmetry-breaking leap [S2]. Export blind A/B/C snippets and ask whether each version has a consistently described personality, tension profile, or agency. Keep the representation issue explicit by comparing bounced audio against MIDI/piano-roll inspection; if the signature is audible but not visible in the representation, log that scar [S3]. Treat each printed version as a collapse from a larger possibility field rather than as a mere variation pass [S5], and preserve an early rough bounce to check whether later refinement erases the first emotional fingerprint [S4].",
+    "parameters": [
+      { "type": "tempo", "value": "108 BPM", "details": { "bpm": 108 } },
+      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
+      { "type": "structuralPattern", "value": "8-bar loop, three 20-second identity passes", "details": { "bars": 8, "passes": 3 } },
+      { "type": "measurement", "value": "Low-variance modulation at 2 Hz", "details": { "modulationHz": 2, "variance": "low" } },
+      { "type": "measurement", "value": "High-variance modulation spanning 1.5–5 Hz", "details": { "minHz": 1.5, "maxHz": 5, "variance": "high" } },
+      { "type": "tuningSystem", "value": "12-tone equal/chromatic system", "details": { "source": "Tonnetz traversal layer" } },
+      { "type": "note", "value": "Three voicing-grip personalities", "details": { "griffs": ["close_dense", "open_registral", "sparse_omissive"] } }
+    ],
+    "dawChecklist": [
+      "Program an 8-bar loop at 108 BPM with fixed melody contour, chord roots, drum pattern, and sound palette.",
+      "Duplicate the loop into three 20-second sections labeled Griff, Rhythm-Formant, and Graph-Traversal.",
+      "In Griff, change only chord voicing grips every two bars: close/dense, open/registral, sparse/omissive, then return.",
+      "In Rhythm-Formant, keep MIDI unchanged and automate tremolo/sidechain depth so one layer stays near 2 Hz while another varies between 1.5 and 5 Hz.",
+      "In Graph-Traversal, keep destination chords fixed but rewrite inner voices as shortest-path, cyclic-return, and symmetry-breaking variants.",
+      "Bounce each pass separately and blind-label the exports.",
+      "Listen without looking at the session; write three adjectives for each pass and note whether identities remain distinguishable.",
+      "Inspect MIDI/piano roll afterward and mark which audible signatures were invisible or hard to see in that representation."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "Nearfield monitors or neutral headphones at matched loudness; blind file names preferred.",
+      "listeningMethod": "Three-pass blind comparison followed by visual session inspection.",
+      "whatVaries": [
+        "voicing-grip personality",
+        "low-frequency amplitude modulation variance",
+        "harmonic graph traversal habit"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "melody contour",
+        "chord roots/destinations",
+        "core timbral palette",
+        "overall duration",
+        "loudness target"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Companion essay: docs/essays/the-signature-in-the-degrees-of-freedom.md"
+}

@@ -306,6 +306,20 @@
     "contentHash": "65e4907a50fc30d9319be4e48c2ce6d4f9cbbb93d2602dd04a01159abb8f2c9f",
     "generatedAt": "2026-04-10T18:36:44.411Z"
   },
+  "the-carrier-under-the-message": {
+    "excerpt": "Across Tonnetz geometry, call-and-response arrangement, chirp transmission, audio chunking, infrasound thresholds, and coherent quantum generation, the carrier layer emerges as an active compositional parameter rather than neutral transport.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "mathematical-music-theory",
+      "psychoacoustics",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3e1198a443003e948c0513204e5947455aea0918ec8871173db3e7af5e6e491a",
+    "generatedAt": "2026-05-09T08:27:03.174Z"
+  },
   "the-category-that-leaks": {
     "excerpt": "Leakage, contour, and timbre all show the same truth: in music, boundaries are useful approximations, not clean facts.",
     "tags": [
@@ -1466,6 +1480,20 @@
     "contentHash": "b0cfe391e32a79cb33f2eeff35979f4a174e6d0a78ddee23234a71ef53e603c4",
     "generatedAt": "2026-04-10T18:40:25.230Z"
   },
+  "the-signature-in-the-degrees-of-freedom": {
+    "excerpt": "A constrained musical system leaves audible degrees of freedom, and those apertures become where personal style, groove, and harmonic identity appear.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "rhythm",
+      "perception",
+      "AI-music",
+      "geometry"
+    ],
+    "category": "composition",
+    "contentHash": "7a32b97320359085e67e5d6a649bb00a69c5afa4cc8ebcb02023c8dd09c1dbc8",
+    "generatedAt": "2026-05-09T16:26:55.216Z"
+  },
   "the-silent-majority": {
     "excerpt": "AI systems inherit Western culture's visual bias, subordinating hearing to seeing—from benchmark design to model architecture. What would change if we took listening seriously?",
     "tags": [
@@ -1841,19 +1869,5 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
-  },
-  "the-carrier-under-the-message": {
-    "excerpt": "Across Tonnetz geometry, call-and-response arrangement, chirp transmission, audio chunking, infrasound thresholds, and coherent quantum generation, the carrier layer emerges as an active compositional parameter rather than neutral transport.",
-    "tags": [
-      "composition",
-      "signal-processing",
-      "mathematical-music-theory",
-      "psychoacoustics",
-      "AI-music",
-      "acoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "3e1198a443003e948c0513204e5947455aea0918ec8871173db3e7af5e6e491a",
-    "generatedAt": "2026-05-09T08:27:03.174Z"
   }
 }
