@@ -1,0 +1,102 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Preparatory Field",
+    "question": "Do arrivals feel more coherent when the preceding 8-16 bars prepare the same event through harmonic adjacency, prosodic contour, or off-screen causal cues, compared with an identical arrival whose preparation layer is scrambled?",
+    "hypothesis": "If a musical arrival is preceded by a coherent preparatory field, then listeners will rate the arrival as more earned and intentional than the same arrival preceded by mismatched cues, because graph proximity, prosodic precursors, hidden-source alignment, call-response expectation, and identity/prosody separation all constrain perception before the event is explicit.",
+    "rationaleMd": "S1 frames harmonic resources as graph/configuration neighborhoods, making the next chord meaningful relative to a prepared path. S2 suggests some severe speech events carry detectable prosodic precursors in a three-second window, supporting the idea that time-varying acoustic features can anticipate events. S3's off-screen audio task shows that hidden causes still need semantic alignment. S4 turns that logic into arrangement practice through call and response and silence as an answering element. S5 separates stable timbre from dynamic prosody, suggesting identity can remain fixed while expression prepares change. S6 adds a useful analogy: coupled musical possibilities should remain coherent until a concrete block is selected.",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7e069afwawf8v8pgrxex5y2s85w80e",
+      "jx7dvwyahyzy5qvrgf7y1gvtnd85vkbp",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx762q5tm7md2f9znq4tykwkv985feka",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc"
+    ],
+    "concepts": [
+      "preparatory field",
+      "prepared adjacency",
+      "prosodic precursor",
+      "off-screen causality",
+      "expectation field",
+      "identity anchor",
+      "coherent collapse",
+      "call-response expectation"
+    ]
+  },
+  "recipe": {
+    "title": "Arrival Backwards Micro-Study",
+    "bodyMd": "Build a 64-bar sketch by designing the arrival first, then composing three alternative preparatory fields for the previous 8-16 bars. Version A prepares through harmonic graph-near motion inspired by S1. Version B prepares through prosodic features such as contour, density, energy, brightness, and timing variance inspired by S2 and S5. Version C prepares acousmatically with off-screen sounds that imply a hidden source before it enters, inspired by S3. Keep Mayer-style call-and-response spacing and silence as structural answers from S4. Add a breach version where the arrival is identical but the preparation cues point elsewhere. Blind-rate whether each arrival feels earned, inevitable, surprising, or pasted on. S6 contributes the control principle: keep coupled alternatives alive during sketching, then collapse them only at the rendered arrival point.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "64 bars",
+        "details": {
+          "role": "total sketch length"
+        }
+      },
+      {
+        "type": "duration",
+        "value": "8-16 bars",
+        "details": {
+          "role": "preparatory field before arrival"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "blind arrival rating",
+        "details": {
+          "scale": "1-7 earned/intentional rating plus free notes"
+        }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "call and response",
+        "details": {
+          "role": "dialogic expectation scaffold"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one 64-bar arrangement with a single target arrival at bar 49 or 57.",
+      "Freeze the arrival audio/MIDI so every version uses the exact same event.",
+      "Version A: prepare the arrival with graph-near harmonic moves while holding timbre and rhythm stable.",
+      "Version B: prepare the arrival with contour, energy, density, brightness, and timing changes while holding harmony stable.",
+      "Version C: prepare the arrival with off-screen/acousmatic cues that imply the future source before it enters.",
+      "Breach version: keep the arrival identical but scramble or redirect the preparatory cues.",
+      "Loudness-match all renders and blind-label them.",
+      "Rate each arrival for earnedness, inevitability, surprise, and pasted-on quality.",
+      "Treat equal ratings for the breach version as evidence that the chosen preparatory cues were decorative, not functional."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 120,
+      "panelPlanned": [
+        "self",
+        "musician_peer_1"
+      ],
+      "listeningContext": "Quiet room; compare blind-labeled versions at matched loudness on headphones and monitors.",
+      "listeningMethod": "Within-subject blind comparison of identical arrivals with different preceding fields.",
+      "whatVaries": [
+        "preparatory field type: harmonic adjacency, prosodic contour, off-screen causal cue, scrambled breach"
+      ],
+      "whatStaysConstant": [
+        "arrival event",
+        "tempo",
+        "mix loudness",
+        "core motif",
+        "instrument set after arrival",
+        "render settings"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Manual synthesis from the 2026-05-10T16-27-26-421Z context pack. Essay written at docs/essays/the-preparatory-field.md."
+}
