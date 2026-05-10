@@ -1,0 +1,68 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Coherence Contract",
+    "question": "When a musical sketch changes surface material, which invariant best predicts whether listeners still hear the layers as belonging together: harmonic graph adjacency, perceptual band separation, phase/microtiming relation, or call-and-response timing?",
+    "hypothesis": "If a call-and-response sketch preserves one explicit coherence contract while varying surface details, then listeners will tolerate larger changes than they will in a version that keeps more surface material but breaks the chosen invariant.",
+    "rationaleMd": "S1 frames harmonic resources as graph/configuration relations, so harmonic coherence can be operationalized as path adjacency rather than chord-name sameness. S3 suggests spectral organization can be made perceptually meaningful by aligning processing bands to Bark-scale critical bands rather than arbitrary crossovers. S5 argues that pitch and phase equivariance improve stem retrieval and better track human musical-coherence judgments than phase-discarding baselines. S2 adds that multi-scale representations need the right temporal and frequency grain to remain stable without losing fine acoustic distinctions. S4 warns that encoder/compression choices determine what acoustic information survives degradation, and S6 supplies a studio-facing structure where call, response, contrast, and silence carry musical continuity. Together these sources support testing coherence as an explicit invariant contract rather than as generic similarity.",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx78nvpygk3a3ehen35mwswkhd85w0pt",
+      "jx7awge62ymkd5ywnpz9ddyymx85ntkj",
+      "jx74r61g2tqd5bcy6aam4aqwes85f9kt",
+      "jx7fk4jg1jw1mbsnkfk8fckn01869sfn",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c"
+    ],
+    "concepts": [
+      "coherence contract",
+      "graph adjacency",
+      "perceptual band contract",
+      "phase coherence",
+      "representation grain",
+      "call-response invariant"
+    ]
+  },
+  "recipe": {
+    "title": "Coherence Under Surface Change",
+    "bodyMd": "Create a 60-second call-and-response sketch with a four-note lead call, a bass/chord answer, and a quiet binding layer. Render four versions. Version A varies answer chords only by a chosen Tonnetz-adjacent rule [S1]. Version B keeps the harmonic path but moves timbres into cleaner perceptual bands inspired by Bark-scale critical-band thinking [S3]. Version C keeps notes and timbre stable while varying phase/microtiming between answer and binding layer [S5]. Version D deliberately breaches one contract: a non-adjacent harmonic answer, masking in the same critical band, phase smear, or silence inserted where response continuity is expected [S4, S6]. The test is falsified if the breach version is rated as equally coherent as the contract-preserving versions despite listeners noticing the manipulation.",
+    "parameters": [
+      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
+      { "type": "tempo", "value": "112 BPM", "details": { "bpm": 112 } },
+      { "type": "form", "value": "8-bar call-and-response loop repeated with four treatments", "details": { "barsPerTreatment": 8, "treatments": 4 } },
+      { "type": "structuralPattern", "value": "Call and response", "details": { "levels": ["phrase", "section"], "source": "S6" } },
+      { "type": "measurement", "value": "coherence rating 1-5 per render", "details": { "scaleMin": 1, "scaleMax": 5 } }
+    ],
+    "dawChecklist": [
+      "Program a four-note lead call and a bass/chord answer at 112 BPM.",
+      "Add a quiet rhythmic or textural binding layer with a stable phase/timing relationship to the answer.",
+      "Render Version A: vary answer harmony only by the selected graph-adjacent rule.",
+      "Render Version B: preserve harmony but separate call and answer into perceptually clearer frequency bands.",
+      "Render Version C: preserve pitch and timbre but vary phase/microtiming between answer and binding layer.",
+      "Render Version D: deliberately break one contract while leaving much surface material intact.",
+      "Blind-listen without viewing the session and rate coherence 1-5 for each render.",
+      "Note which invariant carried coherence: graph path, band placement, phase/timing, or call-response silence."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "DAW bounce or playlist, eyes off the arrangement view, same playback level for all renders.",
+      "listeningMethod": "Blind shuffle the four renders, rate coherence 1-5, then identify the perceived reason each version held together or broke.",
+      "whatVaries": [
+        "harmonic graph adjacency in Version A",
+        "perceptual band placement in Version B",
+        "phase/microtiming relation in Version C",
+        "one deliberate contract breach in Version D"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "overall form length",
+        "lead call contour",
+        "basic call-and-response role structure",
+        "playback level"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "This synthesis deliberately frames coherence as an invariant contract, distinct from prior identity-budget and boundary/carrier framings."
+}
