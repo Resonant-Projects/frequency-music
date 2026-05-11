@@ -1,0 +1,67 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Boundary Is the Instrument",
+    "question": "Does spreading transition evidence across a bounded, multi-parameter field make a musical arrival feel more coherent than switching all parameters at a single barline?",
+    "hypothesis": "If a transition is composed as a finite boundary field where spectral, harmonic, temporal, and low-frequency confirmation cues arrive at staggered moments while one identity marker remains invariant, then listeners will perceive the destination as more coherent and physically motivated than when all cues switch simultaneously.",
+    "rationaleMd": "S4 frames speech segment boundaries as gradient confidence intervals rather than exact points, suggesting that sonic category changes can occupy a composed region. S1 adds that phase changes are path-dependent and may pass through accessible metastable states before reaching a stable form. S2 shows that harmonic objects can be understood through graph neighborhoods, so an edge between chords can itself carry material. S3 and S6 indicate that acoustic events may be distributed across frequency bands and millisecond-scale annotations, while S5 separates high-level planning from low-level synthesis, making the handoff between intent and sound a compositional boundary. Together these sources support testing the transition zone itself as the active musical variable.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx78jqe2mp7zwykmbywha3mzrs85xyys",
+      "jx7dn2qe73n69wb2keprdw1xm984wjxd",
+      "jx7awwpndbmcnas4926276wxfn85e65h",
+      "jx7c7e1e75npm6wa6bzkzk0gq984xs82"
+    ],
+    "concepts": [
+      "boundary field",
+      "gradient boundary",
+      "phase boundary",
+      "harmonic edge",
+      "multi-band transition",
+      "rare-event cue",
+      "plan-synthesis boundary",
+      "invariant identity marker"
+    ]
+  },
+  "recipe": {
+    "title": "Boundary-First Transition Study",
+    "bodyMd": "Build two stable eight-bar states from the same motif: A is sparse, dry, and mid-register; B is wider, brighter, and denser. Compare a control render where all parameters switch at bar 9 with an experimental render where a 12-second boundary field performs the change. In the boundary version, let high-band texture anticipate the destination first, then move one harmonic voice through a local Tonnetz-like edge, then smear transients or consonant-like attacks into a gradient zone, and only confirm the arrival with bass and full density at the end. This operationalizes S4's gradient boundary, S1's path-dependent phase change, S2's graph-neighborhood harmony, S3/S6's band/event distribution, and S5's plan-to-synthesis handoff.",
+    "parameters": [
+      { "type": "tempo", "value": "120 BPM", "details": { "bpm": 120 } },
+      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
+      { "type": "duration", "value": "12-second boundary field", "details": { "seconds": 12 } },
+      { "type": "frequency", "value": "0–8 kHz baseband plus separate high-band cue", "details": { "basebandHz": [0, 8000], "highBandCue": true } },
+      { "type": "measurement", "value": "A/B comparison: simultaneous switch vs staggered boundary", "details": { "conditions": 2 } }
+    ],
+    "dawChecklist": [
+      "Create a four- or eight-bar motif with one clear identity marker: rhythm, contour, or timbral fingerprint.",
+      "Duplicate it into State A and State B; make B brighter, wider, and denser without changing the identity marker.",
+      "Render a control version where pitch, timbre, width, density, and bass all switch at the same barline.",
+      "Render an experimental version with a 12-second boundary field before B.",
+      "In the boundary field, introduce high-band noise/partials first, then move one harmonic voice early, then smear attacks with granular blur or short delay.",
+      "Keep bass and full density withheld until the final beat of the boundary field.",
+      "Listen blind if possible and note which version makes the arrival feel more coherent, more inevitable, and less like an edit."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "studio headphones or nearfields at matched loudness",
+      "listeningMethod": "A/B comparison between simultaneous-switch control and staggered-boundary treatment",
+      "whatVaries": [
+        "whether transition cues are simultaneous or distributed across a 12-second boundary field",
+        "timing order of high-band, harmonic, transient, and bass confirmation cues"
+      ],
+      "whatStaysConstant": [
+        "motif identity marker",
+        "tempo",
+        "final destination state",
+        "overall loudness target",
+        "total study duration"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Disconfirming observation: if the staggered-boundary version feels less directed, less coherent, or merely blurred relative to the simultaneous-switch control, the boundary field is not acting as an instrument and should be narrowed or given clearer invariants."
+}
