@@ -1,0 +1,68 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Pre-Audible Turn",
+    "question": "Does a transition feel more coherent when a low-salience pre-audible parameter moves before the foreground event, compared with changing every parameter at the foreground arrival point?",
+    "hypothesis": "If a musical transition is prepared by a low-salience pre-audible turn—sub-bass pressure, chirp-like spectral motion, formant/brightness drift, or harmonic graph adjacency—then listeners will judge the arrival as more inevitable and less edited than an otherwise identical transition with all parameters switched simultaneously.",
+    "rationaleMd": "Several sources distinguish the visible event from the support layer that makes it reachable. Ice phases can arrive through nearby metastable states rather than directly through the globally optimal structure, making path and timescale part of the result [S1]. Tonnetz geometry likewise defines harmonic motion by adjacency in an abstract graph, so a chord change can be prepared by traversing a local neighborhood before the labeled destination appears [S2]. SSL speech features suggest pitch, F2/formant, intensity, noise, and high-frequency characteristics can behave as separable control axes, which makes it plausible to move one pre-audible dimension ahead of the others [S3]. The infrasound source is speculative, so it should not be treated as proof of ghostly effects, but it usefully flags below-threshold or near-threshold acoustic energy as a potential somatic carrier rather than a foreground object [S4]. Chirp spread spectrum and full-duplex chunked audio add two engineering analogies: information can ride on frequency-sweeping carriers [S5], and perceptual systems may be shaped by short streaming windows rather than one monolithic event [S6]. The testable musical claim is modest: prepared pre-audible motion should improve perceived transition coherence. A failed result would be listeners reporting no difference, or preferring the simultaneous edit as equally coherent.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7ady5b74ettfwnrgzq10p2mn86g6bk",
+      "jx7bsecd6xz13wetqb0aeaxenn85nj95",
+      "jx731xk7jnvfy3k2caqszwn83n86a21d",
+      "jx743vna2yd4hyvvhf93yc1v1h85xvj4"
+    ],
+    "concepts": [
+      "pre-audible turn",
+      "low-salience preparation",
+      "pre-audible transition",
+      "harmonic adjacency carrier",
+      "sub-audible pressure cue",
+      "chirp carrier gesture",
+      "chunked arrival window"
+    ]
+  },
+  "recipe": {
+    "title": "Pre-Audible Arrival Study",
+    "bodyMd": "Create two 60-second versions of the same transition. Version A is the control: at 0:36, switch motif, harmony, brightness, sub layer, and spatial width together. Version B is the pre-audible version: keep the audible motif unchanged until 0:36, but begin moving support dimensions at 0:30. Use a quiet 18–20 Hz sine or filtered sub-energy only if the playback system can reproduce it safely at low level; otherwise use a clearly audible but low-salience 40 Hz substitute, because the S4 evidence is speculative and should be treated carefully [S4]. From 0:30–0:36, sweep a narrow noise or sine partial upward like a chirp carrier [S5], slide one inner voice along a local Tonnetz-like adjacency while holding the outer voices [S2], and drift F2/brightness or formant filtering independently from pitch [S3]. At 0:36, let the foreground motif arrive. The structure borrows the path-dependence idea from metastable phase formation [S1] and the 600 ms streaming chunk as an annotation grid: make ten 600 ms ticks during the six-second preparation and change one small carrier value per tick [S6]. Compare the two renders blind. The pre-audible version should feel more like crystallization than an edit if the hypothesis holds.",
+    "parameters": [
+      { "type": "duration", "value": "60 seconds", "details": { "totalSecs": 60 } },
+      { "type": "duration", "value": "6 second carrier preparation", "details": { "startSecs": 30, "arrivalSecs": 36 } },
+      { "type": "duration", "value": "600 ms automation ticks", "details": { "chunkMs": 600, "tickCount": 10 } },
+      { "type": "frequency", "value": "18–20 Hz optional infrasonic cue or 40 Hz safe substitute", "details": { "infrasoundHz": [18, 20], "substituteHz": 40 } },
+      { "type": "measurement", "value": "F2/formant or brightness drift", "details": { "axis": "F2 / spectral brightness" } },
+      { "type": "measurement", "value": "chirp-like carrier sweep", "details": { "gesture": "narrowband upward sweep" } }
+    ],
+    "dawChecklist": [
+      "Build a 60-second loop with a stable motif from 0:00–0:36 and an arrival state from 0:36–1:00.",
+      "Render Control A with all changes switched together at 0:36.",
+      "Duplicate the session for Version B and add ten 600 ms automation ticks from 0:30 to 0:36.",
+      "On each tick, advance one low-salience carrier: sub pressure, chirp/noise sweep, formant/brightness, stereo width, or an inner harmonic voice.",
+      "Keep foreground melody, tempo, loudness target, and final arrival state identical between A and B.",
+      "Bounce both versions, randomize file names, and listen blind for arrival inevitability, edit-smoothness, and perceived direction.",
+      "Reject the hypothesis if Version B feels merely smeared, less directed, or no more coherent than Control A."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "Studio headphones or monitors at conservative level; avoid high-amplitude sub/infrasonic playback.",
+      "listeningMethod": "Blind A/B comparison with notes after each pass.",
+      "whatVaries": [
+        "Pre-audible preparation timing",
+        "Presence or absence of six-second pre-arrival pre-audible motion",
+        "Stepwise 600 ms automation of support parameters"
+      ],
+      "whatStaysConstant": [
+        "Foreground motif",
+        "Tempo",
+        "Final arrival harmony and instrumentation",
+        "Overall loudness target",
+        "Total duration"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Treat S4 as speculative support only. Keep sub/infrasonic content low-level and optional; the core test is pre-audible timing, not physiological effect."
+}
