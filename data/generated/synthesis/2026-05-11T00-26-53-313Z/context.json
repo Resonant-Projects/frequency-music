@@ -1,0 +1,1148 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-11T00:26:53.313Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 6,
+    "fetch": 200,
+    "minClaims": 1,
+    "minParams": 1,
+    "noveltyWindow": 6,
+    "maxReusedSources": 2,
+    "requireTuningSignal": false,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 200,
+    "withSource": 200,
+    "eligibleCandidates": 27,
+    "selected": 6
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97dwcq0crkhg0n8z2tmyqypfd86f0ny",
+      "sourceId": "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "sourceTitle": "Physicists Discover the Most Complex Forms of Ice Yet",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.quantamagazine.org/physicists-discover-the-most-complex-forms-of-ice-yet-20260427/",
+      "extractionCreatedAt": 1778439941774,
+      "extractionSummary": "Physicists have recently discovered three new phases of ice (including ice XXI with 152 molecules per repeating unit and ice XXII with 304), revealing that water's phase transitions often proceed through metastable intermediate states rather than jumping directly to the most thermodynamically stable configuration. This behavior is described by Ostwald's step rule, which suggests systems transition to the nearest accessible state rather than the optimal one. The article focuses on extreme-pressure crystallography and has limited direct relevance to music or acoustics, though it contains structural and mathematical concepts — periodicity, complex repeating units, self-organization — that may carry metaphorical or compositional fertility.",
+      "topics": [
+        "periodicity",
+        "self-organization",
+        "metastability",
+        "phase transitions",
+        "Ostwald's step rule",
+        "crystallography",
+        "emergence",
+        "path-dependence",
+        "structural complexity",
+        "mathematical vs. physical realizability",
+        "symmetry",
+        "repeating unit cells",
+        "thermodynamic optimization vs. accessibility",
+        "timescale sensitivity"
+      ],
+      "topicTokens": [
+        "periodicity",
+        "self-organization",
+        "metastability",
+        "phase transitions",
+        "ostwald's step rule",
+        "crystallography",
+        "emergence",
+        "path-dependence",
+        "structural complexity",
+        "mathematical vs. physical realizability",
+        "symmetry",
+        "repeating unit cells",
+        "thermodynamic optimization vs. accessibility",
+        "timescale sensitivity"
+      ],
+      "claims": [
+        {
+          "text": "Complex ordered structures can appear almost random at fine scale but reveal clear periodicity when viewed macroscopically — a property demonstrated by ice XXI's 152-molecule repeating unit.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Emergent periodicity at scale",
+              "quote": "It was so complex that at first it looked almost random. 'But step out,' Kim said, 'and we see the structure macroscopically. It has a periodicity.'"
+            }
+          ]
+        },
+        {
+          "text": "Ostwald's step rule proposes that transitioning systems move to the nearest and easiest-to-reach state rather than the most stable one, and may become stuck in metastable configurations — a principle that applies beyond ice to crystals generally.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Ostwald's step rule",
+              "quote": "Ostwald's step rule suggests that systems transition to the closest and easiest-to-reach phase state rather than the most thermodynamically stable one — and that they sometimes then get stuck."
+            },
+            {
+              "label": "Paradox of metastability",
+              "quote": "It's a nicely paradoxical thing that sometimes the easiest [state] to form is the one that's the least stable."
+            }
+          ]
+        },
+        {
+          "text": "The rate and path of compression (speed, direction, timescale) determines which structural phase a system arrives at — small changes in process yield qualitatively different emergent forms.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Path-dependence of structural outcomes",
+              "quote": "You take water, and just the way you compress it — a little bit faster, a bit slower, up and down, at the right timescale — and then you can find this completely unexpected behavior."
+            }
+          ]
+        },
+        {
+          "text": "A 2018 computer simulation predicted over 75,000 possible molecular configurations of water, illustrating that the space of mathematically valid periodic structures vastly exceeds those that actually form in nature.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Scale of theoretical structure space",
+              "quote": "In 2018, an international research group from Europe and Japan created an ambitious computer simulation of the dynamics of water molecules that aimed to predict undiscovered forms of ice. The result was a catalog of over 75,000 phases."
+            },
+            {
+              "label": "Mathematical vs. physical realizability",
+              "quote": "Just because a structure is mathematically possible does not mean that it will form in nature."
+            }
+          ]
+        },
+        {
+          "text": "Ice XXII has a repeating structural unit of 304 molecules, making it the most complex crystalline phase of water yet observed — discovered as a 'nearby' phase during re-creation of ice XXI.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Ice XXII complexity",
+              "quote": "They discovered a nearby phase — now dubbed ice XXII — that is even more complex, repeating its pattern only every 304 molecules."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "152 molecules per repeating structural unit (ice XXI)",
+          "details": {
+            "notes": "Could map to a rhythmic cycle length or polyrhythmic period — 152 is 8 × 19, suggesting nesting of prime and composite structure",
+            "subject": "ice XXI crystal lattice",
+            "unit": "molecules per unit cell",
+            "value": 152
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "304 molecules per repeating structural unit (ice XXII)",
+          "details": {
+            "notes": "304 = 2 × 152 = 16 × 19; exact double of ice XXI period — suggests octave-like relationship between the two phases",
+            "subject": "ice XXII crystal lattice",
+            "unit": "molecules per unit cell",
+            "value": 304
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "~15 distinct X-ray scattering directions from ice XXI",
+          "details": {
+            "notes": "Contrast with simpler ice phases that produce only a few scattering directions; could inspire a 15-voice or 15-interval harmonic structure",
+            "subject": "X-ray diffraction pattern of ice XXI",
+            "unit": "scattering paths",
+            "value": 15
+          }
+        },
+        {
+          "type": "duration",
+          "value": "Tens of milliseconds (metastable phase window)",
+          "details": {
+            "approximate": true,
+            "notes": "Suggests an extremely brief but structurally coherent sonic event — a transient resonance or attack envelope parameter",
+            "subject": "Duration of intermediate metastable ice phase during transition",
+            "unit": "milliseconds"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "3.4 km electron acceleration tunnel (European XFEL)",
+          "details": {
+            "notes": "Scale reference only; could inspire spatial/reverb parameters or large-scale formal proportions",
+            "subject": "European X-Ray Free-Electron Laser Facility tunnel length",
+            "unit": "kilometers",
+            "value": 3.4
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "~500 degrees Celsius (plastic ice VII formation temperature)",
+          "details": {
+            "notes": "Extreme thermodynamic parameter; could map to a spectral brightness or dynamic ceiling value in a compositional system",
+            "subject": "Temperature threshold for plastic ice VII",
+            "unit": "Celsius",
+            "value": 500
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can Ostwald's step rule be applied as a compositional algorithm — where harmonic or timbral progressions move to the 'nearest accessible' state rather than the most resolved one, creating chains of quasi-stable plateaus?",
+        "The ratio 304:152 = 2:1 (ice XXII to ice XXI) mirrors the octave relationship in frequency. Are there other natural crystalline systems where structural complexity doubles in ways that parallel musical interval ratios?",
+        "Ice XXI's 152-molecule unit (8 × 19) and ice XXII's 304-molecule unit (16 × 19) both contain the prime factor 19. Could prime-factored rhythmic cycles based on these numbers produce interesting polyrhythmic tension analogous to the structural tension between ice phases?",
+        "The 'almost random at fine scale, periodic at macro scale' property of ice XXI mirrors certain stochastic music techniques (e.g., Xenakis). Is there a formal analogy between crystallographic complexity metrics and measures of musical texture density?",
+        "X-ray diffraction 'scattering directions' are essentially a frequency-domain representation of spatial periodicity. Could crystallographic diffraction patterns be directly sonified — mapping scattering angle to pitch and intensity to amplitude?",
+        "If rate and direction of compression determine which ice phase forms, what is the musical analog? Does the rate of harmonic change (voice leading velocity) determine which attractor state a piece 'crystallizes' into?",
+        "The simulation predicted 75,000 phases but most are physically unrealizable. Is there a compositional parallel in generative systems — vast theoretical possibility spaces that collapse to a small set of perceptually stable forms under real constraints?",
+        "Plastic ice VII forms at ~500°C under high pressure — stable only under extreme simultaneous conditions. Are there musical structures that are only coherent when multiple extreme parameters co-occur (e.g., very fast tempo + very high register + specific tuning)?",
+        "The 'will-o'-the-wisp' ice IV phase is so elusive it has folkloric associations. Are there analogous musical structures — theoretically described but rarely achieved in practice — that could be targeted compositionally?"
+      ],
+      "scores": {
+        "base": 48,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.52,
+        "topicalBalance": 1,
+        "combined": 0.9279999999999999,
+        "peerReviewedClaims": 4,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j97a50as5v3xbfw82z24ptdj9185b6w6",
+      "sourceId": "jx728k53rhpv5ye61qsvb8b9fh85ayjd",
+      "sourceTitle": "Qwen3.5-Omni Technical Report",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.15804",
+      "extractionCreatedAt": 1776855921425,
+      "extractionSummary": "Qwen3.5-Omni is a large-scale multimodal AI model trained on over 100 million hours of audio-visual content, supporting audio, video, text, and speech modalities. It introduces ARIA, a system for dynamically aligning text and speech tokenization units to improve streaming speech synthesis stability and prosody. The model supports multilingual speech generation across 10 languages with 'human-like emotional nuance.' It demonstrates strong performance on audio and audio-visual benchmarks, surpassing or matching competing frontier models. The report is primarily a technical AI paper, with limited direct relevance to music theory or acoustics, but contains several claims touching on speech, prosody, and audio representation that may interest the Resonant Projects research context.",
+      "topics": [
+        "speech synthesis",
+        "prosody",
+        "audio tokenization",
+        "text-to-speech alignment",
+        "multimodal models",
+        "audio-visual understanding",
+        "emotional nuance in speech",
+        "streaming audio generation",
+        "multilingual voice synthesis",
+        "emergent AI capabilities",
+        "audio representation learning",
+        "long-context audio modeling"
+      ],
+      "topicTokens": [
+        "speech synthesis",
+        "prosody",
+        "audio tokenization",
+        "text-to-speech alignment",
+        "multimodal models",
+        "audio-visual understanding",
+        "emotional nuance in speech",
+        "streaming audio generation",
+        "multilingual voice synthesis",
+        "emergent ai capabilities",
+        "audio representation learning",
+        "long-context audio modeling"
+      ],
+      "claims": [
+        {
+          "text": "Discrepancies in encoding efficiency between text and speech tokenizers cause instability and unnaturalness in streaming speech synthesis.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "ARIA motivation",
+              "quote": "To address the inherent instability and unnaturalness in streaming speech synthesis, often caused by encoding efficiency discrepancies between text and speech tokenizers, we introduce ARIA."
+            }
+          ]
+        },
+        {
+          "text": "Dynamic alignment of text and speech units can significantly enhance the stability and prosody of conversational speech with minimal latency impact.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "ARIA outcome",
+              "quote": "ARIA dynamically aligns text and speech units, significantly enhancing the stability and prosody of conversational speech with minimal latency impact."
+            }
+          ]
+        },
+        {
+          "text": "A single model trained on heterogeneous audio-visual data can support multilingual speech generation with human-like emotional nuance across 10 languages.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "multilingual prosody claim",
+              "quote": "Qwen3.5-Omni expands linguistic boundaries, supporting multilingual understanding and speech generation across 10 languages with human-like emotional nuance."
+            }
+          ]
+        },
+        {
+          "text": "Audio-visual models trained at sufficient scale exhibit emergent capabilities not explicitly trained for, such as generating code from audio-visual instructions.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "emergent capability",
+              "quote": "Remarkably, we observed the emergence of a new capability in omnimodal models: directly performing coding based on audio-visual instructions, which we call Audio-Visual Vibe Coding."
+            }
+          ]
+        },
+        {
+          "text": "Over 100 million hours of audio-visual content is a feasible training dataset scale for a single multimodal model, suggesting the existence of such corpora in the field.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "dataset scale",
+              "quote": "By leveraging a massive dataset comprising heterogeneous text-vision pairs and over 100 million hours of audio-visual content"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "duration",
+          "value": "400 seconds of 720P video at 1 FPS",
+          "details": {
+            "context": "maximum video understanding window",
+            "frameRate": "1 FPS",
+            "resolution": "720P",
+            "seconds": 400
+          }
+        },
+        {
+          "type": "duration",
+          "value": "Over 10 hours of continuous audio understanding",
+          "details": {
+            "context": "maximum audio context window for a single inference pass",
+            "hours": 10
+          }
+        }
+      ],
+      "openQuestions": [
+        "How does ARIA's dynamic text-speech unit alignment relate to known models of prosodic timing and rhythm in music and speech — could analogous alignment methods improve music-language synchronization in generative systems?",
+        "What acoustic and temporal features distinguish 'human-like emotional nuance' in synthesized speech, and are these features analogous to expressive parameters in musical performance (vibrato, rubato, dynamics)?",
+        "If encoding efficiency discrepancies between tokenizers cause instability in speech synthesis, do similar mismatches occur in music generation models between symbolic (MIDI-like) and audio (waveform/spectrogram) representations?",
+        "Could the 256k context length (supporting 10+ hours of audio) enable models to analyze and generate music at the structural scale of full compositions, including long-range harmonic and thematic relationships?",
+        "What is the nature of the 100M hours of audio-visual training data — does it include substantial music content, and if so, does the model implicitly encode music-theoretic structure?",
+        "Is the emergent 'Audio-Visual Vibe Coding' capability related to cross-modal pattern abstraction in ways that parallel how composers map visual or narrative ideas to musical structures (tone painting, leitmotif)?",
+        "How does the model represent and distinguish between speech prosody and musical pitch/rhythm — are these treated as fundamentally different or as points on a continuum?"
+      ],
+      "scores": {
+        "base": 16,
+        "normalizedBase": 0.21951219512195122,
+        "novelty": 1,
+        "crossRunNovelty": 0.85,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.5,
+        "domainRelevance": 0.62,
+        "topicalBalance": 0.9350844053293437,
+        "combined": 0.6661163193359869,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j975dd9v10rhc7w92v593rqn0986469p",
+      "sourceId": "jx764ke9nz50zaqrr0cjsbk149864vyj",
+      "sourceTitle": "Where Does Speech Enhancement Adapt? Probing Study Under Controlled Degradation",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2512.00482",
+      "extractionCreatedAt": 1777979142113,
+      "extractionSummary": "This paper introduces a probing methodology to study how speech enhancement (SE) models internally represent degraded audio signals under controlled noise and reverberation conditions. Using Centered Kernel Alignment (CKA), the authors measure layer-wise representational similarity across encoder and decoder layers of the MUSE model, finding that encoder layers maintain stable, noise-invariant representations while decoder layers adapt strongly to degradation. The pattern is consistent across reverberation conditions and reproduced by two structurally distinct architectures (MP-SENet and Demucs), suggesting the behavior is driven by the enhancement objective itself rather than model architecture. The study also links internal representations to output perceptual quality metrics such as PESQ.",
+      "topics": [
+        "speech enhancement",
+        "reverberation",
+        "signal-to-noise ratio",
+        "acoustic degradation",
+        "C50 clarity index",
+        "perceptual audio quality (PESQ)",
+        "encoder-decoder neural architectures",
+        "representational similarity analysis",
+        "Centered Kernel Alignment (CKA)",
+        "noise invariance",
+        "skip connections",
+        "audio deep learning",
+        "room acoustics modeling",
+        "auditory perception"
+      ],
+      "topicTokens": [
+        "speech enhancement",
+        "reverberation",
+        "signal-to-noise ratio",
+        "acoustic degradation",
+        "c50 clarity index",
+        "perceptual audio quality (pesq)",
+        "encoder-decoder neural architectures",
+        "representational similarity analysis",
+        "centered kernel alignment (cka)",
+        "noise invariance",
+        "skip connections",
+        "audio deep learning",
+        "room acoustics modeling",
+        "auditory perception"
+      ],
+      "claims": [
+        {
+          "text": "Encoder layers in speech enhancement models maintain noise-invariant representations regardless of input degradation level, while decoder layers adapt strongly to degradation.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core finding",
+              "quote": "Encoder layers maintain noise-invariant representations while decoder layers adapt strongly, with sensitivity increasing monotonically within blocks and skip-connection boundaries marking the sharpest transitions."
+            }
+          ]
+        },
+        {
+          "text": "The encoder-decoder adaptation asymmetry is architecture-independent, emerging from the enhancement objective itself rather than specific model design choices.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "generalizability claim",
+              "quote": "The same structure emerges under reverberation and is reproduced independently by MP-SENet and Demucs, two structurally distinct architectures, suggesting that the tradeoff is induced by the enhancement objective rather than a particular model design."
+            }
+          ]
+        },
+        {
+          "text": "Skip-connection boundaries within neural speech enhancement models mark the sharpest transitions in representational sensitivity to acoustic degradation.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "architectural detail",
+              "quote": "skip-connection boundaries marking the sharpest transitions"
+            }
+          ]
+        },
+        {
+          "text": "Reverberation (measured via C50) and additive noise (measured via SNR) produce structurally similar patterns of internal adaptation in speech enhancement models.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "cross-degradation consistency",
+              "quote": "The same structure emerges under reverberation and is reproduced independently by MP-SENet and Demucs"
+            }
+          ]
+        },
+        {
+          "text": "Internal representational similarity (CKA) in speech enhancement models correlates with output-level perceptual quality metrics such as PESQ.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "perceptual link",
+              "quote": "these results characterize where SE models adapt to degradation. We then offer insight into how internal representations correlate with output-level performance metrics, e.g., PESQ."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "SNR (Signal-to-Noise Ratio) — controlled degradation axis",
+          "details": {
+            "context": "Used to systematically vary noise level in input signals to SE models",
+            "metric": "SNR",
+            "role": "acoustic_degradation_parameter",
+            "unit": "dB"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "C50 — reverberation clarity index",
+          "details": {
+            "context": "Clarity index measuring ratio of early-to-late reflected energy; used as a controlled reverberation axis. Higher C50 = clearer, less reverberant.",
+            "metric": "C50",
+            "role": "reverberation_degradation_parameter",
+            "unit": "dB"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "PESQ — Perceptual Evaluation of Speech Quality",
+          "details": {
+            "context": "Output-level metric correlating with internal representational similarity under degradation",
+            "metric": "PESQ",
+            "role": "perceptual_quality_score"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Could the encoder-decoder adaptation asymmetry found in speech enhancement models inform the design of musical audio restoration or denoising tools — e.g., for archival recordings?",
+        "Does C50 (the reverberation clarity metric) have direct compositional utility as a parameter for designing reverb in musical spaces or algorithmic composition systems?",
+        "If skip-connection boundaries are the sharpest sites of acoustic adaptation, could architecturally analogous structures in music generation models mark similar perceptual phase transitions?",
+        "How do SNR thresholds used in SE research compare to perceptual noise-floor thresholds relevant to live performance or recording contexts?",
+        "Could the CKA-based probing methodology be applied to music source separation models (e.g., Demucs in its musical use case) to understand how they internally represent pitch, timbre, or harmony under degraded conditions?",
+        "Is there a compositional analog to 'noise-invariant encoding' — e.g., harmonic invariants that persist across timbral or dynamic degradation?"
+      ],
+      "scores": {
+        "base": 19,
+        "normalizedBase": 0.2926829268292683,
+        "novelty": 1,
+        "crossRunNovelty": 0.9142857142857143,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.2857142857142857,
+        "domainRelevance": 0.30000000000000004,
+        "topicalBalance": 0.9732552660130203,
+        "combined": 0.6599360250935907,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j978wc8spg7xjg8v7d09pzw79985df6w",
+      "sourceId": "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "sourceTitle": "Tonnetz Theory, Classical Harmony, and the Combinatorial Geometry of Abstract Musical Resources",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.19960",
+      "extractionCreatedAt": 1776942387613,
+      "extractionSummary": "This arXiv preprint develops a formal mathematical framework connecting musical harmony to combinatorial geometry through the concept of the Tonnetz (tone network). The authors demonstrate that various musical systems — including diatonic triads, diatonic seventh chords, pentatonic scales, and the 12-tone system — each correspond to specific combinatorial configurations (e.g., Fano, Desargues, Cremona-Richmond). A key result is that the Eulerian tonnetz maps to a Daublebsky von Sterneck D222 configuration, and that this same structure describes the relationship between chromatic pitch classes and major triads. The paper also addresses the major/minor triad duality, showing it can be 'broken' by identifying minor triads with hexacycles in the Levi graph of the D222 configuration. The work frames music theory as an instance of abstract combinatorial geometry, offering these structures as explicit resources for composition.",
+      "topics": [
+        "Tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "Fano configuration",
+        "Desargues configuration",
+        "Cremona-Richmond configuration",
+        "Levi graphs",
+        "bipartite graphs",
+        "major/minor duality",
+        "Tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-Riemannian theory"
+      ],
+      "topicTokens": [
+        "tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "fano configuration",
+        "desargues configuration",
+        "cremona-richmond configuration",
+        "levi graphs",
+        "bipartite graphs",
+        "major",
+        "minor duality",
+        "tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-riemannian theory"
+      ],
+      "claims": [
+        {
+          "text": "The Eulerian tonnetz can be represented by a {12_3} combinatorial configuration of Daublebsky von Sterneck type D222.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core result from prior work, recapitulated here",
+              "quote": "It was shown that the Eulerian tonnetz can be represented by a {12_3} of Daublebsky von Sterneck type D222."
+            }
+          ]
+        },
+        {
+          "text": "The tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) can be represented by a {12_3} combinatorial configuration of type D228.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Tristan-genus tonnetz",
+              "quote": "We also constructed a tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) and we showed that this tonnetz can be represented by a {12_3} of type D228."
+            }
+          ]
+        },
+        {
+          "text": "The seven diatonic degrees and their pitch classes are related by a bipartite graph of type {7_3} with girth four.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "diatonic triads graph",
+              "quote": "In the case of diatonic triads, we show the existence of a bipartite graph of type {7_3} and girth four that represents the well-known relations between the seven diatonic degrees and their pitch classes."
+            }
+          ]
+        },
+        {
+          "text": "The voice-leading relations between diatonic seventh chords are completely characterized by a Fano configuration {7_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Fano configuration and seventh chords",
+              "quote": "In the case of diatonic seventh chords, we obtain a Fano configuration {7_3} which gives a complete characterization of the voice-leading relations that hold between such chords."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for pentatonic music can be constructed based on the Desargues configuration {10_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "pentatonic tonnetz",
+              "quote": "We construct a tonnetz for pentatonic music based on the Desargues configuration {10_3}."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for the 12-tone system can be constructed based on the Cremona-Richmond configuration {15_3}, and can serve as a compositional resource.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "12-tone tonnetz",
+              "quote": "We construct a tonnetz for the 12-tone system based on the Cremona-Richmond configuration {15_3}. Both can be used as a resource for musical compositions."
+            }
+          ]
+        },
+        {
+          "text": "The relationship between the chromatic pitch class set and the major triad set is represented by the same D222 configuration as the Eulerian tonnetz.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "chromatic–major triad correspondence",
+              "quote": "We show that the relation between the chromatic pitch class set and the major triad set is also represented by a D222."
+            }
+          ]
+        },
+        {
+          "text": "Minor triads correspond one-to-one with a certain class of hexacycles in the Levi graph of the D222 configuration, allowing the major/minor duality of the traditional tonnetz to be broken.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "minor triads and hexacycles",
+              "quote": "The minor triads are in one-to-one correspondence with the members of a certain class of hexacycles in the Levi graph of this configuration. In this way, the characteristic duality between major and minor triads in the tonnetz can be broken."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "scaleSystem",
+          "value": "Diatonic (7-note) scale",
+          "details": {
+            "chordTypes": [
+              "triads",
+              "seventh chords"
+            ],
+            "graphType": "{7_3} bipartite, girth 4",
+            "noteCount": 7
+          }
+        },
+        {
+          "type": "scaleSystem",
+          "value": "Pentatonic (5-note) scale",
+          "details": {
+            "configurationModel": "Desargues {10_3}",
+            "noteCount": 5
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal/chromatic system",
+          "details": {
+            "configurationModel": "Cremona-Richmond {15_3}",
+            "eulerianTonnetzModel": "D222 {12_3}",
+            "pitchClassCount": 12
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Tristan-genus chords: dominant seventh and half-diminished seventh",
+          "details": {
+            "chordTypes": [
+              "dominant seventh",
+              "half-diminished seventh"
+            ],
+            "configurationModel": "D228 {12_3}"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Diatonic seventh chords",
+          "details": {
+            "configurationModel": "Fano configuration {7_3}",
+            "property": "complete voice-leading characterization"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Desargues {10_3} pentatonic tonnetz be used to generate novel voice-leading rules analogous to those derived from the Fano configuration for diatonic seventh chords?",
+        "What are the perceptual or acoustic correlates of navigating paths through the Cremona-Richmond {15_3} 12-tone tonnetz — do certain paths correspond to recognizable harmonic progressions?",
+        "Since minor triads are modeled as hexacycles rather than as dual objects to major triads in this framework, what new compositional symmetries or asymmetries does this asymmetric treatment enable?",
+        "Are there analogous combinatorial configurations for microtonal or non-Western tuning systems (e.g., 19-TET, 31-TET, maqam scales)?",
+        "How does the D228 configuration for Tristan-genus chords relate acoustically to the harmonic series — is the dominant seventh's proximity to just intonation ratios reflected in the geometry?",
+        "Can these abstract graph structures be directly sonified or mapped to generative composition algorithms, and if so, what traversal strategies (e.g., Hamiltonian paths, shortest paths) yield musically coherent results?",
+        "What is the relationship between the girth-four constraint of the diatonic triad bipartite graph and perceptual properties like harmonic ambiguity or voice-leading efficiency?"
+      ],
+      "scores": {
+        "base": 31,
+        "normalizedBase": 0.5853658536585366,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "topicalBalance": 0.9955425443355033,
+        "combined": 0.6549411377478864,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j97a8k67pm7ysxbzxb4nt62g85858646",
+      "sourceId": "jx7d318zzcx7e8cd6yrmvrgn7h859g7f",
+      "sourceTitle": "Multi-Source Position and Direction-of-Arrival Estimation Based on Euclidean Distance Matrices",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2510.02556",
+      "extractionCreatedAt": 1776798348783,
+      "extractionSummary": "This arXiv preprint proposes new algorithms for estimating the positions and directions-of-arrival (DOAs) of multiple sound sources using microphone arrays, based on Euclidean Distance Matrices (EDMs) and their Gram matrices. The core insight is that exploiting EDM properties reduces the dimensionality of the optimization problem compared to steered-response power (SRP) beamforming — from three continuous variables to one per source for position estimation, and to zero for DOA estimation. The methods rely on estimated time-differences of arrival (TDOAs) between microphones and minimize cost functions defined over eigenvalues of Gram matrices. Experimental results with six microphones in noisy and reverberant environments show the EDM-based approach outperforms SRP-based methods in both accuracy and computational speed.",
+      "topics": [
+        "sound source localization",
+        "microphone array processing",
+        "direction-of-arrival estimation",
+        "time-difference of arrival (TDOA)",
+        "steered-response power beamforming",
+        "Euclidean distance matrices",
+        "Gram matrices",
+        "eigenvalue decomposition",
+        "Procrustes problem",
+        "room acoustics and reverberation",
+        "spatial audio",
+        "multi-source separation"
+      ],
+      "topicTokens": [
+        "sound source localization",
+        "microphone array processing",
+        "direction-of-arrival estimation",
+        "time-difference of arrival (tdoa)",
+        "steered-response power beamforming",
+        "euclidean distance matrices",
+        "gram matrices",
+        "eigenvalue decomposition",
+        "procrustes problem",
+        "room acoustics and reverberation",
+        "spatial audio",
+        "multi-source separation"
+      ],
+      "claims": [
+        {
+          "text": "Steered-response power (SRP) beamforming for 3D sound source localization requires joint optimization of three continuous variables for position estimation, making it computationally expensive at high accuracy.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "computational cost of SRP",
+              "quote": "SRP-based methods require joint optimization of three continuous variables for position estimation or two continuous variables for DOA estimation, which can be computationally expensive when high localization accuracy is desired."
+            }
+          ]
+        },
+        {
+          "text": "Exploiting Euclidean Distance Matrix properties reduces multi-source position estimation to optimizing only one continuous variable per source (distance to a reference microphone), rather than three.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "dimensionality reduction via EDM",
+              "quote": "only a single continuous variable per source, representing the distance to a reference microphone, needs to be optimized."
+            }
+          ]
+        },
+        {
+          "text": "The proposed EDM-based DOA estimation method eliminates continuous variable optimization entirely, determining the optimal TDOA candidate set through eigenvalue-based cost minimization on a rank-reduced Gram matrix.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "zero-variable DOA optimization",
+              "quote": "The proposed multi-source DOA estimation method eliminates the need for continuous variable optimization. The optimal set of candidate TDOA estimates is determined by minimizing a cost function defined using the eigenvalues of a rank-reduced Gram matrix."
+            }
+          ]
+        },
+        {
+          "text": "In noisy and reverberant acoustic environments, the EDM-based method consistently outperforms SRP-based methods for both position and direction-of-arrival estimation accuracy, as well as run time, across different two-source and six-microphone configurations.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "experimental comparison",
+              "quote": "experimental results for different source and microphone configurations with six microphones show that the proposed EDM-based method consistently outperforms the SRP-based method in terms of position and DOA estimation accuracy and run time."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "6 microphones (array size)",
+          "details": {
+            "context": "experimental array configuration for sound source localization",
+            "count": 6,
+            "type": "microphones"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "2 simultaneous sound sources",
+          "details": {
+            "context": "multi-source scenario tested in noisy reverberant environment",
+            "count": 2,
+            "type": "sources"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Could EDM-based localization methods be applied in real-time compositional systems where microphone arrays track performer positions in a concert space?",
+        "How does TDOA-based spatial analysis relate to psychoacoustic models of spatial hearing, such as interaural time differences (ITD)?",
+        "Could rank-reduced Gram matrix eigenvalue analysis reveal perceptually meaningful structure in reverberant acoustic spaces — e.g., room modes or resonant nodes?",
+        "Can this framework be extended to distinguish timbral or spectral sources, not just spatial ones, enabling frequency-based source separation useful for composition tools?",
+        "Is there a mathematical relationship between the Euclidean Distance Matrix formalism here and the geometry of harmonic interval space (e.g., Tonnetz or pitch-class lattices)?"
+      ],
+      "scores": {
+        "base": 14,
+        "normalizedBase": 0.17073170731707318,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.30000000000000004,
+        "topicalBalance": 1,
+        "combined": 0.6462195121951219,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j9792ckdpne6ycbt2nwccy5b7185d3rp",
+      "sourceId": "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "sourceTitle": "Building dialogue in electronic music with Kontakt, Monark, and David Mayer",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://blog.native-instruments.com/david-mayer/",
+      "extractionCreatedAt": 1776971137733,
+      "extractionSummary": "David Mayer discusses his production process for 'News Flash,' a track built around an Eastern-leaning lead sampled and manipulated in Kontakt. He describes a hybrid workflow combining Kontakt for textural, expressive realism and Monark for analog bass grit. Central to his compositional philosophy is the principle of 'call and response,' which he applies at the level of beats, melodic phrases, and arrangement sections. He also explores the tension between club functionality and symphonic layering, seeking to embed emotional complexity within dance music structures. The article is a promotional interview with Native Instruments and carries no academic or scientific rigor.",
+      "topics": [
+        "call and response",
+        "timbral layering",
+        "Eastern scales and non-Western tonality in electronic music",
+        "tension and release in melodic phrasing",
+        "analog synthesis (Monark / Minimoog modeling)",
+        "sample manipulation",
+        "hybrid synthesis workflows",
+        "club music vs. symphonic complexity",
+        "contrast as compositional principle",
+        "silence as compositional element",
+        "expressive identity vs. technical perfection",
+        "DAW session versioning and archiving",
+        "world percussion libraries",
+        "melodic dialogue between instrument layers"
+      ],
+      "topicTokens": [
+        "call and response",
+        "timbral layering",
+        "eastern scales and non-western tonality in electronic music",
+        "tension and release in melodic phrasing",
+        "analog synthesis (monark",
+        "minimoog modeling)",
+        "sample manipulation",
+        "hybrid synthesis workflows",
+        "club music vs. symphonic complexity",
+        "contrast as compositional principle",
+        "silence as compositional element",
+        "expressive identity vs. technical perfection",
+        "daw session versioning and archiving",
+        "world percussion libraries",
+        "melodic dialogue between instrument layers"
+      ],
+      "claims": [
+        {
+          "text": "The 'call and response' structural principle — alternating tension between a calling phrase and an answering phrase — can be applied at multiple levels: individual beats, melodic intervals, bassline/arpeggio pairings, and macro arrangement sections.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on call-and-response scope",
+              "quote": "one beat calls, the next hit responds, and so on. This can be used to two different sounds or two parts of a melody responding to each other, or to sections in an arrangement being brought into a dialogue."
+            },
+            {
+              "label": "Mayer on affective contrast in call-and-response",
+              "quote": "the call of a moody bassline might be answered with an uplifting arpeggio"
+            }
+          ]
+        },
+        {
+          "text": "Contrast between uplifting rhythmic elements and moody harmonic/melodic elements (e.g., uplifting beats vs. moody synth lines) is a functional compositional strategy for maintaining tension and emotional movement in electronic dance music.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on affective contrast",
+              "quote": "I try to find contrast – typically uplifting beats opposed by moody synth lines."
+            }
+          ]
+        },
+        {
+          "text": "Layering multiple differently-timbred presets or patches simultaneously can produce a composite sound perceived as more unique and expressive than any single source patch.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on timbral layering",
+              "quote": "Merging several different-sounding presets on top of each other to form a unique sound is definitely a habit I can't resist."
+            },
+            {
+              "label": "Mayer reiterating layering as core method",
+              "quote": "Merging several differently sounding presets on top of each other to create a new, unique sound is the most blissful part of my experience when I'm making something."
+            }
+          ]
+        },
+        {
+          "text": "Eastern-leaning melodic phrasing (scales, ornaments, or timbres associated with non-Western musical traditions) can create a distinctive atmospheric tension-and-release quality within a Western electronic club music context.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Editorial description of lead's affective function",
+              "quote": "The record opens around a distinctive Eastern-leaning lead that defines its atmosphere... its phrasing lends an air of tension and release that anchors the arrangement."
+            }
+          ]
+        },
+        {
+          "text": "Preserving and referencing an early 'demo' version of a track throughout the production process can help a producer maintain the original emotional quality and avoid over-refinement that erodes expressive distinctiveness.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on demo preservation",
+              "quote": "Keep your demo close. If it sparked something, it might contain something you don't want to lose in the process... Trying to improve the sound might kill the vibe."
+            },
+            {
+              "label": "Mayer on technical perfection vs. expressive identity",
+              "quote": "A technically perfect track is easy to forget. A track with a distinct fingerprint isn't."
+            }
+          ]
+        },
+        {
+          "text": "Silence and dynamic negative space ('the loud parts answered by the silent parts') function as compositional elements equivalent in weight to sounding material within an arrangement.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on silence as response",
+              "quote": "The loud parts are answered by the silent parts, and vice versa."
+            }
+          ]
+        },
+        {
+          "text": "It is possible to embed symphonic harmonic complexity (dense layering, emotionally contoured progressions) within a club-functional track structure without sacrificing dancefloor impact.",
+          "evidenceLevel": "anecdotal",
+          "citations": [
+            {
+              "label": "Mayer on symphonic-club hybrid aspiration",
+              "quote": "testing the limits of how much symphony could fit in a classic club track – embracing the particular, breathing, lively sound I've always been drawn to while simultaneously surrendering to my passion for classic club music elements."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "timbralSource",
+          "value": "Kontakt sampler — manipulated world/ethnic sample (Eastern-leaning lead)",
+          "details": {
+            "character": "Eastern-leaning, warm, gritty, tension-release phrasing",
+            "instrument": "Kontakt",
+            "origin": "manipulated sample from an organic live-performance clip",
+            "role": "lead melody"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "Monark analog-modeled synthesizer — bass parts",
+          "details": {
+            "character": "gritty, analog bite",
+            "instrument": "Monark",
+            "note": "specific Monark presets reused across multiple productions",
+            "role": "bass"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "Abbey Road Modern Drummer (Kontakt library) — cymbal layering",
+          "details": {
+            "character": "studio-recording realism",
+            "instrument": "Kontakt",
+            "library": "Abbey Road Modern Drummer",
+            "role": "cymbals"
+          }
+        },
+        {
+          "type": "timbralSource",
+          "value": "West Africa / Cuba Kontakt libraries — percussion fills",
+          "details": {
+            "character": "playful, world-music texture",
+            "instrument": "Kontakt",
+            "libraries": [
+              "West Africa",
+              "Cuba"
+            ],
+            "role": "percussion fills"
+          }
+        },
+        {
+          "type": "structuralPattern",
+          "value": "Call and response — alternating tension/release at beat, phrase, and section levels",
+          "details": {
+            "affectivePairing": "moody call / uplifting response (or vice versa)",
+            "levels": [
+              "beat-to-beat",
+              "melodic phrase",
+              "bassline vs. arpeggio",
+              "arrangement section"
+            ]
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific scales, modes, or ornamental techniques characterize 'Eastern-leaning' leads in electronic club music, and how do they map onto Western equal temperament or require microtonal deviation?",
+        "Is there measurable perceptual evidence that call-and-response phrasing at multiple structural levels (beat, phrase, section) increases listener engagement or emotional arousal compared to non-dialogic structures?",
+        "At what point does timbral layering of multiple patches begin to produce perceptual fusion (a single new timbre) vs. auditory stream segregation (multiple distinct sources)? What determines that threshold?",
+        "Can the tension between 'Eastern-leaning' melodic material and Western four-on-the-floor rhythm be analyzed in terms of polymodality or rhythmic/melodic cultural counterpoint?",
+        "What is the relationship between dynamic contrast (loud/silent alternation) and perceived groove or dancefloor functionality in electronic music?",
+        "How do Monark's analog-modeled filter and oscillator characteristics differ acoustically from Kontakt-sampled bass tones, and what compositional roles does each serve best?",
+        "Is there a compositional framework for quantifying 'symphonic density' (harmonic layers, voice count, timbral complexity) within club tracks without exceeding a functional loudness or frequency-masking threshold?"
+      ],
+      "scores": {
+        "base": 29,
+        "normalizedBase": 0.5365853658536586,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.64,
+        "topicalBalance": 1,
+        "combined": 0.5869756097560975,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "periodicity": 1,
+      "self-organization": 1,
+      "metastability": 1,
+      "phase transitions": 1,
+      "ostwald's step rule": 1,
+      "crystallography": 1,
+      "emergence": 1,
+      "path-dependence": 1,
+      "structural complexity": 1,
+      "mathematical vs. physical realizability": 1,
+      "symmetry": 1,
+      "repeating unit cells": 1,
+      "thermodynamic optimization vs. accessibility": 1,
+      "timescale sensitivity": 1,
+      "speech synthesis": 1,
+      "prosody": 1,
+      "audio tokenization": 1,
+      "text-to-speech alignment": 1,
+      "multimodal models": 1,
+      "audio-visual understanding": 1,
+      "emotional nuance in speech": 1,
+      "streaming audio generation": 1,
+      "multilingual voice synthesis": 1,
+      "emergent ai capabilities": 1,
+      "audio representation learning": 1,
+      "long-context audio modeling": 1,
+      "speech enhancement": 1,
+      "reverberation": 1,
+      "signal-to-noise ratio": 1,
+      "acoustic degradation": 1,
+      "c50 clarity index": 1,
+      "perceptual audio quality (pesq)": 1,
+      "encoder-decoder neural architectures": 1,
+      "representational similarity analysis": 1,
+      "centered kernel alignment (cka)": 1,
+      "noise invariance": 1,
+      "skip connections": 1,
+      "audio deep learning": 1,
+      "room acoustics modeling": 1,
+      "auditory perception": 1,
+      "tonnetz": 1,
+      "combinatorial geometry": 1,
+      "music theory formalization": 1,
+      "diatonic harmony": 1,
+      "voice leading": 1,
+      "pentatonic scales": 1,
+      "12-tone system": 1,
+      "fano configuration": 1,
+      "desargues configuration": 1,
+      "cremona-richmond configuration": 1,
+      "levi graphs": 1,
+      "bipartite graphs": 1,
+      "major": 1,
+      "minor duality": 1,
+      "tristan chord": 1,
+      "dominant seventh chords": 1,
+      "half-diminished seventh chords": 1,
+      "pitch class sets": 1,
+      "hexacycles": 1,
+      "graph theory in music": 1,
+      "neo-riemannian theory": 1,
+      "sound source localization": 1,
+      "microphone array processing": 1,
+      "direction-of-arrival estimation": 1,
+      "time-difference of arrival (tdoa)": 1,
+      "steered-response power beamforming": 1,
+      "euclidean distance matrices": 1,
+      "gram matrices": 1,
+      "eigenvalue decomposition": 1,
+      "procrustes problem": 1,
+      "room acoustics and reverberation": 1,
+      "spatial audio": 1,
+      "multi-source separation": 1,
+      "call and response": 1,
+      "timbral layering": 1,
+      "eastern scales and non-western tonality in electronic music": 1,
+      "tension and release in melodic phrasing": 1,
+      "analog synthesis (monark": 1,
+      "minimoog modeling)": 1,
+      "sample manipulation": 1,
+      "hybrid synthesis workflows": 1,
+      "club music vs. symphonic complexity": 1,
+      "contrast as compositional principle": 1,
+      "silence as compositional element": 1,
+      "expressive identity vs. technical perfection": 1,
+      "daw session versioning and archiving": 1,
+      "world percussion libraries": 1,
+      "melodic dialogue between instrument layers": 1
+    },
+    "parameterTypeFrequency": {
+      "measurement": 10,
+      "timbralsource": 4,
+      "duration": 3,
+      "scalesystem": 2,
+      "interval": 2,
+      "tuningsystem": 1,
+      "structuralpattern": 1
+    },
+    "evidenceDistribution": {
+      "preprint": 23,
+      "anecdotal": 7,
+      "peer_reviewed": 4
+    },
+    "sourceTypeDistribution": {
+      "rss": 6
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 6,
+    "priorSourceIds": 24,
+    "priorTopicTokens": 334,
+    "priorVariablePhrases": 20,
+    "priorTitlePhrases": 12
+  }
+}

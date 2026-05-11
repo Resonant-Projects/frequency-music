@@ -1,0 +1,115 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Nearest Accessible Form",
+    "question": "Do musical transitions feel coherent when they move toward the nearest reachable state under current constraints rather than directly toward the most resolved or globally optimal state?",
+    "hypothesis": "Compositional form becomes more convincing when harmonic, timbral, spatial, and expressive transitions proceed through nearest accessible intermediate states that preserve at least one invariant while adapting another parameter. This creates metastable plateaus that make later arrivals feel crystallized rather than merely edited.",
+    "rationaleMd": "S1 provides the physical analogy: under pressure, water can move through nearby metastable ice phases rather than directly to the most stable configuration, and the path of compression changes which form appears. S4 turns harmony into graph adjacency, implying that chord succession depends on a learned space of reachable neighbors. S3 shows a useful signal-processing pattern: stable encoder representations coexist with adaptive decoder layers under degradation. S2 adds that dynamic alignment between mismatched token units can stabilize streaming expression. S5 shows that choosing the right constrained representation can reduce an otherwise difficult spatial search. S6 gives the studio practice version: call-and-response builds chains of plausible answers around a preserved emotional anchor.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx728k53rhpv5ye61qsvb8b9fh85ayjd",
+      "jx764ke9nz50zaqrr0cjsbk149864vyj",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7d318zzcx7e8cd6yrmvrgn7h859g7f",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c"
+    ],
+    "concepts": [
+      "nearest accessible form",
+      "accessible adjacency",
+      "metastable voice leading",
+      "adaptive boundary",
+      "invariant encoder",
+      "dynamic unit alignment",
+      "constrained spatial path",
+      "call-response metastability"
+    ]
+  },
+  "recipe": {
+    "title": "Metastable Voice Leading Study",
+    "bodyMd": "Create a sixty-second piece that starts from one four-bar motif and aims toward an obviously attractive target state: brighter, wider, denser, or more resolved. Instead of moving there directly, insert three nearest-accessible forms. First, move one harmonic voice or one Tonnetz-like graph edge while preserving the motif's rhythm (S4). Second, adapt only the decoder surface — reverb clarity, saturation, filter openness, noise, or stereo width — while preserving pitch identity, echoing the encoder/decoder split in speech enhancement (S3). Third, move the sound spatially through a constrained room relation rather than a raw pan jump, inspired by distance-matrix localization (S5). Use dynamic alignment checks to ensure rhythm, automation, and harmonic pacing share compatible units (S2). Treat each plateau like a metastable phase rather than a final resolution (S1), and structure the whole study as call-and-response around a preserved demo anchor (S6).",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "durationSecs": 60
+        }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "three metastable intermediate states before final arrival",
+        "details": {
+          "plateaus": 3
+        }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "preserve one invariant per transition",
+        "details": {
+          "invariants": [
+            "motif rhythm",
+            "pitch contour",
+            "room depth",
+            "core sound source"
+          ]
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "A/B direct jump vs nearest-accessible chain",
+        "details": {
+          "comparison": "direct transition against staged transition"
+        }
+      },
+      {
+        "type": "timbralSource",
+        "value": "one stable identity layer plus adaptive boundary parameters",
+        "details": {
+          "adaptiveParameters": [
+            "reverb clarity",
+            "filter openness",
+            "saturation",
+            "stereo width"
+          ]
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Bounce or save the initial demo anchor before refinement.",
+      "Map three harmonic neighbor moves before arranging the full transition.",
+      "Automate one timbral boundary parameter while preserving the motif contour.",
+      "Move spatial position by preserving depth, reverb tail, or early-reflection character.",
+      "A/B a direct jump against the metastable chain and listen for whether the final arrival feels earned."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Nearfield monitors or neutral headphones at moderate level.",
+      "listeningMethod": "Compare a direct-transition version against a nearest-accessible-form version. Note whether intermediate states feel necessary, whether identity survives, and whether the final arrival feels crystallized.",
+      "whatVaries": [
+        "Number of metastable intermediate states",
+        "Which invariant is preserved",
+        "Which adaptive boundary parameter changes",
+        "Speed of transition through each plateau"
+      ],
+      "whatStaysConstant": [
+        "Initial motif",
+        "Final target state",
+        "Tempo",
+        "Core sound source or identity layer"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Essay written manually because extraction and publish continue to fail with Convex server errors. This final-output file preserves the synthesis payload for later publishing."
+}
