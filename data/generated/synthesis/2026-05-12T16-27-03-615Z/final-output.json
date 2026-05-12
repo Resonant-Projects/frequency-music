@@ -1,0 +1,105 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Fine Structure Decides",
+    "question": "When a musical or acoustic event keeps the same high-level label, which low-level structures determine whether it remains coherent, believable, or recognizable?",
+    "hypothesis": "The named symbol is only a coarse handle: phase relations, critical-band placement, multi-scale spectral residue, encoder compression, graph adjacency, and path accessibility decide whether a musical event holds together perceptually. Composition can therefore treat fine structure as a load-bearing formal layer rather than surface polish.",
+    "rationaleMd": "WST-X shows that subtle synthetic-speech artifacts can be captured by high-resolution, multi-scale scattering features rather than coarse semantic labels (S1). Bark-scale dynamics frames perceptual band placement as a meaningful processing grid (S2). Ice phase formation demonstrates that path and accessibility filter large mathematical possibility spaces into reachable metastable states (S3). PHALAR suggests phase- and pitch-equivariant representations carry musical-coherence information that semantic baselines discard (S4). ASR fairness results show that encoder compression, silence injection, masking, and reverberation can induce hallucination or collapse distinctions (S5). Tonnetz geometry formalizes harmonic identity through adjacency and graph paths rather than chord names alone (S6).",
+    "sourceIds": [
+      "jx78nvpygk3a3ehen35mwswkhd85w0pt",
+      "jx7awge62ymkd5ywnpz9ddyymx85ntkj",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7fk4jg1jw1mbsnkfk8fckn01869sfn",
+      "jx74r61g2tqd5bcy6aam4aqwes85f9kt",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x"
+    ],
+    "concepts": [
+      "fine structure",
+      "load-bearing residue",
+      "perceptual access grid",
+      "phase coherence",
+      "critical-band form",
+      "encoder bottleneck",
+      "metastable adjacency",
+      "degradation-resilient identity"
+    ]
+  },
+  "recipe": {
+    "title": "Same Label, Different Fine Structure",
+    "bodyMd": "Write a short loop whose foreground symbols stay fixed: one melody, one chord progression, one tempo, and one stem layout. Render four versions: a phase-aware mix that preserves transient and microtiming alignment (S4); a scattering-artifact version with barely audible spectral/modulation instabilities (S1); a Bark-grid dynamics version using critical-band-like regions (S2); and a graph-path voicing version whose chord names stay fixed while voices move by Tonnetz-like adjacency (S6). Then degrade each with compression, silence insertion, masking, and reverberation to test which details remain load-bearing and which collapse into hallucinated repetition or muddiness (S5). Treat the result like ice-phase access: the final form is chosen by path and constraint, not by abstract possibility alone (S3).",
+    "parameters": [
+      {
+        "type": "measurement",
+        "value": "J: small temporal averaging scale",
+        "details": "Use shorter averaging to preserve fine temporal/spectral anomalies."
+      },
+      {
+        "type": "measurement",
+        "value": "Q: high frequency resolution",
+        "details": "Increase spectral resolution for artifact and timbral detail sensitivity."
+      },
+      {
+        "type": "measurement",
+        "value": "L: directional or phase-sensitive resolution",
+        "details": "Represent phase/microtiming relationships where possible."
+      },
+      {
+        "type": "measurement",
+        "value": "24 Bark-scale critical bands",
+        "details": "Use perceptually spaced spectral-dynamics regions."
+      },
+      {
+        "type": "measurement",
+        "value": "compression / masking / silence-injection severity",
+        "details": "Apply identical degradation passes to compare identity survival."
+      },
+      {
+        "type": "measurement",
+        "value": "Tonnetz adjacency path length",
+        "details": "Keep chord labels fixed while varying harmonic graph-route smoothness."
+      }
+    ],
+    "dawChecklist": [
+      "Create a 45-60 second loop with fixed melody, harmony, tempo, and stem layout.",
+      "Bounce a neutral control version.",
+      "Bounce a phase-aware version with careful transient alignment and minimal phase-randomizing processing.",
+      "Bounce a subtle artifact version with fine spectral or modulation instabilities below obvious effect level.",
+      "Bounce a Bark-grid dynamics version using perceptually spaced crossover regions.",
+      "Bounce a graph-path voicing version with fixed chord labels but adjacency-driven inner voices.",
+      "Apply identical degradation passes to every bounce: low-bitrate compression, silence insertion, masking, and room reverb.",
+      "Blind-rank which versions retain identity, coherence, and intentionality after degradation."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Studio monitors or neutral headphones; compare original and degraded renders in randomized order.",
+      "listeningMethod": "Blind A/B ranking for coherence, recognizability, and perceived intentionality.",
+      "whatVaries": [
+        "phase alignment",
+        "fine spectral artifact level",
+        "critical-band dynamics grid",
+        "Tonnetz adjacency voicing",
+        "degradation severity"
+      ],
+      "whatStaysConstant": [
+        "melody",
+        "chord labels",
+        "tempo",
+        "macro arrangement",
+        "instrument/stem roster"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Essay written manually at docs/essays/the-fine-structure-decides.md; metadata added manually because metadata generation has previously required unavailable OpenRouter auth."
+}
