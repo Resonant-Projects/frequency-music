@@ -1,0 +1,84 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Latent Score Identity",
+    "question": "Can a fixed foreground musical loop acquire clearer identity when redundant low-salience modulation, voicing, and spectral marks are composed as a latent score?",
+    "hypothesis": "If one identical foreground loop is rendered with a coordinated latent score of low-frequency modulation profiles, recurrent voicing fingerprints, and subtle spectral-bin/phase gestures, then blinded listeners will report stronger identity and continuity than in a foreground-only control, because identity-relevant information can be carried redundantly in time-frequency, rhythmic, and pitch-content layers without changing the named melody or harmony.",
+    "rationaleMd": "APC watermarking shows that robust information can be embedded across STFT phase and adjacent log-magnitude structure while preserving perceptual quality [S1]. Basso continuo style identification shows that performer identity can live in pitch-content realization choices inside a rule-governed harmonic practice [S2]. Rhythm formant analysis shows that low-frequency amplitude modulation captures macro-temporal identity-bearing structure complementary to spectral features [S3]. MSU-Bench frames score understanding as multilevel rather than single-channel [S5], while Tonnetz/combinatorial geometry provides a formal model for latent harmonic adjacency [S6]. Falsification criterion: if blinded ratings show no reliable difference in identity, continuity, or performer-like character between the latent-score render and the foreground-only control, the hypothesis is not supported.",
+    "sourceIds": [
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "jx70dhsw26kwd55qeh0xgyw3xx85fp1n",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x"
+    ],
+    "concepts": [
+      "latent score",
+      "unnamed layer",
+      "rhythm formant composition",
+      "voicing fingerprint",
+      "spectral watermark gesture",
+      "harmonic adjacency identity",
+      "multilevel score understanding"
+    ]
+  },
+  "recipe": {
+    "title": "Latent Score Identity Micro-Study",
+    "bodyMd": "## Goal\nCompare whether a foreground-identical loop gains recognizable identity from a composed latent score.\n\n## Shared Arrangement\n- Length: 60 seconds.\n- Tempo: 96 BPM.\n- Meter: 4/4.\n- Harmony: one eight-bar loop repeated with identical melody, bass, chord roots, instrumentation, mix balance, and loudness across versions.\n\n## Versions\n- Version A: foreground-only control. No deliberate latent profile beyond normal production.\n- Version B: rhythm-formant latent score. Shape section-level amplitude modulation profiles in the 1-10 Hz range: stable pulse, dispersed pulse, clustered pulse, then mixed pulse [S3].\n- Version C: spectral/voicing latent score. Keep foreground fixed but add recurrent voicing fingerprints inspired by griffs [S2], Tonnetz-adjacent inner-voice moves [S6], and very subtle phase/noise-band gestures distributed across the phrase [S1].\n\n## Evaluation\nBlind-label A/B/C. Rate each for identity clarity, continuity, and whether it feels like the same performer/system returning. Note any bars where the latent layer becomes too obvious or distracts from the foreground. Evidence basis: [S1, S2, S3, S5, S6].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "96 BPM",
+        "details": { "bpm": 96 }
+      },
+      {
+        "type": "form",
+        "value": "60-second three-arm comparison",
+        "details": { "versions": 3, "durationSecs": 60, "meter": "4/4" }
+      },
+      {
+        "type": "frequency",
+        "value": "1-10 Hz amplitude modulation profile",
+        "details": { "role": "rhythm-formant latent layer" }
+      },
+      {
+        "type": "measurement",
+        "value": "identity clarity / continuity / performer-like character ratings",
+        "details": { "scale": "1-7 blinded listener rating" }
+      }
+    ],
+    "dawChecklist": [
+      "Create one 60-second loop at 96 BPM and freeze melody, harmony, instruments, effects, and mix balance.",
+      "Render Version A with no deliberate latent modulation profile.",
+      "For Version B, automate amplitude envelopes or sidechain patterns to create four distinct low-frequency modulation profiles while preserving notes and chords.",
+      "For Version C, add recurring inner-voice voicing fingerprints, subtle Tonnetz-adjacent movements, and low-level spectral/phase/noise gestures distributed across the phrase.",
+      "Loudness-match all exports.",
+      "Blind-label the files and rate identity clarity, continuity, and performer-like character.",
+      "Mark any moments where the latent layer becomes foreground distraction.",
+      "Compare whether Version B or C produces stronger identity without changing the named musical objects."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 60,
+      "panelPlanned": ["self", "musician_peer_1"],
+      "listeningContext": "Quiet room; repeat once on headphones and once on monitors at fixed playback level.",
+      "listeningMethod": "Blinded three-arm comparison with 1-7 ratings and bar-level notes.",
+      "whatVaries": [
+        "presence and type of latent score: none vs low-frequency modulation vs spectral/voicing marks"
+      ],
+      "whatStaysConstant": [
+        "melody",
+        "chord roots",
+        "bass line",
+        "instrumentation",
+        "tempo",
+        "meter",
+        "arrangement length",
+        "mix balance",
+        "loudness target"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S5", "S6"],
+  "notes": "Manual synthesis from the 2026-05-12T00-27-14-364Z context pack. Publish mode is expected to fail until recurring Convex create/publish server errors are fixed."
+}

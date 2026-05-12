@@ -1,0 +1,1171 @@
+{
+  "version": "synthesis_context_v1",
+  "generatedAt": "2026-05-12T00:27:14.364Z",
+  "mode": "collect",
+  "convexUrlHost": "convex-backend.paas.rproj.art",
+  "params": {
+    "target": 6,
+    "fetch": 200,
+    "minClaims": 1,
+    "minParams": 1,
+    "noveltyWindow": 6,
+    "maxReusedSources": 2,
+    "requireTuningSignal": false,
+    "out": "data/generated/synthesis"
+  },
+  "totals": {
+    "fetchedExtractions": 200,
+    "withSource": 200,
+    "eligibleCandidates": 27,
+    "selected": 6
+  },
+  "selected": [
+    {
+      "citation": "S1",
+      "extractionId": "j97f14ww3grvkgbgx82zppkj5x86hmsg",
+      "sourceId": "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "sourceTitle": "Asymmetric Phase Coding Audio Watermarking",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2605.07241",
+      "extractionCreatedAt": 1778526347386,
+      "extractionSummary": "This paper introduces Asymmetric Phase Coding (APC), a cryptographic audio watermarking system that embeds digital signatures into audio by manipulating STFT phase bins and log-magnitude differences of adjacent frequency bins. It is evaluated on 1,000 speech clips at 44.1 kHz and achieves 97.5–98.3% cryptographic verification rates across eight signal-processing attack conditions. The system is training-free and operates at near-real-time CPU latency. It is positioned as a provenance tool against deepfake audio, and is compared against neural watermarking baselines. While not a music theory paper, it has direct implications for how frequency-domain audio structure can carry hidden information without perceptible quality loss.",
+      "topics": [
+        "audio watermarking",
+        "STFT phase manipulation",
+        "frequency-domain encoding",
+        "perceptual audio quality",
+        "deepfake audio detection",
+        "cryptographic audio signing",
+        "Reed-Solomon error correction in audio",
+        "log-magnitude spectral differences",
+        "lossy audio compression artifacts",
+        "psychoacoustics of phase perception",
+        "provenance in generative audio",
+        "quantization-index modulation"
+      ],
+      "topicTokens": [
+        "audio watermarking",
+        "stft phase manipulation",
+        "frequency-domain encoding",
+        "perceptual audio quality",
+        "deepfake audio detection",
+        "cryptographic audio signing",
+        "reed-solomon error correction in audio",
+        "log-magnitude spectral differences",
+        "lossy audio compression artifacts",
+        "psychoacoustics of phase perception",
+        "provenance in generative audio",
+        "quantization-index modulation"
+      ],
+      "claims": [
+        {
+          "text": "Pseudo-random selection of STFT phase bins can encode cryptographic information in audio while maintaining perceptual quality (mean PESQ=3.02), suggesting that phase structure in the frequency domain is largely perceptually transparent to listeners.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core encoding method",
+              "quote": "pseudo-random STFT phase-bin selection, and a redundant quantization-index-modulation (QIM) code on log-magnitude differences of adjacent bin pairs, yielding a compact, non-repudiable, blind-extractable watermark"
+            },
+            {
+              "label": "perceptual quality metric",
+              "quote": "mean PESQ=3.02"
+            }
+          ]
+        },
+        {
+          "text": "Log-magnitude differences between adjacent frequency bins are a robust and perceptually subtle domain in which to embed hidden information, surviving lossy compression (MP3 at 128 kbps, OGG-Vorbis at 128 kbps) and resampling.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "encoding domain",
+              "quote": "a redundant quantization-index-modulation (QIM) code on log-magnitude differences of adjacent bin pairs"
+            },
+            {
+              "label": "robustness evidence",
+              "quote": "MP3 at 128 kbps, and OGG-Vorbis at 128 kbps -- and achieve cryptographic verification rates between 97.5% and 98.3% on every condition"
+            }
+          ]
+        },
+        {
+          "text": "Passive forensic detectors for deepfake audio are sensitive to evolving generative models and real-world channel distortions, making purely detection-based approaches fragile for audio authentication.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "motivation for cryptographic approach",
+              "quote": "passive forensic detectors are sensitive to evolving generative models and to real-world channel distortions"
+            }
+          ]
+        },
+        {
+          "text": "An 8 kHz low-pass filter applied to 44.1 kHz audio is among the most destructive common signal-processing attacks on frequency-domain watermarks, since it eliminates more than 80% of the representable frequency spectrum.",
+          "evidenceLevel": "personal",
+          "citations": [
+            {
+              "label": "attack configurations listed",
+              "quote": "8 kHz low-pass, 16 kHz round-trip resampling, FLAC re-encoding, MP3 at 128 kbps, and OGG-Vorbis at 128 kbps"
+            }
+          ]
+        },
+        {
+          "text": "STFT phase manipulation in audio watermarking can be made robust to end-cropping of up to 20% of audio duration, implying that phase-encoded information is distributed redundantly across the time-frequency representation rather than concentrated at temporal boundaries.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "temporal robustness",
+              "quote": "10% end-cropping, 20% end-cropping ... achieve cryptographic verification rates between 97.5% and 98.3% on every condition"
+            },
+            {
+              "label": "redundancy mechanism",
+              "quote": "Reed-Solomon error correction"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "44,100 Hz sample rate",
+          "details": {
+            "context": "sample rate of LibriSpeech test clips used for evaluation",
+            "hz": 44100
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "8 kHz low-pass cutoff",
+          "details": {
+            "context": "low-pass filter attack condition; removes all spectral content above 8 kHz",
+            "hz": 8000
+          }
+        },
+        {
+          "type": "frequency",
+          "value": "16 kHz round-trip resampling",
+          "details": {
+            "context": "resampling attack: downsample to 16 kHz then upsample, simulating telephony bandwidth",
+            "hz": 16000
+          }
+        },
+        {
+          "type": "duration",
+          "value": "10 seconds per clip",
+          "details": {
+            "context": "length of each LibriSpeech test-clean evaluation clip",
+            "seconds": 10
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "64 bytes (Ed25519 signature length)",
+          "details": {
+            "bytes": 64,
+            "context": "cryptographic payload size embedded into audio; minimum information density per watermarked segment"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Mean PESQ = 3.02",
+          "details": {
+            "context": "perceptual quality of watermarked audio across all conditions; 3.02 is broadly 'acceptable' telephony quality",
+            "pesq": 3.02,
+            "scale": "ITU-T P.862, range 1–4.5"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "MP3 at 128 kbps",
+          "details": {
+            "codec": "MP3",
+            "context": "lossy compression attack condition",
+            "kbps": 128
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "OGG-Vorbis at 128 kbps",
+          "details": {
+            "codec": "OGG-Vorbis",
+            "context": "lossy compression attack condition",
+            "kbps": 128
+          }
+        }
+      ],
+      "openQuestions": [
+        "Since phase is perceptually transparent enough to hide 64-byte cryptographic signatures without audible degradation, what is the perceptual upper bound of phase-encoded information density in musical audio (as opposed to speech)?",
+        "Could the log-magnitude difference encoding domain used here be exploited compositionally — for example, to embed microtonal or spectral voice-leading patterns that are audible but not immediately attributable to conventional harmony?",
+        "How does an 8 kHz low-pass cutoff interact with harmonic content in musical instruments? What is lost perceptually versus what is preserved in terms of fundamental pitch and low-order partials?",
+        "Reed-Solomon error correction is used here for temporal redundancy — could similar error-correcting codes be used to make musical motifs 'recognizable' under heavy transformation (transposition, inversion, rhythmic distortion)?",
+        "PESQ is designed for speech; what equivalent perceptual metric would be appropriate for evaluating phase-modified musical audio, and how would classical or orchestral material score differently than speech?",
+        "If watermark robustness survives 20% end-cropping, what does this imply about the minimum viable segment length for reliable frequency-domain encoding — and does this correspond to any musically meaningful time unit (e.g., a bar at common tempos)?",
+        "Could the pseudo-random STFT bin selection strategy used here serve as a model for stochastic spectral composition — selecting frequency bins by a deterministic seed to create reproducible but apparently random timbral textures?"
+      ],
+      "scores": {
+        "base": 34,
+        "normalizedBase": 0.6585365853658537,
+        "novelty": 1,
+        "crossRunNovelty": 0.925,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.25,
+        "domainRelevance": 0.5,
+        "topicalBalance": 1,
+        "combined": 0.8060609756097561,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    },
+    {
+      "citation": "S2",
+      "extractionId": "j97eag5wx2pp6czsd8rrs1b50x85n9ys",
+      "sourceId": "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "sourceTitle": "Beyond Rules: Towards Basso Continuo Personal Style Identification",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.21822",
+      "extractionCreatedAt": 1777259161758,
+      "extractionSummary": "This preprint investigates whether individual performers can be identified by their basso continuo realizations using machine learning. The study uses the Aligned Continuo Realization Dataset (ACoRD) and a structured pitch-content representation called 'griffs' combined with Support Vector Machines. Results show that player classification from performance data is achievable, suggesting measurable personal styles exist within the improvisatory tradition of basso continuo. The work highlights a gap in computational musicology: the theoretical rules of basso continuo have been studied, but the performance dimension has been neglected due to lack of suitable data.",
+      "topics": [
+        "basso continuo",
+        "historically informed performance practice",
+        "baroque music",
+        "computational musicology",
+        "performance style identification",
+        "machine learning in music",
+        "support vector machines",
+        "harmonic realization",
+        "voice leading",
+        "improvisation",
+        "personal style in performance",
+        "pitch content representation",
+        "keyboard performance",
+        "ACoRD dataset",
+        "griffs"
+      ],
+      "topicTokens": [
+        "basso continuo",
+        "historically informed performance practice",
+        "baroque music",
+        "computational musicology",
+        "performance style identification",
+        "machine learning in music",
+        "support vector machines",
+        "harmonic realization",
+        "voice leading",
+        "improvisation",
+        "personal style in performance",
+        "pitch content representation",
+        "keyboard performance",
+        "acord dataset",
+        "griffs"
+      ],
+      "claims": [
+        {
+          "text": "Individual basso continuo players can be computationally identified from their performances using pitch-content features ('griffs') and Support Vector Machines, indicating the presence of measurable personal performance styles.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "main finding",
+              "quote": "The results show that we can identify players from their performances."
+            }
+          ]
+        },
+        {
+          "text": "Basso continuo is an improvised accompaniment genre rooted in the baroque era that is still actively practiced by keyboard players today.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "genre description",
+              "quote": "an improvised accompaniment genre with its traditions originating in the baroque era and actively practiced by many keyboard players nowadays"
+            }
+          ]
+        },
+        {
+          "text": "Basso continuo playing is shaped both by stylistic traditions from historical treatises and by individual performer choices, suggesting a tension between rule-following and personal expression.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "tradition vs. individuality",
+              "quote": "Basso continuo playing is shaped by stylistic traditions coming from historical treatises, but it also may provide space for showcasing individual performance styles of its practitioners."
+            }
+          ]
+        },
+        {
+          "text": "Computational musicology has historically focused on the rule-based theoretical foundations of basso continuo (harmonic and voice-leading constraints) rather than on empirical performance data.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "gap in literature",
+              "quote": "computational musicology has studied the theoretical foundations of basso continuo expressed by harmonic and voice-leading rules and constraints, characteristics of basso continuo as an active performing art have been largely overlooked"
+            }
+          ]
+        },
+        {
+          "text": "A structured pitch-content representation called 'griffs' can serve as a historically informed feature set for analyzing basso continuo realization style.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "feature representation",
+              "quote": "a historically informed structured representation of basso continuo performance pitch content called griffs"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "tuningSystem",
+          "value": "Historically Informed Practice (baroque conventions)",
+          "details": {
+            "era": "baroque",
+            "genre": "basso continuo",
+            "tradition": "historically informed performance practice"
+          }
+        },
+        {
+          "type": "note",
+          "value": "Griff (chord voicing unit in basso continuo realization)",
+          "details": {
+            "description": "A historically informed structured unit of pitch content representing a realized chord or voicing choice in basso continuo performance",
+            "source": "ACoRD dataset"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific pitch-content features (griffs) most strongly differentiate individual players — and could these serve as generative constraints for compositional systems?",
+        "Can the 'griff' representation be adapted to analyze improvisation styles in non-baroque genres (e.g., jazz piano comping, modal accompaniment)?",
+        "Is personal style in basso continuo realization correlated with the player's training lineage or the treatises they studied — and if so, can treatise-sourced rules be mapped to compositional parameters?",
+        "How does the improvisatory nature of basso continuo compare to other notated music in terms of measurable stylistic variance between performers?",
+        "Could machine-learning-identified personal style clusters inform the design of algorithmic accompaniment systems tuned to baroque conventions?",
+        "What is the minimum performance data needed to reliably identify a player — and does this threshold reveal anything about how quickly personal style asserts itself in improvisation?"
+      ],
+      "scores": {
+        "base": 21,
+        "normalizedBase": 0.34146341463414637,
+        "novelty": 1,
+        "crossRunNovelty": 0.98,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0.06666666666666667,
+        "domainRelevance": 0.76,
+        "topicalBalance": 0.9875191241394095,
+        "combined": 0.7601668930111554,
+        "peerReviewedClaims": 1,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S3",
+      "extractionId": "j97dmcxraattrt4e9gsc7dsp4185rj2e",
+      "sourceId": "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "sourceTitle": "Cross-Linguistic Rhythmic and Spectral Feature-Based Analysis of Nyishi and Adi: Two Under-Resourced Languages of Arunachal Pradesh",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.25309",
+      "extractionCreatedAt": 1777489547200,
+      "extractionSummary": "This preprint investigates acoustic differentiation between two under-resourced Tani languages (Nyishi and Adi) spoken in Arunachal Pradesh using rhythm formant analysis (RFA) in the frequency domain. The study extracts low-frequency amplitude modulation features from speech signals to characterize speech rhythm, finding that Nyishi exhibits higher dominant modulation frequencies and greater dispersion than Adi. Combining rhythmic features with spectral features (MFCC) yields classification accuracies up to 93.96%, demonstrating that low-frequency modulation and spectral structure encode complementary and hierarchical levels of linguistic variation. The approach treats speech rhythm as a spectral phenomenon analyzable via amplitude modulation in the low-frequency range, which has direct relevance to acoustic and musical analysis frameworks.",
+      "topics": [
+        "rhythm formant analysis",
+        "amplitude modulation spectrum",
+        "low-frequency modulation",
+        "speech rhythm",
+        "Mel Frequency Cepstral Coefficients (MFCC)",
+        "Discrete Cosine Transform (DCT)",
+        "spectral modulation",
+        "acoustic phonetics",
+        "under-resourced languages",
+        "Tani language group",
+        "cross-linguistic acoustic differentiation",
+        "hierarchical feature encoding",
+        "temporal structure of sound",
+        "macro-temporal rhythm",
+        "support vector machines for audio classification",
+        "multilayer perceptron audio classification"
+      ],
+      "topicTokens": [
+        "rhythm formant analysis",
+        "amplitude modulation spectrum",
+        "low-frequency modulation",
+        "speech rhythm",
+        "mel frequency cepstral coefficients (mfcc)",
+        "discrete cosine transform (dct)",
+        "spectral modulation",
+        "acoustic phonetics",
+        "under-resourced languages",
+        "tani language group",
+        "cross-linguistic acoustic differentiation",
+        "hierarchical feature encoding",
+        "temporal structure of sound",
+        "macro-temporal rhythm",
+        "support vector machines for audio classification",
+        "multilayer perceptron audio classification"
+      ],
+      "claims": [
+        {
+          "text": "Speech rhythm can be quantified using low-frequency amplitude modulation (AM) spectrum analysis, where dominant spectral peaks in the LF modulation spectrum ('rhythm formants') encode language-specific rhythmic structure.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "RFA framework definition",
+              "quote": "examining speech rhythm in Nyishi and Adi...using a frequency domain framework based on amplitude modulation(AM) low-frequency(LF) spectrum analysis, commonly referred to as rhythm formant analysis(RFA)"
+            }
+          ]
+        },
+        {
+          "text": "Low-frequency amplitude modulation of speech signals captures macro-temporal rhythmic structure, while spectral features (MFCC) reflect finer phonological differentiation — these two domains encode complementary, hierarchical levels of variation.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "hierarchy of rhythmic vs. spectral encoding",
+              "quote": "rhythmic and spectral features encode complementary levels of linguistic variations, with low frequency modulation capturing constrained macro temporal structure and spectral features reflecting finer phonological differentiation"
+            }
+          ]
+        },
+        {
+          "text": "Rhythm-only low-frequency modulation features can classify two related languages with approximately 84–85% accuracy, suggesting that macro-temporal rhythmic structure alone is substantially language-discriminating.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "rhythm-only classification result",
+              "quote": "rhythm-only features achieved approximately 84-85% classification accuracy"
+            }
+          ]
+        },
+        {
+          "text": "Fusing low-frequency rhythm formant features with MFCC representations achieves classification accuracy of up to 93.96% (MLP) and 90.9% (SVM), indicating that spectral envelope information substantially augments rhythmic features for acoustic language modeling.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "fused feature classification accuracy",
+              "quote": "Fusion using MFCC representations improved performance to 90.9% classification accuracy using support vector machine (SVM) and 93.96% using multilayer perceptron (MLP)"
+            }
+          ]
+        },
+        {
+          "text": "Discrete Cosine Transform (DCT) coefficients can be used to characterize the spectral modulation structure of speech signals, complementing cepstral (MFCC) representations of broad spectral organization.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "DCT and MFCC as spectral descriptors",
+              "quote": "Discrete Cosine Transform (DCT) coefficients and Mel Frequency Cepstral Coefficient(MFCC) were extracted to characterise the spectral modulation structure and broad spectral organisation of the speech signal"
+            }
+          ]
+        },
+        {
+          "text": "Nyishi speech exhibits higher dominant modulation frequencies and greater frequency dispersion in the LF amplitude modulation spectrum compared to Adi, indicating a measurably faster or more varied rhythmic pulsation rate.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "cross-language rhythm formant comparison",
+              "quote": "Nyishi exhibiting higher dominant modulation frequencies as well as greater dispersion than Adi"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "frequency",
+          "value": "Low-frequency amplitude modulation band (speech rhythm range, typically ~1–10 Hz)",
+          "details": {
+            "band": "low-frequency (LF)",
+            "description": "The spectral region of the AM envelope used for rhythm formant analysis; corresponds to syllabic and phrasal speech rate, overlapping with musical tempo and meter perception ranges",
+            "domain": "amplitude modulation spectrum"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Number of Dominant Peaks (NDP) in LF modulation spectrum",
+          "details": {
+            "description": "Count of dominant spectral peaks in the low-frequency AM spectrum; analogous to identifying multiple periodicities or metric layers in a musical signal",
+            "feature": "NDP"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Mean Frequency of Dominant Peaks (MFDP)",
+          "details": {
+            "description": "Average frequency (in Hz) of dominant AM modulation peaks; a direct analog to mean tempo or pulse rate in musical rhythm analysis",
+            "feature": "MFDP"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "Variance of Dominant Frequencies (VFDP)",
+          "details": {
+            "description": "Spread/dispersion of dominant modulation frequencies; analogous to rhythmic variability or rubato in musical performance analysis",
+            "feature": "VFDP"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can rhythm formant analysis (RFA) — developed for speech — be meaningfully applied to musical signals to identify culturally distinct rhythmic 'signatures' or metric tendencies in folk music traditions?",
+        "What is the precise low-frequency range (in Hz) of the dominant AM modulation peaks found in Nyishi vs. Adi, and how do these compare to known musical tempo/meter ranges (e.g., ~0.5–4 Hz for beat perception)?",
+        "Could MFDP and VFDP serve as composition parameters — e.g., mapping mean modulation frequency to tempo or metric density, and VFDP to rhythmic variability / humanization amount?",
+        "How does the DCT-based spectral modulation characterization relate to timbre descriptors used in music information retrieval, and could it serve as a bridge between linguistic and musical acoustic analysis?",
+        "Are there analogous 'rhythm formants' detectable in instrumental music that would encode genre- or style-specific temporal structure the way speech rhythm formants encode language-specific rhythm?",
+        "Could the hierarchical separation of macro-temporal (rhythmic) vs. fine-grained (spectral/timbral) information inspire a layered compositional approach where rhythm and timbre are designed to vary independently across structural levels?",
+        "How might the languages of Arunachal Pradesh, including Nyishi and Adi, influence or be reflected in regional folk music rhythm patterns — is there a correlation between speech rhythm formants and musical rhythm in these communities?"
+      ],
+      "scores": {
+        "base": 24,
+        "normalizedBase": 0.4146341463414634,
+        "novelty": 1,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.5,
+        "topicalBalance": 1,
+        "combined": 0.749390243902439,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S4",
+      "extractionId": "j97dwcq0crkhg0n8z2tmyqypfd86f0ny",
+      "sourceId": "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "sourceTitle": "Physicists Discover the Most Complex Forms of Ice Yet",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://www.quantamagazine.org/physicists-discover-the-most-complex-forms-of-ice-yet-20260427/",
+      "extractionCreatedAt": 1778439941774,
+      "extractionSummary": "Physicists have recently discovered three new phases of ice (including ice XXI with 152 molecules per repeating unit and ice XXII with 304), revealing that water's phase transitions often proceed through metastable intermediate states rather than jumping directly to the most thermodynamically stable configuration. This behavior is described by Ostwald's step rule, which suggests systems transition to the nearest accessible state rather than the optimal one. The article focuses on extreme-pressure crystallography and has limited direct relevance to music or acoustics, though it contains structural and mathematical concepts — periodicity, complex repeating units, self-organization — that may carry metaphorical or compositional fertility.",
+      "topics": [
+        "periodicity",
+        "self-organization",
+        "metastability",
+        "phase transitions",
+        "Ostwald's step rule",
+        "crystallography",
+        "emergence",
+        "path-dependence",
+        "structural complexity",
+        "mathematical vs. physical realizability",
+        "symmetry",
+        "repeating unit cells",
+        "thermodynamic optimization vs. accessibility",
+        "timescale sensitivity"
+      ],
+      "topicTokens": [
+        "periodicity",
+        "self-organization",
+        "metastability",
+        "phase transitions",
+        "ostwald's step rule",
+        "crystallography",
+        "emergence",
+        "path-dependence",
+        "structural complexity",
+        "mathematical vs. physical realizability",
+        "symmetry",
+        "repeating unit cells",
+        "thermodynamic optimization vs. accessibility",
+        "timescale sensitivity"
+      ],
+      "claims": [
+        {
+          "text": "Complex ordered structures can appear almost random at fine scale but reveal clear periodicity when viewed macroscopically — a property demonstrated by ice XXI's 152-molecule repeating unit.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Emergent periodicity at scale",
+              "quote": "It was so complex that at first it looked almost random. 'But step out,' Kim said, 'and we see the structure macroscopically. It has a periodicity.'"
+            }
+          ]
+        },
+        {
+          "text": "Ostwald's step rule proposes that transitioning systems move to the nearest and easiest-to-reach state rather than the most stable one, and may become stuck in metastable configurations — a principle that applies beyond ice to crystals generally.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Ostwald's step rule",
+              "quote": "Ostwald's step rule suggests that systems transition to the closest and easiest-to-reach phase state rather than the most thermodynamically stable one — and that they sometimes then get stuck."
+            },
+            {
+              "label": "Paradox of metastability",
+              "quote": "It's a nicely paradoxical thing that sometimes the easiest [state] to form is the one that's the least stable."
+            }
+          ]
+        },
+        {
+          "text": "The rate and path of compression (speed, direction, timescale) determines which structural phase a system arrives at — small changes in process yield qualitatively different emergent forms.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Path-dependence of structural outcomes",
+              "quote": "You take water, and just the way you compress it — a little bit faster, a bit slower, up and down, at the right timescale — and then you can find this completely unexpected behavior."
+            }
+          ]
+        },
+        {
+          "text": "A 2018 computer simulation predicted over 75,000 possible molecular configurations of water, illustrating that the space of mathematically valid periodic structures vastly exceeds those that actually form in nature.",
+          "evidenceLevel": "peer_reviewed",
+          "citations": [
+            {
+              "label": "Scale of theoretical structure space",
+              "quote": "In 2018, an international research group from Europe and Japan created an ambitious computer simulation of the dynamics of water molecules that aimed to predict undiscovered forms of ice. The result was a catalog of over 75,000 phases."
+            },
+            {
+              "label": "Mathematical vs. physical realizability",
+              "quote": "Just because a structure is mathematically possible does not mean that it will form in nature."
+            }
+          ]
+        },
+        {
+          "text": "Ice XXII has a repeating structural unit of 304 molecules, making it the most complex crystalline phase of water yet observed — discovered as a 'nearby' phase during re-creation of ice XXI.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Ice XXII complexity",
+              "quote": "They discovered a nearby phase — now dubbed ice XXII — that is even more complex, repeating its pattern only every 304 molecules."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "measurement",
+          "value": "152 molecules per repeating structural unit (ice XXI)",
+          "details": {
+            "notes": "Could map to a rhythmic cycle length or polyrhythmic period — 152 is 8 × 19, suggesting nesting of prime and composite structure",
+            "subject": "ice XXI crystal lattice",
+            "unit": "molecules per unit cell",
+            "value": 152
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "304 molecules per repeating structural unit (ice XXII)",
+          "details": {
+            "notes": "304 = 2 × 152 = 16 × 19; exact double of ice XXI period — suggests octave-like relationship between the two phases",
+            "subject": "ice XXII crystal lattice",
+            "unit": "molecules per unit cell",
+            "value": 304
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "~15 distinct X-ray scattering directions from ice XXI",
+          "details": {
+            "notes": "Contrast with simpler ice phases that produce only a few scattering directions; could inspire a 15-voice or 15-interval harmonic structure",
+            "subject": "X-ray diffraction pattern of ice XXI",
+            "unit": "scattering paths",
+            "value": 15
+          }
+        },
+        {
+          "type": "duration",
+          "value": "Tens of milliseconds (metastable phase window)",
+          "details": {
+            "approximate": true,
+            "notes": "Suggests an extremely brief but structurally coherent sonic event — a transient resonance or attack envelope parameter",
+            "subject": "Duration of intermediate metastable ice phase during transition",
+            "unit": "milliseconds"
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "3.4 km electron acceleration tunnel (European XFEL)",
+          "details": {
+            "notes": "Scale reference only; could inspire spatial/reverb parameters or large-scale formal proportions",
+            "subject": "European X-Ray Free-Electron Laser Facility tunnel length",
+            "unit": "kilometers",
+            "value": 3.4
+          }
+        },
+        {
+          "type": "measurement",
+          "value": "~500 degrees Celsius (plastic ice VII formation temperature)",
+          "details": {
+            "notes": "Extreme thermodynamic parameter; could map to a spectral brightness or dynamic ceiling value in a compositional system",
+            "subject": "Temperature threshold for plastic ice VII",
+            "unit": "Celsius",
+            "value": 500
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can Ostwald's step rule be applied as a compositional algorithm — where harmonic or timbral progressions move to the 'nearest accessible' state rather than the most resolved one, creating chains of quasi-stable plateaus?",
+        "The ratio 304:152 = 2:1 (ice XXII to ice XXI) mirrors the octave relationship in frequency. Are there other natural crystalline systems where structural complexity doubles in ways that parallel musical interval ratios?",
+        "Ice XXI's 152-molecule unit (8 × 19) and ice XXII's 304-molecule unit (16 × 19) both contain the prime factor 19. Could prime-factored rhythmic cycles based on these numbers produce interesting polyrhythmic tension analogous to the structural tension between ice phases?",
+        "The 'almost random at fine scale, periodic at macro scale' property of ice XXI mirrors certain stochastic music techniques (e.g., Xenakis). Is there a formal analogy between crystallographic complexity metrics and measures of musical texture density?",
+        "X-ray diffraction 'scattering directions' are essentially a frequency-domain representation of spatial periodicity. Could crystallographic diffraction patterns be directly sonified — mapping scattering angle to pitch and intensity to amplitude?",
+        "If rate and direction of compression determine which ice phase forms, what is the musical analog? Does the rate of harmonic change (voice leading velocity) determine which attractor state a piece 'crystallizes' into?",
+        "The simulation predicted 75,000 phases but most are physically unrealizable. Is there a compositional parallel in generative systems — vast theoretical possibility spaces that collapse to a small set of perceptually stable forms under real constraints?",
+        "Plastic ice VII forms at ~500°C under high pressure — stable only under extreme simultaneous conditions. Are there musical structures that are only coherent when multiple extreme parameters co-occur (e.g., very fast tempo + very high register + specific tuning)?",
+        "The 'will-o'-the-wisp' ice IV phase is so elusive it has folkloric associations. Are there analogous musical structures — theoretically described but rarely achieved in practice — that could be targeted compositionally?"
+      ],
+      "scores": {
+        "base": 48,
+        "normalizedBase": 1,
+        "novelty": 1,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 0.52,
+        "topicalBalance": 1,
+        "combined": 0.708,
+        "peerReviewedClaims": 4,
+        "distinctParameterTypes": 2
+      }
+    },
+    {
+      "citation": "S5",
+      "extractionId": "j978mypywk23f3gtf3ykz84q4x85j102",
+      "sourceId": "jx70dhsw26kwd55qeh0xgyw3xx85fp1n",
+      "sourceTitle": "Musical Score Understanding Benchmark: Evaluating Large Language Models' Comprehension of Complete Musical Scores",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2511.20697",
+      "extractionCreatedAt": 1777201528572,
+      "extractionSummary": "MSU-Bench is a human-curated benchmark of 1,800 question-answer pairs designed to evaluate how well Large Language Models and Vision-Language Models understand complete musical scores. It covers works by Bach, Beethoven, Chopin, Debussy, and others, and tests comprehension across four difficulty levels—from basic onset information to texture and form—in both text (ABC notation) and visual (PDF) modalities. Evaluations of over fifteen state-of-the-art models reveal significant modality gaps, unstable performance across difficulty levels, and difficulty maintaining correctness across multiple levels simultaneously. Fine-tuning substantially improves model performance while preserving general knowledge, suggesting a path toward more robust multimodal music reasoning.",
+      "topics": [
+        "musical score understanding",
+        "large language models",
+        "vision-language models",
+        "ABC notation",
+        "music notation",
+        "pitch",
+        "rhythm",
+        "harmony",
+        "musical form",
+        "musical texture",
+        "multimodal reasoning",
+        "benchmark evaluation",
+        "fine-tuning",
+        "AI and music",
+        "computational musicology",
+        "score analysis"
+      ],
+      "topicTokens": [
+        "musical score understanding",
+        "large language models",
+        "vision-language models",
+        "abc notation",
+        "music notation",
+        "pitch",
+        "rhythm",
+        "harmony",
+        "musical form",
+        "musical texture",
+        "multimodal reasoning",
+        "benchmark evaluation",
+        "fine-tuning",
+        "ai and music",
+        "computational musicology",
+        "score analysis"
+      ],
+      "claims": [
+        {
+          "text": "Current Large Language Models and Vision-Language Models have insufficiently examined ability to interpret full musical notation, including pitch, rhythm, harmony, and large-scale structure.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "motivation for benchmark",
+              "quote": "the ability of Large Language Models and Vision--Language Models to interpret full musical notation remains insufficiently examined"
+            }
+          ]
+        },
+        {
+          "text": "Evaluations of more than fifteen state-of-the-art models reveal pronounced modality gaps between textual (ABC notation) and visual (PDF) score understanding.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "key empirical finding",
+              "quote": "Evaluations of more than fifteen state-of-the-art models, in both zero-shot and fine-tuned settings, reveal pronounced modality gaps"
+            }
+          ]
+        },
+        {
+          "text": "Fine-tuning on musical score data substantially improves LLM/VLM performance across modalities while preserving general knowledge.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "fine-tuning result",
+              "quote": "Fine-tuning substantially improves results across modalities while preserving general knowledge"
+            }
+          ]
+        },
+        {
+          "text": "Musical score understanding can be decomposed into at least four hierarchical levels of difficulty, from onset information up to texture and form.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "taxonomy of musical understanding",
+              "quote": "organised into four levels of increasing difficulty, ranging from onset information to texture and form"
+            }
+          ]
+        },
+        {
+          "text": "Models exhibit unstable level-wise performance and struggle to maintain multilevel correctness simultaneously, suggesting that integrated musical reasoning is not a simple sum of component skills.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "emergent difficulty finding",
+              "quote": "unstable level-wise performance, and challenges in maintaining multilevel correctness"
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "note",
+          "value": "ABC notation (textual score representation)",
+          "details": {
+            "format": "ABC notation",
+            "modality": "text",
+            "use": "score encoding for LLM input"
+          }
+        }
+      ],
+      "openQuestions": [
+        "What specific aspects of harmony and large-scale form are hardest for current models, and does this map onto known difficulties in human music theory pedagogy?",
+        "Does the modality gap between ABC notation and PDF scores reflect a fundamental representational difference, or is it an artifact of training data distribution?",
+        "Could a model that reliably understands musical scores be used generatively—e.g., to compose music that conforms to specific structural or harmonic constraints?",
+        "How do model failures at 'multilevel correctness' compare to human expert performance, and what does this reveal about the nature of integrated musical reasoning?",
+        "Would training on a broader corpus of non-Western scores reveal additional gaps, or would models transfer musical structural reasoning across traditions?",
+        "Is ABC notation a sufficient representation for capturing microtonal, spectral, or extended-technique music relevant to contemporary composition?"
+      ],
+      "scores": {
+        "base": 13,
+        "normalizedBase": 0.14634146341463414,
+        "novelty": 0.9666666666666667,
+        "crossRunNovelty": 1,
+        "sourceReusePenalty": 0,
+        "topicReusePenalty": 0,
+        "domainRelevance": 0.64,
+        "topicalBalance": 0.9691495894403482,
+        "combined": 0.6792748774404425,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 1
+      }
+    },
+    {
+      "citation": "S6",
+      "extractionId": "j978wc8spg7xjg8v7d09pzw79985df6w",
+      "sourceId": "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "sourceTitle": "Tonnetz Theory, Classical Harmony, and the Combinatorial Geometry of Abstract Musical Resources",
+      "sourceType": "rss",
+      "sourceStatus": "extracted",
+      "sourceUrl": "https://arxiv.org/abs/2604.19960",
+      "extractionCreatedAt": 1776942387613,
+      "extractionSummary": "This arXiv preprint develops a formal mathematical framework connecting musical harmony to combinatorial geometry through the concept of the Tonnetz (tone network). The authors demonstrate that various musical systems — including diatonic triads, diatonic seventh chords, pentatonic scales, and the 12-tone system — each correspond to specific combinatorial configurations (e.g., Fano, Desargues, Cremona-Richmond). A key result is that the Eulerian tonnetz maps to a Daublebsky von Sterneck D222 configuration, and that this same structure describes the relationship between chromatic pitch classes and major triads. The paper also addresses the major/minor triad duality, showing it can be 'broken' by identifying minor triads with hexacycles in the Levi graph of the D222 configuration. The work frames music theory as an instance of abstract combinatorial geometry, offering these structures as explicit resources for composition.",
+      "topics": [
+        "Tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "Fano configuration",
+        "Desargues configuration",
+        "Cremona-Richmond configuration",
+        "Levi graphs",
+        "bipartite graphs",
+        "major/minor duality",
+        "Tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-Riemannian theory"
+      ],
+      "topicTokens": [
+        "tonnetz",
+        "combinatorial geometry",
+        "music theory formalization",
+        "diatonic harmony",
+        "voice leading",
+        "pentatonic scales",
+        "12-tone system",
+        "fano configuration",
+        "desargues configuration",
+        "cremona-richmond configuration",
+        "levi graphs",
+        "bipartite graphs",
+        "major",
+        "minor duality",
+        "tristan chord",
+        "dominant seventh chords",
+        "half-diminished seventh chords",
+        "pitch class sets",
+        "hexacycles",
+        "graph theory in music",
+        "neo-riemannian theory"
+      ],
+      "claims": [
+        {
+          "text": "The Eulerian tonnetz can be represented by a {12_3} combinatorial configuration of Daublebsky von Sterneck type D222.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "core result from prior work, recapitulated here",
+              "quote": "It was shown that the Eulerian tonnetz can be represented by a {12_3} of Daublebsky von Sterneck type D222."
+            }
+          ]
+        },
+        {
+          "text": "The tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) can be represented by a {12_3} combinatorial configuration of type D228.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Tristan-genus tonnetz",
+              "quote": "We also constructed a tonnetz for Tristan-genus chords (dominant sevenths and half-diminished sevenths) and we showed that this tonnetz can be represented by a {12_3} of type D228."
+            }
+          ]
+        },
+        {
+          "text": "The seven diatonic degrees and their pitch classes are related by a bipartite graph of type {7_3} with girth four.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "diatonic triads graph",
+              "quote": "In the case of diatonic triads, we show the existence of a bipartite graph of type {7_3} and girth four that represents the well-known relations between the seven diatonic degrees and their pitch classes."
+            }
+          ]
+        },
+        {
+          "text": "The voice-leading relations between diatonic seventh chords are completely characterized by a Fano configuration {7_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "Fano configuration and seventh chords",
+              "quote": "In the case of diatonic seventh chords, we obtain a Fano configuration {7_3} which gives a complete characterization of the voice-leading relations that hold between such chords."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for pentatonic music can be constructed based on the Desargues configuration {10_3}.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "pentatonic tonnetz",
+              "quote": "We construct a tonnetz for pentatonic music based on the Desargues configuration {10_3}."
+            }
+          ]
+        },
+        {
+          "text": "A tonnetz for the 12-tone system can be constructed based on the Cremona-Richmond configuration {15_3}, and can serve as a compositional resource.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "12-tone tonnetz",
+              "quote": "We construct a tonnetz for the 12-tone system based on the Cremona-Richmond configuration {15_3}. Both can be used as a resource for musical compositions."
+            }
+          ]
+        },
+        {
+          "text": "The relationship between the chromatic pitch class set and the major triad set is represented by the same D222 configuration as the Eulerian tonnetz.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "chromatic–major triad correspondence",
+              "quote": "We show that the relation between the chromatic pitch class set and the major triad set is also represented by a D222."
+            }
+          ]
+        },
+        {
+          "text": "Minor triads correspond one-to-one with a certain class of hexacycles in the Levi graph of the D222 configuration, allowing the major/minor duality of the traditional tonnetz to be broken.",
+          "evidenceLevel": "preprint",
+          "citations": [
+            {
+              "label": "minor triads and hexacycles",
+              "quote": "The minor triads are in one-to-one correspondence with the members of a certain class of hexacycles in the Levi graph of this configuration. In this way, the characteristic duality between major and minor triads in the tonnetz can be broken."
+            }
+          ]
+        }
+      ],
+      "compositionParameters": [
+        {
+          "type": "scaleSystem",
+          "value": "Diatonic (7-note) scale",
+          "details": {
+            "chordTypes": [
+              "triads",
+              "seventh chords"
+            ],
+            "graphType": "{7_3} bipartite, girth 4",
+            "noteCount": 7
+          }
+        },
+        {
+          "type": "scaleSystem",
+          "value": "Pentatonic (5-note) scale",
+          "details": {
+            "configurationModel": "Desargues {10_3}",
+            "noteCount": 5
+          }
+        },
+        {
+          "type": "tuningSystem",
+          "value": "12-tone equal/chromatic system",
+          "details": {
+            "configurationModel": "Cremona-Richmond {15_3}",
+            "eulerianTonnetzModel": "D222 {12_3}",
+            "pitchClassCount": 12
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Tristan-genus chords: dominant seventh and half-diminished seventh",
+          "details": {
+            "chordTypes": [
+              "dominant seventh",
+              "half-diminished seventh"
+            ],
+            "configurationModel": "D228 {12_3}"
+          }
+        },
+        {
+          "type": "interval",
+          "value": "Diatonic seventh chords",
+          "details": {
+            "configurationModel": "Fano configuration {7_3}",
+            "property": "complete voice-leading characterization"
+          }
+        }
+      ],
+      "openQuestions": [
+        "Can the Desargues {10_3} pentatonic tonnetz be used to generate novel voice-leading rules analogous to those derived from the Fano configuration for diatonic seventh chords?",
+        "What are the perceptual or acoustic correlates of navigating paths through the Cremona-Richmond {15_3} 12-tone tonnetz — do certain paths correspond to recognizable harmonic progressions?",
+        "Since minor triads are modeled as hexacycles rather than as dual objects to major triads in this framework, what new compositional symmetries or asymmetries does this asymmetric treatment enable?",
+        "Are there analogous combinatorial configurations for microtonal or non-Western tuning systems (e.g., 19-TET, 31-TET, maqam scales)?",
+        "How does the D228 configuration for Tristan-genus chords relate acoustically to the harmonic series — is the dominant seventh's proximity to just intonation ratios reflected in the geometry?",
+        "Can these abstract graph structures be directly sonified or mapped to generative composition algorithms, and if so, what traversal strategies (e.g., Hamiltonian paths, shortest paths) yield musically coherent results?",
+        "What is the relationship between the girth-four constraint of the diatonic triad bipartite graph and perceptual properties like harmonic ambiguity or voice-leading efficiency?"
+      ],
+      "scores": {
+        "base": 31,
+        "normalizedBase": 0.5853658536585366,
+        "novelty": 0.9714285714285714,
+        "crossRunNovelty": 0,
+        "sourceReusePenalty": 1,
+        "topicReusePenalty": 1,
+        "domainRelevance": 1,
+        "topicalBalance": 0.9769711157640748,
+        "combined": 0.6470125663193151,
+        "peerReviewedClaims": 0,
+        "distinctParameterTypes": 3
+      }
+    }
+  ],
+  "aggregate": {
+    "topicFrequency": {
+      "computational musicology": 2,
+      "voice leading": 2,
+      "audio watermarking": 1,
+      "stft phase manipulation": 1,
+      "frequency-domain encoding": 1,
+      "perceptual audio quality": 1,
+      "deepfake audio detection": 1,
+      "cryptographic audio signing": 1,
+      "reed-solomon error correction in audio": 1,
+      "log-magnitude spectral differences": 1,
+      "lossy audio compression artifacts": 1,
+      "psychoacoustics of phase perception": 1,
+      "provenance in generative audio": 1,
+      "quantization-index modulation": 1,
+      "basso continuo": 1,
+      "historically informed performance practice": 1,
+      "baroque music": 1,
+      "performance style identification": 1,
+      "machine learning in music": 1,
+      "support vector machines": 1,
+      "harmonic realization": 1,
+      "improvisation": 1,
+      "personal style in performance": 1,
+      "pitch content representation": 1,
+      "keyboard performance": 1,
+      "acord dataset": 1,
+      "griffs": 1,
+      "rhythm formant analysis": 1,
+      "amplitude modulation spectrum": 1,
+      "low-frequency modulation": 1,
+      "speech rhythm": 1,
+      "mel frequency cepstral coefficients (mfcc)": 1,
+      "discrete cosine transform (dct)": 1,
+      "spectral modulation": 1,
+      "acoustic phonetics": 1,
+      "under-resourced languages": 1,
+      "tani language group": 1,
+      "cross-linguistic acoustic differentiation": 1,
+      "hierarchical feature encoding": 1,
+      "temporal structure of sound": 1,
+      "macro-temporal rhythm": 1,
+      "support vector machines for audio classification": 1,
+      "multilayer perceptron audio classification": 1,
+      "periodicity": 1,
+      "self-organization": 1,
+      "metastability": 1,
+      "phase transitions": 1,
+      "ostwald's step rule": 1,
+      "crystallography": 1,
+      "emergence": 1,
+      "path-dependence": 1,
+      "structural complexity": 1,
+      "mathematical vs. physical realizability": 1,
+      "symmetry": 1,
+      "repeating unit cells": 1,
+      "thermodynamic optimization vs. accessibility": 1,
+      "timescale sensitivity": 1,
+      "musical score understanding": 1,
+      "large language models": 1,
+      "vision-language models": 1,
+      "abc notation": 1,
+      "music notation": 1,
+      "pitch": 1,
+      "rhythm": 1,
+      "harmony": 1,
+      "musical form": 1,
+      "musical texture": 1,
+      "multimodal reasoning": 1,
+      "benchmark evaluation": 1,
+      "fine-tuning": 1,
+      "ai and music": 1,
+      "score analysis": 1,
+      "tonnetz": 1,
+      "combinatorial geometry": 1,
+      "music theory formalization": 1,
+      "diatonic harmony": 1,
+      "pentatonic scales": 1,
+      "12-tone system": 1,
+      "fano configuration": 1,
+      "desargues configuration": 1,
+      "cremona-richmond configuration": 1,
+      "levi graphs": 1,
+      "bipartite graphs": 1,
+      "major": 1,
+      "minor duality": 1,
+      "tristan chord": 1,
+      "dominant seventh chords": 1,
+      "half-diminished seventh chords": 1,
+      "pitch class sets": 1,
+      "hexacycles": 1,
+      "graph theory in music": 1,
+      "neo-riemannian theory": 1
+    },
+    "parameterTypeFrequency": {
+      "measurement": 12,
+      "frequency": 4,
+      "duration": 2,
+      "tuningsystem": 2,
+      "note": 2,
+      "scalesystem": 2,
+      "interval": 2
+    },
+    "evidenceDistribution": {
+      "preprint": 28,
+      "peer_reviewed": 5,
+      "personal": 1
+    },
+    "sourceTypeDistribution": {
+      "rss": 6
+    }
+  },
+  "noveltyHistory": {
+    "runsScanned": 6,
+    "priorSourceIds": 26,
+    "priorTopicTokens": 342,
+    "priorVariablePhrases": 18,
+    "priorTitlePhrases": 12
+  }
+}
