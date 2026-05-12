@@ -1,0 +1,90 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The carrier carries the form",
+    "question": "Can musical identity be strengthened by controlling the carrier layers beneath fixed foreground symbols?",
+    "hypothesis": "Listeners will perceive stronger intentionality and identity when fixed notes, chords, or words are supported by coordinated carrier constraints: prosodic stress, harmonic adjacency paths, spectral phase/log-magnitude signatures, and material coloration.",
+    "rationaleMd": "S1 and S5 show that speech text requires prosodic and phonetic carrier annotation for stable expressive synthesis. S6 shows that distributed phase and log-magnitude structures can carry robust hidden information without becoming the foreground. S3 frames harmonic meaning as graph adjacency beneath chord labels, while S2 shows that physical forms become reachable through path-dependent constraints. S4 adds the studio-material analogue: transformer coloration as a repeatable carrier of tonal identity.",
+    "sourceIds": [
+      "jx7dc14cbm6v0cme1ymrv0mmzd8567ga",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7fpefnn1345ek5cpfv2zayx586h3g3",
+      "jx7aa290nckw0wt9xn8y3xpe5s865h5c",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek"
+    ],
+    "concepts": [
+      "carrier form",
+      "carrier constraint",
+      "prosodic carrier",
+      "harmonic carrier path",
+      "spectral carrier signature",
+      "material coloration carrier",
+      "path-dependent form"
+    ]
+  },
+  "recipe": {
+    "title": "Same Symbol, Different Carrier",
+    "bodyMd": "Create a 60-second miniature with fixed melody, lyric, chord symbols, tempo, and form. Render four versions: neutral carrier; prosody carrier using stress/punctuation/timing annotations (S1, S5); graph carrier using Tonnetz-adjacent voicing paths under the same chord labels (S3); spectral/material carrier using subtle repeatable phase, adjacent-bin, or transformer-like coloration gestures (S4, S6). Compare blind for intentionality, emotional specificity, and recognizability. Treat S2 as the process model: the destination should feel believable because the path made it reachable.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": "Short enough for blind A/B comparison."
+      },
+      {
+        "type": "frequency",
+        "value": "44.1 kHz",
+        "details": "Matches APC source evaluation context for spectral-carrier tests."
+      },
+      {
+        "type": "scaleSystem",
+        "value": "Diatonic or chromatic fixed chord loop",
+        "details": "Keep chord labels constant while voicing path changes."
+      },
+      {
+        "type": "measurement",
+        "value": "4 render variants",
+        "details": "Plain, prosody, graph, spectral/material."
+      }
+    ],
+    "dawChecklist": [
+      "Write one 8\u201316 bar phrase and freeze notes/chord symbols.",
+      "Create a plain render with minimal coloration.",
+      "Create a prosody render with deliberate stress, breath, and timing contour.",
+      "Create a graph render with Tonnetz-adjacent inner-voice movement under the same chord names.",
+      "Create a spectral/material render with subtle repeatable saturation or phase/log-magnitude gestures.",
+      "Loudness-match all renders and compare blind."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "studio headphones or nearfields, loudness matched",
+      "listeningMethod": "blind A/B/C/D ranking for identity, intentionality, and emotional specificity",
+      "whatVaries": [
+        "prosodic stress/timing",
+        "voicing adjacency path",
+        "spectral or material carrier signature"
+      ],
+      "whatStaysConstant": [
+        "foreground notes",
+        "chord symbols",
+        "tempo",
+        "form",
+        "overall loudness"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Essay written at docs/essays/the-carrier-carries-the-form.md; graph concepts should be linked manually if publish mode fails with the recurring Convex server error."
+}
