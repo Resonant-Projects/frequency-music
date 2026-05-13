@@ -1,0 +1,119 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Hidden Bands of Form",
+    "question": "Can a musical identity be carried by separable planning, harmonic-geometry, spectral-signature, and dialogic-surface bands rather than by foreground notes alone?",
+    "hypothesis": "If a 90-second study is built with four independently controlled bands\u2014semantic plan, adjacency-governed harmony, subtle spectral signature, and timbral call-and-response\u2014then ablating each band will selectively weaken a different perceived quality: overall form, harmonic inevitability, identity under filtering, or dialogue. The reason is that the selected sources all show structure distributed across bands or layers that must later be fused: frequency bands in bioacoustics, abstraction bands in video-to-music generation, phase/log-magnitude carrier bands in watermarking, combinatorial geometry bands in harmony, accessible phase paths in ice, and dialogic production layers in electronic music.",
+    "rationaleMd": "S3 shows that inherited baseband audio pipelines can discard meaningful high-frequency bioacoustic information, while multi-band decomposition and fusion recovers structure. S4 separates high-level semantic planning from low-level diffusion synthesis, giving a planning/rendering band split. S5 demonstrates that STFT phase bins and adjacent log-magnitude differences can carry robust hidden signatures without dominating perception. S2 formalizes harmonic resources through combinatorial configurations, making adjacency a structural band beneath named chords. S1 grounds the idea physically: large possibility spaces only realize forms through accessible transition paths. S6 gives the practical studio surface: timbral families, phrases, and silence answer one another across arrangement layers. Together they support a band-aware composition experiment in which each layer carries a different aspect of form [S1, S2, S3, S4, S5, S6].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx78jqe2mp7zwykmbywha3mzrs85xyys",
+      "jx7awwpndbmcnas4926276wxfn85e65h",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c"
+    ],
+    "concepts": [
+      "hidden bands of form",
+      "band-aware composition",
+      "planning band",
+      "harmonic geometry band",
+      "spectral signature band",
+      "dialogic surface band",
+      "band-accessible form",
+      "decorrelated agreement"
+    ]
+  },
+  "recipe": {
+    "title": "Multi-Band Signature Piece",
+    "bodyMd": "Create a 90-second study at 96 BPM with four independently designed bands. First, write a planning band: a short verbal or symbolic plan with three sections, such as question, false fusion, real fusion [S4]. Second, create a harmonic geometry band: choose a small Tonnetz-like graph or 6\u20138 chord adjacency map and allow harmony to move only to adjacent states, preferring nearest-accessible moves except at high-pressure section boundaries [S1, S2]. Third, create a spectral signature band: a subtle high-band or phase-like recurring layer such as seeded narrow EQ boosts above 6 kHz, a noise contour, or a phase-smear gesture; render an alternate version with an 8 kHz low-pass to test identity loss [S3, S5]. Fourth, create a dialogic surface band: two timbral families, such as sampled texture and analog-modeled bass, answer each other with phrases and silence [S6]. Render four ablations\u2014full fusion, no signature, no geometry, and no plan\u2014and blind-rate identity, inevitability, and dialogue.",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "96 BPM",
+        "details": {
+          "bpm": 96
+        }
+      },
+      {
+        "type": "duration",
+        "value": "90 seconds",
+        "details": {
+          "seconds": 90
+        }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "four bands with four ablation renders",
+        "details": {
+          "bands": [
+            "planning",
+            "harmonic geometry",
+            "spectral signature",
+            "dialogic surface"
+          ],
+          "renders": 4
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "8 kHz low-pass ablation",
+        "details": {
+          "cutoffHz": 8000
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "6\u20138 chord adjacency map",
+        "details": {
+          "nodes": [
+            6,
+            8
+          ]
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Write a three-section verbal/symbolic plan before sound design: question, false fusion, real fusion.",
+      "Draw a 6\u20138 node chord adjacency graph and restrict harmonic movement to adjacent nodes.",
+      "Design a subtle spectral signature above roughly 6 kHz using seeded EQ, noise contour, cymbal phase smear, or similar high-band material.",
+      "Create two contrasting timbral families and arrange them in call-and-response, including at least two silent answers.",
+      "Render Full Fusion with all four bands active.",
+      "Render No Signature by removing or 8 kHz low-pass filtering the spectral signature layer.",
+      "Render No Geometry by keeping the same sounds but allowing arbitrary chord movement.",
+      "Render No Plan by keeping local materials but randomizing section order.",
+      "Blind-rate the four renders for identity, inevitability, and dialogue on a 1\u20137 scale."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 90,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "studio headphones, matched integrated loudness before rating",
+      "listeningMethod": "blind shuffled comparison with 1\u20137 ratings for identity, inevitability, and dialogue",
+      "whatVaries": [
+        "presence of spectral signature band",
+        "presence of adjacency-governed harmonic geometry",
+        "presence of global planning band",
+        "band fusion across surface dialogue"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "overall duration",
+        "main timbral families",
+        "loudness target",
+        "core motif material"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Companion essay: docs/essays/the-hidden-bands-of-form.md"
+}
