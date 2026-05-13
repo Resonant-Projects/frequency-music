@@ -2009,5 +2009,19 @@
     "category": "composition",
     "contentHash": "bc8d08f07fbf9522bb39f1ad6b30a6fe9ae17f49b492fbfc8fd182cfb1553b69",
     "generatedAt": "2026-05-13T00:29:29.924403Z"
+  },
+  "the-matrix-between-things": {
+    "excerpt": "Musical form can emerge from the relation matrix between fixed objects: call-and-response distance, harmonic graph adjacency, nearest-accessible transitions, token/envelope alignment, and spatial distance constraints.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "geometry",
+      "signal-processing",
+      "acoustics",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "68b01e227cdbd3c33447b4ec734110e3dbd4c14d70ba2379e66c95e3856cefda",
+    "generatedAt": "2026-05-13T08:27:24.618Z"
   }
 }

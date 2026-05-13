@@ -1,0 +1,70 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Relation Matrix",
+    "question": "When musical objects stay fixed, can changing only their relational matrix alter perceived dialogue, coherence, and arrival quality?",
+    "hypothesis": "If the same six sound objects are rearranged by explicit relation matrices—call/answer distance, harmonic graph adjacency, nearest-accessible transition, token/envelope alignment, and invariant/adaptive surface mapping—then listeners will report stronger differences in dialogue, spatial coherence, and formal inevitability than in an object-only control, because the cited sources all show meaning or stability emerging from relations rather than isolated objects.",
+    "rationaleMd": "S1 frames call-and-response as a structural relation operating from beats to whole arrangement sections, including silence as an answering element. S5 formalizes harmonic resources as graph/configuration relations rather than isolated chords, while S6 shows that sound-source positions can be recovered from Euclidean distance and TDOA relations. S3 adds that mismatched text/speech unit alignment destabilizes streaming speech prosody, and S4 separates relatively invariant encoder representations from decoder layers that adapt to degradation. S2 supplies the physical analogy: systems often move to the nearest accessible metastable state rather than the globally optimal one. Together these support a test in which fixed audio objects are made to feel different by changing the relation matrix among them [S1, S2, S3, S4, S5, S6].",
+    "sourceIds": [
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx728k53rhpv5ye61qsvb8b9fh85ayjd",
+      "jx764ke9nz50zaqrr0cjsbk149864vyj",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7d318zzcx7e8cd6yrmvrgn7h859g7f"
+    ],
+    "concepts": [
+      "relation matrix",
+      "call matrix",
+      "harmonic graph adjacency",
+      "nearest accessible relation",
+      "alignment matrix",
+      "invariant adaptive split",
+      "spatial distance matrix"
+    ]
+  },
+  "recipe": {
+    "title": "Relation-Matrix Variations",
+    "bodyMd": "Create a 60-second loop from six fixed sound objects: a call phrase, answer phrase, bass riff, chord pad, percussive noise layer, and spatialized source. Render six versions. A is an object-only control. B forces every event to answer a prior event at beat, phrase, or section scale, including silence as an answer [S1]. C moves the chord pad only by adjacent steps in a small Tonnetz-like graph while keeping the cadence fixed [S5]. D uses nearest-accessible transitions: smallest voice-leading, spectral-density, or rhythmic-subdivision changes, echoing metastable path dependence [S2]. E varies only symbolic/acoustic alignment by offsetting envelope peaks and room tails by 80–160 ms, testing prosodic instability from unit mismatch [S3]. F preserves pitch contour and phrase identity while adapting noise, reverb clarity, transient softness, and stereo position, borrowing the invariant/adaptive split from enhancement models and spatial relation logic [S4, S6]. A disconfirming result would be that blind listeners cannot identify perceptual differences beyond loudness or timbre.",
+    "parameters": [
+      { "type": "tempo", "value": "108 BPM", "details": { "bpm": 108 } },
+      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
+      { "type": "structuralPattern", "value": "six fixed objects, six relation-only variations", "details": { "objects": 6, "versions": 6 } },
+      { "type": "measurement", "value": "alignment offsets of 80 ms and 160 ms", "details": { "offsetMs": [80, 160] } },
+      { "type": "measurement", "value": "three relation scales: beat, phrase, section", "details": { "scales": ["beat", "phrase", "section"] } }
+    ],
+    "dawChecklist": [
+      "Create six audio/MIDI objects and freeze or bounce them so object identity stays fixed across versions.",
+      "Render Version A as an intuitive object-only control.",
+      "Render Version B by assigning every object entry a call/answer target at beat, phrase, or section scale; include at least two silent answers.",
+      "Render Version C by routing the chord pad through a short adjacency-only harmonic graph while keeping the final cadence identical to A.",
+      "Render Version D by replacing leaps with nearest-accessible changes in voice leading, density, and subdivision; reserve one deliberate high-pressure leap.",
+      "Render Version E twice with identical notes but envelope/room-tail offsets of 80 ms and 160 ms.",
+      "Render Version F with pitch/rhythm identity preserved but reverb clarity, noise, transient softness, and stereo position adapted over time.",
+      "Blind-label the renders and rate dialogue, spatial coherence, stability, and inevitability from 1–7."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "studio headphones, matched integrated loudness before rating",
+      "listeningMethod": "blind A/B/X-style shuffle with 1–7 ratings for dialogue, spatial coherence, stability, and inevitability",
+      "whatVaries": [
+        "call/answer relation distance",
+        "harmonic graph path",
+        "nearest-accessible transition rule",
+        "symbolic/acoustic alignment offset",
+        "adaptive surface mapping for noise/reverb/transients/spatial position"
+      ],
+      "whatStaysConstant": [
+        "six source audio objects",
+        "tempo",
+        "overall duration",
+        "final cadence location",
+        "integrated loudness target"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Companion essay: docs/essays/the-matrix-between-things.md"
+}
