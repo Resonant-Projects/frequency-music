@@ -1,0 +1,70 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Precursor Field",
+    "question": "Do listeners perceive identical musical target events differently when only the three-second approach field changes?",
+    "hypothesis": "If a fixed musical target is preceded by different three-second precursor fields that vary accessibility, prosodic contour, and hidden-source cues, then listeners will rate the same target as more prepared, blocked, surprising, or inevitable depending on the precursor field rather than the target itself.",
+    "rationaleMd": "S3 reports that severe stuttering events can carry detectable prosodic precursors in a three-second audio window, suggesting that short pre-event acoustic fields can encode upcoming disruption. S6 separates relatively static timbral identity from dynamic hierarchical prosody, supporting a test where the identity of the target stays fixed while the approach contour changes. S2 adds a path-accessibility model: systems may move to the nearest accessible metastable state rather than the globally optimal one. S5 supplies a harmonic version of accessibility through Tonnetz/combinatorial neighborhood structures. S1 warns, by analogy, that premature measurement/collapse can destroy coherent joint possibility, while S4 frames hidden/off-screen causes as meaningful audio-generation targets. Together these sources support treating the pre-arrival region as a compositional control surface rather than incidental lead-in.",
+    "sourceIds": [
+      "jx7e069afwawf8v8pgrxex5y2s85w80e",
+      "jx762q5tm7md2f9znq4tykwkv985feka",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx7dvwyahyzy5qvrgf7y1gvtnd85vkbp"
+    ],
+    "concepts": [
+      "precursor field",
+      "three-second approach window",
+      "accessible next state",
+      "prosodic warning",
+      "hidden-source cue",
+      "coherent arrival",
+      "metastable harmony"
+    ]
+  },
+  "recipe": {
+    "title": "Three Seconds Before Arrival",
+    "bodyMd": "Write a sixteen-bar loop with four fixed target events: one cadence, one timbral bloom, one rhythmic break, and one sudden silence. Render five versions in which the targets remain identical but the three seconds before each target change. Version A uses nearest-neighbor Tonnetz-like voice leading and gradual timbral/rhythmic movement toward the arrival [S5, S2]. Version B uses hard two-beat or two-note block resets, echoing the collapsed-block constraint in the HHL music architecture [S1]. Version C exaggerates subtle prosodic precursor cues over the three-second window: tempo drag, energy-envelope tilt, pitch-contour narrowing, spectral-flux increase, or breath-like noise [S3]. Version D adds acousmatic/off-screen cues that imply a hidden cause, such as room tone swelling, distant friction, or preparatory vocal noise [S4]. Version E keeps timbral identity constant while changing only dynamic prosody: articulation, contour, timing, and intensity [S6]. Blind-listen to the renders and rate the identical target arrivals for preparation, surprise, blockage, inevitability, and emotional coherence.",
+    "parameters": [
+      { "type": "duration", "value": "3 seconds precursor window", "details": { "seconds": 3 } },
+      { "type": "duration", "value": "16 bars total", "details": { "bars": 16 } },
+      { "type": "measurement", "value": "5-point listener ratings", "details": { "scaleMin": 1, "scaleMax": 5, "dimensions": ["prepared", "surprising", "blocked", "inevitable", "emotionally coherent"] } },
+      { "type": "tempo", "value": "96 BPM", "details": { "bpm": 96 } },
+      { "type": "measurement", "value": "five render conditions", "details": { "conditions": ["accessible path", "collapsed block", "prosodic warning", "hidden cause", "identity/prosody split"] } }
+    ],
+    "dawChecklist": [
+      "Create a 16-bar loop at 96 BPM with four clearly marked target arrivals.",
+      "Duplicate the session into five render lanes or project versions.",
+      "Keep the target-event audio/MIDI identical across all versions.",
+      "Edit only the three seconds before each target in each version.",
+      "Render accessible-path, collapsed-block, prosodic-warning, hidden-cause, and identity/prosody-split versions.",
+      "Randomize filenames before listening so the condition is hidden.",
+      "Rate each fixed target on preparation, surprise, blockage, inevitability, and emotional coherence.",
+      "Compare whether ratings change despite identical targets. If not, reject or revise the precursor-field design."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "studio headphones or monitors, blind randomized render order",
+      "listeningMethod": "rate each identical target arrival after one full pass and one focused pass around each three-second window",
+      "whatVaries": [
+        "three-second pre-target prosody",
+        "voice-leading accessibility",
+        "block-boundary continuity",
+        "hidden-source/acousmatic cues",
+        "dynamic contour while timbre stays fixed"
+      ],
+      "whatStaysConstant": [
+        "target event audio/MIDI",
+        "tempo",
+        "bar structure",
+        "instrumentation at the target",
+        "mix level of the target events"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Disconfirming evidence: if blinded ratings do not change across conditions despite altered precursor fields, then the current three-second approach design is not perceptually load-bearing."
+}
