@@ -1,0 +1,116 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Control Plane Under the Sound",
+    "question": "Can a hidden routing layer make simple foreground material feel more inevitable, tense, and conversational than the same material without routing constraints?",
+    "hypothesis": "If a two-minute study keeps its audible foreground simple but routes every transition through a hidden control plane—harmonic graph adjacency, isolated vocal-feature axes, chirp carriers, low-frequency pressure lanes, and 600 ms response windows—then listeners will rate the full-control version as more inevitable, tense, and conversationally alive than versions with the carriers or routing removed. The mechanism is nearest-accessible control: path constraints shape which musical states can crystallize next.",
+    "rationaleMd": "S1 shows that physical systems may realize nearest accessible metastable phases rather than globally optimal states, with path/rate/timescale determining emergent form. S3 supplies a harmonic analogue: Tonnetz and related combinatorial configurations make chord identity and voice-leading adjacency explicit. S2 suggests a timbral control plane, where pitch, F2, intensity, noise, and higher-frequency characteristics can be manipulated as relatively isolated speech-feature dimensions. S5 adds a carrier model through chirp spread spectrum, where frequency-sweeping structure carries compressed voice through constrained channels. S6 gives a temporal control plane for full-duplex interaction, using 600 ms streaming chunks and warning that cascaded pipelines accumulate latency and information loss. S4 is more speculative, but supports the possibility that low-frequency/sub-audible acoustic causes can shape perceived presence or unease. Together, these sources support a composition whose foreground is governed by hidden routing signals rather than by surface repetition alone [S1, S2, S3, S4, S5, S6].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7ady5b74ettfwnrgzq10p2mn86g6bk",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7bsecd6xz13wetqb0aeaxenn85nj95",
+      "jx731xk7jnvfy3k2caqszwn83n86a21d",
+      "jx743vna2yd4hyvvhf93yc1v1h85xvj4"
+    ],
+    "concepts": [
+      "control plane under the sound",
+      "nearest accessible control",
+      "hidden routing layer",
+      "chirp carrier gesture",
+      "low-frequency pressure lane",
+      "full-duplex timing",
+      "isolated vocal feature axis",
+      "graph-routed harmony"
+    ]
+  },
+  "recipe": {
+    "title": "Control-Plane Composition Study",
+    "bodyMd": "Create a 120-second study with simple foreground material but strict hidden routing. First, draw a 7-node chord graph and permit only adjacent moves, with section boundaries acting as high-pressure exceptions [S1, S3]. Second, build a vocal/formant pad with three separately automated axes: F0 or pitch, F2/formant position, and intensity/noise; move only one axis at a time in the first half, then two at a time in the second [S2]. Third, add a quiet chirp-like carrier—sine sweep, band-pass sweep, filtered noise ramp, or granular scan—300–600 ms before every harmonic move [S5]. Fourth, add a safe low-frequency pressure lane, preferably 24–36 Hz on ordinary monitors rather than unsafe true infrasound, swelling only at section crossings [S4]. Fifth, arrange call-and-response so answers begin within roughly 600 ms, preserving a full-duplex listening/speaking feel [S6]. Render Full Control Plane, No Carrier, and No Routing versions, then blind-rate inevitability, tension, and conversational aliveness.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "120 seconds",
+        "details": {
+          "seconds": 120
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "7-node chord adjacency graph",
+        "details": {
+          "nodes": 7,
+          "movementRule": "adjacent nodes only"
+        }
+      },
+      {
+        "type": "duration",
+        "value": "300–600 ms pre-transition carrier",
+        "details": {
+          "minMs": 300,
+          "maxMs": 600
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "24–36 Hz low-frequency pressure lane",
+        "details": {
+          "minHz": 24,
+          "maxHz": 36,
+          "safetyNote": "keep playback levels conservative"
+        }
+      },
+      {
+        "type": "duration",
+        "value": "600 ms response window",
+        "details": {
+          "milliseconds": 600
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Draw a 7-node chord adjacency graph before writing notes.",
+      "Choose a starting node and write a progression using only adjacent moves except at section boundaries.",
+      "Create a vocal/formant pad with separate automation lanes for F0/pitch, F2/formant, and intensity/noise.",
+      "Automate only one vocal axis at a time in the first half; allow two-axis movement in the second half.",
+      "Place a quiet chirp, sweep, filtered-noise ramp, or granular scan 300–600 ms before every harmonic move.",
+      "Add a conservative 24–36 Hz pressure lane that swells only before section-crossing graph moves.",
+      "Arrange call-and-response gestures so each response begins within roughly 600 ms of the call ending.",
+      "Render Full Control Plane with all routing layers active.",
+      "Render No Carrier by removing chirps and the pressure lane while keeping notes and sounds constant.",
+      "Render No Routing by keeping sounds/carriers but allowing arbitrary chord jumps and loose response timing.",
+      "Blind-rate all renders for inevitability, tension, and conversational aliveness on a 1–7 scale."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 120,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "studio headphones or monitors at conservative low-frequency playback levels; loudness matched before rating",
+      "listeningMethod": "blind shuffled comparison with 1–7 ratings for inevitability, tension, and conversational aliveness",
+      "whatVaries": [
+        "presence of chirp carrier and low-frequency pressure lane",
+        "presence of graph-routed harmonic adjacency",
+        "strictness of 600 ms response timing",
+        "isolation versus coupling of vocal feature axes"
+      ],
+      "whatStaysConstant": [
+        "overall duration",
+        "foreground motifs",
+        "core timbral palette",
+        "mix loudness target",
+        "starting harmonic node"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Companion essay: docs/essays/the-control-plane-under-the-sound.md"
+}

@@ -505,6 +505,20 @@
     "contentHash": "858b99ee65c7f12c746c5fb82963e99ba5d9fe0dac5dbe7ff7513b3530a460bf",
     "generatedAt": "2026-05-02T20:03:00.000Z"
   },
+  "the-control-plane-under-the-sound": {
+    "excerpt": "A hidden routing layer\u2014graph adjacency, vocal axes, chirp carriers, pressure lanes, and timing windows\u2014can govern how simple musical foregrounds become form.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "mathematical-music-theory",
+      "acoustics",
+      "perception",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "0550d8cfb4dfc70712209ed7026e85e9aa273c8f21eb3fd7ca0b33f7e36c7ec2",
+    "generatedAt": "2026-05-14T00:26:53.548Z"
+  },
   "the-coordinate-system-hears-first": {
     "excerpt": "Across Tonnetz geometry, geo-acoustic embeddings, sound-speed physics, spatial localization, and speech tokenization, sound becomes composable only after it is placed in a coordinate system that makes certain transformations meaningful.",
     "tags": [
@@ -951,6 +965,20 @@
     "contentHash": "b1ef7429b0d6ac68625a66a4006c9e7de4b57a21fe445ec7ddc99faa8d5b2e94",
     "generatedAt": "2026-05-05T00:27:52.106941Z"
   },
+  "the-hidden-bands-of-form": {
+    "excerpt": "Multi-band decomposition, semantic planning, phase watermarking, Tonnetz geometry, metastable ice paths, and call-and-response production suggest that musical identity can be distributed across hidden bands of form.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "AI-music",
+      "mathematical-music-theory",
+      "spectral-analysis",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "94ec5ed27a2cc0fd704edde6076e18399456afe21fe5245a1864eae27c197127",
+    "generatedAt": "2026-05-13T16:27:03.895Z"
+  },
   "the-hidden-scheduler": {
     "excerpt": "Music and speech are controlled not by single clocks but by nested schedulers operating at different timescales\u2014from micro-timing to phrase to form\u2014each managing progress and return.",
     "tags": [
@@ -1201,6 +1229,20 @@
     "contentHash": "ea4a82536e4016b7c2cd52dc5be447683872207a71cc82afd31fb79935d5cd16",
     "generatedAt": "2026-04-10T18:39:15.490Z"
   },
+  "the-matrix-between-things": {
+    "excerpt": "Musical form can emerge from the relation matrix between fixed objects: call-and-response distance, harmonic graph adjacency, nearest-accessible transitions, token/envelope alignment, and spatial distance constraints.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "geometry",
+      "signal-processing",
+      "acoustics",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "68b01e227cdbd3c33447b4ec734110e3dbd4c14d70ba2379e66c95e3856cefda",
+    "generatedAt": "2026-05-13T08:27:24.618Z"
+  },
   "the-measurement-wall": {
     "excerpt": "Three converging research areas reveal an inescapable ceiling on audio quality metrics: statistical noise in listeners, undefined perceptual anchors, and entangled measurement dimensions all create irreducible limits to predicting subjective experience from objective signals.",
     "tags": [
@@ -1368,6 +1410,20 @@
     "category": "interdisciplinary",
     "contentHash": "47ce18eafecae8b4c8d1bd6d69e04e831bfba6cbed03c5de990a20e839da7702",
     "generatedAt": "2026-05-11T16:29:00.750Z"
+  },
+  "the-precursor-field": {
+    "excerpt": "Many musical arrivals are shaped by a precursor field: three seconds of prosody, accessible harmonic paths, and hidden-source cues that teach the listener how to hear the event before it happens.",
+    "tags": [
+      "composition",
+      "prosody",
+      "harmony",
+      "acousmatics",
+      "music-cognition",
+      "generative-systems"
+    ],
+    "category": "composition",
+    "contentHash": "bc8d08f07fbf9522bb39f1ad6b30a6fe9ae17f49b492fbfc8fd182cfb1553b69",
+    "generatedAt": "2026-05-13T00:29:29.924403Z"
   },
   "the-preparatory-field": {
     "excerpt": "Musical arrivals feel earned when harmonic space, prosody, hidden causes, and call-response cues make the system lean before the event occurs.",
@@ -1995,47 +2051,5 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
-  },
-  "the-precursor-field": {
-    "excerpt": "Many musical arrivals are shaped by a precursor field: three seconds of prosody, accessible harmonic paths, and hidden-source cues that teach the listener how to hear the event before it happens.",
-    "tags": [
-      "composition",
-      "prosody",
-      "harmony",
-      "acousmatics",
-      "music-cognition",
-      "generative-systems"
-    ],
-    "category": "composition",
-    "contentHash": "bc8d08f07fbf9522bb39f1ad6b30a6fe9ae17f49b492fbfc8fd182cfb1553b69",
-    "generatedAt": "2026-05-13T00:29:29.924403Z"
-  },
-  "the-matrix-between-things": {
-    "excerpt": "Musical form can emerge from the relation matrix between fixed objects: call-and-response distance, harmonic graph adjacency, nearest-accessible transitions, token/envelope alignment, and spatial distance constraints.",
-    "tags": [
-      "composition",
-      "mathematical-music-theory",
-      "geometry",
-      "signal-processing",
-      "acoustics",
-      "AI-music"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "68b01e227cdbd3c33447b4ec734110e3dbd4c14d70ba2379e66c95e3856cefda",
-    "generatedAt": "2026-05-13T08:27:24.618Z"
-  },
-  "the-hidden-bands-of-form": {
-    "excerpt": "Multi-band decomposition, semantic planning, phase watermarking, Tonnetz geometry, metastable ice paths, and call-and-response production suggest that musical identity can be distributed across hidden bands of form.",
-    "tags": [
-      "composition",
-      "signal-processing",
-      "AI-music",
-      "mathematical-music-theory",
-      "spectral-analysis",
-      "psychoacoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "94ec5ed27a2cc0fd704edde6076e18399456afe21fe5245a1864eae27c197127",
-    "generatedAt": "2026-05-13T16:27:03.895Z"
   }
 }
