@@ -1,0 +1,68 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Style as Redundant Code",
+    "question": "Does distributing a compositional fingerprint across harmony, voicing, response timing, spectral signature, and transition path make a piece more recognizable after layer removal than concentrating identity in a lead motif?",
+    "hypothesis": "If a musical identity is redundantly encoded across graph traversal, griff-like voicing choices, call-and-response behavior, hidden spectral signatures, and metastable transition habits, then listeners will recognize the piece's identity more reliably after muting, cropping, or low-pass filtering than when identity is concentrated mainly in a foreground motif.",
+    "rationaleMd": "APC demonstrates that hidden signatures can be distributed across phase/log-magnitude structure and survive compression, cropping, and other signal damage [S3]. Basso continuo style identification suggests that personal performance identity can be measured from recurring pitch-content features rather than from a single spectacular gesture [S6]. Tonnetz/combinatorial geometry provides an explicit graph of harmonic adjacency, while Ostwald-style nearest-accessible transitions suggest that path-dependent local moves can define structural identity [S1][S2]. Mayer's call-and-response practice extends identity to arrangement-scale answer behavior [S4]. The HHL source motivates keeping melody and harmony coupled before collapse, so the identity code is composed as a joint field rather than isolated parameters [S5]. The main evidence conflict is methodological: watermarking robustness, formal graph theory, physics analogy, ML classification, quantum-generation design, and artist interview evidence do not prove the same perceptual claim. This protocol therefore tests recognition directly rather than assuming it.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv"
+    ],
+    "concepts": [
+      "style as redundant code",
+      "error-correcting signature",
+      "distributed musical identity",
+      "griff-like voicing code",
+      "nearest-accessible transition habit",
+      "spectral identity trace"
+    ]
+  },
+  "recipe": {
+    "title": "The Error-Correcting Signature",
+    "bodyMd": "Build two one-minute versions of the same piece. Version A concentrates identity in one obvious lead motif. Version B distributes identity across six layers: harmonic graph traversal, griff-like voicing, coupled melody-harmony cells, call-and-response behavior, a subtle spectral/phase trace, and metastable transition plateaus [S1][S2][S3][S4][S5][S6]. Use the same tempo, instrumentation, length, mix loudness, and form. Then render damaged versions: lead muted, high frequencies low-passed around 8 kHz, last 20% cropped, and accompaniment-only. Rate whether the same compositional hand remains recognizable. Disconfirming evidence: the distributed version is no more recognizable than the concentrated version after damage.",
+    "parameters": [
+      { "type": "tempo", "value": "108 BPM", "details": { "bpm": 108 } },
+      { "type": "duration", "value": "60 seconds per version", "details": { "seconds": 60 } },
+      { "type": "structuralPattern", "value": "8-node harmonic graph with nearest-accessible traversal", "details": { "nodes": 8, "normalEdges": 3, "pressureEdges": 3, "transitionOnlyEdges": 2 } },
+      { "type": "note", "value": "3 griff-like voicing units", "details": { "examples": ["empty third", "delayed third", "doubled bass octave"] } },
+      { "type": "frequency", "value": "8 kHz low-pass damage condition", "details": { "cutoffHz": 8000 } },
+      { "type": "duration", "value": "20% end-cropping damage condition", "details": { "cropPercent": 20 } }
+    ],
+    "dawChecklist": [
+      "Create an 8-node chord graph and mark normal, pressure, and transition-only edges.",
+      "Compose Version A with identity concentrated in a clear foreground lead motif.",
+      "Compose Version B with a plainer lead but six redundant identity layers: graph habit, voicing griffs, coupled melody-harmony cells, response behavior, spectral trace, and transition plateau.",
+      "Match Version A and Version B for tempo, duration, instrumentation, loudness, and broad section form.",
+      "Render clean bounces of both versions.",
+      "Render four damaged bounces of each version: lead muted, 8 kHz low-pass, last 20% cropped, accompaniment-only.",
+      "Blind-label the bounces and rate identity survival from 1–5 for each condition.",
+      "Compare whether the distributed version retains recognizable identity more reliably than the concentrated version."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 60,
+      "panelPlanned": ["self"],
+      "listeningContext": "DAW studio monitors or neutral headphones; blind-labeled clean and damaged bounces.",
+      "listeningMethod": "Rate identity survival and perceived authorial hand on 1–5 scales after layer removal/filtering/cropping.",
+      "whatVaries": [
+        "identity encoding strategy: concentrated lead motif vs distributed redundant code",
+        "damage condition: clean, lead muted, 8 kHz low-pass, 20% end-crop, accompaniment-only"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "duration",
+        "instrument palette",
+        "mix loudness",
+        "section form",
+        "base harmonic node set"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Companion essay: docs/essays/style-as-redundant-code.md"
+}

@@ -2065,5 +2065,19 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
+  },
+  "style-as-redundant-code": {
+    "excerpt": "A musical fingerprint can act like an error-correcting code: distribute identity across harmony, voicing, response timing, spectral trace, and transition habit so the hand survives damage.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "mathematical-music-theory",
+      "performance-practice",
+      "algorithmic-composition",
+      "harmony"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "141e15325bfc8a3568cb8b7529833bae4dc56e6d3dcad170c1a32ddb0db7a4e2",
+    "generatedAt": "2026-05-14T16:29:16.433Z"
   }
 }
