@@ -1,0 +1,99 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Uncollapsed Accompaniment",
+    "question": "Does delaying commitment across harmony, melody, voicing, and hidden timbral signature make accompaniment feel more inevitable, personal, and conversational than an early-collapse workflow?",
+    "hypothesis": "If a short piece composes accompaniment first as a latent field—harmonic graph adjacency, personal griff palette, coupled melody-harmony cells, subtle phase/signature layer, and call-response timing—then a phrase-boundary collapse version will be rated as more inevitable, personally authored, and conversationally alive than versions that choose chords first or remove the stylistic fingerprint. The mechanism is uncollapsed accompaniment: a constrained possibility field that shapes the audible surface before it becomes one thing.",
+    "rationaleMd": "S1 shows that real physical transitions choose local accessible phases from a much larger possibility space, with path/rate/pressure affecting the resulting form. S2 supplies the harmonic possibility field: Tonnetz and combinatorial configurations define adjacency and resource structure before a progression is chosen. S6 shows that basso continuo realization contains measurable personal style inside rule-bound improvisation, making accompaniment a fingerprinted field rather than neutral rule execution. S5 adds the strongest formal analogy: coupled melody-harmony generation should remain coherent until measurement, because premature readout destroys the intended advantage. S3 shows that hidden phase/log-magnitude structure can carry robust information below ordinary perceptual attention, suggesting a subtle signature layer for musical identity. S4 grounds the result in practical arrangement, where call-and-response at multiple levels turns latent possibility into audible dialogue [S1, S2, S3, S4, S5, S6].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv"
+    ],
+    "concepts": [
+      "uncollapsed accompaniment",
+      "latent continuo field",
+      "phrase-boundary collapse",
+      "personal griff palette",
+      "hidden phase signature",
+      "coupled melody harmony cell",
+      "nearest accessible realization",
+      "fingerprinted accompaniment"
+    ]
+  },
+  "recipe": {
+    "title": "Latent Continuo Field Study",
+    "bodyMd": "Create a 120-second piece whose accompaniment is composed first as a constrained possibility field and only collapsed into notes phrase by phrase. Draw a 7–12 node harmonic graph and mark three pressure edges usable only near section boundaries [S1, S2]. Define 6–10 modern griffs—recurring voicing gestures with tendencies rather than fixed rules [S6]. For each phrase, score a two-note melodic cell and two-chord harmonic cell together before committing either to MIDI, preserving coupled choice until a phrase boundary [S5]. Add a subtle phase, all-pass, adjacent-bin EQ, ring-mod, or filtered-noise signature that encodes the current griff identity without dominating perception [S3]. Arrange lead/accompaniment gestures as call and response at beat, phrase, bassline, and section levels [S4]. Render Uncollapsed Field, Early Collapse, and No Fingerprint versions, then blind-rate inevitability, personality, and conversational aliveness.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "120 seconds",
+        "details": { "seconds": 120 }
+      },
+      {
+        "type": "measurement",
+        "value": "7–12 harmonic graph nodes",
+        "details": { "minNodes": 7, "maxNodes": 12 }
+      },
+      {
+        "type": "measurement",
+        "value": "3 pressure edges",
+        "details": { "edges": 3, "rule": "usable only near section boundaries" }
+      },
+      {
+        "type": "measurement",
+        "value": "6–10 griff voicing gestures",
+        "details": { "minGriffs": 6, "maxGriffs": 10 }
+      },
+      {
+        "type": "note",
+        "value": "2-note melodic cell per phrase",
+        "details": { "notes": 2 }
+      },
+      {
+        "type": "interval",
+        "value": "2-chord harmonic cell per phrase",
+        "details": { "chords": 2 }
+      }
+    ],
+    "dawChecklist": [
+      "Create a 7–12 node chord graph before writing the progression.",
+      "Mark three pressure edges that can only be used near section boundaries.",
+      "Design 6–10 modern griffs as recurring voicing gestures with tendencies.",
+      "For each phrase, choose the two-note melody cell and two-chord harmonic cell together.",
+      "Score candidate cells for tonal stability, melodic implication, voice-leading distance, and griff identity before committing to MIDI.",
+      "Add a subtle phase/all-pass/EQ/ring-mod/noise signature that tracks current griff identity.",
+      "Arrange call-and-response between lead and accompaniment at beat and phrase levels.",
+      "Render Uncollapsed Field with graph, griffs, coupled cells, signature, and call-response timing active.",
+      "Render Early Collapse by choosing chords first, then adding melody and voicing afterward with the same sounds.",
+      "Render No Fingerprint by keeping graph and notes but randomizing griffs and removing the hidden signature layer.",
+      "Blind-rate all versions for inevitability, personality, and conversational aliveness on a 1–7 scale."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 120,
+      "panelPlanned": ["self"],
+      "listeningContext": "studio headphones or monitors; loudness matched before rating",
+      "listeningMethod": "blind shuffled comparison with 1–7 ratings for inevitability, personality, and conversational aliveness",
+      "whatVaries": [
+        "phrase-boundary collapse versus early chord-first commitment",
+        "presence of personal griff palette",
+        "presence of hidden phase/signature layer",
+        "coupled versus separated melody-harmony decisions"
+      ],
+      "whatStaysConstant": [
+        "overall duration",
+        "core sound palette",
+        "tempo",
+        "starting harmonic node",
+        "rough melodic contour density",
+        "mix loudness target"
+      ]
+    }
+  },
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
+  "notes": "Companion essay: docs/essays/the-uncollapsed-accompaniment.md"
+}
