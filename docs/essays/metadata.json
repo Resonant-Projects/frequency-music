@@ -2079,5 +2079,19 @@
     "category": "interdisciplinary",
     "contentHash": "141e15325bfc8a3568cb8b7529833bae4dc56e6d3dcad170c1a32ddb0db7a4e2",
     "generatedAt": "2026-05-14T16:29:16.433Z"
+  },
+  "the-minimum-viable-gesture": {
+    "excerpt": "Identity begins at the smallest relational unit: a graph move, griff, response, and spectral trace can form a gesture that survives musical damage.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "signal-processing",
+      "perception",
+      "geometry",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "def05b05d8a6bd4bd320cbdf4359bf70fdb55e67562aba0f5c9f796f5b711cf5",
+    "generatedAt": "2026-05-15T16:29:41.000Z"
   }
 }

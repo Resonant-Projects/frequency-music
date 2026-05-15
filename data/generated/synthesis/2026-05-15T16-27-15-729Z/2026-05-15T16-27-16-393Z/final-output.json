@@ -1,0 +1,105 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Minimum Viable Gesture",
+    "question": "What is the smallest local musical unit that can still carry recognizable compositional identity under layer removal, filtering, or cropping?",
+    "hypothesis": "If a local gesture couples a nearest-neighbor harmonic graph move, a recurring voicing unit, a call-response behavior, and a subtle spectral trace, then it will remain more recognizable under damage than a gesture whose identity is concentrated in one foreground motif.",
+    "rationaleMd": "The APC source shows that identity can be distributed across phase/log-magnitude relationships and survive compression, resampling, and 20% end-cropping [S3]. The HHL source constrains coherent melody-harmony selection to 2-note / 2-chord blocks, implying that small coupled blocks can carry musically meaningful structure [S5]. The basso continuo source reports player identification from griffs, suggesting local voicing units can encode personal style [S6]. Tonnetz geometry supplies graph adjacency for defining nearest harmonic moves [S2], while the ice source motivates nearest-accessible path dependence rather than global optimization [S1]. Mayer's call-response practice adds a practical arrangement layer for paired local gestures [S4].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv"
+    ],
+    "concepts": [
+      "minimum viable gesture",
+      "gesture survival",
+      "nearest accessible move",
+      "graph move",
+      "griff",
+      "hidden spectral trace",
+      "call-response unit",
+      "melody-harmony block"
+    ]
+  },
+  "recipe": {
+    "title": "Gesture Survival Test",
+    "bodyMd": "Build a one-minute piece from eight one- or two-bar gestures. Each gesture couples one nearest-neighbor graph move [S2], one griff-like voicing unit [S6], one call-response answer by silence, register, timbre, percussion, or melody [S4], and one subtle spectral trace inspired by APC's hidden frequency-domain channel [S3]. Borrow the ice-source rule that each transition should move to the nearest accessible state rather than the globally most resolved destination [S1]. Keep melody and harmony chosen as a coupled block before rendering, echoing the HHL source's small coherent blocks [S5]. Render the full mix, a lead-muted version, an 8 kHz low-pass version, and a final-20%-cropped version. Score whether identity survives each damage condition.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "gestureCount": 8,
+          "gestureLength": "1-2 bars"
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "8 kHz low-pass damage condition",
+        "details": {
+          "cutoffHz": 8000
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "20% end-crop damage condition",
+        "details": {
+          "cropPercent": 20
+        }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "nearest-neighbor graph move plus call-response answer",
+        "details": {
+          "layers": [
+            "graph move",
+            "griff",
+            "response",
+            "spectral trace"
+          ]
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create an eight-node harmonic graph and mark allowed nearest-neighbor moves.",
+      "Design four griff-like voicing units and assign one to each gesture.",
+      "For every call, choose one response behavior: silence, lower register, darker timbre, percussion fill, or melodic answer.",
+      "Bind a subtle EQ, phase, or noise-color trace to each griff.",
+      "Render full mix, lead-muted mix, 8 kHz low-pass mix, and final-20%-cropped mix.",
+      "Rate each render from 1 to 5 for whether the same compositional identity survives."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Level-matched DAW bounces over the same monitors or headphones.",
+      "listeningMethod": "Blind or shuffled comparison of full and damaged renders.",
+      "whatVaries": [
+        "damage condition",
+        "identity concentrated in lead vs distributed across gesture layers"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "duration",
+        "instrumentation",
+        "mix loudness",
+        "harmonic graph",
+        "gesture count"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Manual synthesis fallback after Convex batch extraction failed. Essay saved as docs/essays/the-minimum-viable-gesture.md."
+}
