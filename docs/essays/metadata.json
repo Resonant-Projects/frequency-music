@@ -2107,5 +2107,19 @@
     "category": "interdisciplinary",
     "contentHash": "2e1673daa1998b8364b537ac3d25e994d71932b85a710db9bedfa58b2d8df380",
     "generatedAt": "2026-05-16T00:33:00.000Z"
+  },
+  "the-first-cut-listens": {
+    "excerpt": "The front-end representation already listens: Bark bands, phase-aware embeddings, compressed encoders, notation modalities, and physical pathways decide which musical relations can survive.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "AI-music",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "2f6e1bb8df4fbf9a0123b98eb81653365dc0ca1625e25529551a71b78a13e137",
+    "generatedAt": "2026-05-16T08:28:45.000Z"
   }
 }
