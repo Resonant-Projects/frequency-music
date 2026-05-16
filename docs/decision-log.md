@@ -31,6 +31,36 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 
 ## Initial Foundational Decisions
 
+## 2026-05-16 — LangChain Integration Defaults
+
+**Decision**
+
+- Use LangSmith Cloud for initial tracing and evaluation.
+- Self-host the LangGraph Agent Server alongside the existing n8n posture rather than making Convex depend on LangSmith-hosted deployment.
+- Treat tracing as best-effort: trace failures should warn and drop, never fail user-facing extraction, hypothesis, recipe, or weekly brief actions.
+
+**Rationale**
+
+- LangSmith Cloud is the fastest path to useful traces and eval datasets.
+- The project already separates application infrastructure from research code, and Cool Guy owns deployment. Keeping the agent server self-hosted matches that operating boundary.
+- Observability is valuable only if it does not reduce pipeline reliability.
+
+**Alternatives considered**
+
+- Self-host LangSmith immediately.
+- Use LangSmith-hosted agent deployment.
+- Fail Convex actions when tracing is unavailable.
+
+**Downstream implications**
+
+- The prep work should add env vars for LangSmith and agent tooling, but actual secret values remain deployment configuration.
+- Agent server deployment artifacts should be prepared in-repo, then handed to Keith/Cool Guy for hosting.
+- LangSmith wrappers must be defensive and no-op cleanly when tracing is disabled or misconfigured.
+
+**Revisit trigger**
+
+- Revisit if data residency requirements change, tracing costs become material, or the self-hosted agent server proves operationally noisy.
+
 ## 2026-03-24 — Phase 1B Meaning Foundation
 
 **Decision**

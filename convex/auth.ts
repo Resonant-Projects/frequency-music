@@ -23,6 +23,28 @@ function getConfiguredBypassSecret() {
   return process.env.AUTH_BYPASS_SECRET;
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const encoder = new TextEncoder();
+  const bufA = encoder.encode(a);
+  const bufB = encoder.encode(b);
+  let result = 0;
+  for (let i = 0; i < bufA.length; i++) {
+    result |= (bufA[i] as number) ^ (bufB[i] as number);
+  }
+  return result === 0;
+}
+
+export function requireAgentToolSecret(provided: string): void {
+  const expected = process.env.AGENT_TOOL_SECRET;
+  if (!expected || !constantTimeEqual(provided, expected)) {
+    throw new ConvexError({
+      code: "UNAUTHORIZED",
+      message: "Invalid agent tool secret",
+    });
+  }
+}
+
 export async function requireAuth(
   ctx: AuthCtx,
   options?: RequireAuthOptions,
@@ -51,7 +73,11 @@ export async function requireAuth(
     }
     const providedSecret = options?.devBypassSecret;
 
-    if (configuredSecret && providedSecret && providedSecret === configuredSecret) {
+    if (
+      configuredSecret &&
+      providedSecret &&
+      providedSecret === configuredSecret
+    ) {
       return {
         // Schema requires createdBy to be either a users table id or "system".
         // In bypass mode we intentionally persist writes as system-authored.

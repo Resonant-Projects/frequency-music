@@ -1,0 +1,6 @@
+{
+  "graphs": {
+    "weekly-brief": "./src/agents/weekly-brief/index.ts:agent"
+  },
+  "env": ".env"
+}

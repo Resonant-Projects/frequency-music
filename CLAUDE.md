@@ -19,6 +19,10 @@ Research-to-composition pipeline exploring connections between music, physics, m
 
 **Repository:** `github.com:Resonant-Projects/frequency-music.git`
 
+## Agent Tool Surface
+
+External LangGraph/LangChain agents read project state through the secret-guarded Convex agent-tool surface documented in `docs/agent-tool-surface.md`. The surface is read-only in this phase and is enabled by `AGENT_TOOL_SECRET`. The agent workspace is prepared for LangSmith tracing; Convex-side tracing still needs a Node-runtime split before importing the LangSmith SDK.
+
 ## Directory Structure
 
 ```

@@ -9,6 +9,7 @@
     "test": "bun test convex/*.test.ts",
     "build:web": "cd web && bun run build",
     "typecheck:web": "cd web && bunx tsc --noEmit",
+    "eval:export": "bun scripts/export-eval-datasets.ts",
     "convex:extract": "bunx convex run workflows:startBatchExtraction '{\"limit\": 3}'"
   },
   "dependencies": {
