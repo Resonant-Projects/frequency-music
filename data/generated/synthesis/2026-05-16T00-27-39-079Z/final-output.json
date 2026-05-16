@@ -1,0 +1,95 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Task-Relevant Signal",
+    "question": "What should a musical system preserve when full fidelity is impossible or unnecessary?",
+    "hypothesis": "Musical detail should be allocated toward the task that must survive: function, identity, process evidence, coherent relation, or performer fingerprint. A passage that preserves task-relevant structure under degradation is compositionally stronger than one that merely preserves more surface detail.",
+    "rationaleMd": "ClariCodec separates intelligibility from acoustic reconstruction detail by optimizing 200 bps speech with WER-driven reinforcement learning [S5]. The Nyishi/Adi analysis shows that low-frequency amplitude modulation carries language identity before MFCC spectral detail is added [S3]. WST-X preserves deformation-stable, multi-scale evidence of synthetic speech rather than reconstructing the whole signal [S6]. The HHL melody-harmony architecture makes the same point abstractly: relation must sometimes remain coherent until measurement, because exposing the intermediate output can destroy the advantage [S1]. Basso continuo griffs show that human style also has local extractable features [S2].",
+    "sourceIds": [
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "jx7dc14cbm6v0cme1ymrv0mmzd8567ga",
+      "jx7ctrab09mtbkdbghq2qqhm75851vkc",
+      "jx78nvpygk3a3ehen35mwswkhd85w0pt"
+    ],
+    "concepts": [
+      "task-relevant signal",
+      "representation budget",
+      "intelligibility survival",
+      "identity survival",
+      "artifact survival",
+      "coherence budget",
+      "prosodic alignment",
+      "griff fingerprint"
+    ]
+  },
+  "recipe": {
+    "title": "Representation Budget Etudes",
+    "bodyMd": "Write four 45-second etudes from the same eight-bar harmonic skeleton. In the intelligibility version, strip the material until root motion, cadence, and phrase rhythm remain [S5]. In the identity version, preserve macro-rhythm and envelope motion while varying pitch and timbre [S3]. In the artifact version, add one subtle synthetic trace and test whether the process remains detectable [S6]. In the coherence version, compose melody and harmony only as coupled pairs, delaying commitment until both layers imply each other [S1]. Render mono, low-bitrate, and lead-muted degradations, then score whether function, identity, and process survive.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "45 seconds per etude",
+        "details": {
+          "count": 4,
+          "sharedSkeleton": "same eight-bar harmonic frame"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "1-5 survival score for function, identity, and process",
+        "details": {
+          "axes": [
+            "function survived",
+            "identity survived",
+            "process survived"
+          ]
+        }
+      },
+      {
+        "type": "audioProcessing",
+        "value": "mono downmix, low-bitrate export, lead-muted render",
+        "details": {
+          "purpose": "controlled degradation tests"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one eight-bar harmonic skeleton and duplicate it into four 45-second sessions.",
+      "Version 1: reduce the arrangement to functional harmonic and rhythmic cues.",
+      "Version 2: keep macro-envelope rhythm stable while changing pitch and timbre.",
+      "Version 3: add one detectable synthetic process trace without making it foreground material.",
+      "Version 4: write melody and harmony as coupled two-event units before committing either layer.",
+      "Export full, mono, low-bitrate, and lead-muted versions.",
+      "Score function, identity, and process survival from 1 to 5 for each export."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 180,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "studio monitors or neutral headphones, level matched",
+      "listeningMethod": "blind-ish shuffle among degradation renders; score survival before comparing full mixes",
+      "whatVaries": [
+        "representation budget",
+        "degradation condition"
+      ],
+      "whatStaysConstant": [
+        "eight-bar harmonic skeleton",
+        "tempo",
+        "overall duration"
+      ]
+    }
+  },
+  "citations": [
+    "S1: HHL with a Coherent Fourier Oracle: A Proof-of-Concept Quantum Architecture for Joint Melody-Harmony Generation",
+    "S2: Beyond Rules: Towards Basso Continuo Personal Style Identification",
+    "S3: Cross-Linguistic Rhythmic and Spectral Feature-Based Analysis of Nyishi and Adi: Two Under-Resourced Languages of Arunachal Pradesh",
+    "S4: Qwen3.5-Omni Technical Report",
+    "S5: ClariCodec: Optimising Neural Speech Codes for 200bps Communication using Reinforcement Learning",
+    "S6: WST-X Series: Wavelet Scattering Transform for Interpretable Speech Deepfake Detection"
+  ],
+  "notes": "Manual synthesis produced after workflows:startBatchExtraction failed with Convex server error request 2e206b7beb61dbb2. Context collected from Convex read path at data/generated/synthesis/2026-05-16T00-27-39-079Z/context.json."
+}

@@ -2093,5 +2093,19 @@
     "category": "interdisciplinary",
     "contentHash": "def05b05d8a6bd4bd320cbdf4359bf70fdb55e67562aba0f5c9f796f5b711cf5",
     "generatedAt": "2026-05-15T16:29:41.000Z"
+  },
+  "the-task-relevant-signal": {
+    "excerpt": "Musical detail should be allocated toward the task that must survive: function, identity, process, coherence, or performer fingerprint.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "speech",
+      "algorithmic-composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "2e1673daa1998b8364b537ac3d25e994d71932b85a710db9bedfa58b2d8df380",
+    "generatedAt": "2026-05-16T00:33:00.000Z"
   }
 }
