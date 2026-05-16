@@ -1,0 +1,105 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Anticipatory Trace",
+    "question": "When the target arrival is held constant, do different three-second cue-fields change whether the arrival feels earned, surprising, and inferable?",
+    "hypothesis": "If a fixed musical arrival is preceded by a cue-field that changes prosodic contour, call-response incompletion, spectral bias, or hidden-source implication, then listeners will rate the arrival as more earned than when the same arrival is preceded by neutral material, because short temporal windows and subsurface audio features can carry selective information about upcoming events.",
+    "rationaleMd": "S4 reports that three-second speech windows contain severity-selective prosodic precursors for clinically severe stuttering events, suggesting that short audio neighborhoods can encode upcoming disruptions rather than merely reflect the present. S6 supports the broader acoustic premise that nonstationary sound classes benefit from F0, MFCC, STFT, and temporal-memory fusion. S1 gives a directly musical structure: call and response can operate across beats, phrases, bassline/arpeggio pairs, and sections, so an incomplete call can make a response functionally legible. S2 adds that phase bins and adjacent log-magnitude differences can carry robust hidden information with limited perceptual cost, while S5 frames off-screen audio as meaningful generated content even when its source is absent. S3 supplies the path-dependence constraint: transitions often move to nearest accessible states rather than ideal end states. Together these sources suggest that musical arrivals can be prepared by measurable traces distributed before the event, not only by the event's surface identity.",
+    "sourceIds": [
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7e069afwawf8v8pgrxex5y2s85w80e",
+      "jx7dvwyahyzy5qvrgf7y1gvtnd85vkbp",
+      "jx72jqrcp519f3tmk8hpfd7wfn86qwpp"
+    ],
+    "concepts": [
+      "anticipatory trace",
+      "cue-field",
+      "severity-selective foreshadowing",
+      "hidden source implication",
+      "nearest accessible arrival",
+      "subsurface setup",
+      "temporal acoustic memory"
+    ]
+  },
+  "recipe": {
+    "title": "Cue-Field Arrivals",
+    "bodyMd": "Compose four 12-second cycles that all end with the same target arrival, such as a low-register bass entry plus a two-chord harmonic block. Hold the arrival, tempo, loudness, and post-arrival material constant. In the final three seconds before each arrival, vary only the cue-field: one prosodic cue using pitch bend, energy envelope, and rhythmic tightening [S4]; one call cue that leaves a melodic or rhythmic question for the arrival to answer [S1]; one spectral cue using subtle phasey or adjacent-band roughness that resolves at the arrival [S2]; and one off-screen cue using filtered room tone, partial transients, or hidden-source implication before the full source appears [S5]. Compare whether the same arrival feels earned, surprising, and inferable under each cue-field. If all cue-fields work equally well, the hypothesis is not supported for this material.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "totalSecs": 60,
+          "cycles": 4
+        }
+      },
+      {
+        "type": "duration",
+        "value": "3-second cue-field",
+        "details": {
+          "cueFieldSecs": 3
+        }
+      },
+      {
+        "type": "tempo",
+        "value": "120 BPM",
+        "details": {
+          "bpm": 120
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "1-5 earned/surprising/inferable ratings",
+        "details": {
+          "scaleMin": 1,
+          "scaleMax": 5
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create a 60-second session at 120 BPM with four 12-second cycles.",
+      "Design one identical target arrival and copy it unchanged to the end of each cycle.",
+      "Write neutral material before each cue-field so the comparison focuses on the final three seconds.",
+      "Build cue-field 1 with pitch bend, energy envelope, and rhythmic tightening.",
+      "Build cue-field 2 as an incomplete call answered by the fixed arrival.",
+      "Build cue-field 3 with subtle spectral or phasey roughness that resolves at arrival.",
+      "Build cue-field 4 with hidden-source implication before the full source appears.",
+      "Level-match all cycles and keep the post-arrival two bars identical.",
+      "Render the piece and score each arrival for earnedness, surprise, and inferability."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Level-matched nearfield or headphones; listen once without looking at the arrangement, then once while marking arrival ratings.",
+      "listeningMethod": "Compare four identical arrivals after different three-second cue-fields and score each on earnedness, surprise, and inferability.",
+      "whatVaries": [
+        "three-second cue-field before the arrival",
+        "prosodic contour",
+        "call-response incompletion",
+        "spectral or phase bias",
+        "hidden-source implication"
+      ],
+      "whatStaysConstant": [
+        "target arrival audio or MIDI",
+        "tempo",
+        "pre-arrival duration",
+        "integrated loudness",
+        "post-arrival material"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Falsification criterion: if the same fixed arrival receives similar earnedness and inferability scores across all cue-fields, or if stronger cue-fields only increase predictability without earnedness, the anticipatory-trace framing is too broad for this material."
+}
