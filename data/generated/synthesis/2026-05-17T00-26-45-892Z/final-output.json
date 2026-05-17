@@ -1,0 +1,114 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Relation That Survives",
+    "question": "When a musical variation discards one surface coordinate system, does preserving a named relation make the seed more recognizable than an equally changed variation without that relation?",
+    "hypothesis": "If a variation preserves a declared relation such as voice-leading adjacency, spatial distance pattern, prosodic contour, or band-energy independence while changing surface coordinates, then listeners will rate the seed as more recognizable than in a control variation with comparable surface change but no preserved relation.",
+    "rationaleMd": "S1 shows that harmonic resources can be represented as combinatorial configurations where incidence and adjacency, rather than isolated chord labels, organize musical possibility. S5 gives an acoustic parallel: exploiting Euclidean Distance Matrix and Gram-matrix relations reduces localization from direct three-coordinate optimization to lower-dimensional relational geometry. S3 separates voice into static timbre and dynamic prosody, suggesting that identity and contour can be varied independently. S4 reports that speech-enhancement encoders preserve noise-invariant representations while decoders adapt to degradation, supporting an invariant-skeleton/adaptive-surface distinction. S6 shows that decomposed and fused multi-band representations outperform baseband-only approaches in bioacoustics, while S2 warns that real systems follow reachable paths rather than all mathematically valid configurations. Together these sources support a testable compositional claim: continuity can be carried by preserved relations under coordinate loss, but only when the transformation remains perceptually reachable.",
+    "sourceIds": [
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx762q5tm7md2f9znq4tykwkv985feka",
+      "jx764ke9nz50zaqrr0cjsbk149864vyj",
+      "jx7d318zzcx7e8cd6yrmvrgn7h859g7f",
+      "jx78jqe2mp7zwykmbywha3mzrs85xyys"
+    ],
+    "concepts": [
+      "relation survival",
+      "coordinate loss",
+      "relational invariance",
+      "reachable transformation",
+      "decomposition and fusion",
+      "invariant skeleton",
+      "adaptive surface",
+      "geometry-preserving variation"
+    ]
+  },
+  "recipe": {
+    "title": "Coordinate-Loss Variations",
+    "bodyMd": "Compose a 60-second study from a four-bar seed. Make four variations that each discard one coordinate system while preserving one relation: preserve a Tonnetz-like voice-leading adjacency path while changing voicing/register/instrumentation [S1]; preserve a near/far or left/right distance relation between two sources while changing absolute spatial placement [S5]; preserve a melodic/prosodic contour while swapping source identity, or preserve source identity while changing contour [S3]; and preserve a low/mid/high/air band relation while allowing each band to change independently before fusion [S6]. Keep tempo, form length, seed rhythm, and integrated loudness constant. Compare each relation-preserving version with a control that changes a similar amount of surface detail without preserving the target relation. If relation-preserving versions are not more recognizable than controls, the hypothesis is not supported for this material.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "totalSecs": 60,
+          "seedBars": 4,
+          "variations": 4
+        }
+      },
+      {
+        "type": "tempo",
+        "value": "120 BPM",
+        "details": {
+          "bpm": 120
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "1-5 recognizability/transformation/relation-clarity ratings",
+        "details": {
+          "scaleMin": 1,
+          "scaleMax": 5
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "four broad bands: low, mid, high, air",
+        "details": {
+          "bands": [
+            "low",
+            "mid",
+            "high",
+            "air"
+          ]
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create a 60-second session at 120 BPM and write one four-bar seed.",
+      "Duplicate the seed into four variation lanes plus four control lanes.",
+      "Variation 1: preserve the voice-leading adjacency path while changing voicing, register, and instrumentation.",
+      "Variation 2: preserve the two-source spatial distance pattern while changing absolute pan, delay, or reverb placement.",
+      "Variation 3: preserve contour while swapping source identity, or preserve identity while changing contour.",
+      "Variation 4: split the texture into low, mid, high, and air bands, vary each independently, then fuse them into one gesture.",
+      "For each control lane, change a comparable amount of surface detail without preserving the target relation.",
+      "Level-match all lanes and keep tempo, seed rhythm, form length, and integrated loudness constant.",
+      "Render blind comparison clips and score recognizability, transformedness, and relation clarity."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Level-matched headphones or nearfields; compare relation-preserving variations against matched controls without looking at arrangement lanes.",
+      "listeningMethod": "For each pair, score whether the seed remained recognizable, whether the material felt transformed rather than copied, and which relation carried continuity.",
+      "whatVaries": [
+        "target preserved relation",
+        "discarded coordinate system",
+        "surface voicing/register/instrumentation",
+        "absolute spatial placement",
+        "source identity or contour",
+        "band-specific processing"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "form length",
+        "four-bar seed rhythm",
+        "integrated loudness",
+        "number of variations",
+        "comparison rating scale"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Falsification criterion: if relation-preserving variations are not rated more recognizable than matched controls, or if they are recognizable only because too many surface coordinates stayed fixed, the relation-survival framing is not useful for this material."
+}
