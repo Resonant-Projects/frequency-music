@@ -1,0 +1,106 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Carrier-Preserved Relations",
+    "question": "How does changing the carrier of a fixed musical phrase change which relations listeners perceive as preserved?",
+    "hypothesis": "If one fixed phrase is rendered through contrasting carriers while pitch contour, duration, loudness, and form stay constant, then listeners will identify different preserved relations by carrier type, because each carrier selectively preserves stress, timbral identity, intelligibility, or temporal responsiveness.",
+    "rationaleMd": "The selected sources repeatedly show that the path carrying a structure shapes what survives. Ice phase formation depends on accessible metastable paths rather than only thermodynamic optima [S1]. Prosody-aware annotation improves speech denoising and TTS quality by explicitly carrying stress, punctuation, and phoneme information [S2]. Chirp spread spectrum and compression make voice transmissible under low-power bandwidth constraints [S5], while unified full-duplex audio modeling argues that cascaded pipelines accumulate latency, information loss, and error propagation [S6]. Transformer coloration and infrasound are weaker evidence here, but they broaden the studio frame: hardware and air pressure can also act as carriers that shape perceived tone or bodily context [S3, S4].\n\nFalsification criterion: if blinded listeners cannot distinguish which musical relation each carrier was intended to preserve, or if ratings cluster only by generic preference/loudness rather than stress, timbral identity, intelligibility, or responsiveness, the hypothesis is not supported.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7aa290nckw0wt9xn8y3xpe5s865h5c",
+      "jx7bsecd6xz13wetqb0aeaxenn85nj95",
+      "jx7fpefnn1345ek5cpfv2zayx586h3g3",
+      "jx731xk7jnvfy3k2caqszwn83n86a21d",
+      "jx743vna2yd4hyvvhf93yc1v1h85xvj4"
+    ],
+    "concepts": [
+      "carrying medium",
+      "carrier-preserved relation",
+      "reachability constraint",
+      "prosodic carrier",
+      "material carrier",
+      "transmission carrier",
+      "chunked responsiveness",
+      "medium as score"
+    ]
+  },
+  "recipe": {
+    "title": "Carrier-Preserved Relations Study",
+    "bodyMd": "Build a 60-second study from one short source phrase. Render four to five versions while keeping pitch contour, duration, nominal loudness, and form fixed. Version A is a clean carrier. Version B explicitly preserves stress using accent automation, consonant emphasis, formant shaping, or MIDI velocity, following the prosody-aware logic of Balalaika [S2]. Version C uses a material carrier such as transformer, tape, saturation, or a matched nonlinear preamp model, with loudness matching so coloration is not confused with level [S4]. Version D uses a transmission carrier: sweeping bandpass, vocoder, low-bitrate codec, or chirp-like glissando encoding inspired by chirp spread spectrum [S5]. Version E rebuilds the phrase in 600 ms windows where each chunk emits both sound and a control decision for the next chunk, borrowing UAF's fixed streaming chunk as a compositional unit [S6].\n\nThe optional low-frequency layer should be treated cautiously: add sub-20 Hz or near-threshold room pressure only when the playback system can reproduce it safely and measurably, because the source's perceptual claims are speculative [S3]. Use the ice source as the formal model: the goal is not the theoretically perfect phrase, but the phrase reachable through each carrier path [S1].",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "durationSecs": 60
+        }
+      },
+      {
+        "type": "chunkDuration",
+        "value": "600 ms",
+        "details": {
+          "milliseconds": 600,
+          "source": "S6"
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "below 20 Hz optional infrasound layer",
+        "details": {
+          "maxHz": 20,
+          "optional": true,
+          "safetyNote": "Use only with measurable playback capability and conservative amplitude."
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "1-1.5 km LoRa range as transmission metaphor",
+        "details": {
+          "source": "S5"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Choose one 3-6 second source phrase and place it in a 60-second arrangement.",
+      "Render a clean reference version with minimal processing.",
+      "Create an annotated carrier version by emphasizing stress, punctuation-like pauses, phoneme attacks, or rhythmic accents.",
+      "Create a material carrier version through saturation, transformer/preamp modeling, or tape coloration, then loudness-match to the clean reference.",
+      "Create a transmission carrier version with chirp-like sweeps, vocoding, low-bitrate compression, or bandwidth limitation.",
+      "Create a chunked carrier version by processing in 600 ms windows and mapping each window to the next control decision.",
+      "Blind compare versions for preserved stress, timbral identity, intelligibility, responsiveness, and generic preference."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Loudness-matched nearfield monitoring; optional sub layer only on a system that can measure low-frequency output safely.",
+      "listeningMethod": "Blind A/B/C/D/E comparison with relation-specific ratings.",
+      "whatVaries": [
+        "carrier type",
+        "stress encoding method",
+        "material coloration",
+        "transmission encoding",
+        "chunked control behavior"
+      ],
+      "whatStaysConstant": [
+        "source phrase",
+        "pitch contour",
+        "duration",
+        "nominal loudness",
+        "overall form",
+        "main instrumentation"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Infrasound and transformer-character claims are treated as weaker evidence than the peer-reviewed/preprint process claims; use them as studio variables, not established causal guarantees."
+}
