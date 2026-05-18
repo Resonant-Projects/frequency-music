@@ -2247,6 +2247,20 @@
     "contentHash": "69ae9f3b44b98b3750f63a5a03c70acc26b15ca77c786343f33c99ca20c2f2d1",
     "generatedAt": "2026-04-10T18:40:59.313Z"
   },
+  "the-translation-layer": {
+    "excerpt": "Music passes through intermediate representations—from psychoacoustic bands to notation to AI encoders—and each layer decides which musical relations survive. Choosing the right translation layer matters more than the transformation itself.",
+    "tags": [
+      "signal-processing",
+      "psychoacoustics",
+      "perception",
+      "composition",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ab29eccc73203727e146678cdfdf1418086cdcc80aa4daa1cc73fd9b75fedf14",
+    "generatedAt": "2026-05-18T16:29:10.804Z"
+  },
   "the-tuning-codec": {
     "excerpt": "Tuning systems and audio codecs solve the same problem: compressing infinite possibilities into finite, playable representations. Both distribute quantization error through perceptual weighting, making temperament the acoustic analog of lossy compression.",
     "tags": [
