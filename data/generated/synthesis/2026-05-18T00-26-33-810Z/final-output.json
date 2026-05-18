@@ -1,0 +1,106 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Embedded Instruction",
+    "question": "Does preserving a hidden generative instruction make transformed musical surfaces feel more continuous than surface-matched controls where that instruction is broken?",
+    "hypothesis": "If a composition preserves an embedded instruction while varying audible surface features, then listeners will perceive stronger continuity across transformations than in a surface-matched control where the instruction is randomized or broken.",
+    "rationaleMd": "Several sources distinguish foreground surface from recoverable or generative structure. Asymmetric Phase Coding embeds cryptographic information into STFT phase bins and adjacent-bin magnitude differences while maintaining perceptual quality, showing that audio can carry recoverable information outside the main foreground percept [S3]. Tonnetz theory treats harmony as traversal through combinatorial configurations rather than isolated chord labels, making adjacency structure an instruction for possible harmonic motion [S2]. Basso continuo style identification suggests that individual performers leave measurable traces inside constrained realization rules [S6]. The ice source adds a constraint: mathematically possible states are not automatically reachable; path and timescale determine which phases emerge [S1]. Together these support a testable musical claim: continuity can be carried by an embedded rule, signature, or style trace, but only if the rule survives the path through sound.",
+    "sourceIds": [
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb"
+    ],
+    "concepts": [
+      "embedded instruction",
+      "recoverable signature",
+      "graph instruction",
+      "style trace",
+      "reachable rule",
+      "surface-matched control"
+    ]
+  },
+  "recipe": {
+    "title": "Embedded Instruction Study",
+    "bodyMd": "Build a 60-second piece from one eight-bar seed containing a chordal path, a short melodic call, and a timbral layer. Make three versions at the same tempo, length, nominal chord collection, and integrated loudness. In the graph-instruction version, preserve a Tonnetz-like adjacency rule while changing voicing and instrumentation [S2]. In the signature-instruction version, hide a recurring identity marker below the foreground using phase rotation, adjacent-bin EQ relationships, a subtle spectral notch pair, or a stereo phase gesture inspired by watermarking domains [S3]. In the style-instruction version, realize the same harmonic path under fixed rules while preserving one performer or producer habit, such as voicing span, doubled scale degree, ornament placement, or response timing [S6]. Add a control version with the same source sounds and approximate surface density but randomized transitions. The reachability rule is that no transition may jump directly to the strongest resolution unless it is locally reachable under the current register, density, and timbre constraints [S1].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "96 BPM",
+        "details": {
+          "bpm": 96
+        }
+      },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "seconds": 60
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "8-bar seed",
+        "details": {
+          "bars": 8
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "44.1 kHz session rate",
+        "details": {
+          "sampleRateHz": 44100
+        }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "Call and response at phrase and section levels",
+        "details": {
+          "levels": [
+            "phrase",
+            "section"
+          ]
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one eight-bar seed with chords, a melodic call, and one timbral layer.",
+      "Duplicate the seed into graph, signature, style, and randomized-control versions.",
+      "For the graph version, write an adjacency rule and allow only one declared relation per chord move.",
+      "For the signature version, add a subtle recoverable spectral or phase marker that does not dominate the mix.",
+      "For the style version, preserve one realization habit across every phrase response.",
+      "Render all versions at matched length, tempo, nominal chord collection, and integrated loudness.",
+      "Blind-rank versions for perceived continuity, recognizability of the governing instruction, and surface variety."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Nearfield monitors or headphones at matched loudness.",
+      "listeningMethod": "Blind A/B/C/D ranking with the randomized-control version included.",
+      "whatVaries": [
+        "embedded instruction type",
+        "transition rule",
+        "surface voicing",
+        "timbral realization"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "duration",
+        "seed rhythm",
+        "nominal chord collection",
+        "integrated loudness"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S6"
+  ],
+  "notes": "Companion essay: docs/essays/the-instruction-under-the-sound.md. Disconfirming evidence: listeners cannot distinguish the instruction-preserving versions from the randomized control, or the embedded marker is only visible analytically and produces no audible continuity."
+}

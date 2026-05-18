@@ -27,20 +27,6 @@
     "contentHash": "45553e897ed539ef934d9da7e4fa0976dde7a13d726e04db30fd9ac913f55167",
     "generatedAt": "2026-04-10T18:35:51.949Z"
   },
-  "the-carrying-medium": {
-    "excerpt": "A fixed phrase changes meaning when its carrier changes: annotation, transformer coloration, chirp transmission, chunked streaming, and room pressure each preserve different musical relations.",
-    "tags": [
-      "signal-processing",
-      "composition",
-      "acoustics",
-      "psychoacoustics",
-      "AI-music",
-      "wave-physics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "facfdf218e2610c723cb67a45ead877fa1ed09bab5ffee138dbc104c1c6d0f96",
-    "generatedAt": "2026-05-17T16:26:36.161Z"
-  },
   "counting-the-cubes": {
     "excerpt": "Burnside's lemma reveals why 4,096 chromatic subsets collapse to 352 pitch classes—and why Sol LeWitt's cube sculptures and musical structure obey the same counting laws.",
     "tags": [
@@ -444,6 +430,20 @@
     "category": "interdisciplinary",
     "contentHash": "3e1198a443003e948c0513204e5947455aea0918ec8871173db3e7af5e6e491a",
     "generatedAt": "2026-05-09T08:27:03.174Z"
+  },
+  "the-carrying-medium": {
+    "excerpt": "A fixed phrase changes meaning when its carrier changes: annotation, transformer coloration, chirp transmission, chunked streaming, and room pressure each preserve different musical relations.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "acoustics",
+      "psychoacoustics",
+      "AI-music",
+      "wave-physics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "facfdf218e2610c723cb67a45ead877fa1ed09bab5ffee138dbc104c1c6d0f96",
+    "generatedAt": "2026-05-17T16:26:36.161Z"
   },
   "the-category-that-leaks": {
     "excerpt": "Leakage, contour, and timbre all show the same truth: in music, boundaries are useful approximations, not clean facts.",
@@ -1255,6 +1255,20 @@
     "category": "interdisciplinary",
     "contentHash": "4a467d5488284ad4a4ac1e926bb5dd0a66d37cae753e10c62f67cbe9e4a09118",
     "generatedAt": "2026-04-10T18:38:41.803Z"
+  },
+  "the-instruction-under-the-sound": {
+    "excerpt": "A sound can carry an instruction beneath its audible surface—a traversal rule, hidden signature, or performative constraint that survives musical transformation. Composition fails when editing destroys the embedded instruction while keeping the surface intact.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "signal-processing",
+      "perception",
+      "group-theory",
+      "information-theory"
+    ],
+    "category": "composition",
+    "contentHash": "f5cf75f058681f18b43f8f02e161bcbcde86305c722a94c7713cdd670a88238a",
+    "generatedAt": "2026-05-18T00:29:14.045Z"
   },
   "the-instrument-as-equation": {
     "excerpt": "Every musical instrument solves a specific differential equation with particular boundary conditions, generating unique eigenfrequencies that determine its timbre and shape the musical systems built around it.",
