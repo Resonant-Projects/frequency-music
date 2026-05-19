@@ -1,0 +1,111 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Fixed Frame",
+    "question": "Does preserving one explicit invariant frame while varying one adaptive surface produce stronger perceived and analyzable continuity than varying both layers at once?",
+    "hypothesis": "If a composition preserves one explicit fixed frame while varying one adaptive surface, then listeners and analysis tools will identify stronger continuity than in a matched version where both layers vary simultaneously.",
+    "rationaleMd": "This batch suggests that transformation is most legible when motion is measured against a stable frame. Ice phases are path-dependent: systems often move to nearby accessible metastable states rather than freely exploring all mathematically valid structures [S1]. Speech enhancement models show an encoder/decoder asymmetry, with encoder layers maintaining noise-invariant representations while decoder layers adapt to degradation [S2]. ATRIE separates static timbre from dynamic prosody, preserving voice identity while changing expression [S3]. EDM-based localization uses relational geometry to reduce a difficult spatial inference problem [S4]. Multi-band bioacoustics improves by preserving band-specific information before fusion [S5]. Tonnetz theory gives harmony an explicit incidence geometry for tracking transformations [S6]. Together these sources support a testable compositional rule: name the layer that must remain fixed, then vary the adaptive layer against it.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx764ke9nz50zaqrr0cjsbk149864vyj",
+      "jx762q5tm7md2f9znq4tykwkv985feka",
+      "jx7d318zzcx7e8cd6yrmvrgn7h859g7f",
+      "jx78jqe2mp7zwykmbywha3mzrs85xyys",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x"
+    ],
+    "concepts": [
+      "fixed frame",
+      "adaptive surface",
+      "path-dependent reachability",
+      "encoder invariant",
+      "timbre-prosody split",
+      "relational spatial geometry",
+      "decorrelated band fusion",
+      "harmonic reference geometry"
+    ]
+  },
+  "recipe": {
+    "title": "Fixed Frame / Adaptive Surface Study",
+    "bodyMd": "Compose a 75-second study in four matched versions. Version A preserves a six-to-eight-state Tonnetz-like harmonic path while changing voicing, register, and instrumentation [S6]. Version B preserves one prosodic contour while changing timbral identity, then reverses the condition by preserving timbre while changing contour [S3]. Version C adds controlled noise or reverberation changes while preserving the path and contour, treating them as encoder-like invariants and the mix as the adaptive decoder-like layer [S2]. Version D splits the texture into low, mid, and high bands, lets each band move independently, then fuses them by reintroducing the shared graph path or contour [S5]. As an optional spatial layer, preserve relational motion between two sources while changing absolute positions, echoing EDM-based localization's use of relational geometry [S4]. Compare all versions against a control where harmonic path and surface both vary at once. The disconfirming result would be that the control is judged equally or more continuous than the fixed-frame versions.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "75 seconds",
+        "details": {
+          "seconds": 75
+        }
+      },
+      {
+        "type": "tempo",
+        "value": "96 BPM",
+        "details": {
+          "bpm": 96
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "6-8 harmonic states",
+        "details": {
+          "states": "6-8",
+          "frame": "Tonnetz-like graph path"
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "low/mid/high band split",
+        "details": {
+          "bands": [
+            "low",
+            "mid",
+            "high"
+          ]
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "matched control with both frame and surface varied",
+        "details": {
+          "control": true
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create a 75-second session at 96 BPM.",
+      "Write a six-to-eight-state harmonic graph path and label each state.",
+      "Render Version A with the graph path fixed while voicing, register, and instrumentation change.",
+      "Render Version B with one fixed prosodic contour across timbral changes, then one fixed timbre across contour changes.",
+      "Render Version C by adding controlled noise or reverberation changes while keeping the path and contour fixed.",
+      "Render Version D by splitting material into low, mid, and high bands, varying bands independently, then fusing them through the shared path or contour.",
+      "Render a control version where both the harmonic frame and surface parameters change simultaneously.",
+      "Blind-label the renders and rate continuity, identity preservation, and transformation clarity."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 75,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Nearfield monitors or neutral headphones, level-matched renders.",
+      "listeningMethod": "Blind A/B/C comparison against the matched control; rate continuity, identity preservation, and transformation clarity on 1-5 scales.",
+      "whatVaries": [
+        "adaptive surface: voicing, timbre, prosody, degradation, spectral-band motion",
+        "control condition: both fixed frame and adaptive surface vary simultaneously"
+      ],
+      "whatStaysConstant": [
+        "session duration",
+        "tempo",
+        "source motif length",
+        "fixed-frame versions preserve either harmonic graph path, prosodic contour, timbral identity, or band-fusion rule"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Created from synthesis context 2026-05-19T08-26-33-896Z. The main connection is invariant frame plus adaptive surface, distinct from prior recoverable-window and translation-layer framings."
+}
