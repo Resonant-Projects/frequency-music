@@ -2205,6 +2205,20 @@
     "contentHash": "9b9289ec21b29e7af8764e5dcc2f8e2ebea03876758844120a5225e9d6332351",
     "generatedAt": "2026-05-09T00:27:03.764Z"
   },
+  "the-thick-boundary-revisited": {
+    "excerpt": "Musical transitions become more perceptually continuous when pitch, timbre, intensity, and noise change on staggered curves within a bounded window rather than switching simultaneously—treating the edge as a small compositional event.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "mathematical-music-theory",
+      "resonance"
+    ],
+    "category": "composition",
+    "contentHash": "0f224e644196f3271a4c68e3ccc639dae92c5c5c12b69a351caf87aba193c43f",
+    "generatedAt": "2026-05-19T16:28:37.869Z"
+  },
   "the-thread-that-survives": {
     "excerpt": "Audio codecs, watermarks, speech alignment, Tonnetz geometry, and demo preservation all point to the same compositional rule: every transformation needs a deliberately chosen invariant.",
     "tags": [
