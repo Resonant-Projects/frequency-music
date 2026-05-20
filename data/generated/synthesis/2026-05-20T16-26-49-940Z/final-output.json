@@ -1,0 +1,113 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Resolution Budget",
+    "question": "When a musical texture is constrained, does reallocating resolution from timbral detail to rhythm, alignment, or harmonic path make the structure more recognizable without making the sound feel poorer?",
+    "hypothesis": "If a one-minute study keeps pitch material, tempo, and loudness constant while moving resolution budget between low-frequency rhythmic modulation, fine spectral detail, and graph-constrained harmonic path choices, then listeners will identify the high-resolution layer more reliably than the low-resolution layers, because speech, codec, scattering, and Tonnetz evidence all show that meaning survives where the analysis or encoding has preserved the task-relevant degrees of freedom.",
+    "rationaleMd": "S1 separates low-frequency amplitude modulation from MFCC-like spectral detail and reports that each layer carries complementary linguistic information. S3 makes the same distinction under harsher pressure: at 200 bps, optimizing for intelligibility can preserve word recognition even when acoustic reconstruction is not the primary objective. S4 adds that detecting subtle synthetic artifacts requires small temporal averaging and high frequency/directional resolution, so the important layer depends on the task. S2 frames prosody as an alignment problem between token streams, while S6 frames harmony as traversal through explicit combinatorial resources. S5 gives the physical analogy: path, rate, and accessibility can determine the realized state rather than the globally optimal one. Together these sources suggest a compositional hypothesis: the audible identity of a passage is governed less by total detail than by where detail is allowed to remain precise [S1][S2][S3][S4][S5][S6].",
+    "sourceIds": [
+      "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "jx7dc14cbm6v0cme1ymrv0mmzd8567ga",
+      "jx7ctrab09mtbkdbghq2qqhm75851vkc",
+      "jx78nvpygk3a3ehen35mwswkhd85w0pt",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x"
+    ],
+    "concepts": [
+      "resolution budget",
+      "task-relevant fidelity",
+      "rhythm formant orchestration",
+      "alignment fidelity",
+      "intelligibility-first compression",
+      "scattering resolution",
+      "metastable traversal",
+      "graph-constrained resolution"
+    ]
+  },
+  "recipe": {
+    "title": "Three Budgets, One Phrase",
+    "bodyMd": "Write one 60-second phrase and render three matched versions. In every version, keep tempo, chord vocabulary, root rhythm, loudness, and instrumentation constant. Version A spends resolution on low-frequency amplitude modulation: clear 1-10 Hz tremolo, gating, or sidechain pulses with intentionally softened spectral detail, following S1's rhythm-formant split. Version B spends resolution on intelligibility of contour: reduce timbral ornament, but preserve melodic attack timing, register motion, and phrase boundaries, echoing S3's intelligibility-over-reconstruction result and S2's alignment concern. Version C spends resolution on fine spectral texture: keep rhythm and contour plain, but use high-resolution filtering, transient shaping, or wavelet-like multiband motion to make small artifacts audible, following S4. Use S6 by forcing all versions through the same small Tonnetz-adjacent harmonic graph, and use S5 by allowing only nearest-accessible harmonic moves rather than globally resolving every phrase. The study is disconfirmed if listeners cannot identify which layer was given priority, or if the high-resolution layer does not dominate recognition under blind comparison [S1][S2][S3][S4][S5][S6].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "96 BPM",
+        "details": {
+          "bpm": 96
+        }
+      },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "seconds": 60
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "1-10 Hz modulation band",
+        "details": {
+          "minHz": 1,
+          "maxHz": 10,
+          "purpose": "rhythm-formant layer"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "Matched integrated loudness across renders",
+        "details": {
+          "target": "-16 LUFS",
+          "tolerance": "±0.5 LU"
+        }
+      },
+      {
+        "type": "scaleSystem",
+        "value": "One fixed diatonic or pentatonic Tonnetz-derived graph",
+        "details": {
+          "nodes": "fixed across all versions",
+          "moves": "nearest-accessible only"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create a 60-second four-phrase MIDI sketch at 96 BPM.",
+      "Choose one constrained harmonic graph and freeze the chord-node sequence before sound design.",
+      "Render Version A with strong 1-10 Hz rhythmic modulation and deliberately low spectral complexity.",
+      "Render Version B with plain timbre but maximally clear attack timing, phrase boundaries, and melodic contour.",
+      "Render Version C with plain rhythm/contour but detailed multiband spectral motion or transient micro-variation.",
+      "Level-match all three renders to -16 LUFS within ±0.5 LU.",
+      "Blind-label the renders and listen for which layer is most immediately recognizable.",
+      "Write down one falsifying observation before comparing notes: e.g. the prioritized layer is not identifiable above chance."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Nearfield monitors or neutral headphones at matched playback level.",
+      "listeningMethod": "Blind A/B/C comparison after loudness matching; identify which musical layer carries the highest resolution in each render.",
+      "whatVaries": [
+        "Layer receiving the highest resolution budget: rhythmic modulation, contour/alignment, or fine spectral texture",
+        "Amount of spectral smoothing or detail",
+        "Degree of microtiming and phrase-boundary clarity"
+      ],
+      "whatStaysConstant": [
+        "Tempo",
+        "Chord graph and node sequence",
+        "Root rhythm",
+        "Instrumentation family",
+        "Integrated loudness",
+        "Overall duration"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "This synthesis treats resolution as an allocation problem rather than a universal fidelity target. It intentionally avoids claiming that all detail is equivalent; the proposed test asks which layer becomes musically dominant under controlled reallocation."
+}
