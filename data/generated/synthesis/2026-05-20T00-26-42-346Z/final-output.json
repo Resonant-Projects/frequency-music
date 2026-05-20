@@ -1,0 +1,107 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Carrier Counterpoint",
+    "question": "If pitch content stays fixed, do deliberate changes in the carrier layer change perceived musical state?",
+    "hypothesis": "If a fixed motif is rendered through contrasting carrier layers, then listeners will report different stability, intimacy, and intelligibility profiles because carrier constraints shape which parts of the signal survive and become perceptually salient.",
+    "rationaleMd": "S1 shows that realized physical structure depends on path and rate, not only on the mathematically available destination. S2 reports that prosody-aware annotations such as lexical stress, punctuation, and IPA phonemes improve speech denoising and TTS, suggesting that reconstruction depends on carrier information beyond lexical content. S5 places voice through compression and chirp spread spectrum modulation, making intelligibility a property of the whole transmission chain. S6 describes accumulated latency, information loss, and error propagation in cascaded audio pipelines, while using fixed 600 ms streaming chunks as a unified carrier for semantic and control tokens. S4 adds an anecdotal but musically practical case where transformer selection colors the signal path, and S3 cautiously suggests low-frequency acoustic energy may affect perception even when it is not foreground musical pitch.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7aa290nckw0wt9xn8y3xpe5s865h5c",
+      "jx7bsecd6xz13wetqb0aeaxenn85nj95",
+      "jx7fpefnn1345ek5cpfv2zayx586h3g3",
+      "jx731xk7jnvfy3k2caqszwn83n86a21d",
+      "jx743vna2yd4hyvvhf93yc1v1h85xvj4"
+    ],
+    "concepts": [
+      "carrier counterpoint",
+      "path-dependent carrier",
+      "prosodic carrier",
+      "sub-audible pressure",
+      "transformer coloration",
+      "chirp transmission",
+      "chunked listening"
+    ]
+  },
+  "recipe": {
+    "title": "Fixed Motif, Changing Carrier",
+    "bodyMd": "Create a 60-second A/B/C study using one four-note motif, one register, one tempo, one loudness target, and one harmonic destination. Version A uses a transparent carrier: clean synth or dry recorded tone with minimal saturation. Version B uses a color carrier: the same notes through transformer-style saturation or tape-like harmonic coloration, plus a stable low-frequency support layer kept safely above sub-audible playback risk. Version C uses a segmented carrier: the same notes split into 600 ms phrases with chirp-like filter sweeps and light bandwidth restriction. The carrier changes are grounded in path-dependent realization [S1], prosody-aware reconstruction [S2], low-frequency perceptual caution [S3], transformer coloration [S4], chirp/compression transmission [S5], and 600 ms chunked streaming [S6]. Disconfirming evidence: listeners describe the versions only as superficial mix variants, or cannot consistently distinguish changes in stability, intimacy, or intelligibility.",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "96 BPM",
+        "details": {
+          "bpm": 96
+        }
+      },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "seconds": 60
+        }
+      },
+      {
+        "type": "duration",
+        "value": "600 ms phrase chunks",
+        "details": {
+          "milliseconds": 600,
+          "source": "S6"
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "Avoid sub-20 Hz playback; use 32-45 Hz support if monitoring cannot reproduce infrasound safely",
+        "details": {
+          "avoidBelowHz": 20,
+          "supportRangeHz": [
+            32,
+            45
+          ],
+          "source": "S3"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Write a four-note motif and duplicate it into three 20-second sections.",
+      "Keep pitch, register, tempo, harmonic destination, and integrated loudness constant across all sections.",
+      "Render section A with a clean carrier: dry synth or recorded tone, minimal saturation, no obvious segmentation.",
+      "Render section B through transformer-style or tape-style harmonic coloration, matching loudness after the effect.",
+      "Render section C in 600 ms phrase windows with chirp-like filter sweeps and light bandwidth restriction.",
+      "Randomize section order for listening and rate each section for stability, intimacy, and intelligibility from 1 to 7.",
+      "Reject the hypothesis for this material if ratings do not differ meaningfully or if comments reduce all differences to surface mix color."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Nearfield monitors or reliable headphones at conservative level; avoid attempting true infrasound reproduction.",
+      "listeningMethod": "Blind A/B/C order, then written ratings for stability, intimacy, and intelligibility.",
+      "whatVaries": [
+        "carrier coloration",
+        "time segmentation",
+        "filter sweep/transmission profile",
+        "low-frequency support treatment"
+      ],
+      "whatStaysConstant": [
+        "four-note motif",
+        "tempo",
+        "register",
+        "harmonic destination",
+        "integrated loudness target",
+        "overall duration"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Essay written as docs/essays/the-carrier-decides.md. S3 and S4 are used cautiously because their evidence levels are speculative/anecdotal; the operational recipe keeps infrasound as a conceptual constraint rather than a playback target."
+}
