@@ -1,0 +1,103 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Translation Loss",
+    "question": "Which musical layer must a representation preserve for a transformed passage to still be heard as the same music?",
+    "hypothesis": "If a musical identity is carried by a layer that a translation weakens, then listeners will report reduced coherence or identity even when surface audio quality remains acceptable.",
+    "rationaleMd": "The selected sources suggest that representations preserve task-specific layers rather than whole musical objects. Ice phases depend on accessible transition paths rather than abstract possibility space [S1]. Bark-scale dynamics treats frequency resolution as perceptual rather than arbitrary [S2]. StreamMark survives benign acoustic transformations but fails under semantics-altering attacks, separating surface preservation from identity preservation [S3]. PHALAR's phase-equivariant representation improves stem retrieval and aligns better with human coherence judgments, implying that phase can carry musical relatedness [S4]. MSU-Bench shows that score modality changes multilevel musical reasoning [S5], while speech-recognition fairness work identifies the audio encoder, not language-model scale, as the decisive layer for robustness and bias [S6].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7awge62ymkd5ywnpz9ddyymx85ntkj",
+      "jx7e7qw7dt6jtemah5bj363y2h84xrsq",
+      "jx7fk4jg1jw1mbsnkfk8fckn01869sfn",
+      "jx70dhsw26kwd55qeh0xgyw3xx85fp1n",
+      "jx74r61g2tqd5bcy6aam4aqwes85f9kt"
+    ],
+    "concepts": [
+      "translation loss",
+      "load-bearing layer",
+      "representation fidelity",
+      "phase coherence",
+      "perceptual banding",
+      "semantic fragility",
+      "modality gap",
+      "encoder bias"
+    ]
+  },
+  "recipe": {
+    "title": "Load-Bearing Layer Litmus",
+    "bodyMd": "Compose a 60-second miniature with a clear melodic identity, a repeated rhythmic cell, and a recognizable timbral carrier. Export three translations. Version A preserves pitch and rhythm but weakens phase-sensitive microtiming with magnitude-heavy spectral resynthesis, testing the PHALAR claim that phase contributes to coherence [S4]. Version B preserves timing but applies 24-band Bark-style dynamics so each perceptual band breathes independently, testing whether perceptual frequency banding changes identity without destroying audio quality [S2]. Version C preserves notation-level pitch/rhythm while changing carriers and inserting brief rests/silence masks, testing score-modality and encoder-fragility questions raised by MSU-Bench and speech-recognition degradation work [S5][S6]. Compare against an unprocessed reference. The hypothesis is supported if one transformation has acceptable surface quality but clearly loses same-piece identity; it is weakened if all transformations preserve identity equally or all fail only because of obvious audio degradation. StreamMark provides the analogy: robustness to benign surface change is not the same thing as robustness to meaning-changing transformation [S3].",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "seconds": 60
+        }
+      },
+      {
+        "type": "band_count",
+        "value": "24 Bark-scale bands",
+        "details": {
+          "bands": 24,
+          "scale": "Bark"
+        }
+      },
+      {
+        "type": "quality_reference",
+        "value": "SNR target near 24.16 dB for hidden-layer processing audibility check",
+        "details": {
+          "snrDb": 24.16,
+          "source": "StreamMark imperceptibility result"
+        }
+      },
+      {
+        "type": "identity_rating",
+        "value": "1-5 same-piece identity score per version",
+        "details": {
+          "min": 1,
+          "max": 5
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Write one 60-second reference miniature with melody, rhythm, harmony, and a distinctive timbral carrier.",
+      "Export the dry reference and loudness-match all later renders.",
+      "Create Version A with spectral processing that preserves pitch contour but reduces phase/microtiming detail.",
+      "Create Version B with 24-band Bark-style dynamics or the closest available critical-band multiband setup.",
+      "Create Version C by preserving score-level pitch/rhythm while changing instruments and inserting short rests or silence masks.",
+      "Blind-label the four files and rate same-piece identity, coherence, timbral continuity, and surface audio quality.",
+      "Mark the load-bearing layer as the lowest-level feature whose damage reduces identity while surface quality remains acceptable."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Nearfield monitoring or headphones at matched loudness.",
+      "listeningMethod": "Blind A/B/C/reference comparison with written ratings immediately after each pass.",
+      "whatVaries": [
+        "representation layer damaged: phase/microtiming, perceptual band dynamics, timbral carrier/rest masking",
+        "translation path from reference to render"
+      ],
+      "whatStaysConstant": [
+        "melodic contour",
+        "harmonic progression",
+        "nominal tempo",
+        "overall duration",
+        "loudness target"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Created from 2026-05-21 synthesis context. Publish may fail while Convex create mutations are returning server errors."
+}
+

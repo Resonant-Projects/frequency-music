@@ -2345,6 +2345,20 @@
     "contentHash": "ab29eccc73203727e146678cdfdf1418086cdcc80aa4daa1cc73fd9b75fedf14",
     "generatedAt": "2026-05-18T16:29:10.804Z"
   },
+  "the-translation-loss": {
+    "excerpt": "Musical meaning doesn't survive all transformations equally—composers can map what remains intact through different representations to discover a piece's load-bearing structures.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "psychoacoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "979b28b74ade4b4c77e7d430379c0e7902c13559fed4dea07d9b23fc4c1584ba",
+    "generatedAt": "2026-05-21T00:28:40.196Z"
+  },
   "the-tuning-codec": {
     "excerpt": "Tuning systems and audio codecs solve the same problem: compressing infinite possibilities into finite, playable representations. Both distribute quantization error through perceptual weighting, making temperament the acoustic analog of lossy compression.",
     "tags": [
