@@ -2553,6 +2553,20 @@
     "contentHash": "ef902d0c3eda47039faea48f1d2069b65f56d02f850a3895a80db24ca4f2e3c4",
     "generatedAt": "2026-04-10T18:41:31.359Z"
   },
+  "the-source-before-the-signal": {
+    "excerpt": "Source identity is not metadata but part of the signal model: single-source curation, speech separation, and anomalous-sound evaluation all depend on deciding what kind of source exists before interpreting sound.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "acoustics",
+      "composition",
+      "AI-music",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "fc5ec6f5b5ee23cf9635eb9a2115ff17bcfa49959a49fae2ed274fe052a39a27",
+    "generatedAt": "2026-05-22T16:26:00.000Z"
+  },
   "where-the-signal-breaks": {
     "excerpt": "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
     "tags": [
