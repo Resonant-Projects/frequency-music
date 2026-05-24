@@ -1,0 +1,110 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Invisible Coordinate",
+    "question": "When a musical surface is held constant, can listeners still distinguish changes made only in the leftover degrees of freedom allowed by a constraint system?",
+    "hypothesis": "If chord labels, tempo, phrase length, and arrangement form are held constant while only voicing habits, graph traversal habits, or phase/spectral microstructure vary, then listeners will distinguish versions above chance because those hidden coordinates carry stylistic and textural information not captured by the explicit surface.",
+    "rationaleMd": "Basso continuo realizations show that individual performers can be identified from pitch-content features inside a historically constrained practice, so style can survive as a residue of choices left open by rules [S3]. Tonnetz-style combinatorial geometries define adjacency and available harmonic resources without determining the exact traversal or realization, leaving path behavior as a compositional variable [S5]. Audio watermarking via STFT phase bins and adjacent-bin log-magnitude differences shows that frequency-domain microstructure can carry robust information while remaining perceptually subtle, which makes it a plausible hidden coordinate for timbral identity [S6]. The electronic-production source supports the practical arrangement side: call and response, silence, and timbral layering can keep the overt form stable while expressive identity moves through texture and negative space [S1]. The ice source adds a process model: path and rate can select nearby metastable states rather than globally optimal ones, suggesting a harmonic protocol based on nearest accessible states rather than direct resolution [S4]. The quantum-generation source frames the same issue abstractly: premature readout collapses structured possibility, so composition should decide which layer remains coherent before commitment [S2].",
+    "sourceIds": [
+      "jx7a6svn6bw13mgz33j5pjf73h85dp8c",
+      "jx7cpq9xmaekwyq7jj7ajsae5h85eycc",
+      "jx7afrabhjjj4aab4k0bk2s6gn85fycv",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek"
+    ],
+    "concepts": [
+      "invisible coordinate",
+      "style aperture",
+      "hidden degrees of freedom",
+      "graph traversal habit",
+      "phase signature",
+      "metastable harmony",
+      "coherent possibility"
+    ]
+  },
+  "recipe": {
+    "title": "Same Surface, Hidden Coordinate",
+    "bodyMd": "Create a 60-second A/B/C study in which the obvious musical surface stays fixed while one hidden coordinate changes. Use an eight-chord Tonnetz-like path as the harmonic surface [S5]. Arrange it as two-bar call and two-bar response phrases, preserving the same rhythm, tempo, and section layout across all versions [S1]. Version A varies only griff-like realization habits: voicing density, register, doublings, and chord grips, motivated by basso continuo style identification [S3]. Version B varies only path behavior: shortest-path motion, delayed resolution, and one nearest-accessible metastable detour inspired by path-dependent phase formation [S4]. Version C keeps MIDI and levels fixed while applying subtle phase/spectral treatment such as seeded high-partial micro-delay or adjacent-bin EQ ripple, motivated by phase-domain watermarking [S6]. The disconfirming result is clear: if blind listening cannot identify which coordinate changed above chance, that coordinate is not strong enough to carry compositional identity in this setup.",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "112 BPM",
+        "details": {
+          "bpm": 112
+        }
+      },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "seconds": 60
+        }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "2-bar call / 2-bar response, repeated 4 times",
+        "details": {
+          "barsPerCall": 2,
+          "barsPerResponse": 2,
+          "repetitions": 4
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "Blind identification accuracy above 50% for paired comparisons",
+        "details": {
+          "chanceLevel": 0.5
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "44.1 kHz render",
+        "details": {
+          "sampleRateHz": 44100
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create an eight-chord progression using one adjacency rule and freeze the chord labels.",
+      "Program a 60-second arrangement at 112 BPM with two-bar call and two-bar response phrases.",
+      "Duplicate the session into A, B, and C versions with identical tempo, chord labels, phrase lengths, and loudness target.",
+      "In version A, vary only voicing density, register, doublings, and chord grips.",
+      "In version B, vary only graph traversal behavior while keeping voicing style close to the control.",
+      "In version C, keep MIDI and levels fixed and vary only subtle phase/spectral processing.",
+      "Render all versions at 44.1 kHz and loudness-match them.",
+      "Blind-label paired comparisons and record whether the changed coordinate is identifiable."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Studio headphones plus one speaker pass at matched loudness.",
+      "listeningMethod": "Blind paired comparisons between control and hidden-coordinate variants.",
+      "whatVaries": [
+        "griff-like voicing habits",
+        "harmonic graph traversal habit",
+        "phase and adjacent-bin spectral microstructure"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "chord labels",
+        "meter",
+        "phrase length",
+        "call-and-response form",
+        "overall loudness target"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Extraction workflow failed with Convex server error, so this synthesis was built from the collector fallback context generated at 2026-05-20T08:26:40.901Z."
+}

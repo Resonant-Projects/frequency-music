@@ -1,0 +1,114 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "Thick Boundary Control",
+    "question": "Do staggered, multidimensional transition windows make musical state changes feel more continuous than grid-aligned switches or uniform crossfades?",
+    "hypothesis": "If pitch, timbre, intensity, and noise are changed inside a shared 1200 ms boundary window with staggered curves, then listeners will perceive stronger transition continuity than when the same parameters switch at one instant or crossfade together linearly, because acoustic boundaries are gradient and latent acoustic dimensions can be controlled semi-independently.",
+    "rationaleMd": "Forced alignment work argues that phoneme boundaries are gradient ranges rather than single timestamps, and ensemble confidence intervals can represent that boundary thickness [S4]. Self-supervised speech representations suggest pitch, intensity, noise, F2, and higher-frequency characteristics can occupy partially isolated dimensions that are independently manipulable [S3]. ARIA-style dynamic alignment addresses instability caused by mismatched text and speech token grids, suggesting that adaptive alignment can stabilize expressive timing when representational rates differ [S2]. Video-Robin's separation of high-level planning from local synthesis supports the idea that transitions benefit from a plan before local audio is rendered [S5]. Bioacoustic rare-event annotation shows that millisecond-level boundary detail can matter for sparse acoustic events [S6]. Ice phase transitions add a physical analogy: path and rate determine which nearby metastable structures become reachable, so the transition window itself constrains the result [S1].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx728k53rhpv5ye61qsvb8b9fh85ayjd",
+      "jx7ady5b74ettfwnrgzq10p2mn86g6bk",
+      "jx7dn2qe73n69wb2keprdw1xm984wjxd",
+      "jx7awwpndbmcnas4926276wxfn85e65h",
+      "jx7c7e1e75npm6wa6bzkzk0gq984xs82"
+    ],
+    "concepts": [
+      "thick boundary",
+      "gradient alignment",
+      "latent transition space",
+      "adaptive token alignment",
+      "path-dependent reachability",
+      "rare-event annotation"
+    ]
+  },
+  "recipe": {
+    "title": "Score the Boundary",
+    "bodyMd": "Create one 60-second loop with a single planned state change at bar 5. Keep tempo, chord destinations, instrumentation, loudness target, and total transition duration fixed. Render three versions: a thin boundary where pitch, filter/formant EQ, noise layer, and amplitude all switch at one grid point; a wide blur where all parameters crossfade linearly over 1200 ms; and a thick boundary where the same 1200 ms window is internally scored. In the thick version, begin the noise/breath layer at 0 ms, move formant or EQ from 250-850 ms, bend pitch from 400-1000 ms, and let amplitude arrive from 700-1200 ms. This tests whether a boundary modeled as a structured confidence window improves continuity, drawing on gradient segment boundaries [S4], separable acoustic dimensions [S3], dynamic unit alignment [S2], and path-dependent transition behavior [S1].",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "108 BPM",
+        "details": {
+          "bpm": 108
+        }
+      },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "seconds": 60
+        }
+      },
+      {
+        "type": "duration",
+        "value": "1200 ms boundary window",
+        "details": {
+          "milliseconds": 1200
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "97.85% confidence interval inspiration",
+        "details": {
+          "source": "S4"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "10-model ensemble inspiration",
+        "details": {
+          "source": "S4",
+          "classifiers": 10
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "F0, F2, intensity, noise dimensions",
+        "details": {
+          "source": "S3"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create an eight-bar harmonic loop and duplicate it into three 60-second renders.",
+      "Set the state change at bar 5 and keep chord targets identical across all renders.",
+      "Render version A with all transition parameters switching at the same grid-aligned point.",
+      "Render version B with all transition parameters using the same 1200 ms linear crossfade.",
+      "Render version C with a 1200 ms boundary window: noise 0-500 ms, formant/EQ 250-850 ms, pitch 400-1000 ms, amplitude 700-1200 ms.",
+      "Level-match all renders to the same integrated loudness target before listening.",
+      "Blind-rank continuity, destination preparedness, and smear on a 1-5 scale.",
+      "Reject the hypothesis if version C is not ranked more continuous than A or is indistinguishable from B."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Nearfield monitors or neutral headphones, blind A/B/C order, level matched.",
+      "listeningMethod": "Rank continuity, destination preparedness, and perceived smear after two passes per render.",
+      "whatVaries": [
+        "Boundary treatment: instantaneous switch, uniform crossfade, staggered multidimensional window",
+        "Automation curve timing for noise, formant/EQ, pitch, and amplitude"
+      ],
+      "whatStaysConstant": [
+        "Tempo",
+        "Chord destinations",
+        "Instrumentation",
+        "Overall transition duration",
+        "Loudness target",
+        "Arrangement length"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Compelling connection: boundary thickness as a controllable composition object across speech alignment, acoustic latent dimensions, multimodal planning, rare-event annotation, and path-dependent physical transitions."
+}

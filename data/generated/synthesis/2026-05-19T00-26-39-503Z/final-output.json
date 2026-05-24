@@ -1,0 +1,122 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Recoverable Window",
+    "question": "Does musical continuity improve when analysis or transformation happens at the smallest window where the governing relation is recoverable?",
+    "hypothesis": "If a musical structure is analyzed or transformed at the smallest window where its governing relation is recoverable, then the resulting material will preserve stronger continuity than material processed at a window that is too local, too global, or aligned to the wrong feature.",
+    "rationaleMd": "Ice XXI shows that apparent local disorder can reveal periodicity at the right macroscopic scale [S1]. Stuttering precursor work shows that severe events can be forecast from a three-second prosodic window while other event types remain at chance [S2]. Omni2Sound shows that staged multimodal alignment can reduce video/text/audio task conflict [S3]. Infant-cry classification shows that short nonstationary biological signals may require fused F0, MFCC, STFT, and temporal-memory features [S4]. Tonnetz theory shows that harmonic relations become readable as graph incidence structures [S5]. STFT watermarking shows that selected phase and adjacent-bin log-magnitude degrees of freedom can carry recoverable information while remaining perceptually subtle [S6].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7e069afwawf8v8pgrxex5y2s85w80e",
+      "jx7dvwyahyzy5qvrgf7y1gvtnd85vkbp",
+      "jx72jqrcp519f3tmk8hpfd7wfn86qwpp",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x",
+      "jx72yj3ez4q7t2pqt9c0jmcbjx86hbek"
+    ],
+    "concepts": [
+      "recoverable window",
+      "scale-matched analysis",
+      "prosodic precursor",
+      "staged multimodal alignment",
+      "feature-fusion window",
+      "graph-readable harmony",
+      "hidden carrier"
+    ]
+  },
+  "recipe": {
+    "title": "Recoverable-Window Composition",
+    "bodyMd": "Build a 90-second study from one harmonic cell, one noisy or speech-like timbre, one rhythmic density curve, and one stereo or phase-sensitive texture. Compose versions that preserve order at different windows: local apparent disorder with larger periodicity, a prepared event with a three-second precursor versus an inserted event, picture/text/staged multimodal alignment, fused F0-MFCC-STFT feature preservation, Tonnetz-like graph path preservation, and a subtle hidden carrier in phase or adjacent spectral-band motion [S1, S2, S3, S4, S5, S6]. The test asks whether continuity follows the analysis window where the governing relation is actually recoverable.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "90 seconds",
+        "details": {
+          "durationSecs": 90
+        }
+      },
+      {
+        "type": "analysis_window",
+        "value": "3-second precursor window",
+        "details": {
+          "durationSecs": 3,
+          "source": "S2"
+        }
+      },
+      {
+        "type": "feature_set",
+        "value": "F0 + MFCC + STFT + temporal memory",
+        "details": {
+          "features": [
+            "F0 contour",
+            "MFCC",
+            "STFT",
+            "sequence memory"
+          ],
+          "source": "S4"
+        }
+      },
+      {
+        "type": "harmonic_model",
+        "value": "Tonnetz-like graph path",
+        "details": {
+          "configurationReferences": [
+            "{12_3}",
+            "{7_3}"
+          ],
+          "source": "S5"
+        }
+      },
+      {
+        "type": "hidden_carrier",
+        "value": "STFT phase bins and adjacent-bin log-magnitude differences",
+        "details": {
+          "domain": "STFT",
+          "source": "S6"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one 90-second source study with a harmonic cell, noisy or speech-like timbre, rhythmic density curve, and stereo/phase-sensitive texture.",
+      "Write a section that appears locally irregular but reveals periodicity across an eight- or sixteen-bar window.",
+      "Create one event with a three-second acoustic precursor and one matched inserted event without preparation.",
+      "Score the same cue picture-first, text/gesture-first, and with staged alignment, then compare modality bias.",
+      "Track F0 contour, spectral envelope, and short-time energy for the noisy timbre; render one variation preserving all three and one preserving only one.",
+      "Map the harmonic cell onto a small Tonnetz-like graph; render one version preserving path and another preserving chord labels only.",
+      "Embed a subtle continuity carrier in phase/stereo relation or adjacent spectral-band motion, then render a disturbed-carrier control.",
+      "Loudness-match and randomize all renders before judging continuity."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 90,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Studio monitors or neutral headphones, loudness-matched renders",
+      "listeningMethod": "Blind randomized comparison with notes on which analysis window reveals the governing relation",
+      "whatVaries": [
+        "analysis window",
+        "precursor presence",
+        "alignment order",
+        "feature fusion",
+        "graph path preservation",
+        "hidden carrier preservation"
+      ],
+      "whatStaysConstant": [
+        "source cell",
+        "tempo map",
+        "form length",
+        "core timbral materials",
+        "integrated loudness"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Disconfirming evidence: listeners only recover the claimed structure after reading the analysis, or transformations at the proposed recoverable window do not preserve audible continuity better than mismatched local/global controls."
+}

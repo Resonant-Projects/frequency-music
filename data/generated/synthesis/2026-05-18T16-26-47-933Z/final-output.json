@@ -1,0 +1,115 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Translation Layer",
+    "question": "Does a transformation preserve more musical continuity when its intermediate representation is aligned with the relation that must survive?",
+    "hypothesis": "If a musical transformation uses an intermediate representation aligned with the relation that must survive, then listeners will perceive stronger continuity than in a matched transformation using a representation that cuts across that relation.",
+    "rationaleMd": "Bark-scale dynamics suggests that the frequency grid a processor hears through changes what it preserves perceptually [S2]. StreamMark shows that complex-domain audio structure can carry recoverable information through benign transformations while failing under identity-altering attacks [S3]. PHALAR reports that pitch-equivariance and phase-equivariance improve musical representation learning, and that phase-aware representations align with human coherence judgments [S4]. Score-understanding benchmarks show modality gaps between ABC and PDF score representations across onset, pitch, harmony, texture, and form [S5]. Speech-recognition fairness work shows that audio encoder design and compression quality can dominate downstream behavior and bias [S6]. Ice phase behavior adds the physical constraint: mathematically possible structures only matter when a path can actually reach them [S1].",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx7awge62ymkd5ywnpz9ddyymx85ntkj",
+      "j97erghbc7ad3p5p34jhxsgbcn85nn4m",
+      "j9712m9d4c5g8t6s1nbac2exws85nqxp",
+      "j97a759sjc6q974wvnhh9v6dsd85ngdg",
+      "j97e09z3x1dkjp7f0m501s8y0d85ntv4"
+    ],
+    "concepts": [
+      "translation layer",
+      "representation-aligned transformation",
+      "perceptual band grid",
+      "phase-preserved coherence",
+      "notation codec",
+      "front-end fairness",
+      "reachable representation"
+    ]
+  },
+  "recipe": {
+    "title": "Translation-Layer A/B",
+    "bodyMd": "Build a 60-second source passage with drums, bass, chordal material, and one phase-sensitive or stereo-rich texture. Keep tempo, form length, key center, source motif, and integrated loudness constant. Render five transformations: Bark-band dynamics, arbitrary-band dynamics as a control grid, phase-preserved versus phase-disturbed translation, notation-codec translation from ABC and visual/staff or piano-roll forms, and a degraded front-end stress test using low bitrate, silence gaps, onset masking, or coarse pitch quantization [S1, S2, S3, S4, S5, S6]. The test asks whether continuity follows the representation that preserves the task-relevant relation rather than the version with the closest surface match.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "durationSecs": 60
+        }
+      },
+      {
+        "type": "processing",
+        "value": "24 Bark-scale critical bands",
+        "details": {
+          "bands": 24,
+          "source": "S2"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "SNR 24.16 dB watermark transparency reference",
+        "details": {
+          "snrDb": 24.16,
+          "source": "S3"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "PESQ 4.20 watermark perceptual quality reference",
+        "details": {
+          "pesq": 4.2,
+          "source": "S3"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "152/304-cell reachability proportion reference",
+        "details": {
+          "iceXxiUnit": 152,
+          "iceXxiiUnit": 304,
+          "source": "S1"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one 60-second source passage with drums, bass, chords, and a phase-sensitive texture.",
+      "Render a Bark-band dynamics version using 24 perceptual bands or the closest available approximation.",
+      "Render a matched arbitrary-band dynamics control with comparable loudness and gain reduction.",
+      "Render a phase-preserved timbral translation and a magnitude-preserved phase-disturbed control.",
+      "Translate a four-bar excerpt through two notation/workflow codecs, then compose one variation from each.",
+      "Render a degraded front-end version with low bitrate, silence gaps, onset masking, or coarse pitch quantization.",
+      "Loudness-match all versions and randomize playback order before listening.",
+      "Score each version for preserved density, phase coherence, motif, hierarchy, timing, accent, and harmonic path."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Studio monitors or neutral headphones, loudness-matched renders",
+      "listeningMethod": "Blind randomized A/B comparison with written continuity notes",
+      "whatVaries": [
+        "intermediate representation",
+        "frequency band grid",
+        "phase preservation",
+        "notation/workflow codec",
+        "front-end degradation"
+      ],
+      "whatStaysConstant": [
+        "tempo",
+        "form length",
+        "key center",
+        "source motif",
+        "integrated loudness",
+        "instrumental roles"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Disconfirming evidence: listeners cannot distinguish representation-aligned transformations from surface-matched controls, or the preserved relation is only measurable in analysis and has no audible compositional consequence."
+}

@@ -1,0 +1,112 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Readable Constraint",
+    "question": "Does preserving one named readability layer make a transformed passage feel more continuous than preserving surface similarity while breaking that layer?",
+    "hypothesis": "If a musical transformation preserves one named readability layer while changing surface features, then listeners will report stronger continuity than in a surface-matched control where that layer is broken.",
+    "rationaleMd": "Low-frequency amplitude modulation can carry discriminative rhythmic identity in speech, suggesting that macro-temporal modulation may function as a readable rhythmic signature in music [S1]. Dynamic alignment between text and speech units improves prosody and stability in streaming synthesis, suggesting that timing alignment itself can be a task-relevant layer [S2]. ClariCodec shows that intelligibility can be optimized separately from acoustic reconstruction detail at 200 bps, so preserving the musically relevant message may matter more than preserving all surface fidelity [S3]. WST-X adds that multi-scale, deformation-stable features can retain subtle acoustic signatures under transformation [S4]. Ice-phase behavior warns that actual outcomes depend on reachable paths rather than all mathematically possible states [S5], while Tonnetz theory supplies explicit graph structures for preserving harmonic adjacency through variation [S6].",
+    "sourceIds": [
+      "jx78j7ze7qdtvv1jzwvrgwt1as85smq1",
+      "jx7dc14cbm6v0cme1ymrv0mmzd8567ga",
+      "jx7ctrab09mtbkdbghq2qqhm75851vkc",
+      "jx78nvpygk3a3ehen35mwswkhd85w0pt",
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx75ff9jca456jv63hh8tngqhn85dh7x"
+    ],
+    "concepts": [
+      "readable constraint",
+      "readability layer",
+      "rhythm formant preservation",
+      "alignment as parameter",
+      "intelligibility hierarchy",
+      "deformation-stable timbre",
+      "reachable harmonic path"
+    ]
+  },
+  "recipe": {
+    "title": "Preserve One Readability Layer",
+    "bodyMd": "Build a 60-second piece from one four-bar source phrase containing drums, a monophonic lead, a chordal layer, and one noisy or synthetic timbral layer. Create four transformations plus one control. Keep BPM, form length, key center, integrated loudness, and source motif constant. Version A preserves the low-frequency amplitude-modulation profile: similar dominant pulse-rate region, dominant-peak count, and dispersion [S1]. Version B changes melody and accompaniment but keeps stressed events dynamically aligned to structural beat accents [S2]. Version C degrades timbre aggressively while protecting motif intelligibility, then compare it with a control that preserves more detail but obscures the motif [S3]. Version D revoices and reorchestrates harmony while preserving a reachable Tonnetz-like graph path through local plateau states [S5, S6]. The fifth version matches the surface palette but breaks the relevant constraints. The hypothesis is disconfirmed if listeners cannot identify stronger continuity in the preserved-constraint versions than in the broken-constraint control.",
+    "parameters": [
+      {
+        "type": "tempo",
+        "value": "96 BPM",
+        "details": {
+          "bpm": 96
+        }
+      },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": {
+          "seconds": 60
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "dominant AM peaks in ~1-10 Hz band",
+        "details": {
+          "feature": "low-frequency amplitude modulation",
+          "estimatedBandHz": "1-10"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "integrated loudness matched within 1 LU",
+        "details": {
+          "maxDifferenceLU": 1
+        }
+      },
+      {
+        "type": "scaleSystem",
+        "value": "12-tone chromatic/Tonnetz-like adjacency path",
+        "details": {
+          "constraint": "preserve graph path, vary voicing"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create one four-bar source phrase with drums, monophonic lead, chordal layer, and one noisy or synthetic timbral layer.",
+      "Duplicate it into five 60-second arrangements with the same BPM, form length, key center, motif, and integrated loudness.",
+      "For version A, alter drum samples and pattern surface while preserving the approximate low-frequency amplitude-modulation profile.",
+      "For version B, alter melody contour and accompaniment while keeping stressed events aligned to structural beat accents.",
+      "For version C, degrade timbre with filtering, bitcrushing, or resynthesis while keeping the motif easy to identify.",
+      "For version D, revoice and reorchestrate harmony while preserving one reachable Tonnetz-like adjacency path.",
+      "For the control, match the palette and energy but break modulation consistency, accent alignment, motif readability, and graph-path continuity.",
+      "Randomize exports and run a blind self-listening pass scoring continuity from 1 to 5 and naming what remains recognizable."
+    ],
+    "protocol": {
+      "studyType": "litmus",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Level-matched headphones or nearfields; randomized export order.",
+      "listeningMethod": "Blind continuity rating from 1 to 5 plus a short note naming the readable layer perceived.",
+      "whatVaries": [
+        "which readability layer is preserved",
+        "surface drum pattern and samples",
+        "melody contour and accompaniment",
+        "degree of timbral degradation",
+        "harmonic voicing and orchestration"
+      ],
+      "whatStaysConstant": [
+        "96 BPM tempo",
+        "60 second form length",
+        "key center",
+        "source motif identity",
+        "integrated loudness within 1 LU",
+        "overall arrangement density"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "The control must be surface-matched enough that stronger continuity cannot be explained by simple loudness, density, or instrumentation similarity."
+}
+

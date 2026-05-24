@@ -1,0 +1,110 @@
+{
+  "version": "final_output_v1",
+  "hypothesis": {
+    "title": "The Uncertain Edge",
+    "question": "Do transition zones composed as measured confidence intervals create stronger directed continuity than point-like cuts or uniform crossfades between the same musical states?",
+    "hypothesis": "If transition zones are treated as confidence intervals with ordered clarification across pitch, timbre, rhythm, source identity, and semantic intent, then listeners will perceive stronger directed continuity than in versions where the same states are connected by point-like cuts or uniform crossfades.",
+    "rationaleMd": "S4 argues that speech boundaries are gradient regions rather than single instants, and represents them with ensemble-derived confidence intervals. S1 shows that physical phase changes often move through nearby metastable states shaped by path, rate, and accessibility rather than directly optimizing. S2 identifies dynamic alignment between symbolic text units and acoustic speech units as necessary for stable, prosodic streaming speech. S5 separates high-level semantic music planning from local diffusion synthesis, supporting a plan-then-render model for transitions. S3 shows that speech representations expose partly separable axes such as pitch, intensity, noise, F2, and high-frequency characteristics, while S6 shows that rare acoustic events can be learned from sparse raw audio with millisecond temporal annotation. Together these sources support a compositional test: a boundary can carry form when its uncertainty is structured, dimension-specific, and path-connected.",
+    "sourceIds": [
+      "jx7402s3g0ndbjwmfh8qnpvd9n85ndzb",
+      "jx728k53rhpv5ye61qsvb8b9fh85ayjd",
+      "jx7ady5b74ettfwnrgzq10p2mn86g6bk",
+      "jx7dn2qe73n69wb2keprdw1xm984wjxd",
+      "jx7awwpndbmcnas4926276wxfn85e65h",
+      "jx7c7e1e75npm6wa6bzkzk0gq984xs82"
+    ],
+    "concepts": [
+      "uncertain edge",
+      "gradient boundary",
+      "confidence-interval transition",
+      "ordered clarification",
+      "metastable plateau",
+      "plan-then-render edge",
+      "rare-event emergence",
+      "clock alignment"
+    ]
+  },
+  "recipe": {
+    "title": "Confidence-Interval Transitions",
+    "bodyMd": "Build a 60-second piece from three sharply contrasting sound states, then connect them with 8-12 second transition zones rather than point-like edits. For one boundary, stagger pitch, noise, formant color, and amplitude so the edge behaves like a confidence interval [S4]. For another, insert a temporary metastable plateau that is locally coherent, reachable from the first state, and suggestive of the next [S1]. For the third, write a high-level transition intent before rendering sound, following the plan-then-synthesis split suggested by Video-Robin [S5]. Add one clock-alignment passage where a symbolic grid and acoustic gesture drift then lock [S2], and one rare-event motif that becomes detectable only after the background statistics are established [S6]. Compare against a control version with the same source states connected by hard cuts or uniform crossfades.",
+    "parameters": [
+      {
+        "type": "duration",
+        "value": "60 seconds total",
+        "details": {
+          "totalSecs": 60,
+          "transitionCount": 3,
+          "transitionSecs": "8-12"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "97.85% confidence interval as boundary metaphor",
+        "details": {
+          "confidencePercent": 97.85,
+          "source": "S4"
+        }
+      },
+      {
+        "type": "measurement",
+        "value": "10-model ensemble as layered boundary control",
+        "details": {
+          "ensembleLayers": 10,
+          "source": "S4"
+        }
+      },
+      {
+        "type": "duration",
+        "value": "millisecond-resolution event annotation",
+        "details": {
+          "annotationScale": "milliseconds",
+          "source": "S6"
+        }
+      }
+    ],
+    "dawChecklist": [
+      "Create three contrasting source states: pitched vocal tone, noisy breath texture, and percussive pulse field.",
+      "Arrange a 60-second form with three 8-12 second transition zones.",
+      "Transition 1: stagger pitch, noise, formant color, and amplitude so the boundary has width.",
+      "Transition 2: insert a metastable plateau that is neither the source nor the destination.",
+      "Transition 3: write the transition intent in words before choosing automation or synthesis.",
+      "Add one symbolic/acoustic clock drift that resolves into alignment.",
+      "Hide one rare-event motif in sparse background material, then repeat enough background for the motif to become detectable.",
+      "Duplicate the piece and replace the transition design with hard cuts or uniform crossfades for comparison.",
+      "Level-match both versions and score directed continuity, boundary clarity, and over-blur."
+    ],
+    "protocol": {
+      "studyType": "comparison",
+      "durationSecs": 60,
+      "panelPlanned": [
+        "self"
+      ],
+      "listeningContext": "Level-matched headphones or nearfields; compare the designed-transition version against the hard-cut/uniform-crossfade control without looking at the arrangement.",
+      "listeningMethod": "Score whether each transition feels directed, whether the boundary width is audible without becoming vague, and whether the first clarifying dimension can be named.",
+      "whatVaries": [
+        "boundary width",
+        "clarification order",
+        "metastable plateau duration",
+        "clock drift amount",
+        "rare-event detectability",
+        "transition rendering method"
+      ],
+      "whatStaysConstant": [
+        "three source states",
+        "total duration",
+        "integrated loudness",
+        "overall form",
+        "comparison rating scale"
+      ]
+    }
+  },
+  "citations": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "notes": "Falsification criterion: if wider boundaries merely blur the form, or if listeners cannot identify which dimension clarified first, the uncertain-edge framing is not useful for this material."
+}
