@@ -2580,5 +2580,19 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
+  },
+  "the-proof-of-a-source": {
+    "excerpt": "Source identity is an operational proof assembled from clean witnesses, correlation cues, and commitment deadlines; composition can shape what listeners can know in time.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "acoustics",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f51b9b096102adea78506293fc9baf7b36c30a7ea5ea044e9798dc50f79d9731",
+    "generatedAt": "2026-05-24T16:28:56.902Z"
   }
 }
