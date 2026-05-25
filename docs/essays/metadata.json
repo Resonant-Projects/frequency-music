@@ -139,6 +139,20 @@
     "contentHash": "26599211cd31364ad40c84edb8abe7c1b64a649c5bf096388385347fa3e9e6e7",
     "generatedAt": "2026-04-10T18:36:17.644Z"
   },
+  "sourcehood-before-signal": {
+    "excerpt": "Speech separation, single-source dataset curation, and machine-identity evaluation all point to sourcehood as a first-class audio parameter. This essay proposes source-legibility as a compositional control layer.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "psychoacoustics",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "92bd0a654f041980797a333bb2829427282a3de035a8892f3c098b5737181463",
+    "generatedAt": "2026-05-25T08:26:00.000Z"
+  },
   "structure-before-sound": {
     "excerpt": "Minimalist hip-hop beats and mathematical music share a surprising principle: maximum impact comes from structural clarity, not surface complexity. By compressing audio to its irreducible skeleton, we discover what truly matters in composition.",
     "tags": [
@@ -347,6 +361,19 @@
     "contentHash": "c6957ea191bcfa6f87017112ec94c5ee12c6f2521f0a2f2402f92e563e8c13a0",
     "generatedAt": "2026-04-10T18:36:37.407Z"
   },
+  "the-attribution-layer": {
+    "excerpt": "Source attribution is not just a preprocessing step but a compositional layer where systems decide what counts as one thing—turning separation, curation, and detection into a musical problem of how listeners bind sound into source.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ced28eda3b48d8ccc4360064303e3bf2114499161d31a425d56abb02344e667f",
+    "generatedAt": "2026-05-25T16:28:48.096Z"
+  },
   "the-bandpass-principle": {
     "excerpt": "Every listening system starts by choosing a passband; from ultrasonic bioacoustics to Bark-scale dynamics, infrasound, wavelet artifacts, and rhythm formants, the filter is already a theory of music.",
     "tags": [
@@ -402,6 +429,20 @@
     "category": "interdisciplinary",
     "contentHash": "ec75cd0e7be2fb2b9bd4bf33e7646fb410c5de1c386ad2dcad428e6452452b0e",
     "generatedAt": "2026-05-11T08:26:58.171Z"
+  },
+  "the-boundary-that-listens": {
+    "excerpt": "Representation boundaries aren't passive—they actively shape what music can be heard, composed, and understood. Five research domains reveal how encoders, scales, and notations decide which musical facts survive.",
+    "tags": [
+      "psychoacoustics",
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "d5aff19b91761eadbb0c2fe1723f8728d8e3da1ca8aad0bf2aaf0654419b77e7",
+    "generatedAt": "2026-05-25T16:28:50.673Z"
   },
   "the-carrier-carries-the-form": {
     "excerpt": "Speech prosody, Tonnetz adjacency, phase watermarking, ice metastability, and transformer coloration all suggest that musical form is carried by hidden constraint layers beneath named notes and words.",
@@ -797,20 +838,6 @@
     "category": "interdisciplinary",
     "contentHash": "8a230addc837afc6928f57ce64d6df5dcfbc2b8e05ea6237572e6d3fa03b51d3",
     "generatedAt": "2026-05-25T00:26:00.000Z"
-  },
-  "sourcehood-before-signal": {
-    "excerpt": "Speech separation, single-source dataset curation, and machine-identity evaluation all point to sourcehood as a first-class audio parameter. This essay proposes source-legibility as a compositional control layer.",
-    "tags": [
-      "signal-processing",
-      "composition",
-      "perception",
-      "psychoacoustics",
-      "AI-music",
-      "acoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "92bd0a654f041980797a333bb2829427282a3de035a8892f3c098b5737181463",
-    "generatedAt": "2026-05-25T08:26:00.000Z"
   },
   "the-density-horizon": {
     "excerpt": "At ~24-30 notes per second, individual musical notes dissolve into continuous texture-a critical phase transition where discrete melodic perception gives way to statistical texture listening.",
@@ -1437,6 +1464,20 @@
     "contentHash": "0347016d5a02a197faa7ded5bc01b517b5c98ecbac41cb0f4df18211c3a012aa",
     "generatedAt": "2026-04-10T18:38:57.284Z"
   },
+  "the-latency-contract": {
+    "excerpt": "Real-time music systems must honor latency contracts—promises about when decisions happen—not merely chase low numbers. Timing becomes a design surface balancing commitment, duration, preparation, and continuity.",
+    "tags": [
+      "perception",
+      "composition",
+      "signal-processing",
+      "AI-music",
+      "rhythm",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3d9af6eee0fb6e400313df3d535a9159bb2f360a6d22c5433959648b91af7c3c",
+    "generatedAt": "2026-05-25T16:28:52.487Z"
+  },
   "the-listener-in-the-filter": {
     "excerpt": "Audio filters embed implicit models of their listeners. When those models misalign with actual downstream listeners, systems fail systematically-revealing how signal processing choices are inseparable from assumptions about who's listening.",
     "tags": [
@@ -1492,6 +1533,20 @@
     "category": "interdisciplinary",
     "contentHash": "cc4a456bde9baee28f0731c89113340c37fbac0d119dd81adc3dcd8771f5f115",
     "generatedAt": "2026-05-05T16:26:57.645Z"
+  },
+  "the-load-bearing-layer": {
+    "excerpt": "Musical identity is carried by load-bearing layers—listeners track specific features while ignoring others, and transformation fails when it damages the layer the piece depends on, not when it changes everything.",
+    "tags": [
+      "perception",
+      "composition",
+      "signal-processing",
+      "psychoacoustics",
+      "wave-physics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "df06a2e30d3ab48fe906a69e4dd1dada2a756fcfef845398ce07718eb1e6ccd8",
+    "generatedAt": "2026-05-25T16:28:55.098Z"
   },
   "the-locking-in": {
     "excerpt": "Mode-locking explains how coupled oscillators snap into simple frequency ratios-from Huygens' pendulum clocks to cochlear consonance to groove. The physics beneath music's deepest structures.",
@@ -1647,6 +1702,20 @@
     "contentHash": "fa86bb09be5fd43696e96aaaef69e994f79bab9f97d0914f57bb7e4a7871a740",
     "generatedAt": "2026-04-10T18:39:25.921Z"
   },
+  "the-moment-of-enough": {
+    "excerpt": "How do listeners decide when they've heard enough to commit to meaning? This essay bridges speech separation, sound classification, and translation models to propose that composition is fundamentally about controlling commitment timing.",
+    "tags": [
+      "perception",
+      "AI-music",
+      "signal-processing",
+      "psychoacoustics",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "fe1bebee0d182c76da56d8ff9ea61e52a8e485a8153740eacaf411abc13d8f3b",
+    "generatedAt": "2026-05-25T16:28:56.922Z"
+  },
   "the-multiplexed-voice": {
     "excerpt": "The human voice transmits six simultaneous channels-from linguistic content to emotional state, identity, social position, physical condition, and acoustic environment-all entangled in a single broadcast. Recent AI research reveals how machines stumble by treating this multiplexed signal as single-channel, while composers have always known the full spectrum.",
     "tags": [
@@ -1702,6 +1771,20 @@
     "category": "interdisciplinary",
     "contentHash": "1e309be3750bf500e7225afda2e667b2779f0aec0f48cfdacc81175171b1ad93",
     "generatedAt": "2026-04-10T18:39:41.820Z"
+  },
+  "the-one-source-threshold": {
+    "excerpt": "Source identity isn't given by the waveform—it's a threshold judgment built from correlated evidence over time. Three papers reveal how isolation, correlation, and latency shape what counts as 'one thing' in sound.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "acoustics",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f75b8a52be1ffb992d4b04f1fdfa3ca43c662c6f5320153ecd0efe935d64286f",
+    "generatedAt": "2026-05-25T16:28:58.532Z"
   },
   "the-orthogonal-unknown": {
     "excerpt": "When neural systems make the boundary between known and unknown information mathematically explicit-via orthogonal decomposition, frequency crossovers, or distributional ambiguity-they achieve better results with dramatically fewer parameters.",
@@ -1827,6 +1910,20 @@
     "category": "mathematics",
     "contentHash": "36394033f62c16d189ecabbacc361e440c02a6552bbe13d00d723d15000ed2b3",
     "generatedAt": "2026-04-10T18:39:52.516Z"
+  },
+  "the-proof-of-a-source": {
+    "excerpt": "Source identity is an operational proof assembled from clean witnesses, correlation cues, and commitment deadlines; composition can shape what listeners can know in time.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "acoustics",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f51b9b096102adea78506293fc9baf7b36c30a7ea5ea044e9798dc50f79d9731",
+    "generatedAt": "2026-05-24T16:28:56.902Z"
   },
   "the-readable-constraint": {
     "excerpt": "Musical coherence emerges not from unchanging surfaces but from preserving task-relevant readability layers-whether rhythmic modulation, alignment, intelligibility, or harmonic path. This essay connects speech coding, phase transitions, and Tonnetz theory to show how composers can choose which constraint survives transformation.",
@@ -2107,6 +2204,48 @@
     "contentHash": "ac0d7287c28c735aa823ea69d3b27d64abf28e2c028351a937082f14962375b3",
     "generatedAt": "2026-04-10T18:40:27.236Z"
   },
+  "the-source-before-the-signal": {
+    "excerpt": "Source identity is not metadata but part of the signal model: single-source curation, speech separation, and anomalous-sound evaluation all depend on deciding what kind of source exists before interpreting sound.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "acoustics",
+      "composition",
+      "AI-music",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "fc5ec6f5b5ee23cf9635eb9a2115ff17bcfa49959a49fae2ed274fe052a39a27",
+    "generatedAt": "2026-05-22T16:26:00.000Z"
+  },
+  "the-source-before-the-sound": {
+    "excerpt": "Before systems can understand sound, they must decide what counts as a source. This essay explores how source separation, training data curation, and real-time latency constraints reveal a deeper compositional principle: controlling when listeners perceptually bind acoustic fragments together.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "AI-music",
+      "acoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "bcb0375535da41ff28c07d84da7ea942767fc3b9f0a0567e4c07965907ce290c",
+    "generatedAt": "2026-05-25T16:29:01.314Z"
+  },
+  "the-source-identity-budget": {
+    "excerpt": "Source identity is a perceptual budget that listeners spend to track what made a sound. Composers can preserve it for structural continuity, spend it for transformation, or exploit false identity for misdirection.",
+    "tags": [
+      "perception",
+      "acoustics",
+      "composition",
+      "signal-processing",
+      "psychoacoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8400af6db69dd7bf051b262715662ceca51b80603c6ebcdd698711d14a43c703",
+    "generatedAt": "2026-05-25T16:29:03.322Z"
+  },
   "the-space-between": {
     "excerpt": "Three 2026 papers reveal why AI struggles with music: it's not about generating individual elements, but capturing the relational properties-groove, spatial acoustics, cross-dimensional analysis-that live in the space between.",
     "tags": [
@@ -2218,6 +2357,20 @@
     "category": "interdisciplinary",
     "contentHash": "b40c158d1acec17f08705ba09cca674db430af13eff3828c8edfd7ffd6da70ea",
     "generatedAt": "2026-05-04T00:28:18.682Z"
+  },
+  "the-sufficiency-threshold": {
+    "excerpt": "Sufficiency—knowing when you have enough evidence to act—is a hidden variable in both audio AI and music composition, from speaker separation to real-time improvisation.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "composition",
+      "AI-music",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "fb36e722e56d5eb93899ac23ef95d69e06e56bcdc8b0eb426cb6d137b24a4f77",
+    "generatedAt": "2026-05-25T16:29:04.966Z"
   },
   "the-surface-and-the-source": {
     "excerpt": "Timbre perception maps cleanly to simple acoustic parameters, yet producing timbre requires understanding the hidden causal chain. Exploring the gap between what sounds like and what makes it.",
@@ -2581,20 +2734,6 @@
     "contentHash": "ef902d0c3eda47039faea48f1d2069b65f56d02f850a3895a80db24ca4f2e3c4",
     "generatedAt": "2026-04-10T18:41:31.359Z"
   },
-  "the-source-before-the-signal": {
-    "excerpt": "Source identity is not metadata but part of the signal model: single-source curation, speech separation, and anomalous-sound evaluation all depend on deciding what kind of source exists before interpreting sound.",
-    "tags": [
-      "signal-processing",
-      "perception",
-      "acoustics",
-      "composition",
-      "AI-music",
-      "psychoacoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "fc5ec6f5b5ee23cf9635eb9a2115ff17bcfa49959a49fae2ed274fe052a39a27",
-    "generatedAt": "2026-05-22T16:26:00.000Z"
-  },
   "where-the-signal-breaks": {
     "excerpt": "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
     "tags": [
@@ -2608,19 +2747,5 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
-  },
-  "the-proof-of-a-source": {
-    "excerpt": "Source identity is an operational proof assembled from clean witnesses, correlation cues, and commitment deadlines; composition can shape what listeners can know in time.",
-    "tags": [
-      "signal-processing",
-      "perception",
-      "composition",
-      "information-theory",
-      "acoustics",
-      "AI-music"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "f51b9b096102adea78506293fc9baf7b36c30a7ea5ea044e9798dc50f79d9731",
-    "generatedAt": "2026-05-24T16:28:56.902Z"
   }
 }
