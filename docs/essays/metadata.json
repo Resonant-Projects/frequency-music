@@ -798,6 +798,20 @@
     "contentHash": "8a230addc837afc6928f57ce64d6df5dcfbc2b8e05ea6237572e6d3fa03b51d3",
     "generatedAt": "2026-05-25T00:26:00.000Z"
   },
+  "sourcehood-before-signal": {
+    "excerpt": "Speech separation, single-source dataset curation, and machine-identity evaluation all point to sourcehood as a first-class audio parameter. This essay proposes source-legibility as a compositional control layer.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "psychoacoustics",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "92bd0a654f041980797a333bb2829427282a3de035a8892f3c098b5737181463",
+    "generatedAt": "2026-05-25T08:26:00.000Z"
+  },
   "the-density-horizon": {
     "excerpt": "At ~24-30 notes per second, individual musical notes dissolve into continuous texture-a critical phase transition where discrete melodic perception gives way to statistical texture listening.",
     "tags": [
