@@ -784,6 +784,20 @@
     "contentHash": "93b16305ba44c44d5665f963c5b13f6dcee9005a05a4f2e383c933459df0eb47",
     "generatedAt": "2026-05-17T08:28:41.932Z"
   },
+  "the-decision-to-separate": {
+    "excerpt": "Single-source curation, correlation-based speech separation, and streaming translation all expose source identity as a decision under uncertainty. This essay treats separation confidence as a compositional parameter.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "AI-music",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8a230addc837afc6928f57ce64d6df5dcfbc2b8e05ea6237572e6d3fa03b51d3",
+    "generatedAt": "2026-05-25T00:26:00.000Z"
+  },
   "the-density-horizon": {
     "excerpt": "At ~24-30 notes per second, individual musical notes dissolve into continuous texture-a critical phase transition where discrete melodic perception gives way to statistical texture listening.",
     "tags": [
