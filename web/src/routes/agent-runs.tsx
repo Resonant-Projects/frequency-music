@@ -160,6 +160,7 @@ export function AgentRunsPage() {
   const selectedRun = createMemo(() =>
     (runs.data() ?? []).find((run: Doc<"agentRuns">) => run._id === selectedRunId()),
   );
+  const listError = createMemo(() => runs.error() ?? counts.error());
 
   function selectRun(run: Doc<"agentRuns">) {
     setSelectedRunId((current) => (current === run._id ? null : (run._id as Id<"agentRuns">)));
@@ -175,6 +176,22 @@ export function AgentRunsPage() {
           surface. Details load only when a run is selected.
         </p>
       </UICard>
+
+      <Show when={listError()}>
+        {(error) => (
+          <UICard>
+            <UIBadge tone="violet">Convex Query Error</UIBadge>
+            <h2 class={sectionTitleClass}>Agent run data is not available yet</h2>
+            <p class={helperClass}>
+              {error().message || "The agent-run queries failed before returning data."}
+            </p>
+            <p class={helperClass}>
+              This usually means the browser is not fully authenticated with Convex, the app was built
+              against the wrong Convex deployment, or the Clerk JWT template named "convex" is missing.
+            </p>
+          </UICard>
+        )}
+      </Show>
 
       <UICard>
         <h2 class={sectionTitleClass}>Recent Activity</h2>
@@ -235,7 +252,11 @@ export function AgentRunsPage() {
             when={!runs.isLoading() && (runs.data() ?? []).length > 0}
             fallback={
               <p class={helperClass}>
-                {runs.isLoading() ? "Loading agent runs..." : "No agent runs match the current filters."}
+                {runs.isLoading()
+                  ? "Loading agent runs..."
+                  : runs.error()
+                    ? `Unable to load agent runs: ${runs.error()?.message}`
+                    : "No agent runs match the current filters."}
               </p>
             }
           >
@@ -312,7 +333,15 @@ export function AgentRunsPage() {
                   </h3>
                   <Show
                     when={!events.isLoading() && (events.data() ?? []).length > 0}
-                    fallback={<p class={helperClass}>{events.isLoading() ? "Loading events..." : "No events recorded for this run."}</p>}
+                    fallback={
+                      <p class={helperClass}>
+                        {events.isLoading()
+                          ? "Loading events..."
+                          : events.error()
+                            ? `Unable to load events: ${events.error()?.message}`
+                            : "No events recorded for this run."}
+                      </p>
+                    }
                   >
                     <div class={css({ display: "grid", gap: "4" })}>
                       <For each={events.data() ?? []}>
