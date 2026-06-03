@@ -52,16 +52,20 @@ export const storeExtraction = internalMutation({
     const compositionParameters = await Promise.all(
       args.compositionParameters.map(async (parameter) => {
         const kind = (parameter.kind ?? parameter.type ?? "").trim();
-        const registry = await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
-          name: kind,
-        });
+        const registry = kind
+          ? await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
+              name: kind,
+            })
+          : undefined;
+        const canonicalKind =
+          parameter.canonicalKind?.trim() || kind || undefined;
         return {
           kind,
           type: parameter.type ?? kind,
           value: parameter.value,
           details: parameter.details,
-          registryStatus: registry.status,
-          canonicalKind: parameter.canonicalKind,
+          registryStatus: registry?.status ?? parameter.registryStatus,
+          canonicalKind,
         };
       }),
     );

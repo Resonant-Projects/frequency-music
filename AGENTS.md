@@ -25,7 +25,7 @@ External LangGraph/LangChain agents read project state through the secret-guarde
 
 ## Directory Structure
 
-```
+```text
 frequency-music/
 ├── convex/              # Convex backend functions
 │   ├── schema.ts        # Data model (sources, extractions, feeds, etc.)
@@ -151,14 +151,14 @@ All CLI mutations require auth bypass (Clerk integration):
 
 ```bash
 # Add devBypassSecret to mutation args
-bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/Codex-sonnet-4-6", "devBypassSecret": "freq-opus-extract-2026"}'
+bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4.6", "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
 ```
 
-Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=freq-opus-extract-2026`
+Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=<set locally; do not commit the value>`
 
 ## Environment Variables (.env.local)
 
-```
+```bash
 CONVEX_SELF_HOSTED_URL='http://convex-backend.paas.rproj.art'
 OPENROUTER_API_KEY=...
 GROQ_API_KEY=...
@@ -167,7 +167,7 @@ KERNEL_API_KEY=...  # Kernel.sh cloud browser (5 concurrent sessions)
 
 ## Data Pipeline
 
-```
+```text
 Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
                                      ↓
                               Claims, Parameters, Topics
@@ -187,7 +187,7 @@ Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
 ```typescript
 MODELS = {
   fast: "groq/moonshotai/kimi-k2-instruct",
-  default: "anthropic/Codex-sonnet-4-6",
+  default: "anthropic/claude-sonnet-4.6",
   gemini: "google/gemini-2.5-flash",
   grok: "x-ai/grok-3-mini-beta",
   deepseek: "deepseek/deepseek-chat-v3-0324",

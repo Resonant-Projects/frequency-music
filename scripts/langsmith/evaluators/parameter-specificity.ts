@@ -2,7 +2,7 @@ import type { Run, Example } from "langsmith";
 
 const UNIT_TOKENS = ["hz", "bpm", "cents", "ratio", "tet", ":", "/", "°"];
 
-export const parameterSpecificityEvaluator = (run: Run, _example: Example) => {
+export const parameterSpecificityEvaluator = (run: Run, _example?: Example) => {
   const params = (run.outputs as Record<string, unknown> | undefined)
     ?.compositionParameters as Array<Record<string, unknown>> | undefined;
   if (!Array.isArray(params) || params.length === 0) {

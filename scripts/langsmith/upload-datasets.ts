@@ -1,6 +1,11 @@
 #!/usr/bin/env bun
 import { readFile } from "node:fs/promises";
 import { Client } from "langsmith";
+import {
+  type ExampleLike,
+  buildMissingExamples,
+  parseJsonlRows,
+} from "./upload-datasets-lib";
 
 const client = new Client();
 
@@ -15,7 +20,8 @@ interface Dataset {
 const DATASETS: Dataset[] = [
   {
     name: "resonant-extractions-golden",
-    description: "Hand-curated good extractions, used to score extract_* prompts.",
+    description:
+      "Hand-curated good extractions, used to score extract_* prompts.",
     path: "data/eval/extractions-golden.jsonl",
     inputKeys: ["sourceTitle", "sourceType", "rawText"],
     outputKeys: [
@@ -32,7 +38,13 @@ const DATASETS: Dataset[] = [
       "Hypotheses with strong whyThisMatters, used to score hypothesis_* prompts.",
     path: "data/eval/hypotheses-golden.jsonl",
     inputKeys: ["sourceTitle", "claims", "compositionParameters", "topics"],
-    outputKeys: ["title", "question", "hypothesis", "whyThisMatters", "rationaleMd"],
+    outputKeys: [
+      "title",
+      "question",
+      "hypothesis",
+      "whyThisMatters",
+      "rationaleMd",
+    ],
   },
   {
     name: "resonant-weekly-briefs-golden",
@@ -47,42 +59,49 @@ for (const ds of DATASETS) {
   let rows: Record<string, unknown>[] = [];
   try {
     const text = await readFile(ds.path, "utf8");
-    rows = text
-      .trim()
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => JSON.parse(line));
-  } catch (e) {
-    console.warn(`  ${ds.name}: ${ds.path} not found, skipping`);
+    rows = parseJsonlRows(text, ds.path);
+  } catch (error) {
+    const message = (error as Error).message;
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      console.warn(`  ${ds.name}: ${ds.path} not found, skipping`);
+      continue;
+    }
+    console.warn(`  ${ds.name}: ${message}, skipping`);
     continue;
   }
 
-  let dataset;
+  let dataset: Awaited<ReturnType<typeof client.readDataset>>;
   try {
     dataset = await client.readDataset({ datasetName: ds.name });
     console.log(`Found existing dataset: ${ds.name}`);
   } catch {
-    dataset = await client.createDataset(ds.name, { description: ds.description });
+    dataset = await client.createDataset(ds.name, {
+      description: ds.description,
+    });
     console.log(`Created dataset: ${ds.name}`);
   }
 
-  const existing: unknown[] = [];
+  const existing: ExampleLike[] = [];
   for await (const ex of client.listExamples({ datasetId: dataset.id })) {
     existing.push(ex);
   }
-  if (existing.length >= rows.length) {
-    console.log(`  ${ds.name}: already has ${existing.length} examples, skipping upload`);
+
+  const missing = buildMissingExamples(
+    rows,
+    existing,
+    ds.inputKeys,
+    ds.outputKeys,
+  );
+  if (missing.length === 0) {
+    console.log(`  ${ds.name}: already has all ${rows.length} local examples`);
     continue;
   }
 
-  for (const row of rows) {
-    const inputs = Object.fromEntries(
-      ds.inputKeys.map((k) => [k, (row as Record<string, unknown>)[k]]),
-    );
-    const outputs = Object.fromEntries(
-      ds.outputKeys.map((k) => [k, (row as Record<string, unknown>)[k]]),
-    );
-    await client.createExample(inputs, outputs, { datasetId: dataset.id });
+  for (const example of missing) {
+    await client.createExample({
+      ...example,
+      dataset_id: dataset.id,
+    });
   }
-  console.log(`  ${ds.name}: uploaded ${rows.length} examples`);
+  console.log(`  ${ds.name}: uploaded ${missing.length} examples`);
 }

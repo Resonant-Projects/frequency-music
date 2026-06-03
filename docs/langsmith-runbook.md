@@ -31,6 +31,8 @@ npm install                 # npm only inside agent/, project-wide is bun
 npx @langchain/langgraph-cli dev --port 2024
 ```
 
+The `agent/` workspace intentionally uses npm/npx because it maintains `agent/package-lock.json` and `agent/README.md` documents npm setup.
+
 Open `http://localhost:2024/ok` to confirm health; open the LangSmith Studio link printed by the dev server (or hit the API directly with `curl http://localhost:2024/assistants/search -X POST -d '{}' -H 'Content-Type: application/json'`).
 
 ### Convex traces
@@ -38,7 +40,7 @@ Open `http://localhost:2024/ok` to confirm health; open the LangSmith Studio lin
 Already on once `LANGSMITH_*` env vars are set on the deployment. Trigger:
 
 ```bash
-bunx convex run extract:extractAllReady '{"limit": 1, "devBypassSecret": "freq-opus-extract-2026"}'
+bunx convex run extract:extractAllReady '{"limit": 1, "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
 ```
 
 A trace named `extract_v2` should appear in LangSmith → `resonant-projects-prod` within ~30 seconds.

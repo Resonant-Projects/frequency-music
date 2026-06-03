@@ -8,7 +8,7 @@ type Output = {
   openQuestions?: unknown;
 };
 
-export const extractionSchemaEvaluator = (run: Run, _example: Example) => {
+export const extractionSchemaEvaluator = (run: Run, _example?: Example) => {
   const output = run.outputs as Output | undefined;
   if (!output) return { key: "schema_valid", score: 0, comment: "no output" };
   try {

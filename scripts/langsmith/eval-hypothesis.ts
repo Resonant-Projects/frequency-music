@@ -1,14 +1,8 @@
 #!/usr/bin/env bun
-import { evaluate } from "langsmith/evaluation";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
 import { whyThisMattersEvaluator } from "./evaluators/why-matters";
-import { parameterSpecificityEvaluator } from "./evaluators/parameter-specificity";
+import { type EvalPrompt, runEval } from "./eval-helper";
 
-const PROMPTS: Record<
-  string,
-  { system: string; user: (input: Record<string, unknown>) => string }
-> = {
+const PROMPTS: Record<string, EvalPrompt> = {
   v1: {
     system:
       "You are a research synthesis assistant. Generate a hypothesis with strong whyThisMatters language tied to compositional stakes.",
@@ -17,31 +11,11 @@ const PROMPTS: Record<
   },
 };
 
-const versionIdx = process.argv.indexOf("--version");
-const version = versionIdx >= 0 ? (process.argv[versionIdx + 1] ?? "v1") : "v1";
-const prompt = PROMPTS[version];
-if (!prompt) {
-  console.error(`Unknown prompt version: ${version}`);
-  process.exit(1);
-}
-
-const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY! });
-
-await evaluate(
-  async (input) => {
-    const { text } = await generateText({
-      model: openrouter("anthropic/claude-sonnet-4-6"),
-      system: prompt.system,
-      prompt: prompt.user(input as Record<string, unknown>),
-      maxOutputTokens: 2000,
-    });
-    const match = text.match(/\{[\s\S]*\}/);
-    return match ? JSON.parse(match[0]) : {};
-  },
-  {
-    data: "resonant-hypotheses-golden",
-    evaluators: [whyThisMattersEvaluator, parameterSpecificityEvaluator],
-    experimentPrefix: `hypothesis-${version}`,
-    metadata: { promptVersion: version },
-  },
-);
+await runEval({
+  prompts: PROMPTS,
+  defaultVersion: "v1",
+  data: "resonant-hypotheses-golden",
+  evaluators: [whyThisMattersEvaluator],
+  experimentPrefix: "hypothesis",
+  maxOutputTokens: 2000,
+});
