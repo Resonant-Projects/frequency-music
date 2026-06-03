@@ -1,9 +1,11 @@
+"use node";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, type LanguageModel } from "ai";
+import { tracedGenerate } from "./tracing";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { action, internalMutation } from "./_generated/server";
+import { action } from "./_generated/server";
 import { requireAuth } from "./auth";
 
 // ============================================================================
@@ -207,12 +209,22 @@ export const extractSource = action({
     try {
       const model = getModel(modelId);
 
-      const { text: assistantMessage } = await generateText({
-        model,
-        system: EXTRACT_SYSTEM_PROMPT,
-        prompt: userPrompt,
-        maxOutputTokens: 4096,
-      });
+      const { text: assistantMessage } = await tracedGenerate(
+        "extract_v2",
+        () =>
+          generateText({
+            model,
+            system: EXTRACT_SYSTEM_PROMPT,
+            prompt: userPrompt,
+            maxOutputTokens: 4096,
+          }),
+        {
+          sourceId: args.sourceId,
+          sourceType: source.type,
+          model: modelId,
+          promptVersion: "extract_v2",
+        },
+      );
 
       if (!assistantMessage) {
         throw new Error("No response from model");
@@ -262,7 +274,7 @@ export const extractSource = action({
       });
 
       // Store the extraction
-      await ctx.runMutation(internal.extract.storeExtraction, {
+      await ctx.runMutation(internal.extractInternal.storeExtraction, {
         sourceId: args.sourceId,
         model: modelId,
         promptVersion: "extract_v2",
@@ -309,81 +321,6 @@ export const extractSource = action({
   },
 });
 
-/**
- * Store an extraction result
- */
-export const storeExtraction = internalMutation({
-  args: {
-    sourceId: v.id("sources"),
-    model: v.string(),
-    promptVersion: v.string(),
-    inputHash: v.string(),
-    summary: v.string(),
-    claims: v.array(
-      v.object({
-        text: v.string(),
-        evidenceLevel: v.union(
-          v.literal("peer_reviewed"),
-          v.literal("preprint"),
-          v.literal("anecdotal"),
-          v.literal("speculative"),
-          v.literal("personal"),
-        ),
-        citations: v.array(
-          v.object({
-            label: v.optional(v.string()),
-            url: v.optional(v.string()),
-            quote: v.optional(v.string()),
-          }),
-        ),
-        truthConfidence: v.optional(
-          v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-        ),
-        interestLevel: v.optional(
-          v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-        ),
-      }),
-    ),
-    compositionParameters: v.array(
-      v.object({
-        kind: v.optional(v.string()),
-        type: v.optional(v.string()),
-        value: v.string(),
-        details: v.optional(v.any()),
-        registryStatus: v.optional(v.string()),
-        canonicalKind: v.optional(v.string()),
-      }),
-    ),
-    topics: v.array(v.string()),
-    openQuestions: v.array(v.string()),
-    confidence: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const compositionParameters = await Promise.all(
-      args.compositionParameters.map(async (parameter) => {
-        const kind = (parameter.kind ?? parameter.type ?? "").trim();
-        const registry = await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
-          name: kind,
-        });
-        return {
-          kind,
-          type: parameter.type ?? kind,
-          value: parameter.value,
-          details: parameter.details,
-          registryStatus: registry.status,
-          canonicalKind: parameter.canonicalKind,
-        };
-      }),
-    );
-
-    return await ctx.db.insert("extractions", {
-      ...args,
-      compositionParameters,
-      createdBy: "system",
-      createdAt: Date.now(),
-    });
-  },
-});
 
 /**
  * Extract all sources that are ready

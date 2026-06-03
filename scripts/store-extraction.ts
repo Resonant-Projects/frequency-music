@@ -64,7 +64,7 @@ async function main() {
   });
 
   // Store extraction
-  const result = runConvex("extract:storeExtraction", payload);
+  const result = runConvex("extractInternal:storeExtraction", payload);
   console.log(`Stored: ${result.trim()}`);
 
   // Update source status
