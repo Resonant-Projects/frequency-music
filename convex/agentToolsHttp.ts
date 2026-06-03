@@ -27,6 +27,16 @@ const agentToolRefs = {
   searchSourcesByConcept: makeFunctionReference<"action">(
     "agentTools:searchSourcesByConcept",
   ),
+  createAgentRun: makeFunctionReference<"action">("agentTools:createAgentRun"),
+  appendAgentRunEvent: makeFunctionReference<"action">(
+    "agentTools:appendAgentRunEvent",
+  ),
+  markAgentRunCompleted: makeFunctionReference<"action">(
+    "agentTools:markAgentRunCompleted",
+  ),
+  markAgentRunFailed: makeFunctionReference<"action">(
+    "agentTools:markAgentRunFailed",
+  ),
 };
 
 type AgentToolName = keyof typeof agentToolRefs;
@@ -76,4 +86,14 @@ export const getRecommendedActionsHttp = makeAgentToolHttpHandler(
 );
 export const searchSourcesByConceptHttp = makeAgentToolHttpHandler(
   "searchSourcesByConcept",
+);
+export const createAgentRunHttp = makeAgentToolHttpHandler("createAgentRun");
+export const appendAgentRunEventHttp = makeAgentToolHttpHandler(
+  "appendAgentRunEvent",
+);
+export const markAgentRunCompletedHttp = makeAgentToolHttpHandler(
+  "markAgentRunCompleted",
+);
+export const markAgentRunFailedHttp = makeAgentToolHttpHandler(
+  "markAgentRunFailed",
 );

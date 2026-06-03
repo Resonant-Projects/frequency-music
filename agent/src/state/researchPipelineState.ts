@@ -18,7 +18,7 @@ export interface ResearchCandidate {
 }
 
 export interface AuditEvent {
-  kind: "decision" | "tool_call" | "error" | "summary";
+  kind: "tool_call" | "decision" | "draft_write" | "error" | "review_request" | "status" | "node";
   message: string;
   payload?: unknown;
   createdAt: string;
@@ -38,6 +38,7 @@ function replaceArray<T>(_left: T[], right: T[]) {
 
 export const ResearchPipelineAnnotation = Annotation.Root({
   runId: Annotation<string | undefined>,
+  agentRunId: Annotation<string | undefined>,
   dryRun: Annotation<boolean | undefined>,
   limit: Annotation<number | undefined>,
   activeTheses: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
@@ -45,6 +46,7 @@ export const ResearchPipelineAnnotation = Annotation.Root({
   recentHypotheses: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
   recentRecipes: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
   failureArchive: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
+  editorialSignals: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
   recommendedActions: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
   candidates: Annotation<ResearchCandidate[]>({ value: replaceArray, default: () => [] }),
   selectedCandidate: Annotation<ResearchCandidate | undefined>,

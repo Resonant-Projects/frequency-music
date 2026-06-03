@@ -2,6 +2,8 @@ import { httpRouter } from "convex/server";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import {
+  appendAgentRunEventHttp,
+  createAgentRunHttp,
   getEditorialSignalsHttp,
   getExtractionHttp,
   getRecentRecipesHttp,
@@ -10,6 +12,8 @@ import {
   listFailureArchiveHttp,
   listRecentExtractionsHttp,
   listRecentHypothesesHttp,
+  markAgentRunCompletedHttp,
+  markAgentRunFailedHttp,
   searchSourcesByConceptHttp,
 } from "./agentToolsHttp";
 import { generateDedupeKey } from "./sourceUtils";
@@ -118,6 +122,30 @@ http.route({
   path: "/agent-tools/searchSourcesByConcept",
   method: "POST",
   handler: searchSourcesByConceptHttp,
+});
+
+http.route({
+  path: "/agent-tools/createAgentRun",
+  method: "POST",
+  handler: createAgentRunHttp,
+});
+
+http.route({
+  path: "/agent-tools/appendAgentRunEvent",
+  method: "POST",
+  handler: appendAgentRunEventHttp,
+});
+
+http.route({
+  path: "/agent-tools/markAgentRunCompleted",
+  method: "POST",
+  handler: markAgentRunCompletedHttp,
+});
+
+http.route({
+  path: "/agent-tools/markAgentRunFailed",
+  method: "POST",
+  handler: markAgentRunFailedHttp,
 });
 
 http.route({

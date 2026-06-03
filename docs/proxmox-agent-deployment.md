@@ -48,10 +48,33 @@ Run the Proxmox connectivity spike with:
 
 ```bash
 cd agent
-bun scripts/spike-proxmox.ts
+bun run smoke:proxmox
 ```
 
 It reads `PROXMOX_TOKEN_ID` and `PROXMOX_TOKEN_SECRET` from the environment, falling back to the repository root `.env.local` when run from `agent/`. It prints cluster version and sanitized node summaries only. If the cluster certificate is not trusted locally, set `PROXMOX_ALLOW_SELF_SIGNED=true` for the spike/container runtime.
+
+## Local build/smoke sequence
+
+Before preparing any Proxmox runtime, verify the local agent package and LangGraph image build:
+
+```bash
+cd agent
+bun run verify
+bun run automation:local
+```
+
+`bun run automation:local` runs TypeScript verification and the local LangGraph Docker build, producing the local image tag configured by `agent/package.json` (`resonant-projects-agent:local`). It intentionally skips Proxmox connectivity by default so normal local automation remains low-friction and does not require cluster credentials.
+
+To include the secret-safe Proxmox API smoke check in the same fail-fast sequence:
+
+```bash
+cd agent
+RUN_PROXMOX_SMOKE=true bun run automation:local
+```
+
+The automation must not print token values. The optional smoke step delegates to `agent/scripts/spike-proxmox.ts`, which reads credentials from environment variables or the root `.env.local` fallback and prints only sanitized cluster metadata.
+
+Do not use this sequence to deploy yet: it is build/smoke preparation only. Do not copy Proxmox tokens, Codex sessions, or other secrets into Docker images.
 
 ## Near-term deployment sequence
 
@@ -62,3 +85,5 @@ It reads `PROXMOX_TOKEN_ID` and `PROXMOX_TOKEN_SECRET` from the environment, fal
 5. Deploy the container to Proxmox with runtime secrets mounted/injected.
 6. Run weekly brief and research-pipeline in parallel with existing Convex workflows.
 7. Disable Convex-side orchestration only after LangGraph output is stable and auditable.
+
+Always-on Proxmox deployment is gated on the Convex audit tables because the runner needs durable run state, event history, and failure visibility before it can safely replace or parallelize existing orchestration. Until `agentRuns`/`agentRunEvents` and narrow audit/write tools exist, deployment work should stay limited to local builds, smoke checks, and documentation.

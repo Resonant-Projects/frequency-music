@@ -1,4 +1,6 @@
 import {
+  appendAgentRunEvent,
+  createAgentRun,
   getEditorialSignals,
   getRecentRecipes,
   getRecommendedActions,
@@ -6,6 +8,8 @@ import {
   listFailureArchive,
   listRecentExtractions,
   listRecentHypotheses,
+  markAgentRunCompleted,
+  markAgentRunFailed,
 } from "../../tools/convexTools.js";
 import type {
   AuditEvent,
@@ -22,6 +26,68 @@ function nowEvent(kind: AuditEvent["kind"], message: string, payload?: unknown):
     payload,
     createdAt: new Date().toISOString(),
   };
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function runIdFrom(value: unknown) {
+  if (!value || typeof value !== "object") return undefined;
+  const runId = (value as { runId?: unknown }).runId;
+  return typeof runId === "string" ? runId : undefined;
+}
+
+async function appendRemoteAuditEvent(
+  agentRunId: string | undefined,
+  kind: AuditEvent["kind"],
+  message: string,
+  payload?: unknown,
+): Promise<AuditEvent[]> {
+  const localEvent = nowEvent(kind, message, payload);
+  if (!agentRunId) return [localEvent];
+
+  try {
+    await appendAgentRunEvent.invoke({ runId: agentRunId, kind, message, payload });
+    return [localEvent];
+  } catch (error) {
+    return [
+      localEvent,
+      nowEvent("error", "Failed to append remote agent-run audit event", {
+        message: errorMessage(error),
+      }),
+    ];
+  }
+}
+
+export async function initializeRunNode(
+  state: ResearchPipelineState,
+): Promise<ResearchPipelineUpdate> {
+  const input = {
+    dryRun: state.dryRun ?? true,
+    limit: state.limit ?? 10,
+    langGraphRunId: state.runId,
+  };
+
+  try {
+    const created = await createAgentRun.invoke({
+      graphName: "research-pipeline",
+      input,
+    });
+    const agentRunId = runIdFrom(created);
+    return {
+      agentRunId,
+      auditEvents: [nowEvent("status", "Initialized Convex agent-run audit record", { agentRunId })],
+    };
+  } catch (error) {
+    return {
+      auditEvents: [
+        nowEvent("error", "Convex agent-run audit initialization unavailable", {
+          message: errorMessage(error),
+        }),
+      ],
+    };
+  }
 }
 
 function asRecords(value: unknown): Record<string, unknown>[] {
@@ -42,8 +108,16 @@ export async function loadScopeNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
   const limit = state.limit ?? 10;
-  const [activeTheses, recentExtractions, recentHypotheses, recentRecipes, failureArchive, recommendedActions] =
-    await Promise.all([
+  try {
+    const [
+      activeTheses,
+      recentExtractions,
+      recentHypotheses,
+      recentRecipes,
+      failureArchive,
+      recommendedActions,
+      editorialSignals,
+    ] = await Promise.all([
       listActiveTheses.invoke({ limit }),
       listRecentExtractions.invoke({ limit }),
       listRecentHypotheses.invoke({ limit }),
@@ -51,31 +125,35 @@ export async function loadScopeNode(
       listFailureArchive.invoke({ limit }),
       getRecommendedActions.invoke({}),
       getEditorialSignals.invoke({ limit: 24 }),
-    ]).then((results) => [
-      results[0],
-      results[1],
-      results[2],
-      results[3],
-      results[4],
-      results[5],
     ]);
 
-  return {
-    activeTheses: asRecords(activeTheses),
-    recentExtractions: asRecords(recentExtractions),
-    recentHypotheses: asRecords(recentHypotheses),
-    recentRecipes: asRecords(recentRecipes),
-    failureArchive: asRecords(failureArchive),
-    recommendedActions: asRecords(recommendedActions),
-    auditEvents: [
-      nowEvent("tool_call", "Loaded research-pipeline scope from Convex", {
-        limit,
+    return {
+      activeTheses: asRecords(activeTheses),
+      recentExtractions: asRecords(recentExtractions),
+      recentHypotheses: asRecords(recentHypotheses),
+      recentRecipes: asRecords(recentRecipes),
+      failureArchive: asRecords(failureArchive),
+      recommendedActions: asRecords(recommendedActions),
+      editorialSignals: asRecords(editorialSignals),
+      auditEvents: await appendRemoteAuditEvent(
+        state.agentRunId,
+        "tool_call",
+        "Loaded research-pipeline scope from Convex",
+        { limit },
+      ),
+    };
+  } catch (error) {
+    const message = "Failed to load research-pipeline scope from Convex";
+    return {
+      errors: [`${message}: ${errorMessage(error)}`],
+      auditEvents: await appendRemoteAuditEvent(state.agentRunId, "error", message, {
+        message: errorMessage(error),
       }),
-    ],
-  };
+    };
+  }
 }
 
-export function selectCandidatesNode(state: ResearchPipelineState): ResearchPipelineUpdate {
+export async function selectCandidatesNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
   const candidates: ResearchCandidate[] = [];
 
   asRecords(state.recommendedActions).slice(0, 5).forEach((action, index) => {
@@ -113,12 +191,15 @@ export function selectCandidatesNode(state: ResearchPipelineState): ResearchPipe
     candidates,
     selectedCandidate,
     route: selectedCandidate?.route ?? "stop",
-    auditEvents: [
-      nowEvent("decision", "Selected research-pipeline candidate", {
+    auditEvents: await appendRemoteAuditEvent(
+      state.agentRunId,
+      "decision",
+      "Selected research-pipeline candidate",
+      {
         selectedCandidate,
         candidateCount: candidates.length,
-      }),
-    ],
+      },
+    ),
   };
 }
 
@@ -126,7 +207,7 @@ export function routeCandidateNode(state: ResearchPipelineState): CandidateRoute
   return state.route ?? state.selectedCandidate?.route ?? "stop";
 }
 
-export function finalizeRunNode(state: ResearchPipelineState): ResearchPipelineUpdate {
+export async function finalizeRunNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
   const selected = state.selectedCandidate;
   const title = selected
     ? `Dry run: ${selected.title ?? selected.id}`
@@ -134,6 +215,34 @@ export function finalizeRunNode(state: ResearchPipelineState): ResearchPipelineU
   const summary = selected
     ? `Selected ${selected.kind} ${selected.id} for route '${selected.route}' because: ${selected.reason}`
     : "No suitable research-pipeline candidate was found from the current Convex scope.";
+  const hasErrors = state.errors.length > 0;
+
+  const auditEvents = await appendRemoteAuditEvent(
+    state.agentRunId,
+    hasErrors ? "error" : "status",
+    hasErrors ? "Finalized failed dry-run research-pipeline result" : "Finalized dry-run research-pipeline result",
+    { summary, errorCount: state.errors.length },
+  );
+
+  if (state.agentRunId) {
+    try {
+      if (hasErrors) {
+        await markAgentRunFailed.invoke({
+          runId: state.agentRunId,
+          summary,
+          error: { messages: state.errors },
+        });
+      } else {
+        await markAgentRunCompleted.invoke({ runId: state.agentRunId, summary });
+      }
+    } catch (error) {
+      auditEvents.push(
+        nowEvent("error", "Failed to mark remote agent run terminal status", {
+          message: errorMessage(error),
+        }),
+      );
+    }
+  }
 
   return {
     draft: {
@@ -143,16 +252,20 @@ export function finalizeRunNode(state: ResearchPipelineState): ResearchPipelineU
       candidateIds: state.candidates.map((candidate) => candidate.id),
       needsReview: false,
     },
-    auditEvents: [nowEvent("summary", "Finalized dry-run research-pipeline result")],
+    auditEvents,
   };
 }
 
-export function unsupportedWriteRouteNode(state: ResearchPipelineState): ResearchPipelineUpdate {
+export async function unsupportedWriteRouteNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
   const route = state.route ?? "stop";
+  const error = `Route '${route}' is recognized but write-producing specialist nodes are intentionally disabled; only agent-run audit writes are enabled.`;
   return {
-    errors: [
-      `Route '${route}' is recognized but write-producing specialist nodes are intentionally disabled until agent run audit/write tools are implemented.`,
-    ],
-    auditEvents: [nowEvent("decision", "Stopped before write-producing specialist route", { route })],
+    errors: [error],
+    auditEvents: await appendRemoteAuditEvent(
+      state.agentRunId,
+      "decision",
+      "Stopped before write-producing specialist route",
+      { route },
+    ),
   };
 }

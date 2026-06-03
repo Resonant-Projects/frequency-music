@@ -50,7 +50,7 @@ Run the Proxmox connectivity spike with:
 
 ```bash
 cd agent
-bun scripts/spike-proxmox.ts
+bun run smoke:proxmox
 ```
 
 The spike reads `PROXMOX_TOKEN_ID` and `PROXMOX_TOKEN_SECRET` from environment variables, falling back to the repository root `.env.local` when run from `agent/`. It prints sanitized node summaries only. If the cluster certificate is not trusted locally, set `PROXMOX_ALLOW_SELF_SIGNED=true`.
@@ -90,11 +90,27 @@ Do not commit populated `.env` or `.env.local` files.
 
 ```bash
 cd agent
-bunx tsc --noEmit
+bun run verify
 bun run build
 ```
 
-`bun run build` invokes the LangGraph Docker build path; it requires Docker to be installed/running locally. On machines without Docker, use `bunx tsc --noEmit` for TypeScript verification and build the container on a Docker-capable host or Proxmox build runner.
+`bun run build` invokes the LangGraph Docker build path; it requires Docker to be installed/running locally. On machines without Docker, use `bun run verify` for TypeScript verification and build the container on a Docker-capable host or Proxmox build runner.
+
+For one local pre-deployment check that fails fast on typecheck or image-build failures:
+
+```bash
+cd agent
+bun run automation:local
+```
+
+`bun run automation:local` runs `bun run verify` and then the LangGraph Docker build. It skips Proxmox connectivity by default so local verification does not require cluster credentials or network access. To include the existing secret-safe Proxmox smoke script, run:
+
+```bash
+cd agent
+RUN_PROXMOX_SMOKE=true bun run automation:local
+```
+
+The automation prints step names and command results, but does not print environment variable values. The Proxmox smoke script continues to read credentials from the environment or root `.env.local` fallback and prints only sanitized cluster metadata.
 
 Run the repo Convex test suite from the repository root when Convex schema/functions change:
 

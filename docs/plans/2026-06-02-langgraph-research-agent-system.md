@@ -459,24 +459,102 @@ Completed initial implementation pass:
 - Registered `research-pipeline` in `agent/langgraph.json`.
 - Added `agent/.env.example`, `agent/README.md`, and `docs/proxmox-agent-deployment.md`.
 
-Still intentionally deferred:
+Still intentionally deferred before this next phase:
 
 - Convex `agentRuns` / `agentRunEvents` tables.
 - Agent write tools.
 - Draft hypothesis/recipe writes.
 - Proxmox container deployment.
 
+## Current Parallel Implementation Phase
+
+OrbStack is now installed and `cd agent && bun run build` succeeds locally, producing `resonant-projects-agent:local`. The next phase should proceed on two parallel paths that converge before draft writes are enabled.
+
+### Path A: Audit/control plane first
+
+Objective: make every LangGraph execution durable, inspectable, and safe before agents can mutate research data.
+
+Immediate work:
+
+1. Add Convex `agentRuns` and `agentRunEvents` tables.
+2. Add narrow Convex mutations/queries for run lifecycle and events.
+3. Expose only audit write tools through `/agent-tools/*`:
+   - `createAgentRun`
+   - `appendAgentRunEvent`
+   - `markAgentRunCompleted`
+   - `markAgentRunFailed`
+4. Wire `research-pipeline` graph nodes to record run lifecycle events.
+5. Update `docs/agent-tool-surface.md` with the new audit-only write surface.
+
+Non-goals for this path:
+
+- Do not create hypothesis/recipe/source mutation tools yet.
+- Do not let the graph publish or promote research artifacts.
+- Do not expose generic Convex writes.
+
+Verification:
+
+```bash
+cd agent && bunx tsc --noEmit
+cd agent && bun run build
+```
+
+Run Convex tests/codegen when the local Convex test pattern is confirmed.
+
+### Path B: Build/smoke/deploy automation
+
+Objective: turn the now-working local Docker build into a repeatable, secret-safe automation path.
+
+Immediate work:
+
+1. Add a local automation script, e.g. `agent/scripts/build-and-smoke.ts`, that runs:
+   - TypeScript check.
+   - LangGraph Docker build.
+   - Optional Proxmox API smoke test when enabled.
+2. Add package scripts for repeatable commands:
+   - `verify`
+   - `build`
+   - `smoke:proxmox`
+   - `automation:local`
+3. Keep Proxmox token values in environment/runtime secrets only. Never print them.
+4. Document the local automation flow in `agent/README.md` and `docs/proxmox-agent-deployment.md`.
+
+Non-goals for this path until Path A lands:
+
+- Do not auto-deploy a continuously running Proxmox worker yet.
+- Do not wire unattended production cron triggers yet.
+- Do not copy Codex local session tokens into images.
+
+Verification:
+
+```bash
+cd agent && bun run automation:local
+```
+
+### Convergence gate
+
+Before draft-producing tools are implemented, both paths must be true:
+
+- A graph run can create/update an `agentRun` and append node/event decisions.
+- The local build/smoke automation succeeds without printing secrets.
+- Documentation describes exactly which tools are audit-only and which research-data writes remain deferred.
+
+Only after this gate should the project implement:
+
+1. `createHypothesisDraft`
+2. `createRecipeDraft`
+3. `requestHumanReview`
+4. Proxmox-hosted always-on worker deployment
+
 ## Recommended Starting Point
 
-Continue with the Codex App Server spike and Convex audit tables. Do not add write tools until the agent-run audit tables are in place. The safest sequence is:
+Continue from the committed skeleton by implementing the two paths above in parallel. The safest production sequence remains:
 
-1. Typed state.
-2. Model provider abstraction.
-3. Codex endpoint spike.
-4. Agent run audit tables.
-5. Dry-run `research-pipeline` graph.
-6. Run/event write tools.
-7. Draft write tools.
-8. Container deployment.
+1. Agent run audit tables.
+2. Audit-only run/event tools.
+3. Graph lifecycle event wiring.
+4. Local verify/build/smoke automation.
+5. Draft write tools.
+6. Proxmox-hosted always-on deployment.
 
 This gives you a working LangGraph system quickly without prematurely letting an autonomous agent mutate research data.

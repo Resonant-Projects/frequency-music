@@ -56,6 +56,25 @@ export const editorialArtifactStatusValidator = v.union(
   v.literal("published"),
 );
 
+export const agentRunStatusValidator = v.union(
+  v.literal("queued"),
+  v.literal("running"),
+  v.literal("needs_review"),
+  v.literal("completed"),
+  v.literal("failed"),
+  v.literal("cancelled"),
+);
+
+export const agentRunEventKindValidator = v.union(
+  v.literal("tool_call"),
+  v.literal("decision"),
+  v.literal("draft_write"),
+  v.literal("error"),
+  v.literal("review_request"),
+  v.literal("status"),
+  v.literal("node"),
+);
+
 const evidenceLevelValidator = v.union(
   v.literal("peer_reviewed"),
   v.literal("preprint"),
@@ -105,6 +124,31 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerkUserId", ["clerkUserId"]),
+
+  // ==========================================================================
+  // AGENT RUN AUDIT LOGS - Audit-only lifecycle records for external agents
+  // ==========================================================================
+  agentRuns: defineTable({
+    graphName: v.string(),
+    status: agentRunStatusValidator,
+    input: v.any(),
+    summary: v.optional(v.string()),
+    traceUrl: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
+
+  agentRunEvents: defineTable({
+    runId: v.id("agentRuns"),
+    kind: agentRunEventKindValidator,
+    message: v.string(),
+    payload: v.optional(v.any()),
+    createdAt: v.number(),
+  }).index("by_runId_createdAt", ["runId", "createdAt"]),
 
   // ==========================================================================
   // SOURCES - Ingested items from various pipelines

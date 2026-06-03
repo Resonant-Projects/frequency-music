@@ -152,6 +152,68 @@ export const searchSourcesByConcept = tool(
   },
 );
 
+export const createAgentRun = tool(
+  ({ graphName, input, traceUrl }) =>
+    callConvex("createAgentRun", { graphName, input, traceUrl }),
+  {
+    name: "create_agent_run",
+    description:
+      "Create an audit-only Convex agent run record and mark it running. Does not mutate research data.",
+    schema: z.object({
+      graphName: z.string().min(1),
+      input: z.unknown().optional(),
+      traceUrl: z.string().url().optional(),
+    }),
+  },
+);
+
+export const appendAgentRunEvent = tool(
+  ({ runId, kind, message, payload }) =>
+    callConvex("appendAgentRunEvent", { runId, kind, message, payload }),
+  {
+    name: "append_agent_run_event",
+    description:
+      "Append an audit-only lifecycle event to a Convex agent run. Does not mutate research data.",
+    schema: z.object({
+      runId: z.string().min(1),
+      kind: z.enum(["tool_call", "decision", "draft_write", "error", "review_request", "status", "node"]),
+      message: z.string().min(1),
+      payload: z.unknown().optional(),
+    }),
+  },
+);
+
+export const markAgentRunCompleted = tool(
+  ({ runId, summary, traceUrl }) =>
+    callConvex("markAgentRunCompleted", { runId, summary, traceUrl }),
+  {
+    name: "mark_agent_run_completed",
+    description:
+      "Mark an audit-only Convex agent run completed. Does not mutate research data.",
+    schema: z.object({
+      runId: z.string().min(1),
+      summary: z.string().optional(),
+      traceUrl: z.string().url().optional(),
+    }),
+  },
+);
+
+export const markAgentRunFailed = tool(
+  ({ runId, summary, error, traceUrl }) =>
+    callConvex("markAgentRunFailed", { runId, summary, error, traceUrl }),
+  {
+    name: "mark_agent_run_failed",
+    description:
+      "Mark an audit-only Convex agent run failed and optionally record sanitized error details. Does not mutate research data.",
+    schema: z.object({
+      runId: z.string().min(1),
+      summary: z.string().optional(),
+      error: z.unknown().optional(),
+      traceUrl: z.string().url().optional(),
+    }),
+  },
+);
+
 export const convexTools = [
   listRecentExtractions,
   getExtraction,
@@ -162,6 +224,10 @@ export const convexTools = [
   getRecentRecipes,
   getRecommendedActions,
   searchSourcesByConcept,
+  createAgentRun,
+  appendAgentRunEvent,
+  markAgentRunCompleted,
+  markAgentRunFailed,
 ];
 
 export { stripLargeTextFields };

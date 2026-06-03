@@ -2,6 +2,7 @@ import { END, START, StateGraph } from "@langchain/langgraph";
 import { ResearchPipelineAnnotation } from "../../state/researchPipelineState.js";
 import {
   finalizeRunNode,
+  initializeRunNode,
   loadScopeNode,
   routeCandidateNode,
   selectCandidatesNode,
@@ -9,11 +10,13 @@ import {
 } from "./nodes.js";
 
 export const graph = new StateGraph(ResearchPipelineAnnotation)
+  .addNode("initialize_run", initializeRunNode)
   .addNode("load_scope", loadScopeNode)
   .addNode("select_candidates", selectCandidatesNode)
   .addNode("unsupported_write_route", unsupportedWriteRouteNode)
   .addNode("finalize_run", finalizeRunNode)
-  .addEdge(START, "load_scope")
+  .addEdge(START, "initialize_run")
+  .addEdge("initialize_run", "load_scope")
   .addEdge("load_scope", "select_candidates")
   .addConditionalEdges("select_candidates", routeCandidateNode, {
     extract: "unsupported_write_route",
