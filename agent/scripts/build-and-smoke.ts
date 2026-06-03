@@ -3,10 +3,14 @@ import { pathToFileURL } from "node:url";
 
 export type AutomationEnv = {
   RUN_PROXMOX_SMOKE?: string | undefined;
+  RUN_RESEARCH_PIPELINE_SMOKE?: string | undefined;
 };
 
 function automationEnvFromProcess(): AutomationEnv {
-  return { RUN_PROXMOX_SMOKE: process.env.RUN_PROXMOX_SMOKE };
+  return {
+    RUN_PROXMOX_SMOKE: process.env.RUN_PROXMOX_SMOKE,
+    RUN_RESEARCH_PIPELINE_SMOKE: process.env.RUN_RESEARCH_PIPELINE_SMOKE,
+  };
 }
 
 export type AutomationStep = {
@@ -18,6 +22,11 @@ export type AutomationStep = {
 
 export function shouldRunProxmoxSmoke(env: AutomationEnv = automationEnvFromProcess()): boolean {
   const value = env.RUN_PROXMOX_SMOKE?.trim().toLowerCase();
+  return value === "true" || value === "1" || value === "yes";
+}
+
+export function shouldRunResearchPipelineSmoke(env: AutomationEnv = automationEnvFromProcess()): boolean {
+  const value = env.RUN_RESEARCH_PIPELINE_SMOKE?.trim().toLowerCase();
   return value === "true" || value === "1" || value === "yes";
 }
 
@@ -42,6 +51,15 @@ export function planAutomationSteps(env: AutomationEnv = automationEnvFromProces
       name: "Optional Proxmox connectivity smoke",
       command: "bun",
       args: ["scripts/spike-proxmox.ts"],
+      required: true,
+    });
+  }
+
+  if (shouldRunResearchPipelineSmoke(env)) {
+    steps.push({
+      name: "Optional research-pipeline Convex audit smoke",
+      command: "bun",
+      args: ["scripts/smoke-research-pipeline.ts"],
       required: true,
     });
   }
@@ -81,12 +99,18 @@ async function runStep(step: AutomationStep): Promise<void> {
 
 export async function runAutomation(env: AutomationEnv = automationEnvFromProcess()): Promise<void> {
   const runProxmoxSmoke = shouldRunProxmoxSmoke(env);
+  const runResearchPipelineSmoke = shouldRunResearchPipelineSmoke(env);
 
   console.log("Local agent build/smoke automation");
   console.log(
     runProxmoxSmoke
       ? "Proxmox smoke: enabled via RUN_PROXMOX_SMOKE (secret values are not printed)"
       : "Proxmox smoke: skipped by default; set RUN_PROXMOX_SMOKE=true to enable",
+  );
+  console.log(
+    runResearchPipelineSmoke
+      ? "Research-pipeline smoke: enabled via RUN_RESEARCH_PIPELINE_SMOKE (secret values are not printed)"
+      : "Research-pipeline smoke: skipped by default; set RUN_RESEARCH_PIPELINE_SMOKE=true to enable",
   );
 
   for (const step of planAutomationSteps(env)) {

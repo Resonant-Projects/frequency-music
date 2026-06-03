@@ -1,10 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import { planAutomationSteps, shouldRunProxmoxSmoke } from "../scripts/build-and-smoke";
+import {
+  planAutomationSteps,
+  shouldRunProxmoxSmoke,
+  shouldRunResearchPipelineSmoke,
+} from "../scripts/build-and-smoke";
 
 describe("local automation planning", () => {
-  test("skips Proxmox smoke by default", () => {
+  test("skips optional infrastructure smokes by default", () => {
     expect(shouldRunProxmoxSmoke({})).toBe(false);
+    expect(shouldRunResearchPipelineSmoke({})).toBe(false);
 
     const steps = planAutomationSteps({});
 
@@ -25,6 +30,21 @@ describe("local automation planning", () => {
       name: "Optional Proxmox connectivity smoke",
       command: "bun",
       args: ["scripts/spike-proxmox.ts"],
+      required: true,
+    });
+  });
+
+  test("enables research pipeline smoke for explicit true-like flags", () => {
+    for (const value of ["true", "TRUE", "1", "yes", " Yes "]) {
+      expect(shouldRunResearchPipelineSmoke({ RUN_RESEARCH_PIPELINE_SMOKE: value })).toBe(true);
+    }
+
+    const steps = planAutomationSteps({ RUN_RESEARCH_PIPELINE_SMOKE: "true" });
+
+    expect(steps.at(-1)).toMatchObject({
+      name: "Optional research-pipeline Convex audit smoke",
+      command: "bun",
+      args: ["scripts/smoke-research-pipeline.ts"],
       required: true,
     });
   });

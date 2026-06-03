@@ -29,7 +29,10 @@ function nowEvent(kind: AuditEvent["kind"], message: string, payload?: unknown):
 }
 
 function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
+  const message = error instanceof Error ? error.message : String(error);
+  return message
+    .replace(/((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi, "$1[REDACTED]")
+    .replace(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }
 
 function runIdFrom(value: unknown) {
@@ -65,6 +68,7 @@ export async function initializeRunNode(
 ): Promise<ResearchPipelineUpdate> {
   const input = {
     dryRun: state.dryRun ?? true,
+    smokeMode: state.smokeMode ?? false,
     limit: state.limit ?? 10,
     langGraphRunId: state.runId,
   };
@@ -108,6 +112,53 @@ export async function loadScopeNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
   const limit = state.limit ?? 10;
+
+  if (state.smokeMode) {
+    const scopeTools = [
+      ["activeTheses", () => listActiveTheses.invoke({ limit })],
+      ["recentExtractions", () => listRecentExtractions.invoke({ limit })],
+      ["recentHypotheses", () => listRecentHypotheses.invoke({ limit })],
+      ["recentRecipes", () => getRecentRecipes.invoke({ limit })],
+      ["failureArchive", () => listFailureArchive.invoke({ limit })],
+      ["recommendedActions", () => getRecommendedActions.invoke({})],
+      ["editorialSignals", () => getEditorialSignals.invoke({ limit: 24 })],
+    ] as const;
+
+    const settled = await Promise.all(
+      scopeTools.map(async ([key, invoke]) => {
+        try {
+          return { key, value: await invoke() };
+        } catch (error) {
+          return { key, error: errorMessage(error) };
+        }
+      }),
+    );
+    const values = Object.fromEntries(
+      settled.map((result) => [result.key, "value" in result ? result.value : []]),
+    ) as Record<string, unknown>;
+    const warnings = settled
+      .filter((result) => "error" in result)
+      .map((result) => ({ tool: result.key, message: result.error }));
+
+    return {
+      activeTheses: asRecords(values.activeTheses),
+      recentExtractions: asRecords(values.recentExtractions),
+      recentHypotheses: asRecords(values.recentHypotheses),
+      recentRecipes: asRecords(values.recentRecipes),
+      failureArchive: asRecords(values.failureArchive),
+      recommendedActions: asRecords(values.recommendedActions),
+      editorialSignals: asRecords(values.editorialSignals),
+      auditEvents: await appendRemoteAuditEvent(
+        state.agentRunId,
+        warnings.length > 0 ? "status" : "tool_call",
+        warnings.length > 0
+          ? "Loaded research-pipeline smoke scope from Convex with non-fatal warnings"
+          : "Loaded research-pipeline smoke scope from Convex",
+        { limit, warnings },
+      ),
+    };
+  }
+
   try {
     const [
       activeTheses,
@@ -185,6 +236,31 @@ export async function selectCandidatesNode(state: ResearchPipelineState): Promis
   });
 
   candidates.sort((left, right) => right.score - left.score);
+
+  if (state.smokeMode) {
+    const selectedCandidate = candidates[0]
+      ? {
+          ...candidates[0],
+          route: "stop" as const,
+          reason: `Smoke mode selected this candidate for read/audit verification only. Original route: ${candidates[0].route}.`,
+        }
+      : undefined;
+    return {
+      candidates,
+      selectedCandidate,
+      route: "stop",
+      auditEvents: await appendRemoteAuditEvent(
+        state.agentRunId,
+        "decision",
+        "Selected research-pipeline smoke candidate",
+        {
+          selectedCandidate,
+          candidateCount: candidates.length,
+        },
+      ),
+    };
+  }
+
   const selectedCandidate = candidates[0];
 
   return {

@@ -40,6 +40,7 @@ export const ResearchPipelineAnnotation = Annotation.Root({
   runId: Annotation<string | undefined>,
   agentRunId: Annotation<string | undefined>,
   dryRun: Annotation<boolean | undefined>,
+  smokeMode: Annotation<boolean | undefined>,
   limit: Annotation<number | undefined>,
   activeTheses: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
   recentExtractions: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),

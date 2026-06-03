@@ -112,6 +112,22 @@ RUN_PROXMOX_SMOKE=true bun run automation:local
 
 The automation prints step names and command results, but does not print environment variable values. The Proxmox smoke script continues to read credentials from the environment or root `.env.local` fallback and prints only sanitized cluster metadata.
 
+Run the actual research-pipeline smoke against Convex audit tools with:
+
+```bash
+cd agent
+bun run smoke:research-pipeline
+```
+
+This loads Convex tool env from the current environment or the repository root `.env.local`, creates a Convex `agentRun`, appends audit events, invokes the dry-run `research-pipeline` graph in `smokeMode`, and marks the run completed. It prints the run id and non-secret audit message summaries only. Smoke mode treats optional/read-scope tool authorization failures as non-fatal warnings so the audit path can still be verified without broad campaign access.
+
+To include that smoke in the local automation gate:
+
+```bash
+cd agent
+RUN_RESEARCH_PIPELINE_SMOKE=true bun run automation:local
+```
+
 Run the repo Convex test suite from the repository root when Convex schema/functions change:
 
 ```bash

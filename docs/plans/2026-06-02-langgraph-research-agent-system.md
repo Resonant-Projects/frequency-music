@@ -459,12 +459,20 @@ Completed initial implementation pass:
 - Registered `research-pipeline` in `agent/langgraph.json`.
 - Added `agent/.env.example`, `agent/README.md`, and `docs/proxmox-agent-deployment.md`.
 
-Still intentionally deferred before this next phase:
+Completed audit/automation implementation pass:
 
-- Convex `agentRuns` / `agentRunEvents` tables.
-- Agent write tools.
+- Added Convex `agentRuns` / `agentRunEvents` tables and lifecycle functions.
+- Added audit-only `/agent-tools/*` write tools: `createAgentRun`, `appendAgentRunEvent`, `markAgentRunCompleted`, and `markAgentRunFailed`.
+- Wired `research-pipeline` to initialize runs, append lifecycle events, and mark completed/failed without writing research artifacts.
+- Added local automation via `agent/scripts/build-and-smoke.ts` and package scripts.
+- Cleaned up the LangGraph Docker build schema warning from `weekly-brief` by wrapping the DeepAgent in an explicit `MessagesAnnotation` StateGraph.
+- Added `agent/scripts/smoke-research-pipeline.ts`, which performs an actual dry-run graph invocation against the Convex audit tools and prints only non-secret audit summaries.
+
+Still intentionally deferred before the next phase:
+
 - Draft hypothesis/recipe writes.
-- Proxmox container deployment.
+- Human-review request/promote tools.
+- Proxmox-hosted always-on worker deployment.
 
 ## Current Parallel Implementation Phase
 
@@ -511,10 +519,12 @@ Immediate work:
    - TypeScript check.
    - LangGraph Docker build.
    - Optional Proxmox API smoke test when enabled.
+   - Optional research-pipeline Convex audit smoke when enabled.
 2. Add package scripts for repeatable commands:
    - `verify`
    - `build`
    - `smoke:proxmox`
+   - `smoke:research-pipeline`
    - `automation:local`
 3. Keep Proxmox token values in environment/runtime secrets only. Never print them.
 4. Document the local automation flow in `agent/README.md` and `docs/proxmox-agent-deployment.md`.
