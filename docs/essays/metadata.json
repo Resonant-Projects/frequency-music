@@ -27,6 +27,20 @@
     "contentHash": "45553e897ed539ef934d9da7e4fa0976dde7a13d726e04db30fd9ac913f55167",
     "generatedAt": "2026-04-10T18:35:51.949Z"
   },
+  "calibration-before-anomaly": {
+    "excerpt": "Anomaly depends on prior calibration: source identity, corpus cleanliness, temporal memory, and feature fusion all define what normal the music makes available.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "AI-music",
+      "composition",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6c03480223f4b5d8155662f8c809da983c06d6e7a6dc84e8b9b5c520a83519d3",
+    "generatedAt": "2026-06-03T01:34:00.000Z"
+  },
   "counting-the-cubes": {
     "excerpt": "Burnside's lemma reveals why 4,096 chromatic subsets collapse to 352 pitch classes-and why Sol LeWitt's cube sculptures and musical structure obey the same counting laws.",
     "tags": [
