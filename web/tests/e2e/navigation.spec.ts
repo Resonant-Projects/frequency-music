@@ -11,6 +11,7 @@ const routeHeadings: Array<{ path: string; heading: string }> = [
   { path: "/compositions", heading: "Compositions" },
   { path: "/failures", heading: "Failure Archive" },
   { path: "/feedback", heading: "Feedback & Listening Sessions" },
+  { path: "/agent-runs", heading: "Agent Runs" },
   { path: "/admin", heading: "Admin" },
 ];
 
@@ -30,6 +31,7 @@ test.describe("navigation", () => {
     await expect(page.getByRole("link", { name: "Compositions" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Failures", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Feedback" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Agent Runs" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Admin" })).toBeVisible();
   });
 

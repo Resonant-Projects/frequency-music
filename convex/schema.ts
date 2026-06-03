@@ -140,7 +140,9 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_status_updatedAt", ["status", "updatedAt"])
-    .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
+    .index("by_graphName_updatedAt", ["graphName", "updatedAt"])
+    .index("by_status_graphName_updatedAt", ["status", "graphName", "updatedAt"])
+    .index("by_updatedAt", ["updatedAt"]),
 
   agentRunEvents: defineTable({
     runId: v.id("agentRuns"),

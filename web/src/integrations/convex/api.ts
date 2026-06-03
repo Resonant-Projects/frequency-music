@@ -74,6 +74,12 @@ export const convexApi = {
     getByKey: queryRef("failures:getByKey"),
     getByKeys: queryRef("failures:getByKeys"),
   },
+  agentRuns: {
+    get: queryRef("agentRuns:get"),
+    listRecent: queryRef("agentRuns:listRecent"),
+    listEvents: queryRef("agentRuns:listEvents"),
+    statusCounts: queryRef("agentRuns:statusCounts"),
+  },
   listening: {
     listRecent: queryRef("listening:listRecent"),
     create: mutationRef("listening:create"),
