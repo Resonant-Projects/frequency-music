@@ -1,25 +1,103 @@
-# Resonant Projects Agent
+# Frequency Music Agent Runtime
 
-LangGraph/LangChain agent workspace for research synthesis tasks that need planning and tool use.
+This directory hosts LangGraph/LangChain agents for the research-to-composition workflow.
 
-The first target is a weekly brief agent that reads from Convex through the read-only agent-tool surface documented in ../docs/agent-tool-surface.md.
+## Graphs
 
-## Local Setup
+`agent/langgraph.json` currently registers:
 
-    cd agent
-    cp .env.example .env
-    npm install
-    npm run dev
+- `weekly-brief` — existing DeepAgents weekly brief graph.
+- `research-pipeline` — new dry-run LangGraph skeleton for externalizing orchestration from Convex.
 
-Required local env:
+## Architecture boundary
 
-- ANTHROPIC_API_KEY
-- CONVEX_SITE_URL
-- AGENT_TOOL_SECRET
-- LANGSMITH_API_KEY when tracing is enabled
+Convex remains the source-of-truth database and control plane:
 
-The local LangGraph server defaults to port 2024.
+- source, extraction, hypothesis, recipe, thesis, and failure data
+- auth and `AGENT_TOOL_SECRET` validation
+- narrow HTTP tool routes under `/agent-tools/*`
+- simple cron wakeups and audit state
 
-## Deployment Notes
+LangGraph owns reasoning-heavy orchestration:
 
-Convex remains the system of record. The agent server reads via /agent-tools/* and should be deployed as a separate service. Keith/Cool Guy own hosting; this directory contains deployment artifacts only.
+- loading research scope from Convex
+- selecting next candidates
+- routing candidate work
+- specialist agent/subagent stages
+- quality gates and critiques
+- eventual draft/proposal writes through narrow tools
+
+The new `research-pipeline` graph is intentionally dry-run first. It can load scope and select/route a candidate, but write-producing routes stop before mutation until audit tables and write tools are implemented.
+
+## Model provider selection
+
+Model construction is centralized in `src/models/`.
+
+- `getResearchModel({ requiresToolBinding: true })` uses the OpenRouter/Anthropic-compatible path so DeepAgents can bind tools.
+- `getResearchModel()` can use Codex App Server when `CODEX_APP_SERVER_URL` is set.
+- `src/models/codexAppServer.ts` assumes an OpenAI-compatible `/v1/chat/completions` endpoint. Tool calling is not assumed yet.
+
+Run the Codex endpoint spike with:
+
+```bash
+cd agent
+bun scripts/spike-codex-app-server.ts
+```
+
+The spike prints only non-secret metadata and the model response. It must not print `CODEX_APP_SERVER_AUTH_TOKEN`.
+
+Run the Proxmox connectivity spike with:
+
+```bash
+cd agent
+bun scripts/spike-proxmox.ts
+```
+
+The spike reads `PROXMOX_TOKEN_ID` and `PROXMOX_TOKEN_SECRET` from environment variables, falling back to the repository root `.env.local` when run from `agent/`. It prints sanitized node summaries only. If the cluster certificate is not trusted locally, set `PROXMOX_ALLOW_SELF_SIGNED=true`.
+
+## Environment
+
+Copy `agent/.env.example` to `agent/.env` for local LangGraph runs, or source the root `.env.local` before invoking scripts.
+
+Required for Convex tools:
+
+- `CONVEX_SITE_URL`
+- `AGENT_TOOL_SECRET`
+
+Optional model/provider variables:
+
+- `CODEX_APP_SERVER_URL`
+- `CODEX_APP_SERVER_AUTH_TOKEN`
+- `CODEX_APP_SERVER_MODEL`
+- `OPENROUTER_API_KEY`
+- `WEEKLY_BRIEF_AGENT_MODEL`
+
+Optional tracing variables:
+
+- `LANGSMITH_API_KEY`
+- `LANGSMITH_TRACING`
+- `LANGSMITH_PROJECT`
+
+Optional Proxmox deployment variables:
+
+- `PROXMOX_API_URL=https://prox.rproj.art:8006/api2/json`
+- `PROXMOX_TOKEN_ID`
+- `PROXMOX_TOKEN_SECRET`
+
+Do not commit populated `.env` or `.env.local` files.
+
+## Verification
+
+```bash
+cd agent
+bunx tsc --noEmit
+bun run build
+```
+
+`bun run build` invokes the LangGraph Docker build path; it requires Docker to be installed/running locally. On machines without Docker, use `bunx tsc --noEmit` for TypeScript verification and build the container on a Docker-capable host or Proxmox build runner.
+
+Run the repo Convex test suite from the repository root when Convex schema/functions change:
+
+```bash
+bun test convex/*.test.ts
+```

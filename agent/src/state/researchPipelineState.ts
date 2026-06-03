@@ -1,0 +1,64 @@
+import { Annotation } from "@langchain/langgraph";
+
+export type CandidateRoute =
+  | "extract"
+  | "hypothesize"
+  | "recipe"
+  | "critique"
+  | "archive"
+  | "stop";
+
+export interface ResearchCandidate {
+  id: string;
+  kind: "source" | "extraction" | "hypothesis" | "recipe" | "recommended_action";
+  route: CandidateRoute;
+  title?: string;
+  reason: string;
+  score: number;
+}
+
+export interface AuditEvent {
+  kind: "decision" | "tool_call" | "error" | "summary";
+  message: string;
+  payload?: unknown;
+  createdAt: string;
+}
+
+export interface ResearchPipelineDraft {
+  kind: "dry_run_summary" | "hypothesis_draft" | "recipe_draft";
+  title: string;
+  summary: string;
+  candidateIds: string[];
+  needsReview: boolean;
+}
+
+function replaceArray<T>(_left: T[], right: T[]) {
+  return right;
+}
+
+export const ResearchPipelineAnnotation = Annotation.Root({
+  runId: Annotation<string | undefined>,
+  dryRun: Annotation<boolean | undefined>,
+  limit: Annotation<number | undefined>,
+  activeTheses: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
+  recentExtractions: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
+  recentHypotheses: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
+  recentRecipes: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
+  failureArchive: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
+  recommendedActions: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
+  candidates: Annotation<ResearchCandidate[]>({ value: replaceArray, default: () => [] }),
+  selectedCandidate: Annotation<ResearchCandidate | undefined>,
+  route: Annotation<CandidateRoute | undefined>,
+  draft: Annotation<ResearchPipelineDraft | undefined>,
+  errors: Annotation<string[]>({
+    value: (left, right) => left.concat(right),
+    default: () => [],
+  }),
+  auditEvents: Annotation<AuditEvent[]>({
+    value: (left, right) => left.concat(right),
+    default: () => [],
+  }),
+});
+
+export type ResearchPipelineState = typeof ResearchPipelineAnnotation.State;
+export type ResearchPipelineUpdate = typeof ResearchPipelineAnnotation.Update;
