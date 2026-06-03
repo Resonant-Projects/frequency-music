@@ -444,6 +444,20 @@
     "contentHash": "ced28eda3b48d8ccc4360064303e3bf2114499161d31a425d56abb02344e667f",
     "generatedAt": "2026-05-25T16:28:48.096Z"
   },
+  "the-attribution-cost": {
+    "excerpt": "Source attribution is a compositional budget: systems pay it early, late, externally, or continuously, and each timing choice changes what musical actions become possible.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "AI-music",
+      "acoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "107de7e3cf92901669f5834508139146e6c233a3d225b99630b647406636e5c5",
+    "generatedAt": "2026-06-03T09:36:14Z"
+  },
   "the-bandpass-principle": {
     "excerpt": "Every listening system starts by choosing a passband; from ultrasonic bioacoustics to Bark-scale dynamics, infrasound, wavelet artifacts, and rhythm formants, the filter is already a theory of music.",
     "tags": [
