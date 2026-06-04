@@ -12,6 +12,7 @@ import {
   markAgentRunFailed,
   markAgentRunNeedsReview,
 } from "../../tools/convexTools.js";
+import { createResearchDeepAgentDraft } from "../../agents/research-pipeline/deepAgent.js";
 import type {
   AuditEvent,
   CandidateRoute,
@@ -262,10 +263,32 @@ export function routeCandidateNode(state: ResearchPipelineState): CandidateRoute
 }
 
 export async function createReviewDraftNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
-  const draft = buildNeedsReviewDraft({
+  const fallbackDraft = buildNeedsReviewDraft({
     selectedCandidate: state.selectedCandidate,
     candidates: state.candidates,
   });
+  const specialist = await createResearchDeepAgentDraft({
+    selectedCandidate: state.selectedCandidate,
+    candidates: state.candidates,
+    fallbackDraft,
+    scope: {
+      activeTheses: state.activeTheses,
+      recentExtractions: state.recentExtractions,
+      recentHypotheses: state.recentHypotheses,
+      recentRecipes: state.recentRecipes,
+      failureArchive: state.failureArchive,
+      editorialSignals: state.editorialSignals,
+    },
+  });
+  const draft = specialist.draft;
+  const auditPayload = {
+    draftKind: draft.kind,
+    title: draft.title,
+    candidateIds: draft.candidateIds,
+    provider: specialist.provider,
+    usedFallback: specialist.usedFallback,
+    warning: specialist.warning ? errorMessage(specialist.warning) : undefined,
+  };
 
   return {
     draft,
@@ -273,12 +296,10 @@ export async function createReviewDraftNode(state: ResearchPipelineState): Promi
     auditEvents: await appendRemoteAuditEvent(
       state.agentRunId,
       "review_request",
-      "Prepared research-pipeline draft for human review",
-      {
-        draftKind: draft.kind,
-        title: draft.title,
-        candidateIds: draft.candidateIds,
-      },
+      specialist.usedFallback
+        ? "Prepared fallback research-pipeline draft for human review"
+        : "Prepared Codex/deep-agent research-pipeline draft for human review",
+      auditPayload,
     ),
   };
 }
@@ -314,7 +335,11 @@ export async function finalizeRunNode(state: ResearchPipelineState): Promise<Res
           error: { messages: state.errors },
         });
       } else if (needsReview) {
-        await markAgentRunNeedsReview.invoke({ runId: state.agentRunId, summary });
+        await markAgentRunNeedsReview.invoke({
+          runId: state.agentRunId,
+          summary,
+          reviewDraft: state.draft,
+        });
       } else {
         await markAgentRunCompleted.invoke({ runId: state.agentRunId, summary });
       }

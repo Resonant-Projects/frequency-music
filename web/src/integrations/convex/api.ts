@@ -76,6 +76,7 @@ export const convexApi = {
   },
   agentRuns: {
     get: queryRef("agentRuns:get"),
+    getPublic: queryRef("agentRuns:getPublic"),
     listRecent: queryRef("agentRuns:listRecentPublic"),
     listEvents: queryRef("agentRuns:listEventsPublic"),
     statusCounts: queryRef("agentRuns:statusCountsPublic"),

@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { buildAgentRunStatusCounts, clampAgentRunLimit, safeTraceUrl, summarizeRun } from "./agentRuns";
+import {
+  buildAgentRunStatusCounts,
+  clampAgentRunLimit,
+  safeReviewDraft,
+  safeTraceUrl,
+  summarizeRun,
+} from "./agentRuns";
 
 describe("agent run observability helpers", () => {
   test("clamps recent run limits for UI queries", () => {
@@ -63,5 +69,28 @@ describe("agent run observability helpers", () => {
     expect(summary.updatedAt).toBe(40);
     expect(summary.smokeMode).toBe(true);
     expect("input" in summary).toBe(false);
+  });
+
+  test("sanitizes review drafts for public run detail", () => {
+    expect(
+      safeReviewDraft({
+        kind: "hypothesis_draft",
+        title: "Review draft: Cymatics",
+        summary: "Draft hypothesis candidate.",
+        candidateIds: ["abc123", "def456"],
+        needsReview: true,
+        prompt: "private prompt",
+        rawResponse: "private model output",
+      }),
+    ).toEqual({
+      kind: "hypothesis_draft",
+      title: "Review draft: Cymatics",
+      summary: "Draft hypothesis candidate.",
+      candidateIds: ["abc123", "def456"],
+      needsReview: true,
+    });
+
+    expect(safeReviewDraft({ kind: "other", title: "Nope" })).toBeUndefined();
+    expect(safeReviewDraft(null)).toBeUndefined();
   });
 });

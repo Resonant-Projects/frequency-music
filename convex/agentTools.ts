@@ -228,12 +228,14 @@ export const markAgentRunNeedsReview = action({
     agentSecret: v.string(),
     runId: v.id("agentRuns"),
     summary: v.optional(v.string()),
+    reviewDraft: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     requireAgentToolSecret(args.agentSecret);
     return await ctx.runMutation(markAgentRunNeedsReviewRef, omitUndefined({
       runId: args.runId,
       summary: args.summary,
+      reviewDraft: args.reviewDraft,
     }));
   },
 });

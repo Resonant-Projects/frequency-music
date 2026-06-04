@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -283,9 +284,17 @@ export function AgentRunsPage() {
                     <p class={css({ color: "zodiac.cream", fontFamily: "display", fontSize: "lg", lineHeight: "1.35" })}>
                       {run.summary ?? "No summary yet"}
                     </p>
-                    <div class={css({ display: "flex", flexWrap: "wrap", gap: "3" })}>
+                    <div class={css({ display: "flex", flexWrap: "wrap", gap: "3", alignItems: "center" })}>
                       <span class={metaClass}>Updated {formatTime(run.updatedAt)}</span>
                       <span class={metaClass}>Run {String(run._id).slice(0, 12)}</span>
+                      <Link
+                        to="/agent-runs/$runId"
+                        params={{ runId: String(run._id) }}
+                        class={css({ color: "zodiac.gold", fontFamily: "mono", fontSize: "xs", letterSpacing: "0.08em", textTransform: "uppercase" })}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        Open Detail ↗
+                      </Link>
                     </div>
                   </button>
                 )}

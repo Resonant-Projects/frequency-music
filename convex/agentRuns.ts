@@ -48,6 +48,32 @@ function isSmokeInput(input: unknown) {
   return Boolean(input && typeof input === "object" && "smokeMode" in input && input.smokeMode);
 }
 
+const reviewDraftKinds = new Set(["dry_run_summary", "hypothesis_draft", "recipe_draft"]);
+
+export function safeReviewDraft(value: unknown) {
+  if (!value || typeof value !== "object") return undefined;
+  const draft = value as {
+    kind?: unknown;
+    title?: unknown;
+    summary?: unknown;
+    candidateIds?: unknown;
+    needsReview?: unknown;
+  };
+  if (typeof draft.kind !== "string" || !reviewDraftKinds.has(draft.kind)) return undefined;
+  if (typeof draft.title !== "string" || typeof draft.summary !== "string") return undefined;
+  if (!Array.isArray(draft.candidateIds) || !draft.candidateIds.every((id) => typeof id === "string")) {
+    return undefined;
+  }
+  if (typeof draft.needsReview !== "boolean") return undefined;
+  return {
+    kind: draft.kind as "dry_run_summary" | "hypothesis_draft" | "recipe_draft",
+    title: draft.title,
+    summary: draft.summary,
+    candidateIds: draft.candidateIds,
+    needsReview: draft.needsReview,
+  };
+}
+
 export function summarizeRun(run: Doc<"agentRuns">) {
   return {
     _id: run._id,
@@ -61,6 +87,7 @@ export function summarizeRun(run: Doc<"agentRuns">) {
     finishedAt: run.finishedAt,
     updatedAt: run.updatedAt,
     smokeMode: isSmokeInput(run.input),
+    reviewDraft: safeReviewDraft(run.reviewDraft),
   };
 }
 
@@ -194,12 +221,15 @@ export const markNeedsReview = internalMutation({
   args: {
     runId: v.id("agentRuns"),
     summary: v.optional(v.string()),
+    reviewDraft: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const reviewDraft = safeReviewDraft(args.reviewDraft);
     await ctx.db.patch(args.runId, {
       status: "needs_review",
       ...(args.summary === undefined ? {} : { summary: args.summary }),
+      ...(reviewDraft === undefined ? {} : { reviewDraft }),
       updatedAt: now,
     });
     await appendRunEvent(ctx, {
@@ -302,6 +332,14 @@ export const listRecentPublic = query({
   handler: async (ctx, args) => {
     const runs = await queryRecentRuns(ctx, args);
     return runs.map(summarizeRun);
+  },
+});
+
+export const getPublic = query({
+  args: { runId: v.id("agentRuns") },
+  handler: async (ctx, args) => {
+    const run = await ctx.db.get(args.runId);
+    return run ? summarizeRun(run) : null;
   },
 });
 

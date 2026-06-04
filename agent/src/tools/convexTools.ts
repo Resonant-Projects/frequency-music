@@ -199,7 +199,8 @@ export const markAgentRunCompleted = tool(
 );
 
 export const markAgentRunNeedsReview = tool(
-  ({ runId, summary }) => callConvex("markAgentRunNeedsReview", { runId, summary }),
+  ({ runId, summary, reviewDraft }) =>
+    callConvex("markAgentRunNeedsReview", { runId, summary, reviewDraft }),
   {
     name: "mark_agent_run_needs_review",
     description:
@@ -207,6 +208,15 @@ export const markAgentRunNeedsReview = tool(
     schema: z.object({
       runId: z.string().min(1),
       summary: z.string().optional(),
+      reviewDraft: z
+        .object({
+          kind: z.enum(["dry_run_summary", "hypothesis_draft", "recipe_draft"]),
+          title: z.string(),
+          summary: z.string(),
+          candidateIds: z.array(z.string()),
+          needsReview: z.boolean(),
+        })
+        .optional(),
     }),
   },
 );

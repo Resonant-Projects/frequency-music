@@ -34,8 +34,9 @@ The new `research-pipeline` graph is intentionally dry-run first. It can load sc
 Model construction is centralized in `src/models/`.
 
 - `getResearchModel({ requiresToolBinding: true })` uses the OpenRouter/Anthropic-compatible path so DeepAgents can bind tools.
-- `getResearchModel()` can use Codex App Server when `CODEX_APP_SERVER_URL` is set.
-- `src/models/codexAppServer.ts` assumes an OpenAI-compatible `/v1/chat/completions` endpoint. Tool calling is not assumed yet.
+- `getResearchModel()` can use Codex App Server when `CODEX_APP_SERVER_URL` is set for non-tool specialist nodes.
+- `research-pipeline` now calls a Codex/deep-agent specialist before storing a sanitized `reviewDraft`; if Codex/App Server is unavailable or returns invalid JSON, the graph records a fallback warning and still produces a safe needs-review draft.
+- `src/models/codexAppServer.ts` assumes an OpenAI-compatible `/v1/chat/completions` endpoint. The current Codex CLI app-server transport is websocket/stdio-oriented; use a proxy or compatible endpoint before setting `CODEX_APP_SERVER_URL` for production runs. Tool calling is not assumed yet.
 
 Run the Codex endpoint spike with:
 

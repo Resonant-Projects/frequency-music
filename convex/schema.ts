@@ -134,6 +134,15 @@ export default defineSchema({
     input: v.any(),
     summary: v.optional(v.string()),
     traceUrl: v.optional(v.string()),
+    reviewDraft: v.optional(
+      v.object({
+        kind: v.union(v.literal("dry_run_summary"), v.literal("hypothesis_draft"), v.literal("recipe_draft")),
+        title: v.string(),
+        summary: v.string(),
+        candidateIds: v.array(v.string()),
+        needsReview: v.boolean(),
+      }),
+    ),
     startedAt: v.optional(v.number()),
     finishedAt: v.optional(v.number()),
     createdAt: v.number(),
