@@ -14,6 +14,7 @@ import {
   listRecentHypothesesHttp,
   markAgentRunCompletedHttp,
   markAgentRunFailedHttp,
+  markAgentRunNeedsReviewHttp,
   searchSourcesByConceptHttp,
 } from "./agentToolsHttp";
 import { generateDedupeKey } from "./sourceUtils";
@@ -140,6 +141,12 @@ http.route({
   path: "/agent-tools/markAgentRunCompleted",
   method: "POST",
   handler: markAgentRunCompletedHttp,
+});
+
+http.route({
+  path: "/agent-tools/markAgentRunNeedsReview",
+  method: "POST",
+  handler: markAgentRunNeedsReviewHttp,
 });
 
 http.route({

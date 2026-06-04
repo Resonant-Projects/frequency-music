@@ -2,9 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { graph } from "../src/graphs/research-pipeline/index.js";
+export { buildNeedsReviewDraft, finalizeRunNode } from "../src/graphs/research-pipeline/nodes.js";
 
 export type ResearchPipelineSmokeEnv = {
   RUN_RESEARCH_PIPELINE_SMOKE?: string | undefined;
+  RUN_RESEARCH_PIPELINE_REAL?: string | undefined;
   CONVEX_SITE_URL?: string | undefined;
   CONVEX_URL?: string | undefined;
   CONVEX_SELF_HOSTED_URL?: string | undefined;
@@ -21,6 +23,7 @@ const SECRET_SAFE_ENV_KEYS = new Set([
 function envFromProcess(): ResearchPipelineSmokeEnv {
   return {
     RUN_RESEARCH_PIPELINE_SMOKE: process.env.RUN_RESEARCH_PIPELINE_SMOKE,
+    RUN_RESEARCH_PIPELINE_REAL: process.env.RUN_RESEARCH_PIPELINE_REAL,
     CONVEX_SITE_URL: process.env.CONVEX_SITE_URL,
     CONVEX_URL: process.env.CONVEX_URL,
     CONVEX_SELF_HOSTED_URL: process.env.CONVEX_SELF_HOSTED_URL,
@@ -32,9 +35,17 @@ function unquoteEnvValue(value: string) {
   return value.trim().replace(/^['"]|['"]$/g, "");
 }
 
+function isTrueLike(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "true" || normalized === "1" || normalized === "yes";
+}
+
 export function shouldRunResearchPipelineSmoke(env: ResearchPipelineSmokeEnv = envFromProcess()): boolean {
-  const value = env.RUN_RESEARCH_PIPELINE_SMOKE?.trim().toLowerCase();
-  return value === "true" || value === "1" || value === "yes";
+  return isTrueLike(env.RUN_RESEARCH_PIPELINE_SMOKE);
+}
+
+export function shouldRunResearchPipelineRealMode(env: ResearchPipelineSmokeEnv = envFromProcess()): boolean {
+  return isTrueLike(env.RUN_RESEARCH_PIPELINE_REAL);
 }
 
 export function getConvexSiteUrlFromEnv(env: ResearchPipelineSmokeEnv = envFromProcess()): string | undefined {
@@ -114,13 +125,59 @@ export async function runResearchPipelineSmoke() {
   );
 }
 
+export async function runResearchPipelineRealMode() {
+  loadRootEnvLocalForResearchSmoke();
+  requireSmokeEnvironment();
+
+  const runId = `research-pipeline-real-${new Date().toISOString()}`;
+  const result = await graph.invoke({
+    runId,
+    dryRun: true,
+    smokeMode: false,
+    limit: 5,
+  });
+
+  if (!result.agentRunId) {
+    throw new Error("Research pipeline real mode did not create a Convex agentRunId");
+  }
+  if (result.errors.length > 0) {
+    throw new Error(`Research pipeline real mode reported errors: ${result.errors.join("; ")}`);
+  }
+  if (!result.draft || result.draft.needsReview !== true) {
+    throw new Error("Research pipeline real mode did not produce a needs-review draft");
+  }
+
+  const messages = eventMessages(result);
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        graph: "research-pipeline",
+        smokeMode: false,
+        agentRunId: result.agentRunId,
+        draftKind: result.draft.kind,
+        needsReview: result.draft.needsReview,
+        candidateCount: result.candidates.length,
+        auditEventCount: result.auditEvents.length,
+        auditMessages: messages,
+      },
+      null,
+      2,
+    ),
+  );
+}
+
 const isMain = process.argv[1]
   ? import.meta.url === pathToFileURL(process.argv[1]).href
   : false;
 
 if (isMain) {
   try {
-    await runResearchPipelineSmoke();
+    if (shouldRunResearchPipelineRealMode()) {
+      await runResearchPipelineRealMode();
+    } else {
+      await runResearchPipelineSmoke();
+    }
   } catch (error) {
     console.error(
       `Research pipeline smoke failed: ${error instanceof Error ? error.message : String(error)}`,

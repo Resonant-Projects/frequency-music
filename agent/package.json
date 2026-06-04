@@ -9,6 +9,7 @@
     "verify": "bunx tsc --noEmit",
     "smoke:proxmox": "bun scripts/spike-proxmox.ts",
     "smoke:research-pipeline": "bun scripts/smoke-research-pipeline.ts",
+    "run:research-pipeline": "RUN_RESEARCH_PIPELINE_REAL=true bun scripts/smoke-research-pipeline.ts",
     "automation:local": "bun scripts/build-and-smoke.ts",
     "test": "bun test"
   },

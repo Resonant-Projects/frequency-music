@@ -30,6 +30,7 @@ const createAgentRunRef = makeFunctionReference<"mutation">("agentRuns:create");
 const markAgentRunRunningRef = makeFunctionReference<"mutation">("agentRuns:markRunning");
 const appendAgentRunEventRef = makeFunctionReference<"mutation">("agentRuns:appendEvent");
 const markAgentRunCompletedRef = makeFunctionReference<"mutation">("agentRuns:markCompleted");
+const markAgentRunNeedsReviewRef = makeFunctionReference<"mutation">("agentRuns:markNeedsReview");
 const markAgentRunFailedRef = makeFunctionReference<"mutation">("agentRuns:markFailed");
 
 function omitUndefined<T extends Record<string, unknown>>(value: T) {
@@ -218,6 +219,21 @@ export const markAgentRunCompleted = action({
       runId: args.runId,
       summary: args.summary,
       traceUrl: args.traceUrl,
+    }));
+  },
+});
+
+export const markAgentRunNeedsReview = action({
+  args: {
+    agentSecret: v.string(),
+    runId: v.id("agentRuns"),
+    summary: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    requireAgentToolSecret(args.agentSecret);
+    return await ctx.runMutation(markAgentRunNeedsReviewRef, omitUndefined({
+      runId: args.runId,
+      summary: args.summary,
     }));
   },
 });

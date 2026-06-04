@@ -34,6 +34,9 @@ const agentToolRefs = {
   markAgentRunCompleted: makeFunctionReference<"action">(
     "agentTools:markAgentRunCompleted",
   ),
+  markAgentRunNeedsReview: makeFunctionReference<"action">(
+    "agentTools:markAgentRunNeedsReview",
+  ),
   markAgentRunFailed: makeFunctionReference<"action">(
     "agentTools:markAgentRunFailed",
   ),
@@ -93,6 +96,9 @@ export const appendAgentRunEventHttp = makeAgentToolHttpHandler(
 );
 export const markAgentRunCompletedHttp = makeAgentToolHttpHandler(
   "markAgentRunCompleted",
+);
+export const markAgentRunNeedsReviewHttp = makeAgentToolHttpHandler(
+  "markAgentRunNeedsReview",
 );
 export const markAgentRunFailedHttp = makeAgentToolHttpHandler(
   "markAgentRunFailed",

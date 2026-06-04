@@ -198,6 +198,19 @@ export const markAgentRunCompleted = tool(
   },
 );
 
+export const markAgentRunNeedsReview = tool(
+  ({ runId, summary }) => callConvex("markAgentRunNeedsReview", { runId, summary }),
+  {
+    name: "mark_agent_run_needs_review",
+    description:
+      "Mark an audit-only Convex agent run as needs_review after producing a human-review draft. Does not mutate research data.",
+    schema: z.object({
+      runId: z.string().min(1),
+      summary: z.string().optional(),
+    }),
+  },
+);
+
 export const markAgentRunFailed = tool(
   ({ runId, summary, error, traceUrl }) =>
     callConvex("markAgentRunFailed", { runId, summary, error, traceUrl }),
@@ -227,6 +240,7 @@ export const convexTools = [
   createAgentRun,
   appendAgentRunEvent,
   markAgentRunCompleted,
+  markAgentRunNeedsReview,
   markAgentRunFailed,
 ];
 

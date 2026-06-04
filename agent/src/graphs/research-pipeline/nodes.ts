@@ -10,11 +10,13 @@ import {
   listRecentHypotheses,
   markAgentRunCompleted,
   markAgentRunFailed,
+  markAgentRunNeedsReview,
 } from "../../tools/convexTools.js";
 import type {
   AuditEvent,
   CandidateRoute,
   ResearchCandidate,
+  ResearchPipelineDraft,
   ResearchPipelineState,
   ResearchPipelineUpdate,
 } from "../../state/researchPipelineState.js";
@@ -108,100 +110,76 @@ function titleOf(record: Record<string, unknown>) {
   return typeof title === "string" ? title : undefined;
 }
 
+export function buildNeedsReviewDraft(input: {
+  selectedCandidate?: ResearchCandidate;
+  candidates: ResearchCandidate[];
+}): ResearchPipelineDraft {
+  const selected = input.selectedCandidate;
+  const draftKind: ResearchPipelineDraft["kind"] = selected?.route === "recipe" ? "recipe_draft" : "hypothesis_draft";
+  const title = selected
+    ? `Review draft: ${selected.title ?? selected.id}`
+    : "Review draft: no candidate selected";
+  const summary = selected
+    ? `Draft ${draftKind === "recipe_draft" ? "recipe" : "hypothesis"} candidate from ${selected.kind} ${selected.id}. Route: ${selected.route}. Rationale: ${selected.reason}`
+    : "No suitable research-pipeline candidate was found from the current Convex scope.";
+
+  return {
+    kind: draftKind,
+    title,
+    summary,
+    candidateIds: selected ? [selected.id] : input.candidates.map((candidate) => candidate.id),
+    needsReview: true,
+  };
+}
+
 export async function loadScopeNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
   const limit = state.limit ?? 10;
+  const scopeTools = [
+    ["activeTheses", () => listActiveTheses.invoke({ limit })],
+    ["recentExtractions", () => listRecentExtractions.invoke({ limit })],
+    ["recentHypotheses", () => listRecentHypotheses.invoke({ limit })],
+    ["recentRecipes", () => getRecentRecipes.invoke({ limit })],
+    ["failureArchive", () => listFailureArchive.invoke({ limit })],
+    ["recommendedActions", () => getRecommendedActions.invoke({})],
+    ["editorialSignals", () => getEditorialSignals.invoke({ limit: 24 })],
+  ] as const;
 
-  if (state.smokeMode) {
-    const scopeTools = [
-      ["activeTheses", () => listActiveTheses.invoke({ limit })],
-      ["recentExtractions", () => listRecentExtractions.invoke({ limit })],
-      ["recentHypotheses", () => listRecentHypotheses.invoke({ limit })],
-      ["recentRecipes", () => getRecentRecipes.invoke({ limit })],
-      ["failureArchive", () => listFailureArchive.invoke({ limit })],
-      ["recommendedActions", () => getRecommendedActions.invoke({})],
-      ["editorialSignals", () => getEditorialSignals.invoke({ limit: 24 })],
-    ] as const;
+  const settled = await Promise.all(
+    scopeTools.map(async ([key, invoke]) => {
+      try {
+        return { key, value: await invoke() };
+      } catch (error) {
+        return { key, error: errorMessage(error) };
+      }
+    }),
+  );
+  const values = Object.fromEntries(
+    settled.map((result) => [result.key, "value" in result ? result.value : []]),
+  ) as Record<string, unknown>;
+  const warnings = settled
+    .filter((result) => "error" in result)
+    .map((result) => ({ tool: result.key, message: result.error }));
+  const modeLabel = state.smokeMode ? "smoke" : "real dry-run";
 
-    const settled = await Promise.all(
-      scopeTools.map(async ([key, invoke]) => {
-        try {
-          return { key, value: await invoke() };
-        } catch (error) {
-          return { key, error: errorMessage(error) };
-        }
-      }),
-    );
-    const values = Object.fromEntries(
-      settled.map((result) => [result.key, "value" in result ? result.value : []]),
-    ) as Record<string, unknown>;
-    const warnings = settled
-      .filter((result) => "error" in result)
-      .map((result) => ({ tool: result.key, message: result.error }));
-
-    return {
-      activeTheses: asRecords(values.activeTheses),
-      recentExtractions: asRecords(values.recentExtractions),
-      recentHypotheses: asRecords(values.recentHypotheses),
-      recentRecipes: asRecords(values.recentRecipes),
-      failureArchive: asRecords(values.failureArchive),
-      recommendedActions: asRecords(values.recommendedActions),
-      editorialSignals: asRecords(values.editorialSignals),
-      auditEvents: await appendRemoteAuditEvent(
-        state.agentRunId,
-        warnings.length > 0 ? "status" : "tool_call",
-        warnings.length > 0
-          ? "Loaded research-pipeline smoke scope from Convex with non-fatal warnings"
-          : "Loaded research-pipeline smoke scope from Convex",
-        { limit, warnings },
-      ),
-    };
-  }
-
-  try {
-    const [
-      activeTheses,
-      recentExtractions,
-      recentHypotheses,
-      recentRecipes,
-      failureArchive,
-      recommendedActions,
-      editorialSignals,
-    ] = await Promise.all([
-      listActiveTheses.invoke({ limit }),
-      listRecentExtractions.invoke({ limit }),
-      listRecentHypotheses.invoke({ limit }),
-      getRecentRecipes.invoke({ limit }),
-      listFailureArchive.invoke({ limit }),
-      getRecommendedActions.invoke({}),
-      getEditorialSignals.invoke({ limit: 24 }),
-    ]);
-
-    return {
-      activeTheses: asRecords(activeTheses),
-      recentExtractions: asRecords(recentExtractions),
-      recentHypotheses: asRecords(recentHypotheses),
-      recentRecipes: asRecords(recentRecipes),
-      failureArchive: asRecords(failureArchive),
-      recommendedActions: asRecords(recommendedActions),
-      editorialSignals: asRecords(editorialSignals),
-      auditEvents: await appendRemoteAuditEvent(
-        state.agentRunId,
-        "tool_call",
-        "Loaded research-pipeline scope from Convex",
-        { limit },
-      ),
-    };
-  } catch (error) {
-    const message = "Failed to load research-pipeline scope from Convex";
-    return {
-      errors: [`${message}: ${errorMessage(error)}`],
-      auditEvents: await appendRemoteAuditEvent(state.agentRunId, "error", message, {
-        message: errorMessage(error),
-      }),
-    };
-  }
+  return {
+    activeTheses: asRecords(values.activeTheses),
+    recentExtractions: asRecords(values.recentExtractions),
+    recentHypotheses: asRecords(values.recentHypotheses),
+    recentRecipes: asRecords(values.recentRecipes),
+    failureArchive: asRecords(values.failureArchive),
+    recommendedActions: asRecords(values.recommendedActions),
+    editorialSignals: asRecords(values.editorialSignals),
+    auditEvents: await appendRemoteAuditEvent(
+      state.agentRunId,
+      warnings.length > 0 ? "status" : "tool_call",
+      warnings.length > 0
+        ? `Loaded research-pipeline ${modeLabel} scope from Convex with non-fatal warnings`
+        : `Loaded research-pipeline ${modeLabel} scope from Convex`,
+      { limit, warnings },
+    ),
+  };
 }
 
 export async function selectCandidatesNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
@@ -283,6 +261,28 @@ export function routeCandidateNode(state: ResearchPipelineState): CandidateRoute
   return state.route ?? state.selectedCandidate?.route ?? "stop";
 }
 
+export async function createReviewDraftNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
+  const draft = buildNeedsReviewDraft({
+    selectedCandidate: state.selectedCandidate,
+    candidates: state.candidates,
+  });
+
+  return {
+    draft,
+    route: "stop",
+    auditEvents: await appendRemoteAuditEvent(
+      state.agentRunId,
+      "review_request",
+      "Prepared research-pipeline draft for human review",
+      {
+        draftKind: draft.kind,
+        title: draft.title,
+        candidateIds: draft.candidateIds,
+      },
+    ),
+  };
+}
+
 export async function finalizeRunNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
   const selected = state.selectedCandidate;
   const title = selected
@@ -292,12 +292,17 @@ export async function finalizeRunNode(state: ResearchPipelineState): Promise<Res
     ? `Selected ${selected.kind} ${selected.id} for route '${selected.route}' because: ${selected.reason}`
     : "No suitable research-pipeline candidate was found from the current Convex scope.";
   const hasErrors = state.errors.length > 0;
+  const needsReview = state.draft?.needsReview === true;
 
   const auditEvents = await appendRemoteAuditEvent(
     state.agentRunId,
-    hasErrors ? "error" : "status",
-    hasErrors ? "Finalized failed dry-run research-pipeline result" : "Finalized dry-run research-pipeline result",
-    { summary, errorCount: state.errors.length },
+    hasErrors ? "error" : needsReview ? "review_request" : "status",
+    hasErrors
+      ? "Finalized failed dry-run research-pipeline result"
+      : needsReview
+        ? "Finalized research-pipeline draft awaiting human review"
+        : "Finalized dry-run research-pipeline result",
+    { summary, errorCount: state.errors.length, needsReview },
   );
 
   if (state.agentRunId) {
@@ -308,6 +313,8 @@ export async function finalizeRunNode(state: ResearchPipelineState): Promise<Res
           summary,
           error: { messages: state.errors },
         });
+      } else if (needsReview) {
+        await markAgentRunNeedsReview.invoke({ runId: state.agentRunId, summary });
       } else {
         await markAgentRunCompleted.invoke({ runId: state.agentRunId, summary });
       }
@@ -320,14 +327,18 @@ export async function finalizeRunNode(state: ResearchPipelineState): Promise<Res
     }
   }
 
+  const finalDraft = needsReview
+    ? state.draft
+    : {
+        kind: "dry_run_summary" as const,
+        title,
+        summary,
+        candidateIds: state.candidates.map((candidate) => candidate.id),
+        needsReview: false,
+      };
+
   return {
-    draft: {
-      kind: "dry_run_summary",
-      title,
-      summary,
-      candidateIds: state.candidates.map((candidate) => candidate.id),
-      needsReview: false,
-    },
+    draft: finalDraft,
     auditEvents,
   };
 }
