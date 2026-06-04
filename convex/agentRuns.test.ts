@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildAgentRunStatusCounts, clampAgentRunLimit, safeTraceUrl } from "./agentRuns";
+import { buildAgentRunStatusCounts, clampAgentRunLimit, safeTraceUrl, summarizeRun } from "./agentRuns";
 
 describe("agent run observability helpers", () => {
   test("clamps recent run limits for UI queries", () => {
@@ -35,5 +35,33 @@ describe("agent run observability helpers", () => {
     expect(safeTraceUrl("http://localhost:3000/trace")).toBe("http://localhost:3000/trace");
     expect(safeTraceUrl("javascript:alert(1)")).toBeUndefined();
     expect(safeTraceUrl("not a url")).toBeUndefined();
+  });
+
+  test("summarizes runs without exposing raw input", () => {
+    const summary = summarizeRun({
+      _id: "run1",
+      _creationTime: 1,
+      graphName: "research-pipeline",
+      status: "completed",
+      summary: "done",
+      traceUrl: "javascript:alert(1)",
+      input: { smokeMode: true, prompt: "private" },
+      createdAt: 10,
+      startedAt: 20,
+      finishedAt: 30,
+      updatedAt: 40,
+    } as never);
+
+    expect(summary._creationTime).toBe(1);
+    expect(summary.graphName).toBe("research-pipeline");
+    expect(summary.status).toBe("completed");
+    expect(summary.summary).toBe("done");
+    expect(summary.traceUrl).toBeUndefined();
+    expect(summary.createdAt).toBe(10);
+    expect(summary.startedAt).toBe(20);
+    expect(summary.finishedAt).toBe(30);
+    expect(summary.updatedAt).toBe(40);
+    expect(summary.smokeMode).toBe(true);
+    expect("input" in summary).toBe(false);
   });
 });

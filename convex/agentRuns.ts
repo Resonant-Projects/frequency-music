@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, query, type MutationCtx } from "./_generated/server";
+import { internalMutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { agentRunEventKindValidator, agentRunStatusValidator } from "./schema";
 import { requireAuth } from "./auth";
 
@@ -44,9 +44,11 @@ export function safeTraceUrl(value: string | undefined) {
   }
 }
 
-function summarizeRun(run: Doc<"agentRuns">) {
-  const input = run.input;
-  const smokeMode = Boolean(input && typeof input === "object" && "smokeMode" in input && input.smokeMode);
+function isSmokeInput(input: unknown) {
+  return Boolean(input && typeof input === "object" && "smokeMode" in input && input.smokeMode);
+}
+
+export function summarizeRun(run: Doc<"agentRuns">) {
   return {
     _id: run._id,
     _creationTime: run._creationTime,
@@ -58,8 +60,54 @@ function summarizeRun(run: Doc<"agentRuns">) {
     startedAt: run.startedAt,
     finishedAt: run.finishedAt,
     updatedAt: run.updatedAt,
-    smokeMode,
+    smokeMode: isSmokeInput(run.input),
   };
+}
+
+function summarizeEvent(event: Doc<"agentRunEvents">) {
+  return {
+    _id: event._id,
+    _creationTime: event._creationTime,
+    runId: event.runId,
+    kind: event.kind,
+    message: event.message,
+    createdAt: event.createdAt,
+  };
+}
+
+async function queryRecentRuns(
+  ctx: { db: QueryCtx["db"] },
+  args: { limit?: number; status?: AgentRunStatus; graphName?: string },
+) {
+  const limit = clampAgentRunLimit(args.limit);
+
+  if (args.status && args.graphName) {
+    return await ctx.db
+      .query("agentRuns")
+      .withIndex("by_status_graphName_updatedAt", (q) =>
+        q.eq("status", args.status!).eq("graphName", args.graphName!),
+      )
+      .order("desc")
+      .take(limit);
+  }
+
+  if (args.status) {
+    return await ctx.db
+      .query("agentRuns")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status!))
+      .order("desc")
+      .take(limit);
+  }
+
+  if (args.graphName) {
+    return await ctx.db
+      .query("agentRuns")
+      .withIndex("by_graphName_updatedAt", (q) => q.eq("graphName", args.graphName!))
+      .order("desc")
+      .take(limit);
+  }
+
+  return await ctx.db.query("agentRuns").withIndex("by_updatedAt").order("desc").take(limit);
 }
 
 async function appendRunEvent(
@@ -240,34 +288,52 @@ export const listRecent = query({
   },
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
+    const runs = await queryRecentRuns(ctx, args);
+    return runs.map(summarizeRun);
+  },
+});
+
+export const listRecentPublic = query({
+  args: {
+    limit: v.optional(v.number()),
+    status: v.optional(agentRunStatusValidator),
+    graphName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const runs = await queryRecentRuns(ctx, args);
+    return runs.map(summarizeRun);
+  },
+});
+
+export const statusCountsPublic = query({
+  args: { limit: v.optional(v.number()), graphName: v.optional(v.string()) },
+  handler: async (ctx, args) => {
     const limit = clampAgentRunLimit(args.limit);
-    let runs: Doc<"agentRuns">[];
+    const runs = args.graphName
+      ? await ctx.db
+          .query("agentRuns")
+          .withIndex("by_graphName_updatedAt", (q) => q.eq("graphName", args.graphName!))
+          .order("desc")
+          .take(limit)
+      : await ctx.db.query("agentRuns").withIndex("by_updatedAt").order("desc").take(limit);
 
-    if (args.status && args.graphName) {
-      runs = await ctx.db
-        .query("agentRuns")
-        .withIndex("by_status_graphName_updatedAt", (q) =>
-          q.eq("status", args.status!).eq("graphName", args.graphName!),
-        )
-        .order("desc")
-        .take(limit);
-    } else if (args.status) {
-      runs = await ctx.db
-        .query("agentRuns")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status!))
-        .order("desc")
-        .take(limit);
-    } else if (args.graphName) {
-      runs = await ctx.db
-        .query("agentRuns")
-        .withIndex("by_graphName_updatedAt", (q) => q.eq("graphName", args.graphName!))
-        .order("desc")
-        .take(limit);
-    } else {
-      runs = await ctx.db.query("agentRuns").withIndex("by_updatedAt").order("desc").take(limit);
-    }
+    return buildAgentRunStatusCounts(runs);
+  },
+});
 
-    return runs.slice(0, limit).map(summarizeRun);
+export const listEventsPublic = query({
+  args: {
+    runId: v.id("agentRuns"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    return (
+      await ctx.db
+        .query("agentRunEvents")
+        .withIndex("by_runId_createdAt", (q) => q.eq("runId", args.runId))
+        .order("desc")
+        .take(clampLimit(args.limit))
+    ).map(summarizeEvent);
   },
 });
 
