@@ -2832,6 +2832,20 @@
     "contentHash": "502183179c5328e7693ee1a1f61b3a657d5103547c38899e7ca4fcb406a1427e",
     "generatedAt": "2026-06-06T03:10:00.000Z"
   },
+  "the-source-must-arrive-in-time": {
+    "excerpt": "Source arrival latency is the delay between a sound's onset and the moment its identity becomes actionable for a listener, model, or composition system.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "source-separation",
+      "composition",
+      "AI-music",
+      "latency"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "989342546c049862e860cd810fe71372bd7997f7ac6b73f89b47d7ee1981439e",
+    "generatedAt": "2026-06-06T11:10:00.000Z"
+  },
   "where-the-signal-breaks": {
     "excerpt": "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
     "tags": [
