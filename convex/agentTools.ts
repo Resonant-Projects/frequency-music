@@ -27,11 +27,24 @@ const searchSourcesByConceptRef = makeFunctionReference<"query">(
   "graph:searchSourcesByConcept",
 );
 const createAgentRunRef = makeFunctionReference<"mutation">("agentRuns:create");
-const markAgentRunRunningRef = makeFunctionReference<"mutation">("agentRuns:markRunning");
-const appendAgentRunEventRef = makeFunctionReference<"mutation">("agentRuns:appendEvent");
-const markAgentRunCompletedRef = makeFunctionReference<"mutation">("agentRuns:markCompleted");
-const markAgentRunNeedsReviewRef = makeFunctionReference<"mutation">("agentRuns:markNeedsReview");
-const markAgentRunFailedRef = makeFunctionReference<"mutation">("agentRuns:markFailed");
+const markAgentRunRunningRef = makeFunctionReference<"mutation">(
+  "agentRuns:markRunning",
+);
+const appendAgentRunEventRef = makeFunctionReference<"mutation">(
+  "agentRuns:appendEvent",
+);
+const markAgentRunCompletedRef = makeFunctionReference<"mutation">(
+  "agentRuns:markCompleted",
+);
+const markAgentRunNeedsReviewRef = makeFunctionReference<"mutation">(
+  "agentRuns:markNeedsReview",
+);
+const markAgentRunFailedRef = makeFunctionReference<"mutation">(
+  "agentRuns:markFailed",
+);
+const createAgentReviewDraftRef = makeFunctionReference<"mutation">(
+  "agentDrafts:createFromAgentRun",
+);
 
 function omitUndefined<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(
@@ -161,11 +174,14 @@ export const createAgentRun = action({
   },
   handler: async (ctx, args) => {
     requireAgentToolSecret(args.agentSecret);
-    const created = await ctx.runMutation(createAgentRunRef, omitUndefined({
-      graphName: args.graphName,
-      input: args.input,
-      traceUrl: args.traceUrl,
-    }));
+    const created = await ctx.runMutation(
+      createAgentRunRef,
+      omitUndefined({
+        graphName: args.graphName,
+        input: args.input,
+        traceUrl: args.traceUrl,
+      }),
+    );
     const running = await ctx.runMutation(markAgentRunRunningRef, {
       runId: created.runId,
     });
@@ -197,12 +213,15 @@ export const appendAgentRunEvent = action({
   },
   handler: async (ctx, args) => {
     requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(appendAgentRunEventRef, omitUndefined({
-      runId: args.runId,
-      kind: args.kind,
-      message: args.message,
-      payload: args.payload,
-    }));
+    return await ctx.runMutation(
+      appendAgentRunEventRef,
+      omitUndefined({
+        runId: args.runId,
+        kind: args.kind,
+        message: args.message,
+        payload: args.payload,
+      }),
+    );
   },
 });
 
@@ -215,11 +234,14 @@ export const markAgentRunCompleted = action({
   },
   handler: async (ctx, args) => {
     requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(markAgentRunCompletedRef, omitUndefined({
-      runId: args.runId,
-      summary: args.summary,
-      traceUrl: args.traceUrl,
-    }));
+    return await ctx.runMutation(
+      markAgentRunCompletedRef,
+      omitUndefined({
+        runId: args.runId,
+        summary: args.summary,
+        traceUrl: args.traceUrl,
+      }),
+    );
   },
 });
 
@@ -232,11 +254,29 @@ export const markAgentRunNeedsReview = action({
   },
   handler: async (ctx, args) => {
     requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(markAgentRunNeedsReviewRef, omitUndefined({
-      runId: args.runId,
-      summary: args.summary,
-      reviewDraft: args.reviewDraft,
-    }));
+    return await ctx.runMutation(
+      markAgentRunNeedsReviewRef,
+      omitUndefined({
+        runId: args.runId,
+        summary: args.summary,
+        reviewDraft: args.reviewDraft,
+      }),
+    );
+  },
+});
+
+export const createAgentReviewDraft = action({
+  args: {
+    agentSecret: v.string(),
+    agentRunId: v.id("agentRuns"),
+    draft: v.any(),
+  },
+  handler: async (ctx, args) => {
+    requireAgentToolSecret(args.agentSecret);
+    return await ctx.runMutation(createAgentReviewDraftRef, {
+      agentRunId: args.agentRunId,
+      draft: args.draft,
+    });
   },
 });
 
@@ -250,11 +290,14 @@ export const markAgentRunFailed = action({
   },
   handler: async (ctx, args) => {
     requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(markAgentRunFailedRef, omitUndefined({
-      runId: args.runId,
-      summary: args.summary,
-      error: args.error,
-      traceUrl: args.traceUrl,
-    }));
+    return await ctx.runMutation(
+      markAgentRunFailedRef,
+      omitUndefined({
+        runId: args.runId,
+        summary: args.summary,
+        error: args.error,
+        traceUrl: args.traceUrl,
+      }),
+    );
   },
 });

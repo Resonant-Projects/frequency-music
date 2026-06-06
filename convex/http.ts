@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import {
   appendAgentRunEventHttp,
+  createAgentReviewDraftHttp,
   createAgentRunHttp,
   getEditorialSignalsHttp,
   getExtractionHttp,
@@ -147,6 +148,12 @@ http.route({
   path: "/agent-tools/markAgentRunNeedsReview",
   method: "POST",
   handler: markAgentRunNeedsReviewHttp,
+});
+
+http.route({
+  path: "/agent-tools/createAgentReviewDraft",
+  method: "POST",
+  handler: createAgentReviewDraftHttp,
 });
 
 http.route({

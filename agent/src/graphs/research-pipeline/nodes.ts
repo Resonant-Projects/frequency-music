@@ -1,5 +1,6 @@
 import {
   appendAgentRunEvent,
+  createAgentReviewDraft,
   createAgentRun,
   getEditorialSignals,
   getRecentRecipes,
@@ -22,7 +23,11 @@ import type {
   ResearchPipelineUpdate,
 } from "../../state/researchPipelineState.js";
 
-function nowEvent(kind: AuditEvent["kind"], message: string, payload?: unknown): AuditEvent {
+function nowEvent(
+  kind: AuditEvent["kind"],
+  message: string,
+  payload?: unknown,
+): AuditEvent {
   return {
     kind,
     message,
@@ -34,7 +39,10 @@ function nowEvent(kind: AuditEvent["kind"], message: string, payload?: unknown):
 function errorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return message
-    .replace(/((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi, "$1[REDACTED]")
+    .replace(
+      /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
+      "$1[REDACTED]",
+    )
     .replace(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }
 
@@ -54,7 +62,12 @@ async function appendRemoteAuditEvent(
   if (!agentRunId) return [localEvent];
 
   try {
-    await appendAgentRunEvent.invoke({ runId: agentRunId, kind, message, payload });
+    await appendAgentRunEvent.invoke({
+      runId: agentRunId,
+      kind,
+      message,
+      payload,
+    });
     return [localEvent];
   } catch (error) {
     return [
@@ -84,7 +97,11 @@ export async function initializeRunNode(
     const agentRunId = runIdFrom(created);
     return {
       agentRunId,
-      auditEvents: [nowEvent("status", "Initialized Convex agent-run audit record", { agentRunId })],
+      auditEvents: [
+        nowEvent("status", "Initialized Convex agent-run audit record", {
+          agentRunId,
+        }),
+      ],
     };
   } catch (error) {
     return {
@@ -116,7 +133,8 @@ export function buildNeedsReviewDraft(input: {
   candidates: ResearchCandidate[];
 }): ResearchPipelineDraft {
   const selected = input.selectedCandidate;
-  const draftKind: ResearchPipelineDraft["kind"] = selected?.route === "recipe" ? "recipe_draft" : "hypothesis_draft";
+  const draftKind: ResearchPipelineDraft["kind"] =
+    selected?.route === "recipe" ? "recipe_draft" : "hypothesis_draft";
   const title = selected
     ? `Review draft: ${selected.title ?? selected.id}`
     : "Review draft: no candidate selected";
@@ -128,7 +146,9 @@ export function buildNeedsReviewDraft(input: {
     kind: draftKind,
     title,
     summary,
-    candidateIds: selected ? [selected.id] : input.candidates.map((candidate) => candidate.id),
+    candidateIds: selected
+      ? [selected.id]
+      : input.candidates.map((candidate) => candidate.id),
     needsReview: true,
   };
 }
@@ -157,7 +177,10 @@ export async function loadScopeNode(
     }),
   );
   const values = Object.fromEntries(
-    settled.map((result) => [result.key, "value" in result ? result.value : []]),
+    settled.map((result) => [
+      result.key,
+      "value" in result ? result.value : [],
+    ]),
   ) as Record<string, unknown>;
   const warnings = settled
     .filter((result) => "error" in result)
@@ -183,36 +206,45 @@ export async function loadScopeNode(
   };
 }
 
-export async function selectCandidatesNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
+export async function selectCandidatesNode(
+  state: ResearchPipelineState,
+): Promise<ResearchPipelineUpdate> {
   const candidates: ResearchCandidate[] = [];
 
-  asRecords(state.recommendedActions).slice(0, 5).forEach((action, index) => {
-    candidates.push({
-      id: idOf(action, `recommended-action-${index}`),
-      kind: "recommended_action",
-      route: "critique",
-      title: titleOf(action),
-      reason: "Convex deterministic recommended action selected for agent critique.",
-      score: 100 - index,
-    });
-  });
-
-  asRecords(state.recentExtractions).slice(0, 5).forEach((extraction, index) => {
-    const claims = Array.isArray(extraction.claims) ? extraction.claims.length : 0;
-    const params = Array.isArray(extraction.compositionParameters)
-      ? extraction.compositionParameters.length
-      : 0;
-    if (claims >= 2 || params > 0) {
+  asRecords(state.recommendedActions)
+    .slice(0, 5)
+    .forEach((action, index) => {
       candidates.push({
-        id: idOf(extraction, `extraction-${index}`),
-        kind: "extraction",
-        route: "hypothesize",
-        title: titleOf(extraction),
-        reason: `Recent extraction has ${claims} claims and ${params} composition parameters.`,
-        score: 80 + claims + params,
+        id: idOf(action, `recommended-action-${index}`),
+        kind: "recommended_action",
+        route: "critique",
+        title: titleOf(action),
+        reason:
+          "Convex deterministic recommended action selected for agent critique.",
+        score: 100 - index,
       });
-    }
-  });
+    });
+
+  asRecords(state.recentExtractions)
+    .slice(0, 5)
+    .forEach((extraction, index) => {
+      const claims = Array.isArray(extraction.claims)
+        ? extraction.claims.length
+        : 0;
+      const params = Array.isArray(extraction.compositionParameters)
+        ? extraction.compositionParameters.length
+        : 0;
+      if (claims >= 2 || params > 0) {
+        candidates.push({
+          id: idOf(extraction, `extraction-${index}`),
+          kind: "extraction",
+          route: "hypothesize",
+          title: titleOf(extraction),
+          reason: `Recent extraction has ${claims} claims and ${params} composition parameters.`,
+          score: 80 + claims + params,
+        });
+      }
+    });
 
   candidates.sort((left, right) => right.score - left.score);
 
@@ -258,11 +290,15 @@ export async function selectCandidatesNode(state: ResearchPipelineState): Promis
   };
 }
 
-export function routeCandidateNode(state: ResearchPipelineState): CandidateRoute {
+export function routeCandidateNode(
+  state: ResearchPipelineState,
+): CandidateRoute {
   return state.route ?? state.selectedCandidate?.route ?? "stop";
 }
 
-export async function createReviewDraftNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
+export async function createReviewDraftNode(
+  state: ResearchPipelineState,
+): Promise<ResearchPipelineUpdate> {
   const fallbackDraft = buildNeedsReviewDraft({
     selectedCandidate: state.selectedCandidate,
     candidates: state.candidates,
@@ -304,7 +340,9 @@ export async function createReviewDraftNode(state: ResearchPipelineState): Promi
   };
 }
 
-export async function finalizeRunNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
+export async function finalizeRunNode(
+  state: ResearchPipelineState,
+): Promise<ResearchPipelineUpdate> {
   const selected = state.selectedCandidate;
   const title = selected
     ? `Dry run: ${selected.title ?? selected.id}`
@@ -340,8 +378,57 @@ export async function finalizeRunNode(state: ResearchPipelineState): Promise<Res
           summary,
           reviewDraft: state.draft,
         });
+
+        const draft = state.draft;
+        const reviewDraft =
+          draft && draft.kind !== "dry_run_summary"
+            ? {
+                kind: draft.kind,
+                title: draft.title,
+                summary: draft.summary,
+                candidateIds: draft.candidateIds,
+                needsReview: true as const,
+              }
+            : undefined;
+        if (reviewDraft) {
+          try {
+            const persistedDraft = await createAgentReviewDraft.invoke({
+              agentRunId: state.agentRunId,
+              draft: reviewDraft,
+            });
+            if (
+              persistedDraft &&
+              typeof persistedDraft === "object" &&
+              "draftId" in persistedDraft
+            ) {
+              auditEvents.push(
+                nowEvent(
+                  "draft_write",
+                  "Persisted research-pipeline human-review draft",
+                  {
+                    draftId: (persistedDraft as { draftId?: unknown }).draftId,
+                  },
+                ),
+              );
+            }
+          } catch (error) {
+            auditEvents.push(
+              ...(await appendRemoteAuditEvent(
+                state.agentRunId,
+                "error",
+                "Failed to persist human-review draft row",
+                {
+                  message: errorMessage(error),
+                },
+              )),
+            );
+          }
+        }
       } else {
-        await markAgentRunCompleted.invoke({ runId: state.agentRunId, summary });
+        await markAgentRunCompleted.invoke({
+          runId: state.agentRunId,
+          summary,
+        });
       }
     } catch (error) {
       auditEvents.push(
@@ -368,7 +455,9 @@ export async function finalizeRunNode(state: ResearchPipelineState): Promise<Res
   };
 }
 
-export async function unsupportedWriteRouteNode(state: ResearchPipelineState): Promise<ResearchPipelineUpdate> {
+export async function unsupportedWriteRouteNode(
+  state: ResearchPipelineState,
+): Promise<ResearchPipelineUpdate> {
   const route = state.route ?? "stop";
   const error = `Route '${route}' is recognized but write-producing specialist nodes are intentionally disabled; only agent-run audit writes are enabled.`;
   return {

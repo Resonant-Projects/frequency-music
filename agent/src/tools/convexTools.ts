@@ -176,7 +176,15 @@ export const appendAgentRunEvent = tool(
       "Append an audit-only lifecycle event to a Convex agent run. Does not mutate research data.",
     schema: z.object({
       runId: z.string().min(1),
-      kind: z.enum(["tool_call", "decision", "draft_write", "error", "review_request", "status", "node"]),
+      kind: z.enum([
+        "tool_call",
+        "decision",
+        "draft_write",
+        "error",
+        "review_request",
+        "status",
+        "node",
+      ]),
       message: z.string().min(1),
       payload: z.unknown().optional(),
     }),
@@ -221,6 +229,26 @@ export const markAgentRunNeedsReview = tool(
   },
 );
 
+export const createAgentReviewDraft = tool(
+  ({ agentRunId, draft }) =>
+    callConvex("createAgentReviewDraft", { agentRunId, draft }),
+  {
+    name: "create_agent_review_draft",
+    description:
+      "Persist a sanitized human-review draft linked to an agent run. Creates an agentReviewDraft row and audit event; does not publish research artifacts.",
+    schema: z.object({
+      agentRunId: z.string().min(1),
+      draft: z.object({
+        kind: z.enum(["hypothesis_draft", "recipe_draft"]),
+        title: z.string(),
+        summary: z.string(),
+        candidateIds: z.array(z.string()).min(1),
+        needsReview: z.literal(true),
+      }),
+    }),
+  },
+);
+
 export const markAgentRunFailed = tool(
   ({ runId, summary, error, traceUrl }) =>
     callConvex("markAgentRunFailed", { runId, summary, error, traceUrl }),
@@ -251,6 +279,7 @@ export const convexTools = [
   appendAgentRunEvent,
   markAgentRunCompleted,
   markAgentRunNeedsReview,
+  createAgentReviewDraft,
   markAgentRunFailed,
 ];
 

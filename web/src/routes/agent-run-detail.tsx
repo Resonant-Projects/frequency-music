@@ -28,6 +28,19 @@ type PublicAgentRun = Omit<Doc<"agentRuns">, "input"> & {
   smokeMode?: boolean;
   reviewDraft?: PublicReviewDraft;
 };
+type PersistedReviewDraft = {
+  _id: Id<"agentReviewDrafts">;
+  _creationTime: number;
+  agentRunId: Id<"agentRuns">;
+  graphName: string;
+  kind: "hypothesis_draft" | "recipe_draft";
+  title: string;
+  summary: string;
+  candidateIds: string[];
+  status: "pending_review" | "approved" | "rejected" | "superseded";
+  createdAt: number;
+  updatedAt: number;
+};
 
 const helperClass = css({
   color: "rgba(245, 240, 232, 0.62)",
@@ -81,7 +94,12 @@ function formatTime(value?: number) {
   }).format(new Date(value));
 }
 
-function formatDuration(run: Pick<PublicAgentRun, "createdAt" | "startedAt" | "finishedAt" | "updatedAt">) {
+function formatDuration(
+  run: Pick<
+    PublicAgentRun,
+    "createdAt" | "startedAt" | "finishedAt" | "updatedAt"
+  >,
+) {
   const start = run.startedAt ?? run.createdAt;
   const end = run.finishedAt ?? run.updatedAt;
   const durationMs = Math.max(0, end - start);
@@ -108,11 +126,20 @@ export function AgentRunDetailPage() {
   const params = useParams({ from: "/agent-runs/$runId" });
   const runId = createMemo(() => params().runId as Id<"agentRuns">);
 
-  const run = createQueryWithStatus(convexApi.agentRuns.getPublic, () => ({ runId: runId() }));
+  const run = createQueryWithStatus(convexApi.agentRuns.getPublic, () => ({
+    runId: runId(),
+  }));
   const events = createQueryWithStatus(convexApi.agentRuns.listEvents, () => ({
     runId: runId(),
     limit: 120,
   }));
+  const persistedDrafts = createQueryWithStatus(
+    convexApi.agentDrafts.listByRun,
+    () => ({
+      agentRunId: runId(),
+      limit: 10,
+    }),
+  );
 
   onMount(() => {
     document.title = "Agent Run — Frequency Music";
@@ -134,7 +161,11 @@ export function AgentRunDetailPage() {
               when={!run.isLoading() && run.error()}
               fallback={<p class={helperClass}>Loading agent run...</p>}
             >
-              {(error) => <p class={helperClass}>Unable to load agent run: {error().message}</p>}
+              {(error) => (
+                <p class={helperClass}>
+                  Unable to load agent run: {error().message}
+                </p>
+              )}
             </Show>
           </UICard>
         }
@@ -142,16 +173,36 @@ export function AgentRunDetailPage() {
         {(row) => (
           <>
             <UICard>
-              <div class={css({ display: "flex", flexWrap: "wrap", gap: "2", mb: "3" })}>
-                <UIBadge tone={statusTone(row().status)}>{row().status}</UIBadge>
+              <div
+                class={css({
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "2",
+                  mb: "3",
+                })}
+              >
+                <UIBadge tone={statusTone(row().status)}>
+                  {row().status}
+                </UIBadge>
                 <UIBadge tone="violet">{row().graphName}</UIBadge>
                 <Show when={row().smokeMode}>
                   <UIBadge tone="cream">Smoke</UIBadge>
                 </Show>
               </div>
-              <h1 class={detailTitleClass}>Agent Run {String(row()._id).slice(0, 12)}</h1>
-              <p class={helperClass}>{row().summary ?? "This run has not recorded a summary yet."}</p>
-              <dl class={css({ display: "grid", gap: "2", gridTemplateColumns: "auto 1fr", mt: "4" })}>
+              <h1 class={detailTitleClass}>
+                Agent Run {String(row()._id).slice(0, 12)}
+              </h1>
+              <p class={helperClass}>
+                {row().summary ?? "This run has not recorded a summary yet."}
+              </p>
+              <dl
+                class={css({
+                  display: "grid",
+                  gap: "2",
+                  gridTemplateColumns: "auto 1fr",
+                  mt: "4",
+                })}
+              >
                 <dt class={monoClass}>Created</dt>
                 <dd class={helperClass}>{formatTime(row().createdAt)}</dd>
                 <dt class={monoClass}>Started</dt>
@@ -163,7 +214,18 @@ export function AgentRunDetailPage() {
               </dl>
               <Show when={row().traceUrl}>
                 {(traceUrl) => (
-                  <a class={css({ color: "zodiac.gold", display: "inline-block", fontFamily: "mono", fontSize: "sm", mt: "4" })} href={traceUrl()} target="_blank" rel="noreferrer">
+                  <a
+                    class={css({
+                      color: "zodiac.gold",
+                      display: "inline-block",
+                      fontFamily: "mono",
+                      fontSize: "sm",
+                      mt: "4",
+                    })}
+                    href={traceUrl()}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     Open LangSmith Trace ↗
                   </a>
                 )}
@@ -174,38 +236,180 @@ export function AgentRunDetailPage() {
               <h2 class={sectionTitleClass}>Review Draft</h2>
               <Show
                 when={row().reviewDraft}
-                fallback={<p class={helperClass}>No sanitized review draft has been attached to this run yet.</p>}
+                fallback={
+                  <p class={helperClass}>
+                    No sanitized review draft has been attached to this run yet.
+                  </p>
+                }
               >
                 {(draft) => (
                   <div class={css({ display: "grid", gap: "4" })}>
-                    <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+                    <div
+                      class={css({
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "2",
+                      })}
+                    >
                       <UIBadge tone="gold">{draftLabel(draft().kind)}</UIBadge>
                       <UIBadge tone={draft().needsReview ? "violet" : "cream"}>
                         {draft().needsReview ? "Needs Review" : "Read Only"}
                       </UIBadge>
                     </div>
-                    <h3 class={css({ color: "zodiac.cream", fontFamily: "display", fontSize: "2xl", lineHeight: "1.2" })}>
+                    <h3
+                      class={css({
+                        color: "zodiac.cream",
+                        fontFamily: "display",
+                        fontSize: "2xl",
+                        lineHeight: "1.2",
+                      })}
+                    >
                       {draft().title}
                     </h3>
                     <p class={helperClass}>{draft().summary}</p>
                     <div>
                       <div class={fieldLabelClass}>Candidate IDs</div>
-                      <div class={css({ display: "flex", flexWrap: "wrap", gap: "2", mt: "2" })}>
+                      <div
+                        class={css({
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "2",
+                          mt: "2",
+                        })}
+                      >
                         <For each={draft().candidateIds}>
-                          {(candidateId) => <UIBadge tone="cream">{candidateId}</UIBadge>}
+                          {(candidateId) => (
+                            <UIBadge tone="cream">{candidateId}</UIBadge>
+                          )}
                         </For>
                       </div>
                     </div>
-                    <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+                    <div
+                      class={css({
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "2",
+                      })}
+                    >
                       <UIButton disabled>Approve</UIButton>
-                      <UIButton disabled variant="outline">Reject</UIButton>
-                      <UIButton disabled variant="ghost">Rerun with Notes</UIButton>
+                      <UIButton disabled variant="outline">
+                        Reject
+                      </UIButton>
+                      <UIButton disabled variant="ghost">
+                        Rerun with Notes
+                      </UIButton>
                     </div>
                     <p class={helperClass}>
-                      Review actions are placeholders for the next promotion gate. They intentionally do not mutate research data yet.
+                      Review actions are placeholders for the next promotion
+                      gate. They intentionally do not mutate research data yet.
                     </p>
                   </div>
                 )}
+              </Show>
+            </UICard>
+
+            <UICard>
+              <h2 class={sectionTitleClass}>Persisted Draft Records</h2>
+              <Show
+                when={
+                  !persistedDrafts.isLoading() &&
+                  (persistedDrafts.data() ?? []).length > 0
+                }
+                fallback={
+                  <p class={helperClass}>
+                    {persistedDrafts.isLoading()
+                      ? "Loading persisted drafts..."
+                      : persistedDrafts.error()
+                        ? `Unable to load persisted drafts: ${persistedDrafts.error()?.message}`
+                        : "No persisted human-review draft rows are linked to this run yet."}
+                  </p>
+                }
+              >
+                <div class={css({ display: "grid", gap: "4" })}>
+                  <For
+                    each={
+                      (persistedDrafts.data() ?? []) as PersistedReviewDraft[]
+                    }
+                  >
+                    {(draft) => (
+                      <article
+                        class={css({
+                          borderColor: "rgba(245, 240, 232, 0.12)",
+                          borderRadius: "l2",
+                          borderWidth: "1px",
+                          display: "grid",
+                          gap: "3",
+                          p: "4",
+                        })}
+                      >
+                        <div
+                          class={css({
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "2",
+                            justifyContent: "space-between",
+                          })}
+                        >
+                          <div
+                            class={css({
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "2",
+                            })}
+                          >
+                            <UIBadge tone="gold">
+                              {draftLabel(draft.kind)}
+                            </UIBadge>
+                            <UIBadge
+                              tone={
+                                draft.status === "pending_review"
+                                  ? "violet"
+                                  : "cream"
+                              }
+                            >
+                              {draft.status}
+                            </UIBadge>
+                          </div>
+                          <span class={monoClass}>
+                            {formatTime(draft.createdAt)}
+                          </span>
+                        </div>
+                        <h3
+                          class={css({
+                            color: "zodiac.cream",
+                            fontFamily: "display",
+                            fontSize: "xl",
+                            lineHeight: "1.2",
+                          })}
+                        >
+                          {draft.title}
+                        </h3>
+                        <p class={helperClass}>{draft.summary}</p>
+                        <div>
+                          <div class={fieldLabelClass}>Draft Row</div>
+                          <span class={monoClass}>{String(draft._id)}</span>
+                        </div>
+                        <div>
+                          <div class={fieldLabelClass}>Candidate IDs</div>
+                          <div
+                            class={css({
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "2",
+                              mt: "2",
+                            })}
+                          >
+                            <For each={draft.candidateIds}>
+                              {(candidateId) => (
+                                <UIBadge tone="cream">{candidateId}</UIBadge>
+                              )}
+                            </For>
+                          </div>
+                        </div>
+                      </article>
+                    )}
+                  </For>
+                </div>
               </Show>
             </UICard>
 
@@ -229,14 +433,46 @@ export function AgentRunDetailPage() {
                       const payload = () => formatPayload(event.payload);
                       return (
                         <article class={eventClass}>
-                          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2", justifyContent: "space-between" })}>
-                            <UIBadge tone={eventTone(event.kind)}>{event.kind}</UIBadge>
-                            <span class={monoClass}>{formatTime(event.createdAt)}</span>
+                          <div
+                            class={css({
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "2",
+                              justifyContent: "space-between",
+                            })}
+                          >
+                            <UIBadge tone={eventTone(event.kind)}>
+                              {event.kind}
+                            </UIBadge>
+                            <span class={monoClass}>
+                              {formatTime(event.createdAt)}
+                            </span>
                           </div>
-                          <p class={css({ color: "zodiac.cream", lineHeight: "1.55" })}>{event.message}</p>
+                          <p
+                            class={css({
+                              color: "zodiac.cream",
+                              lineHeight: "1.55",
+                            })}
+                          >
+                            {event.message}
+                          </p>
                           <Show when={payload()}>
                             {(text) => (
-                              <pre class={css({ bg: "rgba(0, 0, 0, 0.22)", borderColor: "rgba(245, 240, 232, 0.12)", borderRadius: "l2", borderWidth: "1px", color: "rgba(245, 240, 232, 0.72)", fontFamily: "mono", fontSize: "xs", maxH: "18rem", overflow: "auto", p: "3", whiteSpace: "pre-wrap" })}>
+                              <pre
+                                class={css({
+                                  bg: "rgba(0, 0, 0, 0.22)",
+                                  borderColor: "rgba(245, 240, 232, 0.12)",
+                                  borderRadius: "l2",
+                                  borderWidth: "1px",
+                                  color: "rgba(245, 240, 232, 0.72)",
+                                  fontFamily: "mono",
+                                  fontSize: "xs",
+                                  maxH: "18rem",
+                                  overflow: "auto",
+                                  p: "3",
+                                  whiteSpace: "pre-wrap",
+                                })}
+                              >
                                 {text()}
                               </pre>
                             )}

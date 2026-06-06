@@ -83,7 +83,11 @@ const evidenceLevelValidator = v.union(
   v.literal("personal"),
 );
 
-const confidenceBandValidator = v.union(v.literal("low"), v.literal("medium"), v.literal("high"));
+const confidenceBandValidator = v.union(
+  v.literal("low"),
+  v.literal("medium"),
+  v.literal("high"),
+);
 
 // Parameter types - extensible string for AI flexibility
 // Common types: tempo, key, tuningSystem, rootNote, chordProgression,
@@ -120,7 +124,11 @@ export default defineSchema({
     clerkUserId: v.string(),
     email: v.optional(v.string()),
     displayName: v.optional(v.string()),
-    role: v.union(v.literal("admin"), v.literal("collaborator"), v.literal("follower")),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("collaborator"),
+      v.literal("follower"),
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerkUserId", ["clerkUserId"]),
@@ -136,7 +144,11 @@ export default defineSchema({
     traceUrl: v.optional(v.string()),
     reviewDraft: v.optional(
       v.object({
-        kind: v.union(v.literal("dry_run_summary"), v.literal("hypothesis_draft"), v.literal("recipe_draft")),
+        kind: v.union(
+          v.literal("dry_run_summary"),
+          v.literal("hypothesis_draft"),
+          v.literal("recipe_draft"),
+        ),
         title: v.string(),
         summary: v.string(),
         candidateIds: v.array(v.string()),
@@ -150,7 +162,11 @@ export default defineSchema({
   })
     .index("by_status_updatedAt", ["status", "updatedAt"])
     .index("by_graphName_updatedAt", ["graphName", "updatedAt"])
-    .index("by_status_graphName_updatedAt", ["status", "graphName", "updatedAt"])
+    .index("by_status_graphName_updatedAt", [
+      "status",
+      "graphName",
+      "updatedAt",
+    ])
     .index("by_updatedAt", ["updatedAt"]),
 
   agentRunEvents: defineTable({
@@ -160,6 +176,27 @@ export default defineSchema({
     payload: v.optional(v.any()),
     createdAt: v.number(),
   }).index("by_runId_createdAt", ["runId", "createdAt"]),
+
+  agentReviewDrafts: defineTable({
+    agentRunId: v.id("agentRuns"),
+    graphName: v.string(),
+    kind: v.union(v.literal("hypothesis_draft"), v.literal("recipe_draft")),
+    title: v.string(),
+    summary: v.string(),
+    candidateIds: v.array(v.string()),
+    status: v.union(
+      v.literal("pending_review"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("superseded"),
+    ),
+    createdBy: v.literal("agent"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentRunId_updatedAt", ["agentRunId", "updatedAt"])
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
 
   // ==========================================================================
   // SOURCES - Ingested items from various pipelines
@@ -295,7 +332,11 @@ export default defineSchema({
     title: v.string(),
     statement: v.string(),
     descriptionMd: v.optional(v.string()),
-    status: v.union(v.literal("active"), v.literal("paused"), v.literal("retired")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("retired"),
+    ),
     visibility: visibilityValidator,
     createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
@@ -347,7 +388,11 @@ export default defineSchema({
       v.literal("retired"),
     ),
     resolution: v.optional(
-      v.union(v.literal("supported"), v.literal("inconclusive"), v.literal("contradicted")),
+      v.union(
+        v.literal("supported"),
+        v.literal("inconclusive"),
+        v.literal("contradicted"),
+      ),
     ),
 
     // Versioning
@@ -390,7 +435,11 @@ export default defineSchema({
     ),
 
     // Lifecycle
-    status: v.union(v.literal("draft"), v.literal("in_use"), v.literal("archived")),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("in_use"),
+      v.literal("archived"),
+    ),
     visibility: visibilityValidator,
     createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
@@ -480,7 +529,9 @@ export default defineSchema({
     feltQualities: v.optional(v.array(v.string())),
     bodyMapTags: v.optional(v.array(v.string())),
     standoutMoments: v.optional(v.array(v.string())),
-    expandVerdict: v.optional(v.union(v.literal("yes"), v.literal("maybe"), v.literal("no"))),
+    expandVerdict: v.optional(
+      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
+    ),
 
     // Ownership
     visibility: visibilityValidator,
