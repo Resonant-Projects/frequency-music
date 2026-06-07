@@ -50,9 +50,21 @@ Current status as of 2026-06-06:
 - A fresh scoped Proxmox API identity was created for local smoke checks: `frequency-monitor@pve!codex-local`.
 - The token has `PVEAuditor` at `/` and is stored only in local `.env.local`; do not commit the token secret.
 - `cd agent && PROXMOX_ALLOW_SELF_SIGNED=true bun run smoke:proxmox` now succeeds and returns sanitized Proxmox version/node metadata.
-- Direct SSH initially succeeded to both `prox.rproj.art` and `prox2.rproj.art`, but later SSH attempts timed out while Proxmox API port `8006` remained reachable.
-- No Pulse or ProxMenux installer was run because host shell access became unstable before the install started.
-- Continue installation only after SSH on port `22` is stable again or after creating a temporary mutation-capable Proxmox API token for LXC creation.
+- SSH timeouts were reproduced as a Mac/VPN-to-port-22 transport issue, not an sshd/auth issue: ICMP and Proxmox API port `8006` stayed healthy while direct SSH to `prox2:22`, then both nodes, was temporarily blackholed.
+- `prox2` sshd was active, had no SSH drop rule, and accepted access from `prox`; `ssh -J prox prox2` worked while direct Mac-to-`prox2:22` failed.
+- The practical local fix was to add SSH multiplexing for `prox` and `prox2` in `~/.ssh/config` (`ControlMaster auto`, `ControlPersist 10m`) and avoid rapid parallel SSH bursts.
+- After a cooldown and persistent control connection, `prox2` remained stable enough for installation. Direct SSH to both nodes later recovered.
+- Browser access is useful for viewing Pulse, ProxMenux Monitor, or the Proxmox web shell, but it was not needed for the fix; the root issue was SSH transport churn/filtering, not the Proxmox web UI.
+
+Installed monitoring components:
+
+- Pulse installed as LXC `102` on `prox2`, hostname `pulse`, DHCP address `172.16.0.21`, port `7655`, storage `local-lvm`, `onboot=1`.
+- Pulse version installed: `v5.1.34`.
+- Pulse health endpoint: `http://172.16.0.21:7655/api/health`.
+- Pulse auto-registered the Proxmox cluster through `prox2` and reports 2 nodes, 6 containers, backups, storage, and physical disks.
+- ProxMenux normal version installed on `prox2`.
+- ProxMenux Monitor version installed: `v1.2.2`.
+- ProxMenux Monitor service: `proxmenux-monitor.service`, enabled and active on `prox2`, listening on `http://172.16.0.8:8008`.
 
 Verified cluster inventory from the successful SSH window:
 
