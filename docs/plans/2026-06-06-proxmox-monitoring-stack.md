@@ -47,9 +47,12 @@ Current status as of 2026-06-06:
 - `prox.rproj.art` resolves to `172.16.0.7`.
 - This Mac routes `172.16.0.7` through `utun9`, consistent with private VPN or management-network access.
 - TCP access to `prox.rproj.art:8006` and `prox2.rproj.art:8006` succeeds.
-- The repository root `.env.local` does not currently provide `PROXMOX_TOKEN_ID` or `PROXMOX_TOKEN_SECRET`, so `agent/scripts/spike-proxmox.ts` cannot authenticate yet.
-- Direct SSH initially succeeded to both `prox.rproj.art` and `prox2.rproj.art`, but subsequent SSH attempts timed out while Proxmox API port `8006` remained reachable.
-- No Pulse or ProxMenux installer should be run until either SSH is stable again or a scoped Proxmox API token is available locally.
+- A fresh scoped Proxmox API identity was created for local smoke checks: `frequency-monitor@pve!codex-local`.
+- The token has `PVEAuditor` at `/` and is stored only in local `.env.local`; do not commit the token secret.
+- `cd agent && PROXMOX_ALLOW_SELF_SIGNED=true bun run smoke:proxmox` now succeeds and returns sanitized Proxmox version/node metadata.
+- Direct SSH initially succeeded to both `prox.rproj.art` and `prox2.rproj.art`, but later SSH attempts timed out while Proxmox API port `8006` remained reachable.
+- No Pulse or ProxMenux installer was run because host shell access became unstable before the install started.
+- Continue installation only after SSH on port `22` is stable again or after creating a temporary mutation-capable Proxmox API token for LXC creation.
 
 Verified cluster inventory from the successful SSH window:
 
