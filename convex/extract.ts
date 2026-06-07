@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { action, internalMutation } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { tracedGenerate } from "./tracing";
 
 // ============================================================================
 // MODEL CONFIGURATION
@@ -207,12 +208,22 @@ export const extractSource = action({
     try {
       const model = getModel(modelId);
 
-      const { text: assistantMessage } = await generateText({
-        model,
-        system: EXTRACT_SYSTEM_PROMPT,
-        prompt: userPrompt,
-        maxOutputTokens: 4096,
-      });
+      const { text: assistantMessage } = await tracedGenerate(
+        "extract_v2",
+        () =>
+          generateText({
+            model,
+            system: EXTRACT_SYSTEM_PROMPT,
+            prompt: userPrompt,
+            maxOutputTokens: 4096,
+          }),
+        {
+          sourceId: args.sourceId,
+          sourceType: source.type,
+          model: modelId,
+          promptVersion: "extract_v2",
+        },
+      );
 
       if (!assistantMessage) {
         throw new Error("No response from model");

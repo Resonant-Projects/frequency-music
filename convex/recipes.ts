@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { tracedGenerate } from "./tracing";
 import {
   hypothesisReturnValidator,
   recipeParameterValidator,
@@ -474,12 +475,21 @@ export const generateFromHypothesis = action({
     const openrouter = createOpenRouter({ apiKey: openRouterKey });
     const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-    const result = await generateText({
-      model: openrouter(modelId),
-      system: RECIPE_SYSTEM_PROMPT,
-      prompt,
-      maxTokens: 3000,
-    });
+    const result = await tracedGenerate(
+      "recipe_v1",
+      () =>
+        generateText({
+          model: openrouter(modelId),
+          system: RECIPE_SYSTEM_PROMPT,
+          prompt,
+          maxOutputTokens: 3000,
+        }),
+      {
+        hypothesisId: args.hypothesisId,
+        model: modelId,
+        promptVersion: "recipe_v1",
+      },
+    );
 
     // Parse response
     let parsed: ParsedRecipePayload;

@@ -1,5 +1,15 @@
 import { httpRouter } from "convex/server";
 import { internal } from "./_generated/api";
+import {
+  getEditorialSignalsHttp,
+  getExtractionHttp,
+  getRecentRecipesHttp,
+  listActiveThesesHttp,
+  listFailureArchiveHttp,
+  listRecentExtractionsHttp,
+  listRecentHypothesesHttp,
+  searchSourcesByConceptHttp,
+} from "./agentToolsHttp";
 import { httpAction } from "./_generated/server";
 import { generateDedupeKey } from "./sourceUtils";
 
@@ -53,6 +63,35 @@ http.route({
   path: "/health",
   method: "GET",
   handler: httpAction(() => json({ ok: true })),
+});
+
+http.route({
+  path: "/agent-tools/listRecentExtractions",
+  method: "POST",
+  handler: listRecentExtractionsHttp,
+});
+http.route({ path: "/agent-tools/getExtraction", method: "POST", handler: getExtractionHttp });
+http.route({
+  path: "/agent-tools/listRecentHypotheses",
+  method: "POST",
+  handler: listRecentHypothesesHttp,
+});
+http.route({ path: "/agent-tools/listActiveTheses", method: "POST", handler: listActiveThesesHttp });
+http.route({
+  path: "/agent-tools/listFailureArchive",
+  method: "POST",
+  handler: listFailureArchiveHttp,
+});
+http.route({
+  path: "/agent-tools/getEditorialSignals",
+  method: "POST",
+  handler: getEditorialSignalsHttp,
+});
+http.route({ path: "/agent-tools/getRecentRecipes", method: "POST", handler: getRecentRecipesHttp });
+http.route({
+  path: "/agent-tools/searchSourcesByConcept",
+  method: "POST",
+  handler: searchSourcesByConceptHttp,
 });
 
 http.route({

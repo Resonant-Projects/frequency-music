@@ -6,6 +6,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { tracedGenerate } from "./tracing";
 import {
   hypothesisReturnValidator,
   sourceReturnValidator,
@@ -422,12 +423,22 @@ export const generateFromExtraction = action({
     const openrouter = createOpenRouter({ apiKey: openRouterKey });
     const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-    const result = await generateText({
-      model: openrouter(modelId),
-      system: HYPOTHESIS_SYSTEM_PROMPT,
-      prompt,
-      maxOutputTokens: 2000,
-    });
+    const result = await tracedGenerate(
+      "hypothesis_v1",
+      () =>
+        generateText({
+          model: openrouter(modelId),
+          system: HYPOTHESIS_SYSTEM_PROMPT,
+          prompt,
+          maxOutputTokens: 2000,
+        }),
+      {
+        extractionId: args.extractionId,
+        sourceId: extraction.sourceId,
+        model: modelId,
+        promptVersion: "hypothesis_v1",
+      },
+    );
 
     // Parse response
     let parsed: GeneratedHypothesisPayload;

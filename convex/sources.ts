@@ -57,6 +57,35 @@ export const listRecent = query({
 });
 
 /**
+ * Search sources by topic/tag/concept without returning raw text blobs.
+ * Used by external LangChain/LangGraph agents through the agent-tools surface.
+ */
+export const searchByConcept = query({
+  args: { concept: v.string(), limit: v.optional(v.number()) },
+  returns: v.array(sourceReturnValidator),
+  handler: async (ctx, args) => {
+    const needle = args.concept.toLowerCase().trim();
+    if (!needle) return [];
+
+    const rows = await ctx.db.query("sources").order("desc").take(250);
+    return rows
+      .filter((source) => {
+        const haystack = [
+          source.title,
+          source.author,
+          ...(source.tags ?? []),
+          ...(source.topics ?? []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(needle);
+      })
+      .slice(0, args.limit ?? 25);
+  },
+});
+
+/**
  * List sources by type
  */
 export const listByType = query({

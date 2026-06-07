@@ -7,6 +7,7 @@ import { computeRecommendedActionContext, type RecommendedAction } from "./campa
 import { computeEditorialSignals } from "./dashboard";
 import { action, internalAction, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { tracedGenerate } from "./tracing";
 import { weeklyBriefReturnValidator } from "./validators";
 
 interface BriefParameter {
@@ -427,12 +428,24 @@ Theses: ${
   const openrouter = createOpenRouter({ apiKey: openRouterKey });
   const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-  const result = await generateText({
-    model: openrouter(modelId),
-    system: BRIEF_SYSTEM_PROMPT,
-    prompt,
-    maxOutputTokens: 4000,
-  });
+  const result = await tracedGenerate(
+    "brief_v2.phase3",
+    () =>
+      generateText({
+        model: openrouter(modelId),
+        system: BRIEF_SYSTEM_PROMPT,
+        prompt,
+        maxOutputTokens: 4000,
+      }),
+    {
+      weekOf,
+      model: modelId,
+      promptVersion: "v2.phase3",
+      numHypotheses: recentHypotheses.length,
+      numRecipes: recentRecipes.length,
+      campaignId: recommendationContext.campaign?._id,
+    },
+  );
 
   const parsed = parseBriefResponse(result.text);
 
