@@ -1562,6 +1562,20 @@
     "contentHash": "3d9af6eee0fb6e400313df3d535a9159bb2f360a6d22c5433959648b91af7c3c",
     "generatedAt": "2026-05-25T16:28:52.487Z"
   },
+  "the-label-is-part-of-the-signal": {
+    "excerpt": "Source labels are not neutral annotations: they calibrate anomaly, guide separation, and teach listeners what kind of cause a sound can become.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "AI-music",
+      "composition",
+      "acoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4fad178f638c1843eacc3d542250fdbc2885e948fbf43e4ef73d8d51191dd9c7",
+    "generatedAt": "2026-06-10T19:01:00.000Z"
+  },
   "the-listener-in-the-filter": {
     "excerpt": "Audio filters embed implicit models of their listeners. When those models misalign with actual downstream listeners, systems fail systematically-revealing how signal processing choices are inseparable from assumptions about who's listening.",
     "tags": [
