@@ -486,6 +486,20 @@
     "contentHash": "107de7e3cf92901669f5834508139146e6c233a3d225b99630b647406636e5c5",
     "generatedAt": "2026-06-03T09:36:14Z"
   },
+  "the-attribution-limit": {
+    "excerpt": "Source identity is an operational state reached when enough perceptual evidence accumulates; composition can shape how hard a source is to prove.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "psychoacoustics",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "168fe79896de8d63072430e6ed8d50c692ecbb838f61fa3184ebb9d6332cf92b",
+    "generatedAt": "2026-06-12T19:01:00Z"
+  },
   "the-bandpass-principle": {
     "excerpt": "Every listening system starts by choosing a passband; from ultrasonic bioacoustics to Bark-scale dynamics, infrasound, wavelet artifacts, and rhythm formants, the filter is already a theory of music.",
     "tags": [
