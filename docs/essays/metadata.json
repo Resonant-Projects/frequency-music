@@ -181,6 +181,20 @@
     "contentHash": "92bd0a654f041980797a333bb2829427282a3de035a8892f3c098b5737181463",
     "generatedAt": "2026-05-25T08:26:00.000Z"
   },
+  "the-accessible-phase": {
+    "excerpt": "Composition moves through reachable states, not ideal states: phase-transition path dependence, codec intelligibility, and Tonnetz geometry all point to identity-preserving accessibility as a musical control principle.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "geometry"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1b958e7817fbce86efcca3bbec01d4116c693ce687f49a719abcaaa90bdefb2e",
+    "generatedAt": "2026-06-12T02:58:00.000Z"
+  },
   "the-identity-tax": {
     "excerpt": "Audio systems must pay an identity tax before they can separate, classify, or generalize. Source identity becomes a compositional parameter: identity load.",
     "tags": [
