@@ -111,6 +111,20 @@
     "contentHash": "32cc2c15de189e2b94bca7059c29bd7c9f2c0e050dd1f4b850883cb1e0b9dcd9",
     "generatedAt": "2026-06-02T01:34:00.000Z"
   },
+  "the-evidence-of-a-voice": {
+    "excerpt": "Source identity is not given by the waveform; it has to be curated, recovered, withheld, or allowed to leak through as operational evidence for listening systems and composers.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "psychoacoustics",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "5e8c08eebf4395e79d532a61183e394b34e05f894ea9fd657e66f624b2bfede4",
+    "generatedAt": "2026-06-12T10:58:00.000Z"
+  },
   "finding-one": {
     "excerpt": "Metric perception isn't purely auditory-it's an act of interpretation where the listener imposes structure on sound. This frame-dependent choice shapes what we hear, create, and understand about music.",
     "tags": [
