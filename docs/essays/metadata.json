@@ -2204,6 +2204,20 @@
     "contentHash": "4ed2d201d04addc532900113523874ee6994b19a1e722d8f65d5b3a8eea864cb",
     "generatedAt": "2026-04-10T18:40:06.923Z"
   },
+  "the-room-is-a-source": {
+    "excerpt": "Room response, machine identity, source separation, and channel degradation all point to source identity as recoverable context that can become compositional material.",
+    "tags": [
+      "acoustics",
+      "signal-processing",
+      "composition",
+      "AI-music",
+      "perception",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1df9bd0712da61d4760fc0bf0e315798ed737dd518c27c70f39c11a7b9e1b7ab",
+    "generatedAt": "2026-06-13T11:01:00.000Z"
+  },
   "the-scale-that-holds": {
     "excerpt": "Musical meaning survives at different scales: pulse, critical band, phase, or harmonic graph. The task is choosing the resolution that holds identity.",
     "tags": [
