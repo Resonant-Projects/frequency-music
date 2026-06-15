@@ -4,12 +4,17 @@
  *
  * Usage: KERNEL_API_KEY=... bun run scripts/fetch-blocked-kernel.ts
  */
+import "varlock/auto-load";
 import Kernel from "@onkernel/sdk";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import { writeFileSync, appendFileSync } from "fs";
 
-const BYPASS = "freq-opus-extract-2026";
+const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
+if (!BYPASS) {
+  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
+  process.exit(1);
+}
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
 interface BlockedSource {

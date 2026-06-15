@@ -147,14 +147,16 @@ bun run scripts/generate-experiment.ts <extractionId>
 
 ## Authentication
 
-All CLI mutations require auth bypass (Clerk integration):
+All CLI mutations require auth bypass (Clerk integration). The bypass secret is
+managed by varlock + 1Password (`.env.schema` → `op://frequency-music/...`);
+never paste a real value here. Scripts auto-load it via `import "varlock/auto-load"`.
 
 ```bash
-# Add devBypassSecret to mutation args
-bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4-6", "devBypassSecret": "freq-opus-extract-2026"}'
+# Add devBypassSecret to mutation args (value resolved from 1Password by varlock)
+bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4-6", "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
 ```
 
-Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=freq-opus-extract-2026`
+Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=<set via 1Password / varlock; never commit the value>`
 
 ## Environment Variables (.env.local)
 

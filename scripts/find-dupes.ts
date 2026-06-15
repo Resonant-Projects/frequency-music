@@ -4,11 +4,16 @@
  *
  * Usage: CONVEX_URL=... bun run scripts/find-dupes.ts [--archive]
  */
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
 const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
-const BYPASS = "freq-opus-extract-2026";
+const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
+if (!BYPASS) {
+  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
+  process.exit(1);
+}
 
 function normalizeUrl(url: string): string {
   let u = url
