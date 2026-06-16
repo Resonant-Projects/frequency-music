@@ -2957,5 +2957,19 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
+  },
+  "the-cue-weight-is-the-message": {
+    "excerpt": "Cue weighting turns prosody, TTS latents, speaker similarity, adversarial audio, and holistic dubbing into compositional controls over which acoustic evidence gets to decide meaning.",
+    "tags": [
+      "prosody",
+      "speech-synthesis",
+      "perception",
+      "AI-music",
+      "composition",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7f039d6509cd63381758fb2663fd7a54347640ba834be4d2265d736b2c5f2c6f",
+    "generatedAt": "2026-06-16T19:25:00.000Z"
   }
 }
