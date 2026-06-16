@@ -2930,6 +2930,20 @@
     "contentHash": "989342546c049862e860cd810fe71372bd7997f7ac6b73f89b47d7ee1981439e",
     "generatedAt": "2026-06-06T11:10:00.000Z"
   },
+  "the-missing-microphone": {
+    "excerpt": "Sparse microphones, sparse HRIRs, and distributed arrays make missing acoustic measurements compositional: inference becomes a playable boundary between evidence and imagined space.",
+    "tags": [
+      "spatial-audio",
+      "acoustics",
+      "signal-processing",
+      "source-separation",
+      "composition",
+      "inverse-problems"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "55c7f3d5b6fbedec031750bc45d328de758668ce642241555f97e2490e5e5db4",
+    "generatedAt": "2026-06-16T11:20:00.000Z"
+  },
   "where-the-signal-breaks": {
     "excerpt": "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
     "tags": [
