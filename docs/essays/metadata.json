@@ -2378,6 +2378,19 @@
     "contentHash": "36394033f62c16d189ecabbacc361e440c02a6552bbe13d00d723d15000ed2b3",
     "generatedAt": "2026-04-10T18:39:52.516Z"
   },
+  "the-promptable-room": {
+    "excerpt": "Generative models can now create room impulse responses from natural-language descriptions, transforming acoustic space from a measured artifact into a compositional parameter that lives between physics and fiction.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "AI-music",
+      "acoustics",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "13a1d3c275fb3cb9ffa8b5de7110f130af7db0bc2510db76ebfbe2401c8eb86c",
+    "generatedAt": "2026-06-18T11:04:01.406Z"
+  },
   "the-proof-of-a-source": {
     "excerpt": "Source identity is an operational proof assembled from clean witnesses, correlation cues, and commitment deadlines; composition can shape what listeners can know in time.",
     "tags": [
