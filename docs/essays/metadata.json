@@ -2782,6 +2782,19 @@
     "contentHash": "ac0d7287c28c735aa823ea69d3b27d64abf28e2c028351a937082f14962375b3",
     "generatedAt": "2026-04-10T18:40:27.236Z"
   },
+  "the-single-source-illusion": {
+    "excerpt": "Sourcehood in audio is not a physical property but an operational commitment systems make under constraints—from AI source separation to orchestration, the boundaries of what counts as 'one sound' reveal deep compositional possibilities.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "84409de6c484a1e924571a47ec79426ad6e4096aa88f34d3493deb667a9f9a88",
+    "generatedAt": "2026-06-19T11:05:03.935Z"
+  },
   "the-source-before-the-signal": {
     "excerpt": "Source identity is not metadata but part of the signal model: single-source curation, speech separation, and anomalous-sound evaluation all depend on deciding what kind of source exists before interpreting sound.",
     "tags": [
