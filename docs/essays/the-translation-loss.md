@@ -1,98 +1,87 @@
 # The Translation Loss
 
-**Essay #184** - May 21, 2026
+_Freq - June 19, 2026_
 
 ---
 
-Every musical representation is a translation.
+## What Has to Survive?
 
-A waveform becomes a spectrogram. A score becomes ABC text. A voice becomes an embedding. A mix becomes separated stems. A dense spectrum becomes twenty-four critical bands. Each translation promises preservation, but none preserves everything. The important question is not whether information is lost. It is which layer of meaning pays the price.
+Every musical transformation is a translation. A phrase becomes a score. A score becomes a performance. A performance becomes a recording. A recording becomes a codec stream, a stem embedding, a watermark carrier, a spectrogram, a prompt, a memory.
 
-That loss can be used compositionally.
+The dangerous assumption is that the same music simply passes through these translations intact. It does not. Each representation preserves some layers and weakens others. The compositional question is not "did the signal survive?" but "which layer was carrying the identity?"
 
-## Six Tests
+The recent synthesis set makes this unusually clear. StreamMark survives benign audio transformations but breaks under deepfake-style semantic edits. PHALAR improves stem retrieval by enforcing pitch- and phase-equivariant structure. Bark-scale dynamics divides the spectrum according to perceptual critical bands rather than arbitrary crossovers. MSU-Bench shows that models reason differently about the same score depending on whether it arrives as notation text or visual page. A speech-recognition fairness study finds that the audio encoder, not the language-model decoder, drives robustness and bias. And the ice-phase extraction reminds us that systems under pressure move to the nearest accessible structure, not the abstract optimum.
 
-The current extraction batch circles the same problem from six directions.
+Together they point to a principle: identity is not spread evenly across the signal. It has load-bearing layers.
 
-**Ice shows that reachable structure is not the same as possible structure.** Water has a huge mathematically valid configuration space, but actual phase transitions move through nearby metastable states. The compression path, rate, and timescale determine which form appears. Ice XXI and ice XXII are not just structures; they are histories made visible. The system does not translate pressure into the globally optimal crystal. It translates pressure into the nearest accessible order.
+## Surface Quality Is Not Identity
 
-**Bark-scale dynamics shows that a frequency grid is already an interpretation.** A conventional multiband compressor splits audio by convenient crossover points. A Bark-based processor splits it by critical bands, closer to the cochlea's frequency resolution. The same spectrum becomes a different control surface when translated through perception instead of arithmetic. Twenty-four bands are not merely twenty-four bins; they are a claim about where the ear notices difference.
+StreamMark is the cleanest example. Its watermark is designed to remain recoverable after ordinary signal processing: compression, noise, and other benign distortions. But when the audio undergoes transformations that alter semantic identity, such as speech editing or voice conversion, the message recovery falls toward chance.
 
-**StreamMark shows that identity can survive surface damage and fail under semantic change.** Its watermark remains recoverable after benign transformations such as compression and noise, but collapses toward chance after deepfake-style semantic attacks. That is a beautiful distinction: the signal can be acoustically degraded and still be itself, but a meaning-changing operation breaks the hidden continuity. The watermark turns translation loss into a detector.
+That distinction matters for music. A transformation can leave the surface polished while damaging the layer that made the passage itself. A melody can survive EQ but not reharmonization. A groove can survive timbral substitution but not microtiming quantization. A vocal identity can survive compression but not formant transfer. A chord progression can survive orchestration but not a change in bass implication.
 
-**PHALAR shows that phase is not disposable bookkeeping.** A pitch- and phase-equivariant representation improves stem retrieval and correlates more strongly with human judgments of musical coherence than semantic baselines that discard phase. This matters because phase is often treated as the awkward part of spectral audio, useful for reconstruction but less meaningful than magnitude. Here, it behaves like musical glue.
+This is why "high fidelity" is too blunt a goal. Fidelity to what? Waveform? Timbre? Gesture? Harmonic function? Sourcehood? Phrase role? A representation can be faithful to one layer and treacherous to another.
 
-**MSU-Bench shows that notation modality changes reasoning.** Models that see complete scores as ABC text and models that see them as visual PDFs do not fail in the same way. Understanding onset, rhythm, harmony, texture, and form simultaneously is not a sum of isolated skills. A score translated into another format can preserve notes while disturbing the hierarchy that makes those notes intelligible.
+## Phase as Relation
 
-**Speech-recognition fairness work shows that the encoder decides what can be heard.** Scaling the language model is less decisive than the acoustic encoder. Compression quality predicts accent fairness, silence injection can amplify hallucination, and severe degradation can flatten differences only by making everyone wrong. Translation loss is not neutral. It has a politics and a physics.
+PHALAR sharpens the point by treating phase not as expendable detail but as structure. Its learned musical audio representation uses pitch equivariance and phase equivariance to match missing stems to a submix, and the extracted summary notes stronger alignment with human coherence judgments than semantic baselines.
 
-## The Pattern
+That suggests that musical relatedness can live in relations that ordinary symbolic descriptions often discard. Phase is not melody, harmony, or rhythm in the score-theoretic sense. But in audio, phase relationships shape attacks, spatial placement, interference, groove, and the felt coherence between parts. If a translation preserves pitch labels while flattening phase-sensitive timing and interference, it may retain the map while damaging the terrain.
 
-Across these cases, the same structure appears:
+For composition, this is a warning against treating notation-level identity as complete identity. A passage can be "the same notes" and still lose the thing that made it cohere.
 
-1. A source contains several layers of organization.
-2. A representation preserves some layers better than others.
-3. A downstream task mistakes preservation of one layer for preservation of the whole.
-4. The failure becomes visible only after transformation.
+## The Ear's Coordinate System
 
-This is why "high fidelity" is too vague. Fidelity to what?
+The Bark-scale dynamics extraction gives the perceptual version of the same problem. Conventional multiband dynamics processors divide frequency by chosen crossover points. Bark-scale processing instead follows critical-band structure: the ear's own coarse frequency partitioning.
 
-A Bark processor is faithful to cochlear resolution, not to equal-Hz spacing. StreamMark is faithful to identity under benign signal operations, not to identity after semantic alteration. PHALAR is faithful to musical coherence partly because it respects phase relations. MSU-Bench exposes the gap between symbol preservation and multilevel score reasoning. Speech encoders can preserve enough language to transcribe while losing fairness across acoustic variation.
+That is a translation from mathematical spectrum to perceptual spectrum. The question changes from "which hertz range is being compressed?" to "which auditory band is carrying energy, masking, and salience?" If a transformation respects critical bands, it may preserve perceptual balance even while changing the literal spectrum. If it violates them, it may measure as orderly while sounding wrong.
 
-The translation layer is an instrument. It has a tuning.
+The ear is not a neutral analyzer. It has a coordinate system. Any musical identity that depends on masking, roughness, brightness, or spectral blend is partly defined in that coordinate system.
 
-## A Compositional Use
+## Modality Changes the Question
 
-A composer can treat translation loss as a diagnostic and a material.
+MSU-Bench extends the argument from sound to score. The same musical work can be presented as ABC notation or as a visual score, and models do not understand those forms equivalently across onset, texture, form, and higher-level reasoning. The modality is not a passive container. It decides which operations are easy.
 
-Start with one musical identity: a four-bar phrase, a timbral fingerprint, a rhythmic cell, a harmonic progression. Translate it through several representations:
+Musicians know this physically. A piano roll foregrounds timing and duration. Staff notation foregrounds contour, harmony, and voice. A spectrogram foregrounds energy distribution. A lead sheet foregrounds chord function and melody. None is "the music." Each is a translation with affordances and blind spots.
 
-- Bark-band dynamics
-- magnitude-only spectral processing
-- phase-preserving spectral processing
-- score notation
-- compressed audio
-- silence-masked or noise-masked audio
+The speech-recognition fairness extraction adds the hardest edge: changing the encoder changes robustness and bias. The downstream model may be huge, but if the front-end representation damages accented speech, inserts silence pathologies, or hallucinates repetitions under masking, scale cannot fully repair it. The first translation decides what later reasoning can know.
 
-Then ask what survives each translation.
+## The Nearest Surviving Form
 
-If the phrase survives Bark-band compression but not magnitude-only spectral freezing, its identity may live in phase and timing more than static spectrum. If it survives audio compression but fails when rests are inserted, its continuity may depend on temporal expectation. If it survives score reduction but loses timbral identity, notation preserved syntax while discarding body.
+This returns to the ice phases. Under pressure, water does not scan every possible crystalline structure and choose the most stable. It often enters the nearest accessible metastable phase. The path of compression matters. The realized form depends on rate, direction, and timescale.
 
-The useful result is not a perfect version. The useful result is a map of dependencies.
+Musical transformations behave the same way. When a passage is compressed into notation, quantized to a grid, rendered through a synth, separated into stems, encoded for streaming, or reimagined by a performer, it does not become the ideal equivalent. It becomes the nearest form that the translation path can actually reach.
 
-## Studio Recipe
+Sometimes that nearest form preserves identity. Sometimes it preserves only surface.
 
-Make three versions of the same 60-second miniature.
+## A Compositional Test
 
-Version A preserves pitch and rhythm but scrambles phase-sensitive microtiming with heavy spectral resynthesis.
+A useful experiment would be simple. Compose a one-minute miniature with three recognizable layers:
 
-Version B preserves phase and transient timing but pushes the mix through Bark-scale dynamics so each critical band breathes differently.
+- a melodic contour
+- a rhythmic cell
+- a distinctive timbral or source identity
 
-Version C preserves notation-level structure but changes timbral carriers, registering the same line across instruments or synthesis patches.
+Then make three translations.
 
-Then listen for which version still feels like the same piece.
+The first preserves pitch and rhythm while weakening phase-sensitive microtiming or interference. The second preserves the audible surface but processes dynamics by perceptual bands, letting the Bark bands breathe independently. The third preserves notation-level pitch and rhythm while changing carriers and inserting short silence masks.
 
-The disconfirming case is important: if all three versions preserve identity equally, the hypothesis is too broad. The piece may be carried by a higher-level contour that none of these translations touched. If only one survives, the composition has revealed its load-bearing layer.
+Blind-listen against the reference. Rate surface quality and same-piece identity separately. The interesting case is the version that still sounds "good" but no longer sounds like the same musical object. That is the translation loss. It reveals the load-bearing layer.
 
-That phrase, "load-bearing layer," is the practical gift here. It is what composers need to know. Not every detail matters equally. Some details decorate the structure. Some details are the structure.
+## Writing for Translation
 
-## Why This Matters
+This changes how a composer can think about variation. Instead of asking how much material can change, ask which identity layer is protected.
 
-Music technology often evaluates transformation by surface quality: SNR, perceptual quality, reconstruction accuracy, retrieval accuracy, benchmark scores. These are useful, but they do not answer the composer's question.
+If the load-bearing layer is contour, harmony can move freely. If it is bass function, melody can ornament. If it is phase-coherent groove, quantization is dangerous even when the notes remain correct. If it is sourcehood, reverb and masking matter as much as pitch. If it is notation-level form, timbral changes may be cheap. If it is perceptual-band balance, spectral edits should follow the ear rather than the analyzer.
 
-The composer's question is:
+The practical rule is:
 
-What must remain unchanged for this to still be this?
+> Preserve the layer that carries identity; spend the other layers.
 
-The answer depends on the translation. A phrase can be robust as notation and fragile as timbre. A voice can be robust under compression and fragile under formant conversion. A groove can be robust under EQ and fragile under phase damage. A score can be legible as symbols and incoherent as form.
+That is not a conservative rule. It is a license to transform aggressively once the load-bearing layer is known. A phrase can survive astonishing damage if the right relation remains intact. It can also collapse after a tiny edit if the edit touches the hidden carrier.
 
-That is the translation loss.
-
-Not loss as failure. Loss as measurement. Loss as a way to find where musical meaning lives.
+Translation loss is the difference between changing the clothing and breaking the skeleton. Composition becomes more precise when we know which is which.
 
 ---
 
-_Sources: Physicists Discover the Most Complex Forms of Ice Yet; FSK Audio Bark24 | Dyn; StreamMark; PHALAR; Musical Score Understanding Benchmark; Do LLM Decoders Listen Fairly?_
-
-_Connections: The Resolution Budget (#183), The Carrier Decides (#181), The Invisible Coordinate (#182), What Survives (#82), Where the Signal Breaks (#103)_
-
+_Sources: StreamMark extraction on semi-fragile audio watermarking; PHALAR extraction on phase- and pitch-equivariant musical representations; Bark24 extraction on Bark-scale dynamics processing; MSU-Bench extraction on score-understanding modality gaps; speech-recognition fairness extraction on encoder-driven robustness and bias; Quanta ice-phase extraction on nearest accessible metastable forms. Connects to: [The Accessible Phase](/docs/essays/the-accessible-phase.md), [Sourcehood as a Compositional Parameter](/docs/essays/sourcehood-as-a-compositional-parameter.md), [Every Basis Has a Bias](/docs/essays/every-basis-has-a-bias.md), [The Codec Ear](/docs/essays/the-codec-ear.md), and [The Representation Gap](/docs/essays/the-representation-gap.md)._
