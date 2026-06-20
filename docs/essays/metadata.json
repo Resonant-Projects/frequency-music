@@ -2851,6 +2851,20 @@
     "contentHash": "8400af6db69dd7bf051b262715662ceca51b80603c6ebcdd698711d14a43c703",
     "generatedAt": "2026-05-25T16:29:03.322Z"
   },
+  "the-source-is-a-decision": {
+    "excerpt": "A source is not discovered but decided—a contract between signal, time, and the evidence a system can afford to establish. This essay bridges machine listening, composition, and proof complexity to show how musical sourcehood emerges at decision boundaries.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "perception",
+      "information-theory",
+      "mathematical-music-theory",
+      "consciousness"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "04d5a8997344c2ec7c9446846c25b8411385c9f8b79d30c7474b4d9ff20827f2",
+    "generatedAt": "2026-06-20T19:04:44.377Z"
+  },
   "the-source-is-a-verdict": {
     "excerpt": "A source verdict is the moment a system—dataset, neural network, room, or listener—decides acoustic evidence belongs to one cause. This reframes orchestration around who gets to define what counts as a single source.",
     "tags": [
