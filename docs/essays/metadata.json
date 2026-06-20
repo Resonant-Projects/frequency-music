@@ -3033,6 +3033,20 @@
     "contentHash": "fb36e722e56d5eb93899ac23ef95d69e06e56bcdc8b0eb426cb6d137b24a4f77",
     "generatedAt": "2026-05-25T16:29:04.966Z"
   },
+  "the-sufficiency-threshold-revisited": {
+    "excerpt": "Music and machine listening both grapple with a core question: when has a system heard enough to act? This essay explores sufficiency thresholds as compositional parameters that shape perception and form.",
+    "tags": [
+      "perception",
+      "AI-music",
+      "signal-processing",
+      "composition",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1e82f28ee0d1d0ff0b509a50914ad4f8162fdc68a5c3bf4dd9b3d52900eccba8",
+    "generatedAt": "2026-06-20T11:05:14.477Z"
+  },
   "the-surface-and-the-source": {
     "excerpt": "Timbre perception maps cleanly to simple acoustic parameters, yet producing timbre requires understanding the hidden causal chain. Exploring the gap between what sounds like and what makes it.",
     "tags": [
