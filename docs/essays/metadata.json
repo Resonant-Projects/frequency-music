@@ -2502,6 +2502,20 @@
     "contentHash": "9deb5c4200685ebd67843a6d13e61da1c72657feaeddde18899fcba9525424c0",
     "generatedAt": "2026-05-19T00:28:50.189Z"
   },
+  "the-reference-is-part-of-the-signal": {
+    "excerpt": "Reference frames are not passive context—they actively shape how sounds are perceived and interpreted. By deliberately manipulating these references, composers can reveal and control what listeners actually hear.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "composition",
+      "psychoacoustics",
+      "information-theory",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "89c76a0f5f3710178c61a66c847583546eed3e4b59e86f5c36be1eadf7d5c438",
+    "generatedAt": "2026-06-21T19:04:24.722Z"
+  },
   "the-relation-is-in-the-signal": {
     "excerpt": "Relation—the interaction between voices, sources, or speakers—is encoded directly in the audio signal, not metadata applied afterward. Treating relation as a first-class compositional parameter reveals new possibilities for musical structure.",
     "tags": [
