@@ -1156,6 +1156,20 @@
     "contentHash": "c63d84f4aa5e06651febb7242c264f768d30d00c02983fc557e87edf33d002a9",
     "generatedAt": "2026-04-10T18:37:31.523Z"
   },
+  "the-evidence-horizon": {
+    "excerpt": "The evidence horizon marks when enough signal has arrived for a system to act—a concept spanning speech processing, sound design, and composition. This essay traces how musical listening, like machine learning, involves timed commitments across ambiguous evidence.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "composition",
+      "psychoacoustics",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "87ad7c62772687a61db9b46adf3e9b1e042cfb060e63248ee0094a8342db691a",
+    "generatedAt": "2026-06-21T11:05:57.148Z"
+  },
   "the-evidence-of-a-voice": {
     "excerpt": "Source identity is not given by the waveform; it has to be curated, recovered, withheld, or allowed to leak through as operational evidence for listening systems and composers.",
     "tags": [
