@@ -111,20 +111,6 @@
     "contentHash": "265f88eb2e096d41e6c6fae0765828f5dfb812d797903ff543574e8573bf0463",
     "generatedAt": "2026-04-10T18:36:06.641Z"
   },
-  "the-evidence-budget": {
-    "excerpt": "Listening systems act under limited proof: source, temporal, feature, metadata, and room evidence become compositional budgets that can be spent or withheld.",
-    "tags": [
-      "signal-processing",
-      "perception",
-      "composition",
-      "acoustics",
-      "AI-music",
-      "information-theory"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "adad4856b29c3f506d483dadac36700af0c8beab5fcff9d49514d5889c7e432e",
-    "generatedAt": "2026-06-22T03:02:00.000Z"
-  },
   "finding-one": {
     "excerpt": "Metric perception isn't purely auditory-it's an act of interpretation where the listener imposes structure on sound. This frame-dependent choice shapes what we hear, create, and understand about music.",
     "tags": [
@@ -1170,6 +1156,20 @@
     "contentHash": "c63d84f4aa5e06651febb7242c264f768d30d00c02983fc557e87edf33d002a9",
     "generatedAt": "2026-04-10T18:37:31.523Z"
   },
+  "the-evidence-budget": {
+    "excerpt": "Listening systems act under limited proof: source, temporal, feature, metadata, and room evidence become compositional budgets that can be spent or withheld.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "acoustics",
+      "AI-music",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "adad4856b29c3f506d483dadac36700af0c8beab5fcff9d49514d5889c7e432e",
+    "generatedAt": "2026-06-22T03:02:00.000Z"
+  },
   "the-evidence-horizon": {
     "excerpt": "The evidence horizon marks when enough signal has arrived for a system to act—a concept spanning speech processing, sound design, and composition. This essay traces how musical listening, like machine learning, involves timed commitments across ambiguous evidence.",
     "tags": [
@@ -2057,6 +2057,20 @@
     "category": "interdisciplinary",
     "contentHash": "68b01e227cdbd3c33447b4ec734110e3dbd4c14d70ba2379e66c95e3856cefda",
     "generatedAt": "2026-05-13T08:27:24.618Z"
+  },
+  "the-measurement-position": {
+    "excerpt": "A sound is never measured from nowhere. This essay explores how measurement position—spatial, linguistic, physiological, or technical—fundamentally shapes what we extract from audio, and how composers can deliberately orchestrate these perspectives as compositional material.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "acoustics",
+      "psychoacoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "989669e41dc169c7f0b293d8348d2329b56efb16564a4997edd21065dc5cc99f",
+    "generatedAt": "2026-06-22T11:05:03.132Z"
   },
   "the-measurement-wall": {
     "excerpt": "Three converging research areas reveal an inescapable ceiling on audio quality metrics: statistical noise in listeners, undefined perceptual anchors, and entangled measurement dimensions all create irreducible limits to predicting subjective experience from objective signals.",
