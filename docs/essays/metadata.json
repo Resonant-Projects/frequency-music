@@ -69,6 +69,20 @@
     "contentHash": "05ae7a448bbd4ee1c07de02e36889942d886d32f4db613988f1a3258fa32ec08",
     "generatedAt": "2026-04-10T18:35:57.606Z"
   },
+  "effective-audibility": {
+    "excerpt": "Effective audibility is when musical structure becomes provable enough to guide listening. This essay connects proof-complexity theory to composition, showing how composers can control whether a relation is heard explicitly, eventually, or remains hidden.",
+    "tags": [
+      "perception",
+      "composition",
+      "mathematical-music-theory",
+      "signal-processing",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ea3de45a2a48173c276130bd0deaa55ed042a1117da5658a38df7869131573f2",
+    "generatedAt": "2026-06-22T19:05:13.080Z"
+  },
   "effective-source-knowledge": {
     "excerpt": "Source identity becomes compositional when it is knowable in time to act, linking dataset curation, source separation, streaming commitment, and proof complexity.",
     "tags": [
