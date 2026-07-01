@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import {
+  agentOriginFields,
   campaignStatusValidator,
   compositionParameterValidator,
   editorialArtifactKindValidator,
   editorialArtifactStatusValidator,
   editorialEvidenceStatusValidator,
+  recipeVerificationValidator,
   registryStatusValidator,
   visibilityValidator,
 } from "./schema";
@@ -209,6 +211,7 @@ export const hypothesisReturnValidator = v.object({
   ),
   versionOfId: v.optional(v.id("hypotheses")),
   openQuestions: v.optional(v.array(v.string())),
+  ...agentOriginFields,
   visibility: visibilityValidator,
   createdBy: createdByValidator,
   createdAt: v.number(),
@@ -242,7 +245,9 @@ export const recipeReturnValidator = v.object({
   parameters: v.array(recipeParameterValidator),
   dawChecklist: v.array(v.string()),
   protocol: v.optional(recipeProtocolValidator),
+  verification: v.optional(recipeVerificationValidator),
   status: v.union(v.literal("draft"), v.literal("in_use"), v.literal("archived")),
+  ...agentOriginFields,
   visibility: visibilityValidator,
   createdBy: createdByValidator,
   createdAt: v.number(),

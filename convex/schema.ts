@@ -73,6 +73,8 @@ export const agentRunEventKindValidator = v.union(
   v.literal("review_request"),
   v.literal("status"),
   v.literal("node"),
+  // Emitted when cross-run agent memory (LangGraph Store) changes a decision.
+  v.literal("memory_recall"),
 );
 
 const evidenceLevelValidator = v.union(
@@ -116,6 +118,71 @@ const claimValidator = v.object({
   ),
 });
 
+// ============================================================================
+// AGENT REVIEW DRAFT PAYLOADS - structured data promotion carries into real rows
+// ============================================================================
+// Discriminated structurally by shape (hypothesis payloads carry `statement`,
+// recipe payloads carry `title`+`parameters`); the draft row's `kind` field is
+// the authoritative discriminator on read. Mirrors the fields the existing
+// hypotheses.create / recipes.create paths require so promotion is loss-free.
+export const agentDraftHypothesisPayloadValidator = v.object({
+  statement: v.string(),
+  rationale: v.string(),
+  whyThisMatters: v.string(),
+  sourceIds: v.array(v.id("sources")),
+  extractionIds: v.array(v.id("extractions")),
+  thesisId: v.optional(v.id("theses")),
+  confidence: v.optional(v.number()),
+});
+
+const agentDraftRecipeProtocolValidator = v.object({
+  studyType: v.union(v.literal("litmus"), v.literal("comparison")),
+  durationSecs: v.number(),
+  panelPlanned: v.array(v.string()),
+  listeningContext: v.optional(v.string()),
+  listeningMethod: v.optional(v.string()),
+  baselineArtifactId: v.optional(v.id("compositions")),
+  whatVaries: v.array(v.string()),
+  whatStaysConstant: v.array(v.string()),
+});
+
+export const agentDraftRecipePayloadValidator = v.object({
+  hypothesisId: v.optional(v.id("hypotheses")),
+  title: v.string(),
+  parameters: v.array(compositionParameterValidator),
+  protocol: v.optional(agentDraftRecipeProtocolValidator),
+  whyThisMatters: v.string(),
+  instrumentationNotes: v.optional(v.string()),
+});
+
+export const agentReviewDraftPayloadValidator = v.union(
+  agentDraftHypothesisPayloadValidator,
+  agentDraftRecipePayloadValidator,
+);
+
+// Machine-verification result attached to a recipe by the plan-05 verifier.
+export const recipeVerificationValidator = v.object({
+  passed: v.boolean(),
+  checks: v.array(
+    v.object({
+      name: v.string(),
+      passed: v.boolean(),
+      detail: v.optional(v.string()),
+    }),
+  ),
+  notes: v.optional(v.string()),
+  artifacts: v.array(v.string()),
+  verifiedAt: v.number(),
+});
+
+// Provenance stamped on hypotheses/recipes created by promoting an agent draft.
+export const agentOriginFields = {
+  origin: v.optional(v.literal("agent")),
+  agentRunId: v.optional(v.id("agentRuns")),
+  agentDraftId: v.optional(v.id("agentReviewDrafts")),
+  traceUrl: v.optional(v.string()),
+};
+
 export default defineSchema({
   // ==========================================================================
   // USERS
@@ -157,6 +224,8 @@ export default defineSchema({
     ),
     startedAt: v.optional(v.number()),
     finishedAt: v.optional(v.number()),
+    // Set when a production worker atomically claims a queued run.
+    workerId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -184,6 +253,10 @@ export default defineSchema({
     title: v.string(),
     summary: v.string(),
     candidateIds: v.array(v.string()),
+    // Full structured promotion payload. Optional for backward compatibility
+    // with legacy dry-run drafts (payload-less drafts are acknowledge-only,
+    // never promotable into real hypotheses/recipes).
+    payload: v.optional(agentReviewDraftPayloadValidator),
     status: v.union(
       v.literal("pending_review"),
       v.literal("approved"),
@@ -191,12 +264,40 @@ export default defineSchema({
       v.literal("superseded"),
     ),
     createdBy: v.literal("agent"),
+    // Human decision record (decisions are never made by agents).
+    decidedAt: v.optional(v.number()),
+    decidedBy: v.optional(v.literal("human")),
+    decisionNote: v.optional(v.string()),
+    // Id (as string) of the hypothesis/recipe created on approval, or the
+    // superseding draft id when superseded.
+    promotedId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_agentRunId_updatedAt", ["agentRunId", "updatedAt"])
     .index("by_status_updatedAt", ["status", "updatedAt"])
     .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
+
+  // ==========================================================================
+  // EDIT CAPTURES - Human edits of AI/agent-generated content become eval data
+  // ==========================================================================
+  // Whenever Keith edits a generated extraction, hypothesis, or weekly brief,
+  // the (generated, edited) pair is preserved for curation into golden datasets
+  // and as negative/positive eval signal (plan 05 self-improvement loop).
+  editCaptures: defineTable({
+    entityType: v.union(
+      v.literal("extraction"),
+      v.literal("hypothesis"),
+      v.literal("weeklyBrief"),
+    ),
+    entityId: v.string(),
+    promptVersion: v.optional(v.string()),
+    model: v.optional(v.string()),
+    generated: v.any(),
+    edited: v.any(),
+    editedAt: v.number(),
+    exported: v.optional(v.boolean()),
+  }).index("by_exported_editedAt", ["exported", "editedAt"]),
 
   // ==========================================================================
   // SOURCES - Ingested items from various pipelines
@@ -399,6 +500,9 @@ export default defineSchema({
     versionOfId: v.optional(v.id("hypotheses")),
     openQuestions: v.optional(v.array(v.string())),
 
+    // Provenance (set when promoted from an agent review draft)
+    ...agentOriginFields,
+
     // Visibility & ownership
     visibility: visibilityValidator,
     createdBy: v.union(v.id("users"), v.literal("system")),
@@ -434,12 +538,19 @@ export default defineSchema({
       }),
     ),
 
+    // Machine verification (plan-05 verifier attaches this before human review)
+    verification: v.optional(recipeVerificationValidator),
+
     // Lifecycle
     status: v.union(
       v.literal("draft"),
       v.literal("in_use"),
       v.literal("archived"),
     ),
+
+    // Provenance (set when promoted from an agent review draft)
+    ...agentOriginFields,
+
     visibility: visibilityValidator,
     createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
