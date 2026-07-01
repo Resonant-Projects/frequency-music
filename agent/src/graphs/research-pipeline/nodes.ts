@@ -299,6 +299,12 @@ export function routeCandidateNode(
 export async function createReviewDraftNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
+  // TODO(plan-01 T5): behind CODEX_SPECIALIST==="true", route this specialist
+  // call through `runCodexTask` (src/subagents/codexWorker.ts) to produce the
+  // same ResearchPipelineDraft via sanitizeSpecialistDraft, and store the
+  // returned threadId in agentRunEvents for resumeThread after restarts. Kept
+  // out of this pass to avoid deep graph edits (nodes.ts is a cross-plan
+  // chokepoint with plan 05).
   const fallbackDraft = buildNeedsReviewDraft({
     selectedCandidate: state.selectedCandidate,
     candidates: state.candidates,
@@ -317,6 +323,12 @@ export async function createReviewDraftNode(
     },
   });
   const draft = specialist.draft;
+  // TODO(plan-01 T3): append a per-model-call agentRunEvents event capturing
+  // the provider that actually answered (read response.llmOutput.provider from
+  // withFallback rather than the static getConfiguredModelProvider() label),
+  // the model, usage, and threadId when Codex answered. Deferred to a later
+  // Convex-coordinated wave; `specialist.provider` below is still the static
+  // configured label and may not reflect the answering provider after fallback.
   const auditPayload = {
     draftKind: draft.kind,
     title: draft.title,

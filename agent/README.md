@@ -34,18 +34,22 @@ The new `research-pipeline` graph is intentionally dry-run first. It can load sc
 Model construction is centralized in `src/models/`.
 
 - `getResearchModel({ requiresToolBinding: true })` uses the OpenRouter/Anthropic-compatible path so DeepAgents can bind tools.
-- `getResearchModel()` can use Codex App Server when `CODEX_APP_SERVER_URL` is set for non-tool specialist nodes.
-- `research-pipeline` now calls a Codex/deep-agent specialist before storing a sanitized `reviewDraft`; if Codex/App Server is unavailable or returns invalid JSON, the graph records a fallback warning and still produces a safe needs-review draft.
-- `src/models/codexAppServer.ts` assumes an OpenAI-compatible `/v1/chat/completions` endpoint. The current Codex CLI app-server transport is websocket/stdio-oriented; use a proxy or compatible endpoint before setting `CODEX_APP_SERVER_URL` for production runs. Tool calling is not assumed yet.
+- `getResearchModel()` uses the Codex SDK provider when `CODEX_ENABLED=true` for non-tool specialist nodes, wrapped in an automatic OpenRouter fallback.
+- `src/models/codexSdk.ts` (`CodexSdkChatModel`) wraps `@openai/codex-sdk`, which drives the local `codex` CLI binary through a thread API (`new Codex()` → `startThread()` → `thread.run(prompt, { outputSchema })`) and reuses the CLI's ChatGPT-subscription login state from `CODEX_HOME/auth.json`. There is no HTTP endpoint; the old `codexAppServer.ts` adapter targeted a protocol that does not exist and has been removed.
+- The Codex model is invoke-only: `bindTools` throws so tool-binding paths route to OpenRouter. Structured output is native via `withStructuredOutput(zodSchema)` → JSON Schema (`target: "openAi"`) → `thread.run(prompt, { outputSchema })`.
+- `src/models/withFallback.ts` (`withFallback(codexSdk, openRouterAnthropic)`) retries once on transient Codex errors, then falls back to OpenRouter on auth/quota/unknown Codex errors, tagging `llmOutput.provider` with whichever provider answered.
+- Codex `thread.run` is wrapped in a LangSmith `traceable` (`codex_sdk.run`) guarded by `LANGSMITH_TRACING`, so Codex calls stay traced even though the SDK does not auto-instrument.
+- `src/subagents/codexWorker.ts` (`runCodexTask`) delegates a whole subtask to a Codex thread with a seeded scratch workspace and structured `outputSchema`, returning parsed output, thread id, and usage (default `sandboxMode: "read-only"`).
+- `research-pipeline` calls a specialist before storing a sanitized `reviewDraft`; if the model is unavailable or returns invalid JSON, the graph records a fallback warning and still produces a safe needs-review draft.
 
-Run the Codex endpoint spike with:
+Run the Codex SDK spike (proves subscription auth + structured output) with:
 
 ```bash
 cd agent
-bun scripts/spike-codex-app-server.ts
+bun scripts/spike-codex-sdk.ts
 ```
 
-The spike prints only non-secret metadata and the model response. It must not print `CODEX_APP_SERVER_AUTH_TOKEN`.
+Prereqs: the `codex` CLI installed with `codex login` completed, and `OPENAI_API_KEY`/`CODEX_API_KEY` unset so the SDK reuses login state. The spike prints only parsed JSON, thread id, and usage — never token or `auth.json` contents.
 
 Run the Proxmox connectivity spike with:
 
@@ -67,9 +71,11 @@ Required for Convex tools:
 
 Optional model/provider variables:
 
-- `CODEX_APP_SERVER_URL`
-- `CODEX_APP_SERVER_AUTH_TOKEN`
-- `CODEX_APP_SERVER_MODEL`
+- `CODEX_ENABLED` (set `true` to use the Codex SDK provider for non-tool calls)
+- `CODEX_HOME` (defaults to `~/.codex`; the worker mounts a volume here)
+- `CODEX_MODEL` (optional model override passed to the SDK)
+- `CODEX_SANDBOX_MODE` (`read-only` | `workspace-write`)
+- `CODEX_WORKDIR` (scratch working directory for Codex threads)
 - `OPENROUTER_API_KEY`
 - `WEEKLY_BRIEF_AGENT_MODEL`
 
