@@ -6,6 +6,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { recordEditCapture } from "./editCaptures";
 import {
   hypothesisReturnValidator,
   sourceReturnValidator,
@@ -260,6 +261,23 @@ export const update = mutation({
 
     if (thesisId) {
       await loadThesisOrThrow(ctx, thesisId);
+    }
+
+    // Preserve (generated, edited) pairs for agent-originated rows as eval data.
+    if (hypothesis.origin === "agent") {
+      await recordEditCapture(ctx, {
+        entityType: "hypothesis",
+        entityId: id,
+        generated: {
+          title: hypothesis.title,
+          question: hypothesis.question,
+          hypothesis: hypothesis.hypothesis,
+          whyThisMatters: hypothesis.whyThisMatters,
+          rationaleMd: hypothesis.rationaleMd,
+          concepts: hypothesis.concepts,
+        },
+        edited: { ...updates },
+      });
     }
 
     const whyThisMatters =

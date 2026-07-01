@@ -22,6 +22,7 @@ import type * as compositions from "../compositions.js";
 import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as domainMappings from "../domainMappings.js";
+import type * as editCaptures from "../editCaptures.js";
 import type * as editorialArtifacts from "../editorialArtifacts.js";
 import type * as editorialExports from "../editorialExports.js";
 import type * as extract from "../extract.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   dashboard: typeof dashboard;
   domainMappings: typeof domainMappings;
+  editCaptures: typeof editCaptures;
   editorialArtifacts: typeof editorialArtifacts;
   editorialExports: typeof editorialExports;
   extract: typeof extract;
