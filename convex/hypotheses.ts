@@ -1,9 +1,7 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
 import { makeFunctionReference } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
@@ -433,24 +431,22 @@ export const generateFromExtraction = action({
       .replace("{{parameters}}", paramsText)
       .replace("{{topics}}", extraction.topics.join(", "));
 
-    // Call AI
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
-
-    const openrouter = createOpenRouter({ apiKey: openRouterKey });
+    // Call AI (traced as hypothesis_v1 in the Node-runtime internal action)
     const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-    const result = await generateText({
-      model: openrouter(modelId),
+    const { text } = await ctx.runAction(internal.hypothesesInternal.generateHypothesisText, {
       system: HYPOTHESIS_SYSTEM_PROMPT,
       prompt,
-      maxOutputTokens: 2000,
+      model: modelId,
+      extractionId: args.extractionId,
+      sourceId: extraction.sourceId,
+      promptVersion: "hypothesis_v1",
     });
 
     // Parse response
     let parsed: GeneratedHypothesisPayload;
     try {
-      const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
       parsed = JSON.parse(jsonMatch[0]) as GeneratedHypothesisPayload;
       parsed.whyThisMatters = assertWhyThisMatters(
