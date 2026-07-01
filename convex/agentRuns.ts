@@ -1,6 +1,12 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  query,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { agentRunEventKindValidator, agentRunStatusValidator } from "./schema";
 import { requireAuth } from "./auth";
 
@@ -32,6 +38,26 @@ export function buildAgentRunStatusCounts(runs: Array<{ status: AgentRunStatus }
 
   for (const run of runs) counts[run.status] += 1;
   return counts;
+}
+
+// A running run with no event (updatedAt) inside this window is presumed crashed.
+export const DEFAULT_STALE_RUN_MS = 30 * 60 * 1000;
+
+// Pure queue helpers (unit-tested; the repo has no live-DB test harness).
+export function isStaleRun(
+  run: { status: string; updatedAt: number },
+  now: number,
+  thresholdMs: number = DEFAULT_STALE_RUN_MS,
+): boolean {
+  return run.status === "running" && now - run.updatedAt > thresholdMs;
+}
+
+export function buildClaimPatch(workerId: string, now: number) {
+  return { status: "running" as const, workerId, startedAt: now, updatedAt: now };
+}
+
+export function buildStalePatch(now: number) {
+  return { status: "failed" as const, finishedAt: now, updatedAt: now };
 }
 
 export function safeTraceUrl(value: string | undefined) {
@@ -156,29 +182,129 @@ async function appendRunEvent(
   });
 }
 
+async function insertQueuedRun(
+  ctx: MutationCtx,
+  args: { graphName: string; input?: unknown; traceUrl?: string },
+) {
+  const now = Date.now();
+  const runId = await ctx.db.insert("agentRuns", {
+    graphName: args.graphName,
+    status: "queued",
+    input: args.input ?? null,
+    ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
+    createdAt: now,
+    updatedAt: now,
+  });
+  await appendRunEvent(ctx, {
+    runId,
+    kind: "status",
+    message: "Agent run queued",
+    payload: { graphName: args.graphName },
+  }, now);
+  return { runId, status: "queued" as const, createdAt: now, updatedAt: now };
+}
+
 export const create = internalMutation({
   args: {
     graphName: v.string(),
     input: v.optional(v.any()),
     traceUrl: v.optional(v.string()),
   },
+  handler: async (ctx, args) => insertQueuedRun(ctx, args),
+});
+
+// Semantic alias used by scheduler crons to enqueue work for the worker to claim.
+export const enqueue = internalMutation({
+  args: {
+    graphName: v.string(),
+    input: v.optional(v.any()),
+    traceUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => insertQueuedRun(ctx, args),
+});
+
+// Atomically claim the oldest queued run (optionally for a specific graph).
+// Convex mutations are serializable, so read-verify-patch here is race-safe and
+// prevents a two-worker future from double-running the same run.
+export const claimNextPending = internalMutation({
+  args: { workerId: v.string(), graphName: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const runId = await ctx.db.insert("agentRuns", {
-      graphName: args.graphName,
-      status: "queued",
-      input: args.input ?? null,
-      ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
-      createdAt: now,
-      updatedAt: now,
-    });
+    const candidate = args.graphName
+      ? await ctx.db
+          .query("agentRuns")
+          .withIndex("by_status_graphName_updatedAt", (q) =>
+            q.eq("status", "queued").eq("graphName", args.graphName!),
+          )
+          .order("asc")
+          .first()
+      : await ctx.db
+          .query("agentRuns")
+          .withIndex("by_status_updatedAt", (q) => q.eq("status", "queued"))
+          .order("asc")
+          .first();
+    if (!candidate || candidate.status !== "queued") return null;
+
+    await ctx.db.patch(candidate._id, buildClaimPatch(args.workerId, now));
     await appendRunEvent(ctx, {
-      runId,
+      runId: candidate._id,
       kind: "status",
-      message: "Agent run queued",
-      payload: { graphName: args.graphName },
+      message: `Claimed by worker ${args.workerId}`,
+      payload: { workerId: args.workerId },
     }, now);
-    return { runId, status: "queued" as const, createdAt: now, updatedAt: now };
+    return {
+      runId: candidate._id,
+      graphName: candidate.graphName,
+      input: candidate.input ?? null,
+      status: "running" as const,
+      workerId: args.workerId,
+      startedAt: now,
+    };
+  },
+});
+
+// Full run doc (including raw input) for worker status polling. summarizeRun and
+// the public getters strip input / require auth, hence this internal query.
+export const getForWorker = internalQuery({
+  args: { runId: v.id("agentRuns") },
+  handler: async (ctx, args) => {
+    const run = await ctx.db.get(args.runId);
+    if (!run) return null;
+    return {
+      runId: run._id,
+      graphName: run.graphName,
+      status: run.status,
+      input: run.input ?? null,
+      workerId: run.workerId,
+      startedAt: run.startedAt,
+      updatedAt: run.updatedAt,
+    };
+  },
+});
+
+// Mark crashed workers' runs as failed so they don't wedge the queue.
+export const sweepStaleRuns = internalMutation({
+  args: { thresholdMs: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const threshold = args.thresholdMs ?? DEFAULT_STALE_RUN_MS;
+    const running = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "running"))
+      .collect();
+    let swept = 0;
+    for (const run of running) {
+      if (!isStaleRun(run, now, threshold)) continue;
+      await ctx.db.patch(run._id, buildStalePatch(now));
+      await appendRunEvent(ctx, {
+        runId: run._id,
+        kind: "error",
+        message: "Agent run failed: stale worker (no events within threshold)",
+        payload: { reason: "stale_worker", staleForMs: now - run.updatedAt, workerId: run.workerId },
+      }, now);
+      swept += 1;
+    }
+    return { swept };
   },
 });
 

@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import {
+  DEFAULT_STALE_RUN_MS,
   buildAgentRunStatusCounts,
+  buildClaimPatch,
+  buildStalePatch,
   clampAgentRunLimit,
+  isStaleRun,
   safeReviewDraft,
   safeTraceUrl,
   summarizeRun,
@@ -92,5 +96,31 @@ describe("agent run observability helpers", () => {
 
     expect(safeReviewDraft({ kind: "other", title: "Nope" })).toBeUndefined();
     expect(safeReviewDraft(null)).toBeUndefined();
+  });
+});
+
+describe("worker queue helpers", () => {
+  test("isStaleRun only flags running runs past the threshold", () => {
+    const now = 1_000_000;
+    expect(isStaleRun({ status: "running", updatedAt: now - DEFAULT_STALE_RUN_MS - 1 }, now)).toBe(true);
+    expect(isStaleRun({ status: "running", updatedAt: now - 1000 }, now)).toBe(false);
+    // never sweep a queued/completed run, even if old
+    expect(isStaleRun({ status: "queued", updatedAt: 0 }, now)).toBe(false);
+    expect(isStaleRun({ status: "completed", updatedAt: 0 }, now)).toBe(false);
+    // custom threshold
+    expect(isStaleRun({ status: "running", updatedAt: now - 5000 }, now, 4000)).toBe(true);
+  });
+
+  test("buildClaimPatch flips a run to running and stamps the worker", () => {
+    expect(buildClaimPatch("worker-a", 42)).toEqual({
+      status: "running",
+      workerId: "worker-a",
+      startedAt: 42,
+      updatedAt: 42,
+    });
+  });
+
+  test("buildStalePatch fails the run with a finish time", () => {
+    expect(buildStalePatch(99)).toEqual({ status: "failed", finishedAt: 99, updatedAt: 99 });
   });
 });
