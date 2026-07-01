@@ -82,6 +82,22 @@ async function appendRemoteAuditEvent(
 export async function initializeRunNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
+  // Double-create guard: when the production worker claims a pre-queued
+  // agentRun it threads the claimed Convex run id in as `agentRunId`. In that
+  // case we must NOT call createAgentRun again (which would spawn a second
+  // audit record); we reuse the claimed id and only record a status event.
+  if (state.agentRunId) {
+    return {
+      agentRunId: state.agentRunId,
+      auditEvents: await appendRemoteAuditEvent(
+        state.agentRunId,
+        "status",
+        "Reused claimed Convex agent-run audit record",
+        { agentRunId: state.agentRunId, langGraphRunId: state.runId },
+      ),
+    };
+  }
+
   const input = {
     dryRun: state.dryRun ?? true,
     smokeMode: state.smokeMode ?? false,

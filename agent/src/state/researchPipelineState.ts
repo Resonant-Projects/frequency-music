@@ -38,6 +38,9 @@ function replaceArray<T>(_left: T[], right: T[]) {
 
 export const ResearchPipelineAnnotation = Annotation.Root({
   runId: Annotation<string | undefined>,
+  // agentRunId may be SEEDED as graph input by the production worker to reuse a
+  // pre-claimed Convex agentRun (see initializeRunNode double-create guard). When
+  // absent, initializeRunNode creates a fresh audit record itself.
   agentRunId: Annotation<string | undefined>,
   dryRun: Annotation<boolean | undefined>,
   smokeMode: Annotation<boolean | undefined>,

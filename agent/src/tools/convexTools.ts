@@ -18,7 +18,7 @@ function stripLargeTextFields(value: unknown): unknown {
   return result;
 }
 
-async function callConvex<T>(
+export async function callConvex<T>(
   path: string,
   body: Record<string, unknown>,
 ): Promise<T> {
@@ -167,6 +167,27 @@ export const createAgentRun = tool(
   },
 );
 
+export const claimNextPendingRun = tool(
+  ({ workerId, graphName }) =>
+    callConvex("claimNextPendingRun", { workerId, graphName }),
+  {
+    name: "claim_next_pending_run",
+    description:
+      "Atomically claim the oldest queued Convex agent run for a worker, flipping it to running. Returns {runId, graphName, input, status} or null when the queue is empty. Audit-only lifecycle write; does not mutate research data.",
+    schema: z.object({
+      workerId: z.string().min(1),
+      graphName: z.string().min(1).optional(),
+    }),
+  },
+);
+
+export const getAgentRun = tool(({ runId }) => callConvex("getAgentRun", { runId }), {
+  name: "get_agent_run",
+  description:
+    "Fetch the full Convex agent run document (including raw input) by id for status polling. Audit-only read.",
+  schema: z.object({ runId: z.string().min(1) }),
+});
+
 export const appendAgentRunEvent = tool(
   ({ runId, kind, message, payload }) =>
     callConvex("appendAgentRunEvent", { runId, kind, message, payload }),
@@ -276,6 +297,8 @@ export const convexTools = [
   getRecommendedActions,
   searchSourcesByConcept,
   createAgentRun,
+  claimNextPendingRun,
+  getAgentRun,
   appendAgentRunEvent,
   markAgentRunCompleted,
   markAgentRunNeedsReview,
