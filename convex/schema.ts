@@ -126,9 +126,12 @@ const claimValidator = v.object({
 // the authoritative discriminator on read. Mirrors the fields the existing
 // hypotheses.create / recipes.create paths require so promotion is loss-free.
 export const agentDraftHypothesisPayloadValidator = v.object({
-  statement: v.string(),
-  rationale: v.string(),
+  title: v.string(),
+  question: v.string(),
+  statement: v.string(), // becomes hypotheses.hypothesis
+  rationale: v.string(), // becomes hypotheses.rationaleMd
   whyThisMatters: v.string(),
+  concepts: v.optional(v.array(v.string())),
   sourceIds: v.array(v.id("sources")),
   extractionIds: v.array(v.id("extractions")),
   thesisId: v.optional(v.id("theses")),
@@ -152,6 +155,10 @@ export const agentDraftRecipePayloadValidator = v.object({
   parameters: v.array(compositionParameterValidator),
   protocol: v.optional(agentDraftRecipeProtocolValidator),
   whyThisMatters: v.string(),
+  // Optional: promotion synthesizes these from the payload when absent, so a
+  // promoted recipe always satisfies the recipes-table requirements.
+  bodyMd: v.optional(v.string()),
+  dawChecklist: v.optional(v.array(v.string())),
   instrumentationNotes: v.optional(v.string()),
 });
 

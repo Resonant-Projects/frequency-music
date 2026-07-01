@@ -122,3 +122,83 @@ describe("agent review draft helpers", () => {
     expect("internalNotes" in summary).toBe(false);
   });
 });
+
+describe("structured payload handling", () => {
+  const hypPayload = {
+    title: "Beating and warmth",
+    question: "Does 4 Hz beat as warm?",
+    statement: "If tones beat at 4 Hz then warmth rises.",
+    rationale: "Slow AM aligns with breath tempo.",
+    whyThisMatters: "Warmth is a core studio target worth a reliable knob.",
+    concepts: ["beating"],
+    sourceIds: ["src-1"],
+    extractionIds: ["ext-1"],
+  };
+
+  test("safeAgentReviewDraft attaches a payload when present", () => {
+    const safe = safeAgentReviewDraft({
+      kind: "hypothesis_draft",
+      title: "Draft",
+      summary: "Summary",
+      candidateIds: ["ext-1"],
+      needsReview: true,
+      payload: hypPayload,
+    });
+    expect(safe?.payload).toEqual(hypPayload);
+  });
+
+  test("legacy payload-less drafts round-trip without a payload key", () => {
+    const safe = safeAgentReviewDraft({
+      kind: "hypothesis_draft",
+      title: "Draft",
+      summary: "Summary",
+      candidateIds: ["ext-1"],
+      needsReview: true,
+    });
+    expect(safe && "payload" in safe).toBe(false);
+  });
+
+  test("buildAgentReviewDraftInsert rejects a blank whyThisMatters in the payload", () => {
+    expect(() =>
+      buildAgentReviewDraftInsert({
+        agentRunId: "run-1" as Id<"agentRuns">,
+        graphName: "research-pipeline",
+        draft: {
+          kind: "hypothesis_draft",
+          title: "Draft",
+          summary: "Summary",
+          candidateIds: ["ext-1"],
+          needsReview: true,
+          payload: { ...hypPayload, whyThisMatters: "   " },
+        },
+      }),
+    ).toThrow();
+  });
+
+  test("summaries surface decision fields once a draft is decided", () => {
+    const summary = summarizeAgentReviewDraft({
+      _id: "draft-1" as Id<"agentReviewDrafts">,
+      _creationTime: 1,
+      agentRunId: "run-1" as Id<"agentRuns">,
+      graphName: "research-pipeline",
+      kind: "hypothesis_draft",
+      title: "Draft",
+      summary: "Summary",
+      candidateIds: ["ext-1"],
+      status: "approved",
+      createdBy: "agent",
+      createdAt: 10,
+      updatedAt: 20,
+      decidedAt: 20,
+      decidedBy: "human",
+      decisionNote: "solid",
+      promotedId: "hyp-9",
+    } as never);
+    expect(summary).toMatchObject({
+      status: "approved",
+      decidedBy: "human",
+      decisionNote: "solid",
+      promotedId: "hyp-9",
+    });
+  });
+});

@@ -9,6 +9,7 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as agentDraftPromotion from "../agentDraftPromotion.js";
 import type * as agentDrafts from "../agentDrafts.js";
 import type * as agentRuns from "../agentRuns.js";
 import type * as agentTools from "../agentTools.js";
@@ -56,6 +57,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  agentDraftPromotion: typeof agentDraftPromotion;
   agentDrafts: typeof agentDrafts;
   agentRuns: typeof agentRuns;
   agentTools: typeof agentTools;
