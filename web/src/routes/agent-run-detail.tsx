@@ -1,7 +1,13 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createMemo, For, onMount, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
+import {
+  DecisionState,
+  DraftPayloadPreview,
+  draftLabel as persistedDraftLabel,
+  type PersistedReviewDraft,
+} from "../components/agent-draft";
 import {
   backLink,
   detailTitleClass,
@@ -11,8 +17,9 @@ import {
   UIBadge,
   UIButton,
   UICard,
+  UITextarea,
 } from "../components/ui";
-import { createQueryWithStatus } from "../integrations/convex";
+import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 type AgentRunStatus = Doc<"agentRuns">["status"];
@@ -27,19 +34,6 @@ type PublicReviewDraft = {
 type PublicAgentRun = Omit<Doc<"agentRuns">, "input"> & {
   smokeMode?: boolean;
   reviewDraft?: PublicReviewDraft;
-};
-type PersistedReviewDraft = {
-  _id: Id<"agentReviewDrafts">;
-  _creationTime: number;
-  agentRunId: Id<"agentRuns">;
-  graphName: string;
-  kind: "hypothesis_draft" | "recipe_draft";
-  title: string;
-  summary: string;
-  candidateIds: string[];
-  status: "pending_review" | "approved" | "rejected" | "superseded";
-  createdAt: number;
-  updatedAt: number;
 };
 
 const helperClass = css({
@@ -116,10 +110,95 @@ function formatPayload(payload: unknown) {
   }
 }
 
-function draftLabel(kind: PublicReviewDraft["kind"]) {
-  if (kind === "hypothesis_draft") return "Hypothesis Draft";
-  if (kind === "recipe_draft") return "Recipe Draft";
-  return "Dry-Run Summary";
+const draftLabel = persistedDraftLabel;
+
+/** Per-draft approve/reject controls for a persisted human-review draft. */
+function PersistedDraftActions(props: { draft: PersistedReviewDraft }) {
+  const approve = createMutation(convexApi.agentDrafts.approve);
+  const reject = createMutation(convexApi.agentDrafts.reject);
+
+  const [note, setNote] = createSignal("");
+  const [busy, setBusy] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+
+  const canReject = createMemo(() => note().trim().length > 0);
+  const canPromote = createMemo(() => Boolean(props.draft.payload));
+
+  async function handleApprove() {
+    setError(null);
+    setBusy(true);
+    try {
+      await approve({
+        draftId: props.draft._id,
+        ...(note().trim() ? { decisionNote: note().trim() } : {}),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to approve draft.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleReject() {
+    if (!canReject()) return;
+    setError(null);
+    setBusy(true);
+    try {
+      await reject({ draftId: props.draft._id, decisionNote: note().trim() });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reject draft.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Show
+      when={props.draft.status === "pending_review"}
+      fallback={<DecisionState draft={props.draft} />}
+    >
+      <div class={css({ display: "grid", gap: "2" })}>
+        <label class={fieldLabelClass} for={`note-${props.draft._id}`}>
+          Decision Note{!canPromote() ? " (required to reject)" : ""}
+        </label>
+        <UITextarea
+          id={`note-${props.draft._id}`}
+          value={note()}
+          onInput={(event) => setNote(event.currentTarget.value)}
+          placeholder="Why approve or reject? A note is required to reject."
+        />
+        <Show when={!canPromote()}>
+          <p class={helperClass}>
+            This draft has no structured payload, so it cannot be promoted. It
+            can only be rejected with a note.
+          </p>
+        </Show>
+        <Show when={error()}>
+          {(message) => (
+            <p class={css({ color: "zodiac.violet", lineHeight: "1.6" })}>
+              {message()}
+            </p>
+          )}
+        </Show>
+        <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+          <UIButton
+            variant="solid"
+            disabled={busy() || !canPromote()}
+            onClick={handleApprove}
+          >
+            {busy() ? "Working…" : "Approve"}
+          </UIButton>
+          <UIButton
+            variant="outline"
+            disabled={busy() || !canReject()}
+            onClick={handleReject}
+          >
+            Reject
+          </UIButton>
+        </div>
+      </div>
+    </Show>
+  );
 }
 
 export function AgentRunDetailPage() {
@@ -284,24 +363,10 @@ export function AgentRunDetailPage() {
                         </For>
                       </div>
                     </div>
-                    <div
-                      class={css({
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2",
-                      })}
-                    >
-                      <UIButton disabled>Approve</UIButton>
-                      <UIButton disabled variant="outline">
-                        Reject
-                      </UIButton>
-                      <UIButton disabled variant="ghost">
-                        Rerun with Notes
-                      </UIButton>
-                    </div>
                     <p class={helperClass}>
-                      Review actions are placeholders for the next promotion
-                      gate. They intentionally do not mutate research data yet.
+                      This is the sanitized in-run snapshot. Approve or reject
+                      the promotable record in Persisted Draft Records below (or
+                      from the Review Queue).
                     </p>
                   </div>
                 )}
@@ -385,6 +450,10 @@ export function AgentRunDetailPage() {
                           {draft.title}
                         </h3>
                         <p class={helperClass}>{draft.summary}</p>
+                        <DraftPayloadPreview
+                          kind={draft.kind}
+                          payload={draft.payload}
+                        />
                         <div>
                           <div class={fieldLabelClass}>Draft Row</div>
                           <span class={monoClass}>{String(draft._id)}</span>
@@ -406,6 +475,7 @@ export function AgentRunDetailPage() {
                             </For>
                           </div>
                         </div>
+                        <PersistedDraftActions draft={draft} />
                       </article>
                     )}
                   </For>

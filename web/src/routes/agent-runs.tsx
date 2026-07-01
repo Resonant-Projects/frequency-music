@@ -153,6 +153,13 @@ export function AgentRunsPage() {
     limit: 100,
     ...(graphName() ? { graphName: graphName() } : {}),
   }));
+  const pendingDrafts = createQueryWithStatus(
+    convexApi.agentDrafts.listPending,
+    () => ({ limit: 100 }),
+  );
+  const pendingDraftCount = createMemo(
+    () => (pendingDrafts.data() ?? []).length,
+  );
   const events = createQueryWithStatus(convexApi.agentRuns.listEvents, () => {
     const runId = selectedRunId();
     return runId ? { runId, limit: 80 } : "skip";
@@ -176,6 +183,31 @@ export function AgentRunsPage() {
           Observe dry-runs and production agent lifecycle records written through the Convex audit
           surface. Details load only when a run is selected.
         </p>
+        <Link
+          to="/agent-drafts"
+          class={css({
+            alignItems: "center",
+            display: "inline-flex",
+            gap: "2",
+            mt: "3",
+            textDecoration: "none",
+          })}
+        >
+          <UIBadge tone={pendingDraftCount() > 0 ? "violet" : "cream"}>
+            {pendingDraftCount()} Pending Review
+          </UIBadge>
+          <span
+            class={css({
+              color: "zodiac.gold",
+              fontFamily: "mono",
+              fontSize: "xs",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            })}
+          >
+            Open Review Queue ↗
+          </span>
+        </Link>
       </UICard>
 
       <Show when={listError()}>

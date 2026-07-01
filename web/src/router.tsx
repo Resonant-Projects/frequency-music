@@ -10,6 +10,7 @@ import { type Component, createEffect, createSignal, lazy } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
 import { buildHostedSignInUrl, useClerkAuthSnapshot } from "./integrations/clerk";
 import { AdminPage } from "./routes/admin";
+import { AgentDraftsPage } from "./routes/agent-drafts";
 import { AgentRunDetailPage } from "./routes/agent-run-detail";
 import { AgentRunsPage } from "./routes/agent-runs";
 import { CompositionDetailPage } from "./routes/composition-detail";
@@ -67,6 +68,7 @@ const appLinks = [
   { to: "/failures", label: "Failures" },
   { to: "/feedback", label: "Feedback" },
   { to: "/agent-runs", label: "Agent Runs" },
+  { to: "/agent-drafts", label: "Review Queue" },
   { to: "/admin", label: "Admin" },
 ] as const;
 
@@ -295,6 +297,12 @@ const agentRunDetailRoute = createRoute({
   component: AgentRunDetailPage,
 });
 
+const agentDraftsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/agent-drafts",
+  component: AgentDraftsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   ingestRoute,
@@ -317,6 +325,7 @@ const routeTree = rootRoute.addChildren([
   feedbackRoute,
   agentRunsRoute,
   agentRunDetailRoute,
+  agentDraftsRoute,
   adminRoute,
 ]);
 
