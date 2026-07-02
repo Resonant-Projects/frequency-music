@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import type { Doc } from "./_generated/dataModel";
-import { makeDb } from "./testHelpers";
 import { generateBriefCore, parseBriefResponse, selectRecentBriefInputs } from "./weeklyBriefs";
 
 describe("weekly brief response parsing", () => {
@@ -72,31 +71,34 @@ Research summary.
     const now = Date.now();
     const oldCreatedAt = now - 14 * 24 * 60 * 60 * 1000;
 
-    const db = makeDb({
-      campaigns: [],
-      theses: [],
-      hypotheses: [
-        {
-          _id: "hyp-old",
-          title: "Old hypothesis",
-          question: "What if this worked?",
-          hypothesis: "It did once",
-          rationaleMd: "Old rationale",
-          sourceIds: [],
-          status: "active",
-          visibility: "private",
-          createdBy: "system",
-          createdAt: oldCreatedAt,
-          updatedAt: oldCreatedAt,
+    // generateBriefCore runs in an action context (no ctx.db); it reads all
+    // DB-derived context via ctx.runQuery(loadBriefContext). Fake that boundary
+    // with a stale-only context and assert the recency gate throws before any
+    // AI call. (Previously this test passed a bare { db } — the buggy interface.)
+    const ctx = {
+      runQuery: async () => ({
+        recommendationContext: {
+          campaign: null,
+          theses: [],
+          hypotheses: [
+            {
+              _id: "hyp-old",
+              sourceIds: [],
+              createdAt: oldCreatedAt,
+            } as unknown as Doc<"hypotheses">,
+          ],
+          recipes: [],
+          actions: [],
+          failureArchive: [],
         },
-      ],
-      recipes: [],
-      compositions: [],
-      listeningSessions: [],
-    });
+        extraActiveTheses: [],
+        editorialSignals: { highYieldClusters: [], lowYieldClusters: [] },
+      }),
+      runAction: async () => ({ text: "" }),
+    };
 
     await expect(
-      generateBriefCore({ db } as any, {
+      generateBriefCore(ctx as any, {
         daysBack: 7,
       }),
     ).rejects.toThrow("No recent hypotheses or recipes found. Generate some first.");

@@ -50,6 +50,7 @@ import type * as tracing from "../tracing.js";
 import type * as validators from "../validators.js";
 import type * as vocabulary from "../vocabulary.js";
 import type * as weeklyBriefs from "../weeklyBriefs.js";
+import type * as weeklyBriefsInternal from "../weeklyBriefsInternal.js";
 import type * as workflows from "../workflows.js";
 
 import type {
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   validators: typeof validators;
   vocabulary: typeof vocabulary;
   weeklyBriefs: typeof weeklyBriefs;
+  weeklyBriefsInternal: typeof weeklyBriefsInternal;
   workflows: typeof workflows;
 }>;
 
