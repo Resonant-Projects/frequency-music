@@ -44,6 +44,7 @@ export const recipeDraftProtocolSchema = z.object({
   panelPlanned: z.array(z.string()),
   listeningContext: z.string().optional(),
   listeningMethod: z.string().optional(),
+  baselineArtifactId: z.string().optional(),
   whatVaries: z.array(z.string()),
   whatStaysConstant: z.array(z.string()),
 });
@@ -58,11 +59,6 @@ export const recipeDraftPayloadSchema = z.object({
   dawChecklist: z.array(z.string()).optional(),
   instrumentationNotes: z.string().optional(),
 });
-
-export const researchDraftPayloadSchema = z.union([
-  hypothesisDraftPayloadSchema,
-  recipeDraftPayloadSchema,
-]);
 
 /**
  * Parse a candidate payload against the schema selected by the draft kind.
@@ -206,7 +202,7 @@ export async function createResearchDeepAgentDraft(
       "For kind=recipe_draft, payload keys:",
       "  hypothesisId (optional real Id<hypotheses>), title (string),",
       "  parameters (array of { value:string, kind?, type?, details? }),",
-      "  protocol (optional { studyType:'litmus'|'comparison', durationSecs:number, panelPlanned:string[], whatVaries:string[], whatStaysConstant:string[], listeningContext?, listeningMethod? }),",
+      "  protocol (optional { studyType:'litmus'|'comparison', durationSecs:number, panelPlanned:string[], whatVaries:string[], whatStaysConstant:string[], baselineArtifactId?, listeningContext?, listeningMethod? }),",
       "  whyThisMatters (string, required and non-empty), bodyMd (optional), dawChecklist (string[] optional), instrumentationNotes (optional).",
       "",
       "If you cannot ground a complete, id-accurate payload, OMIT the payload key entirely (still return the other keys).",

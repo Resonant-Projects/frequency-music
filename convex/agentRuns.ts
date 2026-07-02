@@ -43,6 +43,7 @@ export function buildAgentRunStatusCounts(
 
 // A running run with no event (updatedAt) inside this window is presumed crashed.
 export const DEFAULT_STALE_RUN_MS = 30 * 60 * 1000;
+export const STALE_RUN_SWEEP_LIMIT = 500;
 
 // Pure queue helpers (unit-tested; the repo has no live-DB test harness).
 export function isStaleRun(
@@ -334,7 +335,7 @@ export const sweepStaleRuns = internalMutation({
     const running = await ctx.db
       .query("agentRuns")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "running"))
-      .collect();
+      .take(STALE_RUN_SWEEP_LIMIT);
     let swept = 0;
     for (const run of running) {
       if (!isStaleRun(run, now, threshold)) continue;

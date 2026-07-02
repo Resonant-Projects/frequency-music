@@ -100,7 +100,7 @@ describe("insert-row builders", () => {
       createdBy: "system",
       now: 1000,
     });
-    expect(row).toMatchObject({
+    expect(row).toEqual({
       title: hypPayload.title,
       question: hypPayload.question,
       hypothesis: hypPayload.statement,

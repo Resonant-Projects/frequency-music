@@ -204,6 +204,7 @@ export const hypothesisReturnValidator = v.object({
   rationaleMd: v.string(),
   thesisId: v.optional(v.id("theses")),
   sourceIds: v.array(v.id("sources")),
+  extractionIds: v.optional(v.array(v.id("extractions"))),
   concepts: v.optional(v.array(v.string())),
   status: hypothesisStatusValidator,
   resolution: v.optional(

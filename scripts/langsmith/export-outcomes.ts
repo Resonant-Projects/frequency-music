@@ -32,6 +32,7 @@ import {
 const DATASET_NAME = "studio-outcomes";
 const DATASET_DESCRIPTION =
   "Studio composition outcomes (expand | repeat | no_expand | failure_archived) as eval labels, keyed by extraction promptVersion/model.";
+const LINEAGE_BATCH_SIZE = 20;
 
 const CONVEX_URL = process.env.CONVEX_URL ?? process.env.CONVEX_SELF_HOSTED_URL;
 if (!CONVEX_URL) {
@@ -48,6 +49,22 @@ function parseLimit(argv: string[], fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
+function isLangSmithDatasetNotFound(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as {
+    name?: unknown;
+    status?: unknown;
+    response?: { status?: unknown };
+    message?: unknown;
+  };
+  if (err.name === "LangSmithNotFoundError") return true;
+  if (err.status === 404 || err.response?.status === 404) return true;
+  return (
+    typeof err.message === "string" &&
+    /dataset\[.*\] not found/i.test(err.message)
+  );
+}
+
 async function collectOutcomeRows(
   client: ConvexHttpClient,
   limit: number,
@@ -60,13 +77,20 @@ async function collectOutcomeRows(
   }
 
   const rows: OutcomeRow[] = [];
-  for (const composition of compositions) {
-    const lineage = await client.query(api.compositions.getLineage, {
-      id: composition._id as Id<"compositions">,
-    });
-    if (!lineage) continue;
-    const row = outcomeRowFromLineage(lineage as unknown as LineageLike);
-    if (row) rows.push(row);
+  for (let i = 0; i < compositions.length; i += LINEAGE_BATCH_SIZE) {
+    const batch = compositions.slice(i, i + LINEAGE_BATCH_SIZE);
+    const lineages = await Promise.all(
+      batch.map((composition) =>
+        client.query(api.compositions.getLineage, {
+          id: composition._id as Id<"compositions">,
+        }),
+      ),
+    );
+    for (const lineage of lineages) {
+      if (!lineage) continue;
+      const row = outcomeRowFromLineage(lineage as unknown as LineageLike);
+      if (row) rows.push(row);
+    }
   }
   return rows;
 }
@@ -78,7 +102,8 @@ async function pushToLangSmith(rows: OutcomeRow[]): Promise<void> {
   try {
     dataset = await client.readDataset({ datasetName: DATASET_NAME });
     console.log(`Found existing dataset: ${DATASET_NAME}`);
-  } catch {
+  } catch (error) {
+    if (!isLangSmithDatasetNotFound(error)) throw error;
     dataset = await client.createDataset(DATASET_NAME, {
       description: DATASET_DESCRIPTION,
     });

@@ -12,6 +12,7 @@ import { assertWhyThisMatters } from "./hypotheses";
 import {
   assertDecisionNote,
   assertDraftPending,
+  assertRecipeHypothesisId,
   buildHypothesisInsertFromPayload,
   buildRecipeInsertFromPayload,
 } from "./agentDraftPromotion";
@@ -365,6 +366,15 @@ export const approve = mutation({
           code: "INVALID_STATE",
           message: "recipe_draft payload shape mismatch",
           field: "payload",
+        });
+      }
+      const hypothesisId = assertRecipeHypothesisId(draft.payload);
+      const hypothesis = await ctx.db.get(hypothesisId);
+      if (!hypothesis) {
+        throw new ConvexError({
+          code: "NOT_FOUND",
+          message: "Referenced hypothesis not found",
+          field: "payload.hypothesisId",
         });
       }
       const recipeId = await ctx.db.insert(

@@ -35,6 +35,7 @@ import {
 const POLL_INTERVAL_MS = resolveWorkerPollIntervalMs(
   process.env.WORKER_POLL_INTERVAL_MS,
 );
+const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
 
 let shuttingDown = false;
 let currentRunId: string | undefined;
@@ -64,6 +65,27 @@ async function appendNodeEvent(
   }
 }
 
+async function appendWorkerHeartbeat(runId: string): Promise<void> {
+  try {
+    await callConvex("appendAgentRunEvent", {
+      runId,
+      kind: "status",
+      message: "Worker heartbeat",
+      payload: { reason: "worker_heartbeat" },
+    });
+  } catch (error) {
+    log(`failed to append heartbeat for run ${runId}:`, redactError(error));
+  }
+}
+
+function startRunHeartbeat(runId: string): () => void {
+  const timer = setInterval(() => {
+    void appendWorkerHeartbeat(runId);
+  }, HEARTBEAT_INTERVAL_MS);
+  (timer as { unref?: () => void }).unref?.();
+  return () => clearInterval(timer);
+}
+
 async function markFailed(
   runId: string,
   summary: string,
@@ -73,6 +95,41 @@ async function markFailed(
     await callConvex("markAgentRunFailed", { runId, summary, error });
   } catch (markError) {
     log(`failed to mark run ${runId} failed:`, redactError(markError));
+  }
+}
+
+async function getRunStatus(runId: string): Promise<string | undefined> {
+  try {
+    const run = await callConvex<{ status?: unknown } | null>("getAgentRun", {
+      runId,
+    });
+    return typeof run?.status === "string" ? run.status : undefined;
+  } catch (error) {
+    log(`failed to fetch run ${runId} status:`, redactError(error));
+    return undefined;
+  }
+}
+
+async function markRunnerCompleted(
+  runId: string,
+  messageCount: number,
+): Promise<void> {
+  const summary = `weekly-brief agent run completed (${messageCount} messages)`;
+  try {
+    await callConvex("markAgentRunCompleted", { runId, summary });
+    return;
+  } catch (error) {
+    const observedStatus = await getRunStatus(runId);
+    if (observedStatus === "completed") {
+      log(`run ${runId} was already marked completed after write retry check`);
+      return;
+    }
+    log(`failed to mark run ${runId} completed:`, redactError(error));
+    await markFailed(runId, "Worker could not persist completed status", {
+      reason: "terminal_status_write_error",
+      message: redactError(error),
+      ...(observedStatus ? { observedStatus } : {}),
+    });
   }
 }
 
@@ -131,6 +188,7 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
   }
 
   const invocation = buildGraphInvocation(claim);
+  const stopHeartbeat = startRunHeartbeat(runId);
 
   try {
     const { messageCount } = await streamGraph(
@@ -138,16 +196,13 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
       invocation.graphName,
       invocation.input,
     );
+    log(`run ${runId} (${graphName}) finished`);
 
     if (TERMINAL_STATUS_OWNER[invocation.graphName] === "runner") {
       // weekly-brief: the graph writes no audit terminal status, so the runner
-      // owns it. (research-pipeline's finalizeRunNode already marked terminal.)
-      await callConvex("markAgentRunCompleted", {
-        runId,
-        summary: `weekly-brief agent run completed (${messageCount} messages)`,
-      });
+      // owns it. Isolate terminal-write failures from graph execution failures.
+      await markRunnerCompleted(runId, messageCount);
     }
-    log(`run ${runId} (${graphName}) finished`);
   } catch (error) {
     // The graph threw before reaching its own terminal-status write (or has no
     // owner), so the runner ensures the run does not linger as running.
@@ -156,6 +211,8 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
       reason: "graph_execution_error",
       message: redactError(error),
     });
+  } finally {
+    stopHeartbeat();
   }
 }
 

@@ -13,7 +13,15 @@ import {
   type ActionCtx,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { weeklyBriefReturnValidator } from "./validators";
+import {
+  campaignReturnValidator,
+  failureArchiveEntryValidator,
+  hypothesisReturnValidator,
+  recipeReturnValidator,
+  recommendedActionValidator,
+  thesisReturnValidator,
+  weeklyBriefReturnValidator,
+} from "./validators";
 
 interface BriefParameter {
   kind?: string;
@@ -294,19 +302,64 @@ interface GenerateBriefResult {
   preview: string;
 }
 
+const yieldBandValidator = v.union(
+  v.literal("high"),
+  v.literal("mixed"),
+  v.literal("low"),
+);
+
+const editorialSignalConceptValidator = v.object({
+  conceptName: v.string(),
+  displayName: v.string(),
+  domain: v.string(),
+  mentionCount: v.number(),
+  hypothesisCount: v.number(),
+  linkedRecipes: v.number(),
+  linkedCompositions: v.number(),
+  positiveSignals: v.number(),
+  negativeSignals: v.number(),
+  netYieldScore: v.number(),
+  yieldBand: yieldBandValidator,
+});
+
+const editorialSignalClusterValidator = v.object({
+  domain: v.string(),
+  conceptNames: v.array(v.string()),
+  score: v.number(),
+  yieldBand: yieldBandValidator,
+});
+
+const loadBriefContextReturnsValidator = v.object({
+  recommendationContext: v.object({
+    campaign: v.union(campaignReturnValidator, v.null()),
+    theses: v.array(thesisReturnValidator),
+    hypotheses: v.array(hypothesisReturnValidator),
+    recipes: v.array(recipeReturnValidator),
+    actions: v.array(recommendedActionValidator),
+    failureArchive: v.array(failureArchiveEntryValidator),
+  }),
+  extraActiveTheses: v.array(thesisReturnValidator),
+  editorialSignals: v.object({
+    concepts: v.array(editorialSignalConceptValidator),
+    highYieldClusters: v.array(editorialSignalClusterValidator),
+    lowYieldClusters: v.array(editorialSignalClusterValidator),
+  }),
+});
+
 // Actions have no ctx.db, so brief generation reads all its DB-derived context
 // here (V8 runtime) and receives it over ctx.runQuery. This is the fix for the
 // latent bug where generateBriefCore touched ctx.db from an action context.
 export const loadBriefContext = internalQuery({
   args: {},
-  handler: async (
-    ctx,
-  ): Promise<{
-    recommendationContext: Awaited<ReturnType<typeof computeRecommendedActionContext>>;
-    extraActiveTheses: Doc<"theses">[];
-    editorialSignals: Awaited<ReturnType<typeof computeEditorialSignals>>;
-  }> => {
-    const recommendationContext = await computeRecommendedActionContext(ctx.db, { limit: 5 });
+  returns: loadBriefContextReturnsValidator,
+  handler: async (ctx) => {
+    const [recommendationContext, editorialSignals] = await Promise.all([
+      computeRecommendedActionContext(ctx.db, { limit: 5 }),
+      computeEditorialSignals(
+        ctx.db as unknown as Parameters<typeof computeEditorialSignals>[0],
+        8,
+      ),
+    ]);
     const extraActiveTheses =
       recommendationContext.theses.length > 0
         ? ([] as Doc<"theses">[])
@@ -315,10 +368,6 @@ export const loadBriefContext = internalQuery({
             .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
             .order("desc")
             .take(10);
-    const editorialSignals = await computeEditorialSignals(
-      ctx.db as unknown as Parameters<typeof computeEditorialSignals>[0],
-      8,
-    );
     return { recommendationContext, extraActiveTheses, editorialSignals };
   },
 });
@@ -336,16 +385,10 @@ export async function generateBriefCore(
   monday.setDate(now.getDate() - now.getDay() + 1);
   const weekOf = monday.toISOString().split("T")[0] as string;
 
-  // runQuery on a validator-less internal query widens to `any`; re-assert the
-  // precise types loadBriefContext returns so downstream inference holds.
-  const { recommendationContext, extraActiveTheses, editorialSignals } = (await ctx.runQuery(
+  const { recommendationContext, extraActiveTheses, editorialSignals } = await ctx.runQuery(
     internal.weeklyBriefs.loadBriefContext,
     {},
-  )) as {
-    recommendationContext: Awaited<ReturnType<typeof computeRecommendedActionContext>>;
-    extraActiveTheses: Doc<"theses">[];
-    editorialSignals: Awaited<ReturnType<typeof computeEditorialSignals>>;
-  };
+  );
   const hypotheses = recommendationContext.hypotheses;
   const recipes = recommendationContext.recipes;
   const { recentHypotheses, recentRecipes, sourceIds } = selectRecentBriefInputs({
