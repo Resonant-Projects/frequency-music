@@ -14,6 +14,7 @@ import {
   markAgentRunNeedsReview,
 } from "../../tools/convexTools.js";
 import { createResearchDeepAgentDraft } from "../../agents/research-pipeline/deepAgent.js";
+import { findHallucinatedIds, hallucinatedIdError } from "./idGate.js";
 import type {
   AuditEvent,
   CandidateRoute,
@@ -144,6 +145,49 @@ function titleOf(record: Record<string, unknown>) {
   return typeof title === "string" ? title : undefined;
 }
 
+// Reference fields whose values become "seen" ids the hallucinated-ID gate
+// trusts. We record the primary id of every read row PLUS any nested reference
+// ids (an extraction carries its sourceId, a recipe its hypothesisId, etc.).
+const ID_STRING_FIELDS = [
+  "_id",
+  "id",
+  "key",
+  "sourceId",
+  "thesisId",
+  "hypothesisId",
+  "recipeId",
+  "extractionId",
+];
+const ID_ARRAY_FIELDS = ["sourceIds", "extractionIds", "hypothesisIds"];
+
+function collectRecordIds(record: Record<string, unknown>): string[] {
+  const ids: string[] = [];
+  for (const field of ID_STRING_FIELDS) {
+    const value = record[field];
+    if (typeof value === "string" && value.length > 0) ids.push(value);
+  }
+  for (const field of ID_ARRAY_FIELDS) {
+    const value = record[field];
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === "string" && item.length > 0) ids.push(item);
+      }
+    }
+  }
+  return ids;
+}
+
+/** Gather every id the run read across the provided scope result groups. */
+function collectScopeIds(...groups: unknown[]): string[] {
+  const ids: string[] = [];
+  for (const group of groups) {
+    for (const record of asRecords(group)) {
+      ids.push(...collectRecordIds(record));
+    }
+  }
+  return ids;
+}
+
 export function buildNeedsReviewDraft(input: {
   selectedCandidate?: ResearchCandidate;
   candidates: ResearchCandidate[];
@@ -211,6 +255,16 @@ export async function loadScopeNode(
     failureArchive: asRecords(values.failureArchive),
     recommendedActions: asRecords(values.recommendedActions),
     editorialSignals: asRecords(values.editorialSignals),
+    // Record every id the scope read so the hallucinated-ID gate can trust
+    // exactly these — and reject any payload id the model fabricates.
+    seenIds: collectScopeIds(
+      values.activeTheses,
+      values.recentExtractions,
+      values.recentHypotheses,
+      values.recentRecipes,
+      values.failureArchive,
+      values.recommendedActions,
+    ),
     auditEvents: await appendRemoteAuditEvent(
       state.agentRunId,
       warnings.length > 0 ? "status" : "tool_call",
@@ -276,6 +330,7 @@ export async function selectCandidatesNode(
       candidates,
       selectedCandidate,
       route: "stop",
+      seenIds: candidates.map((candidate) => candidate.id),
       auditEvents: await appendRemoteAuditEvent(
         state.agentRunId,
         "decision",
@@ -294,6 +349,7 @@ export async function selectCandidatesNode(
     candidates,
     selectedCandidate,
     route: selectedCandidate?.route ?? "stop",
+    seenIds: candidates.map((candidate) => candidate.id),
     auditEvents: await appendRemoteAuditEvent(
       state.agentRunId,
       "decision",
@@ -339,6 +395,29 @@ export async function createReviewDraftNode(
     },
   });
   const draft = specialist.draft;
+
+  // Hallucinated-ID gate: a payload-bearing draft may only reference ids the
+  // run actually read. If the specialist fabricated any id we FAIL the run
+  // loudly (push to errors) so finalizeRunNode marks it failed and never
+  // persists the draft.
+  if (draft.payload) {
+    const hallucinatedIds = findHallucinatedIds(draft.payload, state.seenIds);
+    if (hallucinatedIds.length > 0) {
+      const gateError = hallucinatedIdError(hallucinatedIds);
+      return {
+        draft,
+        route: "stop",
+        errors: [gateError],
+        auditEvents: await appendRemoteAuditEvent(
+          state.agentRunId,
+          "error",
+          "Rejected research-pipeline draft: hallucinated-ID gate tripped",
+          { hallucinatedIds, draftKind: draft.kind, title: draft.title },
+        ),
+      };
+    }
+  }
+
   // TODO(plan-01 T3): append a per-model-call agentRunEvents event capturing
   // the provider that actually answered (read response.llmOutput.provider from
   // withFallback rather than the static getConfiguredModelProvider() label),
@@ -416,6 +495,11 @@ export async function finalizeRunNode(
                 summary: draft.summary,
                 candidateIds: draft.candidateIds,
                 needsReview: true as const,
+                // Forward the validated payload so promotion is loss-free. The
+                // server re-validates it; a payload-less draft stays acknowledged-only.
+                ...(draft.payload
+                  ? { payload: draft.payload as unknown as Record<string, unknown> }
+                  : {}),
               }
             : undefined;
         if (reviewDraft) {

@@ -265,6 +265,10 @@ export const createAgentReviewDraft = tool(
         summary: z.string(),
         candidateIds: z.array(z.string()).min(1),
         needsReview: z.literal(true),
+        // Optional structured, promotable payload. Kept loose here (the Convex
+        // action takes draft:v.any() and createFromAgentRun validates the exact
+        // discriminated shape + enforces whyThisMatters server-side).
+        payload: z.record(z.string(), z.unknown()).optional(),
       }),
     }),
   },

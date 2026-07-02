@@ -24,16 +24,82 @@ export interface AuditEvent {
   createdAt: string;
 }
 
+/**
+ * Structured, promotable draft payloads. These MUST match the deployed Convex
+ * `agentReviewDrafts.payload` union (see convex/schema.ts) so that human
+ * approval can promote a draft into a real hypothesis/recipe loss-free. A draft
+ * WITHOUT a payload is still valid — it is an acknowledged review record only,
+ * never promotable.
+ */
+export interface HypothesisDraftPayload {
+  title: string;
+  question: string;
+  statement: string;
+  rationale: string;
+  whyThisMatters: string;
+  concepts?: string[];
+  /** Id<sources> values that must have been READ during this run. */
+  sourceIds: string[];
+  /** Id<extractions> values that must have been READ during this run. */
+  extractionIds: string[];
+  /** Id<theses> that must have been READ during this run. */
+  thesisId?: string;
+  confidence?: number;
+}
+
+export interface RecipeDraftParameter {
+  kind?: string;
+  type?: string;
+  value: string;
+  details?: string;
+}
+
+export interface RecipeDraftProtocol {
+  studyType: "litmus" | "comparison";
+  durationSecs: number;
+  panelPlanned: string[];
+  listeningContext?: string;
+  listeningMethod?: string;
+  whatVaries: string[];
+  whatStaysConstant: string[];
+}
+
+export interface RecipeDraftPayload {
+  /** Id<hypotheses> that must have been READ during this run. */
+  hypothesisId?: string;
+  title: string;
+  parameters: RecipeDraftParameter[];
+  protocol?: RecipeDraftProtocol;
+  whyThisMatters: string;
+  bodyMd?: string;
+  dawChecklist?: string[];
+  instrumentationNotes?: string;
+}
+
+export type ResearchPipelineDraftPayload =
+  | HypothesisDraftPayload
+  | RecipeDraftPayload;
+
 export interface ResearchPipelineDraft {
   kind: "dry_run_summary" | "hypothesis_draft" | "recipe_draft";
   title: string;
   summary: string;
   candidateIds: string[];
   needsReview: boolean;
+  /**
+   * Optional structured payload. When present it is validated against the
+   * hallucinated-ID gate before persistence and is the shape promotion reads.
+   */
+  payload?: ResearchPipelineDraftPayload;
 }
 
 function replaceArray<T>(_left: T[], right: T[]) {
   return right;
+}
+
+/** Union/concat-dedupe reducer for the seenIds accumulator channel. */
+function unionStrings(left: string[], right: string[]): string[] {
+  return Array.from(new Set([...left, ...right]));
 }
 
 export const ResearchPipelineAnnotation = Annotation.Root({
@@ -56,6 +122,13 @@ export const ResearchPipelineAnnotation = Annotation.Root({
   selectedCandidate: Annotation<ResearchCandidate | undefined>,
   route: Annotation<CandidateRoute | undefined>,
   draft: Annotation<ResearchPipelineDraft | undefined>,
+  // Accumulates EVERY Convex id the run actually READ (extraction, source,
+  // hypothesis, thesis, recipe ids). The hallucinated-ID gate checks payload
+  // ids against this set, so any id here must come from a real tool result.
+  seenIds: Annotation<string[]>({
+    value: unionStrings,
+    default: () => [],
+  }),
   errors: Annotation<string[]>({
     value: (left, right) => left.concat(right),
     default: () => [],
