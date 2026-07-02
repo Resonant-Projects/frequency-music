@@ -84,6 +84,7 @@ export const convexApi = {
   agentDrafts: {
     listByRun: queryRef("agentDrafts:listByRun"),
     listPending: queryRef("agentDrafts:listPending"),
+    countPending: queryRef("agentDrafts:countPendingPublic"),
     approve: mutationRef("agentDrafts:approve"),
     reject: mutationRef("agentDrafts:reject"),
     supersede: mutationRef("agentDrafts:supersede"),

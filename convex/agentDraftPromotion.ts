@@ -14,8 +14,12 @@ import { assertWhyThisMatters } from "./hypotheses";
 // pure (no ctx) makes every guard + row shape unit-testable without a DB harness
 // (the repo has no convex-test harness).
 
-export type AgentDraftHypothesisPayload = Infer<typeof agentDraftHypothesisPayloadValidator>;
-export type AgentDraftRecipePayload = Infer<typeof agentDraftRecipePayloadValidator>;
+export type AgentDraftHypothesisPayload = Infer<
+  typeof agentDraftHypothesisPayloadValidator
+>;
+export type AgentDraftRecipePayload = Infer<
+  typeof agentDraftRecipePayloadValidator
+>;
 
 export interface AgentPromotionProvenance {
   agentRunId: Id<"agentRuns">;
@@ -39,7 +43,10 @@ export function assertDraftPending(status: string): void {
   }
 }
 
-export function assertDecisionNote(note: string | undefined, field = "decisionNote"): string {
+export function assertDecisionNote(
+  note: string | undefined,
+  field = "decisionNote",
+): string {
   const trimmed = (note ?? "").trim();
   if (!trimmed) {
     throw new ConvexError({
@@ -51,11 +58,14 @@ export function assertDecisionNote(note: string | undefined, field = "decisionNo
   return trimmed;
 }
 
-export function assertRecipeHypothesisId(payload: AgentDraftRecipePayload): Id<"hypotheses"> {
+export function assertRecipeHypothesisId(
+  payload: AgentDraftRecipePayload,
+): Id<"hypotheses"> {
   if (!payload.hypothesisId) {
     throw new ConvexError({
       code: "INVALID_ARGUMENT",
-      message: "recipe_draft payload must reference a hypothesisId to be promoted",
+      message:
+        "recipe_draft payload must reference a hypothesisId to be promoted",
       field: "payload.hypothesisId",
     });
   }
@@ -69,7 +79,12 @@ export function assertRecipeHypothesisId(payload: AgentDraftRecipePayload): Id<"
 
 export function synthesizeRecipeBody(payload: AgentDraftRecipePayload): string {
   if (payload.bodyMd && payload.bodyMd.trim()) return payload.bodyMd;
-  const lines: string[] = [`# ${payload.title}`, "", `**Why this matters:** ${payload.whyThisMatters}`, ""];
+  const lines: string[] = [
+    `# ${payload.title}`,
+    "",
+    `**Why this matters:** ${payload.whyThisMatters}`,
+    "",
+  ];
   if (payload.instrumentationNotes && payload.instrumentationNotes.trim()) {
     lines.push("## Instrumentation", payload.instrumentationNotes, "");
   }
@@ -90,9 +105,14 @@ export function synthesizeRecipeBody(payload: AgentDraftRecipePayload): string {
   return lines.join("\n").trim();
 }
 
-export function synthesizeDawChecklist(payload: AgentDraftRecipePayload): string[] {
-  if (payload.dawChecklist && payload.dawChecklist.length) return payload.dawChecklist;
-  const checklist = payload.parameters.map((p) => `Set ${p.kind ?? p.type ?? "parameter"}: ${p.value}`);
+export function synthesizeDawChecklist(
+  payload: AgentDraftRecipePayload,
+): string[] {
+  if (payload.dawChecklist && payload.dawChecklist.length)
+    return payload.dawChecklist;
+  const checklist = payload.parameters.map(
+    (p) => `Set ${p.kind ?? p.type ?? "parameter"}: ${p.value}`,
+  );
   checklist.push("Render micro-study and log listening notes");
   return checklist;
 }
@@ -116,6 +136,7 @@ export function buildHypothesisInsertFromPayload(input: {
     rationaleMd: payload.rationale,
     ...(payload.thesisId ? { thesisId: payload.thesisId } : {}),
     sourceIds: payload.sourceIds,
+    extractionIds: payload.extractionIds,
     ...(payload.concepts ? { concepts: payload.concepts } : {}),
     status: "draft" as const,
     visibility: "private" as const,

@@ -17,7 +17,8 @@ if (!CONVEX_URL) {
   console.error("Set CONVEX_URL (or CONVEX_SELF_HOSTED_URL).");
   process.exit(1);
 }
-const devBypassSecret = process.env.CONVEX_DEV_BYPASS_SECRET ?? process.env.AUTH_BYPASS_SECRET;
+const devBypassSecret =
+  process.env.CONVEX_DEV_BYPASS_SECRET ?? process.env.AUTH_BYPASS_SECRET;
 
 // Matches the plural golden filenames used by upload-datasets.ts.
 const ENTITY_FILE: Record<string, string> = {
@@ -46,7 +47,11 @@ async function main() {
     const file = ENTITY_FILE[row.entityType];
     if (!file) continue;
     const line = JSON.stringify({
-      inputs: { entityType: row.entityType, entityId: row.entityId, generated: row.generated },
+      inputs: {
+        entityType: row.entityType,
+        entityId: row.entityId,
+        generated: row.generated,
+      },
       outputs: { edited: row.edited },
       metadata: {
         source: "edit_capture",
@@ -56,17 +61,22 @@ async function main() {
       },
     });
     await appendFile(file, `${line}\n`);
+    const marked = await client.mutation(api.editCaptures.markExported, {
+      ids: [row._id],
+      devBypassSecret,
+    });
+    if (marked.marked !== 1) {
+      throw new Error(
+        `Expected to mark one edit capture exported, got ${marked.marked}`,
+      );
+    }
     exportedIds.push(row._id);
     perEntity[row.entityType] = (perEntity[row.entityType] ?? 0) + 1;
   }
 
   if (exportedIds.length) {
-    const marked = await client.mutation(api.editCaptures.markExported, {
-      ids: exportedIds,
-      devBypassSecret,
-    });
     console.log(
-      `Exported ${exportedIds.length} edit capture(s) ${JSON.stringify(perEntity)}; marked ${marked.marked} exported.`,
+      `Exported ${exportedIds.length} edit capture(s) ${JSON.stringify(perEntity)}; marked ${exportedIds.length} exported.`,
     );
   }
 }

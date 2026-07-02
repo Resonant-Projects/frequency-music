@@ -154,6 +154,8 @@ export function makeJudgeEvaluator(options: JudgeEvaluatorOptions = {}) {
         system: JUDGE_SYSTEM,
         prompt: buildJudgeUser(run, example, options.fewShot ?? []),
         maxOutputTokens: 500,
+        temperature: 0,
+        abortSignal: AbortSignal.timeout(30_000),
       });
       scores = parseJudgeResponse(text);
     } catch (error) {

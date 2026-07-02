@@ -21,9 +21,12 @@ const provenance = {
 const hypPayload: AgentDraftHypothesisPayload = {
   title: "Beating rate and perceived warmth",
   question: "Does a 4 Hz beat rate read as warmer than 12 Hz?",
-  statement: "If two tones beat at ~4 Hz then listeners report more warmth than at 12 Hz.",
-  rationale: "Slow amplitude modulation aligns with comfortable breath/heart tempo ranges.",
-  whyThisMatters: "Warmth is a core studio target; a reliable knob for it saves session time.",
+  statement:
+    "If two tones beat at ~4 Hz then listeners report more warmth than at 12 Hz.",
+  rationale:
+    "Slow amplitude modulation aligns with comfortable breath/heart tempo ranges.",
+  whyThisMatters:
+    "Warmth is a core studio target; a reliable knob for it saves session time.",
   concepts: ["beating", "amplitude modulation"],
   sourceIds: ["src-1" as Id<"sources">],
   extractionIds: ["ext-1" as Id<"extractions">],
@@ -32,7 +35,8 @@ const hypPayload: AgentDraftHypothesisPayload = {
 const recipePayload: AgentDraftRecipePayload = {
   hypothesisId: "hyp-1" as Id<"hypotheses">,
   title: "4 Hz beat micro-study",
-  whyThisMatters: "Isolates the warmth-from-slow-beating claim in a listenable 60s sketch.",
+  whyThisMatters:
+    "Isolates the warmth-from-slow-beating claim in a listenable 60s sketch.",
   parameters: [
     { kind: "tempo", value: "96" },
     { type: "beatRateHz", value: "4" },
@@ -57,7 +61,9 @@ describe("draft transition guards", () => {
 
   test("assertRecipeHypothesisId rejects a recipe payload with no hypothesis", () => {
     expect(assertRecipeHypothesisId(recipePayload)).toBe("hyp-1");
-    expect(() => assertRecipeHypothesisId({ ...recipePayload, hypothesisId: undefined })).toThrow();
+    expect(() =>
+      assertRecipeHypothesisId({ ...recipePayload, hypothesisId: undefined }),
+    ).toThrow();
   });
 });
 
@@ -70,8 +76,12 @@ describe("recipe field synthesis", () => {
   });
 
   test("prefers an explicit bodyMd/dawChecklist when provided", () => {
-    expect(synthesizeRecipeBody({ ...recipePayload, bodyMd: "explicit body" })).toBe("explicit body");
-    expect(synthesizeDawChecklist({ ...recipePayload, dawChecklist: ["a", "b"] })).toEqual(["a", "b"]);
+    expect(
+      synthesizeRecipeBody({ ...recipePayload, bodyMd: "explicit body" }),
+    ).toBe("explicit body");
+    expect(
+      synthesizeDawChecklist({ ...recipePayload, dawChecklist: ["a", "b"] }),
+    ).toEqual(["a", "b"]);
   });
 
   test("derives a dawChecklist from parameters when absent", () => {
@@ -84,7 +94,12 @@ describe("recipe field synthesis", () => {
 
 describe("insert-row builders", () => {
   test("hypothesis row carries provenance and maps payload fields", () => {
-    const row = buildHypothesisInsertFromPayload({ payload: hypPayload, provenance, createdBy: "system", now: 1000 });
+    const row = buildHypothesisInsertFromPayload({
+      payload: hypPayload,
+      provenance,
+      createdBy: "system",
+      now: 1000,
+    });
     expect(row).toMatchObject({
       title: hypPayload.title,
       question: hypPayload.question,
@@ -92,6 +107,7 @@ describe("insert-row builders", () => {
       rationaleMd: hypPayload.rationale,
       whyThisMatters: hypPayload.whyThisMatters,
       sourceIds: hypPayload.sourceIds,
+      extractionIds: hypPayload.extractionIds,
       concepts: hypPayload.concepts,
       status: "draft",
       visibility: "private",
@@ -106,7 +122,12 @@ describe("insert-row builders", () => {
   });
 
   test("recipe row synthesizes required fields and stamps provenance", () => {
-    const row = buildRecipeInsertFromPayload({ payload: recipePayload, provenance, createdBy: "system", now: 2000 });
+    const row = buildRecipeInsertFromPayload({
+      payload: recipePayload,
+      provenance,
+      createdBy: "system",
+      now: 2000,
+    });
     expect(row.hypothesisId).toBe("hyp-1");
     expect(row.bodyMd.length).toBeGreaterThan(0);
     expect(row.dawChecklist.length).toBeGreaterThan(0);

@@ -281,6 +281,18 @@ export const listPendingPublic = query({
   },
 });
 
+/** Lightweight public count for navigation badges; does not expose draft content. */
+export const countPendingPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query("agentReviewDrafts")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
+      .collect();
+    return rows.length;
+  },
+});
+
 // ============================================================================
 // HUMAN DECISION MUTATIONS
 // ============================================================================
@@ -443,6 +455,14 @@ export const supersede = mutation({
         message: "Superseding draft not found",
       });
     }
+    if (args.draftId === args.byDraftId) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "A draft cannot supersede itself",
+        field: "byDraftId",
+      });
+    }
+    assertDraftPending(superseding.status);
 
     const now = Date.now();
     await ctx.db.patch(args.draftId, {

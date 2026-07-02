@@ -86,6 +86,24 @@ describe("sanitizeDraftPayload", () => {
     ).toBeUndefined();
   });
 
+  test("drops a hypothesis payload with out-of-range confidence", () => {
+    expect(
+      sanitizeDraftPayload("hypothesis_draft", {
+        ...validHypothesisPayload,
+        confidence: 1.5,
+      }),
+    ).toBeUndefined();
+  });
+
+  test("drops a recipe payload with a non-positive duration", () => {
+    expect(
+      sanitizeDraftPayload("recipe_draft", {
+        ...validRecipePayload,
+        protocol: { ...validRecipePayload.protocol, durationSecs: 0 },
+      }),
+    ).toBeUndefined();
+  });
+
   test("drops a recipe-shaped payload requested as hypothesis", () => {
     expect(
       sanitizeDraftPayload("hypothesis_draft", validRecipePayload),

@@ -1,7 +1,10 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { z } from "zod";
-import { getConfiguredModelProvider, getResearchModel } from "../../models/index.js";
+import {
+  getConfiguredModelProvider,
+  getResearchModel,
+} from "../../models/index.js";
 import type {
   ResearchCandidate,
   ResearchPipelineDraft,
@@ -25,7 +28,7 @@ export const hypothesisDraftPayloadSchema = z.object({
   sourceIds: z.array(z.string()),
   extractionIds: z.array(z.string()),
   thesisId: z.string().optional(),
-  confidence: z.number().optional(),
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 export const recipeDraftParameterSchema = z.object({
@@ -37,7 +40,7 @@ export const recipeDraftParameterSchema = z.object({
 
 export const recipeDraftProtocolSchema = z.object({
   studyType: z.enum(["litmus", "comparison"]),
-  durationSecs: z.number(),
+  durationSecs: z.number().positive(),
   panelPlanned: z.array(z.string()),
   listeningContext: z.string().optional(),
   listeningMethod: z.string().optional(),
@@ -104,7 +107,9 @@ export interface ResearchDraftSpecialistResult {
 
 function truncateJson(value: unknown, maxChars = 8000) {
   const text = JSON.stringify(value, null, 2);
-  return text.length > maxChars ? `${text.slice(0, maxChars)}\n...[truncated]` : text;
+  return text.length > maxChars
+    ? `${text.slice(0, maxChars)}\n...[truncated]`
+    : text;
 }
 
 function contentText(content: unknown) {
@@ -150,11 +155,19 @@ export function sanitizeSpecialistDraft(
     needsReview?: unknown;
     payload?: unknown;
   };
-  const kind = raw.kind === "recipe_draft" ? "recipe_draft" : raw.kind === "hypothesis_draft" ? "hypothesis_draft" : fallbackDraft.kind;
-  if (typeof raw.title !== "string" || typeof raw.summary !== "string") return undefined;
-  const candidateIds = Array.isArray(raw.candidateIds) && raw.candidateIds.every((id) => typeof id === "string")
-    ? raw.candidateIds
-    : fallbackDraft.candidateIds;
+  const kind =
+    raw.kind === "recipe_draft"
+      ? "recipe_draft"
+      : raw.kind === "hypothesis_draft"
+        ? "hypothesis_draft"
+        : fallbackDraft.kind;
+  if (typeof raw.title !== "string" || typeof raw.summary !== "string")
+    return undefined;
+  const candidateIds =
+    Array.isArray(raw.candidateIds) &&
+    raw.candidateIds.every((id) => typeof id === "string")
+      ? raw.candidateIds
+      : fallbackDraft.candidateIds;
   const payload = sanitizeDraftPayload(kind, raw.payload);
   return {
     kind,

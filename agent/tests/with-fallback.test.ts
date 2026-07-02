@@ -5,6 +5,7 @@ import {
   type BaseChatModelCallOptions,
 } from "@langchain/core/language_models/chat_models";
 import type { ChatResult } from "@langchain/core/outputs";
+import { z } from "zod";
 
 import { withFallback } from "../src/models/withFallback";
 import { CodexTransientError, CodexQuotaError } from "../src/models/codexSdk";
@@ -23,6 +24,21 @@ class ScriptedModel extends BaseChatModel<BaseChatModelCallOptions> {
   _generate(): Promise<ChatResult> {
     this.calls += 1;
     return Promise.resolve(this.behaviour());
+  }
+}
+
+class StructuredFallbackModel extends ScriptedModel {
+  structuredCalls = 0;
+
+  override withStructuredOutput(): {
+    invoke: (messages: BaseMessage[]) => Promise<{ answer: string }>;
+  } {
+    return {
+      invoke: () => {
+        this.structuredCalls += 1;
+        return Promise.resolve({ answer: "structured fallback" });
+      },
+    };
   }
 }
 
@@ -95,5 +111,22 @@ describe("withFallback", () => {
     const model = withFallback(primary, fallback);
     await expect(invoke(model)).rejects.toThrow("programmer error");
     expect(fallback.calls).toBe(0);
+  });
+
+  test("routes structured-output fallback through the fallback binding", async () => {
+    const primary = new ScriptedModel(() => {
+      throw new CodexQuotaError("usage limit exceeded");
+    });
+    const fallback = new StructuredFallbackModel(() =>
+      textResult("unstructured fallback"),
+    );
+    const structured = withFallback(primary, fallback).withStructuredOutput(
+      z.object({ answer: z.string() }),
+    );
+
+    const result = await structured.invoke([new AIMessage("answer as JSON")]);
+    expect(result).toEqual({ answer: "structured fallback" });
+    expect(fallback.calls).toBe(0);
+    expect(fallback.structuredCalls).toBe(1);
   });
 });

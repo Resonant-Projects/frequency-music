@@ -1,6 +1,6 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query, type MutationCtx } from "./_generated/server";
-import { requireAuth } from "./auth";
+import { requireAuth, type AppIdentity } from "./auth";
 
 // ============================================================================
 // EDIT CAPTURES - human edits of AI/agent-generated content become eval data
@@ -33,6 +33,14 @@ export function buildEditCaptureRow(input: {
   };
 }
 
+function assertEditCaptureExportAccess(identity: AppIdentity): void {
+  if (identity.isBypass) return;
+  throw new ConvexError({
+    code: "FORBIDDEN",
+    message: "Edit capture export is restricted",
+  });
+}
+
 /** Insert a capture row; call from within an edit mutation. */
 export async function recordEditCapture(
   ctx: MutationCtx,
@@ -53,9 +61,12 @@ export async function recordEditCapture(
 }
 
 export const listUnexported = query({
-  args: { limit: v.optional(v.number()), devBypassSecret: v.optional(v.string()) },
+  args: {
+    limit: v.optional(v.number()),
+    devBypassSecret: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
+    assertEditCaptureExportAccess(await requireAuth(ctx, args));
     const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 100), 500));
     return await ctx.db
       .query("editCaptures")
@@ -71,7 +82,7 @@ export const markExported = mutation({
     devBypassSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
+    assertEditCaptureExportAccess(await requireAuth(ctx, args));
     for (const id of args.ids) {
       await ctx.db.patch(id, { exported: true });
     }

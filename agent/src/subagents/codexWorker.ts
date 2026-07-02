@@ -1,9 +1,15 @@
 import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { Codex, type SandboxMode, type Usage } from "@openai/codex-sdk";
+import { basename, join } from "node:path";
+import type { SandboxMode, Usage } from "@openai/codex-sdk";
 import { traceable } from "langsmith/traceable";
-import { classifyCodexError, toOutputJsonSchema } from "../models/codexSdk.js";
+import {
+  __resetCodexClientForTests,
+  CodexError,
+  classifyCodexError,
+  getCodexClient,
+  toOutputJsonSchema,
+} from "../models/codexSdk.js";
 
 /**
  * Codex specialist worker.
@@ -55,16 +61,17 @@ export interface RunCodexTaskResult<T = unknown> {
   workdir: string;
 }
 
-let sharedClient: Codex | undefined;
-
-function getClient(): Codex {
-  if (!sharedClient) sharedClient = new Codex();
-  return sharedClient;
-}
-
 /** Reset the shared client (tests only). */
 export function __resetCodexWorkerClientForTests(): void {
-  sharedClient = undefined;
+  __resetCodexClientForTests();
+}
+
+function safeContextFileName(name: string): string {
+  const safeName = basename(name);
+  if (!safeName || safeName !== name) {
+    throw new Error(`Invalid context file name: ${name}`);
+  }
+  return safeName;
 }
 
 async function seedWorkspace(
@@ -82,11 +89,12 @@ async function seedWorkspace(
   if (Array.isArray(context)) {
     await Promise.all(
       context.map((file) => {
+        const safeName = safeContextFileName(file.name);
         const body =
           typeof file.content === "string"
             ? file.content
             : JSON.stringify(file.content, null, 2);
-        return writeFile(join(workdir, file.name), body, "utf8");
+        return writeFile(join(workdir, safeName), body, "utf8");
       }),
     );
     return;
@@ -103,13 +111,16 @@ export async function runCodexTask<T = unknown>(
   input: RunCodexTaskInput,
 ): Promise<RunCodexTaskResult<T>> {
   const sandboxMode: SandboxMode = input.sandboxMode ?? "read-only";
-  const workdir =
-    input.workdir ??
-    (await mkdtemp(join(process.env.CODEX_WORKDIR ?? tmpdir(), "codex-task-")));
+  const workdirRoot: string = process.env.CODEX_WORKDIR ?? tmpdir();
+  let workdir = input.workdir;
+  if (!workdir) {
+    await mkdir(workdirRoot, { recursive: true });
+    workdir = await mkdtemp(join(workdirRoot, "codex-task-"));
+  }
 
   await seedWorkspace(workdir, input.context);
 
-  const client = getClient();
+  const client = getCodexClient();
   const threadOptions = {
     workingDirectory: workdir,
     skipGitRepoCheck: true,
@@ -150,12 +161,26 @@ export async function runCodexTask<T = unknown>(
   }
 
   const rawText = turn.finalResponse ?? "";
-  const output = (structuredOutput ? JSON.parse(rawText) : rawText) as T;
+  let output: T;
+  if (structuredOutput) {
+    try {
+      output = JSON.parse(rawText) as T;
+    } catch (error) {
+      throw new CodexError(
+        `Codex worker structured output was not valid JSON: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        { cause: error },
+      );
+    }
+  } else {
+    output = rawText as T;
+  }
 
   return {
     output,
     rawText,
-    threadId: thread.id,
+    threadId: thread.id ?? null,
     usage: turn.usage,
     workdir,
   };

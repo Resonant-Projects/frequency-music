@@ -484,6 +484,7 @@ export default defineSchema({
     rationaleMd: v.string(),
     thesisId: v.optional(v.id("theses")),
     sourceIds: v.array(v.id("sources")),
+    extractionIds: v.optional(v.array(v.id("extractions"))),
     concepts: v.optional(v.array(v.string())),
 
     // Lifecycle

@@ -245,7 +245,7 @@ function mapUsage(usage: Usage | null): CodexUsageOutput | undefined {
 // reuses login state from CODEX_HOME, so a shared client is safe and cheap.
 let sharedClient: Codex | undefined;
 
-function getCodexClient(): Codex {
+export function getCodexClient(): Codex {
   if (!sharedClient) {
     // No options: let the CLI inherit CODEX_HOME/auth from process.env so the
     // subscription login is reused. Passing `env` would opt out of inheritance.
@@ -372,7 +372,14 @@ export class CodexSdkChatModel extends BaseChatModel<CodexSdkCallOptions> {
 
     const parseOutput = (message: BaseMessage) => {
       const text = messageContentToText(message.content);
-      return JSON.parse(text) as Record<string, unknown>;
+      try {
+        return JSON.parse(text) as Record<string, unknown>;
+      } catch (error) {
+        throw new CodexError(
+          `Codex structured output was not valid JSON: ${errorText(error)}`,
+          { cause: error },
+        );
+      }
     };
 
     if (config?.includeRaw) {

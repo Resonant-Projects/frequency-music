@@ -86,7 +86,9 @@ export function draftLabel(kind: AgentDraftKind | "dry_run_summary") {
   return "Dry-Run Summary";
 }
 
-export function statusTone(status: AgentDraftStatus): "gold" | "violet" | "cream" {
+export function statusTone(
+  status: AgentDraftStatus,
+): "gold" | "violet" | "cream" {
   if (status === "pending_review") return "violet";
   if (status === "approved") return "gold";
   return "cream";
@@ -124,9 +126,26 @@ function HypothesisPreview(props: { payload: HypothesisDraftPayload }) {
       <PayloadField label="Statement">
         <p class={bodyValueClass}>{props.payload.statement}</p>
       </PayloadField>
+      <PayloadField label="Rationale">
+        <p class={bodyValueClass}>{props.payload.rationale}</p>
+      </PayloadField>
       <PayloadField label="Why This Matters">
         <p class={bodyValueClass}>{props.payload.whyThisMatters}</p>
       </PayloadField>
+      <Show when={props.payload.confidence !== undefined}>
+        <PayloadField label="Confidence">
+          <p class={monoValueClass}>{props.payload.confidence}</p>
+        </PayloadField>
+      </Show>
+      <Show when={(props.payload.concepts ?? []).length > 0}>
+        <PayloadField label="Concepts">
+          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <For each={props.payload.concepts ?? []}>
+              {(concept) => <UIBadge tone="cream">{concept}</UIBadge>}
+            </For>
+          </div>
+        </PayloadField>
+      </Show>
       <Show when={props.payload.sourceIds.length > 0}>
         <PayloadField label="Source IDs">
           <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
@@ -135,6 +154,22 @@ function HypothesisPreview(props: { payload: HypothesisDraftPayload }) {
             </For>
           </div>
         </PayloadField>
+      </Show>
+      <Show when={props.payload.extractionIds.length > 0}>
+        <PayloadField label="Extraction IDs">
+          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <For each={props.payload.extractionIds}>
+              {(id) => <UIBadge tone="cream">{id}</UIBadge>}
+            </For>
+          </div>
+        </PayloadField>
+      </Show>
+      <Show when={props.payload.thesisId}>
+        {(thesisId) => (
+          <PayloadField label="Thesis ID">
+            <p class={monoValueClass}>{thesisId()}</p>
+          </PayloadField>
+        )}
       </Show>
     </>
   );
@@ -161,6 +196,46 @@ function RecipePreview(props: { payload: RecipeDraftPayload }) {
             </For>
           </div>
         </PayloadField>
+      </Show>
+      <Show when={props.payload.bodyMd}>
+        {(bodyMd) => (
+          <PayloadField label="Body">
+            <p class={bodyValueClass}>{bodyMd()}</p>
+          </PayloadField>
+        )}
+      </Show>
+      <Show when={(props.payload.dawChecklist ?? []).length > 0}>
+        <PayloadField label="DAW Checklist">
+          <div class={css({ display: "grid", gap: "1" })}>
+            <For each={props.payload.dawChecklist ?? []}>
+              {(item) => <div class={monoValueClass}>{item}</div>}
+            </For>
+          </div>
+        </PayloadField>
+      </Show>
+      <Show when={props.payload.instrumentationNotes}>
+        {(notes) => (
+          <PayloadField label="Instrumentation Notes">
+            <p class={bodyValueClass}>{notes()}</p>
+          </PayloadField>
+        )}
+      </Show>
+      <Show when={props.payload.protocol}>
+        {(protocol) => (
+          <PayloadField label="Protocol">
+            <pre
+              class={css({
+                color: "rgba(245, 240, 232, 0.72)",
+                fontFamily: "mono",
+                fontSize: "xs",
+                lineHeight: "1.5",
+                whiteSpace: "pre-wrap",
+              })}
+            >
+              {JSON.stringify(protocol(), null, 2)}
+            </pre>
+          </PayloadField>
+        )}
       </Show>
     </>
   );

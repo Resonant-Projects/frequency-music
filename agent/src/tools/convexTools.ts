@@ -181,12 +181,15 @@ export const claimNextPendingRun = tool(
   },
 );
 
-export const getAgentRun = tool(({ runId }) => callConvex("getAgentRun", { runId }), {
-  name: "get_agent_run",
-  description:
-    "Fetch the full Convex agent run document (including raw input) by id for status polling. Audit-only read.",
-  schema: z.object({ runId: z.string().min(1) }),
-});
+export const getAgentRun = tool(
+  ({ runId }) => callConvex("getAgentRun", { runId }),
+  {
+    name: "get_agent_run",
+    description:
+      "Fetch the full Convex agent run document (including raw input) by id for status polling. Audit-only read.",
+    schema: z.object({ runId: z.string().min(1) }),
+  },
+);
 
 export const appendAgentRunEvent = tool(
   ({ runId, kind, message, payload }) =>
@@ -301,7 +304,6 @@ export const convexTools = [
   getRecommendedActions,
   searchSourcesByConcept,
   createAgentRun,
-  claimNextPendingRun,
   getAgentRun,
   appendAgentRunEvent,
   markAgentRunCompleted,
