@@ -18,15 +18,17 @@ const fallbackDraft: ResearchPipelineDraft = {
 };
 
 describe("Codex/deep-agent research draft integration", () => {
-  test("selects Codex App Server provider when configured for non-tool specialist calls", () => {
-    const previous = process.env.CODEX_APP_SERVER_URL;
-    process.env.CODEX_APP_SERVER_URL = "ws://127.0.0.1:1455";
+  test("selects Codex SDK provider when enabled for non-tool specialist calls", () => {
+    const previous = process.env.CODEX_ENABLED;
+    process.env.CODEX_ENABLED = "true";
     try {
-      expect(getConfiguredModelProvider()).toBe("codex-app-server");
-      expect(getConfiguredModelProvider({ requiresToolBinding: true })).toBe("openrouter-anthropic");
+      expect(getConfiguredModelProvider()).toBe("codex-sdk");
+      expect(getConfiguredModelProvider({ requiresToolBinding: true })).toBe(
+        "openrouter-anthropic",
+      );
     } finally {
-      if (previous === undefined) delete process.env.CODEX_APP_SERVER_URL;
-      else process.env.CODEX_APP_SERVER_URL = previous;
+      if (previous === undefined) delete process.env.CODEX_ENABLED;
+      else process.env.CODEX_ENABLED = previous;
     }
   });
 
@@ -36,7 +38,8 @@ describe("Codex/deep-agent research draft integration", () => {
         {
           kind: "recipe_draft",
           title: "Spectral astrolabe tuning study",
-          summary: "Use the candidate extraction to propose a recipe for review.",
+          summary:
+            "Use the candidate extraction to propose a recipe for review.",
           candidateIds: ["candidate-1", "candidate-2"],
           needsReview: false,
           rawPrompt: "private",
@@ -54,9 +57,7 @@ describe("Codex/deep-agent research draft integration", () => {
 
   test("falls back safely when the specialist model fails", async () => {
     const failingModel = {
-      invoke: async () => {
-        throw new Error("local Codex unavailable");
-      },
+      invoke: () => Promise.reject(new Error("local Codex unavailable")),
     } as unknown as BaseChatModel;
 
     const result = await createResearchDeepAgentDraft(
@@ -83,15 +84,18 @@ describe("Codex/deep-agent research draft integration", () => {
 
   test("uses model JSON when the specialist returns a valid draft", async () => {
     const model = {
-      invoke: async () =>
-        new AIMessage(
-          JSON.stringify({
-            kind: "hypothesis_draft",
-            title: "Deep-agent proposal",
-            summary: "Candidate should become a human-reviewed hypothesis proposal.",
-            candidateIds: ["candidate-1"],
-            needsReview: true,
-          }),
+      invoke: () =>
+        Promise.resolve(
+          new AIMessage(
+            JSON.stringify({
+              kind: "hypothesis_draft",
+              title: "Deep-agent proposal",
+              summary:
+                "Candidate should become a human-reviewed hypothesis proposal.",
+              candidateIds: ["candidate-1"],
+              needsReview: true,
+            }),
+          ),
         ),
     } as unknown as BaseChatModel;
 

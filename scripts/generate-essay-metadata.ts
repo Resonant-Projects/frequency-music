@@ -77,7 +77,7 @@ type EssayMetadataEntry = z.infer<typeof metadataSchema> & {
 type MetadataFile = Record<string, EssayMetadataEntry>;
 
 function normalizeExcerpt(excerpt: string): string {
-  return excerpt.trim().replace(/\s+/g, " ");
+  return excerpt.trim().replaceAll(/\s+/g, " ");
 }
 
 function normalizeTags(tags: string[]): EssayMetadataEntry["tags"] {
@@ -123,7 +123,7 @@ async function main() {
 
   const files = (await readdir(ESSAYS_DIR))
     .filter((f) => f.endsWith(".md"))
-    .sort();
+    .toSorted();
   const metadata = await loadMetadata();
 
   let processed = 0;
@@ -181,7 +181,7 @@ async function main() {
 
   // Sort keys alphabetically for stable output
   const sorted: MetadataFile = {};
-  for (const key of Object.keys(metadata).sort()) {
+  for (const key of Object.keys(metadata).toSorted()) {
     const entry = metadata[key];
     if (entry) {
       sorted[key] = entry;

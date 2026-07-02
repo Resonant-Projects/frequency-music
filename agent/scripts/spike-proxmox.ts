@@ -1,8 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-export {};
-
 function loadRootEnvLocalIfNeeded() {
   if (process.env.PROXMOX_TOKEN_ID && process.env.PROXMOX_TOKEN_SECRET) return;
 
@@ -16,7 +14,7 @@ function loadRootEnvLocalIfNeeded() {
     if (!key.startsWith("PROXMOX_")) continue;
     if (process.env[key]) continue;
     const rawValue = valueParts.join("=").trim();
-    process.env[key] = rawValue.replace(/^['"]|['"]$/g, "");
+    process.env[key] = rawValue.replaceAll(/^['"]|['"]$/g, "");
   }
 }
 
@@ -43,7 +41,9 @@ async function proxmoxGet(path: string) {
   } as RequestInit & { tls?: { rejectUnauthorized: boolean } });
 
   if (!response.ok) {
-    throw new Error(`Proxmox API ${path} failed: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Proxmox API ${path} failed: ${response.status} ${response.statusText}`,
+    );
   }
 
   return (await response.json()) as { data?: unknown };

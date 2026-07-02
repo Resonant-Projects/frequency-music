@@ -43,6 +43,10 @@ const agentToolRefs = {
   markAgentRunFailed: makeFunctionReference<"action">(
     "agentTools:markAgentRunFailed",
   ),
+  claimNextPendingRun: makeFunctionReference<"action">(
+    "agentTools:claimNextPendingRun",
+  ),
+  getAgentRun: makeFunctionReference<"action">("agentTools:getAgentRun"),
 };
 
 type AgentToolName = keyof typeof agentToolRefs;
@@ -108,3 +112,7 @@ export const createAgentReviewDraftHttp = makeAgentToolHttpHandler(
 );
 export const markAgentRunFailedHttp =
   makeAgentToolHttpHandler("markAgentRunFailed");
+export const claimNextPendingRunHttp = makeAgentToolHttpHandler(
+  "claimNextPendingRun",
+);
+export const getAgentRunHttp = makeAgentToolHttpHandler("getAgentRun");

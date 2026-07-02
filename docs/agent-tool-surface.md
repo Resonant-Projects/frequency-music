@@ -2,7 +2,7 @@
 
 This document defines the narrow Convex surface exposed to external LangGraph/LangChain agents.
 
-The current phase is deliberately narrow: agents can read research state and can write audit-only agent-run lifecycle records. They cannot create or mutate hypotheses, recipes, sources, failures, or other project research data. Research-data write tools need a separate human-in-the-loop design before they are exposed.
+Agents can read research state, write audit-only agent-run lifecycle records, and **propose** structured research drafts. They cannot create, mutate, or approve hypotheses, recipes, sources, failures, or other project research data directly. Research data only enters the system through the **draft → human-approval** path: an agent writes a `pending_review` draft, and a human approves it in the app, which promotes it into a real row. Agents must never approve their own work — the decision mutations are Clerk-authenticated and are deliberately **not** exposed on `/agent-tools/*`.
 
 ## Authentication
 
@@ -38,8 +38,30 @@ These are the only write tools currently exposed. They write only to `agentRuns`
 | `appendAgentRunEvent` | `/agent-tools/appendAgentRunEvent` | `agentRuns:appendEvent` | Append a lifecycle/tool/decision/error event to an audit run. | Payloads should be sanitized; never include secrets or raw env data. |
 | `markAgentRunCompleted` | `/agent-tools/markAgentRunCompleted` | `agentRuns:markCompleted` | Mark an audit run completed. | Optional summary and trace URL only. |
 | `markAgentRunFailed` | `/agent-tools/markAgentRunFailed` | `agentRuns:markFailed` | Mark an audit run failed and optionally append sanitized error payload. | Error payloads should be high-level, not secrets. |
+| `markAgentRunNeedsReview` | `/agent-tools/markAgentRunNeedsReview` | `agentRuns:markNeedsReview` | Flag a run for human review with a sanitized review draft. | Draft is sanitized server-side. |
+| `createAgentReviewDraft` | `/agent-tools/createAgentReviewDraft` | `agentDrafts:createFromAgentRun` | Persist a `pending_review` draft carrying an optional structured `payload` (hypothesis or recipe). | `whyThisMatters` is enforced at draft-creation time; payload-less drafts are acknowledge-only and can never be promoted. The research-pipeline graph runs a hallucinated-ID gate before this call: a payload referencing any source/extraction/hypothesis id the run never read fails the run instead of writing the draft. |
+| `claimNextPendingRun` | `/agent-tools/claimNextPendingRun` | `agentRuns:claimNextPending` | Atomically claim the oldest queued run (queued → running), stamping `workerId`. | Production worker only. A lifecycle write, not a research-data write. |
+| `getAgentRun` | `/agent-tools/getAgentRun` | `agentRuns:getForWorker` | Fetch a claimed run's full doc (including `input`) for status polling. | Worker-only; the public getters strip `input`. |
 
-Research-data mutation tools such as `createHypothesisDraft`, `createRecipeDraft`, `markFailure`, source mutation tools, and review-approval mutations remain deferred.
+### Human-only decision mutations (NOT on the agent surface)
+
+Draft promotion is where agent proposals become real research data. These are Clerk-authenticated `mutation`s in `agentDrafts.ts` and are intentionally **absent** from `/agent-tools/*` — an agent can never call them.
+
+| Mutation | Effect |
+| --- | --- |
+| `agentDrafts.approve` | `pending_review` → `approved`. Promotes the payload into a real hypothesis/recipe with `origin: "agent"` provenance (`agentRunId`, `agentDraftId`, trace URL), full `whyThisMatters` enforcement, and concept linking; logs a `draft_write` event. |
+| `agentDrafts.reject` | `pending_review` → `rejected`. A decision note is **required** (rejections are learning signal for the eval loop, never silent). |
+| `agentDrafts.supersede` | `pending_review` → `superseded`, pointing at the replacing draft (for re-runs). |
+
+**Promotion invariants**
+
+- A draft is promotable only if it carries a structured `payload`; payload-less (legacy dry-run) drafts are acknowledge-only.
+- `whyThisMatters` is enforced both at draft creation and again at promotion (a blank stake is rejected).
+- Recipe drafts must reference a `hypothesisId` to promote; promotion synthesizes `bodyMd`/`dawChecklist` when absent so the promoted recipe satisfies every recipes-table requirement.
+- Promoted rows are indistinguishable in rigor from human-authored ones, differing only in provenance fields.
+- Only `pending_review` drafts can be decided; approving/rejecting an already-decided draft is rejected.
+
+Remaining deferred research-data tools: direct source mutation tools and `markFailure`.
 
 ## Dataset Quality Criteria
 

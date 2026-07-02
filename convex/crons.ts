@@ -20,4 +20,8 @@ crons.weekly(
   { daysBack: 7 },
 );
 
+// Fail runs whose worker crashed (no events within the stale window) so a dead
+// worker never wedges the queue.
+crons.interval("sweep-stale-agent-runs", { minutes: 15 }, internal.agentRuns.sweepStaleRuns, {});
+
 export default crons;

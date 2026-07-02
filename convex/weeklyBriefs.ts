@@ -1,13 +1,27 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { computeRecommendedActionContext, type RecommendedAction } from "./campaigns";
 import { computeEditorialSignals } from "./dashboard";
-import { action, internalAction, internalMutation, mutation, query } from "./_generated/server";
+import {
+  action,
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  type ActionCtx,
+} from "./_generated/server";
 import { requireAuth } from "./auth";
-import { weeklyBriefReturnValidator } from "./validators";
+import {
+  campaignReturnValidator,
+  failureArchiveEntryValidator,
+  hypothesisReturnValidator,
+  recipeReturnValidator,
+  recommendedActionValidator,
+  thesisReturnValidator,
+  weeklyBriefReturnValidator,
+} from "./validators";
 
 interface BriefParameter {
   kind?: string;
@@ -288,9 +302,78 @@ interface GenerateBriefResult {
   preview: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- shared between action and internalAction contexts
+const yieldBandValidator = v.union(
+  v.literal("high"),
+  v.literal("mixed"),
+  v.literal("low"),
+);
+
+const editorialSignalConceptValidator = v.object({
+  conceptName: v.string(),
+  displayName: v.string(),
+  domain: v.string(),
+  mentionCount: v.number(),
+  hypothesisCount: v.number(),
+  linkedRecipes: v.number(),
+  linkedCompositions: v.number(),
+  positiveSignals: v.number(),
+  negativeSignals: v.number(),
+  netYieldScore: v.number(),
+  yieldBand: yieldBandValidator,
+});
+
+const editorialSignalClusterValidator = v.object({
+  domain: v.string(),
+  conceptNames: v.array(v.string()),
+  score: v.number(),
+  yieldBand: yieldBandValidator,
+});
+
+const loadBriefContextReturnsValidator = v.object({
+  recommendationContext: v.object({
+    campaign: v.union(campaignReturnValidator, v.null()),
+    theses: v.array(thesisReturnValidator),
+    hypotheses: v.array(hypothesisReturnValidator),
+    recipes: v.array(recipeReturnValidator),
+    actions: v.array(recommendedActionValidator),
+    failureArchive: v.array(failureArchiveEntryValidator),
+  }),
+  extraActiveTheses: v.array(thesisReturnValidator),
+  editorialSignals: v.object({
+    concepts: v.array(editorialSignalConceptValidator),
+    highYieldClusters: v.array(editorialSignalClusterValidator),
+    lowYieldClusters: v.array(editorialSignalClusterValidator),
+  }),
+});
+
+// Actions have no ctx.db, so brief generation reads all its DB-derived context
+// here (V8 runtime) and receives it over ctx.runQuery. This is the fix for the
+// latent bug where generateBriefCore touched ctx.db from an action context.
+export const loadBriefContext = internalQuery({
+  args: {},
+  returns: loadBriefContextReturnsValidator,
+  handler: async (ctx) => {
+    const [recommendationContext, editorialSignals] = await Promise.all([
+      computeRecommendedActionContext(ctx.db, { limit: 5 }),
+      computeEditorialSignals(
+        ctx.db as unknown as Parameters<typeof computeEditorialSignals>[0],
+        8,
+      ),
+    ]);
+    const extraActiveTheses =
+      recommendationContext.theses.length > 0
+        ? ([] as Doc<"theses">[])
+        : await ctx.db
+            .query("theses")
+            .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
+            .order("desc")
+            .take(10);
+    return { recommendationContext, extraActiveTheses, editorialSignals };
+  },
+});
+
 export async function generateBriefCore(
-  ctx: any,
+  ctx: ActionCtx,
   args: GenerateBriefArgs,
 ): Promise<GenerateBriefResult> {
   const daysBack = args.daysBack ?? 7;
@@ -302,9 +385,10 @@ export async function generateBriefCore(
   monday.setDate(now.getDate() - now.getDay() + 1);
   const weekOf = monday.toISOString().split("T")[0] as string;
 
-  const recommendationContext = await computeRecommendedActionContext(ctx.db, {
-    limit: 5,
-  });
+  const { recommendationContext, extraActiveTheses, editorialSignals } = await ctx.runQuery(
+    internal.weeklyBriefs.loadBriefContext,
+    {},
+  );
   const hypotheses = recommendationContext.hypotheses;
   const recipes = recommendationContext.recipes;
   const { recentHypotheses, recentRecipes, sourceIds } = selectRecentBriefInputs({
@@ -318,18 +402,11 @@ export async function generateBriefCore(
   }
 
   const typedActiveTheses =
-    recommendationContext.theses.length > 0
-      ? recommendationContext.theses
-      : ((await ctx.db
-          .query("theses")
-          .withIndex("by_status_updatedAt", (q: any) => q.eq("status", "active"))
-          .order("desc")
-          .take(10)) as Doc<"theses">[]);
+    recommendationContext.theses.length > 0 ? recommendationContext.theses : extraActiveTheses;
   const recommendedActions = recommendationContext.actions;
   const recentFailures = recommendationContext.failureArchive
     .filter((entry) => entry.createdAt > cutoff)
     .slice(0, 8);
-  const editorialSignals = await computeEditorialSignals(ctx.db as any, 8);
 
   // Format for prompt
   const hypothesesText = recentHypotheses
@@ -420,21 +497,21 @@ Theses: ${
     .replace("{{lowYield}}", lowYieldText)
     .replace("{{recommendedActions}}", recommendedActionsText);
 
-  // Call AI
-  const openRouterKey = process.env.OPENROUTER_API_KEY;
-  if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
-
-  const openrouter = createOpenRouter({ apiKey: openRouterKey });
+  // Call AI (traced as brief_v2.phase3 in the Node-runtime internal action)
   const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-  const result = await generateText({
-    model: openrouter(modelId),
+  const { text } = await ctx.runAction(internal.weeklyBriefsInternal.generateBriefText, {
     system: BRIEF_SYSTEM_PROMPT,
     prompt,
-    maxOutputTokens: 4000,
+    model: modelId,
+    weekOf,
+    promptVersion: "v2.phase3",
+    numHypotheses: recentHypotheses.length,
+    numRecipes: recentRecipes.length,
+    ...(recommendationContext.campaign?._id ? { campaignId: recommendationContext.campaign._id } : {}),
   });
 
-  const parsed = parseBriefResponse(result.text);
+  const parsed = parseBriefResponse(text);
 
   const persistedSourceIds = sourceIds.slice(0, 20);
 
@@ -464,7 +541,7 @@ Theses: ${
       recipes: recentRecipes.length,
       sources: persistedSourceIds.length,
     },
-    preview: `${result.text.slice(0, 500)}...`,
+    preview: `${text.slice(0, 500)}...`,
   };
 }
 

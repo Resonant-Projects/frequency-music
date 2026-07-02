@@ -45,6 +45,10 @@ const markAgentRunFailedRef = makeFunctionReference<"mutation">(
 const createAgentReviewDraftRef = makeFunctionReference<"mutation">(
   "agentDrafts:createFromAgentRun",
 );
+const claimNextPendingRef = makeFunctionReference<"mutation">(
+  "agentRuns:claimNextPending",
+);
+const getForWorkerRef = makeFunctionReference<"query">("agentRuns:getForWorker");
 
 function omitUndefined<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(
@@ -299,5 +303,34 @@ export const markAgentRunFailed = action({
         traceUrl: args.traceUrl,
       }),
     );
+  },
+});
+
+// Production-worker queue surface. Claiming is a lifecycle write (queued ->
+// running), consistent with the audit-write policy: secret-gated, never a
+// research-data write.
+export const claimNextPendingRun = action({
+  args: {
+    agentSecret: v.string(),
+    workerId: v.string(),
+    graphName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    requireAgentToolSecret(args.agentSecret);
+    return await ctx.runMutation(
+      claimNextPendingRef,
+      omitUndefined({ workerId: args.workerId, graphName: args.graphName }),
+    );
+  },
+});
+
+export const getAgentRun = action({
+  args: {
+    agentSecret: v.string(),
+    runId: v.id("agentRuns"),
+  },
+  handler: async (ctx, args) => {
+    requireAgentToolSecret(args.agentSecret);
+    return await ctx.runQuery(getForWorkerRef, { runId: args.runId });
   },
 });

@@ -2,7 +2,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { graph } from "../src/graphs/research-pipeline/index.js";
-export { buildNeedsReviewDraft, finalizeRunNode } from "../src/graphs/research-pipeline/nodes.js";
+export {
+  buildNeedsReviewDraft,
+  finalizeRunNode,
+} from "../src/graphs/research-pipeline/nodes.js";
 
 export type ResearchPipelineSmokeEnv = {
   RUN_RESEARCH_PIPELINE_SMOKE?: string | undefined;
@@ -32,7 +35,7 @@ function envFromProcess(): ResearchPipelineSmokeEnv {
 }
 
 function unquoteEnvValue(value: string) {
-  return value.trim().replace(/^['"]|['"]$/g, "");
+  return value.trim().replaceAll(/^['"]|['"]$/g, "");
 }
 
 function isTrueLike(value: string | undefined) {
@@ -40,15 +43,21 @@ function isTrueLike(value: string | undefined) {
   return normalized === "true" || normalized === "1" || normalized === "yes";
 }
 
-export function shouldRunResearchPipelineSmoke(env: ResearchPipelineSmokeEnv = envFromProcess()): boolean {
+export function shouldRunResearchPipelineSmoke(
+  env: ResearchPipelineSmokeEnv = envFromProcess(),
+): boolean {
   return isTrueLike(env.RUN_RESEARCH_PIPELINE_SMOKE);
 }
 
-export function shouldRunResearchPipelineRealMode(env: ResearchPipelineSmokeEnv = envFromProcess()): boolean {
+export function shouldRunResearchPipelineRealMode(
+  env: ResearchPipelineSmokeEnv = envFromProcess(),
+): boolean {
   return isTrueLike(env.RUN_RESEARCH_PIPELINE_REAL);
 }
 
-export function getConvexSiteUrlFromEnv(env: ResearchPipelineSmokeEnv = envFromProcess()): string | undefined {
+export function getConvexSiteUrlFromEnv(
+  env: ResearchPipelineSmokeEnv = envFromProcess(),
+): string | undefined {
   return env.CONVEX_SITE_URL ?? env.CONVEX_URL ?? env.CONVEX_SELF_HOSTED_URL;
 }
 
@@ -70,7 +79,9 @@ export function loadRootEnvLocalForResearchSmoke() {
 function requireSmokeEnvironment() {
   const convexSiteUrl = getConvexSiteUrlFromEnv();
   if (!convexSiteUrl) {
-    throw new Error("CONVEX_SITE_URL, CONVEX_URL, or CONVEX_SELF_HOSTED_URL is required");
+    throw new Error(
+      "CONVEX_SITE_URL, CONVEX_URL, or CONVEX_SELF_HOSTED_URL is required",
+    );
   }
   if (!process.env.CONVEX_SITE_URL) {
     process.env.CONVEX_SITE_URL = convexSiteUrl;
@@ -81,7 +92,9 @@ function requireSmokeEnvironment() {
 }
 
 function eventMessages(result: { auditEvents?: Array<{ message?: string }> }) {
-  return (result.auditEvents ?? []).map((event) => event.message).filter(Boolean);
+  return (result.auditEvents ?? [])
+    .map((event) => event.message)
+    .filter(Boolean);
 }
 
 export async function runResearchPipelineSmoke() {
@@ -97,13 +110,19 @@ export async function runResearchPipelineSmoke() {
   });
 
   if (!result.agentRunId) {
-    throw new Error("Research pipeline smoke did not create a Convex agentRunId");
+    throw new Error(
+      "Research pipeline smoke did not create a Convex agentRunId",
+    );
   }
   if (result.errors.length > 0) {
-    throw new Error(`Research pipeline smoke reported errors: ${result.errors.join("; ")}`);
+    throw new Error(
+      `Research pipeline smoke reported errors: ${result.errors.join("; ")}`,
+    );
   }
   if (!result.draft || result.draft.kind !== "dry_run_summary") {
-    throw new Error("Research pipeline smoke did not produce a dry_run_summary draft");
+    throw new Error(
+      "Research pipeline smoke did not produce a dry_run_summary draft",
+    );
   }
 
   const messages = eventMessages(result);
@@ -138,13 +157,19 @@ export async function runResearchPipelineRealMode() {
   });
 
   if (!result.agentRunId) {
-    throw new Error("Research pipeline real mode did not create a Convex agentRunId");
+    throw new Error(
+      "Research pipeline real mode did not create a Convex agentRunId",
+    );
   }
   if (result.errors.length > 0) {
-    throw new Error(`Research pipeline real mode reported errors: ${result.errors.join("; ")}`);
+    throw new Error(
+      `Research pipeline real mode reported errors: ${result.errors.join("; ")}`,
+    );
   }
   if (!result.draft || result.draft.needsReview !== true) {
-    throw new Error("Research pipeline real mode did not produce a needs-review draft");
+    throw new Error(
+      "Research pipeline real mode did not produce a needs-review draft",
+    );
   }
 
   const messages = eventMessages(result);

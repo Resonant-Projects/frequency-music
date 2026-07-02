@@ -1,8 +1,43 @@
 services:
-  agent:
+  # Always-on worker: polls Convex for queued agentRuns and executes them.
+  langgraph-worker:
     build: .
     restart: unless-stopped
+    command: ["bun", "run", "worker"]
+    env_file:
+      - .env
+    # Persistent Codex subscription auth. Seed auth.json ONCE (see
+    # docs/proxmox-agent-deployment.md); Codex refreshes tokens in place.
+    volumes:
+      - codex-home:/data/codex-home
+    environment:
+      - CODEX_HOME=/data/codex-home
+    # Outbound only (Convex site URL, OpenRouter, OpenAI/ChatGPT, LangSmith).
+
+  # Opt-in LangGraph Studio dev server: `docker compose --profile dev up langgraph-dev`.
+  langgraph-dev:
+    build: .
+    profiles: ["dev"]
+    command: ["bun", "run", "up"]
     env_file:
       - .env
     ports:
       - "2024:2024"
+
+  # Opt-in Postgres for the LangGraph Store (cross-run agent memory, plan 05 T3):
+  # `docker compose --profile memory up -d postgres`. Point the worker's store at
+  # postgres://agent:${POSTGRES_PASSWORD}@postgres:5432/agent_store.
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["memory"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set when using the memory profile}
+      POSTGRES_DB: agent_store
+    volumes:
+      - agent-pg:/var/lib/postgresql/data
+
+volumes:
+  codex-home:
+  agent-pg:

@@ -352,6 +352,36 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 
 - Revisit if a compelling connector prototype proves that plugin-first work would now accelerate the project more than export and bridge hardening.
 
+## 2026-07-01 — Agent Draft Promotion + Worker Queue (Gate G2 backbone)
+
+**Decision**
+
+- Research data enters the system only through a single `agentReviewDrafts` table extended with a structured `payload` union (hypothesis/recipe) and human decision fields — not through per-type draft tables.
+- Approval promotes a draft into a real hypothesis/recipe by inlining `ctx.db.insert` via pure, unit-tested builders in `agentDraftPromotion.ts` (Convex mutations cannot `runMutation`), stamping `origin: "agent"` provenance (`agentRunId`, `agentDraftId`, trace URL) and running the same `whyThisMatters` + concept-linking rigor as human creation.
+- `approve`/`reject`/`supersede` are Clerk-authenticated human mutations, never exposed on `/agent-tools/*`; agents cannot approve their own work. Rejections require a note.
+- The production worker claims runs through an atomic `queued → running` `claimNextPending` (stamping `workerId`), with a `sweepStaleRuns` cron so a crashed worker can't wedge the queue.
+
+**Rationale**
+
+- One extended table keeps promoted rows indistinguishable in rigor from human-authored ones and avoids schema sprawl.
+- Pure builders make every promotion invariant testable without a live-DB harness (the repo has none) and keep the audit-only write policy intact.
+- Atomic claim now prevents a two-worker future from double-running the same run.
+
+**Alternatives considered**
+
+- Per-type draft tables (`hypothesisDrafts`, `recipeDrafts`) — rejected as duplicative.
+- Agent-callable approval — rejected outright; violates the human-in-the-loop invariant.
+- Reusing `hypotheses.create`/`recipes.create` via `runMutation` — impossible from a mutation; shared pure builders used instead.
+
+**Downstream implications**
+
+- The research-pipeline specialist must emit the structured payload with a hallucinated-ID gate (plan 03 task 2); the review UI consumes `listPendingPublic` (task 4).
+- Provenance fields enable plan 05 outcome/edit-capture joins back to the generating run.
+
+**Revisit trigger**
+
+- Revisit if draft volume exceeds weekly human review capacity → introduce batch tooling or eval-score-gated auto-approve tiers.
+
 ## Reversals / What Changed Our Mind
 
 No strategic reversals recorded yet. Add entries here when a prior roadmap or doctrine assumption is intentionally changed rather than merely extended.

@@ -3,8 +3,10 @@ import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import {
   appendAgentRunEventHttp,
+  claimNextPendingRunHttp,
   createAgentReviewDraftHttp,
   createAgentRunHttp,
+  getAgentRunHttp,
   getEditorialSignalsHttp,
   getExtractionHttp,
   getRecentRecipesHttp,
@@ -160,6 +162,18 @@ http.route({
   path: "/agent-tools/markAgentRunFailed",
   method: "POST",
   handler: markAgentRunFailedHttp,
+});
+
+http.route({
+  path: "/agent-tools/claimNextPendingRun",
+  method: "POST",
+  handler: claimNextPendingRunHttp,
+});
+
+http.route({
+  path: "/agent-tools/getAgentRun",
+  method: "POST",
+  handler: getAgentRunHttp,
 });
 
 http.route({

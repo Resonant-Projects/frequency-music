@@ -1,7 +1,5 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
 import { ConvexError, v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import {
@@ -467,24 +465,21 @@ export const generateFromHypothesis = action({
       .replace("{{rationale}}", hypothesis.rationaleMd)
       .replace("{{concepts}}", (hypothesis.concepts || []).join(", "));
 
-    // Call AI
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
-
-    const openrouter = createOpenRouter({ apiKey: openRouterKey });
+    // Call AI (traced as recipe_v1 in the Node-runtime internal action)
     const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-    const result = await generateText({
-      model: openrouter(modelId),
+    const { text } = await ctx.runAction(internal.recipesInternal.generateRecipeText, {
       system: RECIPE_SYSTEM_PROMPT,
       prompt,
-      maxTokens: 3000,
+      model: modelId,
+      hypothesisId: args.hypothesisId,
+      promptVersion: "recipe_v1",
     });
 
     // Parse response
     let parsed: ParsedRecipePayload;
     try {
-      const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
       parsed = validateGeneratedRecipePayload(JSON.parse(jsonMatch[0]));
     } catch (e: unknown) {

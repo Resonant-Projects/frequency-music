@@ -14,6 +14,7 @@ import {
   markAgentRunNeedsReview,
 } from "../../tools/convexTools.js";
 import { createResearchDeepAgentDraft } from "../../agents/research-pipeline/deepAgent.js";
+import { findHallucinatedIds, hallucinatedIdError } from "./idGate.js";
 import type {
   AuditEvent,
   CandidateRoute,
@@ -39,11 +40,11 @@ function nowEvent(
 function errorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return message
-    .replace(
+    .replaceAll(
       /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
       "$1[REDACTED]",
     )
-    .replace(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
+    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }
 
 function runIdFrom(value: unknown) {
@@ -82,6 +83,22 @@ async function appendRemoteAuditEvent(
 export async function initializeRunNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
+  // Double-create guard: when the production worker claims a pre-queued
+  // agentRun it threads the claimed Convex run id in as `agentRunId`. In that
+  // case we must NOT call createAgentRun again (which would spawn a second
+  // audit record); we reuse the claimed id and only record a status event.
+  if (state.agentRunId) {
+    return {
+      agentRunId: state.agentRunId,
+      auditEvents: await appendRemoteAuditEvent(
+        state.agentRunId,
+        "status",
+        "Reused claimed Convex agent-run audit record",
+        { agentRunId: state.agentRunId, langGraphRunId: state.runId },
+      ),
+    };
+  }
+
   const input = {
     dryRun: state.dryRun ?? true,
     smokeMode: state.smokeMode ?? false,
@@ -126,6 +143,47 @@ function idOf(record: Record<string, unknown>, fallback: string) {
 function titleOf(record: Record<string, unknown>) {
   const title = record.title ?? record.name ?? record.headline;
   return typeof title === "string" ? title : undefined;
+}
+
+// Reference fields whose values become "seen" ids the hallucinated-ID gate
+// trusts. We record the primary id of every read row PLUS any nested reference
+// ids (an extraction carries its sourceId, a recipe its hypothesisId, etc.).
+const ID_STRING_FIELDS = [
+  "_id",
+  "sourceId",
+  "thesisId",
+  "hypothesisId",
+  "recipeId",
+  "extractionId",
+];
+const ID_ARRAY_FIELDS = ["sourceIds", "extractionIds", "hypothesisIds"];
+
+function collectRecordIds(record: Record<string, unknown>): string[] {
+  const ids: string[] = [];
+  for (const field of ID_STRING_FIELDS) {
+    const value = record[field];
+    if (typeof value === "string" && value.length > 0) ids.push(value);
+  }
+  for (const field of ID_ARRAY_FIELDS) {
+    const value = record[field];
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === "string" && item.length > 0) ids.push(item);
+      }
+    }
+  }
+  return ids;
+}
+
+/** Gather every id the run read across the provided scope result groups. */
+function collectScopeIds(...groups: unknown[]): string[] {
+  const ids: string[] = [];
+  for (const group of groups) {
+    for (const record of asRecords(group)) {
+      ids.push(...collectRecordIds(record));
+    }
+  }
+  return ids;
 }
 
 export function buildNeedsReviewDraft(input: {
@@ -195,6 +253,16 @@ export async function loadScopeNode(
     failureArchive: asRecords(values.failureArchive),
     recommendedActions: asRecords(values.recommendedActions),
     editorialSignals: asRecords(values.editorialSignals),
+    // Record every id the scope read so the hallucinated-ID gate can trust
+    // exactly these — and reject any payload id the model fabricates.
+    seenIds: collectScopeIds(
+      values.activeTheses,
+      values.recentExtractions,
+      values.recentHypotheses,
+      values.recentRecipes,
+      values.failureArchive,
+      values.recommendedActions,
+    ),
     auditEvents: await appendRemoteAuditEvent(
       state.agentRunId,
       warnings.length > 0 ? "status" : "tool_call",
@@ -260,6 +328,7 @@ export async function selectCandidatesNode(
       candidates,
       selectedCandidate,
       route: "stop",
+      seenIds: candidates.map((candidate) => candidate.id),
       auditEvents: await appendRemoteAuditEvent(
         state.agentRunId,
         "decision",
@@ -278,6 +347,7 @@ export async function selectCandidatesNode(
     candidates,
     selectedCandidate,
     route: selectedCandidate?.route ?? "stop",
+    seenIds: candidates.map((candidate) => candidate.id),
     auditEvents: await appendRemoteAuditEvent(
       state.agentRunId,
       "decision",
@@ -299,6 +369,12 @@ export function routeCandidateNode(
 export async function createReviewDraftNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
+  // TODO(plan-01 T5): behind CODEX_SPECIALIST==="true", route this specialist
+  // call through `runCodexTask` (src/subagents/codexWorker.ts) to produce the
+  // same ResearchPipelineDraft via sanitizeSpecialistDraft, and store the
+  // returned threadId in agentRunEvents for resumeThread after restarts. Kept
+  // out of this pass to avoid deep graph edits (nodes.ts is a cross-plan
+  // chokepoint with plan 05).
   const fallbackDraft = buildNeedsReviewDraft({
     selectedCandidate: state.selectedCandidate,
     candidates: state.candidates,
@@ -317,6 +393,35 @@ export async function createReviewDraftNode(
     },
   });
   const draft = specialist.draft;
+
+  // Hallucinated-ID gate: a payload-bearing draft may only reference ids the
+  // run actually read. If the specialist fabricated any id we FAIL the run
+  // loudly (push to errors) so finalizeRunNode marks it failed and never
+  // persists the draft.
+  if (draft.payload) {
+    const hallucinatedIds = findHallucinatedIds(draft.payload, state.seenIds);
+    if (hallucinatedIds.length > 0) {
+      const gateError = hallucinatedIdError(hallucinatedIds);
+      return {
+        draft,
+        route: "stop",
+        errors: [gateError],
+        auditEvents: await appendRemoteAuditEvent(
+          state.agentRunId,
+          "error",
+          "Rejected research-pipeline draft: hallucinated-ID gate tripped",
+          { hallucinatedIds, draftKind: draft.kind, title: draft.title },
+        ),
+      };
+    }
+  }
+
+  // TODO(plan-01 T3): append a per-model-call agentRunEvents event capturing
+  // the provider that actually answered (read response.llmOutput.provider from
+  // withFallback rather than the static getConfiguredModelProvider() label),
+  // the model, usage, and threadId when Codex answered. Deferred to a later
+  // Convex-coordinated wave; `specialist.provider` below is still the static
+  // configured label and may not reflect the answering provider after fallback.
   const auditPayload = {
     draftKind: draft.kind,
     title: draft.title,
@@ -388,6 +493,16 @@ export async function finalizeRunNode(
                 summary: draft.summary,
                 candidateIds: draft.candidateIds,
                 needsReview: true as const,
+                // Forward the validated payload so promotion is loss-free. The
+                // server re-validates it; a payload-less draft stays acknowledged-only.
+                ...(draft.payload
+                  ? {
+                      payload: draft.payload as unknown as Record<
+                        string,
+                        unknown
+                      >,
+                    }
+                  : {}),
               }
             : undefined;
         if (reviewDraft) {
