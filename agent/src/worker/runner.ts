@@ -8,8 +8,8 @@
 // claiming another. A SIGTERM/SIGINT handler fails any in-flight run so an
 // interrupted run does not linger as `running` forever.
 //
-// All live calls are guarded on CONVEX_SITE_URL + AGENT_TOOL_SECRET; if either
-// is missing the process prints a message and exits cleanly.
+// All live calls are guarded on a Convex URL + AGENT_TOOL_SECRET; if either is
+// missing the process prints a message and exits cleanly.
 
 import { hostname } from "node:os";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -20,6 +20,10 @@ import { graph as researchPipelineGraph } from "../graphs/research-pipeline/inde
 import { agent as weeklyBriefAgent } from "../agents/weekly-brief/index.js";
 import { loadRootEnvLocalForResearchSmoke } from "../../scripts/smoke-research-pipeline.js";
 import {
+  normalizeConvexSiteUrlEnv,
+  resolveWorkerPollIntervalMs,
+} from "./config.js";
+import {
   buildGraphInvocation,
   isKnownGraphName,
   redactError,
@@ -28,7 +32,9 @@ import {
   type ClaimedRun,
 } from "./graphInput.js";
 
-const POLL_INTERVAL_MS = Number(process.env.WORKER_POLL_INTERVAL_MS ?? 15000);
+const POLL_INTERVAL_MS = resolveWorkerPollIntervalMs(
+  process.env.WORKER_POLL_INTERVAL_MS,
+);
 
 let shuttingDown = false;
 let currentRunId: string | undefined;
@@ -82,7 +88,9 @@ async function streamGraph(
 
   const handleChunk = async (chunk: unknown) => {
     if (!chunk || typeof chunk !== "object") return;
-    for (const [node, update] of Object.entries(chunk as Record<string, unknown>)) {
+    for (const [node, update] of Object.entries(
+      chunk as Record<string, unknown>,
+    )) {
       if (update && typeof update === "object") {
         const messages = (update as { messages?: unknown }).messages;
         if (Array.isArray(messages)) messageCount = messages.length;
@@ -112,7 +120,9 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
   const { runId, graphName } = claim;
 
   if (!isKnownGraphName(graphName)) {
-    log(`claimed run ${runId} has unknown graph '${graphName}'; marking failed`);
+    log(
+      `claimed run ${runId} has unknown graph '${graphName}'; marking failed`,
+    );
     await markFailed(runId, `Unknown graph '${graphName}'`, {
       reason: "unknown_graph",
       graphName,
@@ -189,13 +199,15 @@ async function handleShutdown(signal: string): Promise<void> {
 }
 
 export async function main(): Promise<void> {
-  // Pick up CONVEX_SITE_URL / AGENT_TOOL_SECRET from the repo-root .env.local for
-  // local runs (Bun also auto-loads agent/.env.local; Docker uses env_file).
+  // Pick up Convex URL aliases / AGENT_TOOL_SECRET from the repo-root
+  // .env.local for local runs (Bun also auto-loads agent/.env.local; Docker
+  // uses env_file).
   loadRootEnvLocalForResearchSmoke();
+  normalizeConvexSiteUrlEnv();
 
   if (!hasLiveConfig()) {
     log(
-      "CONVEX_SITE_URL and AGENT_TOOL_SECRET are required to run the worker. Exiting.",
+      "CONVEX_SITE_URL, CONVEX_URL, or CONVEX_SELF_HOSTED_URL plus AGENT_TOOL_SECRET are required to run the worker. Exiting.",
     );
     return;
   }
@@ -212,7 +224,8 @@ export async function main(): Promise<void> {
       (graphFilter ? ` graphFilter=${graphFilter}` : ""),
   );
 
-  while (!shuttingDown) {
+  while (true) {
+    if (shuttingDown) break;
     let claimed = false;
     try {
       claimed = await pollOnce(workerId, graphFilter);

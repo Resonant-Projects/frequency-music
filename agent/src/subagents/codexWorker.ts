@@ -83,14 +83,20 @@ async function seedWorkspace(
     await Promise.all(
       context.map((file) => {
         const body =
-          typeof file.content === "string" ? file.content : JSON.stringify(file.content, null, 2);
+          typeof file.content === "string"
+            ? file.content
+            : JSON.stringify(file.content, null, 2);
         return writeFile(join(workdir, file.name), body, "utf8");
       }),
     );
     return;
   }
 
-  await writeFile(join(workdir, "context.json"), JSON.stringify(context, null, 2), "utf8");
+  await writeFile(
+    join(workdir, "context.json"),
+    JSON.stringify(context, null, 2),
+    "utf8",
+  );
 }
 
 export async function runCodexTask<T = unknown>(
@@ -115,10 +121,12 @@ export async function runCodexTask<T = unknown>(
     : client.startThread(threadOptions);
 
   const outputSchema =
-    input.outputSchema !== undefined ? toOutputJsonSchema(input.outputSchema) : undefined;
+    input.outputSchema !== undefined
+      ? toOutputJsonSchema(input.outputSchema)
+      : undefined;
   const structuredOutput = outputSchema !== undefined;
 
-  const runTurn = async () =>
+  const runTurn = () =>
     thread.run(input.instructions, structuredOutput ? { outputSchema } : {});
 
   const tracingEnabled = process.env.LANGSMITH_TRACING === "true";

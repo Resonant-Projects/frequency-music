@@ -40,11 +40,11 @@ function nowEvent(
 function errorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return message
-    .replace(
+    .replaceAll(
       /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
       "$1[REDACTED]",
     )
-    .replace(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
+    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }
 
 function runIdFrom(value: unknown) {
@@ -150,8 +150,6 @@ function titleOf(record: Record<string, unknown>) {
 // ids (an extraction carries its sourceId, a recipe its hypothesisId, etc.).
 const ID_STRING_FIELDS = [
   "_id",
-  "id",
-  "key",
   "sourceId",
   "thesisId",
   "hypothesisId",
@@ -498,7 +496,12 @@ export async function finalizeRunNode(
                 // Forward the validated payload so promotion is loss-free. The
                 // server re-validates it; a payload-less draft stays acknowledged-only.
                 ...(draft.payload
-                  ? { payload: draft.payload as unknown as Record<string, unknown> }
+                  ? {
+                      payload: draft.payload as unknown as Record<
+                        string,
+                        unknown
+                      >,
+                    }
                   : {}),
               }
             : undefined;

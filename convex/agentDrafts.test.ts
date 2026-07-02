@@ -5,6 +5,7 @@ import {
   buildAgentReviewDraftInsert,
   safeAgentReviewDraft,
   summarizeAgentReviewDraft,
+  summarizeAgentReviewDraftPublic,
 } from "./agentDrafts";
 
 describe("agent review draft helpers", () => {
@@ -173,6 +174,60 @@ describe("structured payload handling", () => {
         },
       }),
     ).toThrow();
+  });
+
+  test("buildAgentReviewDraftInsert rejects a missing whyThisMatters in the payload", () => {
+    expect(() =>
+      buildAgentReviewDraftInsert({
+        agentRunId: "run-1" as Id<"agentRuns">,
+        graphName: "research-pipeline",
+        draft: {
+          kind: "hypothesis_draft",
+          title: "Draft",
+          summary: "Summary",
+          candidateIds: ["ext-1"],
+          needsReview: true,
+          payload: { ...hypPayload, whyThisMatters: undefined },
+        },
+      }),
+    ).toThrow(/payload\.whyThisMatters/);
+  });
+
+  test("public summaries omit payload and human decision details", () => {
+    const summary = summarizeAgentReviewDraftPublic({
+      _id: "draft-1" as Id<"agentReviewDrafts">,
+      _creationTime: 1,
+      agentRunId: "run-1" as Id<"agentRuns">,
+      graphName: "research-pipeline",
+      kind: "hypothesis_draft",
+      title: "Draft",
+      summary: "Summary",
+      candidateIds: ["ext-1"],
+      status: "approved",
+      createdBy: "agent",
+      createdAt: 10,
+      updatedAt: 20,
+      payload: hypPayload,
+      decidedAt: 20,
+      decidedBy: "human",
+      decisionNote: "private review note",
+      promotedId: "hyp-9",
+    } as never);
+    expect(summary).toEqual({
+      _id: "draft-1",
+      _creationTime: 1,
+      agentRunId: "run-1",
+      graphName: "research-pipeline",
+      kind: "hypothesis_draft",
+      title: "Draft",
+      summary: "Summary",
+      candidateIds: ["ext-1"],
+      status: "approved",
+      createdAt: 10,
+      updatedAt: 20,
+    });
+    expect("payload" in summary).toBe(false);
+    expect("decisionNote" in summary).toBe(false);
   });
 
   test("summaries surface decision fields once a draft is decided", () => {

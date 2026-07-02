@@ -46,7 +46,8 @@ export interface OutcomeRow {
 export function deriveOutcome(
   summary: LineageSummaryLike,
 ): { outcome: Outcome; failureReason: string | null } | null {
-  const failureReason = summary.localFailureStatus ?? summary.branchFailureStatus ?? null;
+  const failureReason =
+    summary.localFailureStatus ?? summary.branchFailureStatus ?? null;
   if (failureReason) {
     return { outcome: "failure_archived", failureReason };
   }
@@ -84,7 +85,12 @@ export function outcomeRowFromLineage(lineage: LineageLike): OutcomeRow | null {
   };
 }
 
-export const OUTCOMES: Outcome[] = ["expand", "repeat", "no_expand", "failure_archived"];
+export const OUTCOMES: Outcome[] = [
+  "expand",
+  "repeat",
+  "no_expand",
+  "failure_archived",
+];
 
 export interface OutcomeGroup {
   promptVersion: string;
@@ -117,7 +123,7 @@ export function groupByPromptVersion(rows: OutcomeRow[]): OutcomeGroup[] {
         expandRate: total > 0 ? counts.expand / total : 0,
       };
     })
-    .sort((a, b) => a.promptVersion.localeCompare(b.promptVersion));
+    .toSorted((a, b) => a.promptVersion.localeCompare(b.promptVersion));
 }
 
 /** Render the grouped outcome-rate table as a fixed-width string block. */

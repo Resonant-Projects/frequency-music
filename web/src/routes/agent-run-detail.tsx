@@ -159,7 +159,7 @@ function PersistedDraftActions(props: { draft: PersistedReviewDraft }) {
     >
       <div class={css({ display: "grid", gap: "2" })}>
         <label class={fieldLabelClass} for={`note-${props.draft._id}`}>
-          Decision Note{!canPromote() ? " (required to reject)" : ""}
+          Decision Note (required to reject)
         </label>
         <UITextarea
           id={`note-${props.draft._id}`}

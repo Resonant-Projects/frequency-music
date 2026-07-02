@@ -25,6 +25,7 @@ export function parseJsonlRows(
       } catch (error) {
         throw new Error(
           `${path}:${lineNumber}: invalid JSONL row: ${(error as Error).message}`,
+          { cause: error },
         );
       }
     });

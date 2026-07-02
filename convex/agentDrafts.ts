@@ -1,7 +1,12 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
-import { internalMutation, mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  mutation,
+  query,
+  type QueryCtx,
+} from "./_generated/server";
 import { requireAuth } from "./auth";
 import { assertWhyThisMatters } from "./hypotheses";
 import {
@@ -32,7 +37,10 @@ function redactDeep(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(redactDeep);
   if (value && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([k, val]) => [k, redactDeep(val)]),
+      Object.entries(value as Record<string, unknown>).map(([k, val]) => [
+        k,
+        redactDeep(val),
+      ]),
     );
   }
   return value;
@@ -105,18 +113,30 @@ export function buildAgentReviewDraftInsert(input: {
     updatedAt: now,
   };
 
-  if ("payload" in draft && draft.payload && typeof draft.payload === "object") {
+  if (
+    "payload" in draft &&
+    draft.payload &&
+    typeof draft.payload === "object"
+  ) {
     // Enforce the musical stake at draft-creation time, not just at promotion.
-    const whyThisMatters = (draft.payload as { whyThisMatters?: unknown }).whyThisMatters;
-    if (typeof whyThisMatters === "string") {
-      assertWhyThisMatters(whyThisMatters, "payload.whyThisMatters");
+    const whyThisMatters = (draft.payload as { whyThisMatters?: unknown })
+      .whyThisMatters;
+    if (typeof whyThisMatters !== "string") {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "payload.whyThisMatters is required",
+        field: "payload.whyThisMatters",
+      });
     }
+    assertWhyThisMatters(whyThisMatters, "payload.whyThisMatters");
     return { ...row, payload: draft.payload };
   }
   return row;
 }
 
-export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
+export function summarizeAgentReviewDraftPublic(
+  draft: Doc<"agentReviewDrafts">,
+) {
   return {
     _id: draft._id,
     _creationTime: draft._creationTime,
@@ -129,12 +149,20 @@ export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
     status: draft.status,
     createdAt: draft.createdAt,
     updatedAt: draft.updatedAt,
+  };
+}
+
+export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
+  return {
+    ...summarizeAgentReviewDraftPublic(draft),
     // Decision + payload fields only appear once set, so legacy drafts and the
     // existing exact-equality summary tests round-trip unchanged.
     ...(draft.payload !== undefined ? { payload: draft.payload } : {}),
     ...(draft.decidedAt !== undefined ? { decidedAt: draft.decidedAt } : {}),
     ...(draft.decidedBy !== undefined ? { decidedBy: draft.decidedBy } : {}),
-    ...(draft.decisionNote !== undefined ? { decisionNote: draft.decisionNote } : {}),
+    ...(draft.decisionNote !== undefined
+      ? { decisionNote: draft.decisionNote }
+      : {}),
     ...(draft.promotedId !== undefined ? { promotedId: draft.promotedId } : {}),
   };
 }
@@ -194,21 +222,62 @@ export const listByRunPublic = query({
       )
       .order("desc")
       .take(limit);
+    return rows.map(summarizeAgentReviewDraftPublic);
+  },
+});
+
+/** Persisted draft records for the authenticated human review UI. */
+export const listByRun = query({
+  args: {
+    agentRunId: v.id("agentRuns"),
+    limit: v.optional(v.number()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 10), 25));
+    const rows = await ctx.db
+      .query("agentReviewDrafts")
+      .withIndex("by_agentRunId_updatedAt", (q) =>
+        q.eq("agentRunId", args.agentRunId),
+      )
+      .order("desc")
+      .take(limit);
     return rows.map(summarizeAgentReviewDraft);
   },
 });
 
-/** Pending-review queue for the human review UI. */
-export const listPendingPublic = query({
-  args: { limit: v.optional(v.number()) },
+async function listPendingDrafts(ctx: QueryCtx, args: { limit?: number }) {
+  const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 25), 100));
+  const rows = await ctx.db
+    .query("agentReviewDrafts")
+    .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
+    .order("desc")
+    .take(limit);
+  return rows.map(summarizeAgentReviewDraft);
+}
+
+/** Pending-review queue for the authenticated human review UI. */
+export const listPending = query({
+  args: {
+    limit: v.optional(v.number()),
+    devBypassSecret: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 25), 100));
-    const rows = await ctx.db
-      .query("agentReviewDrafts")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
-      .order("desc")
-      .take(limit);
-    return rows.map(summarizeAgentReviewDraft);
+    await requireAuth(ctx, args);
+    return listPendingDrafts(ctx, args);
+  },
+});
+
+/** Deprecated compatibility name; still authenticated because the queue is human-only. */
+export const listPendingPublic = query({
+  args: {
+    limit: v.optional(v.number()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    return listPendingDrafts(ctx, args);
   },
 });
 
@@ -229,19 +298,23 @@ export const approve = mutation({
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx, args);
     const draft = await ctx.db.get(args.draftId);
-    if (!draft) throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+    if (!draft)
+      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
     assertDraftPending(draft.status);
     if (!draft.payload) {
       throw new ConvexError({
         code: "INVALID_STATE",
-        message: "Draft has no structured payload and is acknowledge-only (not promotable)",
+        message:
+          "Draft has no structured payload and is acknowledge-only (not promotable)",
         field: "payload",
       });
     }
 
     const now = Date.now();
     const createdBy =
-      identity.subject === "system" ? "system" : (identity.subject as Id<"users">);
+      identity.subject === "system"
+        ? "system"
+        : (identity.subject as Id<"users">);
     const run = await ctx.db.get(draft.agentRunId);
     const provenance = {
       agentRunId: draft.agentRunId,
@@ -261,10 +334,17 @@ export const approve = mutation({
       }
       const hypothesisId = await ctx.db.insert(
         "hypotheses",
-        buildHypothesisInsertFromPayload({ payload: draft.payload, provenance, createdBy, now }),
+        buildHypothesisInsertFromPayload({
+          payload: draft.payload,
+          provenance,
+          createdBy,
+          now,
+        }),
       );
       // Concept linking is an action; schedule it (mutations cannot await actions).
-      await ctx.scheduler.runAfter(0, api.graph.linkHypothesisConcepts, { hypothesisId });
+      await ctx.scheduler.runAfter(0, api.graph.linkHypothesisConcepts, {
+        hypothesisId,
+      });
       promotedId = hypothesisId;
       promotedKind = "hypothesis";
     } else {
@@ -277,7 +357,12 @@ export const approve = mutation({
       }
       const recipeId = await ctx.db.insert(
         "recipes",
-        buildRecipeInsertFromPayload({ payload: draft.payload, provenance, createdBy, now }),
+        buildRecipeInsertFromPayload({
+          payload: draft.payload,
+          provenance,
+          createdBy,
+          now,
+        }),
       );
       promotedId = recipeId;
       promotedKind = "recipe";
@@ -288,7 +373,9 @@ export const approve = mutation({
       promotedId,
       decidedAt: now,
       decidedBy: "human",
-      ...(args.decisionNote?.trim() ? { decisionNote: args.decisionNote.trim() } : {}),
+      ...(args.decisionNote?.trim()
+        ? { decisionNote: args.decisionNote.trim() }
+        : {}),
       updatedAt: now,
     });
     await ctx.db.insert("agentRunEvents", {
@@ -313,7 +400,8 @@ export const reject = mutation({
     // Rejections are learning signal for plan 05 — a note is always required.
     const note = assertDecisionNote(args.decisionNote);
     const draft = await ctx.db.get(args.draftId);
-    if (!draft) throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+    if (!draft)
+      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
     assertDraftPending(draft.status);
 
     const now = Date.now();
@@ -345,11 +433,15 @@ export const supersede = mutation({
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const draft = await ctx.db.get(args.draftId);
-    if (!draft) throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+    if (!draft)
+      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
     assertDraftPending(draft.status);
     const superseding = await ctx.db.get(args.byDraftId);
     if (!superseding) {
-      throw new ConvexError({ code: "NOT_FOUND", message: "Superseding draft not found" });
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Superseding draft not found",
+      });
     }
 
     const now = Date.now();
@@ -358,9 +450,15 @@ export const supersede = mutation({
       promotedId: args.byDraftId,
       decidedAt: now,
       decidedBy: "human",
-      ...(args.decisionNote?.trim() ? { decisionNote: args.decisionNote.trim() } : {}),
+      ...(args.decisionNote?.trim()
+        ? { decisionNote: args.decisionNote.trim() }
+        : {}),
       updatedAt: now,
     });
-    return { draftId: args.draftId, status: "superseded" as const, byDraftId: args.byDraftId };
+    return {
+      draftId: args.draftId,
+      status: "superseded" as const,
+      byDraftId: args.byDraftId,
+    };
   },
 });

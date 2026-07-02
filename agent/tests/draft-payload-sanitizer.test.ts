@@ -44,7 +44,10 @@ const validRecipePayload = {
 
 describe("sanitizeDraftPayload", () => {
   test("parses a valid hypothesis payload", () => {
-    const parsed = sanitizeDraftPayload("hypothesis_draft", validHypothesisPayload);
+    const parsed = sanitizeDraftPayload(
+      "hypothesis_draft",
+      validHypothesisPayload,
+    );
     expect(parsed).toBeDefined();
     expect((parsed as { statement: string }).statement).toBe(
       "Polygon-angle temperament increases consonance ratings.",
@@ -67,8 +70,11 @@ describe("sanitizeDraftPayload", () => {
   });
 
   test("drops a payload missing whyThisMatters to undefined", () => {
-    const { whyThisMatters, ...withoutWhy } = validHypothesisPayload;
-    expect(sanitizeDraftPayload("hypothesis_draft", withoutWhy)).toBeUndefined();
+    const { whyThisMatters: _whyThisMatters, ...withoutWhy } =
+      validHypothesisPayload;
+    expect(
+      sanitizeDraftPayload("hypothesis_draft", withoutWhy),
+    ).toBeUndefined();
   });
 
   test("drops a hypothesis payload with a blank whyThisMatters", () => {
@@ -81,7 +87,9 @@ describe("sanitizeDraftPayload", () => {
   });
 
   test("drops a recipe-shaped payload requested as hypothesis", () => {
-    expect(sanitizeDraftPayload("hypothesis_draft", validRecipePayload)).toBeUndefined();
+    expect(
+      sanitizeDraftPayload("hypothesis_draft", validRecipePayload),
+    ).toBeUndefined();
   });
 
   test("drops non-object values", () => {

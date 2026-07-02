@@ -101,7 +101,7 @@ function parseArgs(): { outputDir: string } {
 async function listEssayFiles(): Promise<string[]> {
   return (await readdir(ESSAYS_DIR))
     .filter((file) => file.endsWith(".md"))
-    .sort();
+    .toSorted();
 }
 
 async function main() {

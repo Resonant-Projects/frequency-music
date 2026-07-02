@@ -7,7 +7,12 @@ import {
 import type { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
 import type { ChatResult } from "@langchain/core/outputs";
 import { RunnableLambda, RunnableSequence } from "@langchain/core/runnables";
-import { Codex, type SandboxMode, type ThreadOptions, type Usage } from "@openai/codex-sdk";
+import {
+  Codex,
+  type SandboxMode,
+  type ThreadOptions,
+  type Usage,
+} from "@openai/codex-sdk";
 import { z } from "zod";
 import { traceable } from "langsmith/traceable";
 
@@ -89,7 +94,11 @@ export function classifyCodexError(error: unknown): CodexError {
   ) {
     return new CodexAuthError(message, { cause: error });
   }
-  if (/quota|rate.?limit|usage limit|429|too many requests|insufficient|exceeded/.test(lower)) {
+  if (
+    /quota|rate.?limit|usage limit|429|too many requests|insufficient|exceeded/.test(
+      lower,
+    )
+  ) {
     return new CodexQuotaError(message, { cause: error });
   }
   if (
@@ -180,11 +189,8 @@ function isZodSchema(schema: unknown): boolean {
  * Convert a Zod schema (or pass through a raw JSON Schema object) into the
  * JSON Schema shape Codex expects for `outputSchema`.
  *
- * The plan calls for `zod-to-json-schema` with `target: "openAi"`, but that
- * package is typed against Zod v3 and this workspace runs Zod v4. Zod v4 ships
- * a built-in `z.toJSONSchema` that emits the same OpenAI-compatible dialect
- * (`additionalProperties: false`, explicit `required`), so we use it directly
- * and keep the dependency install per the plan.
+ * Zod v4 ships a built-in `z.toJSONSchema`, so we avoid the legacy
+ * `zod-to-json-schema` package that is typed around Zod v3.
  */
 export function toOutputJsonSchema(schema: unknown): unknown {
   if (isZodSchema(schema)) {
@@ -267,7 +273,9 @@ export class CodexSdkChatModel extends BaseChatModel<CodexSdkCallOptions> {
       (process.env.CODEX_SANDBOX_MODE as SandboxMode | undefined) ??
       DEFAULT_CODEX_SANDBOX_MODE;
     this.workingDirectory =
-      fields.workingDirectory ?? process.env.CODEX_WORKDIR ?? DEFAULT_CODEX_WORKDIR;
+      fields.workingDirectory ??
+      process.env.CODEX_WORKDIR ??
+      DEFAULT_CODEX_WORKDIR;
     this.temperature = fields.temperature;
   }
 
@@ -307,7 +315,7 @@ export class CodexSdkChatModel extends BaseChatModel<CodexSdkCallOptions> {
     const outputSchema = options.outputSchema;
     const structuredOutput = outputSchema !== undefined;
 
-    const runTurn = async () =>
+    const runTurn = () =>
       thread.run(prompt, {
         ...(structuredOutput ? { outputSchema } : {}),
         ...(options.signal ? { signal: options.signal } : {}),
@@ -382,7 +390,12 @@ export class CodexSdkChatModel extends BaseChatModel<CodexSdkCallOptions> {
 }
 
 export function createCodexSdkModel(
-  options: { temperature?: number; model?: string; sandboxMode?: SandboxMode; workingDirectory?: string } = {},
+  options: {
+    temperature?: number;
+    model?: string;
+    sandboxMode?: SandboxMode;
+    workingDirectory?: string;
+  } = {},
 ): CodexSdkChatModel {
   return new CodexSdkChatModel({
     model: options.model,

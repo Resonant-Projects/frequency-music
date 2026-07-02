@@ -30,11 +30,12 @@ export function clampAgentRunLimit(limit: number | undefined) {
   return clampLimit(limit, 25, 100);
 }
 
-export function buildAgentRunStatusCounts(runs: Array<{ status: AgentRunStatus }>) {
-  const counts = Object.fromEntries(agentRunStatuses.map((status) => [status, 0])) as Record<
-    AgentRunStatus,
-    number
-  >;
+export function buildAgentRunStatusCounts(
+  runs: Array<{ status: AgentRunStatus }>,
+) {
+  const counts = Object.fromEntries(
+    agentRunStatuses.map((status) => [status, 0]),
+  ) as Record<AgentRunStatus, number>;
 
   for (const run of runs) counts[run.status] += 1;
   return counts;
@@ -53,7 +54,12 @@ export function isStaleRun(
 }
 
 export function buildClaimPatch(workerId: string, now: number) {
-  return { status: "running" as const, workerId, startedAt: now, updatedAt: now };
+  return {
+    status: "running" as const,
+    workerId,
+    startedAt: now,
+    updatedAt: now,
+  };
 }
 
 export function buildStalePatch(now: number) {
@@ -64,17 +70,28 @@ export function safeTraceUrl(value: string | undefined) {
   if (!value) return undefined;
   try {
     const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.toString() : undefined;
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString()
+      : undefined;
   } catch {
     return undefined;
   }
 }
 
 function isSmokeInput(input: unknown) {
-  return Boolean(input && typeof input === "object" && "smokeMode" in input && input.smokeMode);
+  return Boolean(
+    input &&
+      typeof input === "object" &&
+      "smokeMode" in input &&
+      input.smokeMode,
+  );
 }
 
-const reviewDraftKinds = new Set(["dry_run_summary", "hypothesis_draft", "recipe_draft"]);
+const reviewDraftKinds = new Set([
+  "dry_run_summary",
+  "hypothesis_draft",
+  "recipe_draft",
+]);
 
 export function safeReviewDraft(value: unknown) {
   if (!value || typeof value !== "object") return undefined;
@@ -85,9 +102,14 @@ export function safeReviewDraft(value: unknown) {
     candidateIds?: unknown;
     needsReview?: unknown;
   };
-  if (typeof draft.kind !== "string" || !reviewDraftKinds.has(draft.kind)) return undefined;
-  if (typeof draft.title !== "string" || typeof draft.summary !== "string") return undefined;
-  if (!Array.isArray(draft.candidateIds) || !draft.candidateIds.every((id) => typeof id === "string")) {
+  if (typeof draft.kind !== "string" || !reviewDraftKinds.has(draft.kind))
+    return undefined;
+  if (typeof draft.title !== "string" || typeof draft.summary !== "string")
+    return undefined;
+  if (
+    !Array.isArray(draft.candidateIds) ||
+    !draft.candidateIds.every((id) => typeof id === "string")
+  ) {
     return undefined;
   }
   if (typeof draft.needsReview !== "boolean") return undefined;
@@ -155,19 +177,32 @@ async function queryRecentRuns(
   if (args.graphName) {
     return await ctx.db
       .query("agentRuns")
-      .withIndex("by_graphName_updatedAt", (q) => q.eq("graphName", args.graphName!))
+      .withIndex("by_graphName_updatedAt", (q) =>
+        q.eq("graphName", args.graphName!),
+      )
       .order("desc")
       .take(limit);
   }
 
-  return await ctx.db.query("agentRuns").withIndex("by_updatedAt").order("desc").take(limit);
+  return await ctx.db
+    .query("agentRuns")
+    .withIndex("by_updatedAt")
+    .order("desc")
+    .take(limit);
 }
 
 async function appendRunEvent(
   ctx: MutationCtx,
   args: {
     runId: Id<"agentRuns">;
-    kind: "tool_call" | "decision" | "draft_write" | "error" | "review_request" | "status" | "node";
+    kind:
+      | "tool_call"
+      | "decision"
+      | "draft_write"
+      | "error"
+      | "review_request"
+      | "status"
+      | "node";
     message: string;
     payload?: unknown;
   },
@@ -195,12 +230,16 @@ async function insertQueuedRun(
     createdAt: now,
     updatedAt: now,
   });
-  await appendRunEvent(ctx, {
-    runId,
-    kind: "status",
-    message: "Agent run queued",
-    payload: { graphName: args.graphName },
-  }, now);
+  await appendRunEvent(
+    ctx,
+    {
+      runId,
+      kind: "status",
+      message: "Agent run queued",
+      payload: { graphName: args.graphName },
+    },
+    now,
+  );
   return { runId, status: "queued" as const, createdAt: now, updatedAt: now };
 }
 
@@ -210,7 +249,7 @@ export const create = internalMutation({
     input: v.optional(v.any()),
     traceUrl: v.optional(v.string()),
   },
-  handler: async (ctx, args) => insertQueuedRun(ctx, args),
+  handler: (ctx, args) => insertQueuedRun(ctx, args),
 });
 
 // Semantic alias used by scheduler crons to enqueue work for the worker to claim.
@@ -220,7 +259,7 @@ export const enqueue = internalMutation({
     input: v.optional(v.any()),
     traceUrl: v.optional(v.string()),
   },
-  handler: async (ctx, args) => insertQueuedRun(ctx, args),
+  handler: (ctx, args) => insertQueuedRun(ctx, args),
 });
 
 // Atomically claim the oldest queued run (optionally for a specific graph).
@@ -246,12 +285,16 @@ export const claimNextPending = internalMutation({
     if (!candidate || candidate.status !== "queued") return null;
 
     await ctx.db.patch(candidate._id, buildClaimPatch(args.workerId, now));
-    await appendRunEvent(ctx, {
-      runId: candidate._id,
-      kind: "status",
-      message: `Claimed by worker ${args.workerId}`,
-      payload: { workerId: args.workerId },
-    }, now);
+    await appendRunEvent(
+      ctx,
+      {
+        runId: candidate._id,
+        kind: "status",
+        message: `Claimed by worker ${args.workerId}`,
+        payload: { workerId: args.workerId },
+      },
+      now,
+    );
     return {
       runId: candidate._id,
       graphName: candidate.graphName,
@@ -296,12 +339,21 @@ export const sweepStaleRuns = internalMutation({
     for (const run of running) {
       if (!isStaleRun(run, now, threshold)) continue;
       await ctx.db.patch(run._id, buildStalePatch(now));
-      await appendRunEvent(ctx, {
-        runId: run._id,
-        kind: "error",
-        message: "Agent run failed: stale worker (no events within threshold)",
-        payload: { reason: "stale_worker", staleForMs: now - run.updatedAt, workerId: run.workerId },
-      }, now);
+      await appendRunEvent(
+        ctx,
+        {
+          runId: run._id,
+          kind: "error",
+          message:
+            "Agent run failed: stale worker (no events within threshold)",
+          payload: {
+            reason: "stale_worker",
+            staleForMs: now - run.updatedAt,
+            workerId: run.workerId,
+          },
+        },
+        now,
+      );
       swept += 1;
     }
     return { swept };
@@ -319,12 +371,21 @@ export const markRunning = internalMutation({
       startedAt: now,
       updatedAt: now,
     });
-    await appendRunEvent(ctx, {
+    await appendRunEvent(
+      ctx,
+      {
+        runId: args.runId,
+        kind: "status",
+        message: "Agent run started",
+      },
+      now,
+    );
+    return {
       runId: args.runId,
-      kind: "status",
-      message: "Agent run started",
-    }, now);
-    return { runId: args.runId, status: "running" as const, startedAt: now, updatedAt: now };
+      status: "running" as const,
+      startedAt: now,
+      updatedAt: now,
+    };
   },
 });
 
@@ -358,13 +419,23 @@ export const markNeedsReview = internalMutation({
       ...(reviewDraft === undefined ? {} : { reviewDraft }),
       updatedAt: now,
     });
-    await appendRunEvent(ctx, {
+    await appendRunEvent(
+      ctx,
+      {
+        runId: args.runId,
+        kind: "review_request",
+        message: "Agent run needs review",
+        ...(args.summary === undefined
+          ? {}
+          : { payload: { summary: args.summary } }),
+      },
+      now,
+    );
+    return {
       runId: args.runId,
-      kind: "review_request",
-      message: "Agent run needs review",
-      ...(args.summary === undefined ? {} : { payload: { summary: args.summary } }),
-    }, now);
-    return { runId: args.runId, status: "needs_review" as const, updatedAt: now };
+      status: "needs_review" as const,
+      updatedAt: now,
+    };
   },
 });
 
@@ -383,16 +454,25 @@ export const markCompleted = internalMutation({
       finishedAt: now,
       updatedAt: now,
     });
-    await appendRunEvent(ctx, {
-      runId: args.runId,
-      kind: "status",
-      message: "Agent run completed",
-      payload: {
-        ...(args.summary === undefined ? {} : { summary: args.summary }),
-        ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
+    await appendRunEvent(
+      ctx,
+      {
+        runId: args.runId,
+        kind: "status",
+        message: "Agent run completed",
+        payload: {
+          ...(args.summary === undefined ? {} : { summary: args.summary }),
+          ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
+        },
       },
-    }, now);
-    return { runId: args.runId, status: "completed" as const, finishedAt: now, updatedAt: now };
+      now,
+    );
+    return {
+      runId: args.runId,
+      status: "completed" as const,
+      finishedAt: now,
+      updatedAt: now,
+    };
   },
 });
 
@@ -412,16 +492,25 @@ export const markFailed = internalMutation({
       finishedAt: now,
       updatedAt: now,
     });
-    await appendRunEvent(ctx, {
-      runId: args.runId,
-      kind: "error",
-      message: args.summary ?? "Agent run failed",
-      payload: {
-        ...(args.error === undefined ? {} : { error: args.error }),
-        ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
+    await appendRunEvent(
+      ctx,
+      {
+        runId: args.runId,
+        kind: "error",
+        message: args.summary ?? "Agent run failed",
+        payload: {
+          ...(args.error === undefined ? {} : { error: args.error }),
+          ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
+        },
       },
-    }, now);
-    return { runId: args.runId, status: "failed" as const, finishedAt: now, updatedAt: now };
+      now,
+    );
+    return {
+      runId: args.runId,
+      status: "failed" as const,
+      finishedAt: now,
+      updatedAt: now,
+    };
   },
 });
 
@@ -476,10 +565,16 @@ export const statusCountsPublic = query({
     const runs = args.graphName
       ? await ctx.db
           .query("agentRuns")
-          .withIndex("by_graphName_updatedAt", (q) => q.eq("graphName", args.graphName!))
+          .withIndex("by_graphName_updatedAt", (q) =>
+            q.eq("graphName", args.graphName!),
+          )
           .order("desc")
           .take(limit)
-      : await ctx.db.query("agentRuns").withIndex("by_updatedAt").order("desc").take(limit);
+      : await ctx.db
+          .query("agentRuns")
+          .withIndex("by_updatedAt")
+          .order("desc")
+          .take(limit);
 
     return buildAgentRunStatusCounts(runs);
   },
@@ -513,10 +608,16 @@ export const statusCounts = query({
     const runs = args.graphName
       ? await ctx.db
           .query("agentRuns")
-          .withIndex("by_graphName_updatedAt", (q) => q.eq("graphName", args.graphName!))
+          .withIndex("by_graphName_updatedAt", (q) =>
+            q.eq("graphName", args.graphName!),
+          )
           .order("desc")
           .take(limit)
-      : await ctx.db.query("agentRuns").withIndex("by_updatedAt").order("desc").take(limit);
+      : await ctx.db
+          .query("agentRuns")
+          .withIndex("by_updatedAt")
+          .order("desc")
+          .take(limit);
 
     return buildAgentRunStatusCounts(runs);
   },

@@ -27,7 +27,7 @@ function parseDate(line: string): {
   essayNumber: number | null;
 } {
   // Strip markdown emphasis (asterisks or underscores)
-  const clean = line.replace(/^[*_]{1,2}|[*_]{1,2}$/g, "").trim();
+  const clean = line.replaceAll(/^[*_]{1,2}|[*_]{1,2}$/g, "").trim();
 
   // Extract essay number if present: "Essay #87" or "Essay #80"
   let essayNumber: number | null = null;

@@ -20,10 +20,11 @@ export const DEFAULT_WEEKLY_BRIEF_SEED =
 //   failed, so the runner must NOT double-mark on the success path.
 // - weekly-brief: the graph performs no audit writes, so the runner owns the
 //   terminal status write.
-export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> = {
-  "research-pipeline": "graph",
-  "weekly-brief": "runner",
-};
+export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
+  {
+    "research-pipeline": "graph",
+    "weekly-brief": "runner",
+  };
 
 export function isKnownGraphName(name: string): name is KnownGraphName {
   return (KNOWN_GRAPH_NAMES as readonly string[]).includes(name);
@@ -118,9 +119,9 @@ export function summarizeNodeUpdate(
 export function redactError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message
-    .replace(
+    .replaceAll(
       /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
       "$1[REDACTED]",
     )
-    .replace(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
+    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }

@@ -20,7 +20,6 @@
  *   - default model served: the `codex` CLI default (codex-default; no override
  *     passed). Set CODEX_MODEL to pin a specific model.
  */
-export {};
 
 import { Codex } from "@openai/codex-sdk";
 import { z } from "zod";
@@ -31,7 +30,9 @@ const sandboxMode = "read-only" as const;
 // Small structured schema so we can confirm outputSchema round-trips.
 const schema = z.object({
   provider: z.string().describe("Name of the inference provider responding"),
-  confirmation: z.string().describe("One short sentence confirming the call worked"),
+  confirmation: z
+    .string()
+    .describe("One short sentence confirming the call worked"),
   answer: z.number().describe("The result of 6 multiplied by 7"),
 });
 
@@ -46,7 +47,11 @@ async function main() {
   const codex = new Codex();
 
   const started = Date.now();
-  const thread = codex.startThread({ workingDirectory, skipGitRepoCheck: true, sandboxMode });
+  const thread = codex.startThread({
+    workingDirectory,
+    skipGitRepoCheck: true,
+    sandboxMode,
+  });
   const first = await thread.run(prompt, { outputSchema });
   const firstLatency = Date.now() - started;
 
@@ -74,7 +79,11 @@ async function main() {
 
   // Second run via resumeThread to confirm CODEX_HOME/sessions persistence.
   const resumeStarted = Date.now();
-  const resumed = codex.resumeThread(threadId, { workingDirectory, skipGitRepoCheck: true, sandboxMode });
+  const resumed = codex.resumeThread(threadId, {
+    workingDirectory,
+    skipGitRepoCheck: true,
+    sandboxMode,
+  });
   const second = await resumed.run(
     "Repeat the previous answer number in the 'answer' field and set confirmation to 'resumed ok'.",
     { outputSchema },
@@ -98,6 +107,9 @@ async function main() {
 
 main().catch((error) => {
   // Print a sanitized message only; never dump auth material.
-  console.error("spike-codex-sdk failed:", error instanceof Error ? error.message : String(error));
+  console.error(
+    "spike-codex-sdk failed:",
+    error instanceof Error ? error.message : String(error),
+  );
   process.exit(1);
 });

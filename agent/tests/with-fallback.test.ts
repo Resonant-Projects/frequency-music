@@ -20,9 +20,9 @@ class ScriptedModel extends BaseChatModel<BaseChatModelCallOptions> {
   _llmType() {
     return this.llmType;
   }
-  async _generate(): Promise<ChatResult> {
+  _generate(): Promise<ChatResult> {
     this.calls += 1;
-    return this.behaviour();
+    return Promise.resolve(this.behaviour());
   }
 }
 
@@ -33,7 +33,7 @@ function textResult(text: string, provider?: string): ChatResult {
   };
 }
 
-async function invoke(model: BaseChatModel, msg = "hi"): Promise<BaseMessage> {
+function invoke(model: BaseChatModel, msg = "hi"): Promise<BaseMessage> {
   return model.invoke([new AIMessage(msg)]);
 }
 
@@ -66,7 +66,9 @@ describe("withFallback", () => {
     const primary = new ScriptedModel(() => {
       throw new CodexQuotaError("usage limit exceeded");
     });
-    const fallback = new ScriptedModel(() => textResult("fallback answer", "openrouter-anthropic"));
+    const fallback = new ScriptedModel(() =>
+      textResult("fallback answer", "openrouter-anthropic"),
+    );
     const model = withFallback(primary, fallback);
     const res = await invoke(model);
     expect(res.content).toBe("fallback answer");

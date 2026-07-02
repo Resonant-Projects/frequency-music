@@ -175,7 +175,10 @@ function DraftReviewCard(props: {
       </h3>
       <p class={helperClass}>{props.draft.summary}</p>
 
-      <DraftPayloadPreview kind={props.draft.kind} payload={props.draft.payload} />
+      <DraftPayloadPreview
+        kind={props.draft.kind}
+        payload={props.draft.payload}
+      />
 
       <Show when={props.draft.candidateIds.length > 0}>
         <div>
@@ -199,11 +202,7 @@ function DraftReviewCard(props: {
 
       <div class={css({ display: "grid", gap: "2" })}>
         <label class={fieldLabelClass} for={`note-${props.draft._id}`}>
-          Decision Note
-          <Show when={!canPromote()}>
-            {" "}
-            (required to reject)
-          </Show>
+          Decision Note (required to reject)
         </label>
         <UITextarea
           id={`note-${props.draft._id}`}
@@ -253,11 +252,16 @@ export function AgentDraftsPage() {
     document.title = "Review Queue — Frequency Music";
   });
 
-  const pending = createQueryWithStatus(convexApi.agentDrafts.listPending, () => ({
-    limit: 50,
-  }));
+  const pending = createQueryWithStatus(
+    convexApi.agentDrafts.listPending,
+    () => ({
+      limit: 50,
+    }),
+  );
 
-  const [lastPromotion, setLastPromotion] = createSignal<Promotion | null>(null);
+  const [lastPromotion, setLastPromotion] = createSignal<Promotion | null>(
+    null,
+  );
 
   const rows = createMemo(
     () => (pending.data() ?? []) as PersistedReviewDraft[],
@@ -299,7 +303,9 @@ export function AgentDraftsPage() {
             <h2 class={sectionTitleClass}>Draft approved</h2>
             <p class={helperClass}>
               The draft was promoted into a new{" "}
-              {promotion().kind === "hypothesis_draft" ? "hypothesis" : "recipe"}
+              {promotion().kind === "hypothesis_draft"
+                ? "hypothesis"
+                : "recipe"}
               .
             </p>
             <PromotedLink

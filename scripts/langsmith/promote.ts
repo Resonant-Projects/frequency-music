@@ -211,6 +211,8 @@ export interface RubricResult {
   notes: string[];
 }
 
+const pad = (s: string, n: number) => s.padEnd(n);
+
 /**
  * Head-to-head rubric: candidate must not regress any evaluator beyond
  * `threshold`, and (when a judge evaluator ran on both sides) the judge score
@@ -224,11 +226,8 @@ export function evaluateRubric(opts: {
 }): RubricResult {
   const { baselineMeans, candidateMeans, judgeKey, threshold } = opts;
   const keys = [
-    ...new Set([
-      ...Object.keys(baselineMeans),
-      ...Object.keys(candidateMeans),
-    ]),
-  ].sort();
+    ...new Set([...Object.keys(baselineMeans), ...Object.keys(candidateMeans)]),
+  ].toSorted();
 
   const rows: RubricRow[] = [];
   const notes: string[] = [];
@@ -244,7 +243,14 @@ export function evaluateRubric(opts: {
       notes.push(
         `Evaluator "${key}" missing on one side (baseline=${b}, candidate=${c}); cannot compare — skipped.`,
       );
-      rows.push({ key, baseline: b, candidate: c, delta: null, regressed: false, isJudge });
+      rows.push({
+        key,
+        baseline: b,
+        candidate: c,
+        delta: null,
+        regressed: false,
+        isJudge,
+      });
       continue;
     }
 
@@ -293,7 +299,7 @@ export function renderBaselineDiff(
   candidate: string,
   means: Record<string, number>,
 ): string {
-  const keys = Object.keys(means).sort();
+  const keys = Object.keys(means).toSorted();
   const lines: string[] = [];
   lines.push(`## ${target} (${candidate})`);
   lines.push("");
@@ -400,7 +406,6 @@ export async function readMeansForExperiment(
 
 function formatRubric(result: RubricResult): string {
   const lines: string[] = [];
-  const pad = (s: string, n: number) => s.padEnd(n);
   lines.push(
     `  ${pad("evaluator", 26)}${pad("baseline", 11)}${pad("candidate", 11)}${pad("delta", 11)}status`,
   );
@@ -512,7 +517,9 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   let allPass = true;
 
   for (let trial = 1; trial <= args.trials; trial++) {
-    console.log(`── Trial ${trial}/${args.trials} ─────────────────────────────`);
+    console.log(
+      `── Trial ${trial}/${args.trials} ─────────────────────────────`,
+    );
 
     console.log(`Running baseline experiment (${baseline})…`);
     const baselineExp = runExperiment(runnerPath, baseline);
@@ -548,7 +555,9 @@ export async function main(argv: string[] = process.argv.slice(2)) {
 
   console.log("═══════════════════════════════════════════════");
   if (!allPass) {
-    console.log(`RESULT: FAIL — candidate "${candidate}" does not clear the gate.`);
+    console.log(
+      `RESULT: FAIL — candidate "${candidate}" does not clear the gate.`,
+    );
     console.log(
       "Do not flip the shipping version. Iterate on the candidate prompt and re-run.",
     );
@@ -559,9 +568,13 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   console.log(
     `RESULT: PASS — candidate "${candidate}" clears the gate on all ${args.trials} trials.`,
   );
-  console.log("\nApply this diff to docs/eval-baselines.md (append or replace the target section):\n");
+  console.log(
+    "\nApply this diff to docs/eval-baselines.md (append or replace the target section):\n",
+  );
   console.log(renderBaselineDiff(target, candidate, avgCandidate));
-  console.log("\nThen flip the shipping version (human commit — not automated):");
+  console.log(
+    "\nThen flip the shipping version (human commit — not automated):",
+  );
   console.log(
     `  1. In scripts/langsmith/${config.runner}, set defaultVersion: "${candidate}" (and keep "${baseline}" in PROMPTS for regression runs).`,
   );

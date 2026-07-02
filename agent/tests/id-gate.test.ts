@@ -30,8 +30,8 @@ const recipePayload: RecipeDraftPayload = {
 
 describe("hallucinated-ID gate", () => {
   test("collects every id-like field from a hypothesis payload", () => {
-    expect(collectPayloadIds(hypothesisPayload).sort()).toEqual(
-      ["ext_1", "src_1", "src_2", "thesis_1"].sort(),
+    expect(collectPayloadIds(hypothesisPayload).toSorted()).toEqual(
+      ["ext_1", "src_1", "src_2", "thesis_1"].toSorted(),
     );
   });
 
@@ -50,7 +50,9 @@ describe("hallucinated-ID gate", () => {
   });
 
   test("flags a hallucinated recipe hypothesisId", () => {
-    expect(findHallucinatedIds(recipePayload, ["other_hyp"])).toEqual(["hyp_1"]);
+    expect(findHallucinatedIds(recipePayload, ["other_hyp"])).toEqual([
+      "hyp_1",
+    ]);
     expect(findHallucinatedIds(recipePayload, ["hyp_1"])).toEqual([]);
   });
 
