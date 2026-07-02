@@ -76,14 +76,57 @@ The automation must not print token values. The optional smoke step delegates to
 
 Do not use this sequence to deploy yet: it is build/smoke preparation only. Do not copy Proxmox tokens, Codex sessions, or other secrets into Docker images.
 
-## Near-term deployment sequence
+## Deployment runbook (gate satisfied — 2026-07-01)
 
-1. Keep running locally while `research-pipeline` is dry-run only.
-2. Add `agentRuns` and `agentRunEvents` in Convex.
-3. Add narrow write tools for agent run audit events.
-4. Containerize `agent/`.
-5. Deploy the container to Proxmox with runtime secrets mounted/injected.
-6. Run weekly brief and research-pipeline in parallel with existing Convex workflows.
-7. Disable Convex-side orchestration only after LangGraph output is stable and auditable.
+The gating condition ("Convex audit tables + narrow audit-write tools") is now met:
+`agentRuns`/`agentRunEvents` exist, the queue surface (`enqueue`/`claimNextPending`/
+`sweepStaleRuns` + `/agent-tools/{claimNextPendingRun,getAgentRun}`) is deployed, and
+the worker runner (`agent/src/worker/runner.ts`, `bun run worker`) is implemented.
+Cluster confirmed online (v9.2.3; nodes `prox`/`prox2`/`prox3`).
 
-Always-on Proxmox deployment is gated on the Convex audit tables because the runner needs durable run state, event history, and failure visibility before it can safely replace or parallelize existing orchestration. Until `agentRuns`/`agentRunEvents` and narrow audit/write tools exist, deployment work should stay limited to local builds, smoke checks, and documentation.
+### 1. Provision the host
+- Create an LXC/VM on `prox` or `prox2`: 2 vCPU / 4 GB, Docker installed.
+- Add it to the Pulse-agent candidate list (monitoring plan); alert on the worker
+  container being down and on `sweep-stale-agent-runs` firing.
+
+### 2. Configure secrets (never baked into the image)
+Create `agent/.env` on the host (NOT committed) with:
+```
+CONVEX_SITE_URL=<convex http actions url>
+AGENT_TOOL_SECRET=<agent tool secret>
+OPENROUTER_API_KEY=<openrouter key>
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=<langsmith key>          # op item s37crgkfad35vq6wyoymg3szja
+CODEX_ENABLED=true
+CODEX_HOME=/data/codex-home
+WORKER_ID=prox-worker-1
+WORKER_POLL_INTERVAL_MS=15000
+# WORKER_GRAPH_NAME=research-pipeline       # optional: restrict this worker to one graph
+```
+
+### 3. Seed Codex subscription auth ONCE
+- Run `codex login` on a trusted machine (browser OAuth against the ChatGPT plan).
+- Copy that machine's `~/.codex/auth.json` into the `codex-home` volume **only if
+  missing** — Codex refreshes tokens in place; re-seeding every deploy discards
+  refreshed tokens. Also drop a `config.toml` with `cli_auth_credentials_store = "file"`
+  (no OS keyring exists in the container).
+
+### 4. Deploy
+```bash
+cd agent
+docker compose build
+docker compose up -d langgraph-worker          # always-on worker (default)
+# optional: docker compose --profile memory up -d postgres   # plan-05 agent memory
+# optional: docker compose --profile dev up langgraph-dev     # LangGraph Studio
+```
+Egress required: Convex site URL, OpenRouter, OpenAI/ChatGPT, LangSmith.
+
+### 5. Verify
+- `bunx convex run agentRuns:... ` enqueue a `research-pipeline` run; watch the worker
+  claim → execute → reach a terminal status (events in the app / `/agent-runs`).
+- Grep container logs for token-shaped strings — expect none.
+- 72-hour soak: enqueue ≥5 runs across days; zero manual intervention.
+
+### Cutover (after the plan-04 comparison resolves in the agent's favor)
+Only then flip the Friday cron to enqueue-only and demote Convex-side brief
+generation to fallback. Keep the deterministic path as the documented fallback.
