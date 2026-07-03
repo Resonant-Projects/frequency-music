@@ -382,6 +382,39 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 
 - Revisit if draft volume exceeds weekly human review capacity → introduce batch tooling or eval-score-gated auto-approve tiers.
 
+## 2026-07-03 — Architecture Deepening Wave (plans 2026-07-03-01..07)
+
+**Decision**
+
+- Adopt the `convex-test` harness for exercising Convex handler glue (mutations/actions) through the same interface production callers use — spiked under `bun:test` with an explicit module map, falling back to vitest scoped to `convex/harness/**` only if bun proves incompatible. Existing pure-helper `bun:test` suites stay.
+- Shapes that cross the convex↔agent repo seam (agent draft payloads, run-event kinds, tool args, queue timing constants) become **zod-first** in `convex/shared/`, with Convex validators derived via `convex-helpers/server/zod4` (`zodToConvex`). Internal-only shapes (source/hypothesis/recipe status unions, recipe protocol, claims, studio prompts) remain **schema-canonical**: defined once in `convex/schema.ts` and imported everywhere else.
+- Source intake unifies on `sourceUtils.generateDedupeKey` as the single dedupe contract; existing rows get a canonical-key backfill migration, and colliding duplicates are archived, never deleted.
+- Already-run one-shot ingest scripts move to `scripts/archive/` untouched; a deep `scripts/lib/ingest.ts` ingestor serves recurring scripts and future manifest-driven batches.
+
+**Rationale**
+
+- Only a validator-enforcing harness catches the bug class that shipped twice (ctx.db-in-action breaking the Friday brief cron; `kind`-field rejection breaking recipe generation) — a hand-rolled writable fake never runs validators.
+- The agent workspace needs zod at runtime (LangChain tools); deriving Convex validators from zod gives one source of truth instead of comment-enforced mirrors ("MUST mirror") that already drifted (`memory_recall`).
+- Two intake paths computing different dedupe keys is a live data-integrity defect, not a style issue.
+- Converting scripts that will never run again is rework with no payoff; the lib pays back on recurring and future work.
+
+**Alternatives considered**
+
+- Contract tests pinning hand-written zod to Convex validators (schema stays canonical for everything) — rejected in favor of true single-sourcing for cross-seam shapes.
+- Extending the read-only `makeDb` fake into a writable one — rejected: re-implements Convex semantics by hand and cannot enforce validators.
+- Converting or deleting the one-shot ingest scripts — rejected: archive preserves re-run provenance at zero refactor cost.
+
+**Downstream implications**
+
+- `convex/shared/` is a new purity-constrained seam: no `convex/server` or `_generated` imports; both workspaces and web may import from it.
+- The Gate G2 pure promotion builders (2026-07-01) are unchanged; the harness adds the orchestration coverage those builders cannot reach.
+- Tracing remains best-effort (2026-05-16); the shared LLM module becomes the single place that invariant is enforced.
+- Plans live in `docs/plans/2026-07-03-0*-arch-*.md` with `00` as the master sequence.
+
+**Revisit trigger**
+
+- Revisit zod-first if `convex-helpers` zod4 derivation produces validator shapes that diverge from hand-written equivalents, or if zod major-version churn outpaces convex-helpers support. Revisit the bun harness path if `convex-test` module-map maintenance becomes noisy — that is the signal to move harness tests to vitest.
+
 ## Reversals / What Changed Our Mind
 
 No strategic reversals recorded yet. Add entries here when a prior roadmap or doctrine assumption is intentionally changed rather than merely extended.
