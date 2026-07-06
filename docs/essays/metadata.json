@@ -2862,6 +2862,20 @@
     "contentHash": "1df9bd0712da61d4760fc0bf0e315798ed737dd518c27c70f39c11a7b9e1b7ab",
     "generatedAt": "2026-06-13T11:01:00.000Z"
   },
+  "the-room-is-part-of-the-source": {
+    "excerpt": "Source identity and room identity are jointly inferred: reflections, spatial correlations, and reverberant signatures help decide what a sound is, not just where it is.",
+    "tags": [
+      "acoustics",
+      "signal-processing",
+      "composition",
+      "spatial-audio",
+      "perception",
+      "source-separation"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "392a2ae8d9b979473e9e0c009b0555a38340c503d4ba154314339addd3dc75df",
+    "generatedAt": "2026-07-06T16:00:00.000Z"
+  },
   "the-room-that-isnt-there": {
     "excerpt": "Listening is an act of completion-from spatial inference in rooms to spectral reconstruction in timbral perception. Diffusion models formalize what the auditory system does, offering composers new tools to control what listeners infer from partial acoustic information.",
     "tags": [
