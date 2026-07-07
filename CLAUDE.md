@@ -103,6 +103,15 @@ bun run scripts/find-e2e.ts                           # Find E2E test data
 
 ## Convex Commands
 
+### Deploy
+
+```bash
+# Push functions to the live self-hosted deployment
+bun x convex deploy -y
+```
+
+> **Gotcha:** `bunx convex codegen` is typegate-only on this setup — its output says "Uploading functions to Convex..." but the functions do NOT go live (verified 2026-07-07 via functionSpec). Always run `convex deploy` to actually push.
+
 ### Extraction
 
 ```bash
