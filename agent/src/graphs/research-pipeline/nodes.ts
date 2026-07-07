@@ -463,14 +463,17 @@ async function createReviewDraftViaCodex(
   codexRunner: typeof runCodexTask,
   fallbackOptions: { model?: BaseChatModel } = {},
 ): Promise<SpecialistOutcome> {
+  // One variable feeds both the thread's model override and the audit label,
+  // so the model_call event never reports a model the thread didn't run with.
+  const codexModel = process.env.CODEX_MODEL || undefined;
   try {
     const result = await codexRunner({
       instructions: RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS,
       context: specialistContext(input),
       outputSchema: codexSpecialistOutputSchema,
+      model: codexModel,
     });
     const draft = sanitizeSpecialistDraft(result.output, input.fallbackDraft);
-    const model = process.env.CODEX_MODEL ?? "codex-default";
     return {
       draft: draft ?? input.fallbackDraft,
       provider: "codex-sdk",
@@ -482,13 +485,16 @@ async function createReviewDraftViaCodex(
       // task can be resumed with resumeThread after a worker restart.
       modelCall: {
         provider: "codex-sdk",
-        model,
+        model: codexModel ?? "codex-default",
         usage: result.usage ?? undefined,
         threadId: result.threadId ?? undefined,
       },
     };
   } catch (error) {
-    const fallback = await createReviewDraftViaOpenRouter(input, fallbackOptions);
+    const fallback = await createReviewDraftViaOpenRouter(
+      input,
+      fallbackOptions,
+    );
     const codexMessage = errorMessage(error);
     return {
       ...fallback,
@@ -509,9 +515,13 @@ export async function createSpecialistOutcome(
   options: { runCodexTask?: typeof runCodexTask; model?: BaseChatModel } = {},
 ): Promise<SpecialistOutcome> {
   if (process.env.CODEX_SPECIALIST === "true") {
-    return createReviewDraftViaCodex(input, options.runCodexTask ?? runCodexTask, {
-      model: options.model,
-    });
+    return createReviewDraftViaCodex(
+      input,
+      options.runCodexTask ?? runCodexTask,
+      {
+        model: options.model,
+      },
+    );
   }
   return createReviewDraftViaOpenRouter(input, { model: options.model });
 }

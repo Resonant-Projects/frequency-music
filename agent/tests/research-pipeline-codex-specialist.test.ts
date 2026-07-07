@@ -42,10 +42,13 @@ const specialistInput: ResearchDraftSpecialistInput = {
 
 describe("CODEX_SPECIALIST routing decision", () => {
   const previousFlag = process.env.CODEX_SPECIALIST;
+  const previousModel = process.env.CODEX_MODEL;
 
   afterEach(() => {
     if (previousFlag === undefined) delete process.env.CODEX_SPECIALIST;
     else process.env.CODEX_SPECIALIST = previousFlag;
+    if (previousModel === undefined) delete process.env.CODEX_MODEL;
+    else process.env.CODEX_MODEL = previousModel;
   });
 
   test("flag off: takes the OpenRouter path and never calls the Codex runner", async () => {
@@ -104,6 +107,40 @@ describe("CODEX_SPECIALIST routing decision", () => {
       input_tokens: 10,
       output_tokens: 20,
     });
+  });
+
+  test("flag on + CODEX_MODEL set: forwards the model to the Codex thread and audits the same value", async () => {
+    process.env.CODEX_SPECIALIST = "true";
+    process.env.CODEX_MODEL = "gpt-5-codex";
+    let forwardedModel: string | undefined;
+    const codexRunner = async (
+      input: RunCodexTaskInput,
+    ): Promise<RunCodexTaskResult> => {
+      forwardedModel = input.model;
+      return {
+        output: {
+          kind: "hypothesis_draft",
+          title: "Codex thread proposal",
+          summary:
+            "Candidate should become a human-reviewed hypothesis proposal.",
+          candidateIds: ["candidate-1"],
+          needsReview: true,
+        },
+        rawText: "{}",
+        threadId: "thread-codex-2",
+        usage: null,
+        workdir: "/tmp/codex-task-test",
+      };
+    };
+
+    const outcome = await createSpecialistOutcome(specialistInput, {
+      runCodexTask: codexRunner,
+    });
+
+    // The thread must run with the operator's override, and the audit event
+    // must report the same value the thread actually received.
+    expect(forwardedModel).toBe("gpt-5-codex");
+    expect(outcome.modelCall?.model).toBe("gpt-5-codex");
   });
 
   test("flag on + Codex runner throws: falls back to OpenRouter and never fails the run", async () => {
