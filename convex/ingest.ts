@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { action, internalAction } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 
 // ============================================================================
 // HELPERS
@@ -115,14 +116,6 @@ function stripHtml(html: string): string {
 }
 
 /**
- * Generate dedupeKey for RSS items
- */
-function generateRSSDedupeKey(feedUrl: string, item: RSSItem): string {
-  const identifier = item.guid || item.link;
-  return `rss:${new URL(feedUrl).hostname}:${identifier}`;
-}
-
-/**
  * Poll a single RSS feed and ingest new items
  */
 export const pollFeed = internalAction({
@@ -159,7 +152,11 @@ export const pollFeed = internalAction({
       // Process each item
       for (const item of parsed.items) {
         try {
-          const dedupeKey = generateRSSDedupeKey(feed.url, item);
+          const dedupeKey = generateDedupeKey("rss", {
+            feedUrl: feed.url,
+            rssGuid: item.guid,
+            canonicalUrl: item.link,
+          });
 
           // Check if already exists
           const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
@@ -298,9 +295,9 @@ export const ingestUrl = action({
   }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    // Generate dedupeKey
+    // Generate dedupeKey (canonical: keeps query string, matches sources.createFromUrlInput)
     const urlObj = new URL(args.url);
-    const dedupeKey = `url:${urlObj.hostname}${urlObj.pathname.replace(/\/$/, "")}`;
+    const dedupeKey = generateDedupeKey("url", { canonicalUrl: args.url });
 
     // Check if already exists
     const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
@@ -350,22 +347,6 @@ export const ingestUrl = action({
 // ============================================================================
 // YOUTUBE INGESTION
 // ============================================================================
-
-/**
- * Extract YouTube video ID from URL
- */
-function extractYouTubeVideoId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
-}
 
 /**
  * Ingest a YouTube video (metadata only - transcript extraction is separate)
