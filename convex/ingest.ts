@@ -255,11 +255,17 @@ export const pollFeed = internalAction({
       // Process each item
       for (const item of parsed.items) {
         try {
-          const dedupeKey = generateDedupeKey("rss", {
-            feedUrl: feed.url,
-            rssGuid: item.guid,
-            canonicalUrl: item.link,
-          });
+          // YouTube feed items must carry the canonical youtube identity
+          // (yt:videoId) so cron ingests dedupe against the HTTP ingest path.
+          const videoId =
+            feed.type === "youtube" ? extractYouTubeVideoId(item.link) : null;
+          const dedupeKey = videoId
+            ? generateDedupeKey("youtube", { youtubeVideoId: videoId })
+            : generateDedupeKey("rss", {
+                feedUrl: feed.url,
+                rssGuid: item.guid,
+                canonicalUrl: item.link,
+              });
 
           // Check if already exists
           const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
