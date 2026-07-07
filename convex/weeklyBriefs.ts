@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { computeRecommendedActionContext, type RecommendedAction } from "./campaigns";
@@ -13,6 +13,7 @@ import {
   type ActionCtx,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { recordEditCapture } from "./editCaptures";
 import {
   campaignReturnValidator,
   failureArchiveEntryValidator,
@@ -40,6 +41,76 @@ type ParsedBriefMetadata = {
   studioPrompts: StudioPromptVariants;
   cleanBodyMd: string;
 };
+
+// ============================================================================
+// EDIT CAPTURE - pure helpers (unit-testable without a DB harness)
+// ============================================================================
+// Weekly briefs have no `origin` field either: `create` is an internalMutation
+// only ever called from generateBriefCore (the AI generation pipeline), so
+// every row is AI-generated. The editable "content" is the brief's authored
+// output (body, todo list, studio prompts) -- not the structural links
+// (sourceIds, recommendedHypothesisIds, etc.) which are recommendation
+// bookkeeping, not human-authored text.
+
+export interface BriefEditableContent {
+  bodyMd: string;
+  todo?: string[];
+  studioPrompts?: StudioPromptVariants;
+}
+
+export type BriefEditableUpdates = Partial<BriefEditableContent>;
+
+export function selectBriefContent(row: BriefEditableContent): BriefEditableContent {
+  return {
+    bodyMd: row.bodyMd,
+    todo: row.todo,
+    studioPrompts: row.studioPrompts,
+  };
+}
+
+export function mergeBriefContent(
+  existing: BriefEditableContent,
+  updates: BriefEditableUpdates,
+): BriefEditableContent {
+  return {
+    bodyMd: updates.bodyMd ?? existing.bodyMd,
+    todo: updates.todo ?? existing.todo,
+    studioPrompts: updates.studioPrompts ?? existing.studioPrompts,
+  };
+}
+
+export function briefContentChanged(
+  generated: BriefEditableContent,
+  edited: BriefEditableContent,
+): boolean {
+  return JSON.stringify(generated) !== JSON.stringify(edited);
+}
+
+export interface BriefEditCapture {
+  promptVersion: string;
+  model: string;
+  generated: BriefEditableContent;
+  edited: BriefEditableContent;
+}
+
+/**
+ * Decide whether a weekly-brief edit is capture-worthy and build the
+ * (generated, edited) payload. Returns null when nothing actually changed.
+ */
+export function computeBriefEditCapture(
+  brief: BriefEditableContent & { promptVersion: string; model: string },
+  updates: BriefEditableUpdates,
+): BriefEditCapture | null {
+  const generated = selectBriefContent(brief);
+  const edited = mergeBriefContent(generated, updates);
+  if (!briefContentChanged(generated, edited)) return null;
+  return {
+    promptVersion: brief.promptVersion,
+    model: brief.model,
+    generated,
+    edited,
+  };
+}
 
 // ============================================================================
 // QUERIES
@@ -134,6 +205,59 @@ export const publish = mutation({
       visibility: "public",
       publishedAt: Date.now(),
     });
+    return null;
+  },
+});
+
+/**
+ * Edit the human-editable content of a weekly brief (body markdown, todo
+ * list, studio prompts). `publish` only flips visibility -- this is the
+ * dedicated content-edit path (no such mutation existed before).
+ *
+ * Every brief is AI-generated (there is no human-authored path), so a
+ * capture row is written whenever the edited content actually differs from
+ * what was stored, preserving the (generated, edited) pair as eval data.
+ */
+export const editBrief = mutation({
+  args: {
+    id: v.id("weeklyBriefs"),
+    bodyMd: v.optional(v.string()),
+    todo: v.optional(v.array(v.string())),
+    studioPrompts: v.optional(
+      v.object({
+        tenMinuteMd: v.string(),
+        thirtyMinuteMd: v.string(),
+        ninetyMinuteMd: v.string(),
+      }),
+    ),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const { id, devBypassSecret: _devBypassSecret, ...updates } = args;
+
+    const brief = await ctx.db.get("weeklyBriefs", id);
+    if (!brief) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Weekly brief not found",
+      });
+    }
+
+    const capture = computeBriefEditCapture(brief, updates);
+    if (capture) {
+      await recordEditCapture(ctx, {
+        entityType: "weeklyBrief",
+        entityId: id,
+        promptVersion: capture.promptVersion,
+        model: capture.model,
+        generated: capture.generated,
+        edited: capture.edited,
+      });
+    }
+
+    await ctx.db.patch("weeklyBriefs", id, updates);
     return null;
   },
 });
