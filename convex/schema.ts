@@ -75,6 +75,9 @@ export const agentRunEventKindValidator = v.union(
   v.literal("node"),
   // Emitted when cross-run agent memory (LangGraph Store) changes a decision.
   v.literal("memory_recall"),
+  // Per-model-call quota audit trail: provider, model, usage, threadId (when
+  // Codex answered). See docs/plans/2026-07-01-01-codex-sdk-inference-provider.md.
+  v.literal("model_call"),
 );
 
 const evidenceLevelValidator = v.union(

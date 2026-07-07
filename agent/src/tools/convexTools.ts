@@ -208,6 +208,7 @@ export const appendAgentRunEvent = tool(
         "review_request",
         "status",
         "node",
+        "model_call",
       ]),
       message: z.string().min(1),
       payload: z.unknown().optional(),

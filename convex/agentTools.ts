@@ -211,6 +211,7 @@ export const appendAgentRunEvent = action({
       v.literal("review_request"),
       v.literal("status"),
       v.literal("node"),
+      v.literal("model_call"),
     ),
     message: v.string(),
     payload: v.optional(v.any()),

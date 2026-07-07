@@ -57,7 +57,7 @@ describe("Codex/deep-agent research draft integration", () => {
 
   test("falls back safely when the specialist model fails", async () => {
     const failingModel = {
-      invoke: () => Promise.reject(new Error("local Codex unavailable")),
+      generate: () => Promise.reject(new Error("local Codex unavailable")),
     } as unknown as BaseChatModel;
 
     const result = await createResearchDeepAgentDraft(
@@ -83,20 +83,24 @@ describe("Codex/deep-agent research draft integration", () => {
   });
 
   test("uses model JSON when the specialist returns a valid draft", async () => {
+    const text = JSON.stringify({
+      kind: "hypothesis_draft",
+      title: "Deep-agent proposal",
+      summary: "Candidate should become a human-reviewed hypothesis proposal.",
+      candidateIds: ["candidate-1"],
+      needsReview: true,
+    });
     const model = {
-      invoke: () =>
-        Promise.resolve(
-          new AIMessage(
-            JSON.stringify({
-              kind: "hypothesis_draft",
-              title: "Deep-agent proposal",
-              summary:
-                "Candidate should become a human-reviewed hypothesis proposal.",
-              candidateIds: ["candidate-1"],
-              needsReview: true,
-            }),
-          ),
-        ),
+      generate: () =>
+        Promise.resolve({
+          generations: [[{ text, message: new AIMessage(text) }]],
+          llmOutput: {
+            provider: "codex-sdk",
+            model: "codex-default",
+            usage: { total_tokens: 42 },
+            threadId: "thread-abc",
+          },
+        }),
     } as unknown as BaseChatModel;
 
     const result = await createResearchDeepAgentDraft(
@@ -119,5 +123,9 @@ describe("Codex/deep-agent research draft integration", () => {
     expect(result.usedFallback).toBe(false);
     expect(result.draft.title).toBe("Deep-agent proposal");
     expect(result.draft.needsReview).toBe(true);
+    // llmOutput threads through so the graph node can build the per-model-
+    // call audit event (provider/model/usage/threadId).
+    expect(result.llmOutput?.provider).toBe("codex-sdk");
+    expect(result.llmOutput?.threadId).toBe("thread-abc");
   });
 });

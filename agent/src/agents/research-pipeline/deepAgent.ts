@@ -1,5 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { ChatGeneration } from "@langchain/core/outputs";
 import { z } from "zod";
 import {
   getConfiguredModelProvider,
@@ -99,6 +100,14 @@ export interface ResearchDraftSpecialistResult {
   provider: string;
   usedFallback: boolean;
   warning?: string;
+  /**
+   * Raw `llmOutput` from the model call (provider/model/usage/threadId when
+   * codexSdk/withFallback populated it). Present whenever the model actually
+   * responded, even if the response was unparsable; absent only when the
+   * call itself threw before any provider answered. Graph nodes read this to
+   * append the per-model-call agentRunEvents audit event.
+   */
+  llmOutput?: Record<string, unknown>;
 }
 
 function truncateJson(value: unknown, maxChars = 8000) {
@@ -177,37 +186,45 @@ export function sanitizeSpecialistDraft(
   };
 }
 
+/**
+ * System instructions shared by both specialist implementations: the default
+ * OpenRouter/Codex-via-getResearchModel chat call below, and the
+ * CODEX_SPECIALIST=true `runCodexTask` path in
+ * `graphs/research-pipeline/nodes.ts` (which passes this same text as Codex
+ * thread `instructions`). Keeping one copy avoids the two specialists
+ * drifting out of sync on the payload contract.
+ */
+export const RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS = [
+  "You are the Frequency Music research-pipeline deep-agent specialist.",
+  "Given sanitized Convex context, prepare a concise human-review draft only.",
+  "Do not claim you wrote domain data. Return JSON only with keys: kind, title, summary, candidateIds, needsReview, payload.",
+  "kind must be hypothesis_draft or recipe_draft. needsReview must be true.",
+  "",
+  "CRITICAL — the `payload` object is what a human promotes into a real record, so it must be loss-free and its ids must be REAL.",
+  "Only ever reference ids (sourceIds, extractionIds, thesisId, hypothesisId) that appear in the provided scope/candidate context.",
+  "NEVER invent, guess, or reformat an id. A fabricated id fails the run.",
+  "",
+  "For kind=hypothesis_draft, payload keys:",
+  "  title (string), question (string), statement (string), rationale (string), whyThisMatters (string, required and non-empty),",
+  "  concepts (string[] optional), sourceIds (string[] of real Id<sources>), extractionIds (string[] of real Id<extractions>),",
+  "  thesisId (optional real Id<theses>), confidence (optional number 0-1).",
+  "",
+  "For kind=recipe_draft, payload keys:",
+  "  hypothesisId (optional real Id<hypotheses>), title (string),",
+  "  parameters (array of { value:string, kind?, type?, details? }),",
+  "  protocol (optional { studyType:'litmus'|'comparison', durationSecs:number, panelPlanned:string[], whatVaries:string[], whatStaysConstant:string[], baselineArtifactId?, listeningContext?, listeningMethod? }),",
+  "  whyThisMatters (string, required and non-empty), bodyMd (optional), dawChecklist (string[] optional), instrumentationNotes (optional).",
+  "",
+  "If you cannot ground a complete, id-accurate payload, OMIT the payload key entirely (still return the other keys).",
+].join("\n");
+
 export async function createResearchDeepAgentDraft(
   input: ResearchDraftSpecialistInput,
   options: { model?: BaseChatModel } = {},
 ): Promise<ResearchDraftSpecialistResult> {
   const provider = getConfiguredModelProvider();
   const model = options.model ?? getResearchModel({ temperature: 0.2 });
-  const system = new SystemMessage(
-    [
-      "You are the Frequency Music research-pipeline deep-agent specialist.",
-      "Given sanitized Convex context, prepare a concise human-review draft only.",
-      "Do not claim you wrote domain data. Return JSON only with keys: kind, title, summary, candidateIds, needsReview, payload.",
-      "kind must be hypothesis_draft or recipe_draft. needsReview must be true.",
-      "",
-      "CRITICAL — the `payload` object is what a human promotes into a real record, so it must be loss-free and its ids must be REAL.",
-      "Only ever reference ids (sourceIds, extractionIds, thesisId, hypothesisId) that appear in the provided scope/candidate context.",
-      "NEVER invent, guess, or reformat an id. A fabricated id fails the run.",
-      "",
-      "For kind=hypothesis_draft, payload keys:",
-      "  title (string), question (string), statement (string), rationale (string), whyThisMatters (string, required and non-empty),",
-      "  concepts (string[] optional), sourceIds (string[] of real Id<sources>), extractionIds (string[] of real Id<extractions>),",
-      "  thesisId (optional real Id<theses>), confidence (optional number 0-1).",
-      "",
-      "For kind=recipe_draft, payload keys:",
-      "  hypothesisId (optional real Id<hypotheses>), title (string),",
-      "  parameters (array of { value:string, kind?, type?, details? }),",
-      "  protocol (optional { studyType:'litmus'|'comparison', durationSecs:number, panelPlanned:string[], whatVaries:string[], whatStaysConstant:string[], baselineArtifactId?, listeningContext?, listeningMethod? }),",
-      "  whyThisMatters (string, required and non-empty), bodyMd (optional), dawChecklist (string[] optional), instrumentationNotes (optional).",
-      "",
-      "If you cannot ground a complete, id-accurate payload, OMIT the payload key entirely (still return the other keys).",
-    ].join("\n"),
-  );
+  const system = new SystemMessage(RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS);
   const human = new HumanMessage(
     truncateJson({
       selectedCandidate: input.selectedCandidate,
@@ -218,8 +235,28 @@ export async function createResearchDeepAgentDraft(
   );
 
   try {
-    const response = await model.invoke([system, human]);
-    const parsed = extractJson(contentText(response.content));
+    // Use generate() rather than invoke() so llmOutput (provider/model/usage/
+    // threadId, populated by codexSdk/withFallback) survives the call — the
+    // per-model-call audit event in nodes.ts needs it, and invoke() discards
+    // llmOutput, returning only the bare message.
+    const generated = await model.generate([[system, human]]);
+    const llmOutput = generated.llmOutput as
+      | Record<string, unknown>
+      | undefined;
+    const generation = generated.generations[0]?.[0] as
+      | ChatGeneration
+      | undefined;
+    const message = generation?.message;
+    if (!message) {
+      return {
+        draft: input.fallbackDraft,
+        provider,
+        usedFallback: true,
+        warning: "Deep-agent specialist returned no message.",
+        llmOutput,
+      };
+    }
+    const parsed = extractJson(contentText(message.content));
     const draft = sanitizeSpecialistDraft(parsed, input.fallbackDraft);
     if (!draft) {
       return {
@@ -227,9 +264,10 @@ export async function createResearchDeepAgentDraft(
         provider,
         usedFallback: true,
         warning: "Deep-agent specialist returned an unparsable draft.",
+        llmOutput,
       };
     }
-    return { draft, provider, usedFallback: false };
+    return { draft, provider, usedFallback: false, llmOutput };
   } catch (error) {
     return {
       draft: input.fallbackDraft,
