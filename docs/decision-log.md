@@ -415,6 +415,59 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 
 - Revisit zod-first if `convex-helpers` zod4 derivation produces validator shapes that diverge from hand-written equivalents, or if zod major-version churn outpaces convex-helpers support. Revisit the bun harness path if `convex-test` module-map maintenance becomes noisy — that is the signal to move harness tests to vitest.
 
+## 2026-07-07 — Correspondence Layer + Synthesis Rearchitecture (grilling session)
+
+**Decision**
+
+- The system's diagnosed failure is synthesis + agent productization, not capture: 1,580 extractions and a 4,000+-concept graph collapse to 19 hypotheses, 0 compositions, 0 agent drafts. Capture-side work is deprioritized in favor of making captured knowledge flow downstream.
+- **Correspondence** becomes a first-class entity: an asserted link between two concepts from *different domains*, identified by its concept pair (dedupe key), evidenced by claim citations, with lifecycle `conjectured → evidenced | contradicted → retired`. A conjecture resolves by found evidence or by experiment (a derived hypothesis). Same-domain links remain plain edges.
+- **Claims are promoted to first-class rows** (stable ids, `extractionId`/`sourceId` provenance), backfilled from the embedded arrays in 1,580 extractions. Correspondence evidence, embeddings, and cross-referencing all require claim addressability.
+- **Two doors, one gate:** agents write graph enrichment (correspondences, edges, concepts) directly, provenance-stamped, with no review queue. The human gate sits at the point of irreversibility: entry into the experimental pipeline (hypothesis/recipe drafts) via the existing agent-draft review door.
+- **Concept domains and mission relevance get backfilled** (LLM pass against the conceptDomains registry, multi-domain allowed, plus an on-mission/off-mission flag). Correspondence mining runs only over the on-mission, domain-classified core. The arXiv cs.SD/eess.AS feeds keep flowing; their concepts auto-flag off-mission. Dead feeds are removed.
+- **Candidate discovery = embeddings propose, symbolic features score, LLM judges.** Convex native vector indexes over claims and concept descriptions; candidates are pairs semantically near but structurally distant (different domains, no existing edge/co-mention); the LangGraph agent evaluates the shortlist and writes correspondences with rationale.
+- **Runtime seam:** single-step transforms with fixed inputs stay Convex generators (extraction, weekly brief); anything requiring search, traversal, or judgment over alternatives is a LangGraph graph producing drafts (correspondence mining, evidence hunting, hypothesis derivation from correspondences, source scouting). `hypotheses:generateFromExtraction` survives as a manual utility only.
+- **Split cadence with WIP limit:** graph enrichment runs continuously; hypothesis drafting is pulsed and capped (drafting refuses to run at ≥3 pending drafts). The weekly brief is the single delivery vehicle for review asks: pending drafts, correspondence movement, contradicted conjectures (auto-retired), scouted feed proposals, and recipes in_use awaiting listening sessions.
+- **Source Scout** is a new agent workload: need-directed discovery driven by graph gaps (under-represented domains, evidence-starved conjectures). Individual sources direct-ingest with provenance; new recurring feeds require human enablement.
+- **Composition end is in scope:** every recipe auto-generates its machine-derivable starter kit (`.scl`/`.kbm` from tuning parameters, seed MIDI, parameter card) this wave; self-rendering micro-studies are a bounded follow-on spike (headless synthesis; Ableton Extensions SDK noted as an assist path). Machine-rendered studies must be validated against at least one human rendering of the same recipe before their listening data is trusted.
+- Review UX in the web app is a first-class workstream: a draft review must be decidable in under two minutes, showing the correspondence (pair, evidence, domains), the derived hypothesis, and related prior hypotheses/failures.
+- Prior plan waves: the 2026-07-03 architecture deepening wave presumptively stands (nothing formally sacred); the unexecuted agent-v2 plans (production worker scheduling, self-improvement loop) are to be re-derived against this decision set.
+
+**Rationale**
+
+- The repo's goal is hypotheses that connect frequency across disciplines, but the synthesis unit was a single extraction — a one-document-in generator cannot produce cross-discipline output except by accident. The concept graph (2,000+ edges) was never consulted during synthesis.
+- Connections that live only in prompt context evaporate; products in this system are durable, reviewable rows. Making the connection itself the entity gives mining, evidence hunting, and experimentation one shared target.
+- Human attention is the system's scarcest resource; the dead draft queue (0 reviewed ever) proves that gating cheap reversible artifacts kills throughput. Attention is spent at irreversibility instead.
+- 99.4% of concepts were in domain "general" and the top concepts by mention were arXiv ML-engineering vocabulary — "cross-domain" was undefinable and an unfiltered miner would drown in junk pairs, recreating the distrust that parked agent v2.
+- Embedding similarity across domain boundaries finds exactly the correspondence shape ("two literatures describing the same thing"); symbolic co-mention penalization keeps already-known links from dominating; LLM-as-judge over a shortlist is the job LLMs are good at.
+- Micro-studies are by design one-variable, minimally artistic artifacts — the most mechanizable object in the ontology and the only thing between conjectures and embodied evidence.
+
+**Alternatives considered**
+
+- Richer RAG retrieval into the existing hypothesis generator, no new entity — rejected: connections wouldn't accumulate, dedupe, or feed the failure archive.
+- Claim citations as `(extractionId, claimIndex)` tuples — rejected: re-extraction silently corrupts every citation.
+- Gating mined correspondences through the draft queue — rejected on the evidence of that queue's history.
+- Moving all synthesis to LangGraph (or all to Convex) — rejected: per-source extraction gains nothing from graph orchestration; multi-step tool-using mining fights Convex action limits.
+- Continuous autonomous drafting — rejected: inventory rot erodes trust faster than throughput builds it.
+- Symbolic-only or LLM-browsing-only candidate discovery — rejected: co-mention finds the already-connected; context-window browsing rediscovers the obvious.
+
+**Downstream implications**
+
+- Schema work: `claims` table + backfill; `correspondences` table (pair-keyed, claim-cited, lifecycle status, agent provenance); domain/relevance fields populated on concepts; vector indexes on claims and concepts.
+- The extraction generator's write path changes (claims as rows, domains at creation) — coordinate with the 2026-07-03-03 LLM-module plan.
+- The agent workspace's research-pipeline graph is superseded by: miner graph, evidence-hunter graph, hypothesis-drafting graph (WIP-capped), scout graph. The worker/leasing and draft-promotion machinery from Gate G2 is reused as-is.
+- Weekly brief gains correspondence-movement, scouted-feed, and experiment-debt sections.
+- Recipes gain a starter-kit artifact contract; `scales/` generation becomes code.
+- The remaining agent-v2 plans (04 worker/scheduling, 05 self-improvement) must be re-derived; their assumption that draft *operationalization* was the bottleneck is overturned (see Reversals).
+
+**Revisit trigger**
+
+- If embedding-proposed candidates are mostly junk after the first mining wave, revisit discovery (tighten to evidenced concepts only, or re-weight symbolic features).
+- If the WIP-capped drafting loop starves (cap always full because review never happens even at N=3), the bottleneck is review UX or brief delivery — fix those before raising or lowering N.
+- If machine-rendered micro-studies fail validation against human renderings, self-rendering retreats to starter kits and the studio remains the render path.
+- If off-mission flagging misclassifies enough on-mission concepts to matter, revisit single-pass LLM classification (add human spot-check or registry-seeded few-shot).
+
 ## Reversals / What Changed Our Mind
 
-No strategic reversals recorded yet. Add entries here when a prior roadmap or doctrine assumption is intentionally changed rather than merely extended.
+## 2026-07-07 — Agent drafts are no longer the only door
+
+The 2026-07-01 doctrine held that the agent-draft review queue is the only door through which agent research enters the system. Overturned for graph enrichment: correspondences, edges, and concepts are agent-writable directly with provenance, because the review queue processed zero items in its lifetime while attention-cheap, reversible artifacts waited behind an attention-expensive gate. The draft door remains the only entrance to the experimental pipeline (hypotheses, recipes). Recorded with the 2026-07-07 correspondence-layer decision above.
