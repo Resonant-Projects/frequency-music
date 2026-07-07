@@ -208,6 +208,7 @@ export const appendAgentRunEvent = tool(
         "review_request",
         "status",
         "node",
+        "memory_recall",
         "model_call",
       ]),
       message: z.string().min(1),

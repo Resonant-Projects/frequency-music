@@ -1,6 +1,7 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import type { BaseMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import type { ChatGeneration } from "@langchain/core/outputs";
+import type { ChatGeneration, LLMResult } from "@langchain/core/outputs";
 import { z } from "zod";
 import {
   getConfiguredModelProvider,
@@ -218,6 +219,34 @@ export const RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS = [
   "If you cannot ground a complete, id-accurate payload, OMIT the payload key entirely (still return the other keys).",
 ].join("\n");
 
+/**
+ * Recover the model call's llmOutput from a real generate() result. LangChain
+ * only populates result.llmOutput via `_combineLLMOutput`, which none of our
+ * chat models (CodexSdkChatModel, FallbackChatModel, ChatAnthropic) implement;
+ * for a single generation it instead merges the per-call llmOutput into the
+ * message's response_metadata. Prefer that, fall back to result.llmOutput
+ * (mocked models in tests return it directly). ChatAnthropic reports token
+ * counts under `usage`/`tokenUsage` metadata keys — normalize onto `usage` so
+ * the model_call audit event carries usage regardless of answering provider.
+ */
+function extractLlmOutput(
+  generated: LLMResult,
+  message: BaseMessage | undefined,
+): Record<string, unknown> | undefined {
+  const metadata = message?.response_metadata as
+    | Record<string, unknown>
+    | undefined;
+  const base =
+    metadata && Object.keys(metadata).length > 0
+      ? metadata
+      : (generated.llmOutput as Record<string, unknown> | undefined);
+  if (!base) return undefined;
+  if (base.usage === undefined && base.tokenUsage !== undefined) {
+    return { ...base, usage: base.tokenUsage };
+  }
+  return base;
+}
+
 export async function createResearchDeepAgentDraft(
   input: ResearchDraftSpecialistInput,
   options: { model?: BaseChatModel } = {},
@@ -240,13 +269,11 @@ export async function createResearchDeepAgentDraft(
     // per-model-call audit event in nodes.ts needs it, and invoke() discards
     // llmOutput, returning only the bare message.
     const generated = await model.generate([[system, human]]);
-    const llmOutput = generated.llmOutput as
-      | Record<string, unknown>
-      | undefined;
     const generation = generated.generations[0]?.[0] as
       | ChatGeneration
       | undefined;
     const message = generation?.message;
+    const llmOutput = extractLlmOutput(generated, message);
     if (!message) {
       return {
         draft: input.fallbackDraft,
