@@ -10,7 +10,9 @@
     "build:web": "cd web && bun run build",
     "typecheck:web": "cd web && bunx tsc --noEmit",
     "eval:export": "bun scripts/export-eval-datasets.ts",
-    "convex:extract": "bunx convex run workflows:startBatchExtraction '{\"limit\": 3}'"
+    "convex:extract": "bunx convex run workflows:startBatchExtraction '{\"limit\": 3}'",
+    "env:check": "varlock load",
+    "env:check:all": "varlock load --show-all"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.34",
@@ -31,7 +33,9 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
     "@types/bun": "latest",
-    "oxlint": "^1.59.0"
+    "@varlock/1password-plugin": "^1.2.0",
+    "oxlint": "^1.59.0",
+    "varlock": "^1.6.1"
   },
   "peerDependencies": {
     "typescript": "^5.9.3"

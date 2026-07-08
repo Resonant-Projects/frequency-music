@@ -2,12 +2,17 @@
  * Ingest esoteric/complementary research sources.
  * Fetches full text via Jina Reader and stores in Convex.
  */
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import { readFileSync } from "fs";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
-const BYPASS = "freq-opus-extract-2026";
+const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
+if (!BYPASS) {
+  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
+  process.exit(1);
+}
 
 interface Source {
   title: string;

@@ -6,7 +6,12 @@
  */
 import { execSync } from "node:child_process";
 
-const BYPASS = process.env.AUTH_BYPASS_SECRET ?? "freq-opus-extract-2026";
+const BYPASS = process.env.AUTH_BYPASS_SECRET;
+if (!BYPASS) {
+  throw new Error(
+    "AUTH_BYPASS_SECRET is required for e2e cleanup — set it in web/.env.local or run via `varlock run`",
+  );
+}
 
 function convexRun(fn: string, args: Record<string, unknown>): string {
   try {

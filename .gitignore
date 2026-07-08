@@ -36,3 +36,8 @@ web/tests/e2e/.auth
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# varlock generated types (regenerated from .env.schema; do not commit)
+env.d.ts
+web/env.d.ts
+agent/env.d.ts
