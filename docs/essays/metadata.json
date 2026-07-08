@@ -1,4 +1,18 @@
 {
+  "the-context-arrives-first": {
+    "excerpt": "Context is upstream evidence: room, source, domain, and timing frames decide when a sound can become identity, space, gesture, or form.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "AI-music",
+      "composition",
+      "acoustics",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "03573c91c9e5b5f0f4f49e77248f282d5fb80220cb59294c488e16829cb84a81",
+    "generatedAt": "2026-07-08T19:01:00.000Z"
+  },
   "against-dominance": {
     "excerpt": "Three distinct strategies-subtraction, anchoring, and isolation-address how subordinate modalities can be heard in multimodal AI systems, each with direct parallels in musical composition and voice hierarchy.",
     "tags": [
