@@ -15,10 +15,13 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 
-const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
-if (!BYPASS) {
-  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
-  process.exit(1);
+function requireBypassSecret(): string {
+  const bypass = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
+  if (!bypass) {
+    console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
+    process.exit(1);
+  }
+  return bypass;
 }
 const CONVEX_URL =
   process.env.CONVEX_URL ||
@@ -133,6 +136,7 @@ async function smartFetch(url: string): Promise<FetchResult> {
 }
 
 async function batchUpdate() {
+  const bypass = requireBypassSecret();
   const client = new ConvexHttpClient(CONVEX_URL);
   const ingested = await client.query(api.sources.listByStatus, {
     status: "ingested" as any,
@@ -160,7 +164,7 @@ async function batchUpdate() {
         await client.mutation(api.sources.updateText, {
           id: src._id as Id<"sources">,
           rawText: result.text,
-          devBypassSecret: BYPASS,
+          devBypassSecret: bypass,
         });
         console.log(`  ✓ ${result.method}: ${result.chars} chars`);
         updated++;
@@ -197,11 +201,12 @@ async function main() {
 
   const sourceId = args[args.indexOf("--update") + 1];
   if (sourceId && result.chars > 200) {
+    const bypass = requireBypassSecret();
     const client = new ConvexHttpClient(CONVEX_URL);
     await client.mutation(api.sources.updateText, {
       id: sourceId as Id<"sources">,
       rawText: result.text,
-      devBypassSecret: BYPASS,
+      devBypassSecret: bypass,
     });
     console.error("✓ Updated in Convex");
   }

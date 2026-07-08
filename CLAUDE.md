@@ -148,7 +148,7 @@ bun run scripts/generate-experiment.ts <extractionId>
 ## Authentication
 
 All CLI mutations require auth bypass (Clerk integration). The bypass secret is
-managed by varlock + 1Password (`.env.schema` → `op://frequency-music/...`);
+managed by varlock + 1Password (`.env.schema` → `op://Country Manor Lab/...`);
 never paste a real value here. Scripts auto-load it via `import "varlock/auto-load"`.
 
 ```bash
