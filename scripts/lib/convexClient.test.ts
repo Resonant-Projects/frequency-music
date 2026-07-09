@@ -21,10 +21,8 @@ describe("getConvexUrl", () => {
   });
   afterEach(restore);
 
-  test("throws when neither env var is set", () => {
-    expect(() => getConvexUrl()).toThrow(
-      "Set CONVEX_SELF_HOSTED_URL or CONVEX_URL in .env.local",
-    );
+  test("uses the current HTTP deployment default when neither env var is set", () => {
+    expect(getConvexUrl()).toBe("http://convex-backend.paas.rproj.art");
   });
 
   test("uses CONVEX_URL when it is the only one set", () => {

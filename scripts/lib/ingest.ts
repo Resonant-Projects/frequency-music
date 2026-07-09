@@ -110,11 +110,15 @@ export function createSourceIngestor(
   const log = opts.log ?? console.log;
   const devBypassSecret = getDevBypassSecret();
 
-  async function alreadyIngested(dedupeKey: string): Promise<boolean> {
+  async function dedupeKeyExists(dedupeKey: string): Promise<boolean> {
     const existing = await client.query(api.sources.getByDedupeKey, {
       dedupeKey,
     });
     return existing !== null;
+  }
+
+  function alreadyIngested(item: SourceManifestItem): Promise<boolean> {
+    return dedupeKeyExists(manifestDedupeKey(item));
   }
 
   async function ingest(items: SourceManifestItem[]): Promise<IngestSummary> {
@@ -122,7 +126,7 @@ export function createSourceIngestor(
     for (const item of items) {
       try {
         const dedupeKey = manifestDedupeKey(item);
-        if (await alreadyIngested(dedupeKey)) {
+        if (await dedupeKeyExists(dedupeKey)) {
           log(`  ⏭ exists: ${item.title}`);
           summary.skipped++;
           continue;

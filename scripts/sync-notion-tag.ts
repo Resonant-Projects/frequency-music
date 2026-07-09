@@ -151,6 +151,18 @@ async function main() {
   let errors = 0;
   for (const noteId of noteIds) {
     try {
+      if (
+        await ingestor.alreadyIngested({
+          type: "notion",
+          title: noteId,
+          notionPageId: noteId,
+        })
+      ) {
+        console.log("   ⏭️ Already exists, skipping");
+        skipped++;
+        continue;
+      }
+
       const page = await getPageDetails(noteId);
       const title = extractTitle(page);
       const url = extractUrl(page);

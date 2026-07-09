@@ -3,11 +3,11 @@ import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 
 export function getConvexUrl(): string {
-  const url = process.env.CONVEX_SELF_HOSTED_URL ?? process.env.CONVEX_URL;
-  if (!url) {
-    throw new Error("Set CONVEX_SELF_HOSTED_URL or CONVEX_URL in .env.local");
-  }
-  return url;
+  return (
+    process.env.CONVEX_SELF_HOSTED_URL ??
+    process.env.CONVEX_URL ??
+    "http://convex-backend.paas.rproj.art"
+  );
 }
 
 export function getConvexClient(): ConvexHttpClient {

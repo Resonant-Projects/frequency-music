@@ -153,6 +153,18 @@ async function main() {
   let failed = 0;
   for (const article of relevantArticles) {
     console.log(`📄 ${article.title?.slice(0, 60)}...`);
+    if (
+      await ingestor.alreadyIngested({
+        type: "url",
+        title: article.title,
+        canonicalUrl: article.source_url,
+      })
+    ) {
+      console.log("   ⏭️ Already ingested");
+      skipped++;
+      continue;
+    }
+
     let rawText = article.content || article.summary || "";
     if (fetchFull && article.source_url && rawText.length < 2000) {
       console.log("   📥 Fetching full text...");
