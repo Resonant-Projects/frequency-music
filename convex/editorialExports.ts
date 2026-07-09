@@ -1,3 +1,6 @@
+// oxlint-disable-next-line typescript-eslint/triple-slash-reference -- The web tsconfig excludes Node types but includes this Convex Node action.
+/// <reference path="../node_modules/@types/node/index.d.ts" />
+
 "use node";
 
 import { createHash } from "node:crypto";

@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { v, type Infer } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -196,15 +196,7 @@ async function appendRunEvent(
   ctx: MutationCtx,
   args: {
     runId: Id<"agentRuns">;
-    kind:
-      | "tool_call"
-      | "decision"
-      | "draft_write"
-      | "error"
-      | "review_request"
-      | "status"
-      | "node"
-      | "model_call";
+    kind: Infer<typeof agentRunEventKindValidator>;
     message: string;
     payload?: unknown;
   },

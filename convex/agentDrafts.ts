@@ -130,7 +130,10 @@ export function buildAgentReviewDraftInsert(input: {
       });
     }
     assertWhyThisMatters(whyThisMatters, "payload.whyThisMatters");
-    return { ...row, payload: draft.payload };
+    return {
+      ...row,
+      payload: draft.payload as Doc<"agentReviewDrafts">["payload"],
+    };
   }
   return row;
 }

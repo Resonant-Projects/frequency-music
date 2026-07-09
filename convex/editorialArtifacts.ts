@@ -602,6 +602,9 @@ export async function buildThesisDraft(
         "A contradicted or explicitly selected hypothesis is required for what_changed_my_mind",
     });
   }
+  const primaryRef: ArtifactPrimaryRef = isChangedMind
+    ? { type: "hypothesis", id: contradictedHypothesis._id }
+    : { type: "thesis", id: thesis._id };
 
   return {
     title: isChangedMind
@@ -667,10 +670,7 @@ export async function buildThesisDraft(
         : publicEvidenceCards.length > 0
           ? "supported"
           : "speculative",
-    primaryRef: {
-      type: isChangedMind ? "hypothesis" : "thesis",
-      id: isChangedMind ? contradictedHypothesis._id : thesis._id,
-    },
+    primaryRef,
     linkedIds: {
       thesisIds: [thesis._id],
       hypothesisIds: uniqueDefined(hypotheses.map((row) => row._id)),
@@ -1308,7 +1308,15 @@ export const exportForAstro = action({
     exportedCount: v.number(),
     manifestPath: v.string(),
   }),
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    version: typeof PUBLIC_EDITORIAL_EXPORT_VERSION;
+    outputDir: string;
+    exportedCount: number;
+    manifestPath: string;
+  }> => {
     await requireAuth(ctx, args);
     return await ctx.runAction(
       internal.editorialExports.exportForAstroInternal,

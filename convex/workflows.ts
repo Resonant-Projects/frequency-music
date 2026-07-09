@@ -8,6 +8,7 @@
  */
 
 import { v } from "convex/values";
+import type { WorkflowId } from "@convex-dev/workflow";
 import type { Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
@@ -290,7 +291,7 @@ export const startBatchExtraction = mutation({
   returns: v.object({ workflowId: v.string() }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const workflowId = await workflowManager.start(
+    const workflowId: WorkflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchExtractionWorkflow,
       {
@@ -313,9 +314,9 @@ export const startSingleSourceExtraction = mutation({
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({ workflowId: v.string() }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ workflowId: string }> => {
     await requireAuth(ctx, args);
-    const workflowId = await workflowManager.start(
+    const workflowId: WorkflowId = await workflowManager.start(
       ctx,
       internal.workflows.extractSourceWorkflow,
       {
@@ -365,9 +366,9 @@ export const startBatchHypothesis = mutation({
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({ workflowId: v.string() }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ workflowId: string }> => {
     await requireAuth(ctx, args);
-    const workflowId = await workflowManager.start(
+    const workflowId: WorkflowId = await workflowManager.start(
       ctx,
       internal.workflows.batchHypothesisWorkflow,
       {
@@ -392,9 +393,9 @@ export const startFullPipeline = mutation({
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({ workflowId: v.string() }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ workflowId: string }> => {
     await requireAuth(ctx, args);
-    const workflowId = await workflowManager.start(
+    const workflowId: WorkflowId = await workflowManager.start(
       ctx,
       internal.workflows.fullPipelineWorkflow,
       {
@@ -415,6 +416,6 @@ export const getStatus = query({
   args: { workflowId: v.string() },
   returns: v.any(),
   handler: async (ctx, args) => {
-    return await workflowManager.status(ctx, args.workflowId);
+    return await workflowManager.status(ctx, args.workflowId as WorkflowId);
   },
 });

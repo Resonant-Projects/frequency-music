@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
@@ -178,7 +179,7 @@ export const create = mutation({
       status:
         createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
       visibility: "private",
-      createdBy: identity.subject,
+      createdBy: identity.subject as Id<"users">,
       createdAt: now,
       updatedAt: now,
     });
@@ -297,13 +298,24 @@ type ExternalUpsertArgs = {
   tags?: string[];
   topics?: string[];
   metadata?: unknown;
-  createdBy?: string;
+  createdBy?: Id<"users"> | "system";
+};
+
+type ExternalUpsertResult = {
+  id: Id<"sources">;
+  created: boolean;
+  contentChanged: boolean;
+};
+
+type QueuedSourceResult = ExternalUpsertResult & {
+  queued: boolean;
+  workflowId?: string;
 };
 
 async function upsertExternalSource(
   ctx: MutationCtx,
   args: ExternalUpsertArgs,
-) {
+): Promise<ExternalUpsertResult> {
   const now = Date.now();
 
   const existing = await ctx.db
@@ -459,7 +471,7 @@ export const createFromUrlInput = mutation({
       canonicalUrl: args.url,
       rawText: args.rawText,
       tags: args.tags,
-      createdBy: identity.subject,
+      createdBy: identity.subject as Id<"users">,
     });
   },
 });
@@ -498,7 +510,7 @@ export const createFromYouTubeInput = mutation({
       youtubeVideoId: videoId,
       transcript: args.transcript,
       tags: args.tags,
-      createdBy: identity.subject,
+      createdBy: identity.subject as Id<"users">,
     });
   },
 });
@@ -519,21 +531,24 @@ export const createFromUrlAndQueue = action({
     queued: v.boolean(),
     workflowId: v.optional(v.string()),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<QueuedSourceResult> => {
     await requireAuth(ctx, args);
-    const result = await ctx.runMutation(api.sources.createFromUrlInput, {
+    const result: ExternalUpsertResult = await ctx.runMutation(
+      api.sources.createFromUrlInput,
+      {
       url: args.url,
       title: args.title,
       rawText: args.rawText,
       tags: args.tags,
       devBypassSecret: args.devBypassSecret,
-    });
+      },
+    );
     const hasReadyContent = Boolean(args.rawText?.trim());
     if (!hasReadyContent || (!result.created && !result.contentChanged)) {
       return { ...result, queued: false };
     }
 
-    const workflow = await ctx.runMutation(
+    const workflow: { workflowId: string } = await ctx.runMutation(
       api.workflows.startSingleSourceExtraction,
       {
         sourceId: result.id,
@@ -566,21 +581,24 @@ export const createFromYouTubeAndQueue = action({
     queued: v.boolean(),
     workflowId: v.optional(v.string()),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<QueuedSourceResult> => {
     await requireAuth(ctx, args);
-    const result = await ctx.runMutation(api.sources.createFromYouTubeInput, {
+    const result: ExternalUpsertResult = await ctx.runMutation(
+      api.sources.createFromYouTubeInput,
+      {
       url: args.url,
       title: args.title,
       transcript: args.transcript,
       tags: args.tags,
       devBypassSecret: args.devBypassSecret,
-    });
+      },
+    );
     const hasReadyContent = Boolean(args.transcript?.trim());
     if (!hasReadyContent || (!result.created && !result.contentChanged)) {
       return { ...result, queued: false };
     }
 
-    const workflow = await ctx.runMutation(
+    const workflow: { workflowId: string } = await ctx.runMutation(
       api.workflows.startSingleSourceExtraction,
       {
         sourceId: result.id,
