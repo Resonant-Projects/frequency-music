@@ -3,7 +3,12 @@ import { api } from "./_generated/api";
 import type { MutationCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
+import {
+  computeCanonicalDedupeKey,
+  extractYouTubeVideoId,
+  generateArchivedDedupeKey,
+  generateDedupeKey,
+} from "./sourceUtils";
 import { sourceReturnValidator } from "./validators";
 
 // Reusable validator for source status
@@ -626,6 +631,124 @@ export const archive = mutation({
       updatedAt: Date.now(),
     });
     return null;
+  },
+});
+
+/**
+ * Migration: recompute canonical dedupeKeys (see docs/plans/2026-07-03-01-arch-dedupe-contract.md).
+ * Batched via pagination cursor. apply:false reports without writing.
+ * Collision rule: older row keeps the key; newer row is archived as duplicate.
+ */
+export const recomputeDedupeKeys = mutation({
+  args: {
+    cursor: v.union(v.string(), v.null()),
+    batchSize: v.optional(v.number()),
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    processed: v.number(),
+    changed: v.number(),
+    collisionsArchived: v.number(),
+    skipped: v.number(),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+    planned: v.array(
+      v.object({
+        id: v.string(),
+        from: v.string(),
+        to: v.string(),
+        collidesWith: v.union(v.string(), v.null()),
+      }),
+    ),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const batchSize = Math.min(Math.max(args.batchSize ?? 25, 1), 100);
+    const page = await ctx.db
+      .query("sources")
+      .paginate({ numItems: batchSize, cursor: args.cursor });
+
+    let changed = 0;
+    let collisionsArchived = 0;
+    let skipped = 0;
+    const planned: Array<{
+      id: string;
+      from: string;
+      to: string;
+      collidesWith: string | null;
+    }> = [];
+    const now = Date.now();
+
+    for (const source of page.page) {
+      if (source.status === "archived") {
+        skipped++;
+        continue;
+      }
+
+      const canonical = computeCanonicalDedupeKey(source);
+      if (canonical === null || canonical === source.dedupeKey) {
+        if (canonical === null) skipped++;
+        continue;
+      }
+
+      const holder = await ctx.db
+        .query("sources")
+        .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", canonical))
+        .first();
+      const collidesWith =
+        holder && holder._id !== source._id ? holder._id : null;
+      planned.push({
+        id: source._id,
+        from: source.dedupeKey,
+        to: canonical,
+        collidesWith,
+      });
+
+      if (!args.apply) continue;
+
+      if (collidesWith === null) {
+        await ctx.db.patch("sources", source._id, {
+          dedupeKey: canonical,
+          updatedAt: now,
+        });
+        changed++;
+      } else if (holder && holder.createdAt <= source.createdAt) {
+        // Holder is older: archive this row as the duplicate.
+        await ctx.db.patch("sources", source._id, {
+          status: "archived",
+          blockedReason: "duplicate",
+          blockedDetails: `dedupe-migration: duplicate of ${holder._id}`,
+          updatedAt: now,
+        });
+        collisionsArchived++;
+      } else if (holder) {
+        // This row is older: it should own the canonical key. Archive the newer holder first.
+        await ctx.db.patch("sources", holder._id, {
+          status: "archived",
+          blockedReason: "duplicate",
+          blockedDetails: `dedupe-migration: duplicate of ${source._id}`,
+          dedupeKey: generateArchivedDedupeKey(holder.dedupeKey, holder._id),
+          updatedAt: now,
+        });
+        await ctx.db.patch("sources", source._id, {
+          dedupeKey: canonical,
+          updatedAt: now,
+        });
+        changed++;
+        collisionsArchived++;
+      }
+    }
+
+    return {
+      processed: page.page.length,
+      changed,
+      collisionsArchived,
+      skipped,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+      planned: planned.slice(0, 50),
+    };
   },
 });
 
