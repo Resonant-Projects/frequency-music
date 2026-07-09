@@ -27,12 +27,36 @@
     "title": "Pre-Audible Arrival Study",
     "bodyMd": "Create two 60-second versions of the same transition. Version A is the control: at 0:36, switch motif, harmony, brightness, sub layer, and spatial width together. Version B is the pre-audible version: keep the audible motif unchanged until 0:36, but begin moving support dimensions at 0:30. Use a quiet 18–20 Hz sine or filtered sub-energy only if the playback system can reproduce it safely at low level; otherwise use a clearly audible but low-salience 40 Hz substitute, because the S4 evidence is speculative and should be treated carefully [S4]. From 0:30–0:36, sweep a narrow noise or sine partial upward like a chirp carrier [S5], slide one inner voice along a local Tonnetz-like adjacency while holding the outer voices [S2], and drift F2/brightness or formant filtering independently from pitch [S3]. At 0:36, let the foreground motif arrive. The structure borrows the path-dependence idea from metastable phase formation [S1] and the 600 ms streaming chunk as an annotation grid: make ten 600 ms ticks during the six-second preparation and change one small carrier value per tick [S6]. Compare the two renders blind. The pre-audible version should feel more like crystallization than an edit if the hypothesis holds.",
     "parameters": [
-      { "type": "duration", "value": "60 seconds", "details": { "totalSecs": 60 } },
-      { "type": "duration", "value": "6 second carrier preparation", "details": { "startSecs": 30, "arrivalSecs": 36 } },
-      { "type": "duration", "value": "600 ms automation ticks", "details": { "chunkMs": 600, "tickCount": 10 } },
-      { "type": "frequency", "value": "18–20 Hz optional infrasonic cue or 40 Hz safe substitute", "details": { "infrasoundHz": [18, 20], "substituteHz": 40 } },
-      { "type": "measurement", "value": "F2/formant or brightness drift", "details": { "axis": "F2 / spectral brightness" } },
-      { "type": "measurement", "value": "chirp-like carrier sweep", "details": { "gesture": "narrowband upward sweep" } }
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": { "totalSecs": 60 }
+      },
+      {
+        "type": "duration",
+        "value": "6 second carrier preparation",
+        "details": { "startSecs": 30, "arrivalSecs": 36 }
+      },
+      {
+        "type": "duration",
+        "value": "600 ms automation ticks",
+        "details": { "chunkMs": 600, "tickCount": 10 }
+      },
+      {
+        "type": "frequency",
+        "value": "18–20 Hz optional infrasonic cue or 40 Hz safe substitute",
+        "details": { "infrasoundHz": [18, 20], "substituteHz": 40 }
+      },
+      {
+        "type": "measurement",
+        "value": "F2/formant or brightness drift",
+        "details": { "axis": "F2 / spectral brightness" }
+      },
+      {
+        "type": "measurement",
+        "value": "chirp-like carrier sweep",
+        "details": { "gesture": "narrowband upward sweep" }
+      }
     ],
     "dawChecklist": [
       "Build a 60-second loop with a stable motif from 0:00–0:36 and an arrival state from 0:36–1:00.",

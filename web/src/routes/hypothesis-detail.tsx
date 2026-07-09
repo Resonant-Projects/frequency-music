@@ -47,7 +47,14 @@ const sourceCell = css({
   p: "3",
 });
 
-const STATUSES = ["draft", "queued", "active", "evaluated", "revised", "retired"] as const;
+const STATUSES = [
+  "draft",
+  "queued",
+  "active",
+  "evaluated",
+  "revised",
+  "retired",
+] as const;
 
 const RESOLUTIONS = ["supported", "inconclusive", "contradicted"] as const;
 type Status = (typeof STATUSES)[number];
@@ -102,7 +109,11 @@ export function HypothesisDetailPage() {
     try {
       await setStatus(status);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Failed to update hypothesis status.");
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Failed to update hypothesis status.",
+      );
     } finally {
       setSaving(false);
     }
@@ -114,7 +125,11 @@ export function HypothesisDetailPage() {
     try {
       await setResolution(resolution);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Failed to update hypothesis resolution.");
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Failed to update hypothesis resolution.",
+      );
     } finally {
       setSaving(false);
     }
@@ -131,7 +146,11 @@ export function HypothesisDetailPage() {
       });
       setNotice("Meaning metadata updated.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Failed to update meaning metadata.");
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Failed to update meaning metadata.",
+      );
     } finally {
       setSaving(false);
     }
@@ -167,13 +186,19 @@ export function HypothesisDetailPage() {
             >
               <UIBadge tone="gold">{h().status}</UIBadge>
               <UIBadge tone="violet">{h().sourceIds.length} citations</UIBadge>
-              <Show when={h().resolution}>{(res) => <UIBadge tone="cream">{res()}</UIBadge>}</Show>
+              <Show when={h().resolution}>
+                {(res) => <UIBadge tone="cream">{res()}</UIBadge>}
+              </Show>
             </div>
 
             {/* Title */}
             <h1 class={detailTitleClass}>{h().title}</h1>
             <Show when={notice()}>
-              {(message) => <p class={css({ color: "zodiac.cream", mt: "2" })}>{message()}</p>}
+              {(message) => (
+                <p class={css({ color: "zodiac.cream", mt: "2" })}>
+                  {message()}
+                </p>
+              )}
             </Show>
 
             {/* Question */}
@@ -235,7 +260,9 @@ export function HypothesisDetailPage() {
                   pl: "5",
                 })}
               >
-                <For each={h().openQuestions}>{(q) => <li class={css({ py: "1" })}>{q}</li>}</For>
+                <For each={h().openQuestions}>
+                  {(q) => <li class={css({ py: "1" })}>{q}</li>}
+                </For>
               </ul>
             </Show>
 
@@ -304,7 +331,9 @@ export function HypothesisDetailPage() {
                 <UISelect
                   id="hyp-detail-thesis"
                   value={thesisIdDraft()}
-                  onChange={(event) => setThesisIdDraft(event.currentTarget.value)}
+                  onChange={(event) =>
+                    setThesisIdDraft(event.currentTarget.value)
+                  }
                 >
                   <option value="">No thesis yet</option>
                   <For each={theses() ?? []}>
@@ -323,7 +352,9 @@ export function HypothesisDetailPage() {
                 <UITextarea
                   id="hyp-detail-why"
                   value={whyThisMattersDraft()}
-                  onInput={(event) => setWhyThisMattersDraft(event.currentTarget.value)}
+                  onInput={(event) =>
+                    setWhyThisMattersDraft(event.currentTarget.value)
+                  }
                 />
               </div>
               <div class={css({ display: "flex", justifyContent: "flex-end" })}>

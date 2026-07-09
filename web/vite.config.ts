@@ -7,7 +7,14 @@ export default defineConfig({
   plugins: [solid()],
   appType: "spa",
   optimizeDeps: {
-    include: ["debug", "extend", "micromark", "remark-parse", "remark-rehype", "unified"],
+    include: [
+      "debug",
+      "extend",
+      "micromark",
+      "remark-parse",
+      "remark-rehype",
+      "unified",
+    ],
   },
   server: {
     port: 4173,

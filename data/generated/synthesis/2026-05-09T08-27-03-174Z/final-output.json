@@ -28,10 +28,31 @@
     "bodyMd": "Create a two-bar call-and-response phrase and keep its MIDI notes, tempo, velocities, and base harmony unchanged across all renders. Version A uses a graph carrier: voice the answer by nearest harmonic adjacency inspired by Tonnetz traversal [S1]. Version B uses a silence carrier: render three response gaps of 0 ms, 300 ms, and 600 ms, treating silence as the medium that carries dialogue [S2][S5]. Version C uses a chirp carrier: route the answer through a rising bandpass or pitch-swept layer, borrowing the idea of frequency-sweeping transmission from chirp spread spectrum [S3]. Version D uses a threshold carrier: add a very low, safe-level sine or filtered noise bed that is felt more as pressure/weight than as foreground pitch, while avoiding unsupported claims about actual infrasound effects [S4]. Compare whether the same phrase is heard as more answering, interrupting, suspended, directional, or bodily weighted. Disconfirming evidence: if blind notes show no consistent difference in perceived agency, tension, or direction across carrier variants, then the carrier manipulation did not function as a salient compositional parameter in this setup.",
     "parameters": [
       { "type": "tempo", "value": "120 BPM", "details": { "bpm": 120 } },
-      { "type": "duration", "value": "2-bar phrase, 60-second test loop", "details": { "phraseBars": 2, "durationSecs": 60 } },
-      { "type": "duration", "value": "response gaps: 0 ms, 300 ms, 600 ms", "details": { "gapMs": [0, 300, 600] } },
-      { "type": "frequency", "value": "low support bed: 30-45 Hz if playback permits", "details": { "rangeHz": [30, 45], "safety": "keep below foreground and monitor at safe levels" } },
-      { "type": "timbralSource", "value": "rising bandpass or pitch-swept carrier layer", "details": { "automation": "sweep cutoff or pitch upward during answer" } }
+      {
+        "type": "duration",
+        "value": "2-bar phrase, 60-second test loop",
+        "details": { "phraseBars": 2, "durationSecs": 60 }
+      },
+      {
+        "type": "duration",
+        "value": "response gaps: 0 ms, 300 ms, 600 ms",
+        "details": { "gapMs": [0, 300, 600] }
+      },
+      {
+        "type": "frequency",
+        "value": "low support bed: 30-45 Hz if playback permits",
+        "details": {
+          "rangeHz": [30, 45],
+          "safety": "keep below foreground and monitor at safe levels"
+        }
+      },
+      {
+        "type": "timbralSource",
+        "value": "rising bandpass or pitch-swept carrier layer",
+        "details": {
+          "automation": "sweep cutoff or pitch upward during answer"
+        }
+      }
     ],
     "dawChecklist": [
       "Write a two-bar MIDI call-and-response phrase at 120 BPM.",

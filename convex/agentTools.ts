@@ -48,7 +48,9 @@ const createAgentReviewDraftRef = makeFunctionReference<"mutation">(
 const claimNextPendingRef = makeFunctionReference<"mutation">(
   "agentRuns:claimNextPending",
 );
-const getForWorkerRef = makeFunctionReference<"query">("agentRuns:getForWorker");
+const getForWorkerRef = makeFunctionReference<"query">(
+  "agentRuns:getForWorker",
+);
 const selfImprovementStatsRef = makeFunctionReference<"query">(
   "agentTools:selfImprovementStats",
 );
@@ -399,9 +401,7 @@ export function summarizeSelfImprovementWindow(input: {
   ).length;
 
   const draftsInWindow = decidedDrafts.filter((d) => inWindow(d.updatedAt));
-  const approved = draftsInWindow.filter(
-    (d) => d.status === "approved",
-  ).length;
+  const approved = draftsInWindow.filter((d) => d.status === "approved").length;
   const rejectedDrafts = draftsInWindow.filter((d) => d.status === "rejected");
   const rejectionNotes = rejectedDrafts
     .map((d) => d.decisionNote?.trim())
@@ -458,16 +458,12 @@ export const selfImprovementStats = query({
         ctx.db.query("editCaptures").order("desc").take(RECENT_ROWS_LIMIT),
         ctx.db
           .query("agentReviewDrafts")
-          .withIndex("by_status_updatedAt", (q) =>
-            q.eq("status", "approved"),
-          )
+          .withIndex("by_status_updatedAt", (q) => q.eq("status", "approved"))
           .order("desc")
           .take(RECENT_ROWS_LIMIT),
         ctx.db
           .query("agentReviewDrafts")
-          .withIndex("by_status_updatedAt", (q) =>
-            q.eq("status", "rejected"),
-          )
+          .withIndex("by_status_updatedAt", (q) => q.eq("status", "rejected"))
           .order("desc")
           .take(RECENT_ROWS_LIMIT),
         ctx.db.query("agentRunEvents").order("desc").take(RECENT_ROWS_LIMIT),

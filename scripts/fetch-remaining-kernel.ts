@@ -36,7 +36,9 @@ async function main() {
   const kernel = new Kernel();
 
   for (const src of SOURCES) {
-    console.log(`\n[${SOURCES.indexOf(src) + 1}/${SOURCES.length}] ${src.title}`);
+    console.log(
+      `\n[${SOURCES.indexOf(src) + 1}/${SOURCES.length}] ${src.title}`,
+    );
     let sessionId = "";
     try {
       const browser = await kernel.browsers.create({

@@ -38,15 +38,23 @@ export function ThesesPage() {
     limit: 100,
   }));
   const createThesis = createMutation(convexApi.theses.create);
-  const thesisRows = createMemo<Doc<"theses">[]>(() => (theses.data() ?? []) as Doc<"theses">[]);
+  const thesisRows = createMemo<Doc<"theses">[]>(
+    () => (theses.data() ?? []) as Doc<"theses">[],
+  );
   const [title, setTitle] = createSignal("");
   const [statement, setStatement] = createSignal("");
   const [descriptionMd, setDescriptionMd] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
 
-  const active = createMemo(() => thesisRows().filter((thesis) => thesis.status === "active"));
-  const paused = createMemo(() => thesisRows().filter((thesis) => thesis.status === "paused"));
-  const retired = createMemo(() => thesisRows().filter((thesis) => thesis.status === "retired"));
+  const active = createMemo(() =>
+    thesisRows().filter((thesis) => thesis.status === "active"),
+  );
+  const paused = createMemo(() =>
+    thesisRows().filter((thesis) => thesis.status === "paused"),
+  );
+  const retired = createMemo(() =>
+    thesisRows().filter((thesis) => thesis.status === "retired"),
+  );
 
   function renderGroup(label: string, rows: Doc<"theses">[]) {
     return (
@@ -117,9 +125,11 @@ export function ThesesPage() {
     <section class={pageClass}>
       <UICard as="form" onSubmit={handleCreate as any}>
         <h1 class={pageTitleClass}>Theses</h1>
-        <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
-          Theses are the lightweight organizing questions that accumulate hypotheses, recipes,
-          compositions, and reversals over time.
+        <p
+          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
+        >
+          Theses are the lightweight organizing questions that accumulate
+          hypotheses, recipes, compositions, and reversals over time.
         </p>
 
         <label class={fieldLabelClass} for="thesis-title">
@@ -163,7 +173,9 @@ export function ThesesPage() {
           })}
         >
           <Show when={notice()}>
-            {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
+            {(message) => (
+              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+            )}
           </Show>
           <UIButton type="submit" variant="outline">
             Create Thesis

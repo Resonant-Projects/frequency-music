@@ -8,7 +8,10 @@ import {
 } from "@tanstack/solid-router";
 import { type Component, createEffect, createSignal, lazy } from "solid-js";
 import { UIBadge, UIButton, UICard } from "./components/ui";
-import { buildHostedSignInUrl, useClerkAuthSnapshot } from "./integrations/clerk";
+import {
+  buildHostedSignInUrl,
+  useClerkAuthSnapshot,
+} from "./integrations/clerk";
 import { AdminPage } from "./routes/admin";
 import { AgentDraftsPage } from "./routes/agent-drafts";
 import { AgentRunDetailPage } from "./routes/agent-run-detail";
@@ -94,7 +97,11 @@ const AppShell: Component = () => {
         >
           ≡
         </button>
-        <nav id="app-nav-menu" class="app-nav" classList={{ "is-open": menuOpen() }}>
+        <nav
+          id="app-nav-menu"
+          class="app-nav"
+          classList={{ "is-open": menuOpen() }}
+        >
           {appLinks.map((link) => (
             <Link
               to={link.to}
@@ -135,7 +142,8 @@ const RootLayout: Component = () => {
           <UIBadge tone="violet">Authentication</UIBadge>
           <h1>Redirecting to sign in...</h1>
           <p>
-            This app requires authentication. You&apos;ll be redirected to login.resonantrhythm.com.
+            This app requires authentication. You&apos;ll be redirected to
+            login.resonantrhythm.com.
           </p>
         </UICard>
       </div>
@@ -145,7 +153,10 @@ const RootLayout: Component = () => {
   return <AppShell />;
 };
 
-const _PlaceholderPage = (props: { title: string; body: string }): Component => {
+const _PlaceholderPage = (props: {
+  title: string;
+  body: string;
+}): Component => {
   const Page: Component = () => (
     <div class="route-placeholder">
       <UICard class="route-placeholder-card">

@@ -128,31 +128,51 @@
         "name": "12-EDO",
         "step_cents": 100,
         "description": "Standard Western tuning",
-        "features": ["universal transposition", "approximates 3/2 well", "poor 5/4"]
+        "features": [
+          "universal transposition",
+          "approximates 3/2 well",
+          "poor 5/4"
+        ]
       },
       {
         "name": "19-EDO",
         "step_cents": 63.16,
         "description": "Good meantone approximation",
-        "features": ["better 5/4 than 12", "distinct enharmonics", "meantone-like"]
+        "features": [
+          "better 5/4 than 12",
+          "distinct enharmonics",
+          "meantone-like"
+        ]
       },
       {
         "name": "22-EDO",
         "step_cents": 54.55,
         "description": "Superpyth temperament support",
-        "features": ["good 7-limit", "exotic intervals", "two sizes of whole tone"]
+        "features": [
+          "good 7-limit",
+          "exotic intervals",
+          "two sizes of whole tone"
+        ]
       },
       {
         "name": "24-EDO",
         "step_cents": 50,
         "description": "Quarter-tone scale",
-        "features": ["includes 12-EDO", "neutral intervals", "Arabic maqam approximation"]
+        "features": [
+          "includes 12-EDO",
+          "neutral intervals",
+          "Arabic maqam approximation"
+        ]
       },
       {
         "name": "31-EDO",
         "step_cents": 38.71,
         "description": "Extended meantone",
-        "features": ["excellent 5-limit", "good 7-limit", "many distinct intervals"]
+        "features": [
+          "excellent 5-limit",
+          "good 7-limit",
+          "many distinct intervals"
+        ]
       },
       {
         "name": "41-EDO",
@@ -170,7 +190,11 @@
         "name": "72-EDO",
         "step_cents": 16.67,
         "description": "High-precision temperament",
-        "features": ["includes 12, 24, 36", "excellent all limits", "ekmelic system"]
+        "features": [
+          "includes 12, 24, 36",
+          "excellent all limits",
+          "ekmelic system"
+        ]
       }
     ],
     "just_intonation": [

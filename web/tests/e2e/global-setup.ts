@@ -1,7 +1,12 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium, type FullConfig, type Locator, type Page } from "@playwright/test";
+import {
+  chromium,
+  type FullConfig,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
@@ -26,7 +31,10 @@ function getEnv(key: string): string | undefined {
   );
 }
 
-async function findVisibleLocator(page: Page, locators: Locator[]): Promise<Locator> {
+async function findVisibleLocator(
+  page: Page,
+  locators: Locator[],
+): Promise<Locator> {
   for (const locator of locators) {
     if (
       await locator

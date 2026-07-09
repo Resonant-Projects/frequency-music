@@ -5,12 +5,7 @@ import { makeJudgeEvaluator } from "./evaluators/judge";
 
 // Required sections a well-formed weekly brief body must surface. schema-lite:
 // we only check that the generated bodyMd names each section, not its quality.
-const REQUIRED_SECTIONS = [
-  "thesis",
-  "recommend",
-  "studio",
-  "todo",
-];
+const REQUIRED_SECTIONS = ["thesis", "recommend", "studio", "todo"];
 
 /** schema-lite: bodyMd exists and mentions each required section heading. */
 const briefSchemaLite = (run: Run, _example?: Example) => {
@@ -43,7 +38,9 @@ const thesisReferenceCheck = (run: Run, example?: Example) => {
     };
   }
   const referenced = theses.some((t) => {
-    const title = String(t.title ?? t.statement ?? "").toLowerCase().trim();
+    const title = String(t.title ?? t.statement ?? "")
+      .toLowerCase()
+      .trim();
     return title.length >= 4 && body.includes(title);
   });
   return {
@@ -53,7 +50,8 @@ const thesisReferenceCheck = (run: Run, example?: Example) => {
   };
 };
 
-const CONTRADICTION_RE = /(contradiction|low-yield|low yield|weak path|weak-path|failure|dead end|dead-end)/i;
+const CONTRADICTION_RE =
+  /(contradiction|low-yield|low yield|weak path|weak-path|failure|dead end|dead-end)/i;
 
 /** contradiction-mention: brief surfaces a contradiction / low-yield / weak path. */
 const contradictionMentionCheck = (run: Run, _example?: Example) => {

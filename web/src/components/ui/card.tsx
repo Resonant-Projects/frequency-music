@@ -22,5 +22,11 @@ type UICardProps = JSX.HTMLAttributes<HTMLElement> & {
 
 export function UICard(props: UICardProps) {
   const { as = "section", class: className, glass, ...rest } = props;
-  return <Dynamic component={as} {...rest} class={cx(cardClass, glass && glassClass, className)} />;
+  return (
+    <Dynamic
+      component={as}
+      {...rest}
+      class={cx(cardClass, glass && glassClass, className)}
+    />
+  );
 }

@@ -26,7 +26,9 @@ function getNotionKey(): string {
   try {
     return readFileSync(`${homedir()}/.config/notion/api_key`, "utf-8").trim();
   } catch {
-    throw new Error("Notion API key not found. Set up ~/.config/notion/api_key");
+    throw new Error(
+      "Notion API key not found. Set up ~/.config/notion/api_key",
+    );
   }
 }
 
@@ -147,8 +149,14 @@ async function main() {
   let tagId = FREQUENCY_RESEARCH_TAG_ID;
   if (tagIdx !== -1) {
     const candidate = args[tagIdx + 1];
-    if (!candidate || candidate.trim().length === 0 || candidate.startsWith("--")) {
-      throw new Error("Missing value for --tag-id. Usage: --tag-id <notion-tag-id>");
+    if (
+      !candidate ||
+      candidate.trim().length === 0 ||
+      candidate.startsWith("--")
+    ) {
+      throw new Error(
+        "Missing value for --tag-id. Usage: --tag-id <notion-tag-id>",
+      );
     }
     tagId = candidate;
   }

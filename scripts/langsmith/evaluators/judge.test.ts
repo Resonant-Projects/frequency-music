@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  aggregateJudgeScore,
-  parseJudgeResponse,
-} from "./judge";
+import { aggregateJudgeScore, parseJudgeResponse } from "./judge";
 
 describe("parseJudgeResponse", () => {
   test("parses a raw JSON object with all four dimensions", () => {

@@ -1,7 +1,12 @@
 import { Link } from "@tanstack/solid-router";
 import { For, onMount } from "solid-js";
 import { css } from "../../styled-system/css";
-import { UIBadge, UICard, pageClass, sectionTitleClass } from "../components/ui";
+import {
+  UIBadge,
+  UICard,
+  pageClass,
+  sectionTitleClass,
+} from "../components/ui";
 import { essayLibrary } from "../lib/essays";
 
 const heroCard = css({
@@ -16,7 +21,8 @@ const heroCard = css({
     width: "18rem",
     height: "18rem",
     borderRadius: "full",
-    background: "radial-gradient(circle, rgba(200, 168, 75, 0.22), rgba(200, 168, 75, 0) 68%)",
+    background:
+      "radial-gradient(circle, rgba(200, 168, 75, 0.22), rgba(200, 168, 75, 0) 68%)",
     filter: "blur(14px)",
     pointerEvents: "none",
   },
@@ -139,7 +145,8 @@ const essayCard = css({
   textDecoration: "none",
   minHeight: { base: "auto", md: "13.5rem" },
   bg: "rgba(13, 6, 32, 0.92)",
-  transition: "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+  transition:
+    "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
   backdropFilter: "blur(8px)",
   borderColor: "rgba(200, 168, 75, 0.22)",
   borderRadius: "l3",
@@ -202,15 +209,18 @@ export function EssaysPage() {
             <div class={eyebrow}>Written Essays</div>
             <h1 class={heroTitle}>Essays</h1>
             <p class={heroBody}>
-              These essays take the project&apos;s raw material, papers, and notes and turn them
-              into arguments worth reading end to end. The latest pieces lean into mathematical
-              music theory, tuning, rhythm, AI, and the physical structure of sound.
+              These essays take the project&apos;s raw material, papers, and
+              notes and turn them into arguments worth reading end to end. The
+              latest pieces lean into mathematical music theory, tuning, rhythm,
+              AI, and the physical structure of sound.
             </p>
 
             <div class={statRow}>
               <UIBadge tone="gold">{essayLibrary.length} essays</UIBadge>
               <UIBadge tone="cream">
-                {essayLibrary.reduce((sum, essay) => sum + essay.wordCount, 0).toLocaleString()}{" "}
+                {essayLibrary
+                  .reduce((sum, essay) => sum + essay.wordCount, 0)
+                  .toLocaleString()}{" "}
                 words
               </UIBadge>
               <UIBadge tone="violet">Frequency Music archive</UIBadge>
@@ -226,8 +236,12 @@ export function EssaysPage() {
               >
                 <div class={eyebrow}>Latest dispatch</div>
                 <div class={essayMeta}>
-                  <UIBadge tone="gold">{featured.dateLabel ?? "Research essay"}</UIBadge>
-                  <UIBadge tone="cream">{featured.readTimeMinutes} min read</UIBadge>
+                  <UIBadge tone="gold">
+                    {featured.dateLabel ?? "Research essay"}
+                  </UIBadge>
+                  <UIBadge tone="cream">
+                    {featured.readTimeMinutes} min read
+                  </UIBadge>
                 </div>
                 <h2 class={featuredTitle}>{featured.title}</h2>
                 <p class={featuredExcerpt}>{featured.excerpt}</p>
@@ -242,9 +256,15 @@ export function EssaysPage() {
         <div class={archiveGrid}>
           <For each={archive.length > 0 ? archive : featured ? [featured] : []}>
             {(essay) => (
-              <Link to="/essays/$essaySlug" params={{ essaySlug: essay.slug }} class={essayCard}>
+              <Link
+                to="/essays/$essaySlug"
+                params={{ essaySlug: essay.slug }}
+                class={essayCard}
+              >
                 <div class={essayMeta}>
-                  <UIBadge tone="gold">{essay.dateLabel ?? "Research essay"}</UIBadge>
+                  <UIBadge tone="gold">
+                    {essay.dateLabel ?? "Research essay"}
+                  </UIBadge>
                   <UIBadge tone="cream">{essay.readTimeMinutes} min</UIBadge>
                 </div>
                 <h2 class={essayTitle}>{essay.title}</h2>

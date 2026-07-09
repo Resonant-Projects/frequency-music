@@ -39,7 +39,9 @@ async function getPlaylistVideos(playlistUrl: string): Promise<Video[]> {
   ]);
   const exitCode = await proc.exited;
   if (exitCode !== 0) {
-    throw new Error(`yt-dlp failed with exit code ${exitCode}\n${stderr}\n${output}`);
+    throw new Error(
+      `yt-dlp failed with exit code ${exitCode}\n${stderr}\n${output}`,
+    );
   }
 
   return output

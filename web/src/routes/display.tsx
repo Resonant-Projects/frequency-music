@@ -67,9 +67,12 @@ export function DisplayPage() {
     limit: DISPLAY_QUEUE_LIMIT,
   }));
   const counts = createQuery(convexApi.inbox.counts);
-  const editorialSignals = createQuery(convexApi.dashboard.editorialSignals, () => ({
-    limit: 6,
-  }));
+  const editorialSignals = createQuery(
+    convexApi.dashboard.editorialSignals,
+    () => ({
+      limit: 6,
+    }),
+  );
 
   const runExtraction = createAction(convexApi.extract.extractSource);
   const updateStatus = createMutation(convexApi.sources.updateStatus);
@@ -114,13 +117,19 @@ export function DisplayPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Display & Triage</h1>
-        <p class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}>
-          This queue prioritizes blocked and oldest private sources so weekly review stays aligned
-          with ingest throughput.
+        <p
+          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
+        >
+          This queue prioritizes blocked and oldest private sources so weekly
+          review stays aligned with ingest throughput.
         </p>
         <div aria-live="polite">
           <Show when={notice()}>
-            {(message) => <p class={css({ color: "zodiac.cream", marginTop: "3" })}>{message()}</p>}
+            {(message) => (
+              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
+                {message()}
+              </p>
+            )}
           </Show>
         </div>
       </UICard>
@@ -204,8 +213,8 @@ export function DisplayPage() {
             mb: "3",
           })}
         >
-          These concept areas combine hypothesis outcomes, downstream recipes, compositions, and
-          listening verdicts into a pragmatic yield score.
+          These concept areas combine hypothesis outcomes, downstream recipes,
+          compositions, and listening verdicts into a pragmatic yield score.
         </p>
         <div
           class={css({
@@ -229,7 +238,9 @@ export function DisplayPage() {
               <For each={editorialSignals()?.highYieldClusters ?? []}>
                 {(cluster) => (
                   <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>{cluster.domain}</div>
+                    <div class={css({ color: "zodiac.cream" })}>
+                      {cluster.domain}
+                    </div>
                     <div
                       class={css({
                         color: "rgba(245, 240, 232, 0.58)",
@@ -258,7 +269,9 @@ export function DisplayPage() {
               <For each={editorialSignals()?.lowYieldClusters ?? []}>
                 {(cluster) => (
                   <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>{cluster.domain}</div>
+                    <div class={css({ color: "zodiac.cream" })}>
+                      {cluster.domain}
+                    </div>
                     <div
                       class={css({
                         color: "rgba(245, 240, 232, 0.58)",
@@ -299,10 +312,14 @@ export function DisplayPage() {
                       marginBottom: "2",
                     })}
                   >
-                    <UIBadge tone={statusTone(row.status)}>{row.status}</UIBadge>
+                    <UIBadge tone={statusTone(row.status)}>
+                      {row.status}
+                    </UIBadge>
                     <UIBadge tone="cream">{row.type}</UIBadge>
                     <Show when={row.blockedReason}>
-                      <UIBadge tone="violet">blocked: {row.blockedReason}</UIBadge>
+                      <UIBadge tone="violet">
+                        blocked: {row.blockedReason}
+                      </UIBadge>
                     </Show>
                   </div>
 
@@ -384,7 +401,9 @@ export function DisplayPage() {
                     )}
                   </Show>
 
-                  <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+                  <div
+                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                  >
                     <UIButton
                       variant="outline"
                       disabled={row.status !== "text_ready"}
@@ -392,10 +411,16 @@ export function DisplayPage() {
                     >
                       Run Extraction
                     </UIButton>
-                    <UIButton variant="outline" onClick={() => markTriaged(row._id)}>
+                    <UIButton
+                      variant="outline"
+                      onClick={() => markTriaged(row._id)}
+                    >
                       Mark Triaged
                     </UIButton>
-                    <UIButton variant="ghost" onClick={() => promoteFollowers(row._id)}>
+                    <UIButton
+                      variant="ghost"
+                      onClick={() => promoteFollowers(row._id)}
+                    >
                       Promote Followers
                     </UIButton>
                   </div>

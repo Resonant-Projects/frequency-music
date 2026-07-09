@@ -161,10 +161,7 @@
           "type": "measurement",
           "value": "1–3% modulation depth",
           "details": {
-            "applicableTo": [
-              "filter cutoff",
-              "wavetable position"
-            ],
+            "applicableTo": ["filter cutoff", "wavetable position"],
             "context": "Subtle movement to animate leads and pads without altering core character",
             "parameterType": "modulation depth",
             "range": {
@@ -188,12 +185,7 @@
           "value": "Four-role synth layer architecture: attack, body, movement, air",
           "details": {
             "principle": "each layer performs a single acoustic function",
-            "roles": [
-              "attack",
-              "body",
-              "movement",
-              "air"
-            ]
+            "roles": ["attack", "body", "movement", "air"]
           }
         }
       ],
@@ -544,10 +536,7 @@
           "type": "key",
           "value": "All 12 keys (major and minor chord loops)",
           "details": {
-            "chordTypes": [
-              "major",
-              "minor"
-            ],
+            "chordTypes": ["major", "minor"],
             "context": "8dio Songwriting Guitar chord triggering",
             "keyCount": 12,
             "source": "8dio Songwriting Guitar"
@@ -744,10 +733,7 @@
           "details": {
             "character": "playful, world-music texture",
             "instrument": "Kontakt",
-            "libraries": [
-              "West Africa",
-              "Cuba"
-            ],
+            "libraries": ["West Africa", "Cuba"],
             "role": "percussion fills"
           }
         },

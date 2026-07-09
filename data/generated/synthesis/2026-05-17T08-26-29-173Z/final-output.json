@@ -76,9 +76,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Level-matched headphones or nearfields; compare the designed-transition version against the hard-cut/uniform-crossfade control without looking at the arrangement.",
       "listeningMethod": "Score whether each transition feels directed, whether the boundary width is audible without becoming vague, and whether the first clarifying dimension can be named.",
       "whatVaries": [
@@ -98,13 +96,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Falsification criterion: if wider boundaries merely blur the form, or if listeners cannot identify which dimension clarified first, the uncertain-edge framing is not useful for this material."
 }

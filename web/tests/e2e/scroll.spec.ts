@@ -37,6 +37,8 @@ test.describe("scroll behavior", () => {
     await page.mouse.move(240, 240);
     await page.mouse.wheel(0, 1400);
 
-    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    await expect
+      .poll(async () => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(0);
   });
 });

@@ -1,7 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
-import { computeRecommendedActionContext, type RecommendedAction } from "./campaigns";
+import {
+  computeRecommendedActionContext,
+  type RecommendedAction,
+} from "./campaigns";
 import { computeEditorialSignals } from "./dashboard";
 import {
   action,
@@ -60,7 +63,9 @@ export interface BriefEditableContent {
 
 export type BriefEditableUpdates = Partial<BriefEditableContent>;
 
-export function selectBriefContent(row: BriefEditableContent): BriefEditableContent {
+export function selectBriefContent(
+  row: BriefEditableContent,
+): BriefEditableContent {
   return {
     bodyMd: row.bodyMd,
     todo: row.todo,
@@ -140,7 +145,11 @@ export const getLatest = query({
   args: {},
   returns: v.union(weeklyBriefReturnValidator, v.null()),
   handler: async (ctx) => {
-    return await ctx.db.query("weeklyBriefs").withIndex("by_weekOf").order("desc").first();
+    return await ctx.db
+      .query("weeklyBriefs")
+      .withIndex("by_weekOf")
+      .order("desc")
+      .first();
   },
 });
 
@@ -174,7 +183,11 @@ export const create = internalMutation({
           v.literal("compare_branch"),
           v.literal("prototype_hypothesis"),
         ),
-        targetType: v.union(v.literal("hypothesis"), v.literal("recipe"), v.literal("composition")),
+        targetType: v.union(
+          v.literal("hypothesis"),
+          v.literal("recipe"),
+          v.literal("composition"),
+        ),
         targetId: v.string(),
         durationBucket: v.union(
           v.literal("10-minute"),
@@ -355,8 +368,12 @@ export function selectRecentBriefInputs(args: {
   const recentHypotheses = args.hypotheses.filter(
     (hypothesis) => hypothesis.createdAt > args.cutoff,
   );
-  const recentRecipes = args.recipes.filter((recipe) => recipe.createdAt > args.cutoff);
-  const sourceIds = [...new Set(recentHypotheses.flatMap((hypothesis) => hypothesis.sourceIds))];
+  const recentRecipes = args.recipes.filter(
+    (recipe) => recipe.createdAt > args.cutoff,
+  );
+  const sourceIds = [
+    ...new Set(recentHypotheses.flatMap((hypothesis) => hypothesis.sourceIds)),
+  ];
 
   return {
     recentHypotheses,
@@ -376,7 +393,10 @@ export function parseBriefResponse(text: string): ParsedBriefMetadata {
         todo?: unknown;
         studioPrompts?: Partial<StudioPromptVariants>;
       };
-      if (Array.isArray(parsed.todo) && parsed.todo.every((item) => typeof item === "string")) {
+      if (
+        Array.isArray(parsed.todo) &&
+        parsed.todo.every((item) => typeof item === "string")
+      ) {
         todo = parsed.todo;
       } else if (typeof parsed.todo === "string") {
         todo = [parsed.todo];
@@ -509,24 +529,27 @@ export async function generateBriefCore(
   monday.setDate(now.getDate() - now.getDay() + 1);
   const weekOf = monday.toISOString().split("T")[0] as string;
 
-  const { recommendationContext, extraActiveTheses, editorialSignals } = await ctx.runQuery(
-    internal.weeklyBriefs.loadBriefContext,
-    {},
-  );
+  const { recommendationContext, extraActiveTheses, editorialSignals } =
+    await ctx.runQuery(internal.weeklyBriefs.loadBriefContext, {});
   const hypotheses = recommendationContext.hypotheses;
   const recipes = recommendationContext.recipes;
-  const { recentHypotheses, recentRecipes, sourceIds } = selectRecentBriefInputs({
-    hypotheses,
-    recipes,
-    cutoff,
-  });
+  const { recentHypotheses, recentRecipes, sourceIds } =
+    selectRecentBriefInputs({
+      hypotheses,
+      recipes,
+      cutoff,
+    });
 
   if (recentHypotheses.length === 0 && recentRecipes.length === 0) {
-    throw new Error("No recent hypotheses or recipes found. Generate some first.");
+    throw new Error(
+      "No recent hypotheses or recipes found. Generate some first.",
+    );
   }
 
   const typedActiveTheses =
-    recommendationContext.theses.length > 0 ? recommendationContext.theses : extraActiveTheses;
+    recommendationContext.theses.length > 0
+      ? recommendationContext.theses
+      : extraActiveTheses;
   const recommendedActions = recommendationContext.actions;
   const recentFailures = recommendationContext.failureArchive
     .filter((entry) => entry.createdAt > cutoff)
@@ -546,7 +569,10 @@ export async function generateBriefCore(
           .map((r: Doc<"recipes">, i: number) => {
             const params = r.parameters
               .slice(0, 4)
-              .map((p: BriefParameter) => `${p.kind ?? p.type ?? "parameter"}: ${p.value}`)
+              .map(
+                (p: BriefParameter) =>
+                  `${p.kind ?? p.type ?? "parameter"}: ${p.value}`,
+              )
               .join(", ");
             return `${i + 1}. **${r.title}**\n   Why this matters: ${r.whyThisMatters ?? "Not specified"}\n   Parameters: ${params}\n   Checklist items: ${r.dawChecklist.length}`;
           })
@@ -575,7 +601,9 @@ export async function generateBriefCore(
 Question: ${recommendationContext.campaign.question}
 Theses: ${
         recommendationContext.theses.length > 0
-          ? recommendationContext.theses.map((thesis) => thesis.title).join(", ")
+          ? recommendationContext.theses
+              .map((thesis) => thesis.title)
+              .join(", ")
           : "None attached yet"
       }`
     : "No active campaign. Use the strongest active threads from the current weekly system.";
@@ -624,16 +652,21 @@ Theses: ${
   // Call AI (traced as brief_v2.phase3 in the Node-runtime internal action)
   const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-  const { text } = await ctx.runAction(internal.weeklyBriefsInternal.generateBriefText, {
-    system: BRIEF_SYSTEM_PROMPT,
-    prompt,
-    model: modelId,
-    weekOf,
-    promptVersion: "v2.phase3",
-    numHypotheses: recentHypotheses.length,
-    numRecipes: recentRecipes.length,
-    ...(recommendationContext.campaign?._id ? { campaignId: recommendationContext.campaign._id } : {}),
-  });
+  const { text } = await ctx.runAction(
+    internal.weeklyBriefsInternal.generateBriefText,
+    {
+      system: BRIEF_SYSTEM_PROMPT,
+      prompt,
+      model: modelId,
+      weekOf,
+      promptVersion: "v2.phase3",
+      numHypotheses: recentHypotheses.length,
+      numRecipes: recentRecipes.length,
+      ...(recommendationContext.campaign?._id
+        ? { campaignId: recommendationContext.campaign._id }
+        : {}),
+    },
+  );
 
   const parsed = parseBriefResponse(text);
 
@@ -647,9 +680,13 @@ Theses: ${
     bodyMd: parsed.cleanBodyMd,
     sourceIds: persistedSourceIds,
     campaignId: recommendationContext.campaign?._id,
-    recommendedHypothesisIds: recentHypotheses.map((h: Doc<"hypotheses">) => h._id),
+    recommendedHypothesisIds: recentHypotheses.map(
+      (h: Doc<"hypotheses">) => h._id,
+    ),
     recommendedRecipeIds: recentRecipes.map((r: Doc<"recipes">) => r._id),
-    activeThesisIds: typedActiveTheses.map((thesis: Doc<"theses">) => thesis._id),
+    activeThesisIds: typedActiveTheses.map(
+      (thesis: Doc<"theses">) => thesis._id,
+    ),
     referencedFailureKeys: recentFailures.map((failure) => failure.key),
     studioPrompts: parsed.studioPrompts,
     recommendedActions: recommendedActions as RecommendedAction[],
@@ -733,7 +770,9 @@ function chunkText(text: string, maxLen = 2000): NotionRichText[] {
 
 function stripTrailingFencedBlock(md: string): string {
   const trimmed = md.trimEnd();
-  const match = trimmed.match(/^(?<body>[\s\S]*?)\n```(?:[a-zA-Z0-9_-]+)?[^\n]*\n[\s\S]*\n```$/);
+  const match = trimmed.match(
+    /^(?<body>[\s\S]*?)\n```(?:[a-zA-Z0-9_-]+)?[^\n]*\n[\s\S]*\n```$/,
+  );
 
   return match?.groups?.body?.trimEnd() ?? trimmed;
 }

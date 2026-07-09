@@ -68,7 +68,10 @@ describe("domain mappings", () => {
 
   test("can infer sector membership from registry domain names after seeding", () => {
     expect(
-      resolveDomainsForSector([...getSeedConceptDomainEntries(), { name: "topology" }], "math"),
+      resolveDomainsForSector(
+        [...getSeedConceptDomainEntries(), { name: "topology" }],
+        "math",
+      ),
     ).toEqual({
       sector: "math",
       domains: ["mathematics", "general", "topology"],

@@ -341,7 +341,11 @@ function fail(message: string): never {
   throw new Error(message);
 }
 
-function parseNumberFlag(args: string[], flag: string, defaultValue: number): number {
+function parseNumberFlag(
+  args: string[],
+  flag: string,
+  defaultValue: number,
+): number {
   const idx = args.indexOf(flag);
   if (idx === -1) return defaultValue;
   const raw = args[idx + 1];
@@ -353,7 +357,11 @@ function parseNumberFlag(args: string[], flag: string, defaultValue: number): nu
   return parsed;
 }
 
-function parseStringFlag(args: string[], flag: string, defaultValue?: string): string {
+function parseStringFlag(
+  args: string[],
+  flag: string,
+  defaultValue?: string,
+): string {
   const idx = args.indexOf(flag);
   if (idx === -1) {
     if (defaultValue === undefined) fail(`Missing required flag ${flag}`);
@@ -464,11 +472,16 @@ function hasTuningSignal(candidate: {
   extraction: ExtractionLike;
   topicTokens: string[];
 }): boolean {
-  const paramSignal = candidate.extraction.compositionParameters.some((param) => {
-    const normalizedType = normalizePhrase(param.type);
-    const normalizedValue = normalizePhrase(param.value);
-    return isTuningCentricLabel(normalizedType) || isTuningCentricLabel(normalizedValue);
-  });
+  const paramSignal = candidate.extraction.compositionParameters.some(
+    (param) => {
+      const normalizedType = normalizePhrase(param.type);
+      const normalizedValue = normalizePhrase(param.value);
+      return (
+        isTuningCentricLabel(normalizedType) ||
+        isTuningCentricLabel(normalizedValue)
+      );
+    },
+  );
   if (paramSignal) return true;
 
   const topicSignal = candidate.topicTokens.some((topic) => {
@@ -478,7 +491,9 @@ function hasTuningSignal(candidate: {
   return topicSignal;
 }
 
-function buildTopicFrequency(candidates: CandidateExtraction[]): Map<string, number> {
+function buildTopicFrequency(
+  candidates: CandidateExtraction[],
+): Map<string, number> {
   const counts = new Map<string, number>();
   for (const candidate of candidates) {
     for (const token of candidate.topicTokenSet) {
@@ -495,23 +510,34 @@ function computeTopicalBalanceScore(input: {
   selectedCount: number;
   candidatePoolSize: number;
 }): number {
-  const { candidate, globalTopicCounts, selectedTopicCounts, selectedCount, candidatePoolSize } =
-    input;
-  const tokens = [...candidate.topicTokenSet].filter((token) => isMeaningfulTopicToken(token));
+  const {
+    candidate,
+    globalTopicCounts,
+    selectedTopicCounts,
+    selectedCount,
+    candidatePoolSize,
+  } = input;
+  const tokens = [...candidate.topicTokenSet].filter((token) =>
+    isMeaningfulTopicToken(token),
+  );
   if (tokens.length === 0) return 0.25;
 
   const rarityScores = tokens.map((token) => {
     const globalFreq = globalTopicCounts.get(token) ?? 1;
-    const rarity = Math.log((candidatePoolSize + 1) / globalFreq) / Math.log(candidatePoolSize + 1);
+    const rarity =
+      Math.log((candidatePoolSize + 1) / globalFreq) /
+      Math.log(candidatePoolSize + 1);
     return Math.max(0, Math.min(1, rarity));
   });
   const globalRarity =
-    rarityScores.reduce((sum, value) => sum + value, 0) / Math.max(1, rarityScores.length);
+    rarityScores.reduce((sum, value) => sum + value, 0) /
+    Math.max(1, rarityScores.length);
 
   if (selectedCount === 0) return globalRarity;
 
   const unseenShare =
-    tokens.filter((token) => !selectedTopicCounts.has(token)).length / tokens.length;
+    tokens.filter((token) => !selectedTopicCounts.has(token)).length /
+    tokens.length;
   const saturationPenalty =
     tokens.reduce((sum, token) => {
       const selectedFreq = selectedTopicCounts.get(token) ?? 0;
@@ -585,14 +611,22 @@ async function loadNoveltyHistory(
     const finalOutput =
       (await readJsonIfExists(join(dirPath, "final-output.auto.json"))) ??
       (await readJsonIfExists(join(dirPath, "final-output.json")));
-    if (finalOutput && typeof finalOutput === "object" && !Array.isArray(finalOutput)) {
+    if (
+      finalOutput &&
+      typeof finalOutput === "object" &&
+      !Array.isArray(finalOutput)
+    ) {
       const row = finalOutput as JsonRecord;
       const hypothesis =
-        row.hypothesis && typeof row.hypothesis === "object" && !Array.isArray(row.hypothesis)
+        row.hypothesis &&
+        typeof row.hypothesis === "object" &&
+        !Array.isArray(row.hypothesis)
           ? (row.hypothesis as JsonRecord)
           : undefined;
       const recipe =
-        row.recipe && typeof row.recipe === "object" && !Array.isArray(row.recipe)
+        row.recipe &&
+        typeof row.recipe === "object" &&
+        !Array.isArray(row.recipe)
           ? (row.recipe as JsonRecord)
           : undefined;
 
@@ -602,7 +636,9 @@ async function loadNoveltyHistory(
           history.titlePhrases,
         );
         addPhrasesToSet(
-          typeof hypothesis.question === "string" ? [hypothesis.question] : undefined,
+          typeof hypothesis.question === "string"
+            ? [hypothesis.question]
+            : undefined,
           history.titlePhrases,
         );
         const sourceIds = Array.isArray(hypothesis.sourceIds)
@@ -620,7 +656,9 @@ async function loadNoveltyHistory(
 
       if (recipe) {
         const protocol =
-          recipe.protocol && typeof recipe.protocol === "object" && !Array.isArray(recipe.protocol)
+          recipe.protocol &&
+          typeof recipe.protocol === "object" &&
+          !Array.isArray(recipe.protocol)
             ? (recipe.protocol as JsonRecord)
             : undefined;
         const whatVaries = Array.isArray(protocol?.whatVaries)
@@ -631,11 +669,16 @@ async function loadNoveltyHistory(
     }
 
     const contextJson = await readJsonIfExists(join(dirPath, "context.json"));
-    if (contextJson && typeof contextJson === "object" && !Array.isArray(contextJson)) {
+    if (
+      contextJson &&
+      typeof contextJson === "object" &&
+      !Array.isArray(contextJson)
+    ) {
       const row = contextJson as JsonRecord;
       const selected = Array.isArray(row.selected) ? row.selected : [];
       for (const source of selected) {
-        if (!source || typeof source !== "object" || Array.isArray(source)) continue;
+        if (!source || typeof source !== "object" || Array.isArray(source))
+          continue;
         const sourceRow = source as JsonRecord;
         const sourceId = sourceRow.sourceId;
         if (typeof sourceId === "string") history.sourceIds.add(sourceId);
@@ -714,7 +757,8 @@ function coerceClaims(value: unknown): Claim[] {
     const claimObj = row as JsonRecord;
     const textRaw = claimObj.text;
     const evidenceRaw = claimObj.evidenceLevel;
-    if (typeof textRaw !== "string" || typeof evidenceRaw !== "string") continue;
+    if (typeof textRaw !== "string" || typeof evidenceRaw !== "string")
+      continue;
     claims.push({
       text: textRaw,
       evidenceLevel: evidenceRaw,
@@ -732,7 +776,10 @@ function coerceParameters(value: unknown): CompositionParameter[] {
   for (const row of value) {
     if (!row || typeof row !== "object" || Array.isArray(row)) continue;
     const paramObj = row as JsonRecord;
-    if (typeof paramObj.type !== "string" || typeof paramObj.value !== "string") {
+    if (
+      typeof paramObj.type !== "string" ||
+      typeof paramObj.value !== "string"
+    ) {
       continue;
     }
     params.push({
@@ -755,10 +802,12 @@ function coerceStringArray(value: unknown): string[] {
 function coerceExtraction(value: unknown): ExtractionLike | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const row = value as JsonRecord;
-  if (typeof row._id !== "string" || typeof row.sourceId !== "string") return null;
+  if (typeof row._id !== "string" || typeof row.sourceId !== "string")
+    return null;
   return {
     _id: row._id,
-    _creationTime: typeof row._creationTime === "number" ? row._creationTime : undefined,
+    _creationTime:
+      typeof row._creationTime === "number" ? row._creationTime : undefined,
     sourceId: row.sourceId,
     summary: typeof row.summary === "string" ? row.summary : "",
     claims: coerceClaims(row.claims),
@@ -767,7 +816,8 @@ function coerceExtraction(value: unknown): ExtractionLike | null {
     openQuestions: coerceStringArray(row.openQuestions),
     confidence: typeof row.confidence === "number" ? row.confidence : undefined,
     model: typeof row.model === "string" ? row.model : undefined,
-    promptVersion: typeof row.promptVersion === "string" ? row.promptVersion : undefined,
+    promptVersion:
+      typeof row.promptVersion === "string" ? row.promptVersion : undefined,
     createdAt: typeof row.createdAt === "number" ? row.createdAt : undefined,
   };
 }
@@ -777,13 +827,16 @@ function coerceSource(value: unknown): SourceLike | null {
   const row = value as JsonRecord;
   if (typeof row._id !== "string" || typeof row.type !== "string") return null;
   const status =
-    typeof row.status === "string" && isSourceStatus(row.status) ? row.status : "ingested";
+    typeof row.status === "string" && isSourceStatus(row.status)
+      ? row.status
+      : "ingested";
   return {
     _id: row._id,
     type: row.type,
     status,
     title: typeof row.title === "string" ? row.title : undefined,
-    canonicalUrl: typeof row.canonicalUrl === "string" ? row.canonicalUrl : undefined,
+    canonicalUrl:
+      typeof row.canonicalUrl === "string" ? row.canonicalUrl : undefined,
     tags: coerceStringArray(row.tags),
     topics: coerceStringArray(row.topics),
     author: typeof row.author === "string" ? row.author : undefined,
@@ -830,31 +883,49 @@ function buildContextMarkdown(context: SynthesisContextV1): string {
   lines.push(`- Minimum claims: ${context.params.minClaims}`);
   lines.push(`- Minimum composition parameters: ${context.params.minParams}`);
   lines.push(`- Cross-run novelty window: ${context.params.noveltyWindow}`);
-  lines.push(`- Max reused sources from novelty window: ${context.params.maxReusedSources}`);
-  lines.push(`- Require tuning/intonation signal: ${context.params.requireTuningSignal}`);
+  lines.push(
+    `- Max reused sources from novelty window: ${context.params.maxReusedSources}`,
+  );
+  lines.push(
+    `- Require tuning/intonation signal: ${context.params.requireTuningSignal}`,
+  );
   lines.push("");
   lines.push("## Novelty History");
   lines.push("");
   lines.push(`- Prior runs scanned: ${context.noveltyHistory.runsScanned}`);
-  lines.push(`- Prior source IDs tracked: ${context.noveltyHistory.priorSourceIds}`);
-  lines.push(`- Prior topic tokens tracked: ${context.noveltyHistory.priorTopicTokens}`);
-  lines.push(`- Prior variable phrases tracked: ${context.noveltyHistory.priorVariablePhrases}`);
-  lines.push(`- Prior title phrases tracked: ${context.noveltyHistory.priorTitlePhrases}`);
+  lines.push(
+    `- Prior source IDs tracked: ${context.noveltyHistory.priorSourceIds}`,
+  );
+  lines.push(
+    `- Prior topic tokens tracked: ${context.noveltyHistory.priorTopicTokens}`,
+  );
+  lines.push(
+    `- Prior variable phrases tracked: ${context.noveltyHistory.priorVariablePhrases}`,
+  );
+  lines.push(
+    `- Prior title phrases tracked: ${context.noveltyHistory.priorTitlePhrases}`,
+  );
   lines.push("");
   lines.push("## Aggregate Signals");
   lines.push("");
   lines.push("### Topic Frequency");
-  for (const [topic, count] of Object.entries(context.aggregate.topicFrequency)) {
+  for (const [topic, count] of Object.entries(
+    context.aggregate.topicFrequency,
+  )) {
     lines.push(`- ${topic}: ${count}`);
   }
   lines.push("");
   lines.push("### Parameter Type Frequency");
-  for (const [paramType, count] of Object.entries(context.aggregate.parameterTypeFrequency)) {
+  for (const [paramType, count] of Object.entries(
+    context.aggregate.parameterTypeFrequency,
+  )) {
     lines.push(`- ${paramType}: ${count}`);
   }
   lines.push("");
   lines.push("### Evidence Distribution");
-  for (const [evidence, count] of Object.entries(context.aggregate.evidenceDistribution)) {
+  for (const [evidence, count] of Object.entries(
+    context.aggregate.evidenceDistribution,
+  )) {
     lines.push(`- ${evidence}: ${count}`);
   }
   lines.push("");
@@ -998,13 +1069,15 @@ function buildTemplate(context: SynthesisContextV1): FinalOutputV1 {
       title: "",
       question: "",
       hypothesis: "",
-      rationaleMd: "Provide rationale with explicit S# citations, e.g. `Supported by S1 and S3.`",
+      rationaleMd:
+        "Provide rationale with explicit S# citations, e.g. `Supported by S1 and S3.`",
       sourceIds,
       concepts: [],
     },
     recipe: {
       title: "",
-      bodyMd: "Describe arrangement, test method, and expected outcomes with S# citations.",
+      bodyMd:
+        "Describe arrangement, test method, and expected outcomes with S# citations.",
       parameters: [],
       dawChecklist: [],
       protocol: {
@@ -1018,7 +1091,8 @@ function buildTemplate(context: SynthesisContextV1): FinalOutputV1 {
       },
     },
     citations: context.selected.map((row) => row.citation),
-    notes: "Fill all required fields, then run publish mode with this file path.",
+    notes:
+      "Fill all required fields, then run publish mode with this file path.",
   };
 }
 
@@ -1032,7 +1106,10 @@ function validateFinalOutput(input: unknown): FinalOutputV1 {
   const hypothesisObj = ensureObject(top.hypothesis, "hypothesis");
   const recipeObj = ensureObject(top.recipe, "recipe");
 
-  const sourceIds = asStringArray(hypothesisObj.sourceIds, "hypothesis.sourceIds");
+  const sourceIds = asStringArray(
+    hypothesisObj.sourceIds,
+    "hypothesis.sourceIds",
+  );
   const concepts = Array.isArray(hypothesisObj.concepts)
     ? hypothesisObj.concepts.map((value, idx) => {
         if (typeof value !== "string") {
@@ -1067,12 +1144,18 @@ function validateFinalOutput(input: unknown): FinalOutputV1 {
     };
   });
 
-  const dawChecklist = asStringArray(recipeObj.dawChecklist, "recipe.dawChecklist");
+  const dawChecklist = asStringArray(
+    recipeObj.dawChecklist,
+    "recipe.dawChecklist",
+  );
 
   let protocol: FinalRecipeProtocolV1 | undefined;
   if (recipeObj.protocol !== undefined) {
     const protocolObj = ensureObject(recipeObj.protocol, "recipe.protocol");
-    const studyTypeRaw = asString(protocolObj.studyType, "recipe.protocol.studyType");
+    const studyTypeRaw = asString(
+      protocolObj.studyType,
+      "recipe.protocol.studyType",
+    );
     if (studyTypeRaw !== "litmus" && studyTypeRaw !== "comparison") {
       fail('recipe.protocol.studyType must be "litmus" or "comparison"');
     }
@@ -1083,8 +1166,14 @@ function validateFinalOutput(input: unknown): FinalOutputV1 {
     }
     const durationSecs = Math.max(1, Math.floor(durationRaw));
 
-    const panelPlanned = asStringArray(protocolObj.panelPlanned, "recipe.protocol.panelPlanned");
-    const whatVaries = asStringArray(protocolObj.whatVaries, "recipe.protocol.whatVaries");
+    const panelPlanned = asStringArray(
+      protocolObj.panelPlanned,
+      "recipe.protocol.panelPlanned",
+    );
+    const whatVaries = asStringArray(
+      protocolObj.whatVaries,
+      "recipe.protocol.whatVaries",
+    );
     const whatStaysConstant = asStringArray(
       protocolObj.whatStaysConstant,
       "recipe.protocol.whatStaysConstant",
@@ -1095,9 +1184,13 @@ function validateFinalOutput(input: unknown): FinalOutputV1 {
       durationSecs,
       panelPlanned,
       listeningContext:
-        typeof protocolObj.listeningContext === "string" ? protocolObj.listeningContext : undefined,
+        typeof protocolObj.listeningContext === "string"
+          ? protocolObj.listeningContext
+          : undefined,
       listeningMethod:
-        typeof protocolObj.listeningMethod === "string" ? protocolObj.listeningMethod : undefined,
+        typeof protocolObj.listeningMethod === "string"
+          ? protocolObj.listeningMethod
+          : undefined,
       baselineArtifactId:
         typeof protocolObj.baselineArtifactId === "string"
           ? protocolObj.baselineArtifactId
@@ -1141,7 +1234,10 @@ function hostOnly(urlString: string): string {
   }
 }
 
-function compareCandidates(a: CandidateExtraction, b: CandidateExtraction): number {
+function compareCandidates(
+  a: CandidateExtraction,
+  b: CandidateExtraction,
+): number {
   if (b.combinedScore !== a.combinedScore) {
     return b.combinedScore - a.combinedScore;
   }
@@ -1158,7 +1254,10 @@ async function collectMode(
   client: ConvexHttpClient,
   options: CollectOptions,
 ): Promise<CollectArtifacts> {
-  const noveltyHistory = await loadNoveltyHistory(options.out, options.noveltyWindow);
+  const noveltyHistory = await loadNoveltyHistory(
+    options.out,
+    options.noveltyWindow,
+  );
 
   const fetchedRaw = (await client.query(api.extractions.listRecent, {
     limit: options.fetch,
@@ -1191,7 +1290,9 @@ async function collectMode(
         [
           ...extraction.topics.flatMap((topic) => normalizeTopicToken(topic)),
           ...(source.tags ?? []).flatMap((topic) => normalizeTopicToken(topic)),
-          ...(source.topics ?? []).flatMap((topic) => normalizeTopicToken(topic)),
+          ...(source.topics ?? []).flatMap((topic) =>
+            normalizeTopicToken(topic),
+          ),
         ].filter((token) => token.length > 0 && isMeaningfulTopicToken(token)),
       );
       const topicTokenSet = new Set(topicTokens);
@@ -1263,14 +1364,20 @@ async function collectMode(
   const minBase = Math.min(...baseScores);
   const maxBase = Math.max(...baseScores);
   for (const candidate of usableCandidates) {
-    candidate.normalizedBaseScore = normalizedScore(candidate.baseScore, minBase, maxBase);
+    candidate.normalizedBaseScore = normalizedScore(
+      candidate.baseScore,
+      minBase,
+      maxBase,
+    );
   }
 
   const remaining = [...usableCandidates];
   const selected: CandidateExtraction[] = [];
 
   while (selected.length < options.target && remaining.length > 0) {
-    const reusedAlready = selected.filter((item) => item.sourceReusePenalty >= 1).length;
+    const reusedAlready = selected.filter(
+      (item) => item.sourceReusePenalty >= 1,
+    ).length;
     const selectedSourceIds = new Set(selected.map((item) => item.source._id));
     const distinctSourcePool = remaining.filter(
       (candidate) => !selectedSourceIds.has(candidate.source._id),
@@ -1281,7 +1388,10 @@ async function collectMode(
     const selectedTopicCounts = new Map<string, number>();
     for (const topicSet of selectedTopicSets) {
       for (const token of topicSet) {
-        selectedTopicCounts.set(token, (selectedTopicCounts.get(token) ?? 0) + 1);
+        selectedTopicCounts.set(
+          token,
+          (selectedTopicCounts.get(token) ?? 0) + 1,
+        );
       }
     }
     for (const candidate of pool) {
@@ -1294,17 +1404,28 @@ async function collectMode(
                 jaccardSimilarity(candidate.topicTokenSet, selectedTopics),
               ),
             );
-      const sourceReusePenalty = noveltyHistory.sourceIds.has(candidate.source._id) ? 1 : 0;
+      const sourceReusePenalty = noveltyHistory.sourceIds.has(
+        candidate.source._id,
+      )
+        ? 1
+        : 0;
       let topicReusePenalty = 0;
-      if (noveltyHistory.topicTokens.size > 0 && candidate.topicTokenSet.size > 0) {
+      if (
+        noveltyHistory.topicTokens.size > 0 &&
+        candidate.topicTokenSet.size > 0
+      ) {
         let overlap = 0;
         for (const token of candidate.topicTokenSet) {
-          if (noveltyHistory.topicTokens.has(normalizePhrase(token))) overlap += 1;
+          if (noveltyHistory.topicTokens.has(normalizePhrase(token)))
+            overlap += 1;
         }
         topicReusePenalty = overlap / candidate.topicTokenSet.size;
       }
 
-      const crossRunNovelty = Math.max(0, 1 - (0.7 * sourceReusePenalty + 0.3 * topicReusePenalty));
+      const crossRunNovelty = Math.max(
+        0,
+        1 - (0.7 * sourceReusePenalty + 0.3 * topicReusePenalty),
+      );
 
       candidate.noveltyScore = intraRunNovelty;
       candidate.crossRunNoveltyScore = crossRunNovelty;
@@ -1327,7 +1448,9 @@ async function collectMode(
 
     let candidatePool = [...pool];
     if (reusedAlready >= options.maxReusedSources) {
-      const freshOnly = candidatePool.filter((candidate) => candidate.sourceReusePenalty < 1);
+      const freshOnly = candidatePool.filter(
+        (candidate) => candidate.sourceReusePenalty < 1,
+      );
       if (freshOnly.length > 0) {
         candidatePool = freshOnly;
       }
@@ -1393,7 +1516,10 @@ async function collectMode(
     for (const param of row.compositionParameters) {
       const key = param.type.trim().toLowerCase();
       if (key.length === 0) continue;
-      parameterTypeFrequency.set(key, (parameterTypeFrequency.get(key) ?? 0) + 1);
+      parameterTypeFrequency.set(
+        key,
+        (parameterTypeFrequency.get(key) ?? 0) + 1,
+      );
     }
 
     for (const claim of row.claims) {
@@ -1450,10 +1576,22 @@ async function collectMode(
   const templatePath = join(outBase, "final-output.template.json");
 
   await mkdir(outBase, { recursive: true });
-  await writeFile(contextJsonPath, `${JSON.stringify(context, null, 2)}\n`, "utf8");
+  await writeFile(
+    contextJsonPath,
+    `${JSON.stringify(context, null, 2)}\n`,
+    "utf8",
+  );
   await writeFile(contextMdPath, `${buildContextMarkdown(context)}\n`, "utf8");
-  await writeFile(assistantBriefPath, `${buildAssistantBrief(context)}\n`, "utf8");
-  await writeFile(templatePath, `${JSON.stringify(buildTemplate(context), null, 2)}\n`, "utf8");
+  await writeFile(
+    assistantBriefPath,
+    `${buildAssistantBrief(context)}\n`,
+    "utf8",
+  );
+  await writeFile(
+    templatePath,
+    `${JSON.stringify(buildTemplate(context), null, 2)}\n`,
+    "utf8",
+  );
 
   console.log("Synthesis context generated:");
   console.log(`- ${contextJsonPath}`);
@@ -1602,7 +1740,11 @@ function firstNumericInText(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function pickNovelPhrase(candidates: string[], seenPhrases: Set<string>, fallback: string): string {
+function pickNovelPhrase(
+  candidates: string[],
+  seenPhrases: Set<string>,
+  fallback: string,
+): string {
   for (const candidate of candidates) {
     const normalized = normalizePhrase(candidate);
     if (normalized.length === 0) continue;
@@ -1621,21 +1763,35 @@ function buildAutoFinalOutput(
       b.scores.peerReviewedClaims - a.scores.peerReviewedClaims,
   );
 
-  const sourceWindow = rankedSources.slice(0, Math.min(6, rankedSources.length));
+  const sourceWindow = rankedSources.slice(
+    0,
+    Math.min(6, rankedSources.length),
+  );
   const sourceIds = unique(sourceWindow.map((row) => row.sourceId));
   const citations = sourceWindow.map((row) => row.citation);
 
   const topTopics = topMeaningfulTopics(context.aggregate.topicFrequency, 6);
-  const nonTuningTopics = topTopics.filter((row) => !isTuningCentricLabel(row.key));
-  const topTopicA = nonTuningTopics[0]?.key ?? topTopics[0]?.key ?? "harmonic profile";
-  const topTopicB = nonTuningTopics[1]?.key ?? topTopics[1]?.key ?? "music perception";
-  const topTopicC = nonTuningTopics[2]?.key ?? topTopics[2]?.key ?? "voice leading";
-
-  const topParamTypesRaw = topEntries(context.aggregate.parameterTypeFrequency, 6).map((row) =>
-    humanizeParamType(row.key),
+  const nonTuningTopics = topTopics.filter(
+    (row) => !isTuningCentricLabel(row.key),
   );
-  const nonTuningParamTypes = topParamTypesRaw.filter((type) => !isTuningCentricLabel(type));
-  const topParamTypes = unique([...nonTuningParamTypes, ...topParamTypesRaw]).slice(0, 6);
+  const topTopicA =
+    nonTuningTopics[0]?.key ?? topTopics[0]?.key ?? "harmonic profile";
+  const topTopicB =
+    nonTuningTopics[1]?.key ?? topTopics[1]?.key ?? "music perception";
+  const topTopicC =
+    nonTuningTopics[2]?.key ?? topTopics[2]?.key ?? "voice leading";
+
+  const topParamTypesRaw = topEntries(
+    context.aggregate.parameterTypeFrequency,
+    6,
+  ).map((row) => humanizeParamType(row.key));
+  const nonTuningParamTypes = topParamTypesRaw.filter(
+    (type) => !isTuningCentricLabel(type),
+  );
+  const topParamTypes = unique([
+    ...nonTuningParamTypes,
+    ...topParamTypesRaw,
+  ]).slice(0, 6);
 
   const tuningValues = unique(
     sourceWindow
@@ -1649,7 +1805,9 @@ function buildAutoFinalOutput(
     ? unique(
         sourceWindow
           .flatMap((row) => row.compositionParameters)
-          .filter((param) => humanizeParamType(param.type) === topNonTuningParamType)
+          .filter(
+            (param) => humanizeParamType(param.type) === topNonTuningParamType,
+          )
           .map((param) => param.value),
       ).slice(0, 3)
     : [];
@@ -1680,11 +1838,15 @@ function buildAutoFinalOutput(
             `${topNonTuningParamType} variation across fixed arrangement`,
             `interaction between ${topTopicA} and ${topNonTuningParamType}`,
             ...(tuningValues.length > 0
-              ? [`${topNonTuningParamType} comparison under fixed tuning control`]
+              ? [
+                  `${topNonTuningParamType} comparison under fixed tuning control`,
+                ]
               : []),
           ]
         : []),
-      ...(nonTuningTopics.length >= 2 ? [`contrast between ${topTopicA} and ${topTopicB}`] : []),
+      ...(nonTuningTopics.length >= 2
+        ? [`contrast between ${topTopicA} and ${topTopicB}`]
+        : []),
       ...(tuningValues.length >= 2
         ? [
             `tuning strategy (${tuningValues.slice(0, 2).join(" vs ")})`,
@@ -1700,7 +1862,12 @@ function buildAutoFinalOutput(
   );
   const tuningIsPrimaryVariable = isTuningCentricLabel(chosenVariable);
 
-  const healingSignals = [topTopicA, topTopicB, topTopicC, ...topParamTypes].some((value) => {
+  const healingSignals = [
+    topTopicA,
+    topTopicB,
+    topTopicC,
+    ...topParamTypes,
+  ].some((value) => {
     const normalized = normalizePhrase(value);
     return (
       normalized.includes("healing") ||
@@ -1725,7 +1892,11 @@ function buildAutoFinalOutput(
     `${toTitleCase(topTopicB)} Protocol Under ${toTitleCase(topTopicC)} Constraints`,
     `${toTitleCase(topTopicA)} Comparative Micro-Study`,
   ];
-  const title = pickNovelPhrase(titleCandidates, noveltyHistory.titlePhrases, titleFallback);
+  const title = pickNovelPhrase(
+    titleCandidates,
+    noveltyHistory.titlePhrases,
+    titleFallback,
+  );
   const questionWithNovelty = `How does ${chosenVariable} influence ${outcomePhrase} in a controlled harmonic micro-study?`;
   const hypothesisText = tuningIsPrimaryVariable
     ? `If we render one identical arrangement with ${chosenVariable} while holding all other musical factors fixed, then listener ratings will show a consistent ordering in consonance and roughness between versions, because interval-ratio alignment and temperament error distribution change partial overlap and beating behavior.`
@@ -1742,9 +1913,14 @@ function buildAutoFinalOutput(
   const variableChecklist = tuningIsPrimaryVariable
     ? tuningValues.length > 0
       ? tuningValues
-          .map((value, idx) => `Render Version ${String.fromCharCode(65 + idx)} using ${value}.`)
+          .map(
+            (value, idx) =>
+              `Render Version ${String.fromCharCode(65 + idx)} using ${value}.`,
+          )
           .slice(0, 3)
-      : ["Render at least two versions with distinct tuning/parameter mappings."]
+      : [
+          "Render at least two versions with distinct tuning/parameter mappings.",
+        ]
     : [
         topNonTuningValues[0]
           ? `Render Version A with ${topNonTuningParamType}: ${topNonTuningValues[0]}.`
@@ -1753,7 +1929,9 @@ function buildAutoFinalOutput(
           ? `Render Version B with ${topNonTuningParamType}: ${topNonTuningValues[1]}.`
           : `Render Version B with alternate ${chosenVariable}.`,
         ...(topNonTuningValues[2]
-          ? [`Render Version C with ${topNonTuningParamType}: ${topNonTuningValues[2]}.`]
+          ? [
+              `Render Version C with ${topNonTuningParamType}: ${topNonTuningValues[2]}.`,
+            ]
           : []),
         ...(tuningValues[0]
           ? [`Keep tuning fixed at ${tuningValues[0]} across all versions.`]
@@ -1891,8 +2069,10 @@ function buildAutoFinalOutput(
         studyType: "comparison",
         durationSecs: Math.round(((28 * 60) / safeTempo) * 4),
         panelPlanned: ["self", "musician_peer_1", "musician_peer_2"],
-        listeningContext: "Quiet room; repeat on headphones and monitors at fixed playback level.",
-        listeningMethod: "Blinded multi-version comparison with consistent rating rubric.",
+        listeningContext:
+          "Quiet room; repeat on headphones and monitors at fixed playback level.",
+        listeningMethod:
+          "Blinded multi-version comparison with consistent rating rubric.",
         whatVaries: [chosenVariable],
         whatStaysConstant,
       },
@@ -1918,7 +2098,8 @@ async function verifyPublish(
 
   const hypothesisOk = latestHypothesis?._id === expectedHypothesisId;
   const recipeOk =
-    latestRecipe?._id === expectedRecipeId && latestRecipe?.hypothesisId === expectedHypothesisId;
+    latestRecipe?._id === expectedRecipeId &&
+    latestRecipe?.hypothesisId === expectedHypothesisId;
 
   return {
     hypothesisOk,
@@ -1930,14 +2111,25 @@ async function verifyPublish(
 }
 
 async function fullMode(client: ConvexHttpClient, options: FullOptions) {
-  const noveltyHistory = await loadNoveltyHistory(options.out, options.noveltyWindow);
+  const noveltyHistory = await loadNoveltyHistory(
+    options.out,
+    options.noveltyWindow,
+  );
   const artifacts = await collectMode(client, options);
 
   const autoOutput = buildAutoFinalOutput(artifacts.context, noveltyHistory);
   const outputPath = join(artifacts.outBase, options.outputName);
-  await writeFile(outputPath, `${JSON.stringify(autoOutput, null, 2)}\n`, "utf8");
+  await writeFile(
+    outputPath,
+    `${JSON.stringify(autoOutput, null, 2)}\n`,
+    "utf8",
+  );
 
-  const publishResult = await publishFinalOutput(client, autoOutput, outputPath);
+  const publishResult = await publishFinalOutput(
+    client,
+    autoOutput,
+    outputPath,
+  );
   const verification = await verifyPublish(
     client,
     publishResult.hypothesisId,
@@ -1977,7 +2169,11 @@ function parsePublishOptions(args: string[]): PublishOptions {
 function parseFullOptions(args: string[]): FullOptions {
   return {
     ...parseCollectOptions(args),
-    outputName: parseStringFlag(args, "--output-name", "final-output.auto.json"),
+    outputName: parseStringFlag(
+      args,
+      "--output-name",
+      "final-output.auto.json",
+    ),
   };
 }
 
@@ -1989,7 +2185,8 @@ async function main() {
   }
 
   const { mode, args } = parseModeAndArgs(argv);
-  const convexUrl = process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL;
+  const convexUrl =
+    process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL;
   if (!convexUrl) {
     fail(
       "Missing Convex URL. Set CONVEX_URL or CONVEX_SELF_HOSTED_URL before running this script.",

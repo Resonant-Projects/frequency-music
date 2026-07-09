@@ -13,7 +13,11 @@ import {
   UIInput,
   UISelect,
 } from "../components/ui";
-import { createMutation, createQuery, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQuery,
+  createQueryWithStatus,
+} from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 export function CompositionsPage() {
@@ -21,9 +25,12 @@ export function CompositionsPage() {
     document.title = "Compositions — Frequency Music";
   });
 
-  const compositions = createQueryWithStatus(convexApi.compositions.list, () => ({
-    limit: 24,
-  }));
+  const compositions = createQueryWithStatus(
+    convexApi.compositions.list,
+    () => ({
+      limit: 24,
+    }),
+  );
   const recipes = createQuery(convexApi.recipes.listByStatus, () => ({
     limit: 40,
   }));
@@ -54,7 +61,10 @@ export function CompositionsPage() {
       await createComposition({
         title: title().trim(),
         recipeId: recipeId() as Id<"recipes">,
-        artifactType: artifactType() as "microStudy" | "expandedStudy" | "fullTrack",
+        artifactType: artifactType() as
+          | "microStudy"
+          | "expandedStudy"
+          | "fullTrack",
         revisionParentId: revisionParentId().trim()
           ? (revisionParentId().trim() as Id<"compositions">)
           : undefined,
@@ -153,7 +163,9 @@ export function CompositionsPage() {
             <UISelect
               id="composition-revision-parent"
               value={revisionParentId()}
-              onChange={(event) => setRevisionParentId(event.currentTarget.value)}
+              onChange={(event) =>
+                setRevisionParentId(event.currentTarget.value)
+              }
             >
               <option value="">Original composition</option>
               <For each={compositions.data() ?? []}>
@@ -168,13 +180,18 @@ export function CompositionsPage() {
 
           <Show when={revisionParentId()}>
             <div>
-              <label class={fieldLabelClass} for="composition-revision-variable">
+              <label
+                class={fieldLabelClass}
+                for="composition-revision-variable"
+              >
                 Changed Variable
               </label>
               <UIInput
                 id="composition-revision-variable"
                 value={revisionVariable()}
-                onInput={(event) => setRevisionVariable(event.currentTarget.value)}
+                onInput={(event) =>
+                  setRevisionVariable(event.currentTarget.value)
+                }
                 placeholder="tuning, tempo, timbre, rhythm density, voicing..."
               />
               <p
@@ -184,8 +201,8 @@ export function CompositionsPage() {
                   mt: "2",
                 })}
               >
-                Name the one major variable this revision is testing: tuning, tempo, timbre, rhythm
-                density, voicing, etc.
+                Name the one major variable this revision is testing: tuning,
+                tempo, timbre, rhythm density, voicing, etc.
               </p>
             </div>
           </Show>
@@ -201,7 +218,9 @@ export function CompositionsPage() {
         >
           <div aria-live="polite">
             <Show when={notice()}>
-              {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
+              {(message) => (
+                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+              )}
             </Show>
           </div>
           <UIButton type="submit" variant="solid">
@@ -212,7 +231,10 @@ export function CompositionsPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Artifact Pipeline</h2>
-        <Show when={!compositions.isLoading()} fallback={<p>Loading compositions…</p>}>
+        <Show
+          when={!compositions.isLoading()}
+          fallback={<p>Loading compositions…</p>}
+        >
           <Show
             when={(compositions.data() ?? []).length > 0}
             fallback={
@@ -269,7 +291,9 @@ export function CompositionsPage() {
                         <UIBadge tone="violet">{item.artifactType}</UIBadge>
                         <UIBadge tone="cream">{item.version}</UIBadge>
                         <Show when={item.revisionVariable}>
-                          <UIBadge tone="gold">variable: {item.revisionVariable}</UIBadge>
+                          <UIBadge tone="gold">
+                            variable: {item.revisionVariable}
+                          </UIBadge>
                         </Show>
                       </div>
 
@@ -295,7 +319,8 @@ export function CompositionsPage() {
                             mb: "2",
                           })}
                         >
-                          Revision of {revisionParent()?.title ?? "an earlier composition"}
+                          Revision of{" "}
+                          {revisionParent()?.title ?? "an earlier composition"}
                         </p>
                       </Show>
 
@@ -308,19 +333,25 @@ export function CompositionsPage() {
                       >
                         <UIButton
                           variant="outline"
-                          onClick={() => setStatus(String(item._id), "in_progress")}
+                          onClick={() =>
+                            setStatus(String(item._id), "in_progress")
+                          }
                         >
                           In Progress
                         </UIButton>
                         <UIButton
                           variant="outline"
-                          onClick={() => setStatus(String(item._id), "rendered")}
+                          onClick={() =>
+                            setStatus(String(item._id), "rendered")
+                          }
                         >
                           Rendered
                         </UIButton>
                         <UIButton
                           variant="ghost"
-                          onClick={() => setStatus(String(item._id), "published")}
+                          onClick={() =>
+                            setStatus(String(item._id), "published")
+                          }
                         >
                           Published
                         </UIButton>

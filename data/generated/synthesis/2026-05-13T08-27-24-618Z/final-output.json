@@ -28,10 +28,26 @@
     "bodyMd": "Create a 60-second loop from six fixed sound objects: a call phrase, answer phrase, bass riff, chord pad, percussive noise layer, and spatialized source. Render six versions. A is an object-only control. B forces every event to answer a prior event at beat, phrase, or section scale, including silence as an answer [S1]. C moves the chord pad only by adjacent steps in a small Tonnetz-like graph while keeping the cadence fixed [S5]. D uses nearest-accessible transitions: smallest voice-leading, spectral-density, or rhythmic-subdivision changes, echoing metastable path dependence [S2]. E varies only symbolic/acoustic alignment by offsetting envelope peaks and room tails by 80–160 ms, testing prosodic instability from unit mismatch [S3]. F preserves pitch contour and phrase identity while adapting noise, reverb clarity, transient softness, and stereo position, borrowing the invariant/adaptive split from enhancement models and spatial relation logic [S4, S6]. A disconfirming result would be that blind listeners cannot identify perceptual differences beyond loudness or timbre.",
     "parameters": [
       { "type": "tempo", "value": "108 BPM", "details": { "bpm": 108 } },
-      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
-      { "type": "structuralPattern", "value": "six fixed objects, six relation-only variations", "details": { "objects": 6, "versions": 6 } },
-      { "type": "measurement", "value": "alignment offsets of 80 ms and 160 ms", "details": { "offsetMs": [80, 160] } },
-      { "type": "measurement", "value": "three relation scales: beat, phrase, section", "details": { "scales": ["beat", "phrase", "section"] } }
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": { "seconds": 60 }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "six fixed objects, six relation-only variations",
+        "details": { "objects": 6, "versions": 6 }
+      },
+      {
+        "type": "measurement",
+        "value": "alignment offsets of 80 ms and 160 ms",
+        "details": { "offsetMs": [80, 160] }
+      },
+      {
+        "type": "measurement",
+        "value": "three relation scales: beat, phrase, section",
+        "details": { "scales": ["beat", "phrase", "section"] }
+      }
     ],
     "dawChecklist": [
       "Create six audio/MIDI objects and freeze or bounce them so object identity stays fixed across versions.",

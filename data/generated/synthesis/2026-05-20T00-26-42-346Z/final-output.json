@@ -54,10 +54,7 @@
         "value": "Avoid sub-20 Hz playback; use 32-45 Hz support if monitoring cannot reproduce infrasound safely",
         "details": {
           "avoidBelowHz": 20,
-          "supportRangeHz": [
-            32,
-            45
-          ],
+          "supportRangeHz": [32, 45],
           "source": "S3"
         }
       }
@@ -74,9 +71,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Nearfield monitors or reliable headphones at conservative level; avoid attempting true infrasound reproduction.",
       "listeningMethod": "Blind A/B/C order, then written ratings for stability, intimacy, and intelligibility.",
       "whatVaries": [
@@ -95,13 +90,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Essay written as docs/essays/the-carrier-decides.md. S3 and S4 are used cautiously because their evidence levels are speculative/anecdotal; the operational recipe keeps infrasound as a conceptual constraint rather than a playback target."
 }

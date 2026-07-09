@@ -83,9 +83,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Nearfield monitors or neutral headphones, blind A/B/C order, level matched.",
       "listeningMethod": "Rank continuity, destination preparedness, and perceived smear after two passes per render.",
       "whatVaries": [
@@ -102,13 +100,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Compelling connection: boundary thickness as a controllable composition object across speech alignment, acoustic latent dimensions, multimodal planning, rare-event annotation, and path-dependent physical transitions."
 }

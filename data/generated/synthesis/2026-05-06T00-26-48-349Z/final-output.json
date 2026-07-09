@@ -23,9 +23,15 @@
     "title": "Obligation-Preserving Variations",
     "bodyMd": "Choose an eight-node Tonnetz-like harmonic path (S1), imply it through a bass line, then render literal, continuo-style, and surface-obscured realizations. Use griff-like choices as the performer-style layer (S2), then annotate whether pitch, harmony, texture, and form remain coherent across levels as a practical version of multilevel correctness (S3).",
     "parameters": [
-      { "type": "scaleSystem", "value": "Diatonic or 12-tone Tonnetz-like path" },
+      {
+        "type": "scaleSystem",
+        "value": "Diatonic or 12-tone Tonnetz-like path"
+      },
       { "type": "note", "value": "Griff-style voicing unit" },
-      { "type": "analysis", "value": "Constraint ledger linking graph moves to surface events" }
+      {
+        "type": "analysis",
+        "value": "Constraint ledger linking graph moves to surface events"
+      }
     ],
     "dawChecklist": [
       "Create an eight-node harmonic path and keep it fixed.",
@@ -40,8 +46,20 @@
       "panelPlanned": ["self"],
       "listeningContext": "Studio headphones or monitors, level-matched across renders.",
       "listeningMethod": "Blind compare whether the hidden harmonic path can still be inferred in each realization.",
-      "whatVaries": ["voicing", "spacing", "inner-voice motion", "surface texture", "ornamentation"],
-      "whatStaysConstant": ["harmonic graph path", "bass implication", "tempo", "instrumentation", "overall duration"]
+      "whatVaries": [
+        "voicing",
+        "spacing",
+        "inner-voice motion",
+        "surface texture",
+        "ornamentation"
+      ],
+      "whatStaysConstant": [
+        "harmonic graph path",
+        "bass implication",
+        "tempo",
+        "instrumentation",
+        "overall duration"
+      ]
     }
   },
   "citations": ["S1", "S2", "S3"],

@@ -54,11 +54,7 @@
         "type": "frequency",
         "value": "low/mid/high band split",
         "details": {
-          "bands": [
-            "low",
-            "mid",
-            "high"
-          ]
+          "bands": ["low", "mid", "high"]
         }
       },
       {
@@ -82,9 +78,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 75,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Nearfield monitors or neutral headphones, level-matched renders.",
       "listeningMethod": "Blind A/B/C comparison against the matched control; rate continuity, identity preservation, and transformation clarity on 1-5 scales.",
       "whatVaries": [
@@ -99,13 +93,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Created from synthesis context 2026-05-19T08-26-33-896Z. The main connection is invariant frame plus adaptive surface, distinct from prior recoverable-window and translation-layer framings."
 }

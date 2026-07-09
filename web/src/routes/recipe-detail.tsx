@@ -217,7 +217,9 @@ export function RecipeDetailPage() {
                   <For each={r().parameters}>
                     {(param) => (
                       <div class={paramCell}>
-                        <div class={paramType}>{param.kind ?? param.type ?? "parameter"}</div>
+                        <div class={paramType}>
+                          {param.kind ?? param.type ?? "parameter"}
+                        </div>
                         <div class={paramValue}>{param.value}</div>
                       </div>
                     )}
@@ -250,19 +252,25 @@ export function RecipeDetailPage() {
                     <div class={protocolPanel}>
                       <div class={protocolMeta}>
                         <UIBadge tone="gold">{proto().studyType}</UIBadge>
-                        <UIBadge tone="cream">{formatDuration(proto().durationSecs)}</UIBadge>
+                        <UIBadge tone="cream">
+                          {formatDuration(proto().durationSecs)}
+                        </UIBadge>
                         <Show when={proto().listeningContext}>
                           {(ctx) => <UIBadge tone="violet">{ctx()}</UIBadge>}
                         </Show>
                         <Show when={proto().listeningMethod}>
-                          {(method) => <UIBadge tone="violet">{method()}</UIBadge>}
+                          {(method) => (
+                            <UIBadge tone="violet">{method()}</UIBadge>
+                          )}
                         </Show>
                       </div>
 
                       <Show when={proto().panelPlanned.length > 0}>
                         <div class={protocolColumnTitle}>Panel Planned</div>
                         <For each={proto().panelPlanned}>
-                          {(member) => <div class={protocolListItem}>{member}</div>}
+                          {(member) => (
+                            <div class={protocolListItem}>{member}</div>
+                          )}
                         </For>
                       </Show>
 
@@ -270,13 +278,19 @@ export function RecipeDetailPage() {
                         <div>
                           <div class={protocolColumnTitle}>What Varies</div>
                           <For each={proto().whatVaries}>
-                            {(item) => <div class={protocolListItem}>{item}</div>}
+                            {(item) => (
+                              <div class={protocolListItem}>{item}</div>
+                            )}
                           </For>
                         </div>
                         <div>
-                          <div class={protocolColumnTitle}>What Stays Constant</div>
+                          <div class={protocolColumnTitle}>
+                            What Stays Constant
+                          </div>
                           <For each={proto().whatStaysConstant}>
-                            {(item) => <div class={protocolListItem}>{item}</div>}
+                            {(item) => (
+                              <div class={protocolListItem}>{item}</div>
+                            )}
                           </For>
                         </div>
                       </div>

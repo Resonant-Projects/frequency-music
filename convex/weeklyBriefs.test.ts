@@ -69,10 +69,12 @@ Research summary.
       ],
     });
 
-    expect(result.recentHypotheses.map((hypothesis) => hypothesis._id)).toEqual([
-      recentHypothesisId,
+    expect(result.recentHypotheses.map((hypothesis) => hypothesis._id)).toEqual(
+      [recentHypothesisId],
+    );
+    expect(result.recentRecipes.map((recipe) => recipe._id)).toEqual([
+      "recipe-recent",
     ]);
-    expect(result.recentRecipes.map((recipe) => recipe._id)).toEqual(["recipe-recent"]);
     expect(result.sourceIds).toEqual([recentSourceId]);
   });
 
@@ -110,11 +112,16 @@ Research summary.
       generateBriefCore(ctx as any, {
         daysBack: 7,
       }),
-    ).rejects.toThrow("No recent hypotheses or recipes found. Generate some first.");
+    ).rejects.toThrow(
+      "No recent hypotheses or recipes found. Generate some first.",
+    );
   });
 });
 
-function baseBrief(): BriefEditableContent & { promptVersion: string; model: string } {
+function baseBrief(): BriefEditableContent & {
+  promptVersion: string;
+  model: string;
+} {
   return {
     bodyMd: "# Week of March 26\n\nOriginal body.",
     todo: ["Try branch A"],
@@ -149,12 +156,16 @@ describe("weekly brief edit capture", () => {
   test("briefContentChanged returns false for identical content and true when a field differs", () => {
     const content = selectBriefContent(baseBrief());
     expect(briefContentChanged(content, { ...content })).toBe(false);
-    expect(briefContentChanged(content, { ...content, bodyMd: "Changed" })).toBe(true);
+    expect(
+      briefContentChanged(content, { ...content, bodyMd: "Changed" }),
+    ).toBe(true);
   });
 
   test("computeBriefEditCapture fires on AI-origin edit with content change", () => {
     const brief = baseBrief();
-    const capture = computeBriefEditCapture(brief, { bodyMd: "# Human-edited body" });
+    const capture = computeBriefEditCapture(brief, {
+      bodyMd: "# Human-edited body",
+    });
 
     expect(capture).not.toBeNull();
     expect(capture?.promptVersion).toBe("v2.phase3");

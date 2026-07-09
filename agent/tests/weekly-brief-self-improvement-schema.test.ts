@@ -64,7 +64,10 @@ describe("weeklyBriefOutputSchema whatTheSystemLearned", () => {
         editCapturesCount: 4,
         draftsApproved: 3,
         draftsRejected: 2,
-        rejectionThemes: ["not grounded in an extraction", "duplicate hypothesis"],
+        rejectionThemes: [
+          "not grounded in an extraction",
+          "duplicate hypothesis",
+        ],
         memoryRecallNotes: ["skipped Schumann×D-root: contradicted in run abc"],
         promptPromotions: [],
       },

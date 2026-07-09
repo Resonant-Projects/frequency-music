@@ -27,11 +27,45 @@
     "title": "Three Seconds Before Arrival",
     "bodyMd": "Write a sixteen-bar loop with four fixed target events: one cadence, one timbral bloom, one rhythmic break, and one sudden silence. Render five versions in which the targets remain identical but the three seconds before each target change. Version A uses nearest-neighbor Tonnetz-like voice leading and gradual timbral/rhythmic movement toward the arrival [S5, S2]. Version B uses hard two-beat or two-note block resets, echoing the collapsed-block constraint in the HHL music architecture [S1]. Version C exaggerates subtle prosodic precursor cues over the three-second window: tempo drag, energy-envelope tilt, pitch-contour narrowing, spectral-flux increase, or breath-like noise [S3]. Version D adds acousmatic/off-screen cues that imply a hidden cause, such as room tone swelling, distant friction, or preparatory vocal noise [S4]. Version E keeps timbral identity constant while changing only dynamic prosody: articulation, contour, timing, and intensity [S6]. Blind-listen to the renders and rate the identical target arrivals for preparation, surprise, blockage, inevitability, and emotional coherence.",
     "parameters": [
-      { "type": "duration", "value": "3 seconds precursor window", "details": { "seconds": 3 } },
-      { "type": "duration", "value": "16 bars total", "details": { "bars": 16 } },
-      { "type": "measurement", "value": "5-point listener ratings", "details": { "scaleMin": 1, "scaleMax": 5, "dimensions": ["prepared", "surprising", "blocked", "inevitable", "emotionally coherent"] } },
+      {
+        "type": "duration",
+        "value": "3 seconds precursor window",
+        "details": { "seconds": 3 }
+      },
+      {
+        "type": "duration",
+        "value": "16 bars total",
+        "details": { "bars": 16 }
+      },
+      {
+        "type": "measurement",
+        "value": "5-point listener ratings",
+        "details": {
+          "scaleMin": 1,
+          "scaleMax": 5,
+          "dimensions": [
+            "prepared",
+            "surprising",
+            "blocked",
+            "inevitable",
+            "emotionally coherent"
+          ]
+        }
+      },
       { "type": "tempo", "value": "96 BPM", "details": { "bpm": 96 } },
-      { "type": "measurement", "value": "five render conditions", "details": { "conditions": ["accessible path", "collapsed block", "prosodic warning", "hidden cause", "identity/prosody split"] } }
+      {
+        "type": "measurement",
+        "value": "five render conditions",
+        "details": {
+          "conditions": [
+            "accessible path",
+            "collapsed block",
+            "prosodic warning",
+            "hidden cause",
+            "identity/prosody split"
+          ]
+        }
+      }
     ],
     "dawChecklist": [
       "Create a 16-bar loop at 96 BPM with four clearly marked target arrivals.",

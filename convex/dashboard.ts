@@ -23,7 +23,11 @@ const emptySectors: Record<SectorId, { sources: number; claims: number }> = {
 function inferSector(topics: string[]): SectorId {
   const joined = topics.join(" ").toLowerCase();
 
-  if (joined.includes("math") || joined.includes("ratio") || joined.includes("topolog"))
+  if (
+    joined.includes("math") ||
+    joined.includes("ratio") ||
+    joined.includes("topolog")
+  )
     return "math";
   if (
     joined.includes("wave") ||
@@ -39,7 +43,11 @@ function inferSector(topics: string[]): SectorId {
     joined.includes("disson")
   )
     return "psycho";
-  if (joined.includes("geometr") || joined.includes("tonnetz") || joined.includes("symmetry"))
+  if (
+    joined.includes("geometr") ||
+    joined.includes("tonnetz") ||
+    joined.includes("symmetry")
+  )
     return "geometry";
   if (
     joined.includes("synth") ||
@@ -62,15 +70,21 @@ export const pipeline = query({
     weeklyBriefs: v.number(),
   }),
   handler: async (ctx) => {
-    const [sources, extractions, hypotheses, recipes, compositions, weeklyBriefs] =
-      await Promise.all([
-        ctx.db.query("sources").collect(),
-        ctx.db.query("extractions").collect(),
-        ctx.db.query("hypotheses").collect(),
-        ctx.db.query("recipes").collect(),
-        ctx.db.query("compositions").collect(),
-        ctx.db.query("weeklyBriefs").collect(),
-      ]);
+    const [
+      sources,
+      extractions,
+      hypotheses,
+      recipes,
+      compositions,
+      weeklyBriefs,
+    ] = await Promise.all([
+      ctx.db.query("sources").collect(),
+      ctx.db.query("extractions").collect(),
+      ctx.db.query("hypotheses").collect(),
+      ctx.db.query("recipes").collect(),
+      ctx.db.query("compositions").collect(),
+      ctx.db.query("weeklyBriefs").collect(),
+    ]);
 
     return {
       sources: sources.length,
@@ -94,9 +108,15 @@ export const zodiacSectors = query({
   ),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 120;
-    const extractions = await ctx.db.query("extractions").order("desc").take(limit);
+    const extractions = await ctx.db
+      .query("extractions")
+      .order("desc")
+      .take(limit);
 
-    const sectorMetrics: Record<SectorId, { sources: Set<string>; claims: number }> = {
+    const sectorMetrics: Record<
+      SectorId,
+      { sources: Set<string>; claims: number }
+    > = {
       math: { sources: new Set(), claims: 0 },
       wave: { sources: new Set(), claims: 0 },
       music: { sources: new Set(), claims: 0 },
@@ -134,7 +154,10 @@ export const domainSubTopics = query({
   ),
   handler: async (ctx, args) => {
     const allRegisteredDomains = await ctx.db.query("conceptDomains").collect();
-    const { domains } = resolveDomainsForSector(allRegisteredDomains, args.domain);
+    const { domains } = resolveDomainsForSector(
+      allRegisteredDomains,
+      args.domain,
+    );
 
     // Fetch concepts using the by_domain index for each matching domain
     const conceptLists = await Promise.all(
@@ -165,9 +188,14 @@ export const domainSubTopics = query({
     for (const concept of allConcepts) {
       const edges = await ctx.db
         .query("edges")
-        .withIndex("by_from", (q) => q.eq("fromType", "concept").eq("fromId", concept.name))
+        .withIndex("by_from", (q) =>
+          q.eq("fromType", "concept").eq("fromId", concept.name),
+        )
         .filter((q) =>
-          q.or(q.eq(q.field("relationship"), "is_a"), q.eq(q.field("relationship"), "part_of")),
+          q.or(
+            q.eq(q.field("relationship"), "is_a"),
+            q.eq(q.field("relationship"), "part_of"),
+          ),
         )
         .first();
       if (edges) parentMap.set(concept.name, edges.toId);
@@ -187,8 +215,11 @@ export const domainSubTopics = query({
       groups.clear();
       // Use first significant word (>3 chars) from displayName
       for (const concept of allConcepts) {
-        const words = concept.displayName.split(/\s+/).map((w: string) => w.toLowerCase());
-        const keyword = words.find((w: string) => w.length > 3) ?? concept.domain ?? "other";
+        const words = concept.displayName
+          .split(/\s+/)
+          .map((w: string) => w.toLowerCase());
+        const keyword =
+          words.find((w: string) => w.length > 3) ?? concept.domain ?? "other";
         if (!groups.has(keyword)) groups.set(keyword, []);
         groups.get(keyword)!.push(concept.name);
       }
@@ -209,7 +240,9 @@ export const domainSubTopics = query({
     }
 
     // Take top 4 clusters by size
-    const sorted = [...groups.entries()].toSorted((a, b) => b[1].length - a[1].length).slice(0, 4);
+    const sorted = [...groups.entries()]
+      .toSorted((a, b) => b[1].length - a[1].length)
+      .slice(0, 4);
 
     return sorted.map(([key, names]) => ({
       label: key.charAt(0).toUpperCase() + key.slice(1),
@@ -299,52 +332,59 @@ export const pipelineItems = query({
 });
 
 export async function computeEditorialSignals(db: DbReader, limit = 24) {
-  const [concepts, hypotheses, recipes, compositions, listeningSessions] = (await Promise.all([
-    db.query("concepts").collect(),
-    db.query("hypotheses").collect(),
-    db.query("recipes").collect(),
-    db.query("compositions").collect(),
-    db.query("listeningSessions").collect(),
-  ])) as [
-    Doc<"concepts">[],
-    Doc<"hypotheses">[],
-    Doc<"recipes">[],
-    Doc<"compositions">[],
-    Doc<"listeningSessions">[],
-  ];
+  const [concepts, hypotheses, recipes, compositions, listeningSessions] =
+    (await Promise.all([
+      db.query("concepts").collect(),
+      db.query("hypotheses").collect(),
+      db.query("recipes").collect(),
+      db.query("compositions").collect(),
+      db.query("listeningSessions").collect(),
+    ])) as [
+      Doc<"concepts">[],
+      Doc<"hypotheses">[],
+      Doc<"recipes">[],
+      Doc<"compositions">[],
+      Doc<"listeningSessions">[],
+    ];
 
   const recipesByHypothesisId = new Map<string, Doc<"recipes">[]>();
   for (const recipe of recipes) {
-    const existing = recipesByHypothesisId.get(String(recipe.hypothesisId)) ?? [];
+    const existing =
+      recipesByHypothesisId.get(String(recipe.hypothesisId)) ?? [];
     existing.push(recipe);
     recipesByHypothesisId.set(String(recipe.hypothesisId), existing);
   }
 
   const compositionsByRecipeId = new Map<string, Doc<"compositions">[]>();
   for (const composition of compositions) {
-    const existing = compositionsByRecipeId.get(String(composition.recipeId)) ?? [];
+    const existing =
+      compositionsByRecipeId.get(String(composition.recipeId)) ?? [];
     existing.push(composition);
     compositionsByRecipeId.set(String(composition.recipeId), existing);
   }
 
   const sessionsByCompositionId = new Map<string, Doc<"listeningSessions">[]>();
   for (const session of listeningSessions) {
-    const existing = sessionsByCompositionId.get(String(session.compositionId)) ?? [];
+    const existing =
+      sessionsByCompositionId.get(String(session.compositionId)) ?? [];
     existing.push(session);
     sessionsByCompositionId.set(String(session.compositionId), existing);
   }
 
   const rows = concepts.map((concept: Doc<"concepts">) => {
-    const linkedHypotheses = hypotheses.filter((hypothesis: Doc<"hypotheses">) =>
-      (hypothesis.concepts ?? []).some(
-        (item: string) => item.toLowerCase().trim() === concept.name,
-      ),
+    const linkedHypotheses = hypotheses.filter(
+      (hypothesis: Doc<"hypotheses">) =>
+        (hypothesis.concepts ?? []).some(
+          (item: string) => item.toLowerCase().trim() === concept.name,
+        ),
     );
     const linkedRecipes = linkedHypotheses.flatMap(
-      (hypothesis: Doc<"hypotheses">) => recipesByHypothesisId.get(String(hypothesis._id)) ?? [],
+      (hypothesis: Doc<"hypotheses">) =>
+        recipesByHypothesisId.get(String(hypothesis._id)) ?? [],
     );
     const linkedCompositions = linkedRecipes.flatMap(
-      (recipe: Doc<"recipes">) => compositionsByRecipeId.get(String(recipe._id)) ?? [],
+      (recipe: Doc<"recipes">) =>
+        compositionsByRecipeId.get(String(recipe._id)) ?? [],
     );
 
     let supportedHypotheses = 0;
@@ -366,9 +406,9 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
     let compositionsNo = 0;
     let compositionsLowExpandability = 0;
     for (const composition of linkedCompositions) {
-      const sessions = (sessionsByCompositionId.get(String(composition._id)) ?? []).toSorted(
-        (a, b) => b.createdAt - a.createdAt,
-      );
+      const sessions = (
+        sessionsByCompositionId.get(String(composition._id)) ?? []
+      ).toSorted((a, b) => b.createdAt - a.createdAt);
       const latest = sessions[0];
       if (!latest) continue;
       if (latest.expandVerdict === "yes") compositionsYes += 1;
@@ -403,7 +443,9 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
     };
   });
 
-  const sorted = [...rows].toSorted((a, b) => b.netYieldScore - a.netYieldScore);
+  const sorted = [...rows].toSorted(
+    (a, b) => b.netYieldScore - a.netYieldScore,
+  );
   const topRows = sorted.slice(0, limit);
 
   const byDomain = new Map<
@@ -424,7 +466,8 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
     };
     existing.conceptNames.push(row.displayName);
     existing.score += row.netYieldScore;
-    existing.yieldBand = existing.score >= 6 ? "high" : existing.score <= -1 ? "low" : "mixed";
+    existing.yieldBand =
+      existing.score >= 6 ? "high" : existing.score <= -1 ? "low" : "mixed";
     byDomain.set(row.domain, existing);
   }
 
@@ -437,7 +480,9 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
 
   return {
     concepts: topRows,
-    highYieldClusters: clusters.filter((cluster) => cluster.yieldBand === "high").slice(0, 4),
+    highYieldClusters: clusters
+      .filter((cluster) => cluster.yieldBand === "high")
+      .slice(0, 4),
     lowYieldClusters: [...clusters]
       .filter((cluster) => cluster.yieldBand === "low")
       .toReversed()
@@ -460,7 +505,11 @@ export const editorialSignals = query({
         positiveSignals: v.number(),
         negativeSignals: v.number(),
         netYieldScore: v.number(),
-        yieldBand: v.union(v.literal("high"), v.literal("mixed"), v.literal("low")),
+        yieldBand: v.union(
+          v.literal("high"),
+          v.literal("mixed"),
+          v.literal("low"),
+        ),
       }),
     ),
     highYieldClusters: v.array(
@@ -468,7 +517,11 @@ export const editorialSignals = query({
         domain: v.string(),
         conceptNames: v.array(v.string()),
         score: v.number(),
-        yieldBand: v.union(v.literal("high"), v.literal("mixed"), v.literal("low")),
+        yieldBand: v.union(
+          v.literal("high"),
+          v.literal("mixed"),
+          v.literal("low"),
+        ),
       }),
     ),
     lowYieldClusters: v.array(
@@ -476,7 +529,11 @@ export const editorialSignals = query({
         domain: v.string(),
         conceptNames: v.array(v.string()),
         score: v.number(),
-        yieldBand: v.union(v.literal("high"), v.literal("mixed"), v.literal("low")),
+        yieldBand: v.union(
+          v.literal("high"),
+          v.literal("mixed"),
+          v.literal("low"),
+        ),
       }),
     ),
   }),
@@ -498,12 +555,16 @@ export const itemRelations = query({
   handler: async (ctx, args) => {
     const edgesFrom = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) => q.eq("fromType", args.itemType as any).eq("fromId", args.itemId))
+      .withIndex("by_from", (q) =>
+        q.eq("fromType", args.itemType as any).eq("fromId", args.itemId),
+      )
       .take(30);
 
     const edgesTo = await ctx.db
       .query("edges")
-      .withIndex("by_to", (q) => q.eq("toType", args.itemType as any).eq("toId", args.itemId))
+      .withIndex("by_to", (q) =>
+        q.eq("toType", args.itemType as any).eq("toId", args.itemId),
+      )
       .take(30);
 
     const results: Array<{
@@ -514,7 +575,8 @@ export const itemRelations = query({
     }> = [];
 
     for (const edge of [...edgesFrom, ...edgesTo]) {
-      const isFrom = edge.fromType === args.itemType && edge.fromId === args.itemId;
+      const isFrom =
+        edge.fromType === args.itemType && edge.fromId === args.itemId;
       const otherId = isFrom ? edge.toId : edge.fromId;
       const otherType = isFrom ? edge.toType : edge.fromType;
 
@@ -533,7 +595,10 @@ export const itemRelations = query({
           const r = await ctx.db.get("recipes", otherId as Id<"recipes">);
           if (r) title = r.title;
         } else if (otherType === "extraction") {
-          const e = await ctx.db.get("extractions", otherId as Id<"extractions">);
+          const e = await ctx.db.get(
+            "extractions",
+            otherId as Id<"extractions">,
+          );
           if (e) title = `Extraction (${e.topics.slice(0, 2).join(", ")})`;
         }
       } catch {

@@ -13,7 +13,11 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQuery, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQuery,
+  createQueryWithStatus,
+} from "../integrations/convex";
 import { convexApi } from "../integrations/convex/api";
 
 function parseParticipants(input: string) {
@@ -58,11 +62,20 @@ const FELT_QUALITY_HELPERS = [
   "pressurized",
 ] as const;
 
-const BODY_MAP_HELPERS = ["chest", "jaw", "spine", "stomach", "throat", "forehead"] as const;
+const BODY_MAP_HELPERS = [
+  "chest",
+  "jaw",
+  "spine",
+  "stomach",
+  "throat",
+  "forehead",
+] as const;
 
 function appendCommaValue(current: string, next: string): string {
   const values = parseCommaSeparated(current);
-  return values.includes(next) ? values.join(", ") : [...values, next].join(", ");
+  return values.includes(next)
+    ? values.join(", ")
+    : [...values, next].join(", ");
 }
 
 export function FeedbackPage() {
@@ -73,9 +86,12 @@ export function FeedbackPage() {
   const compositions = createQuery(convexApi.compositions.list, () => ({
     limit: 40,
   }));
-  const sessions = createQueryWithStatus(convexApi.listening.listRecent, () => ({
-    limit: 30,
-  }));
+  const sessions = createQueryWithStatus(
+    convexApi.listening.listRecent,
+    () => ({
+      limit: 30,
+    }),
+  );
   const createSession = createMutation(convexApi.listening.create);
 
   const compositionById = createMemo(() => {
@@ -127,10 +143,15 @@ export function FeedbackPage() {
           expandability: parseOptionalRating(expandability()),
         },
         bodyMapNotes: bodyMapNotes().trim() || undefined,
-        feltQualities: parsedFeltQualities.length > 0 ? parsedFeltQualities : undefined,
-        bodyMapTags: parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
-        standoutMoments: parsedStandoutMoments.length > 0 ? parsedStandoutMoments : undefined,
-        expandVerdict: expandVerdict() ? (expandVerdict() as "yes" | "maybe" | "no") : undefined,
+        feltQualities:
+          parsedFeltQualities.length > 0 ? parsedFeltQualities : undefined,
+        bodyMapTags:
+          parsedBodyMapTags.length > 0 ? parsedBodyMapTags : undefined,
+        standoutMoments:
+          parsedStandoutMoments.length > 0 ? parsedStandoutMoments : undefined,
+        expandVerdict: expandVerdict()
+          ? (expandVerdict() as "yes" | "maybe" | "no")
+          : undefined,
       });
 
       setParticipants("");
@@ -163,7 +184,9 @@ export function FeedbackPage() {
         >
           <option value="">Select composition</option>
           <For each={compositions() ?? []}>
-            {(item: Doc<"compositions">) => <option value={String(item._id)}>{item.title}</option>}
+            {(item: Doc<"compositions">) => (
+              <option value={String(item._id)}>{item.title}</option>
+            )}
           </For>
         </UISelect>
 
@@ -319,7 +342,11 @@ export function FeedbackPage() {
                       px: "2.5",
                       py: "1",
                     })}
-                    onClick={() => setFeltQualities((current) => appendCommaValue(current, helper))}
+                    onClick={() =>
+                      setFeltQualities((current) =>
+                        appendCommaValue(current, helper),
+                      )
+                    }
                   >
                     {helper}
                   </button>
@@ -358,7 +385,11 @@ export function FeedbackPage() {
                       px: "2.5",
                       py: "1",
                     })}
-                    onClick={() => setBodyMapTags((current) => appendCommaValue(current, helper))}
+                    onClick={() =>
+                      setBodyMapTags((current) =>
+                        appendCommaValue(current, helper),
+                      )
+                    }
                   >
                     {helper}
                   </button>
@@ -398,7 +429,9 @@ export function FeedbackPage() {
         >
           <div aria-live="polite">
             <Show when={notice()}>
-              {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
+              {(message) => (
+                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+              )}
             </Show>
           </div>
           <UIButton type="submit" variant="solid">
@@ -414,7 +447,8 @@ export function FeedbackPage() {
             when={!sessions.isError()}
             fallback={
               <p class={css({ color: "zodiac.error" })}>
-                Failed to load sessions: {sessions.error()?.message ?? "Unknown error"}
+                Failed to load sessions:{" "}
+                {sessions.error()?.message ?? "Unknown error"}
               </p>
             }
           >
@@ -438,9 +472,12 @@ export function FeedbackPage() {
                       })}
                     >
                       <UIBadge tone="gold">
-                        {compositionById().get(String(session.compositionId)) ?? "Composition"}
+                        {compositionById().get(String(session.compositionId)) ??
+                          "Composition"}
                       </UIBadge>
-                      <UIBadge tone="cream">{session.participants.length} listeners</UIBadge>
+                      <UIBadge tone="cream">
+                        {session.participants.length} listeners
+                      </UIBadge>
                       <Show when={session.expandVerdict}>
                         {(value) => <UIBadge tone="violet">{value()}</UIBadge>}
                       </Show>
@@ -468,9 +505,9 @@ export function FeedbackPage() {
                             : "0",
                       })}
                     >
-                      pleasantness: {session.ratings?.bodilyPleasantness ?? "-"} · goosebumps:{" "}
-                      {session.ratings?.goosebumps ?? "-"} · musicality:{" "}
-                      {session.ratings?.musicality ?? "-"}
+                      pleasantness: {session.ratings?.bodilyPleasantness ?? "-"}{" "}
+                      · goosebumps: {session.ratings?.goosebumps ?? "-"} ·
+                      musicality: {session.ratings?.musicality ?? "-"}
                     </p>
                     <Show when={session.ratings?.expandability !== undefined}>
                       <p
@@ -528,7 +565,10 @@ export function FeedbackPage() {
                             color: "rgba(245, 240, 232, 0.62)",
                             fontSize: "sm",
                             whiteSpace: "pre-wrap",
-                            marginBottom: (session.standoutMoments?.length ?? 0) > 0 ? "2" : "0",
+                            marginBottom:
+                              (session.standoutMoments?.length ?? 0) > 0
+                                ? "2"
+                                : "0",
                           })}
                         >
                           Body notes: {value()}
@@ -543,7 +583,11 @@ export function FeedbackPage() {
                         })}
                       >
                         Standout:{" "}
-                        {truncate(session.standoutMoments?.slice(0, 2).join(" • ") ?? "", 160)}
+                        {truncate(
+                          session.standoutMoments?.slice(0, 2).join(" • ") ??
+                            "",
+                          160,
+                        )}
                       </p>
                     </Show>
                   </div>

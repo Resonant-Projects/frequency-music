@@ -15,7 +15,11 @@ export const failureActionValidator = v.union(
   v.literal("leave_archived"),
 );
 
-export const yieldBandValidator = v.union(v.literal("high"), v.literal("mixed"), v.literal("low"));
+export const yieldBandValidator = v.union(
+  v.literal("high"),
+  v.literal("mixed"),
+  v.literal("low"),
+);
 
 export type FailureReason =
   | "contradicted_hypothesis"
@@ -73,7 +77,9 @@ export function isLowYieldListeningSession(
   );
 }
 
-export function summarizeListeningSessions(sessions: Doc<"listeningSessions">[]): ListeningSummary {
+export function summarizeListeningSessions(
+  sessions: Doc<"listeningSessions">[],
+): ListeningSummary {
   const sorted = [...sessions].toSorted((a, b) => b.createdAt - a.createdAt);
   const latest = sorted[0];
   const lowOutcomeCount = sorted.filter(isLowYieldListeningSession).length;

@@ -26,11 +26,27 @@
     "title": "Coherence Under Surface Change",
     "bodyMd": "Create a 60-second call-and-response sketch with a four-note lead call, a bass/chord answer, and a quiet binding layer. Render four versions. Version A varies answer chords only by a chosen Tonnetz-adjacent rule [S1]. Version B keeps the harmonic path but moves timbres into cleaner perceptual bands inspired by Bark-scale critical-band thinking [S3]. Version C keeps notes and timbre stable while varying phase/microtiming between answer and binding layer [S5]. Version D deliberately breaches one contract: a non-adjacent harmonic answer, masking in the same critical band, phase smear, or silence inserted where response continuity is expected [S4, S6]. The test is falsified if the breach version is rated as equally coherent as the contract-preserving versions despite listeners noticing the manipulation.",
     "parameters": [
-      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": { "seconds": 60 }
+      },
       { "type": "tempo", "value": "112 BPM", "details": { "bpm": 112 } },
-      { "type": "form", "value": "8-bar call-and-response loop repeated with four treatments", "details": { "barsPerTreatment": 8, "treatments": 4 } },
-      { "type": "structuralPattern", "value": "Call and response", "details": { "levels": ["phrase", "section"], "source": "S6" } },
-      { "type": "measurement", "value": "coherence rating 1-5 per render", "details": { "scaleMin": 1, "scaleMax": 5 } }
+      {
+        "type": "form",
+        "value": "8-bar call-and-response loop repeated with four treatments",
+        "details": { "barsPerTreatment": 8, "treatments": 4 }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "Call and response",
+        "details": { "levels": ["phrase", "section"], "source": "S6" }
+      },
+      {
+        "type": "measurement",
+        "value": "coherence rating 1-5 per render",
+        "details": { "scaleMin": 1, "scaleMax": 5 }
+      }
     ],
     "dawChecklist": [
       "Program a four-note lead call and a bass/chord answer at 112 BPM.",

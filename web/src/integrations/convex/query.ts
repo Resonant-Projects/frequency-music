@@ -1,5 +1,15 @@
-import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
-import { type Accessor, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import type {
+  FunctionArgs,
+  FunctionReference,
+  FunctionReturnType,
+} from "convex/server";
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+} from "solid-js";
 import { useConvexClient } from "./provider";
 
 export interface QueryStatus<T> {
@@ -33,12 +43,15 @@ export function createQuery<Query extends FunctionReference<"query">>(
   args?: FunctionArgs<Query> | (() => FunctionArgs<Query>),
 ): Accessor<FunctionReturnType<Query> | undefined> {
   const convex = useConvexClient();
-  const [data, setData] = createSignal<FunctionReturnType<Query> | undefined>(undefined);
+  const [data, setData] = createSignal<FunctionReturnType<Query> | undefined>(
+    undefined,
+  );
 
   const resolvedArgs = createMemo(
     () =>
-      (typeof args === "function" ? (args as () => FunctionArgs<Query>)() : args) ??
-      ({} as FunctionArgs<Query>),
+      (typeof args === "function"
+        ? (args as () => FunctionArgs<Query>)()
+        : args) ?? ({} as FunctionArgs<Query>),
   );
 
   let unsubscribe: (() => void) | null = null;
@@ -72,11 +85,16 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
 ): QueryStatus<FunctionReturnType<Query>> {
   const convex = useConvexClient();
 
-  const [data, setData] = createSignal<FunctionReturnType<Query> | undefined>(undefined);
+  const [data, setData] = createSignal<FunctionReturnType<Query> | undefined>(
+    undefined,
+  );
   const [error, setError] = createSignal<Error | null>(null);
 
   const resolvedArgs = createMemo(() => {
-    const raw = typeof args === "function" ? (args as () => FunctionArgs<Query> | "skip")() : args;
+    const raw =
+      typeof args === "function"
+        ? (args as () => FunctionArgs<Query> | "skip")()
+        : args;
     if (raw === "skip") return "skip" as const;
     return raw ?? ({} as FunctionArgs<Query>);
   });
@@ -116,7 +134,8 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
     convex
       .query(query, nextArgs)
       .then((result: FunctionReturnType<Query>) => {
-        if (version !== requestVersion || !isMounted || hasReceivedData) return undefined;
+        if (version !== requestVersion || !isMounted || hasReceivedData)
+          return undefined;
         hasReceivedData = true;
         setData(() => result);
         return undefined;

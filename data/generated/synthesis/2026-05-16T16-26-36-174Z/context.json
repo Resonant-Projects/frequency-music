@@ -184,10 +184,7 @@
           "details": {
             "character": "playful, world-music texture",
             "instrument": "Kontakt",
-            "libraries": [
-              "West Africa",
-              "Cuba"
-            ],
+            "libraries": ["West Africa", "Cuba"],
             "role": "percussion fills"
           }
         },
@@ -856,11 +853,7 @@
           "details": {
             "count": 470000,
             "datasetName": "SoundAtlas",
-            "modalities": [
-              "video",
-              "audio",
-              "text"
-            ],
+            "modalities": ["video", "audio", "text"],
             "unit": "pairs"
           }
         }

@@ -20,7 +20,9 @@ function isSummaryItem(item: unknown): item is SummaryItem {
   );
 }
 
-const summary = JSON.parse(readFileSync("/tmp/ext-summary.json", "utf-8")) as unknown;
+const summary = JSON.parse(
+  readFileSync("/tmp/ext-summary.json", "utf-8"),
+) as unknown;
 const rows = Array.isArray(summary)
   ? summary.filter((item): item is SummaryItem => isSummaryItem(item))
   : [];

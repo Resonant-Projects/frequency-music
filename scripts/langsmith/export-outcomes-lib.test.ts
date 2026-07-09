@@ -15,13 +15,19 @@ describe("deriveOutcome", () => {
         latestExpandVerdict: "yes",
         localFailureStatus: "low_expandability_composition",
       }),
-    ).toEqual({ outcome: "failure_archived", failureReason: "low_expandability_composition" });
+    ).toEqual({
+      outcome: "failure_archived",
+      failureReason: "low_expandability_composition",
+    });
   });
 
   test("falls back to branch failure status", () => {
     expect(
       deriveOutcome({ branchFailureStatus: "repeat_no_expand_composition" }),
-    ).toEqual({ outcome: "failure_archived", failureReason: "repeat_no_expand_composition" });
+    ).toEqual({
+      outcome: "failure_archived",
+      failureReason: "repeat_no_expand_composition",
+    });
   });
 
   test("maps expand verdicts", () => {
@@ -113,7 +119,12 @@ describe("groupByPromptVersion", () => {
     const groups = groupByPromptVersion(rows);
     expect(groups).toHaveLength(2);
     const v1 = groups.find((g) => g.promptVersion === "v1")!;
-    expect(v1.counts).toEqual({ expand: 1, repeat: 0, no_expand: 1, failure_archived: 0 });
+    expect(v1.counts).toEqual({
+      expand: 1,
+      repeat: 0,
+      no_expand: 1,
+      failure_archived: 0,
+    });
     expect(v1.total).toBe(2);
     expect(v1.expandRate).toBeCloseTo(0.5);
     const unknown = groups.find((g) => g.promptVersion === "unknown")!;
@@ -155,7 +166,10 @@ describe("outcomeToExample", () => {
         model: "m",
         provider: null,
       },
-      outputs: { outcome: "failure_archived", failureReason: "archived_recipe" },
+      outputs: {
+        outcome: "failure_archived",
+        failureReason: "archived_recipe",
+      },
       metadata: { source: "studio_outcome", compositionId: "c1" },
     });
   });

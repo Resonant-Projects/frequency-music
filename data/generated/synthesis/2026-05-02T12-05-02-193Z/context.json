@@ -344,10 +344,7 @@
           "type": "key",
           "value": "All 12 keys (major and minor chord loops)",
           "details": {
-            "chordTypes": [
-              "major",
-              "minor"
-            ],
+            "chordTypes": ["major", "minor"],
             "context": "8dio Songwriting Guitar chord triggering",
             "keyCount": 12,
             "source": "8dio Songwriting Guitar"
@@ -522,10 +519,7 @@
           "type": "scaleSystem",
           "value": "Diatonic (7-note) scale",
           "details": {
-            "chordTypes": [
-              "triads",
-              "seventh chords"
-            ],
+            "chordTypes": ["triads", "seventh chords"],
             "graphType": "{7_3} bipartite, girth 4",
             "noteCount": 7
           }
@@ -551,10 +545,7 @@
           "type": "interval",
           "value": "Tristan-genus chords: dominant seventh and half-diminished seventh",
           "details": {
-            "chordTypes": [
-              "dominant seventh",
-              "half-diminished seventh"
-            ],
+            "chordTypes": ["dominant seventh", "half-diminished seventh"],
             "configurationModel": "D228 {12_3}"
           }
         },

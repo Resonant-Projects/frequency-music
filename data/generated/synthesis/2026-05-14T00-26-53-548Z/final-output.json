@@ -84,9 +84,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 120,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "studio headphones or monitors at conservative low-frequency playback levels; loudness matched before rating",
       "listeningMethod": "blind shuffled comparison with 1–7 ratings for inevitability, tension, and conversational aliveness",
       "whatVaries": [
@@ -104,13 +102,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Companion essay: docs/essays/the-control-plane-under-the-sound.md"
 }

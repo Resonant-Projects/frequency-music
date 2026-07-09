@@ -49,7 +49,11 @@ interface ParsedRecipePayload {
   };
 }
 
-function assertStringArray(value: unknown, field: string, raw: unknown): string[] {
+function assertStringArray(
+  value: unknown,
+  field: string,
+  raw: unknown,
+): string[] {
   if (
     !Array.isArray(value) ||
     value.some((item) => typeof item !== "string" || item.trim().length === 0)
@@ -129,7 +133,9 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
     return {
       kind,
       type:
-        typeof param.type === "string" && param.type.trim().length > 0 ? param.type.trim() : kind,
+        typeof param.type === "string" && param.type.trim().length > 0
+          ? param.type.trim()
+          : kind,
       value: param.value,
       details: param.details,
     };
@@ -148,7 +154,11 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
     }
 
     const p = protocol as Record<string, unknown>;
-    if (p.studyType !== undefined && p.studyType !== "litmus" && p.studyType !== "comparison") {
+    if (
+      p.studyType !== undefined &&
+      p.studyType !== "litmus" &&
+      p.studyType !== "comparison"
+    ) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
         message: "protocol.studyType must be litmus|comparison",
@@ -166,14 +176,16 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
     }
     if (p.panelPlanned !== undefined)
       assertStringArray(p.panelPlanned, "protocol.panelPlanned", raw);
-    if (p.whatVaries !== undefined) assertStringArray(p.whatVaries, "protocol.whatVaries", raw);
+    if (p.whatVaries !== undefined)
+      assertStringArray(p.whatVaries, "protocol.whatVaries", raw);
     if (p.whatStaysConstant !== undefined)
       assertStringArray(p.whatStaysConstant, "protocol.whatStaysConstant", raw);
   }
 
   return {
     title: row.title,
-    whyThisMatters: typeof row.whyThisMatters === "string" ? row.whyThisMatters : undefined,
+    whyThisMatters:
+      typeof row.whyThisMatters === "string" ? row.whyThisMatters : undefined,
     bodyMd: row.bodyMd,
     parameters,
     dawChecklist: row.dawChecklist as string[],
@@ -243,7 +255,9 @@ export const getByHypothesisId = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("recipes")
-      .withIndex("by_hypothesisId_updatedAt", (q) => q.eq("hypothesisId", args.hypothesisId))
+      .withIndex("by_hypothesisId_updatedAt", (q) =>
+        q.eq("hypothesisId", args.hypothesisId),
+      )
       .order("desc")
       .collect();
   },
@@ -468,13 +482,16 @@ export const generateFromHypothesis = action({
     // Call AI (traced as recipe_v1 in the Node-runtime internal action)
     const modelId = args.model || "anthropic/claude-sonnet-4-6";
 
-    const { text } = await ctx.runAction(internal.recipesInternal.generateRecipeText, {
-      system: RECIPE_SYSTEM_PROMPT,
-      prompt,
-      model: modelId,
-      hypothesisId: args.hypothesisId,
-      promptVersion: "recipe_v1",
-    });
+    const { text } = await ctx.runAction(
+      internal.recipesInternal.generateRecipeText,
+      {
+        system: RECIPE_SYSTEM_PROMPT,
+        prompt,
+        model: modelId,
+        hypothesisId: args.hypothesisId,
+        promptVersion: "recipe_v1",
+      },
+    );
 
     // Parse response
     let parsed: ParsedRecipePayload;

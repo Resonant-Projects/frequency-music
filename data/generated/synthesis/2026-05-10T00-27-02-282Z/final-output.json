@@ -75,9 +75,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Studio headphones or monitors at safe level, no visual access to DAW arrangement during evaluation.",
       "listeningMethod": "Blind A/B/C/D comparison against the original demo; write down which layer seems to carry identity before revealing variant labels.",
       "whatVaries": [
@@ -94,13 +92,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Essay written to docs/essays/the-identity-budget.md; publish mode may fail until recurring Convex create/publish server errors are repaired."
 }

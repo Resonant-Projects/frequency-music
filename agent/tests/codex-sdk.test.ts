@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
+import {
+  AIMessage,
+  HumanMessage,
+  SystemMessage,
+  ToolMessage,
+} from "@langchain/core/messages";
 import { z } from "zod";
 
 import {
@@ -74,22 +79,30 @@ describe("toOutputJsonSchema", () => {
 
 describe("classifyCodexError", () => {
   test("classifies auth failures", () => {
-    expect(classifyCodexError(new Error("Not logged in: run codex login"))).toBeInstanceOf(
-      CodexAuthError,
-    );
-    expect(classifyCodexError(new Error("HTTP 401 Unauthorized"))).toBeInstanceOf(CodexAuthError);
+    expect(
+      classifyCodexError(new Error("Not logged in: run codex login")),
+    ).toBeInstanceOf(CodexAuthError);
+    expect(
+      classifyCodexError(new Error("HTTP 401 Unauthorized")),
+    ).toBeInstanceOf(CodexAuthError);
   });
 
   test("classifies quota failures", () => {
-    expect(classifyCodexError(new Error("usage limit exceeded"))).toBeInstanceOf(CodexQuotaError);
-    expect(classifyCodexError(new Error("429 too many requests"))).toBeInstanceOf(CodexQuotaError);
+    expect(
+      classifyCodexError(new Error("usage limit exceeded")),
+    ).toBeInstanceOf(CodexQuotaError);
+    expect(
+      classifyCodexError(new Error("429 too many requests")),
+    ).toBeInstanceOf(CodexQuotaError);
   });
 
   test("classifies transient failures", () => {
-    expect(classifyCodexError(new Error("connection timeout"))).toBeInstanceOf(CodexTransientError);
-    expect(classifyCodexError(new Error("service unavailable (503)"))).toBeInstanceOf(
+    expect(classifyCodexError(new Error("connection timeout"))).toBeInstanceOf(
       CodexTransientError,
     );
+    expect(
+      classifyCodexError(new Error("service unavailable (503)")),
+    ).toBeInstanceOf(CodexTransientError);
   });
 
   test("falls back to a generic CodexError for unknown messages", () => {

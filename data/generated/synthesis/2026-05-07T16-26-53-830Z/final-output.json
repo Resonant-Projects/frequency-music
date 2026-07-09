@@ -29,8 +29,14 @@
     "bodyMd": "Choose a four-bar musical object and define three layers: semantic recognition, prosodic feel, and surface timbre. Make five transformations: aggressive codec degradation, graph-adjacent reharmonization, timing/prosody drift, timbral replacement, and one deliberate semantic attack. Compare where the listener stops hearing variation and starts hearing replacement. The test borrows intelligibility-vs-detail separation from S4, benign-vs-identity-altering transformations from S5, alignment sensitivity from S3, relational continuity from S6, and demo-energy preservation from S1.",
     "parameters": [
       { "type": "duration", "value": "4 bars source material" },
-      { "type": "measurement", "value": "listener recognition threshold across five transformations" },
-      { "type": "structuralPattern", "value": "semantic/prosodic/surface layer separation" }
+      {
+        "type": "measurement",
+        "value": "listener recognition threshold across five transformations"
+      },
+      {
+        "type": "structuralPattern",
+        "value": "semantic/prosodic/surface layer separation"
+      }
     ],
     "dawChecklist": [
       "Bounce a rough demo/reference and keep it in the session as an identity anchor.",
@@ -47,8 +53,18 @@
       "panelPlanned": ["self"],
       "listeningContext": "Studio monitoring or headphones; compare each transformed excerpt against the original demo/reference.",
       "listeningMethod": "Blind-shuffle transformed excerpts if possible, then label same/variation/replacement and note which musical feature carried the decision.",
-      "whatVaries": ["codec degradation", "harmonic geometry", "prosody/timing", "timbre", "semantic invariant"],
-      "whatStaysConstant": ["source phrase length", "overall tempo", "nominal melodic/rhythmic material except in the semantic attack condition"]
+      "whatVaries": [
+        "codec degradation",
+        "harmonic geometry",
+        "prosody/timing",
+        "timbre",
+        "semantic invariant"
+      ],
+      "whatStaysConstant": [
+        "source phrase length",
+        "overall tempo",
+        "nominal melodic/rhythmic material except in the semantic attack condition"
+      ]
     }
   },
   "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],

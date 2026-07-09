@@ -40,11 +40,7 @@
         "type": "measurement",
         "value": "1-5 survival score for function, identity, and process",
         "details": {
-          "axes": [
-            "function survived",
-            "identity survived",
-            "process survived"
-          ]
+          "axes": ["function survived", "identity survived", "process survived"]
         }
       },
       {
@@ -67,15 +63,10 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 180,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "studio monitors or neutral headphones, level matched",
       "listeningMethod": "blind-ish shuffle among degradation renders; score survival before comparing full mixes",
-      "whatVaries": [
-        "representation budget",
-        "degradation condition"
-      ],
+      "whatVaries": ["representation budget", "degradation condition"],
       "whatStaysConstant": [
         "eight-bar harmonic skeleton",
         "tempo",

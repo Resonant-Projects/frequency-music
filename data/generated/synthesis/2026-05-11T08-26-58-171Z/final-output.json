@@ -29,10 +29,26 @@
     "bodyMd": "Build two stable eight-bar states from the same motif: A is sparse, dry, and mid-register; B is wider, brighter, and denser. Compare a control render where all parameters switch at bar 9 with an experimental render where a 12-second boundary field performs the change. In the boundary version, let high-band texture anticipate the destination first, then move one harmonic voice through a local Tonnetz-like edge, then smear transients or consonant-like attacks into a gradient zone, and only confirm the arrival with bass and full density at the end. This operationalizes S4's gradient boundary, S1's path-dependent phase change, S2's graph-neighborhood harmony, S3/S6's band/event distribution, and S5's plan-to-synthesis handoff.",
     "parameters": [
       { "type": "tempo", "value": "120 BPM", "details": { "bpm": 120 } },
-      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
-      { "type": "duration", "value": "12-second boundary field", "details": { "seconds": 12 } },
-      { "type": "frequency", "value": "0–8 kHz baseband plus separate high-band cue", "details": { "basebandHz": [0, 8000], "highBandCue": true } },
-      { "type": "measurement", "value": "A/B comparison: simultaneous switch vs staggered boundary", "details": { "conditions": 2 } }
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": { "seconds": 60 }
+      },
+      {
+        "type": "duration",
+        "value": "12-second boundary field",
+        "details": { "seconds": 12 }
+      },
+      {
+        "type": "frequency",
+        "value": "0–8 kHz baseband plus separate high-band cue",
+        "details": { "basebandHz": [0, 8000], "highBandCue": true }
+      },
+      {
+        "type": "measurement",
+        "value": "A/B comparison: simultaneous switch vs staggered boundary",
+        "details": { "conditions": 2 }
+      }
     ],
     "dawChecklist": [
       "Create a four- or eight-bar motif with one clear identity marker: rhythm, contour, or timbral fingerprint.",

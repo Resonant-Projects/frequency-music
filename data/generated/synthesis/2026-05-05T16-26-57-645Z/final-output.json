@@ -41,12 +41,22 @@
       {
         "type": "measurement",
         "value": "4 grid conditions",
-        "details": { "conditions": ["rhythm formant AM", "fine-scale artifact", "encoder degradation", "Bark-band dynamics"] }
+        "details": {
+          "conditions": [
+            "rhythm formant AM",
+            "fine-scale artifact",
+            "encoder degradation",
+            "Bark-band dynamics"
+          ]
+        }
       },
       {
         "type": "measurement",
         "value": "24 Bark-scale critical-band target or closest available approximation",
-        "details": { "bands": 24, "fallback": "many log-spaced EQ/dynamics bands" }
+        "details": {
+          "bands": 24,
+          "fallback": "many log-spaced EQ/dynamics bands"
+        }
       }
     ],
     "dawChecklist": [

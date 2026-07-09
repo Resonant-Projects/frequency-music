@@ -78,7 +78,8 @@ async function main() {
     fs.writeFileSync(`/tmp/kernel-text-${sourceId || "output"}.txt`, text);
 
     console.log(text.slice(0, 3000));
-    if (text.length > 3000) console.log(`\n... [${text.length - 3000} more chars]`);
+    if (text.length > 3000)
+      console.log(`\n... [${text.length - 3000} more chars]`);
   } catch (e: unknown) {
     if (e instanceof Error) {
       console.error(`Error: ${e.message}`);

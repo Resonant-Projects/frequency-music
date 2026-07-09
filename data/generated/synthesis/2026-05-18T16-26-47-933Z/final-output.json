@@ -81,9 +81,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Studio monitors or neutral headphones, loudness-matched renders",
       "listeningMethod": "Blind randomized A/B comparison with written continuity notes",
       "whatVaries": [
@@ -103,13 +101,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Disconfirming evidence: listeners cannot distinguish representation-aligned transformations from surface-matched controls, or the preserved relation is only measurable in analysis and has no audible compositional consequence."
 }

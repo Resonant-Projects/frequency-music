@@ -22,7 +22,8 @@ const heroCard = css({
     width: "18rem",
     height: "18rem",
     borderRadius: "full",
-    background: "radial-gradient(circle, rgba(200, 168, 75, 0.22), rgba(200, 168, 75, 0) 68%)",
+    background:
+      "radial-gradient(circle, rgba(200, 168, 75, 0.22), rgba(200, 168, 75, 0) 68%)",
     filter: "blur(14px)",
     pointerEvents: "none",
   },
@@ -90,7 +91,8 @@ const relatedLink = css({
   borderWidth: "1px",
   color: "zodiac.cream",
   p: "16px 18px",
-  transition: "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+  transition:
+    "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
   _hover: {
     transform: "translateY(-3px)",
     borderColor: "rgba(200, 168, 75, 0.48)",
@@ -120,7 +122,9 @@ export function EssayDetailPage() {
     if (e) document.title = `${e.title} — Frequency Music`;
   });
   const related = () =>
-    essayLibrary.filter((entry) => entry.slug !== params().essaySlug).slice(0, 3);
+    essayLibrary
+      .filter((entry) => entry.slug !== params().essaySlug)
+      .slice(0, 3);
 
   return (
     <section class={pageClass}>
@@ -142,9 +146,15 @@ export function EssayDetailPage() {
           <>
             <UICard glass class={heroCard}>
               <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
-                <UIBadge tone="gold">{entry().dateLabel ?? "Research essay"}</UIBadge>
-                <UIBadge tone="cream">{entry().readTimeMinutes} min read</UIBadge>
-                <UIBadge tone="violet">{entry().wordCount.toLocaleString()} words</UIBadge>
+                <UIBadge tone="gold">
+                  {entry().dateLabel ?? "Research essay"}
+                </UIBadge>
+                <UIBadge tone="cream">
+                  {entry().readTimeMinutes} min read
+                </UIBadge>
+                <UIBadge tone="violet">
+                  {entry().wordCount.toLocaleString()} words
+                </UIBadge>
               </div>
               <h1 class={titleClass}>{entry().title}</h1>
               <p class={dekClass}>{entry().excerpt}</p>
@@ -177,8 +187,12 @@ export function EssayDetailPage() {
                             flexWrap: "wrap",
                           })}
                         >
-                          <UIBadge tone="gold">{nextEssay.dateLabel ?? "Research essay"}</UIBadge>
-                          <UIBadge tone="cream">{nextEssay.readTimeMinutes} min</UIBadge>
+                          <UIBadge tone="gold">
+                            {nextEssay.dateLabel ?? "Research essay"}
+                          </UIBadge>
+                          <UIBadge tone="cream">
+                            {nextEssay.readTimeMinutes} min
+                          </UIBadge>
                         </div>
                         <h2 class={relatedTitle}>{nextEssay.title}</h2>
                         <p class={relatedExcerpt}>{nextEssay.excerpt}</p>

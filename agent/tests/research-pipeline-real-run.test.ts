@@ -9,10 +9,18 @@ import {
 describe("research pipeline real dry-run mode", () => {
   test("requires explicit opt-in for non-smoke runs", () => {
     expect(shouldRunResearchPipelineRealMode({})).toBe(false);
-    expect(shouldRunResearchPipelineRealMode({ RUN_RESEARCH_PIPELINE_REAL: "false" })).toBe(false);
+    expect(
+      shouldRunResearchPipelineRealMode({
+        RUN_RESEARCH_PIPELINE_REAL: "false",
+      }),
+    ).toBe(false);
 
     for (const value of ["true", "TRUE", "1", "yes", " Yes "]) {
-      expect(shouldRunResearchPipelineRealMode({ RUN_RESEARCH_PIPELINE_REAL: value })).toBe(true);
+      expect(
+        shouldRunResearchPipelineRealMode({
+          RUN_RESEARCH_PIPELINE_REAL: value,
+        }),
+      ).toBe(true);
     }
   });
 
@@ -41,8 +49,22 @@ describe("research pipeline real dry-run mode", () => {
       failureArchive: [],
       editorialSignals: [],
       recommendedActions: [],
-      candidates: [{ id: "extraction-123", kind: "extraction", route: "hypothesize", reason: "reason", score: 86 }],
-      selectedCandidate: { id: "extraction-123", kind: "extraction", route: "hypothesize", reason: "reason", score: 86 },
+      candidates: [
+        {
+          id: "extraction-123",
+          kind: "extraction",
+          route: "hypothesize",
+          reason: "reason",
+          score: 86,
+        },
+      ],
+      selectedCandidate: {
+        id: "extraction-123",
+        kind: "extraction",
+        route: "hypothesize",
+        reason: "reason",
+        score: 86,
+      },
       route: "stop",
       draft,
       errors: [],

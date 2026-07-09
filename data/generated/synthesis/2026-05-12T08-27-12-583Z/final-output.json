@@ -59,9 +59,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "studio headphones or nearfields, loudness matched",
       "listeningMethod": "blind A/B/C/D ranking for identity, intentionality, and emotional specificity",
       "whatVaries": [
@@ -78,13 +76,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Essay written at docs/essays/the-carrier-carries-the-form.md; graph concepts should be linked manually if publish mode fails with the recurring Convex server error."
 }

@@ -65,9 +65,7 @@
     "protocol": {
       "studyType": "A/B compositional litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Compare coordinate-first version against surface-first control on headphones or studio monitors.",
       "listeningMethod": "Delayed blind notes: rate which version has clearer motion, stronger expectation, more stable identity, and more spatial/harmonic intelligibility.",
       "whatVaries": [
@@ -86,13 +84,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Essay written to docs/essays/the-coordinate-that-makes-motion.md. Extraction remains blocked by the recurring Convex workflows:startBatchExtraction server error."
 }

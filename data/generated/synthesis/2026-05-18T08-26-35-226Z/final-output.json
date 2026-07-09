@@ -77,9 +77,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Level-matched headphones or nearfields; randomized export order.",
       "listeningMethod": "Blind continuity rating from 1 to 5 plus a short note naming the readable layer perceived.",
       "whatVaries": [
@@ -99,14 +97,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "The control must be surface-matched enough that stronger continuity cannot be explained by simple loudness, density, or instrumentation similarity."
 }
-

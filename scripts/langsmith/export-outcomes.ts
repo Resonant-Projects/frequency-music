@@ -113,7 +113,8 @@ async function pushToLangSmith(rows: OutcomeRow[]): Promise<void> {
   // Dedup on compositionId (one label per composition).
   const existing = new Set<string>();
   for await (const ex of client.listExamples({ datasetId: dataset.id })) {
-    const compositionId = (ex.metadata as Record<string, unknown> | undefined)?.compositionId;
+    const compositionId = (ex.metadata as Record<string, unknown> | undefined)
+      ?.compositionId;
     if (typeof compositionId === "string") existing.add(compositionId);
   }
 
@@ -142,12 +143,16 @@ async function main() {
   const rows = await collectOutcomeRows(convex, limit);
 
   if (!rows.length) {
-    console.log("No labeled compositions found (no listening verdict or failure status yet).");
+    console.log(
+      "No labeled compositions found (no listening verdict or failure status yet).",
+    );
     return;
   }
 
   const groups = groupByPromptVersion(rows);
-  console.log(`\nStudio outcomes by promptVersion (${rows.length} labeled composition(s)):\n`);
+  console.log(
+    `\nStudio outcomes by promptVersion (${rows.length} labeled composition(s)):\n`,
+  );
   console.log(formatOutcomeTable(groups));
   console.log("");
 

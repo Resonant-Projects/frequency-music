@@ -2,7 +2,9 @@ import { ConvexError, v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { requireAuth, type AppIdentity } from "./auth";
 
-export function assertBypassIdentity(identity: Pick<AppIdentity, "isBypass">): void {
+export function assertBypassIdentity(
+  identity: Pick<AppIdentity, "isBypass">,
+): void {
   if (identity.isBypass) return;
   throw new ConvexError({
     code: "UNAUTHORIZED",

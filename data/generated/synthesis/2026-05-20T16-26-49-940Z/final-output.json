@@ -81,9 +81,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Nearfield monitors or neutral headphones at matched playback level.",
       "listeningMethod": "Blind A/B/C comparison after loudness matching; identify which musical layer carries the highest resolution in each render.",
       "whatVaries": [
@@ -101,13 +99,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "This synthesis treats resolution as an allocation problem rather than a universal fidelity target. It intentionally avoids claiming that all detail is equivalent; the proposed test asks which layer becomes musically dominant under controlled reallocation."
 }

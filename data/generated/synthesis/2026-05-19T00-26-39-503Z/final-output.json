@@ -46,12 +46,7 @@
         "type": "feature_set",
         "value": "F0 + MFCC + STFT + temporal memory",
         "details": {
-          "features": [
-            "F0 contour",
-            "MFCC",
-            "STFT",
-            "sequence memory"
-          ],
+          "features": ["F0 contour", "MFCC", "STFT", "sequence memory"],
           "source": "S4"
         }
       },
@@ -59,10 +54,7 @@
         "type": "harmonic_model",
         "value": "Tonnetz-like graph path",
         "details": {
-          "configurationReferences": [
-            "{12_3}",
-            "{7_3}"
-          ],
+          "configurationReferences": ["{12_3}", "{7_3}"],
           "source": "S5"
         }
       },
@@ -88,9 +80,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 90,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Studio monitors or neutral headphones, loudness-matched renders",
       "listeningMethod": "Blind randomized comparison with notes on which analysis window reveals the governing relation",
       "whatVaries": [
@@ -110,13 +100,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Disconfirming evidence: listeners only recover the claimed structure after reading the analysis, or transformations at the proposed recoverable window do not preserve audible continuity better than mismatched local/global controls."
 }

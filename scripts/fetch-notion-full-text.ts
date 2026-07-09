@@ -72,10 +72,14 @@ async function main() {
   // Filter to notion sources with URLs but minimal text
   const notionSources = sources.filter(
     (s: NotionSourceRow) =>
-      s.type === "notion" && s.canonicalUrl && (!s.rawText || s.rawText.length < 500),
+      s.type === "notion" &&
+      s.canonicalUrl &&
+      (!s.rawText || s.rawText.length < 500),
   );
 
-  console.log(`Found ${notionSources.length} Notion sources needing full text\n`);
+  console.log(
+    `Found ${notionSources.length} Notion sources needing full text\n`,
+  );
 
   let updated = 0;
   let skipped = 0;

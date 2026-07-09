@@ -27,11 +27,38 @@
     "bodyMd": "Build two one-minute versions of the same piece. Version A concentrates identity in one obvious lead motif. Version B distributes identity across six layers: harmonic graph traversal, griff-like voicing, coupled melody-harmony cells, call-and-response behavior, a subtle spectral/phase trace, and metastable transition plateaus [S1][S2][S3][S4][S5][S6]. Use the same tempo, instrumentation, length, mix loudness, and form. Then render damaged versions: lead muted, high frequencies low-passed around 8 kHz, last 20% cropped, and accompaniment-only. Rate whether the same compositional hand remains recognizable. Disconfirming evidence: the distributed version is no more recognizable than the concentrated version after damage.",
     "parameters": [
       { "type": "tempo", "value": "108 BPM", "details": { "bpm": 108 } },
-      { "type": "duration", "value": "60 seconds per version", "details": { "seconds": 60 } },
-      { "type": "structuralPattern", "value": "8-node harmonic graph with nearest-accessible traversal", "details": { "nodes": 8, "normalEdges": 3, "pressureEdges": 3, "transitionOnlyEdges": 2 } },
-      { "type": "note", "value": "3 griff-like voicing units", "details": { "examples": ["empty third", "delayed third", "doubled bass octave"] } },
-      { "type": "frequency", "value": "8 kHz low-pass damage condition", "details": { "cutoffHz": 8000 } },
-      { "type": "duration", "value": "20% end-cropping damage condition", "details": { "cropPercent": 20 } }
+      {
+        "type": "duration",
+        "value": "60 seconds per version",
+        "details": { "seconds": 60 }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "8-node harmonic graph with nearest-accessible traversal",
+        "details": {
+          "nodes": 8,
+          "normalEdges": 3,
+          "pressureEdges": 3,
+          "transitionOnlyEdges": 2
+        }
+      },
+      {
+        "type": "note",
+        "value": "3 griff-like voicing units",
+        "details": {
+          "examples": ["empty third", "delayed third", "doubled bass octave"]
+        }
+      },
+      {
+        "type": "frequency",
+        "value": "8 kHz low-pass damage condition",
+        "details": { "cutoffHz": 8000 }
+      },
+      {
+        "type": "duration",
+        "value": "20% end-cropping damage condition",
+        "details": { "cropPercent": 20 }
+      }
     ],
     "dawChecklist": [
       "Create an 8-node chord graph and mark normal, pressure, and transition-only edges.",

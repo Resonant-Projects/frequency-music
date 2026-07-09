@@ -83,7 +83,9 @@ async function main() {
     limit: limit * 2,
   });
 
-  const youtubeSources = sources.filter((s: any) => s.type === "youtube").slice(0, limit);
+  const youtubeSources = sources
+    .filter((s: any) => s.type === "youtube")
+    .slice(0, limit);
 
   console.log(`Found ${youtubeSources.length} YouTube videos to process`);
 
@@ -91,7 +93,8 @@ async function main() {
   let failed = 0;
 
   for (const source of youtubeSources) {
-    const videoId = source.youtubeVideoId || extractVideoId(source.canonicalUrl || "");
+    const videoId =
+      source.youtubeVideoId || extractVideoId(source.canonicalUrl || "");
     if (!videoId) {
       console.log(`❌ ${source.title}: No video ID`);
       failed++;

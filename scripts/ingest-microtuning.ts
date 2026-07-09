@@ -64,18 +64,33 @@ const sources = [
     title: "Introduction to Historical Tunings",
     author: "Kyle Gann",
     url: "https://www.kylegann.com/histune.html",
-    topics: ["meantone", "well temperaments", "Pythagorean", "historical tuning"],
+    topics: [
+      "meantone",
+      "well temperaments",
+      "Pythagorean",
+      "historical tuning",
+    ],
   },
   {
     title: "Ben Johnston's Notation",
     author: "Kyle Gann",
     url: "https://www.kylegann.com/BJnotation.html",
-    topics: ["notation", "just intonation", "Ben Johnston", "microtonal notation"],
+    topics: [
+      "notation",
+      "just intonation",
+      "Ben Johnston",
+      "microtonal notation",
+    ],
   },
   {
     title: "Microtonality (Music Composition Textbook)",
     url: "https://open.lib.umn.edu/musiccomposition/chapter/microtonality/",
-    topics: ["composition", "notation", "harmonic beating", "microtonal composition"],
+    topics: [
+      "composition",
+      "notation",
+      "harmonic beating",
+      "microtonal composition",
+    ],
   },
   // Sevish tutorials
   {

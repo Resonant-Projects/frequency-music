@@ -17,14 +17,15 @@ export const workspaceSnapshot = query({
     feeds: v.number(),
   }),
   handler: async (ctx) => {
-    const [sources, hypotheses, recipes, compositions, weeklyBriefs, feeds] = await Promise.all([
-      ctx.db.query("sources").collect(),
-      ctx.db.query("hypotheses").collect(),
-      ctx.db.query("recipes").collect(),
-      ctx.db.query("compositions").collect(),
-      ctx.db.query("weeklyBriefs").collect(),
-      ctx.db.query("feeds").collect(),
-    ]);
+    const [sources, hypotheses, recipes, compositions, weeklyBriefs, feeds] =
+      await Promise.all([
+        ctx.db.query("sources").collect(),
+        ctx.db.query("hypotheses").collect(),
+        ctx.db.query("recipes").collect(),
+        ctx.db.query("compositions").collect(),
+        ctx.db.query("weeklyBriefs").collect(),
+        ctx.db.query("feeds").collect(),
+      ]);
 
     return {
       sources: sources.length,

@@ -47,7 +47,9 @@ export function ThesisDetailPage() {
   const campaigns = createQuery(convexApi.campaigns.listForSelection);
   const attachThesis = createMutation(convexApi.campaigns.attachThesis);
   const detachThesis = createMutation(convexApi.campaigns.detachThesis);
-  const createDraftFromThesis = createMutation(convexApi.editorialArtifacts.createDraftFromThesis);
+  const createDraftFromThesis = createMutation(
+    convexApi.editorialArtifacts.createDraftFromThesis,
+  );
   const [selectedCampaignId, setSelectedCampaignId] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
   const [creatingSummary, setCreatingSummary] = createSignal(false);
@@ -55,7 +57,8 @@ export function ThesisDetailPage() {
   const contradictedHypotheses = createMemo(
     () =>
       detail()?.hypotheses.filter(
-        (hypothesis: Doc<"hypotheses">) => hypothesis.resolution === "contradicted",
+        (hypothesis: Doc<"hypotheses">) =>
+          hypothesis.resolution === "contradicted",
       ) ?? [],
   );
 
@@ -161,9 +164,13 @@ export function ThesisDetailPage() {
               >
                 <UIBadge tone="gold">{row().thesis.status}</UIBadge>
                 <UIBadge tone="cream">{row().thesis.visibility}</UIBadge>
-                <UIBadge tone="violet">{row().hypotheses.length} hypotheses</UIBadge>
+                <UIBadge tone="violet">
+                  {row().hypotheses.length} hypotheses
+                </UIBadge>
                 <UIBadge tone="violet">{row().recipes.length} recipes</UIBadge>
-                <UIBadge tone="violet">{row().compositions.length} compositions</UIBadge>
+                <UIBadge tone="violet">
+                  {row().compositions.length} compositions
+                </UIBadge>
               </div>
 
               <h1 class={detailTitleClass}>{row().thesis.title}</h1>
@@ -190,7 +197,9 @@ export function ThesisDetailPage() {
                   onClick={handleCreateSummary}
                   disabled={creatingSummary()}
                 >
-                  {creatingSummary() ? "Creating summary..." : "Create thesis summary"}
+                  {creatingSummary()
+                    ? "Creating summary..."
+                    : "Create thesis summary"}
                 </UIButton>
                 <For each={contradictedHypotheses()}>
                   {(hypothesis) => (
@@ -329,7 +338,10 @@ export function ThesisDetailPage() {
                           })}
                         >
                           <UIBadge tone="gold">{campaign.status}</UIBadge>
-                          <UIButton variant="outline" onClick={() => handleDetach(campaign._id)}>
+                          <UIButton
+                            variant="outline"
+                            onClick={() => handleDetach(campaign._id)}
+                          >
                             Detach
                           </UIButton>
                         </div>
@@ -349,24 +361,34 @@ export function ThesisDetailPage() {
                   >
                     Attach To Campaign
                   </label>
-                  <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                  <div
+                    class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}
+                  >
                     <UISelect
                       id="thesis-campaign-select"
                       data-testid="thesis-campaign-select"
                       value={selectedCampaignId()}
-                      onChange={(event) => setSelectedCampaignId(event.currentTarget.value)}
+                      onChange={(event) =>
+                        setSelectedCampaignId(event.currentTarget.value)
+                      }
                     >
                       <option value="">Select campaign</option>
                       <For
-                        each={((campaigns() ?? []) as Doc<"campaigns">[]).filter(
+                        each={(
+                          (campaigns() ?? []) as Doc<"campaigns">[]
+                        ).filter(
                           (campaign: Doc<"campaigns">) =>
                             !row()
-                              .campaigns.map((linked: Doc<"campaigns">) => linked._id)
+                              .campaigns.map(
+                                (linked: Doc<"campaigns">) => linked._id,
+                              )
                               .includes(campaign._id),
                         )}
                       >
                         {(campaign) => (
-                          <option value={String(campaign._id)}>{campaign.title}</option>
+                          <option value={String(campaign._id)}>
+                            {campaign.title}
+                          </option>
                         )}
                       </For>
                     </UISelect>
@@ -377,7 +399,9 @@ export function ThesisDetailPage() {
                 </div>
 
                 <Show when={notice()}>
-                  {(message) => <p class={css({ color: "zodiac.cream" })}>{message()}</p>}
+                  {(message) => (
+                    <p class={css({ color: "zodiac.cream" })}>{message()}</p>
+                  )}
                 </Show>
               </div>
 

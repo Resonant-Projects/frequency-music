@@ -3,7 +3,10 @@ import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { listeningSessionReturnValidator } from "./validators";
 
-function assertOptionalZeroToFive(value: number | undefined, field: string): void {
+function assertOptionalZeroToFive(
+  value: number | undefined,
+  field: string,
+): void {
   if (value === undefined) return;
   if (value < 0 || value > 5) {
     throw new ConvexError({
@@ -20,7 +23,9 @@ export const listByComposition = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("listeningSessions")
-      .withIndex("by_compositionId_createdAt", (q) => q.eq("compositionId", args.compositionId))
+      .withIndex("by_compositionId_createdAt", (q) =>
+        q.eq("compositionId", args.compositionId),
+      )
       .order("desc")
       .collect();
   },
@@ -64,7 +69,9 @@ export const create = mutation({
     feltQualities: v.optional(v.array(v.string())),
     bodyMapTags: v.optional(v.array(v.string())),
     standoutMoments: v.optional(v.array(v.string())),
-    expandVerdict: v.optional(v.union(v.literal("yes"), v.literal("maybe"), v.literal("no"))),
+    expandVerdict: v.optional(
+      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
+    ),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("listeningSessions"),
@@ -77,7 +84,10 @@ export const create = mutation({
         message: "Composition not found",
       });
     }
-    assertOptionalZeroToFive(args.ratings?.expandability, "ratings.expandability");
+    assertOptionalZeroToFive(
+      args.ratings?.expandability,
+      "ratings.expandability",
+    );
 
     return await ctx.db.insert("listeningSessions", {
       compositionId: args.compositionId,
@@ -100,7 +110,11 @@ export const create = mutation({
 export const updateVisibility = mutation({
   args: {
     id: v.id("listeningSessions"),
-    visibility: v.union(v.literal("private"), v.literal("followers"), v.literal("public")),
+    visibility: v.union(
+      v.literal("private"),
+      v.literal("followers"),
+      v.literal("public"),
+    ),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),

@@ -72,9 +72,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Loudness-matched nearfield monitoring; optional sub layer only on a system that can measure low-frequency output safely.",
       "listeningMethod": "Blind A/B/C/D/E comparison with relation-specific ratings.",
       "whatVaries": [
@@ -94,13 +92,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Infrasound and transformer-character claims are treated as weaker evidence than the peer-reviewed/preprint process claims; use them as studio variables, not established causal guarantees."
 }

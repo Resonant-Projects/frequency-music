@@ -71,10 +71,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 120,
-      "panelPlanned": [
-        "self",
-        "musician_peer_1"
-      ],
+      "panelPlanned": ["self", "musician_peer_1"],
       "listeningContext": "Quiet room; compare blind-labeled versions at matched loudness on headphones and monitors.",
       "listeningMethod": "Within-subject blind comparison of identical arrivals with different preceding fields.",
       "whatVaries": [
@@ -90,13 +87,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Manual synthesis from the 2026-05-10T16-27-26-421Z context pack. Essay written at docs/essays/the-preparatory-field.md."
 }

@@ -50,7 +50,10 @@ function normalizeName(name: string) {
   return name.trim().toLowerCase();
 }
 
-function inferStatus(name: string, knownSet: Set<string>): "known" | "provisional" {
+function inferStatus(
+  name: string,
+  knownSet: Set<string>,
+): "known" | "provisional" {
   return knownSet.has(name) ? "known" : "provisional";
 }
 
@@ -158,7 +161,10 @@ export const seedConceptDomains = internalMutation({
         continue;
       }
 
-      if (existing.status !== "known" || existing.sectorMapping !== entry.sectorMapping) {
+      if (
+        existing.status !== "known" ||
+        existing.sectorMapping !== entry.sectorMapping
+      ) {
         await ctx.db.patch(existing._id, {
           status: "known",
           sectorMapping: entry.sectorMapping,
@@ -212,20 +218,21 @@ export const reviewSummary = query({
     provisionalRelationshipKinds: v.array(v.string()),
   }),
   handler: async (ctx) => {
-    const [parameterKinds, conceptDomains, relationshipKinds] = await Promise.all([
-      ctx.db
-        .query("parameterKinds")
-        .withIndex("by_status", (q) => q.eq("status", "provisional"))
-        .collect(),
-      ctx.db
-        .query("conceptDomains")
-        .withIndex("by_status", (q) => q.eq("status", "provisional"))
-        .collect(),
-      ctx.db
-        .query("relationshipKinds")
-        .withIndex("by_status", (q) => q.eq("status", "provisional"))
-        .collect(),
-    ]);
+    const [parameterKinds, conceptDomains, relationshipKinds] =
+      await Promise.all([
+        ctx.db
+          .query("parameterKinds")
+          .withIndex("by_status", (q) => q.eq("status", "provisional"))
+          .collect(),
+        ctx.db
+          .query("conceptDomains")
+          .withIndex("by_status", (q) => q.eq("status", "provisional"))
+          .collect(),
+        ctx.db
+          .query("relationshipKinds")
+          .withIndex("by_status", (q) => q.eq("status", "provisional"))
+          .collect(),
+      ]);
 
     return {
       provisionalParameterKinds: parameterKinds.map((item) => item.name),

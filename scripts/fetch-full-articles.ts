@@ -117,7 +117,9 @@ async function main() {
       const fullText = await fetchFullArticle(source.canonicalUrl);
 
       if (fullText.length <= currentLen) {
-        console.log(`   ⚠️ Fetched text not longer (${fullText.length} chars), skipping`);
+        console.log(
+          `   ⚠️ Fetched text not longer (${fullText.length} chars), skipping`,
+        );
         continue;
       }
 

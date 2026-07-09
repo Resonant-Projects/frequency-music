@@ -84,9 +84,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Nearfield monitors or neutral headphones at moderate level.",
       "listeningMethod": "Compare a direct-transition version against a nearest-accessible-form version. Note whether intermediate states feel necessary, whether identity survives, and whether the final arrival feels crystallized.",
       "whatVaries": [
@@ -103,13 +101,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Essay written manually because extraction and publish continue to fail with Convex server errors. This final-output file preserves the synthesis payload for later publishing."
 }

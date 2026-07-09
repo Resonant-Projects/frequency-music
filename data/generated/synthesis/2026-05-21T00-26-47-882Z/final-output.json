@@ -72,9 +72,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Nearfield monitoring or headphones at matched loudness.",
       "listeningMethod": "Blind A/B/C/reference comparison with written ratings immediately after each pass.",
       "whatVaries": [
@@ -90,14 +88,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Created from 2026-05-21 synthesis context. Publish may fail while Convex create mutations are returning server errors."
 }
-

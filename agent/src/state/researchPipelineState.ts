@@ -10,7 +10,12 @@ export type CandidateRoute =
 
 export interface ResearchCandidate {
   id: string;
-  kind: "source" | "extraction" | "hypothesis" | "recipe" | "recommended_action";
+  kind:
+    | "source"
+    | "extraction"
+    | "hypothesis"
+    | "recipe"
+    | "recommended_action";
   route: CandidateRoute;
   title?: string;
   reason: string;
@@ -119,14 +124,38 @@ export const ResearchPipelineAnnotation = Annotation.Root({
   dryRun: Annotation<boolean | undefined>,
   smokeMode: Annotation<boolean | undefined>,
   limit: Annotation<number | undefined>,
-  activeTheses: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
-  recentExtractions: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
-  recentHypotheses: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
-  recentRecipes: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
-  failureArchive: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
-  editorialSignals: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
-  recommendedActions: Annotation<unknown[]>({ value: replaceArray, default: () => [] }),
-  candidates: Annotation<ResearchCandidate[]>({ value: replaceArray, default: () => [] }),
+  activeTheses: Annotation<unknown[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
+  recentExtractions: Annotation<unknown[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
+  recentHypotheses: Annotation<unknown[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
+  recentRecipes: Annotation<unknown[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
+  failureArchive: Annotation<unknown[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
+  editorialSignals: Annotation<unknown[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
+  recommendedActions: Annotation<unknown[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
+  candidates: Annotation<ResearchCandidate[]>({
+    value: replaceArray,
+    default: () => [],
+  }),
   selectedCandidate: Annotation<ResearchCandidate | undefined>,
   route: Annotation<CandidateRoute | undefined>,
   draft: Annotation<ResearchPipelineDraft | undefined>,

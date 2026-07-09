@@ -36,7 +36,9 @@ describe("local automation planning", () => {
 
   test("enables research pipeline smoke for explicit true-like flags", () => {
     for (const value of ["true", "TRUE", "1", "yes", " Yes "]) {
-      expect(shouldRunResearchPipelineSmoke({ RUN_RESEARCH_PIPELINE_SMOKE: value })).toBe(true);
+      expect(
+        shouldRunResearchPipelineSmoke({ RUN_RESEARCH_PIPELINE_SMOKE: value }),
+      ).toBe(true);
     }
 
     const steps = planAutomationSteps({ RUN_RESEARCH_PIPELINE_SMOKE: "true" });

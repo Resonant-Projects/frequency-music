@@ -72,9 +72,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Level-matched nearfield or headphones; listen once without looking at the arrangement, then once while marking arrival ratings.",
       "listeningMethod": "Compare four identical arrivals after different three-second cue-fields and score each on earnedness, surprise, and inferability.",
       "whatVaries": [
@@ -93,13 +91,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Falsification criterion: if the same fixed arrival receives similar earnedness and inferability scores across all cue-fields, or if stronger cue-fields only increase predictability without earnedness, the anticipatory-trace framing is too broad for this material."
 }

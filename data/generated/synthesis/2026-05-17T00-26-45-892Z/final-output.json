@@ -56,12 +56,7 @@
         "type": "frequency",
         "value": "four broad bands: low, mid, high, air",
         "details": {
-          "bands": [
-            "low",
-            "mid",
-            "high",
-            "air"
-          ]
+          "bands": ["low", "mid", "high", "air"]
         }
       }
     ],
@@ -79,9 +74,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Level-matched headphones or nearfields; compare relation-preserving variations against matched controls without looking at arrangement lanes.",
       "listeningMethod": "For each pair, score whether the seed remained recognizable, whether the material felt transformed rather than copied, and which relation carried continuity.",
       "whatVaries": [
@@ -102,13 +95,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Falsification criterion: if relation-preserving variations are not rated more recognizable than matched controls, or if they are recognizable only because too many surface coordinates stayed fixed, the relation-survival framing is not useful for this material."
 }

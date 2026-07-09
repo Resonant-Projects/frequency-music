@@ -26,14 +26,18 @@ export function isCodexEnabled(): boolean {
   return process.env.CODEX_ENABLED === "true";
 }
 
-export function getConfiguredModelProvider(options: ResearchModelOptions = {}): ModelProvider {
+export function getConfiguredModelProvider(
+  options: ResearchModelOptions = {},
+): ModelProvider {
   if (isCodexEnabled() && !options.requiresToolBinding) {
     return "codex-sdk";
   }
   return "openrouter-anthropic";
 }
 
-export function getResearchModel(options: ResearchModelOptions = {}): BaseChatModel {
+export function getResearchModel(
+  options: ResearchModelOptions = {},
+): BaseChatModel {
   // Tool-binding calls always resolve directly to OpenRouter/Anthropic.
   if (options.requiresToolBinding) {
     return createOpenRouterAnthropicModel(options);
@@ -51,7 +55,11 @@ export function getResearchModel(options: ResearchModelOptions = {}): BaseChatMo
   return createOpenRouterAnthropicModel(options);
 }
 
-export { createCodexSdkModel, CodexSdkChatModel, flattenMessagesToPrompt } from "./codexSdk.js";
+export {
+  createCodexSdkModel,
+  CodexSdkChatModel,
+  flattenMessagesToPrompt,
+} from "./codexSdk.js";
 export {
   CodexError,
   CodexAuthError,
@@ -60,4 +68,7 @@ export {
   classifyCodexError,
 } from "./codexSdk.js";
 export { withFallback, FallbackChatModel } from "./withFallback.js";
-export { createOpenRouterAnthropicModel, normalizeOpenRouterModel } from "./openRouterAnthropic.js";
+export {
+  createOpenRouterAnthropicModel,
+  normalizeOpenRouterModel,
+} from "./openRouterAnthropic.js";

@@ -299,10 +299,7 @@
           "type": "scaleSystem",
           "value": "Diatonic (7-note) scale",
           "details": {
-            "chordTypes": [
-              "triads",
-              "seventh chords"
-            ],
+            "chordTypes": ["triads", "seventh chords"],
             "graphType": "{7_3} bipartite, girth 4",
             "noteCount": 7
           }
@@ -328,10 +325,7 @@
           "type": "interval",
           "value": "Tristan-genus chords: dominant seventh and half-diminished seventh",
           "details": {
-            "chordTypes": [
-              "dominant seventh",
-              "half-diminished seventh"
-            ],
+            "chordTypes": ["dominant seventh", "half-diminished seventh"],
             "configurationModel": "D228 {12_3}"
           }
         },
@@ -662,10 +656,7 @@
           "details": {
             "character": "playful, world-music texture",
             "instrument": "Kontakt",
-            "libraries": [
-              "West Africa",
-              "Cuba"
-            ],
+            "libraries": ["West Africa", "Cuba"],
             "role": "percussion fills"
           }
         },

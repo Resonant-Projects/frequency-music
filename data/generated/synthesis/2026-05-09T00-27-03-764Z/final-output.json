@@ -46,8 +46,19 @@
       "panelPlanned": ["composer self-test", "2-3 trusted listeners"],
       "listeningContext": "Nearfield monitors or headphones at moderate level",
       "listeningMethod": "Blind A/B between thin-boundary and thick-boundary renders",
-      "whatVaries": ["boundary width", "spectral handoff timing", "call-response gap/overlap", "harmonic graph distance"],
-      "whatStaysConstant": ["source samples", "tempo", "primary pitch material", "overall duration", "mix loudness"]
+      "whatVaries": [
+        "boundary width",
+        "spectral handoff timing",
+        "call-response gap/overlap",
+        "harmonic graph distance"
+      ],
+      "whatStaysConstant": [
+        "source samples",
+        "tempo",
+        "primary pitch material",
+        "overall duration",
+        "mix loudness"
+      ]
     }
   },
   "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],

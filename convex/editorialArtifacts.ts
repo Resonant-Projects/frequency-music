@@ -84,7 +84,12 @@ type DraftPayload = {
     sourceTitle: string;
     sourceCanonicalUrl?: string;
     summary: string;
-    evidenceLevel: "peer_reviewed" | "preprint" | "anecdotal" | "speculative" | "personal";
+    evidenceLevel:
+      | "peer_reviewed"
+      | "preprint"
+      | "anecdotal"
+      | "speculative"
+      | "personal";
     truthConfidence?: "low" | "medium" | "high";
     interestLevel?: "low" | "medium" | "high";
   }>;
@@ -130,7 +135,9 @@ async function loadRecipesForHypotheses(
     hypothesisIds.map((hypothesisId) =>
       db
         .query("recipes")
-        .withIndex("by_hypothesisId_updatedAt", (q) => q.eq("hypothesisId", hypothesisId))
+        .withIndex("by_hypothesisId_updatedAt", (q) =>
+          q.eq("hypothesisId", hypothesisId),
+        )
         .collect(),
     ),
   );
@@ -160,7 +167,9 @@ async function loadListeningSessionsForCompositions(
     compositionIds.map((compositionId) =>
       db
         .query("listeningSessions")
-        .withIndex("by_compositionId_createdAt", (q) => q.eq("compositionId", compositionId))
+        .withIndex("by_compositionId_createdAt", (q) =>
+          q.eq("compositionId", compositionId),
+        )
         .collect(),
     ),
   );
@@ -185,14 +194,19 @@ async function buildPublicEvidenceCards(
       return {
         sourceTitle: source.title ?? "Untitled source",
         sourceCanonicalUrl: source.canonicalUrl,
-        summary: extraction?.summary ?? featuredClaim?.text ?? "Public evidence summary pending.",
+        summary:
+          extraction?.summary ??
+          featuredClaim?.text ??
+          "Public evidence summary pending.",
         evidenceLevel: featuredClaim?.evidenceLevel ?? "speculative",
         truthConfidence: featuredClaim?.truthConfidence,
         interestLevel: featuredClaim?.interestLevel,
       };
     }),
   );
-  return cards.filter((card): card is NonNullable<typeof card> => card !== null);
+  return cards.filter(
+    (card): card is NonNullable<typeof card> => card !== null,
+  );
 }
 
 async function collectSourceIdsForArtifact(
@@ -271,21 +285,27 @@ export async function validateArtifactForPublish(
   const whyOk = artifact.whyItMattersMd.trim().length > 0;
   const uncertaintyOk = artifact.uncertaintyMd.trim().length > 0;
   const visibilityOk = artifact.visibility === "public";
-  const statusOk = artifact.status === "approved" || artifact.status === "published";
+  const statusOk =
+    artifact.status === "approved" || artifact.status === "published";
   const privacy = await findPrivacyViolations(db, artifact);
   const noPrivateSourceMentions = privacy.privateSourceMentions.length === 0;
-  const noPrivateExtractionMentions = privacy.privateExtractionMentions.length === 0;
+  const noPrivateExtractionMentions =
+    privacy.privateExtractionMentions.length === 0;
 
   const checks = [
     {
       key: "body",
       ok: bodyOk,
-      message: bodyOk ? "Narrative body is present." : "Narrative body is required.",
+      message: bodyOk
+        ? "Narrative body is present."
+        : "Narrative body is required.",
     },
     {
       key: "why",
       ok: whyOk,
-      message: whyOk ? "Why-it-matters section is present." : "Why-it-matters section is required.",
+      message: whyOk
+        ? "Why-it-matters section is present."
+        : "Why-it-matters section is required.",
     },
     {
       key: "uncertainty",
@@ -347,7 +367,10 @@ export async function buildWeeklyBriefDraft(
   const referencedFailures = failures.filter((failure) =>
     (brief.referencedFailureKeys ?? []).includes(failure.key),
   );
-  const publicEvidenceCards = await buildPublicEvidenceCards(db, brief.sourceIds);
+  const publicEvidenceCards = await buildPublicEvidenceCards(
+    db,
+    brief.sourceIds,
+  );
 
   return {
     title: `Experiment Recap: Week of ${brief.weekOf}`,
@@ -364,12 +387,17 @@ export async function buildWeeklyBriefDraft(
       "",
       "## What Changed",
       renderList(
-        referencedFailures.map((failure) => `${failure.title}: ${failure.explanation}`),
+        referencedFailures.map(
+          (failure) => `${failure.title}: ${failure.explanation}`,
+        ),
         "No major reversal was linked into this weekly recap.",
       ),
       "",
       "## What Still Feels Open",
-      renderList(brief.todo ?? [], "Open questions still need to be written into this recap."),
+      renderList(
+        brief.todo ?? [],
+        "Open questions still need to be written into this recap.",
+      ),
     ].join("\n"),
     whyItMattersMd: [
       "The musical stake of this week was to turn live inquiry into studio action without flattening uncertainty.",
@@ -409,11 +437,17 @@ function evidenceCardsEqual(
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function linkedIdsEqual(left: ArtifactLinkedIds, right: ArtifactLinkedIds): boolean {
+function linkedIdsEqual(
+  left: ArtifactLinkedIds,
+  right: ArtifactLinkedIds,
+): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function primaryRefEqual(left: ArtifactPrimaryRef, right: ArtifactPrimaryRef): boolean {
+function primaryRefEqual(
+  left: ArtifactPrimaryRef,
+  right: ArtifactPrimaryRef,
+): boolean {
   return left.type === right.type && left.id === right.id;
 }
 
@@ -421,15 +455,17 @@ export async function buildCampaignDraft(
   db: DatabaseReader,
   campaign: Doc<"campaigns">,
 ): Promise<DraftPayload> {
-  const theses = (await Promise.all(campaign.thesisIds.map((id) => db.get("theses", id)))).filter(
-    (row): row is Doc<"theses"> => row !== null,
-  );
+  const theses = (
+    await Promise.all(campaign.thesisIds.map((id) => db.get("theses", id)))
+  ).filter((row): row is Doc<"theses"> => row !== null);
   const hypotheses = (
     await Promise.all(
       theses.map((thesis) =>
         db
           .query("hypotheses")
-          .withIndex("by_thesisId_updatedAt", (q) => q.eq("thesisId", thesis._id))
+          .withIndex("by_thesisId_updatedAt", (q) =>
+            q.eq("thesisId", thesis._id),
+          )
           .collect(),
       ),
     )
@@ -448,7 +484,9 @@ export async function buildCampaignDraft(
   );
   const failures = await deriveFailureArchiveEntries(db as any);
   const relevantFailures = failures.filter((failure) =>
-    failure.supportingIds.thesisIds.some((id) => campaign.thesisIds.includes(id)),
+    failure.supportingIds.thesisIds.some((id) =>
+      campaign.thesisIds.includes(id),
+    ),
   );
   const sourceIds = hypotheses.flatMap((hypothesis) => hypothesis.sourceIds);
   const publicEvidenceCards = await buildPublicEvidenceCards(db, sourceIds);
@@ -460,14 +498,17 @@ export async function buildCampaignDraft(
       "## What We Tried",
       renderList(
         recipes.map(
-          (recipe: Doc<"recipes">) => `${recipe.title}: ${recipe.whyThisMatters ?? recipe.bodyMd}`,
+          (recipe: Doc<"recipes">) =>
+            `${recipe.title}: ${recipe.whyThisMatters ?? recipe.bodyMd}`,
         ),
         "No recipes have been linked to this campaign yet.",
       ),
       "",
       "## What Changed",
       renderList(
-        relevantFailures.slice(0, 6).map((failure) => `${failure.title}: ${failure.explanation}`),
+        relevantFailures
+          .slice(0, 6)
+          .map((failure) => `${failure.title}: ${failure.explanation}`),
         "No contradictions or low-yield turns have been summarized yet.",
       ),
       "",
@@ -490,7 +531,9 @@ export async function buildCampaignDraft(
     uncertaintyMd:
       "This summary should distinguish between campaign momentum, actual evidence, and the places where the work is still exploratory or musically unresolved.",
     evidenceStatus:
-      relevantFailures.length > 0 || publicEvidenceCards.length > 0 ? "mixed" : "speculative",
+      relevantFailures.length > 0 || publicEvidenceCards.length > 0
+        ? "mixed"
+        : "speculative",
     primaryRef: {
       type: "campaign",
       id: campaign._id,
@@ -500,7 +543,9 @@ export async function buildCampaignDraft(
       hypothesisIds: uniqueDefined(hypotheses.map((row) => row._id)),
       recipeIds: uniqueDefined(recipes.map((row) => row._id)),
       compositionIds: uniqueDefined(compositions.map((row) => row._id)),
-      listeningSessionIds: uniqueDefined(listeningSessions.map((row) => row._id)),
+      listeningSessionIds: uniqueDefined(
+        listeningSessions.map((row) => row._id),
+      ),
       failureKeys: uniqueDefined(relevantFailures.map((row) => row.key)),
     },
     publicEvidenceCards,
@@ -537,14 +582,19 @@ export async function buildThesisDraft(
   );
   const contradictedHypothesis =
     args?.hypothesisId !== undefined
-      ? hypotheses.find((hypothesis: Doc<"hypotheses">) => hypothesis._id === args.hypothesisId)
+      ? hypotheses.find(
+          (hypothesis: Doc<"hypotheses">) =>
+            hypothesis._id === args.hypothesisId,
+        )
       : hypotheses.find(
-          (hypothesis: Doc<"hypotheses">) => hypothesis.resolution === "contradicted",
+          (hypothesis: Doc<"hypotheses">) =>
+            hypothesis.resolution === "contradicted",
         );
   const sourceIds = hypotheses.flatMap((hypothesis) => hypothesis.sourceIds);
   const publicEvidenceCards = await buildPublicEvidenceCards(db, sourceIds);
   const kind = args?.kind ?? "thesis_summary";
-  const isChangedMind = kind === "what_changed_my_mind" && contradictedHypothesis;
+  const isChangedMind =
+    kind === "what_changed_my_mind" && contradictedHypothesis;
   if (kind === "what_changed_my_mind" && !contradictedHypothesis) {
     throw new ConvexError({
       code: "INVALID_ARGUMENT",
@@ -562,7 +612,8 @@ export async function buildThesisDraft(
       "## What We Tried",
       renderList(
         hypotheses.map(
-          (hypothesis: Doc<"hypotheses">) => `${hypothesis.title}: ${hypothesis.hypothesis}`,
+          (hypothesis: Doc<"hypotheses">) =>
+            `${hypothesis.title}: ${hypothesis.hypothesis}`,
         ),
         "No hypotheses are attached to this thesis yet.",
       ),
@@ -571,16 +622,23 @@ export async function buildThesisDraft(
       renderList(
         isChangedMind
           ? relevantFailures
-              .filter((failure) => failure.hypothesisId === contradictedHypothesis?._id)
+              .filter(
+                (failure) =>
+                  failure.hypothesisId === contradictedHypothesis?._id,
+              )
               .map((failure) => `${failure.title}: ${failure.explanation}`)
-          : relevantFailures.map((failure) => `${failure.title}: ${failure.explanation}`),
+          : relevantFailures.map(
+              (failure) => `${failure.title}: ${failure.explanation}`,
+            ),
         "No clear reversal has been documented yet.",
       ),
       "",
       "## What Still Feels Open",
       renderList(
         hypotheses
-          .filter((hypothesis: Doc<"hypotheses">) => hypothesis.status !== "retired")
+          .filter(
+            (hypothesis: Doc<"hypotheses">) => hypothesis.status !== "retired",
+          )
           .map((hypothesis: Doc<"hypotheses">) => hypothesis.question),
         "No open hypothesis questions are attached to this thesis.",
       ),
@@ -618,7 +676,9 @@ export async function buildThesisDraft(
       hypothesisIds: uniqueDefined(hypotheses.map((row) => row._id)),
       recipeIds: uniqueDefined(recipes.map((row) => row._id)),
       compositionIds: uniqueDefined(compositions.map((row) => row._id)),
-      listeningSessionIds: uniqueDefined(listeningSessions.map((row) => row._id)),
+      listeningSessionIds: uniqueDefined(
+        listeningSessions.map((row) => row._id),
+      ),
       failureKeys: uniqueDefined(relevantFailures.map((row) => row.key)),
     },
     publicEvidenceCards,
@@ -641,12 +701,16 @@ async function resolveExportContext(
     }
   }
 
-  const theses = await Promise.all(artifact.linkedIds.thesisIds.map((id) => db.get("theses", id)));
+  const theses = await Promise.all(
+    artifact.linkedIds.thesisIds.map((id) => db.get("theses", id)),
+  );
 
   return {
     campaignSlug,
     thesisSlugs: uniqueDefined(
-      theses.map((row: Doc<"theses"> | null) => (row ? slugify(row.title) : undefined)),
+      theses.map((row: Doc<"theses"> | null) =>
+        row ? slugify(row.title) : undefined,
+      ),
     ),
   };
 }
@@ -701,7 +765,9 @@ export function buildExportEntry(
     "",
     "## Uncertainty",
     artifact.uncertaintyMd,
-    artifact.whatChangedMd ? `\n## What Changed\n${artifact.whatChangedMd}\n` : "",
+    artifact.whatChangedMd
+      ? `\n## What Changed\n${artifact.whatChangedMd}\n`
+      : "",
   ].join("\n");
 
   return {
@@ -797,7 +863,10 @@ async function insertDraftArtifact(
     primaryRef: payload.primaryRef,
     linkedIds: payload.linkedIds,
     publicEvidenceCards: payload.publicEvidenceCards,
-    createdBy: identity.subject === "system" ? "system" : (identity.subject as Id<"users">),
+    createdBy:
+      identity.subject === "system"
+        ? "system"
+        : (identity.subject as Id<"users">),
     createdAt: now,
     updatedAt: now,
   });
@@ -819,7 +888,12 @@ export const createDraftFromWeeklyBrief = mutation({
       });
     }
     const payload = await buildWeeklyBriefDraft(ctx.db, brief);
-    return await insertDraftArtifact(ctx, identity, "experiment_recap", payload);
+    return await insertDraftArtifact(
+      ctx,
+      identity,
+      "experiment_recap",
+      payload,
+    );
   },
 });
 
@@ -839,14 +913,21 @@ export const createDraftFromCampaign = mutation({
       });
     }
     const payload = await buildCampaignDraft(ctx.db, campaign);
-    return await insertDraftArtifact(ctx, identity, "campaign_summary", payload);
+    return await insertDraftArtifact(
+      ctx,
+      identity,
+      "campaign_summary",
+      payload,
+    );
   },
 });
 
 export const createDraftFromThesis = mutation({
   args: {
     thesisId: v.id("theses"),
-    kind: v.optional(v.union(v.literal("thesis_summary"), v.literal("what_changed_my_mind"))),
+    kind: v.optional(
+      v.union(v.literal("thesis_summary"), v.literal("what_changed_my_mind")),
+    ),
     hypothesisId: v.optional(v.id("hypotheses")),
     devBypassSecret: v.optional(v.string()),
   },
@@ -864,7 +945,12 @@ export const createDraftFromThesis = mutation({
       kind: args.kind,
       hypothesisId: args.hypothesisId,
     });
-    return await insertDraftArtifact(ctx, identity, args.kind ?? "thesis_summary", payload);
+    return await insertDraftArtifact(
+      ctx,
+      identity,
+      args.kind ?? "thesis_summary",
+      payload,
+    );
   },
 });
 
@@ -896,34 +982,57 @@ export const update = mutation({
         message: "Editorial artifact not found",
       });
     }
-    const slug = args.slug !== undefined ? await uniqueSlug(ctx.db, args.slug, args.id) : undefined;
+    const slug =
+      args.slug !== undefined
+        ? await uniqueSlug(ctx.db, args.slug, args.id)
+        : undefined;
     const normalizedWhatChanged =
-      args.whatChangedMd !== undefined ? (args.whatChangedMd ?? undefined) : undefined;
+      args.whatChangedMd !== undefined
+        ? (args.whatChangedMd ?? undefined)
+        : undefined;
     const reviewSensitiveChanged =
       (args.kind !== undefined && args.kind !== artifact.kind) ||
       (args.title !== undefined && args.title.trim() !== artifact.title) ||
       (args.dek !== undefined && args.dek.trim() !== artifact.dek) ||
       (slug !== undefined && slug !== artifact.slug) ||
       (args.bodyMd !== undefined && args.bodyMd !== artifact.bodyMd) ||
-      (args.whyItMattersMd !== undefined && args.whyItMattersMd !== artifact.whyItMattersMd) ||
-      (args.uncertaintyMd !== undefined && args.uncertaintyMd !== artifact.uncertaintyMd) ||
-      (args.whatChangedMd !== undefined && normalizedWhatChanged !== artifact.whatChangedMd) ||
-      (args.evidenceStatus !== undefined && args.evidenceStatus !== artifact.evidenceStatus) ||
-      (args.visibility !== undefined && args.visibility !== artifact.visibility) ||
+      (args.whyItMattersMd !== undefined &&
+        args.whyItMattersMd !== artifact.whyItMattersMd) ||
+      (args.uncertaintyMd !== undefined &&
+        args.uncertaintyMd !== artifact.uncertaintyMd) ||
+      (args.whatChangedMd !== undefined &&
+        normalizedWhatChanged !== artifact.whatChangedMd) ||
+      (args.evidenceStatus !== undefined &&
+        args.evidenceStatus !== artifact.evidenceStatus) ||
+      (args.visibility !== undefined &&
+        args.visibility !== artifact.visibility) ||
       (args.publicEvidenceCards !== undefined &&
-        !evidenceCardsEqual(args.publicEvidenceCards, artifact.publicEvidenceCards)) ||
-      (args.linkedIds !== undefined && !linkedIdsEqual(args.linkedIds, artifact.linkedIds)) ||
-      (args.primaryRef !== undefined && !primaryRefEqual(args.primaryRef, artifact.primaryRef));
+        !evidenceCardsEqual(
+          args.publicEvidenceCards,
+          artifact.publicEvidenceCards,
+        )) ||
+      (args.linkedIds !== undefined &&
+        !linkedIdsEqual(args.linkedIds, artifact.linkedIds)) ||
+      (args.primaryRef !== undefined &&
+        !primaryRefEqual(args.primaryRef, artifact.primaryRef));
     await ctx.db.patch(args.id, {
       ...(args.kind !== undefined ? { kind: args.kind } : {}),
       ...(args.title !== undefined ? { title: args.title.trim() } : {}),
       ...(args.dek !== undefined ? { dek: args.dek.trim() } : {}),
       ...(slug !== undefined ? { slug } : {}),
       ...(args.bodyMd !== undefined ? { bodyMd: args.bodyMd } : {}),
-      ...(args.whyItMattersMd !== undefined ? { whyItMattersMd: args.whyItMattersMd } : {}),
-      ...(args.uncertaintyMd !== undefined ? { uncertaintyMd: args.uncertaintyMd } : {}),
-      ...(args.whatChangedMd !== undefined ? { whatChangedMd: normalizedWhatChanged } : {}),
-      ...(args.evidenceStatus !== undefined ? { evidenceStatus: args.evidenceStatus } : {}),
+      ...(args.whyItMattersMd !== undefined
+        ? { whyItMattersMd: args.whyItMattersMd }
+        : {}),
+      ...(args.uncertaintyMd !== undefined
+        ? { uncertaintyMd: args.uncertaintyMd }
+        : {}),
+      ...(args.whatChangedMd !== undefined
+        ? { whatChangedMd: normalizedWhatChanged }
+        : {}),
+      ...(args.evidenceStatus !== undefined
+        ? { evidenceStatus: args.evidenceStatus }
+        : {}),
       ...(args.visibility !== undefined ? { visibility: args.visibility } : {}),
       ...(args.publicEvidenceCards !== undefined
         ? { publicEvidenceCards: args.publicEvidenceCards }
@@ -933,7 +1042,9 @@ export const update = mutation({
       ...(reviewSensitiveChanged && artifact.status !== "draft"
         ? {
             status: "draft" as ArtifactStatus,
-            ...(artifact.status === "published" ? { publishedAt: undefined } : {}),
+            ...(artifact.status === "published"
+              ? { publishedAt: undefined }
+              : {}),
           }
         : {}),
       updatedAt: Date.now(),
@@ -1089,7 +1200,9 @@ async function loadPublishedExportBundle(db: DatabaseReader) {
     .withIndex("by_visibility_updatedAt", (q) => q.eq("visibility", "public"))
     .order("desc")
     .collect();
-  const publishedArtifacts = artifacts.filter((artifact) => artifact.status === "published");
+  const publishedArtifacts = artifacts.filter(
+    (artifact) => artifact.status === "published",
+  );
   return await Promise.all(
     publishedArtifacts.map(async (artifact) => ({
       artifact,
@@ -1102,7 +1215,9 @@ async function loadPublishedExportBundle(db: DatabaseReader) {
 async function patchAstroExportMetadata(
   ctx: {
     db: {
-      get: (id: Id<"editorialArtifacts">) => Promise<Doc<"editorialArtifacts"> | null>;
+      get: (
+        id: Id<"editorialArtifacts">,
+      ) => Promise<Doc<"editorialArtifacts"> | null>;
       patch: (
         id: Id<"editorialArtifacts">,
         fields: Partial<Doc<"editorialArtifacts">>,
@@ -1195,8 +1310,11 @@ export const exportForAstro = action({
   }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    return await ctx.runAction(internal.editorialExports.exportForAstroInternal, {
-      outputDir: args.outputDir,
-    });
+    return await ctx.runAction(
+      internal.editorialExports.exportForAstroInternal,
+      {
+        outputDir: args.outputDir,
+      },
+    );
   },
 });

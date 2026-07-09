@@ -9,7 +9,9 @@ import { readFileSync } from "fs";
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
 if (!BYPASS) {
-  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
+  console.error(
+    "AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local",
+  );
   process.exit(1);
 }
 
@@ -34,7 +36,9 @@ async function fetchText(url: string): Promise<string> {
 }
 
 async function main() {
-  const sources: Source[] = JSON.parse(readFileSync("data/esoteric-sources-2.json", "utf-8"));
+  const sources: Source[] = JSON.parse(
+    readFileSync("data/esoteric-sources-2.json", "utf-8"),
+  );
 
   console.log("Processing " + sources.length + " sources");
 
@@ -72,7 +76,15 @@ async function main() {
     }
   }
 
-  console.log("\nDone: " + ingested + " ingested, " + skipped + " skipped, " + failed + " failed");
+  console.log(
+    "\nDone: " +
+      ingested +
+      " ingested, " +
+      skipped +
+      " skipped, " +
+      failed +
+      " failed",
+  );
 }
 
 main().catch(console.error);

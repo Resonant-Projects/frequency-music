@@ -63,5 +63,10 @@ type UIButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
 export function UIButton(props: UIButtonProps) {
   const variant = () => props.variant ?? "outline";
 
-  return <button {...props} class={cx(base, variantStyles[variant()], props.class)} />;
+  return (
+    <button
+      {...props}
+      class={cx(base, variantStyles[variant()], props.class)}
+    />
+  );
 }

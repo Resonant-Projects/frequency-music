@@ -28,7 +28,10 @@
       { "type": "measurement", "value": "SNR or noise amount" },
       { "type": "measurement", "value": "Reverb clarity / blur" },
       { "type": "timing", "value": "Microtiming displacement" },
-      { "type": "axis", "value": "Timbre-preserving vs rhythm-preserving transformations" },
+      {
+        "type": "axis",
+        "value": "Timbre-preserving vs rhythm-preserving transformations"
+      },
       { "type": "formant", "value": "Vowel/formant trajectory alignment" }
     ],
     "dawChecklist": [
@@ -44,8 +47,18 @@
       "panelPlanned": ["self"],
       "listeningContext": "Nearfield or headphones, level-matched passes",
       "listeningMethod": "A/B compare each transformed pass against the source and write the surviving identity cues",
-      "whatVaries": ["adaptation layer", "degradation amount", "axis preserved", "vowel/formant alignment"],
-      "whatStaysConstant": ["source phrase", "duration", "macro-timing", "overall loudness target"]
+      "whatVaries": [
+        "adaptation layer",
+        "degradation amount",
+        "axis preserved",
+        "vowel/formant alignment"
+      ],
+      "whatStaysConstant": [
+        "source phrase",
+        "duration",
+        "macro-timing",
+        "overall loudness target"
+      ]
     }
   },
   "citations": ["S1", "S2", "S3", "S4", "S5"],

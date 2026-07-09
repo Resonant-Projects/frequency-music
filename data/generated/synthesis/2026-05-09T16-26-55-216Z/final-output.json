@@ -28,12 +28,38 @@
     "bodyMd": "Create a 60-second loop whose melody contour, chord roots, tempo, and core sound palette never change. Version A varies only continuo-like voicing grips: close/dense, open/registral, and sparse/omissive, inspired by griff-based performer differences [S1]. Version B keeps MIDI events fixed but changes low-frequency amplitude modulation: a low-variance 2 Hz sidechain/tremolo layer, a higher-variance 1.5–5 Hz modulation layer, and a split layer where percussion carries faster modulation while pads carry slower modulation, adapting rhythm-formant parameters from speech analysis [S6]. Version C keeps destination chords fixed but changes harmonic traversal habit through a Tonnetz-like graph: shortest path, cyclic return, and one deliberate symmetry-breaking leap [S2]. Export blind A/B/C snippets and ask whether each version has a consistently described personality, tension profile, or agency. Keep the representation issue explicit by comparing bounced audio against MIDI/piano-roll inspection; if the signature is audible but not visible in the representation, log that scar [S3]. Treat each printed version as a collapse from a larger possibility field rather than as a mere variation pass [S5], and preserve an early rough bounce to check whether later refinement erases the first emotional fingerprint [S4].",
     "parameters": [
       { "type": "tempo", "value": "108 BPM", "details": { "bpm": 108 } },
-      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
-      { "type": "structuralPattern", "value": "8-bar loop, three 20-second identity passes", "details": { "bars": 8, "passes": 3 } },
-      { "type": "measurement", "value": "Low-variance modulation at 2 Hz", "details": { "modulationHz": 2, "variance": "low" } },
-      { "type": "measurement", "value": "High-variance modulation spanning 1.5–5 Hz", "details": { "minHz": 1.5, "maxHz": 5, "variance": "high" } },
-      { "type": "tuningSystem", "value": "12-tone equal/chromatic system", "details": { "source": "Tonnetz traversal layer" } },
-      { "type": "note", "value": "Three voicing-grip personalities", "details": { "griffs": ["close_dense", "open_registral", "sparse_omissive"] } }
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": { "seconds": 60 }
+      },
+      {
+        "type": "structuralPattern",
+        "value": "8-bar loop, three 20-second identity passes",
+        "details": { "bars": 8, "passes": 3 }
+      },
+      {
+        "type": "measurement",
+        "value": "Low-variance modulation at 2 Hz",
+        "details": { "modulationHz": 2, "variance": "low" }
+      },
+      {
+        "type": "measurement",
+        "value": "High-variance modulation spanning 1.5–5 Hz",
+        "details": { "minHz": 1.5, "maxHz": 5, "variance": "high" }
+      },
+      {
+        "type": "tuningSystem",
+        "value": "12-tone equal/chromatic system",
+        "details": { "source": "Tonnetz traversal layer" }
+      },
+      {
+        "type": "note",
+        "value": "Three voicing-grip personalities",
+        "details": {
+          "griffs": ["close_dense", "open_registral", "sparse_omissive"]
+        }
+      }
     ],
     "dawChecklist": [
       "Program an 8-bar loop at 108 BPM with fixed melody contour, chord roots, drum pattern, and sound palette.",

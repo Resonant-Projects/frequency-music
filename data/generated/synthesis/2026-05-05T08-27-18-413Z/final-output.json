@@ -24,10 +24,29 @@
     "bodyMd": "Build one 60-second study from a fixed eight-chord path. Use S1 as the model for treating the chord sequence as a graph traversal rather than a free progression. Use S2 as the model for preserving a constrained but style-bearing realization layer. Use S3 as the warning that notation/representation determines which musical levels are easy to preserve, so document each version both as chord symbols and MIDI/staff notation. Create three renders: narrow aperture, medium aperture, and wide aperture. The expected result is that the medium aperture should preserve enough harmonic identity to feel coherent while leaving enough voicing/spacing choice to feel performed rather than mechanically fixed.",
     "parameters": [
       { "type": "tempo", "value": "96 BPM", "details": { "bpm": 96 } },
-      { "type": "duration", "value": "60 seconds", "details": { "seconds": 60 } },
-      { "type": "form", "value": "8 chords, each repeated for two bars", "details": { "chords": 8, "barsPerChord": 2 } },
-      { "type": "scaleSystem", "value": "12-tone equal/chromatic harmonic nodes", "details": { "source": "S1" } },
-      { "type": "note", "value": "Medium aperture varies voicing, spacing, and inner-voice motion only", "details": { "styleLayer": "griff-inspired realization choices", "source": "S2" } }
+      {
+        "type": "duration",
+        "value": "60 seconds",
+        "details": { "seconds": 60 }
+      },
+      {
+        "type": "form",
+        "value": "8 chords, each repeated for two bars",
+        "details": { "chords": 8, "barsPerChord": 2 }
+      },
+      {
+        "type": "scaleSystem",
+        "value": "12-tone equal/chromatic harmonic nodes",
+        "details": { "source": "S1" }
+      },
+      {
+        "type": "note",
+        "value": "Medium aperture varies voicing, spacing, and inner-voice motion only",
+        "details": {
+          "styleLayer": "griff-inspired realization choices",
+          "source": "S2"
+        }
+      }
     ],
     "dawChecklist": [
       "Create a 96 BPM session with one neutral keyboard or soft-piano instrument.",

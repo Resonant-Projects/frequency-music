@@ -5,10 +5,21 @@ import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
-import { createCamera, createOrbitControls, focusSector } from "./zodiac-camera";
+import {
+  CSS3DObject,
+  CSS3DRenderer,
+} from "three/examples/jsm/renderers/CSS3DRenderer.js";
+import {
+  createCamera,
+  createOrbitControls,
+  focusSector,
+} from "./zodiac-camera";
 import { COLORS, SECTORS } from "./zodiac-data";
-import { buildDomainEdges, buildHubEdges, setEdgeActivity } from "./zodiac-edges";
+import {
+  buildDomainEdges,
+  buildHubEdges,
+  setEdgeActivity,
+} from "./zodiac-edges";
 import {
   buildBackgroundDots,
   buildHub,
@@ -20,7 +31,10 @@ import {
   getLabelPositions,
 } from "./zodiac-geometry";
 import type { Id } from "../../../convex/_generated/dataModel";
-import type { ConstellationGroup, ConstellationEdge } from "./zodiac-constellations";
+import type {
+  ConstellationGroup,
+  ConstellationEdge,
+} from "./zodiac-constellations";
 import {
   buildConstellations,
   updateConstellationTime,
@@ -33,7 +47,11 @@ import {
   updateArmillaryRotation,
 } from "./zodiac-armillary";
 import type { OrbitalSystem } from "./zodiac-orbits";
-import { buildOrbitalSystem, updateOrbits, buildPullLines } from "./zodiac-orbits";
+import {
+  buildOrbitalSystem,
+  updateOrbits,
+  buildPullLines,
+} from "./zodiac-orbits";
 import { pickAny, configureRaycaster } from "./zodiac-orbit-picking";
 import type {
   ConstellationConcept,
@@ -260,9 +278,11 @@ export function initZodiacScene(
       if (prev) rebuildSectorGroup(prev, false);
 
       // Update CSS label opacity (scoped to this scene's CSS3D layer)
-      cssRenderer.domElement.querySelectorAll<HTMLElement>("[data-sector-id]").forEach((el) => {
-        if (el.dataset.sectorId === activeSectorId) el.style.opacity = "0.58";
-      });
+      cssRenderer.domElement
+        .querySelectorAll<HTMLElement>("[data-sector-id]")
+        .forEach((el) => {
+          if (el.dataset.sectorId === activeSectorId) el.style.opacity = "0.58";
+        });
 
       // Clear overlays from previous sector
       clearConstellation();
@@ -278,9 +298,11 @@ export function initZodiacScene(
       if (sector) {
         rebuildSectorGroup(sector, true);
         // Update CSS label
-        cssRenderer.domElement.querySelectorAll<HTMLElement>("[data-sector-id]").forEach((el) => {
-          if (el.dataset.sectorId === id) el.style.opacity = "1";
-        });
+        cssRenderer.domElement
+          .querySelectorAll<HTMLElement>("[data-sector-id]")
+          .forEach((el) => {
+            if (el.dataset.sectorId === id) el.style.opacity = "1";
+          });
       }
     }
 
@@ -299,7 +321,12 @@ export function initZodiacScene(
     raycaster.setFromCamera(mouse, camera);
 
     // Phase 1-3: Try picking concepts, armillary rings, orbital items first
-    const pick = pickAny(raycaster, activeConstellation, activeArmillary, orbitalSystem);
+    const pick = pickAny(
+      raycaster,
+      activeConstellation,
+      activeArmillary,
+      orbitalSystem,
+    );
     if (pick) {
       showSelectionHalo(pick.position);
       if (pick.type === "concept" && onConceptClick) {
@@ -314,7 +341,11 @@ export function initZodiacScene(
           Hypotheses: "hypothesis",
           Recipes: "recipe",
         };
-        onOrbitalClick(pick.id, typeMap[pick.ringLabel ?? ""] ?? "source", pick.label);
+        onOrbitalClick(
+          pick.id,
+          typeMap[pick.ringLabel ?? ""] ?? "source",
+          pick.label,
+        );
         return;
       }
       if (pick.type === "armillary-ring" && onArmillaryClick) {
@@ -393,7 +424,12 @@ export function initZodiacScene(
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
 
-    const pick = pickAny(raycaster, activeConstellation, activeArmillary, orbitalSystem);
+    const pick = pickAny(
+      raycaster,
+      activeConstellation,
+      activeArmillary,
+      orbitalSystem,
+    );
     if (pick) {
       tooltipEl.textContent = pick.label;
       tooltipEl.style.display = "block";
@@ -436,7 +472,8 @@ export function initZodiacScene(
     // Pulse source node emissive intensity
     sourceNodes.forEach(({ mesh }, i) => {
       const mat = mesh.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity = 0.4 + Math.sin(t * (0.5 + i * 0.05) + i * 0.7) * 0.25;
+      mat.emissiveIntensity =
+        0.4 + Math.sin(t * (0.5 + i * 0.05) + i * 0.7) * 0.25;
     });
 
     // Slow hub rotation (the hub dot)
@@ -511,7 +548,9 @@ export function initZodiacScene(
       composer.dispose();
       renderer.dispose();
       if (cssRenderer.domElement.parentElement) {
-        cssRenderer.domElement.parentElement.removeChild(cssRenderer.domElement);
+        cssRenderer.domElement.parentElement.removeChild(
+          cssRenderer.domElement,
+        );
       }
     },
     setActiveSector,
@@ -555,7 +594,12 @@ export function initZodiacScene(
         orbitalSystem.dispose();
       }
 
-      orbitalSystem = buildOrbitalSystem(sources, extractions, hypotheses, recipes);
+      orbitalSystem = buildOrbitalSystem(
+        sources,
+        extractions,
+        hypotheses,
+        recipes,
+      );
       scene.add(orbitalSystem.group);
     },
 
@@ -568,7 +612,12 @@ export function initZodiacScene(
       for (const ring of orbitalSystem.rings) {
         const idx = ring.items.findIndex((item) => item.id === itemId);
         if (idx !== -1) {
-          pullLinesGroup = buildPullLines(ring, idx, relations, orbitalSystem.rings);
+          pullLinesGroup = buildPullLines(
+            ring,
+            idx,
+            relations,
+            orbitalSystem.rings,
+          );
           scene.add(pullLinesGroup);
           break;
         }

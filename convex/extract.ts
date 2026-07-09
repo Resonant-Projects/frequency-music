@@ -139,8 +139,12 @@ interface ExtractionResult {
   openQuestions: string[];
 }
 
-function parseConfidenceBand(value: unknown): "low" | "medium" | "high" | undefined {
-  return value === "low" || value === "medium" || value === "high" ? value : undefined;
+function parseConfidenceBand(
+  value: unknown,
+): "low" | "medium" | "high" | undefined {
+  return value === "low" || value === "medium" || value === "high"
+    ? value
+    : undefined;
 }
 
 /**
@@ -200,7 +204,10 @@ export const extractSource = action({
     });
 
     // Build the prompt
-    const userPrompt = EXTRACT_USER_PROMPT.replace("{{title}}", source.title || "Untitled")
+    const userPrompt = EXTRACT_USER_PROMPT.replace(
+      "{{title}}",
+      source.title || "Untitled",
+    )
       .replace("{{url}}", source.canonicalUrl || "")
       .replace("{{content}}", content.slice(0, 30000)); // Limit content length
 
@@ -243,10 +250,15 @@ export const extractSource = action({
       const hashData = encoder.encode(`${content}extract_v2`);
       const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const inputHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      const inputHash = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
 
       // Check for existing extraction with same hash
-      const existingExtractions = await ctx.runQuery(api.extractions.getByInputHash, { inputHash });
+      const existingExtractions = await ctx.runQuery(
+        api.extractions.getByInputHash,
+        { inputHash },
+      );
       if (existingExtractions && !args.force) {
         await ctx.runMutation(api.sources.updateStatus, {
           id: args.sourceId,
@@ -257,21 +269,23 @@ export const extractSource = action({
       }
 
       // Filter and map parameters before storing
-      const filteredParameters = extraction.compositionParameters.flatMap((p) => {
-        const kind = p.kind?.trim();
-        const type = p.type?.trim();
-        const resolvedKind = kind || type;
-        const value = p.value?.trim();
-        if (!resolvedKind || !value) return [];
-        return [
-          {
-            kind: resolvedKind,
-            type: type || resolvedKind,
-            value,
-            details: p.details,
-          },
-        ];
-      });
+      const filteredParameters = extraction.compositionParameters.flatMap(
+        (p) => {
+          const kind = p.kind?.trim();
+          const type = p.type?.trim();
+          const resolvedKind = kind || type;
+          const value = p.value?.trim();
+          if (!resolvedKind || !value) return [];
+          return [
+            {
+              kind: resolvedKind,
+              type: type || resolvedKind,
+              value,
+              details: p.details,
+            },
+          ];
+        },
+      );
 
       // Store the extraction
       await ctx.runMutation(internal.extractInternal.storeExtraction, {
@@ -320,7 +334,6 @@ export const extractSource = action({
     }
   },
 });
-
 
 /**
  * Extract all sources that are ready

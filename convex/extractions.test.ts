@@ -44,10 +44,14 @@ describe("selectExtractionContent / mergeExtractionContent", () => {
 
   test("mergeExtractionContent falls back to existing values for omitted fields", () => {
     const existing = selectExtractionContent(baseExtraction());
-    const merged = mergeExtractionContent(existing, { summary: "Edited summary" });
+    const merged = mergeExtractionContent(existing, {
+      summary: "Edited summary",
+    });
     expect(merged.summary).toBe("Edited summary");
     expect(merged.claims).toEqual(existing.claims);
-    expect(merged.compositionParameters).toEqual(existing.compositionParameters);
+    expect(merged.compositionParameters).toEqual(
+      existing.compositionParameters,
+    );
     expect(merged.topics).toEqual(existing.topics);
     expect(merged.openQuestions).toEqual(existing.openQuestions);
     expect(merged.confidence).toBe(existing.confidence);
@@ -109,7 +113,9 @@ describe("computeExtractionEditCapture", () => {
       ...extraction.claims,
       { text: "Claim two", evidenceLevel: "anecdotal", citations: [] },
     ];
-    const capture = computeExtractionEditCapture(extraction, { claims: newClaims });
+    const capture = computeExtractionEditCapture(extraction, {
+      claims: newClaims,
+    });
     expect(capture).not.toBeNull();
     expect(capture?.edited.claims).toHaveLength(2);
     expect(capture?.generated.claims).toHaveLength(1);

@@ -15,7 +15,10 @@ export function createCamera(aspect: number): THREE.PerspectiveCamera {
   return camera;
 }
 
-export function createOrbitControls(camera: THREE.Camera, domElement: HTMLElement): OrbitControls {
+export function createOrbitControls(
+  camera: THREE.Camera,
+  domElement: HTMLElement,
+): OrbitControls {
   const controls = new OrbitControls(camera, domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
@@ -36,10 +39,18 @@ export function focusSector(
   const mid = (sector.startAngle + sector.endAngle) / 2;
 
   // Target position: 500 units out along sector mid-angle, at Z=250
-  const targetPos = new THREE.Vector3(Math.cos(mid) * 500, -Math.sin(mid) * 500, 250);
+  const targetPos = new THREE.Vector3(
+    Math.cos(mid) * 500,
+    -Math.sin(mid) * 500,
+    250,
+  );
 
   // Target look-at: sector inner arc midpoint
-  const lookAt = new THREE.Vector3(Math.cos(mid) * 175, -Math.sin(mid) * 175, 0);
+  const lookAt = new THREE.Vector3(
+    Math.cos(mid) * 175,
+    -Math.sin(mid) * 175,
+    0,
+  );
 
   // Cancel any prior focus animation and disable autoRotate during lerp.
   // Capture autoRotate only when no animation is running (it's already false during one).

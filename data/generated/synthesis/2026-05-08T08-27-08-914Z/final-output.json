@@ -60,9 +60,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "A/B comparison of cause-first loop against scrambled-cause control on studio monitors or headphones.",
       "listeningMethod": "Blind or delayed A/B notes: rate which version feels more coherent, world-like, inevitable, and emotionally inhabited.",
       "whatVaries": [
@@ -81,13 +79,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Essay written to docs/essays/the-absent-cause.md. Publish may fail until the current Convex server errors are repaired."
 }

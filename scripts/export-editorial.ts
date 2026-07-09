@@ -17,7 +17,10 @@ import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import type { Doc } from "../convex/_generated/dataModel";
 import { api } from "../convex/_generated/api";
-import { buildExportEntry, PUBLIC_EDITORIAL_EXPORT_VERSION } from "../convex/editorialArtifacts";
+import {
+  buildExportEntry,
+  PUBLIC_EDITORIAL_EXPORT_VERSION,
+} from "../convex/editorialArtifacts";
 
 const CONVEX_URL = process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL;
 if (!CONVEX_URL) {
@@ -29,7 +32,8 @@ if (!DEV_BYPASS_SECRET) {
   console.error("DEV_BYPASS_SECRET env var is required");
   process.exit(1);
 }
-const APP_BASE_URL = process.env.PUBLIC_APP_BASE_URL || "https://app.resonantprojects.art";
+const APP_BASE_URL =
+  process.env.PUBLIC_APP_BASE_URL || "https://app.resonantprojects.art";
 
 function parseArgs(): { outputDir: string } {
   const args = process.argv.slice(2);
@@ -49,9 +53,12 @@ async function main() {
 
   console.log(`Querying published editorial artifacts from ${CONVEX_URL}...`);
 
-  const exportBundle = await client.query(api.editorialArtifacts.getPublicExportBundle, {
-    devBypassSecret: DEV_BYPASS_SECRET,
-  });
+  const exportBundle = await client.query(
+    api.editorialArtifacts.getPublicExportBundle,
+    {
+      devBypassSecret: DEV_BYPASS_SECRET,
+    },
+  );
 
   const manifestItems: Array<{
     slug: string;
@@ -82,7 +89,9 @@ async function main() {
     );
 
     await writeFile(join(outputDir, rendered.path), rendered.markdown, "utf8");
-    const exportSha = createHash("sha256").update(rendered.markdown).digest("hex");
+    const exportSha = createHash("sha256")
+      .update(rendered.markdown)
+      .digest("hex");
 
     metadataUpdates.push({
       id: artifact._id,
@@ -107,7 +116,11 @@ async function main() {
     ),
   );
   const failedEntries = results
-    .map((r, i) => (r.status === "rejected" ? { ...metadataUpdates[i], reason: r.reason } : null))
+    .map((r, i) =>
+      r.status === "rejected"
+        ? { ...metadataUpdates[i], reason: r.reason }
+        : null,
+    )
     .filter(Boolean);
   if (failedEntries.length > 0) {
     console.error(`${failedEntries.length} metadata update(s) failed:`);
@@ -131,7 +144,9 @@ async function main() {
     "utf8",
   );
 
-  console.log(`\nExported ${manifestItems.length} artifacts to ${outputDir}/manifest.json`);
+  console.log(
+    `\nExported ${manifestItems.length} artifacts to ${outputDir}/manifest.json`,
+  );
 }
 
 main().catch((error) => {

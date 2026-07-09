@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import {
-  convexTools,
-  getSelfImprovementStats,
-} from "../src/tools/convexTools";
+import { convexTools, getSelfImprovementStats } from "../src/tools/convexTools";
 
 const originalFetch = globalThis.fetch;
 const originalUrl = process.env.CONVEX_SITE_URL;

@@ -66,10 +66,7 @@
         "type": "measurement",
         "value": "6\u20138 chord adjacency map",
         "details": {
-          "nodes": [
-            6,
-            8
-          ]
+          "nodes": [6, 8]
         }
       }
     ],
@@ -87,9 +84,7 @@
     "protocol": {
       "studyType": "comparison",
       "durationSecs": 90,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "studio headphones, matched integrated loudness before rating",
       "listeningMethod": "blind shuffled comparison with 1\u20137 ratings for identity, inevitability, and dialogue",
       "whatVaries": [
@@ -107,13 +102,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Companion essay: docs/essays/the-hidden-bands-of-form.md"
 }

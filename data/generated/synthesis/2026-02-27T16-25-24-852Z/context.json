@@ -327,7 +327,10 @@
             "harmonicLimits": "3, 5, 7",
             "octaveName": "tritave",
             "octaveRatio": 3,
-            "suitableInstruments": ["clarinet", "instruments with strong odd harmonics"]
+            "suitableInstruments": [
+              "clarinet",
+              "instruments with strong odd harmonics"
+            ]
           }
         },
         {

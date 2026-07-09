@@ -146,7 +146,10 @@ export function animateArmillarySpring(
 }
 
 // Slow rotation animation (call every frame)
-export function updateArmillaryRotation(armillary: ArmillaryRingGroup, time: number): void {
+export function updateArmillaryRotation(
+  armillary: ArmillaryRingGroup,
+  time: number,
+): void {
   armillary.rings.forEach((ring, i) => {
     const speed = 0.08 + i * 0.03; // inner fastest
     ring.torus.rotation.z = time * speed;

@@ -6,8 +6,12 @@ import { cleanupByRunId } from "./cleanup";
 async function createCampaignViaUi(page: Page, title: string) {
   await page.goto("/weekly-turns");
   await page.locator("#campaign-title").fill(title);
-  await page.locator("#campaign-question").fill(`Campaign question for ${title}`);
-  await page.locator("#campaign-description").fill(`Campaign description for ${title}`);
+  await page
+    .locator("#campaign-question")
+    .fill(`Campaign question for ${title}`);
+  await page
+    .locator("#campaign-description")
+    .fill(`Campaign description for ${title}`);
   await page.locator("#campaign-status").selectOption("paused");
   await page.getByRole("button", { name: "Create Campaign" }).click();
   await expect(
@@ -30,7 +34,9 @@ test.describe("phase three weekly turns", () => {
     }
   });
 
-  test("creates a campaign-guided brief with persisted studio prompts", async ({ page }) => {
+  test("creates a campaign-guided brief with persisted studio prompts", async ({
+    page,
+  }) => {
     test.skip(
       !process.env.RUN_LIVE_BRIEF_E2E,
       "Requires live weekly brief generation with external LLM credentials.",
@@ -46,7 +52,9 @@ test.describe("phase three weekly turns", () => {
     await test.step("create thesis", async () => {
       await page.goto("/theses");
       await page.locator("#thesis-title").fill(thesisTitle);
-      await page.locator("#thesis-statement").fill(`A thesis statement for ${runId}`);
+      await page
+        .locator("#thesis-statement")
+        .fill(`A thesis statement for ${runId}`);
       await page.getByRole("button", { name: "Create Thesis" }).click();
       await expectNoticeToMatch(page, [/Thesis created\./i]);
       await expect(page.getByRole("link", { name: thesisTitle })).toBeVisible({
@@ -69,7 +77,9 @@ test.describe("phase three weekly turns", () => {
 
     await test.step("create recipe", async () => {
       await page.goto("/recipes");
-      await page.locator("#recipe-hypothesis").selectOption({ label: hypothesisTitle });
+      await page
+        .locator("#recipe-hypothesis")
+        .selectOption({ label: hypothesisTitle });
       await page.locator("#recipe-title").fill(recipeTitle);
       await page.locator("#recipe-why").fill(`Recipe why ${runId}`);
       await page.locator("#recipe-body").fill(`Recipe body ${runId}`);
@@ -83,8 +93,12 @@ test.describe("phase three weekly turns", () => {
     await test.step("create active campaign", async () => {
       await page.goto("/weekly-turns");
       await page.locator("#campaign-title").fill(campaignTitle);
-      await page.locator("#campaign-question").fill(`Campaign question ${runId}`);
-      await page.locator("#campaign-description").fill(`Campaign description ${runId}`);
+      await page
+        .locator("#campaign-question")
+        .fill(`Campaign question ${runId}`);
+      await page
+        .locator("#campaign-description")
+        .fill(`Campaign description ${runId}`);
       await page.locator("#campaign-status").selectOption("active");
       await page.getByRole("button", { name: "Create Campaign" }).click();
       await expectNoticeToMatch(page, [/Campaign created\./i]);
@@ -96,7 +110,9 @@ test.describe("phase three weekly turns", () => {
     await test.step("attach thesis to campaign", async () => {
       await page.goto("/theses");
       await page.getByRole("link", { name: thesisTitle }).click();
-      await page.getByTestId("thesis-campaign-select").selectOption({ label: campaignTitle });
+      await page
+        .getByTestId("thesis-campaign-select")
+        .selectOption({ label: campaignTitle });
       await page.getByRole("button", { name: "Attach" }).click();
       await expectNoticeToMatch(page, [/Thesis attached to campaign\./i]);
       await expect(page.getByText(campaignTitle)).toBeVisible({
@@ -109,7 +125,11 @@ test.describe("phase three weekly turns", () => {
       await page.getByRole("button", { name: "Generate Now" }).click();
       await expectNoticeToMatch(page, [/Weekly turn generated for /i], 60_000);
 
-      await page.getByRole("link").filter({ hasText: "campaign" }).first().click();
+      await page
+        .getByRole("link")
+        .filter({ hasText: "campaign" })
+        .first()
+        .click();
 
       await expect(page.getByText("Campaign Context")).toBeVisible({
         timeout: 30_000,
@@ -144,12 +164,19 @@ test.describe("phase three weekly turns", () => {
     await expectNoticeToMatch(page, [/Campaign updated\./i]);
 
     await expect(firstCard.locator("select")).toHaveValue("active");
-    await expect(firstCard.getByRole("button", { name: "Set Active" })).toHaveCount(0);
+    await expect(
+      firstCard.getByRole("button", { name: "Set Active" }),
+    ).toHaveCount(0);
   });
 
-  test("older campaigns remain selectable from thesis detail", async ({ page }) => {
+  test("older campaigns remain selectable from thesis detail", async ({
+    page,
+  }) => {
     const bypassSecret = process.env.AUTH_BYPASS_SECRET;
-    test.skip(!bypassSecret, "Requires AUTH_BYPASS_SECRET for CLI seedCampaigns.");
+    test.skip(
+      !bypassSecret,
+      "Requires AUTH_BYPASS_SECRET for CLI seedCampaigns.",
+    );
 
     const runId = createRunId();
     runIds.push(runId);
@@ -158,7 +185,9 @@ test.describe("phase three weekly turns", () => {
 
     await page.goto("/theses");
     await page.locator("#thesis-title").fill(thesisTitle);
-    await page.locator("#thesis-statement").fill(`Selection thesis statement ${runId}`);
+    await page
+      .locator("#thesis-statement")
+      .fill(`Selection thesis statement ${runId}`);
     await page.getByRole("button", { name: "Create Thesis" }).click();
     await expectNoticeToMatch(page, [/Thesis created\./i]);
     await expect(page.getByRole("link", { name: thesisTitle })).toBeVisible({

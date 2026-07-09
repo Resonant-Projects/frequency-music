@@ -58,7 +58,11 @@ describe("summarizeSelfImprovementWindow", () => {
           decisionNote: "  Duplicate of an archived failure  ",
         },
         // outside window - ignored
-        { status: "rejected", updatedAt: windowEnd + 100, decisionNote: "late" },
+        {
+          status: "rejected",
+          updatedAt: windowEnd + 100,
+          decisionNote: "late",
+        },
         // pending drafts never reach this input in practice, but should be
         // ignored defensively if they slip through
         { status: "pending_review", updatedAt: 1_150 },

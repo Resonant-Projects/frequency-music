@@ -58,7 +58,8 @@ async function fetchReadwiseArticles(params: {
 }): Promise<ReadwiseArticle[]> {
   const queryParams = new URLSearchParams();
   if (params.location) queryParams.set("location", params.location);
-  if (params.category) queryParams.set("category", params.category || "article");
+  if (params.category)
+    queryParams.set("category", params.category || "article");
   queryParams.set("page_size", String(params.pageSize || 100));
 
   const url = `https://readwise.io/api/v3/list/?${queryParams}`;
@@ -189,7 +190,10 @@ async function main() {
   console.log(`Found ${allArticles.length} total articles in Reader`);
 
   // Filter by search terms
-  const relevantArticles = filterBySearchTerms(allArticles, searchTerms).slice(0, limit);
+  const relevantArticles = filterBySearchTerms(allArticles, searchTerms).slice(
+    0,
+    limit,
+  );
   console.log(`${relevantArticles.length} match research criteria\n`);
 
   let success = 0;
@@ -236,7 +240,9 @@ async function main() {
         title: article.title,
         author: article.author || undefined,
         canonicalUrl: article.source_url,
-        publishedAt: article.published_date ? Date.parse(article.published_date) : undefined,
+        publishedAt: article.published_date
+          ? Date.parse(article.published_date)
+          : undefined,
         rawText: rawText || undefined,
         tags: ["readwise", ...Object.keys(article.tags || {})],
         metadata: {
@@ -264,7 +270,9 @@ async function main() {
   }
 
   console.log(`\n${"=".repeat(50)}`);
-  console.log(`Done: ${success} ingested, ${skipped} skipped, ${failed} failed`);
+  console.log(
+    `Done: ${success} ingested, ${skipped} skipped, ${failed} failed`,
+  );
 }
 
 main().catch(console.error);

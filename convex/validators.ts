@@ -10,7 +10,11 @@ import {
   registryStatusValidator,
   visibilityValidator,
 } from "./schema";
-import { failureActionValidator, failureReasonValidator, yieldBandValidator } from "./phase2";
+import {
+  failureActionValidator,
+  failureReasonValidator,
+  yieldBandValidator,
+} from "./phase2";
 
 // ============================================================================
 // SHARED SUB-VALIDATORS
@@ -24,7 +28,11 @@ const evidenceLevelValidator = v.union(
   v.literal("personal"),
 );
 
-const confidenceBandValidator = v.union(v.literal("low"), v.literal("medium"), v.literal("high"));
+const confidenceBandValidator = v.union(
+  v.literal("low"),
+  v.literal("medium"),
+  v.literal("high"),
+);
 
 const claimValidator = v.object({
   text: v.string(),
@@ -112,7 +120,11 @@ export const sourceReturnValidator = v.object({
 // FEED
 // ============================================================================
 
-const feedTypeValidator = v.union(v.literal("rss"), v.literal("podcast"), v.literal("youtube"));
+const feedTypeValidator = v.union(
+  v.literal("rss"),
+  v.literal("podcast"),
+  v.literal("youtube"),
+);
 
 export const feedReturnValidator = v.object({
   _id: v.id("feeds"),
@@ -161,7 +173,11 @@ export const thesisReturnValidator = v.object({
   title: v.string(),
   statement: v.string(),
   descriptionMd: v.optional(v.string()),
-  status: v.union(v.literal("active"), v.literal("paused"), v.literal("retired")),
+  status: v.union(
+    v.literal("active"),
+    v.literal("paused"),
+    v.literal("retired"),
+  ),
   visibility: visibilityValidator,
   createdBy: createdByValidator,
   createdAt: v.number(),
@@ -208,7 +224,11 @@ export const hypothesisReturnValidator = v.object({
   concepts: v.optional(v.array(v.string())),
   status: hypothesisStatusValidator,
   resolution: v.optional(
-    v.union(v.literal("supported"), v.literal("inconclusive"), v.literal("contradicted")),
+    v.union(
+      v.literal("supported"),
+      v.literal("inconclusive"),
+      v.literal("contradicted"),
+    ),
   ),
   versionOfId: v.optional(v.id("hypotheses")),
   openQuestions: v.optional(v.array(v.string())),
@@ -247,7 +267,11 @@ export const recipeReturnValidator = v.object({
   dawChecklist: v.array(v.string()),
   protocol: v.optional(recipeProtocolValidator),
   verification: v.optional(recipeVerificationValidator),
-  status: v.union(v.literal("draft"), v.literal("in_use"), v.literal("archived")),
+  status: v.union(
+    v.literal("draft"),
+    v.literal("in_use"),
+    v.literal("archived"),
+  ),
   ...agentOriginFields,
   visibility: visibilityValidator,
   createdBy: createdByValidator,
@@ -327,7 +351,9 @@ export const listeningSessionReturnValidator = v.object({
   feltQualities: v.optional(v.array(v.string())),
   bodyMapTags: v.optional(v.array(v.string())),
   standoutMoments: v.optional(v.array(v.string())),
-  expandVerdict: v.optional(v.union(v.literal("yes"), v.literal("maybe"), v.literal("no"))),
+  expandVerdict: v.optional(
+    v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
+  ),
   visibility: visibilityValidator,
   createdBy: createdByValidator,
   createdAt: v.number(),
@@ -351,9 +377,17 @@ export const recommendedActionValidator = v.object({
     v.literal("compare_branch"),
     v.literal("prototype_hypothesis"),
   ),
-  targetType: v.union(v.literal("hypothesis"), v.literal("recipe"), v.literal("composition")),
+  targetType: v.union(
+    v.literal("hypothesis"),
+    v.literal("recipe"),
+    v.literal("composition"),
+  ),
   targetId: v.string(),
-  durationBucket: v.union(v.literal("10-minute"), v.literal("30-minute"), v.literal("90-minute")),
+  durationBucket: v.union(
+    v.literal("10-minute"),
+    v.literal("30-minute"),
+    v.literal("90-minute"),
+  ),
   reason: v.string(),
 });
 
@@ -519,7 +553,9 @@ export const compositionLineageValidator = v.object({
     depth: v.number(),
     revisionVariable: v.optional(v.string()),
     hasChildren: v.boolean(),
-    latestExpandVerdict: v.optional(v.union(v.literal("yes"), v.literal("maybe"), v.literal("no"))),
+    latestExpandVerdict: v.optional(
+      v.union(v.literal("yes"), v.literal("maybe"), v.literal("no")),
+    ),
     latestExpandability: v.optional(v.number()),
     localFailureStatus: v.optional(failureReasonValidator),
     branchFailureStatus: v.optional(failureReasonValidator),
@@ -591,7 +627,11 @@ export const edgeReturnValidator = v.object({
 });
 
 export const registryItemValidator = v.object({
-  _id: v.union(v.id("parameterKinds"), v.id("conceptDomains"), v.id("relationshipKinds")),
+  _id: v.union(
+    v.id("parameterKinds"),
+    v.id("conceptDomains"),
+    v.id("relationshipKinds"),
+  ),
   _creationTime: v.number(),
   name: v.string(),
   status: registryStatusValidator,

@@ -40,7 +40,8 @@ async function parseRSSFeed(): Promise<Article[]> {
 
     const title = item.match(/<dc:title>(.*?)<\/dc:title>/)?.[1] || "";
     const url = item.match(/<link>(.*?)<\/link>/)?.[1] || "";
-    const doi = item.match(/<dc:identifier>doi:(.*?)<\/dc:identifier>/)?.[1] || "";
+    const doi =
+      item.match(/<dc:identifier>doi:(.*?)<\/dc:identifier>/)?.[1] || "";
     const author = item.match(/<dc:creator>(.*?)<\/dc:creator>/)?.[1] || "";
     const date = item.match(/<dc:date>(.*?)<\/dc:date>/)?.[1] || "";
     const volume = item.match(/<prism:volume>(.*?)<\/prism:volume>/)?.[1];
@@ -150,7 +151,11 @@ async function main() {
         author: article.author.split(/\s+(?:a |b )/)[0], // Clean up author field
         canonicalUrl: article.url,
         rawText: fullText,
-        tags: ["journal-of-mathematics-and-music", "open-access", "peer-reviewed"],
+        tags: [
+          "journal-of-mathematics-and-music",
+          "open-access",
+          "peer-reviewed",
+        ],
         topics: ["mathematical music theory"],
         dedupeKey,
         metadata: {

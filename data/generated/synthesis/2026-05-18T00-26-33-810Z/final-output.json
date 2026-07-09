@@ -56,10 +56,7 @@
         "type": "structuralPattern",
         "value": "Call and response at phrase and section levels",
         "details": {
-          "levels": [
-            "phrase",
-            "section"
-          ]
+          "levels": ["phrase", "section"]
         }
       }
     ],
@@ -75,9 +72,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Nearfield monitors or headphones at matched loudness.",
       "listeningMethod": "Blind A/B/C/D ranking with the randomized-control version included.",
       "whatVaries": [
@@ -95,12 +90,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S6"],
   "notes": "Companion essay: docs/essays/the-instruction-under-the-sound.md. Disconfirming evidence: listeners cannot distinguish the instruction-preserving versions from the randomized control, or the embedded marker is only visible analytically and produces no audible continuity."
 }

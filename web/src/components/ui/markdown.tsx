@@ -127,7 +127,10 @@ const components = {
     />
   ),
   strong: (props: JSX.HTMLAttributes<HTMLElement>) => (
-    <strong class={css({ color: "rgba(245, 240, 232, 0.95)", fontWeight: "bold" })} {...props} />
+    <strong
+      class={css({ color: "rgba(245, 240, 232, 0.95)", fontWeight: "bold" })}
+      {...props}
+    />
   ),
   em: (props: JSX.HTMLAttributes<HTMLElement>) => (
     <em class={css({ fontStyle: "italic" })} {...props} />

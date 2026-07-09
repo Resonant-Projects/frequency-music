@@ -72,9 +72,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Studio monitors or neutral headphones; compare original and degraded renders in randomized order.",
       "listeningMethod": "Blind A/B ranking for coherence, recognizability, and perceived intentionality.",
       "whatVaries": [
@@ -93,13 +91,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Essay written manually at docs/essays/the-fine-structure-decides.md; metadata added manually because metadata generation has previously required unavailable OpenRouter auth."
 }

@@ -127,11 +127,7 @@
           "details": {
             "count": 470000,
             "datasetName": "SoundAtlas",
-            "modalities": [
-              "video",
-              "audio",
-              "text"
-            ],
+            "modalities": ["video", "audio", "text"],
             "unit": "pairs"
           }
         }

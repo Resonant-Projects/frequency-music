@@ -82,7 +82,9 @@ export function EditorialDetailPage() {
   }));
 
   const updateArtifact = createMutation(convexApi.editorialArtifacts.update);
-  const submitForReview = createMutation(convexApi.editorialArtifacts.submitForReview);
+  const submitForReview = createMutation(
+    convexApi.editorialArtifacts.submitForReview,
+  );
   const approveArtifact = createMutation(convexApi.editorialArtifacts.approve);
   const publishArtifact = createMutation(convexApi.editorialArtifacts.publish);
 
@@ -131,7 +133,9 @@ export function EditorialDetailPage() {
         title: current.title,
         slug,
         kind: current.kind,
-        publishedAt: new Date(row.artifact.publishedAt ?? row.artifact.updatedAt).toISOString(),
+        publishedAt: new Date(
+          row.artifact.publishedAt ?? row.artifact.updatedAt,
+        ).toISOString(),
         dek: current.dek,
         evidenceStatus: current.evidenceStatus,
         uncertaintySummary: current.uncertaintyMd,
@@ -143,7 +147,10 @@ export function EditorialDetailPage() {
     return JSON.stringify(preview, null, 2);
   });
 
-  function updateField<K extends keyof ArtifactDraft>(key: K, value: ArtifactDraft[K]) {
+  function updateField<K extends keyof ArtifactDraft>(
+    key: K,
+    value: ArtifactDraft[K],
+  ) {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
   }
 
@@ -289,7 +296,9 @@ export function EditorialDetailPage() {
         when={detail()}
         fallback={
           <UICard>
-            <p class={css({ color: "zodiac.cream" })}>Loading editorial artifact...</p>
+            <p class={css({ color: "zodiac.cream" })}>
+              Loading editorial artifact...
+            </p>
           </UICard>
         }
         keyed
@@ -299,7 +308,9 @@ export function EditorialDetailPage() {
           if (!current()) {
             return (
               <UICard>
-                <p class={css({ color: "zodiac.cream" })}>Loading editorial draft...</p>
+                <p class={css({ color: "zodiac.cream" })}>
+                  Loading editorial draft...
+                </p>
               </UICard>
             );
           }
@@ -315,10 +326,16 @@ export function EditorialDetailPage() {
                     mb: "2",
                   })}
                 >
-                  <UIBadge tone="gold">{formatKind(detailRow.artifact.kind)}</UIBadge>
+                  <UIBadge tone="gold">
+                    {formatKind(detailRow.artifact.kind)}
+                  </UIBadge>
                   <UIBadge tone="cream">{detailRow.artifact.status}</UIBadge>
-                  <UIBadge tone="cream">{detailRow.artifact.visibility}</UIBadge>
-                  <UIBadge tone="violet">{detailRow.artifact.evidenceStatus}</UIBadge>
+                  <UIBadge tone="cream">
+                    {detailRow.artifact.visibility}
+                  </UIBadge>
+                  <UIBadge tone="violet">
+                    {detailRow.artifact.evidenceStatus}
+                  </UIBadge>
                 </div>
 
                 <h1 class={detailTitleClass}>{detailRow.artifact.title}</h1>
@@ -327,10 +344,11 @@ export function EditorialDetailPage() {
                   {detailRow.artifact.primaryRef.id.slice(-6)}
                 </p>
                 <p class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}>
-                  linked: {detailRow.artifact.linkedIds.thesisIds.length} theses ·{" "}
-                  {detailRow.artifact.linkedIds.hypothesisIds.length} hypotheses ·{" "}
-                  {detailRow.artifact.linkedIds.recipeIds.length} recipes ·{" "}
-                  {detailRow.artifact.linkedIds.compositionIds.length} compositions
+                  linked: {detailRow.artifact.linkedIds.thesisIds.length} theses
+                  · {detailRow.artifact.linkedIds.hypothesisIds.length}{" "}
+                  hypotheses · {detailRow.artifact.linkedIds.recipeIds.length}{" "}
+                  recipes · {detailRow.artifact.linkedIds.compositionIds.length}{" "}
+                  compositions
                 </p>
 
                 <div
@@ -341,7 +359,11 @@ export function EditorialDetailPage() {
                     mt: "4",
                   })}
                 >
-                  <UIButton variant="outline" onClick={handleSave} disabled={isBusy()}>
+                  <UIButton
+                    variant="outline"
+                    onClick={handleSave}
+                    disabled={isBusy()}
+                  >
                     {saving() ? "Saving..." : "Save draft"}
                   </UIButton>
                   <UIButton
@@ -354,7 +376,9 @@ export function EditorialDetailPage() {
                   <UIButton
                     variant="outline"
                     onClick={handleApprove}
-                    disabled={isBusy() || detailRow.artifact.status !== "in_review"}
+                    disabled={
+                      isBusy() || detailRow.artifact.status !== "in_review"
+                    }
                   >
                     {approving() ? "Approving..." : "Approve"}
                   </UIButton>
@@ -368,7 +392,11 @@ export function EditorialDetailPage() {
                 </div>
 
                 <Show when={notice()}>
-                  {(message) => <p class={css({ color: "zodiac.cream", mt: "3" })}>{message()}</p>}
+                  {(message) => (
+                    <p class={css({ color: "zodiac.cream", mt: "3" })}>
+                      {message()}
+                    </p>
+                  )}
                 </Show>
               </UICard>
 
@@ -382,11 +410,16 @@ export function EditorialDetailPage() {
                   id="artifact-kind"
                   value={d().kind}
                   onChange={(event) =>
-                    updateField("kind", event.currentTarget.value as EditorialArtifact["kind"])
+                    updateField(
+                      "kind",
+                      event.currentTarget.value as EditorialArtifact["kind"],
+                    )
                   }
                 >
                   <option value="experiment_recap">experiment_recap</option>
-                  <option value="what_changed_my_mind">what_changed_my_mind</option>
+                  <option value="what_changed_my_mind">
+                    what_changed_my_mind
+                  </option>
                   <option value="campaign_summary">campaign_summary</option>
                   <option value="thesis_summary">thesis_summary</option>
                 </UISelect>
@@ -397,7 +430,9 @@ export function EditorialDetailPage() {
                 <UIInput
                   id="artifact-title"
                   value={d().title}
-                  onInput={(event) => updateField("title", event.currentTarget.value)}
+                  onInput={(event) =>
+                    updateField("title", event.currentTarget.value)
+                  }
                 />
 
                 <label class={fieldLabelClass} for="artifact-dek">
@@ -406,7 +441,9 @@ export function EditorialDetailPage() {
                 <UITextarea
                   id="artifact-dek"
                   value={d().dek}
-                  onInput={(event) => updateField("dek", event.currentTarget.value)}
+                  onInput={(event) =>
+                    updateField("dek", event.currentTarget.value)
+                  }
                 />
 
                 <div
@@ -423,11 +460,16 @@ export function EditorialDetailPage() {
                     <UIInput
                       id="artifact-slug"
                       value={d().slug}
-                      onInput={(event) => updateField("slug", event.currentTarget.value)}
+                      onInput={(event) =>
+                        updateField("slug", event.currentTarget.value)
+                      }
                     />
                   </div>
                   <div>
-                    <label class={fieldLabelClass} for="artifact-evidence-status">
+                    <label
+                      class={fieldLabelClass}
+                      for="artifact-evidence-status"
+                    >
                       Evidence Status
                     </label>
                     <UISelect
@@ -436,7 +478,8 @@ export function EditorialDetailPage() {
                       onChange={(event) =>
                         updateField(
                           "evidenceStatus",
-                          event.currentTarget.value as EditorialArtifact["evidenceStatus"],
+                          event.currentTarget
+                            .value as EditorialArtifact["evidenceStatus"],
                         )
                       }
                     >
@@ -455,7 +498,8 @@ export function EditorialDetailPage() {
                       onChange={(event) =>
                         updateField(
                           "visibility",
-                          event.currentTarget.value as EditorialArtifact["visibility"],
+                          event.currentTarget
+                            .value as EditorialArtifact["visibility"],
                         )
                       }
                     >
@@ -473,7 +517,9 @@ export function EditorialDetailPage() {
                   id="artifact-body"
                   rows={18}
                   value={d().bodyMd}
-                  onInput={(event) => updateField("bodyMd", event.currentTarget.value)}
+                  onInput={(event) =>
+                    updateField("bodyMd", event.currentTarget.value)
+                  }
                 />
 
                 <label class={fieldLabelClass} for="artifact-why">
@@ -483,7 +529,9 @@ export function EditorialDetailPage() {
                   id="artifact-why"
                   rows={8}
                   value={d().whyItMattersMd}
-                  onInput={(event) => updateField("whyItMattersMd", event.currentTarget.value)}
+                  onInput={(event) =>
+                    updateField("whyItMattersMd", event.currentTarget.value)
+                  }
                 />
 
                 <label class={fieldLabelClass} for="artifact-uncertainty">
@@ -493,7 +541,9 @@ export function EditorialDetailPage() {
                   id="artifact-uncertainty"
                   rows={8}
                   value={d().uncertaintyMd}
-                  onInput={(event) => updateField("uncertaintyMd", event.currentTarget.value)}
+                  onInput={(event) =>
+                    updateField("uncertaintyMd", event.currentTarget.value)
+                  }
                 />
 
                 <label class={fieldLabelClass} for="artifact-what-changed">
@@ -503,7 +553,9 @@ export function EditorialDetailPage() {
                   id="artifact-what-changed"
                   rows={6}
                   value={d().whatChangedMd}
-                  onInput={(event) => updateField("whatChangedMd", event.currentTarget.value)}
+                  onInput={(event) =>
+                    updateField("whatChangedMd", event.currentTarget.value)
+                  }
                 />
               </UICard>
 
@@ -545,23 +597,36 @@ export function EditorialDetailPage() {
                           })}
                         >
                           <UIBadge tone="gold">Card {index() + 1}</UIBadge>
-                          <UIButton variant="outline" onClick={() => removeEvidenceCard(index())}>
+                          <UIButton
+                            variant="outline"
+                            onClick={() => removeEvidenceCard(index())}
+                          >
                             Remove
                           </UIButton>
                         </div>
 
-                        <label class={fieldLabelClass} for={`evidence-${index()}-source-title`}>
+                        <label
+                          class={fieldLabelClass}
+                          for={`evidence-${index()}-source-title`}
+                        >
                           Source Title
                         </label>
                         <UIInput
                           id={`evidence-${index()}-source-title`}
                           value={card.sourceTitle}
                           onInput={(event) =>
-                            updateEvidenceCard(index(), "sourceTitle", event.currentTarget.value)
+                            updateEvidenceCard(
+                              index(),
+                              "sourceTitle",
+                              event.currentTarget.value,
+                            )
                           }
                         />
 
-                        <label class={fieldLabelClass} for={`evidence-${index()}-canonical-url`}>
+                        <label
+                          class={fieldLabelClass}
+                          for={`evidence-${index()}-canonical-url`}
+                        >
                           Canonical URL
                         </label>
                         <UIInput
@@ -576,7 +641,10 @@ export function EditorialDetailPage() {
                           }
                         />
 
-                        <label class={fieldLabelClass} for={`evidence-${index()}-summary`}>
+                        <label
+                          class={fieldLabelClass}
+                          for={`evidence-${index()}-summary`}
+                        >
                           Summary
                         </label>
                         <UITextarea
@@ -584,7 +652,11 @@ export function EditorialDetailPage() {
                           rows={5}
                           value={card.summary}
                           onInput={(event) =>
-                            updateEvidenceCard(index(), "summary", event.currentTarget.value)
+                            updateEvidenceCard(
+                              index(),
+                              "summary",
+                              event.currentTarget.value,
+                            )
                           }
                         />
 
@@ -612,11 +684,14 @@ export function EditorialDetailPage() {
                                 updateEvidenceCard(
                                   index(),
                                   "evidenceLevel",
-                                  event.currentTarget.value as EvidenceCard["evidenceLevel"],
+                                  event.currentTarget
+                                    .value as EvidenceCard["evidenceLevel"],
                                 )
                               }
                             >
-                              <option value="peer_reviewed">peer_reviewed</option>
+                              <option value="peer_reviewed">
+                                peer_reviewed
+                              </option>
                               <option value="preprint">preprint</option>
                               <option value="anecdotal">anecdotal</option>
                               <option value="speculative">speculative</option>
@@ -698,7 +773,9 @@ export function EditorialDetailPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {check.ok ? "Pass" : "Block"}
                         </div>
-                        <div class={css({ color: "rgba(245, 240, 232, 0.64)" })}>
+                        <div
+                          class={css({ color: "rgba(245, 240, 232, 0.64)" })}
+                        >
                           {check.message}
                         </div>
                       </div>

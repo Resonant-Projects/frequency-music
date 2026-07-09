@@ -10,13 +10,18 @@ function makeId<TableName extends string>(value: string) {
   return value as Id<TableName>;
 }
 
-function sortRows<T extends { createdAt?: number; updatedAt?: number }>(rows: T[]) {
+function sortRows<T extends { createdAt?: number; updatedAt?: number }>(
+  rows: T[],
+) {
   return [...rows].toSorted(
-    (a, b) => (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
+    (a, b) =>
+      (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
   );
 }
 
-function createQueryResult<T extends { createdAt?: number; updatedAt?: number }>(rows: T[]) {
+function createQueryResult<
+  T extends { createdAt?: number; updatedAt?: number },
+>(rows: T[]) {
   return {
     collect: async () => rows,
     first: async () => rows[0] ?? null,
@@ -53,22 +58,36 @@ function makeDb(data: {
 
         if (table === "hypotheses" && index === "by_thesisId_updatedAt") {
           return createQueryResult(
-            sortRows(tables.hypotheses.filter((row) => String(row.thesisId) === String(value))),
-          );
-        }
-
-        if (table === "compositions" && index === "by_revisionParentId_updatedAt") {
-          return createQueryResult(
             sortRows(
-              tables.compositions.filter((row) => String(row.revisionParentId) === String(value)),
+              tables.hypotheses.filter(
+                (row) => String(row.thesisId) === String(value),
+              ),
             ),
           );
         }
 
-        if (table === "listeningSessions" && index === "by_compositionId_createdAt") {
+        if (
+          table === "compositions" &&
+          index === "by_revisionParentId_updatedAt"
+        ) {
           return createQueryResult(
             sortRows(
-              tables.listeningSessions.filter((row) => String(row.compositionId) === String(value)),
+              tables.compositions.filter(
+                (row) => String(row.revisionParentId) === String(value),
+              ),
+            ),
+          );
+        }
+
+        if (
+          table === "listeningSessions" &&
+          index === "by_compositionId_createdAt"
+        ) {
+          return createQueryResult(
+            sortRows(
+              tables.listeningSessions.filter(
+                (row) => String(row.compositionId) === String(value),
+              ),
             ),
           );
         }
@@ -165,11 +184,13 @@ describe("failure archive derivation", () => {
     expect(await getFailureStatusForComposition(db as any, testedChildId)).toBe(
       "low_expandability_composition",
     );
-    expect(await getFailureStatusForComposition(db as any, untouchedChildId)).toBeUndefined();
+    expect(
+      await getFailureStatusForComposition(db as any, untouchedChildId),
+    ).toBeUndefined();
 
-    expect(await getBranchFailureStatusForComposition(db as any, untouchedChildId)).toBe(
-      "repeat_no_expand_composition",
-    );
+    expect(
+      await getBranchFailureStatusForComposition(db as any, untouchedChildId),
+    ).toBe("repeat_no_expand_composition");
   });
 
   test("anchors repeat-no-expand entries to the branch root and resolves legacy keys", async () => {
@@ -245,12 +266,16 @@ describe("failure archive derivation", () => {
     expect(repeatEntries[0]?.compositionId).toBe(rootId);
     expect(repeatEntries[0]?.revisionBranchRootId).toBe(rootId);
 
-    const lowEntries = entries.filter((entry) => entry.reason === "low_expandability_composition");
+    const lowEntries = entries.filter(
+      (entry) => entry.reason === "low_expandability_composition",
+    );
     expect(lowEntries).toHaveLength(1);
     expect(lowEntries[0]?.compositionId).toBe(childId);
 
     // Legacy key resolution is handled at the query layer (getByKey/getByKeys)
     // Verify the archive key is always anchored to branch root
-    expect(repeatEntries[0]?.key).toBe(`composition:${rootId}:repeat_no_expand`);
+    expect(repeatEntries[0]?.key).toBe(
+      `composition:${rootId}:repeat_no_expand`,
+    );
   });
 });

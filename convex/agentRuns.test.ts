@@ -42,7 +42,9 @@ describe("agent run observability helpers", () => {
     expect(safeTraceUrl("https://smith.langchain.com/o/trace")).toBe(
       "https://smith.langchain.com/o/trace",
     );
-    expect(safeTraceUrl("http://localhost:3000/trace")).toBe("http://localhost:3000/trace");
+    expect(safeTraceUrl("http://localhost:3000/trace")).toBe(
+      "http://localhost:3000/trace",
+    );
     expect(safeTraceUrl("javascript:alert(1)")).toBeUndefined();
     expect(safeTraceUrl("not a url")).toBeUndefined();
   });
@@ -102,13 +104,22 @@ describe("agent run observability helpers", () => {
 describe("worker queue helpers", () => {
   test("isStaleRun only flags running runs past the threshold", () => {
     const now = 1_000_000;
-    expect(isStaleRun({ status: "running", updatedAt: now - DEFAULT_STALE_RUN_MS - 1 }, now)).toBe(true);
-    expect(isStaleRun({ status: "running", updatedAt: now - 1000 }, now)).toBe(false);
+    expect(
+      isStaleRun(
+        { status: "running", updatedAt: now - DEFAULT_STALE_RUN_MS - 1 },
+        now,
+      ),
+    ).toBe(true);
+    expect(isStaleRun({ status: "running", updatedAt: now - 1000 }, now)).toBe(
+      false,
+    );
     // never sweep a queued/completed run, even if old
     expect(isStaleRun({ status: "queued", updatedAt: 0 }, now)).toBe(false);
     expect(isStaleRun({ status: "completed", updatedAt: 0 }, now)).toBe(false);
     // custom threshold
-    expect(isStaleRun({ status: "running", updatedAt: now - 5000 }, now, 4000)).toBe(true);
+    expect(
+      isStaleRun({ status: "running", updatedAt: now - 5000 }, now, 4000),
+    ).toBe(true);
   });
 
   test("buildClaimPatch flips a run to running and stamps the worker", () => {
@@ -121,6 +132,10 @@ describe("worker queue helpers", () => {
   });
 
   test("buildStalePatch fails the run with a finish time", () => {
-    expect(buildStalePatch(99)).toEqual({ status: "failed", finishedAt: 99, updatedAt: 99 });
+    expect(buildStalePatch(99)).toEqual({
+      status: "failed",
+      finishedAt: 99,
+      updatedAt: 99,
+    });
   });
 });

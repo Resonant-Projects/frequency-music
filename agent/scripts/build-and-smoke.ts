@@ -20,17 +20,23 @@ export type AutomationStep = {
   required: boolean;
 };
 
-export function shouldRunProxmoxSmoke(env: AutomationEnv = automationEnvFromProcess()): boolean {
+export function shouldRunProxmoxSmoke(
+  env: AutomationEnv = automationEnvFromProcess(),
+): boolean {
   const value = env.RUN_PROXMOX_SMOKE?.trim().toLowerCase();
   return value === "true" || value === "1" || value === "yes";
 }
 
-export function shouldRunResearchPipelineSmoke(env: AutomationEnv = automationEnvFromProcess()): boolean {
+export function shouldRunResearchPipelineSmoke(
+  env: AutomationEnv = automationEnvFromProcess(),
+): boolean {
   const value = env.RUN_RESEARCH_PIPELINE_SMOKE?.trim().toLowerCase();
   return value === "true" || value === "1" || value === "yes";
 }
 
-export function planAutomationSteps(env: AutomationEnv = automationEnvFromProcess()): AutomationStep[] {
+export function planAutomationSteps(
+  env: AutomationEnv = automationEnvFromProcess(),
+): AutomationStep[] {
   const steps: AutomationStep[] = [
     {
       name: "TypeScript typecheck",
@@ -91,13 +97,17 @@ async function runStep(step: AutomationStep): Promise<void> {
   });
 
   if (exitCode !== 0) {
-    throw new Error(`${step.name} failed with exit code ${exitCode ?? "unknown"}`);
+    throw new Error(
+      `${step.name} failed with exit code ${exitCode ?? "unknown"}`,
+    );
   }
 
   console.log(`✓ ${step.name} passed`);
 }
 
-export async function runAutomation(env: AutomationEnv = automationEnvFromProcess()): Promise<void> {
+export async function runAutomation(
+  env: AutomationEnv = automationEnvFromProcess(),
+): Promise<void> {
   const runProxmoxSmoke = shouldRunProxmoxSmoke(env);
   const runResearchPipelineSmoke = shouldRunResearchPipelineSmoke(env);
 
@@ -128,7 +138,9 @@ if (isMain) {
   try {
     await runAutomation();
   } catch (error) {
-    console.error(`\nAutomation failed: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `\nAutomation failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
     process.exit(1);
   }
 }

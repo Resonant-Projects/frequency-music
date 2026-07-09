@@ -78,9 +78,7 @@
     "protocol": {
       "studyType": "litmus",
       "durationSecs": 60,
-      "panelPlanned": [
-        "self"
-      ],
+      "panelPlanned": ["self"],
       "listeningContext": "Studio headphones plus one speaker pass at matched loudness.",
       "listeningMethod": "Blind paired comparisons between control and hidden-coordinate variants.",
       "whatVaries": [
@@ -98,13 +96,6 @@
       ]
     }
   },
-  "citations": [
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6"
-  ],
+  "citations": ["S1", "S2", "S3", "S4", "S5", "S6"],
   "notes": "Extraction workflow failed with Convex server error, so this synthesis was built from the collector fallback context generated at 2026-05-20T08:26:40.901Z."
 }

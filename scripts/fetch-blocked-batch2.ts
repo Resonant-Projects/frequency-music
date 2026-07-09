@@ -10,7 +10,9 @@ import { Id } from "../convex/_generated/dataModel";
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
 if (!BYPASS) {
-  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
+  console.error(
+    "AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local",
+  );
   process.exit(1);
 }
 

@@ -28,7 +28,8 @@ describe("worker graph-input mapping", () => {
     });
 
     expect(invocation.graphName).toBe("research-pipeline");
-    if (invocation.graphName !== "research-pipeline") throw new Error("narrowing");
+    if (invocation.graphName !== "research-pipeline")
+      throw new Error("narrowing");
     expect(invocation.input.agentRunId).toBe("run_abc123");
     expect(invocation.input.dryRun).toBe(false);
     expect(invocation.input.smokeMode).toBe(false);
@@ -41,7 +42,8 @@ describe("worker graph-input mapping", () => {
       runId: "run_x",
       graphName: "research-pipeline",
     });
-    if (invocation.graphName !== "research-pipeline") throw new Error("narrowing");
+    if (invocation.graphName !== "research-pipeline")
+      throw new Error("narrowing");
     expect(invocation.input.limit).toBe(DEFAULT_RESEARCH_LIMIT);
   });
 
@@ -93,7 +95,9 @@ describe("worker graph-input mapping", () => {
   });
 
   test("summarizeNodeUpdate reports node name and update keys", () => {
-    expect(summarizeNodeUpdate("finalize_run", { draft: {}, auditEvents: [] })).toEqual({
+    expect(
+      summarizeNodeUpdate("finalize_run", { draft: {}, auditEvents: [] }),
+    ).toEqual({
       node: "finalize_run",
       keys: ["draft", "auditEvents"],
     });
