@@ -12,7 +12,7 @@ import {
   UISelect,
 } from "../components/ui";
 import { createQueryWithStatus } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 type AgentRunStatus = Doc<"agentRuns">["status"];
 type AgentRunEventKind = Doc<"agentRunEvents">["kind"];
@@ -157,22 +157,22 @@ export function AgentRunsPage() {
   const [selectedRunId, setSelectedRunId] =
     createSignal<Id<"agentRuns"> | null>(null);
 
-  const runs = createQueryWithStatus(convexApi.agentRuns.listRecent, () => ({
+  const runs = createQueryWithStatus(api.agentRuns.listRecentPublic, () => ({
     limit: 40,
     ...(status() ? { status: status() as AgentRunStatus } : {}),
     ...(graphName() ? { graphName: graphName() } : {}),
   }));
   const counts = createQueryWithStatus(
-    convexApi.agentRuns.statusCounts,
+    api.agentRuns.statusCountsPublic,
     () => ({
       limit: 100,
       ...(graphName() ? { graphName: graphName() } : {}),
     }),
   );
   const pendingDraftCount = createQueryWithStatus(
-    convexApi.agentDrafts.countPending,
+    api.agentDrafts.countPendingPublic,
   );
-  const events = createQueryWithStatus(convexApi.agentRuns.listEvents, () => {
+  const events = createQueryWithStatus(api.agentRuns.listEventsPublic, () => {
     const runId = selectedRunId();
     return runId ? { runId, limit: 80 } : "skip";
   });
