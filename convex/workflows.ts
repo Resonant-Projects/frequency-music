@@ -64,7 +64,7 @@ export const extractSourceWorkflow = workflowManager.define({
     });
 
     if (extractions.length > 0) {
-      await ctx.runAction(api.graph.linkExtractionConcepts, {
+      await ctx.runAction(internal.graph.linkExtractionConcepts, {
         extractionId: extractions[0]._id,
       });
     }
@@ -106,7 +106,7 @@ export const batchExtractionWorkflow = workflowManager.define({
         });
 
         if (extractions.length > 0) {
-          await ctx.runAction(api.graph.linkExtractionConcepts, {
+          await ctx.runAction(internal.graph.linkExtractionConcepts, {
             extractionId: extractions[0]._id,
           });
         }
@@ -141,7 +141,7 @@ export const generateHypothesisWorkflow = workflowManager.define({
     );
 
     if (result.hypothesisId) {
-      await ctx.runAction(api.graph.linkHypothesisConcepts, {
+      await ctx.runAction(internal.graph.linkHypothesisConcepts, {
         hypothesisId: result.hypothesisId,
       });
     }
@@ -182,7 +182,7 @@ export const batchHypothesisWorkflow = workflowManager.define({
         );
 
         if (result.hypothesisId) {
-          await ctx.runAction(api.graph.linkHypothesisConcepts, {
+          await ctx.runAction(internal.graph.linkHypothesisConcepts, {
             hypothesisId: result.hypothesisId,
           });
         }

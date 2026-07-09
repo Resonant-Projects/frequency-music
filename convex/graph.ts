@@ -1,7 +1,11 @@
 import { ConvexError, v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { action, mutation, query } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  query,
+} from "./_generated/server";
 import {
   inferDisplaySectorFromDomain,
   resolveDomainsForSector,
@@ -94,7 +98,7 @@ export const getTopConcepts = query({
 /**
  * Create or update a concept
  */
-export const upsertConcept = mutation({
+export const upsertConcept = internalMutation({
   args: {
     name: v.string(),
     displayName: v.optional(v.string()),
@@ -160,7 +164,7 @@ export const upsertConcept = mutation({
 /**
  * Increment concept mention count
  */
-export const incrementMentions = mutation({
+export const incrementMentions = internalMutation({
   args: { conceptId: v.id("concepts"), amount: v.optional(v.number()) },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -409,7 +413,7 @@ export const searchSourcesByConcept = query({
 /**
  * Create an edge between two entities
  */
-export const createEdge = mutation({
+export const createEdge = internalMutation({
   args: {
     fromType: entityTypeValidator,
     fromId: v.string(),
@@ -469,7 +473,7 @@ export const createEdge = mutation({
 /**
  * Delete an edge
  */
-export const deleteEdge = mutation({
+export const deleteEdge = internalMutation({
   args: { id: v.id("edges") },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -486,7 +490,7 @@ export const deleteEdge = mutation({
  * Link an extraction's topics to concepts
  * Called after extraction to build concept graph
  */
-export const linkExtractionConcepts = action({
+export const linkExtractionConcepts = internalAction({
   args: { extractionId: v.id("extractions") },
   returns: v.object({
     linked: v.number(),
@@ -503,12 +507,12 @@ export const linkExtractionConcepts = action({
 
     for (const topic of extraction.topics) {
       // Upsert the concept
-      const conceptId = await ctx.runMutation(api.graph.upsertConcept, {
+      const conceptId = await ctx.runMutation(internal.graph.upsertConcept, {
         name: topic,
       });
 
       // Create edge from source to concept
-      await ctx.runMutation(api.graph.createEdge, {
+      await ctx.runMutation(internal.graph.createEdge, {
         fromType: "source",
         fromId: extraction.sourceId,
         toType: "concept",
@@ -518,7 +522,7 @@ export const linkExtractionConcepts = action({
       });
 
       // Increment mention count
-      await ctx.runMutation(api.graph.incrementMentions, {
+      await ctx.runMutation(internal.graph.incrementMentions, {
         conceptId,
       });
 
@@ -532,7 +536,7 @@ export const linkExtractionConcepts = action({
 /**
  * Link a hypothesis to its concepts
  */
-export const linkHypothesisConcepts = action({
+export const linkHypothesisConcepts = internalAction({
   args: { hypothesisId: v.id("hypotheses") },
   returns: v.object({
     linked: v.number(),
@@ -550,12 +554,12 @@ export const linkHypothesisConcepts = action({
 
     for (const concept of concepts) {
       // Upsert the concept
-      await ctx.runMutation(api.graph.upsertConcept, {
+      await ctx.runMutation(internal.graph.upsertConcept, {
         name: concept,
       });
 
       // Create edge from hypothesis to concept
-      await ctx.runMutation(api.graph.createEdge, {
+      await ctx.runMutation(internal.graph.createEdge, {
         fromType: "hypothesis",
         fromId: args.hypothesisId,
         toType: "concept",
@@ -569,7 +573,7 @@ export const linkHypothesisConcepts = action({
 
     // Also link to source concepts
     for (const sourceId of hypothesis.sourceIds) {
-      await ctx.runMutation(api.graph.createEdge, {
+      await ctx.runMutation(internal.graph.createEdge, {
         fromType: "hypothesis",
         fromId: args.hypothesisId,
         toType: "source",
@@ -586,7 +590,7 @@ export const linkHypothesisConcepts = action({
 /**
  * Build graph for all existing extractions
  */
-export const buildGraphFromExtractions = action({
+export const buildGraphFromExtractions = internalAction({
   args: { limit: v.optional(v.number()) },
   returns: v.object({
     processed: v.number(),
@@ -609,9 +613,12 @@ export const buildGraphFromExtractions = action({
 
     for (const extraction of extractions) {
       try {
-        const result = await ctx.runAction(api.graph.linkExtractionConcepts, {
-          extractionId: extraction._id,
-        });
+        const result = await ctx.runAction(
+          internal.graph.linkExtractionConcepts,
+          {
+            extractionId: extraction._id,
+          },
+        );
         conceptsLinked += result.linked;
         processed++;
       } catch (error) {

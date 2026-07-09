@@ -23,7 +23,7 @@ function getConfiguredBypassSecret() {
   return process.env.AUTH_BYPASS_SECRET;
 }
 
-function constantTimeEqual(a: string, b: string): boolean {
+export function constantTimeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   const encoder = new TextEncoder();
   const bufA = encoder.encode(a);

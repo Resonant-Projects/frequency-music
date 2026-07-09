@@ -1,5 +1,6 @@
 import { makeFunctionReference } from "convex/server";
 import { httpAction } from "./_generated/server";
+import { constantTimeEqual } from "./auth";
 
 const agentToolRefs = {
   listRecentExtractions: makeFunctionReference<"action">(
@@ -65,7 +66,8 @@ function makeAgentToolHttpHandler(toolName: AgentToolName) {
   return httpAction(async (ctx, request) => {
     const body = (await request.json()) as Record<string, unknown>;
     const secret = typeof body.secret === "string" ? body.secret : undefined;
-    if (!secret || secret !== process.env.AGENT_TOOL_SECRET) {
+    const expected = process.env.AGENT_TOOL_SECRET;
+    if (!secret || !expected || !constantTimeEqual(secret, expected)) {
       return json({ error: "Forbidden" }, 403);
     }
 
