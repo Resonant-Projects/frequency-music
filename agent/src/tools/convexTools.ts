@@ -50,7 +50,10 @@ export async function callConvex<T>(
 }
 
 function toSnake(name: string): string {
-  return name.replace(/[A-Z]/g, (character) => `_${character.toLowerCase()}`);
+  return name.replaceAll(
+    /[A-Z]/g,
+    (character) => `_${character.toLowerCase()}`,
+  );
 }
 
 export const convexTools = AGENT_TOOL_MANIFEST.filter(

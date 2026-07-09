@@ -3,7 +3,10 @@ import { AGENT_TOOL_MANIFEST } from "../../convex/shared/agentToolManifest";
 import { convexTools } from "../src/tools/convexTools.js";
 
 function toSnake(name: string): string {
-  return name.replace(/[A-Z]/g, (character) => `_${character.toLowerCase()}`);
+  return name.replaceAll(
+    /[A-Z]/g,
+    (character) => `_${character.toLowerCase()}`,
+  );
 }
 
 describe("convexTools derive from the manifest", () => {
