@@ -5,8 +5,12 @@
   "module": "index.ts",
   "scripts": {
     "format": "biome format --write .",
+    "format:check": "biome format .",
     "lint": "oxlint . --fix --tsconfig tsconfig.json",
+    "lint:check": "oxlint . --tsconfig tsconfig.json",
     "test": "bun test convex/*.test.ts",
+    "test:agent": "cd agent && bun test",
+    "typecheck:agent": "cd agent && bun run verify",
     "build:web": "cd web && bun run build",
     "typecheck:web": "cd web && bunx tsc --noEmit",
     "eval:export": "bun scripts/export-eval-datasets.ts",
