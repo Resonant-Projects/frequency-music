@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
+import { DEFAULT_MODEL, extractJsonObject } from "./llm";
 import { hypothesisStatusValidator } from "./schema";
 import {
   hypothesisReturnValidator,
@@ -485,7 +486,7 @@ export const generateFromExtraction = action({
       .replace("{{topics}}", extraction.topics.join(", "));
 
     // Call AI (traced as hypothesis_v1 in the Node-runtime internal action)
-    const modelId = args.model || "anthropic/claude-sonnet-4-6";
+    const modelId = args.model || DEFAULT_MODEL;
 
     const { text } = await ctx.runAction(
       internal.hypothesesInternal.generateHypothesisText,
@@ -502,9 +503,7 @@ export const generateFromExtraction = action({
     // Parse response
     let parsed: GeneratedHypothesisPayload;
     try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON found");
-      parsed = JSON.parse(jsonMatch[0]) as GeneratedHypothesisPayload;
+      parsed = extractJsonObject(text) as GeneratedHypothesisPayload;
       parsed.whyThisMatters = assertWhyThisMatters(
         parsed.whyThisMatters,
         "generated.whyThisMatters",
