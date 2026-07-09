@@ -59,9 +59,9 @@ frequency-music/
 │   └── polygon-angles-pure.scl
 │
 ├── scripts/             # Local ingestion scripts
-│   ├── ingest-robert-grant.ts
-│   ├── ingest-books-papers.ts
-│   ├── ingest-microtuning.ts
+│   ├── lib/             # Shared ingest library (client/env, fetch, ingestor)
+│   ├── archive/         # Completed one-shot scripts (byte-identical, do not run)
+│   ├── ingest-manifest.ts
 │   ├── fetch-full-articles.ts
 │   ├── fetch-youtube-transcripts.ts
 │   └── fetch-readwise-articles.ts
@@ -74,31 +74,27 @@ frequency-music/
 All scripts use Bun and load env from `.env.local`:
 
 ```bash
-# Source ingestion
-bun run scripts/ingest-robert-grant.ts      # Robert Edward Grant sources
-bun run scripts/ingest-books-papers.ts       # Books and arXiv papers
-bun run scripts/ingest-microtuning.ts        # Microtuning/xenharmonic sources
-bun run scripts/ingest-esoteric.ts           # Esoteric research batch 1 (26 sources)
-bun run scripts/ingest-esoteric-2.ts         # Esoteric research batch 2
-bun run scripts/ingest-jmm-open-access.ts    # JMM RSS full text
+# Source ingestion (batches are data now — one driver + JSON manifests)
+bun run scripts/ingest-manifest.ts data/example-manifest.json   # dry-run by default
 
-# Text fetching
+# Text fetching (recurring; shared scripts/lib ingestor)
 bun run scripts/fetch-full-articles.ts --limit 10    # Jina Reader
-bun run scripts/fetch-article-kernel.ts <url>        # Kernel.sh cloud browser
-bun run scripts/fetch-blocked-kernel.ts              # Batch fetch blocked sources
-bun run scripts/fetch-remaining-kernel.ts             # Retry remaining blocked
-bun run scripts/update-text-from-files.ts             # Update Convex from /tmp files
+bun run scripts/smart-fetch.ts                        # Multi-strategy fetch for blocked sources
 bun run scripts/fetch-notion-full-text.ts             # Notion sources → Jina
 
 # YouTube & Notion
 bun run scripts/fetch-youtube-transcripts.ts          # Fabric CLI transcripts
 bun run scripts/sync-notion-tag.ts                    # Sync Frequency Research tag
+bun run scripts/fetch-readwise-articles.ts            # Readwise → sources
 
 # Analysis & Maintenance
 bun run scripts/audit-extractions.ts                  # Audit extraction quality
 bun run scripts/list-extraction-ids.ts                # Export to /tmp/ext-summary.json
 bun run scripts/list-zero-sources.ts                  # Find zero-claim sources
-bun run scripts/find-e2e.ts                           # Find E2E test data
+bun run scripts/migrate-dedupe-keys.ts                # Dedupe-key migration (dry-run default)
+bun run scripts/find-dupes.ts                         # Duplicate report
+
+# Completed one-shot batch scripts live in scripts/archive/ (reference only)
 ```
 
 ## Convex Commands
