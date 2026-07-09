@@ -10,10 +10,15 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
 const CONVEX_URL = process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL;
+const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
 const JINA_READER_URL = "https://r.jina.ai";
 
 if (!CONVEX_URL) {
   console.error("CONVEX_URL or CONVEX_SELF_HOSTED_URL must be set");
+  process.exit(1);
+}
+if (!BYPASS) {
+  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required");
   process.exit(1);
 }
 
@@ -120,6 +125,7 @@ async function main() {
       await client.mutation(api.sources.updateText, {
         id: source._id,
         rawText: fullText,
+        devBypassSecret: BYPASS,
       });
 
       console.log(`   ✅ Updated: ${fullText.length} chars`);
