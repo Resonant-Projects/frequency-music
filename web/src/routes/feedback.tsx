@@ -18,7 +18,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 function parseParticipants(input: string) {
   return input
@@ -83,16 +83,16 @@ export function FeedbackPage() {
     document.title = "Feedback — Frequency Music";
   });
 
-  const compositions = createQuery(convexApi.compositions.list, () => ({
+  const compositions = createQuery(api.compositions.list, () => ({
     limit: 40,
   }));
   const sessions = createQueryWithStatus(
-    convexApi.listening.listRecent,
+    api.listening.listRecent,
     () => ({
       limit: 30,
     }),
   );
-  const createSession = createMutation(convexApi.listening.create);
+  const createSession = createMutation(api.listening.create);
 
   const compositionById = createMemo(() => {
     const lookup = new Map<string, string>();

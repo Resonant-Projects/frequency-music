@@ -492,20 +492,29 @@ export const linkExtractionConcepts = internalAction({
     linked: v.number(),
     concepts: v.array(v.string()),
   }),
-  handler: async (ctx, args) => {
-    const extraction = await ctx.runQuery(api.extractions.get, {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ linked: number; concepts: string[] }> => {
+    const extraction: Doc<"extractions"> | null = await ctx.runQuery(
+      api.extractions.get,
+      {
       id: args.extractionId,
-    });
+      },
+    );
 
     if (!extraction) throw new Error("Extraction not found");
 
-    const linkedConcepts = [];
+    const linkedConcepts: string[] = [];
 
     for (const topic of extraction.topics) {
       // Upsert the concept
-      const conceptId = await ctx.runMutation(internal.graph.upsertConcept, {
-        name: topic,
-      });
+      const conceptId: Id<"concepts"> = await ctx.runMutation(
+        internal.graph.upsertConcept,
+        {
+          name: topic,
+        },
+      );
 
       // Create edge from source to concept
       await ctx.runMutation(internal.graph.createEdge, {
@@ -538,15 +547,21 @@ export const linkHypothesisConcepts = internalAction({
     linked: v.number(),
     concepts: v.array(v.string()),
   }),
-  handler: async (ctx, args) => {
-    const hypothesis = await ctx.runQuery(api.hypotheses.get, {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ linked: number; concepts: string[] }> => {
+    const hypothesis: Doc<"hypotheses"> | null = await ctx.runQuery(
+      api.hypotheses.get,
+      {
       id: args.hypothesisId,
-    });
+      },
+    );
 
     if (!hypothesis) throw new Error("Hypothesis not found");
 
-    const concepts = hypothesis.concepts || [];
-    const linkedConcepts = [];
+    const concepts: string[] = hypothesis.concepts || [];
+    const linkedConcepts: string[] = [];
 
     for (const concept of concepts) {
       // Upsert the concept

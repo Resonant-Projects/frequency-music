@@ -20,7 +20,7 @@ import {
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 type AgentRunStatus = Doc<"agentRuns">["status"];
 type AgentRunEventKind = Doc<"agentRunEvents">["kind"];
@@ -114,8 +114,8 @@ const draftLabel = persistedDraftLabel;
 
 /** Per-draft approve/reject controls for a persisted human-review draft. */
 function PersistedDraftActions(props: { draft: PersistedReviewDraft }) {
-  const approve = createMutation(convexApi.agentDrafts.approve);
-  const reject = createMutation(convexApi.agentDrafts.reject);
+  const approve = createMutation(api.agentDrafts.approve);
+  const reject = createMutation(api.agentDrafts.reject);
 
   const [note, setNote] = createSignal("");
   const [busy, setBusy] = createSignal(false);
@@ -205,15 +205,15 @@ export function AgentRunDetailPage() {
   const params = useParams({ from: "/agent-runs/$runId" });
   const runId = createMemo(() => params().runId as Id<"agentRuns">);
 
-  const run = createQueryWithStatus(convexApi.agentRuns.getPublic, () => ({
+  const run = createQueryWithStatus(api.agentRuns.getPublic, () => ({
     runId: runId(),
   }));
-  const events = createQueryWithStatus(convexApi.agentRuns.listEvents, () => ({
+  const events = createQueryWithStatus(api.agentRuns.listEventsPublic, () => ({
     runId: runId(),
     limit: 120,
   }));
   const persistedDrafts = createQueryWithStatus(
-    convexApi.agentDrafts.listByRun,
+    api.agentDrafts.listByRun,
     () => ({
       agentRunId: runId(),
       limit: 10,

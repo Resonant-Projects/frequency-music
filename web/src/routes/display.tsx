@@ -15,7 +15,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const statGridClass = css({
   display: "grid",
@@ -63,20 +63,20 @@ export function DisplayPage() {
     } | null;
   };
 
-  const inboxRows = createQueryWithStatus(convexApi.inbox.list, () => ({
+  const inboxRows = createQueryWithStatus(api.inbox.list, () => ({
     limit: DISPLAY_QUEUE_LIMIT,
   }));
-  const counts = createQuery(convexApi.inbox.counts);
+  const counts = createQuery(api.inbox.counts);
   const editorialSignals = createQuery(
-    convexApi.dashboard.editorialSignals,
+    api.dashboard.editorialSignals,
     () => ({
       limit: 6,
     }),
   );
 
-  const runExtraction = createAction(convexApi.extract.extractSource);
-  const updateStatus = createMutation(convexApi.sources.updateStatus);
-  const setVisibility = createMutation(convexApi.sources.setVisibility);
+  const runExtraction = createAction(api.extract.extractSource);
+  const updateStatus = createMutation(api.sources.updateStatus);
+  const setVisibility = createMutation(api.sources.setVisibility);
 
   const [notice, setNotice] = createSignal<string | null>(null);
 

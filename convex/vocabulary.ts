@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { getSeedConceptDomainEntries } from "./domainMappings";
 import { internalMutation, query } from "./_generated/server";
 import { registryStatusValidator } from "./schema";
@@ -46,6 +47,8 @@ const KNOWN_RELATIONSHIP_KINDS = new Set([
   "implements",
 ]);
 
+const PROVISIONAL_STATUS = "provisional" as const;
+
 function normalizeName(name: string) {
   return name.trim().toLowerCase();
 }
@@ -67,7 +70,7 @@ export const ensureParameterKind = internalMutation({
   }),
   handler: async (ctx, args) => {
     const name = normalizeName(args.name);
-    if (!name) return { status: "provisional" };
+    if (!name) return { status: PROVISIONAL_STATUS };
 
     const existing = await ctx.db
       .query("parameterKinds")
@@ -100,7 +103,7 @@ export const ensureConceptDomain = internalMutation({
   }),
   handler: async (ctx, args) => {
     const name = normalizeName(args.name);
-    if (!name) return { status: "provisional" };
+    if (!name) return { status: PROVISIONAL_STATUS };
 
     const existing = await ctx.db
       .query("conceptDomains")
@@ -188,7 +191,7 @@ export const ensureRelationshipKind = internalMutation({
   }),
   handler: async (ctx, args) => {
     const name = normalizeName(args.name);
-    if (!name) return { status: "provisional" };
+    if (!name) return { status: PROVISIONAL_STATUS };
 
     const existing = await ctx.db
       .query("relationshipKinds")
@@ -218,8 +221,11 @@ export const reviewSummary = query({
     provisionalRelationshipKinds: v.array(v.string()),
   }),
   handler: async (ctx) => {
-    const [parameterKinds, conceptDomains, relationshipKinds] =
-      await Promise.all([
+    const [parameterKinds, conceptDomains, relationshipKinds]: [
+      Doc<"parameterKinds">[],
+      Doc<"conceptDomains">[],
+      Doc<"relationshipKinds">[],
+    ] = await Promise.all([
         ctx.db
           .query("parameterKinds")
           .withIndex("by_status", (q) => q.eq("status", "provisional"))

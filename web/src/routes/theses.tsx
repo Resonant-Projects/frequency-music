@@ -14,7 +14,7 @@ import {
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const thesisCard = css({
   borderColor: "rgba(200, 168, 75, 0.22)",
@@ -34,10 +34,10 @@ export function ThesesPage() {
     document.title = "Theses — Frequency Music";
   });
 
-  const theses = createQueryWithStatus(convexApi.theses.list, () => ({
+  const theses = createQueryWithStatus(api.theses.list, () => ({
     limit: 100,
   }));
-  const createThesis = createMutation(convexApi.theses.create);
+  const createThesis = createMutation(api.theses.create);
   const thesisRows = createMemo<Doc<"theses">[]>(
     () => (theses.data() ?? []) as Doc<"theses">[],
   );

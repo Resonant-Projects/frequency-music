@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 import { action } from "./_generated/server";
 import { requireAuth } from "./auth";
@@ -19,6 +20,19 @@ interface TactiqCaption {
   start: number;
   dur?: number;
 }
+
+type TranscriptForSourceResult =
+  | {
+      success: true;
+      videoId: string;
+      transcriptLength: number;
+      segments: number;
+    }
+  | { success: false; error: string };
+
+type ArticleForSourceResult =
+  | { success: true; url: string; textLength: number }
+  | { success: false; error: string };
 
 interface TactiqResponse {
   captions?: TactiqCaption[];
@@ -202,10 +216,12 @@ export const fetchTranscriptForSource = action({
       error: v.string(),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<TranscriptForSourceResult> => {
     await requireAuth(ctx, args);
     // Get the source
-    const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
+    const source: Doc<"sources"> | null = await ctx.runQuery(api.sources.get, {
+      id: args.sourceId,
+    });
     if (!source) {
       throw new Error("Source not found");
     }
@@ -284,7 +300,7 @@ export const fetchAllYouTubeTranscripts = action({
     });
 
     const youtubeSources = sources
-      .filter((s) => s.type === "youtube")
+      .filter((s: Doc<"sources">) => s.type === "youtube")
       .slice(0, limit);
 
     const results: Array<{
@@ -382,9 +398,11 @@ export const fetchArticleForSource = action({
       error: v.string(),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<ArticleForSourceResult> => {
     await requireAuth(ctx, args);
-    const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
+    const source: Doc<"sources"> | null = await ctx.runQuery(api.sources.get, {
+      id: args.sourceId,
+    });
     if (!source) {
       throw new Error("Source not found");
     }

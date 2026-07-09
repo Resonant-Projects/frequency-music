@@ -16,7 +16,7 @@ import {
 } from "solid-js";
 import { css } from "../../styled-system/css";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 import type { ConstellationEdge } from "../lib/zodiac-constellations";
 import { SECTORS } from "../lib/zodiac-data";
 import { initZodiacScene, type ZodiacHandle } from "../lib/zodiac-scene";
@@ -650,16 +650,16 @@ export function Zodiac3D() {
   });
 
   // --- Convex Queries (existing, stable) ---
-  const sectorMetrics = createQuery(convexApi.dashboard.zodiacSectors, () => ({
+  const sectorMetrics = createQuery(api.dashboard.zodiacSectors, () => ({
     limit: 200,
   }));
-  const pipeline = createQuery(convexApi.dashboard.pipeline);
+  const pipeline = createQuery(api.dashboard.pipeline);
 
   // --- New queries (use createQueryWithStatus so errors don't crash the page) ---
 
   // Phase 1: Concepts for active sector
   const domainConceptsQ = createQueryWithStatus(
-    convexApi.graph.getConceptsForDomain,
+    api.graph.getConceptsForDomain,
     () => ({
       domain: selSector(),
       limit: 40,
@@ -672,7 +672,7 @@ export function Zodiac3D() {
   // Phase 1: Edges between those concepts
   const conceptNames = createMemo(() => domainConcepts().map((c) => c.name));
   const conceptEdgesQ = createQueryWithStatus(
-    convexApi.graph.getConceptEdges,
+    api.graph.getConceptEdges,
     () => ({
       conceptNames: conceptNames(),
     }),
@@ -697,7 +697,7 @@ export function Zodiac3D() {
     return mode.kind === "concept-detail" ? mode.conceptId : undefined;
   });
   const conceptDetailQ = createQueryWithStatus(
-    convexApi.graph.getConceptDetail,
+    api.graph.getConceptDetail,
     () => {
       const id = activeConceptId();
       return id ? { conceptId: id } : {};
@@ -711,7 +711,7 @@ export function Zodiac3D() {
 
   // Phase 2: Sub-topics for active sector
   const subTopicsQ = createQueryWithStatus(
-    convexApi.dashboard.domainSubTopics,
+    api.dashboard.domainSubTopics,
     () => ({
       domain: selSector(),
     }),
@@ -722,7 +722,7 @@ export function Zodiac3D() {
 
   // Phase 3: Pipeline items (loaded once)
   const pipelineItemsQ = createQueryWithStatus(
-    convexApi.dashboard.pipelineItems,
+    api.dashboard.pipelineItems,
   );
   const pipelineItems = createMemo<
     | {
@@ -752,7 +752,7 @@ export function Zodiac3D() {
       : undefined;
   });
   const itemRelationsQ = createQueryWithStatus(
-    convexApi.dashboard.itemRelations,
+    api.dashboard.itemRelations,
     () => {
       const item = activeItem();
       if (!item?.id) return "skip" as const;

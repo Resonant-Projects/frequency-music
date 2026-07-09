@@ -13,7 +13,7 @@ import {
   sectionLabel,
 } from "../components/ui";
 import { createQuery } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const paramGrid = css({
   display: "grid",
@@ -112,7 +112,7 @@ function formatDuration(secs: number): string {
 export function RecipeDetailPage() {
   const params = useParams({ from: "/recipes/$recipeId" });
 
-  const recipe = createQuery(convexApi.recipes.get, () => ({
+  const recipe = createQuery(api.recipes.get, () => ({
     id: params().recipeId as Id<"recipes">,
   }));
 

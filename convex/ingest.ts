@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
@@ -435,16 +436,22 @@ export const ingestUrl = action({
     id: v.id("sources"),
     created: v.boolean(),
   }),
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ id: Id<"sources">; created: boolean }> => {
     await requireAuth(ctx, args);
     // Generate dedupeKey (canonical: keeps query string, matches sources.createFromUrlInput)
     const urlObj = new URL(args.url);
     const dedupeKey = generateDedupeKey("url", { canonicalUrl: args.url });
 
     // Check if already exists
-    const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
+    const existing: Doc<"sources"> | null = await ctx.runQuery(
+      api.sources.getByDedupeKey,
+      {
       dedupeKey,
-    });
+      },
+    );
     if (existing) {
       return { id: existing._id, created: false };
     }
@@ -474,7 +481,8 @@ export const ingestUrl = action({
       : undefined;
 
     // Create source
-    const result = await ctx.runMutation(api.sources.create, {
+    const result: { id: Id<"sources">; created: boolean } =
+      await ctx.runMutation(api.sources.create, {
       type: "url",
       title,
       canonicalUrl: args.url,
@@ -482,7 +490,7 @@ export const ingestUrl = action({
       tags: args.tags || [],
       dedupeKey,
       devBypassSecret: args.devBypassSecret,
-    });
+      });
 
     return { id: result.id, created: result.created };
   },
@@ -506,7 +514,10 @@ export const ingestYouTube = action({
     created: v.boolean(),
     videoId: v.string(),
   }),
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ id: Id<"sources">; created: boolean; videoId: string }> => {
     await requireAuth(ctx, args);
     const videoId = extractYouTubeVideoId(args.url);
     if (!videoId) {
@@ -518,9 +529,12 @@ export const ingestYouTube = action({
     });
 
     // Check if already exists
-    const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
+    const existing: Doc<"sources"> | null = await ctx.runQuery(
+      api.sources.getByDedupeKey,
+      {
       dedupeKey,
-    });
+      },
+    );
     if (existing) {
       return { id: existing._id, created: false, videoId };
     }
@@ -555,7 +569,8 @@ export const ingestYouTube = action({
     }
 
     // Create source (transcript will be added later)
-    const result = await ctx.runMutation(api.sources.create, {
+    const result: { id: Id<"sources">; created: boolean } =
+      await ctx.runMutation(api.sources.create, {
       type: "youtube",
       title,
       author,
@@ -564,7 +579,7 @@ export const ingestYouTube = action({
       tags: args.tags || [],
       dedupeKey,
       devBypassSecret: args.devBypassSecret,
-    });
+      });
 
     return { id: result.id, created: result.created, videoId };
   },

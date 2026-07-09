@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { listeningSessionReturnValidator } from "./validators";
@@ -101,7 +102,7 @@ export const create = mutation({
       standoutMoments: args.standoutMoments,
       expandVerdict: args.expandVerdict,
       visibility: "private",
-      createdBy: identity.subject,
+      createdBy: identity.subject as Id<"users">,
       createdAt: Date.now(),
     });
   },

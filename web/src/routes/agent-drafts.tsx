@@ -19,7 +19,7 @@ import {
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const helperClass = css({
   color: "rgba(245, 240, 232, 0.62)",
@@ -55,7 +55,7 @@ type Promotion = { kind: PersistedReviewDraft["kind"]; promotedId: string };
 
 /** Loads the parent run so the queue can surface the LangSmith trace URL. */
 function RunTraceLink(props: { agentRunId: Id<"agentRuns"> }) {
-  const run = createQueryWithStatus(convexApi.agentRuns.getPublic, () => ({
+  const run = createQueryWithStatus(api.agentRuns.getPublic, () => ({
     runId: props.agentRunId,
   }));
   const traceUrl = createMemo(
@@ -102,8 +102,8 @@ function DraftReviewCard(props: {
   draft: PersistedReviewDraft;
   onApproved: (promotion: Promotion) => void;
 }) {
-  const approve = createMutation(convexApi.agentDrafts.approve);
-  const reject = createMutation(convexApi.agentDrafts.reject);
+  const approve = createMutation(api.agentDrafts.approve);
+  const reject = createMutation(api.agentDrafts.reject);
 
   const [note, setNote] = createSignal("");
   const [busy, setBusy] = createSignal(false);
@@ -253,7 +253,7 @@ export function AgentDraftsPage() {
   });
 
   const pending = createQueryWithStatus(
-    convexApi.agentDrafts.listPending,
+    api.agentDrafts.listPending,
     () => ({
       limit: 50,
     }),

@@ -233,7 +233,12 @@ export const pollFeedsNow = action({
   returns: v.object({
     results: v.any(),
   }),
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    results: Record<string, { processed: number; errors: string[] }>;
+  }> => {
     await requireAuth(ctx, args);
     return await ctx.runAction(api.ingest.pollAllFeeds, {
       devBypassSecret: args.devBypassSecret,

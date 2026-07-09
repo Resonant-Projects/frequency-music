@@ -1,4 +1,5 @@
-import { ConvexError, v } from "convex/values";
+import { ConvexError, v, type Value } from "convex/values";
+import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
@@ -17,7 +18,7 @@ const recipeStatusValidator = v.union(
 
 interface RecipeParameter {
   kind?: string;
-  type?: string;
+  type: string;
   value: string;
   details?: unknown;
 }
@@ -38,16 +39,22 @@ interface ParsedRecipePayload {
   bodyMd: string;
   parameters: RecipeParameter[];
   dawChecklist: string[];
-  protocol?: {
-    studyType?: "litmus" | "comparison";
-    durationSecs?: number;
-    panelPlanned?: string[];
-    listeningContext?: string;
-    listeningMethod?: string;
-    whatVaries?: string[];
-    whatStaysConstant?: string[];
-  };
+  protocol?: RecipeProtocol;
 }
+
+type GeneratedRecipeResult = {
+  recipeId: Id<"recipes">;
+  model: string;
+  generated: ParsedRecipePayload;
+};
+
+type BatchRecipeResult =
+  | ({ success: true } & GeneratedRecipeResult)
+  | {
+      success: false;
+      hypothesisId: Id<"hypotheses">;
+      error: string;
+    };
 
 function assertStringArray(
   value: unknown,
@@ -62,7 +69,7 @@ function assertStringArray(
       code: "INVALID_ARGUMENT",
       message: `${field} must be a non-empty string[]`,
       field,
-      raw,
+      raw: raw as Value,
     });
   }
   return value as string[];
@@ -74,7 +81,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
       code: "INVALID_ARGUMENT",
       message: "generated recipe payload must be an object",
       field: "root",
-      raw,
+      raw: raw as Value,
     });
   }
   const row = raw as Record<string, unknown>;
@@ -83,7 +90,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
       code: "INVALID_ARGUMENT",
       message: "generated recipe title must be a non-empty string",
       field: "title",
-      raw,
+      raw: raw as Value,
     });
   }
   if (typeof row.bodyMd !== "string" || row.bodyMd.trim().length === 0) {
@@ -91,7 +98,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
       code: "INVALID_ARGUMENT",
       message: "generated recipe bodyMd must be a non-empty string",
       field: "bodyMd",
-      raw,
+      raw: raw as Value,
     });
   }
   if (!Array.isArray(row.parameters)) {
@@ -99,7 +106,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
       code: "INVALID_ARGUMENT",
       message: "generated recipe parameters must be an array",
       field: "parameters",
-      raw,
+      raw: raw as Value,
     });
   }
   const parameters: RecipeParameter[] = row.parameters.map((value, index) => {
@@ -108,7 +115,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
         code: "INVALID_ARGUMENT",
         message: "recipe parameter must be an object",
         field: `parameters[${index}]`,
-        raw,
+        raw: raw as Value,
       });
     }
     const param = value as Record<string, unknown>;
@@ -118,7 +125,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
         code: "INVALID_ARGUMENT",
         message: "recipe parameter kind must be a non-empty string",
         field: `parameters[${index}].kind`,
-        raw,
+        raw: raw as Value,
       });
     }
     if (typeof param.value !== "string" || param.value.trim().length === 0) {
@@ -126,7 +133,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
         code: "INVALID_ARGUMENT",
         message: "recipe parameter value must be a non-empty string",
         field: `parameters[${index}].value`,
-        raw,
+        raw: raw as Value,
       });
     }
 
@@ -149,7 +156,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
         code: "INVALID_ARGUMENT",
         message: "generated recipe protocol must be an object",
         field: "protocol",
-        raw,
+        raw: raw as Value,
       });
     }
 
@@ -163,7 +170,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
         code: "INVALID_ARGUMENT",
         message: "protocol.studyType must be litmus|comparison",
         field: "protocol.studyType",
-        raw,
+        raw: raw as Value,
       });
     }
     if (p.durationSecs !== undefined && typeof p.durationSecs !== "number") {
@@ -171,7 +178,7 @@ function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
         code: "INVALID_ARGUMENT",
         message: "protocol.durationSecs must be a number",
         field: "protocol.durationSecs",
-        raw,
+        raw: raw as Value,
       });
     }
     if (p.panelPlanned !== undefined)
@@ -209,10 +216,11 @@ export const listByStatus = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
-    if (args.status !== undefined) {
+    const status = args.status;
+    if (status !== undefined) {
       return await ctx.db
         .query("recipes")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", status))
         .order("desc")
         .take(limit);
     }
@@ -308,7 +316,7 @@ export const create = mutation({
       ...createArgs,
       status: "draft",
       visibility: "private",
-      createdBy: identity.subject,
+      createdBy: identity.subject as Id<"users">,
       createdAt: now,
       updatedAt: now,
     });
@@ -456,7 +464,7 @@ export const generateFromHypothesis = action({
       protocol: v.optional(recipeProtocolValidator),
     }),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<GeneratedRecipeResult> => {
     await requireAuth(ctx, args);
     // Get hypothesis
     const hypothesis = await ctx.runQuery(api.hypotheses.get, {
@@ -520,7 +528,7 @@ export const generateFromHypothesis = action({
     }
 
     // Create recipe
-    const recipeId = await ctx.runMutation(api.recipes.create, {
+    const recipeId: Id<"recipes"> = await ctx.runMutation(api.recipes.create, {
       hypothesisId: args.hypothesisId,
       title: parsed.title,
       whyThisMatters: parsed.whyThisMatters,
@@ -569,26 +577,35 @@ export const generateBatch = action({
       }),
     ),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<BatchRecipeResult[]> => {
     await requireAuth(ctx, args);
     const limit = args.limit ?? 3;
 
     // Get hypotheses that need recipes
-    const hypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
+    const hypotheses: Doc<"hypotheses">[] = await ctx.runQuery(
+      api.hypotheses.listByStatus,
+      {
       status: "queued",
       limit: 20,
-    });
+      },
+    );
 
     // Also include active ones
-    const activeHypotheses = await ctx.runQuery(api.hypotheses.listByStatus, {
-      status: "active",
-      limit: 20,
-    });
+    const activeHypotheses: Doc<"hypotheses">[] = await ctx.runQuery(
+      api.hypotheses.listByStatus,
+      {
+        status: "active",
+        limit: 20,
+      },
+    );
 
-    const allHypotheses = [...hypotheses, ...activeHypotheses];
+    const allHypotheses: Doc<"hypotheses">[] = [
+      ...hypotheses,
+      ...activeHypotheses,
+    ];
 
     // Filter to ones without recipes
-    const needsRecipe = [];
+    const needsRecipe: Doc<"hypotheses">[] = [];
     for (const h of allHypotheses) {
       const recipes = await ctx.runQuery(api.recipes.getByHypothesisId, {
         hypothesisId: h._id,
@@ -598,15 +615,18 @@ export const generateBatch = action({
       }
     }
 
-    const results = [];
+    const results: BatchRecipeResult[] = [];
 
     for (const hypothesis of needsRecipe.slice(0, limit)) {
       try {
-        const result = await ctx.runAction(api.recipes.generateFromHypothesis, {
-          hypothesisId: hypothesis._id,
-          model: args.model,
-          devBypassSecret: args.devBypassSecret,
-        });
+        const result: GeneratedRecipeResult = await ctx.runAction(
+          api.recipes.generateFromHypothesis,
+          {
+            hypothesisId: hypothesis._id,
+            model: args.model,
+            devBypassSecret: args.devBypassSecret,
+          },
+        );
         results.push({ success: true, ...result });
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : "Unknown error";

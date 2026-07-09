@@ -13,7 +13,7 @@ import {
   sectionLabel,
 } from "../components/ui";
 import { createQuery } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const lineItem = css({
   borderColor: "rgba(200, 168, 75, 0.18)",
@@ -24,7 +24,7 @@ const lineItem = css({
 
 export function CompositionDetailPage() {
   const params = useParams({ from: "/compositions/$compositionId" });
-  const lineage = createQuery(convexApi.compositions.getLineage, () => ({
+  const lineage = createQuery(api.compositions.getLineage, () => ({
     id: params().compositionId as Id<"compositions">,
   }));
 

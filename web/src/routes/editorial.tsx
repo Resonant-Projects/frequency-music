@@ -15,7 +15,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 function kindLabel(kind: Doc<"editorialArtifacts">["kind"]) {
   switch (kind) {
@@ -36,19 +36,19 @@ export function EditorialPage() {
   });
 
   const artifacts = createQueryWithStatus(
-    convexApi.editorialArtifacts.list,
+    api.editorialArtifacts.list,
     () => ({
       limit: 50,
     }),
   );
   const missingWhyThisMatters = createQuery(
-    convexApi.hypotheses.listMissingWhyThisMatters,
+    api.hypotheses.listMissingWhyThisMatters,
     () => ({
       limit: 20,
     }),
   );
   const exportForAstro = createAction(
-    convexApi.editorialArtifacts.exportForAstro,
+    api.editorialArtifacts.exportForAstro,
   );
 
   const [notice, setNotice] = createSignal<string | null>(null);

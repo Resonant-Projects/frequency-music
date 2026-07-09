@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/solid-router";
+import type { FunctionReturnType } from "convex/server";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -20,17 +21,10 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 type HypothesisRow = { _id: string; title: string };
-type RecipeRow = {
-  _id: string;
-  title: string;
-  status: string;
-  whyThisMatters?: string;
-  bodyMd: string;
-  parameters: Array<{ type: string; value: string }>;
-};
+type RecipeRow = FunctionReturnType<typeof api.recipes.listByStatus>[number];
 
 function parseParameters(input: string) {
   return input
@@ -58,16 +52,16 @@ export function RecipesPage() {
     document.title = "Recipes — Frequency Music";
   });
 
-  const hypotheses = createQuery(convexApi.hypotheses.listByStatus, () => ({
+  const hypotheses = createQuery(api.hypotheses.listByStatus, () => ({
     limit: 30,
   }));
-  const recipes = createQueryWithStatus(convexApi.recipes.listByStatus, () => ({
+  const recipes = createQueryWithStatus(api.recipes.listByStatus, () => ({
     limit: 30,
   }));
 
-  const createRecipe = createMutation(convexApi.recipes.create);
+  const createRecipe = createMutation(api.recipes.create);
   const generateFromHypothesis = createAction(
-    convexApi.recipes.generateFromHypothesis,
+    api.recipes.generateFromHypothesis,
   );
 
   const [hypothesisId, setHypothesisId] = createSignal("");

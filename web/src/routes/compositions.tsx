@@ -18,7 +18,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 export function CompositionsPage() {
   onMount(() => {
@@ -26,17 +26,17 @@ export function CompositionsPage() {
   });
 
   const compositions = createQueryWithStatus(
-    convexApi.compositions.list,
+    api.compositions.list,
     () => ({
       limit: 24,
     }),
   );
-  const recipes = createQuery(convexApi.recipes.listByStatus, () => ({
+  const recipes = createQuery(api.recipes.listByStatus, () => ({
     limit: 40,
   }));
 
-  const createComposition = createMutation(convexApi.compositions.create);
-  const updateComposition = createMutation(convexApi.compositions.update);
+  const createComposition = createMutation(api.compositions.create);
+  const updateComposition = createMutation(api.compositions.update);
 
   const [title, setTitle] = createSignal("");
   const [recipeId, setRecipeId] = createSignal("");

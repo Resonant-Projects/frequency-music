@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import {
   computeRecommendedActionContext,
+  type RecommendationContext,
   type RecommendedAction,
 } from "./campaigns";
 import { computeEditorialSignals } from "./dashboard";
@@ -446,6 +447,14 @@ interface GenerateBriefResult {
   preview: string;
 }
 
+type EditorialSignals = Awaited<ReturnType<typeof computeEditorialSignals>>;
+
+type LoadBriefContext = {
+  recommendationContext: RecommendationContext;
+  extraActiveTheses: Doc<"theses">[];
+  editorialSignals: EditorialSignals;
+};
+
 const yieldBandValidator = v.union(
   v.literal("high"),
   v.literal("mixed"),
@@ -529,8 +538,12 @@ export async function generateBriefCore(
   monday.setDate(now.getDate() - now.getDay() + 1);
   const weekOf = monday.toISOString().split("T")[0] as string;
 
+  const briefContext: LoadBriefContext = await ctx.runQuery(
+    internal.weeklyBriefs.loadBriefContext,
+    {},
+  );
   const { recommendationContext, extraActiveTheses, editorialSignals } =
-    await ctx.runQuery(internal.weeklyBriefs.loadBriefContext, {});
+    briefContext;
   const hypotheses = recommendationContext.hypotheses;
   const recipes = recommendationContext.recipes;
   const { recentHypotheses, recentRecipes, sourceIds } =
@@ -893,9 +906,15 @@ export const publishToNotion = action({
     notionPageId: v.string(),
     notionUrl: v.optional(v.string()),
   }),
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ notionPageId: string; notionUrl?: string }> => {
     await requireAuth(ctx, args);
-    const brief = await ctx.runQuery(api.weeklyBriefs.get, { id: args.id });
+    const brief: Doc<"weeklyBriefs"> | null = await ctx.runQuery(
+      api.weeklyBriefs.get,
+      { id: args.id },
+    );
     if (!brief) throw new Error("Brief not found");
     if (brief.notionPageId) {
       return { notionPageId: brief.notionPageId, notionUrl: undefined };

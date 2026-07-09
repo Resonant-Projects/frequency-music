@@ -17,7 +17,7 @@ import {
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQuery } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 type EditorialArtifact = Doc<"editorialArtifacts">;
 type EvidenceCard = EditorialArtifact["publicEvidenceCards"][number];
@@ -77,16 +77,16 @@ function formatKind(kind: EditorialArtifact["kind"]) {
 
 export function EditorialDetailPage() {
   const params = useParams({ from: "/editorial/$artifactId" });
-  const detail = createQuery(convexApi.editorialArtifacts.get, () => ({
+  const detail = createQuery(api.editorialArtifacts.get, () => ({
     id: params().artifactId as Id<"editorialArtifacts">,
   }));
 
-  const updateArtifact = createMutation(convexApi.editorialArtifacts.update);
+  const updateArtifact = createMutation(api.editorialArtifacts.update);
   const submitForReview = createMutation(
-    convexApi.editorialArtifacts.submitForReview,
+    api.editorialArtifacts.submitForReview,
   );
-  const approveArtifact = createMutation(convexApi.editorialArtifacts.approve);
-  const publishArtifact = createMutation(convexApi.editorialArtifacts.publish);
+  const approveArtifact = createMutation(api.editorialArtifacts.approve);
+  const publishArtifact = createMutation(api.editorialArtifacts.publish);
 
   const [draft, setDraft] = createSignal<ArtifactDraft | null>(null);
   const [loadedVersion, setLoadedVersion] = createSignal("");

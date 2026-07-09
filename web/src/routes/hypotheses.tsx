@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
-import type { Doc } from "../../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
@@ -19,7 +19,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 function truncate(text: string, maxLength: number) {
   return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
@@ -31,15 +31,15 @@ export function HypothesesPage() {
   });
 
   const hypotheses = createQueryWithStatus(
-    convexApi.hypotheses.listByStatus,
+    api.hypotheses.listByStatus,
     () => ({
       limit: 24,
     }),
   );
-  const recentSources = createQuery(convexApi.sources.listRecent, () => ({
+  const recentSources = createQuery(api.sources.listRecent, () => ({
     limit: 20,
   }));
-  const activeTheses = createQuery(convexApi.theses.list, () => ({
+  const activeTheses = createQuery(api.theses.list, () => ({
     status: "active" as const,
     limit: 50,
   }));
@@ -53,7 +53,7 @@ export function HypothesesPage() {
     () => (hypotheses.data() ?? []) as Doc<"hypotheses">[],
   );
 
-  const createHypothesis = createMutation(convexApi.hypotheses.create);
+  const createHypothesis = createMutation(api.hypotheses.create);
 
   const [title, setTitle] = createSignal("");
   const [question, setQuestion] = createSignal("");
@@ -61,10 +61,11 @@ export function HypothesesPage() {
   const [whyThisMatters, setWhyThisMatters] = createSignal("");
   const [rationale, setRationale] = createSignal("");
   const [thesisId, setThesisId] = createSignal("");
-  const [selectedSources, setSelectedSources] = createSignal<string[]>([]);
+  const [selectedSources, setSelectedSources] =
+    createSignal<Id<"sources">[]>([]);
   const [notice, setNotice] = createSignal<string | null>(null);
 
-  function toggleSource(sourceId: string) {
+  function toggleSource(sourceId: Id<"sources">) {
     setSelectedSources((prev) =>
       prev.includes(sourceId)
         ? prev.filter((id) => id !== sourceId)
@@ -214,8 +215,8 @@ export function HypothesesPage() {
                 >
                   <input
                     type="checkbox"
-                    checked={selectedSources().includes(String(source._id))}
-                    onChange={() => toggleSource(String(source._id))}
+                    checked={selectedSources().includes(source._id)}
+                    onChange={() => toggleSource(source._id)}
                   />
                   <span class={css({ fontSize: "sm" })}>
                     {source.title ?? "Untitled source"}

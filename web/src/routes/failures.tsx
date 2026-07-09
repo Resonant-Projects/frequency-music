@@ -10,7 +10,7 @@ import {
   UISelect,
 } from "../components/ui";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const rowClass = css({
   borderColor: "rgba(200, 168, 75, 0.18)",
@@ -35,8 +35,8 @@ export function FailuresPage() {
   const [reason, setReason] = createSignal("");
   const [thesisId, setThesisId] = createSignal("");
 
-  const theses = createQuery(convexApi.theses.list, () => ({ limit: 100 }));
-  const archive = createQueryWithStatus(convexApi.failures.listArchive, () => ({
+  const theses = createQuery(api.theses.list, () => ({ limit: 100 }));
+  const archive = createQueryWithStatus(api.failures.listArchive, () => ({
     limit: 100,
     reason: reason() ? (reason() as (typeof REASONS)[number]) : undefined,
     thesisId: thesisId() ? (thesisId() as Id<"theses">) : undefined,

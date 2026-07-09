@@ -72,7 +72,7 @@ function isAuthorized(request: Request, payloadSecret?: string): boolean {
 http.route({
   path: "/health",
   method: "GET",
-  handler: httpAction(() => json({ ok: true })),
+  handler: httpAction(() => json({ ok: true }) as unknown as Promise<Response>),
 });
 
 http.route({
