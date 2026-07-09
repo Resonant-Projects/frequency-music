@@ -247,6 +247,11 @@ Feed domains span research publications, YouTube channels, and music-production 
 - Use `bunx <package>` instead of `npx`
 - Bun auto-loads `.env.local` — no dotenv needed
 
+## Lint & format
+- **biome** = formatter (`bun run format`); its linter config exists but oxlint is the primary linter.
+- **oxlint** = linter (`bun run lint`, check-only: `bun run lint:check`).
+- Don't add overlapping rules to both configs; oxlint wins for lint rules.
+
 ## Writing Guidelines
 
 - Document new sources in `data/*.json`
