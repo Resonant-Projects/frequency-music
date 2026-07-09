@@ -2,6 +2,10 @@ import { defineSchema, defineTable } from "convex/server";
 import { literals } from "convex-helpers/validators";
 import { v } from "convex/values";
 import {
+  AGENT_RUN_EVENT_KINDS,
+  AGENT_RUN_STATUSES,
+} from "./shared/agentContract";
+import {
   HYPOTHESIS_STATUSES,
   RECIPE_STATUSES,
   SOURCE_BLOCKED_REASONS,
@@ -63,29 +67,9 @@ export const editorialArtifactStatusValidator = v.union(
   v.literal("published"),
 );
 
-export const agentRunStatusValidator = v.union(
-  v.literal("queued"),
-  v.literal("running"),
-  v.literal("needs_review"),
-  v.literal("completed"),
-  v.literal("failed"),
-  v.literal("cancelled"),
-);
+export const agentRunStatusValidator = literals(...AGENT_RUN_STATUSES);
 
-export const agentRunEventKindValidator = v.union(
-  v.literal("tool_call"),
-  v.literal("decision"),
-  v.literal("draft_write"),
-  v.literal("error"),
-  v.literal("review_request"),
-  v.literal("status"),
-  v.literal("node"),
-  // Emitted when cross-run agent memory (LangGraph Store) changes a decision.
-  v.literal("memory_recall"),
-  // Per-model-call quota audit trail: provider, model, usage, threadId (when
-  // Codex answered). See docs/plans/2026-07-01-01-codex-sdk-inference-provider.md.
-  v.literal("model_call"),
-);
+export const agentRunEventKindValidator = literals(...AGENT_RUN_EVENT_KINDS);
 
 export const sourceStatusValidator = literals(...SOURCE_STATUSES);
 export const sourceBlockedReasonValidator = literals(...SOURCE_BLOCKED_REASONS);

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { agentRunEventKindValidator, agentRunStatusValidator } from "../schema";
 import {
   AGENT_RUN_EVENT_KINDS,
   AGENT_RUN_STATUSES,
@@ -45,5 +46,27 @@ describe("agentContract", () => {
     for (const name of KNOWN_GRAPH_NAMES) {
       expect(["graph", "runner"]).toContain(TERMINAL_STATUS_OWNER[name]);
     }
+  });
+});
+
+describe("schema validators derive from agentContract", () => {
+  test("event-kind members equal the shared contract", () => {
+    const members = (
+      agentRunEventKindValidator as unknown as {
+        members: Array<{ value: string }>;
+      }
+    ).members.map((member) => member.value);
+
+    expect(members).toEqual([...AGENT_RUN_EVENT_KINDS]);
+  });
+
+  test("run-status members equal the shared contract", () => {
+    const members = (
+      agentRunStatusValidator as unknown as {
+        members: Array<{ value: string }>;
+      }
+    ).members.map((member) => member.value);
+
+    expect(members).toEqual([...AGENT_RUN_STATUSES]);
   });
 });
