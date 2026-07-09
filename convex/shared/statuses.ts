@@ -39,3 +39,13 @@ export type HypothesisStatus = (typeof HYPOTHESIS_STATUSES)[number];
 
 export const RECIPE_STATUSES = ["draft", "in_use", "archived"] as const;
 export type RecipeStatus = (typeof RECIPE_STATUSES)[number];
+
+export const AGENT_RUN_STATUSES = [
+  "queued",
+  "running",
+  "needs_review",
+  "completed",
+  "failed",
+  "cancelled",
+] as const;
+export type AgentRunStatus = (typeof AGENT_RUN_STATUSES)[number];

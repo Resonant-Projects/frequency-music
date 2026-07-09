@@ -1,0 +1,40 @@
+// Cross-workspace contract for the agent-run lifecycle. Imported by both the
+// Convex backend and the agent workspace; keep this module runtime-pure.
+import { AGENT_RUN_STATUSES, type AgentRunStatus } from "./statuses";
+
+export { AGENT_RUN_STATUSES, type AgentRunStatus };
+
+export const AGENT_RUN_EVENT_KINDS = [
+  "tool_call",
+  "decision",
+  "draft_write",
+  "error",
+  "review_request",
+  "status",
+  "node",
+  // Emitted when cross-run agent memory (LangGraph Store) changes a decision.
+  "memory_recall",
+  // Per-model-call quota audit trail. Added after the original plan was written.
+  "model_call",
+] as const;
+export type AgentRunEventKind = (typeof AGENT_RUN_EVENT_KINDS)[number];
+
+// A heartbeat interval at or above the stale threshold would let the sweeper
+// kill healthy in-flight runs.
+export const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+export const STALE_RUN_MS = 30 * 60 * 1000;
+if (HEARTBEAT_INTERVAL_MS >= STALE_RUN_MS) {
+  throw new Error(
+    "agentContract invariant violated: HEARTBEAT_INTERVAL_MS must be < STALE_RUN_MS",
+  );
+}
+
+export const KNOWN_GRAPH_NAMES = ["research-pipeline", "weekly-brief"] as const;
+export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
+
+// Which side owns the terminal Convex status write for each graph.
+export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
+  {
+    "research-pipeline": "graph",
+    "weekly-brief": "runner",
+  };
