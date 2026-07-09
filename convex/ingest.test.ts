@@ -1,5 +1,103 @@
 import { describe, expect, test } from "bun:test";
-import { parseRSSXML, stripHtml } from "./ingest";
+import {
+  buildJinaReaderUrl,
+  classifyUrlTextFetchError,
+  MAX_URL_TEXT_CHARS,
+  parseRSSXML,
+  responseToUrlTextResult,
+  stripHtml,
+} from "./ingest";
+
+describe("URL text fetch helpers", () => {
+  test("builds the Jina Reader URL for HTTP and HTTPS sources", () => {
+    expect(buildJinaReaderUrl("https://example.com/article?part=1")).toBe(
+      "https://r.jina.ai/https://example.com/article?part=1",
+    );
+    expect(buildJinaReaderUrl("http://example.com/article")).toBe(
+      "https://r.jina.ai/http://example.com/article",
+    );
+  });
+
+  test("rejects malformed, credentialed, and non-HTTP source URLs", () => {
+    expect(() => buildJinaReaderUrl("not a URL")).toThrow("invalid_url");
+    expect(() => buildJinaReaderUrl("ftp://example.com/article")).toThrow(
+      "invalid_url",
+    );
+    expect(() =>
+      buildJinaReaderUrl("https://user:secret@example.com/article"),
+    ).toThrow("invalid_url");
+  });
+
+  test("shapes a successful response into trimmed text", () => {
+    expect(
+      responseToUrlTextResult({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: "  readable article text  ",
+      }),
+    ).toEqual({ ok: true, text: "readable article text", status: 200 });
+  });
+
+  test("shapes HTTP, empty, and oversized responses into stable errors", () => {
+    expect(
+      responseToUrlTextResult({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        text: "",
+      }),
+    ).toEqual({
+      ok: false,
+      error: "http_error: Jina Reader returned HTTP 429 Too Many Requests",
+      status: 429,
+    });
+
+    expect(
+      responseToUrlTextResult({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: "   ",
+      }),
+    ).toEqual({
+      ok: false,
+      error: "no_text: Jina Reader returned an empty response",
+      status: 200,
+    });
+
+    expect(
+      responseToUrlTextResult({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: "x".repeat(MAX_URL_TEXT_CHARS + 1),
+      }),
+    ).toEqual({
+      ok: false,
+      error: `response_too_large: Jina Reader returned ${MAX_URL_TEXT_CHARS + 1} characters (limit ${MAX_URL_TEXT_CHARS})`,
+      status: 200,
+    });
+  });
+
+  test("classifies timeout, network, invalid URL, and unknown failures", () => {
+    const timeout = new Error("This operation was aborted");
+    timeout.name = "AbortError";
+
+    expect(classifyUrlTextFetchError(timeout)).toBe(
+      "timeout: Jina Reader request exceeded 30 seconds",
+    );
+    expect(classifyUrlTextFetchError(new TypeError("fetch failed"))).toBe(
+      "network_error: fetch failed",
+    );
+    expect(
+      classifyUrlTextFetchError(new Error("invalid_url: malformed URL")),
+    ).toBe("invalid_url: malformed URL");
+    expect(classifyUrlTextFetchError("unavailable")).toBe(
+      "unknown_error: unavailable",
+    );
+  });
+});
 
 describe("RSS and Atom source parsing", () => {
   test("parses a minimal RSS source item", () => {
