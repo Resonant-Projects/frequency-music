@@ -441,7 +441,10 @@ const CONVEX_URL = process.env.CONVEX_SELF_HOSTED_URL ?? process.env.CONVEX_URL;
 if (!CONVEX_URL) {
   throw new Error("Set CONVEX_SELF_HOSTED_URL or CONVEX_URL in .env.local");
 }
-const BYPASS = process.env.AUTH_BYPASS_SECRET ?? "freq-opus-extract-2026";
+const BYPASS = process.env.AUTH_BYPASS_SECRET;
+if (!BYPASS) {
+  throw new Error("Set AUTH_BYPASS_SECRET before applying dedupe-key mutations");
+}
 
 async function main() {
   const apply = process.argv.includes("--apply");
@@ -536,7 +539,7 @@ Expected: `rekeyed=0 archived=0` and an empty planned list — every row now car
 
 - [ ] **Step 3: Verify the cron path agrees**
 
-Run: `bunx convex run ingest:pollAllFeeds '{"devBypassSecret": "freq-opus-extract-2026"}'`
+Run: `bunx convex run ingest:pollAllFeeds '{"devBypassSecret": "<AUTH_BYPASS_SECRET>"}'`
 Then rerun: `bun run scripts/migrate-dedupe-keys.ts`
 Expected: still `rekeyed=0 archived=0` — freshly polled items dedupe against migrated rows instead of duplicating them.
 
@@ -558,7 +561,10 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
 const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
-const BYPASS = "freq-opus-extract-2026";
+const BYPASS = process.env.AUTH_BYPASS_SECRET;
+if (!BYPASS) {
+  throw new Error("Set AUTH_BYPASS_SECRET before archiving duplicates");
+}
 
 function normalizeUrl(url: string): string {
   let u = url
@@ -583,7 +589,10 @@ import { api } from "../convex/_generated/api";
 import { normalizeUrl } from "../convex/sourceUtils";
 
 const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
-const BYPASS = "freq-opus-extract-2026";
+const BYPASS = process.env.AUTH_BYPASS_SECRET;
+if (!BYPASS) {
+  throw new Error("Set AUTH_BYPASS_SECRET before archiving duplicates");
+}
 ```
 
 (Env-var precedence cleanup for this script belongs to the ingest-script-lib plan, 2026-07-03-06 — do not fold it in here.)

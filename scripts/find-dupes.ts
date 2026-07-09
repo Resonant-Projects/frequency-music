@@ -8,11 +8,18 @@ import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL = process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
+const CONVEX_URL =
+  process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
 const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
-if (!BYPASS) {
-  console.error("AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local");
-  process.exit(1);
+
+function requireBypassSecret(): string {
+  if (!BYPASS) {
+    console.error(
+      "AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required — set it in 1Password / .env.local",
+    );
+    process.exit(1);
+  }
+  return BYPASS;
 }
 
 function normalizeUrl(url: string): string {
@@ -75,7 +82,9 @@ async function main() {
   }
 
   // Find URL dupes
-  const urlDupes = [...byUrl.entries()].filter(([_, sources]) => sources.length > 1);
+  const urlDupes = [...byUrl.entries()].filter(
+    ([_, sources]) => sources.length > 1,
+  );
   if (urlDupes.length > 0) {
     console.log(`=== URL Duplicates (${urlDupes.length} groups) ===\n`);
     let archived = 0;
@@ -98,7 +107,7 @@ async function main() {
             await client.mutation(api.sources.archive, {
               id: s._id,
               reason: `Duplicate of ${sorted[0]._id}`,
-              devBypassSecret: BYPASS,
+              devBypassSecret: requireBypassSecret(),
             });
             console.log(`       → Archived`);
             archived++;
@@ -117,16 +126,22 @@ async function main() {
     .filter(([_, sources]) => sources.length > 1)
     .filter(([_, sources]) => {
       // Skip if all have the same URL (already caught above)
-      const urls = new Set(sources.map((s: any) => normalizeUrl(s.canonicalUrl || "")));
+      const urls = new Set(
+        sources.map((s: any) => normalizeUrl(s.canonicalUrl || "")),
+      );
       return urls.size > 1;
     });
 
   if (titleDupes.length > 0) {
-    console.log(`=== Title-Similar Duplicates (${titleDupes.length} groups) ===\n`);
+    console.log(
+      `=== Title-Similar Duplicates (${titleDupes.length} groups) ===\n`,
+    );
     for (const [title, sources] of titleDupes.slice(0, 20)) {
       console.log(`Title: "${title.slice(0, 60)}"`);
       for (const s of sources) {
-        console.log(`  ${s._id} | ${s.status} | ${s.canonicalUrl?.slice(0, 60)}`);
+        console.log(
+          `  ${s._id} | ${s.status} | ${s.canonicalUrl?.slice(0, 60)}`,
+        );
       }
       console.log();
     }

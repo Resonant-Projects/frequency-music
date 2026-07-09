@@ -391,7 +391,7 @@ Expected: no errors.
 
 - [ ] **Step 6 (optional live check): generate one recipe end-to-end**
 
-Run: `bunx convex run recipes:generateBatch '{"limit": 1, "devBypassSecret": "freq-opus-extract-2026"}'`
+Run: `bunx convex run recipes:generateBatch '{"limit": 1, "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'`
 Expected: completes without an `ArgumentValidationError` mentioning `parameters[0].kind` (pre-fix it fails exactly there). Skip if no draft hypotheses exist.
 
 - [ ] **Step 7: Commit**
