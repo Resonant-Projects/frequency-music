@@ -543,7 +543,7 @@ export function WeeklyTurnsPage() {
               <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
                 <UIBadge tone={preview().campaign ? "gold" : "cream"}>
                   {preview().campaign
-                    ? `Active Campaign: ${preview().campaign.title}`
+                    ? `Active Campaign: ${preview().campaign?.title}`
                     : "No active campaign"}
                 </UIBadge>
                 <For each={preview().theses}>

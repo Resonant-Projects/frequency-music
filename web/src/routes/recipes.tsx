@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/solid-router";
+import type { FunctionReturnType } from "convex/server";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -23,14 +24,7 @@ import {
 import { api } from "../../../convex/_generated/api";
 
 type HypothesisRow = { _id: string; title: string };
-type RecipeRow = {
-  _id: string;
-  title: string;
-  status: string;
-  whyThisMatters?: string;
-  bodyMd: string;
-  parameters: Array<{ type: string; value: string }>;
-};
+type RecipeRow = FunctionReturnType<typeof api.recipes.listByStatus>[number];
 
 function parseParameters(input: string) {
   return input

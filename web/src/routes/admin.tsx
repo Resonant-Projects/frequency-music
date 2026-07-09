@@ -1,4 +1,5 @@
 import { createSignal, For, onMount, Show } from "solid-js";
+import type { FunctionArgs } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
@@ -14,6 +15,8 @@ import {
 } from "../components/ui";
 import { createMutation, createQuery } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+
+type SourceStatus = FunctionArgs<typeof api.admin.setSourceStatus>["status"];
 
 const helperClass = css({
   color: "rgba(245, 240, 232, 0.58)",
@@ -34,7 +37,8 @@ export function AdminPage() {
   const reviewSummary = createQuery(api.vocabulary.reviewSummary);
 
   const [sourceId, setSourceId] = createSignal("");
-  const [sourceStatus, setSourceStatusValue] = createSignal("review_needed");
+  const [sourceStatus, setSourceStatusValue] =
+    createSignal<SourceStatus>("review_needed");
   const [batchLimit, setBatchLimit] = createSignal("25");
   const [notice, setNotice] = createSignal<string | null>(null);
 
@@ -288,7 +292,9 @@ export function AdminPage() {
         <UISelect
           id="admin-source-status"
           value={sourceStatus()}
-          onChange={(event) => setSourceStatusValue(event.currentTarget.value)}
+          onChange={(event) =>
+            setSourceStatusValue(event.currentTarget.value as SourceStatus)
+          }
         >
           <option value="ingested">ingested</option>
           <option value="text_ready">text_ready</option>

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
-import type { Doc } from "../../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
@@ -61,10 +61,11 @@ export function HypothesesPage() {
   const [whyThisMatters, setWhyThisMatters] = createSignal("");
   const [rationale, setRationale] = createSignal("");
   const [thesisId, setThesisId] = createSignal("");
-  const [selectedSources, setSelectedSources] = createSignal<string[]>([]);
+  const [selectedSources, setSelectedSources] =
+    createSignal<Id<"sources">[]>([]);
   const [notice, setNotice] = createSignal<string | null>(null);
 
-  function toggleSource(sourceId: string) {
+  function toggleSource(sourceId: Id<"sources">) {
     setSelectedSources((prev) =>
       prev.includes(sourceId)
         ? prev.filter((id) => id !== sourceId)
@@ -214,8 +215,8 @@ export function HypothesesPage() {
                 >
                   <input
                     type="checkbox"
-                    checked={selectedSources().includes(String(source._id))}
-                    onChange={() => toggleSource(String(source._id))}
+                    checked={selectedSources().includes(source._id)}
+                    onChange={() => toggleSource(source._id)}
                   />
                   <span class={css({ fontSize: "sm" })}>
                     {source.title ?? "Untitled source"}

@@ -18,6 +18,7 @@ import {
   createAction,
   createMutation,
   createQuery,
+  createQueryWithStatus,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import { extractTitle } from "../lib/markdown-utils";
@@ -29,7 +30,7 @@ export function WeeklyBriefDetailPage() {
   const brief = createQuery(api.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
-  const campaignQuery = createQuery(api.campaigns.get, () => {
+  const campaignQuery = createQueryWithStatus(api.campaigns.get, () => {
     const campaignId = brief()?.campaignId;
     return campaignId ? { id: campaignId } : "skip";
   });
@@ -46,7 +47,7 @@ export function WeeklyBriefDetailPage() {
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
   const campaign = createMemo<Doc<"campaigns"> | null>(
-    () => (campaignQuery() as Doc<"campaigns"> | null) ?? null,
+    () => (campaignQuery.data() as Doc<"campaigns"> | null) ?? null,
   );
   const referencedFailures = createMemo(() => referencedFailureEntries() ?? []);
 

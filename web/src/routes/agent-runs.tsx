@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/solid-router";
+import type { FunctionReturnType } from "convex/server";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -16,6 +17,9 @@ import { api } from "../../../convex/_generated/api";
 
 type AgentRunStatus = Doc<"agentRuns">["status"];
 type AgentRunEventKind = Doc<"agentRunEvents">["kind"];
+type AgentRun = FunctionReturnType<
+  typeof api.agentRuns.listRecentPublic
+>[number];
 
 const STATUSES: Array<{ value: "" | AgentRunStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -119,7 +123,7 @@ function formatTime(value?: number) {
   }).format(new Date(value));
 }
 
-function formatDuration(run: Doc<"agentRuns">) {
+function formatDuration(run: AgentRun) {
   const start = run.startedAt ?? run.createdAt;
   const end = run.finishedAt ?? run.updatedAt;
   const durationMs = Math.max(0, end - start);
@@ -178,13 +182,11 @@ export function AgentRunsPage() {
   });
 
   const selectedRun = createMemo(() =>
-    (runs.data() ?? []).find(
-      (run: Doc<"agentRuns">) => run._id === selectedRunId(),
-    ),
+    (runs.data() ?? []).find((run: AgentRun) => run._id === selectedRunId()),
   );
   const listError = createMemo(() => runs.error() ?? counts.error());
 
-  function selectRun(run: Doc<"agentRuns">) {
+  function selectRun(run: AgentRun) {
     setSelectedRunId((current) =>
       current === run._id ? null : (run._id as Id<"agentRuns">),
     );
@@ -348,7 +350,7 @@ export function AgentRunsPage() {
           >
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={runs.data() ?? []}>
-                {(run: Doc<"agentRuns">) => (
+                {(run: AgentRun) => (
                   <button
                     type="button"
                     data-testid="agent-run-row"
