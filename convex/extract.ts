@@ -1,57 +1,12 @@
 "use node";
-import { createGroq } from "@ai-sdk/groq";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText, type LanguageModel } from "ai";
-import { tracedGenerate } from "./tracing";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { DEFAULT_MODEL, MODELS } from "./llm";
+import { generateJson } from "./llmNode";
 
-// ============================================================================
-// MODEL CONFIGURATION
-// ============================================================================
-
-// Default model - can be overridden per-extraction
-const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
-
-// Available models for different use cases
-export const MODELS = {
-  // === GROQ (fast, cheap) ===
-  fast: "groq/moonshotai/kimi-k2-instruct",
-  kimi: "groq/moonshotai/kimi-k2-instruct",
-
-  // === OpenRouter (model variety) ===
-  default: "anthropic/claude-sonnet-4-6",
-  quality: "anthropic/claude-sonnet-4-6",
-  haiku: "anthropic/claude-3-5-haiku-20241022",
-  gemini: "google/gemini-2.5-flash",
-  gpt4: "openai/gpt-4o",
-  deepseek: "deepseek/deepseek-chat-v3-0324",
-  grok: "x-ai/grok-3-mini-beta",
-} as const;
-
-/**
- * Get the appropriate model instance based on model ID
- * Routes to Groq for groq/* models, OpenRouter for everything else
- */
-function getModel(modelId: string): LanguageModel {
-  if (modelId.startsWith("groq/")) {
-    const groqKey = process.env.GROQ_API_KEY;
-    if (!groqKey) {
-      throw new Error("GROQ_API_KEY not configured");
-    }
-    const groq = createGroq({ apiKey: groqKey });
-    // Strip the "groq/" prefix for the actual model ID
-    return groq(modelId.replace("groq/", ""));
-  }
-  const openRouterKey = process.env.OPENROUTER_API_KEY;
-  if (!openRouterKey) {
-    throw new Error("OPENROUTER_API_KEY not configured");
-  }
-  const openrouter = createOpenRouter({ apiKey: openRouterKey });
-  return openrouter(modelId);
-}
+export { MODELS };
 
 // ============================================================================
 // EXTRACTION PROMPTS
@@ -139,16 +94,6 @@ interface ExtractionResult {
   openQuestions: string[];
 }
 
-export function parseExtractionJson(
-  assistantMessage: string,
-): ExtractionResult {
-  const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Could not parse JSON from response");
-  }
-  return JSON.parse(jsonMatch[0]) as ExtractionResult;
-}
-
 export function parseConfidenceBand(
   value: unknown,
 ): "low" | "medium" | "high" | undefined {
@@ -224,31 +169,19 @@ export const extractSource = action({
     const modelId = args.model || DEFAULT_MODEL;
 
     try {
-      const model = getModel(modelId);
-
-      const { text: assistantMessage } = await tracedGenerate(
-        "extract_v2",
-        () =>
-          generateText({
-            model,
-            system: EXTRACT_SYSTEM_PROMPT,
-            prompt: userPrompt,
-            maxOutputTokens: 4096,
-          }),
-        {
+      const { json } = await generateJson({
+        task: "extract_v2",
+        model: modelId,
+        system: EXTRACT_SYSTEM_PROMPT,
+        prompt: userPrompt,
+        metadata: {
           sourceId: args.sourceId,
           sourceType: source.type,
-          model: modelId,
           promptVersion: "extract_v2",
         },
-      );
+      });
 
-      if (!assistantMessage) {
-        throw new Error("No response from model");
-      }
-
-      // Parse the JSON response
-      const extraction = parseExtractionJson(assistantMessage);
+      const extraction = json as ExtractionResult;
 
       // Compute input hash for deduplication
       const encoder = new TextEncoder();

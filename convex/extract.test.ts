@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { parseConfidenceBand, parseExtractionJson } from "./extract";
+import { parseConfidenceBand } from "./extract";
+import { parseExtractionJson } from "./llm";
 
 const extraction = {
   summary: "A compact reading of the source.",
