@@ -14,7 +14,7 @@ import {
   sectionLabel,
 } from "../components/ui";
 import { createMutation, createQuery } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const statGrid = css({
   display: "grid",
@@ -41,14 +41,14 @@ const linkList = css({
 export function ThesisDetailPage() {
   const params = useParams({ from: "/theses/$thesisId" });
   const navigate = useNavigate();
-  const detail = createQuery(convexApi.theses.getDetail, () => ({
+  const detail = createQuery(api.theses.getDetail, () => ({
     id: params().thesisId as Id<"theses">,
   }));
-  const campaigns = createQuery(convexApi.campaigns.listForSelection);
-  const attachThesis = createMutation(convexApi.campaigns.attachThesis);
-  const detachThesis = createMutation(convexApi.campaigns.detachThesis);
+  const campaigns = createQuery(api.campaigns.listForSelection);
+  const attachThesis = createMutation(api.campaigns.attachThesis);
+  const detachThesis = createMutation(api.campaigns.detachThesis);
   const createDraftFromThesis = createMutation(
-    convexApi.editorialArtifacts.createDraftFromThesis,
+    api.editorialArtifacts.createDraftFromThesis,
   );
   const [selectedCampaignId, setSelectedCampaignId] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);

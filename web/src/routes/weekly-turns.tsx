@@ -27,7 +27,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 import { extractTitle } from "../lib/markdown-utils";
 
 function extractExcerpt(bodyMd: string, maxLen = 180): string {
@@ -312,16 +312,16 @@ export function WeeklyTurnsPage() {
     document.title = "Weekly Turns — Frequency Music";
   });
 
-  const briefs = createQueryWithStatus(convexApi.weeklyBriefs.list, () => ({
+  const briefs = createQueryWithStatus(api.weeklyBriefs.list, () => ({
     limit: 12,
   }));
-  const campaigns = createQueryWithStatus(convexApi.campaigns.list, () => ({
+  const campaigns = createQueryWithStatus(api.campaigns.list, () => ({
     limit: 20,
   }));
-  const theses = createQuery(convexApi.theses.list, () => ({
+  const theses = createQuery(api.theses.list, () => ({
     limit: 100,
   }));
-  const steering = createQuery(convexApi.campaigns.getRecommendedActions);
+  const steering = createQuery(api.campaigns.getRecommendedActions);
 
   const briefRows = createMemo<Doc<"weeklyBriefs">[]>(
     () => (briefs.data() ?? []) as Doc<"weeklyBriefs">[],
@@ -337,12 +337,12 @@ export function WeeklyTurnsPage() {
     return map;
   });
 
-  const generateBrief = createAction(convexApi.weeklyBriefs.generate);
-  const createCampaign = createMutation(convexApi.campaigns.create);
-  const updateCampaign = createMutation(convexApi.campaigns.update);
-  const setActiveCampaign = createMutation(convexApi.campaigns.setActive);
+  const generateBrief = createAction(api.weeklyBriefs.generate);
+  const createCampaign = createMutation(api.campaigns.create);
+  const updateCampaign = createMutation(api.campaigns.update);
+  const setActiveCampaign = createMutation(api.campaigns.setActive);
   const createCampaignDraft = createMutation(
-    convexApi.editorialArtifacts.createDraftFromCampaign,
+    api.editorialArtifacts.createDraftFromCampaign,
   );
 
   const [title, setTitle] = createSignal("");

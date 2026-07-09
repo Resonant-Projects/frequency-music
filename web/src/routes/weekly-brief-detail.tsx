@@ -19,25 +19,25 @@ import {
   createMutation,
   createQuery,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 import { extractTitle } from "../lib/markdown-utils";
 
 export function WeeklyBriefDetailPage() {
   const params = useParams({ from: "/weekly-turns/$briefId" });
   const navigate = useNavigate();
 
-  const brief = createQuery(convexApi.weeklyBriefs.get, () => ({
+  const brief = createQuery(api.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
-  const campaignQuery = createQuery(convexApi.campaigns.get, () => {
+  const campaignQuery = createQuery(api.campaigns.get, () => {
     const campaignId = brief()?.campaignId;
     return campaignId ? { id: campaignId } : "skip";
   });
-  const activeThesesQuery = createQuery(convexApi.theses.getByIds, () => ({
+  const activeThesesQuery = createQuery(api.theses.getByIds, () => ({
     ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
   const referencedFailureEntries = createQuery(
-    convexApi.failures.getByKeys,
+    api.failures.getByKeys,
     () => ({
       keys: brief()?.referencedFailureKeys ?? [],
     }),
@@ -55,9 +55,9 @@ export function WeeklyBriefDetailPage() {
     if (b) document.title = `Week ${b.weekOf} — Frequency Music`;
   });
 
-  const publishToNotion = createAction(convexApi.weeklyBriefs.publishToNotion);
+  const publishToNotion = createAction(api.weeklyBriefs.publishToNotion);
   const createRecapDraft = createMutation(
-    convexApi.editorialArtifacts.createDraftFromWeeklyBrief,
+    api.editorialArtifacts.createDraftFromWeeklyBrief,
   );
   const [notice, setNotice] = createSignal<string | null>(null);
   const [publishing, setPublishing] = createSignal(false);
