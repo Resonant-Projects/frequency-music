@@ -2,6 +2,7 @@ import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { action, query } from "./_generated/server";
 import { requireAgentToolSecret } from "./auth";
+import { agentRunEventKindValidator } from "./schema";
 
 const listRecentExtractionsRef = makeFunctionReference<"query">(
   "extractions:listRecent",
@@ -208,17 +209,7 @@ export const appendAgentRunEvent = action({
   args: {
     agentSecret: v.string(),
     runId: v.id("agentRuns"),
-    kind: v.union(
-      v.literal("tool_call"),
-      v.literal("decision"),
-      v.literal("draft_write"),
-      v.literal("error"),
-      v.literal("review_request"),
-      v.literal("status"),
-      v.literal("node"),
-      v.literal("memory_recall"),
-      v.literal("model_call"),
-    ),
+    kind: agentRunEventKindValidator,
     message: v.string(),
     payload: v.optional(v.any()),
   },
