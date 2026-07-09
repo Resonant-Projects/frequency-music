@@ -80,9 +80,7 @@ export function IngestPage() {
   const [notice, setNotice] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
-  const createFromUrlInput = createAction(
-    api.sources.createFromUrlAndQueue,
-  );
+  const createFromUrlInput = createAction(api.sources.createFromUrlAndQueue);
   const createFromYouTubeInput = createAction(
     api.sources.createFromYouTubeAndQueue,
   );
@@ -91,12 +89,9 @@ export function IngestPage() {
   const pollFeedsNow = createAction(api.admin.pollFeedsNow);
   const feeds = createQuery(api.admin.listFeeds);
 
-  const recentSources = createQueryWithStatus(
-    api.sources.listRecent,
-    () => ({
-      limit: 14,
-    }),
-  );
+  const recentSources = createQueryWithStatus(api.sources.listRecent, () => ({
+    limit: 14,
+  }));
 
   async function submitUrl(event: SubmitEvent) {
     event.preventDefault();

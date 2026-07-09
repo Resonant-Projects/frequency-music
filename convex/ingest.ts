@@ -449,7 +449,7 @@ export const ingestUrl = action({
     const existing: Doc<"sources"> | null = await ctx.runQuery(
       api.sources.getByDedupeKey,
       {
-      dedupeKey,
+        dedupeKey,
       },
     );
     if (existing) {
@@ -483,13 +483,13 @@ export const ingestUrl = action({
     // Create source
     const result: { id: Id<"sources">; created: boolean } =
       await ctx.runMutation(api.sources.create, {
-      type: "url",
-      title,
-      canonicalUrl: args.url,
-      rawText,
-      tags: args.tags || [],
-      dedupeKey,
-      devBypassSecret: args.devBypassSecret,
+        type: "url",
+        title,
+        canonicalUrl: args.url,
+        rawText,
+        tags: args.tags || [],
+        dedupeKey,
+        devBypassSecret: args.devBypassSecret,
       });
 
     return { id: result.id, created: result.created };
@@ -532,7 +532,7 @@ export const ingestYouTube = action({
     const existing: Doc<"sources"> | null = await ctx.runQuery(
       api.sources.getByDedupeKey,
       {
-      dedupeKey,
+        dedupeKey,
       },
     );
     if (existing) {
@@ -571,14 +571,14 @@ export const ingestYouTube = action({
     // Create source (transcript will be added later)
     const result: { id: Id<"sources">; created: boolean } =
       await ctx.runMutation(api.sources.create, {
-      type: "youtube",
-      title,
-      author,
-      canonicalUrl: `https://www.youtube.com/watch?v=${videoId}`,
-      youtubeVideoId: videoId,
-      tags: args.tags || [],
-      dedupeKey,
-      devBypassSecret: args.devBypassSecret,
+        type: "youtube",
+        title,
+        author,
+        canonicalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+        youtubeVideoId: videoId,
+        tags: args.tags || [],
+        dedupeKey,
+        devBypassSecret: args.devBypassSecret,
       });
 
     return { id: result.id, created: result.created, videoId };

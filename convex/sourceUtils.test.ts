@@ -40,9 +40,9 @@ describe("source utilities", () => {
   });
 
   test("extracts video ids from /v/ URLs (inherited from ingest.ts copy)", () => {
-    expect(
-      extractYouTubeVideoId("https://www.youtube.com/v/dQw4w9WgXcQ"),
-    ).toBe("dQw4w9WgXcQ");
+    expect(extractYouTubeVideoId("https://www.youtube.com/v/dQw4w9WgXcQ")).toBe(
+      "dQw4w9WgXcQ",
+    );
   });
 
   test("rss dedupe key falls back to canonicalUrl when guid is missing", () => {

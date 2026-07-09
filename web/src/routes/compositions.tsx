@@ -25,12 +25,9 @@ export function CompositionsPage() {
     document.title = "Compositions — Frequency Music";
   });
 
-  const compositions = createQueryWithStatus(
-    api.compositions.list,
-    () => ({
-      limit: 24,
-    }),
-  );
+  const compositions = createQueryWithStatus(api.compositions.list, () => ({
+    limit: 24,
+  }));
   const recipes = createQuery(api.recipes.listByStatus, () => ({
     limit: 40,
   }));

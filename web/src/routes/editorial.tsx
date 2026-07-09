@@ -35,21 +35,16 @@ export function EditorialPage() {
     document.title = "Editorial — Frequency Music";
   });
 
-  const artifacts = createQueryWithStatus(
-    api.editorialArtifacts.list,
-    () => ({
-      limit: 50,
-    }),
-  );
+  const artifacts = createQueryWithStatus(api.editorialArtifacts.list, () => ({
+    limit: 50,
+  }));
   const missingWhyThisMatters = createQuery(
     api.hypotheses.listMissingWhyThisMatters,
     () => ({
       limit: 20,
     }),
   );
-  const exportForAstro = createAction(
-    api.editorialArtifacts.exportForAstro,
-  );
+  const exportForAstro = createAction(api.editorialArtifacts.exportForAstro);
 
   const [notice, setNotice] = createSignal<string | null>(null);
   const [exporting, setExporting] = createSignal(false);

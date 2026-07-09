@@ -22,10 +22,9 @@ export const conceptsAggregate = new TableAggregate<{
   DataModel: DataModel;
   TableName: "concepts";
 }>(components.aggregate, {
-    sortKey: (doc: Doc<"concepts">) => doc.mentionCount,
-    sumValue: (doc: Doc<"concepts">) => doc.mentionCount,
-  },
-);
+  sortKey: (doc: Doc<"concepts">) => doc.mentionCount,
+  sumValue: (doc: Doc<"concepts">) => doc.mentionCount,
+});
 
 // ============================================================================
 // AGGREGATE QUERIES

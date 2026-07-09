@@ -4,10 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import {
-  sourceBlockedReasonValidator,
-  sourceStatusValidator,
-} from "./schema";
+import { sourceBlockedReasonValidator, sourceStatusValidator } from "./schema";
 import {
   computeCanonicalDedupeKey,
   extractYouTubeVideoId,
@@ -512,11 +509,11 @@ export const createFromUrlAndQueue = action({
     const result: ExternalUpsertResult = await ctx.runMutation(
       api.sources.createFromUrlInput,
       {
-      url: args.url,
-      title: args.title,
-      rawText: args.rawText,
-      tags: args.tags,
-      devBypassSecret: args.devBypassSecret,
+        url: args.url,
+        title: args.title,
+        rawText: args.rawText,
+        tags: args.tags,
+        devBypassSecret: args.devBypassSecret,
       },
     );
     const hasReadyContent = Boolean(args.rawText?.trim());
@@ -562,11 +559,11 @@ export const createFromYouTubeAndQueue = action({
     const result: ExternalUpsertResult = await ctx.runMutation(
       api.sources.createFromYouTubeInput,
       {
-      url: args.url,
-      title: args.title,
-      transcript: args.transcript,
-      tags: args.tags,
-      devBypassSecret: args.devBypassSecret,
+        url: args.url,
+        title: args.title,
+        transcript: args.transcript,
+        tags: args.tags,
+        devBypassSecret: args.devBypassSecret,
       },
     );
     const hasReadyContent = Boolean(args.transcript?.trim());

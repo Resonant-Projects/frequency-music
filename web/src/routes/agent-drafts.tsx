@@ -252,12 +252,9 @@ export function AgentDraftsPage() {
     document.title = "Review Queue — Frequency Music";
   });
 
-  const pending = createQueryWithStatus(
-    api.agentDrafts.listPending,
-    () => ({
-      limit: 50,
-    }),
-  );
+  const pending = createQueryWithStatus(api.agentDrafts.listPending, () => ({
+    limit: 50,
+  }));
 
   const [lastPromotion, setLastPromotion] = createSignal<Promotion | null>(
     null,

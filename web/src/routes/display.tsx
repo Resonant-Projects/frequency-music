@@ -67,12 +67,9 @@ export function DisplayPage() {
     limit: DISPLAY_QUEUE_LIMIT,
   }));
   const counts = createQuery(api.inbox.counts);
-  const editorialSignals = createQuery(
-    api.dashboard.editorialSignals,
-    () => ({
-      limit: 6,
-    }),
-  );
+  const editorialSignals = createQuery(api.dashboard.editorialSignals, () => ({
+    limit: 6,
+  }));
 
   const runExtraction = createAction(api.extract.extractSource);
   const updateStatus = createMutation(api.sources.updateStatus);

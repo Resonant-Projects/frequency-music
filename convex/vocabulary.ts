@@ -226,19 +226,19 @@ export const reviewSummary = query({
       Doc<"conceptDomains">[],
       Doc<"relationshipKinds">[],
     ] = await Promise.all([
-        ctx.db
-          .query("parameterKinds")
-          .withIndex("by_status", (q) => q.eq("status", "provisional"))
-          .collect(),
-        ctx.db
-          .query("conceptDomains")
-          .withIndex("by_status", (q) => q.eq("status", "provisional"))
-          .collect(),
-        ctx.db
-          .query("relationshipKinds")
-          .withIndex("by_status", (q) => q.eq("status", "provisional"))
-          .collect(),
-      ]);
+      ctx.db
+        .query("parameterKinds")
+        .withIndex("by_status", (q) => q.eq("status", "provisional"))
+        .collect(),
+      ctx.db
+        .query("conceptDomains")
+        .withIndex("by_status", (q) => q.eq("status", "provisional"))
+        .collect(),
+      ctx.db
+        .query("relationshipKinds")
+        .withIndex("by_status", (q) => q.eq("status", "provisional"))
+        .collect(),
+    ]);
 
     return {
       provisionalParameterKinds: parameterKinds.map((item) => item.name),

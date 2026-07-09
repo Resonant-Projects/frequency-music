@@ -721,9 +721,7 @@ export function Zodiac3D() {
   );
 
   // Phase 3: Pipeline items (loaded once)
-  const pipelineItemsQ = createQueryWithStatus(
-    api.dashboard.pipelineItems,
-  );
+  const pipelineItemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
   const pipelineItems = createMemo<
     | {
         sources: OrbitalSource[];

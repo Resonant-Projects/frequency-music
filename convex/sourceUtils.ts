@@ -89,7 +89,9 @@ export function computeCanonicalDedupeKey(source: {
     case "youtube": {
       const videoId =
         source.youtubeVideoId ??
-        (source.canonicalUrl ? extractYouTubeVideoId(source.canonicalUrl) : null);
+        (source.canonicalUrl
+          ? extractYouTubeVideoId(source.canonicalUrl)
+          : null);
       return videoId ? `yt:${videoId}` : null;
     }
     default:

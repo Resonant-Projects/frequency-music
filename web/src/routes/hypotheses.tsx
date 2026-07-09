@@ -30,12 +30,9 @@ export function HypothesesPage() {
     document.title = "Hypotheses — Frequency Music";
   });
 
-  const hypotheses = createQueryWithStatus(
-    api.hypotheses.listByStatus,
-    () => ({
-      limit: 24,
-    }),
-  );
+  const hypotheses = createQueryWithStatus(api.hypotheses.listByStatus, () => ({
+    limit: 24,
+  }));
   const recentSources = createQuery(api.sources.listRecent, () => ({
     limit: 20,
   }));
@@ -61,8 +58,9 @@ export function HypothesesPage() {
   const [whyThisMatters, setWhyThisMatters] = createSignal("");
   const [rationale, setRationale] = createSignal("");
   const [thesisId, setThesisId] = createSignal("");
-  const [selectedSources, setSelectedSources] =
-    createSignal<Id<"sources">[]>([]);
+  const [selectedSources, setSelectedSources] = createSignal<Id<"sources">[]>(
+    [],
+  );
   const [notice, setNotice] = createSignal<string | null>(null);
 
   function toggleSource(sourceId: Id<"sources">) {

@@ -11,14 +11,15 @@ import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const CONVEX_URL =
-  process.env.CONVEX_SELF_HOSTED_URL ?? process.env.CONVEX_URL;
+const CONVEX_URL = process.env.CONVEX_SELF_HOSTED_URL ?? process.env.CONVEX_URL;
 if (!CONVEX_URL) {
   throw new Error("Set CONVEX_SELF_HOSTED_URL or CONVEX_URL in .env.local");
 }
 const BYPASS = process.env.AUTH_BYPASS_SECRET;
 if (!BYPASS) {
-  throw new Error("Set AUTH_BYPASS_SECRET before applying dedupe-key mutations");
+  throw new Error(
+    "Set AUTH_BYPASS_SECRET before applying dedupe-key mutations",
+  );
 }
 
 type MigrationBatchResult = {

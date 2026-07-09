@@ -23,33 +23,31 @@ export const storeExtraction = internalMutation({
         args.compositionParameters.map(
           async (
             parameter,
-          ): Promise<
-            Doc<"extractions">["compositionParameters"][number]
-          > => {
-        const kind = (parameter.kind ?? parameter.type ?? "").trim();
-        const registry:
-          | {
-              status: NonNullable<
-                Doc<"extractions">["compositionParameters"][number]["registryStatus"]
-              >;
-            }
-          | undefined = kind
-          ? await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
-              name: kind,
-            })
-          : undefined;
-        const canonicalKind =
-          parameter.canonicalKind?.trim() || kind || undefined;
-        return {
-          kind,
-          type: parameter.type ?? kind,
-          value: parameter.value,
-          details: parameter.details,
-          registryStatus:
-            registry?.status ??
-            (parameter.registryStatus as Doc<"extractions">["compositionParameters"][number]["registryStatus"]),
-          canonicalKind,
-        };
+          ): Promise<Doc<"extractions">["compositionParameters"][number]> => {
+            const kind = (parameter.kind ?? parameter.type ?? "").trim();
+            const registry:
+              | {
+                  status: NonNullable<
+                    Doc<"extractions">["compositionParameters"][number]["registryStatus"]
+                  >;
+                }
+              | undefined = kind
+              ? await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
+                  name: kind,
+                })
+              : undefined;
+            const canonicalKind =
+              parameter.canonicalKind?.trim() || kind || undefined;
+            return {
+              kind,
+              type: parameter.type ?? kind,
+              value: parameter.value,
+              details: parameter.details,
+              registryStatus:
+                registry?.status ??
+                (parameter.registryStatus as Doc<"extractions">["compositionParameters"][number]["registryStatus"]),
+              canonicalKind,
+            };
           },
         ),
       );

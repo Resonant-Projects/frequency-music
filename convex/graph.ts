@@ -499,7 +499,7 @@ export const linkExtractionConcepts = internalAction({
     const extraction: Doc<"extractions"> | null = await ctx.runQuery(
       api.extractions.get,
       {
-      id: args.extractionId,
+        id: args.extractionId,
       },
     );
 
@@ -554,7 +554,7 @@ export const linkHypothesisConcepts = internalAction({
     const hypothesis: Doc<"hypotheses"> | null = await ctx.runQuery(
       api.hypotheses.get,
       {
-      id: args.hypothesisId,
+        id: args.hypothesisId,
       },
     );
 

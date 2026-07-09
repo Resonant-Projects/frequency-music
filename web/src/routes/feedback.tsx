@@ -86,12 +86,9 @@ export function FeedbackPage() {
   const compositions = createQuery(api.compositions.list, () => ({
     limit: 40,
   }));
-  const sessions = createQueryWithStatus(
-    api.listening.listRecent,
-    () => ({
-      limit: 30,
-    }),
-  );
+  const sessions = createQueryWithStatus(api.listening.listRecent, () => ({
+    limit: 30,
+  }));
   const createSession = createMutation(api.listening.create);
 
   const compositionById = createMemo(() => {

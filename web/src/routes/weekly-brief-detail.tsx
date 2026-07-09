@@ -37,12 +37,9 @@ export function WeeklyBriefDetailPage() {
   const activeThesesQuery = createQuery(api.theses.getByIds, () => ({
     ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
   }));
-  const referencedFailureEntries = createQuery(
-    api.failures.getByKeys,
-    () => ({
-      keys: brief()?.referencedFailureKeys ?? [],
-    }),
-  );
+  const referencedFailureEntries = createQuery(api.failures.getByKeys, () => ({
+    keys: brief()?.referencedFailureKeys ?? [],
+  }));
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
