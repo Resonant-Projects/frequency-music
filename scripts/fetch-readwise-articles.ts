@@ -1,32 +1,16 @@
 #!/usr/bin/env bun
 /**
- * Fetch articles from Readwise Reader and ingest into Convex
+ * Fetch articles from Readwise Reader and ingest into Convex.
  *
  * Usage: bun run scripts/fetch-readwise-articles.ts [options]
- *   --search <terms>    Search for specific topics
+ *   --search <terms>    Search for specific topics (comma separated)
  *   --location <loc>    Filter by location (new, later, archive)
  *   --limit <n>         Max articles to process
  *   --fetch-full        Fetch full article text via Jina
+ *   --dry-run           Validate options without network/backend access
  */
-
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api";
-
-const READWISE_TOKEN = process.env.READWISE_TOKEN;
-const CONVEX_URL = process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL;
-const JINA_READER_URL = "https://r.jina.ai";
-
-if (!READWISE_TOKEN) {
-  console.error("READWISE_TOKEN must be set");
-  process.exit(1);
-}
-
-if (!CONVEX_URL) {
-  console.error("CONVEX_URL or CONVEX_SELF_HOSTED_URL must be set");
-  process.exit(1);
-}
-
-const client = new ConvexHttpClient(CONVEX_URL);
+import { fetchViaJina } from "./lib/fetchText";
+import { createSourceIngestor } from "./lib/ingest";
 
 interface ReadwiseArticle {
   id: string;
@@ -35,7 +19,7 @@ interface ReadwiseArticle {
   source_url: string;
   category: string;
   location: string;
-  tags: Record<string, any>;
+  tags: Record<string, unknown>;
   site_name: string | null;
   word_count: number | null;
   created_at: string;
@@ -48,9 +32,12 @@ interface ReadwiseArticle {
   notes: string | null;
 }
 
-/**
- * Fetch articles from Readwise Reader API
- */
+function getReadwiseToken(): string {
+  const token = process.env.READWISE_TOKEN;
+  if (!token) throw new Error("READWISE_TOKEN must be set");
+  return token;
+}
+
 async function fetchReadwiseArticles(params: {
   location?: string;
   category?: string;
@@ -58,184 +45,132 @@ async function fetchReadwiseArticles(params: {
 }): Promise<ReadwiseArticle[]> {
   const queryParams = new URLSearchParams();
   if (params.location) queryParams.set("location", params.location);
-  if (params.category)
-    queryParams.set("category", params.category || "article");
+  if (params.category) queryParams.set("category", params.category);
   queryParams.set("page_size", String(params.pageSize || 100));
-
-  const url = `https://readwise.io/api/v3/list/?${queryParams}`;
-
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Token ${READWISE_TOKEN}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `https://readwise.io/api/v3/list/?${queryParams}`,
+    {
+      headers: {
+        Authorization: `Token ${getReadwiseToken()}`,
+        "Content-Type": "application/json",
+      },
     },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Readwise API error: ${response.status}`);
-  }
-
-  const data = await response.json();
+  );
+  if (!response.ok) throw new Error(`Readwise API error: ${response.status}`);
+  const data = (await response.json()) as { results: ReadwiseArticle[] };
   return data.results;
 }
 
-/**
- * Fetch full article content via Jina Reader
- */
-async function fetchFullArticle(url: string): Promise<string | null> {
-  try {
-    const jinaUrl = `${JINA_READER_URL}/${url}`;
-    const response = await fetch(jinaUrl, {
-      headers: { Accept: "text/plain" },
-    });
-
-    if (!response.ok) {
-      console.log(`   ⚠️ Jina failed for ${url}: ${response.status}`);
-      return null;
-    }
-
-    return await response.text();
-  } catch (error) {
-    console.log(`   ⚠️ Jina error: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Filter articles by search terms
- */
 function filterBySearchTerms(
   articles: ReadwiseArticle[],
   searchTerms: string[],
 ): ReadwiseArticle[] {
   if (searchTerms.length === 0) return articles;
-
-  const patterns = searchTerms.map((t) => new RegExp(t, "i"));
-
+  const patterns = searchTerms.map((term) => new RegExp(term, "i"));
   return articles.filter((article) => {
     const searchText = `${article.title} ${article.summary || ""} ${article.site_name || ""}`;
-    return patterns.some((p) => p.test(searchText));
+    return patterns.some((pattern) => pattern.test(searchText));
   });
 }
 
-/**
- * Main function
- */
+const DEFAULT_SEARCH_TERMS = [
+  "music",
+  "frequency",
+  "harmonic",
+  "acoustic",
+  "cymatics",
+  "tuning",
+  "psychoacoustic",
+  "neuroscience",
+  "perception",
+  "physics",
+  "mathematics",
+  "wave",
+  "resonance",
+  "vibration",
+  "432",
+  "528",
+  "solfeggio",
+  "temperament",
+  "interval",
+  "consonance",
+  "dissonance",
+  "spectrum",
+  "fourier",
+];
+
 async function main() {
   const args = process.argv.slice(2);
   let searchTerms: string[] = [];
   let location: string | undefined;
   let limit = 20;
   let fetchFull = false;
+  for (let index = 0; index < args.length; index++) {
+    if (args[index] === "--search" && args[index + 1]) {
+      searchTerms = args[index + 1].split(",").map((term) => term.trim());
+      index++;
+    }
+    if (args[index] === "--location" && args[index + 1]) {
+      location = args[index + 1];
+      index++;
+    }
+    if (args[index] === "--limit" && args[index + 1]) {
+      limit = Number.parseInt(args[index + 1], 10);
+      index++;
+    }
+    if (args[index] === "--fetch-full") fetchFull = true;
+  }
+  if (searchTerms.length === 0) searchTerms = DEFAULT_SEARCH_TERMS;
 
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--search" && args[i + 1]) {
-      searchTerms = args[i + 1].split(",").map((s) => s.trim());
-      i++;
-    }
-    if (args[i] === "--location" && args[i + 1]) {
-      location = args[i + 1];
-      i++;
-    }
-    if (args[i] === "--limit" && args[i + 1]) {
-      limit = parseInt(args[i + 1], 10);
-      i++;
-    }
-    if (args[i] === "--fetch-full") {
-      fetchFull = true;
-    }
+  if (args.includes("--dry-run")) {
+    console.log(
+      `DRY RUN: fetch Readwise location=${location || "any"} limit=${limit} fetchFull=${fetchFull} searchTerms=${searchTerms.length}`,
+    );
+    return;
   }
 
-  // Default search terms for research content
-  if (searchTerms.length === 0) {
-    searchTerms = [
-      "music",
-      "frequency",
-      "harmonic",
-      "acoustic",
-      "cymatics",
-      "tuning",
-      "psychoacoustic",
-      "neuroscience",
-      "perception",
-      "physics",
-      "mathematics",
-      "wave",
-      "resonance",
-      "vibration",
-      "432",
-      "528",
-      "solfeggio",
-      "temperament",
-      "interval",
-      "consonance",
-      "dissonance",
-      "spectrum",
-      "fourier",
-    ];
-  }
-
-  console.log(`Fetching Readwise articles...`);
+  console.log("Fetching Readwise articles...");
   console.log(`Search terms: ${searchTerms.join(", ")}`);
   console.log(`Location filter: ${location || "any"}`);
   console.log(`Fetch full text: ${fetchFull}\n`);
 
-  // Fetch articles
   const allArticles = await fetchReadwiseArticles({
     location,
     category: "article",
     pageSize: 200,
   });
-
   console.log(`Found ${allArticles.length} total articles in Reader`);
-
-  // Filter by search terms
   const relevantArticles = filterBySearchTerms(allArticles, searchTerms).slice(
     0,
     limit,
   );
   console.log(`${relevantArticles.length} match research criteria\n`);
 
+  const ingestor = createSourceIngestor();
   let success = 0;
   let skipped = 0;
   let failed = 0;
-
   for (const article of relevantArticles) {
     console.log(`📄 ${article.title?.slice(0, 60)}...`);
-    console.log(`   URL: ${article.source_url}`);
-    console.log(
-      `   Location: ${article.location}, Progress: ${Math.round(article.reading_progress * 100)}%`,
-    );
+    const dedupeKey = `readwise:${article.id}`;
+    if (await ingestor.alreadyIngested(dedupeKey)) {
+      console.log("   ⏭️ Already ingested");
+      skipped++;
+      continue;
+    }
 
-    try {
-      // Generate dedupeKey
-      const dedupeKey = `readwise:${article.id}`;
-
-      // Check if already exists
-      const existing = await client.query(api.sources.getByDedupeKey, {
-        dedupeKey,
-      });
-      if (existing) {
-        console.log(`   ⏭️ Already ingested`);
-        skipped++;
-        continue;
+    let rawText = article.content || article.summary || "";
+    if (fetchFull && article.source_url && rawText.length < 2000) {
+      console.log("   📥 Fetching full text...");
+      const fullText = await fetchViaJina(article.source_url);
+      if (fullText.ok && fullText.text.length > rawText.length) {
+        rawText = fullText.text;
+        console.log(`   ✓ Got ${fullText.text.length} chars`);
       }
+    }
 
-      // Get full text if requested
-      let rawText = article.content || article.summary || "";
-      if (fetchFull && article.source_url && rawText.length < 2000) {
-        console.log(`   📥 Fetching full text...`);
-        const fullText = await fetchFullArticle(article.source_url);
-        if (fullText && fullText.length > rawText.length) {
-          rawText = fullText;
-          console.log(`   ✓ Got ${fullText.length} chars`);
-        }
-        // Rate limit
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      // Create source in Convex
-      const result = await client.mutation(api.sources.create, {
+    const summary = await ingestor.ingest([
+      {
         type: "url",
         title: article.title,
         author: article.author || undefined,
@@ -244,6 +179,7 @@ async function main() {
           ? Date.parse(article.published_date)
           : undefined,
         rawText: rawText || undefined,
+        fetchText: false,
         tags: ["readwise", ...Object.keys(article.tags || {})],
         metadata: {
           readwiseId: article.id,
@@ -253,20 +189,11 @@ async function main() {
           readingProgress: article.reading_progress,
         },
         dedupeKey,
-      });
-
-      if (result.created) {
-        console.log(`   ✅ Ingested (${rawText.length} chars)`);
-        success++;
-      } else {
-        console.log(`   ⏭️ Duplicate`);
-        skipped++;
-      }
-    } catch (error) {
-      console.log(`   ❌ ${error}`);
-      failed++;
-    }
-    console.log();
+      },
+    ]);
+    success += summary.created;
+    skipped += summary.skipped;
+    failed += summary.failed;
   }
 
   console.log(`\n${"=".repeat(50)}`);
