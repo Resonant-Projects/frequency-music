@@ -2,7 +2,11 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { visibilityValidator } from "./schema";
+import {
+  sourceBlockedReasonValidator,
+  sourceStatusValidator,
+  visibilityValidator,
+} from "./schema";
 import { feedReturnValidator } from "./validators";
 
 // Intentionally public — read-only data, personal research tool.
@@ -95,28 +99,8 @@ export const setFeedEnabled = mutation({
 export const setSourceStatus = mutation({
   args: {
     id: v.id("sources"),
-    status: v.union(
-      v.literal("ingested"),
-      v.literal("text_ready"),
-      v.literal("extracting"),
-      v.literal("extracted"),
-      v.literal("review_needed"),
-      v.literal("triaged"),
-      v.literal("promoted_followers"),
-      v.literal("promoted_public"),
-      v.literal("archived"),
-    ),
-    blockedReason: v.optional(
-      v.union(
-        v.literal("no_text"),
-        v.literal("copyright"),
-        v.literal("needs_metadata"),
-        v.literal("needs_tagging"),
-        v.literal("ai_error"),
-        v.literal("needs_human_review"),
-        v.literal("duplicate"),
-      ),
-    ),
+    status: sourceStatusValidator,
+    blockedReason: v.optional(sourceBlockedReasonValidator),
     blockedDetails: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },

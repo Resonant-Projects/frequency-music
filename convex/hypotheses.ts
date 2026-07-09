@@ -5,20 +5,12 @@ import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
+import { hypothesisStatusValidator } from "./schema";
 import {
   hypothesisReturnValidator,
   sourceReturnValidator,
   thesisReturnValidator,
 } from "./validators";
-
-const hypothesisStatusValidator = v.union(
-  v.literal("draft"),
-  v.literal("queued"),
-  v.literal("active"),
-  v.literal("evaluated"),
-  v.literal("revised"),
-  v.literal("retired"),
-);
 
 interface GeneratedHypothesisPayload {
   title: string;
