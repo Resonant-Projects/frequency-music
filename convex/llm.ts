@@ -37,17 +37,17 @@ export function isGroqModel(model: string): boolean {
 
 /**
  * Preserve the extraction parser's characterized greedy-brace behavior while
- * its ownership moves out of extract.ts. New generator paths use the stricter
- * fenced-first extractJsonObject below.
+ * its ownership moves out of extract.ts. Hypothesis and recipe parse sites use
+ * the stricter fenced-first extractJsonObject below.
  */
-export function parseExtractionJson<T = Record<string, unknown>>(
+export function parseExtractionJson(
   assistantMessage: string,
-): T {
+): Record<string, unknown> {
   const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     throw new Error("Could not parse JSON from response");
   }
-  return JSON.parse(jsonMatch[0]) as T;
+  return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
 }
 
 /**

@@ -8,8 +8,8 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, type LanguageModel } from "ai";
 import {
   DEFAULT_MODEL,
-  extractJsonObject,
   isGroqModel,
+  parseExtractionJson,
   TOKEN_BUDGETS,
   type LlmTask,
 } from "./llm";
@@ -72,10 +72,13 @@ export async function generateLlmText(
   return { text };
 }
 
-/** generateLlmText + strict JSON extraction, for callers that parse node-side (extract). */
+/**
+ * generateLlmText + the extraction parser's characterized greedy-brace
+ * behavior. Other generators use extractJsonObject on the V8 side.
+ */
 export async function generateJson(
   opts: GenerateOpts,
 ): Promise<{ text: string; json: unknown }> {
   const { text } = await generateLlmText(opts);
-  return { text, json: extractJsonObject(text) };
+  return { text, json: parseExtractionJson(text) };
 }
