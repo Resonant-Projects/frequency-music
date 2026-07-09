@@ -1,26 +1,8 @@
 import { httpRouter } from "convex/server";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
-import {
-  appendAgentRunEventHttp,
-  claimNextPendingRunHttp,
-  createAgentReviewDraftHttp,
-  createAgentRunHttp,
-  getAgentRunHttp,
-  getEditorialSignalsHttp,
-  getExtractionHttp,
-  getRecentRecipesHttp,
-  getRecommendedActionsHttp,
-  getSelfImprovementStatsHttp,
-  listActiveThesesHttp,
-  listFailureArchiveHttp,
-  listRecentExtractionsHttp,
-  listRecentHypothesesHttp,
-  markAgentRunCompletedHttp,
-  markAgentRunFailedHttp,
-  markAgentRunNeedsReviewHttp,
-  searchSourcesByConceptHttp,
-} from "./agentToolsHttp";
+import { agentToolHttpHandlers } from "./agentToolsHttp";
+import { AGENT_TOOL_NAMES } from "./shared/agentToolManifest";
 import { generateDedupeKey } from "./sourceUtils";
 
 const http = httpRouter();
@@ -75,113 +57,13 @@ http.route({
   handler: httpAction(() => json({ ok: true }) as unknown as Promise<Response>),
 });
 
-http.route({
-  path: "/agent-tools/listRecentExtractions",
-  method: "POST",
-  handler: listRecentExtractionsHttp,
-});
-
-http.route({
-  path: "/agent-tools/getExtraction",
-  method: "POST",
-  handler: getExtractionHttp,
-});
-
-http.route({
-  path: "/agent-tools/listRecentHypotheses",
-  method: "POST",
-  handler: listRecentHypothesesHttp,
-});
-
-http.route({
-  path: "/agent-tools/listActiveTheses",
-  method: "POST",
-  handler: listActiveThesesHttp,
-});
-
-http.route({
-  path: "/agent-tools/listFailureArchive",
-  method: "POST",
-  handler: listFailureArchiveHttp,
-});
-
-http.route({
-  path: "/agent-tools/getEditorialSignals",
-  method: "POST",
-  handler: getEditorialSignalsHttp,
-});
-
-http.route({
-  path: "/agent-tools/getRecentRecipes",
-  method: "POST",
-  handler: getRecentRecipesHttp,
-});
-
-http.route({
-  path: "/agent-tools/getRecommendedActions",
-  method: "POST",
-  handler: getRecommendedActionsHttp,
-});
-
-http.route({
-  path: "/agent-tools/searchSourcesByConcept",
-  method: "POST",
-  handler: searchSourcesByConceptHttp,
-});
-
-http.route({
-  path: "/agent-tools/createAgentRun",
-  method: "POST",
-  handler: createAgentRunHttp,
-});
-
-http.route({
-  path: "/agent-tools/appendAgentRunEvent",
-  method: "POST",
-  handler: appendAgentRunEventHttp,
-});
-
-http.route({
-  path: "/agent-tools/markAgentRunCompleted",
-  method: "POST",
-  handler: markAgentRunCompletedHttp,
-});
-
-http.route({
-  path: "/agent-tools/markAgentRunNeedsReview",
-  method: "POST",
-  handler: markAgentRunNeedsReviewHttp,
-});
-
-http.route({
-  path: "/agent-tools/createAgentReviewDraft",
-  method: "POST",
-  handler: createAgentReviewDraftHttp,
-});
-
-http.route({
-  path: "/agent-tools/markAgentRunFailed",
-  method: "POST",
-  handler: markAgentRunFailedHttp,
-});
-
-http.route({
-  path: "/agent-tools/claimNextPendingRun",
-  method: "POST",
-  handler: claimNextPendingRunHttp,
-});
-
-http.route({
-  path: "/agent-tools/getAgentRun",
-  method: "POST",
-  handler: getAgentRunHttp,
-});
-
-http.route({
-  path: "/agent-tools/getSelfImprovementStats",
-  method: "POST",
-  handler: getSelfImprovementStatsHttp,
-});
+for (const name of AGENT_TOOL_NAMES) {
+  http.route({
+    path: `/agent-tools/${name}`,
+    method: "POST",
+    handler: agentToolHttpHandlers[name],
+  });
+}
 
 http.route({
   path: "/ingest/notion",
