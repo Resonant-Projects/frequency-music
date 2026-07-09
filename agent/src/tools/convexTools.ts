@@ -1,5 +1,6 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
+import { AGENT_RUN_EVENT_KINDS } from "../../../convex/shared/agentContract";
 
 const rawTextKeys = new Set(["rawText", "transcript"]);
 
@@ -200,17 +201,7 @@ export const appendAgentRunEvent = tool(
       "Append an audit-only lifecycle event to a Convex agent run. Does not mutate research data.",
     schema: z.object({
       runId: z.string().min(1),
-      kind: z.enum([
-        "tool_call",
-        "decision",
-        "draft_write",
-        "error",
-        "review_request",
-        "status",
-        "node",
-        "memory_recall",
-        "model_call",
-      ]),
+      kind: z.enum(AGENT_RUN_EVENT_KINDS),
       message: z.string().min(1),
       payload: z.unknown().optional(),
     }),
