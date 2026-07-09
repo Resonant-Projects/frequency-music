@@ -27,7 +27,7 @@ operator-gated.
 | 003 | CI workflow + check-only lint/format/typecheck scripts | P1 | S | — | TODO |
 | 004 | Characterization tests for RSS/LLM-output parsers | P2 | M | — (best before/with 003's CI) | TODO |
 | 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | TODO |
-| 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | TODO |
+| 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | DONE |
 | 007 | Dependency hygiene: dead deps, npm lockfile, linter split | P3 | S | 006 | TODO |
 | 008 | Run first eval baseline sweep (operational) | P2 | S–M | — (needs live API keys) | TODO |
 | 009 | Spike: `recipe_export_v1` contract + .scl emitter | P3 | M | — (needs `.env.local`) | TODO |
