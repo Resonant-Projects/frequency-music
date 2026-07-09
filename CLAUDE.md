@@ -184,7 +184,7 @@ Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
 3. `extracted` — AI extraction complete
 4. `triaged` — Reviewed and categorized
 
-## Models (convex/extract.ts)
+## Models (convex/llm.ts)
 
 ```typescript
 export const MODELS = {
@@ -203,7 +203,7 @@ export const MODELS = {
 } as const;
 ```
 
-> Source of truth: convex/extract.ts — update this table when that changes.
+> Source of truth: convex/llm.ts (MODELS moved there by the LLM-module consolidation) — update this table when that changes.
 >
 > **Note:** Never use Llama models. Sonnet 4.6 for automated cron extractions, Opus for manual re-extractions.
 
