@@ -139,7 +139,17 @@ interface ExtractionResult {
   openQuestions: string[];
 }
 
-function parseConfidenceBand(
+export function parseExtractionJson(
+  assistantMessage: string,
+): ExtractionResult {
+  const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("Could not parse JSON from response");
+  }
+  return JSON.parse(jsonMatch[0]) as ExtractionResult;
+}
+
+export function parseConfidenceBand(
   value: unknown,
 ): "low" | "medium" | "high" | undefined {
   return value === "low" || value === "medium" || value === "high"
@@ -238,12 +248,7 @@ export const extractSource = action({
       }
 
       // Parse the JSON response
-      const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("Could not parse JSON from response");
-      }
-
-      const extraction: ExtractionResult = JSON.parse(jsonMatch[0]);
+      const extraction = parseExtractionJson(assistantMessage);
 
       // Compute input hash for deduplication
       const encoder = new TextEncoder();
