@@ -22,7 +22,7 @@ operator-gated.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Rotate & de-commit auth-bypass secret, HTTPS transport | P1 | S | — | TODO |
+| 001 | Rotate & de-commit auth-bypass secret, HTTPS transport | P1 | S | — | BLOCKED (STOP-3: TLS unavailable; operator rotation required) |
 | 002 | Internalize concept-graph write surface + constant-time secret check | P1 | S–M | — | TODO |
 | 003 | CI workflow + check-only lint/format/typecheck scripts | P1 | S | — | TODO |
 | 004 | Characterization tests for RSS/LLM-output parsers | P2 | M | — (best before/with 003's CI) | TODO |
