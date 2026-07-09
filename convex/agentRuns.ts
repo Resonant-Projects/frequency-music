@@ -203,7 +203,8 @@ async function appendRunEvent(
       | "error"
       | "review_request"
       | "status"
-      | "node";
+      | "node"
+      | "model_call";
     message: string;
     payload?: unknown;
   },

@@ -1,6 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import type { Doc } from "./_generated/dataModel";
-import { generateBriefCore, parseBriefResponse, selectRecentBriefInputs } from "./weeklyBriefs";
+import {
+  type BriefEditableContent,
+  briefContentChanged,
+  computeBriefEditCapture,
+  generateBriefCore,
+  mergeBriefContent,
+  parseBriefResponse,
+  selectBriefContent,
+  selectRecentBriefInputs,
+} from "./weeklyBriefs";
 
 describe("weekly brief response parsing", () => {
   test("extracts todo items and prompt variants while stripping the JSON block", () => {
@@ -103,4 +112,79 @@ Research summary.
       }),
     ).rejects.toThrow("No recent hypotheses or recipes found. Generate some first.");
   });
+});
+
+function baseBrief(): BriefEditableContent & { promptVersion: string; model: string } {
+  return {
+    bodyMd: "# Week of March 26\n\nOriginal body.",
+    todo: ["Try branch A"],
+    studioPrompts: {
+      tenMinuteMd: "Ten minute prompt",
+      thirtyMinuteMd: "Thirty minute prompt",
+      ninetyMinuteMd: "Ninety minute prompt",
+    },
+    promptVersion: "v2.phase3",
+    model: "anthropic/claude-sonnet-4-6",
+  };
+}
+
+describe("weekly brief edit capture", () => {
+  test("selectBriefContent picks only the editable fields", () => {
+    const brief = baseBrief();
+    expect(selectBriefContent(brief)).toEqual({
+      bodyMd: brief.bodyMd,
+      todo: brief.todo,
+      studioPrompts: brief.studioPrompts,
+    });
+  });
+
+  test("mergeBriefContent falls back to existing values for omitted fields", () => {
+    const existing = selectBriefContent(baseBrief());
+    const merged = mergeBriefContent(existing, { bodyMd: "# Edited body" });
+    expect(merged.bodyMd).toBe("# Edited body");
+    expect(merged.todo).toEqual(existing.todo);
+    expect(merged.studioPrompts).toEqual(existing.studioPrompts);
+  });
+
+  test("briefContentChanged returns false for identical content and true when a field differs", () => {
+    const content = selectBriefContent(baseBrief());
+    expect(briefContentChanged(content, { ...content })).toBe(false);
+    expect(briefContentChanged(content, { ...content, bodyMd: "Changed" })).toBe(true);
+  });
+
+  test("computeBriefEditCapture fires on AI-origin edit with content change", () => {
+    const brief = baseBrief();
+    const capture = computeBriefEditCapture(brief, { bodyMd: "# Human-edited body" });
+
+    expect(capture).not.toBeNull();
+    expect(capture?.promptVersion).toBe("v2.phase3");
+    expect(capture?.model).toBe("anthropic/claude-sonnet-4-6");
+    expect(capture?.generated.bodyMd).toBe(brief.bodyMd);
+    expect(capture?.edited.bodyMd).toBe("# Human-edited body");
+    // Untouched fields carry through unchanged on both sides.
+    expect(capture?.generated.todo).toEqual(brief.todo);
+    expect(capture?.edited.todo).toEqual(brief.todo);
+  });
+
+  test("computeBriefEditCapture does not fire when no fields are provided", () => {
+    expect(computeBriefEditCapture(baseBrief(), {})).toBeNull();
+  });
+
+  test("computeBriefEditCapture does not fire when the provided value matches the stored value", () => {
+    const brief = baseBrief();
+    expect(computeBriefEditCapture(brief, { bodyMd: brief.bodyMd })).toBeNull();
+  });
+
+  test("computeBriefEditCapture fires on a todo-only edit even when bodyMd is untouched", () => {
+    const brief = baseBrief();
+    const capture = computeBriefEditCapture(brief, { todo: ["Try branch B"] });
+    expect(capture).not.toBeNull();
+    expect(capture?.edited.todo).toEqual(["Try branch B"]);
+    expect(capture?.generated.todo).toEqual(["Try branch A"]);
+  });
+
+  // Note: weekly briefs have no `origin` field and no human-authored insert
+  // path (`create` is an internalMutation only called from the AI generation
+  // pipeline in generateBriefCore), so there is no "non-AI row" case to
+  // cover for this entity -- every row qualifies.
 });

@@ -208,6 +208,8 @@ export const appendAgentRunEvent = tool(
         "review_request",
         "status",
         "node",
+        "memory_recall",
+        "model_call",
       ]),
       message: z.string().min(1),
       payload: z.unknown().optional(),
@@ -277,6 +279,18 @@ export const createAgentReviewDraft = tool(
   },
 );
 
+export const getSelfImprovementStats = tool(
+  ({ daysBack }) => callConvex("getSelfImprovementStats", { daysBack }),
+  {
+    name: "get_self_improvement_stats",
+    description:
+      "Fetch read-only self-improvement stats for the weekly brief's 'what the system learned' section: new edit-captures count, agent-review-draft approve/reject counts with rejection notes, and memory_recall run-event notes, all window-filtered by daysBack (default 7). Prompt promotions are not tracked here yet — never claim one happened unless told separately. All counts come straight from Convex; never invent or round numbers not present in the response.",
+    schema: z.object({
+      daysBack: z.number().int().positive().max(90).optional(),
+    }),
+  },
+);
+
 export const markAgentRunFailed = tool(
   ({ runId, summary, error, traceUrl }) =>
     callConvex("markAgentRunFailed", { runId, summary, error, traceUrl }),
@@ -310,6 +324,7 @@ export const convexTools = [
   markAgentRunNeedsReview,
   createAgentReviewDraft,
   markAgentRunFailed,
+  getSelfImprovementStats,
 ];
 
 export { stripLargeTextFields };

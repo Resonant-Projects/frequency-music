@@ -11,6 +11,7 @@ import {
   getExtractionHttp,
   getRecentRecipesHttp,
   getRecommendedActionsHttp,
+  getSelfImprovementStatsHttp,
   listActiveThesesHttp,
   listFailureArchiveHttp,
   listRecentExtractionsHttp,
@@ -174,6 +175,12 @@ http.route({
   path: "/agent-tools/getAgentRun",
   method: "POST",
   handler: getAgentRunHttp,
+});
+
+http.route({
+  path: "/agent-tools/getSelfImprovementStats",
+  method: "POST",
+  handler: getSelfImprovementStatsHttp,
 });
 
 http.route({

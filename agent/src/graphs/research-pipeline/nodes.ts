@@ -1,3 +1,5 @@
+import { z } from "zod";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import {
   appendAgentRunEvent,
   createAgentReviewDraft,
@@ -13,7 +15,15 @@ import {
   markAgentRunFailed,
   markAgentRunNeedsReview,
 } from "../../tools/convexTools.js";
-import { createResearchDeepAgentDraft } from "../../agents/research-pipeline/deepAgent.js";
+import {
+  createResearchDeepAgentDraft,
+  hypothesisDraftPayloadSchema,
+  recipeDraftPayloadSchema,
+  RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS,
+  sanitizeSpecialistDraft,
+  type ResearchDraftSpecialistInput,
+} from "../../agents/research-pipeline/deepAgent.js";
+import { runCodexTask } from "../../subagents/codexWorker.js";
 import { findHallucinatedIds, hallucinatedIdError } from "./idGate.js";
 import type {
   AuditEvent,
@@ -366,20 +376,164 @@ export function routeCandidateNode(
   return state.route ?? state.selectedCandidate?.route ?? "stop";
 }
 
+// Output shape Codex must produce for the CODEX_SPECIALIST path. Mirrors the
+// OpenRouter specialist's JSON contract (RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS)
+// so both paths pass through the same `sanitizeSpecialistDraft` gate below.
+const codexSpecialistOutputSchema = z.object({
+  kind: z.enum(["hypothesis_draft", "recipe_draft"]),
+  title: z.string(),
+  summary: z.string(),
+  candidateIds: z.array(z.string()),
+  needsReview: z.boolean(),
+  payload: z
+    .union([hypothesisDraftPayloadSchema, recipeDraftPayloadSchema])
+    .optional(),
+});
+
+/** provider/model/usage/threadId for the per-model-call agentRunEvents event. */
+interface ModelCallInfo {
+  provider: string;
+  model?: string;
+  usage?: unknown;
+  threadId?: string;
+}
+
+interface SpecialistOutcome {
+  draft: ResearchPipelineDraft;
+  provider: string;
+  usedFallback: boolean;
+  warning?: string;
+  /** Present whenever a model actually answered; absent on a total failure. */
+  modelCall?: ModelCallInfo;
+}
+
+function specialistContext(input: ResearchDraftSpecialistInput) {
+  return {
+    selectedCandidate: input.selectedCandidate,
+    candidateCount: input.candidates.length,
+    fallbackDraft: input.fallbackDraft,
+    scope: input.scope,
+  };
+}
+
+async function createReviewDraftViaOpenRouter(
+  input: ResearchDraftSpecialistInput,
+  options: { model?: BaseChatModel } = {},
+): Promise<SpecialistOutcome> {
+  const specialist = await createResearchDeepAgentDraft(input, options);
+  const llmOutput = specialist.llmOutput;
+  // withFallback tags llmOutput.provider with whichever provider actually
+  // answered (codex-sdk or openrouter-anthropic), which is more accurate than
+  // the static getConfiguredModelProvider() label specialist.provider carries.
+  const answeringProvider =
+    typeof llmOutput?.provider === "string"
+      ? llmOutput.provider
+      : specialist.provider;
+  return {
+    draft: specialist.draft,
+    provider: answeringProvider,
+    usedFallback: specialist.usedFallback,
+    warning: specialist.warning,
+    modelCall: llmOutput
+      ? {
+          provider: answeringProvider,
+          model:
+            typeof llmOutput.model === "string" ? llmOutput.model : undefined,
+          usage: llmOutput.usage,
+          threadId:
+            typeof llmOutput.threadId === "string"
+              ? llmOutput.threadId
+              : undefined,
+        }
+      : undefined,
+  };
+}
+
+/**
+ * CODEX_SPECIALIST=true alternative specialist implementation: delegates the
+ * whole draft subtask to a Codex thread (default read-only sandbox) instead
+ * of a single OpenRouter completion, then passes the parsed result through
+ * the same `sanitizeSpecialistDraft` gate as the OpenRouter path so the node
+ * output shape is identical either way. On any Codex failure this falls back
+ * to the OpenRouter specialist path — Codex being down must never fail the
+ * run (plan's standing rule).
+ */
+async function createReviewDraftViaCodex(
+  input: ResearchDraftSpecialistInput,
+  codexRunner: typeof runCodexTask,
+  fallbackOptions: { model?: BaseChatModel } = {},
+): Promise<SpecialistOutcome> {
+  // One variable feeds both the thread's model override and the audit label,
+  // so the model_call event never reports a model the thread didn't run with.
+  const codexModel = process.env.CODEX_MODEL || undefined;
+  try {
+    const result = await codexRunner({
+      instructions: RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS,
+      context: specialistContext(input),
+      outputSchema: codexSpecialistOutputSchema,
+      model: codexModel,
+    });
+    const draft = sanitizeSpecialistDraft(result.output, input.fallbackDraft);
+    return {
+      draft: draft ?? input.fallbackDraft,
+      provider: "codex-sdk",
+      usedFallback: !draft,
+      warning: draft
+        ? undefined
+        : "Codex specialist returned an unparsable draft.",
+      // Store the thread id in the model_call audit event so a long-running
+      // task can be resumed with resumeThread after a worker restart.
+      modelCall: {
+        provider: "codex-sdk",
+        model: codexModel ?? "codex-default",
+        usage: result.usage ?? undefined,
+        threadId: result.threadId ?? undefined,
+      },
+    };
+  } catch (error) {
+    const fallback = await createReviewDraftViaOpenRouter(
+      input,
+      fallbackOptions,
+    );
+    const codexMessage = errorMessage(error);
+    return {
+      ...fallback,
+      usedFallback: true,
+      warning: fallback.warning
+        ? `Codex specialist unavailable (${codexMessage}); ${fallback.warning}`
+        : `Codex specialist unavailable (${codexMessage}); used OpenRouter fallback.`,
+    };
+  }
+}
+
+/**
+ * `runCodexTask` and `model` are injectable so routing can be unit-tested
+ * without a live Codex CLI or configured model provider.
+ */
+export async function createSpecialistOutcome(
+  input: ResearchDraftSpecialistInput,
+  options: { runCodexTask?: typeof runCodexTask; model?: BaseChatModel } = {},
+): Promise<SpecialistOutcome> {
+  if (process.env.CODEX_SPECIALIST === "true") {
+    return createReviewDraftViaCodex(
+      input,
+      options.runCodexTask ?? runCodexTask,
+      {
+        model: options.model,
+      },
+    );
+  }
+  return createReviewDraftViaOpenRouter(input, { model: options.model });
+}
+
 export async function createReviewDraftNode(
   state: ResearchPipelineState,
 ): Promise<ResearchPipelineUpdate> {
-  // TODO(plan-01 T5): behind CODEX_SPECIALIST==="true", route this specialist
-  // call through `runCodexTask` (src/subagents/codexWorker.ts) to produce the
-  // same ResearchPipelineDraft via sanitizeSpecialistDraft, and store the
-  // returned threadId in agentRunEvents for resumeThread after restarts. Kept
-  // out of this pass to avoid deep graph edits (nodes.ts is a cross-plan
-  // chokepoint with plan 05).
   const fallbackDraft = buildNeedsReviewDraft({
     selectedCandidate: state.selectedCandidate,
     candidates: state.candidates,
   });
-  const specialist = await createResearchDeepAgentDraft({
+  const specialistInput: ResearchDraftSpecialistInput = {
     selectedCandidate: state.selectedCandidate,
     candidates: state.candidates,
     fallbackDraft,
@@ -391,8 +545,21 @@ export async function createReviewDraftNode(
       failureArchive: state.failureArchive,
       editorialSignals: state.editorialSignals,
     },
-  });
-  const draft = specialist.draft;
+  };
+
+  const outcome = await createSpecialistOutcome(specialistInput);
+  const draft = outcome.draft;
+
+  // Per-model-call quota audit trail called for in 00-master-sequence.md:
+  // provider used, model, usage, and threadId when Codex answered.
+  const modelCallEvents = outcome.modelCall
+    ? await appendRemoteAuditEvent(
+        state.agentRunId,
+        "model_call",
+        `Recorded ${outcome.modelCall.provider} specialist model call`,
+        outcome.modelCall,
+      )
+    : [];
 
   // Hallucinated-ID gate: a payload-bearing draft may only reference ids the
   // run actually read. If the specialist fabricated any id we FAIL the run
@@ -406,42 +573,42 @@ export async function createReviewDraftNode(
         draft,
         route: "stop",
         errors: [gateError],
-        auditEvents: await appendRemoteAuditEvent(
-          state.agentRunId,
-          "error",
-          "Rejected research-pipeline draft: hallucinated-ID gate tripped",
-          { hallucinatedIds, draftKind: draft.kind, title: draft.title },
-        ),
+        auditEvents: [
+          ...modelCallEvents,
+          ...(await appendRemoteAuditEvent(
+            state.agentRunId,
+            "error",
+            "Rejected research-pipeline draft: hallucinated-ID gate tripped",
+            { hallucinatedIds, draftKind: draft.kind, title: draft.title },
+          )),
+        ],
       };
     }
   }
 
-  // TODO(plan-01 T3): append a per-model-call agentRunEvents event capturing
-  // the provider that actually answered (read response.llmOutput.provider from
-  // withFallback rather than the static getConfiguredModelProvider() label),
-  // the model, usage, and threadId when Codex answered. Deferred to a later
-  // Convex-coordinated wave; `specialist.provider` below is still the static
-  // configured label and may not reflect the answering provider after fallback.
   const auditPayload = {
     draftKind: draft.kind,
     title: draft.title,
     candidateIds: draft.candidateIds,
-    provider: specialist.provider,
-    usedFallback: specialist.usedFallback,
-    warning: specialist.warning ? errorMessage(specialist.warning) : undefined,
+    provider: outcome.provider,
+    usedFallback: outcome.usedFallback,
+    warning: outcome.warning ? errorMessage(outcome.warning) : undefined,
   };
 
   return {
     draft,
     route: "stop",
-    auditEvents: await appendRemoteAuditEvent(
-      state.agentRunId,
-      "review_request",
-      specialist.usedFallback
-        ? "Prepared fallback research-pipeline draft for human review"
-        : "Prepared Codex/deep-agent research-pipeline draft for human review",
-      auditPayload,
-    ),
+    auditEvents: [
+      ...modelCallEvents,
+      ...(await appendRemoteAuditEvent(
+        state.agentRunId,
+        "review_request",
+        outcome.usedFallback
+          ? "Prepared fallback research-pipeline draft for human review"
+          : "Prepared Codex/deep-agent research-pipeline draft for human review",
+        auditPayload,
+      )),
+    ],
   };
 }
 

@@ -47,6 +47,9 @@ const agentToolRefs = {
     "agentTools:claimNextPendingRun",
   ),
   getAgentRun: makeFunctionReference<"action">("agentTools:getAgentRun"),
+  getSelfImprovementStats: makeFunctionReference<"action">(
+    "agentTools:getSelfImprovementStats",
+  ),
 };
 
 type AgentToolName = keyof typeof agentToolRefs;
@@ -116,3 +119,6 @@ export const claimNextPendingRunHttp = makeAgentToolHttpHandler(
   "claimNextPendingRun",
 );
 export const getAgentRunHttp = makeAgentToolHttpHandler("getAgentRun");
+export const getSelfImprovementStatsHttp = makeAgentToolHttpHandler(
+  "getSelfImprovementStats",
+);

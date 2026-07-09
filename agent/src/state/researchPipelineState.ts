@@ -18,7 +18,15 @@ export interface ResearchCandidate {
 }
 
 export interface AuditEvent {
-  kind: "tool_call" | "decision" | "draft_write" | "error" | "review_request" | "status" | "node";
+  kind:
+    | "tool_call"
+    | "decision"
+    | "draft_write"
+    | "error"
+    | "review_request"
+    | "status"
+    | "node"
+    | "model_call";
   message: string;
   payload?: unknown;
   createdAt: string;

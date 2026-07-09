@@ -27,6 +27,7 @@ All tool calls require `AGENT_TOOL_SECRET`.
 | `getRecentRecipes` | `/agent-tools/getRecentRecipes` | `recipes:listByStatus` | Fetch recent recipes with parameters and protocols. | Gives the agent concrete studio actions, not just abstract claims. |
 | `getRecommendedActions` | `/agent-tools/getRecommendedActions` | `campaigns:getRecommendedActions` | Fetch deterministic next-action candidates. | Agent recommendations should explain when they diverge from these deterministic suggestions. |
 | `searchSourcesByConcept` | `/agent-tools/searchSourcesByConcept` | `graph:searchSourcesByConcept` | Fetch sources linked to a concept name. | Returns source metadata only. It intentionally omits `rawText` and transcripts to protect context windows. |
+| `getSelfImprovementStats` | `/agent-tools/getSelfImprovementStats` | `agentTools:selfImprovementStats` | Fetch a window-filtered summary of edit-capture volume, `agentReviewDrafts` approve/reject counts with rejection notes, and `memory_recall` run-event notes. | Backs the weekly brief's "what the system learned" section. Accepts optional `daysBack` (default 7, max 90). Degrades gracefully to all-zero counts and empty note arrays when the window is empty; never fabricate numbers not returned here. Prompt/policy promotions are NOT included — there is no queryable store for them yet (they live in `docs/eval-baselines.md` + the decision log via `scripts/langsmith/promote.ts`); wire a field here once one exists instead of building a parallel store. |
 
 ### Audit-only write tools
 
