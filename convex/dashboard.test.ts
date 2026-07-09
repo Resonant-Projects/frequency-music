@@ -29,6 +29,117 @@ function makeDb(data: {
 }
 
 describe("editorial signals", () => {
+  test("preserves normalized concept-to-hypothesis linkage", async () => {
+    const db = makeDb({
+      concepts: [
+        {
+          _id: "concept-cymatics",
+          name: "cymatics",
+          displayName: "Cymatics",
+          domain: "wave",
+          mentionCount: 2,
+          hypothesisCount: 2,
+        },
+        {
+          _id: "concept-resonance",
+          name: "resonance",
+          displayName: "Resonance",
+          domain: "wave",
+          mentionCount: 2,
+          hypothesisCount: 2,
+        },
+      ],
+      hypotheses: [
+        {
+          _id: "hypothesis-shared",
+          concepts: [" Cymatics ", " RESONANCE "],
+          resolution: "supported",
+          status: "active",
+        },
+        {
+          _id: "hypothesis-cymatics",
+          concepts: ["CYMATICS"],
+          resolution: "contradicted",
+          status: "retired",
+        },
+        {
+          _id: "hypothesis-resonance",
+          concepts: ["resonance"],
+          resolution: "inconclusive",
+          status: "active",
+        },
+      ],
+      recipes: [
+        {
+          _id: "recipe-shared",
+          hypothesisId: "hypothesis-shared",
+          status: "draft",
+        },
+        {
+          _id: "recipe-cymatics",
+          hypothesisId: "hypothesis-cymatics",
+          status: "archived",
+        },
+        {
+          _id: "recipe-resonance",
+          hypothesisId: "hypothesis-resonance",
+          status: "draft",
+        },
+      ],
+      compositions: [
+        {
+          _id: "composition-shared",
+          recipeId: "recipe-shared",
+        },
+        {
+          _id: "composition-cymatics",
+          recipeId: "recipe-cymatics",
+        },
+      ],
+      listeningSessions: [
+        {
+          _id: "session-shared",
+          compositionId: "composition-shared",
+          createdAt: 100,
+          expandVerdict: "yes",
+          ratings: { expandability: 5 },
+        },
+        {
+          _id: "session-cymatics",
+          compositionId: "composition-cymatics",
+          createdAt: 200,
+          expandVerdict: "no",
+          ratings: { expandability: 1 },
+        },
+      ],
+    });
+
+    const result = await computeEditorialSignals(db as any);
+    const cymatics = result.concepts.find(
+      (concept) => concept.conceptName === "cymatics",
+    );
+    const resonance = result.concepts.find(
+      (concept) => concept.conceptName === "resonance",
+    );
+
+    expect(cymatics?.linkedRecipes).toBe(2);
+    expect(cymatics?.linkedCompositions).toBe(2);
+    expect(resonance?.linkedRecipes).toBe(2);
+    expect(resonance?.linkedCompositions).toBe(1);
+  });
+
+  test("returns empty signals when every table is empty", async () => {
+    const result = await computeEditorialSignals(
+      makeDb({ concepts: [] }) as any,
+    );
+
+    expect(result).toEqual({
+      concepts: [],
+      highYieldClusters: [],
+      lowYieldClusters: [],
+    });
+  });
+
   test("scores concepts beyond the old 200-row cap", async () => {
     const fillerConcepts = Array.from({ length: 200 }, (_, index) => ({
       _id: `concept-filler-${index}`,

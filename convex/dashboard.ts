@@ -1,15 +1,167 @@
+import type { GenericDatabaseReader } from "convex/server";
 import { v } from "convex/values";
-import type { Doc, Id } from "./_generated/dataModel";
-import { query } from "./_generated/server";
+import { internal } from "./_generated/api";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+  query,
+} from "./_generated/server";
 import { resolveDomainsForSector } from "./domainMappings";
 import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
 
 type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
 
-type DbReader = {
-  query: (table: string) => any;
+type DbReader = GenericDatabaseReader<DataModel>;
+
+export async function readStat(db: DbReader, key: string): Promise<number> {
+  const row = await db
+    .query("stats")
+    .withIndex("by_key", (q) => q.eq("key", key))
+    .first();
+  return row?.value ?? 0;
+}
+
+const COUNTED_TABLES = [
+  "sources",
+  "extractions",
+  "hypotheses",
+  "recipes",
+  "compositions",
+  "weeklyBriefs",
+  "feeds",
+] as const;
+type CountedTable = (typeof COUNTED_TABLES)[number];
+type CountPageResult = {
+  count: number;
+  inbox: {
+    ingested: number;
+    textReady: number;
+    reviewNeeded: number;
+    blocked: number;
+  };
+  cursor: string | null;
+  isDone: boolean;
 };
+
+export const countPage = internalQuery({
+  args: { table: v.string(), cursor: v.union(v.string(), v.null()) },
+  returns: v.object({
+    count: v.number(),
+    inbox: v.object({
+      ingested: v.number(),
+      textReady: v.number(),
+      reviewNeeded: v.number(),
+      blocked: v.number(),
+    }),
+    cursor: v.union(v.string(), v.null()),
+    isDone: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const page = await ctx.db
+      .query(args.table as CountedTable)
+      .paginate({ cursor: args.cursor, numItems: 500 });
+    const inbox = {
+      ingested: 0,
+      textReady: 0,
+      reviewNeeded: 0,
+      blocked: 0,
+    };
+    if (args.table === "sources") {
+      for (const row of page.page as Doc<"sources">[]) {
+        if (row.visibility !== "private") continue;
+        if (row.status === "ingested") inbox.ingested++;
+        if (row.status === "text_ready") inbox.textReady++;
+        if (row.status === "review_needed") inbox.reviewNeeded++;
+        if (
+          (row.status === "ingested" ||
+            row.status === "text_ready" ||
+            row.status === "review_needed") &&
+          Boolean(row.blockedReason)
+        )
+          inbox.blocked++;
+      }
+    }
+    return {
+      count: page.page.length,
+      inbox,
+      cursor: page.continueCursor,
+      isDone: page.isDone,
+    };
+  },
+});
+
+export const writeStat = internalMutation({
+  args: { key: v.string(), value: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("stats")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+    if (existing) {
+      await ctx.db.patch("stats", existing._id, {
+        value: args.value,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("stats", {
+        key: args.key,
+        value: args.value,
+        updatedAt: Date.now(),
+      });
+    }
+    return null;
+  },
+});
+
+export const recomputeStats = internalAction({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    for (const table of COUNTED_TABLES) {
+      let cursor: string | null = null;
+      let total = 0;
+      const inboxTotals = {
+        ingested: 0,
+        textReady: 0,
+        reviewNeeded: 0,
+        blocked: 0,
+      };
+      while (true) {
+        const page: CountPageResult = await ctx.runQuery(
+          internal.dashboard.countPage,
+          {
+            table,
+            cursor,
+          },
+        );
+        total += page.count;
+        inboxTotals.ingested += page.inbox.ingested;
+        inboxTotals.textReady += page.inbox.textReady;
+        inboxTotals.reviewNeeded += page.inbox.reviewNeeded;
+        inboxTotals.blocked += page.inbox.blocked;
+        if (page.isDone) break;
+        cursor = page.cursor;
+      }
+      await ctx.runMutation(internal.dashboard.writeStat, {
+        key: `count.${table}`,
+        value: total,
+      });
+      if (table === "sources") {
+        for (const [key, value] of Object.entries(inboxTotals)) {
+          await ctx.runMutation(internal.dashboard.writeStat, {
+            key: `inbox.${key}`,
+            value,
+          });
+        }
+      }
+    }
+    return null;
+  },
+});
 
 const emptySectors: Record<SectorId, { sources: number; claims: number }> = {
   math: { sources: 0, claims: 0 },
@@ -78,21 +230,21 @@ export const pipeline = query({
       compositions,
       weeklyBriefs,
     ] = await Promise.all([
-      ctx.db.query("sources").collect(),
-      ctx.db.query("extractions").collect(),
-      ctx.db.query("hypotheses").collect(),
-      ctx.db.query("recipes").collect(),
-      ctx.db.query("compositions").collect(),
-      ctx.db.query("weeklyBriefs").collect(),
+      readStat(ctx.db, "count.sources"),
+      readStat(ctx.db, "count.extractions"),
+      readStat(ctx.db, "count.hypotheses"),
+      readStat(ctx.db, "count.recipes"),
+      readStat(ctx.db, "count.compositions"),
+      readStat(ctx.db, "count.weeklyBriefs"),
     ]);
 
     return {
-      sources: sources.length,
-      extractions: extractions.length,
-      hypotheses: hypotheses.length,
-      recipes: recipes.length,
-      compositions: compositions.length,
-      weeklyBriefs: weeklyBriefs.length,
+      sources,
+      extractions,
+      hypotheses,
+      recipes,
+      compositions,
+      weeklyBriefs,
     };
   },
 });
@@ -184,22 +336,27 @@ export const domainSubTopics = query({
     if (allConcepts.length === 0) return [];
 
     // Get is_a and part_of edges to find natural clusters
+    const parentEdges = await Promise.all(
+      allConcepts.map((concept) =>
+        ctx.db
+          .query("edges")
+          .withIndex("by_from", (q) =>
+            q.eq("fromType", "concept").eq("fromId", concept.name),
+          )
+          .filter((q) =>
+            q.or(
+              q.eq(q.field("relationship"), "is_a"),
+              q.eq(q.field("relationship"), "part_of"),
+            ),
+          )
+          .first(),
+      ),
+    );
     const parentMap = new Map<string, string>();
-    for (const concept of allConcepts) {
-      const edges = await ctx.db
-        .query("edges")
-        .withIndex("by_from", (q) =>
-          q.eq("fromType", "concept").eq("fromId", concept.name),
-        )
-        .filter((q) =>
-          q.or(
-            q.eq(q.field("relationship"), "is_a"),
-            q.eq(q.field("relationship"), "part_of"),
-          ),
-        )
-        .first();
-      if (edges) parentMap.set(concept.name, edges.toId);
-    }
+    allConcepts.forEach((concept, index) => {
+      const edge = parentEdges[index];
+      if (edge) parentMap.set(concept.name, edge.toId);
+    });
 
     // Group by parent concept, or fall back to keyword clustering
     const groups = new Map<string, string[]>();
@@ -355,6 +512,16 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
     recipesByHypothesisId.set(String(recipe.hypothesisId), existing);
   }
 
+  const hypothesesByConcept = new Map<string, Doc<"hypotheses">[]>();
+  for (const hypothesis of hypotheses) {
+    for (const raw of hypothesis.concepts ?? []) {
+      const key = raw.toLowerCase().trim();
+      const existing = hypothesesByConcept.get(key) ?? [];
+      existing.push(hypothesis);
+      hypothesesByConcept.set(key, existing);
+    }
+  }
+
   const compositionsByRecipeId = new Map<string, Doc<"compositions">[]>();
   for (const composition of compositions) {
     const existing =
@@ -372,12 +539,7 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
   }
 
   const rows = concepts.map((concept: Doc<"concepts">) => {
-    const linkedHypotheses = hypotheses.filter(
-      (hypothesis: Doc<"hypotheses">) =>
-        (hypothesis.concepts ?? []).some(
-          (item: string) => item.toLowerCase().trim() === concept.name,
-        ),
-    );
+    const linkedHypotheses = hypothesesByConcept.get(concept.name) ?? [];
     const linkedRecipes = linkedHypotheses.flatMap(
       (hypothesis: Doc<"hypotheses">) =>
         recipesByHypothesisId.get(String(hypothesis._id)) ?? [],
