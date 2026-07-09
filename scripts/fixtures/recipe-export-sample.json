@@ -1,0 +1,215 @@
+[
+  {
+    "_id": "js77hvp05pbx9dxwkvshpn0fkn81yc4m",
+    "hypothesisId": "jh72dyj6wbjyqayn14s7ywfa1x81y3ak",
+    "title": "Music Cognition Comparison Micro-Study",
+    "parameters": [
+      {
+        "details": { "bpm": 82 },
+        "type": "tempo",
+        "value": "82 BPM"
+      },
+      {
+        "details": { "barsMax": 32, "barsMin": 24, "meter": "4/4" },
+        "type": "form",
+        "value": "24-32 bar controlled comparison"
+      },
+      {
+        "details": {
+          "objective": "maximize audibility of roughness differences"
+        },
+        "type": "harmonicProfile",
+        "value": "Sustained triadic texture with fixed voicing"
+      },
+      {
+        "details": { "role": "comparison arm A" },
+        "type": "harmonicProfile",
+        "value": "Octatonic scale (half-step/whole-step diminished): 8 tones, 4-fold rotational symmetry, maximally even"
+      },
+      {
+        "details": { "role": "comparison arm B" },
+        "type": "harmonicProfile",
+        "value": "Hexatonic scale: 6 tones, 3-fold rotational symmetry, not maximally even"
+      },
+      {
+        "details": { "role": "comparison arm C" },
+        "type": "harmonicProfile",
+        "value": "Interval size range for adjacent scale degrees: 1–3 semitones (cross-cultural norm)"
+      },
+      {
+        "details": { "role": "fixed control" },
+        "type": "tuningSystem",
+        "value": "12-tone equal temperament"
+      }
+    ],
+    "protocol": {
+      "durationSecs": 82,
+      "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
+      "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
+      "panelPlanned": ["self", "musician_peer_1", "musician_peer_2"],
+      "studyType": "comparison",
+      "whatStaysConstant": [
+        "MIDI notes",
+        "arrangement length",
+        "tempo",
+        "sound sources",
+        "automation",
+        "mix balance",
+        "export settings",
+        "tuning system"
+      ],
+      "whatVaries": ["harmonic profile strategy"]
+    },
+    "dawChecklist": [
+      "Create one master MIDI arrangement template.",
+      "Freeze instrument and FX chain before rendering comparison arms.",
+      "Render Version A with harmonic profile: Octatonic scale (half-step/whole-step diminished): 8 tones, 4-fold rotational symmetry, maximally even.",
+      "Render Version B with harmonic profile: Hexatonic scale: 6 tones, 3-fold rotational symmetry, not maximally even.",
+      "Render Version C with harmonic profile: Interval size range for adjacent scale degrees: 1–3 semitones (cross-cultural norm).",
+      "Keep tuning fixed at 12-tone equal temperament across all versions.",
+      "Match loudness across exports to remove gain bias.",
+      "Rename exports to blind labels (e.g., X/Y/Z).",
+      "Rate each version for perceived consonance, roughness, and continuity.",
+      "Capture bar-level notes for perceptual spikes.",
+      "Summarize whether observed ordering supports or contradicts hypothesis."
+    ]
+  },
+  {
+    "_id": "js74dj82m6v49axj9p8nxqpvg181qk8y",
+    "hypothesisId": "jh7ajq8cee5t8zh6hgzj0gjwxx81p785",
+    "title": "Frequency-research Comparison Micro-Study",
+    "parameters": [
+      {
+        "details": { "bpm": 82 },
+        "type": "tempo",
+        "value": "82 BPM"
+      },
+      {
+        "details": { "barsMax": 32, "barsMin": 24, "meter": "4/4" },
+        "type": "form",
+        "value": "24-32 bar controlled comparison"
+      },
+      {
+        "details": {
+          "objective": "maximize audibility of roughness differences"
+        },
+        "type": "harmonicProfile",
+        "value": "Sustained triadic texture with fixed voicing"
+      },
+      {
+        "details": { "role": "comparison arm A" },
+        "type": "tuningSystem",
+        "value": "72-EDO"
+      },
+      {
+        "details": { "role": "comparison arm B" },
+        "type": "tuningSystem",
+        "value": "19-EDO"
+      },
+      {
+        "details": { "role": "comparison arm C" },
+        "type": "tuningSystem",
+        "value": "31-EDO"
+      }
+    ],
+    "protocol": {
+      "durationSecs": 82,
+      "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
+      "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
+      "panelPlanned": ["self", "musician_peer_1", "musician_peer_2"],
+      "studyType": "comparison",
+      "whatStaysConstant": [
+        "MIDI notes",
+        "arrangement length",
+        "tempo",
+        "sound sources",
+        "automation",
+        "mix balance",
+        "export settings"
+      ],
+      "whatVaries": ["tuning strategy (72-EDO vs 19-EDO vs 31-EDO)"]
+    },
+    "dawChecklist": [
+      "Create one master MIDI arrangement template.",
+      "Freeze instrument and FX chain before rendering comparison arms.",
+      "Render Version A using 72-EDO.",
+      "Render Version B using 19-EDO.",
+      "Render Version C using 31-EDO.",
+      "Match loudness across exports to remove gain bias.",
+      "Rename exports to blind labels (e.g., X/Y/Z).",
+      "Rate each version for consonance, roughness, and continuity.",
+      "Capture bar-level notes for perceptual spikes.",
+      "Summarize whether observed ordering supports or contradicts hypothesis."
+    ]
+  },
+  {
+    "_id": "js75mrddksdhkqdbjqqd0sjyd181qm7m",
+    "hypothesisId": "jh7ar2fja41rss34mexbb42yrx81qrwe",
+    "title": "Equal Temperament Comparison Micro-Study",
+    "parameters": [
+      {
+        "details": { "bpm": 120 },
+        "type": "tempo",
+        "value": "120 BPM"
+      },
+      {
+        "details": { "barsMax": 32, "barsMin": 24, "meter": "4/4" },
+        "type": "form",
+        "value": "24-32 bar controlled comparison"
+      },
+      {
+        "details": {
+          "objective": "maximize audibility of roughness differences"
+        },
+        "type": "harmonicProfile",
+        "value": "Sustained triadic texture with fixed voicing"
+      },
+      {
+        "details": { "role": "comparison arm A" },
+        "type": "tuningSystem",
+        "value": "12-Tone Equal Temperament (12-TET)"
+      },
+      {
+        "details": { "role": "comparison arm B" },
+        "type": "tuningSystem",
+        "value": "Just Intonation"
+      },
+      {
+        "details": { "role": "comparison arm C" },
+        "type": "tuningSystem",
+        "value": "Quarter-comma meantone"
+      }
+    ],
+    "protocol": {
+      "durationSecs": 56,
+      "listeningContext": "Quiet room; repeat on headphones and monitors at fixed playback level.",
+      "listeningMethod": "Blinded multi-version comparison with consistent rating rubric.",
+      "panelPlanned": ["self", "musician_peer_1", "musician_peer_2"],
+      "studyType": "comparison",
+      "whatStaysConstant": [
+        "MIDI notes",
+        "arrangement length",
+        "tempo",
+        "sound sources",
+        "automation",
+        "mix balance",
+        "export settings"
+      ],
+      "whatVaries": [
+        "tuning strategy (12-Tone Equal Temperament (12-TET) vs Just Intonation vs Quarter-comma meantone)"
+      ]
+    },
+    "dawChecklist": [
+      "Create one master MIDI arrangement template.",
+      "Freeze instrument and FX chain before rendering comparison arms.",
+      "Render Version A using 12-Tone Equal Temperament (12-TET).",
+      "Render Version B using Just Intonation.",
+      "Render Version C using Quarter-comma meantone.",
+      "Match loudness across exports to remove gain bias.",
+      "Rename exports to blind labels (e.g., X/Y/Z).",
+      "Rate each version for consonance, roughness, and continuity.",
+      "Capture bar-level notes for perceptual spikes.",
+      "Summarize whether observed ordering supports or contradicts hypothesis."
+    ]
+  }
+]
