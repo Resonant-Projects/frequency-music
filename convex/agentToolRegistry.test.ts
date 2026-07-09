@@ -104,6 +104,16 @@ describe("agent tool registry", () => {
     }
   });
 
+  test("self-improvement stats stays behind the secret-guarded action", () => {
+    const backingQuery = agentTools.selfImprovementStats as {
+      isInternal: boolean;
+    };
+    expect(backingQuery.isInternal).toBe(true);
+    expect(agentToolByName.getSelfImprovementStats.backing).toBe(
+      "internal.agentTools:selfImprovementStats",
+    );
+  });
+
   test("action args match the frozen hand-written validators", () => {
     for (const definition of AGENT_TOOL_REGISTRY) {
       const registered = agentTools[

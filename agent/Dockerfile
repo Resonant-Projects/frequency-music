@@ -1,9 +1,10 @@
 # Always-on agent image. node:22 provides the Codex CLI + langgraphjs dev server;
 # Bun is the worker runtime (runner uses top-level await + .js ESM specifiers).
 FROM node:22-slim AS base
-WORKDIR /app
+WORKDIR /app/agent
 
 ARG CODEX_CLI_VERSION=0.142.5
+ARG BUN_VERSION=1.3.14
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Bake the Codex CLI binary (fine to bake) and Bun. Codex AUTH is never baked —
@@ -13,7 +14,7 @@ ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates unzip \
     && npm install -g @openai/codex@${CODEX_CLI_VERSION} \
-    && curl -fsSL https://bun.sh/install | bash \
+    && curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --shell /bin/bash agent \
     && mkdir -p /data/codex-home /data/codex-scratch \
@@ -24,11 +25,12 @@ ENV CODEX_HOME=/data/codex-home
 ENV CODEX_WORKDIR=/data/codex-scratch
 ENV CODEX_ENABLED=true
 
-# npm-managed deps (package-lock authoritative); Bun runs them from node_modules.
-COPY package.json package-lock.json* ./
-RUN npm install
+# bun.lock is authoritative; Bun installs and runs dependencies from node_modules.
+COPY agent/package.json agent/bun.lock ./
+RUN bun install --frozen-lockfile
 
-COPY . .
+COPY agent/. ./
+COPY convex/shared /app/convex/shared
 RUN chown -R agent:agent /app
 USER agent
 EXPOSE 2024

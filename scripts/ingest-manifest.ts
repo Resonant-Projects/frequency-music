@@ -2,7 +2,8 @@
 /**
  * Ingest a JSON manifest of sources. New source batches are data, not code.
  *
- * Usage: bun run scripts/ingest-manifest.ts data/<batch>.json [--dry-run]
+ * Dry-run by default; pass --apply to ingest the manifest.
+ * Usage: bun run scripts/ingest-manifest.ts data/<batch>.json [--apply]
  */
 import { readFileSync } from "node:fs";
 import { type SourceManifestItem, createSourceIngestor } from "./lib/ingest";
@@ -11,7 +12,7 @@ const args = process.argv.slice(2);
 const path = args.find((arg) => !arg.startsWith("--"));
 if (!path) {
   console.error(
-    "Usage: bun run scripts/ingest-manifest.ts <manifest.json> [--dry-run]",
+    "Usage: bun run scripts/ingest-manifest.ts <manifest.json> [--apply]",
   );
   process.exit(1);
 }
@@ -22,7 +23,9 @@ if (!Array.isArray(parsed)) {
 }
 const items = parsed as SourceManifestItem[];
 
-if (args.includes("--dry-run")) {
+const apply = args.includes("--apply");
+
+if (!apply) {
   const typeCounts = new Map<string, number>();
   for (const item of items) {
     typeCounts.set(item.type, (typeCounts.get(item.type) ?? 0) + 1);
@@ -31,7 +34,7 @@ if (args.includes("--dry-run")) {
     .map(([type, count]) => `${type}:${count}`)
     .join(",");
   console.log(
-    `DRY RUN: manifest=${path} sources=${items.length} types=${types}`,
+    `DRY RUN: manifest=${path} sources=${items.length} types=${types} (use --apply to ingest)`,
   );
 } else {
   console.log(`Ingesting ${items.length} sources from ${path}\n`);

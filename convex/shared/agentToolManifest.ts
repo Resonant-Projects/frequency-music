@@ -99,7 +99,7 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
   entry(
     "getSelfImprovementStats",
     "read",
-    "agentTools:selfImprovementStats",
+    "internal.agentTools:selfImprovementStats",
     "Fetch read-only self-improvement stats for the weekly brief's 'what the system learned' section: new edit-captures count, agent-review-draft approve/reject counts with rejection notes, and memory_recall run-event notes, all window-filtered by daysBack (default 7). Prompt promotions are not tracked here yet — never claim one happened unless told separately. All counts come straight from Convex; never invent or round numbers not present in the response.",
     "Accepts optional `daysBack` (default 7, max 90) and degrades to all-zero counts and empty note arrays when the window is empty. Prompt/policy promotions are not included because they live in `docs/eval-baselines.md` and the decision log via `scripts/langsmith/promote.ts`; wire a field here once a queryable store exists.",
   ),

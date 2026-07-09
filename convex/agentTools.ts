@@ -3,7 +3,7 @@
 // derive from the shared registry.
 import { zodToConvexFields } from "convex-helpers/server/zod4";
 import { v } from "convex/values";
-import { action, query } from "./_generated/server";
+import { action, internalQuery } from "./_generated/server";
 import { agentToolByName } from "./agentToolRegistry";
 import { requireAgentToolSecret } from "./auth";
 import type { AgentToolName } from "./shared/agentToolArgs";
@@ -164,7 +164,7 @@ const RECENT_ROWS_LIMIT = 500;
  * the existing by_status_updatedAt index) and delegates all window logic to
  * the pure `summarizeSelfImprovementWindow` above.
  */
-export const selfImprovementStats = query({
+export const selfImprovementStats = internalQuery({
   args: { daysBack: v.optional(v.number()) },
   returns: selfImprovementStatsReturnValidator,
   handler: async (ctx, args) => {

@@ -113,12 +113,14 @@ WORKER_POLL_INTERVAL_MS=15000
 
 ### 4. Deploy
 ```bash
-cd agent
-docker compose build
-docker compose up -d langgraph-worker          # always-on worker (default)
-# optional: docker compose --profile memory up -d postgres   # plan-05 agent memory
-# optional: docker compose --profile dev up langgraph-dev     # LangGraph Studio
+cd frequency-music
+docker compose -f agent/docker-compose.yml build
+docker compose -f agent/docker-compose.yml up -d langgraph-worker
+# optional: docker compose -f agent/docker-compose.yml --profile memory up -d postgres
+# optional: docker compose -f agent/docker-compose.yml --profile dev up langgraph-dev
 ```
+The compose services build from the repository root so the image can copy the
+agent workspace together with its imported `convex/shared` contracts.
 Egress required: Convex site URL, OpenRouter, OpenAI/ChatGPT, LangSmith.
 
 ### 5. Verify

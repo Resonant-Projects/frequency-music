@@ -1,6 +1,7 @@
 // Convex-only bindings from the pure manifest to backing function references
 // and behavior. Cross-workspace consumers import the manifest, not this file.
 import { makeFunctionReference } from "convex/server";
+import { internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { AgentToolName } from "./shared/agentToolArgs";
 import {
@@ -57,8 +58,8 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
       limit: (args.limit as number) ?? 20,
     }),
   getSelfImprovementStats: (ctx, args) =>
-    ctx.runQuery(queryRef("agentTools:selfImprovementStats"), {
-      daysBack: args.daysBack,
+    ctx.runQuery(internal.agentTools.selfImprovementStats, {
+      daysBack: args.daysBack as number | undefined,
     }),
   createAgentRun: async (ctx, args) => {
     const created = (await ctx.runMutation(

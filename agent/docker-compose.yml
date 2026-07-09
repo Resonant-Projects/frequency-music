@@ -1,7 +1,9 @@
 services:
   # Always-on worker: polls Convex for queued agentRuns and executes them.
   langgraph-worker:
-    build: .
+    build:
+      context: ..
+      dockerfile: agent/Dockerfile
     restart: unless-stopped
     command: ["bun", "run", "worker"]
     env_file:
@@ -16,7 +18,9 @@ services:
 
   # Opt-in LangGraph Studio dev server: `docker compose --profile dev up langgraph-dev`.
   langgraph-dev:
-    build: .
+    build:
+      context: ..
+      dockerfile: agent/Dockerfile
     profiles: ["dev"]
     command: ["bun", "run", "up"]
     env_file:
