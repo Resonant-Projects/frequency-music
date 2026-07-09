@@ -25,6 +25,93 @@ async function fetchWithTimeout(
   }
 }
 
+const JINA_READER_URL = "https://r.jina.ai";
+export const MAX_URL_TEXT_CHARS = 100_000;
+
+export type UrlTextFetchResult =
+  | { ok: true; text: string; status: number }
+  | { ok: false; error: string; status?: number };
+
+interface UrlTextResponse {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  text: string;
+}
+
+/**
+ * Validate a source URL and map it to the Jina Reader endpoint.
+ */
+export function buildJinaReaderUrl(rawUrl: string): string {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new Error("invalid_url: URL is not valid");
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("invalid_url: only HTTP and HTTPS URLs are supported");
+  }
+  if (url.username || url.password) {
+    throw new Error("invalid_url: URLs with embedded credentials are rejected");
+  }
+
+  return `${JINA_READER_URL}/${url.toString()}`;
+}
+
+/**
+ * Convert a completed HTTP response into the probe's stable result shape.
+ */
+export function responseToUrlTextResult(
+  response: UrlTextResponse,
+  maxChars = MAX_URL_TEXT_CHARS,
+): UrlTextFetchResult {
+  if (!response.ok) {
+    const statusText = response.statusText ? ` ${response.statusText}` : "";
+    return {
+      ok: false,
+      error: `http_error: Jina Reader returned HTTP ${response.status}${statusText}`,
+      status: response.status,
+    };
+  }
+
+  const text = response.text.trim();
+  if (!text) {
+    return {
+      ok: false,
+      error: "no_text: Jina Reader returned an empty response",
+      status: response.status,
+    };
+  }
+  if (text.length > maxChars) {
+    return {
+      ok: false,
+      error: `response_too_large: Jina Reader returned ${text.length} characters (limit ${maxChars})`,
+      status: response.status,
+    };
+  }
+
+  return { ok: true, text, status: response.status };
+}
+
+/**
+ * Classify validation and fetch failures without exposing unstable stack text.
+ */
+export function classifyUrlTextFetchError(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.name === "AbortError") {
+      return "timeout: Jina Reader request exceeded 30 seconds";
+    }
+    if (error.message.startsWith("invalid_url:")) {
+      return error.message;
+    }
+    return `network_error: ${error.message || error.name}`;
+  }
+
+  return `unknown_error: ${String(error)}`;
+}
+
 // ============================================================================
 // RSS FEED POLLING
 // ============================================================================
@@ -294,6 +381,46 @@ export const pollAllFeedsInternal = internalAction({
 // ============================================================================
 // URL INGESTION
 // ============================================================================
+
+/**
+ * Probe whether the Convex action runtime can retrieve readable URL text.
+ * This action intentionally performs no database writes.
+ */
+export const fetchUrlText = internalAction({
+  args: { url: v.string() },
+  returns: v.union(
+    v.object({
+      ok: v.literal(true),
+      text: v.string(),
+      status: v.number(),
+    }),
+    v.object({
+      ok: v.literal(false),
+      error: v.string(),
+      status: v.optional(v.number()),
+    }),
+  ),
+  handler: async (_ctx, args): Promise<UrlTextFetchResult> => {
+    try {
+      const response = await fetchWithTimeout(buildJinaReaderUrl(args.url), {
+        headers: {
+          Accept: "text/plain",
+          "User-Agent": "ResonantProjects/1.0 (research aggregator)",
+        },
+      });
+      const text = response.ok ? await response.text() : "";
+
+      return responseToUrlTextResult({
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        text,
+      });
+    } catch (error) {
+      return { ok: false, error: classifyUrlTextFetchError(error) };
+    }
+  },
+});
 
 /**
  * Ingest a URL by fetching and extracting readable content
