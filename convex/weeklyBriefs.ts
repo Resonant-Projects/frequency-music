@@ -19,11 +19,14 @@ import {
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
 import {
+  recommendedActionValidator,
+  studioPromptVariantsValidator,
+} from "./schema";
+import {
   campaignReturnValidator,
   failureArchiveEntryValidator,
   hypothesisReturnValidator,
   recipeReturnValidator,
-  recommendedActionValidator,
   thesisReturnValidator,
   weeklyBriefReturnValidator,
 } from "./validators";
@@ -170,34 +173,8 @@ export const create = internalMutation({
     recommendedRecipeIds: v.array(v.id("recipes")),
     activeThesisIds: v.optional(v.array(v.id("theses"))),
     referencedFailureKeys: v.optional(v.array(v.string())),
-    studioPrompts: v.object({
-      tenMinuteMd: v.string(),
-      thirtyMinuteMd: v.string(),
-      ninetyMinuteMd: v.string(),
-    }),
-    recommendedActions: v.array(
-      v.object({
-        kind: v.union(
-          v.literal("advance_recipe"),
-          v.literal("revive_recipe"),
-          v.literal("expand_composition"),
-          v.literal("compare_branch"),
-          v.literal("prototype_hypothesis"),
-        ),
-        targetType: v.union(
-          v.literal("hypothesis"),
-          v.literal("recipe"),
-          v.literal("composition"),
-        ),
-        targetId: v.string(),
-        durationBucket: v.union(
-          v.literal("10-minute"),
-          v.literal("30-minute"),
-          v.literal("90-minute"),
-        ),
-        reason: v.string(),
-      }),
-    ),
+    studioPrompts: studioPromptVariantsValidator,
+    recommendedActions: v.array(recommendedActionValidator),
     todo: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -237,13 +214,7 @@ export const editBrief = mutation({
     id: v.id("weeklyBriefs"),
     bodyMd: v.optional(v.string()),
     todo: v.optional(v.array(v.string())),
-    studioPrompts: v.optional(
-      v.object({
-        tenMinuteMd: v.string(),
-        thirtyMinuteMd: v.string(),
-        ninetyMinuteMd: v.string(),
-      }),
-    ),
+    studioPrompts: v.optional(studioPromptVariantsValidator),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),

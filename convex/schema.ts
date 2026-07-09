@@ -1,5 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
+import { literals } from "convex-helpers/validators";
 import { v } from "convex/values";
+import {
+  HYPOTHESIS_STATUSES,
+  RECIPE_STATUSES,
+  SOURCE_BLOCKED_REASONS,
+  SOURCE_STATUSES,
+} from "./shared/statuses";
 
 // ============================================================================
 // RESONANT PROJECTS - CONVEX SCHEMA v1
@@ -80,6 +87,11 @@ export const agentRunEventKindValidator = v.union(
   v.literal("model_call"),
 );
 
+export const sourceStatusValidator = literals(...SOURCE_STATUSES);
+export const sourceBlockedReasonValidator = literals(...SOURCE_BLOCKED_REASONS);
+export const hypothesisStatusValidator = literals(...HYPOTHESIS_STATUSES);
+export const recipeStatusValidator = literals(...RECIPE_STATUSES);
+
 const evidenceLevelValidator = v.union(
   v.literal("peer_reviewed"),
   v.literal("preprint"),
@@ -107,7 +119,35 @@ export const compositionParameterValidator = v.object({
   canonicalKind: v.optional(v.string()),
 });
 
-const claimValidator = v.object({
+export const studioPromptVariantsValidator = v.object({
+  tenMinuteMd: v.string(),
+  thirtyMinuteMd: v.string(),
+  ninetyMinuteMd: v.string(),
+});
+
+export const recommendedActionValidator = v.object({
+  kind: v.union(
+    v.literal("advance_recipe"),
+    v.literal("revive_recipe"),
+    v.literal("expand_composition"),
+    v.literal("compare_branch"),
+    v.literal("prototype_hypothesis"),
+  ),
+  targetType: v.union(
+    v.literal("hypothesis"),
+    v.literal("recipe"),
+    v.literal("composition"),
+  ),
+  targetId: v.string(),
+  durationBucket: v.union(
+    v.literal("10-minute"),
+    v.literal("30-minute"),
+    v.literal("90-minute"),
+  ),
+  reason: v.string(),
+});
+
+export const claimValidator = v.object({
   text: v.string(),
   evidenceLevel: evidenceLevelValidator,
   truthConfidence: v.optional(confidenceBandValidator),
@@ -141,7 +181,7 @@ export const agentDraftHypothesisPayloadValidator = v.object({
   confidence: v.optional(v.number()),
 });
 
-const agentDraftRecipeProtocolValidator = v.object({
+export const recipeProtocolValidator = v.object({
   studyType: v.union(v.literal("litmus"), v.literal("comparison")),
   durationSecs: v.number(),
   panelPlanned: v.array(v.string()),
@@ -156,7 +196,7 @@ export const agentDraftRecipePayloadValidator = v.object({
   hypothesisId: v.optional(v.id("hypotheses")),
   title: v.string(),
   parameters: v.array(compositionParameterValidator),
-  protocol: v.optional(agentDraftRecipeProtocolValidator),
+  protocol: v.optional(recipeProtocolValidator),
   whyThisMatters: v.string(),
   // Optional: promotion synthesizes these from the payload when absent, so a
   // promoted recipe always satisfies the recipes-table requirements.
@@ -347,28 +387,8 @@ export default defineSchema({
     metadata: v.optional(v.any()),
 
     // Pipeline state
-    status: v.union(
-      v.literal("ingested"),
-      v.literal("text_ready"),
-      v.literal("extracting"),
-      v.literal("extracted"),
-      v.literal("review_needed"),
-      v.literal("triaged"),
-      v.literal("promoted_followers"),
-      v.literal("promoted_public"),
-      v.literal("archived"),
-    ),
-    blockedReason: v.optional(
-      v.union(
-        v.literal("no_text"),
-        v.literal("copyright"),
-        v.literal("needs_metadata"),
-        v.literal("needs_tagging"),
-        v.literal("ai_error"),
-        v.literal("needs_human_review"),
-        v.literal("duplicate"),
-      ),
-    ),
+    status: sourceStatusValidator,
+    blockedReason: v.optional(sourceBlockedReasonValidator),
     blockedDetails: v.optional(v.string()),
     openQuestions: v.optional(v.array(v.string())),
     confidence: v.optional(v.number()),
@@ -491,14 +511,7 @@ export default defineSchema({
     concepts: v.optional(v.array(v.string())),
 
     // Lifecycle
-    status: v.union(
-      v.literal("draft"),
-      v.literal("queued"),
-      v.literal("active"),
-      v.literal("evaluated"),
-      v.literal("revised"),
-      v.literal("retired"),
-    ),
+    status: hypothesisStatusValidator,
     resolution: v.optional(
       v.union(
         v.literal("supported"),
@@ -536,28 +549,13 @@ export default defineSchema({
     dawChecklist: v.array(v.string()),
 
     // Protocol (test design)
-    protocol: v.optional(
-      v.object({
-        studyType: v.union(v.literal("litmus"), v.literal("comparison")),
-        durationSecs: v.number(),
-        panelPlanned: v.array(v.string()),
-        listeningContext: v.optional(v.string()),
-        listeningMethod: v.optional(v.string()),
-        baselineArtifactId: v.optional(v.id("compositions")),
-        whatVaries: v.array(v.string()),
-        whatStaysConstant: v.array(v.string()),
-      }),
-    ),
+    protocol: v.optional(recipeProtocolValidator),
 
     // Machine verification (plan-05 verifier attaches this before human review)
     verification: v.optional(recipeVerificationValidator),
 
     // Lifecycle
-    status: v.union(
-      v.literal("draft"),
-      v.literal("in_use"),
-      v.literal("archived"),
-    ),
+    status: recipeStatusValidator,
 
     // Provenance (set when promoted from an agent review draft)
     ...agentOriginFields,
@@ -679,38 +677,8 @@ export default defineSchema({
     recommendedRecipeIds: v.array(v.id("recipes")),
     activeThesisIds: v.optional(v.array(v.id("theses"))),
     referencedFailureKeys: v.optional(v.array(v.string())),
-    studioPrompts: v.optional(
-      v.object({
-        tenMinuteMd: v.string(),
-        thirtyMinuteMd: v.string(),
-        ninetyMinuteMd: v.string(),
-      }),
-    ),
-    recommendedActions: v.optional(
-      v.array(
-        v.object({
-          kind: v.union(
-            v.literal("advance_recipe"),
-            v.literal("revive_recipe"),
-            v.literal("expand_composition"),
-            v.literal("compare_branch"),
-            v.literal("prototype_hypothesis"),
-          ),
-          targetType: v.union(
-            v.literal("hypothesis"),
-            v.literal("recipe"),
-            v.literal("composition"),
-          ),
-          targetId: v.string(),
-          durationBucket: v.union(
-            v.literal("10-minute"),
-            v.literal("30-minute"),
-            v.literal("90-minute"),
-          ),
-          reason: v.string(),
-        }),
-      ),
-    ),
+    studioPrompts: v.optional(studioPromptVariantsValidator),
+    recommendedActions: v.optional(v.array(recommendedActionValidator)),
     todo: v.optional(v.array(v.string())),
 
     // Publishing

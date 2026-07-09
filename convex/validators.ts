@@ -2,12 +2,20 @@ import { v } from "convex/values";
 import {
   agentOriginFields,
   campaignStatusValidator,
+  claimValidator,
   compositionParameterValidator,
   editorialArtifactKindValidator,
   editorialArtifactStatusValidator,
   editorialEvidenceStatusValidator,
+  hypothesisStatusValidator,
+  recipeProtocolValidator,
+  recipeStatusValidator,
   recipeVerificationValidator,
+  recommendedActionValidator,
   registryStatusValidator,
+  sourceBlockedReasonValidator,
+  sourceStatusValidator,
+  studioPromptVariantsValidator,
   visibilityValidator,
 } from "./schema";
 import {
@@ -34,20 +42,6 @@ const confidenceBandValidator = v.union(
   v.literal("high"),
 );
 
-const claimValidator = v.object({
-  text: v.string(),
-  evidenceLevel: evidenceLevelValidator,
-  truthConfidence: v.optional(confidenceBandValidator),
-  interestLevel: v.optional(confidenceBandValidator),
-  citations: v.array(
-    v.object({
-      label: v.optional(v.string()),
-      url: v.optional(v.string()),
-      quote: v.optional(v.string()),
-    }),
-  ),
-});
-
 const createdByValidator = v.union(v.id("users"), v.literal("system"));
 
 // ============================================================================
@@ -61,18 +55,6 @@ const sourceTypeValidator = v.union(
   v.literal("youtube"),
   v.literal("pdf"),
   v.literal("podcast"),
-);
-
-const sourceStatusValidator = v.union(
-  v.literal("ingested"),
-  v.literal("text_ready"),
-  v.literal("extracting"),
-  v.literal("extracted"),
-  v.literal("review_needed"),
-  v.literal("triaged"),
-  v.literal("promoted_followers"),
-  v.literal("promoted_public"),
-  v.literal("archived"),
 );
 
 export const sourceReturnValidator = v.object({
@@ -95,17 +77,7 @@ export const sourceReturnValidator = v.object({
   topics: v.optional(v.array(v.string())),
   metadata: v.optional(v.any()),
   status: sourceStatusValidator,
-  blockedReason: v.optional(
-    v.union(
-      v.literal("no_text"),
-      v.literal("copyright"),
-      v.literal("needs_metadata"),
-      v.literal("needs_tagging"),
-      v.literal("ai_error"),
-      v.literal("needs_human_review"),
-      v.literal("duplicate"),
-    ),
-  ),
+  blockedReason: v.optional(sourceBlockedReasonValidator),
   blockedDetails: v.optional(v.string()),
   openQuestions: v.optional(v.array(v.string())),
   confidence: v.optional(v.number()),
@@ -201,15 +173,6 @@ export const campaignReturnValidator = v.object({
   updatedAt: v.number(),
 });
 
-const hypothesisStatusValidator = v.union(
-  v.literal("draft"),
-  v.literal("queued"),
-  v.literal("active"),
-  v.literal("evaluated"),
-  v.literal("revised"),
-  v.literal("retired"),
-);
-
 export const hypothesisReturnValidator = v.object({
   _id: v.id("hypotheses"),
   _creationTime: v.number(),
@@ -245,16 +208,11 @@ export const hypothesisReturnValidator = v.object({
 
 export const recipeParameterValidator = compositionParameterValidator;
 
-export const recipeProtocolValidator = v.object({
-  studyType: v.union(v.literal("litmus"), v.literal("comparison")),
-  durationSecs: v.number(),
-  panelPlanned: v.array(v.string()),
-  listeningContext: v.optional(v.string()),
-  listeningMethod: v.optional(v.string()),
-  baselineArtifactId: v.optional(v.id("compositions")),
-  whatVaries: v.array(v.string()),
-  whatStaysConstant: v.array(v.string()),
-});
+export {
+  recipeProtocolValidator,
+  recommendedActionValidator,
+  studioPromptVariantsValidator,
+};
 
 export const recipeReturnValidator = v.object({
   _id: v.id("recipes"),
@@ -267,11 +225,7 @@ export const recipeReturnValidator = v.object({
   dawChecklist: v.array(v.string()),
   protocol: v.optional(recipeProtocolValidator),
   verification: v.optional(recipeVerificationValidator),
-  status: v.union(
-    v.literal("draft"),
-    v.literal("in_use"),
-    v.literal("archived"),
-  ),
+  status: recipeStatusValidator,
   ...agentOriginFields,
   visibility: visibilityValidator,
   createdBy: createdByValidator,
@@ -362,34 +316,6 @@ export const listeningSessionReturnValidator = v.object({
 // ============================================================================
 // WEEKLY BRIEF
 // ============================================================================
-
-export const studioPromptVariantsValidator = v.object({
-  tenMinuteMd: v.string(),
-  thirtyMinuteMd: v.string(),
-  ninetyMinuteMd: v.string(),
-});
-
-export const recommendedActionValidator = v.object({
-  kind: v.union(
-    v.literal("advance_recipe"),
-    v.literal("revive_recipe"),
-    v.literal("expand_composition"),
-    v.literal("compare_branch"),
-    v.literal("prototype_hypothesis"),
-  ),
-  targetType: v.union(
-    v.literal("hypothesis"),
-    v.literal("recipe"),
-    v.literal("composition"),
-  ),
-  targetId: v.string(),
-  durationBucket: v.union(
-    v.literal("10-minute"),
-    v.literal("30-minute"),
-    v.literal("90-minute"),
-  ),
-  reason: v.string(),
-});
 
 export const weeklyBriefReturnValidator = v.object({
   _id: v.id("weeklyBriefs"),

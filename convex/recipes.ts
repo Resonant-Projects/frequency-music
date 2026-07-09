@@ -3,18 +3,13 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { recipeStatusValidator } from "./schema";
 import {
   hypothesisReturnValidator,
   recipeParameterValidator,
   recipeProtocolValidator,
   recipeReturnValidator,
 } from "./validators";
-
-const recipeStatusValidator = v.union(
-  v.literal("draft"),
-  v.literal("in_use"),
-  v.literal("archived"),
-);
 
 interface RecipeParameter {
   kind?: string;
@@ -75,7 +70,9 @@ function assertStringArray(
   return value as string[];
 }
 
-function validateGeneratedRecipePayload(raw: unknown): ParsedRecipePayload {
+export function validateGeneratedRecipePayload(
+  raw: unknown,
+): ParsedRecipePayload {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new ConvexError({
       code: "INVALID_ARGUMENT",
@@ -284,26 +281,9 @@ export const create = mutation({
     title: v.string(),
     whyThisMatters: v.optional(v.string()),
     bodyMd: v.string(),
-    parameters: v.array(
-      v.object({
-        type: v.string(),
-        value: v.string(),
-        details: v.optional(v.any()),
-      }),
-    ),
+    parameters: v.array(recipeParameterValidator),
     dawChecklist: v.array(v.string()),
-    protocol: v.optional(
-      v.object({
-        studyType: v.union(v.literal("litmus"), v.literal("comparison")),
-        durationSecs: v.number(),
-        panelPlanned: v.array(v.string()),
-        listeningContext: v.optional(v.string()),
-        listeningMethod: v.optional(v.string()),
-        baselineArtifactId: v.optional(v.id("compositions")),
-        whatVaries: v.array(v.string()),
-        whatStaysConstant: v.array(v.string()),
-      }),
-    ),
+    protocol: v.optional(recipeProtocolValidator),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.id("recipes"),

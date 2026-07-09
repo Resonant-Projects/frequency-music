@@ -8,6 +8,7 @@
 
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import type { SourceStatus } from "../convex/shared/statuses";
 
 const CONVEX_URL = process.env.CONVEX_URL || process.env.CONVEX_SELF_HOSTED_URL;
 const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
@@ -79,7 +80,7 @@ async function main() {
 
   // Get sources that might need full text
   // Check both extracted and text_ready sources
-  const statuses = ["extracted", "text_ready"];
+  const statuses: readonly SourceStatus[] = ["extracted", "text_ready"];
   const allSources: SourceRow[] = [];
 
   for (const status of statuses) {

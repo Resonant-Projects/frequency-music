@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation } from "./_generated/server";
+import { claimValidator, compositionParameterValidator } from "./schema";
 
 export const storeExtraction = internalMutation({
   args: {
@@ -10,41 +11,8 @@ export const storeExtraction = internalMutation({
     promptVersion: v.string(),
     inputHash: v.string(),
     summary: v.string(),
-    claims: v.array(
-      v.object({
-        text: v.string(),
-        evidenceLevel: v.union(
-          v.literal("peer_reviewed"),
-          v.literal("preprint"),
-          v.literal("anecdotal"),
-          v.literal("speculative"),
-          v.literal("personal"),
-        ),
-        citations: v.array(
-          v.object({
-            label: v.optional(v.string()),
-            url: v.optional(v.string()),
-            quote: v.optional(v.string()),
-          }),
-        ),
-        truthConfidence: v.optional(
-          v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-        ),
-        interestLevel: v.optional(
-          v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-        ),
-      }),
-    ),
-    compositionParameters: v.array(
-      v.object({
-        kind: v.optional(v.string()),
-        type: v.optional(v.string()),
-        value: v.string(),
-        details: v.optional(v.any()),
-        registryStatus: v.optional(v.string()),
-        canonicalKind: v.optional(v.string()),
-      }),
-    ),
+    claims: v.array(claimValidator),
+    compositionParameters: v.array(compositionParameterValidator),
     topics: v.array(v.string()),
     openQuestions: v.array(v.string()),
     confidence: v.number(),

@@ -5,25 +5,16 @@ import type { MutationCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import {
+  sourceBlockedReasonValidator,
+  sourceStatusValidator,
+} from "./schema";
+import {
   computeCanonicalDedupeKey,
   extractYouTubeVideoId,
   generateArchivedDedupeKey,
   generateDedupeKey,
 } from "./sourceUtils";
 import { sourceReturnValidator } from "./validators";
-
-// Reusable validator for source status
-const sourceStatusValidator = v.union(
-  v.literal("ingested"),
-  v.literal("text_ready"),
-  v.literal("extracting"),
-  v.literal("extracted"),
-  v.literal("triaged"),
-  v.literal("review_needed"),
-  v.literal("promoted_followers"),
-  v.literal("promoted_public"),
-  v.literal("archived"),
-);
 
 // ============================================================================
 // QUERIES
@@ -199,28 +190,8 @@ export const create = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("sources"),
-    status: v.union(
-      v.literal("ingested"),
-      v.literal("text_ready"),
-      v.literal("extracting"),
-      v.literal("extracted"),
-      v.literal("review_needed"),
-      v.literal("triaged"),
-      v.literal("promoted_followers"),
-      v.literal("promoted_public"),
-      v.literal("archived"),
-    ),
-    blockedReason: v.optional(
-      v.union(
-        v.literal("no_text"),
-        v.literal("copyright"),
-        v.literal("needs_metadata"),
-        v.literal("needs_tagging"),
-        v.literal("ai_error"),
-        v.literal("needs_human_review"),
-        v.literal("duplicate"),
-      ),
-    ),
+    status: sourceStatusValidator,
+    blockedReason: v.optional(sourceBlockedReasonValidator),
     blockedDetails: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
