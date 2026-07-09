@@ -17,6 +17,7 @@ jobs:
       - run: bun run lint:check
       - run: bun run format:check
       - run: bun test convex/*.test.ts
+      - run: bun run test:harness
 
   web:
     runs-on: ubuntu-latest
