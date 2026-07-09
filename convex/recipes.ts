@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { DEFAULT_MODEL, extractJsonObject } from "./llm";
 import { recipeStatusValidator } from "./schema";
 import {
   hypothesisReturnValidator,
@@ -468,7 +469,7 @@ export const generateFromHypothesis = action({
       .replace("{{concepts}}", (hypothesis.concepts || []).join(", "));
 
     // Call AI (traced as recipe_v1 in the Node-runtime internal action)
-    const modelId = args.model || "anthropic/claude-sonnet-4-6";
+    const modelId = args.model || DEFAULT_MODEL;
 
     const { text } = await ctx.runAction(
       internal.recipesInternal.generateRecipeText,
@@ -484,9 +485,7 @@ export const generateFromHypothesis = action({
     // Parse response
     let parsed: ParsedRecipePayload;
     try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON found");
-      parsed = validateGeneratedRecipePayload(JSON.parse(jsonMatch[0]));
+      parsed = validateGeneratedRecipePayload(extractJsonObject(text));
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown parse error";
       throw new Error(`Failed to parse AI response: ${message}`, { cause: e });
@@ -565,8 +564,8 @@ export const generateBatch = action({
     const hypotheses: Doc<"hypotheses">[] = await ctx.runQuery(
       api.hypotheses.listByStatus,
       {
-      status: "queued",
-      limit: 20,
+        status: "queued",
+        limit: 20,
       },
     );
 
