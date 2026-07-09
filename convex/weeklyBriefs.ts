@@ -18,6 +18,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
+import { DEFAULT_MODEL } from "./llm";
 import {
   recommendedActionValidator,
   studioPromptVariantsValidator,
@@ -634,7 +635,7 @@ Theses: ${
     .replace("{{recommendedActions}}", recommendedActionsText);
 
   // Call AI (traced as brief_v2.phase3 in the Node-runtime internal action)
-  const modelId = args.model || "anthropic/claude-sonnet-4-6";
+  const modelId = args.model || DEFAULT_MODEL;
 
   const { text } = await ctx.runAction(
     internal.weeklyBriefsInternal.generateBriefText,
