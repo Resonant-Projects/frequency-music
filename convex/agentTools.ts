@@ -1,337 +1,62 @@
-import { makeFunctionReference } from "convex/server";
+// Secret-auth bridge for the agent-tool surface. Convex requires static named
+// exports, so each registry entry has one export line; all behavior and args
+// derive from the shared registry.
+import { zodToConvexFields } from "convex-helpers/server/zod4";
 import { v } from "convex/values";
 import { action, query } from "./_generated/server";
+import { agentToolByName } from "./agentToolRegistry";
 import { requireAgentToolSecret } from "./auth";
-import { agentRunEventKindValidator } from "./schema";
+import type { AgentToolName } from "./shared/agentToolArgs";
 
-const listRecentExtractionsRef = makeFunctionReference<"query">(
-  "extractions:listRecent",
-);
-const getExtractionRef = makeFunctionReference<"query">("extractions:get");
-const listRecentHypothesesRef = makeFunctionReference<"query">(
-  "hypotheses:listByStatus",
-);
-const listActiveThesesRef = makeFunctionReference<"query">("theses:list");
-const listFailureArchiveRef = makeFunctionReference<"query">(
-  "failures:listArchive",
-);
-const getEditorialSignalsRef = makeFunctionReference<"query">(
-  "dashboard:editorialSignals",
-);
-const getRecentRecipesRef = makeFunctionReference<"query">(
-  "recipes:listByStatus",
-);
-const getRecommendedActionsRef = makeFunctionReference<"query">(
-  "campaigns:getRecommendedActions",
-);
-const searchSourcesByConceptRef = makeFunctionReference<"query">(
-  "graph:searchSourcesByConcept",
-);
-const createAgentRunRef = makeFunctionReference<"mutation">("agentRuns:create");
-const markAgentRunRunningRef = makeFunctionReference<"mutation">(
-  "agentRuns:markRunning",
-);
-const appendAgentRunEventRef = makeFunctionReference<"mutation">(
-  "agentRuns:appendEvent",
-);
-const markAgentRunCompletedRef = makeFunctionReference<"mutation">(
-  "agentRuns:markCompleted",
-);
-const markAgentRunNeedsReviewRef = makeFunctionReference<"mutation">(
-  "agentRuns:markNeedsReview",
-);
-const markAgentRunFailedRef = makeFunctionReference<"mutation">(
-  "agentRuns:markFailed",
-);
-const createAgentReviewDraftRef = makeFunctionReference<"mutation">(
-  "agentDrafts:createFromAgentRun",
-);
-const claimNextPendingRef = makeFunctionReference<"mutation">(
-  "agentRuns:claimNextPending",
-);
-const getForWorkerRef = makeFunctionReference<"query">(
-  "agentRuns:getForWorker",
-);
-const selfImprovementStatsRef = makeFunctionReference<"query">(
-  "agentTools:selfImprovementStats",
-);
-
-function omitUndefined<T extends Record<string, unknown>>(value: T) {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, child]) => child !== undefined),
-  ) as T;
+export function makeAgentToolAction(name: AgentToolName) {
+  const definition = agentToolByName[name];
+  return action({
+    args: {
+      agentSecret: v.string(),
+      ...zodToConvexFields(definition.args.shape),
+    },
+    handler: async (ctx, args) => {
+      const { agentSecret, ...rest } = args as Record<string, unknown> & {
+        agentSecret: string;
+      };
+      requireAgentToolSecret(agentSecret);
+      return await definition.run(ctx, rest);
+    },
+  });
 }
 
-export const listRecentExtractions = action({
-  args: {
-    agentSecret: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(listRecentExtractionsRef, {
-      limit: args.limit ?? 20,
-    });
-  },
-});
-
-export const getExtraction = action({
-  args: {
-    agentSecret: v.string(),
-    id: v.id("extractions"),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(getExtractionRef, { id: args.id });
-  },
-});
-
-export const listRecentHypotheses = action({
-  args: {
-    agentSecret: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(listRecentHypothesesRef, {
-      limit: args.limit ?? 20,
-    });
-  },
-});
-
-export const listActiveTheses = action({
-  args: {
-    agentSecret: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(listActiveThesesRef, {
-      status: "active",
-      limit: args.limit ?? 20,
-    });
-  },
-});
-
-export const listFailureArchive = action({
-  args: {
-    agentSecret: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(listFailureArchiveRef, {
-      limit: args.limit ?? 20,
-    });
-  },
-});
-
-export const getEditorialSignals = action({
-  args: {
-    agentSecret: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(getEditorialSignalsRef, {
-      limit: args.limit ?? 24,
-    });
-  },
-});
-
-export const getRecentRecipes = action({
-  args: {
-    agentSecret: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(getRecentRecipesRef, { limit: args.limit ?? 20 });
-  },
-});
-
-export const getRecommendedActions = action({
-  args: {
-    agentSecret: v.string(),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(getRecommendedActionsRef, {});
-  },
-});
-
-export const searchSourcesByConcept = action({
-  args: {
-    agentSecret: v.string(),
-    conceptName: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(searchSourcesByConceptRef, {
-      conceptName: args.conceptName,
-      limit: args.limit ?? 20,
-    });
-  },
-});
-
-export const createAgentRun = action({
-  args: {
-    agentSecret: v.string(),
-    graphName: v.string(),
-    input: v.optional(v.any()),
-    traceUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    const created = await ctx.runMutation(
-      createAgentRunRef,
-      omitUndefined({
-        graphName: args.graphName,
-        input: args.input,
-        traceUrl: args.traceUrl,
-      }),
-    );
-    const running = await ctx.runMutation(markAgentRunRunningRef, {
-      runId: created.runId,
-    });
-    return {
-      runId: created.runId,
-      status: running.status,
-      createdAt: created.createdAt,
-      startedAt: running.startedAt,
-      updatedAt: running.updatedAt,
-    };
-  },
-});
-
-export const appendAgentRunEvent = action({
-  args: {
-    agentSecret: v.string(),
-    runId: v.id("agentRuns"),
-    kind: agentRunEventKindValidator,
-    message: v.string(),
-    payload: v.optional(v.any()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(
-      appendAgentRunEventRef,
-      omitUndefined({
-        runId: args.runId,
-        kind: args.kind,
-        message: args.message,
-        payload: args.payload,
-      }),
-    );
-  },
-});
-
-export const markAgentRunCompleted = action({
-  args: {
-    agentSecret: v.string(),
-    runId: v.id("agentRuns"),
-    summary: v.optional(v.string()),
-    traceUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(
-      markAgentRunCompletedRef,
-      omitUndefined({
-        runId: args.runId,
-        summary: args.summary,
-        traceUrl: args.traceUrl,
-      }),
-    );
-  },
-});
-
-export const markAgentRunNeedsReview = action({
-  args: {
-    agentSecret: v.string(),
-    runId: v.id("agentRuns"),
-    summary: v.optional(v.string()),
-    reviewDraft: v.optional(v.any()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(
-      markAgentRunNeedsReviewRef,
-      omitUndefined({
-        runId: args.runId,
-        summary: args.summary,
-        reviewDraft: args.reviewDraft,
-      }),
-    );
-  },
-});
-
-export const createAgentReviewDraft = action({
-  args: {
-    agentSecret: v.string(),
-    agentRunId: v.id("agentRuns"),
-    draft: v.any(),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(createAgentReviewDraftRef, {
-      agentRunId: args.agentRunId,
-      draft: args.draft,
-    });
-  },
-});
-
-export const markAgentRunFailed = action({
-  args: {
-    agentSecret: v.string(),
-    runId: v.id("agentRuns"),
-    summary: v.optional(v.string()),
-    error: v.optional(v.any()),
-    traceUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(
-      markAgentRunFailedRef,
-      omitUndefined({
-        runId: args.runId,
-        summary: args.summary,
-        error: args.error,
-        traceUrl: args.traceUrl,
-      }),
-    );
-  },
-});
-
-// Production-worker queue surface. Claiming is a lifecycle write (queued ->
-// running), consistent with the audit-write policy: secret-gated, never a
-// research-data write.
-export const claimNextPendingRun = action({
-  args: {
-    agentSecret: v.string(),
-    workerId: v.string(),
-    graphName: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runMutation(
-      claimNextPendingRef,
-      omitUndefined({ workerId: args.workerId, graphName: args.graphName }),
-    );
-  },
-});
-
-export const getAgentRun = action({
-  args: {
-    agentSecret: v.string(),
-    runId: v.id("agentRuns"),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(getForWorkerRef, { runId: args.runId });
-  },
-});
+export const listRecentExtractions = makeAgentToolAction(
+  "listRecentExtractions",
+);
+export const getExtraction = makeAgentToolAction("getExtraction");
+export const listRecentHypotheses = makeAgentToolAction("listRecentHypotheses");
+export const listActiveTheses = makeAgentToolAction("listActiveTheses");
+export const listFailureArchive = makeAgentToolAction("listFailureArchive");
+export const getEditorialSignals = makeAgentToolAction("getEditorialSignals");
+export const getRecentRecipes = makeAgentToolAction("getRecentRecipes");
+export const getRecommendedActions = makeAgentToolAction(
+  "getRecommendedActions",
+);
+export const searchSourcesByConcept = makeAgentToolAction(
+  "searchSourcesByConcept",
+);
+export const getSelfImprovementStats = makeAgentToolAction(
+  "getSelfImprovementStats",
+);
+export const createAgentRun = makeAgentToolAction("createAgentRun");
+export const appendAgentRunEvent = makeAgentToolAction("appendAgentRunEvent");
+export const markAgentRunCompleted = makeAgentToolAction(
+  "markAgentRunCompleted",
+);
+export const markAgentRunNeedsReview = makeAgentToolAction(
+  "markAgentRunNeedsReview",
+);
+export const createAgentReviewDraft = makeAgentToolAction(
+  "createAgentReviewDraft",
+);
+export const markAgentRunFailed = makeAgentToolAction("markAgentRunFailed");
+export const claimNextPendingRun = makeAgentToolAction("claimNextPendingRun");
+export const getAgentRun = makeAgentToolAction("getAgentRun");
 
 // ============================================================================
 // SELF-IMPROVEMENT STATS - weekly brief "what the system learned" section
@@ -385,25 +110,31 @@ export function summarizeSelfImprovementWindow(input: {
 }) {
   const { editCaptures, decidedDrafts, runEvents, windowStart, windowEnd } =
     input;
-  const inWindow = (t: number) => t >= windowStart && t <= windowEnd;
+  const inWindow = (time: number) => time >= windowStart && time <= windowEnd;
 
   const editCapturesCount = editCaptures.filter((row) =>
     inWindow(row.editedAt),
   ).length;
 
-  const draftsInWindow = decidedDrafts.filter((d) => inWindow(d.updatedAt));
-  const approved = draftsInWindow.filter((d) => d.status === "approved").length;
-  const rejectedDrafts = draftsInWindow.filter((d) => d.status === "rejected");
+  const draftsInWindow = decidedDrafts.filter((draft) =>
+    inWindow(draft.updatedAt),
+  );
+  const approved = draftsInWindow.filter(
+    (draft) => draft.status === "approved",
+  ).length;
+  const rejectedDrafts = draftsInWindow.filter(
+    (draft) => draft.status === "rejected",
+  );
   const rejectionNotes = rejectedDrafts
-    .map((d) => d.decisionNote?.trim())
+    .map((draft) => draft.decisionNote?.trim())
     .filter((note): note is string => Boolean(note))
     .slice(0, MAX_NOTES);
 
   const memoryRecallEvents = runEvents.filter(
-    (e) => e.kind === "memory_recall" && inWindow(e.createdAt),
+    (event) => event.kind === "memory_recall" && inWindow(event.createdAt),
   );
   const memoryRecallNotes = memoryRecallEvents
-    .map((e) => e.message)
+    .map((event) => event.message)
     .slice(0, MAX_NOTES);
 
   return {
@@ -449,12 +180,16 @@ export const selfImprovementStats = query({
         ctx.db.query("editCaptures").order("desc").take(RECENT_ROWS_LIMIT),
         ctx.db
           .query("agentReviewDrafts")
-          .withIndex("by_status_updatedAt", (q) => q.eq("status", "approved"))
+          .withIndex("by_status_updatedAt", (queryBuilder) =>
+            queryBuilder.eq("status", "approved"),
+          )
           .order("desc")
           .take(RECENT_ROWS_LIMIT),
         ctx.db
           .query("agentReviewDrafts")
-          .withIndex("by_status_updatedAt", (q) => q.eq("status", "rejected"))
+          .withIndex("by_status_updatedAt", (queryBuilder) =>
+            queryBuilder.eq("status", "rejected"),
+          )
           .order("desc")
           .take(RECENT_ROWS_LIMIT),
         ctx.db.query("agentRunEvents").order("desc").take(RECENT_ROWS_LIMIT),
@@ -466,19 +201,6 @@ export const selfImprovementStats = query({
       runEvents: runEventRows,
       windowStart,
       windowEnd,
-    });
-  },
-});
-
-export const getSelfImprovementStats = action({
-  args: {
-    agentSecret: v.string(),
-    daysBack: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    requireAgentToolSecret(args.agentSecret);
-    return await ctx.runQuery(selfImprovementStatsRef, {
-      daysBack: args.daysBack,
     });
   },
 });
