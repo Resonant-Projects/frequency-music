@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import * as agentTools from "./agentTools";
 import { AGENT_TOOL_REGISTRY, agentToolByName } from "./agentToolRegistry";
 import { AGENT_RUN_EVENT_KINDS } from "./shared/agentContract";
@@ -99,5 +100,14 @@ describe("agent tool registry", () => {
       ] as { exportArgs: () => string };
       expect(registered.exportArgs()).toBe(FROZEN_ARGS[definition.name]);
     }
+  });
+
+  test("generated agent-tool documentation is fresh", () => {
+    const result = spawnSync(
+      "bun",
+      ["scripts/generate-agent-tool-docs.ts", "--check"],
+      { cwd: `${import.meta.dir}/..` },
+    );
+    expect(result.status).toBe(0);
   });
 });

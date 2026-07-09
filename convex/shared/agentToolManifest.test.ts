@@ -10,6 +10,8 @@ describe("agent tool manifest", () => {
     expect(new Set(AGENT_TOOL_NAMES).size).toBe(18);
     for (const entry of AGENT_TOOL_MANIFEST) {
       expect(entry.description.length).toBeGreaterThan(10);
+      expect(entry.context.length).toBeGreaterThan(10);
+      expect(entry.backing).toContain(":");
       expect(entry.args).toBeInstanceOf(z.ZodObject);
       expect(entry.args).toBe(agentToolArgs[entry.name]);
     }

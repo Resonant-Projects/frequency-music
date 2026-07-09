@@ -14,35 +14,39 @@ All tool calls require `AGENT_TOOL_SECRET`.
 
 ## Tools
 
+<!-- AGENT_TOOLS:BEGIN -->
+
 ### Read-only research tools
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
-| `listRecentExtractions` | `/agent-tools/listRecentExtractions` | `extractions:listRecent` | Fetch recent extractions with claims, topics, questions, and composition parameters. | Use first when a brief or synthesis needs fresh source material. |
-| `getExtraction` | `/agent-tools/getExtraction` | `extractions:get` | Fetch one extraction by id. | Use after `listRecentExtractions` when the agent needs full detail for a selected item. |
-| `listRecentHypotheses` | `/agent-tools/listRecentHypotheses` | `hypotheses:listByStatus` | Fetch recent hypotheses with rationale and `whyThisMatters`. | No status filter in phase one; returns newest rows. |
-| `listActiveTheses` | `/agent-tools/listActiveTheses` | `theses:list` | Fetch active theses. | Helps the weekly brief connect recommendations to durable research questions. |
-| `listFailureArchive` | `/agent-tools/listFailureArchive` | `failures:listArchive` | Fetch recent derived failures. | Use to avoid recommending ideas already contradicted, retired, archived, or repeatedly low-yield. |
-| `getEditorialSignals` | `/agent-tools/getEditorialSignals` | `dashboard:editorialSignals` | Fetch high-yield and low-yield concept clusters. | Useful for naming promising research lanes and weak paths. |
-| `getRecentRecipes` | `/agent-tools/getRecentRecipes` | `recipes:listByStatus` | Fetch recent recipes with parameters and protocols. | Gives the agent concrete studio actions, not just abstract claims. |
-| `getRecommendedActions` | `/agent-tools/getRecommendedActions` | `campaigns:getRecommendedActions` | Fetch deterministic next-action candidates. | Agent recommendations should explain when they diverge from these deterministic suggestions. |
-| `searchSourcesByConcept` | `/agent-tools/searchSourcesByConcept` | `graph:searchSourcesByConcept` | Fetch sources linked to a concept name. | Returns source metadata only. It intentionally omits `rawText` and transcripts to protect context windows. |
-| `getSelfImprovementStats` | `/agent-tools/getSelfImprovementStats` | `agentTools:selfImprovementStats` | Fetch a window-filtered summary of edit-capture volume, `agentReviewDrafts` approve/reject counts with rejection notes, and `memory_recall` run-event notes. | Backs the weekly brief's "what the system learned" section. Accepts optional `daysBack` (default 7, max 90). Degrades gracefully to all-zero counts and empty note arrays when the window is empty; never fabricate numbers not returned here. Prompt/policy promotions are NOT included — there is no queryable store for them yet (they live in `docs/eval-baselines.md` + the decision log via `scripts/langsmith/promote.ts`); wire a field here once one exists instead of building a parallel store. |
+| `listRecentExtractions` | `/agent-tools/listRecentExtractions` | `extractions:listRecent` | Fetch recent structured source extractions with claims, topics, open questions, and composition parameters. | Use first when a brief or synthesis needs fresh source material. |
+| `getExtraction` | `/agent-tools/getExtraction` | `extractions:get` | Fetch one extraction by Convex extraction id. | Use after listRecentExtractions when the agent needs full detail for a selected item. |
+| `listRecentHypotheses` | `/agent-tools/listRecentHypotheses` | `hypotheses:listByStatus` | Fetch recent hypotheses with rationale and whyThisMatters. | No status filter in phase one; returns newest rows. |
+| `listActiveTheses` | `/agent-tools/listActiveTheses` | `theses:list` | Fetch active research theses that should anchor weekly brief recommendations. | Helps the weekly brief connect recommendations to durable research questions. |
+| `listFailureArchive` | `/agent-tools/listFailureArchive` | `failures:listArchive` | Fetch recent failed, retired, contradicted, archived, or low-yield research paths to avoid repeating them. | Use to avoid recommending ideas already contradicted, retired, archived, or repeatedly low-yield. |
+| `getEditorialSignals` | `/agent-tools/getEditorialSignals` | `dashboard:editorialSignals` | Fetch high-yield and low-yield concept clusters from the editorial graph. | Useful for naming promising research lanes and weak paths. |
+| `getRecentRecipes` | `/agent-tools/getRecentRecipes` | `recipes:listByStatus` | Fetch recent composition recipes with parameters, DAW checklists, and protocols. | Gives the agent concrete studio actions, not just abstract claims. |
+| `getRecommendedActions` | `/agent-tools/getRecommendedActions` | `campaigns:getRecommendedActions` | Fetch deterministic recommended action candidates from the current campaign scope. | Agent recommendations should explain when they diverge from these deterministic suggestions. |
+| `searchSourcesByConcept` | `/agent-tools/searchSourcesByConcept` | `graph:searchSourcesByConcept` | Find source metadata linked to a concept name. Raw text is intentionally omitted. | Returns source metadata only. It intentionally omits rawText and transcripts to protect context windows. |
+| `getSelfImprovementStats` | `/agent-tools/getSelfImprovementStats` | `agentTools:selfImprovementStats` | Fetch read-only self-improvement stats for the weekly brief's 'what the system learned' section: new edit-captures count, agent-review-draft approve/reject counts with rejection notes, and memory_recall run-event notes, all window-filtered by daysBack (default 7). Prompt promotions are not tracked here yet — never claim one happened unless told separately. All counts come straight from Convex; never invent or round numbers not present in the response. | Accepts optional `daysBack` (default 7, max 90) and degrades to all-zero counts and empty note arrays when the window is empty. Prompt/policy promotions are not included because they live in `docs/eval-baselines.md` and the decision log via `scripts/langsmith/promote.ts`; wire a field here once a queryable store exists. |
 
 ### Audit-only write tools
 
-These are the only write tools currently exposed. They write only to `agentRuns` and `agentRunEvents` for observability/review. They must not be used as a substitute for approved research-data writes.
+These are the only write tools currently exposed. They write only to agent audit/review records and must not substitute for approved research-data writes.
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
-| `createAgentRun` | `/agent-tools/createAgentRun` | `agentRuns:create` + `agentRuns:markRunning` | Create an audit run and mark it running. | Returns safe metadata: run id, status, and timestamps. |
-| `appendAgentRunEvent` | `/agent-tools/appendAgentRunEvent` | `agentRuns:appendEvent` | Append a lifecycle/tool/decision/error event to an audit run. | Payloads should be sanitized; never include secrets or raw env data. |
-| `markAgentRunCompleted` | `/agent-tools/markAgentRunCompleted` | `agentRuns:markCompleted` | Mark an audit run completed. | Optional summary and trace URL only. |
-| `markAgentRunFailed` | `/agent-tools/markAgentRunFailed` | `agentRuns:markFailed` | Mark an audit run failed and optionally append sanitized error payload. | Error payloads should be high-level, not secrets. |
-| `markAgentRunNeedsReview` | `/agent-tools/markAgentRunNeedsReview` | `agentRuns:markNeedsReview` | Flag a run for human review with a sanitized review draft. | Draft is sanitized server-side. |
-| `createAgentReviewDraft` | `/agent-tools/createAgentReviewDraft` | `agentDrafts:createFromAgentRun` | Persist a `pending_review` draft carrying an optional structured `payload` (hypothesis or recipe). | `whyThisMatters` is enforced at draft-creation time; payload-less drafts are acknowledge-only and can never be promoted. The research-pipeline graph runs a hallucinated-ID gate before this call: a payload referencing any source/extraction/hypothesis id the run never read fails the run instead of writing the draft. |
-| `claimNextPendingRun` | `/agent-tools/claimNextPendingRun` | `agentRuns:claimNextPending` | Atomically claim the oldest queued run (queued → running), stamping `workerId`. | Production worker only. A lifecycle write, not a research-data write. |
-| `getAgentRun` | `/agent-tools/getAgentRun` | `agentRuns:getForWorker` | Fetch a claimed run's full doc (including `input`) for status polling. | Worker-only; the public getters strip `input`. |
+| `createAgentRun` | `/agent-tools/createAgentRun` | `agentRuns:create + agentRuns:markRunning` | Create an audit-only Convex agent run record and mark it running. Does not mutate research data. | Returns safe metadata: run id, status, and timestamps. |
+| `appendAgentRunEvent` | `/agent-tools/appendAgentRunEvent` | `agentRuns:appendEvent` | Append an audit-only lifecycle event to a Convex agent run. Does not mutate research data. | Payloads should be sanitized; never include secrets or raw env data. |
+| `markAgentRunCompleted` | `/agent-tools/markAgentRunCompleted` | `agentRuns:markCompleted` | Mark an audit-only Convex agent run completed. Does not mutate research data. | Optional summary and trace URL only. |
+| `markAgentRunNeedsReview` | `/agent-tools/markAgentRunNeedsReview` | `agentRuns:markNeedsReview` | Mark an audit-only Convex agent run as needs_review after producing a human-review draft. Does not mutate research data. | Draft is sanitized server-side. |
+| `createAgentReviewDraft` | `/agent-tools/createAgentReviewDraft` | `agentDrafts:createFromAgentRun` | Persist a sanitized human-review draft linked to an agent run. Creates an agentReviewDraft row and audit event; does not publish research artifacts. | `whyThisMatters` is enforced at draft creation; payload-less drafts are acknowledge-only and cannot be promoted. The research-pipeline hallucinated-ID gate rejects payloads referencing source, extraction, or hypothesis ids the run never read. |
+| `markAgentRunFailed` | `/agent-tools/markAgentRunFailed` | `agentRuns:markFailed` | Mark an audit-only Convex agent run failed and optionally record sanitized error details. Does not mutate research data. | Error payloads should be high-level, not secrets. |
+| `claimNextPendingRun` | `/agent-tools/claimNextPendingRun` | `agentRuns:claimNextPending` | Atomically claim the oldest queued Convex agent run for a worker, flipping it to running. Production worker only. | Production worker only. A lifecycle write, not a research-data write. |
+| `getAgentRun` | `/agent-tools/getAgentRun` | `agentRuns:getForWorker` | Fetch the full Convex agent run document including raw input by id for status polling. Audit-only read. | Worker status polling; public getters strip input. |
+
+<!-- AGENT_TOOLS:END -->
 
 ### Human-only decision mutations (NOT on the agent surface)
 
