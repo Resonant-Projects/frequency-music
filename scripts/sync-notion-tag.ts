@@ -1,27 +1,21 @@
 #!/usr/bin/env bun
-
 /**
- * Sync notes from a Notion Tag to the Convex sources database
+ * Sync notes from a Notion Tag to the Convex sources database.
  *
  * Usage:
- *   bun scripts/sync-notion-tag.ts                    # Sync Frequency Research tag
- *   bun scripts/sync-notion-tag.ts --tag-id <id>      # Sync specific tag
- *   bun scripts/sync-notion-tag.ts --fetch-full-text  # Also fetch article text via Jina
+ *   bun scripts/sync-notion-tag.ts
+ *   bun scripts/sync-notion-tag.ts --tag-id <id>
+ *   bun scripts/sync-notion-tag.ts --fetch-full-text
+ *   Add --dry-run to validate options without network/backend access.
  */
-
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api";
+import { fetchViaJina } from "./lib/fetchText";
+import { createSourceIngestor } from "./lib/ingest";
 
-const CONVEX_URL = process.env.CONVEX_URL;
-if (!CONVEX_URL) {
-  throw new Error("CONVEX_URL must be set");
-}
 const NOTION_VERSION = "2025-09-03";
 const FREQUENCY_RESEARCH_TAG_ID = "2ff1c0d4-15f5-806e-8d86-d62c5f4cf701";
 
-// Read Notion API key
 function getNotionKey(): string {
   try {
     return readFileSync(`${homedir()}/.config/notion/api_key`, "utf-8").trim();
@@ -43,12 +37,10 @@ async function notionRequest(endpoint: string, options: RequestInit = {}) {
       ...options.headers,
     },
   });
-
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`Notion API error: ${response.status} - ${error}`);
   }
-
   return response.json();
 }
 
@@ -74,7 +66,7 @@ interface RichTextElement {
 async function getTagNotes(tagId: string): Promise<string[]> {
   const page = await notionRequest(`/pages/${tagId}`);
   const notes = page.properties?.Notes?.relation || [];
-  return notes.map((n: { id: string }) => n.id);
+  return notes.map((note: { id: string }) => note.id);
 }
 
 async function getPageDetails(pageId: string): Promise<NotionPage> {
@@ -83,52 +75,29 @@ async function getPageDetails(pageId: string): Promise<NotionPage> {
 
 async function getPageContent(pageId: string): Promise<string> {
   const blocks = await notionRequest(`/blocks/${pageId}/children`);
-
   const textParts: string[] = [];
-
   for (const block of blocks.results || []) {
     const type = block.type;
     const content = block[type];
-
     if (content?.rich_text) {
       const text = (content.rich_text as RichTextElement[])
-        .map((t) => (typeof t.plain_text === "string" ? t.plain_text : ""))
+        .map((element) =>
+          typeof element.plain_text === "string" ? element.plain_text : "",
+        )
         .filter((value) => value.trim().length > 0)
         .join("");
       if (text) textParts.push(text);
     }
-
-    // Handle child blocks recursively (one level)
     if (block.has_children) {
       try {
         const childContent = await getPageContent(block.id);
         if (childContent) textParts.push(childContent);
       } catch {
-        // Ignore errors for child blocks
+        // Ignore errors for child blocks.
       }
     }
   }
-
   return textParts.join("\n\n");
-}
-
-async function fetchFullText(url: string): Promise<string | null> {
-  if (!url) return null;
-
-  try {
-    const jinaUrl = `https://r.jina.ai/${encodeURIComponent(url)}`;
-    const response = await fetch(jinaUrl, {
-      headers: { Accept: "text/plain" },
-    });
-
-    if (!response.ok) return null;
-
-    const text = await response.text();
-    return text.slice(0, 100000); // Limit to 100k chars
-  } catch (e) {
-    console.error(`Failed to fetch ${url}: ${e}`);
-    return null;
-  }
 }
 
 function extractTitle(page: NotionPage): string {
@@ -145,10 +114,10 @@ function extractType(page: NotionPage): string | undefined {
 
 async function main() {
   const args = process.argv.slice(2);
-  const tagIdx = args.indexOf("--tag-id");
+  const tagIndex = args.indexOf("--tag-id");
   let tagId = FREQUENCY_RESEARCH_TAG_ID;
-  if (tagIdx !== -1) {
-    const candidate = args[tagIdx + 1];
+  if (tagIndex !== -1) {
+    const candidate = args[tagIndex + 1];
     if (
       !candidate ||
       candidate.trim().length === 0 ||
@@ -160,14 +129,19 @@ async function main() {
     }
     tagId = candidate;
   }
-  const fetchFullTextFlag = args.includes("--fetch-full-text");
+  const fetchFullText = args.includes("--fetch-full-text");
+
+  if (args.includes("--dry-run")) {
+    console.log(
+      `DRY RUN: sync Notion tag=${tagId} fetchFullText=${fetchFullText}`,
+    );
+    return;
+  }
 
   console.log(`🔄 Syncing Notion tag: ${tagId}`);
-  console.log(`   Fetch full text: ${fetchFullTextFlag ? "yes" : "no"}\n`);
+  console.log(`   Fetch full text: ${fetchFullText ? "yes" : "no"}\n`);
+  const ingestor = createSourceIngestor({ rateMs: 350 });
 
-  const client = new ConvexHttpClient(CONVEX_URL);
-
-  // Get all notes linked to the tag
   console.log("📋 Fetching note IDs from tag...");
   const noteIds = await getTagNotes(tagId);
   console.log(`   Found ${noteIds.length} notes\n`);
@@ -175,72 +149,59 @@ async function main() {
   let created = 0;
   let skipped = 0;
   let errors = 0;
-
   for (const noteId of noteIds) {
     try {
-      // Get page details
-      const page = await getPageDetails(noteId);
-      const title = extractTitle(page);
-      const url = extractUrl(page);
-      const type = extractType(page);
-
-      console.log(`📄 Processing: ${title.slice(0, 50)}...`);
-
-      // Generate dedupeKey
-      const dedupeKey = `notion:${noteId}`;
-
-      // Check if already exists
-      const existing = await client.query(api.sources.getByDedupeKey, {
-        dedupeKey,
-      });
-      if (existing) {
-        console.log(`   ⏭️ Already exists, skipping`);
+      if (
+        await ingestor.alreadyIngested({
+          type: "notion",
+          title: noteId,
+          notionPageId: noteId,
+        })
+      ) {
+        console.log("   ⏭️ Already exists, skipping");
         skipped++;
         continue;
       }
 
-      // Get page content (blocks)
-      let rawText = await getPageContent(noteId);
+      const page = await getPageDetails(noteId);
+      const title = extractTitle(page);
+      const url = extractUrl(page);
+      const type = extractType(page);
+      console.log(`📄 Processing: ${title.slice(0, 50)}...`);
 
-      // Optionally fetch full article text
-      if (fetchFullTextFlag && url) {
+      let rawText = await getPageContent(noteId);
+      if (fetchFullText && url) {
         console.log(`   🌐 Fetching full article from ${url.slice(0, 50)}...`);
-        const fullText = await fetchFullText(url);
-        if (fullText) {
-          rawText = `${rawText}\n\n---\n\n${fullText}`;
+        const fullText = await fetchViaJina(url);
+        if (fullText.ok) {
+          rawText = `${rawText}\n\n---\n\n${fullText.text.slice(0, 100_000)}`;
         }
       }
 
-      // Create source
-      const result = await client.mutation(api.sources.create, {
-        type: "notion",
-        title,
-        canonicalUrl: url,
-        notionPageId: noteId,
-        rawText: rawText || undefined,
-        tags: type ? [type] : undefined,
-        topics: ["frequency-research"],
-        dedupeKey,
-        metadata: {
-          notionUrl: page.url,
-          notionType: type,
-          createdTime: page.created_time,
-          lastEditedTime: page.last_edited_time,
+      const summary = await ingestor.ingest([
+        {
+          type: "notion",
+          title,
+          canonicalUrl: url,
+          notionPageId: noteId,
+          rawText: rawText || undefined,
+          fetchText: false,
+          tags: type ? [type] : undefined,
+          topics: ["frequency-research"],
+          metadata: {
+            notionUrl: page.url,
+            notionType: type,
+            createdTime: page.created_time,
+            lastEditedTime: page.last_edited_time,
+          },
         },
-      });
-
-      if (result.created) {
-        console.log(`   ✅ Created: ${result.id}`);
-        created++;
-      } else {
-        console.log(`   ⏭️ Duplicate`);
-        skipped++;
-      }
-
-      // Rate limit
-      await new Promise((r) => setTimeout(r, 350));
-    } catch (e: any) {
-      console.error(`   ❌ Error: ${e.message}`);
+      ]);
+      created += summary.created;
+      skipped += summary.skipped;
+      errors += summary.failed;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Error: ${message}`);
       errors++;
     }
   }
