@@ -8,6 +8,7 @@
  */
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import type { SourceStatus } from "../convex/shared/statuses";
 import { writeFileSync, mkdirSync } from "fs";
 
 const CONVEX_URL =
@@ -114,11 +115,15 @@ async function main() {
   const client = new ConvexHttpClient(CONVEX_URL);
 
   // Fetch all non-archived sources
-  const statuses = ["extracted", "text_ready", "ingested"] as const;
+  const statuses: readonly SourceStatus[] = [
+    "extracted",
+    "text_ready",
+    "ingested",
+  ];
   const allSources: any[] = [];
   for (const status of statuses) {
     const batch = await client.query(api.sources.listByStatus, {
-      status: status as any,
+      status,
       limit: 1000,
     });
     allSources.push(...batch);

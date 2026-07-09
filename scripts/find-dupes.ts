@@ -7,6 +7,7 @@
 import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import type { SourceStatus } from "../convex/shared/statuses";
 import { normalizeUrl } from "../convex/sourceUtils";
 
 const CONVEX_URL =
@@ -36,11 +37,15 @@ async function main() {
   const client = new ConvexHttpClient(CONVEX_URL);
 
   // Get all non-archived sources
-  const statuses = ["ingested", "text_ready", "extracted"] as const;
+  const statuses: readonly SourceStatus[] = [
+    "ingested",
+    "text_ready",
+    "extracted",
+  ];
   const allSources: any[] = [];
   for (const status of statuses) {
     const batch = await client.query(api.sources.listByStatus, {
-      status: status as any,
+      status,
       limit: 1000,
     });
     allSources.push(...batch);
