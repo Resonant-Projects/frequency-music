@@ -1,6 +1,12 @@
 // ZODIAC data layer — types, constants, sector/pipeline definitions.
 // Mirrors design3.tsx SECTORS but serves both 2D and 3D implementations.
 
+import type {
+  HypothesisStatus,
+  RecipeStatus,
+  SourceStatus,
+} from "../../../convex/shared/statuses";
+
 export const COLORS = {
   void: "#0d0620",
   gold: "#c8a84b",
@@ -189,21 +195,28 @@ export function conceptDomainToSector(domain: string): string {
   return CONCEPT_DOMAIN_TO_SECTOR[domain] ?? "music";
 }
 
-// Status colors for pipeline items
-export const STATUS_COLORS: Record<string, string> = {
+type PipelineStatus = SourceStatus | HypothesisStatus | RecipeStatus;
+
+// Compile-checked against the contract: an unknown key here is now a type error.
+const STATUS_COLOR_MAP = {
   ingested: "#4a5568",
   text_ready: "#2b6cb0",
   extracting: "#c8a84b",
   extracted: "#38a169",
   review_needed: "#d69e2e",
   triaged: "#805ad5",
+  promoted_followers: "#b7791f",
+  promoted_public: "#c8a84b",
   draft: "#718096",
   queued: "#2b6cb0",
   active: "#38a169",
   evaluated: "#805ad5",
   in_use: "#38a169",
   archived: "#4a5568",
-};
+} satisfies Partial<Record<PipelineStatus, string>>;
+
+// Loose lookup surface for callers indexing with runtime strings.
+export const STATUS_COLORS: Record<string, string> = STATUS_COLOR_MAP;
 
 // Compute the midpoint position on an arc (for edge targets, label placement, etc.)
 export function arcMidpoint(

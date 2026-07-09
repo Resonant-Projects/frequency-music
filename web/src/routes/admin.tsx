@@ -1,6 +1,7 @@
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { FunctionArgs } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { SOURCE_STATUSES } from "../../../convex/shared/statuses";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
@@ -296,12 +297,9 @@ export function AdminPage() {
             setSourceStatusValue(event.currentTarget.value as SourceStatus)
           }
         >
-          <option value="ingested">ingested</option>
-          <option value="text_ready">text_ready</option>
-          <option value="extracting">extracting</option>
-          <option value="review_needed">review_needed</option>
-          <option value="triaged">triaged</option>
-          <option value="archived">archived</option>
+          <For each={SOURCE_STATUSES}>
+            {(status) => <option value={status}>{status}</option>}
+          </For>
         </UISelect>
 
         <div
