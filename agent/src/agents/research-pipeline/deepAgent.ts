@@ -2,7 +2,10 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ChatGeneration, LLMResult } from "@langchain/core/outputs";
-import { z } from "zod";
+import {
+  hypothesisDraftPayloadZ,
+  recipeDraftPayloadZ,
+} from "../../../../convex/shared/draftPayloads";
 import {
   getConfiguredModelProvider,
   getResearchModel,
@@ -13,54 +16,10 @@ import type {
   ResearchPipelineDraftPayload,
 } from "../../state/researchPipelineState.js";
 
-/**
- * Zod schemas for the structured draft payloads. These MUST mirror the deployed
- * Convex `agentReviewDrafts.payload` union so a promoted draft is loss-free.
- * Unknown keys are stripped; whyThisMatters is required (the server also
- * enforces it) so a payload that omits it collapses to undefined and the draft
- * stays valid-but-non-promotable.
- */
-export const hypothesisDraftPayloadSchema = z.object({
-  title: z.string().min(1),
-  question: z.string().min(1),
-  statement: z.string().min(1),
-  rationale: z.string().min(1),
-  whyThisMatters: z.string().min(1),
-  concepts: z.array(z.string()).optional(),
-  sourceIds: z.array(z.string()),
-  extractionIds: z.array(z.string()),
-  thesisId: z.string().optional(),
-  confidence: z.number().min(0).max(1).optional(),
-});
-
-export const recipeDraftParameterSchema = z.object({
-  kind: z.string().optional(),
-  type: z.string().optional(),
-  value: z.string(),
-  details: z.string().optional(),
-});
-
-export const recipeDraftProtocolSchema = z.object({
-  studyType: z.enum(["litmus", "comparison"]),
-  durationSecs: z.number().positive(),
-  panelPlanned: z.array(z.string()),
-  listeningContext: z.string().optional(),
-  listeningMethod: z.string().optional(),
-  baselineArtifactId: z.string().optional(),
-  whatVaries: z.array(z.string()),
-  whatStaysConstant: z.array(z.string()),
-});
-
-export const recipeDraftPayloadSchema = z.object({
-  hypothesisId: z.string().optional(),
-  title: z.string().min(1),
-  parameters: z.array(recipeDraftParameterSchema),
-  protocol: recipeDraftProtocolSchema.optional(),
-  whyThisMatters: z.string().min(1),
-  bodyMd: z.string().optional(),
-  dawChecklist: z.array(z.string()).optional(),
-  instrumentationNotes: z.string().optional(),
-});
+// Aliases preserve the existing agent interface while the zod schemas now live
+// at the shared seam and derive the Convex validators too.
+export const hypothesisDraftPayloadSchema = hypothesisDraftPayloadZ;
+export const recipeDraftPayloadSchema = recipeDraftPayloadZ;
 
 /**
  * Parse a candidate payload against the schema selected by the draft kind.

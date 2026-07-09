@@ -4,8 +4,13 @@
 // construct models at import time). Keeping the graphName -> input mapping pure
 // lets it be unit-tested without env/secrets or network access.
 
-export const KNOWN_GRAPH_NAMES = ["research-pipeline", "weekly-brief"] as const;
-export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
+import {
+  KNOWN_GRAPH_NAMES,
+  TERMINAL_STATUS_OWNER,
+  type KnownGraphName,
+} from "../../../convex/shared/agentContract";
+
+export { KNOWN_GRAPH_NAMES, TERMINAL_STATUS_OWNER, type KnownGraphName };
 
 export const DEFAULT_RESEARCH_LIMIT = 10;
 export const MAX_RESEARCH_LIMIT = 100;
@@ -14,17 +19,6 @@ export const DEFAULT_WEEKLY_BRIEF_SEED =
   "Generate this week's research brief from the current Convex research state. " +
   "Follow the weekly-brief supervisor instructions and land the result as a " +
   "human-review draft. Do not publish or mutate research data directly.";
-
-// Which side owns the terminal Convex status write for each graph:
-// - research-pipeline: its finalizeRunNode already marks completed/needs_review/
-//   failed, so the runner must NOT double-mark on the success path.
-// - weekly-brief: the graph performs no audit writes, so the runner owns the
-//   terminal status write.
-export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
-  {
-    "research-pipeline": "graph",
-    "weekly-brief": "runner",
-  };
 
 export function isKnownGraphName(name: string): name is KnownGraphName {
   return (KNOWN_GRAPH_NAMES as readonly string[]).includes(name);

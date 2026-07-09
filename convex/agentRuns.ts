@@ -1,4 +1,4 @@
-import { v, type Infer } from "convex/values";
+import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -8,18 +8,15 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { agentRunEventKindValidator, agentRunStatusValidator } from "./schema";
+import {
+  AGENT_RUN_STATUSES,
+  STALE_RUN_MS,
+  type AgentRunEventKind,
+  type AgentRunStatus,
+} from "./shared/agentContract";
 import { requireAuth } from "./auth";
 
-const agentRunStatuses = [
-  "queued",
-  "running",
-  "needs_review",
-  "completed",
-  "failed",
-  "cancelled",
-] as const;
-
-type AgentRunStatus = (typeof agentRunStatuses)[number];
+const agentRunStatuses = AGENT_RUN_STATUSES;
 
 function clampLimit(limit: number | undefined, fallback = 50, max = 200) {
   if (!limit || !Number.isFinite(limit)) return fallback;
@@ -42,7 +39,7 @@ export function buildAgentRunStatusCounts(
 }
 
 // A running run with no event (updatedAt) inside this window is presumed crashed.
-export const DEFAULT_STALE_RUN_MS = 30 * 60 * 1000;
+export const DEFAULT_STALE_RUN_MS = STALE_RUN_MS;
 export const STALE_RUN_SWEEP_LIMIT = 500;
 
 // Pure queue helpers (unit-tested; the repo has no live-DB test harness).
@@ -196,7 +193,7 @@ async function appendRunEvent(
   ctx: MutationCtx,
   args: {
     runId: Id<"agentRuns">;
-    kind: Infer<typeof agentRunEventKindValidator>;
+    kind: AgentRunEventKind;
     message: string;
     payload?: unknown;
   },

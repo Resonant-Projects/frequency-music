@@ -15,6 +15,7 @@ import { hostname } from "node:os";
 import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 
+import { HEARTBEAT_INTERVAL_MS } from "../../../convex/shared/agentContract";
 import { callConvex } from "../tools/convexTools.js";
 import { graph as researchPipelineGraph } from "../graphs/research-pipeline/index.js";
 import { agent as weeklyBriefAgent } from "../agents/weekly-brief/index.js";
@@ -35,12 +36,10 @@ import {
 const POLL_INTERVAL_MS = resolveWorkerPollIntervalMs(
   process.env.WORKER_POLL_INTERVAL_MS,
 );
-const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
-
 let shuttingDown = false;
 let currentRunId: string | undefined;
 
-function log(message: string, ...rest: unknown[]) {
+function log(message: string, ...rest: unknown[]): void {
   console.log(`[worker] ${message}`, ...rest);
 }
 

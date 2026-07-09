@@ -1,4 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import {
+  HEARTBEAT_INTERVAL_MS,
+  STALE_RUN_MS,
+  TERMINAL_STATUS_OWNER as CONTRACT_OWNER,
+} from "../../convex/shared/agentContract";
 
 import {
   buildGraphInvocation,
@@ -111,5 +116,15 @@ describe("worker graph-input mapping", () => {
     expect(redactError(new Error("PVEAPIToken=user!id=abcdef"))).toBe(
       "PVEAPIToken=[REDACTED]",
     );
+  });
+});
+
+describe("agentContract wiring", () => {
+  test("graphInput re-exports the contract's terminal-status owner", () => {
+    expect(TERMINAL_STATUS_OWNER).toBe(CONTRACT_OWNER);
+  });
+
+  test("worker heartbeat is faster than the queue's stale sweep", () => {
+    expect(HEARTBEAT_INTERVAL_MS).toBeLessThan(STALE_RUN_MS);
   });
 });

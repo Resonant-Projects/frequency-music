@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { convexTest } from "convex-test";
 import schema, { agentRunEventKindValidator } from "./schema";
 import { modules } from "./harness/modules";
+import { HEARTBEAT_INTERVAL_MS, STALE_RUN_MS } from "./shared/agentContract";
 
 // Contract tests pin copies that must agree across seams. When one of these
 // fails, fix the drifted copy rather than widening the test.
@@ -74,9 +75,6 @@ describe("agent run event kinds", () => {
   });
 });
 
-// Heartbeat/stale timing contract: HEARTBEAT_INTERVAL_MS < DEFAULT_STALE_RUN_MS.
-// BLOCKED until plan 2026-07-03-05 lands convex/shared/agentContract.ts; the
-// worker constant lives in a separate workspace today. Enable after plan 05.
-test.todo(
-  "heartbeat fits inside the stale threshold (needs plan 05 shared contract)",
-);
+test("heartbeat fits inside the stale threshold", () => {
+  expect(HEARTBEAT_INTERVAL_MS).toBeLessThan(STALE_RUN_MS);
+});

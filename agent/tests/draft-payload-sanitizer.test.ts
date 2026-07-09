@@ -60,6 +60,31 @@ describe("sanitizeDraftPayload", () => {
     expect((parsed as { hypothesisId?: string }).hypothesisId).toBe("hyp_1");
   });
 
+  test("preserves the full shared composition-parameter shape", () => {
+    const parsed = sanitizeDraftPayload("recipe_draft", {
+      ...validRecipePayload,
+      parameters: [
+        {
+          kind: "tempo",
+          type: "tempo",
+          value: "96bpm",
+          details: { curve: "linear" },
+          registryStatus: "provisional",
+          canonicalKind: "tempo",
+        },
+      ],
+    }) as { parameters: Array<Record<string, unknown>> };
+
+    expect(parsed.parameters[0]).toEqual({
+      kind: "tempo",
+      type: "tempo",
+      value: "96bpm",
+      details: { curve: "linear" },
+      registryStatus: "provisional",
+      canonicalKind: "tempo",
+    });
+  });
+
   test("strips unknown keys but keeps the known shape", () => {
     const parsed = sanitizeDraftPayload("hypothesis_draft", {
       ...validHypothesisPayload,
