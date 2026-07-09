@@ -6,6 +6,16 @@ import {
   AGENT_RUN_STATUSES,
 } from "./shared/agentContract";
 import {
+  agentReviewDraftPayloadValidator,
+  recipeProtocolValidator,
+} from "./shared/draftPayloads";
+export {
+  agentDraftHypothesisPayloadValidator,
+  agentDraftRecipePayloadValidator,
+  agentReviewDraftPayloadValidator,
+  recipeProtocolValidator,
+} from "./shared/draftPayloads";
+import {
   HYPOTHESIS_STATUSES,
   RECIPE_STATUSES,
   SOURCE_BLOCKED_REASONS,
@@ -148,51 +158,9 @@ export const claimValidator = v.object({
 // ============================================================================
 // AGENT REVIEW DRAFT PAYLOADS - structured data promotion carries into real rows
 // ============================================================================
-// Discriminated structurally by shape (hypothesis payloads carry `statement`,
-// recipe payloads carry `title`+`parameters`); the draft row's `kind` field is
-// the authoritative discriminator on read. Mirrors the fields the existing
-// hypotheses.create / recipes.create paths require so promotion is loss-free.
-export const agentDraftHypothesisPayloadValidator = v.object({
-  title: v.string(),
-  question: v.string(),
-  statement: v.string(), // becomes hypotheses.hypothesis
-  rationale: v.string(), // becomes hypotheses.rationaleMd
-  whyThisMatters: v.string(),
-  concepts: v.optional(v.array(v.string())),
-  sourceIds: v.array(v.id("sources")),
-  extractionIds: v.array(v.id("extractions")),
-  thesisId: v.optional(v.id("theses")),
-  confidence: v.optional(v.number()),
-});
-
-export const recipeProtocolValidator = v.object({
-  studyType: v.union(v.literal("litmus"), v.literal("comparison")),
-  durationSecs: v.number(),
-  panelPlanned: v.array(v.string()),
-  listeningContext: v.optional(v.string()),
-  listeningMethod: v.optional(v.string()),
-  baselineArtifactId: v.optional(v.id("compositions")),
-  whatVaries: v.array(v.string()),
-  whatStaysConstant: v.array(v.string()),
-});
-
-export const agentDraftRecipePayloadValidator = v.object({
-  hypothesisId: v.optional(v.id("hypotheses")),
-  title: v.string(),
-  parameters: v.array(compositionParameterValidator),
-  protocol: v.optional(recipeProtocolValidator),
-  whyThisMatters: v.string(),
-  // Optional: promotion synthesizes these from the payload when absent, so a
-  // promoted recipe always satisfies the recipes-table requirements.
-  bodyMd: v.optional(v.string()),
-  dawChecklist: v.optional(v.array(v.string())),
-  instrumentationNotes: v.optional(v.string()),
-});
-
-export const agentReviewDraftPayloadValidator = v.union(
-  agentDraftHypothesisPayloadValidator,
-  agentDraftRecipePayloadValidator,
-);
+// Discriminated structurally by shape; the draft row's `kind` field is the
+// authoritative discriminator. Zod schemas and derived Convex validators live
+// in shared/draftPayloads.ts so the agent and backend consume one contract.
 
 // Machine-verification result attached to a recipe by the plan-05 verifier.
 export const recipeVerificationValidator = v.object({
