@@ -38,4 +38,12 @@ crons.interval(
   {},
 );
 
+// Refresh dashboard/inbox row counts (see plans/005) so hot queries never full-scan
+crons.interval(
+  "recompute-stats",
+  { minutes: 30 },
+  internal.dashboard.recomputeStats,
+  {},
+);
+
 export default crons;

@@ -643,6 +643,12 @@ export default defineSchema({
     .index("by_weekOf", ["weekOf"])
     .index("by_visibility_createdAt", ["visibility", "createdAt"]),
 
+  stats: defineTable({
+    key: v.string(),
+    value: v.number(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
   editorialArtifacts: defineTable({
     kind: editorialArtifactKindValidator,
     slug: v.string(),

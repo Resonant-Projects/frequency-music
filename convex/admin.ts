@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { readStat } from "./dashboard";
 import {
   sourceBlockedReasonValidator,
   sourceStatusValidator,
@@ -23,21 +24,21 @@ export const workspaceSnapshot = query({
   handler: async (ctx) => {
     const [sources, hypotheses, recipes, compositions, weeklyBriefs, feeds] =
       await Promise.all([
-        ctx.db.query("sources").collect(),
-        ctx.db.query("hypotheses").collect(),
-        ctx.db.query("recipes").collect(),
-        ctx.db.query("compositions").collect(),
-        ctx.db.query("weeklyBriefs").collect(),
-        ctx.db.query("feeds").collect(),
+        readStat(ctx.db, "count.sources"),
+        readStat(ctx.db, "count.hypotheses"),
+        readStat(ctx.db, "count.recipes"),
+        readStat(ctx.db, "count.compositions"),
+        readStat(ctx.db, "count.weeklyBriefs"),
+        readStat(ctx.db, "count.feeds"),
       ]);
 
     return {
-      sources: sources.length,
-      hypotheses: hypotheses.length,
-      recipes: recipes.length,
-      compositions: compositions.length,
-      weeklyBriefs: weeklyBriefs.length,
-      feeds: feeds.length,
+      sources,
+      hypotheses,
+      recipes,
+      compositions,
+      weeklyBriefs,
+      feeds,
     };
   },
 });

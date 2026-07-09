@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
+import { readStat } from "./dashboard";
 import { sourceReturnValidator } from "./validators";
 
 type InboxStatus = "ingested" | "text_ready" | "extracted" | "review_needed";
@@ -159,28 +160,17 @@ export const counts = query({
     blocked: v.number(),
   }),
   handler: async (ctx) => {
-    const ingested = await ctx.db
-      .query("sources")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "ingested"))
-      .collect();
-    const textReady = await ctx.db
-      .query("sources")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "text_ready"))
-      .collect();
-    const reviewNeeded = await ctx.db
-      .query("sources")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "review_needed"))
-      .collect();
-
-    const blocked = [...ingested, ...textReady, ...reviewNeeded].filter(
-      (row) => row.visibility === "private" && Boolean(row.blockedReason),
-    ).length;
+    const [ingested, textReady, reviewNeeded, blocked] = await Promise.all([
+      readStat(ctx.db, "inbox.ingested"),
+      readStat(ctx.db, "inbox.textReady"),
+      readStat(ctx.db, "inbox.reviewNeeded"),
+      readStat(ctx.db, "inbox.blocked"),
+    ]);
 
     return {
-      ingested: ingested.filter((row) => row.visibility === "private").length,
-      textReady: textReady.filter((row) => row.visibility === "private").length,
-      reviewNeeded: reviewNeeded.filter((row) => row.visibility === "private")
-        .length,
+      ingested,
+      textReady,
+      reviewNeeded,
       blocked,
     };
   },

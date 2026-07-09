@@ -26,7 +26,7 @@ operator-gated.
 | 002 | Internalize concept-graph write surface + constant-time secret check | P1 | S–M | — | DONE |
 | 003 | CI workflow + check-only lint/format/typecheck scripts | P1 | S | — | DONE — root typecheck descoped (pre-existing type debt) |
 | 004 | Characterization tests for RSS/LLM-output parsers | P2 | M | — (best before/with 003's CI) | DONE |
-| 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | TODO |
+| 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | DONE — operator must deploy + run first `recomputeStats`; counts read 0 until then |
 | 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | DONE |
 | 007 | Dependency hygiene: dead deps, npm lockfile, linter split | P3 | S | 006 | DONE |
 | 008 | Run first eval baseline sweep (operational) | P2 | S–M | — (needs live API keys) | TODO |
