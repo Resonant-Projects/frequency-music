@@ -77,6 +77,51 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(draft?.decidedBy).toBe("human");
   });
 
+  test("recipe draft becomes a recipes row with generated parameter kind", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const hypothesisId = await t.run((ctx) =>
+      ctx.db.insert("hypotheses", {
+        title: "432Hz warmth hypothesis",
+        question: "Does 432Hz tuning change perceived warmth?",
+        hypothesis: "Retuning to 432Hz increases perceived warmth",
+        rationaleMd: "Seeded for recipe promotion harness coverage",
+        sourceIds: [],
+        status: "draft",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      }),
+    );
+    const { agentRunId, draftId } = await seedRunAndDraft(
+      t,
+      {
+        hypothesisId,
+        title: "432Hz warmth litmus",
+        parameters: [
+          { kind: "tuning", type: "tuning", value: "432Hz reference" },
+        ],
+        whyThisMatters: "Tests an audible prediction from the hypothesis.",
+      },
+      "recipe_draft",
+    );
+
+    const result = await asSystem.mutation(api.agentDrafts.approve, {
+      draftId,
+    });
+
+    expect(result.promotedKind).toBe("recipe");
+    const recipe = await t.run((ctx) =>
+      ctx.db.get(result.promotedId as Id<"recipes">),
+    );
+    expect(recipe?.hypothesisId).toBe(hypothesisId);
+    expect(recipe?.parameters[0].kind).toBe("tuning");
+    expect(recipe?.origin).toBe("agent");
+    expect(recipe?.agentRunId).toBe(agentRunId);
+    expect(recipe?.agentDraftId).toBe(draftId);
+  });
+
   test("payload-less draft is acknowledge-only: approve throws INVALID_STATE", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
