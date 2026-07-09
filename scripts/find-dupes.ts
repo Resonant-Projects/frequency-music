@@ -7,6 +7,7 @@
 import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import { normalizeUrl } from "../convex/sourceUtils";
 
 const CONVEX_URL =
   process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
@@ -20,20 +21,6 @@ function requireBypassSecret(): string {
     process.exit(1);
   }
   return BYPASS;
-}
-
-function normalizeUrl(url: string): string {
-  let u = url
-    .replace(/^https?:\/\//, "")
-    .replace(/^www\./, "")
-    .replace(/\/$/, "")
-    .replace(/#.*$/, "")
-    .toLowerCase();
-  // Keep query params for YouTube (video ID is in ?v=)
-  if (!u.includes("youtube.com") && !u.includes("youtu.be")) {
-    u = u.replace(/\?.*$/, "");
-  }
-  return u;
 }
 
 function normalizeTitle(title: string): string {
