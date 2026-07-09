@@ -1,5 +1,4 @@
 import { tool } from "@langchain/core/tools";
-import type { AgentToolName } from "../../../convex/shared/agentToolArgs";
 import { AGENT_TOOL_MANIFEST } from "../../../convex/shared/agentToolManifest";
 
 const rawTextKeys = new Set(["rawText", "transcript"]);
@@ -20,7 +19,7 @@ function stripLargeTextFields(value: unknown): unknown {
 }
 
 export async function callConvex<T>(
-  path: AgentToolName,
+  path: string,
   body: Record<string, unknown>,
 ): Promise<T> {
   const convexUrl = process.env.CONVEX_SITE_URL;

@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import * as agentTools from "./agentTools";
 import { AGENT_TOOL_REGISTRY, agentToolByName } from "./agentToolRegistry";
-import { AGENT_RUN_EVENT_KINDS } from "./shared/agentContract";
 import { AGENT_TOOL_MANIFEST } from "./shared/agentToolManifest";
 
 const field = (fieldType: unknown, optional = false) => ({
@@ -43,7 +42,19 @@ const FROZEN_ARGS: Record<string, string> = {
   }),
   appendAgentRunEvent: frozenArgs({
     runId,
-    kind: field(union(...AGENT_RUN_EVENT_KINDS.map((kind) => literal(kind)))),
+    kind: field(
+      union(
+        literal("tool_call"),
+        literal("decision"),
+        literal("draft_write"),
+        literal("error"),
+        literal("review_request"),
+        literal("status"),
+        literal("node"),
+        literal("memory_recall"),
+        literal("model_call"),
+      ),
+    ),
     message: field(string),
     payload: field(any, true),
   }),
