@@ -1,20 +1,6 @@
 import { z } from "zod";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import {
-  appendAgentRunEvent,
-  createAgentReviewDraft,
-  createAgentRun,
-  getEditorialSignals,
-  getRecentRecipes,
-  getRecommendedActions,
-  listActiveTheses,
-  listFailureArchive,
-  listRecentExtractions,
-  listRecentHypotheses,
-  markAgentRunCompleted,
-  markAgentRunFailed,
-  markAgentRunNeedsReview,
-} from "../../tools/convexTools.js";
+import { callConvex } from "../../tools/convexTools.js";
 import {
   createResearchDeepAgentDraft,
   hypothesisDraftPayloadSchema,
@@ -73,7 +59,7 @@ async function appendRemoteAuditEvent(
   if (!agentRunId) return [localEvent];
 
   try {
-    await appendAgentRunEvent.invoke({
+    await callConvex("appendAgentRunEvent", {
       runId: agentRunId,
       kind,
       message,
@@ -117,7 +103,7 @@ export async function initializeRunNode(
   };
 
   try {
-    const created = await createAgentRun.invoke({
+    const created = await callConvex("createAgentRun", {
       graphName: "research-pipeline",
       input,
     });
@@ -226,13 +212,16 @@ export async function loadScopeNode(
 ): Promise<ResearchPipelineUpdate> {
   const limit = state.limit ?? 10;
   const scopeTools = [
-    ["activeTheses", () => listActiveTheses.invoke({ limit })],
-    ["recentExtractions", () => listRecentExtractions.invoke({ limit })],
-    ["recentHypotheses", () => listRecentHypotheses.invoke({ limit })],
-    ["recentRecipes", () => getRecentRecipes.invoke({ limit })],
-    ["failureArchive", () => listFailureArchive.invoke({ limit })],
-    ["recommendedActions", () => getRecommendedActions.invoke({})],
-    ["editorialSignals", () => getEditorialSignals.invoke({ limit: 24 })],
+    ["activeTheses", () => callConvex("listActiveTheses", { limit })],
+    ["recentExtractions", () => callConvex("listRecentExtractions", { limit })],
+    ["recentHypotheses", () => callConvex("listRecentHypotheses", { limit })],
+    ["recentRecipes", () => callConvex("getRecentRecipes", { limit })],
+    ["failureArchive", () => callConvex("listFailureArchive", { limit })],
+    ["recommendedActions", () => callConvex("getRecommendedActions", {})],
+    [
+      "editorialSignals",
+      () => callConvex("getEditorialSignals", { limit: 24 }),
+    ],
   ] as const;
 
   const settled = await Promise.all(
@@ -639,13 +628,13 @@ export async function finalizeRunNode(
   if (state.agentRunId) {
     try {
       if (hasErrors) {
-        await markAgentRunFailed.invoke({
+        await callConvex("markAgentRunFailed", {
           runId: state.agentRunId,
           summary,
           error: { messages: state.errors },
         });
       } else if (needsReview) {
-        await markAgentRunNeedsReview.invoke({
+        await callConvex("markAgentRunNeedsReview", {
           runId: state.agentRunId,
           summary,
           reviewDraft: state.draft,
@@ -674,7 +663,7 @@ export async function finalizeRunNode(
             : undefined;
         if (reviewDraft) {
           try {
-            const persistedDraft = await createAgentReviewDraft.invoke({
+            const persistedDraft = await callConvex("createAgentReviewDraft", {
               agentRunId: state.agentRunId,
               draft: reviewDraft,
             });
@@ -707,7 +696,7 @@ export async function finalizeRunNode(
           }
         }
       } else {
-        await markAgentRunCompleted.invoke({
+        await callConvex("markAgentRunCompleted", {
           runId: state.agentRunId,
           summary,
         });

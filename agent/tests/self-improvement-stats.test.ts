@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { convexTools, getSelfImprovementStats } from "../src/tools/convexTools";
+import { convexTools } from "../src/tools/convexTools";
+
+const getSelfImprovementStats = convexTools.find(
+  (candidate) => candidate.name === "get_self_improvement_stats",
+);
+if (!getSelfImprovementStats) {
+  throw new Error("get_self_improvement_stats is missing from convexTools");
+}
 
 const originalFetch = globalThis.fetch;
 const originalUrl = process.env.CONVEX_SITE_URL;
