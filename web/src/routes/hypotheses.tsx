@@ -19,7 +19,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 function truncate(text: string, maxLength: number) {
   return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
@@ -31,15 +31,15 @@ export function HypothesesPage() {
   });
 
   const hypotheses = createQueryWithStatus(
-    convexApi.hypotheses.listByStatus,
+    api.hypotheses.listByStatus,
     () => ({
       limit: 24,
     }),
   );
-  const recentSources = createQuery(convexApi.sources.listRecent, () => ({
+  const recentSources = createQuery(api.sources.listRecent, () => ({
     limit: 20,
   }));
-  const activeTheses = createQuery(convexApi.theses.list, () => ({
+  const activeTheses = createQuery(api.theses.list, () => ({
     status: "active" as const,
     limit: 50,
   }));
@@ -53,7 +53,7 @@ export function HypothesesPage() {
     () => (hypotheses.data() ?? []) as Doc<"hypotheses">[],
   );
 
-  const createHypothesis = createMutation(convexApi.hypotheses.create);
+  const createHypothesis = createMutation(api.hypotheses.create);
 
   const [title, setTitle] = createSignal("");
   const [question, setQuestion] = createSignal("");

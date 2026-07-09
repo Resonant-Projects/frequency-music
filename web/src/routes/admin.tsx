@@ -13,7 +13,7 @@ import {
   UISelect,
 } from "../components/ui";
 import { createMutation, createQuery } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const helperClass = css({
   color: "rgba(245, 240, 232, 0.58)",
@@ -26,12 +26,12 @@ export function AdminPage() {
     document.title = "Admin — Frequency Music";
   });
 
-  const snapshot = createQuery(convexApi.admin.workspaceSnapshot);
-  const setSourceStatus = createMutation(convexApi.admin.setSourceStatus);
+  const snapshot = createQuery(api.admin.workspaceSnapshot);
+  const setSourceStatus = createMutation(api.admin.setSourceStatus);
   const startBatchExtraction = createMutation(
-    convexApi.workflows.startBatchExtraction,
+    api.workflows.startBatchExtraction,
   );
-  const reviewSummary = createQuery(convexApi.vocabulary.reviewSummary);
+  const reviewSummary = createQuery(api.vocabulary.reviewSummary);
 
   const [sourceId, setSourceId] = createSignal("");
   const [sourceStatus, setSourceStatusValue] = createSignal("review_needed");

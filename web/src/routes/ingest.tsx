@@ -19,7 +19,7 @@ import {
   createQuery,
   createQueryWithStatus,
 } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const twoColClass = css({
   display: "grid",
@@ -81,18 +81,18 @@ export function IngestPage() {
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
   const createFromUrlInput = createAction(
-    convexApi.sources.createFromUrlAndQueue,
+    api.sources.createFromUrlAndQueue,
   );
   const createFromYouTubeInput = createAction(
-    convexApi.sources.createFromYouTubeAndQueue,
+    api.sources.createFromYouTubeAndQueue,
   );
-  const createFeed = createMutation(convexApi.admin.createFeed);
-  const setFeedEnabled = createMutation(convexApi.admin.setFeedEnabled);
-  const pollFeedsNow = createAction(convexApi.admin.pollFeedsNow);
-  const feeds = createQuery(convexApi.admin.listFeeds);
+  const createFeed = createMutation(api.admin.createFeed);
+  const setFeedEnabled = createMutation(api.admin.setFeedEnabled);
+  const pollFeedsNow = createAction(api.admin.pollFeedsNow);
+  const feeds = createQuery(api.admin.listFeeds);
 
   const recentSources = createQueryWithStatus(
-    convexApi.sources.listRecent,
+    api.sources.listRecent,
     () => ({
       limit: 14,
     }),

@@ -17,7 +17,7 @@ import {
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQuery } from "../integrations/convex";
-import { convexApi } from "../integrations/convex/api";
+import { api } from "../../../convex/_generated/api";
 
 const bodyClass = css({
   color: "rgba(245, 240, 232, 0.7)",
@@ -64,10 +64,10 @@ type HypothesisSource = Doc<"sources">;
 export function HypothesisDetailPage() {
   const params = useParams({ from: "/hypotheses/$hypothesisId" });
 
-  const hypothesis = createQuery(convexApi.hypotheses.get, () => ({
+  const hypothesis = createQuery(api.hypotheses.get, () => ({
     id: params().hypothesisId as Id<"hypotheses">,
   }));
-  const theses = createQuery(convexApi.theses.list, () => ({
+  const theses = createQuery(api.theses.list, () => ({
     limit: 100,
   }));
 
@@ -76,7 +76,7 @@ export function HypothesisDetailPage() {
     if (h) document.title = `${h.title} — Frequency Music`;
   });
 
-  const updateHypothesis = createMutation(convexApi.hypotheses.update);
+  const updateHypothesis = createMutation(api.hypotheses.update);
   const [notice, setNotice] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
   const [whyThisMattersDraft, setWhyThisMattersDraft] = createSignal("");
