@@ -23,7 +23,7 @@ operator-gated.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001 | Rotate & de-commit auth-bypass secret, HTTPS transport | P1 | S | — | TODO |
-| 002 | Internalize concept-graph write surface + constant-time secret check | P1 | S–M | — | TODO |
+| 002 | Internalize concept-graph write surface + constant-time secret check | P1 | S–M | — | DONE |
 | 003 | CI workflow + check-only lint/format/typecheck scripts | P1 | S | — | TODO |
 | 004 | Characterization tests for RSS/LLM-output parsers | P2 | M | — (best before/with 003's CI) | TODO |
 | 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | TODO |

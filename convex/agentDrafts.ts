@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import {
   internalMutation,
   mutation,
@@ -355,7 +355,7 @@ export const approve = mutation({
         }),
       );
       // Concept linking is an action; schedule it (mutations cannot await actions).
-      await ctx.scheduler.runAfter(0, api.graph.linkHypothesisConcepts, {
+      await ctx.scheduler.runAfter(0, internal.graph.linkHypothesisConcepts, {
         hypothesisId,
       });
       promotedId = hypothesisId;
