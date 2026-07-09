@@ -28,7 +28,7 @@ async function fetchWithTimeout(
 // RSS FEED POLLING
 // ============================================================================
 
-interface RSSItem {
+export interface RSSItem {
   title: string;
   link: string;
   pubDate?: string;
@@ -37,7 +37,7 @@ interface RSSItem {
   content?: string;
 }
 
-interface ParsedFeed {
+export interface ParsedFeed {
   title: string;
   items: RSSItem[];
 }
@@ -45,7 +45,7 @@ interface ParsedFeed {
 /**
  * Parse RSS/Atom XML into structured items
  */
-function parseRSSXML(xml: string): ParsedFeed {
+export function parseRSSXML(xml: string): ParsedFeed {
   // Simple regex-based parser (works for most RSS/Atom feeds)
   const items: RSSItem[] = [];
 
@@ -112,7 +112,7 @@ function parseRSSXML(xml: string): ParsedFeed {
 /**
  * Strip HTML tags from text
  */
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return html
     .replaceAll(/<[^>]*>/g, " ")
     .replaceAll("&nbsp;", " ")
