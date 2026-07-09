@@ -14,7 +14,7 @@ Research-to-composition pipeline exploring connections between music, physics, m
 
 - **Runtime:** Bun (not Node.js)
 - **Backend:** Self-hosted Convex (managed by Cool Guy)
-- **LLM:** OpenRouter + AI SDK (multi-model: Claude, Groq, Gemini, GPT-4)
+- **LLM:** Convex pipeline: OpenRouter + AI SDK (Claude Sonnet default, Groq/Gemini/DeepSeek variants — see convex/extract.ts MODELS). Agent workspace: LangGraph with Codex SDK + Anthropic (see agent/).
 - **Tuning Files:** Scala format (.scl, .kbm)
 
 **Repository:** `github.com:Resonant-Projects/frequency-music.git`
@@ -187,35 +187,31 @@ Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
 ## Models (convex/extract.ts)
 
 ```typescript
-MODELS = {
+export const MODELS = {
+  // === GROQ (fast, cheap) ===
   fast: "groq/moonshotai/kimi-k2-instruct",
+  kimi: "groq/moonshotai/kimi-k2-instruct",
+
+  // === OpenRouter (model variety) ===
   default: "anthropic/claude-sonnet-4-6",
+  quality: "anthropic/claude-sonnet-4-6",
+  haiku: "anthropic/claude-3-5-haiku-20241022",
   gemini: "google/gemini-2.5-flash",
-  grok: "x-ai/grok-3-mini-beta",
+  gpt4: "openai/gpt-4o",
   deepseek: "deepseek/deepseek-chat-v3-0324",
-};
+  grok: "x-ai/grok-3-mini-beta",
+} as const;
 ```
 
+> Source of truth: convex/extract.ts — update this table when that changes.
+>
 > **Note:** Never use Llama models. Sonnet 4.6 for automated cron extractions, Opus for manual re-extractions.
 
-## Current Feeds (18, 6 dead)
+## Feeds
 
-**Research (active):**
+Feeds live in the `feeds` table; inspect the current inventory with `bunx convex run feeds:list`.
 
-- Quanta Magazine, Nautilus, BRAMS
-- Music Theory Online, Journal of Mathematics and Music (T&F — Cloudflare blocks full text)
-- arXiv: cs.SD (Sound), eess.AS (Audio & Speech)
-
-**YouTube (mostly dead):**
-
-- ~~3Blue1Brown~~ (HTTP 500), ~~Adam Neely~~ (HTTP 500), ~~David Bennett Piano~~ (HTTP 404)
-- ~~CymaScope~~ (HTTP 500), Andrew Huang, ~~Robert Edward Grant~~ (HTTP 404)
-
-**Production:**
-
-- ~~Sound on Sound~~ (HTTP 410 Gone — permanently dead), Splice Blog, Bobby Owsinski, Native Instruments
-
-> **TODO:** Remove 6 dead feeds, find replacements
+Feed domains span research publications, YouTube channels, and music-production sources.
 
 ## Research Domains
 

@@ -50,16 +50,34 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 ## Local development
 
+### Web app
+
 1. Install dependencies:
    - `bun install`
    - `cd web && bun install`
 2. Set web env:
-   - `VITE_CONVEX_URL=<your convex deployment url>` in `web/.env.local`
-   - `VITE_CLERK_PUBLISHABLE_KEY=<your clerk publishable key>`
-   - `VITE_CLERK_SIGN_IN_URL=https://login.resonantrhythm.com/sign-in`
-   - `VITE_CLERK_SIGN_UP_URL=https://login.resonantrhythm.com/sign-up`
+   - Create `web/.env.local` and set `VITE_CONVEX_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`, and `VITE_CLERK_SIGN_UP_URL`.
 3. Run web app:
    - `cd web && bun run dev`
+
+### Convex backend
+
+- The backend is self-hosted. Copy [`.env.example`](./.env.example) to `.env.local`; Bun auto-loads it.
+- Caution: `bunx convex dev`, `bunx convex codegen`, and `bunx convex deploy` talk to the live backend.
+- For CLI mutation auth, see [Authentication in CLAUDE.md](./CLAUDE.md#authentication).
+
+### Agent workspace & worker
+
+- See [`agent/README.md`](./agent/README.md) for workspace setup.
+- The production worker uses [`agent/docker-compose.yml`](./agent/docker-compose.yml) and the [Proxmox agent deployment guide](./docs/proxmox-agent-deployment.md).
+- External agents use the [Agent-Tool HTTP surface](./docs/agent-tool-surface.md).
+
+### Verification
+
+- Convex: `bun test convex/*.test.ts`
+- Web: `bun run typecheck:web` and `bun run build:web`
+- Agent: `cd agent && bun run verify && bun test`
+- If present after Plan 003 lands: `bun run lint:check`, `bun run format:check`, and `bun run typecheck`
 
 ## App routes (TanStack Router)
 
@@ -72,9 +90,3 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - `/compositions` composition lifecycle tracking
 - `/feedback` listening session capture and ratings
 - `/admin` feed controls + operational overrides
-
-## Verification commands
-
-- `bun run test`
-- `bun run build:web`
-- `bun run typecheck:web`
