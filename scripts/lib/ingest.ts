@@ -6,6 +6,10 @@ import type { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { SourceStatus } from "../../convex/shared/statuses";
+import {
+  computeCanonicalDedupeKey,
+  generateDedupeKey,
+} from "../../convex/sourceUtils";
 import { getConvexClient, getDevBypassSecret } from "./convexClient";
 import { type FetchResult, TEXT_CAP, capText, fetchViaJina } from "./fetchText";
 
@@ -20,7 +24,6 @@ export type SourceType =
 export interface SourceManifestItem {
   type: SourceType;
   title: string;
-  dedupeKey: string;
   url?: string;
   canonicalUrl?: string;
   author?: string;
@@ -35,6 +38,7 @@ export interface SourceManifestItem {
   topics?: string[];
   metadata?: Record<string, unknown>;
   fetchText?: boolean;
+  fileSha256?: string;
 }
 
 export interface IngestSummary {
@@ -59,9 +63,9 @@ export interface RefetchOptions {
 export type MinimalClient = Pick<ConvexHttpClient, "query" | "mutation">;
 
 interface SourceRow {
-  _id: string;
-  type: string;
-  status: string;
+  _id: Id<"sources">;
+  type: SourceType;
+  status: SourceStatus;
   canonicalUrl?: string;
   rawText?: string;
   title?: string;
@@ -69,6 +73,28 @@ interface SourceRow {
 
 const sleep = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+function manifestDedupeKey(item: SourceManifestItem): string {
+  if (item.type === "pdf") {
+    if (!item.fileSha256) {
+      throw new Error(`PDF manifest item requires fileSha256: ${item.title}`);
+    }
+    return generateDedupeKey("pdf", { fileSha256: item.fileSha256 });
+  }
+
+  const dedupeKey = computeCanonicalDedupeKey({
+    type: item.type,
+    notionPageId: item.notionPageId,
+    feedUrl: item.feedUrl,
+    rssGuid: item.rssGuid,
+    canonicalUrl: item.canonicalUrl ?? item.url,
+    youtubeVideoId: item.youtubeVideoId,
+  });
+  if (!dedupeKey) {
+    throw new Error(`Cannot compute canonical dedupe key: ${item.title}`);
+  }
+  return dedupeKey;
+}
 
 export function createSourceIngestor(
   opts: {
@@ -95,7 +121,8 @@ export function createSourceIngestor(
     const summary: IngestSummary = { created: 0, skipped: 0, failed: 0 };
     for (const item of items) {
       try {
-        if (await alreadyIngested(item.dedupeKey)) {
+        const dedupeKey = manifestDedupeKey(item);
+        if (await alreadyIngested(dedupeKey)) {
           log(`  ⏭ exists: ${item.title}`);
           summary.skipped++;
           continue;
@@ -125,7 +152,7 @@ export function createSourceIngestor(
           tags: item.tags,
           topics: item.topics,
           metadata: item.metadata,
-          dedupeKey: item.dedupeKey,
+          dedupeKey,
           devBypassSecret,
         });
 
@@ -160,35 +187,34 @@ export function createSourceIngestor(
 
     const all: SourceRow[] = [];
     for (const status of statuses) {
-      const batch = (await client.query(api.sources.listByStatus, {
+      const batch: SourceRow[] = await client.query(api.sources.listByStatus, {
         status,
         limit: limit * 2,
-      })) as SourceRow[];
+      });
       all.push(...batch);
     }
 
     const candidates = all
-      .filter((source) => {
+      .filter((source): source is SourceRow & { canonicalUrl: string } => {
         const textLength = (source.rawText ?? "").length;
         const hasUrl = source.canonicalUrl?.startsWith("http") ?? false;
-        const typeMatches =
-          types === undefined || types.includes(source.type as SourceType);
+        const typeMatches = types === undefined || types.includes(source.type);
         return typeMatches && hasUrl && textLength < minLength;
       })
       .slice(0, limit);
 
-    const toReExtract: string[] = [];
+    const toReExtract: Id<"sources">[] = [];
     for (const source of candidates) {
       const currentLength = (source.rawText ?? "").length;
       log(`📄 ${source.title?.slice(0, 60)} (${currentLength} chars)`);
       try {
-        const result = await fetchText(source.canonicalUrl as string);
+        const result = await fetchText(source.canonicalUrl);
         if (!result.ok || result.text.length <= currentLength) {
           log(`  ⏭ no better text${result.ok ? "" : ` (${result.error})`}`);
           summary.skipped++;
         } else {
           await client.mutation(api.sources.updateText, {
-            id: source._id as Id<"sources">,
+            id: source._id,
             rawText: result.text.slice(0, TEXT_CAP),
             devBypassSecret,
           });
@@ -207,7 +233,7 @@ export function createSourceIngestor(
 
     for (const id of toReExtract) {
       await client.mutation(api.sources.updateStatus, {
-        id: id as Id<"sources">,
+        id,
         status: "text_ready",
         devBypassSecret,
       });

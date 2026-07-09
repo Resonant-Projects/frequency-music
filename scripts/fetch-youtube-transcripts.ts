@@ -16,8 +16,8 @@ function extractVideoId(url: string): string | null {
     /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
   ];
   for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
+    const videoId = url.match(pattern)?.[1];
+    if (videoId) return videoId;
   }
   return null;
 }
@@ -45,8 +45,9 @@ async function main() {
   const args = process.argv.slice(2);
   let limit = 10;
   for (let index = 0; index < args.length; index++) {
-    if (args[index] === "--limit" && args[index + 1]) {
-      limit = Number.parseInt(args[index + 1], 10);
+    const value = args[index + 1];
+    if (args[index] === "--limit" && value) {
+      limit = Number.parseInt(value, 10);
     }
   }
 

@@ -1,3 +1,5 @@
+// oxlint-disable-next-line import/no-unassigned-import -- Loads env-backed values before client resolution.
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 
 export function getConvexUrl(): string {

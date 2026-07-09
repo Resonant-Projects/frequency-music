@@ -106,16 +106,17 @@ async function main() {
   let limit = 20;
   let fetchFull = false;
   for (let index = 0; index < args.length; index++) {
-    if (args[index] === "--search" && args[index + 1]) {
-      searchTerms = args[index + 1].split(",").map((term) => term.trim());
+    const value = args[index + 1];
+    if (args[index] === "--search" && value) {
+      searchTerms = value.split(",").map((term) => term.trim());
       index++;
     }
-    if (args[index] === "--location" && args[index + 1]) {
-      location = args[index + 1];
+    if (args[index] === "--location" && value) {
+      location = value;
       index++;
     }
-    if (args[index] === "--limit" && args[index + 1]) {
-      limit = Number.parseInt(args[index + 1], 10);
+    if (args[index] === "--limit" && value) {
+      limit = Number.parseInt(value, 10);
       index++;
     }
     if (args[index] === "--fetch-full") fetchFull = true;
@@ -152,13 +153,6 @@ async function main() {
   let failed = 0;
   for (const article of relevantArticles) {
     console.log(`📄 ${article.title?.slice(0, 60)}...`);
-    const dedupeKey = `readwise:${article.id}`;
-    if (await ingestor.alreadyIngested(dedupeKey)) {
-      console.log("   ⏭️ Already ingested");
-      skipped++;
-      continue;
-    }
-
     let rawText = article.content || article.summary || "";
     if (fetchFull && article.source_url && rawText.length < 2000) {
       console.log("   📥 Fetching full text...");
@@ -188,7 +182,6 @@ async function main() {
           wordCount: article.word_count,
           readingProgress: article.reading_progress,
         },
-        dedupeKey,
       },
     ]);
     success += summary.created;

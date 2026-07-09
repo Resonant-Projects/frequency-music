@@ -53,7 +53,7 @@ describe("ingest", () => {
   test("skips existing, creates new, applies capText, counts correctly", async () => {
     const { client, calls } = fakeClient({
       "sources:getByDedupeKey": (args) =>
-        args.dedupeKey === "url:exists" ? { _id: "s1" } : null,
+        args.dedupeKey === "url:a.example" ? { _id: "s1" } : null,
       "sources:create": () => ({ id: "s2", created: true }),
     });
     const ingestor = createSourceIngestor({
@@ -67,19 +67,17 @@ describe("ingest", () => {
       {
         type: "url",
         title: "Old",
-        dedupeKey: "url:exists",
         url: "https://a.example",
       },
       {
         type: "url",
         title: "New",
-        dedupeKey: "url:new",
         url: "https://b.example",
       },
       {
         type: "pdf",
         title: "Short text",
-        dedupeKey: "pdf:short",
+        fileSha256: "short-sha",
         rawText: "tiny",
       },
     ]);
@@ -89,6 +87,10 @@ describe("ingest", () => {
     expect((creates[0].args.rawText as string).length).toBe(150);
     expect(creates[1].args.rawText).toBeUndefined();
     expect(creates[0].args.devBypassSecret).toBeDefined();
+    expect(creates.map((call) => call.args.dedupeKey)).toEqual([
+      "url:b.example",
+      "pdf:short-sha",
+    ]);
   });
 
   test("failed fetch still creates the source without rawText", async () => {
@@ -107,7 +109,6 @@ describe("ingest", () => {
       {
         type: "url",
         title: "Blocked",
-        dedupeKey: "url:blocked",
         url: "https://c.example",
       },
     ]);
@@ -134,8 +135,8 @@ describe("ingest", () => {
       log: () => {},
     });
     const summary = await ingestor.ingest([
-      { type: "url", title: "Bad", dedupeKey: "url:bad" },
-      { type: "url", title: "Good", dedupeKey: "url:good" },
+      { type: "url", title: "Bad", url: "https://bad.example" },
+      { type: "url", title: "Good", url: "https://good.example" },
     ]);
     expect(summary).toEqual({ created: 1, skipped: 0, failed: 1 });
   });

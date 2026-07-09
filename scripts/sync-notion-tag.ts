@@ -151,13 +151,6 @@ async function main() {
   let errors = 0;
   for (const noteId of noteIds) {
     try {
-      const dedupeKey = `notion:${noteId}`;
-      if (await ingestor.alreadyIngested(dedupeKey)) {
-        console.log("   ⏭️ Already exists, skipping");
-        skipped++;
-        continue;
-      }
-
       const page = await getPageDetails(noteId);
       const title = extractTitle(page);
       const url = extractUrl(page);
@@ -183,7 +176,6 @@ async function main() {
           fetchText: false,
           tags: type ? [type] : undefined,
           topics: ["frequency-research"],
-          dedupeKey,
           metadata: {
             notionUrl: page.url,
             notionType: type,

@@ -3,7 +3,6 @@
     "type": "url",
     "title": "Example article — replace me",
     "url": "https://example.com/article",
-    "dedupeKey": "url:example.com/article",
     "topics": ["example"],
     "tags": ["manifest-example"]
   },
@@ -11,7 +10,7 @@
     "type": "pdf",
     "title": "Example paper — replace me",
     "url": "https://example.com/paper.pdf",
-    "dedupeKey": "book:example-paper",
+    "fileSha256": "replace-with-file-sha256",
     "topics": ["example"],
     "fetchText": false
   }
