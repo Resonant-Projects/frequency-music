@@ -2,11 +2,11 @@
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, type LanguageModel } from "ai";
-import { tracedGenerate } from "./tracing";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { tracedGenerate } from "./tracing";
 
 // ============================================================================
 // MODEL CONFIGURATION
@@ -139,9 +139,10 @@ interface ExtractionResult {
   openQuestions: string[];
 }
 
-export function parseExtractionJson(
-  assistantMessage: string,
-): ExtractionResult {
+// Temporary private compatibility shim: the public parser moved to llm.ts,
+// while this action keeps its characterized behavior until Task 3 migrates it
+// to generateJson. Keeping this local avoids a generated-API inference cycle.
+function parseExtractionJson(assistantMessage: string): ExtractionResult {
   const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     throw new Error("Could not parse JSON from response");
