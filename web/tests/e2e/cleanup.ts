@@ -6,11 +6,15 @@
  */
 import { execSync } from "node:child_process";
 
-const BYPASS = process.env.AUTH_BYPASS_SECRET;
-if (!BYPASS) {
-  throw new Error(
-    "AUTH_BYPASS_SECRET is required for e2e cleanup — set it in web/.env.local or run via `varlock run`",
-  );
+function requireBypassSecret(): string {
+  const bypass =
+    process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
+  if (!bypass) {
+    throw new Error(
+      "AUTH_BYPASS_SECRET (or DEV_BYPASS_SECRET) is required for e2e cleanup — set it in web/.env.local or run via `varlock run --`",
+    );
+  }
+  return bypass;
 }
 
 function convexRun(fn: string, args: Record<string, unknown>): string {
@@ -29,11 +33,20 @@ function convexRun(fn: string, args: Record<string, unknown>): string {
  * Delete a single record by table and ID.
  */
 function deleteRecord(
-  table: "sources" | "hypotheses" | "recipes" | "compositions" | "listening" | "weeklyBriefs",
+  table:
+    | "sources"
+    | "hypotheses"
+    | "recipes"
+    | "compositions"
+    | "listening"
+    | "weeklyBriefs",
   id: string,
 ): boolean {
   try {
-    convexRun(`${table}:deleteById`, { id, devBypassSecret: BYPASS });
+    convexRun(`${table}:deleteById`, {
+      id,
+      devBypassSecret: requireBypassSecret(),
+    });
     return true;
   } catch {
     return false;
@@ -42,7 +55,7 @@ function deleteRecord(
 
 function deleteFeed(id: string): boolean {
   try {
-    convexRun("feeds:remove", { id, devBypassSecret: BYPASS });
+    convexRun("feeds:remove", { id, devBypassSecret: requireBypassSecret() });
     return true;
   } catch {
     return false;
@@ -89,7 +102,9 @@ export class E2ECleanupTracker {
     // Delete in reverse order (children before parents)
     for (const record of this.records.toReversed()) {
       const success =
-        record.table === "feeds" ? deleteFeed(record.id) : deleteRecord(record.table, record.id);
+        record.table === "feeds"
+          ? deleteFeed(record.id)
+          : deleteRecord(record.table, record.id);
       if (success) deleted++;
       else failed++;
     }
@@ -114,7 +129,10 @@ export async function cleanupByRunId(runId: string): Promise<number> {
   try {
     const sources = JSON.parse(sourcesJson);
     for (const s of sources) {
-      if ((s.title || "").includes(runId) || (s.dedupeKey || "").includes(runId)) {
+      if (
+        (s.title || "").includes(runId) ||
+        (s.dedupeKey || "").includes(runId)
+      ) {
         if (deleteRecord("sources", s._id)) deleted++;
       }
     }
@@ -128,7 +146,10 @@ export async function cleanupByRunId(runId: string): Promise<number> {
     try {
       const sources = JSON.parse(json);
       for (const s of sources) {
-        if ((s.title || "").includes(runId) || (s.dedupeKey || "").includes(runId)) {
+        if (
+          (s.title || "").includes(runId) ||
+          (s.dedupeKey || "").includes(runId)
+        ) {
           if (deleteRecord("sources", s._id)) deleted++;
         }
       }

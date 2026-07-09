@@ -83,9 +83,9 @@ describe("getDevBypassSecret", () => {
     expect(getDevBypassSecret()).toBe("custom-secret");
   });
 
-  test("falls back to the current hardcoded value", () => {
+  test("throws when the secret is missing", () => {
     delete process.env.AUTH_BYPASS_SECRET;
-    expect(getDevBypassSecret()).toBe("freq-opus-extract-2026");
+    expect(() => getDevBypassSecret()).toThrow("Set AUTH_BYPASS_SECRET");
   });
 });
 ```
@@ -114,7 +114,11 @@ export function getConvexClient(): ConvexHttpClient {
 }
 
 export function getDevBypassSecret(): string {
-  return process.env.AUTH_BYPASS_SECRET ?? "freq-opus-extract-2026";
+  const secret = process.env.AUTH_BYPASS_SECRET;
+  if (!secret) {
+    throw new Error("Set AUTH_BYPASS_SECRET in .env.local or 1Password");
+  }
+  return secret;
 }
 ```
 
@@ -1695,7 +1699,7 @@ bun run scripts/find-e2e.ts                          # Find E2E test data
 - [ ] **Step 4: Verify the driver end-to-end against the live deployment**
 
 Run: `bun run scripts/ingest-manifest.ts data/example-manifest.json`
-Expected: `Done: 2 created, 0 skipped, 0 failed` on first run; re-run prints `Done: 0 created, 2 skipped, 0 failed` (dedupe works). Then clean up the two example rows: in the Convex dashboard or via `bunx convex run sources:updateStatus '{"id":"<id>","status":"archived","devBypassSecret":"freq-opus-extract-2026"}'` for each created id printed in the log.
+Expected: `Done: 2 created, 0 skipped, 0 failed` on first run; re-run prints `Done: 0 created, 2 skipped, 0 failed` (dedupe works). Then clean up the two example rows: in the Convex dashboard or via `bunx convex run sources:updateStatus '{"id":"<id>","status":"archived","devBypassSecret":"<AUTH_BYPASS_SECRET>"}'` for each created id printed in the log.
 
 - [ ] **Step 5: Run the full lib suite one last time**
 
