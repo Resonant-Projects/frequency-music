@@ -143,6 +143,7 @@ async function main() {
 
   if (batchUpdate) {
     const summary = await createSourceIngestor({
+      client: getConvexClient({ useCurrentDeploymentDefault: true }),
       fetchText: smartFetchAdapter,
     }).refetchByStatus(["ingested"], {
       limit: 500,
@@ -166,11 +167,14 @@ async function main() {
   console.error(`Method: ${result.method}, Chars: ${result.chars}`);
 
   if (sourceId && result.chars > 200) {
-    await getConvexClient().mutation(api.sources.updateText, {
-      id: sourceId as Id<"sources">,
-      rawText: result.text,
-      devBypassSecret: getDevBypassSecret(),
-    });
+    await getConvexClient({ useCurrentDeploymentDefault: true }).mutation(
+      api.sources.updateText,
+      {
+        id: sourceId as Id<"sources">,
+        rawText: result.text,
+        devBypassSecret: getDevBypassSecret(),
+      },
+    );
     console.error("✓ Updated in Convex");
   }
 
