@@ -9,7 +9,7 @@
     "lint": "oxlint . --fix --tsconfig tsconfig.json",
     "lint:check": "oxlint . --tsconfig tsconfig.json",
     "test": "bun test convex/*.test.ts",
-    "test:harness": "bun test convex/harness",
+    "test:harness": "bun test harness",
     "test:agent": "cd agent && bun test",
     "typecheck:agent": "cd agent && bun run verify",
     "build:web": "cd web && bun run build",

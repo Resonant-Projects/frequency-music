@@ -28,6 +28,7 @@
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@pandacss/dev": "^1.9.1",
     "@playwright/test": "^1.59.1",
+    "@types/node": "^24",
     "@types/three": "^0.183.1",
     "typescript": "^5.9.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { convexTest } from "convex-test";
-import { api } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
-import schema from "../schema";
+import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
+import schema from "../convex/schema";
 import { modules } from "./modules";
 
 async function seedRunAndDraft(

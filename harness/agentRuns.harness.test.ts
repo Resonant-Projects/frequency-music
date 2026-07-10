@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { convexTest } from "convex-test";
-import { internal } from "../_generated/api";
-import { DEFAULT_STALE_RUN_MS } from "../agentRuns";
-import schema from "../schema";
+import { internal } from "../convex/_generated/api";
+import { DEFAULT_STALE_RUN_MS } from "../convex/agentRuns";
+import schema from "../convex/schema";
 import { modules } from "./modules";
 
 function seedRun(

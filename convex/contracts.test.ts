@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { convexTest } from "convex-test";
 import schema, { agentRunEventKindValidator } from "./schema";
-import { modules } from "./harness/modules";
+import { modules } from "../harness/modules";
 import { HEARTBEAT_INTERVAL_MS, STALE_RUN_MS } from "./shared/agentContract";
 
 // Contract tests pin copies that must agree across seams. When one of these

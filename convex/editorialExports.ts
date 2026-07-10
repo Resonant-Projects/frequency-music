@@ -1,7 +1,6 @@
-// oxlint-disable-next-line typescript-eslint/triple-slash-reference -- The web tsconfig excludes Node types but includes this Convex Node action.
-/// <reference path="../node_modules/@types/node/index.d.ts" />
-
 "use node";
+// Convex only honors the directive as the file's first line — nothing may
+// precede it. Node types resolve in web tsc via web/node_modules/@types/node.
 
 import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";

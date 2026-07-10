@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { convexTest } from "convex-test";
-import { api } from "../_generated/api";
-import schema from "../schema";
+import { api } from "../convex/_generated/api";
+import schema from "../convex/schema";
 import { modules } from "./modules";
 
 describe("convex-test spike (GO/NO-GO gate)", () => {
