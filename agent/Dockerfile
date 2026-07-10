@@ -31,6 +31,9 @@ RUN bun install --frozen-lockfile
 
 COPY agent/. ./
 COPY convex/shared /app/convex/shared
+# convex/shared files resolve their imports (zod, convex-helpers, convex)
+# upward from /app/convex — link them to the agent install.
+RUN ln -s /app/agent/node_modules /app/node_modules
 RUN chown -R agent:agent /app
 USER agent
 EXPOSE 2024
