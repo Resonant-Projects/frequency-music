@@ -3043,6 +3043,20 @@
     "contentHash": "67f7bc316452271685bc5f47743879595ec70f6268f4540b1543d5c908d4da9f",
     "generatedAt": "2026-06-02T09:34:00.000Z"
   },
+  "the-self-measuring-voice": {
+    "excerpt": "A voice must measure itself in real time, tracking duration while speaking. This essay explores how self-measuring systems—output clocks, room acoustics, and temporal risk—shape musical and speech generation.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "AI-music",
+      "perception",
+      "resonance",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "fd7594178164dc06525b2d21d60aac5525dd9f38e5a61ced5a83bcc819e33b2c",
+    "generatedAt": "2026-07-10T19:05:35.349Z"
+  },
   "the-self-teaching-signal": {
     "excerpt": "When audio signals contain their own decomposition-from room acoustics to instrument timbres-machine learning and music composition reveal a shared principle: sound knows how to understand itself.",
     "tags": [
@@ -3265,6 +3279,19 @@
     "contentHash": "48170bade333c1cbea9a96e8824d1c5915326129b2b1510fc839d153a37fac55",
     "generatedAt": "2026-06-17T19:05:27.899Z"
   },
+  "the-sourcehood-decision-window": {
+    "excerpt": "Sourcehood is not fixed but temporal—a deadline for when sufficient evidence arrives to attribute a sound to its source. This decision window shapes both machine perception and musical composition.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "composition",
+      "information-theory",
+      "consciousness"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6e5bcf39f2aa3a35e80094d6106fe1f3813a237b4094dde7d78e9e880aa0230c",
+    "generatedAt": "2026-07-10T19:05:39.407Z"
+  },
   "the-sourcehood-filter": {
     "excerpt": "Explores how speech separation, audio curation, and streaming translation reveal a shared principle: when systems commit to source identity. Proposes a 'sourcehood meter' for compositional analysis bridging signal processing and musical practice.",
     "tags": [
@@ -3278,6 +3305,20 @@
     "category": "interdisciplinary",
     "contentHash": "3056e152899c5fd1744df74dfb8668688c29e721abcb12fee6500e624886ba4b",
     "generatedAt": "2026-06-17T19:05:30.934Z"
+  },
+  "the-sourcehood-separation-threshold": {
+    "excerpt": "Sourcehood is not discovered in sound but decided by task. Four recent ML extraction methods reveal that the boundary between one source and many is a movable threshold, with profound compositional implications.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "acoustics",
+      "information-theory",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6ea5c1b5c66c841e2512d41c82098df7c31f398b85f40fa4e54af5623f3609f5",
+    "generatedAt": "2026-07-10T19:05:41.422Z"
   },
   "the-sourcehood-threshold": {
     "excerpt": "Sourcehood is a compositional threshold—the point where listeners and models decide if something is one sound or many. Machine learning reveals this as a musical control parameter between isolation and fusion.",
