@@ -16,6 +16,10 @@ type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
 
 type DbReader = GenericDatabaseReader<DataModel>;
 
+// A missing row deliberately reads 0 rather than falling back to a live
+// count — the fallback would reintroduce the full-table scans this cache
+// exists to remove. The operator must run dashboard:recomputeStats once
+// after deploy (see plans/005); the cron keeps it fresh thereafter.
 export async function readStat(db: DbReader, key: string): Promise<number> {
   const row = await db
     .query("stats")
