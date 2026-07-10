@@ -29,7 +29,7 @@ describe("getConvexUrl", () => {
 
   test("can preserve the current HTTP default for scripts that already had it", () => {
     expect(getConvexUrl({ useCurrentDeploymentDefault: true })).toBe(
-      "http://convex-backend.paas.rproj.art",
+      "https://convex.resonantprojects.art",
     );
   });
 

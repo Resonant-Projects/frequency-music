@@ -12,7 +12,7 @@ import type { SourceStatus } from "../convex/shared/statuses";
 import { writeFileSync, mkdirSync } from "fs";
 
 const CONVEX_URL =
-  process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
+  process.env.CONVEX_URL || "https://convex.resonantprojects.art";
 
 interface BibEntry {
   id: string;

@@ -26,7 +26,7 @@ jobs:
 
       - name: Generate public editorial snapshot
         env:
-          CONVEX_URL: ${{ vars.CONVEX_SELF_HOSTED_URL || 'http://convex-backend.paas.rproj.art' }}
+          CONVEX_URL: ${{ vars.CONVEX_SELF_HOSTED_URL || 'https://convex.resonantprojects.art' }}
           DEV_BYPASS_SECRET: ${{ secrets.AUTH_BYPASS_SECRET }}
           PUBLIC_APP_BASE_URL: ${{ vars.PUBLIC_APP_BASE_URL || 'https://app.resonantprojects.art' }}
         run: |

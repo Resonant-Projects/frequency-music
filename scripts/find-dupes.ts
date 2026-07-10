@@ -11,7 +11,7 @@ import type { SourceStatus } from "../convex/shared/statuses";
 import { normalizeUrl } from "../convex/sourceUtils";
 
 const CONVEX_URL =
-  process.env.CONVEX_URL || "http://convex-backend.paas.rproj.art";
+  process.env.CONVEX_URL || "https://convex.resonantprojects.art";
 const BYPASS = process.env.AUTH_BYPASS_SECRET ?? process.env.DEV_BYPASS_SECRET;
 
 function requireBypassSecret(): string {

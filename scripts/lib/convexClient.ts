@@ -10,7 +10,7 @@ export function getConvexUrl(options: ConvexClientOptions = {}): string {
   const url = process.env.CONVEX_SELF_HOSTED_URL ?? process.env.CONVEX_URL;
   if (url) return url;
   if (options.useCurrentDeploymentDefault) {
-    return "http://convex-backend.paas.rproj.art";
+    return "https://convex.resonantprojects.art";
   }
   throw new Error("Set CONVEX_SELF_HOSTED_URL or CONVEX_URL in .env.local");
 }

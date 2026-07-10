@@ -157,7 +157,7 @@ Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=<set via 1Passw
 ## Environment Variables (.env.local)
 
 ```
-CONVEX_SELF_HOSTED_URL='http://convex-backend.paas.rproj.art'
+CONVEX_SELF_HOSTED_URL='https://convex.resonantprojects.art'
 OPENROUTER_API_KEY=...
 GROQ_API_KEY=...
 KERNEL_API_KEY=...  # Kernel.sh cloud browser (5 concurrent sessions)
