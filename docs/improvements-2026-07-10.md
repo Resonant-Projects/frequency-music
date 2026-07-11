@@ -159,3 +159,35 @@ graphs). This session's evidence strongly supports executing it as planned.
 14. **Off-mission arXiv noise at ingest** — plan 02 covers classification;
     consider also feed-level topic filters so barreleye-fish articles never
     become sources at all.
+
+## Late-session addendum (after OpenRouter key rotation)
+
+Verified working end-to-end tonight: extraction with Sonnet on the rotated
+key; hypothesis creation (`generateFromExtraction`); the full worker loop
+(enqueue → claim → research-pipeline graph → persisted review draft →
+`needs_review`, 1 pending draft now in the queue).
+
+New findings, fixed in commit `3e347ba` (deploy still pending):
+
+- **Recipe generation deterministically truncates** with Sonnet 4.6 at the
+  deployed `recipe_v1: 3000` token budget (two live failures, "Unterminated
+  string"). Budget raised to 6000.
+- **Weekly brief cannot generate from an all-draft corpus** — the fallback
+  hypothesis pool was status-`active`-only, so `generateBriefCore` threw "No
+  recent hypotheses or recipes found" even with same-day drafts. Fallback now
+  widens to newest rows when nothing is active. (The brief failed today for
+  two independent reasons: dead key + this guard.)
+
+Still open:
+
+- **`agent/.env` (May 24) held the stale `AGENT_TOOL_SECRET`** and shadows the
+  repo-root `.env.local` (Bun auto-loads it; the root loader skips
+  already-set vars). Refreshed locally; the Proxmox worker's env_file needs
+  the same refresh. Its `OPENROUTER_API_KEY` is still the dead key.
+- **The 1Password item `openrouter-api-key` no longer exists** under that
+  name in Country Manor Lab — `.env.schema`'s `op()` ref is broken; varlock
+  resolution of `OPENROUTER_API_KEY` fails for every script. Rename the item
+  or update the ref.
+- **Something scheduled still calls `sources:updateText` with a stale bypass
+  secret** — recurring UNAUTHORIZED bursts (15:01 and 21:00 tonight). Find
+  the job (Proxmox? launchd?) and refresh its secret.
