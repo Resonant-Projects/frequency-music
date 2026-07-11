@@ -6,8 +6,8 @@
   "scripts": {
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint": "oxlint . --fix --tsconfig tsconfig.json",
-    "lint:check": "oxlint . --tsconfig tsconfig.json",
+    "lint": "vp lint . --fix --tsconfig tsconfig.json",
+    "lint:check": "vp lint . --tsconfig tsconfig.json",
     "test": "bun test convex/*.test.ts",
     "test:harness": "bun test harness",
     "test:agent": "cd agent && bun test",
@@ -37,11 +37,15 @@
     "@types/bun": "latest",
     "@varlock/1password-plugin": "^1.2.0",
     "convex-test": "^0.0.54",
-    "oxlint": "^1.59.0",
-    "varlock": "^1.6.1"
+    "varlock": "^1.6.1",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2",
+    "vite-plus": "0.2.2"
   },
   "peerDependencies": {
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2"
   },
   "devEngines": {
     "packageManager": {
