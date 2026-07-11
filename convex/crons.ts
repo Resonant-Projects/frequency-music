@@ -54,4 +54,12 @@ crons.interval(
   {},
 );
 
+// Retry unreviewed concepts older than an hour in case creation scheduling failed.
+crons.interval(
+  "classify-stale-concepts",
+  { hours: 1 },
+  internal.conceptClassifier.sweepUnreviewedConcepts,
+  {},
+);
+
 export default crons;

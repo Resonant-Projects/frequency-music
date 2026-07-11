@@ -99,13 +99,24 @@ export const setEnabled = mutation({
   args: {
     id: v.id("feeds"),
     enabled: v.boolean(),
+    disabledReason: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
+    const feed = await ctx.db.get("feeds", args.id);
+    if (!feed) return null;
+    const metadata =
+      typeof feed.metadata === "object" && feed.metadata !== null
+        ? feed.metadata
+        : {};
     await ctx.db.patch("feeds", args.id, {
       enabled: args.enabled,
+      metadata:
+        !args.enabled && args.disabledReason
+          ? { ...metadata, disabledReason: args.disabledReason }
+          : feed.metadata,
       updatedAt: Date.now(),
     });
     return null;

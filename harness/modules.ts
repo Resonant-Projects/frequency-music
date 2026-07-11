@@ -16,6 +16,9 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./claims.ts": () => import("../convex/claims"),
   "./components.ts": () => import("../convex/components"),
   "./compositions.ts": () => import("../convex/compositions"),
+  "./conceptClassifier.ts": () => import("../convex/conceptClassifier"),
+  "./conceptClassifierInternal.ts": () =>
+    import("../convex/conceptClassifierInternal"),
   "./crons.ts": () => import("../convex/crons"),
   "./dashboard.ts": () => import("../convex/dashboard"),
   "./domainMappings.ts": () => import("../convex/domainMappings"),

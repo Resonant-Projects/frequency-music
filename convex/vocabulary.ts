@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getSeedConceptDomainEntries } from "./domainMappings";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { requireAuth } from "./auth";
 import { registryStatusValidator } from "./schema";
 
 const KNOWN_PARAMETER_KINDS = new Set([
@@ -178,6 +179,73 @@ export const seedConceptDomains = internalMutation({
     }
 
     return { seeded, updated };
+  },
+});
+
+export const seedMissionConceptDomains = mutation({
+  args: {
+    entries: v.array(
+      v.object({
+        name: v.string(),
+        description: v.string(),
+      }),
+    ),
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    created: v.number(),
+    updated: v.number(),
+    unchanged: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const now = Date.now();
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+
+    for (const entry of args.entries) {
+      const name = normalizeName(entry.name);
+      const existing = await ctx.db
+        .query("conceptDomains")
+        .withIndex("by_name", (q) => q.eq("name", name))
+        .first();
+      if (!existing) {
+        created++;
+        if (args.apply) {
+          await ctx.db.insert("conceptDomains", {
+            name,
+            status: "known",
+            description: entry.description,
+            introducedBy: "system",
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+        continue;
+      }
+
+      if (
+        existing.status !== "known" ||
+        existing.description !== entry.description ||
+        existing.introducedBy !== "system"
+      ) {
+        updated++;
+        if (args.apply) {
+          await ctx.db.patch(existing._id, {
+            status: "known",
+            description: entry.description,
+            introducedBy: "system",
+            updatedAt: now,
+          });
+        }
+      } else {
+        unchanged++;
+      }
+    }
+
+    return { created, updated, unchanged };
   },
 });
 

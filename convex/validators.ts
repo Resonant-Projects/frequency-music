@@ -445,6 +445,12 @@ export const conceptReturnValidator = v.object({
   aliases: v.array(v.string()),
   domain: v.string(),
   domains: v.optional(v.array(v.string())),
+  missionRelevance: v.optional(
+    v.union(v.literal("on"), v.literal("off"), v.literal("unreviewed")),
+  ),
+  relevanceRationale: v.optional(v.string()),
+  classifiedAt: v.optional(v.number()),
+  classifierModel: v.optional(v.string()),
   wikipedia: v.optional(v.string()),
   definitionSource: v.optional(v.id("sources")),
   mentionCount: v.number(),

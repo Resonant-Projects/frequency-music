@@ -5,7 +5,8 @@
 // *Internal.ts) may import this module. V8 files import ./llm instead.
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText, type LanguageModel } from "ai";
+import { generateObject, generateText, type LanguageModel } from "ai";
+import type { z } from "zod";
 import {
   DEFAULT_MODEL,
   isGroqModel,
@@ -85,4 +86,34 @@ export async function generateJson(
 ): Promise<{ text: string; json: unknown }> {
   const { text } = await generateLlmText(opts);
   return { text, json: parseExtractionJson(text) };
+}
+
+export async function generateLlmObject<Output>(
+  opts: GenerateOpts & {
+    schema: z.ZodType<Output>;
+    schemaName: string;
+    schemaDescription: string;
+  },
+): Promise<{ object: Output; inputTokens: number; outputTokens: number }> {
+  const modelId = opts.model ?? DEFAULT_MODEL;
+  const model = getModel(modelId);
+  const result = await tracedGenerate(
+    opts.traceName ?? opts.task,
+    () =>
+      generateObject({
+        model,
+        system: opts.system,
+        prompt: opts.prompt,
+        schema: opts.schema,
+        schemaName: opts.schemaName,
+        schemaDescription: opts.schemaDescription,
+        maxOutputTokens: opts.maxOutputTokens ?? TOKEN_BUDGETS[opts.task],
+      }),
+    { model: modelId, ...opts.metadata },
+  );
+  return {
+    object: result.object,
+    inputTokens: result.usage.inputTokens ?? 0,
+    outputTokens: result.usage.outputTokens ?? 0,
+  };
 }

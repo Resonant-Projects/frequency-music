@@ -796,6 +796,12 @@ export default defineSchema({
     // Categorization
     domain: v.string(),
     domains: v.optional(v.array(v.string())),
+    missionRelevance: v.optional(
+      v.union(v.literal("on"), v.literal("off"), v.literal("unreviewed")),
+    ),
+    relevanceRationale: v.optional(v.string()),
+    classifiedAt: v.optional(v.number()),
+    classifierModel: v.optional(v.string()),
 
     // Metadata
     wikipedia: v.optional(v.string()), // Wikipedia URL
@@ -810,6 +816,7 @@ export default defineSchema({
   })
     .index("by_name", ["name"])
     .index("by_domain", ["domain"])
+    .index("by_missionRelevance", ["missionRelevance"])
     .index("by_mentionCount", ["mentionCount"])
     .searchIndex("search_concepts", {
       searchField: "displayName",
