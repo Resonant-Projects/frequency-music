@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
-import { describe, expect, test } from "vite-plus/test";
+import { makeFunctionReference } from "convex/server";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
@@ -38,6 +39,136 @@ describe("mission concept-domain seed", () => {
 });
 
 describe("concept classification persistence", () => {
+  test("normalizes proposed slugs and reuses known and provisional registry rows", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { knownConceptId, provisionalConceptId } = await t.run(
+      async (ctx) => {
+        for (const entry of [
+          {
+            name: "mathematical-music-theory",
+            status: "known" as const,
+          },
+          { name: "signal processing", status: "provisional" as const },
+        ]) {
+          await ctx.db.insert("conceptDomains", {
+            ...entry,
+            introducedBy: "system",
+            createdAt: 1000,
+            updatedAt: 1000,
+          });
+        }
+        const insertConcept = (name: string) =>
+          ctx.db.insert("concepts", {
+            name,
+            displayName: name,
+            aliases: [],
+            domain: "general",
+            missionRelevance: "unreviewed" as const,
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 1000,
+            updatedAt: 1000,
+          });
+        return {
+          knownConceptId: await insertConcept("known variant"),
+          provisionalConceptId: await insertConcept("provisional variant"),
+        };
+      },
+    );
+
+    expect(
+      await asSystem.mutation(api.conceptClassifier.writeClassifications, {
+        classifications: [
+          {
+            conceptId: knownConceptId,
+            domains: [" Mathematical Music Theory "],
+            missionRelevance: "on",
+            rationale: "The spaced variant matches the seeded domain.",
+          },
+          {
+            conceptId: provisionalConceptId,
+            domains: ["signal-processing"],
+            missionRelevance: "off",
+            rationale: "The hyphenated variant matches the provisional row.",
+          },
+        ],
+        model: "test-model",
+        force: false,
+      }),
+    ).toMatchObject({ assigned: 1, unreviewed: 1, skipped: 0 });
+
+    const state = await t.run(async (ctx) => ({
+      knownConcept: await ctx.db.get("concepts", knownConceptId),
+      provisionalConcept: await ctx.db.get("concepts", provisionalConceptId),
+      registry: await ctx.db.query("conceptDomains").collect(),
+    }));
+    expect(state.knownConcept?.domain).toBe("mathematical-music-theory");
+    expect(state.provisionalConcept).toMatchObject({
+      domain: "general",
+      missionRelevance: "unreviewed",
+      relevanceRationale:
+        "classifier proposed unknown domain: signal-processing",
+    });
+    expect(state.registry.map((entry) => entry.name).toSorted()).toEqual([
+      "mathematical-music-theory",
+      "signal processing",
+    ]);
+  });
+
+  test("merges duplicate provisional rows by normalized slug idempotently", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    await t.run(async (ctx) => {
+      for (const entry of [
+        { name: "mathematical-music-theory", status: "known" as const },
+        { name: "mathematical music theory", status: "provisional" as const },
+        { name: "signal processing", status: "provisional" as const },
+        { name: "signal-processing", status: "provisional" as const },
+        { name: "Signal Processing", status: "provisional" as const },
+      ]) {
+        await ctx.db.insert("conceptDomains", {
+          ...entry,
+          introducedBy: "system",
+          createdAt: 1000,
+          updatedAt: 1000,
+        });
+      }
+    });
+    const cleanupRef = makeFunctionReference<
+      "mutation",
+      { apply: boolean; devBypassSecret?: string },
+      { duplicateGroups: number; deleted: number; renamed: number }
+    >("vocabulary:cleanupProvisionalConceptDomainDuplicates");
+
+    expect(await asSystem.mutation(cleanupRef, { apply: false })).toEqual({
+      duplicateGroups: 2,
+      deleted: 3,
+      renamed: 0,
+    });
+    expect(await asSystem.mutation(cleanupRef, { apply: true })).toEqual({
+      duplicateGroups: 2,
+      deleted: 3,
+      renamed: 0,
+    });
+    expect(
+      await t.run(async (ctx) => {
+        const rows = await ctx.db.query("conceptDomains").collect();
+        return rows
+          .map(({ name, status }) => ({ name, status }))
+          .toSorted((a, b) => a.name.localeCompare(b.name));
+      }),
+    ).toEqual([
+      { name: "mathematical-music-theory", status: "known" },
+      { name: "signal-processing", status: "provisional" },
+    ]);
+    expect(await asSystem.mutation(cleanupRef, { apply: true })).toEqual({
+      duplicateGroups: 0,
+      deleted: 0,
+      renamed: 0,
+    });
+  });
+
   test("assigns only registered domains and stages unknown proposals", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
@@ -301,5 +432,62 @@ describe("concept creation classification scheduling", () => {
         limit: 20,
       }),
     ).toEqual([oldId]);
+  });
+});
+
+describe("concept classification fault tolerance", () => {
+  test("a validation failure leaves one chunk unreviewed and continues", async () => {
+    const failingModules = {
+      ...modules,
+      "./conceptClassifierInternal.ts": () =>
+        import("./fixtures/conceptClassifierInternalFailure"),
+    };
+    const t = convexTest(schema, failingModules);
+    const conceptIds = await t.run(async (ctx) => {
+      await ctx.db.insert("conceptDomains", {
+        name: "cymatics",
+        status: "known",
+        introducedBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      const ids = [];
+      for (let index = 0; index < 21; index++) {
+        ids.push(
+          await ctx.db.insert("concepts", {
+            name: `concept-${index}`,
+            displayName: `Concept ${index}`,
+            aliases: [],
+            domain: "general",
+            missionRelevance: "unreviewed",
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 1000,
+            updatedAt: 1000,
+          }),
+        );
+      }
+      return ids;
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await t.action(
+      internal.conceptClassifier.classifyConceptBatch,
+      { conceptIds, model: "test-model", apply: true },
+    );
+    expect(result).toMatchObject({
+      assigned: 1,
+      failed: 20,
+      llmCalls: 2,
+    });
+    expect(errorSpy).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+
+    const concepts = await t.run((ctx) => ctx.db.query("concepts").collect());
+    expect(
+      concepts.filter((concept) => concept.classifiedAt !== undefined),
+    ).toHaveLength(1);
+    expect(
+      concepts.filter((concept) => concept.missionRelevance === "unreviewed"),
+    ).toHaveLength(20);
   });
 });

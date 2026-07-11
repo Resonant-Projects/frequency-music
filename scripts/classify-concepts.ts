@@ -45,6 +45,7 @@ const totals = {
   inputTokens: 0,
   outputTokens: 0,
   llmCalls: 0,
+  failed: 0,
 };
 
 type CandidatePage = {
@@ -61,27 +62,40 @@ while (!isDone && selected < limit) {
   const remaining = limit - selected;
   const conceptIds = page.conceptIds.slice(0, remaining);
   if (conceptIds.length > 0) {
-    const result = await client.action(api.conceptClassifier.classifyConcepts, {
-      conceptIds,
-      model,
-      force,
-      apply,
-      devBypassSecret,
-    });
     selected += conceptIds.length;
-    totals.classified += result.classifications.length;
-    totals.assigned += result.assigned;
-    totals.unreviewed += result.unreviewed;
-    totals.skipped += result.skipped;
-    totals.inputTokens += result.inputTokens;
-    totals.outputTokens += result.outputTokens;
-    totals.llmCalls += result.llmCalls;
-    if (!apply) {
-      for (const classification of result.classifications) {
-        console.log(
-          `${classification.conceptId}: ${classification.domains.join(", ")} | ${classification.missionRelevance} | ${classification.rationale}`,
-        );
+    try {
+      const result = await client.action(
+        api.conceptClassifier.classifyConcepts,
+        {
+          conceptIds,
+          model,
+          force,
+          apply,
+          devBypassSecret,
+        },
+      );
+      totals.classified += result.classifications.length;
+      totals.assigned += result.assigned;
+      totals.unreviewed += result.unreviewed;
+      totals.skipped += result.skipped;
+      totals.inputTokens += result.inputTokens;
+      totals.outputTokens += result.outputTokens;
+      totals.llmCalls += result.llmCalls;
+      totals.failed += result.failed;
+      if (!apply) {
+        for (const classification of result.classifications) {
+          console.log(
+            `${classification.conceptId}: ${classification.domains.join(", ")} | ${classification.missionRelevance} | ${classification.rationale}`,
+          );
+        }
       }
+    } catch (error) {
+      totals.failed += conceptIds.length;
+      console.error("\nclassification page failed; continuing", {
+        conceptIds,
+        model,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
   cursor = page.continueCursor;
@@ -99,7 +113,7 @@ console.log(
   `model=${model} batchSize=${batchSize} llmCalls=${totals.llmCalls}`,
 );
 console.log(
-  `selected=${selected} classified=${totals.classified} assigned=${totals.assigned} unreviewed=${totals.unreviewed} skipped=${totals.skipped}`,
+  `selected=${selected} classified=${totals.classified} assigned=${totals.assigned} unreviewed=${totals.unreviewed} skipped=${totals.skipped} failed=${totals.failed}`,
 );
 console.log(
   `inputTokens=${totals.inputTokens} outputTokens=${totals.outputTokens}${sonnetEstimate === undefined ? "" : ` estimatedUsd=${sonnetEstimate.toFixed(2)}`}`,

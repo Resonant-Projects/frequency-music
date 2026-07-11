@@ -1,8 +1,10 @@
+/* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getSeedConceptDomainEntries } from "./domainMappings";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { registryStatusValidator } from "./schema";
 
 const KNOWN_PARAMETER_KINDS = new Set([
@@ -246,6 +248,68 @@ export const seedMissionConceptDomains = mutation({
     }
 
     return { created, updated, unchanged };
+  },
+});
+
+export const cleanupProvisionalConceptDomainDuplicates = mutation({
+  args: {
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    duplicateGroups: v.number(),
+    deleted: v.number(),
+    renamed: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const registry = await ctx.db.query("conceptDomains").collect();
+    const groups = new Map<string, Doc<"conceptDomains">[]>();
+    for (const entry of registry) {
+      const slug = normalizeConceptDomainSlug(entry.name);
+      const entries = groups.get(slug) ?? [];
+      entries.push(entry);
+      groups.set(slug, entries);
+    }
+
+    let duplicateGroups = 0;
+    let deleted = 0;
+    let renamed = 0;
+    for (const [slug, entries] of groups) {
+      const provisionals = entries.filter(
+        (entry) => entry.status === "provisional",
+      );
+      if (provisionals.length === 0) continue;
+      const established = entries.find(
+        (entry) => entry.status === "known" || entry.status === "experimental",
+      );
+      const keep = established
+        ? undefined
+        : (provisionals.find((entry) => entry.name === slug) ??
+          provisionals.toSorted(
+            (a, b) => a._creationTime - b._creationTime,
+          )[0]);
+      const toDelete = established
+        ? provisionals
+        : provisionals.filter((entry) => entry._id !== keep?._id);
+      const shouldRename = keep !== undefined && keep.name !== slug;
+      if (toDelete.length === 0 && !shouldRename) continue;
+
+      duplicateGroups++;
+      deleted += toDelete.length;
+      if (shouldRename) renamed++;
+      if (!args.apply) continue;
+      for (const entry of toDelete) {
+        await ctx.db.delete("conceptDomains", entry._id);
+      }
+      if (shouldRename && keep) {
+        await ctx.db.patch("conceptDomains", keep._id, {
+          name: slug,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+    return { duplicateGroups, deleted, renamed };
   },
 });
 

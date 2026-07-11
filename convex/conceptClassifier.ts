@@ -12,6 +12,7 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { MODELS } from "./llm";
 
 const classificationValidator = v.object({
@@ -32,6 +33,7 @@ const batchResultValidator = v.object({
   assigned: v.number(),
   unreviewed: v.number(),
   skipped: v.number(),
+  failed: v.number(),
   inputTokens: v.number(),
   outputTokens: v.number(),
   llmCalls: v.number(),
@@ -73,6 +75,7 @@ type BatchResult = {
   inputTokens: number;
   outputTokens: number;
   llmCalls: number;
+  failed: number;
 };
 
 const getClassificationInputsRef = makeFunctionReference<
@@ -106,10 +109,6 @@ const listStaleUnreviewedRef = makeFunctionReference<
   Id<"concepts">[]
 >("conceptClassifier:listStaleUnreviewed");
 
-function normalizeDomain(name: string): string {
-  return name.trim().toLowerCase();
-}
-
 async function persistClassifications(
   ctx: MutationCtx,
   args: {
@@ -119,14 +118,13 @@ async function persistClassifications(
   },
 ) {
   const registry = await ctx.db.query("conceptDomains").collect();
-  const registryNames = new Set(registry.map((entry) => entry.name));
-  const assignableRegistryNames = new Set(
-    registry
-      .filter(
-        (entry) => entry.status === "known" || entry.status === "experimental",
-      )
-      .map((entry) => entry.name),
-  );
+  const registryBySlug = new Map<string, typeof registry>();
+  for (const entry of registry) {
+    const slug = normalizeConceptDomainSlug(entry.name);
+    const entries = registryBySlug.get(slug) ?? [];
+    entries.push(entry);
+    registryBySlug.set(slug, entries);
+  }
   const stagedProvisionalNames = new Set<string>();
   let assigned = 0;
   let unreviewed = 0;
@@ -138,25 +136,34 @@ async function persistClassifications(
       skipped++;
       continue;
     }
-    const domains = Array.from(
-      new Set(classification.domains.map(normalizeDomain).filter(Boolean)),
+    const proposedSlugs = Array.from(
+      new Set(
+        classification.domains.map(normalizeConceptDomainSlug).filter(Boolean),
+      ),
     ).slice(0, 3);
-    const unknownDomains = domains.filter(
-      (name) => !assignableRegistryNames.has(name),
-    );
+    const domains: string[] = [];
+    const unknownDomains: string[] = [];
+    for (const slug of proposedSlugs) {
+      const existingRows = registryBySlug.get(slug) ?? [];
+      const assignable = existingRows.find(
+        (entry) => entry.status === "known" || entry.status === "experimental",
+      );
+      if (assignable) domains.push(assignable.name);
+      else unknownDomains.push(slug);
+    }
     if (unknownDomains.length > 0) {
       const now = Date.now();
-      for (const name of unknownDomains) {
-        if (!registryNames.has(name) && !stagedProvisionalNames.has(name)) {
+      for (const slug of unknownDomains) {
+        if (!registryBySlug.has(slug) && !stagedProvisionalNames.has(slug)) {
           await ctx.db.insert("conceptDomains", {
-            name,
+            name: slug,
             status: "provisional",
             introducedBy: "system",
             notes: "Proposed by concept classifier; requires registry review.",
             createdAt: now,
             updatedAt: now,
           });
-          stagedProvisionalNames.add(name);
+          stagedProvisionalNames.add(slug);
         }
       }
       await ctx.db.patch("concepts", classification.conceptId, {
@@ -313,18 +320,27 @@ export const getClassificationInputs = internalQuery({
       });
     }
     return {
-      domains: registry
-        .filter(
-          (entry) =>
-            entry.status === "known" || entry.status === "experimental",
-        )
-        .map(({ name, description }) => ({ name, description })),
+      domains: Array.from(
+        registry
+          .filter(
+            (entry) =>
+              entry.status === "known" || entry.status === "experimental",
+          )
+          .reduce((bySlug, entry) => {
+            const slug = normalizeConceptDomainSlug(entry.name);
+            if (!bySlug.has(slug)) {
+              bySlug.set(slug, { name: slug, description: entry.description });
+            }
+            return bySlug;
+          }, new Map<string, { name: string; description?: string }>())
+          .values(),
+      ),
       concepts,
     };
   },
 });
 
-const SYSTEM_PROMPT = `You classify concepts for a research-to-composition program spanning music, physics, mathematics, geometry, consciousness, and sound. Use only the supplied registry domain names. Mark incidental ML/software/general science capture off-mission. Return one classification per concept in the same order, with 1-3 domains (primary first), on/off mission relevance, and a one-sentence rationale.`;
+const SYSTEM_PROMPT = `You classify concepts for a research-to-composition program spanning music, physics, mathematics, geometry, consciousness, and sound. Domain names are canonical registry slugs: copy them verbatim from registryDomains.name. Never change hyphens to spaces, invent synonyms, or return any domain absent from registryDomains. Mark incidental ML/software/general science capture off-mission. Return one classification per concept in the same order, with 1-3 domains (primary first), on/off mission relevance, and a one-sentence rationale.`;
 
 export const classifyConceptBatch = internalAction({
   args: {
@@ -346,6 +362,7 @@ export const classifyConceptBatch = internalAction({
       inputTokens: 0,
       outputTokens: 0,
       llmCalls: 0,
+      failed: 0,
     };
     for (let offset = 0; offset < args.conceptIds.length; offset += 20) {
       const conceptIds = args.conceptIds.slice(offset, offset + 20);
@@ -357,32 +374,43 @@ export const classifyConceptBatch = internalAction({
         totals.skipped += conceptIds.length;
         continue;
       }
-      const generated = await ctx.runAction(generateClassificationsRef, {
-        system: SYSTEM_PROMPT,
-        prompt: JSON.stringify({
-          registryDomains: input.domains,
-          concepts: input.concepts.map(
-            ({ conceptId: _conceptId, ...concept }) => concept,
-          ),
-        }),
-        model,
-        expectedCount: input.concepts.length,
-      });
-      const classifications = generated.classifications.map(
-        (classification, index) => {
-          const concept = input.concepts[index];
-          if (!concept) {
-            throw new Error(
-              `Missing concept input at classification index ${index}`,
-            );
-          }
-          return { conceptId: concept.conceptId, ...classification };
-        },
-      );
-      totals.classifications.push(...classifications);
-      totals.inputTokens += generated.inputTokens;
-      totals.outputTokens += generated.outputTokens;
       totals.llmCalls++;
+      let classifications: ClassificationWrite[];
+      try {
+        const generated = await ctx.runAction(generateClassificationsRef, {
+          system: SYSTEM_PROMPT,
+          prompt: JSON.stringify({
+            registryDomains: input.domains,
+            concepts: input.concepts.map(
+              ({ conceptId: _conceptId, ...concept }) => concept,
+            ),
+          }),
+          model,
+          expectedCount: input.concepts.length,
+        });
+        classifications = generated.classifications.map(
+          (classification, index) => {
+            const concept = input.concepts[index];
+            if (!concept) {
+              throw new Error(
+                `Missing concept input at classification index ${index}`,
+              );
+            }
+            return { conceptId: concept.conceptId, ...classification };
+          },
+        );
+        totals.inputTokens += generated.inputTokens;
+        totals.outputTokens += generated.outputTokens;
+      } catch (error) {
+        totals.failed += input.concepts.length;
+        console.error("concept classification batch failed", {
+          model,
+          conceptIds: input.concepts.map((concept) => concept.conceptId),
+          error: error instanceof Error ? error.message : String(error),
+        });
+        continue;
+      }
+      totals.classifications.push(...classifications);
       if (apply) {
         const written = await ctx.runMutation(writeClassificationsInternalRef, {
           classifications,

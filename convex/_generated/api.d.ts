@@ -24,6 +24,7 @@ import type * as compositions from "../compositions.js";
 import type * as conceptClassification from "../conceptClassification.js";
 import type * as conceptClassifier from "../conceptClassifier.js";
 import type * as conceptClassifierInternal from "../conceptClassifierInternal.js";
+import type * as conceptDomainNormalization from "../conceptDomainNormalization.js";
 import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as domainMappings from "../domainMappings.js";
@@ -89,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   conceptClassification: typeof conceptClassification;
   conceptClassifier: typeof conceptClassifier;
   conceptClassifierInternal: typeof conceptClassifierInternal;
+  conceptDomainNormalization: typeof conceptDomainNormalization;
   crons: typeof crons;
   dashboard: typeof dashboard;
   domainMappings: typeof domainMappings;
