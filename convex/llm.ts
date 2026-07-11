@@ -26,7 +26,10 @@ export const MODELS = {
 export const TOKEN_BUDGETS = {
   extract_v2: 4096,
   hypothesis_v1: 2000,
-  recipe_v1: 3000,
+  // 3000 truncated Sonnet 4.6 recipe JSON mid-string (observed 2026-07-10:
+  // "Unterminated string in JSON at position 5353"); recipes are the longest
+  // payload we generate.
+  recipe_v1: 6000,
   brief_v2: 4000,
 } as const;
 

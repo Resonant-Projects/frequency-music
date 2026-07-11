@@ -11,7 +11,9 @@ describe("llm constants", () => {
     expect(DEFAULT_MODEL).toBe("anthropic/claude-sonnet-4-6");
     expect(TOKEN_BUDGETS.extract_v2).toBe(4096);
     expect(TOKEN_BUDGETS.hypothesis_v1).toBe(2000);
-    expect(TOKEN_BUDGETS.recipe_v1).toBe(3000);
+    // Raised from 3000: Sonnet 4.6 recipe JSON truncated mid-string at 3000
+    // (observed live 2026-07-10).
+    expect(TOKEN_BUDGETS.recipe_v1).toBe(6000);
     expect(TOKEN_BUDGETS.brief_v2).toBe(4000);
   });
 

@@ -143,11 +143,16 @@ async function loadRecipesForHypotheses(
 async function loadFallbackHypotheses(
   db: DatabaseReader,
 ): Promise<Doc<"hypotheses">[]> {
-  return await db
+  const active = await db
     .query("hypotheses")
     .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
     .order("desc")
     .take(12);
+  if (active.length > 0) return active;
+  // When nothing is active (the common state while every hypothesis is still
+  // a draft), fall back to the newest rows regardless of status so downstream
+  // consumers — the weekly brief especially — still see this week's movement.
+  return await db.query("hypotheses").order("desc").take(12);
 }
 
 async function loadScope(
@@ -427,12 +432,14 @@ export const list = query({
     const limit = args.limit ?? 20;
     if (args.status !== undefined) {
       const status = args.status;
-      return await ctx.db
+      const rows = await ctx.db
         .query("campaigns")
         .withIndex("by_status_updatedAt", (q) => q.eq("status", status))
-        .filter((q) => q.eq(q.field("visibility"), "public"))
         .order("desc")
-        .take(limit);
+        .take(Math.max(limit * 5, 100));
+      return rows
+        .filter((campaign) => campaign.visibility === "public")
+        .slice(0, limit);
     }
     return await ctx.db
       .query("campaigns")
