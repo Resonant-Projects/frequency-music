@@ -3,7 +3,17 @@
 // from V8 modules (hypotheses.ts, recipes.ts, weeklyBriefs.ts).
 // The node-side generation half lives in llmNode.ts.
 
-export const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
+export const DEFAULT_MODEL = "openai/gpt-5.6-terra";
+
+/**
+ * Per-model OpenRouter reasoning effort. Only models listed here get a
+ * `reasoning` block; others are called without one (sending an effort to a
+ * non-reasoning model is a provider error).
+ */
+export const MODEL_REASONING_EFFORT: Record<string, "low" | "medium" | "high"> =
+  {
+    "openai/gpt-5.6-terra": "medium",
+  };
 
 // Available models for different use cases (moved verbatim from extract.ts).
 export const MODELS = {
@@ -13,8 +23,11 @@ export const MODELS = {
   fast: "groq/openai/gpt-oss-120b",
 
   // === OpenRouter (model variety) ===
-  default: "anthropic/claude-sonnet-4-6",
-  quality: "anthropic/claude-sonnet-4-6",
+  // Default switched from Sonnet 4.6 per Keith 2026-07-10: GPT-5.6 Terra at
+  // medium reasoning effort (see MODEL_REASONING_EFFORT).
+  default: "openai/gpt-5.6-terra",
+  quality: "openai/gpt-5.6-terra",
+  sonnet: "anthropic/claude-sonnet-4-6",
   haiku: "anthropic/claude-3-5-haiku-20241022",
   gemini: "google/gemini-2.5-flash",
   gpt4: "openai/gpt-4o",

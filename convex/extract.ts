@@ -347,9 +347,9 @@ export const listModels = action({
   args: {},
   returns: v.object({
     fast: v.string(),
-    kimi: v.string(),
     default: v.string(),
     quality: v.string(),
+    sonnet: v.string(),
     haiku: v.string(),
     gemini: v.string(),
     gpt4: v.string(),

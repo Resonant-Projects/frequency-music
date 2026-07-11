@@ -9,6 +9,7 @@ import { generateText, type LanguageModel } from "ai";
 import {
   DEFAULT_MODEL,
   isGroqModel,
+  MODEL_REASONING_EFFORT,
   parseExtractionJson,
   TOKEN_BUDGETS,
   type LlmTask,
@@ -42,7 +43,10 @@ function getModel(modelId: string): LanguageModel {
     throw new Error("OPENROUTER_API_KEY not configured");
   }
   const openrouter = createOpenRouter({ apiKey: openRouterKey });
-  return openrouter(modelId);
+  const effort = MODEL_REASONING_EFFORT[modelId];
+  return effort
+    ? openrouter(modelId, { reasoning: { effort } })
+    : openrouter(modelId);
 }
 
 /**

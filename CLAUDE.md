@@ -188,8 +188,9 @@ export const MODELS = {
   fast: "groq/openai/gpt-oss-120b", // Groq retired kimi-k2-instruct (2026-07)
 
   // === OpenRouter (model variety) ===
-  default: "anthropic/claude-sonnet-4-6",
-  quality: "anthropic/claude-sonnet-4-6",
+  default: "openai/gpt-5.6-terra", // medium reasoning effort (MODEL_REASONING_EFFORT)
+  quality: "openai/gpt-5.6-terra",
+  sonnet: "anthropic/claude-sonnet-4-6",
   haiku: "anthropic/claude-3-5-haiku-20241022",
   gemini: "google/gemini-2.5-flash",
   gpt4: "openai/gpt-4o",
@@ -200,7 +201,7 @@ export const MODELS = {
 
 > Source of truth: convex/llm.ts (MODELS moved there by the LLM-module consolidation) — update this table when that changes.
 >
-> **Note:** Never use Llama models. Sonnet 4.6 for automated cron extractions, Opus for manual re-extractions.
+> **Note:** Never use Llama models. GPT-5.6 Terra (medium reasoning) is the default for automated cron extractions (per Keith 2026-07-10); Opus for manual re-extractions.
 
 ## Feeds
 
