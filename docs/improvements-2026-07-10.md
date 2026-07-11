@@ -272,9 +272,43 @@ high reasoning) implements via codex-first. Each landed item lists its commit.
 - **Service-account 1P token scope is read-only** — fine for secret
   resolution, cannot create/edit items. By design; noted for future sessions.
 
+### Landed (second batch — runs B, D, loop-wave 01; content committed in `b2e0cbe`)
+
+- **Backlog #8**: `computeEditorialSignals` no longer collects five whole
+  tables — bounded to the top-100 concepts via `by_mentionCount` with
+  indexed per-candidate lookups; output shape/ranking preserved.
+- **Backlog #13**: `getConceptDetail` returns private-corpus links for
+  authenticated callers; `getConceptDetailPublic` keeps the public-filtered
+  behavior for the editorial surface.
+- **Backlog #7**: root cause fixed — draft approve/reject/supersede now
+  advance the parent run when its last pending draft resolves; live backfill
+  `agentRuns:reconcileReviewedRuns` reconciled 4 orphaned runs → completed,
+  keeping the 1 legitimate needs_review (1 pending draft).
+- **Loop-wave plan 01 (backlog #1 started)**: `claims` table live —
+  schema/write-path/read-surface/backfill implemented; backfill applied and
+  converged (1,590 extractions → **4,648 claim rows**, second dry-run plans
+  zero); force re-extraction live-verified supersession (4 superseded, 6 new
+  active rows, ordinals correct). Plans 03/04/05 now have their substrate.
+- **Root typecheck debt cleared**: ~115 pre-existing convex/harness/scripts
+  errors (vp-migrate scaffold debt) fixed with type-only changes;
+  `scripts/archive` excluded from tsconfig instead of editing frozen files.
+  `tsc --noEmit` now exits 0 at repo root.
+- Note: these were implemented by Codex runs B/D/wave-01 as uncommitted
+  work; the concurrent Bun→Vite+ migration session committed them inside
+  `b2e0cbe` along with the migration itself, so they share that hash.
+
+### New findings (batch 2)
+
+- **varlock op() serves a stale `auth-bypass-secret`** — varlock's resolution
+  (via 1Password desktop-app auth) returned a different value than a direct
+  `op read` of the same ref after the 2026-07-10 rotation; scripts relying on
+  varlock got UNAUTHORIZED while direct reads worked. This is a plausible
+  mechanism for the recurring UNAUTHORIZED bursts wherever a runner caches
+  or resolves through the app-auth path. Workaround: export the secret
+  explicitly (env wins over varlock auto-load). Worth a varlock cache/app
+  session investigation or pinning resolution to the service-account token.
+
 ### In flight (Codex)
 
-- Run B: backlog #8 #13 (editorialSignals scaling, getConceptDetail
-  workbench variant) + #7 fix (advance runs when last pending draft
-  resolves) + reconcile backfill.
-- Loop-wave plan 01 (claims table) — plan 02 queued behind it.
+- Loop-wave plan 02 (domains + mission relevance: registry seed, classifier,
+  4,000-concept classification backfill, dead-feed disable).

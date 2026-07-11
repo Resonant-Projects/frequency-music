@@ -1,4 +1,5 @@
 # Claims Become First-Class Rows — Implementation Plan
+> Landed: b2e0cbe (2026-07-10) — backfill applied + converged same night (4,648 claims); write-path supersession live-verified
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > **Found-state rule (wave 2026-07-07):** authored pre-arch-wave. Adapt quoted "current" code to found state; schemas, interfaces, and gates are binding.
