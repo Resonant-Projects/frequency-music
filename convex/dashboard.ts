@@ -16,6 +16,26 @@ type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
 
 type DbReader = GenericDatabaseReader<DataModel>;
 
+const EXTRACTION_STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+const BRIEF_STALE_AFTER_MS = 8 * 24 * 60 * 60 * 1000;
+
+export function computeLoopHealth(
+  now: number,
+  lastExtractionAt: number | null,
+  lastBriefAt: number | null,
+) {
+  const extractionStale =
+    lastExtractionAt === null ||
+    now - lastExtractionAt > EXTRACTION_STALE_AFTER_MS;
+  const briefStale =
+    lastBriefAt === null || now - lastBriefAt > BRIEF_STALE_AFTER_MS;
+  return {
+    extractionStale,
+    briefStale,
+    staleCount: Number(extractionStale) + Number(briefStale),
+  };
+}
+
 // A missing row deliberately reads 0 rather than falling back to a live
 // count — the fallback would reintroduce the full-table scans this cache
 // exists to remove. The operator must run dashboard:recomputeStats once
@@ -121,6 +141,57 @@ export const writeStat = internalMutation({
   },
 });
 
+export const readLoopTimestamps = internalQuery({
+  args: {},
+  returns: v.object({
+    lastExtractionAt: v.union(v.number(), v.null()),
+    lastBriefAt: v.union(v.number(), v.null()),
+  }),
+  handler: async (ctx) => {
+    const [extraction, brief] = await Promise.all([
+      ctx.db.query("extractions").order("desc").first(),
+      ctx.db.query("weeklyBriefs").order("desc").first(),
+    ]);
+    return {
+      lastExtractionAt: extraction?._creationTime ?? null,
+      lastBriefAt: brief?._creationTime ?? null,
+    };
+  },
+});
+
+export const recordBatchExtractionOutcome = internalMutation({
+  args: {
+    attempted: v.number(),
+    succeeded: v.number(),
+    failed: v.number(),
+    allFailed: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const values = {
+      "batchExtraction.attempted": args.attempted,
+      "batchExtraction.succeeded": args.succeeded,
+      "batchExtraction.failed": args.failed,
+      "batchExtraction.completedAt": now,
+      "loopHealth.batchExtractionAllFailed": Number(args.allFailed),
+      ...(args.allFailed ? { "batchExtraction.lastAllFailedAt": now } : {}),
+    };
+    for (const [key, value] of Object.entries(values)) {
+      const existing = await ctx.db
+        .query("stats")
+        .withIndex("by_key", (q) => q.eq("key", key))
+        .first();
+      if (existing) {
+        await ctx.db.patch("stats", existing._id, { value, updatedAt: now });
+      } else {
+        await ctx.db.insert("stats", { key, value, updatedAt: now });
+      }
+    }
+    return null;
+  },
+});
+
 export const recomputeStats = internalAction({
   args: {},
   returns: v.null(),
@@ -162,6 +233,31 @@ export const recomputeStats = internalAction({
           });
         }
       }
+    }
+
+    const now = Date.now();
+    const { lastExtractionAt, lastBriefAt } = await ctx.runQuery(
+      internal.dashboard.readLoopTimestamps,
+      {},
+    );
+    const loopHealth = computeLoopHealth(now, lastExtractionAt, lastBriefAt);
+    const healthStats = {
+      lastExtractionAt: lastExtractionAt ?? 0,
+      lastBriefAt: lastBriefAt ?? 0,
+      loopHealth: loopHealth.staleCount,
+      "loopHealth.extractionStale": Number(loopHealth.extractionStale),
+      "loopHealth.briefStale": Number(loopHealth.briefStale),
+      "loopHealth.checkedAt": now,
+    };
+    for (const [key, value] of Object.entries(healthStats)) {
+      await ctx.runMutation(internal.dashboard.writeStat, { key, value });
+    }
+    if (loopHealth.staleCount > 0) {
+      console.error("Research loop is stale", {
+        lastExtractionAt,
+        lastBriefAt,
+        ...loopHealth,
+      });
     }
     return null;
   },

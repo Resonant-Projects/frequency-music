@@ -1,5 +1,35 @@
-import { describe, expect, test } from "bun:test";
-import { computeEditorialSignals } from "./dashboard";
+import { describe, expect, test } from "vite-plus/test";
+import { computeEditorialSignals, computeLoopHealth } from "./dashboard";
+
+describe("loop health", () => {
+  const hour = 60 * 60 * 1000;
+  const day = 24 * hour;
+
+  test("marks only timestamps older than their staleness thresholds", () => {
+    const now = 10 * day;
+
+    expect(computeLoopHealth(now, now - day, now - 8 * day)).toMatchObject({
+      extractionStale: false,
+      briefStale: false,
+      staleCount: 0,
+    });
+    expect(
+      computeLoopHealth(now, now - day - 1, now - 8 * day - 1),
+    ).toMatchObject({
+      extractionStale: true,
+      briefStale: true,
+      staleCount: 2,
+    });
+  });
+
+  test("treats missing pipeline output as stale", () => {
+    expect(computeLoopHealth(10 * day, null, null)).toEqual({
+      extractionStale: true,
+      briefStale: true,
+      staleCount: 2,
+    });
+  });
+});
 
 function createQueryResult<T>(rows: T[]) {
   return {

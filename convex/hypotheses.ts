@@ -2,12 +2,13 @@ import { makeFunctionReference } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
-import { action, mutation, query } from "./_generated/server";
+import { action, internalQuery, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
 import { DEFAULT_MODEL, extractJsonObject } from "./llm";
 import { hypothesisStatusValidator } from "./schema";
 import {
+  extractionReturnValidator,
   hypothesisReturnValidator,
   sourceReturnValidator,
   thesisReturnValidator,
@@ -40,6 +41,38 @@ type GenerateFromExtractionResult = {
   model: string;
   generated: GeneratedHypothesisPayload;
 };
+
+type HypothesisCandidate = {
+  _id: Id<"extractions">;
+  claims: unknown[];
+  compositionParameters: unknown[];
+};
+
+export async function selectUnlinkedExtractionCandidates<
+  T extends HypothesisCandidate,
+>(
+  extractions: T[],
+  options: {
+    limit: number;
+    minClaims: number;
+    isLinked: (extractionId: Id<"extractions">) => Promise<boolean>;
+  },
+): Promise<T[]> {
+  if (options.limit <= 0) return [];
+  const candidates: T[] = [];
+  for (const extraction of extractions) {
+    if (
+      extraction.claims.length < options.minClaims ||
+      extraction.compositionParameters.length === 0
+    ) {
+      continue;
+    }
+    if (await options.isLinked(extraction._id)) continue;
+    candidates.push(extraction);
+    if (candidates.length >= options.limit) break;
+  }
+  return candidates;
+}
 
 const generateFromExtractionRef = makeFunctionReference<"action">(
   "hypotheses:generateFromExtraction",
@@ -199,6 +232,7 @@ export const create = mutation({
     rationaleMd: v.string(),
     thesisId: v.optional(v.id("theses")),
     sourceIds: v.array(v.id("sources")),
+    extractionIds: v.optional(v.array(v.id("extractions"))),
     concepts: v.optional(v.array(v.string())),
     devBypassSecret: v.optional(v.string()),
   },
@@ -523,6 +557,7 @@ export const generateFromExtraction = action({
         whyThisMatters: parsed.whyThisMatters,
         rationaleMd: parsed.rationaleMd,
         sourceIds: [extraction.sourceId],
+        extractionIds: [args.extractionId],
         concepts: parsed.concepts,
         devBypassSecret: args.devBypassSecret,
       },
@@ -533,6 +568,29 @@ export const generateFromExtraction = action({
       model: modelId,
       generated: parsed,
     };
+  },
+});
+
+export const listUnlinkedBatchCandidates = internalQuery({
+  args: { limit: v.number(), minClaims: v.number() },
+  returns: v.array(extractionReturnValidator),
+  handler: async (ctx, args) => {
+    const extractions = await ctx.db
+      .query("extractions")
+      .order("desc")
+      .take(50);
+    return await selectUnlinkedExtractionCandidates(extractions, {
+      ...args,
+      isLinked: async (extractionId) =>
+        Boolean(
+          await ctx.db
+            .query("hypotheses")
+            .withIndex("by_extractionIds", (q) =>
+              q.eq("extractionIds", [extractionId]),
+            )
+            .first(),
+        ),
+    });
   },
 });
 
@@ -573,22 +631,14 @@ export const generateBatch = action({
     const limit = args.limit ?? 3;
     const minClaims = args.minClaims ?? 2;
 
-    // Get extractions with enough claims
-    const extractions: Doc<"extractions">[] = await ctx.runQuery(
-      api.extractions.listRecent,
-      {
-        limit: 50,
-      },
-    );
-
-    const candidates: Doc<"extractions">[] = extractions.filter(
-      (e: Doc<"extractions">) =>
-        e.claims.length >= minClaims && e.compositionParameters.length > 0,
+    const candidates: Doc<"extractions">[] = await ctx.runQuery(
+      internal.hypotheses.listUnlinkedBatchCandidates,
+      { limit, minClaims },
     );
 
     const results: BatchGenerationResult[] = [];
 
-    for (const extraction of candidates.slice(0, limit)) {
+    for (const extraction of candidates) {
       try {
         const result = await ctx.runAction(generateFromExtractionRef, {
           extractionId: extraction._id,

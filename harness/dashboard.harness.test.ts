@@ -1,10 +1,34 @@
-import { describe, expect, test } from "bun:test";
+/* eslint-disable no-underscore-dangle */
+import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import { modules } from "./modules";
 
 describe("dashboard stats recomputation", () => {
+  test("persists an all-failed batch extraction signal", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.mutation(internal.dashboard.recordBatchExtractionOutcome, {
+      attempted: 3,
+      succeeded: 0,
+      failed: 3,
+      allFailed: true,
+    });
+
+    const stats = await t.run(async (ctx) => {
+      const rows = await ctx.db.query("stats").collect();
+      return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+    });
+    expect(stats).toMatchObject({
+      "batchExtraction.attempted": 3,
+      "batchExtraction.succeeded": 0,
+      "batchExtraction.failed": 3,
+      "loopHealth.batchExtractionAllFailed": 1,
+    });
+    expect(stats["batchExtraction.lastAllFailedAt"]).toBeGreaterThan(0);
+  });
+
   test("writes exact reader keys with values matching direct counts", async () => {
     const t = convexTest(schema, modules);
 
@@ -233,7 +257,7 @@ describe("dashboard stats recomputation", () => {
 
     await t.action(internal.dashboard.recomputeStats, {});
 
-    const { directCounts, stats } = await t.run(async (ctx) => {
+    const { directCounts, latest, stats } = await t.run(async (ctx) => {
       const [
         sources,
         extractions,
@@ -263,6 +287,10 @@ describe("dashboard stats recomputation", () => {
           weeklyBriefs: weeklyBriefs.length,
           feeds: feeds.length,
         },
+        latest: {
+          extraction: Math.max(...extractions.map((row) => row._creationTime)),
+          brief: Math.max(...weeklyBriefs.map((row) => row._creationTime)),
+        },
         stats: Object.fromEntries(statRows.map((row) => [row.key, row.value])),
       };
     });
@@ -279,6 +307,12 @@ describe("dashboard stats recomputation", () => {
       "inbox.ingested",
       "inbox.reviewNeeded",
       "inbox.textReady",
+      "lastBriefAt",
+      "lastExtractionAt",
+      "loopHealth",
+      "loopHealth.briefStale",
+      "loopHealth.checkedAt",
+      "loopHealth.extractionStale",
     ]);
     expect(directCounts).toEqual({
       sources: 13,
@@ -301,6 +335,11 @@ describe("dashboard stats recomputation", () => {
       "inbox.textReady": 3,
       "inbox.reviewNeeded": 2,
       "inbox.blocked": 1,
+      lastExtractionAt: latest.extraction,
+      lastBriefAt: latest.brief,
+      loopHealth: 0,
+      "loopHealth.extractionStale": 0,
+      "loopHealth.briefStale": 0,
     });
 
     expect(await t.query(api.dashboard.pipeline, {})).toEqual({

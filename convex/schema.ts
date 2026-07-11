@@ -487,7 +487,8 @@ export default defineSchema({
   })
     .index("by_status_updatedAt", ["status", "updatedAt"])
     .index("by_visibility_updatedAt", ["visibility", "updatedAt"])
-    .index("by_thesisId_updatedAt", ["thesisId", "updatedAt"]),
+    .index("by_thesisId_updatedAt", ["thesisId", "updatedAt"])
+    .index("by_extractionIds", ["extractionIds"]),
 
   // ==========================================================================
   // RECIPES - DAW-ready composition specifications

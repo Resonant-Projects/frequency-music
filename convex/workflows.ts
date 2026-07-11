@@ -21,6 +21,18 @@ interface MinimalExtraction {
   compositionParameters: unknown[];
 }
 
+export function countBatchExtractionOutcomes(outcomes: boolean[]) {
+  const succeeded = outcomes.filter(Boolean).length;
+  const attempted = outcomes.length;
+  const failed = attempted - succeeded;
+  return {
+    attempted,
+    succeeded,
+    failed,
+    allFailed: attempted > 0 && failed === attempted,
+  };
+}
+
 // Auth bypass secret is threaded through workflow args since workflow handlers
 // run in mutation context where process.env is not available.
 
@@ -64,9 +76,10 @@ export const extractSourceWorkflow = workflowManager.define({
       sourceId: args.sourceId,
     });
 
-    if (extractions.length > 0) {
+    const extraction = extractions[0];
+    if (extraction) {
       await ctx.runAction(internal.graph.linkExtractionConcepts, {
-        extractionId: extractions[0]._id,
+        extractionId: extraction._id,
       });
     }
 
@@ -94,6 +107,7 @@ export const batchExtractionWorkflow = workflowManager.define({
 
     console.log(`Starting batch extraction of ${sources.length} sources`);
 
+    const outcomes: boolean[] = [];
     for (const source of sources) {
       try {
         await ctx.runAction(
@@ -106,17 +120,32 @@ export const batchExtractionWorkflow = workflowManager.define({
           sourceId: source._id,
         });
 
-        if (extractions.length > 0) {
+        const extraction = extractions[0];
+        if (extraction) {
           await ctx.runAction(internal.graph.linkExtractionConcepts, {
-            extractionId: extractions[0]._id,
+            extractionId: extraction._id,
           });
         }
+        outcomes.push(true);
       } catch (e) {
-        console.error(`Failed to extract ${source._id}: ${e}`);
+        outcomes.push(false);
+        console.error("Failed to extract source", source._id, e);
       }
     }
 
-    console.log(`Batch extraction complete`);
+    const counts = countBatchExtractionOutcomes(outcomes);
+    await ctx.runMutation(internal.dashboard.recordBatchExtractionOutcome, {
+      ...counts,
+    });
+    console.log(
+      `Batch extraction complete: attempted=${counts.attempted} succeeded=${counts.succeeded} failed=${counts.failed}`,
+    );
+    if (counts.allFailed) {
+      console.error(
+        "Batch extraction failed for every attempted source",
+        counts,
+      );
+    }
   },
 });
 
@@ -164,20 +193,16 @@ export const batchHypothesisWorkflow = workflowManager.define({
     const minClaims = args.minClaims ?? 2;
     const devBypassSecret = args.devBypassSecret;
 
-    const extractions = await ctx.runQuery(api.extractions.listRecent, {
-      limit: 50,
-    });
-
-    const candidates = extractions.filter(
-      (e: MinimalExtraction) =>
-        e.claims.length >= minClaims && e.compositionParameters.length > 0,
+    const candidates: MinimalExtraction[] = await ctx.runQuery(
+      internal.hypotheses.listUnlinkedBatchCandidates,
+      { limit, minClaims },
     );
 
     console.log(
       `Found ${candidates.length} candidates for hypothesis generation`,
     );
 
-    for (const extraction of candidates.slice(0, limit)) {
+    for (const extraction of candidates) {
       try {
         const result = await ctx.runAction(
           api.hypotheses.generateFromExtraction,
@@ -191,7 +216,7 @@ export const batchHypothesisWorkflow = workflowManager.define({
           });
         }
       } catch (e) {
-        console.error(`Failed: ${e}`);
+        console.error("Failed to generate hypothesis", e);
       }
     }
   },
@@ -232,7 +257,7 @@ export const fullPipelineWorkflow = workflowManager.define({
           { retry: true },
         );
       } catch (e) {
-        console.error(`Extract failed: ${e}`);
+        console.error("Extraction failed", e);
       }
     }
 
@@ -267,7 +292,7 @@ export const fullPipelineWorkflow = workflowManager.define({
           );
         }
       } catch (e) {
-        console.error(`Pipeline step failed: ${e}`);
+        console.error("Pipeline step failed", e);
       }
     }
 

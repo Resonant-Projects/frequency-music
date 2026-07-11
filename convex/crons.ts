@@ -21,6 +21,14 @@ crons.interval(
   },
 );
 
+// Generate a small batch of hypotheses from fresh, unlinked extractions weekly.
+crons.weekly(
+  "generate-hypotheses",
+  { dayOfWeek: "monday", hourUTC: 16, minuteUTC: 0 },
+  internal.workflows.startBatchHypothesisInternal,
+  { limit: 3 },
+);
+
 // Generate a weekly turn/brief every Friday.
 crons.weekly(
   "generate-weekly-turn",
