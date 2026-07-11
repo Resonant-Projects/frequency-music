@@ -308,7 +308,63 @@ high reasoning) implements via codex-first. Each landed item lists its commit.
   explicitly (env wins over varlock auto-load). Worth a varlock cache/app
   session investigation or pinning resolution to the service-account token.
 
-### In flight (Codex)
+### Landed (batch 3 — loop-wave plan 02 complete, live and converged)
 
-- Loop-wave plan 02 (domains + mission relevance: registry seed, classifier,
-  4,000-concept classification backfill, dead-feed disable).
+- **Plan 02 code (`03dce57` + fixes)**: concepts carry
+  `missionRelevance`/`relevanceRationale`/`classifiedAt`/`classifierModel` +
+  `by_missionRelevance`; registry-constrained Sonnet classifier with
+  structured output (new shared Zod path in llm/llmNode); classification at
+  concept-creation + hourly `classify-stale-concepts` sweep; idempotent
+  seeder/backfill/cleanup drivers.
+- **Live results**: registry seeded and converged (14 domains).
+  Classification backfill converged — **5,444/5,444 concepts classified**
+  (363 + 37 Sonnet calls, ≈ $6.2). Off-mission arXiv/ML noise now flags
+  `ml-audio-engineering | off` with clean rationales; `getTopConcepts`-style
+  mention noise is finally filterable (backlog #14's concept-side half).
+  49 normalized provisional domains await Keith's registry review
+  (`vpx convex run vocabulary:reviewSummary '{}'`).
+- **Two live-run defects found and fixed en route** (each committed
+  separately): Anthropic structured-output rejects array `maxItems` → the
+  LLM-facing schema is now permissive with strict post-parse; the
+  exactly-one-sentence rationale gate failed 10% of the corpus (abbreviations
+  like "e.g." counted as extra sentences, and chunk granularity failed 20
+  concepts per bad row) → gate softened to terminated/bounded, all 555
+  failures recovered with zero failures on rerun.
+- **Dead feeds (plan 02 task)**: honest no-op — four of the six listed feeds
+  are no longer in the registry and the remaining two (3Blue1Brown, Robert
+  Edward Grant) verify LIVE. Nothing disabled.
+
+### Cross-vendor audit (Cato) — new backlog items
+
+Verdict "concerns"; ledger-hygiene finding fixed in-session. Remaining
+technical findings, filed as new backlog entries:
+
+15. **Per-concept validation granularity** — classifier failures are handled
+    per 20-concept chunk; one malformed row still fails its 19 neighbors
+    (they retry via sweep, but per-item safeParse would be strictly better).
+16. **`readConceptDetail` unbounded edge collect** — `getConceptDetail*`
+    collects ALL edges for a concept (linked-item fetches are capped at 20,
+    the edge scan is not); bound it like plan-005 did for counts.
+17. **`pipelineItems` full-table collects** — hypotheses + recipes are
+    collected unbounded in convex/dashboard.ts (~560) while sources/
+    extractions in the same query are capped. Small tables today; fix cheap.
+18. **`getConceptDetail` authenticated ≠ authorized** — any Clerk identity
+    sees the private corpus (presence-of-identity gate, no role check).
+    Fine for the current collaborator circle; make the decision explicit.
+
+### Backlog dispositions (items not separately actioned)
+
+- **#1 loop wave**: plans 01–02 DONE and live; 03–11 remain (03
+  correspondences is next — claims + domains, its two prerequisites, now
+  exist).
+- **#6 agent graph-traversal tools**: deferred as designed — superseded by
+  plan 03/05 correspondence tools now that the wave is actually moving.
+- **#9 TLS for site surface**: unchanged, Keith/infra (SECURITY-04).
+- **#14 ingest-side topic filters**: concept-side handled by plan 02's
+  relevance flags; feed-level filters remain optional now that off-mission
+  concepts self-flag.
+
+### Cost & spend note
+
+LLM spend this session: ≈ $6.2 classification backfill + a handful of test
+extractions/hypothesis/brief generations on Sonnet/Terra/Groq.

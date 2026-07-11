@@ -1,4 +1,5 @@
 # Concept Domains + Mission Relevance — Implementation Plan
+> Landed: 03dce57 + fixes (2026-07-11) — registry seeded (14), classification backfill converged same night (5,444/5,444 concepts, ~$6.2); 49 provisional domains await registry review; dead-feed check found all targets live
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > **Found-state rule (wave 2026-07-07):** authored pre-arch-wave. Adapt quoted "current" code to found state; schemas, interfaces, and gates are binding. **Hard prerequisite: arch plan 2026-07-03-03 (shared LLM module) — the classifier calls it.**
