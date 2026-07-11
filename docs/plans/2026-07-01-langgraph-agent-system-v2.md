@@ -1,4 +1,5 @@
 # LangGraph Agent System Plan v2 — Status Update Against Current Codebase
+> Landed: 32166aa (2026-07-09) (best-effort attribution)
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 

@@ -1,4 +1,5 @@
 # Ingest Script Lib (Arch Candidate 6) Implementation Plan
+> Landed: d457c71 (2026-07-09)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

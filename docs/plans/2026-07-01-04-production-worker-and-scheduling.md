@@ -1,4 +1,5 @@
 # 04 — Production Worker, Scheduling, and Weekly-Brief Cutover
+> Landed: 550fbbb (2026-07-02)
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 

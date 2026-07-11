@@ -1,4 +1,5 @@
 # Convex-Test Harness (Test Through the Seam) Implementation Plan
+> Landed: d2e0da0 (2026-07-09)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -1,4 +1,5 @@
 # 03 — Structured Draft Writes and Human Review Promotion
+> Landed: 550fbbb (2026-07-02)
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 

@@ -1,4 +1,5 @@
 # 01 — Codex SDK Inference Provider (Subscription Auth)
+> Landed: 32166aa (2026-07-09)
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
