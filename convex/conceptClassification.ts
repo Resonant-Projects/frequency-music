@@ -17,6 +17,20 @@ export const conceptClassificationBatchSchema = z.object({
   classifications: z.array(conceptClassificationSchema),
 });
 
+// Anthropic's structured-output schema subset rejects array length
+// constraints (minItems/maxItems) and refinements, so the LLM-facing schema
+// stays permissive; parseConceptClassificationOutput applies the strict
+// schema to whatever comes back.
+export const conceptClassificationLlmSchema = z.object({
+  classifications: z.array(
+    z.object({
+      domains: z.array(z.string()),
+      missionRelevance: z.enum(["on", "off"]),
+      rationale: z.string(),
+    }),
+  ),
+});
+
 export type ConceptClassification = z.infer<typeof conceptClassificationSchema>;
 
 export function parseConceptClassificationOutput(

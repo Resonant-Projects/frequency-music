@@ -2,7 +2,7 @@
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 import {
-  conceptClassificationBatchSchema,
+  conceptClassificationLlmSchema,
   parseConceptClassificationOutput,
 } from "./conceptClassification";
 import { generateLlmObject } from "./llmNode";
@@ -31,7 +31,7 @@ export const generateClassifications = internalAction({
       model: args.model,
       system: args.system,
       prompt: args.prompt,
-      schema: conceptClassificationBatchSchema,
+      schema: conceptClassificationLlmSchema,
       schemaName: "concept_classifications",
       schemaDescription:
         "One registry-constrained domain and mission-relevance classification per input concept, in input order.",
