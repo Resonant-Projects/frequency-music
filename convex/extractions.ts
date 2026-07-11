@@ -1,37 +1,12 @@
+/* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
 import { compositionParameterValidator } from "./schema";
+import { claimValidator } from "./shared/claims";
 import { extractionReturnValidator } from "./validators";
-
-// Local copy of the claim shape mirrors validators.ts's convention: the
-// schema-internal `claimValidator` isn't exported, so return/arg validators
-// each define their own structurally-identical copy.
-const claimValidator = v.object({
-  text: v.string(),
-  evidenceLevel: v.union(
-    v.literal("peer_reviewed"),
-    v.literal("preprint"),
-    v.literal("anecdotal"),
-    v.literal("speculative"),
-    v.literal("personal"),
-  ),
-  truthConfidence: v.optional(
-    v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-  ),
-  interestLevel: v.optional(
-    v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-  ),
-  citations: v.array(
-    v.object({
-      label: v.optional(v.string()),
-      url: v.optional(v.string()),
-      quote: v.optional(v.string()),
-    }),
-  ),
-});
 
 // ============================================================================
 // EDIT CAPTURE - pure helpers (unit-testable without a DB harness)
@@ -221,5 +196,79 @@ export const editExtraction = mutation({
 
     await ctx.db.patch("extractions", id, updates);
     return null;
+  },
+});
+
+/**
+ * Backfill first-class claim rows from the denormalized extraction payloads.
+ * Dry-run by default at the driver layer; apply:false never writes.
+ */
+export const backfillClaims = mutation({
+  args: {
+    cursor: v.union(v.string(), v.null()),
+    batchSize: v.optional(v.number()),
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    processed: v.number(),
+    claimsInserted: v.number(),
+    skippedExisting: v.number(),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const batchSize = Math.min(Math.max(args.batchSize ?? 10, 1), 50);
+    const page = await ctx.db
+      .query("extractions")
+      .paginate({ numItems: batchSize, cursor: args.cursor });
+    let claimsInserted = 0;
+    let skippedExisting = 0;
+
+    for (const extraction of page.page) {
+      const existingClaim = await ctx.db
+        .query("claims")
+        .withIndex("by_extractionId_ordinal", (q) =>
+          q.eq("extractionId", extraction._id),
+        )
+        .first();
+      if (existingClaim) {
+        skippedExisting++;
+        continue;
+      }
+
+      const newestExtraction = await ctx.db
+        .query("extractions")
+        .withIndex("by_sourceId_createdAt", (q) =>
+          q.eq("sourceId", extraction.sourceId),
+        )
+        .order("desc")
+        .first();
+      const status =
+        newestExtraction?._id === extraction._id ? "active" : "superseded";
+      claimsInserted += extraction.claims.length;
+
+      if (!args.apply) continue;
+      for (const [ordinal, claim] of extraction.claims.entries()) {
+        await ctx.db.insert("claims", {
+          extractionId: extraction._id,
+          sourceId: extraction.sourceId,
+          ordinal,
+          ...claim,
+          status,
+          createdBy: extraction.createdBy,
+          createdAt: extraction.createdAt,
+        });
+      }
+    }
+
+    return {
+      processed: page.page.length,
+      claimsInserted,
+      skippedExisting,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
   },
 });

@@ -1,4 +1,5 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
+import "varlock/auto-load";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { evaluate, type EvaluatorT } from "langsmith/evaluation";

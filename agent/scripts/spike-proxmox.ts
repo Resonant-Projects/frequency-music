@@ -11,6 +11,7 @@ function loadRootEnvLocalIfNeeded() {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
     const [key, ...valueParts] = trimmed.split("=");
+    if (key === undefined) continue;
     if (!key.startsWith("PROXMOX_")) continue;
     if (process.env[key]) continue;
     const rawValue = valueParts.join("=").trim();

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
 
 import { convexTools } from "../src/tools/convexTools";
 
@@ -23,7 +23,7 @@ function mockFetchOnce(responseBody: unknown) {
       status: 200,
       headers: { "content-type": "application/json" },
     });
-  }) as typeof fetch;
+  }) as unknown as typeof fetch;
   return {
     getCapturedUrl: () => capturedUrl,
     getCapturedBody: () => capturedBody,
@@ -61,9 +61,12 @@ describe("get_self_improvement_stats tool", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
-    if (originalUrl === undefined) delete process.env.CONVEX_SITE_URL;
+    if (originalUrl === undefined) {
+      Reflect.deleteProperty(process.env, "CONVEX_SITE_URL");
+    }
     else process.env.CONVEX_SITE_URL = originalUrl;
-    if (originalSecret === undefined) delete process.env.AGENT_TOOL_SECRET;
+    if (originalSecret === undefined)
+      Reflect.deleteProperty(process.env, "AGENT_TOOL_SECRET");
     else process.env.AGENT_TOOL_SECRET = originalSecret;
   });
 

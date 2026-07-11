@@ -1,6 +1,8 @@
+import "varlock/auto-load";
 import { readFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
@@ -34,7 +36,9 @@ const zeros = rows.filter((e: SummaryItem) => e.claims === 0 && e.params === 0);
 
 async function main() {
   for (const z of zeros) {
-    const source = await client.query(api.sources.get, { id: z.sourceId });
+    const source = await client.query(api.sources.get, {
+      id: z.sourceId as Id<"sources">,
+    });
     const title = source?.title?.slice(0, 70) || "UNKNOWN";
     const type = source?.type || "?";
     const textLen = source?.rawText?.length || 0;

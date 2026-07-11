@@ -7,6 +7,7 @@
  *   bun run scripts/smart-fetch.ts --batch-update
  *   Add --dry-run to print the selected operation without network/backend access.
  */
+import "varlock/auto-load";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";

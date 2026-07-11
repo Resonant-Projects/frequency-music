@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 import { readFile } from "node:fs/promises";
 import { Client } from "langsmith";
 import {

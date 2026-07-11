@@ -1,10 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { AIMessage, type BaseMessage } from "@langchain/core/messages";
 import {
   BaseChatModel,
   type BaseChatModelCallOptions,
 } from "@langchain/core/language_models/chat_models";
 import type { ChatResult } from "@langchain/core/outputs";
+import { RunnableLambda, type Runnable } from "@langchain/core/runnables";
 import { z } from "zod";
 
 import { withFallback } from "../src/models/withFallback";
@@ -30,15 +31,13 @@ class ScriptedModel extends BaseChatModel<BaseChatModelCallOptions> {
 class StructuredFallbackModel extends ScriptedModel {
   structuredCalls = 0;
 
-  override withStructuredOutput(): {
-    invoke: (messages: BaseMessage[]) => Promise<{ answer: string }>;
-  } {
-    return {
-      invoke: () => {
-        this.structuredCalls += 1;
-        return Promise.resolve({ answer: "structured fallback" });
-      },
-    };
+  override withStructuredOutput<
+    RunOutput extends Record<string, any> = Record<string, any>,
+  >(_outputSchema: unknown, _config?: unknown): Runnable<any, RunOutput> {
+    return RunnableLambda.from(async (_messages: BaseMessage[]) => {
+      this.structuredCalls += 1;
+      return { answer: "structured fallback" };
+    }) as unknown as Runnable<any, RunOutput>;
   }
 }
 

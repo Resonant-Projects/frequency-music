@@ -31,30 +31,80 @@ describe("loop health", () => {
   });
 });
 
-function createQueryResult<T>(rows: T[]) {
-  return {
-    collect: async () => rows,
-    take: async (limit: number) => rows.slice(0, limit),
-  };
-}
-
 function makeDb(data: {
   concepts: any[];
+  edges?: any[];
   hypotheses?: any[];
   recipes?: any[];
   compositions?: any[];
   listeningSessions?: any[];
 }) {
+  const calls: Array<{ table: string; operation: string; value?: unknown }> =
+    [];
   const tables = {
     concepts: data.concepts,
+    edges: data.edges ?? [],
     hypotheses: data.hypotheses ?? [],
     recipes: data.recipes ?? [],
     compositions: data.compositions ?? [],
     listeningSessions: data.listeningSessions ?? [],
   };
 
+  const rowsById = new Map(
+    Object.values(tables)
+      .flat()
+      .map((row) => [row._id, row]),
+  );
+
+  const query = (table: keyof typeof tables) => {
+    let rows = [...tables[table]];
+    let indexName: string | undefined;
+    const builder = {
+      withIndex: (name: string, apply?: (q: any) => unknown) => {
+        calls.push({ table, operation: "withIndex", value: name });
+        indexName = name;
+        if (apply) {
+          const predicates: Array<[string, unknown]> = [];
+          const q = {
+            eq: (field: string, value: unknown) => {
+              predicates.push([field, value]);
+              return q;
+            },
+          };
+          apply(q);
+          rows = rows.filter((row) =>
+            predicates.every(([field, value]) => row[field] === value),
+          );
+        }
+        return builder;
+      },
+      order: (direction: "asc" | "desc") => {
+        calls.push({ table, operation: "order", value: direction });
+        const orderField =
+          indexName === "by_mentionCount" ? "mentionCount" : "createdAt";
+        rows.sort((a, b) =>
+          direction === "desc"
+            ? (b[orderField] ?? 0) - (a[orderField] ?? 0)
+            : (a[orderField] ?? 0) - (b[orderField] ?? 0),
+        );
+        return builder;
+      },
+      take: async (limit: number) => {
+        calls.push({ table, operation: "take", value: limit });
+        return rows.slice(0, limit);
+      },
+      first: async () => {
+        calls.push({ table, operation: "first" });
+        return rows[0] ?? null;
+      },
+    };
+    return builder;
+  };
+
   return {
-    query: (table: keyof typeof tables) => createQueryResult(tables[table]),
+    query,
+    get: async (_table: string, id: string) => rowsById.get(id) ?? null,
+    calls,
   };
 }
 
@@ -97,6 +147,36 @@ describe("editorial signals", () => {
           concepts: ["resonance"],
           resolution: "inconclusive",
           status: "active",
+        },
+      ],
+      edges: [
+        {
+          _id: "edge-shared-cymatics",
+          fromType: "hypothesis",
+          fromId: "hypothesis-shared",
+          toType: "concept",
+          toId: "cymatics",
+        },
+        {
+          _id: "edge-shared-resonance",
+          fromType: "hypothesis",
+          fromId: "hypothesis-shared",
+          toType: "concept",
+          toId: "resonance",
+        },
+        {
+          _id: "edge-cymatics",
+          fromType: "hypothesis",
+          fromId: "hypothesis-cymatics",
+          toType: "concept",
+          toId: "cymatics",
+        },
+        {
+          _id: "edge-resonance",
+          fromType: "hypothesis",
+          fromId: "hypothesis-resonance",
+          toType: "concept",
+          toId: "resonance",
         },
       ],
       recipes: [
@@ -170,7 +250,7 @@ describe("editorial signals", () => {
     });
   });
 
-  test("scores concepts beyond the old 200-row cap", async () => {
+  test("bounds candidates by mention index while preserving yield ranking", async () => {
     const fillerConcepts = Array.from({ length: 200 }, (_, index) => ({
       _id: `concept-filler-${index}`,
       name: `filler-${index}`,
@@ -185,7 +265,7 @@ describe("editorial signals", () => {
       name: "late-high",
       displayName: "Late High",
       domain: "late-high-domain",
-      mentionCount: 1,
+      mentionCount: 10,
       hypothesisCount: 1,
     };
 
@@ -194,7 +274,7 @@ describe("editorial signals", () => {
       name: "late-low",
       displayName: "Late Low",
       domain: "late-low-domain",
-      mentionCount: 1,
+      mentionCount: 9,
       hypothesisCount: 1,
     };
 
@@ -212,6 +292,22 @@ describe("editorial signals", () => {
           concepts: ["late-low"],
           resolution: "contradicted",
           status: "retired",
+        },
+      ],
+      edges: [
+        {
+          _id: "edge-late-high",
+          fromType: "hypothesis",
+          fromId: "hypothesis-late-high",
+          toType: "concept",
+          toId: "late-high",
+        },
+        {
+          _id: "edge-late-low",
+          fromType: "hypothesis",
+          fromId: "hypothesis-late-low",
+          toType: "concept",
+          toId: "late-low",
         },
       ],
       recipes: [
@@ -269,5 +365,15 @@ describe("editorial signals", () => {
         (cluster) => cluster.domain === "late-low-domain",
       ),
     ).toBe(true);
+    expect(db.calls).toContainEqual({
+      table: "concepts",
+      operation: "withIndex",
+      value: "by_mentionCount",
+    });
+    expect(db.calls).toContainEqual({
+      table: "concepts",
+      operation: "take",
+      value: 100,
+    });
   });
 });

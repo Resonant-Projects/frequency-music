@@ -1,5 +1,5 @@
 ---
-description: Frequency Music Research Pipeline - Bun + Convex
+description: Frequency Music Research Pipeline - Vite+ + Convex
 globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
 alwaysApply: true
 ---
@@ -12,7 +12,7 @@ Research-to-composition pipeline exploring connections between music, physics, m
 
 **Stack:**
 
-- **Runtime:** Bun (not Node.js)
+- **Runtime:** Node 24 managed by Vite+ (`vp`); package management delegates to Bun via `bun.lock`
 - **Backend:** Self-hosted Convex (managed by Cool Guy)
 - **LLM:** Convex pipeline: OpenRouter + AI SDK (Claude Sonnet default, Groq/Gemini/DeepSeek variants — see convex/extract.ts MODELS). Agent workspace: LangGraph with Codex SDK + Anthropic (see agent/).
 - **Tuning Files:** Scala format (.scl, .kbm)
@@ -71,28 +71,28 @@ frequency-music/
 
 ## Key Scripts
 
-All scripts use Bun and load env from `.env.local`:
+All scripts run directly via `vpx tsx` (use `vp run <script>` for `package.json` tasks). Env is auto-loaded from `.env.local` by `varlock/auto-load` (imported at the top of each env-reading script), not by the runtime:
 
 ```bash
 # Source ingestion (batches are data now — one driver + JSON manifests)
-bun run scripts/ingest-manifest.ts data/example-manifest.json   # dry-run by default
+vpx tsx scripts/ingest-manifest.ts data/example-manifest.json   # dry-run by default
 
 # Text fetching (recurring; shared scripts/lib ingestor)
-bun run scripts/fetch-full-articles.ts --limit 10    # Jina Reader
-bun run scripts/smart-fetch.ts                        # Multi-strategy fetch for blocked sources
-bun run scripts/fetch-notion-full-text.ts             # Notion sources → Jina
+vpx tsx scripts/fetch-full-articles.ts --limit 10    # Jina Reader
+vpx tsx scripts/smart-fetch.ts                        # Multi-strategy fetch for blocked sources
+vpx tsx scripts/fetch-notion-full-text.ts             # Notion sources → Jina
 
 # YouTube & Notion
-bun run scripts/fetch-youtube-transcripts.ts          # Fabric CLI transcripts
-bun run scripts/sync-notion-tag.ts                    # Sync Frequency Research tag
-bun run scripts/fetch-readwise-articles.ts            # Readwise → sources
+vpx tsx scripts/fetch-youtube-transcripts.ts          # Fabric CLI transcripts
+vpx tsx scripts/sync-notion-tag.ts                    # Sync Frequency Research tag
+vpx tsx scripts/fetch-readwise-articles.ts            # Readwise → sources
 
 # Analysis & Maintenance
-bun run scripts/audit-extractions.ts                  # Audit extraction quality
-bun run scripts/list-extraction-ids.ts                # Export to /tmp/ext-summary.json
-bun run scripts/list-zero-sources.ts                  # Find zero-claim sources
-bun run scripts/migrate-dedupe-keys.ts                # Dedupe-key migration (dry-run default)
-bun run scripts/find-dupes.ts                         # Duplicate report
+vpx tsx scripts/audit-extractions.ts                  # Audit extraction quality
+vpx tsx scripts/list-extraction-ids.ts                # Export to /tmp/ext-summary.json
+vpx tsx scripts/list-zero-sources.ts                  # Find zero-claim sources
+vpx tsx scripts/migrate-dedupe-keys.ts                # Dedupe-key migration (dry-run default)
+vpx tsx scripts/find-dupes.ts                         # Duplicate report
 
 # Completed one-shot batch scripts live in scripts/archive/ (reference only)
 ```
@@ -103,42 +103,42 @@ bun run scripts/find-dupes.ts                         # Duplicate report
 
 ```bash
 # Run extraction on all text_ready sources
-bunx convex run extract:extractAllReady '{"limit": 20}'
+vpx convex run extract:extractAllReady '{"limit": 20}'
 
 # List sources by status
-bunx convex run sources:listByStatus '{"status": "extracted", "limit": 50}'
+vpx convex run sources:listByStatus '{"status": "extracted", "limit": 50}'
 
 # Poll all RSS feeds manually
-bunx convex run ingest:pollAllFeeds
+vpx convex run ingest:pollAllFeeds
 
 # List feeds
-bunx convex run feeds:list
+vpx convex run feeds:list
 ```
 
 ### Hypothesis & Recipe Generation
 
 ```bash
 # Generate hypothesis from extraction (AI)
-bunx convex run hypotheses:generateFromExtraction '{"extractionId": "..."}'
+vpx convex run hypotheses:generateFromExtraction '{"extractionId": "..."}'
 
 # Generate hypotheses batch (auto-pick best extractions)
-bunx convex run hypotheses:generateBatch '{"limit": 3}'
+vpx convex run hypotheses:generateBatch '{"limit": 3}'
 
 # Generate recipe from hypothesis (AI)
-bunx convex run recipes:generateFromHypothesis '{"hypothesisId": "..."}'
+vpx convex run recipes:generateFromHypothesis '{"hypothesisId": "..."}'
 
 # Generate recipes for hypotheses without them
-bunx convex run recipes:generateBatch '{"limit": 3}'
+vpx convex run recipes:generateBatch '{"limit": 3}'
 
 # List hypotheses by status
-bunx convex run hypotheses:listByStatus '{"status": "draft", "limit": 10}'
+vpx convex run hypotheses:listByStatus '{"status": "draft", "limit": 10}'
 
 # List recipes
-bunx convex run recipes:listByStatus '{"limit": 10}'
+vpx convex run recipes:listByStatus '{"limit": 10}'
 
 # Full experiment generation script (extraction → hypothesis → recipe)
-bun run scripts/generate-experiment.ts --auto
-bun run scripts/generate-experiment.ts <extractionId>
+vpx tsx scripts/generate-experiment.ts --auto
+vpx tsx scripts/generate-experiment.ts <extractionId>
 ```
 
 ## Authentication
@@ -149,7 +149,7 @@ never paste a real value here. Scripts auto-load it via `import "varlock/auto-lo
 
 ```bash
 # Add devBypassSecret to mutation args (value resolved from 1Password by varlock)
-bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4-6", "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
+vpx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4.6", "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
 ```
 
 Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=<set via 1Password / varlock; never commit the value>`
@@ -190,12 +190,12 @@ export const MODELS = {
   // === OpenRouter (model variety) ===
   default: "openai/gpt-5.6-terra", // medium reasoning effort (MODEL_REASONING_EFFORT)
   quality: "openai/gpt-5.6-terra",
-  sonnet: "anthropic/claude-sonnet-4-6",
-  haiku: "anthropic/claude-3-5-haiku-20241022",
+  sonnet: "anthropic/claude-sonnet-4.6",
+  haiku: "anthropic/claude-haiku-4.5",
   gemini: "google/gemini-2.5-flash",
   gpt4: "openai/gpt-4o",
   deepseek: "deepseek/deepseek-chat-v3-0324",
-  grok: "x-ai/grok-3-mini-beta",
+  grok: "x-ai/grok-4.5",
 } as const;
 ```
 
@@ -205,7 +205,7 @@ export const MODELS = {
 
 ## Feeds
 
-Feeds live in the `feeds` table; inspect the current inventory with `bunx convex run feeds:list`.
+Feeds live in the `feeds` table; inspect the current inventory with `vpx convex run feeds:list`.
 
 Feed domains span research publications, YouTube channels, and music-production sources.
 
@@ -236,16 +236,17 @@ Feed domains span research publications, YouTube channels, and music-production 
 2/1
 ```
 
-## Bun Defaults
+## Vite+ Defaults
 
-- Use `bun <file>` instead of `node <file>`
-- Use `bun install` instead of `npm install`
-- Use `bunx <package>` instead of `npx`
-- Bun auto-loads `.env.local` — no dotenv needed
+- Use `vpx tsx <file>` to run a TypeScript/JS file (replaces `bun <file>` / `node <file>`)
+- Use `vp install` instead of `npm install` / `bun install` (delegates to Bun via `bun.lock`)
+- Use `vpx <package>` instead of `npx` / `bunx`
+- Use `vp run <script>` (or `vpr <script>`) to run a `package.json` script
+- `.env.local` is auto-loaded by `varlock/auto-load` (imported at the top of each env-reading script), not by the runtime — Node does not auto-load `.env` files the way Bun did
 
 ## Lint & format
-- **biome** = formatter (`bun run format`); its linter config exists but oxlint is the primary linter.
-- **oxlint** = linter (`bun run lint`, check-only: `bun run lint:check`).
+- **biome** = formatter (`vp run format`); its linter config exists but oxlint is the primary linter.
+- **oxlint** = linter (`vp run lint`, check-only: `vp run lint:check`).
 - Don't add overlapping rules to both configs; oxlint wins for lint rules.
 
 ## Writing Guidelines

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
 import { type MinimalClient, createSourceIngestor } from "./ingest";
 
 type Call = {
@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  if (savedBypass === undefined) delete process.env.AUTH_BYPASS_SECRET;
+  if (savedBypass === undefined) Reflect.deleteProperty(process.env, "AUTH_BYPASS_SECRET");
   else process.env.AUTH_BYPASS_SECRET = savedBypass;
 });
 
@@ -84,9 +84,9 @@ describe("ingest", () => {
     expect(summary).toEqual({ created: 2, skipped: 1, failed: 0 });
     const creates = calls.filter((call) => call.name === "sources:create");
     expect(creates.length).toBe(2);
-    expect((creates[0].args.rawText as string).length).toBe(150);
-    expect(creates[1].args.rawText).toBeUndefined();
-    expect(creates[0].args.devBypassSecret).toBeDefined();
+    expect((creates[0]!.args.rawText as string).length).toBe(150);
+    expect(creates[1]!.args.rawText).toBeUndefined();
+    expect(creates[0]!.args.devBypassSecret).toBeDefined();
     expect(creates.map((call) => call.args.dedupeKey)).toEqual([
       "url:b.example",
       "pdf:short-sha",
@@ -213,7 +213,7 @@ describe("refetchByStatus", () => {
     expect(updates.map((call) => call.args.id).toSorted()).toEqual(["a", "c"]);
     const resets = calls.filter((call) => call.name === "sources:updateStatus");
     expect(resets.length).toBe(1);
-    expect(resets[0].args).toMatchObject({ id: "c", status: "text_ready" });
+    expect(resets[0]!.args).toMatchObject({ id: "c", status: "text_ready" });
   });
 
   test("fetched text not longer than current counts as skipped", async () => {

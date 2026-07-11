@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { spawnSync } from "node:child_process";
 import * as agentTools from "./agentTools";
 import { AGENT_TOOL_REGISTRY, agentToolByName } from "./agentToolRegistry";
@@ -118,7 +118,7 @@ describe("agent tool registry", () => {
     for (const definition of AGENT_TOOL_REGISTRY) {
       const registered = agentTools[
         definition.name as keyof typeof agentTools
-      ] as { exportArgs: () => string };
+      ] as unknown as { exportArgs: () => string };
       expect(registered.exportArgs()).toBe(FROZEN_ARGS[definition.name]);
     }
   });
@@ -127,7 +127,7 @@ describe("agent tool registry", () => {
     const result = spawnSync(
       "bun",
       ["scripts/generate-agent-tool-docs.ts", "--check"],
-      { cwd: `${import.meta.dir}/..` },
+      { cwd: `${import.meta.dirname}/..` },
     );
     expect(result.status).toBe(0);
   });

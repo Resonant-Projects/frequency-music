@@ -1,9 +1,11 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vp node
 /**
  * Fetch YouTube transcripts using Fabric CLI and push to Convex.
  *
  * Usage: bun run scripts/fetch-youtube-transcripts.ts [--limit N] [--dry-run]
  */
+import "varlock/auto-load";
+import { spawn } from "node:child_process";
 import { api } from "../convex/_generated/api";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
 
@@ -24,19 +26,36 @@ function extractVideoId(url: string): string | null {
 
 async function fetchTranscript(videoId: string): Promise<string> {
   const url = `https://www.youtube.com/watch?v=${videoId}`;
-  const proc = Bun.spawn([FABRIC_PATH, "--youtube", url, "--transcript"], {
-    stdout: "pipe",
-    stderr: "pipe",
-    env: {
-      ...process.env,
-      PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
-    },
+  const { stdout, stderr, exitCode } = await new Promise<{
+    stdout: string;
+    stderr: string;
+    exitCode: number | null;
+  }>((resolve, reject) => {
+    const proc = spawn(
+      FABRIC_PATH,
+      ["--youtube", url, "--transcript"],
+      {
+        env: {
+          ...process.env,
+          PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
+        },
+      },
+    );
+    let stdout = "";
+    let stderr = "";
+    proc.stdout.setEncoding("utf8");
+    proc.stderr.setEncoding("utf8");
+    proc.stdout.on("data", (chunk: string) => {
+      stdout += chunk;
+    });
+    proc.stderr.on("data", (chunk: string) => {
+      stderr += chunk;
+    });
+    proc.on("error", reject);
+    proc.on("close", (code) => {
+      resolve({ stdout, stderr, exitCode: code });
+    });
   });
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ]);
   if (exitCode !== 0) throw new Error(`Fabric error: ${stderr}`);
   return stdout.trim();
 }

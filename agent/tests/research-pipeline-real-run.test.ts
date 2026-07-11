@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import {
   buildNeedsReviewDraft,
@@ -65,6 +65,7 @@ describe("research pipeline real dry-run mode", () => {
         reason: "reason",
         score: 86,
       },
+      seenIds: [],
       route: "stop",
       draft,
       errors: [],

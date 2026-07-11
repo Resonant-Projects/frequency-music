@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 import type { Example, Run } from "langsmith";
 import { type EvalPrompt, runEval } from "./eval-helper";
 import { makeJudgeEvaluator } from "./evaluators/judge";

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { ConvexError } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import {
@@ -107,7 +107,7 @@ describe("phase 4 editorial artifacts", () => {
       createdAt: 1,
       updatedAt: 2,
       publishedAt: 3,
-    } as Doc<"editorialArtifacts">;
+    } as unknown as Doc<"editorialArtifacts">;
 
     const db = makeDb({
       campaigns: [],
@@ -195,7 +195,7 @@ describe("phase 4 editorial artifacts", () => {
       createdAt: 1,
       updatedAt: 2,
       publishedAt: 3,
-    } as Doc<"editorialArtifacts">;
+    } as unknown as Doc<"editorialArtifacts">;
 
     const db = makeDb({
       campaigns: [],
@@ -280,7 +280,7 @@ describe("phase 4 editorial artifacts", () => {
       createdAt: 1,
       updatedAt: 2,
       publishedAt: 3,
-    } as Doc<"editorialArtifacts">;
+    } as unknown as Doc<"editorialArtifacts">;
 
     const rendered = buildExportEntry(artifact, "https://app.example.com", {
       campaignSlug: "harmonic-drift",

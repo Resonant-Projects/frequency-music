@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import {
   HEARTBEAT_INTERVAL_MS,
   STALE_RUN_MS,

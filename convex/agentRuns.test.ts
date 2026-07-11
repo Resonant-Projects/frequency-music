@@ -1,8 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import {
   DEFAULT_STALE_RUN_MS,
   buildAgentRunStatusCounts,
   buildClaimPatch,
+  buildReviewedRunCompletionPatch,
   buildStalePatch,
   clampAgentRunLimit,
   isStaleRun,
@@ -136,6 +137,14 @@ describe("worker queue helpers", () => {
       status: "failed",
       finishedAt: 99,
       updatedAt: 99,
+    });
+  });
+
+  test("buildReviewedRunCompletionPatch uses the normal completed terminal shape", () => {
+    expect(buildReviewedRunCompletionPatch(101)).toEqual({
+      status: "completed",
+      finishedAt: 101,
+      updatedAt: 101,
     });
   });
 });

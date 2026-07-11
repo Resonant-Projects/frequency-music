@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { MIN_TEXT_LENGTH, TEXT_CAP, capText, fetchViaJina } from "./fetchText";
 
 function fakeFetch(status: number, body: string): typeof fetch {
@@ -33,7 +33,7 @@ describe("fetchViaJina", () => {
 
   test("targets the Jina reader URL", async () => {
     let seenUrl = "";
-    const spy = ((input: RequestInfo | URL) => {
+    const spy = ((input: string | Request | URL) => {
       seenUrl = String(input);
       return Promise.resolve(new Response("text", { status: 200 }));
     }) as unknown as typeof fetch;

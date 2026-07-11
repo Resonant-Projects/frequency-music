@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Generate a full experiment (hypothesis + recipe) from an extraction
  *
@@ -7,6 +7,7 @@
  *   bun scripts/generate-experiment.ts --auto       # Pick best extraction automatically
  */
 
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
@@ -47,7 +48,7 @@ async function main() {
       process.exit(1);
     }
 
-    const best = scored[0];
+    const best = scored[0]!;
     extractionId = best.extraction._id;
 
     console.log(`📊 Selected: "${best.extraction.sourceId}"`);

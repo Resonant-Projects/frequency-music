@@ -161,5 +161,5 @@ Each slice must preserve the Phase A requirement that Source Intake reaches `tex
 Pending operator smoke:
 
 ```bash
-bunx convex run ingest:fetchUrlText '{"url": "https://en.wikipedia.org/wiki/Cymatics"}'
+vpx convex run ingest:fetchUrlText '{"url": "https://en.wikipedia.org/wiki/Cymatics"}'
 ```

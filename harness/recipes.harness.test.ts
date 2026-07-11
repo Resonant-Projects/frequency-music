@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api } from "../convex/_generated/api";
 import schema from "../convex/schema";
@@ -38,7 +38,7 @@ describe("recipes.create accepts generated parameter shape", () => {
     });
 
     const stored = await t.run((ctx) => ctx.db.get(recipeId));
-    expect(stored?.parameters[0].kind).toBe("tuning");
-    expect(stored?.parameters[0].value).toBe("432Hz reference");
+    expect(stored?.parameters[0]!.kind).toBe("tuning");
+    expect(stored?.parameters[0]!.value).toBe("432Hz reference");
   });
 });

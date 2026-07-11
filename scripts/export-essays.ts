@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Phase 2: Export essays as frontmattered markdown + manifest for the Astro blog.
  *
@@ -15,9 +15,9 @@ import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { parseEssay, type ParsedEssay } from "./lib/parse-essay";
 
-const ESSAYS_DIR = join(import.meta.dir, "../docs/essays");
+const ESSAYS_DIR = join(import.meta.dirname, "../docs/essays");
 const METADATA_PATH = join(ESSAYS_DIR, "metadata.json");
-const DEFAULT_OUTPUT_DIR = join(import.meta.dir, "../exports/blog");
+const DEFAULT_OUTPUT_DIR = join(import.meta.dirname, "../exports/blog");
 const MANIFEST_VERSION = "frequency_essays_v1";
 const AUTHOR = "Keith Elliott";
 const BYLINE = "Freq";
@@ -39,14 +39,14 @@ type ManifestItem = {
 };
 
 function getGitDate(filePath: string): string | null {
-  const repoRelativePath = relative(resolve(import.meta.dir, ".."), filePath);
+  const repoRelativePath = relative(resolve(import.meta.dirname, ".."), filePath);
   try {
     const result = execFileSync(
       "git",
       ["log", "--diff-filter=A", "--format=%aI", "--", repoRelativePath],
       {
         encoding: "utf8",
-        cwd: resolve(import.meta.dir, ".."),
+        cwd: resolve(import.meta.dirname, ".."),
         stdio: ["ignore", "pipe", "pipe"],
       },
     ).trim();

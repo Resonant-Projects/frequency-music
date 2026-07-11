@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Build a topic-diverse multi-source synthesis context from Convex data,
  * then optionally publish a finalized hypothesis+recipe payload to Convex.
@@ -11,6 +11,7 @@
  *   bun scripts/synthesize-from-convex.ts full --target 8 --fetch 180 --min-claims 2 --min-params 1 --out data/generated/synthesis
  */
 
+import "varlock/auto-load";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
@@ -1703,7 +1704,7 @@ function toTitleCase(value: string): string {
   return value
     .split(" ")
     .filter((chunk) => chunk.length > 0)
-    .map((chunk) => chunk[0].toUpperCase() + chunk.slice(1))
+    .map((chunk) => chunk[0]!.toUpperCase() + chunk.slice(1))
     .join(" ");
 }
 
@@ -1736,7 +1737,7 @@ function canonicalizeParamTypeLabel(value: string): string {
 function firstNumericInText(value: string): number | null {
   const match = value.match(/(\d+(?:\.\d+)?)/);
   if (!match) return null;
-  const parsed = Number.parseFloat(match[1]);
+  const parsed = Number.parseFloat(match[1]!);
   return Number.isFinite(parsed) ? parsed : null;
 }
 

@@ -48,7 +48,7 @@ Run the Proxmox connectivity spike with:
 
 ```bash
 cd agent
-bun run smoke:proxmox
+vp run smoke:proxmox
 ```
 
 It reads `PROXMOX_TOKEN_ID` and `PROXMOX_TOKEN_SECRET` from the environment, falling back to the repository root `.env.local` when run from `agent/`. It prints cluster version and sanitized node summaries only. If the cluster certificate is not trusted locally, set `PROXMOX_ALLOW_SELF_SIGNED=true` for the spike/container runtime.
@@ -59,17 +59,17 @@ Before preparing any Proxmox runtime, verify the local agent package and LangGra
 
 ```bash
 cd agent
-bun run verify
-bun run automation:local
+vp run verify
+vp run automation:local
 ```
 
-`bun run automation:local` runs TypeScript verification and the local LangGraph Docker build, producing the local image tag configured by `agent/package.json` (`resonant-projects-agent:local`). It intentionally skips Proxmox connectivity by default so normal local automation remains low-friction and does not require cluster credentials.
+`vp run automation:local` runs TypeScript verification and the local LangGraph Docker build, producing the local image tag configured by `agent/package.json` (`resonant-projects-agent:local`). It intentionally skips Proxmox connectivity by default so normal local automation remains low-friction and does not require cluster credentials.
 
 To include the secret-safe Proxmox API smoke check in the same fail-fast sequence:
 
 ```bash
 cd agent
-RUN_PROXMOX_SMOKE=true bun run automation:local
+RUN_PROXMOX_SMOKE=true vp run automation:local
 ```
 
 The automation must not print token values. The optional smoke step delegates to `agent/scripts/spike-proxmox.ts`, which reads credentials from environment variables or the root `.env.local` fallback and prints only sanitized cluster metadata.
@@ -81,7 +81,7 @@ Do not use this sequence to deploy yet: it is build/smoke preparation only. Do n
 The gating condition ("Convex audit tables + narrow audit-write tools") is now met:
 `agentRuns`/`agentRunEvents` exist, the queue surface (`enqueue`/`claimNextPending`/
 `sweepStaleRuns` + `/agent-tools/{claimNextPendingRun,getAgentRun}`) is deployed, and
-the worker runner (`agent/src/worker/runner.ts`, `bun run worker`) is implemented.
+the worker runner (`agent/src/worker/runner.ts`, `vp run worker`) is implemented.
 Cluster confirmed online (v9.2.3; nodes `prox`/`prox2`/`prox3`).
 
 ### 1. Provision the host
@@ -124,7 +124,7 @@ agent workspace together with its imported `convex/shared` contracts.
 Egress required: Convex site URL, OpenRouter, OpenAI/ChatGPT, LangSmith.
 
 ### 5. Verify
-- `bunx convex run agentRuns:... ` enqueue a `research-pipeline` run; watch the worker
+- `vpx convex run agentRuns:... ` enqueue a `research-pipeline` run; watch the worker
   claim → execute → reach a terminal status (events in the app / `/agent-runs`).
 - Grep container logs for token-shaped strings — expect none.
 - 72-hour soak: enqueue ≥5 runs across days; zero manual intervention.

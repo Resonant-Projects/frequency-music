@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
@@ -13,7 +13,7 @@ async function seedRunAndDraft(
   return await t.run(async (ctx) => {
     const agentRunId = await ctx.db.insert("agentRuns", {
       graphName: "research-pipeline",
-      status: "completed",
+      status: "needs_review",
       input: null,
       traceUrl: "https://smith.langchain.com/r/test",
       createdAt: 1000,
@@ -75,6 +75,8 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(draft?.status).toBe("approved");
     expect(draft?.promotedId).toBe(result.promotedId);
     expect(draft?.decidedBy).toBe("human");
+    const run = await t.run((ctx) => ctx.db.get(agentRunId));
+    expect(run?.status).toBe("completed");
   });
 
   test("recipe draft becomes a recipes row with generated parameter kind", async () => {
@@ -116,7 +118,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
       ctx.db.get(result.promotedId as Id<"recipes">),
     );
     expect(recipe?.hypothesisId).toBe(hypothesisId);
-    expect(recipe?.parameters[0].kind).toBe("tuning");
+    expect(recipe?.parameters[0]!.kind).toBe("tuning");
     expect(recipe?.origin).toBe("agent");
     expect(recipe?.agentRunId).toBe(agentRunId);
     expect(recipe?.agentDraftId).toBe(draftId);
@@ -176,6 +178,8 @@ describe("agentDrafts.reject requires a decision note", () => {
         .collect(),
     );
     expect(events.some((event) => event.kind === "decision")).toBe(true);
+    const run = await t.run((ctx) => ctx.db.get(agentRunId));
+    expect(run?.status).toBe("completed");
   });
 
   test("reject with a whitespace note throws", async () => {
@@ -193,5 +197,75 @@ describe("agentDrafts.reject requires a decision note", () => {
         decisionNote: "  ",
       }),
     ).rejects.toThrow();
+  });
+
+  test("keeps the run in review until its final pending draft is resolved", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { agentRunId, draftId } = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+    const secondDraftId = await t.run((ctx) =>
+      ctx.db.insert("agentReviewDrafts", {
+        agentRunId,
+        graphName: "research-pipeline",
+        kind: "hypothesis_draft",
+        title: "Second draft",
+        summary: "Second pending review",
+        candidateIds: [],
+        payload: hypothesisPayload,
+        status: "pending_review",
+        createdBy: "agent",
+        createdAt: 1100,
+        updatedAt: 1100,
+      }),
+    );
+
+    await asSystem.mutation(api.agentDrafts.reject, {
+      draftId,
+      decisionNote: "Not ready to promote.",
+    });
+
+    const stillPending = await t.run((ctx) => ctx.db.get(agentRunId));
+    expect(stillPending?.status).toBe("needs_review");
+
+    await asSystem.mutation(api.agentDrafts.reject, {
+      draftId: secondDraftId,
+      decisionNote: "Also not ready to promote.",
+    });
+    const completed = await t.run((ctx) => ctx.db.get(agentRunId));
+    expect(completed?.status).toBe("completed");
+    expect(completed?.finishedAt).toBeDefined();
+  });
+});
+
+describe("agentDrafts.supersede closes the resolved draft's run", () => {
+  test("completes the original run when its superseding draft belongs to another run", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const original = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+    const replacement = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+
+    await asSystem.mutation(api.agentDrafts.supersede, {
+      draftId: original.draftId,
+      byDraftId: replacement.draftId,
+    });
+
+    const runs = await t.run(async (ctx) => ({
+      original: await ctx.db.get(original.agentRunId),
+      replacement: await ctx.db.get(replacement.agentRunId),
+    }));
+    expect(runs.original?.status).toBe("completed");
+    expect(runs.replacement?.status).toBe("needs_review");
   });
 });

@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Phase 1: Generate AI excerpts, tags, and categories for essays.
  *
@@ -10,6 +10,7 @@
  *   bun scripts/generate-essay-metadata.ts --force   # regenerate all
  */
 
+import "varlock/auto-load";
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -18,7 +19,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { parseEssay } from "./lib/parse-essay";
 
-const ESSAYS_DIR = join(import.meta.dir, "../docs/essays");
+const ESSAYS_DIR = join(import.meta.dirname, "../docs/essays");
 const METADATA_PATH = join(ESSAYS_DIR, "metadata.json");
 const MODEL_ID = "anthropic/claude-haiku-4.5";
 

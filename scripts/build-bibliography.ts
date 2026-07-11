@@ -6,6 +6,7 @@
  *
  * Usage: CONVEX_URL=... bun run scripts/build-bibliography.ts
  */
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import type { SourceStatus } from "../convex/shared/statuses";

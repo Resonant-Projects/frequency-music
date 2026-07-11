@@ -13,6 +13,7 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./aggregates.ts": () => import("../convex/aggregates"),
   "./auth.ts": () => import("../convex/auth"),
   "./campaigns.ts": () => import("../convex/campaigns"),
+  "./claims.ts": () => import("../convex/claims"),
   "./components.ts": () => import("../convex/components"),
   "./compositions.ts": () => import("../convex/compositions"),
   "./crons.ts": () => import("../convex/crons"),

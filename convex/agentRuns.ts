@@ -41,6 +41,7 @@ export function buildAgentRunStatusCounts(
 // A running run with no event (updatedAt) inside this window is presumed crashed.
 export const DEFAULT_STALE_RUN_MS = STALE_RUN_MS;
 export const STALE_RUN_SWEEP_LIMIT = 500;
+export const REVIEWED_RUN_RECONCILE_LIMIT = 100;
 
 // Pure queue helpers (unit-tested; the repo has no live-DB test harness).
 export function isStaleRun(
@@ -62,6 +63,10 @@ export function buildClaimPatch(workerId: string, now: number) {
 
 export function buildStalePatch(now: number) {
   return { status: "failed" as const, finishedAt: now, updatedAt: now };
+}
+
+export function buildReviewedRunCompletionPatch(now: number) {
+  return { status: "completed" as const, finishedAt: now, updatedAt: now };
 }
 
 export function safeTraceUrl(value: string | undefined) {
@@ -206,6 +211,65 @@ async function appendRunEvent(
     ...(args.payload === undefined ? {} : { payload: args.payload }),
     createdAt: now,
   });
+}
+
+async function completeRun(
+  ctx: MutationCtx,
+  args: {
+    runId: Id<"agentRuns">;
+    summary?: string;
+    traceUrl?: string;
+    message: string;
+    payload?: unknown;
+  },
+  now: number,
+) {
+  await ctx.db.patch(args.runId, {
+    ...buildReviewedRunCompletionPatch(now),
+    ...(args.summary === undefined ? {} : { summary: args.summary }),
+    ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
+  });
+  await appendRunEvent(
+    ctx,
+    {
+      runId: args.runId,
+      kind: "status",
+      message: args.message,
+      payload: args.payload ?? {
+        ...(args.summary === undefined ? {} : { summary: args.summary }),
+        ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
+      },
+    },
+    now,
+  );
+}
+
+export async function completeReviewedRunIfReady(
+  ctx: MutationCtx,
+  runId: Id<"agentRuns">,
+  now = Date.now(),
+) {
+  const run = await ctx.db.get(runId);
+  if (!run || run.status !== "needs_review") return false;
+
+  const pendingDraft = await ctx.db
+    .query("agentReviewDrafts")
+    .withIndex("by_agentRunId_status_updatedAt", (q) =>
+      q.eq("agentRunId", runId).eq("status", "pending_review"),
+    )
+    .first();
+  if (pendingDraft) return false;
+
+  await completeRun(
+    ctx,
+    {
+      runId,
+      message: "Agent run completed after human review",
+      payload: { reason: "review_closed" },
+    },
+    now,
+  );
+  return true;
 }
 
 async function insertQueuedRun(
@@ -438,23 +502,13 @@ export const markCompleted = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    await ctx.db.patch(args.runId, {
-      status: "completed",
-      ...(args.summary === undefined ? {} : { summary: args.summary }),
-      ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
-      finishedAt: now,
-      updatedAt: now,
-    });
-    await appendRunEvent(
+    await completeRun(
       ctx,
       {
         runId: args.runId,
-        kind: "status",
         message: "Agent run completed",
-        payload: {
-          ...(args.summary === undefined ? {} : { summary: args.summary }),
-          ...(args.traceUrl === undefined ? {} : { traceUrl: args.traceUrl }),
-        },
+        summary: args.summary,
+        traceUrl: args.traceUrl,
       },
       now,
     );
@@ -463,6 +517,43 @@ export const markCompleted = internalMutation({
       status: "completed" as const,
       finishedAt: now,
       updatedAt: now,
+    };
+  },
+});
+
+export const reconcileReviewedRuns = internalMutation({
+  args: {
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  returns: v.object({
+    scanned: v.number(),
+    reconciled: v.number(),
+    stillPending: v.number(),
+    cursor: v.union(v.string(), v.null()),
+    isDone: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const limit = clampLimit(
+      args.limit,
+      REVIEWED_RUN_RECONCILE_LIMIT,
+      REVIEWED_RUN_RECONCILE_LIMIT,
+    );
+    const page = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "needs_review"))
+      .order("asc")
+      .paginate({ cursor: args.cursor ?? null, numItems: limit });
+    let reconciled = 0;
+    for (const run of page.page) {
+      if (await completeReviewedRunIfReady(ctx, run._id)) reconciled += 1;
+    }
+    return {
+      scanned: page.page.length,
+      reconciled,
+      stillPending: page.page.length - reconciled,
+      cursor: page.isDone ? null : page.continueCursor,
+      isDone: page.isDone,
     };
   },
 });

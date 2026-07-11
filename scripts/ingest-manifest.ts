@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Ingest a JSON manifest of sources. New source batches are data, not code.
  *

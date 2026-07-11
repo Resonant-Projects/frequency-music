@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { z } from "zod";
 import { AGENT_RUN_EVENT_KINDS } from "./agentContract";
 import { agentToolArgs } from "./agentToolArgs";

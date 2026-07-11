@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Export unexported editCaptures into golden-dataset *candidate* files for human
  * curation, then flag them exported. Human edits of AI/agent-generated content
@@ -8,6 +8,7 @@
  * Usage:
  *   CONVEX_URL=... AUTH_BYPASS_SECRET=... bun scripts/langsmith/export-edit-captures.ts
  */
+import "varlock/auto-load";
 import { appendFile, mkdir } from "node:fs/promises";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";

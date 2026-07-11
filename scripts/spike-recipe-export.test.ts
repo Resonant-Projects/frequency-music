@@ -1,4 +1,5 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
+import { readFile } from "node:fs/promises";
 import {
   buildRecipeExport,
   normalizeParameter,
@@ -154,9 +155,12 @@ describe("recipe_export_v1", () => {
   });
 
   test("builds a bundle for every scrubbed live-data fixture row", async () => {
-    const fixture = (await Bun.file(
-      new URL("./fixtures/recipe-export-sample.json", import.meta.url),
-    ).json()) as RecipeInput[];
+    const fixture = JSON.parse(
+      await readFile(
+        new URL("./fixtures/recipe-export-sample.json", import.meta.url),
+        "utf8",
+      ),
+    ) as RecipeInput[];
 
     expect(fixture).toHaveLength(3);
     for (const recipe of fixture) {

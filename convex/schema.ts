@@ -9,6 +9,18 @@ import {
   agentReviewDraftPayloadValidator,
   recipeProtocolValidator,
 } from "./shared/draftPayloads";
+import {
+  claimCitationValidator,
+  claimValidator,
+  claimStatusValidator,
+  confidenceBandValidator,
+  evidenceLevelValidator,
+} from "./shared/claims";
+export {
+  claimValidator,
+  confidenceBandValidator,
+  evidenceLevelValidator,
+} from "./shared/claims";
 export {
   agentDraftHypothesisPayloadValidator,
   agentDraftRecipePayloadValidator,
@@ -86,20 +98,6 @@ export const sourceBlockedReasonValidator = literals(...SOURCE_BLOCKED_REASONS);
 export const hypothesisStatusValidator = literals(...HYPOTHESIS_STATUSES);
 export const recipeStatusValidator = literals(...RECIPE_STATUSES);
 
-const evidenceLevelValidator = v.union(
-  v.literal("peer_reviewed"),
-  v.literal("preprint"),
-  v.literal("anecdotal"),
-  v.literal("speculative"),
-  v.literal("personal"),
-);
-
-const confidenceBandValidator = v.union(
-  v.literal("low"),
-  v.literal("medium"),
-  v.literal("high"),
-);
-
 // Parameter types - extensible string for AI flexibility
 // Common types: tempo, key, tuningSystem, rootNote, chordProgression,
 // rhythm, instrument, synthWaveform, harmonicProfile, frequency, note,
@@ -139,20 +137,6 @@ export const recommendedActionValidator = v.object({
     v.literal("90-minute"),
   ),
   reason: v.string(),
-});
-
-export const claimValidator = v.object({
-  text: v.string(),
-  evidenceLevel: evidenceLevelValidator,
-  truthConfidence: v.optional(confidenceBandValidator),
-  interestLevel: v.optional(confidenceBandValidator),
-  citations: v.array(
-    v.object({
-      label: v.optional(v.string()),
-      url: v.optional(v.string()),
-      quote: v.optional(v.string()),
-    }),
-  ),
 });
 
 // ============================================================================
@@ -277,6 +261,11 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_agentRunId_updatedAt", ["agentRunId", "updatedAt"])
+    .index("by_agentRunId_status_updatedAt", [
+      "agentRunId",
+      "status",
+      "updatedAt",
+    ])
     .index("by_status_updatedAt", ["status", "updatedAt"])
     .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
 
@@ -407,6 +396,30 @@ export default defineSchema({
   })
     .index("by_sourceId_createdAt", ["sourceId", "createdAt"])
     .index("by_inputHash", ["inputHash"]),
+
+  // ==========================================================================
+  // CLAIMS - Addressable knowledge atoms produced by extractions
+  // ==========================================================================
+  claims: defineTable({
+    extractionId: v.id("extractions"),
+    sourceId: v.id("sources"),
+    ordinal: v.number(),
+    text: v.string(),
+    evidenceLevel: evidenceLevelValidator,
+    truthConfidence: v.optional(confidenceBandValidator),
+    interestLevel: v.optional(confidenceBandValidator),
+    citations: v.array(claimCitationValidator),
+    status: claimStatusValidator,
+    supersededBy: v.optional(v.id("claims")),
+    embedding: v.optional(v.array(v.float64())),
+    embeddingModel: v.optional(v.string()),
+    createdBy: v.union(v.id("users"), v.literal("system")),
+    createdAt: v.number(),
+  })
+    .index("by_extractionId_ordinal", ["extractionId", "ordinal"])
+    .index("by_sourceId", ["sourceId"])
+    .index("by_sourceId_status", ["sourceId", "status"])
+    .index("by_status", ["status"]),
 
   // ==========================================================================
   // THESES - Lightweight organizing layer for related hypotheses
@@ -829,6 +842,7 @@ export default defineSchema({
   })
     .index("by_from", ["fromType", "fromId"])
     .index("by_to", ["toType", "toId"])
+    .index("by_to_fromType", ["toType", "toId", "fromType"])
     .index("by_relationship", ["relationship"])
     .index("by_fromType_relationship", ["fromType", "relationship"]),
 });

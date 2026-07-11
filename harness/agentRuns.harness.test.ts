@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { internal } from "../convex/_generated/api";
 import { DEFAULT_STALE_RUN_MS } from "../convex/agentRuns";
@@ -86,5 +86,78 @@ describe("agentRuns.sweepStaleRuns", () => {
     const fresh = await t.run((ctx) => ctx.db.get(freshId));
     expect(stale?.status).toBe("failed");
     expect(fresh?.status).toBe("running");
+  });
+});
+
+describe("agentRuns.reconcileReviewedRuns", () => {
+  test("completes orphaned review runs and leaves runs with pending drafts", async () => {
+    const t = convexTest(schema, modules);
+    const { orphanId, pendingId } = await t.run(async (ctx) => {
+      const seededOrphanId = await ctx.db.insert("agentRuns", {
+        graphName: "research-pipeline",
+        status: "needs_review",
+        input: null,
+        createdAt: 2000,
+        updatedAt: 2000,
+      });
+      const seededPendingId = await ctx.db.insert("agentRuns", {
+        graphName: "research-pipeline",
+        status: "needs_review",
+        input: null,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      await ctx.db.insert("agentReviewDrafts", {
+        agentRunId: seededPendingId,
+        graphName: "research-pipeline",
+        kind: "hypothesis_draft",
+        title: "Pending draft",
+        summary: "Still awaiting review",
+        candidateIds: [],
+        status: "pending_review",
+        createdBy: "agent",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      return { orphanId: seededOrphanId, pendingId: seededPendingId };
+    });
+
+    const firstPage = await t.mutation(
+      internal.agentRuns.reconcileReviewedRuns,
+      { limit: 1 },
+    );
+    expect(firstPage).toMatchObject({
+      scanned: 1,
+      reconciled: 0,
+      stillPending: 1,
+      isDone: false,
+    });
+    expect(firstPage.cursor).not.toBeNull();
+
+    const secondPage = await t.mutation(
+      internal.agentRuns.reconcileReviewedRuns,
+      { limit: 1, cursor: firstPage.cursor ?? undefined },
+    );
+    expect(secondPage).toEqual({
+      scanned: 1,
+      reconciled: 1,
+      stillPending: 0,
+      cursor: null,
+      isDone: true,
+    });
+    const state = await t.run(async (ctx) => ({
+      orphan: await ctx.db.get(orphanId),
+      pending: await ctx.db.get(pendingId),
+      events: await ctx.db
+        .query("agentRunEvents")
+        .withIndex("by_runId_createdAt", (q) => q.eq("runId", orphanId))
+        .collect(),
+    }));
+    expect(state.orphan?.status).toBe("completed");
+    expect(state.orphan?.finishedAt).toBeDefined();
+    expect(state.pending?.status).toBe("needs_review");
+    expect(state.events.at(-1)?.message).toBe(
+      "Agent run completed after human review",
+    );
   });
 });

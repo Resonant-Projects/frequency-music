@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import {
   sanitizeDraftPayload,
@@ -73,7 +73,7 @@ describe("sanitizeDraftPayload", () => {
           canonicalKind: "tempo",
         },
       ],
-    }) as { parameters: Array<Record<string, unknown>> };
+    }) as unknown as { parameters: Array<Record<string, unknown>> };
 
     expect(parsed.parameters[0]).toEqual({
       kind: "tempo",
@@ -89,7 +89,7 @@ describe("sanitizeDraftPayload", () => {
     const parsed = sanitizeDraftPayload("hypothesis_draft", {
       ...validHypothesisPayload,
       secretPrompt: "leak",
-    }) as Record<string, unknown>;
+    }) as unknown as Record<string, unknown>;
     expect(parsed.secretPrompt).toBeUndefined();
     expect(parsed.title).toBe("Astrolabe consonance");
   });

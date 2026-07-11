@@ -2,6 +2,10 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   fmt: {},
+  test: {
+    include: ["convex/*.test.ts", "harness/**/*.test.ts"],
+    environment: "node",
+  },
   lint: {
     categories: {
       correctness: "error",
@@ -9,7 +13,14 @@ export default defineConfig({
       perf: "warn",
     },
     plugins: ["typescript", "unicorn", "import", "promise"],
-    ignorePatterns: ["convex/_generated/**", "node_modules/**", "web/styled-system/**", "dist/**"],
+    ignorePatterns: [
+      "convex/_generated/**",
+      "node_modules/**",
+      "web/styled-system/**",
+      "dist/**",
+      // Frozen one-shot reference scripts — byte-identical by policy, never run.
+      "scripts/archive/**",
+    ],
     rules: {
       "typescript/no-namespace": "error",
       "typescript/no-require-imports": "error",

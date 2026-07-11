@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Export published editorial artifacts as markdown + manifest for the Astro site.
  *
@@ -11,6 +11,7 @@
  *   bun scripts/export-editorial.ts --output-dir exports/public-editorial/v1
  */
 
+import "varlock/auto-load";
 import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -40,7 +41,7 @@ function parseArgs(): { outputDir: string } {
   let outputDir = "exports/public-editorial/v1";
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--output-dir" && args[i + 1]) {
-      outputDir = args[i + 1];
+      outputDir = args[i + 1]!;
       i++;
     }
   }
@@ -125,7 +126,7 @@ async function main() {
   if (failedEntries.length > 0) {
     console.error(`${failedEntries.length} metadata update(s) failed:`);
     for (const f of failedEntries) {
-      console.error(`  ${f.id} (${f.exportPath}):`, f.reason);
+      console.error(`  ${f!.id} (${f!.exportPath}):`, f!.reason);
     }
     process.exit(1);
   }

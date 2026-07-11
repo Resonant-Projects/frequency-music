@@ -16,6 +16,7 @@ import {
   buildHypothesisInsertFromPayload,
   buildRecipeInsertFromPayload,
 } from "./agentDraftPromotion";
+import { completeReviewedRunIfReady } from "./agentRuns";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
 
@@ -311,6 +312,11 @@ export const approve = mutation({
     decisionNote: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    draftId: v.id("agentReviewDrafts"),
+    promotedId: v.union(v.id("hypotheses"), v.id("recipes")),
+    promotedKind: v.union(v.literal("hypothesis"), v.literal("recipe")),
+  }),
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx, args);
     const draft = await ctx.db.get(args.draftId);
@@ -338,7 +344,7 @@ export const approve = mutation({
       ...(run?.traceUrl ? { traceUrl: run.traceUrl } : {}),
     };
 
-    let promotedId: string;
+    let promotedId: Id<"hypotheses"> | Id<"recipes">;
     let promotedKind: "hypothesis" | "recipe";
     if (draft.kind === "hypothesis_draft") {
       if (!("statement" in draft.payload)) {
@@ -410,6 +416,7 @@ export const approve = mutation({
       payload: { draftId: args.draftId, promotedId, promotedKind },
       createdAt: now,
     });
+    await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
     return { draftId: args.draftId, promotedId, promotedKind };
   },
 });
@@ -420,6 +427,10 @@ export const reject = mutation({
     decisionNote: v.string(),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    draftId: v.id("agentReviewDrafts"),
+    status: v.literal("rejected"),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     // Rejections are learning signal for plan 05 — a note is always required.
@@ -444,6 +455,7 @@ export const reject = mutation({
       payload: { draftId: args.draftId, note },
       createdAt: now,
     });
+    await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
     return { draftId: args.draftId, status: "rejected" as const };
   },
 });
@@ -455,6 +467,11 @@ export const supersede = mutation({
     decisionNote: v.optional(v.string()),
     devBypassSecret: v.optional(v.string()),
   },
+  returns: v.object({
+    draftId: v.id("agentReviewDrafts"),
+    status: v.literal("superseded"),
+    byDraftId: v.id("agentReviewDrafts"),
+  }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const draft = await ctx.db.get(args.draftId);
@@ -488,6 +505,7 @@ export const supersede = mutation({
         : {}),
       updatedAt: now,
     });
+    await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
     return {
       draftId: args.draftId,
       status: "superseded" as const,

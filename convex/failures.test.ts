@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import type { Id } from "./_generated/dataModel";
+import { describe, expect, test } from "vite-plus/test";
+import type { Id, TableNames } from "./_generated/dataModel";
 import {
   deriveFailureArchiveEntries,
   getBranchFailureStatusForComposition,
   getFailureStatusForComposition,
 } from "./failures";
 
-function makeId<TableName extends string>(value: string) {
+function makeId<TableName extends TableNames>(value: string) {
   return value as Id<TableName>;
 }
 

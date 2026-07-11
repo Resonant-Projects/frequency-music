@@ -16,6 +16,9 @@ type SectorId = "math" | "wave" | "music" | "psycho" | "geometry" | "synthesis";
 
 type DbReader = GenericDatabaseReader<DataModel>;
 
+const MAX_EDITORIAL_CANDIDATES = 100;
+const MAX_EDITORIAL_LINKS_PER_ENTITY = 100;
+
 const EXTRACTION_STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const BRIEF_STALE_AFTER_MS = 8 * 24 * 60 * 60 * 1000;
 
@@ -589,129 +592,127 @@ export const pipelineItems = query({
 });
 
 export async function computeEditorialSignals(db: DbReader, limit = 24) {
-  const [concepts, hypotheses, recipes, compositions, listeningSessions] =
-    (await Promise.all([
-      db.query("concepts").collect(),
-      db.query("hypotheses").collect(),
-      db.query("recipes").collect(),
-      db.query("compositions").collect(),
-      db.query("listeningSessions").collect(),
-    ])) as [
-      Doc<"concepts">[],
-      Doc<"hypotheses">[],
-      Doc<"recipes">[],
-      Doc<"compositions">[],
-      Doc<"listeningSessions">[],
-    ];
-
-  const recipesByHypothesisId = new Map<string, Doc<"recipes">[]>();
-  for (const recipe of recipes) {
-    const existing =
-      recipesByHypothesisId.get(String(recipe.hypothesisId)) ?? [];
-    existing.push(recipe);
-    recipesByHypothesisId.set(String(recipe.hypothesisId), existing);
+  const outputLimit = Math.max(0, Math.min(Math.floor(limit), 100));
+  if (outputLimit === 0) {
+    return { concepts: [], highYieldClusters: [], lowYieldClusters: [] };
   }
+  const concepts = (await db
+    .query("concepts")
+    .withIndex("by_mentionCount")
+    .order("desc")
+    .take(MAX_EDITORIAL_CANDIDATES)) as Doc<"concepts">[];
 
-  const hypothesesByConcept = new Map<string, Doc<"hypotheses">[]>();
-  for (const hypothesis of hypotheses) {
-    for (const raw of hypothesis.concepts ?? []) {
-      const key = raw.toLowerCase().trim();
-      const existing = hypothesesByConcept.get(key) ?? [];
-      existing.push(hypothesis);
-      hypothesesByConcept.set(key, existing);
-    }
-  }
+  const rows = await Promise.all(
+    concepts.map(async (concept) => {
+      const hypothesisEdges = await db
+        .query("edges")
+        .withIndex("by_to_fromType", (q) =>
+          q
+            .eq("toType", "concept")
+            .eq("toId", concept.name)
+            .eq("fromType", "hypothesis"),
+        )
+        .take(MAX_EDITORIAL_LINKS_PER_ENTITY);
+      const hypothesisIds = [
+        ...new Set(
+          hypothesisEdges.map((edge) => edge.fromId as Id<"hypotheses">),
+        ),
+      ];
+      const linkedHypotheses = (
+        await Promise.all(hypothesisIds.map((id) => db.get("hypotheses", id)))
+      ).filter((row): row is Doc<"hypotheses"> => row !== null);
+      const linkedRecipes = (
+        await Promise.all(
+          linkedHypotheses.map((hypothesis) =>
+            db
+              .query("recipes")
+              .withIndex("by_hypothesisId_updatedAt", (q) =>
+                q.eq("hypothesisId", hypothesis._id),
+              )
+              .take(MAX_EDITORIAL_LINKS_PER_ENTITY),
+          ),
+        )
+      ).flat();
+      const linkedCompositions = (
+        await Promise.all(
+          linkedRecipes.map((recipe) =>
+            db
+              .query("compositions")
+              .withIndex("by_recipeId_updatedAt", (q) =>
+                q.eq("recipeId", recipe._id),
+              )
+              .take(MAX_EDITORIAL_LINKS_PER_ENTITY),
+          ),
+        )
+      ).flat();
 
-  const compositionsByRecipeId = new Map<string, Doc<"compositions">[]>();
-  for (const composition of compositions) {
-    const existing =
-      compositionsByRecipeId.get(String(composition.recipeId)) ?? [];
-    existing.push(composition);
-    compositionsByRecipeId.set(String(composition.recipeId), existing);
-  }
-
-  const sessionsByCompositionId = new Map<string, Doc<"listeningSessions">[]>();
-  for (const session of listeningSessions) {
-    const existing =
-      sessionsByCompositionId.get(String(session.compositionId)) ?? [];
-    existing.push(session);
-    sessionsByCompositionId.set(String(session.compositionId), existing);
-  }
-
-  const rows = concepts.map((concept: Doc<"concepts">) => {
-    const linkedHypotheses = hypothesesByConcept.get(concept.name) ?? [];
-    const linkedRecipes = linkedHypotheses.flatMap(
-      (hypothesis: Doc<"hypotheses">) =>
-        recipesByHypothesisId.get(String(hypothesis._id)) ?? [],
-    );
-    const linkedCompositions = linkedRecipes.flatMap(
-      (recipe: Doc<"recipes">) =>
-        compositionsByRecipeId.get(String(recipe._id)) ?? [],
-    );
-
-    let supportedHypotheses = 0;
-    let contradictedHypotheses = 0;
-    let retiredHypotheses = 0;
-    for (const hypothesis of linkedHypotheses) {
-      if (hypothesis.resolution === "supported") supportedHypotheses += 1;
-      if (hypothesis.resolution === "contradicted") contradictedHypotheses += 1;
-      if (hypothesis.status === "retired") retiredHypotheses += 1;
-    }
-
-    let archivedRecipes = 0;
-    for (const recipe of linkedRecipes) {
-      if (recipe.status === "archived") archivedRecipes += 1;
-    }
-
-    let compositionsYes = 0;
-    let compositionsMaybe = 0;
-    let compositionsNo = 0;
-    let compositionsLowExpandability = 0;
-    for (const composition of linkedCompositions) {
-      const sessions = (
-        sessionsByCompositionId.get(String(composition._id)) ?? []
-      ).toSorted((a, b) => b.createdAt - a.createdAt);
-      const latest = sessions[0];
-      if (!latest) continue;
-      if (latest.expandVerdict === "yes") compositionsYes += 1;
-      if (latest.expandVerdict === "maybe") compositionsMaybe += 1;
-      if (latest.expandVerdict === "no") compositionsNo += 1;
-      if ((latest.ratings.expandability ?? Number.POSITIVE_INFINITY) <= 2) {
-        compositionsLowExpandability += 1;
+      let supportedHypotheses = 0;
+      let contradictedHypotheses = 0;
+      let retiredHypotheses = 0;
+      for (const hypothesis of linkedHypotheses) {
+        if (hypothesis.resolution === "supported") supportedHypotheses += 1;
+        if (hypothesis.resolution === "contradicted")
+          contradictedHypotheses += 1;
+        if (hypothesis.status === "retired") retiredHypotheses += 1;
       }
-    }
 
-    return {
-      conceptName: concept.name,
-      displayName: concept.displayName,
-      domain: concept.domain,
-      mentionCount: concept.mentionCount,
-      // Computed from hypothesis.concepts like the rest of this row — the
-      // stored concept.hypothesisCount field is never incremented by the
-      // graph link actions and reads 0 forever.
-      hypothesisCount: linkedHypotheses.length,
-      linkedRecipes: linkedRecipes.length,
-      linkedCompositions: linkedCompositions.length,
-      ...scoreEditorialSignals({
-        linkedHypotheses: linkedHypotheses.length,
+      let archivedRecipes = 0;
+      for (const recipe of linkedRecipes) {
+        if (recipe.status === "archived") archivedRecipes += 1;
+      }
+
+      let compositionsYes = 0;
+      let compositionsMaybe = 0;
+      let compositionsNo = 0;
+      let compositionsLowExpandability = 0;
+      for (const composition of linkedCompositions) {
+        const latest = await db
+          .query("listeningSessions")
+          .withIndex("by_compositionId_createdAt", (q) =>
+            q.eq("compositionId", composition._id),
+          )
+          .order("desc")
+          .first();
+        if (!latest) continue;
+        if (latest.expandVerdict === "yes") compositionsYes += 1;
+        if (latest.expandVerdict === "maybe") compositionsMaybe += 1;
+        if (latest.expandVerdict === "no") compositionsNo += 1;
+        if ((latest.ratings.expandability ?? Number.POSITIVE_INFINITY) <= 2) {
+          compositionsLowExpandability += 1;
+        }
+      }
+
+      return {
+        conceptName: concept.name,
+        displayName: concept.displayName,
+        domain: concept.domain,
+        mentionCount: concept.mentionCount,
+        // Computed from indexed graph links; the stored concept.hypothesisCount
+        // field is not maintained by graph link actions.
+        hypothesisCount: linkedHypotheses.length,
         linkedRecipes: linkedRecipes.length,
         linkedCompositions: linkedCompositions.length,
-        supportedHypotheses,
-        contradictedHypotheses,
-        retiredHypotheses,
-        archivedRecipes,
-        compositionsYes,
-        compositionsMaybe,
-        compositionsNo,
-        compositionsLowExpandability,
-      }),
-    };
-  });
+        ...scoreEditorialSignals({
+          linkedHypotheses: linkedHypotheses.length,
+          linkedRecipes: linkedRecipes.length,
+          linkedCompositions: linkedCompositions.length,
+          supportedHypotheses,
+          contradictedHypotheses,
+          retiredHypotheses,
+          archivedRecipes,
+          compositionsYes,
+          compositionsMaybe,
+          compositionsNo,
+          compositionsLowExpandability,
+        }),
+      };
+    }),
+  );
 
   const sorted = [...rows].toSorted(
     (a, b) => b.netYieldScore - a.netYieldScore,
   );
-  const topRows = sorted.slice(0, limit);
+  const topRows = sorted.slice(0, outputLimit);
 
   const byDomain = new Map<
     string,

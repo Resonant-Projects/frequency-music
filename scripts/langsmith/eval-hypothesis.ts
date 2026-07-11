@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 import { whyThisMattersEvaluator } from "./evaluators/why-matters";
 import { type EvalPrompt, runEval } from "./eval-helper";
 

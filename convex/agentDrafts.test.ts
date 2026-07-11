@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import type { Id } from "./_generated/dataModel";
 
 import {
@@ -145,7 +145,9 @@ describe("structured payload handling", () => {
       needsReview: true,
       payload: hypPayload,
     });
-    expect(safe?.payload).toEqual(hypPayload);
+    expect(safe && "payload" in safe ? safe.payload : undefined).toEqual(
+      hypPayload,
+    );
   });
 
   test("legacy payload-less drafts round-trip without a payload key", () => {

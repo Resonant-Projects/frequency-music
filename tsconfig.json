@@ -25,5 +25,12 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  // web/ is its own TypeScript project (web/tsconfig.json: DOM lib, React
+  // JSX types). Sweeping it from the root project mis-compiles ~2,400 JSX/DOM
+  // sites against lib:["ESNext"], so keep the root project scoped out of it.
+  // scripts/archive/ holds completed one-shot scripts kept byte-identical for
+  // reference and never run (see CLAUDE.md); they carry stale relative imports
+  // and Bun globals, so exclude them from the root typecheck.
+  "exclude": ["node_modules", "web", "scripts/archive"]
 }

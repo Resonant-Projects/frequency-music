@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { AGENT_TOOL_MANIFEST } from "../../convex/shared/agentToolManifest";
 import { convexTools } from "../src/tools/convexTools.js";
 

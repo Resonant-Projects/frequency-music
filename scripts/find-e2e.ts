@@ -1,3 +1,4 @@
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
@@ -29,7 +30,7 @@ async function main() {
     const isE2E = /e2e|test composition|test title/i.test(text);
     if (isE2E) {
       console.log(
-        `🗑️  ${comp._id} | ${(comp.title || comp.description || "").slice(0, 80)}`,
+        `🗑️  ${comp._id} | ${(comp.title || (comp as { description?: string }).description || "").slice(0, 80)}`,
       );
       e2eComps.push(comp._id);
     }
@@ -45,7 +46,7 @@ async function main() {
     const isE2E = /e2e|test recipe|test title/i.test(text);
     if (isE2E) {
       console.log(
-        `🗑️  ${r._id} | ${(r.title || r.description || "").slice(0, 80)}`,
+        `🗑️  ${r._id} | ${(r.title || (r as { description?: string }).description || "").slice(0, 80)}`,
       );
       e2eRecipes.push(r._id);
     }
@@ -62,13 +63,13 @@ async function main() {
   console.log("\n=== ALL COMPOSITIONS (brief) ===");
   for (const comp of comps) {
     console.log(
-      `  ${comp._id} | ${(comp.title || comp.description || "").slice(0, 60)}`,
+      `  ${comp._id} | ${(comp.title || (comp as { description?: string }).description || "").slice(0, 60)}`,
     );
   }
   console.log("\n=== ALL RECIPES (brief) ===");
   for (const r of recipes) {
     console.log(
-      `  ${r._id} | ${r.status} | ${(r.title || r.description || "").slice(0, 60)}`,
+      `  ${r._id} | ${r.status} | ${(r.title || (r as { description?: string }).description || "").slice(0, 60)}`,
     );
   }
 }

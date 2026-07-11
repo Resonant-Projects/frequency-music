@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Fetch full article text for short rss/url sources via Jina Reader.
  *

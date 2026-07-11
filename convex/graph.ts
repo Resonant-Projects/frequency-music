@@ -1,7 +1,12 @@
 import { ConvexError, v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalAction, internalMutation, query } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  query,
+  type QueryCtx,
+} from "./_generated/server";
 import {
   inferDisplaySectorFromDomain,
   resolveDomainsForSector,
@@ -733,124 +738,151 @@ export const getConceptEdges = query({
 /**
  * Get full concept detail with linked pipeline items (for sidebar drill-down)
  */
+const conceptDetailValidator = v.union(
+  v.object({
+    concept: conceptReturnValidator,
+    linkedSources: v.array(
+      v.object({
+        _id: v.id("sources"),
+        title: v.optional(v.string()),
+        status: v.string(),
+      }),
+    ),
+    linkedHypotheses: v.array(
+      v.object({
+        _id: v.id("hypotheses"),
+        title: v.string(),
+        status: v.string(),
+      }),
+    ),
+    linkedRecipes: v.array(
+      v.object({
+        _id: v.id("recipes"),
+        title: v.string(),
+        status: v.string(),
+      }),
+    ),
+    edgeCount: v.number(),
+  }),
+  v.null(),
+);
+
+async function readConceptDetail(
+  ctx: QueryCtx,
+  conceptId: Id<"concepts"> | undefined,
+  visibilityScope: "public" | "workbench",
+) {
+  if (!conceptId) return null;
+  const concept = await ctx.db.get("concepts", conceptId);
+  if (!concept) return null;
+
+  // Get all edges mentioning this concept
+  const edgesTo = await ctx.db
+    .query("edges")
+    .withIndex("by_to", (q) =>
+      q.eq("toType", "concept").eq("toId", concept.name),
+    )
+    .collect();
+
+  const edgesFrom = await ctx.db
+    .query("edges")
+    .withIndex("by_from", (q) =>
+      q.eq("fromType", "concept").eq("fromId", concept.name),
+    )
+    .collect();
+
+  const allEdges = [...edgesTo, ...edgesFrom];
+
+  // Collect linked entity IDs by type
+  const sourceIds = new Set<Id<"sources">>();
+  const hypothesisIds = new Set<Id<"hypotheses">>();
+  const recipeIds = new Set<Id<"recipes">>();
+
+  for (const edge of allEdges) {
+    const otherId = edge.fromType === "concept" ? edge.toId : edge.fromId;
+    const otherType = edge.fromType === "concept" ? edge.toType : edge.fromType;
+    if (otherType === "source") sourceIds.add(otherId as Id<"sources">);
+    if (otherType === "hypothesis") {
+      hypothesisIds.add(otherId as Id<"hypotheses">);
+    }
+    if (otherType === "recipe") recipeIds.add(otherId as Id<"recipes">);
+  }
+
+  // Fetch linked items (limit to 20 each)
+  const linkedSources = (
+    await Promise.all(
+      [...sourceIds].slice(0, 20).map(async (id) => {
+        try {
+          const s = await ctx.db.get("sources", id);
+          if (!s || (visibilityScope === "public" && s.visibility !== "public"))
+            return null;
+          return { _id: s._id, title: s.title, status: s.status };
+        } catch {
+          return null;
+        }
+      }),
+    )
+  ).filter((s): s is NonNullable<typeof s> => s !== null);
+
+  const linkedHypotheses = (
+    await Promise.all(
+      [...hypothesisIds].slice(0, 20).map(async (id) => {
+        try {
+          const h = await ctx.db.get("hypotheses", id);
+          if (!h || (visibilityScope === "public" && h.visibility !== "public"))
+            return null;
+          return { _id: h._id, title: h.title, status: h.status };
+        } catch {
+          return null;
+        }
+      }),
+    )
+  ).filter((h): h is NonNullable<typeof h> => h !== null);
+
+  const linkedRecipes = (
+    await Promise.all(
+      [...recipeIds].slice(0, 20).map(async (id) => {
+        try {
+          const r = await ctx.db.get("recipes", id);
+          if (!r || (visibilityScope === "public" && r.visibility !== "public"))
+            return null;
+          return { _id: r._id, title: r.title, status: r.status };
+        } catch {
+          return null;
+        }
+      }),
+    )
+  ).filter((r): r is NonNullable<typeof r> => r !== null);
+
+  return {
+    concept,
+    linkedSources,
+    linkedHypotheses,
+    linkedRecipes,
+    edgeCount: allEdges.length,
+  };
+}
+
+/** Authenticated workbench detail, including private-corpus links. */
 export const getConceptDetail = query({
   args: { conceptId: v.optional(v.id("concepts")) },
-  returns: v.union(
-    v.object({
-      concept: conceptReturnValidator,
-      linkedSources: v.array(
-        v.object({
-          _id: v.id("sources"),
-          title: v.optional(v.string()),
-          status: v.string(),
-        }),
-      ),
-      linkedHypotheses: v.array(
-        v.object({
-          _id: v.id("hypotheses"),
-          title: v.string(),
-          status: v.string(),
-        }),
-      ),
-      linkedRecipes: v.array(
-        v.object({
-          _id: v.id("recipes"),
-          title: v.string(),
-          status: v.string(),
-        }),
-      ),
-      edgeCount: v.number(),
-    }),
-    v.null(),
-  ),
+  returns: conceptDetailValidator,
   handler: async (ctx, args) => {
-    if (!args.conceptId) return null;
-    const concept = await ctx.db.get("concepts", args.conceptId);
-    if (!concept) return null;
+    const identity = await ctx.auth.getUserIdentity();
+    return await readConceptDetail(
+      ctx,
+      args.conceptId,
+      identity ? "workbench" : "public",
+    );
+  },
+});
 
-    // Get all edges mentioning this concept
-    const edgesTo = await ctx.db
-      .query("edges")
-      .withIndex("by_to", (q) =>
-        q.eq("toType", "concept").eq("toId", concept.name),
-      )
-      .collect();
-
-    const edgesFrom = await ctx.db
-      .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", "concept").eq("fromId", concept.name),
-      )
-      .collect();
-
-    const allEdges = [...edgesTo, ...edgesFrom];
-
-    // Collect linked entity IDs by type
-    const sourceIds = new Set<Id<"sources">>();
-    const hypothesisIds = new Set<Id<"hypotheses">>();
-    const recipeIds = new Set<Id<"recipes">>();
-
-    for (const edge of allEdges) {
-      const otherId = edge.fromType === "concept" ? edge.toId : edge.fromId;
-      const otherType =
-        edge.fromType === "concept" ? edge.toType : edge.fromType;
-      if (otherType === "source") sourceIds.add(otherId as Id<"sources">);
-      if (otherType === "hypothesis") {
-        hypothesisIds.add(otherId as Id<"hypotheses">);
-      }
-      if (otherType === "recipe") recipeIds.add(otherId as Id<"recipes">);
-    }
-
-    // Fetch linked items (limit to 20 each)
-    const linkedSources = (
-      await Promise.all(
-        [...sourceIds].slice(0, 20).map(async (id) => {
-          try {
-            const s = await ctx.db.get("sources", id);
-            if (!s || s.visibility !== "public") return null;
-            return { _id: s._id, title: s.title, status: s.status };
-          } catch {
-            return null;
-          }
-        }),
-      )
-    ).filter((s): s is NonNullable<typeof s> => s !== null);
-
-    const linkedHypotheses = (
-      await Promise.all(
-        [...hypothesisIds].slice(0, 20).map(async (id) => {
-          try {
-            const h = await ctx.db.get("hypotheses", id);
-            if (!h || h.visibility !== "public") return null;
-            return { _id: h._id, title: h.title, status: h.status };
-          } catch {
-            return null;
-          }
-        }),
-      )
-    ).filter((h): h is NonNullable<typeof h> => h !== null);
-
-    const linkedRecipes = (
-      await Promise.all(
-        [...recipeIds].slice(0, 20).map(async (id) => {
-          try {
-            const r = await ctx.db.get("recipes", id);
-            if (!r || r.visibility !== "public") return null;
-            return { _id: r._id, title: r.title, status: r.status };
-          } catch {
-            return null;
-          }
-        }),
-      )
-    ).filter((r): r is NonNullable<typeof r> => r !== null);
-
-    return {
-      concept,
-      linkedSources,
-      linkedHypotheses,
-      linkedRecipes,
-      edgeCount: allEdges.length,
-    };
+/** Anonymous-safe concept detail; linked pipeline items must be public. */
+export const getConceptDetailPublic = query({
+  args: { conceptId: v.optional(v.id("concepts")) },
+  returns: conceptDetailValidator,
+  handler: async (ctx, args) => {
+    return await readConceptDetail(ctx, args.conceptId, "public");
   },
 });
 

@@ -7,13 +7,13 @@
     "dev": "langgraphjs dev",
     "build": "langgraphjs build -t resonant-projects-agent:local",
     "up": "langgraphjs up",
-    "verify": "bunx tsc --noEmit",
-    "smoke:proxmox": "bun scripts/spike-proxmox.ts",
-    "smoke:research-pipeline": "bun scripts/smoke-research-pipeline.ts",
-    "run:research-pipeline": "RUN_RESEARCH_PIPELINE_REAL=true bun scripts/smoke-research-pipeline.ts",
-    "worker": "bun src/worker/runner.ts",
-    "automation:local": "bun scripts/build-and-smoke.ts",
-    "test": "bun test"
+    "verify": "vpx tsc --noEmit",
+    "smoke:proxmox": "vpx tsx scripts/spike-proxmox.ts",
+    "smoke:research-pipeline": "vpx tsx scripts/smoke-research-pipeline.ts",
+    "run:research-pipeline": "RUN_RESEARCH_PIPELINE_REAL=true vpx tsx scripts/smoke-research-pipeline.ts",
+    "worker": "vpx tsx src/worker/runner.ts",
+    "automation:local": "vpx tsx scripts/build-and-smoke.ts",
+    "test": "vp test"
   },
   "dependencies": {
     "@langchain/anthropic": "1.3.29",
@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "1.2.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
 }

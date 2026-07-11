@@ -142,7 +142,7 @@ export function parseRSSXML(xml: string): ParsedFeed {
   const feedTitleMatch = xml.match(
     /<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i,
   );
-  const feedTitle = feedTitleMatch ? feedTitleMatch[1].trim() : "Unknown Feed";
+  const feedTitle = feedTitleMatch ? feedTitleMatch[1]!.trim() : "Unknown Feed";
 
   // Match RSS items or Atom entries
   const itemRegex =
@@ -150,7 +150,7 @@ export function parseRSSXML(xml: string): ParsedFeed {
   while (true) {
     const match = itemRegex.exec(xml);
     if (match === null) break;
-    const itemXml = match[1] || match[2];
+    const itemXml = (match[1] || match[2])!;
 
     // Extract fields
     const titleMatch = itemXml.match(
@@ -172,7 +172,7 @@ export function parseRSSXML(xml: string): ParsedFeed {
       /<content:encoded[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content:encoded>|<content[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content>/i,
     );
 
-    const title = titleMatch ? titleMatch[1].trim() : "";
+    const title = titleMatch ? titleMatch[1]!.trim() : "";
     const link = linkMatch ? (linkMatch[1] || linkMatch[2] || "").trim() : "";
 
     if (title && link) {
@@ -477,13 +477,13 @@ export const ingestUrl = action({
 
     // Extract title
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
-    const title = titleMatch ? stripHtml(titleMatch[1]) : urlObj.hostname;
+    const title = titleMatch ? stripHtml(titleMatch[1]!) : urlObj.hostname;
 
     // Extract main content (simplified - could use readability library)
     // For now, just strip HTML from body
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     const rawText = bodyMatch
-      ? stripHtml(bodyMatch[1]).slice(0, 50000)
+      ? stripHtml(bodyMatch[1]!).slice(0, 50000)
       : undefined;
 
     // Create source
@@ -564,7 +564,7 @@ export const ingestYouTube = action({
       // Extract title
       const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
       if (titleMatch) {
-        title = stripHtml(titleMatch[1]).replace(" - YouTube", "").trim();
+        title = stripHtml(titleMatch[1]!).replace(" - YouTube", "").trim();
       }
 
       // Extract channel name

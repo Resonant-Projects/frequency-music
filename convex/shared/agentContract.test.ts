@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { agentRunEventKindValidator, agentRunStatusValidator } from "../schema";
 import {
   AGENT_RUN_EVENT_KINDS,

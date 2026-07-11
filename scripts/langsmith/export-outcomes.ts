@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Export studio outcomes as eval labels (plan 05, task 2).
  *
@@ -16,6 +16,7 @@
  * Usage:
  *   CONVEX_URL=... LANGSMITH_API_KEY=... bun scripts/langsmith/export-outcomes.ts [--limit N] [--dry-run]
  */
+import "varlock/auto-load";
 import { Client } from "langsmith";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";

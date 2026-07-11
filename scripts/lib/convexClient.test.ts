@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
 import { getConvexUrl, getDevBypassSecret } from "./convexClient";
 
 const SAVED = {
@@ -16,8 +16,8 @@ function restore() {
 
 describe("getConvexUrl", () => {
   beforeEach(() => {
-    delete process.env.CONVEX_SELF_HOSTED_URL;
-    delete process.env.CONVEX_URL;
+    Reflect.deleteProperty(process.env, "CONVEX_SELF_HOSTED_URL");
+    Reflect.deleteProperty(process.env, "CONVEX_URL");
   });
   afterEach(restore);
 
@@ -55,7 +55,7 @@ describe("getDevBypassSecret", () => {
   });
 
   test("throws when the secret is missing", () => {
-    delete process.env.AUTH_BYPASS_SECRET;
+    Reflect.deleteProperty(process.env, "AUTH_BYPASS_SECRET");
     expect(() => getDevBypassSecret()).toThrow("Set AUTH_BYPASS_SECRET");
   });
 });

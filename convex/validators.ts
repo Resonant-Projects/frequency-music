@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import {
   agentOriginFields,
   campaignStatusValidator,
-  claimValidator,
   compositionParameterValidator,
   editorialArtifactKindValidator,
   editorialArtifactStatusValidator,
@@ -19,6 +18,13 @@ import {
   visibilityValidator,
 } from "./schema";
 import {
+  claimCitationValidator,
+  claimStatusValidator,
+  claimValidator,
+  confidenceBandValidator,
+  evidenceLevelValidator,
+} from "./shared/claims";
+import {
   failureActionValidator,
   failureReasonValidator,
   yieldBandValidator,
@@ -27,20 +33,6 @@ import {
 // ============================================================================
 // SHARED SUB-VALIDATORS
 // ============================================================================
-
-const evidenceLevelValidator = v.union(
-  v.literal("peer_reviewed"),
-  v.literal("preprint"),
-  v.literal("anecdotal"),
-  v.literal("speculative"),
-  v.literal("personal"),
-);
-
-const confidenceBandValidator = v.union(
-  v.literal("low"),
-  v.literal("medium"),
-  v.literal("high"),
-);
 
 const createdByValidator = v.union(v.id("users"), v.literal("system"));
 
@@ -131,6 +123,25 @@ export const extractionReturnValidator = v.object({
   topics: v.array(v.string()),
   openQuestions: v.array(v.string()),
   confidence: v.number(),
+  createdBy: createdByValidator,
+  createdAt: v.number(),
+});
+
+export const claimReturnValidator = v.object({
+  _id: v.id("claims"),
+  _creationTime: v.number(),
+  extractionId: v.id("extractions"),
+  sourceId: v.id("sources"),
+  ordinal: v.number(),
+  text: v.string(),
+  evidenceLevel: evidenceLevelValidator,
+  truthConfidence: v.optional(confidenceBandValidator),
+  interestLevel: v.optional(confidenceBandValidator),
+  citations: v.array(claimCitationValidator),
+  status: claimStatusValidator,
+  supersededBy: v.optional(v.id("claims")),
+  embedding: v.optional(v.array(v.float64())),
+  embeddingModel: v.optional(v.string()),
   createdBy: createdByValidator,
   createdAt: v.number(),
 });

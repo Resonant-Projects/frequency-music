@@ -1,9 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
+import { readFile } from "node:fs/promises";
 import { constantTimeEqual } from "./auth";
 
 describe("concept graph write authorization", () => {
   test("does not export public write functions", async () => {
-    const source = await Bun.file("convex/graph.ts").text();
+    const source = await readFile("convex/graph.ts", "utf8");
 
     expect(source).not.toContain("= mutation(");
     expect(source).not.toContain("= action(");
@@ -12,7 +13,7 @@ describe("concept graph write authorization", () => {
 
 describe("agent-tool HTTP authorization", () => {
   test("uses constant-time secret comparison", async () => {
-    const source = await Bun.file("convex/agentToolsHttp.ts").text();
+    const source = await readFile("convex/agentToolsHttp.ts", "utf8");
 
     expect(source).toContain("constantTimeEqual");
     expect(source).not.toContain("!== process.env.AGENT_TOOL_SECRET");

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import {
   DEFAULT_WORKER_POLL_INTERVAL_MS,
@@ -30,7 +30,7 @@ describe("worker runner config", () => {
     const originalSelfHostedUrl = process.env.CONVEX_SELF_HOSTED_URL;
 
     try {
-      delete process.env.CONVEX_SITE_URL;
+      Reflect.deleteProperty(process.env, "CONVEX_SITE_URL");
       process.env.CONVEX_URL = "https://convex.example";
       process.env.CONVEX_SELF_HOSTED_URL = "https://self-hosted.example";
       normalizeConvexSiteUrlEnv();
@@ -43,11 +43,12 @@ describe("worker runner config", () => {
       if (originalSiteUrl === undefined) delete process.env.CONVEX_SITE_URL;
       else process.env.CONVEX_SITE_URL = originalSiteUrl;
 
-      if (originalUrl === undefined) delete process.env.CONVEX_URL;
+      if (originalUrl === undefined)
+        Reflect.deleteProperty(process.env, "CONVEX_URL");
       else process.env.CONVEX_URL = originalUrl;
 
       if (originalSelfHostedUrl === undefined)
-        delete process.env.CONVEX_SELF_HOSTED_URL;
+        Reflect.deleteProperty(process.env, "CONVEX_SELF_HOSTED_URL");
       else process.env.CONVEX_SELF_HOSTED_URL = originalSelfHostedUrl;
     }
   });

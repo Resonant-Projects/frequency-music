@@ -54,7 +54,7 @@ export class FakeQuery<T extends Record<string, any>> {
   }
 }
 
-export function makeDb(tables: Tables) {
+export function makeDb(tables: Partial<Tables>) {
   return {
     get(table: TableName, id: string) {
       return Promise.resolve(

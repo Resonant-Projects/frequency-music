@@ -2,6 +2,7 @@
  * List all extraction IDs and their sourceIds with quality metrics.
  * Outputs compact JSON to avoid truncation.
  */
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 

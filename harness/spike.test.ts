@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api } from "../convex/_generated/api";
 import schema from "../convex/schema";
@@ -28,7 +28,7 @@ describe("convex-test spike (GO/NO-GO gate)", () => {
     });
 
     expect(rows).toHaveLength(1);
-    expect(rows[0].title).toBe("Spike source");
-    expect(rows[0].dedupeKey).toBe("url:example.com/spike");
+    expect(rows[0]!.title).toBe("Spike source");
+    expect(rows[0]!.dedupeKey).toBe("url:example.com/spike");
   });
 });

@@ -3,6 +3,7 @@
  * Groups by quality tier so we can prioritize re-extraction.
  */
 
+import "varlock/auto-load";
 import { writeFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";

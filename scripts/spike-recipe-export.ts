@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 export type RegistryStatus =
@@ -243,6 +243,12 @@ function sha256(content: string): string {
   return createHash("sha256").update(content).digest("hex");
 }
 
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 export function buildRecipeExport(
   recipe: RecipeInput,
   options: BuildOptions = {},
@@ -315,15 +321,17 @@ function parseArguments(args: string[]): {
 }
 
 async function readRecipes(inputPath?: string): Promise<RecipeInput[]> {
-  const source =
-    inputPath && inputPath !== "-" ? Bun.file(inputPath) : Bun.stdin;
-  const parsed = JSON.parse(await source.text()) as RecipeInput | RecipeInput[];
+  const text =
+    inputPath && inputPath !== "-"
+      ? await readFile(inputPath, "utf8")
+      : await readStdin();
+  const parsed = JSON.parse(text) as RecipeInput | RecipeInput[];
   return Array.isArray(parsed) ? parsed : [parsed];
 }
 
 async function main(): Promise<void> {
   const { inputPath, outDirectory, generatedAt } = parseArguments(
-    Bun.argv.slice(2),
+    process.argv.slice(2),
   );
   const recipes = await readRecipes(inputPath);
   const outputPath = resolve(outDirectory);
@@ -344,12 +352,12 @@ async function main(): Promise<void> {
     }
 
     await Promise.all([
-      Bun.write(
+      writeFile(
         resolve(outputPath, result.bundleFilename),
         serializeBundle(result.bundle),
       ),
       ...result.files.map((file) =>
-        Bun.write(resolve(outputPath, file.filename), file.content),
+        writeFile(resolve(outputPath, file.filename), file.content),
       ),
     ]);
   }

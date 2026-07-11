@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -17,6 +18,7 @@ export const storeExtraction = internalMutation({
     openQuestions: v.array(v.string()),
     confidence: v.number(),
   },
+  returns: v.id("extractions"),
   handler: async (ctx, args): Promise<Id<"extractions">> => {
     const compositionParameters: Doc<"extractions">["compositionParameters"] =
       await Promise.all(
@@ -52,11 +54,48 @@ export const storeExtraction = internalMutation({
         ),
       );
 
-    return await ctx.db.insert("extractions", {
+    const previousExtraction = await ctx.db
+      .query("extractions")
+      .withIndex("by_sourceId_createdAt", (q) =>
+        q.eq("sourceId", args.sourceId),
+      )
+      .order("desc")
+      .first();
+    if (previousExtraction) {
+      const previousClaims = await ctx.db
+        .query("claims")
+        .withIndex("by_extractionId_ordinal", (q) =>
+          q.eq("extractionId", previousExtraction._id),
+        )
+        .take(previousExtraction.claims.length);
+      for (const claim of previousClaims) {
+        if (claim.status === "active") {
+          await ctx.db.patch("claims", claim._id, { status: "superseded" });
+        }
+      }
+    }
+
+    const createdBy = "system" as const;
+    const createdAt = Date.now();
+    const extractionId = await ctx.db.insert("extractions", {
       ...args,
       compositionParameters,
-      createdBy: "system",
-      createdAt: Date.now(),
+      createdBy,
+      createdAt,
     });
+
+    for (const [ordinal, claim] of args.claims.entries()) {
+      await ctx.db.insert("claims", {
+        extractionId,
+        sourceId: args.sourceId,
+        ordinal,
+        ...claim,
+        status: "active",
+        createdBy,
+        createdAt,
+      });
+    }
+
+    return extractionId;
   },
 });

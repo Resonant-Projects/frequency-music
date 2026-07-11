@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "vite-plus/test";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ResearchDraftSpecialistInput } from "../src/agents/research-pipeline/deepAgent";
 import { createSpecialistOutcome } from "../src/graphs/research-pipeline/nodes";
@@ -54,7 +54,9 @@ describe("CODEX_SPECIALIST routing decision", () => {
   test("flag off: takes the OpenRouter path and never calls the Codex runner", async () => {
     delete process.env.CODEX_SPECIALIST;
     let calls = 0;
-    const codexRunner = async (): Promise<RunCodexTaskResult> => {
+    const codexRunner = async <T = unknown>(
+      _input: RunCodexTaskInput,
+    ): Promise<RunCodexTaskResult<T>> => {
       calls += 1;
       throw new Error("should not be invoked when CODEX_SPECIALIST is off");
     };
@@ -72,9 +74,9 @@ describe("CODEX_SPECIALIST routing decision", () => {
 
   test("flag on: routes through Codex and threads the draft/provider/threadId/usage", async () => {
     process.env.CODEX_SPECIALIST = "true";
-    const codexRunner = async (
+    const codexRunner = async <T = unknown>(
       input: RunCodexTaskInput,
-    ): Promise<RunCodexTaskResult> => {
+    ): Promise<RunCodexTaskResult<T>> => {
       expect(input.instructions).toContain(
         "research-pipeline deep-agent specialist",
       );
@@ -86,10 +88,15 @@ describe("CODEX_SPECIALIST routing decision", () => {
             "Candidate should become a human-reviewed hypothesis proposal.",
           candidateIds: ["candidate-1"],
           needsReview: true,
-        },
+        } as T,
         rawText: "{}",
         threadId: "thread-codex-1",
-        usage: { input_tokens: 10, output_tokens: 20 },
+        usage: {
+          input_tokens: 10,
+          output_tokens: 20,
+          cached_input_tokens: 0,
+          reasoning_output_tokens: 0,
+        },
         workdir: "/tmp/codex-task-test",
       };
     };
@@ -106,6 +113,8 @@ describe("CODEX_SPECIALIST routing decision", () => {
     expect(outcome.modelCall?.usage).toEqual({
       input_tokens: 10,
       output_tokens: 20,
+      cached_input_tokens: 0,
+      reasoning_output_tokens: 0,
     });
   });
 
@@ -113,9 +122,9 @@ describe("CODEX_SPECIALIST routing decision", () => {
     process.env.CODEX_SPECIALIST = "true";
     process.env.CODEX_MODEL = "gpt-5-codex";
     let forwardedModel: string | undefined;
-    const codexRunner = async (
+    const codexRunner = async <T = unknown>(
       input: RunCodexTaskInput,
-    ): Promise<RunCodexTaskResult> => {
+    ): Promise<RunCodexTaskResult<T>> => {
       forwardedModel = input.model;
       return {
         output: {
@@ -125,7 +134,7 @@ describe("CODEX_SPECIALIST routing decision", () => {
             "Candidate should become a human-reviewed hypothesis proposal.",
           candidateIds: ["candidate-1"],
           needsReview: true,
-        },
+        } as T,
         rawText: "{}",
         threadId: "thread-codex-2",
         usage: null,
@@ -145,7 +154,9 @@ describe("CODEX_SPECIALIST routing decision", () => {
 
   test("flag on + Codex runner throws: falls back to OpenRouter and never fails the run", async () => {
     process.env.CODEX_SPECIALIST = "true";
-    const codexRunner = async (): Promise<RunCodexTaskResult> => {
+    const codexRunner = async <T = unknown>(
+      _input: RunCodexTaskInput,
+    ): Promise<RunCodexTaskResult<T>> => {
       throw new Error("codex CLI unavailable");
     };
 

@@ -1,5 +1,6 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 
+import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { mkdir, writeFile } from "node:fs/promises";
 

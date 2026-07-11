@@ -70,6 +70,7 @@ export function loadRootEnvLocalForResearchSmoke() {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
     const [key, ...valueParts] = trimmed.split("=");
+    if (key === undefined) continue;
     if (!SECRET_SAFE_ENV_KEYS.has(key)) continue;
     if (process.env[key]) continue;
     process.env[key] = unquoteEnvValue(valueParts.join("="));

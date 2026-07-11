@@ -44,7 +44,7 @@ Open `http://localhost:2024/ok` to confirm health; open the LangSmith Studio lin
 Already on once `LANGSMITH_*` env vars are set on the deployment. Trigger:
 
 ```bash
-bunx convex run extract:extractAllReady '{"limit": 1, "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
+vpx convex run extract:extractAllReady '{"limit": 1, "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
 ```
 
 A trace named `extract_v2` should appear in LangSmith → `resonant-projects-prod` within ~30 seconds.
@@ -54,10 +54,10 @@ A trace named `extract_v2` should appear in LangSmith → `resonant-projects-pro
 ```bash
 # 1. Hand-curate golden rows into data/eval/*-golden.jsonl
 # 2. Push them to LangSmith
-bun scripts/langsmith/upload-datasets.ts
+vpx tsx scripts/langsmith/upload-datasets.ts
 # 3. Run an experiment
-bun scripts/langsmith/eval-extraction.ts --version v2
-bun scripts/langsmith/eval-hypothesis.ts --version v1
+vpx tsx scripts/langsmith/eval-extraction.ts --version v2
+vpx tsx scripts/langsmith/eval-hypothesis.ts --version v1
 ```
 
 ## Decision rubric for shipping a prompt change

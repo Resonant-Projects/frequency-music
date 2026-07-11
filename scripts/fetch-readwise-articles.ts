@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Fetch articles from Readwise Reader and ingest into Convex.
  *
@@ -9,6 +9,7 @@
  *   --fetch-full        Fetch full article text via Jina
  *   --dry-run           Validate options without network/backend access
  */
+import "varlock/auto-load";
 import { fetchViaJina } from "./lib/fetchText";
 import { createSourceIngestor } from "./lib/ingest";
 

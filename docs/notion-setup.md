@@ -42,8 +42,8 @@ The database ID is the 32-character hex string before the `?v=` query param. For
 ## 5. Set Convex Environment Variables
 
 ```bash
-bunx convex env set NOTION_API_KEY "ntn_..."
-bunx convex env set NOTION_WEEKLY_BRIEFS_DB "<database-id>"
+vpx convex env set NOTION_API_KEY "ntn_..."
+vpx convex env set NOTION_WEEKLY_BRIEFS_DB "<database-id>"
 ```
 
 ## 6. Verify

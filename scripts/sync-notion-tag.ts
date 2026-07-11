@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Sync notes from a Notion Tag to the Convex sources database.
  *
@@ -63,22 +63,35 @@ interface RichTextElement {
   plain_text?: string;
 }
 
+interface NotionBlock {
+  id: string;
+  type: string;
+  has_children?: boolean;
+  [key: string]: unknown;
+}
+
 async function getTagNotes(tagId: string): Promise<string[]> {
-  const page = await notionRequest(`/pages/${tagId}`);
+  const page = (await notionRequest(`/pages/${tagId}`)) as {
+    properties?: { Notes?: { relation?: { id: string }[] } };
+  };
   const notes = page.properties?.Notes?.relation || [];
   return notes.map((note: { id: string }) => note.id);
 }
 
 async function getPageDetails(pageId: string): Promise<NotionPage> {
-  return await notionRequest(`/pages/${pageId}`);
+  return (await notionRequest(`/pages/${pageId}`)) as NotionPage;
 }
 
 async function getPageContent(pageId: string): Promise<string> {
-  const blocks = await notionRequest(`/blocks/${pageId}/children`);
+  const blocks = (await notionRequest(`/blocks/${pageId}/children`)) as {
+    results?: NotionBlock[];
+  };
   const textParts: string[] = [];
   for (const block of blocks.results || []) {
     const type = block.type;
-    const content = block[type];
+    const content = block[type] as
+      | { rich_text?: RichTextElement[] }
+      | undefined;
     if (content?.rich_text) {
       const text = (content.rich_text as RichTextElement[])
         .map((element) =>

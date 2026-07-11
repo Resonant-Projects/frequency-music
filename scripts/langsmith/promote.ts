@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S vpx tsx
 /**
  * Eval-gated prompt/policy promotion (plan 05, task 4).
  *
@@ -33,6 +33,7 @@
  *   --threshold <float>                            optional; default 0.02
  *   --help                                         print this help and exit
  */
+import "varlock/auto-load";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -139,7 +140,7 @@ export function parseArgs(argv: string[]): CliArgs {
 /** Extract the experiment name langsmith prints when an evaluation starts. */
 export function parseExperimentName(output: string): string | null {
   const m = output.match(/Starting evaluation of experiment:\s*(\S+)/);
-  return m ? m[1] : null;
+  return m ? m[1]! : null;
 }
 
 /** Pull per-evaluator means out of a LangSmith `feedback_stats` object. */
@@ -176,7 +177,7 @@ export function parseBaselinesDoc(
     const heading = line.match(/^#{1,6}\s+(.*)$/);
     if (heading) {
       sawHeading = true;
-      inScope = heading[1].toLowerCase().includes(target.toLowerCase());
+      inScope = heading[1]!.toLowerCase().includes(target.toLowerCase());
       continue;
     }
     if (!(inScope || !sawHeading)) continue;
@@ -188,6 +189,7 @@ export function parseBaselinesDoc(
     if (cells.length < 2) continue;
     const key = cells[0];
     const last = cells[cells.length - 1];
+    if (key === undefined || last === undefined) continue;
     if (/^-+$/.test(key) || /^-+$/.test(last)) continue; // separator row
     const num = Number(last);
     if (key && Number.isFinite(num)) means[key] = num;
@@ -235,8 +237,8 @@ export function evaluateRubric(opts: {
   let judgeEvaluated = false;
 
   for (const key of keys) {
-    const b = key in baselineMeans ? baselineMeans[key] : null;
-    const c = key in candidateMeans ? candidateMeans[key] : null;
+    const b = key in baselineMeans ? baselineMeans[key]! : null;
+    const c = key in candidateMeans ? candidateMeans[key]! : null;
     const isJudge = key === judgeKey;
 
     if (b === null || c === null) {
@@ -289,7 +291,7 @@ export function averageMeans(
     }
   }
   const out: Record<string, number> = {};
-  for (const key of Object.keys(sums)) out[key] = sums[key] / counts[key];
+  for (const key of Object.keys(sums)) out[key] = sums[key]! / counts[key]!;
   return out;
 }
 
@@ -305,7 +307,7 @@ export function renderBaselineDiff(
   lines.push("");
   lines.push("| evaluator | mean |");
   lines.push("| --- | --- |");
-  for (const key of keys) lines.push(`| ${key} | ${means[key].toFixed(4)} |`);
+  for (const key of keys) lines.push(`| ${key} | ${means[key]!.toFixed(4)} |`);
   return lines.join("\n");
 }
 

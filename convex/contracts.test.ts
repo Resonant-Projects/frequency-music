@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import schema, { agentRunEventKindValidator } from "./schema";
 import { modules } from "../harness/modules";
@@ -22,7 +22,7 @@ const originalAgentToolSecret = process.env.AGENT_TOOL_SECRET;
 
 afterEach(() => {
   if (originalAgentToolSecret === undefined) {
-    delete process.env.AGENT_TOOL_SECRET;
+    Reflect.deleteProperty(process.env, "AGENT_TOOL_SECRET");
   } else {
     process.env.AGENT_TOOL_SECRET = originalAgentToolSecret;
   }
@@ -71,7 +71,7 @@ describe("agent run event kinds", () => {
         .collect(),
     );
     expect(events).toHaveLength(1);
-    expect(events[0].kind).toBe("memory_recall");
+    expect(events[0]!.kind).toBe("memory_recall");
   });
 });
 

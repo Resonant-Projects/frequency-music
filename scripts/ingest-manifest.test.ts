@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { spawnSync } from "node:child_process";
 
 describe("ingest-manifest CLI", () => {
@@ -7,7 +7,7 @@ describe("ingest-manifest CLI", () => {
       "bun",
       ["run", "scripts/ingest-manifest.ts", "data/example-manifest.json"],
       {
-        cwd: import.meta.dir + "/..",
+        cwd: import.meta.dirname + "/..",
         encoding: "utf8",
         env: {
           ...process.env,
