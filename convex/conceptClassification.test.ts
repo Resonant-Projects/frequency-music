@@ -61,26 +61,27 @@ describe("concept classifier output", () => {
             {
               domains: ["cymatics"],
               missionRelevance: "on",
-              rationale: "This is one sentence. This is another.",
-            },
-          ],
-        },
-        1,
-      ),
-    ).toThrow("Rationale must be exactly one terminated sentence");
-    expect(() =>
-      parseConceptClassificationOutput(
-        {
-          classifications: [
-            {
-              domains: ["cymatics"],
-              missionRelevance: "on",
               rationale: "Directly relevant",
             },
           ],
         },
         1,
       ),
-    ).toThrow("Rationale must be exactly one terminated sentence");
+    ).toThrow("Rationale must end with sentence-terminating punctuation");
+  });
+
+  test("accepts rationales with abbreviations or two sentences (live-backfill regression)", () => {
+    const rationale =
+      "Refers to ML codec tooling, e.g. neural vocoders. Off-mission for the research program.";
+    expect(
+      parseConceptClassificationOutput(
+        {
+          classifications: [
+            { domains: ["ml-audio-engineering"], missionRelevance: "off", rationale },
+          ],
+        },
+        1,
+      )[0]?.rationale,
+    ).toBe(rationale);
   });
 });
