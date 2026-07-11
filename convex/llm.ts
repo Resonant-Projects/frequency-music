@@ -8,8 +8,9 @@ export const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
 // Available models for different use cases (moved verbatim from extract.ts).
 export const MODELS = {
   // === GROQ (fast, cheap) ===
-  fast: "groq/moonshotai/kimi-k2-instruct",
-  kimi: "groq/moonshotai/kimi-k2-instruct",
+  // Groq retired moonshotai/kimi-k2-instruct (verified 2026-07-10); gpt-oss-120b
+  // is the current production-tier non-Llama option.
+  fast: "groq/openai/gpt-oss-120b",
 
   // === OpenRouter (model variety) ===
   default: "anthropic/claude-sonnet-4-6",

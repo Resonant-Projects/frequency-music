@@ -341,20 +341,20 @@ export const domainSubTopics = query({
 
     // Get is_a and part_of edges to find natural clusters
     const parentEdges = await Promise.all(
-      allConcepts.map((concept) =>
-        ctx.db
+      allConcepts.map(async (concept) => {
+        const outEdges = await ctx.db
           .query("edges")
           .withIndex("by_from", (q) =>
             q.eq("fromType", "concept").eq("fromId", concept.name),
           )
-          .filter((q) =>
-            q.or(
-              q.eq(q.field("relationship"), "is_a"),
-              q.eq(q.field("relationship"), "part_of"),
-            ),
-          )
-          .first(),
-      ),
+          .collect();
+        return (
+          outEdges.find(
+            (edge) =>
+              edge.relationship === "is_a" || edge.relationship === "part_of",
+          ) ?? null
+        );
+      }),
     );
     const parentMap = new Map<string, string>();
     allConcepts.forEach((concept, index) => {
@@ -590,7 +590,10 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
       displayName: concept.displayName,
       domain: concept.domain,
       mentionCount: concept.mentionCount,
-      hypothesisCount: concept.hypothesisCount,
+      // Computed from hypothesis.concepts like the rest of this row — the
+      // stored concept.hypothesisCount field is never incremented by the
+      // graph link actions and reads 0 forever.
+      hypothesisCount: linkedHypotheses.length,
       linkedRecipes: linkedRecipes.length,
       linkedCompositions: linkedCompositions.length,
       ...scoreEditorialSignals({

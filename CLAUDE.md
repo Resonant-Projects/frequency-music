@@ -185,8 +185,7 @@ Sources → Ingest (RSS/URL/PDF) → Text Ready → Extract (AI) → Extracted
 ```typescript
 export const MODELS = {
   // === GROQ (fast, cheap) ===
-  fast: "groq/moonshotai/kimi-k2-instruct",
-  kimi: "groq/moonshotai/kimi-k2-instruct",
+  fast: "groq/openai/gpt-oss-120b", // Groq retired kimi-k2-instruct (2026-07)
 
   // === OpenRouter (model variety) ===
   default: "anthropic/claude-sonnet-4-6",

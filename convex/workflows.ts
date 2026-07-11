@@ -337,6 +337,7 @@ export const startBatchExtractionInternal = internalMutation({
     limit: v.optional(v.number()),
     model: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     // Internal mutations can access process.env; pass bypass secret to workflow
     const devBypassSecret =
@@ -352,6 +353,38 @@ export const startBatchExtractionInternal = internalMutation({
         devBypassSecret,
       },
     );
+    return null;
+  },
+});
+
+/**
+ * Start batch hypothesis workflow (internal, for crons — mirrors
+ * startBatchExtractionInternal so hypothesis generation is schedulable).
+ */
+export const startBatchHypothesisInternal = internalMutation({
+  args: {
+    limit: v.optional(v.number()),
+    minClaims: v.optional(v.number()),
+    model: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Internal mutations can access process.env; pass bypass secret to workflow
+    const devBypassSecret =
+      process.env.AUTH_BYPASS_ENABLED === "true"
+        ? process.env.AUTH_BYPASS_SECRET
+        : undefined;
+    await workflowManager.start(
+      ctx,
+      internal.workflows.batchHypothesisWorkflow,
+      {
+        limit: args.limit,
+        minClaims: args.minClaims,
+        model: args.model,
+        devBypassSecret,
+      },
+    );
+    return null;
   },
 });
 
