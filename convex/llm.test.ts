@@ -10,12 +10,12 @@ describe("llm constants", () => {
   test("default model and budgets match the values the four generators used", () => {
     // Default switched to GPT-5.6 Terra (medium reasoning) per Keith 2026-07-10.
     expect(DEFAULT_MODEL).toBe("openai/gpt-5.6-terra");
-    expect(TOKEN_BUDGETS.extract_v2).toBe(4096);
-    expect(TOKEN_BUDGETS.hypothesis_v1).toBe(2000);
-    // Raised from 3000: Sonnet 4.6 recipe JSON truncated mid-string at 3000
-    // (observed live 2026-07-10).
-    expect(TOKEN_BUDGETS.recipe_v1).toBe(6000);
-    expect(TOKEN_BUDGETS.brief_v2).toBe(4000);
+    // Raised 2026-07-10 for reasoning models (Terra): reasoning tokens count
+    // against maxOutputTokens; recipe JSON truncated live at 3000 and 6000.
+    expect(TOKEN_BUDGETS.extract_v2).toBe(8000);
+    expect(TOKEN_BUDGETS.hypothesis_v1).toBe(6000);
+    expect(TOKEN_BUDGETS.recipe_v1).toBe(16000);
+    expect(TOKEN_BUDGETS.brief_v2).toBe(8000);
   });
 
   test("isGroqModel routes on the groq/ prefix", () => {

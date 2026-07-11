@@ -36,14 +36,15 @@ export const MODELS = {
 } as const;
 
 // One visible table instead of four magic numbers buried in generator bodies.
+// These are maxOutputTokens CAPS (not spend). Sized for reasoning models:
+// GPT-5.6 Terra's reasoning tokens count against the output budget, and its
+// recipe JSON truncated at both 3000 and 6000 in live runs on 2026-07-10
+// ("Unterminated string" / cut mid-array). Recipes are the longest payload.
 export const TOKEN_BUDGETS = {
-  extract_v2: 4096,
-  hypothesis_v1: 2000,
-  // 3000 truncated Sonnet 4.6 recipe JSON mid-string (observed 2026-07-10:
-  // "Unterminated string in JSON at position 5353"); recipes are the longest
-  // payload we generate.
-  recipe_v1: 6000,
-  brief_v2: 4000,
+  extract_v2: 8000,
+  hypothesis_v1: 6000,
+  recipe_v1: 16000,
+  brief_v2: 8000,
 } as const;
 
 export type LlmTask = keyof typeof TOKEN_BUDGETS;
