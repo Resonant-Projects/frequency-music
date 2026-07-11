@@ -9,8 +9,8 @@ import {
 // Standing cost decision: judging always runs through Claude Haiku via
 // OpenRouter. Do NOT route judging through Codex or any evaluated provider —
 // keeping the judge independent of what it scores avoids self-preference bias
-// and keeps per-row cost bounded. This matches convex/extract.ts MODELS.haiku.
-const JUDGE_MODEL = "anthropic/claude-3-5-haiku-20241022";
+// and keeps per-row cost bounded. This matches convex/llm.ts MODELS.haiku.
+const JUDGE_MODEL = "anthropic/claude-haiku-4.5";
 
 // The four rubric dimensions. Keys mirror the JSON the judge is asked to emit.
 export const JUDGE_DIMENSIONS = [

@@ -27,12 +27,15 @@ export const MODELS = {
   // medium reasoning effort (see MODEL_REASONING_EFFORT).
   default: "openai/gpt-5.6-terra",
   quality: "openai/gpt-5.6-terra",
-  sonnet: "anthropic/claude-sonnet-4-6",
-  haiku: "anthropic/claude-3-5-haiku-20241022",
+  // Catalog-canonical ids — scripts/check-model-catalog.ts verifies these
+  // against the live provider catalogs (OpenRouter lists dot-form Anthropic
+  // slugs; claude-3-5-haiku and grok-3-mini-beta were delisted 2026-07-10).
+  sonnet: "anthropic/claude-sonnet-4.6",
+  haiku: "anthropic/claude-haiku-4.5",
   gemini: "google/gemini-2.5-flash",
   gpt4: "openai/gpt-4o",
   deepseek: "deepseek/deepseek-chat-v3-0324",
-  grok: "x-ai/grok-3-mini-beta",
+  grok: "x-ai/grok-4.5",
 } as const;
 
 // One visible table instead of four magic numbers buried in generator bodies.
