@@ -1738,6 +1738,20 @@
     "contentHash": "4e421b71ef74e5204ca5ff6797a438104ecf891dd455fba4d54c351f398a3af8",
     "generatedAt": "2026-06-17T19:04:51.725Z"
   },
+  "the-interpretable-grain": {
+    "excerpt": "Controllable sound begins where timing, frequency, and phonetic structure can still be named; fidelity alone is not musical access.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "composition",
+      "machine-listening",
+      "speech",
+      "timbre"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a890afe38c8bfeb232202a63b73a7e1fcd79cd988dbe55e8b1572718c0b23d76",
+    "generatedAt": "2026-07-11T11:02:00.000Z"
+  },
   "the-hidden-scheduler": {
     "excerpt": "Music and speech are controlled not by single clocks but by nested schedulers operating at different timescales-from micro-timing to phrase to form-each managing progress and return.",
     "tags": [
