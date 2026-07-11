@@ -230,11 +230,51 @@ high reasoning) implements via codex-first. Each landed item lists its commit.
   parent agent run, so runs stick at `needs_review` forever (live counts:
   5 needs_review vs 1 pending draft = 4 orphans). Fix + backfill in flight.
 
+### Landed (Codex runs A + C, reviewed/committed/deployed)
+
+- **Backlog #2 + #3 (`ed07e09`, deployed)**: recomputeStats now persists
+  `lastExtractionAt`/`lastBriefAt` + `loopHealth.*` staleness flags
+  (extraction >24h, brief >8d) — verified live in the stats table.
+  batch-extract records attempted/succeeded/failed + an all-failed signal;
+  dead loops are now visible in data, not the 5-minute log buffer.
+- **Backlog #4 + #5 (`ed07e09`, deployed)**: generateBatch and the internal
+  starter select only extractions not already linked to a hypothesis (new
+  `hypotheses.by_extractionIds` index; auto-generated hypotheses record
+  `extractionIds` provenance). Weekly `generate-hypotheses` cron registered
+  (Mondays 16:00 UTC, limit 3). Caveat: pre-existing hypotheses lack
+  `extractionIds`, so legacy extractions can each be re-picked once;
+  plan 06's WIP cap supersedes.
+- **Backlog #11 (`51081af`)**: `scripts/check-model-catalog.ts` verifies
+  MODELS against live OpenRouter/Groq catalogs, exit 1 on drift. **It caught
+  three drifted ids on its first run** — sonnet's dash-form alias, delisted
+  claude-3-5-haiku, delisted grok-3-mini-beta — fixed to catalog-canonical
+  ids in `f7ff6ad` (sonnet 4.6 dot-form, haiku 4.5, grok 4.5; LangSmith
+  judge model updated too). Guard now passes 9/9.
+- **Backlog #12 (`281141e`)**: 07-01 and 07-03 wave plan docs carry
+  `> Landed: <hash> (<date>)` headers.
+- **Weekly brief live-verified**: `weeklyBriefs:generateInternal` produced a
+  real brief on the rotated key post-deploy (both formerly-dead loops proven
+  alive end-to-end).
+
+### New findings this session (appended to backlog)
+
+- **1P item `groq-api-key` does not exist** — varlock's op() ref pointed at
+  nothing; the schema marked it optional so resolution "succeeded" silently
+  and local Groq calls were 401. The working key from the Convex deployment
+  env is parked as a gitignored `.env.local` literal. **Needs Keith** (60s):
+  create the item in Country Manor Lab with that credential, then delete the
+  literal — the agent's service-account token is read-only and desktop-app
+  authorization times out unattended.
+- **vp-migrate dep bump broke one agent test**: `@openai/codex-sdk` 0.142.5
+  adds `cached_input_tokens`/`reasoning_output_tokens` to usage; the
+  codex-specialist test expectation was updated in the working tree (rides
+  the vp-migrate commit, as do CLAUDE.md's synced model table + vpx notes).
+- **Service-account 1P token scope is read-only** — fine for secret
+  resolution, cannot create/edit items. By design; noted for future sessions.
+
 ### In flight (Codex)
 
-- Run A: backlog #2 #3 #4 #5 (staleness watchdog, batch-extract failure
-  accounting, generateBatch dedupe, hypothesis cron).
-- Run C: backlog #11 #12 (model-catalog drift guard, plan-doc landed headers).
-- Run B (queued behind A): backlog #8 #13 (editorialSignals scaling,
-  getConceptDetail workbench variant) + #7 fix/backfill.
-- Loop-wave plans 01–02 (queued behind deploy of A/B).
+- Run B: backlog #8 #13 (editorialSignals scaling, getConceptDetail
+  workbench variant) + #7 fix (advance runs when last pending draft
+  resolves) + reconcile backfill.
+- Loop-wave plan 01 (claims table) — plan 02 queued behind it.
