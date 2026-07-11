@@ -61,21 +61,29 @@ improvement backlog from that pass.
 
 ## Blocked on Keith (cannot proceed autonomously)
 
-1. **Rotate/replace the OpenRouter API key.** Revoked key = extraction,
-   hypothesis, recipe, and weekly-brief generation on default models all dead
-   since ~mid-May. Update 1Password (`op://Country Manor Lab/openrouter-api-key`),
-   the Convex deployment env (`OPENROUTER_API_KEY`), and local `.env.local`.
-2. **Refresh rotated secrets into `.env.local`** — `AUTH_BYPASS_SECRET` and
-   `AGENT_TOOL_SECRET` there are stale post-rotation (plan 001): local CLI
-   mutations get UNAUTHORIZED (today's 3 PM failure burst was exactly this)
-   and the agent-tools surface returns 403 to the local worker.
-3. **Deploy this session's fixes**: `bun x convex deploy -y` (production deploy
-   was permission-gated for the agent). Until deployed, the cron still
-   references the retired Groq model when invoked with `fast`.
+> **Session-2 update (2026-07-10 late night):** items 1–3 and 5 are RESOLVED —
+> see "Session 2 ledger" at the bottom. Only item 4 (Proxmox worker restart)
+> still needs Keith.
+
+1. ~~**Rotate/replace the OpenRouter API key.**~~ **RESOLVED.** Key rotated;
+   1P item renamed to `OpenRouter API Key - Frequency Music` and `.env.schema`
+   ref updated to match; varlock resolution verified; live extraction on the
+   rotated key verified post-deploy (session 2).
+2. ~~**Refresh rotated secrets into `.env.local`**~~ **RESOLVED.** `.env.local`
+   intentionally carries no secret literals — varlock resolves
+   `AUTH_BYPASS_SECRET`/`OPENROUTER_API_KEY` from 1P at runtime (verified);
+   `AGENT_TOOL_SECRET` in `.env.local` and `agent/.env` hash-matches current 1P;
+   live authed CLI mutation succeeded (no UNAUTHORIZED). A 1P service-account
+   token at `~/.config/op/agentic-workers.token` now enables fully headless
+   secret resolution.
+3. ~~**Deploy this session's fixes**~~ **DONE (session 2).**
+   `bun x convex deploy -y` succeeded 2026-07-10 ~22:36; live extraction
+   verified end-to-end post-deploy (default model `openai/gpt-5.6-terra`).
 4. **Restart the Proxmox worker** with the fresh `AGENT_TOOL_SECRET`
-   (see `docs/proxmox-agent-deployment.md`).
-5. **Groq local key** in `.env.local` is also 401 — refresh if local Groq
-   calls are wanted (the deployed Groq key works).
+   (see `docs/proxmox-agent-deployment.md`). **Still Keith** — remote host.
+5. ~~**Groq local key**~~ **RESOLVED.** Local Groq calls go through varlock's
+   `op://Country Manor Lab/groq-api-key` ref; live Groq extraction from this
+   machine succeeded in session 2 (gpt-oss-120b spot-check below).
 
 ## Does the knowledge graph / retrieval actually help the workflow?
 
@@ -191,3 +199,42 @@ Still open:
 - **Something scheduled still calls `sources:updateText` with a stale bypass
   secret** — recurring UNAUTHORIZED bursts (15:01 and 21:00 tonight). Find
   the job (Proxmox? launchd?) and refresh its secret.
+
+## Session 2 ledger (2026-07-10 late night — autonomous orchestration)
+
+Working method: Claude orchestrates/verifies/commits; Codex (`gpt-5.6-sol`,
+high reasoning) implements via codex-first. Each landed item lists its commit.
+
+### Landed / verified
+
+- **Secrets & access**: 1P service-account token stored at
+  `~/.config/op/agentic-workers.token` (Country Manor Lab scope) — headless
+  `op read` + varlock resolution, zero prompts. `vpx varlock load` resolves
+  every schema var including the rotated OpenRouter key. Live authed CLI
+  mutation verified (extractAllReady → success), killing the UNAUTHORIZED
+  class for local work.
+- **Deploy**: session-1 fixes (Groq model id, hypothesis internal starter,
+  editorialSignals hypothesisCount, recipe budget 6000, brief fallback)
+  deployed and live-verified 2026-07-10 ~22:36.
+- **Backlog #10 (gpt-oss-120b quality)**: spot-checked on 2 on-mission
+  sources + Sonnet control. Verdict: functional but lower-yield — 4 claims on
+  a substantive arXiv source; 0 claims on a thin news item where Sonnet found
+  only 1. Keep `fast` for cheap duty; cron default remains gpt-5.6-terra. No
+  demotion needed.
+- **Addendum/UNAUTHORIZED bursts**: ruled out this Mac (no crontab, no
+  launchd job referencing the repo/backend). Bursts follow a ~6h cadence
+  (15:01, 21:00) → prime suspects are a remote scheduler (n8n workflow or a
+  Proxmox host cron) running the fetch scripts with a baked stale secret.
+  Fix when the Proxmox worker is restarted (same env_file refresh).
+- **Backlog #7 root cause**: draft `approve`/`reject` never advances the
+  parent agent run, so runs stick at `needs_review` forever (live counts:
+  5 needs_review vs 1 pending draft = 4 orphans). Fix + backfill in flight.
+
+### In flight (Codex)
+
+- Run A: backlog #2 #3 #4 #5 (staleness watchdog, batch-extract failure
+  accounting, generateBatch dedupe, hypothesis cron).
+- Run C: backlog #11 #12 (model-catalog drift guard, plan-doc landed headers).
+- Run B (queued behind A): backlog #8 #13 (editorialSignals scaling,
+  getConceptDetail workbench variant) + #7 fix/backfill.
+- Loop-wave plans 01–02 (queued behind deploy of A/B).
