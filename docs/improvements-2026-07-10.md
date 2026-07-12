@@ -264,12 +264,15 @@ run. Covers both 2026-07-12 handoff files.
   Convex, none run on a 6h cadence.** n8n is definitively not the source. A
   **host or LXC cron** is the remaining suspect. Could not confirm: `id_ed25519`,
   the OpenTofu SSH key (OpenSSH format), the Proxmox API token, and `:8006`
-  ticket auth were **all denied** from Keith's Mac. A 40-minute Convex log
-  window over one ~09:00 burst slot saw zero UNAUTHORIZED — **inconclusive**
-  (one partial window against a 6h cadence trivially misses a burst; do NOT read
-  this as "fixed" or "dormant"). Full runbook + host-cron hunt commands + a
-  no-host canary method: `docs/proxmox-worker-runbook-2026-07-12.md`. Env
-  refresh + worker restart also await host access there.
+  ticket auth were **all denied** from Keith's Mac. **A 40-minute log window
+  DID capture a live burst 08:58:44–09:01:10 PT** (2026-07-12): one
+  `sources:create` + ~20 `sources:updateText`, all UNAUTHORIZED — the
+  fetch/ingest pattern iterating over sources with the pre-rotation bypass
+  secret, firing at the top of the hour on a ~6h cadence (≈03/09/15/21 PT).
+  Scheduler is **confirmed live, not dormant**; next window ~15:00 PT. Harmless
+  (rejected) but real. Full runbook + host-cron hunt commands + no-host canary:
+  `docs/proxmox-worker-runbook-2026-07-12.md`. Env refresh + worker restart also
+  await host access there.
 - **49 provisional domains (D6)**: triaged into a decision packet —
   `docs/review/domain-triage-2026-07-12.md` (2 promote / 34 merge / 13 reject,
   plus 5/5/9 for parameter/relationship kinds). Surfaced two normalization bugs:

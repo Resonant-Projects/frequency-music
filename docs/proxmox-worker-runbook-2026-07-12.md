@@ -20,9 +20,15 @@ and `:8006` ticket auth with the **Proxmox API** item all returned
   20 workflows (9 active) — only *Gmail→Parcel tracking*, *audio-chunking/
   transcription*, *Notion voice notes*, and n8n self-backup. **None call Convex;
   none run on a 6-hour cadence.** The scheduler is not in n8n.
-- **No live burst observed.** A 40-minute Convex log capture spanning the
-  ~09:00 local burst slot recorded **zero** UNAUTHORIZED. The bursts may already
-  be dormant (consistent with the worker/host having gone quiet since ~June 4).
+- **Scheduler is LIVE — burst captured 2026-07-12.** A 40-minute Convex log
+  capture caught a burst **08:58:44–09:01:10** (PT): one `sources:create` then
+  ~20 `sources:updateText` calls, every one `UNAUTHORIZED: Authentication
+  required`. This is the fetch/ingest pattern (create a source, then updateText
+  per source) iterating with the **pre-rotation** bypass secret. It fires at the
+  **top of the hour on a ~6h cadence** (≈03:00 / 09:00 / 15:00 / 21:00 PT), so
+  the next confirmation window is ~15:00 PT. NOT dormant — the earlier "no burst"
+  read was a too-short first window. Harmless today (the mutations reject), but
+  it's the fingerprint to catch the job by.
 
 ## What Keith needs to do on the host
 

@@ -362,14 +362,21 @@ export const setStatus = mutation({
         "Correspondence not found",
       );
     }
-    const isSystemOrAgent = identity.subject === "system" || args.agentRunId;
+    // Agent-provenanced calls (agentRunId present) may only auto-retire a
+    // conjectured row — they can never force any other transition. Humans get
+    // full transitions: this includes CLI callers, who authenticate via
+    // devBypass and are mapped to subject "system" (see auth.ts), so we key the
+    // restriction on agent provenance, NOT on the system subject — otherwise
+    // the documented CLI path (the only manual surface until plan 07's UI) could
+    // never un-retire or override a status.
+    const isAgentCaller = args.agentRunId !== undefined;
     if (
-      isSystemOrAgent &&
+      isAgentCaller &&
       !(correspondence.status === "conjectured" && args.status === "retired")
     ) {
       correspondenceError(
         "INVALID_STATUS_TRANSITION",
-        "Agents and system callers may only retire conjectured correspondences",
+        "Agent callers may only retire conjectured correspondences",
       );
     }
     await validateAgentRun(ctx, args.agentRunId);
@@ -449,6 +456,10 @@ export const listRecentMovement = query({
           .withIndex("by_status_updatedAt", (q) =>
             q.eq("status", status).gte("updatedAt", args.since),
           )
+          // Descending so the cap keeps the NEWEST movements, not the oldest —
+          // an ascending take() would silently drop the most recent rows when a
+          // status has more than the cap of movements in the window.
+          .order("desc")
           .take(MOVEMENT_LIMIT_PER_STATUS),
       ),
     );

@@ -368,7 +368,15 @@ describe("correspondence setStatus guard", () => {
                   status: target,
                   statusReason: `${actor}: ${source} to ${target}`,
                 });
-          if (source === "conjectured" && target === "retired") {
+          // Agent-provenanced calls (agentRunId present) may only auto-retire a
+          // conjectured row. A bare "system" subject with no agentRunId is the
+          // CLI/devBypass human path (auth maps CLI callers to subject
+          // "system") and gets full transitions — the restriction keys on agent
+          // provenance, not the system subject.
+          if (
+            actor === "system" ||
+            (source === "conjectured" && target === "retired")
+          ) {
             await expect(transition).resolves.toBeNull();
           } else {
             await expect(transition).rejects.toThrow(
