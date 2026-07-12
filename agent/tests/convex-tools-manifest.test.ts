@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vite-plus/test";
 import { AGENT_TOOL_MANIFEST } from "../../convex/shared/agentToolManifest";
-import { convexTools } from "../src/tools/convexTools.js";
+import {
+  agentModelSchema,
+  bindAgentRunContext,
+  convexTools,
+} from "../src/tools/convexTools.js";
 
 function toSnake(name: string): string {
   return name.replaceAll(
@@ -26,5 +30,30 @@ describe("convexTools derive from the manifest", () => {
         (toolDefinition) => toolDefinition.name === "claim_next_pending_run",
       ),
     ).toBe(false);
+  });
+
+  test("binds research-write provenance from run context, not model args", () => {
+    const definition = AGENT_TOOL_MANIFEST.find(
+      (candidate) => candidate.name === "upsertCorrespondence",
+    );
+    if (!definition) throw new Error("upsertCorrespondence is missing");
+    expect(Object.keys(definition.args.shape)).toContain("agentRunId");
+    expect(Object.keys(agentModelSchema(definition).shape)).not.toContain(
+      "agentRunId",
+    );
+    expect(() => bindAgentRunContext(definition, {}, undefined)).toThrow(
+      /requires agentRunId in run context/,
+    );
+    expect(
+      bindAgentRunContext(
+        definition,
+        { statement: "test", agentRunId: "model-controlled" },
+        { agentRunId: "run-context", traceUrl: "https://trace.example/run" },
+      ),
+    ).toMatchObject({
+      statement: "test",
+      agentRunId: "run-context",
+      traceUrl: "https://trace.example/run",
+    });
   });
 });

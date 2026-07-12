@@ -25,6 +25,11 @@ import {
   evidenceLevelValidator,
 } from "./shared/claims";
 import {
+  correspondenceStatusValidator,
+  evidenceStanceValidator,
+} from "./shared/correspondences";
+export { correspondenceStatusValidator } from "./shared/correspondences";
+import {
   failureActionValidator,
   failureReasonValidator,
   yieldBandValidator,
@@ -144,6 +149,35 @@ export const claimReturnValidator = v.object({
   embeddingModel: v.optional(v.string()),
   createdBy: createdByValidator,
   createdAt: v.number(),
+});
+
+export const correspondenceEvidenceValidator = v.object({
+  claimId: v.id("claims"),
+  stance: evidenceStanceValidator,
+  note: v.optional(v.string()),
+  addedBy: v.union(v.literal("agent"), v.literal("human")),
+  addedAt: v.number(),
+});
+
+export const correspondenceReturnValidator = v.object({
+  _id: v.id("correspondences"),
+  _creationTime: v.number(),
+  conceptAId: v.id("concepts"),
+  conceptBId: v.id("concepts"),
+  pairKey: v.string(),
+  statement: v.string(),
+  rationaleMd: v.string(),
+  relationship: v.optional(v.string()),
+  evidence: v.array(correspondenceEvidenceValidator),
+  status: correspondenceStatusValidator,
+  statusReason: v.optional(v.string()),
+  statusChangedAt: v.optional(v.number()),
+  similarityScore: v.optional(v.number()),
+  noveltyScore: v.optional(v.number()),
+  ...agentOriginFields,
+  createdBy: createdByValidator,
+  createdAt: v.number(),
+  updatedAt: v.number(),
 });
 
 // ============================================================================

@@ -10,12 +10,12 @@ export type AgentToolManifestEntry = {
   backing: string;
   args: z.ZodObject;
   langchain: boolean;
-  kind: "read" | "audit_write";
+  kind: "read" | "research_write" | "audit_write";
 };
 
 function entry(
   name: AgentToolName,
-  kind: "read" | "audit_write",
+  kind: "read" | "research_write" | "audit_write",
   backing: string,
   description: string,
   context: string,
@@ -102,6 +102,41 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "internal.agentTools:selfImprovementStats",
     "Fetch read-only self-improvement stats for the weekly brief's 'what the system learned' section: new edit-captures count, agent-review-draft approve/reject counts with rejection notes, and memory_recall run-event notes, all window-filtered by daysBack (default 7). Prompt promotions are not tracked here yet — never claim one happened unless told separately. All counts come straight from Convex; never invent or round numbers not present in the response.",
     "Accepts optional `daysBack` (default 7, max 90) and degrades to all-zero counts and empty note arrays when the window is empty. Prompt/policy promotions are not included because they live in `docs/eval-baselines.md` and the decision log via `scripts/langsmith/promote.ts`; wire a field here once a queryable store exists.",
+  ),
+  entry(
+    "getCorrespondence",
+    "read",
+    "correspondences:getByPairKey",
+    "Fetch the unique correspondence for a canonical concept pair key.",
+    "Compute the key with the shared pairKey helper; concept order never changes identity.",
+  ),
+  entry(
+    "listCorrespondences",
+    "read",
+    "correspondences:listByStatus",
+    "List recent correspondences in one lifecycle status.",
+    "Accepts a lifecycle status and an optional bounded limit.",
+  ),
+  entry(
+    "listConceptCorrespondences",
+    "read",
+    "correspondences:listForConcept",
+    "List correspondences involving one concept on either side of the canonical pair.",
+    "The backing query unions both concept indexes and returns newest movement first.",
+  ),
+  entry(
+    "upsertCorrespondence",
+    "research_write",
+    "internal.correspondences:upsertConjectureFromAgent",
+    "Create or strengthen one cross-domain conjecture without duplicating its concept pair.",
+    "Requires agent-run provenance; rejects same-domain, off-mission, and unclassified concepts.",
+  ),
+  entry(
+    "addCorrespondenceEvidence",
+    "research_write",
+    "internal.correspondences:addEvidenceFromAgent",
+    "Attach a supporting or contradicting claim citation to a correspondence.",
+    "Requires agent-run provenance; duplicate claim-and-stance citations are ignored and status recomputes by evidence counts.",
   ),
   entry(
     "createAgentRun",

@@ -7,7 +7,7 @@ const DOC = "docs/agent-tool-surface.md";
 const BEGIN = "<!-- AGENT_TOOLS:BEGIN -->";
 const END = "<!-- AGENT_TOOLS:END -->";
 
-function table(kind: "read" | "audit_write"): string {
+function table(kind: "read" | "research_write" | "audit_write"): string {
   const rows = AGENT_TOOL_MANIFEST.filter((tool) => tool.kind === kind).map(
     (tool) =>
       `| \`${tool.name}\` | \`/agent-tools/${tool.name}\` | \`${tool.backing}\` | ${tool.description} | ${tool.context} |`,
@@ -26,9 +26,15 @@ const generated = [
   "",
   table("read"),
   "",
+  "### Direct graph-enrichment write tools",
+  "",
+  "Correspondences are reversible, provenance-stamped graph enrichment. They bypass the draft-review door but enforce cross-domain and mission invariants in their mutations.",
+  "",
+  table("research_write"),
+  "",
   "### Audit-only write tools",
   "",
-  "These are the only write tools currently exposed. They write only to agent audit/review records and must not substitute for approved research-data writes.",
+  "These tools write only to agent audit/review records and must not substitute for approved research-data writes.",
   "",
   table("audit_write"),
   "",

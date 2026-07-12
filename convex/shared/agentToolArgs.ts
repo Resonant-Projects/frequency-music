@@ -3,6 +3,13 @@
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
 import { AGENT_RUN_EVENT_KINDS } from "./agentContract";
+import {
+  addCorrespondenceEvidenceArgsZ,
+  getCorrespondenceArgsZ,
+  listConceptCorrespondencesArgsZ,
+  listCorrespondencesArgsZ,
+  upsertCorrespondenceArgsZ,
+} from "./correspondences";
 
 const limit = z.number().int().positive().max(100).optional();
 
@@ -22,6 +29,11 @@ export const agentToolArgs = {
   getSelfImprovementStats: z.object({
     daysBack: z.number().int().positive().max(90).optional(),
   }),
+  upsertCorrespondence: upsertCorrespondenceArgsZ,
+  addCorrespondenceEvidence: addCorrespondenceEvidenceArgsZ,
+  getCorrespondence: getCorrespondenceArgsZ,
+  listCorrespondences: listCorrespondencesArgsZ,
+  listConceptCorrespondences: listConceptCorrespondencesArgsZ,
   createAgentRun: z.object({
     graphName: z.string().min(1),
     input: z.any().optional(),

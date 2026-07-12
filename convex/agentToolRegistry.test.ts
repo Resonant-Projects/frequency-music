@@ -35,6 +35,40 @@ const FROZEN_ARGS: Record<string, string> = {
     limit: field(number, true),
   }),
   getSelfImprovementStats: frozenArgs({ daysBack: field(number, true) }),
+  upsertCorrespondence: frozenArgs({
+    conceptAId: field(id("concepts")),
+    conceptBId: field(id("concepts")),
+    statement: field(string),
+    rationaleMd: field(string),
+    relationship: field(string, true),
+    similarityScore: field(number, true),
+    noveltyScore: field(number, true),
+    agentRunId: field(id("agentRuns"), true),
+    traceUrl: field(string, true),
+  }),
+  addCorrespondenceEvidence: frozenArgs({
+    correspondenceId: field(id("correspondences")),
+    claimId: field(id("claims")),
+    stance: field(union(literal("supports"), literal("contradicts"))),
+    note: field(string, true),
+    agentRunId: field(id("agentRuns"), true),
+  }),
+  getCorrespondence: frozenArgs({ pairKey: field(string) }),
+  listCorrespondences: frozenArgs({
+    status: field(
+      union(
+        literal("conjectured"),
+        literal("evidenced"),
+        literal("contradicted"),
+        literal("retired"),
+      ),
+    ),
+    limit: field(number, true),
+  }),
+  listConceptCorrespondences: frozenArgs({
+    conceptId: field(id("concepts")),
+    limit: field(number, true),
+  }),
   createAgentRun: frozenArgs({
     graphName: field(string),
     input: field(any, true),

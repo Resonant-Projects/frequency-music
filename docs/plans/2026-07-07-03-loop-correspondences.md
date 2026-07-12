@@ -1,5 +1,7 @@
 # Correspondences — Table, Lifecycle, Agent Write Surface — Implementation Plan
 
+> Landed: (see commit below) 2026-07-12 — table + lifecycle mutations + 5 agent tools + weekly auto-retire cron live on the self-hosted backend; wave gate (upsert-twice → one row) verified live.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > **Found-state rule (wave 2026-07-07):** authored pre-arch-wave. Adapt to found state; schemas, interfaces, and gates are binding. **Prerequisites: plan 01 (claims), plan 02 (domains/relevance), arch plan 2026-07-03-05 (agent-tool registry).**
 

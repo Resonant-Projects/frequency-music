@@ -158,13 +158,13 @@ async function streamGraph(
   if (graphName === "research-pipeline") {
     const stream = await researchPipelineGraph.stream(
       invocationInput as Parameters<typeof researchPipelineGraph.stream>[0],
-      { streamMode: "updates" },
+      { streamMode: "updates", configurable: { agentRunId: runId } },
     );
     for await (const chunk of stream) await handleChunk(chunk);
   } else {
     const stream = await weeklyBriefAgent.stream(
       invocationInput as Parameters<typeof weeklyBriefAgent.stream>[0],
-      { streamMode: "updates" },
+      { streamMode: "updates", configurable: { agentRunId: runId } },
     );
     for await (const chunk of stream) await handleChunk(chunk);
   }

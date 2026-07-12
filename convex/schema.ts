@@ -16,6 +16,10 @@ import {
   confidenceBandValidator,
   evidenceLevelValidator,
 } from "./shared/claims";
+import {
+  correspondenceStatusValidator,
+  evidenceStanceValidator,
+} from "./shared/correspondences";
 export {
   claimValidator,
   confidenceBandValidator,
@@ -420,6 +424,40 @@ export default defineSchema({
     .index("by_sourceId", ["sourceId"])
     .index("by_sourceId_status", ["sourceId", "status"])
     .index("by_status", ["status"]),
+
+  // ==========================================================================
+  // CORRESPONDENCES - Cross-domain assertions between canonical concepts
+  // ==========================================================================
+  correspondences: defineTable({
+    conceptAId: v.id("concepts"),
+    conceptBId: v.id("concepts"),
+    pairKey: v.string(),
+    statement: v.string(),
+    rationaleMd: v.string(),
+    relationship: v.optional(v.string()),
+    evidence: v.array(
+      v.object({
+        claimId: v.id("claims"),
+        stance: evidenceStanceValidator,
+        note: v.optional(v.string()),
+        addedBy: v.union(v.literal("agent"), v.literal("human")),
+        addedAt: v.number(),
+      }),
+    ),
+    status: correspondenceStatusValidator,
+    statusReason: v.optional(v.string()),
+    statusChangedAt: v.optional(v.number()),
+    similarityScore: v.optional(v.number()),
+    noveltyScore: v.optional(v.number()),
+    ...agentOriginFields,
+    createdBy: v.union(v.id("users"), v.literal("system")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_pairKey", ["pairKey"])
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_conceptAId", ["conceptAId"])
+    .index("by_conceptBId", ["conceptBId"]),
 
   // ==========================================================================
   // THESES - Lightweight organizing layer for related hypotheses

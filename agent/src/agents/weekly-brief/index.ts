@@ -4,6 +4,7 @@ import {
   START,
   StateGraph,
 } from "@langchain/langgraph";
+import type { RunnableConfig } from "@langchain/core/runnables";
 import { createDeepAgent } from "deepagents";
 import { getResearchModel } from "../../models/index.js";
 import { convexTools } from "../../tools/index.js";
@@ -19,8 +20,11 @@ const deepAgent = createDeepAgent({
   systemPrompt: supervisorPrompt,
 });
 
-async function runWeeklyBriefAgent(state: typeof MessagesAnnotation.State) {
-  const result = await deepAgent.invoke({ messages: state.messages });
+async function runWeeklyBriefAgent(
+  state: typeof MessagesAnnotation.State,
+  config: RunnableConfig,
+) {
+  const result = await deepAgent.invoke({ messages: state.messages }, config);
   return { messages: result.messages ?? [] };
 }
 

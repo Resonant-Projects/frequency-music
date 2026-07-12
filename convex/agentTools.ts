@@ -43,6 +43,15 @@ export const searchSourcesByConcept = makeAgentToolAction(
 export const getSelfImprovementStats = makeAgentToolAction(
   "getSelfImprovementStats",
 );
+export const upsertCorrespondence = makeAgentToolAction("upsertCorrespondence");
+export const addCorrespondenceEvidence = makeAgentToolAction(
+  "addCorrespondenceEvidence",
+);
+export const getCorrespondence = makeAgentToolAction("getCorrespondence");
+export const listCorrespondences = makeAgentToolAction("listCorrespondences");
+export const listConceptCorrespondences = makeAgentToolAction(
+  "listConceptCorrespondences",
+);
 export const createAgentRun = makeAgentToolAction("createAgentRun");
 export const appendAgentRunEvent = makeAgentToolAction("appendAgentRunEvent");
 export const markAgentRunCompleted = makeAgentToolAction(

@@ -2,7 +2,7 @@
 
 This document defines the narrow Convex surface exposed to external LangGraph/LangChain agents.
 
-Agents can read research state, write audit-only agent-run lifecycle records, and **propose** structured research drafts. They cannot create, mutate, or approve hypotheses, recipes, sources, failures, or other project research data directly. Research data only enters the system through the **draft → human-approval** path: an agent writes a `pending_review` draft, and a human approves it in the app, which promotes it into a real row. Agents must never approve their own work — the decision mutations are Clerk-authenticated and are deliberately **not** exposed on `/agent-tools/*`.
+Agents can read research state, write audit-only agent-run lifecycle records, **propose** structured hypothesis and recipe drafts, and directly enrich the reversible graph through provenance-stamped correspondences. Hypotheses and recipes still enter through the **draft → human-approval** path. Agents must never approve their own work — the decision mutations are Clerk-authenticated and are deliberately **not** exposed on `/agent-tools/*`.
 
 ## Authentication
 
@@ -30,10 +30,22 @@ All tool calls require `AGENT_TOOL_SECRET`.
 | `getRecommendedActions` | `/agent-tools/getRecommendedActions` | `campaigns:getRecommendedActions` | Fetch deterministic recommended action candidates from the current campaign scope. | Agent recommendations should explain when they diverge from these deterministic suggestions. |
 | `searchSourcesByConcept` | `/agent-tools/searchSourcesByConcept` | `graph:searchSourcesByConcept` | Find source metadata linked to a concept name. Raw text is intentionally omitted. | Returns source metadata only. It intentionally omits rawText and transcripts to protect context windows. |
 | `getSelfImprovementStats` | `/agent-tools/getSelfImprovementStats` | `internal.agentTools:selfImprovementStats` | Fetch read-only self-improvement stats for the weekly brief's 'what the system learned' section: new edit-captures count, agent-review-draft approve/reject counts with rejection notes, and memory_recall run-event notes, all window-filtered by daysBack (default 7). Prompt promotions are not tracked here yet — never claim one happened unless told separately. All counts come straight from Convex; never invent or round numbers not present in the response. | Accepts optional `daysBack` (default 7, max 90) and degrades to all-zero counts and empty note arrays when the window is empty. Prompt/policy promotions are not included because they live in `docs/eval-baselines.md` and the decision log via `scripts/langsmith/promote.ts`; wire a field here once a queryable store exists. |
+| `getCorrespondence` | `/agent-tools/getCorrespondence` | `correspondences:getByPairKey` | Fetch the unique correspondence for a canonical concept pair key. | Compute the key with the shared pairKey helper; concept order never changes identity. |
+| `listCorrespondences` | `/agent-tools/listCorrespondences` | `correspondences:listByStatus` | List recent correspondences in one lifecycle status. | Accepts a lifecycle status and an optional bounded limit. |
+| `listConceptCorrespondences` | `/agent-tools/listConceptCorrespondences` | `correspondences:listForConcept` | List correspondences involving one concept on either side of the canonical pair. | The backing query unions both concept indexes and returns newest movement first. |
+
+### Direct graph-enrichment write tools
+
+Correspondences are reversible, provenance-stamped graph enrichment. They bypass the draft-review door but enforce cross-domain and mission invariants in their mutations.
+
+| Tool | HTTP path | Backing function | Purpose | Context notes |
+| --- | --- | --- | --- | --- |
+| `upsertCorrespondence` | `/agent-tools/upsertCorrespondence` | `internal.correspondences:upsertConjectureFromAgent` | Create or strengthen one cross-domain conjecture without duplicating its concept pair. | Requires agent-run provenance; rejects same-domain, off-mission, and unclassified concepts. |
+| `addCorrespondenceEvidence` | `/agent-tools/addCorrespondenceEvidence` | `internal.correspondences:addEvidenceFromAgent` | Attach a supporting or contradicting claim citation to a correspondence. | Requires agent-run provenance; duplicate claim-and-stance citations are ignored and status recomputes by evidence counts. |
 
 ### Audit-only write tools
 
-These are the only write tools currently exposed. They write only to agent audit/review records and must not substitute for approved research-data writes.
+These tools write only to agent audit/review records and must not substitute for approved research-data writes.
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
@@ -95,4 +107,4 @@ These criteria guide the eval dataset export and manual curation step.
 
 Add a new tool only when an agent run demonstrably needs it. Prefer small, specific read tools over exposing broad table access.
 
-Do not add research-data write tools in this phase. Candidate write tools such as `createHypothesisDraft` and `markFailure` belong in the later LangGraph plan after approval flows are designed. The four audit-only write tools above are the sole exception and must remain limited to agent-run lifecycle records.
+Irreversible research-data writes require a designed approval door. Reversible graph enrichment may be exposed only with provenance and mutation-enforced invariants, following the correspondence tools above.

@@ -1,5 +1,8 @@
 import { tool } from "@langchain/core/tools";
-import { AGENT_TOOL_MANIFEST } from "../../../convex/shared/agentToolManifest";
+import {
+  AGENT_TOOL_MANIFEST,
+  type AgentToolManifestEntry,
+} from "../../../convex/shared/agentToolManifest";
 
 const rawTextKeys = new Set(["rawText", "transcript"]);
 
@@ -55,14 +58,49 @@ function toSnake(name: string): string {
   );
 }
 
+export function bindAgentRunContext(
+  definition: Pick<AgentToolManifestEntry, "kind" | "name">,
+  args: Record<string, unknown>,
+  configurable: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (definition.kind !== "research_write") return args;
+  const agentRunId = configurable?.agentRunId;
+  if (typeof agentRunId !== "string" || !agentRunId) {
+    throw new Error(`${definition.name} requires agentRunId in run context`);
+  }
+  const traceUrl = configurable?.traceUrl;
+  return {
+    ...args,
+    agentRunId,
+    ...(typeof traceUrl === "string" && traceUrl ? { traceUrl } : {}),
+  };
+}
+
+export function agentModelSchema(definition: AgentToolManifestEntry) {
+  return definition.kind === "research_write"
+    ? definition.args.omit({ agentRunId: true })
+    : definition.args;
+}
+
 export const convexTools = AGENT_TOOL_MANIFEST.filter(
   (definition) => definition.langchain,
 ).map((definition) =>
-  tool((args) => callConvex(definition.name, args as Record<string, unknown>), {
-    name: toSnake(definition.name),
-    description: definition.description,
-    schema: definition.args,
-  }),
+  tool(
+    (args, config) =>
+      callConvex(
+        definition.name,
+        bindAgentRunContext(
+          definition,
+          args as Record<string, unknown>,
+          config?.configurable,
+        ),
+      ),
+    {
+      name: toSnake(definition.name),
+      description: definition.description,
+      schema: agentModelSchema(definition),
+    },
+  ),
 );
 
 export { stripLargeTextFields };

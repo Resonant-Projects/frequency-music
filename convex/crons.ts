@@ -62,4 +62,12 @@ crons.interval(
   {},
 );
 
+// Park unresolved conjectures that have shown no evidence or movement in 90 days.
+crons.weekly(
+  "retire-stale-correspondences",
+  { dayOfWeek: "sunday", hourUTC: 16, minuteUTC: 0 },
+  internal.correspondences.autoRetireStale,
+  {},
+);
+
 export default crons;

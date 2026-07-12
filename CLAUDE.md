@@ -21,7 +21,7 @@ Research-to-composition pipeline exploring connections between music, physics, m
 
 ## Agent Tool Surface
 
-External LangGraph/LangChain agents read project state through the secret-guarded Convex agent-tool surface documented in `docs/agent-tool-surface.md`. The surface is read-only in this phase and is enabled by `AGENT_TOOL_SECRET`. The agent workspace is prepared for LangSmith tracing; Convex-side tracing still needs a Node-runtime split before importing the LangSmith SDK.
+External LangGraph/LangChain agents use the secret-guarded Convex agent-tool surface documented in `docs/agent-tool-surface.md`. The surface reads project state, writes audit lifecycle records, and directly enriches reversible correspondence graph data with run-context provenance; irreversible hypothesis and recipe writes remain behind human-reviewed drafts. It is enabled by `AGENT_TOOL_SECRET`. The agent workspace is prepared for LangSmith tracing; Convex-side tracing still needs a Node-runtime split before importing the LangSmith SDK.
 
 ## Directory Structure
 

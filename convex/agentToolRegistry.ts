@@ -61,6 +61,46 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ctx.runQuery(internal.agentTools.selfImprovementStats, {
       daysBack: args.daysBack as number | undefined,
     }),
+  getCorrespondence: (ctx, args) =>
+    ctx.runQuery(queryRef("correspondences:getByPairKey"), {
+      pairKey: args.pairKey,
+    }),
+  listCorrespondences: (ctx, args) =>
+    ctx.runQuery(queryRef("correspondences:listByStatus"), {
+      status: args.status,
+      limit: (args.limit as number) ?? 20,
+    }),
+  listConceptCorrespondences: (ctx, args) =>
+    ctx.runQuery(queryRef("correspondences:listForConcept"), {
+      conceptId: args.conceptId,
+      limit: (args.limit as number) ?? 20,
+    }),
+  upsertCorrespondence: (ctx, args) =>
+    ctx.runMutation(
+      mutationRef("correspondences:upsertConjectureFromAgent"),
+      omitUndefined({
+        conceptAId: args.conceptAId,
+        conceptBId: args.conceptBId,
+        statement: args.statement,
+        rationaleMd: args.rationaleMd,
+        relationship: args.relationship,
+        similarityScore: args.similarityScore,
+        noveltyScore: args.noveltyScore,
+        agentRunId: args.agentRunId,
+        traceUrl: args.traceUrl,
+      }),
+    ),
+  addCorrespondenceEvidence: (ctx, args) =>
+    ctx.runMutation(
+      mutationRef("correspondences:addEvidenceFromAgent"),
+      omitUndefined({
+        correspondenceId: args.correspondenceId,
+        claimId: args.claimId,
+        stance: args.stance,
+        note: args.note,
+        agentRunId: args.agentRunId,
+      }),
+    ),
   createAgentRun: async (ctx, args) => {
     const created = (await ctx.runMutation(
       mutationRef("agentRuns:create"),
