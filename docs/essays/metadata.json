@@ -13,6 +13,20 @@
     "contentHash": "6df49c0becdf8503662e60b862662bdbfc4e0d50cd2abfff35b87c1bcac9786b",
     "generatedAt": "2026-04-10T18:35:48.651Z"
   },
+  "alignment-is-pressure": {
+    "excerpt": "Alignment is not just preprocessing; it creates pressure by holding one dimension still so residual differences become musically and analytically meaningful.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "AI-music",
+      "perception",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "d12be0fb337df5be4d7af2aa0819ebfc76acaa44de867735550e2ac628c251a4",
+    "generatedAt": "2026-07-12T19:05:52.991Z"
+  },
   "beyond-the-integers": {
     "excerpt": "Discover how moving beyond integers and rationals to Gaussian integers, algebraic units, and modular arithmetic unlocks new musical structures-from integrating the tritone to closing tuning systems under difference tones.",
     "tags": [
@@ -1738,20 +1752,6 @@
     "contentHash": "4e421b71ef74e5204ca5ff6797a438104ecf891dd455fba4d54c351f398a3af8",
     "generatedAt": "2026-06-17T19:04:51.725Z"
   },
-  "the-interpretable-grain": {
-    "excerpt": "Controllable sound begins where timing, frequency, and phonetic structure can still be named; fidelity alone is not musical access.",
-    "tags": [
-      "AI-music",
-      "signal-processing",
-      "composition",
-      "machine-listening",
-      "speech",
-      "timbre"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "a890afe38c8bfeb232202a63b73a7e1fcd79cd988dbe55e8b1572718c0b23d76",
-    "generatedAt": "2026-07-11T11:02:00.000Z"
-  },
   "the-hidden-scheduler": {
     "excerpt": "Music and speech are controlled not by single clocks but by nested schedulers operating at different timescales-from micro-timing to phrase to form-each managing progress and return.",
     "tags": [
@@ -1972,6 +1972,20 @@
     "category": "interdisciplinary",
     "contentHash": "ecc668f2da0aa7a569c6b55426b2d7e4aebbfe9a446d3f73db5649fc6728b0e1",
     "generatedAt": "2026-04-10T18:38:48.386Z"
+  },
+  "the-interpretable-grain": {
+    "excerpt": "Controllable sound begins where timing, frequency, and phonetic structure can still be named; fidelity alone is not musical access.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "composition",
+      "machine-listening",
+      "speech",
+      "timbre"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a890afe38c8bfeb232202a63b73a7e1fcd79cd988dbe55e8b1572718c0b23d76",
+    "generatedAt": "2026-07-11T11:02:00.000Z"
   },
   "the-invariance-trap": {
     "excerpt": "Audio encoders have blind spots dictated by their training objectives-an ASR model might miss pitch shifts while catching temporal shuffles. This analysis reveals the fundamental trade-off: representations designed to detect semantic changes often miss structural ones, and vice versa.",
