@@ -17,14 +17,10 @@ export const conceptClassificationSchema = z.object({
     ),
 });
 
-export const conceptClassificationBatchSchema = z.object({
-  classifications: z.array(conceptClassificationSchema),
-});
-
 // Anthropic's structured-output schema subset rejects array length
 // constraints (minItems/maxItems) and refinements, so the LLM-facing schema
-// stays permissive; parseConceptClassificationOutput applies the strict
-// schema to whatever comes back.
+// stays permissive; parseConceptClassificationItems applies the strict schema
+// to each row while retaining its positional concept index.
 export const conceptClassificationLlmSchema = z.object({
   classifications: z.array(
     z.object({
@@ -37,15 +33,41 @@ export const conceptClassificationLlmSchema = z.object({
 
 export type ConceptClassification = z.infer<typeof conceptClassificationSchema>;
 
-export function parseConceptClassificationOutput(
+export type ParsedConceptClassifications = {
+  classifications: Array<{
+    index: number;
+    classification: ConceptClassification;
+  }>;
+  failed: number;
+};
+
+const conceptClassificationRowsSchema = z.object({
+  classifications: z.array(z.unknown()),
+});
+
+export function parseConceptClassificationItems(
   value: unknown,
   expectedCount: number,
-): ConceptClassification[] {
-  const parsed = conceptClassificationBatchSchema.parse(value);
+): ParsedConceptClassifications {
+  const parsed = conceptClassificationRowsSchema.parse(value);
   if (parsed.classifications.length !== expectedCount) {
     throw new Error(
       `Expected ${expectedCount} classifications, received ${parsed.classifications.length}`,
     );
   }
-  return parsed.classifications;
+  const classifications: ParsedConceptClassifications["classifications"] = [];
+
+  for (let index = 0; index < expectedCount; index++) {
+    const result = conceptClassificationSchema.safeParse(
+      parsed.classifications[index],
+    );
+    if (result.success) {
+      classifications.push({ index, classification: result.data });
+    }
+  }
+
+  return {
+    classifications,
+    failed: expectedCount - classifications.length,
+  };
 }

@@ -59,10 +59,14 @@ type ClassificationInputBatch = {
 
 type GeneratedClassificationBatch = {
   classifications: Array<{
-    domains: string[];
-    missionRelevance: "on" | "off";
-    rationale: string;
+    index: number;
+    classification: {
+      domains: string[];
+      missionRelevance: "on" | "off";
+      rationale: string;
+    };
   }>;
+  failed: number;
   inputTokens: number;
   outputTokens: number;
 };
@@ -389,7 +393,7 @@ export const classifyConceptBatch = internalAction({
           expectedCount: input.concepts.length,
         });
         classifications = generated.classifications.map(
-          (classification, index) => {
+          ({ index, classification }) => {
             const concept = input.concepts[index];
             if (!concept) {
               throw new Error(
@@ -399,6 +403,7 @@ export const classifyConceptBatch = internalAction({
             return { conceptId: concept.conceptId, ...classification };
           },
         );
+        totals.failed += generated.failed;
         totals.inputTokens += generated.inputTokens;
         totals.outputTokens += generated.outputTokens;
       } catch (error) {

@@ -557,8 +557,8 @@ export const pipelineItems = query({
     const [sources, extractions, hypotheses, recipes] = await Promise.all([
       ctx.db.query("sources").order("desc").take(200),
       ctx.db.query("extractions").order("desc").take(100),
-      ctx.db.query("hypotheses").collect(),
-      ctx.db.query("recipes").collect(),
+      ctx.db.query("hypotheses").order("desc").take(100),
+      ctx.db.query("recipes").order("desc").take(100),
     ]);
 
     return {

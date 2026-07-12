@@ -436,6 +436,53 @@ describe("concept creation classification scheduling", () => {
 });
 
 describe("concept classification fault tolerance", () => {
+  test("one malformed row leaves only that concept unreviewed", async () => {
+    const partialModules = {
+      ...modules,
+      "./conceptClassifierInternal.ts": () =>
+        import("./fixtures/conceptClassifierInternalPartial"),
+    };
+    const t = convexTest(schema, partialModules);
+    const conceptIds = await t.run(async (ctx) => {
+      await ctx.db.insert("conceptDomains", {
+        name: "cymatics",
+        status: "known",
+        introducedBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      const ids = [];
+      for (let index = 0; index < 3; index++) {
+        ids.push(
+          await ctx.db.insert("concepts", {
+            name: `partial-${index}`,
+            displayName: `Partial ${index}`,
+            aliases: [],
+            domain: "general",
+            missionRelevance: "unreviewed",
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 1000,
+            updatedAt: 1000,
+          }),
+        );
+      }
+      return ids;
+    });
+
+    const result = await t.action(
+      internal.conceptClassifier.classifyConceptBatch,
+      { conceptIds, model: "test-model", apply: true },
+    );
+    expect(result).toMatchObject({ assigned: 2, failed: 1, llmCalls: 1 });
+
+    const concepts = await t.run((ctx) => ctx.db.query("concepts").collect());
+    expect(concepts[0]?.classifiedAt).toBeDefined();
+    expect(concepts[1]?.classifiedAt).toBeUndefined();
+    expect(concepts[1]?.missionRelevance).toBe("unreviewed");
+    expect(concepts[2]?.classifiedAt).toBeDefined();
+  });
+
   test("a validation failure leaves one chunk unreviewed and continues", async () => {
     const failingModules = {
       ...modules,

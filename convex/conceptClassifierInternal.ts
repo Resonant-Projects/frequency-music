@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 import {
   conceptClassificationLlmSchema,
-  parseConceptClassificationOutput,
+  parseConceptClassificationItems,
 } from "./conceptClassification";
 import { generateLlmObject } from "./llmNode";
 
@@ -17,11 +17,15 @@ export const generateClassifications = internalAction({
   returns: v.object({
     classifications: v.array(
       v.object({
-        domains: v.array(v.string()),
-        missionRelevance: v.union(v.literal("on"), v.literal("off")),
-        rationale: v.string(),
+        index: v.number(),
+        classification: v.object({
+          domains: v.array(v.string()),
+          missionRelevance: v.union(v.literal("on"), v.literal("off")),
+          rationale: v.string(),
+        }),
       }),
     ),
+    failed: v.number(),
     inputTokens: v.number(),
     outputTokens: v.number(),
   }),
@@ -37,12 +41,13 @@ export const generateClassifications = internalAction({
         "One registry-constrained domain and mission-relevance classification per input concept, in input order.",
       metadata: { conceptCount: args.expectedCount },
     });
-    const classifications = parseConceptClassificationOutput(
+    const parsed = parseConceptClassificationItems(
       generated.object,
       args.expectedCount,
     );
     return {
-      classifications,
+      classifications: parsed.classifications,
+      failed: parsed.failed,
       inputTokens: generated.inputTokens,
       outputTokens: generated.outputTokens,
     };

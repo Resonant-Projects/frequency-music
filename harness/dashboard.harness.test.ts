@@ -367,6 +367,46 @@ describe("dashboard stats recomputation", () => {
   });
 });
 
+describe("dashboard pipeline items", () => {
+  test("caps hypotheses and recipes like the other recent-item lists", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (let index = 0; index < 101; index++) {
+        const hypothesisId = await ctx.db.insert("hypotheses", {
+          title: `Hypothesis ${index}`,
+          question: `Question ${index}?`,
+          hypothesis: `Hypothesis body ${index}`,
+          rationaleMd: "Harness fixture",
+          sourceIds: [],
+          status: "draft",
+          visibility: "private",
+          createdBy: "system",
+          createdAt: index + 1,
+          updatedAt: index + 1,
+        });
+        await ctx.db.insert("recipes", {
+          hypothesisId,
+          title: `Recipe ${index}`,
+          bodyMd: "Harness fixture",
+          parameters: [],
+          dawChecklist: [],
+          status: "draft",
+          visibility: "private",
+          createdBy: "system",
+          createdAt: index + 1,
+          updatedAt: index + 1,
+        });
+      }
+    });
+
+    const result = await t.query(api.dashboard.pipelineItems);
+    expect(result.hypotheses).toHaveLength(100);
+    expect(result.recipes).toHaveLength(100);
+    expect(result.hypotheses[0]?.title).toBe("Hypothesis 100");
+    expect(result.recipes[0]?.title).toBe("Recipe 100");
+  });
+});
+
 describe("dashboard editorial signals", () => {
   test("scores a bounded mention-index candidate through indexed graph links", async () => {
     const t = convexTest(schema, modules);

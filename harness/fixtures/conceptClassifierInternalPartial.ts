@@ -1,6 +1,5 @@
 "use node";
 import { v } from "convex/values";
-import { z } from "zod";
 import { internalAction } from "../../convex/_generated/server";
 
 export const generateClassifications = internalAction({
@@ -25,26 +24,27 @@ export const generateClassifications = internalAction({
     inputTokens: v.number(),
     outputTokens: v.number(),
   }),
-  handler: (_ctx, args) => {
-    if (args.expectedCount > 1) {
-      z.object({ classifications: z.array(z.never()) }).parse({
-        classifications: [{ invalid: true }],
-      });
-    }
-    return {
-      classifications: [
-        {
-          index: 0,
-          classification: {
-            domains: ["cymatics"],
-            missionRelevance: "on" as const,
-            rationale: "This valid trailing batch should still be assigned.",
-          },
+  handler: () => ({
+    classifications: [
+      {
+        index: 0,
+        classification: {
+          domains: ["cymatics"],
+          missionRelevance: "on" as const,
+          rationale: "The first valid neighbor should be persisted.",
         },
-      ],
-      failed: 0,
-      inputTokens: 10,
-      outputTokens: 5,
-    };
-  },
+      },
+      {
+        index: 2,
+        classification: {
+          domains: ["cymatics"],
+          missionRelevance: "on" as const,
+          rationale: "The second valid neighbor should be persisted.",
+        },
+      },
+    ],
+    failed: 1,
+    inputTokens: 10,
+    outputTokens: 5,
+  }),
 });

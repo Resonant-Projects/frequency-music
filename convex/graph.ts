@@ -15,6 +15,18 @@ import {
 import { entityTypeValidator } from "./schema";
 import { conceptReturnValidator, edgeReturnValidator } from "./validators";
 
+const CONCEPT_DETAIL_LINK_LIMIT = 20;
+
+// Deliberate collaborator-circle decision: authenticated means authorized for
+// the private workbench; unauthenticated callers degrade to the public scope
+// (the zodiac graph is browsable logged-out). Revisit if the circle grows.
+async function resolveWorkbenchScope(
+  ctx: Pick<QueryCtx, "auth">,
+): Promise<"workbench" | "public"> {
+  const identity = await ctx.auth.getUserIdentity();
+  return identity ? "workbench" : "public";
+}
+
 function parseNodeId(nodeId: string): { type: string; id: string } {
   const firstColon = nodeId.indexOf(":");
   return {
@@ -802,20 +814,24 @@ async function readConceptDetail(
   const concept = await ctx.db.get("concepts", conceptId);
   if (!concept) return null;
 
-  // Get all edges mentioning this concept
+  // Bound the combined indexed scan to the linked-item response cap.
   const edgesTo = await ctx.db
     .query("edges")
     .withIndex("by_to", (q) =>
       q.eq("toType", "concept").eq("toId", concept.name),
     )
-    .collect();
+    .take(CONCEPT_DETAIL_LINK_LIMIT);
 
-  const edgesFrom = await ctx.db
-    .query("edges")
-    .withIndex("by_from", (q) =>
-      q.eq("fromType", "concept").eq("fromId", concept.name),
-    )
-    .collect();
+  const remainingEdgeCapacity = CONCEPT_DETAIL_LINK_LIMIT - edgesTo.length;
+  const edgesFrom =
+    remainingEdgeCapacity > 0
+      ? await ctx.db
+          .query("edges")
+          .withIndex("by_from", (q) =>
+            q.eq("fromType", "concept").eq("fromId", concept.name),
+          )
+          .take(remainingEdgeCapacity)
+      : [];
 
   const allEdges = [...edgesTo, ...edgesFrom];
 
@@ -837,7 +853,7 @@ async function readConceptDetail(
   // Fetch linked items (limit to 20 each)
   const linkedSources = (
     await Promise.all(
-      [...sourceIds].slice(0, 20).map(async (id) => {
+      [...sourceIds].slice(0, CONCEPT_DETAIL_LINK_LIMIT).map(async (id) => {
         try {
           const s = await ctx.db.get("sources", id);
           if (!s || (visibilityScope === "public" && s.visibility !== "public"))
@@ -852,7 +868,7 @@ async function readConceptDetail(
 
   const linkedHypotheses = (
     await Promise.all(
-      [...hypothesisIds].slice(0, 20).map(async (id) => {
+      [...hypothesisIds].slice(0, CONCEPT_DETAIL_LINK_LIMIT).map(async (id) => {
         try {
           const h = await ctx.db.get("hypotheses", id);
           if (!h || (visibilityScope === "public" && h.visibility !== "public"))
@@ -867,7 +883,7 @@ async function readConceptDetail(
 
   const linkedRecipes = (
     await Promise.all(
-      [...recipeIds].slice(0, 20).map(async (id) => {
+      [...recipeIds].slice(0, CONCEPT_DETAIL_LINK_LIMIT).map(async (id) => {
         try {
           const r = await ctx.db.get("recipes", id);
           if (!r || (visibilityScope === "public" && r.visibility !== "public"))
@@ -894,12 +910,8 @@ export const getConceptDetail = query({
   args: { conceptId: v.optional(v.id("concepts")) },
   returns: conceptDetailValidator,
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    return await readConceptDetail(
-      ctx,
-      args.conceptId,
-      identity ? "workbench" : "public",
-    );
+    const scope = await resolveWorkbenchScope(ctx);
+    return await readConceptDetail(ctx, args.conceptId, scope);
   },
 });
 
