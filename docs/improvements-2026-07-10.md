@@ -200,6 +200,103 @@ Still open:
   secret** — recurring UNAUTHORIZED bursts (15:01 and 21:00 tonight). Find
   the job (Proxmox? launchd?) and refresh its secret.
 
+## Session 3 ledger (2026-07-12 — handoff closeout, Keith-authorized autonomous)
+
+Working method: Fable orchestrates/verifies/deploys/commits; Codex (`gpt-5.6-sol`
+high) implements via codex-first. Keith front-loaded four approvals (1P item
+create, e2e purge, full build+deploy green light, Proxmox SSH) then left it to
+run. Covers both 2026-07-12 handoff files.
+
+### Landed / verified
+
+- **Credentials (D1)**: 1P item `groq-api-key` created in Country Manor Lab
+  (Keith approved the biometric prompt); hash-verified against the working key;
+  `.env.local` literal + marker comment removed; `vpx varlock load` resolves it;
+  `check-model-catalog.ts` 9/9 with an explicit `op read` export. **Reconfirmed
+  the varlock stale-resolution gotcha**: the freshly-created item reads fine via
+  direct `op read` (service token) but returns 401 through varlock auto-load in
+  the same shell — varlock's resolution lags 1P item creation exactly as it
+  lagged the 2026-07-10 rotation. All fresh-secret flows must export explicitly.
+- **E2E purge (D2)**: added `convex/maintenance.ts:purgeE2eDebris` (dry-run
+  default, title-prefix scoped). Dry-run matched Keith's approved inventory
+  ID-for-ID; live run deleted 4 `E2E Campaign e2e-*` + 6 `E2E Thesis e2e-*`
+  rows; both tables now 0 e2e rows. `find-e2e.ts` only scans
+  hypotheses/recipes/compositions (all clean) — the debris lived in
+  campaigns/theses, which it doesn't cover.
+- **Structural root cause (D2, backlog #19 below)**: SystemsThinking iceberg —
+  e2e runs point `VITE_CONVEX_URL` at **production** (single deployment), and
+  `web/tests/e2e/cleanup.ts` omits campaigns/theses from its table union AND
+  swallows every error via bare `catch {}`. That's the exact 4+6 leak. The
+  purge is the event-layer patch; the fix is fail-closed isolation (below).
+- **Backlog #15–18 (D3, `e7f2f14`, deployed)**: per-item classifier
+  `safeParse` (one malformed row no longer fails its 19 chunk neighbors);
+  `getConceptDetail*` edge scan bounded to the 20-item link cap; `pipelineItems`
+  hypotheses/recipes bounded to newest 100; `getConceptDetail` scope decision
+  made explicit (`resolveWorkbenchScope`: authenticated → workbench, anonymous →
+  public fallback so the zodiac graph stays browsable logged-out). 143 tests
+  green. (Codex initially made anonymous callers throw; caught in review and
+  changed to the public-scope fallback the route actually needs.)
+- **Loop-wave plan 03 correspondences (D4, `2adca48`, deployed + live-gated)**:
+  `correspondences` table (canonical pairKey identity, 4 indexes,
+  agentOriginFields provenance); lifecycle mutations (idempotent
+  `upsertConjecture` with same-domain/off-mission/unclassified rejection;
+  `addEvidence` count-based recompute + (claimId,stance) dedupe; guarded
+  `setStatus` — agents/system may only retire conjectured, never set evidenced
+  directly); queries; weekly paginated auto-retire cron. 5 agent tools via the
+  arch-05 registry drill. **Live wave gate**: upsert same pair twice (opposite
+  order) → one row (created:true then created:false, same id); same-concept
+  rejected; probe row retired (no delete mutation exists — retired is terminal).
+  Plans 01+02+03 now live; **04 embeddings is next**.
+- **Proxmox worker image (D5, part of `2adca48`)**: image build was failing
+  `bun install --frozen-lockfile` (lockfile drift); regenerated `agent/bun.lock`;
+  `docker compose build langgraph-worker` now succeeds. The June-4 offline
+  worker's *image* is no longer a blocker.
+- **Reconciliation (D6)**: the "4 orphaned needs_review runs" from the handoff
+  were already reconciled in session 2 — live state is 1 needs_review run
+  (`md74e18...`) with exactly 1 pending draft, consistent. No action needed;
+  the 1 pending draft is Keith's to review.
+
+### Open / packaged for Keith (host access was denied)
+
+- **UNAUTHORIZED scheduler (D5) — ELIMINATED n8n, SOURCE STILL UNKNOWN,
+  PACKAGED.** Logged into n8n (`zap.rproj.art`) and pulled the full workflow +
+  execution inventory: 20 workflows, only Gmail/audio/Notion — **none call
+  Convex, none run on a 6h cadence.** n8n is definitively not the source. A
+  **host or LXC cron** is the remaining suspect. Could not confirm: `id_ed25519`,
+  the OpenTofu SSH key (OpenSSH format), the Proxmox API token, and `:8006`
+  ticket auth were **all denied** from Keith's Mac. A 40-minute Convex log
+  window over one ~09:00 burst slot saw zero UNAUTHORIZED — **inconclusive**
+  (one partial window against a 6h cadence trivially misses a burst; do NOT read
+  this as "fixed" or "dormant"). Full runbook + host-cron hunt commands + a
+  no-host canary method: `docs/proxmox-worker-runbook-2026-07-12.md`. Env
+  refresh + worker restart also await host access there.
+- **49 provisional domains (D6)**: triaged into a decision packet —
+  `docs/review/domain-triage-2026-07-12.md` (2 promote / 34 merge / 13 reject,
+  plus 5/5/9 for parameter/relationship kinds). Surfaced two normalization bugs:
+  `KNOWN_PARAMETER_KINDS` camelCase entries can never match (normalizeName
+  lowercases first), and `normalizeConceptDomainSlug` doesn't fold underscores
+  (so `audio_ml` evades dedupe). Keith promotes/merges from the packet.
+- **Eval baseline sweep, plans/README 008 (D6)**: Codex ran it to STOP 4 — all
+  three golden datasets (`extractions/hypotheses/weekly-briefs-golden.jsonl`)
+  are **absent**; curation is a research-judgment task (targets ≥15/≥15/≥6
+  examples). No code issue; the sweep is unblocked the moment datasets exist.
+
+### New backlog items
+
+19. **e2e writes to production (structural).** e2e points at the prod Convex
+    deployment and the cleanup tracker omits campaigns/theses + swallows errors.
+    Fix (Meadows rule-level): a dedicated e2e deployment; `start-dev-for-e2e.sh`
+    refuses to boot unless `E2E_CONVEX_URL` is non-prod; a `DEPLOYMENT_ROLE=test`
+    guard inside the seed/bypass path; un-silence cleanup errors. Files:
+    `web/tests/e2e/cleanup.ts`, `web/scripts/start-dev-for-e2e.sh`,
+    `convex/testing.ts`.
+20. **Bypass-secret consumer inventory + auth-failure alerting.** The
+    UNAUTHORIZED class exists because `sources:updateText` is a public mutation
+    gated only by a shared dev bypass secret with unmanaged production consumers
+    and no alerting on repeated auth failures. Inventory consumers at rotation
+    time; add Convex-side alerting on repeated auth failures; longer-term give
+    the worker/scripts a real service identity.
+
 ## Session 2 ledger (2026-07-10 late night — autonomous orchestration)
 
 Working method: Claude orchestrates/verifies/commits; Codex (`gpt-5.6-sol`,
