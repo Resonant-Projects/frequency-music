@@ -1,4 +1,18 @@
 {
+  "the-rate-of-handles": {
+    "excerpt": "Audio becomes composable when high-dimensional sound is projected into slower, named handle spaces whose rates match musical intervention.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "composition",
+      "acoustics",
+      "perception",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "9bd384304143e3e05bf00316d603773ed1df3583deeff8ebd4e42e8f0768d194",
+    "generatedAt": "2026-07-13T19:08:00.000Z"
+  },
   "the-aligned-control-surface": {
     "excerpt": "Control begins when a system can hold one sonic identity steady while another dimension moves, linking source separation, transcription, TTS prosody, authenticity detection, and activation steering.",
     "tags": [
