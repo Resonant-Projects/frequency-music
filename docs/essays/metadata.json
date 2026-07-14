@@ -1,4 +1,18 @@
 {
+  "plasticity-is-a-trajectory": {
+    "excerpt": "Plasticity becomes compositional when a sonic gesture is treated as a trajectory: some sounds are fixed anchors, while others remain learnable and steerable across developmental time.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3f4b227d5b532e3598f799bcb71772ee010e123b60a601d600ff0c08dcce925e",
+    "generatedAt": "2026-07-14T11:05:09.974Z"
+  },
   "task-specific-time": {
     "excerpt": "Musical time is plural: beat shifts, choreographic plans, slow audio latents, and phonological features each expose the clock where a different musical decision becomes playable.",
     "tags": [
