@@ -1,4 +1,18 @@
 {
+  "task-specific-time": {
+    "excerpt": "Musical time is plural: beat shifts, choreographic plans, slow audio latents, and phonological features each expose the clock where a different musical decision becomes playable.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "AI-music",
+      "rhythm",
+      "perception",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "574b5986f8b2fd5315f783dfeb9f49e3fa73370dc18f05dce85258c6047af88a",
+    "generatedAt": "2026-07-14T03:06:18.052Z"
+  },
   "the-rate-of-handles": {
     "excerpt": "Audio becomes composable when high-dimensional sound is projected into slower, named handle spaces whose rates match musical intervention.",
     "tags": [
