@@ -42,3 +42,4 @@ env.d.ts
 web/env.d.ts
 agent/env.d.ts
 .worktrees/
+.vercel
