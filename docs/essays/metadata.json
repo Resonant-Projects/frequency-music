@@ -1,4 +1,18 @@
 {
+  "the-partial-that-becomes-a-line": {
+    "excerpt": "Produced pitch becomes composable when pitch strength, upper-partial salience, and inharmonicity are treated as controls over whether one sound behaves as a note, timbre, or hidden counterpoint.",
+    "tags": [
+      "composition",
+      "psychoacoustics",
+      "signal-processing",
+      "AI-music",
+      "acoustics",
+      "music-production"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f6c4fa1aa179a90ee8356a8dc8d9aa371adf95bdb84895be7ddbc08f6794898b",
+    "generatedAt": "2026-07-15T19:02:00.000Z"
+  },
   "plasticity-is-a-trajectory": {
     "excerpt": "Plasticity becomes compositional when a sonic gesture is treated as a trajectory: some sounds are fixed anchors, while others remain learnable and steerable across developmental time.",
     "tags": [
