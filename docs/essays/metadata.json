@@ -1,4 +1,18 @@
 {
+  "the-accessible-trajectory": {
+    "excerpt": "Musical form becomes composable when possible structures are constrained by the trajectories that make them reachable to matter, motion, models, and listeners.",
+    "tags": [
+      "composition",
+      "physics",
+      "rhythm",
+      "geometry",
+      "AI-music",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "70679e440b22ce1f2623e306daefad6071626a8843f29a09bdfc848ed46163e3",
+    "generatedAt": "2026-07-16T11:03:00.000Z"
+  },
   "the-partial-that-becomes-a-line": {
     "excerpt": "Produced pitch becomes composable when pitch strength, upper-partial salience, and inharmonicity are treated as controls over whether one sound behaves as a note, timbre, or hidden counterpoint.",
     "tags": [
