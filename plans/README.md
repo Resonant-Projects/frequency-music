@@ -10,20 +10,18 @@ starting, honor its STOP conditions, and update your row when done.
   agent worker, `web/src` + `agent/src`) that Wave 1 did not cover. **The active
   work is here** — see the "Wave 2" section below.
 
-> **⚠ Operator action required before Wave 2 runs (SEC-01):** the CI editorial
-> export (`.github/workflows/public-editorial-export.yml`) authenticates to the
-> **production** Convex backend using `AUTH_BYPASS_SECRET`. That only works if
-> `AUTH_BYPASS_ENABLED=true` on the prod deployment — which would mean the dev
-> auth bypass is live in production and any holder of the (now widely-copied)
-> bypass secret can call any `requireAuth`-gated function as `system`, fully
-> sidestepping Clerk. **Confirm `AUTH_BYPASS_ENABLED` on the prod backend.** If
-> it is `true`, replace the export's bypass auth with a scoped CI/service
-> identity (Clerk machine token or a `CONVEX_DEPLOY_KEY`-authenticated internal
-> export action) and set `AUTH_BYPASS_ENABLED=false` in prod, then drop
-> `AUTH_BYPASS_SECRET` from the GitHub Actions and Vercel envs. This is an
-> operator/deployment decision, not an executor code task, so it is not a
-> numbered plan — but it is the highest-severity finding of Wave 2. Plan 014
-> (constant-time compare) reduces its blast radius but does not resolve it.
+> **SEC-01 — resolved by operator decision (Keith, 2026-07-16):**
+> `AUTH_BYPASS_ENABLED=true` on the single production instance is
+> **intentional and stays on**. There is no separate dev deployment; the
+> bypass secret is the standing service identity for agents, CI (the
+> editorial export), and scripts that read/write the database, while Clerk
+> authentication exists to track which humans log in — not to gate agents.
+> Do not re-flag the enabled bypass as a misconfiguration, and do not file
+> plans to disable it. See the 2026-07-16 decision-log entry. The controls
+> that matter under this model are **secret hygiene**: plan 014's
+> constant-time compare, rotation discipline, the consumer inventory +
+> auth-failure alerting (improvements ledger #20), and TLS for the site
+> surface (#9).
 
 > **Archive note (2026-07-15):** Wave-1 completed plans 001–007, 009, 010 were
 > moved to `plans/archive/`. Only 008 remains active from Wave 1. The Wave-1

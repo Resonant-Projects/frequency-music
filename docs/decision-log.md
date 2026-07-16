@@ -466,6 +466,30 @@ Do not use this file for ordinary implementation notes or commit-style changelog
 - If machine-rendered micro-studies fail validation against human renderings, self-rendering retreats to starter kits and the studio remains the render path.
 - If off-mission flagging misclassifies enough on-mission concepts to matter, revisit single-pass LLM classification (add human spot-check or registry-seeded few-shot).
 
+## 2026-07-16 — Auth Bypass Is the Agent Service Identity (SEC-01 resolution)
+
+## **Decision**
+
+`AUTH_BYPASS_ENABLED=true` stays permanently on. There is no dev/production split — the single self-hosted Convex instance IS production. Clerk authentication exists to track which humans log in; the auth bypass secret is the standing service identity for everything non-human: LangGraph agents, CI (the public editorial export), crons-adjacent scripts, and CLI mutations. The Wave-2 audit finding SEC-01, which read the enabled bypass as a dev misconfiguration leaked into production, is resolved as intended behavior.
+
+## **Rationale**
+
+Agents running against the database are a core part of the system, not an exception; they need unattended read/write access that Clerk's human login flow cannot provide. One shared bypass secret is the accepted mechanism for the current single-operator, small-collaborator deployment.
+
+## **Alternatives considered**
+
+Disabling the bypass and issuing a scoped CI/service identity (Clerk machine token or deploy-key-authenticated internal actions) — rejected for now as machinery the deployment size doesn't warrant; noted as the long-term direction in improvements ledger #20.
+
+## **Downstream implications**
+
+- Future audits must not re-flag the enabled bypass; auditors check secret **hygiene**, not the flag.
+- The security burden concentrates on the secret itself: constant-time comparison (plan 014), rotation discipline with a consumer inventory + auth-failure alerting (ledger #20), and TLS for the plaintext site surface (#9).
+- `plans/README.md` Wave-2 preamble updated to match.
+
+## **Revisit trigger**
+
+Broader external exposure (public automation surfaces, more collaborators, connector layer going live) or any evidence the secret leaked — at that point graduate agents to a real service identity per ledger #20.
+
 ## Reversals / What Changed Our Mind
 
 ## 2026-07-07 — Agent drafts are no longer the only door
