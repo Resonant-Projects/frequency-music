@@ -196,7 +196,7 @@ Stop and report back (do not improvise) if:
   `eval-recipe.ts` exists, leave the recipe section `—` and say so in the
   report — that's a tooling gap for a future plan, not an execution failure.
 - The Codex provider-comparison rows are the first hard data on
-  subscription-inference quality (see `docs/plans/2026-07-01-01`); run them
+  subscription-inference quality (see `docs/archive/plan-waves/2026-07-01-01-codex-sdk-inference-provider.md`); run them
   when the agent workspace has Codex auth configured.
 - Watch: `docs/eval-baselines.md` is parsed positionally (first/last cell).
   Anyone "improving" the tables with extra columns breaks `promote.ts` —

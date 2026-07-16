@@ -5,13 +5,16 @@ commit `a30f10c`. Execute in the order below unless dependencies say
 otherwise. Each executor: read the plan fully before starting, honor its STOP
 conditions, and update your row when done.
 
+> **Archive note (2026-07-15):** completed plans 001–007, 009, 010 were moved
+> to `plans/archive/`. Only 008 remains active here. This table stays as the
+> wave's ledger. Cross-repo plan status: `docs/plans/README.md`.
+
 **Relationship to `docs/plans/`**: this repo already carries two committed plan
-waves — `docs/plans/2026-07-01-*` (agent system v2) and `docs/plans/2026-07-03-*`
-(architecture deepening 01–07). The audit behind THIS directory excluded
-everything those waves already card. Where a plan here touches the same files
-as an arch-wave plan, its STOP conditions and maintenance notes say how to
-reconcile; the arch wave's own sequencing (`docs/plans/2026-07-03-00-arch-master-sequence.md`)
-is unaffected.
+waves — the 2026-07-01 agent-system-v2 and 2026-07-03 architecture-deepening
+waves, both fully landed and archived to `docs/archive/plan-waves/`. The audit
+behind THIS directory excluded everything those waves already card. Where a
+plan here touches the same files as an arch-wave plan, its STOP conditions and
+maintenance notes say how to reconcile.
 
 **Standing constraint for every plan**: `bunx convex codegen|dev|deploy`
 contact the LIVE self-hosted backend. No plan here requires them; executors
@@ -48,13 +51,13 @@ action in `convex/ingest.ts` — don't run 004 and 010 concurrently).
 - **007 after 006**: both edit `CLAUDE.md` (linter-split note vs canonicalization).
 - **004 before/with 003**: the parser tests should be enforced by the new CI
   from day one; either order works, but land both.
-- **004 vs `docs/plans/2026-07-03-03` (LLM module)**: if the LLM-module refactor
+- **004 vs arch plan 2026-07-03-03 (LLM module, archived)**: if the LLM-module refactor
   lands first, 004's extract.ts targets move — its STOP 1 covers this.
-- **002 vs `docs/plans/2026-07-03-05` (agent-tool registry)**: both touch
+- **002 vs arch plan 2026-07-03-05 (agent-tool registry, archived)**: both touch
   `agentToolsHttp.ts`; whichever runs second adapts (002's STOP 2 / the
   registry plan's seam-handoff rules).
 - **Deferred dep upgrades** (see 007 maintenance notes): AI SDK v6→v7 must wait
-  for `docs/plans/2026-07-03-03`.
+  for arch plan 2026-07-03-03 (archived).
 - **008** needs `OPENROUTER_API_KEY` + `LANGSMITH_API_KEY` and possibly human
   dataset curation — it STOPs cleanly if either is missing.
 

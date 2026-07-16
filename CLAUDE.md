@@ -48,9 +48,11 @@ frequency-music/
 │   ├── essays/          # Synthesized research essays (18 essays)
 │   ├── reference/       # Quick reference guides
 │   │   └── microtuning-overview.md
-│   └── *.md             # Planning/spec docs
+│   ├── plans/           # ACTIVE plan wave + README with remaining-work order
+│   ├── archive/         # Completed/superseded plans (MVP planning/, landed waves)
+│   └── *.md             # Planning/spec docs; plan-status-report-*.md = latest audit
 │
-├── planning/            # Architecture and roadmap docs
+├── plans/               # Improve-skill wave ledger (008 open; done ones in plans/archive/)
 │
 ├── scales/              # Scala tuning files (.scl, .kbm)
 │   ├── geometric-temperament.scl
