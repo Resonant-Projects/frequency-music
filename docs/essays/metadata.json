@@ -1,4 +1,18 @@
 {
+  "representation-pressure": {
+    "excerpt": "Representation pressure names the task, dataset, body, or tradition that decides which musical facts remain legible enough to act on.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8d734c02cc78c7fbe84b4d21ede5176e3af97e68de2cf34fff0039feee290734",
+    "generatedAt": "2026-07-17T19:03:00.000Z"
+  },
   "the-alignment-rate": {
     "excerpt": "Alignment rate is a compositional handle: different musical decisions need different clocks of correspondence, from warping paths to latent audio rates to language-guided rewards.",
     "tags": [
