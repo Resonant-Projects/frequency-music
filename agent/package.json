@@ -32,5 +32,8 @@
     "@langchain/langgraph-cli": "1.2.1",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "ws": "^8.21.0"
   }
 }

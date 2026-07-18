@@ -127,6 +127,31 @@ mutation of source, and the plan requires it); run it only in the repo root.
 - `agent/` and `web/` lockfiles — Part 1's `ws` reachability is via root
   `convex`; if `bun audit` still flags `ws` from a `web/`- or `agent/`-only path
   after the root fix, note it and STOP rather than editing those workspaces here.
+  **Amended 2026-07-18 (operator-approved scope extension, standing cleanup
+  directive):** the root override provably does not reach the subpackages —
+  there is no `workspaces` field, so `agent/` and `web/` are independent
+  installs. `agent/` is now fixed here (own `overrides` block, re-locked to
+  `ws@8.21.1`, `bun audit` shows no `ws` advisory, `test:agent` 83 pass).
+  `web/` is deliberately NOT fixed — see the maintenance note below.
+
+**Maintenance note — `ws` overrides are now per-install:** there are three
+lockfiles (root, `agent/`, `web/`) and each needs its own `ws` override; two
+are done (root `ws@8.21.0`, `agent/ ws@8.21.1`). They share one retirement
+point: drop all overrides once every transitive dependent (`convex`,
+`langsmith`, `@hono/node-ws`, `@clerk/clerk-js` → `rpc-websockets`,
+`vite-plus`) ships a release requiring `ws >= 8.21.0` on its own.
+
+**Why `web/` is still open:** a name-level `ws` override there is not safe.
+`web/` also carries `ws@7.5.10` transitively (metro, react-native
+dev-middleware, jayson), which is **outside** both advisories' range
+(`>=8.0.0 <8.21.0`); a blanket override forces those to 8.x, a breaking major
+bump. Verified empirically — after the override `ws@7.5.10` disappears from
+`web/bun.lock` entirely. Separately, `web/package.json` pins `vite` and
+`vitest` to `@latest`, so any `vp install` in `web/` also drags the build
+toolchain (observed: `@voidzero-dev/vite-plus-core` 0.1.16 → 0.2.5,
+`@oxc-project/*` 0.123.0 → 0.139.0, +159 lockfile lines). Fixing `web/` needs
+path-scoped overrides (`convex`, `vite-plus`, `@clerk/clerk-js` only) plus a
+decision on the `@latest` pins — its own card, not a security patch.
 - Any other advisory `bun audit` surfaces — record it in your report as a
   follow-up; this plan fixes only `ws`.
 
