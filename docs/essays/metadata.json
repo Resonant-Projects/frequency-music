@@ -1,4 +1,18 @@
 {
+  "the-control-surface-inside-the-representation": {
+    "excerpt": "A musical representation becomes an instrument when its coordinates afford specific actions: transposition, reconstruction, tracking, and reachable melodic continuation.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "representation-learning",
+      "signal-processing",
+      "spatial-audio",
+      "music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b1e6afe4358a30f2e78bf1b57ec6809d8d4708518085f62e8bc9cad446dc57a4",
+    "generatedAt": "2026-07-18T11:03:00.000Z"
+  },
   "the-actionable-invariant": {
     "excerpt": "A musical identity becomes useful when it survives filtering, reconstruction, or transformation strongly enough to steer what happens next.",
     "tags": [
