@@ -111,12 +111,12 @@ async function main() {
       console.log(`   ✅ ${transcript.length} chars`);
       success++;
     } catch (error) {
-      console.log(`   ❌ ${error}`);
+      console.log(`   ❌ ${String(error)}`);
       await client.mutation(api.sources.updateStatus, {
         id: source._id,
         status: "review_needed",
         blockedReason: "no_text",
-        blockedDetails: `Transcript fetch failed: ${error}`,
+        blockedDetails: `Transcript fetch failed: ${String(error)}`,
         devBypassSecret,
       });
       failed++;

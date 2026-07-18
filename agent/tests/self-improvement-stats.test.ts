@@ -18,6 +18,7 @@ function mockFetchOnce(responseBody: unknown) {
   let capturedBody: Record<string, unknown> | undefined;
   globalThis.fetch = ((url: string | URL, init?: RequestInit) => {
     capturedUrl = String(url);
+    // oxlint-disable-next-line typescript/no-base-to-string -- Preserve the mock's legacy RequestInit body coercion.
     capturedBody = JSON.parse(String(init?.body ?? "{}"));
     return new Response(JSON.stringify(responseBody), {
       status: 200,

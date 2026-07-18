@@ -313,7 +313,7 @@ export const pollFeed = internalAction({
 
           processed++;
         } catch (itemError) {
-          errors.push(`Item "${item.title}": ${itemError}`);
+          errors.push(`Item "${item.title}": ${String(itemError)}`);
         }
       }
 
@@ -324,7 +324,7 @@ export const pollFeed = internalAction({
         lastItemAt: latestItemDate,
       });
     } catch (fetchError) {
-      errors.push(`Fetch error: ${fetchError}`);
+      errors.push(`Fetch error: ${String(fetchError)}`);
     }
 
     return { processed, errors };
@@ -358,7 +358,7 @@ export const pollAllFeeds = action({
       } catch (error) {
         results[feed.name] = {
           processed: 0,
-          errors: [`Action error: ${error}`],
+          errors: [`Action error: ${String(error)}`],
         };
       }
     }

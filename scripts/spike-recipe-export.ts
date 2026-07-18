@@ -47,7 +47,7 @@ export type RecipeExportV1 = {
   hypothesisId: string;
   generatedAt?: string;
   parameters: ParameterValueV1[];
-  protocol: unknown | null;
+  protocol: unknown;
   dawChecklist: string[];
   assets: Array<{
     type: "scl" | "kbm";

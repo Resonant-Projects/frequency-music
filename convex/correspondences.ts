@@ -348,7 +348,7 @@ export const setStatus = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx, args);
+    await requireAuth(ctx, args);
     if (!args.statusReason.trim()) {
       correspondenceError("STATUS_REASON_REQUIRED", "statusReason is required");
     }

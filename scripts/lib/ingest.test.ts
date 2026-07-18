@@ -210,7 +210,15 @@ describe("refetchByStatus", () => {
     );
     expect(summary).toEqual({ updated: 2, skipped: 0, failed: 0 });
     const updates = calls.filter((call) => call.name === "sources:updateText");
-    expect(updates.map((call) => call.args.id).toSorted()).toEqual(["a", "c"]);
+    expect(
+      updates
+        .map((call) => {
+          const id = call.args.id;
+          if (typeof id !== "string") throw new TypeError("Expected string id");
+          return id;
+        })
+        .toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual(["a", "c"]);
     const resets = calls.filter((call) => call.name === "sources:updateStatus");
     expect(resets.length).toBe(1);
     expect(resets[0]!.args).toMatchObject({ id: "c", status: "text_ready" });

@@ -28,14 +28,17 @@ function getNotionKey(): string {
 
 async function notionRequest(endpoint: string, options: RequestInit = {}) {
   const key = getNotionKey();
+  const headers = new Headers({
+    Authorization: `Bearer ${key}`,
+    "Notion-Version": NOTION_VERSION,
+    "Content-Type": "application/json",
+  });
+  new Headers(options.headers).forEach((value, name) => {
+    headers.set(name, value);
+  });
   const response = await fetch(`https://api.notion.com/v1${endpoint}`, {
     ...options,
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Notion-Version": NOTION_VERSION,
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
   });
   if (!response.ok) {
     const error = await response.text();

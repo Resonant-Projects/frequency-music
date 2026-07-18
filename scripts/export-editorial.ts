@@ -50,7 +50,7 @@ function parseArgs(): { outputDir: string } {
 
 async function main() {
   const { outputDir } = parseArgs();
-  const client = new ConvexHttpClient(CONVEX_URL);
+  const client = new ConvexHttpClient(CONVEX_URL!);
 
   console.log(`Querying published editorial artifacts from ${CONVEX_URL}...`);
 

@@ -136,6 +136,7 @@ function formatPayload(payload: unknown) {
   try {
     return JSON.stringify(payload, null, 2);
   } catch {
+    // oxlint-disable-next-line typescript/no-base-to-string -- Preserve the existing fallback for non-JSON-serializable payloads.
     return String(payload);
   }
 }
