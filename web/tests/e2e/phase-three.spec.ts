@@ -17,7 +17,7 @@ async function createCampaignViaUi(page: Page, title: string) {
   await expect(
     page
       .getByTestId("campaign-card")
-      .filter({ has: page.getByDisplayValue(title) })
+      .filter({ has: page.locator(`input[value="${title}"]`) })
       .first(),
   ).toBeVisible({ timeout: 30_000 });
 }
@@ -154,7 +154,9 @@ test.describe("phase three weekly turns", () => {
     await page.goto("/weekly-turns");
     const firstCard = page
       .getByTestId("campaign-card")
-      .filter({ has: page.getByDisplayValue(firstCampaignTitle) })
+      .filter({
+        has: page.locator(`input[value="${firstCampaignTitle}"]`),
+      })
       .first();
 
     await firstCard.getByRole("button", { name: "Set Active" }).click();

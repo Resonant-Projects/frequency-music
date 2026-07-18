@@ -34,7 +34,12 @@ describe("fetchViaJina", () => {
   test("targets the Jina reader URL", async () => {
     let seenUrl = "";
     const spy = ((input: string | Request | URL) => {
-      seenUrl = String(input);
+      seenUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
       return Promise.resolve(new Response("text", { status: 200 }));
     }) as unknown as typeof fetch;
     await fetchViaJina("https://example.com/article?x=1", { fetchImpl: spy });

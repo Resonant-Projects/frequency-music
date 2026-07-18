@@ -83,21 +83,36 @@ const FROZEN_UNION = union(FROZEN_HYPOTHESIS, FROZEN_RECIPE);
 
 describe("frozen pre-swap draft validator shapes", () => {
   test("schema validators match the captured hand-written shapes", () => {
-    expect((schemaHypothesisValidator as unknown as { json: unknown }).json).toEqual(FROZEN_HYPOTHESIS);
-    expect((schemaRecipeValidator as unknown as { json: unknown }).json).toEqual(FROZEN_RECIPE);
-    expect((schemaUnionValidator as unknown as { json: unknown }).json).toEqual(FROZEN_UNION);
-    expect((schemaProtocolValidator as unknown as { json: unknown }).json).toEqual(FROZEN_PROTOCOL);
+    expect(
+      (schemaHypothesisValidator as unknown as { json: unknown }).json,
+    ).toEqual(FROZEN_HYPOTHESIS);
+    expect(
+      (schemaRecipeValidator as unknown as { json: unknown }).json,
+    ).toEqual(FROZEN_RECIPE);
+    expect((schemaUnionValidator as unknown as { json: unknown }).json).toEqual(
+      FROZEN_UNION,
+    );
+    expect(
+      (schemaProtocolValidator as unknown as { json: unknown }).json,
+    ).toEqual(FROZEN_PROTOCOL);
   });
 });
 
 describe("zod-first draft payload validators", () => {
   test("derived validators are shape-identical to the frozen validators", () => {
-    expect((agentDraftHypothesisPayloadValidator as unknown as { json: unknown }).json).toEqual(
-      FROZEN_HYPOTHESIS,
-    );
-    expect((agentDraftRecipePayloadValidator as unknown as { json: unknown }).json).toEqual(FROZEN_RECIPE);
-    expect((agentReviewDraftPayloadValidator as unknown as { json: unknown }).json).toEqual(FROZEN_UNION);
-    expect((recipeProtocolValidator as unknown as { json: unknown }).json).toEqual(FROZEN_PROTOCOL);
+    expect(
+      (agentDraftHypothesisPayloadValidator as unknown as { json: unknown })
+        .json,
+    ).toEqual(FROZEN_HYPOTHESIS);
+    expect(
+      (agentDraftRecipePayloadValidator as unknown as { json: unknown }).json,
+    ).toEqual(FROZEN_RECIPE);
+    expect(
+      (agentReviewDraftPayloadValidator as unknown as { json: unknown }).json,
+    ).toEqual(FROZEN_UNION);
+    expect(
+      (recipeProtocolValidator as unknown as { json: unknown }).json,
+    ).toEqual(FROZEN_PROTOCOL);
   });
 
   test("zod keeps agent-facing refinements", () => {

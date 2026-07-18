@@ -100,7 +100,7 @@ export class E2ECleanupTracker {
     let failed = 0;
 
     // Delete in reverse order (children before parents)
-    for (const record of this.records.toReversed()) {
+    for (const record of [...this.records].reverse()) {
       const success =
         record.table === "feeds"
           ? deleteFeed(record.id)

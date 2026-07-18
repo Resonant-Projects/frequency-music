@@ -414,7 +414,7 @@ export function WeeklyTurnsPage() {
   async function handleCreateCampaignRecap(id: Id<"campaigns">) {
     try {
       const artifactId = await createCampaignDraft({ campaignId: id });
-      navigate({
+      void navigate({
         to: "/editorial/$artifactId",
         params: { artifactId: String(artifactId) },
       });
@@ -428,7 +428,7 @@ export function WeeklyTurnsPage() {
       <UICard
         as="form"
         onSubmit={(e: SubmitEvent) => {
-          handleCreateCampaign(e);
+          void handleCreateCampaign(e);
         }}
       >
         <div

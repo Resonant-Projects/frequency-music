@@ -899,11 +899,11 @@ export function Zodiac3D() {
 
   function openDomainWorkspace() {
     const destination = sectorRouteMap[selSector()] ?? "/display";
-    navigate({ to: destination });
+    void navigate({ to: destination });
   }
 
   function openWorkspace(path: string) {
-    navigate({ to: path });
+    void navigate({ to: path });
   }
 
   function goBack() {

@@ -707,9 +707,13 @@ export async function finalizeRunNode(
               // Swallow like runner.ts markFailed: the reconcile cron is the
               // backstop for a run this path could not transition.
               auditEvents.push(
-                nowEvent("error", "Failed to mark run failed after draft-write error", {
-                  message: errorMessage(markError),
-                }),
+                nowEvent(
+                  "error",
+                  "Failed to mark run failed after draft-write error",
+                  {
+                    message: errorMessage(markError),
+                  },
+                ),
               );
             }
           }

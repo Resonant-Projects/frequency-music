@@ -21,9 +21,9 @@ First paragraph here.`;
     expect(result.publishDate).toBe("2026-03-20");
     expect(result.draft).toBe(false);
     expect(result.essayNumber).toBeNull();
-    expect(
-      result.body.startsWith("## The Same Notes, Different Worlds"),
-    ).toBe(true);
+    expect(result.body.startsWith("## The Same Notes, Different Worlds")).toBe(
+      true,
+    );
     expect(result.body).not.toContain("Freq —");
     expect(result.body).not.toContain("# The Ground Note");
   });
