@@ -76,7 +76,7 @@ export async function requireAuth(
     if (
       configuredSecret &&
       providedSecret &&
-      providedSecret === configuredSecret
+      constantTimeEqual(providedSecret, configuredSecret)
     ) {
       return {
         // Schema requires createdBy to be either a users table id or "system".
