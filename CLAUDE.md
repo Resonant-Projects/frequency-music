@@ -14,14 +14,14 @@ Research-to-composition pipeline exploring connections between music, physics, m
 
 - **Runtime:** Node 24 managed by Vite+ (`vp`); package management delegates to Bun via `bun.lock`
 - **Backend:** Self-hosted Convex (managed by Cool Guy)
-- **LLM:** Convex pipeline: OpenRouter + AI SDK (Claude Sonnet default, Groq/Gemini/DeepSeek variants — see convex/extract.ts MODELS). Agent workspace: LangGraph with Codex SDK + Anthropic (see agent/).
+- **LLM:** Convex pipeline: OpenRouter + AI SDK (Claude Sonnet default, Groq/Gemini/DeepSeek variants — see convex/llm.ts MODELS). Agent workspace: LangGraph with Codex SDK + Anthropic (see agent/).
 - **Tuning Files:** Scala format (.scl, .kbm)
 
 **Repository:** `github.com:Resonant-Projects/frequency-music.git`
 
 ## Agent Tool Surface
 
-External LangGraph/LangChain agents use the secret-guarded Convex agent-tool surface documented in `docs/agent-tool-surface.md`. The surface reads project state, writes audit lifecycle records, and directly enriches reversible correspondence graph data with run-context provenance; irreversible hypothesis and recipe writes remain behind human-reviewed drafts. It is enabled by `AGENT_TOOL_SECRET`. The agent workspace is prepared for LangSmith tracing; Convex-side tracing still needs a Node-runtime split before importing the LangSmith SDK.
+External LangGraph/LangChain agents use the secret-guarded Convex agent-tool surface documented in `docs/agent-tool-surface.md`. The surface reads project state, writes audit lifecycle records, and directly enriches reversible correspondence graph data with run-context provenance; irreversible hypothesis and recipe writes remain behind human-reviewed drafts. It is enabled by `AGENT_TOOL_SECRET`. The agent workspace is prepared for LangSmith tracing; Convex-side tracing runs in Node-runtime modules (`convex/tracing.ts` with `"use node"`, plus `convex/llmNode.ts`) — see `docs/langsmith-runbook.md`.
 
 ## Directory Structure
 
@@ -45,7 +45,7 @@ frequency-music/
 │   └── pdfs/                          # Downloaded PDF files
 │
 ├── docs/
-│   ├── essays/          # Synthesized research essays (18 essays)
+│   ├── essays/          # Synthesized research essays — hundreds
 │   ├── reference/       # Quick reference guides
 │   │   └── microtuning-overview.md
 │   ├── plans/           # ACTIVE plan wave + README with remaining-work order
@@ -67,8 +67,6 @@ frequency-music/
 │   ├── fetch-full-articles.ts
 │   ├── fetch-youtube-transcripts.ts
 │   └── fetch-readwise-articles.ts
-│
-└── skills/              # Agent skills (Fabric CLI, etc.)
 ```
 
 ## Key Scripts

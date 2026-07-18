@@ -7,7 +7,7 @@ The canonical project reference is [CLAUDE.md](./CLAUDE.md); [CONTEXT.md](./CONT
 All CLI mutations require the Clerk auth bypass. Add the placeholder argument to mutation calls and let the local environment resolve the real value:
 
 ```bash
-bunx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4-6", "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
+vpx convex run extract:extractSource '{"sourceId": "...", "model": "anthropic/claude-sonnet-4.6", "devBypassSecret": "<AUTH_BYPASS_SECRET>"}'
 ```
 
 Never paste or commit a real secret value. See the Authentication section in [CLAUDE.md](./CLAUDE.md) for the canonical setup.
