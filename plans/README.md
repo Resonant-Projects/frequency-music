@@ -35,7 +35,8 @@ behind THIS directory excluded everything those waves already card. Where a
 plan here touches the same files as an arch-wave plan, its STOP conditions and
 maintenance notes say how to reconcile.
 
-**Standing constraint for every plan**: `bunx convex codegen|dev|deploy`
+**Standing constraint for every plan**: `bunx convex codegen|dev|deploy` — and
+equally the post-Vite+ `vpx convex codegen|dev|deploy` / `vpx convex run` —
 contact the LIVE self-hosted backend. No plan here requires them; executors
 never run them. Deployment of convex-touching changes (plans 002, 005, 010) is
 operator-gated.

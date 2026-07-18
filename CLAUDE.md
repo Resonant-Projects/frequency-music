@@ -14,7 +14,7 @@ Research-to-composition pipeline exploring connections between music, physics, m
 
 - **Runtime:** Node 24 managed by Vite+ (`vp`); package management delegates to Bun via `bun.lock`
 - **Backend:** Self-hosted Convex (managed by Cool Guy)
-- **LLM:** Convex pipeline: OpenRouter + AI SDK (Claude Sonnet default, Groq/Gemini/DeepSeek variants — see convex/llm.ts MODELS). Agent workspace: LangGraph with Codex SDK + Anthropic (see agent/).
+- **LLM:** Convex pipeline: OpenRouter + AI SDK (`openai/gpt-5.6-terra` default, Claude/Groq/Gemini/DeepSeek variants — see convex/llm.ts MODELS). Agent workspace: LangGraph with Codex SDK + Anthropic (see agent/).
 - **Tuning Files:** Scala format (.scl, .kbm)
 
 **Repository:** `github.com:Resonant-Projects/frequency-music.git`
