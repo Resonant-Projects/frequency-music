@@ -29,8 +29,9 @@ recommended order:
 
 ## Global constraints
 
-- Presentation + wiring of **existing** mutations only; the only new mutation surface allowed is
-  what item 1 needs for list/detail reads. No new decision semantics anywhere in this sweep.
+- Presentation + wiring of **existing** mutations only; the only new backend surface allowed is the
+  **query/read** side item 1 needs for its list/detail views. No new decision semantics anywhere in
+  this sweep.
 - Per item: typecheck green, Interceptor visual pass, screenshots in PR.
 
 ## Non-goals

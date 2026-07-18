@@ -29,7 +29,15 @@ routes `recipe-detail.tsx`, `agent-drafts.tsx`.
 ## Global constraints
 
 - The WIP cap (N=3 pending drafts) applies to auto-generated recipe drafts exactly as to miner
-  output: at cap, generation defers and logs a status event — it never queues unbounded.
+  output: at cap, generation defers and logs a status event — it never queues unbounded. **Deferral
+  must not strand work:** the "approved hypothesis lacking a recipe and lacking a pending
+  `recipe_draft`" condition IS the durable deferred-work record — no separate queue table. A
+  capacity-recheck (on draft decision and/or a cron sweep reusing the `generateBatch` selection
+  semantics) picks up deferred hypotheses when slots free, bounded to the cap each pass.
+- **Cap-check + dedupe are atomic:** the WIP-cap test and the pending-draft-per-hypothesis dedupe
+  happen inside the single Convex mutation that inserts the draft row (transactional), so concurrent
+  approvals can neither exceed N=3 nor create duplicate drafts; a retry reuses the existing pending
+  draft.
 - Recipe draft payloads validate against the shared zod payload schema (`convex/shared/`); the
   generator path and the review/amendment path use the same validator.
 - One recipe draft per hypothesis approval; re-approval or regeneration must not duplicate a pending
@@ -70,6 +78,9 @@ draft-creation helper per found state, harness tests.
   add/remove), extending the plan-07 edit mode; checklist and protocol as editable text.
 - `recipe-detail`: wire `recipes.update` (parameter edits with the same field-diff provenance
   discipline) and `recipes.updateStatus` (approve/deprecate with note).
+- **Server-side guards, not UI-side trust:** `recipes.update` revalidates payload shape and
+  authorization; `recipes.updateStatus` enforces the legal status-transition set; both get
+  mutation-level tests covering invalid payloads, unauthorized callers, and illegal transitions.
 
 - [ ] **Step 1:** Implement; `bun run typecheck:web`; Interceptor visual pass; screenshots in PR;
   commit.
@@ -79,9 +90,10 @@ draft-creation helper per found state, harness tests.
 ### Task 3: End-to-end gate
 
 - [ ] **Step 1:** On a real hypothesis: approve it → recipe draft appears in the queue (or a
-  deferral event if at cap) → amend one parameter in review → approve → promoted recipe carries
-  both agent and approved-with-edits provenance → deprecate it from `recipe-detail`. Timed: the
-  recipe review decision under 2 minutes.
+  deferral event if at cap, then appears after a slot frees) → amend one parameter in review →
+  approve → promoted recipe carries both agent and approved-with-edits provenance → **edit a
+  parameter on the promoted recipe from `recipe-detail`** (validation + field-diff provenance
+  verified) → deprecate it from `recipe-detail`. Timed: the recipe review decision under 2 minutes.
 
 ## Done means
 
