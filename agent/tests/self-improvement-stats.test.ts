@@ -64,8 +64,7 @@ describe("get_self_improvement_stats tool", () => {
     globalThis.fetch = originalFetch;
     if (originalUrl === undefined) {
       Reflect.deleteProperty(process.env, "CONVEX_SITE_URL");
-    }
-    else process.env.CONVEX_SITE_URL = originalUrl;
+    } else process.env.CONVEX_SITE_URL = originalUrl;
     if (originalSecret === undefined)
       Reflect.deleteProperty(process.env, "AGENT_TOOL_SECRET");
     else process.env.AGENT_TOOL_SECRET = originalSecret;

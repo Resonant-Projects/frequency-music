@@ -14,7 +14,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  if (savedBypass === undefined) Reflect.deleteProperty(process.env, "AUTH_BYPASS_SECRET");
+  if (savedBypass === undefined)
+    Reflect.deleteProperty(process.env, "AUTH_BYPASS_SECRET");
   else process.env.AUTH_BYPASS_SECRET = savedBypass;
 });
 

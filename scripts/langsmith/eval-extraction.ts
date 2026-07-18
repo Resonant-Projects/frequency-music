@@ -1,11 +1,7 @@
 #!/usr/bin/env -S vpx tsx
 import { extractionSchemaEvaluator } from "./evaluators/schema";
 import { parameterSpecificityEvaluator } from "./evaluators/parameter-specificity";
-import {
-  type EvalPrompt,
-  runEval,
-  stringifyPromptValue,
-} from "./eval-helper";
+import { type EvalPrompt, runEval, stringifyPromptValue } from "./eval-helper";
 
 const PROMPTS: Record<string, EvalPrompt> = {
   v2: {

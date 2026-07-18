@@ -39,7 +39,10 @@ type ManifestItem = {
 };
 
 function getGitDate(filePath: string): string | null {
-  const repoRelativePath = relative(resolve(import.meta.dirname, ".."), filePath);
+  const repoRelativePath = relative(
+    resolve(import.meta.dirname, ".."),
+    filePath,
+  );
   try {
     const result = execFileSync(
       "git",

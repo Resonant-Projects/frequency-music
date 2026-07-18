@@ -31,16 +31,12 @@ async function fetchTranscript(videoId: string): Promise<string> {
     stderr: string;
     exitCode: number | null;
   }>((resolve, reject) => {
-    const proc = spawn(
-      FABRIC_PATH,
-      ["--youtube", url, "--transcript"],
-      {
-        env: {
-          ...process.env,
-          PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
-        },
+    const proc = spawn(FABRIC_PATH, ["--youtube", url, "--transcript"], {
+      env: {
+        ...process.env,
+        PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
       },
-    );
+    });
     let stdout = "";
     let stderr = "";
     proc.stdout.setEncoding("utf8");

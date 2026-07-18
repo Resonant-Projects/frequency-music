@@ -1,10 +1,6 @@
 #!/usr/bin/env -S vpx tsx
 import type { Example, Run } from "langsmith";
-import {
-  type EvalPrompt,
-  runEval,
-  stringifyPromptValue,
-} from "./eval-helper";
+import { type EvalPrompt, runEval, stringifyPromptValue } from "./eval-helper";
 import { makeJudgeEvaluator } from "./evaluators/judge";
 
 // Required sections a well-formed weekly brief body must surface. schema-lite:
@@ -29,7 +25,8 @@ const briefSchemaLite = (run: Run, _example?: Example) => {
 
 /** thesis-reference: brief references at least one active thesis by title. */
 const thesisReferenceCheck = (run: Run, example?: Example) => {
-  const bodyValue = (run.outputs as Record<string, unknown> | undefined)?.bodyMd;
+  const bodyValue = (run.outputs as Record<string, unknown> | undefined)
+    ?.bodyMd;
   const body = stringifyPromptValue(bodyValue ?? "").toLowerCase();
   const theses = ((example?.inputs as Record<string, unknown> | undefined)
     ?.theses ?? []) as Array<Record<string, unknown>>;
@@ -58,7 +55,8 @@ const CONTRADICTION_RE =
 
 /** contradiction-mention: brief surfaces a contradiction / low-yield / weak path. */
 const contradictionMentionCheck = (run: Run, _example?: Example) => {
-  const bodyValue = (run.outputs as Record<string, unknown> | undefined)?.bodyMd;
+  const bodyValue = (run.outputs as Record<string, unknown> | undefined)
+    ?.bodyMd;
   const body = stringifyPromptValue(bodyValue ?? "");
   const hit = CONTRADICTION_RE.test(body);
   return {

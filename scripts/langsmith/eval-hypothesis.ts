@@ -1,10 +1,6 @@
 #!/usr/bin/env -S vpx tsx
 import { whyThisMattersEvaluator } from "./evaluators/why-matters";
-import {
-  type EvalPrompt,
-  runEval,
-  stringifyPromptValue,
-} from "./eval-helper";
+import { type EvalPrompt, runEval, stringifyPromptValue } from "./eval-helper";
 
 const PROMPTS: Record<string, EvalPrompt> = {
   v1: {

@@ -61,9 +61,9 @@ describe("graph concept detail authorization", () => {
     ]);
 
     const anonymousDetail = await t.query(api.graph.getConceptDetail, ids);
-    expect(anonymousDetail?.linkedSources.map((source) => source.title)).toEqual(
-      ["Public source"],
-    );
+    expect(
+      anonymousDetail?.linkedSources.map((source) => source.title),
+    ).toEqual(["Public source"]);
     const workbenchDetail = await t
       .withIdentity({ subject: "user-1" })
       .query(api.graph.getConceptDetail, ids);
