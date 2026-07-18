@@ -50,7 +50,7 @@ adds a cron whose **activation is operator-gated** (needs a Convex deploy).
 |------|-------|----------|--------|------------|--------|
 | 011 | SSRF guard on `ingestUrl` (block private/loopback targets) | P1 | S | — | DONE 2026-07-18 — parse-time guard incl. IPv4-mapped-IPv6 block; `lint:check` gate pre-existing-broken on main (waived; carded into 015). |
 | 012 | Fix `recipes.generateBatch` return validator (`whyThisMatters`) | P1 | S | — | DONE 2026-07-18 — fail-then-pass regression test included; `lint:check` gate pre-existing-broken on main (waived; carded into 015/016). |
-| 013 | Wire `reconcileReviewedRuns` cron + finalizer atomicity | P1 | S | — | TODO (cron activation operator-gated) |
+| 013 | Wire `reconcileReviewedRuns` cron + finalizer atomicity | P1 | S | — | DONE — code+tests landed 2026-07-18; cron activation deploy-pending (operator). Note: `lint:check` and root `typecheck:agent` gates are pre-existing-broken on main (waived; carded into 015). |
 | 014 | Security hardening: bump `ws` (GHSA), constant-time bypass compare | P2 | S | — | TODO |
 | 015 | Docs sweep (Bun→Vite+, stale facts) + aggregate `verify` command | P2 | S | — | TODO |
 
