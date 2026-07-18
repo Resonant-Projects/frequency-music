@@ -28,6 +28,10 @@ _Avoid_: fact, finding
 **Domain**:
 A registry-governed discipline (microtuning, cymatics, psychoacoustics, sacred geometry, …) assigned to concepts; correspondences must cross domains. A concept may live in several domains. Registry maturity (known/provisional/experimental/deprecated) and mission relevance are separate axes from domain membership.
 
+**Domain Triage**:
+The standing human curation of the domain registry: promoting, merging, or rejecting provisional domains the classifier mints as new sources arrive. A recurring decision surface, not a one-off cleanup — provisional domains accumulate continuously, and untriaged domains degrade correspondence mining (which filters on domain membership).
+_Avoid_: domain cleanup (implies one-off), registry review (too generic)
+
 **On-Mission / Off-Mission**:
 Whether a concept belongs to the research program or is incidental capture (e.g. ML-engineering vocabulary from arXiv feeds). Off-mission concepts remain in the graph but are excluded from correspondence mining.
 _Avoid_: relevant/irrelevant (too generic), noise (off-mission capture may still be useful reference)
@@ -88,7 +92,7 @@ An agent-proposed hypothesis or recipe payload awaiting human review; the only d
 _Avoid_: proposal, suggestion
 
 **Draft Promotion**:
-Human approval converting an agent draft into a real hypothesis or recipe, stamped with agent provenance and held to the same rigor as human creation.
+Human approval converting an agent draft into a real hypothesis or recipe, stamped with agent provenance and held to the same rigor as human creation. Promotion may carry operator amendments — the reviewer edits the payload before approving, the original agent payload is preserved, and provenance records approved-with-edits plus the changed fields.
 
 **Agent-Tool Surface**:
 The secret-guarded HTTP interface through which external agents read project state and append audit events. Human decisions (approve/reject/supersede) are never part of it.

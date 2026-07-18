@@ -490,6 +490,49 @@ Disabling the bypass and issuing a scoped CI/service identity (Clerk machine tok
 
 Broader external exposure (public automation surfaces, more collaborators, connector layer going live) or any evidence the secret leaked — at that point graduate agents to a real service identity per ledger #20.
 
+## 2026-07-18 — Decision Surfaces: Coverage and Shaping, Not Initiation
+
+## **Decision**
+
+The web UI's job is **decision coverage, input/output shaping, and observability — not pipeline initiation**. Generation and mining stay scheduled/CLI-triggered; the UI is where the human decides and shapes. Concretely, four things enter the plan set:
+
+1. **Plan 07 (review UX) is amended in place** to include edit-before-approve: `agentDrafts.approve` gains an optional `amendedPayload` (validated by the same shared zod schema the agent write path uses); the original agent payload is preserved on the draft row; promoted provenance records `approvedWithEdits` + `editedFields`. This explicitly overrides plan 07's original "no new decision semantics" constraint. Visual plan: plans.rproj.art `plan-6c6d455f77974bd3`.
+2. **Domain triage becomes a standing surface** (new plan 2026-07-18-12): `promote`/`reject` mutations (merge with a scripted-assist fallback if remapping semantics balloon) plus a minimal triage UI. The 49-domain packet (`docs/review/domain-triage-2026-07-12.md`) is decided *through* the new surface. Runs parallel to plan 04, lands before plan 05 so the miner sees a curated registry.
+3. **Recipe loop closure** (new plan 2026-07-18-13): approving a hypothesis auto-drafts its recipe through the agent-draft door (same WIP cap, same review queue), and the recipe review surface supports parameter editing + status transitions (fixing recipes being read-only in the UI). Lands after 07.
+4. **Decision-surface sweep** (new plan 2026-07-18-14): correspondence adjudication view, weekly-brief edit/publish, draft supersede, extraction correction. After 08/09.
+
+Generator steering (model/prompt/scope knobs in the UI) is **deferred but roadmapped** — next after the sweep, before any Phase-B cockpit work. The self-render bounded-spike framing (plan 11) was re-examined and **stands**.
+
+Operator-item delegations recorded: the Proxmox worker restart + UNAUTHORIZED-caller hunt is now DA-executed (SSH/1Password/OpenTofu), gated before plan 05 counts as done; golden eval datasets become DA-prepared/Keith-ratified (pre-annotated candidates, single accept/reject pass), scheduled before recipe-loop-closure starts.
+
+## **Rationale**
+
+- A full audit of UI decision surfaces (2026-07-18) found approvals exist but are thin: draft approval was take-it-or-leave-it, recipes were read-only in the UI, correspondence adjudication was CLI-only by design, and domain triage had **no executable path anywhere** — the only decision point in the system that could not be executed even from the CLI.
+- Take-it-or-leave-it review forces reject-and-regenerate loops on drafts that are 90% right — the same friction that produced the dead queue plan 07 exists to fix. Editing is part of the decision moment.
+- Decisions parked in markdown don't happen (the triage packet sat six days untouched); decisions with buttons do. Triage is recurring, not one-off — the classifier keeps minting provisional domains.
+- Auto-generating recipes on hypothesis approval extends "two doors, one gate" instead of bypassing it: automation of generation, human gate on entry.
+
+## **Alternatives considered**
+
+- A full operator cockpit (initiation + steering from the web) — rejected: the gap evidence points at decision coverage, and the loop-wave sequencing rule (synthesis first) stands.
+- One-off script to apply the 49 triage decisions — rejected: clears today's queue, queue refills, surface still missing.
+- Separate plan for edit-before-approve instead of amending 07 — rejected: it would rebuild the same review card twice.
+- Committing to full machine rendering now — rejected: the validation-gated spike protects listening-data integrity, the loop's ground truth.
+
+## **Downstream implications**
+
+- `agentReviewDrafts` gains an optional `amendedPayload` field; promoted-row provenance gains `approvedWithEdits`/`editedFields`.
+- The vocabulary registry gains triage mutations; the miner (plan 05) consumes a curated registry.
+- `recipes.updateStatus` and recipe editing get UI surfaces; hypothesis approval schedules recipe drafting.
+- CONTEXT.md updated: Draft Promotion (amendments), new Domain Triage term.
+- Execution order: Wave-2 fixes (011–015) → 04 ∥ 12-triage → 05 → 06 → 07 (amended) → 13-recipe-loop → 08 → 09 → 14-sweep → 10 → 11 → generator steering.
+
+## **Revisit trigger**
+
+- If edit-before-approve sees near-zero use after a month of real drafts, the reject-note loop was sufficient — drop the amendment surface from the recipe path rather than extending it.
+- If triage volume stays trivial (<5 provisional domains/month), the standing surface can freeze after the initial 49 are decided.
+- If scheduled generation cadence feels wrong once volume arrives, that is the signal to build generator steering.
+
 ## Reversals / What Changed Our Mind
 
 ## 2026-07-07 — Agent drafts are no longer the only door
