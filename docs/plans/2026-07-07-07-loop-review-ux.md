@@ -87,7 +87,12 @@ Queue list view: pending count headline ("2 drafts awaiting review — agent blo
 
 **Interfaces (binding):**
 
-- `approve` args gain `amendedPayload: v.optional(<shared draft payload validator>)`. Promotion uses `amendedPayload ?? draft.payload`. Kind mismatch (hypothesis draft with recipe-shaped amendment, or vice versa) rejects with `INVALID_STATE`.
+- `approve` args gain `amendedPayload: v.optional(<shared draft payload validator>)`. The argument is
+  a **complete payload**, not a patch — the client sends the full amended object, the server
+  validates it whole, and `editedFields` is derived server-side by diffing against the original
+  (dot-paths for nested fields, e.g. `protocol.steps`). Promotion uses
+  `amendedPayload ?? draft.payload`. Kind mismatch (hypothesis draft with recipe-shaped amendment,
+  or vice versa) rejects with `INVALID_STATE`.
 - Draft patch on approval stores `amendedPayload` beside the untouched original `payload`; promoted-row provenance gains `approvedWithEdits: true` + `editedFields: string[]` (top-level field diff) when edits exist.
 - UI: edit is an **explicit mode** entered from the decide bar (`e`), not always-editable fields. Evidence and prior work stay visible while editing. Approve becomes "Approve with edits" and the confirm dialog lists the changed fields. Scope for this pass: text-level fields (title/question/statement/why-this-matters and recipe text fields); structured recipe-parameter editing lands with the recipe-loop-closure plan (2026-07-18-13).
 

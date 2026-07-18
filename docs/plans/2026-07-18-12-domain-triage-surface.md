@@ -48,7 +48,13 @@ harness tests.
 
 **Interfaces (binding):** three human mutations, each list-aware
 (`list: "conceptDomain" | "parameterKind" | "relationshipKind"`), each recording
-`decidedAt`/`decidedBy` and a short optional note:
+`decidedAt`/`decidedBy` and a short optional note. Common contract: caller must be
+an authenticated operator (Clerk identity, or `devBypassSecret` under the standing
+`AUTH_BYPASS_ENABLED` service-identity model) with `decidedBy` derived server-side
+from the auth context, never caller-supplied; the source entry must be **currently
+provisional and belong to the named list** at transaction time — decided (known/
+deprecated/merged) or wrong-list sources reject, making repeated and stale
+operations safe. Tests cover unauthorized callers and stale/repeated decisions:
 
 - `vocabulary.promoteEntry { list, entryId, note? }` — provisional → `known`.
 - `vocabulary.rejectEntry { list, entryId, note? }` — provisional → `deprecated`; concepts keep their
@@ -98,10 +104,13 @@ visible the way review debt is on the draft queue.
 
 - [ ] **Step 1:** Keith (or DA-assisted session) walks the packet's recommendations through the new
   surface. The packet document gets a header note marking it decided-with-date and pointing at the
-  registry as the source of truth thereafter.
-- [ ] **Step 2:** Spot-check gate: `reviewSummary` shows 0 provisional entries on **all three lists**
-  (concept domains, parameter kinds, relationship kinds); miner-facing domain filter excludes
-  deprecated entries; `vpx convex run vocabulary:reviewSummary '{}'` output attached to the PR.
+  registry as the source of truth thereafter. **Completion is scoped to the packet snapshot** (the
+  entries listed in the 2026-07-12 doc): provisional entries minted after that cutoff are ordinary
+  new triage debt surfaced by the route's headline counts, not blockers on this plan's done-gate.
+- [ ] **Step 2:** Spot-check gate: `reviewSummary` shows 0 provisional **packet-snapshot** entries on
+  all three lists (concept domains, parameter kinds, relationship kinds); miner-facing domain filter
+  excludes deprecated entries; `vpx convex run vocabulary:reviewSummary '{}'` output attached to the
+  PR.
 
 ## Done means
 

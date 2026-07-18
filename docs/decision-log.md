@@ -494,7 +494,7 @@ Broader external exposure (public automation surfaces, more collaborators, conne
 
 ## **Decision**
 
-The web UI's job is **decision coverage, input/output shaping, and observability — not pipeline initiation**. Generation and mining stay scheduled/CLI-triggered; the UI is where the human decides and shapes. Concretely, four things enter the plan set:
+The web UI's job is **decision coverage, input/output shaping, and observability — not pipeline initiation**. "Not initiation" means the UI gets no arbitrary generate/mine/extract triggers; a bounded generation step enqueued as the **side effect of a human decision** (hypothesis approval auto-drafting its recipe, item 3 below) is decision-coverage, not initiation. Generation and mining otherwise stay scheduled/CLI-triggered; the UI is where the human decides and shapes. Concretely, four things enter the plan set:
 
 1. **Plan 07 (review UX) is amended in place** to include edit-before-approve: `agentDrafts.approve` gains an optional `amendedPayload` (validated by the same shared zod schema the agent write path uses); the original agent payload is preserved on the draft row; promoted provenance records `approvedWithEdits` + `editedFields`. This explicitly overrides plan 07's original "no new decision semantics" constraint. Visual plan: plans.rproj.art `plan-6c6d455f77974bd3`.
 2. **Domain triage becomes a standing surface** (new plan 2026-07-18-12): `promote`/`reject` mutations (merge with a scripted-assist fallback if remapping semantics balloon) plus a minimal triage UI. The 49-domain packet (`docs/review/domain-triage-2026-07-12.md`) is decided *through* the new surface. Runs parallel to plan 04, lands before plan 05 so the miner sees a curated registry.
