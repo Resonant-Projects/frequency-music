@@ -15,7 +15,7 @@ describe("assertPublicHttpUrl", () => {
     "http://example.com:8080/x",
     "https://93.184.216.34/",
   ])("accepts public HTTP URL %s", (url) => {
-    expect(assertPublicHttpUrl(url)).toBe(url);
+    expect(assertPublicHttpUrl(url).toString()).toBe(url);
   });
 
   test.each(["file:///etc/passwd", "ftp://example.com"])(

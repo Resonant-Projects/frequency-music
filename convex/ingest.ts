@@ -44,42 +44,37 @@ interface UrlTextResponse {
  * Validate a source URL and map it to the Jina Reader endpoint.
  */
 export function buildJinaReaderUrl(rawUrl: string): string {
-  let url: URL;
-  try {
-    url = new URL(rawUrl);
-  } catch {
-    throw new Error("invalid_url: URL is not valid");
-  }
-
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("invalid_url: only HTTP and HTTPS URLs are supported");
-  }
-  if (url.username || url.password) {
-    throw new Error("invalid_url: URLs with embedded credentials are rejected");
-  }
-
-  return `${JINA_READER_URL}/${url.toString()}`;
+  return `${JINA_READER_URL}/${parseHttpUrl(rawUrl).toString()}`;
 }
 
 /**
- * Validate that a URL is safe for a direct fetch from the Convex runtime.
- * This is a parse-time guard only; without DNS resolution it cannot prevent
- * DNS rebinding from a public hostname to a private address.
+ * Parse a URL and apply the scheme + embedded-credential checks shared by
+ * every outbound-URL helper in this module.
  */
-export function assertPublicHttpUrl(rawUrl: string): string {
+function parseHttpUrl(rawUrl: string): URL {
   let url: URL;
   try {
     url = new URL(rawUrl);
   } catch {
     throw new Error("invalid_url: URL is not valid");
   }
-
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("invalid_url: only HTTP and HTTPS URLs are supported");
   }
   if (url.username || url.password) {
     throw new Error("invalid_url: URLs with embedded credentials are rejected");
   }
+  return url;
+}
+
+/**
+ * Validate that a URL is safe for a direct fetch from the Convex runtime and
+ * return the parsed URL. This is a parse-time guard only; without DNS
+ * resolution it cannot prevent DNS rebinding from a public hostname to a
+ * private address.
+ */
+export function assertPublicHttpUrl(rawUrl: string): URL {
+  const url = parseHttpUrl(rawUrl);
 
   const hostname = url.hostname.toLowerCase().replaceAll(/^\[|\]$/g, "");
   const isInternalHostname =
@@ -91,20 +86,17 @@ export function assertPublicHttpUrl(rawUrl: string): string {
   const octets = hostname.split(".");
   const isIpv4Literal =
     octets.length === 4 &&
-    octets.every((octet) => /^\d+$/.test(octet)) &&
-    octets.every((octet) => {
-      const value = Number(octet);
-      return Number.isInteger(value) && value >= 0 && value <= 255;
-    });
-  const ipv4 = isIpv4Literal ? octets.map(Number) : undefined;
+    octets.every((octet) => /^\d{1,3}$/.test(octet) && Number(octet) <= 255);
+  const [a, b] = isIpv4Literal ? octets.map(Number) : [];
   const isPrivateIpv4 =
-    ipv4 !== undefined &&
-    (ipv4[0] === 10 ||
-      ipv4[0] === 127 ||
-      (ipv4[0] === 169 && ipv4[1] === 254) ||
-      (ipv4[0] === 172 && ipv4[1]! >= 16 && ipv4[1]! <= 31) ||
-      (ipv4[0] === 192 && ipv4[1] === 168) ||
-      (ipv4[0] === 100 && ipv4[1]! >= 64 && ipv4[1]! <= 127));
+    a !== undefined &&
+    b !== undefined &&
+    (a === 10 ||
+      a === 127 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127));
 
   const isIpv6Literal = hostname.includes(":");
   const isPrivateIpv6 =
@@ -130,7 +122,7 @@ export function assertPublicHttpUrl(rawUrl: string): string {
     );
   }
 
-  return rawUrl;
+  return url;
 }
 
 /**
@@ -521,7 +513,6 @@ export const ingestUrl = action({
     await requireAuth(ctx, args);
     const safeUrl = assertPublicHttpUrl(args.url);
     // Generate dedupeKey (canonical: keeps query string, matches sources.createFromUrlInput)
-    const urlObj = new URL(args.url);
     const dedupeKey = generateDedupeKey("url", { canonicalUrl: args.url });
 
     // Check if already exists
@@ -536,7 +527,7 @@ export const ingestUrl = action({
     }
 
     // Fetch the page
-    const response = await fetchWithTimeout(safeUrl, {
+    const response = await fetchWithTimeout(safeUrl.toString(), {
       headers: {
         "User-Agent": "ResonantProjects/1.0 (research aggregator)",
       },
@@ -550,7 +541,7 @@ export const ingestUrl = action({
 
     // Extract title
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
-    const title = titleMatch ? stripHtml(titleMatch[1]!) : urlObj.hostname;
+    const title = titleMatch ? stripHtml(titleMatch[1]!) : safeUrl.hostname;
 
     // Extract main content (simplified - could use readability library)
     // For now, just strip HTML from body
