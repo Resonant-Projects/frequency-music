@@ -86,7 +86,7 @@ export function WeeklyBriefDetailPage() {
       const artifactId = await createRecapDraft({
         weeklyBriefId: b._id as Id<"weeklyBriefs">,
       });
-      navigate({
+      void navigate({
         to: "/editorial/$artifactId",
         params: { artifactId: String(artifactId) },
       });

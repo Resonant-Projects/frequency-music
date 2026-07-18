@@ -31,16 +31,12 @@ async function fetchTranscript(videoId: string): Promise<string> {
     stderr: string;
     exitCode: number | null;
   }>((resolve, reject) => {
-    const proc = spawn(
-      FABRIC_PATH,
-      ["--youtube", url, "--transcript"],
-      {
-        env: {
-          ...process.env,
-          PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
-        },
+    const proc = spawn(FABRIC_PATH, ["--youtube", url, "--transcript"], {
+      env: {
+        ...process.env,
+        PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
       },
-    );
+    });
     let stdout = "";
     let stderr = "";
     proc.stdout.setEncoding("utf8");
@@ -111,12 +107,12 @@ async function main() {
       console.log(`   ✅ ${transcript.length} chars`);
       success++;
     } catch (error) {
-      console.log(`   ❌ ${error}`);
+      console.log(`   ❌ ${String(error)}`);
       await client.mutation(api.sources.updateStatus, {
         id: source._id,
         status: "review_needed",
         blockedReason: "no_text",
-        blockedDetails: `Transcript fetch failed: ${error}`,
+        blockedDetails: `Transcript fetch failed: ${String(error)}`,
         devBypassSecret,
       });
       failed++;

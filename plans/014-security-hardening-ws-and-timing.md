@@ -246,6 +246,8 @@ Stop and report if:
 - The `ws` override is a **transitive pin**; when `convex` is next upgraded,
   check whether it already depends on a patched `ws` and remove the override if
   redundant (a stale override masks future advisories on the same package).
+  Concretely: **remove the override when `convex` reaches ≥1.42.3**, which pins
+  `ws 8.21.0` natively — the exact version this override resolves to today.
 - SEC-01 (whether `AUTH_BYPASS_ENABLED` is true in production) is a separate,
   operator-owned verification. This plan reduces the blast radius of that
   question but does not resolve it — see `plans/README.md`'s operator-action note.

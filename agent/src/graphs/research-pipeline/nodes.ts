@@ -682,17 +682,40 @@ export async function finalizeRunNode(
                 ),
               );
             }
-          } catch (error) {
+          } catch (draftError) {
+            // A needs_review run with no persisted draft can never be closed by a
+            // human. Fail the run so it leaves the review queue instead of
+            // wedging. See plan 013.
+            const draftFailureMessage = errorMessage(draftError);
             auditEvents.push(
               ...(await appendRemoteAuditEvent(
                 state.agentRunId,
                 "error",
                 "Failed to persist human-review draft row",
                 {
-                  message: errorMessage(error),
+                  message: draftFailureMessage,
                 },
               )),
             );
+            try {
+              await callConvex("markAgentRunFailed", {
+                runId: state.agentRunId,
+                summary,
+                error: { messages: [...state.errors, draftFailureMessage] },
+              });
+            } catch (markError) {
+              // Swallow like runner.ts markFailed: the reconcile cron is the
+              // backstop for a run this path could not transition.
+              auditEvents.push(
+                nowEvent(
+                  "error",
+                  "Failed to mark run failed after draft-write error",
+                  {
+                    message: errorMessage(markError),
+                  },
+                ),
+              );
+            }
           }
         }
       } else {

@@ -30,7 +30,7 @@ type BackfillBatchResult = {
 
 async function main() {
   const apply = process.argv.includes("--apply");
-  const client = new ConvexHttpClient(CONVEX_URL);
+  const client = new ConvexHttpClient(CONVEX_URL!);
   let cursor: string | null = null;
   let isDone = false;
   const totals = { processed: 0, claimsInserted: 0, skippedExisting: 0 };

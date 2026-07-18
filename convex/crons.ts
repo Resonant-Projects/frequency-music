@@ -46,6 +46,15 @@ crons.interval(
   {},
 );
 
+// Close needs_review runs whose drafts are all resolved (or that never got a
+// draft written) so a run can't wedge in needs_review forever. See plan 013.
+crons.interval(
+  "reconcile-reviewed-agent-runs",
+  { minutes: 15 },
+  internal.agentRuns.reconcileReviewedRuns,
+  {},
+);
+
 // Refresh dashboard/inbox row counts (see plans/005) so hot queries never full-scan
 crons.interval(
   "recompute-stats",

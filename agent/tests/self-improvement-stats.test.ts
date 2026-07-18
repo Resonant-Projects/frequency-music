@@ -18,6 +18,7 @@ function mockFetchOnce(responseBody: unknown) {
   let capturedBody: Record<string, unknown> | undefined;
   globalThis.fetch = ((url: string | URL, init?: RequestInit) => {
     capturedUrl = String(url);
+    // oxlint-disable-next-line typescript/no-base-to-string -- Preserve the mock's legacy RequestInit body coercion.
     capturedBody = JSON.parse(String(init?.body ?? "{}"));
     return new Response(JSON.stringify(responseBody), {
       status: 200,
@@ -63,8 +64,7 @@ describe("get_self_improvement_stats tool", () => {
     globalThis.fetch = originalFetch;
     if (originalUrl === undefined) {
       Reflect.deleteProperty(process.env, "CONVEX_SITE_URL");
-    }
-    else process.env.CONVEX_SITE_URL = originalUrl;
+    } else process.env.CONVEX_SITE_URL = originalUrl;
     if (originalSecret === undefined)
       Reflect.deleteProperty(process.env, "AGENT_TOOL_SECRET");
     else process.env.AGENT_TOOL_SECRET = originalSecret;

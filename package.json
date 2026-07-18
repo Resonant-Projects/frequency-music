@@ -6,8 +6,8 @@
   "scripts": {
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint": "vp lint . --fix --tsconfig tsconfig.json",
-    "lint:check": "vp lint . --tsconfig tsconfig.json",
+    "lint": "vp lint convex harness scripts --fix --tsconfig tsconfig.json",
+    "lint:check": "vp lint convex harness scripts --tsconfig tsconfig.json",
     "test": "vp test convex",
     "test:harness": "vp test harness",
     "test:agent": "cd agent && vp test",
@@ -47,7 +47,8 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2",
+    "ws": "^8.20.1"
   },
   "devEngines": {
     "packageManager": {

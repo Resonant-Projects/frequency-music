@@ -331,7 +331,7 @@ export const extractAllReady = action({
           id: source._id,
           title: source.title || "Untitled",
           success: false,
-          error: `${error}`,
+          error: String(error),
         });
       }
     }
