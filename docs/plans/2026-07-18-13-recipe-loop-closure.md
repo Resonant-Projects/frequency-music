@@ -1,0 +1,92 @@
+# 13 — Recipe Loop Closure — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
+> **Sequencing:** after plan 07 (amended review UX) — recipe drafts flow into the same review card and reuse its edit-before-approve machinery. Consumes plan 06's draft-door plumbing.
+> **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). Prerequisite operator item: golden eval datasets curated (plan `plans/008`) **before this plan starts**, so generator changes here are measured against a baseline.
+
+## Executor brief
+
+Two halves of one user story — when a hypothesis is approved, its recipe drafts itself; when the
+recipe draft comes up for review, the reviewer can shape it:
+
+1. **Auto-draft on approval:** approving a hypothesis (draft promotion or manual status change to an
+   approved/active state per found status vocabulary) schedules recipe generation whose output enters
+   the **agent-draft door** as a `recipe_draft` — same WIP cap, same review queue, same provenance
+   discipline. Automation of generation, human gate on entry ("two doors, one gate" extended, not
+   bypassed).
+2. **Recipe review surface:** recipe drafts and promoted recipes stop being read-only in the UI —
+   structured parameter editing on the review card (extending plan 07's text-level edit mode), and
+   `recipes.updateStatus` (approve/deprecate) wired into `recipe-detail`.
+
+**Why:** today `recipes:generateFromHypothesis` is a manual CLI ritual, `recipe-detail.tsx` has zero
+mutations, and `recipes.updateStatus` is unreachable from the UI — the hypothesis→recipe chain is
+where the pipeline stalls after review.
+
+**Tech stack:** Convex scheduler + existing recipe generator path (`convex/recipes.ts`,
+`convex/llm.ts`); agent-draft door (`convex/agentDrafts.ts`, `agentReviewDrafts` table); SolidJS
+routes `recipe-detail.tsx`, `agent-drafts.tsx`.
+
+## Global constraints
+
+- The WIP cap (N=3 pending drafts) applies to auto-generated recipe drafts exactly as to miner
+  output: at cap, generation defers and logs a status event — it never queues unbounded.
+- Recipe draft payloads validate against the shared zod payload schema (`convex/shared/`); the
+  generator path and the review/amendment path use the same validator.
+- One recipe draft per hypothesis approval; re-approval or regeneration must not duplicate a pending
+  draft for the same hypothesis (dedupe on pending `recipe_draft` payload.hypothesisId).
+- `bunx convex codegen|dev|deploy` contact the LIVE backend; deploys operator-gated.
+
+## Non-goals / rabbit holes
+
+- **No** starter-kit generation on approval (plan 10 owns recipe → `.scl`/`.kbm`/MIDI artifacts).
+- **No** auto-approval of anything — the draft door's human gate is the point.
+- **No** composition scheduling; the chain stops at an approved recipe.
+- **No** generator model/prompt knobs in the UI (generator steering is deferred by decision log).
+
+---
+
+### Task 1: Auto-draft trigger
+
+**Files:** `convex/hypotheses.ts` (approval paths), `convex/agentDrafts.ts` or the internal
+draft-creation helper per found state, harness tests.
+
+- On hypothesis approval, schedule (`ctx.scheduler`) recipe generation → insert a `recipe_draft`
+  agent review draft with provenance `{ trigger: "hypothesis_approval", hypothesisId }` (shape per
+  found provenance contract).
+- WIP-cap check before generation; at cap, write the deferral status event and stop.
+- Dedupe: skip if a pending `recipe_draft` already references the hypothesis.
+
+- [ ] **Step 1:** Harness tests (draft created on approval; WIP-cap deferral event; dedupe; payload
+  validates). Implement; codegen; commit.
+
+---
+
+### Task 2: Recipe review + editing surface
+
+**Files:** `web/src/routes/recipe-detail.tsx`, `web/src/components/agent-draft.tsx`,
+`convex/recipes.ts` (only if `update`/`updateStatus` need shape work).
+
+- Review card: structured parameter editing for `recipe_draft` payloads (name/value/unit rows,
+  add/remove), extending the plan-07 edit mode; checklist and protocol as editable text.
+- `recipe-detail`: wire `recipes.update` (parameter edits with the same field-diff provenance
+  discipline) and `recipes.updateStatus` (approve/deprecate with note).
+
+- [ ] **Step 1:** Implement; `bun run typecheck:web`; Interceptor visual pass; screenshots in PR;
+  commit.
+
+---
+
+### Task 3: End-to-end gate
+
+- [ ] **Step 1:** On a real hypothesis: approve it → recipe draft appears in the queue (or a
+  deferral event if at cap) → amend one parameter in review → approve → promoted recipe carries
+  both agent and approved-with-edits provenance → deprecate it from `recipe-detail`. Timed: the
+  recipe review decision under 2 minutes.
+
+## Done means
+
+- Hypothesis approval auto-drafts a recipe through the draft door, WIP-capped and deduped, never
+  auto-approved.
+- Recipe drafts are editable at review (structured parameters); promoted recipes are editable and
+  status-transitionable from `recipe-detail`.
+- End-to-end gate passes with provenance verified at each hop.

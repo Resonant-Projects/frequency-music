@@ -1,6 +1,7 @@
 # Plans — What Remains, In Order
 
 > Last full audit: 2026-07-15 (see [plan-status-report-2026-07-15.md](../plan-status-report-2026-07-15.md)).
+> Last planning session: 2026-07-18 (decision surfaces — see the decision-log entry of that date).
 > Completed waves live in [docs/archive/](../archive/README.md). Decision history: [decision-log.md](../decision-log.md).
 
 ## Where things stand
@@ -27,31 +28,44 @@ Plans 01–03 carry `> Landed:` headers; do not re-implement.
 | 02 | Concept domains + mission relevance | ✅ Landed `03dce57` (5,444/5,444 classified) |
 | 03 | Correspondences table + agent write surface | ✅ Landed `2adca48` (live-gated) |
 | 04 | **Embeddings + vector indexes** | ⬅️ **NEXT** (prereqs 01+02 satisfied) |
-| 05 | Candidate generator + miner & evidence-hunter graphs | Pending (needs 03+04) |
+| 12 | [Domain triage surface](./2026-07-18-12-domain-triage-surface.md) | Pending — **parallel to 04, must land before 05** |
+| 05 | Candidate generator + miner & evidence-hunter graphs | Pending (needs 03+04+12; gate: Proxmox worker healthy) |
 | 06 | Drafting graph + WIP cap (N=3) | Pending |
-| 07 | Review UX | Pending |
+| 07 | Review UX — **amended 2026-07-18**: edit-before-approve added | Pending |
+| 13 | [Recipe loop closure](./2026-07-18-13-recipe-loop-closure.md) | Pending (after 07; golden datasets curated first) |
 | 08 | Weekly brief integration | Pending |
 | 09 | Source scout | Pending |
-| 10 | Composition starter kits | Pending |
-| 11 | Self-render spike (bounded) | Pending |
+| 14 | [Decision-surface sweep](./2026-07-18-14-decision-surface-sweep.md) (card-level) | Pending (after 08/09) |
+| 10 | Composition starter kits | Pending (independent — pull forward any time) |
+| 11 | Self-render spike (bounded) | Pending (spike framing reaffirmed 2026-07-18) |
 
-## 2. Unblock in parallel — operator/Keith items
+After 11: **generator steering** (model/prompt/scope knobs in the UI) is the next roadmapped item —
+deferred by the 2026-07-18 decision, not dropped.
 
-Small, mostly human-gated; none block the loop wave but several block later work.
+## 2. Unblock in parallel — operator items (ownership updated 2026-07-18)
 
-1. **Curate golden eval datasets** — hand-curate `data/eval/*-candidates.jsonl`
-   into `extractions/hypotheses/weekly-briefs-golden.jsonl` (targets ≥15/≥15/≥6).
-   This is the sole blocker for [`plans/008`](../../plans/008-eval-baseline-sweep.md)
-   (eval baseline sweep), which is otherwise ready to run.
-2. **Domain-triage decision packet** — promote/merge/reject 49 provisional
-   domains: [review/domain-triage-2026-07-12.md](../review/domain-triage-2026-07-12.md).
-3. **Proxmox host access** — restart the worker with the fresh
-   `AGENT_TOOL_SECRET`, refresh `agent/.env` on the host, and hunt the
-   UNAUTHORIZED ~6h scheduler: [proxmox-worker-runbook-2026-07-12.md](../proxmox-worker-runbook-2026-07-12.md).
-4. **Review the 1 pending agent draft** in the review queue.
+Small; none block the loop wave start but several gate specific plans.
+
+1. **Golden eval datasets — DA-prepared, Keith-ratified.** The DA pre-ranks and
+   annotates `data/eval/*-candidates.jsonl` (keep/swap + one-line rationale);
+   Keith does a single accept/reject pass (~30 min) producing
+   `extractions/hypotheses/weekly-briefs-golden.jsonl` (targets ≥15/≥15/≥6).
+   Scheduled **before plan 13 (recipe loop closure) starts**; sole blocker for
+   [`plans/008`](../../plans/008-eval-baseline-sweep.md).
+2. **Domain triage** — now carded as
+   [plan 12](./2026-07-18-12-domain-triage-surface.md): the packet is decided
+   *through* the new surface, not hand-applied.
+3. **Proxmox worker — DA-executed** (SSH / 1Password / OpenTofu): restart with
+   the fresh `AGENT_TOOL_SECRET`, refresh `agent/.env` on the host, hunt the
+   UNAUTHORIZED ~6h caller:
+   [proxmox-worker-runbook-2026-07-12.md](../proxmox-worker-runbook-2026-07-12.md).
+   **Gate: worker healthy before plan 05 counts as done.**
+4. **Review the 1 pending agent draft** in the review queue (Keith — also the
+   felt baseline for plan 07's timed gate).
 5. **Structural fixes** (improvements ledger #19, #20, #9): dedicated e2e Convex
    deployment (e2e currently points at production), bypass-secret consumer
    inventory + auth-failure alerting, TLS for the `:3211` site surface.
+   Unscheduled backlog — none gate the current sequence.
 
 ## 3. Next wave (Phases A–F) — after the loop wave
 
