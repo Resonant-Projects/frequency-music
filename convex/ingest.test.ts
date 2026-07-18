@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
+  assertPublicHttpUrl,
   buildJinaReaderUrl,
   classifyUrlTextFetchError,
   MAX_URL_TEXT_CHARS,
@@ -7,6 +8,62 @@ import {
   responseToUrlTextResult,
   stripHtml,
 } from "./ingest";
+
+describe("assertPublicHttpUrl", () => {
+  test.each([
+    "https://example.com/article",
+    "http://example.com:8080/x",
+    "https://93.184.216.34/",
+  ])("accepts public HTTP URL %s", (url) => {
+    expect(assertPublicHttpUrl(url)).toBe(url);
+  });
+
+  test.each(["file:///etc/passwd", "ftp://example.com"])(
+    "rejects unsupported scheme in %s",
+    (url) => {
+      expect(() => assertPublicHttpUrl(url)).toThrow(
+        "invalid_url: only HTTP and HTTPS URLs are supported",
+      );
+    },
+  );
+
+  test("rejects embedded credentials", () => {
+    expect(() =>
+      assertPublicHttpUrl("https://user:pass@example.com"),
+    ).toThrow("invalid_url: URLs with embedded credentials are rejected");
+  });
+
+  test.each([
+    "http://localhost/",
+    "http://service.localhost/",
+    "http://printer.local/",
+    "http://foo.internal/",
+    "http://0.0.0.0/",
+    "http://127.0.0.1/",
+    "http://169.254.169.254/latest/meta-data/",
+    "http://10.1.2.3/",
+    "http://172.16.0.1/",
+    "http://192.168.1.1/",
+    "http://100.64.0.1/",
+    "http://[::]/",
+    "http://[::1]/",
+    "http://[fe80::1]/",
+    "http://[fc00::1]/",
+    "http://[fd00::1]/",
+    "http://[::ffff:127.0.0.1]/",
+    "http://[::ffff:10.0.0.1]/",
+  ])("rejects private or internal target %s", (url) => {
+    expect(() => assertPublicHttpUrl(url)).toThrow(
+      "blocked_url: refusing to fetch a private or loopback address",
+    );
+  });
+
+  test("rejects malformed URLs", () => {
+    expect(() => assertPublicHttpUrl("not a url")).toThrow(
+      "invalid_url: URL is not valid",
+    );
+  });
+});
 
 describe("URL text fetch helpers", () => {
   test("builds the Jina Reader URL for HTTP and HTTPS sources", () => {

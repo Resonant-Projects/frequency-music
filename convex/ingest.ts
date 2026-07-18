@@ -62,6 +62,78 @@ export function buildJinaReaderUrl(rawUrl: string): string {
 }
 
 /**
+ * Validate that a URL is safe for a direct fetch from the Convex runtime.
+ * This is a parse-time guard only; without DNS resolution it cannot prevent
+ * DNS rebinding from a public hostname to a private address.
+ */
+export function assertPublicHttpUrl(rawUrl: string): string {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new Error("invalid_url: URL is not valid");
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("invalid_url: only HTTP and HTTPS URLs are supported");
+  }
+  if (url.username || url.password) {
+    throw new Error("invalid_url: URLs with embedded credentials are rejected");
+  }
+
+  const hostname = url.hostname.toLowerCase().replaceAll(/^\[|\]$/g, "");
+  const isInternalHostname =
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".internal");
+
+  const octets = hostname.split(".");
+  const isIpv4Literal =
+    octets.length === 4 &&
+    octets.every((octet) => /^\d+$/.test(octet)) &&
+    octets.every((octet) => {
+      const value = Number(octet);
+      return Number.isInteger(value) && value >= 0 && value <= 255;
+    });
+  const ipv4 = isIpv4Literal ? octets.map(Number) : undefined;
+  const isPrivateIpv4 =
+    ipv4 !== undefined &&
+    (ipv4[0] === 10 ||
+      ipv4[0] === 127 ||
+      (ipv4[0] === 169 && ipv4[1] === 254) ||
+      (ipv4[0] === 172 && ipv4[1]! >= 16 && ipv4[1]! <= 31) ||
+      (ipv4[0] === 192 && ipv4[1] === 168) ||
+      (ipv4[0] === 100 && ipv4[1]! >= 64 && ipv4[1]! <= 127));
+
+  const isIpv6Literal = hostname.includes(":");
+  const isPrivateIpv6 =
+    isIpv6Literal &&
+    (hostname === "::" ||
+      hostname === "::1" ||
+      /^fe[89ab]/.test(hostname) ||
+      hostname.startsWith("fc") ||
+      hostname.startsWith("fd") ||
+      // IPv4-mapped IPv6 (::ffff:a.b.c.d) can smuggle a private IPv4 target
+      // past the dotted-quad check on dual-stack hosts; public IPv4 targets
+      // have no reason to use the mapped form, so reject it wholesale.
+      hostname.startsWith("::ffff:"));
+
+  if (
+    isInternalHostname ||
+    hostname === "0.0.0.0" ||
+    isPrivateIpv4 ||
+    isPrivateIpv6
+  ) {
+    throw new Error(
+      "blocked_url: refusing to fetch a private or loopback address",
+    );
+  }
+
+  return rawUrl;
+}
+
+/**
  * Convert a completed HTTP response into the probe's stable result shape.
  */
 export function responseToUrlTextResult(
@@ -447,6 +519,7 @@ export const ingestUrl = action({
     args,
   ): Promise<{ id: Id<"sources">; created: boolean }> => {
     await requireAuth(ctx, args);
+    const safeUrl = assertPublicHttpUrl(args.url);
     // Generate dedupeKey (canonical: keeps query string, matches sources.createFromUrlInput)
     const urlObj = new URL(args.url);
     const dedupeKey = generateDedupeKey("url", { canonicalUrl: args.url });
@@ -463,7 +536,7 @@ export const ingestUrl = action({
     }
 
     // Fetch the page
-    const response = await fetchWithTimeout(args.url, {
+    const response = await fetchWithTimeout(safeUrl, {
       headers: {
         "User-Agent": "ResonantProjects/1.0 (research aggregator)",
       },
