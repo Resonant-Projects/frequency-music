@@ -29,9 +29,19 @@ routes `recipe-detail.tsx`, `agent-drafts.tsx`.
 ## Global constraints
 
 - The WIP cap (N=3 pending drafts) applies to auto-generated recipe drafts exactly as to miner
-  output: at cap, generation defers and logs a status event — it never queues unbounded.
-- Recipe draft payloads validate against the shared zod payload schema (`convex/shared/`); the
-  generator path and the review/amendment path use the same validator.
+  output: at cap, generation defers and logs a status event — it never queues unbounded. **Deferral
+  must not strand work:** the "approved hypothesis lacking a recipe and lacking a pending
+  `recipe_draft`" condition IS the durable deferred-work record — no separate queue table. A
+  capacity-recheck (on draft decision and/or a cron sweep reusing the `generateBatch` selection
+  semantics) picks up deferred hypotheses when slots free, bounded to the cap each pass.
+- **Cap-check + dedupe are atomic:** the WIP-cap test and the pending-draft-per-hypothesis dedupe
+  happen inside the single Convex mutation that inserts the draft row (transactional), so concurrent
+  approvals can neither exceed N=3 nor create duplicate drafts; a retry reuses the existing pending
+  draft.
+- Recipe draft payloads validate against the shared validators (`generatedRecipeValidator` in
+  `convex/validators.ts`, plus the draft-payload schema under `convex/shared/` at the agent seam);
+  the generator path and the review/amendment path use the same validators — never hand-mirrored
+  shapes.
 - One recipe draft per hypothesis approval; re-approval or regeneration must not duplicate a pending
   draft for the same hypothesis (dedupe on pending `recipe_draft` payload.hypothesisId).
 - `bunx convex codegen|dev|deploy` contact the LIVE backend; deploys operator-gated.
@@ -50,11 +60,15 @@ routes `recipe-detail.tsx`, `agent-drafts.tsx`.
 **Files:** `convex/hypotheses.ts` (approval paths), `convex/agentDrafts.ts` or the internal
 draft-creation helper per found state, harness tests.
 
-- On hypothesis approval, schedule (`ctx.scheduler`) recipe generation → insert a `recipe_draft`
-  agent review draft with provenance `{ trigger: "hypothesis_approval", hypothesisId }` (shape per
+- On hypothesis approval — the found status vocabulary's transition into its active/approved state;
+  the executor pins the exact enum value at execution and records it in the PR — **reserve, then
+  schedule**: the approval mutation itself atomically checks the WIP cap and the pending-draft
+  dedupe key (`recipe_draft` × `hypothesisId`) and records the reservation in the same transaction;
+  only a successful reservation enqueues generation via `ctx.scheduler`. On reservation failure,
+  write the deferral status event (cap) or skip silently (dedupe). The scheduled job's draft insert
+  is idempotent against its reservation, so a retry reuses it rather than duplicating.
+- Generated drafts carry provenance `{ trigger: "hypothesis_approval", hypothesisId }` (shape per
   found provenance contract).
-- WIP-cap check before generation; at cap, write the deferral status event and stop.
-- Dedupe: skip if a pending `recipe_draft` already references the hypothesis.
 
 - [ ] **Step 1:** Harness tests (draft created on approval; WIP-cap deferral event; dedupe; payload
   validates). Implement; codegen; commit.
@@ -67,9 +81,16 @@ draft-creation helper per found state, harness tests.
 `convex/recipes.ts` (only if `update`/`updateStatus` need shape work).
 
 - Review card: structured parameter editing for `recipe_draft` payloads (name/value/unit rows,
-  add/remove), extending the plan-07 edit mode; checklist and protocol as editable text.
+  add/remove), extending the plan-07 edit mode; checklist and protocol as editable text. **Draft
+  edits flow through `agentDrafts.approve`'s `amendedPayload` (plan 07's mutation — no new draft-edit
+  mutation)**; only promoted recipes use `recipes.update`. Both paths validate against the shared
+  `generatedRecipeValidator` in `convex/validators.ts` and preserve the original payload alongside
+  the amendment with field-diff provenance.
 - `recipe-detail`: wire `recipes.update` (parameter edits with the same field-diff provenance
   discipline) and `recipes.updateStatus` (approve/deprecate with note).
+- **Server-side guards, not UI-side trust:** `recipes.update` revalidates payload shape and
+  authorization; `recipes.updateStatus` enforces the legal status-transition set; both get
+  mutation-level tests covering invalid payloads, unauthorized callers, and illegal transitions.
 
 - [ ] **Step 1:** Implement; `bun run typecheck:web`; Interceptor visual pass; screenshots in PR;
   commit.
@@ -79,9 +100,10 @@ draft-creation helper per found state, harness tests.
 ### Task 3: End-to-end gate
 
 - [ ] **Step 1:** On a real hypothesis: approve it → recipe draft appears in the queue (or a
-  deferral event if at cap) → amend one parameter in review → approve → promoted recipe carries
-  both agent and approved-with-edits provenance → deprecate it from `recipe-detail`. Timed: the
-  recipe review decision under 2 minutes.
+  deferral event if at cap, then appears after a slot frees) → amend one parameter in review →
+  approve → promoted recipe carries both agent and approved-with-edits provenance → **edit a
+  parameter on the promoted recipe from `recipe-detail`** (validation + field-diff provenance
+  verified) → deprecate it from `recipe-detail`. Timed: the recipe review decision under 2 minutes.
 
 ## Done means
 
