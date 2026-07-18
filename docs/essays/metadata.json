@@ -1,4 +1,18 @@
 {
+  "the-actionable-invariant": {
+    "excerpt": "A musical identity becomes useful when it survives filtering, reconstruction, or transformation strongly enough to steer what happens next.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "AI-music",
+      "spatial-audio",
+      "representation-learning",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "af7718ce83ec0f76ce19a7701f7605b2f8b0a38945523a1222f36e50539a1555",
+    "generatedAt": "2026-07-18T03:05:00.000Z"
+  },
   "representation-pressure": {
     "excerpt": "Representation pressure names the task, dataset, body, or tradition that decides which musical facts remain legible enough to act on.",
     "tags": [
