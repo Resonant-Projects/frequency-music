@@ -697,11 +697,21 @@ export async function finalizeRunNode(
                 },
               )),
             );
-            await callConvex("markAgentRunFailed", {
-              runId: state.agentRunId,
-              summary,
-              error: { messages: [...state.errors, draftFailureMessage] },
-            });
+            try {
+              await callConvex("markAgentRunFailed", {
+                runId: state.agentRunId,
+                summary,
+                error: { messages: [...state.errors, draftFailureMessage] },
+              });
+            } catch (markError) {
+              // Swallow like runner.ts markFailed: the reconcile cron is the
+              // backstop for a run this path could not transition.
+              auditEvents.push(
+                nowEvent("error", "Failed to mark run failed after draft-write error", {
+                  message: errorMessage(markError),
+                }),
+              );
+            }
           }
         }
       } else {
