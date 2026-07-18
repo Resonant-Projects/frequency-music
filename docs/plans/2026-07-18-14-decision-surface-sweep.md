@@ -13,11 +13,13 @@ The 2026-07-18 audit mapped every human decision point in the backend against UI
 loop-critical gaps went to plans 07 (amended), 12, and 13. This sweep closes the rest. Items, in
 recommended order:
 
-1. **Correspondence adjudication view.** `correspondences.setStatus` (confirm/retire/override),
-   `upsertConjecture`, and `addEvidence` are CLI-only ("the only manual surface until plan 07's
-   UI" — this is that UI, kept out of plan 07 to protect its <2-minute gate). A correspondence
-   list + detail route with lifecycle actions and evidence display. Becomes urgent as soon as the
-   miner (05) produces volume.
+1. **Correspondence adjudication view.** `correspondences.setStatus` (confirm/retire/override) is
+   CLI-only ("the only manual surface until plan 07's UI" — this is that UI, kept out of plan 07 to
+   protect its <2-minute gate). A correspondence list + detail route with lifecycle actions and
+   evidence display. Becomes urgent as soon as the miner (05) produces volume. Scope note:
+   `upsertConjecture` and `addEvidence` stay CLI/agent-side by design — graph enrichment is the
+   agents' door per the two-doors doctrine, and human conjecture creation is rare enough that the
+   CLI path suffices; this view adjudicates, it does not author.
 2. **Weekly-brief edit + publish.** `weeklyBriefs.editBrief` and `publish` have no UI (only
    `publishToNotion` is wired). Add both to `weekly-brief-detail.tsx`.
 3. **Draft supersede.** `agentDrafts.supersede` is unwired. Pending the visual-plan open question:
