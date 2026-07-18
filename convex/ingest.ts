@@ -91,7 +91,8 @@ export function assertPublicHttpUrl(rawUrl: string): URL {
   const isPrivateIpv4 =
     a !== undefined &&
     b !== undefined &&
-    (a === 10 ||
+    (a === 0 || // 0.0.0.0/8 ("this network") — includes 0.0.0.0 itself
+      a === 10 ||
       a === 127 ||
       (a === 169 && b === 254) ||
       (a === 172 && b >= 16 && b <= 31) ||
@@ -111,12 +112,7 @@ export function assertPublicHttpUrl(rawUrl: string): URL {
       // have no reason to use the mapped form, so reject it wholesale.
       hostname.startsWith("::ffff:"));
 
-  if (
-    isInternalHostname ||
-    hostname === "0.0.0.0" ||
-    isPrivateIpv4 ||
-    isPrivateIpv6
-  ) {
+  if (isInternalHostname || isPrivateIpv4 || isPrivateIpv6) {
     throw new Error(
       "blocked_url: refusing to fetch a private or loopback address",
     );

@@ -52,6 +52,8 @@ describe("assertPublicHttpUrl", () => {
     "http://[fd00::1]/",
     "http://[::ffff:127.0.0.1]/",
     "http://[::ffff:10.0.0.1]/",
+    "http://[::ffff:8.8.8.8]/",
+    "http://0.1.2.3/",
   ])("rejects private or internal target %s", (url) => {
     expect(() => assertPublicHttpUrl(url)).toThrow(
       "blocked_url: refusing to fetch a private or loopback address",
