@@ -13,4 +13,8 @@ describe("constantTimeEqual", () => {
   test("rejects strings of different lengths", () => {
     expect(constantTimeEqual("short", "longer")).toBe(false);
   });
+
+  test("does not conflate a lone surrogate with the replacement character", () => {
+    expect(constantTimeEqual("\uD800", "�")).toBe(false);
+  });
 });

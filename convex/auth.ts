@@ -25,12 +25,11 @@ function getConfiguredBypassSecret() {
 
 export function constantTimeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
-  const encoder = new TextEncoder();
-  const bufA = encoder.encode(a);
-  const bufB = encoder.encode(b);
+  // Compare UTF-16 code units directly: TextEncoder maps lone surrogates to
+  // U+FFFD, which would let distinct malformed strings compare equal.
   let result = 0;
-  for (let i = 0; i < bufA.length; i++) {
-    result |= (bufA[i] as number) ^ (bufB[i] as number);
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
   return result === 0;
 }
