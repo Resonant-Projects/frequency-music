@@ -93,7 +93,7 @@ draft-creation helper per found state, harness tests.
   authorization; `recipes.updateStatus` enforces the legal status-transition set; both get
   mutation-level tests covering invalid payloads, unauthorized callers, and illegal transitions.
 
-- [ ] **Step 1:** Implement; `bun run typecheck:web`; Interceptor visual pass; screenshots in PR;
+- [ ] **Step 1:** Implement; `vp run typecheck:web`; Interceptor visual pass; screenshots in PR;
   commit.
 
 ---

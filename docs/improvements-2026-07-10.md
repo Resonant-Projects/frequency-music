@@ -468,3 +468,43 @@ technical findings, filed as new backlog entries:
 
 LLM spend this session: ≈ $6.2 classification backfill + a handful of test
 extractions/hypothesis/brief generations on Sonnet/Terra/Groq.
+
+## Session ledger — 2026-07-18 (Wave-2 execution train, PRs #21–#27)
+
+Follow-ups carded during the merge train (all verified findings, none blocking):
+
+19a. **`web/` ws override (security residual from plan 014)** — `web/` still
+    resolves `ws@8.18.0` (vulnerable range `>=8.0.0 <8.21.0`); a name-level
+    override is unsafe there because `ws@7.5.10` (metro/react-native-dev-
+    middleware/jayson, OUTSIDE the range) gets force-bumped to 8.x. Needs
+    path-scoped overrides (`convex`, `vite-plus`, `@clerk/clerk-js` →
+    rpc-websockets). Exposure low (client-rendered app). Pair with DEP-01.
+20a. **DEP-01 escalation — `web/` floats `vite`/`vitest` at `@latest`** —
+    confirmed live: any override change in `web/` re-resolves the toolchain
+    (observed vite-plus-core 0.1.16→0.2.5, oxc 0.123→0.139, +159 lock lines).
+    Pin to match root before any `web/` dependency work.
+21a. **Lint coverage for `web/`/`agent/` CI jobs** — root `lint:check` is now
+    scoped to `convex harness scripts` (matching root tsconfig's deliberate
+    web exclusion; the repo-wide sweep produced 2,556 phantom module-resolution
+    errors in CI where subpackage deps aren't installed). web/agent source is
+    currently lint-checked only locally; add lint steps to their CI jobs.
+22a. **E2E campaign-title selector is unlocatable under Solid** — Solid sets
+    `value` as a property, never an attribute, so `input[value="…"]` can't
+    match; the prior `getByDisplayValue` is a Testing-Library API absent from
+    Playwright (would throw). Both broken; fix with a stable hook
+    (`data-campaign-title`) or `expect(...).toHaveValue()`. Latent — no e2e in CI.
+23a. **Stale `web/node_modules` produces phantom `node:` typecheck failures** —
+    an old hoisted `@types/node@12` predates `node:`-prefixed imports; symptom
+    is TS2307 on `node:crypto`/`node:fs` in convex files during `typecheck:web`.
+    Fix: `vp install` in `web/` (verified no-op on the lockfile).
+24a. **Agent workspace carries 14 non-ws advisories** (hono, esbuild, …) —
+    surfaced by `bun audit` during plan 014's scope extension; separate
+    hygiene pass, not security-urgent for a single-operator internal worker.
+25a. **Finalizer two-call seam** (from plan 013 review) — collapse
+    `markAgentRunNeedsReview` + `createAgentReviewDraft` into one transactional
+    mutation; demotes the reconcile cron to true backstop.
+26a. **`hypotheses.ts` generated-shape validator duplication** (from plan 012) —
+    same drift class fixed in recipes.ts; two copies remain, same two-line fix.
+27a. **`sanitizedProtocol` return-vs-persist mismatch** (CodeRabbit on 012,
+    unverified) — generators may return raw parsed protocol while persisting
+    the normalized one; check and align when recipes.ts is next open.

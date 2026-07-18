@@ -96,7 +96,7 @@ merge — a target picker constrained to `known` entries of the same list. Per-r
 list live (Convex reactivity). Headline shows remaining-provisional counts per list so triage debt is
 visible the way review debt is on the draft queue.
 
-- [ ] **Step 1:** Implement against `reviewSummary`; `bun run typecheck:web`.
+- [ ] **Step 1:** Implement against `reviewSummary`; `vp run typecheck:web`.
 - [ ] **Step 2:** Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit.
 
 ---

@@ -18,7 +18,7 @@
 ## Global Constraints
 
 - Decisions remain human-only. `approve` gains exactly one new semantic — an optional `amendedPayload` argument, validated by the **same shared payload validator the agent write path uses** (`convex/shared/`, zod-first; never hand-mirror shapes). The payload kind cannot change through amendment. No other new decision semantics.
-- `bun run typecheck:web` green; wrappers use `_generated/api` (arch plan 07 deleted the string-name table — do not reintroduce it).
+- `vp run typecheck:web` green; wrappers use `_generated/api` (arch plan 07 deleted the string-name table — do not reintroduce it).
 - Verify visually with the Interceptor skill (`interceptor open <url>`) per operating rules — screenshots in the PR.
 
 ## Non-goals / rabbit holes
@@ -75,7 +75,7 @@
 Queue list view: pending count headline ("2 drafts awaiting review — agent blocked at 3"), oldest-first, per-card one-line statement + pair so triage order is obvious.
 
 - [ ] **Step 1:** Implement list + card against `getReviewContext`.
-- [ ] **Step 2:** `bun run typecheck:web`; Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit.
+- [ ] **Step 2:** `vp run typecheck:web`; Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit.
 
 ---
 
@@ -105,7 +105,7 @@ Queue list view: pending count headline ("2 drafts awaiting review — agent blo
 > allowlist on `amendedPayload` — plan 2026-07-18-13 extends amendment to structured recipe
 > parameters through the same argument, so a hard allowlist now would be churn. The shared schema
 > validation + `editedFields` provenance is the interim guard.
-- [ ] **Step 2:** Edit-mode UI + confirm dialog; `bun run typecheck:web`; Interceptor visual pass; commit.
+- [ ] **Step 2:** Edit-mode UI + confirm dialog; `vp run typecheck:web`; Interceptor visual pass; commit.
 
 ---
 
