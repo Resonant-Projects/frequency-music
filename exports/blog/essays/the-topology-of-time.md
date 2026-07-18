@@ -1,7 +1,7 @@
 ---
 title: "The Topology of Time: Why Musical Time Isn't a Line"
 publishDate: 2026-03-15
-excerpt: "Musical time isn't a line but a topological space with loops, hierarchical nesting, and identifications—a framework that explains form, repetition, and why theme returns feel like folding rather than forwarding."
+excerpt: "Musical time isn't a line but a topological space with loops, hierarchical nesting, and identifications-a framework that explains form, repetition, and why theme returns feel like folding rather than forwarding."
 category: "mathematics"
 tags:
   - "mathematical-music-theory"

@@ -1,7 +1,7 @@
 ---
 title: "The Geometry of Sounding Bodies: Shape as Score"
 publishDate: 2026-03-31
-excerpt: "Sound and geometry are dual descriptions of the same physical reality—modern machine learning now lets us translate freely between them, opening new possibilities for composition through acoustic geometry."
+excerpt: "Sound and geometry are dual descriptions of the same physical reality-modern machine learning now lets us translate freely between them, opening new possibilities for composition through acoustic geometry."
 category: "interdisciplinary"
 tags:
   - "wave-physics"

@@ -1,7 +1,7 @@
 ---
 title: "The Shape of Musical Choice"
 publishDate: 2026-02-26
-excerpt: "Mathematical constraints on chord spaces and melodic invention reveal how composers navigate fixed topological structures—orbifolds, low-dimensional attractors—while expressing individual style within them."
+excerpt: "Mathematical constraints on chord spaces and melodic invention reveal how composers navigate fixed topological structures-orbifolds, low-dimensional attractors-while expressing individual style within them."
 category: "mathematics"
 tags:
   - "mathematical-music-theory"

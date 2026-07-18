@@ -1,7 +1,7 @@
 ---
 title: "Symmetry as the Skeleton of Music"
 publishDate: 2026-02-25
-excerpt: "Three convergent papers reveal that tonal music's essential features emerge from symmetry groups—whether geometric (Tonnetz), algebraic (scales), or dynamic (gauge theory)—suggesting that musical structure is fundamentally rooted in how symmetry breaks and reorganizes."
+excerpt: "Three convergent papers reveal that tonal music's essential features emerge from symmetry groups-whether geometric (Tonnetz), algebraic (scales), or dynamic (gauge theory)-suggesting that musical structure is fundamentally rooted in how symmetry breaks and reorganizes."
 category: "mathematics"
 tags:
   - "group-theory"

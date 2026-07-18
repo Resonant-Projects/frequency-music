@@ -1,7 +1,7 @@
 ---
 title: "The Comparator Is the Instrument"
 publishDate: 2026-04-05
-excerpt: "Perceptual structure emerges through relational comparison, not absolute measurement—a principle reshaping how we understand musical meaning and design both algorithms and compositions."
+excerpt: "Perceptual structure emerges through relational comparison, not absolute measurement-a principle reshaping how we understand musical meaning and design both algorithms and compositions."
 category: "interdisciplinary"
 tags:
   - "perception"

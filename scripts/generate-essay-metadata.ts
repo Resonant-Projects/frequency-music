@@ -6,10 +6,11 @@
  * or whose content hash has changed.
  *
  * Usage:
- *   bun scripts/generate-essay-metadata.ts
- *   bun scripts/generate-essay-metadata.ts --force   # regenerate all
+ *   vpx tsx scripts/generate-essay-metadata.ts
+ *   vpx tsx scripts/generate-essay-metadata.ts --force   # regenerate all
  */
 
+// oxlint-disable-next-line import/no-unassigned-import -- varlock populates process.env as a side effect.
 import "varlock/auto-load";
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
@@ -17,6 +18,7 @@ import { join } from "node:path";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, Output } from "ai";
 import { z } from "zod";
+import { normalizeExcerpt } from "./lib/essay-metadata";
 import { parseEssay } from "./lib/parse-essay";
 
 const ESSAYS_DIR = join(import.meta.dirname, "../docs/essays");
@@ -61,12 +63,8 @@ const CATEGORIES = [
 const metadataSchema = z.object({
   excerpt: z
     .string()
-    .describe(
-      "1-2 sentence summary suitable for a blog card, under 200 characters",
-    ),
-  tags: z
-    .array(z.enum(TAG_VOCABULARY))
-    .describe("3-6 tags from the controlled vocabulary"),
+    .describe("1-2 sentence summary suitable for a blog card, under 200 characters"),
+  tags: z.array(z.enum(TAG_VOCABULARY)).describe("3-6 tags from the controlled vocabulary"),
   category: z.enum(CATEGORIES).describe("Single best-fit category"),
 });
 
@@ -76,10 +74,6 @@ type EssayMetadataEntry = z.infer<typeof metadataSchema> & {
 };
 
 type MetadataFile = Record<string, EssayMetadataEntry>;
-
-function normalizeExcerpt(excerpt: string): string {
-  return excerpt.trim().replaceAll(/\s+/g, " ");
-}
 
 function normalizeTags(tags: string[]): EssayMetadataEntry["tags"] {
   const uniqueTags = Array.from(
@@ -114,17 +108,15 @@ async function main() {
   const force = process.argv.includes("--force");
 
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    console.error("OPENROUTER_API_KEY env var is required");
+  if (!apiKey || apiKey.startsWith("op(") || apiKey.startsWith("op://")) {
+    console.error("OPENROUTER_API_KEY must be resolved before running metadata generation");
     process.exit(1);
   }
 
   const openrouter = createOpenRouter({ apiKey });
   const model = openrouter(MODEL_ID);
 
-  const files = (await readdir(ESSAYS_DIR))
-    .filter((f) => f.endsWith(".md"))
-    .toSorted();
+  const files = (await readdir(ESSAYS_DIR)).filter((f) => f.endsWith(".md")).toSorted();
   const metadata = await loadMetadata();
 
   let processed = 0;
@@ -180,24 +172,11 @@ async function main() {
     }
   }
 
-  // Sort keys alphabetically for stable output
-  const sorted: MetadataFile = {};
-  for (const key of Object.keys(metadata).toSorted()) {
-    const entry = metadata[key];
-    if (entry) {
-      sorted[key] = entry;
-    }
+  if (processed > 0) {
+    await writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2) + "\n", "utf8");
   }
 
-  await writeFile(
-    METADATA_PATH,
-    JSON.stringify(sorted, null, 2) + "\n",
-    "utf8",
-  );
-
-  console.log(
-    `\nDone. Processed: ${processed}, Skipped: ${skipped}, Failed: ${failures.length}`,
-  );
+  console.log(`\nDone. Processed: ${processed}, Skipped: ${skipped}, Failed: ${failures.length}`);
   if (failures.length > 0) {
     console.error("Failures:", failures.join(", "));
     process.exit(1);

@@ -1,7 +1,7 @@
 ---
 title: "The Invariance Trap: What Audio Representations Choose to Forget"
 publishDate: 2026-03-21
-excerpt: "Audio encoders have blind spots dictated by their training objectives—an ASR model might miss pitch shifts while catching temporal shuffles. This analysis reveals the fundamental trade-off: representations designed to detect semantic changes often miss structural ones, and vice versa."
+excerpt: "Audio encoders have blind spots dictated by their training objectives-an ASR model might miss pitch shifts while catching temporal shuffles. This analysis reveals the fundamental trade-off: representations designed to detect semantic changes often miss structural ones, and vice versa."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

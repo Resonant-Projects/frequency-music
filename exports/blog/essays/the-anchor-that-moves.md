@@ -1,7 +1,7 @@
 ---
 title: "The Anchor That Moves"
 publishDate: 2026-04-09
-excerpt: "Every effective system for analyzing sound needs a reference point—but the best ones recognize that these anchors inevitably drift. From speaker extraction to music analysis, stability itself becomes a parameter to manage."
+excerpt: "Every effective system for analyzing sound needs a reference point-but the best ones recognize that these anchors inevitably drift. From speaker extraction to music analysis, stability itself becomes a parameter to manage."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

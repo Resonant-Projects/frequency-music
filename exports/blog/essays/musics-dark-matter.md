@@ -1,7 +1,7 @@
 ---
 title: "Music's Dark Matter: What Neural Networks Know That Theory Doesn't"
 publishDate: 2026-03-05
-excerpt: "Neural networks discover perceptually real patterns in music that music theory has never named—suggesting music's structure extends beyond our theoretical vocabulary, like dark matter in cosmology."
+excerpt: "Neural networks discover perceptually real patterns in music that music theory has never named-suggesting music's structure extends beyond our theoretical vocabulary, like dark matter in cosmology."
 category: "interdisciplinary"
 tags:
   - "AI-music"

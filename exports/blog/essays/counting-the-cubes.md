@@ -1,7 +1,7 @@
 ---
 title: "Counting the Cubes: Burnside's Lemma and the Enumeration of Musical Objects"
 publishDate: 2026-03-08
-excerpt: "Burnside's lemma reveals why 4,096 chromatic subsets collapse to 352 pitch classes—and why Sol LeWitt's cube sculptures and musical structure obey the same counting laws."
+excerpt: "Burnside's lemma reveals why 4,096 chromatic subsets collapse to 352 pitch classes-and why Sol LeWitt's cube sculptures and musical structure obey the same counting laws."
 category: "mathematics"
 tags:
   - "group-theory"

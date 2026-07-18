@@ -4197,5 +4197,144 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
+  },
+  "perceptual-resolution": {
+    "excerpt": "Perceptual resolution is the grain size at which listeners and models distinguish musical structure that matters—a compositional tool revealed through density, streaming, tracking, and compression.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "composition",
+      "signal-processing",
+      "AI-music",
+      "acoustics"
+    ],
+    "category": "perception",
+    "contentHash": "54770e5da1dedee62f55c663d70e80acbaabbdedc37d3783278a922a01c38f82",
+    "generatedAt": "2026-07-18T18:03:09.200Z"
+  },
+  "pitch-is-a-negotiation": {
+    "excerpt": "Pitch is not a fixed frequency but a negotiated outcome between spectrum, context, and attention—a perceptual settlement that composers can manipulate as a creative parameter.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "composition",
+      "wave-physics",
+      "mathematical-music-theory",
+      "acoustics"
+    ],
+    "category": "perception",
+    "contentHash": "d026b0bd2060aedbfc423013f7df11d2b946cf4a9594df5c5092b43b1f65ca9d",
+    "generatedAt": "2026-07-18T18:03:11.288Z"
+  },
+  "the-access-layer": {
+    "excerpt": "Musical systems, neural models, and bodies define which distinctions remain accessible to performers and listeners, making representation a compositional affordance rather than mere infrastructure.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "perception",
+      "composition",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "58f7298d851c7088d736f2f33b7c48b2d16c9cd3072fcb89162eebb60658930a",
+    "generatedAt": "2026-07-18T18:03:13.246Z"
+  },
+  "the-basis-is-an-intervention": {
+    "excerpt": "A musical representation is useful when its coordinates preserve the actions a musician needs—from latent spaces to ragas to vocal timing, the basis determines what can be controlled.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "mathematical-music-theory",
+      "AI-music",
+      "perception",
+      "tuning-systems"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ad7272793e8ca2472cee26992bfd2ee7a41742e3e1e72696a92e3b4e2442e9c4",
+    "generatedAt": "2026-07-18T18:03:16.336Z"
+  },
+  "the-evaluator-in-the-room": {
+    "excerpt": "Evaluation shapes music through measurement systems—from ASR verifiers to human ears. Compose not just the signal, but the evaluator's environment and its inherited listening habits.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "AI-music",
+      "information-theory",
+      "composition",
+      "consciousness"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6d6f64fc873628cbfd3a8e169e1ca065a9825099ac07bf1a8cc298ddce2277bb",
+    "generatedAt": "2026-07-18T18:03:19.417Z"
+  },
+  "the-judge-has-a-lineage": {
+    "excerpt": "Audio systems judge sound through learned histories—training data, timing distributions, and model families that become inseparable from evaluation itself.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "perception",
+      "information-theory",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a656b747ef2f2e32d0d3b377964f459e71377f22f86c6137c7b631bfc2861666",
+    "generatedAt": "2026-07-18T18:03:21.633Z"
+  },
+  "the-proxy-that-listens": {
+    "excerpt": "Listening systems in music AI are never neutral: they hear through proxies such as affect vectors, alignment paths, and language rewards, which composers can expose as instruments.",
+    "tags": [
+      "AI-music",
+      "perception",
+      "signal-processing",
+      "composition",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "073a4621ef7fdcb74a0969eff47c7f49b2fd232986c45d36b02ebbacbdc64ad1",
+    "generatedAt": "2026-07-18T18:03:24.091Z"
+  },
+  "the-survival-test": {
+    "excerpt": "Musical identity often survives in structural layers—phase, contour, and modulation—rather than surface detail, giving composers a precise framework for intentional transformation.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "information-theory",
+      "wave-physics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "61609ade013b1d9d851fb06dfc19d22883cedec3fc32b9d00a72c571e8f2466f",
+    "generatedAt": "2026-07-18T18:03:26.453Z"
+  },
+  "the-three-question-listener": {
+    "excerpt": "When sounds overlap, listeners ask three questions: who is present, what are they doing, and when? Keeping those dimensions separate makes machine listening more musically useful.",
+    "tags": [
+      "perception",
+      "composition",
+      "signal-processing",
+      "AI-music",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "aa21b4889bdd5e23920c4b618179c7e22d3c3af2bc111392eb72ec8cc338ec70",
+    "generatedAt": "2026-07-18T18:03:28.914Z"
+  },
+  "the-voice-vector": {
+    "excerpt": "A voice is a bundle of separable dimensions—identity, content, time, state, and surface. Treating them as independent vectors opens new possibilities for vocal counterpoint.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "perception",
+      "mathematical-music-theory",
+      "AI-music",
+      "psychoacoustics"
+    ],
+    "category": "composition",
+    "contentHash": "21f04c09522cc60e57761d1bb83363dbc7d4e8ddd4eaa1cf98736ef1be6d5042",
+    "generatedAt": "2026-07-18T18:03:31.803Z"
   }
 }

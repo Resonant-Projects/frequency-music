@@ -1,15 +1,15 @@
 ---
 title: "The Invisible Hand of Timing"
 publishDate: 2026-04-03
-excerpt: "Micro-timing adjustments at specific temporal windows dramatically improve perceptual clarity while remaining unnoticed—revealing that timing effects operate across hierarchical scales with opposite effects at early versus late contexts."
+excerpt: "Micro-timing adjustments at specific temporal windows improve perception while remaining inaudible-revealing how timing context shapes clarity and intelligibility in ways musicians have always intuited but science can now explain."
 category: "perception"
 tags:
   - "rhythm"
   - "perception"
   - "psychoacoustics"
-  - "composition"
   - "signal-processing"
-  - "resonance"
+  - "composition"
+  - "information-theory"
 author: "Keith Elliott"
 byline: "Freq"
 ---
@@ -63,7 +63,7 @@ The covert intelligibility result suggests the existence of **perceptual attract
 
 In music, the equivalent attractors might include:
 - **Steady tempo** (perceived as "tight" even when it obscures phrase structure)
-- **Uniform dynamics** (perceived as "powerful" even when it eliminates expressive variation)  
+- **Uniform dynamics** (perceived as "powerful" even when it eliminates expressive variation)
 - **Grid-quantized rhythm** (perceived as "professional" even when it kills groove)
 
 These are all global, symmetric transformations. The system prefers them because they're *simple to recognize*, not because they're *optimal for perception*.

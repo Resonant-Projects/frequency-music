@@ -1,0 +1,103 @@
+name: Publish Essays
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/essays/*.md"
+      - "scripts/generate-essay-metadata.ts"
+      - "scripts/export-essays.ts"
+      - "scripts/lib/essay-metadata.ts"
+      - "scripts/lib/parse-essay.ts"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-essays
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: "24"
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Load OpenRouter key from 1Password
+        uses: 1password/load-secrets-action@v4
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OPENROUTER_API_KEY: "op://Country Manor Lab/OpenRouter API Key - Frequency Music/credential"
+
+      - name: Generate metadata and public export
+        run: vp run essays:publish
+
+      - name: Validate export
+        run: |
+          vp node - <<'NODE'
+          const { readdirSync, readFileSync } = require("node:fs");
+
+          const manifest = JSON.parse(
+            readFileSync("exports/blog/manifest.json", "utf8"),
+          );
+          const markdownFiles = readdirSync("exports/blog/essays").filter(
+            (file) => file.endsWith(".md"),
+          );
+
+          if (manifest.version !== "frequency_essays_v1") {
+            throw new Error(`Unexpected manifest version: ${manifest.version}`);
+          }
+          if (manifest.items.length !== markdownFiles.length) {
+            throw new Error(
+              `Manifest has ${manifest.items.length} items but export has ${markdownFiles.length} Markdown files`,
+            );
+          }
+
+          console.log(`Validated ${manifest.items.length} exported essays.`);
+          NODE
+
+      - name: Commit refreshed export
+        id: commit
+        run: |
+          if git diff --quiet -- docs/essays/metadata.json exports/blog; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Essay export is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/essays/metadata.json exports/blog
+          git commit -m "chore(essays): refresh public export"
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Resonant Projects deployment
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.RPROJ_VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "::error::RPROJ_VERCEL_DEPLOY_HOOK_URL is not configured. See docs/reference/essay-publishing.md."
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --output /dev/null \
+            "$DEPLOY_HOOK_URL"
+          echo "Triggered the Resonant Projects production build."

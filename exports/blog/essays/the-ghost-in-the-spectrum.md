@@ -1,7 +1,7 @@
 ---
 title: "The Ghost in the Spectrum: Phase as Music's Invisible Architecture"
 publishDate: 2026-03-16
-excerpt: "Phase relationships—the temporal alignment of frequency components—carry half of spectral information yet remain invisible in standard music analysis. A new neural vocoder demonstrates why treating phase as structurally entangled with magnitude, rather than discarding it, reveals the hidden architecture of musical sound."
+excerpt: "Phase relationships-the temporal alignment of frequency components-carry half of spectral information yet remain invisible in standard music analysis. A new neural vocoder demonstrates why treating phase as structurally entangled with magnitude, rather than discarding it, reveals the hidden architecture of musical sound."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

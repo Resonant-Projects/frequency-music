@@ -1,7 +1,7 @@
 ---
 title: "The Grain of Identity: Where Musical Meaning Becomes Indivisible"
 publishDate: 2026-03-01
-excerpt: "Musical identity isn't atomic—timbre crystallizes at the note, harmony at the spectral moment, and meaning in a separate layer. Three recent papers reveal music operates at multiple incommensurable grains simultaneously."
+excerpt: "Musical identity isn't atomic-timbre crystallizes at the note, harmony at the spectral moment, and meaning in a separate layer. Three recent papers reveal music operates at multiple incommensurable grains simultaneously."
 category: "interdisciplinary"
 tags:
   - "perception"

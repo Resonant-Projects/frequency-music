@@ -1,7 +1,7 @@
 ---
 title: "The Expressive Residual"
 publishDate: 2026-03-19
-excerpt: "Expression isn't decoration—it's a parallel dimension of sound that carries emotional meaning independently from content, separable in neural representations yet acoustically inseparable in performance."
+excerpt: "Expression isn't decoration-it's a parallel dimension of sound that carries emotional meaning independently from content, separable in neural representations yet acoustically inseparable in performance."
 category: "interdisciplinary"
 tags:
   - "perception"

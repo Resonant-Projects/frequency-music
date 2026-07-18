@@ -1,7 +1,7 @@
 ---
 title: "The Information in Decay"
 publishDate: 2026-04-01
-excerpt: "Decay reveals a system's identity through information-theoretic entropy. Musical sounds—like vibrating structures—communicate their essential character not through attack but through how they die."
+excerpt: "Decay reveals a system's identity through information-theoretic entropy. Musical sounds-like vibrating structures-communicate their essential character not through attack but through how they die."
 category: "interdisciplinary"
 tags:
   - "information-theory"

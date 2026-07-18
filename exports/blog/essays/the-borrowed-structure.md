@@ -1,7 +1,7 @@
 ---
 title: "The Borrowed Structure: Why Similar Sounds Share Computation"
 publishDate: 2026-03-22
-excerpt: "Text-to-audio diffusion models can reuse structural components from similar sounds, achieving 1.8–3.0× speedup while improving quality—revealing that all sounds cluster around ~1,000 acoustic archetypes."
+excerpt: "Text-to-audio diffusion models can reuse structural components from similar sounds, achieving 1.8-3.0× speedup while improving quality-revealing that all sounds cluster around ~1,000 acoustic archetypes."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

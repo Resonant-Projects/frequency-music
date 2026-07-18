@@ -1,7 +1,7 @@
 ---
 title: "The Coherence Imperative: Why Sound Resists Being Divided"
 publishDate: 2026-03-17
-excerpt: "Sound resists atomistic analysis because its meaning lives in coherence—the smooth dependencies across time and frequency that define musical identity. Three recent papers rediscover why bin-independent processing fails."
+excerpt: "Sound resists atomistic analysis because its meaning lives in coherence-the smooth dependencies across time and frequency that define musical identity. Three recent papers rediscover why bin-independent processing fails."
 category: "physics-of-sound"
 tags:
   - "signal-processing"

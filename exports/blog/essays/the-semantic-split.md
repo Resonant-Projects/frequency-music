@@ -1,7 +1,7 @@
 ---
 title: "The Semantic Split: Why Perfect Reproduction Isn't Understanding"
 publishDate: 2026-03-25
-excerpt: "Perfect acoustic reproduction doesn't guarantee semantic understanding. Just as neural codecs separate acoustic fidelity from harmonic meaning, tuning systems encode either acoustic uniformity or semantic function—but rarely both."
+excerpt: "Perfect acoustic reproduction doesn't guarantee semantic understanding. Just as neural codecs separate acoustic fidelity from harmonic meaning, tuning systems encode either acoustic uniformity or semantic function-but rarely both."
 category: "interdisciplinary"
 tags:
   - "tuning-systems"

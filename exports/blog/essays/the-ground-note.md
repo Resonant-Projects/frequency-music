@@ -1,7 +1,7 @@
 ---
 title: "The Ground Note: Why Everything in Music Is Relative to What's Underneath"
 publishDate: 2026-03-20
-excerpt: "Musical meaning emerges not from frequencies themselves but from their relationship to a ground note—the bass defines a reference frame whose overtone series creates consonance templates that shape how we hear harmony, modes, and modulation."
+excerpt: "Musical meaning emerges not from frequencies themselves but from their relationship to a ground note-the bass defines a reference frame whose overtone series creates consonance templates that shape how we hear harmony, modes, and modulation."
 category: "music-theory"
 tags:
   - "resonance"

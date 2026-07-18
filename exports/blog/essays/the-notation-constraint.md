@@ -1,7 +1,7 @@
 ---
 title: "The Notation Constraint: How Representation Shapes Musical Thought"
 publishDate: 2026-03-25
-excerpt: "Musical notation isn't neutral transcription—it's a cognitive technology that shapes what composers can think. By factorizing sound into different representations, we enable specific operations while foreclosing others, determining both the music we create and our ability to understand it."
+excerpt: "Musical notation isn't neutral transcription-it's a cognitive technology that shapes what composers can think. By factorizing sound into different representations, we enable specific operations while foreclosing others, determining both the music we create and our ability to understand it."
 category: "interdisciplinary"
 tags:
   - "composition"

@@ -1,7 +1,7 @@
 ---
 title: "The Self-Teaching Signal: When Sound Knows How to Decompose Itself"
 publishDate: 2026-03-28
-excerpt: "When audio signals contain their own decomposition—from room acoustics to instrument timbres—machine learning and music composition reveal a shared principle: sound knows how to understand itself."
+excerpt: "When audio signals contain their own decomposition-from room acoustics to instrument timbres-machine learning and music composition reveal a shared principle: sound knows how to understand itself."
 category: "interdisciplinary"
 tags:
   - "AI-music"

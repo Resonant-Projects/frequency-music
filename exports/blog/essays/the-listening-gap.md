@@ -1,7 +1,7 @@
 ---
 title: "The Listening Gap: Why Describing Sound Destroys Information"
 publishDate: 2026-03-20
-excerpt: "The gap between what we hear and what we can describe about sound is structural, not solvable—language's sequential, categorical nature can never fully capture hearing's parallel, analog richness, yet this irreducible gap is precisely what gives music its meaning."
+excerpt: "The gap between what we hear and what we can describe about sound is structural, not solvable-language's sequential, categorical nature can never fully capture hearing's parallel, analog richness, yet this irreducible gap is precisely what gives music its meaning."
 category: "interdisciplinary"
 tags:
   - "perception"

@@ -1,7 +1,7 @@
 ---
 title: "The Ghost at the Grid Line"
 publishDate: 2026-04-10
-excerpt: "Every representation has gaps—and what gets refused by the grid returns as artifact. Musical noise, transfer failures, lost articulation, and phantom tones are not errors but ghosts that reveal what discretization cannot encode."
+excerpt: "Every representation has gaps-and what gets refused by the grid returns as artifact. Musical noise, transfer failures, lost articulation, and phantom tones are not errors but ghosts that reveal what discretization cannot encode."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

@@ -1,7 +1,7 @@
 ---
 title: "The Representation Gap"
 publishDate: 2026-03-02
-excerpt: "Every musical representation preserves something while destroying something else. New research reveals how AI systems develop hidden biases toward certain representations—and why understanding these gaps matters for music cognition and generation."
+excerpt: "Every musical representation preserves something while destroying something else. New research reveals how AI systems develop hidden biases toward certain representations-and why understanding these gaps matters for music cognition and generation."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

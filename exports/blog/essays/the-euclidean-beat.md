@@ -1,7 +1,7 @@
 ---
 title: "The Euclidean Beat: Why the World's Rhythms Are Solutions to a 2,300-Year-Old Algorithm"
 publishDate: 2026-03-11
-excerpt: "The Euclidean algorithm generates the world's most widespread rhythmic patterns across cultures—the same mathematical principle that organizes consonant intervals and scales reveals why humans everywhere converge on maximally even distributions of beats."
+excerpt: "The Euclidean algorithm generates the world's most widespread rhythmic patterns across cultures-the same mathematical principle that organizes consonant intervals and scales reveals why humans everywhere converge on maximally even distributions of beats."
 category: "mathematics"
 tags:
   - "rhythm"

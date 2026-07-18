@@ -1,7 +1,7 @@
 ---
 title: "Finding One: The Frame Problem in Musical Perception"
 publishDate: 2026-03-08
-excerpt: "Metric perception isn't purely auditory—it's an act of interpretation where the listener imposes structure on sound. This frame-dependent choice shapes what we hear, create, and understand about music."
+excerpt: "Metric perception isn't purely auditory-it's an act of interpretation where the listener imposes structure on sound. This frame-dependent choice shapes what we hear, create, and understand about music."
 category: "perception"
 tags:
   - "rhythm"

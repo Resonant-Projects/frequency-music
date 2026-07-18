@@ -1,7 +1,7 @@
 ---
 title: "The Groove Equation: From Asymmetric Meter to Fractal Rhythm"
 publishDate: 2026-02-28
-excerpt: "Rhythm has deep mathematical structure beyond subdivision—from Sierpinski fractals and Boolean algebra to asymmetric meters—revealing how producers intuitively encode these ideas in groove."
+excerpt: "Rhythm has deep mathematical structure beyond subdivision-from Sierpinski fractals and Boolean algebra to asymmetric meters-revealing how producers intuitively encode these ideas in groove."
 category: "mathematics"
 tags:
   - "rhythm"

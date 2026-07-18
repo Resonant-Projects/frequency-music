@@ -1,7 +1,7 @@
 ---
 title: "What Comes Apart"
 publishDate: 2026-04-09
-excerpt: "Separability of sound properties depends not on physics but on representation—whether you can pull pitch from rhythm, emotion from language, or signal from noise hinges on the dimensional space you choose to work in."
+excerpt: "Separability of sound properties depends not on physics but on representation-whether you can pull pitch from rhythm, emotion from language, or signal from noise hinges on the dimensional space you choose to work in."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

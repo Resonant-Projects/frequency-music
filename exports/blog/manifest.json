@@ -1,7 +1,1449 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-04-11T16:00:22.503Z",
+  "generatedAt": "2026-07-18T18:06:33.556Z",
   "items": [
+    {
+      "slug": "the-actionable-invariant",
+      "path": "essays/the-actionable-invariant.md",
+      "title": "The Actionable Invariant",
+      "publishDate": "2026-07-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-control-surface-inside-the-representation",
+      "path": "essays/the-control-surface-inside-the-representation.md",
+      "title": "The Control Surface Inside the Representation",
+      "publishDate": "2026-07-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "perceptual-resolution",
+      "path": "essays/perceptual-resolution.md",
+      "title": "Perceptual Resolution",
+      "publishDate": "2026-07-17",
+      "category": "perception"
+    },
+    {
+      "slug": "representation-pressure",
+      "path": "essays/representation-pressure.md",
+      "title": "Representation Pressure",
+      "publishDate": "2026-07-17",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-proxy-that-listens",
+      "path": "essays/the-proxy-that-listens.md",
+      "title": "The Proxy That Listens",
+      "publishDate": "2026-07-17",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "pitch-is-a-negotiation",
+      "path": "essays/pitch-is-a-negotiation.md",
+      "title": "Pitch Is a Negotiation",
+      "publishDate": "2026-07-16",
+      "category": "perception"
+    },
+    {
+      "slug": "the-accessible-trajectory",
+      "path": "essays/the-accessible-trajectory.md",
+      "title": "The Accessible Trajectory",
+      "publishDate": "2026-07-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-alignment-rate",
+      "path": "essays/the-alignment-rate.md",
+      "title": "The Alignment Rate",
+      "publishDate": "2026-07-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-partial-that-becomes-a-line",
+      "path": "essays/the-partial-that-becomes-a-line.md",
+      "title": "The Partial That Becomes a Line",
+      "publishDate": "2026-07-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-three-question-listener",
+      "path": "essays/the-three-question-listener.md",
+      "title": "The Three-Question Listener",
+      "publishDate": "2026-07-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-voice-vector",
+      "path": "essays/the-voice-vector.md",
+      "title": "The Voice Vector",
+      "publishDate": "2026-07-15",
+      "category": "composition"
+    },
+    {
+      "slug": "plasticity-is-a-trajectory",
+      "path": "essays/plasticity-is-a-trajectory.md",
+      "title": "Plasticity Is a Trajectory",
+      "publishDate": "2026-07-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "task-specific-time",
+      "path": "essays/task-specific-time.md",
+      "title": "Task-Specific Time",
+      "publishDate": "2026-07-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-survival-test",
+      "path": "essays/the-survival-test.md",
+      "title": "The Survival Test",
+      "publishDate": "2026-07-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-aligned-control-surface",
+      "path": "essays/the-aligned-control-surface.md",
+      "title": "The Aligned Control Surface",
+      "publishDate": "2026-07-13",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-mixable-world",
+      "path": "essays/the-mixable-world.md",
+      "title": "The Mixable World",
+      "publishDate": "2026-07-13",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-rate-of-handles",
+      "path": "essays/the-rate-of-handles.md",
+      "title": "The Rate of Handles",
+      "publishDate": "2026-07-13",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "alignment-is-pressure",
+      "path": "essays/alignment-is-pressure.md",
+      "title": "Alignment Is Pressure",
+      "publishDate": "2026-07-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-evaluator-in-the-room",
+      "path": "essays/the-evaluator-in-the-room.md",
+      "title": "The Evaluator in the Room",
+      "publishDate": "2026-07-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-judge-has-a-lineage",
+      "path": "essays/the-judge-has-a-lineage.md",
+      "title": "The Judge Has a Lineage",
+      "publishDate": "2026-07-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-access-layer",
+      "path": "essays/the-access-layer.md",
+      "title": "The Access Layer",
+      "publishDate": "2026-07-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-basis-is-an-intervention",
+      "path": "essays/the-basis-is-an-intervention.md",
+      "title": "The Basis Is an Intervention",
+      "publishDate": "2026-07-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-interpretable-grain",
+      "path": "essays/the-interpretable-grain.md",
+      "title": "The Interpretable Grain",
+      "publishDate": "2026-07-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-self-measuring-voice",
+      "path": "essays/the-self-measuring-voice.md",
+      "title": "The Self-Measuring Voice",
+      "publishDate": "2026-07-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-sourcehood-decision-window",
+      "path": "essays/the-sourcehood-decision-window.md",
+      "title": "The Sourcehood Decision Window",
+      "publishDate": "2026-07-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-sourcehood-separation-threshold",
+      "path": "essays/the-sourcehood-separation-threshold.md",
+      "title": "The Sourcehood Separation Threshold",
+      "publishDate": "2026-07-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-one-source-threshold-revisited",
+      "path": "essays/the-one-source-threshold-revisited.md",
+      "title": "The One-Source Threshold, Revisited",
+      "publishDate": "2026-07-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-proxy-listener",
+      "path": "essays/the-proxy-listener.md",
+      "title": "The Proxy Listener",
+      "publishDate": "2026-07-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-trace-before-report",
+      "path": "essays/the-trace-before-report.md",
+      "title": "The Trace Before Report",
+      "publishDate": "2026-07-09",
+      "category": "perception"
+    },
+    {
+      "slug": "the-calibrated-unknown",
+      "path": "essays/the-calibrated-unknown.md",
+      "title": "The Calibrated Unknown",
+      "publishDate": "2026-07-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-context-arrives-first",
+      "path": "essays/the-context-arrives-first.md",
+      "title": "The Context Arrives First",
+      "publishDate": "2026-07-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-usable-proof",
+      "path": "essays/the-usable-proof.md",
+      "title": "The Usable Proof",
+      "publishDate": "2026-07-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-clock-inside-the-listener",
+      "path": "essays/the-clock-inside-the-listener.md",
+      "title": "The Clock Inside the Listener",
+      "publishDate": "2026-07-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-missing-identity-label",
+      "path": "essays/the-missing-identity-label.md",
+      "title": "The Missing Identity Label",
+      "publishDate": "2026-07-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-threshold-of-audibility",
+      "path": "essays/the-threshold-of-audibility.md",
+      "title": "The Threshold of Audibility",
+      "publishDate": "2026-07-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-upstream-name",
+      "path": "essays/the-upstream-name.md",
+      "title": "The Upstream Name",
+      "publishDate": "2026-07-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "effective-sourcehood",
+      "path": "essays/effective-sourcehood.md",
+      "title": "Effective Sourcehood",
+      "publishDate": "2026-07-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-metric-that-listens-back",
+      "path": "essays/the-metric-that-listens-back.md",
+      "title": "The Metric That Listens Back",
+      "publishDate": "2026-07-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-room-is-part-of-the-source",
+      "path": "essays/the-room-is-part-of-the-source.md",
+      "title": "The Room Is Part of the Source",
+      "publishDate": "2026-07-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-room-enters-the-separator",
+      "path": "essays/the-room-enters-the-separator.md",
+      "title": "The Room Enters the Separator",
+      "publishDate": "2026-07-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "identity-is-a-listening-condition",
+      "path": "essays/identity-is-a-listening-condition.md",
+      "title": "Identity Is A Listening Condition",
+      "publishDate": "2026-07-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-window",
+      "path": "essays/the-identity-window.md",
+      "title": "The Identity Window",
+      "publishDate": "2026-07-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-proof-burden-of-sound",
+      "path": "essays/the-proof-burden-of-sound.md",
+      "title": "The Proof Burden of Sound",
+      "publishDate": "2026-07-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-sourcehood-threshold",
+      "path": "essays/the-sourcehood-threshold.md",
+      "title": "The Sourcehood Threshold",
+      "publishDate": "2026-07-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-deadline",
+      "path": "essays/the-identity-deadline.md",
+      "title": "The Identity Deadline",
+      "publishDate": "2026-07-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-source-is-a-hypothesis",
+      "path": "essays/the-source-is-a-hypothesis.md",
+      "title": "The Source Is a Hypothesis",
+      "publishDate": "2026-07-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-filter-is-the-decision",
+      "path": "essays/the-filter-is-the-decision.md",
+      "title": "The Filter Is The Decision",
+      "publishDate": "2026-07-01",
+      "category": "composition"
+    },
+    {
+      "slug": "the-mixture-is-the-instrument",
+      "path": "essays/the-mixture-is-the-instrument.md",
+      "title": "The Mixture Is The Instrument",
+      "publishDate": "2026-07-01",
+      "category": "composition"
+    },
+    {
+      "slug": "manufactured-clarity",
+      "path": "essays/manufactured-clarity.md",
+      "title": "Manufactured Clarity",
+      "publishDate": "2026-06-24",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-useful-delay",
+      "path": "essays/the-useful-delay.md",
+      "title": "The Useful Delay",
+      "publishDate": "2026-06-24",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "voice-as-state",
+      "path": "essays/voice-as-state.md",
+      "title": "Voice As State",
+      "publishDate": "2026-06-24",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "implicit-evidence",
+      "path": "essays/implicit-evidence.md",
+      "title": "Implicit Evidence",
+      "publishDate": "2026-06-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "sourcehood-is-a-commitment",
+      "path": "essays/sourcehood-is-a-commitment.md",
+      "title": "Sourcehood Is A Commitment",
+      "publishDate": "2026-06-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-decision-has-a-shape",
+      "path": "essays/the-decision-has-a-shape.md",
+      "title": "The Decision Has A Shape",
+      "publishDate": "2026-06-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "effective-audibility",
+      "path": "essays/effective-audibility.md",
+      "title": "Effective Audibility",
+      "publishDate": "2026-06-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-evidence-budget",
+      "path": "essays/the-evidence-budget.md",
+      "title": "The Evidence Budget",
+      "publishDate": "2026-06-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-measurement-position",
+      "path": "essays/the-measurement-position.md",
+      "title": "The Measurement Position",
+      "publishDate": "2026-06-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-evidence-horizon",
+      "path": "essays/the-evidence-horizon.md",
+      "title": "The Evidence Horizon",
+      "publishDate": "2026-06-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-reference-is-part-of-the-signal",
+      "path": "essays/the-reference-is-part-of-the-signal.md",
+      "title": "The Reference Is Part Of The Signal",
+      "publishDate": "2026-06-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-temporal-contract",
+      "path": "essays/the-temporal-contract.md",
+      "title": "The Temporal Contract",
+      "publishDate": "2026-06-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-focus-is-a-filter",
+      "path": "essays/the-focus-is-a-filter.md",
+      "title": "The Focus Is a Filter",
+      "publishDate": "2026-06-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-source-is-a-decision",
+      "path": "essays/the-source-is-a-decision.md",
+      "title": "The Source Is a Decision",
+      "publishDate": "2026-06-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-sufficiency-threshold-revisited",
+      "path": "essays/the-sufficiency-threshold-revisited.md",
+      "title": "The Sufficiency Threshold Revisited",
+      "publishDate": "2026-06-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-single-source-illusion",
+      "path": "essays/the-single-source-illusion.md",
+      "title": "The Single-Source Illusion",
+      "publishDate": "2026-06-19",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-translation-loss",
+      "path": "essays/the-translation-loss.md",
+      "title": "The Translation Loss",
+      "publishDate": "2026-06-19",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-promptable-room",
+      "path": "essays/the-promptable-room.md",
+      "title": "The Promptable Room",
+      "publishDate": "2026-06-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-audible-proof",
+      "path": "essays/the-audible-proof.md",
+      "title": "The Audible Proof",
+      "publishDate": "2026-06-17",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-minimum-separable-unit",
+      "path": "essays/the-minimum-separable-unit.md",
+      "title": "The Minimum Separable Unit",
+      "publishDate": "2026-06-17",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-count-depends-on-the-scale",
+      "path": "essays/the-count-depends-on-the-scale.md",
+      "title": "The Count Depends on the Scale",
+      "publishDate": "2026-06-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-cue-weight-is-the-message",
+      "path": "essays/the-cue-weight-is-the-message.md",
+      "title": "The Cue Weight Is the Message",
+      "publishDate": "2026-06-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-missing-microphone",
+      "path": "essays/the-missing-microphone.md",
+      "title": "The Missing Microphone",
+      "publishDate": "2026-06-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-invariant-voice",
+      "path": "essays/the-invariant-voice.md",
+      "title": "The Invariant Voice",
+      "publishDate": "2026-06-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-relation-is-in-the-signal",
+      "path": "essays/the-relation-is-in-the-signal.md",
+      "title": "The Relation Is in the Signal",
+      "publishDate": "2026-06-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-context-that-listens",
+      "path": "essays/the-context-that-listens.md",
+      "title": "The Context That Listens",
+      "publishDate": "2026-06-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-threshold-that-counts",
+      "path": "essays/the-threshold-that-counts.md",
+      "title": "The Threshold That Counts",
+      "publishDate": "2026-06-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-decision-bearing-representation",
+      "path": "essays/the-decision-bearing-representation.md",
+      "title": "The Decision-Bearing Representation",
+      "publishDate": "2026-06-13",
+      "category": "composition"
+    },
+    {
+      "slug": "the-room-is-a-source",
+      "path": "essays/the-room-is-a-source.md",
+      "title": "The Room Is a Source",
+      "publishDate": "2026-06-13",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-accessible-phase",
+      "path": "essays/the-accessible-phase.md",
+      "title": "The Accessible Phase",
+      "publishDate": "2026-06-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-attribution-limit",
+      "path": "essays/the-attribution-limit.md",
+      "title": "The Attribution Limit",
+      "publishDate": "2026-06-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-evidence-of-a-voice",
+      "path": "essays/the-evidence-of-a-voice.md",
+      "title": "The Evidence of a Voice",
+      "publishDate": "2026-06-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-hidden-variable",
+      "path": "essays/the-hidden-variable.md",
+      "title": "The Hidden Variable",
+      "publishDate": "2026-06-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-withheld-name",
+      "path": "essays/the-withheld-name.md",
+      "title": "The Withheld Name",
+      "publishDate": "2026-06-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-label-is-part-of-the-signal",
+      "path": "essays/the-label-is-part-of-the-signal.md",
+      "title": "The Label Is Part of the Signal",
+      "publishDate": "2026-06-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-evidence-window",
+      "path": "essays/the-evidence-window.md",
+      "title": "The Evidence Window",
+      "publishDate": "2026-06-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-listening-boundary",
+      "path": "essays/the-listening-boundary.md",
+      "title": "The Listening Boundary",
+      "publishDate": "2026-06-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-early-separation-principle",
+      "path": "essays/the-early-separation-principle.md",
+      "title": "The Early Separation Principle",
+      "publishDate": "2026-06-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-room-as-witness",
+      "path": "essays/the-room-as-witness.md",
+      "title": "The Room as Witness",
+      "publishDate": "2026-06-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-proof-threshold",
+      "path": "essays/the-proof-threshold.md",
+      "title": "The Proof Threshold",
+      "publishDate": "2026-06-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-source-must-arrive-in-time",
+      "path": "essays/the-source-must-arrive-in-time.md",
+      "title": "The Source Must Arrive in Time",
+      "publishDate": "2026-06-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-curated-mixture",
+      "path": "essays/the-curated-mixture.md",
+      "title": "The Curated Mixture",
+      "publishDate": "2026-06-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-clock",
+      "path": "essays/the-identity-clock.md",
+      "title": "The Identity Clock",
+      "publishDate": "2026-06-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-sourcehood-contract",
+      "path": "essays/the-sourcehood-contract.md",
+      "title": "The Sourcehood Contract",
+      "publishDate": "2026-06-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "calibration-before-anomaly",
+      "path": "essays/calibration-before-anomaly.md",
+      "title": "Calibration Before Anomaly",
+      "publishDate": "2026-06-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-attribution-cost",
+      "path": "essays/the-attribution-cost.md",
+      "title": "The Attribution Cost",
+      "publishDate": "2026-06-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-listener-must-name-the-source",
+      "path": "essays/the-listener-must-name-the-source.md",
+      "title": "The Listener Must Name the Source",
+      "publishDate": "2026-06-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "effective-source-knowledge",
+      "path": "essays/effective-source-knowledge.md",
+      "title": "Effective Source Knowledge",
+      "publishDate": "2026-06-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-decision-moves-upstream",
+      "path": "essays/the-decision-moves-upstream.md",
+      "title": "The Decision Moves Upstream",
+      "publishDate": "2026-06-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-self-measuring-sound",
+      "path": "essays/the-self-measuring-sound.md",
+      "title": "The Self-Measuring Sound",
+      "publishDate": "2026-06-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-tax",
+      "path": "essays/the-identity-tax.md",
+      "title": "The Identity Tax",
+      "publishDate": "2026-06-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-representation-that-gets-to-act",
+      "path": "essays/the-representation-that-gets-to-act.md",
+      "title": "The Representation That Gets to Act",
+      "publishDate": "2026-06-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-hidden-carrier",
+      "path": "essays/the-hidden-carrier.md",
+      "title": "The Hidden Carrier",
+      "publishDate": "2026-05-31",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-length-of-the-proof",
+      "path": "essays/the-length-of-the-proof.md",
+      "title": "The Length of the Proof",
+      "publishDate": "2026-05-31",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "when-evidence-becomes-enough",
+      "path": "essays/when-evidence-becomes-enough.md",
+      "title": "When Evidence Becomes Enough",
+      "publishDate": "2026-05-31",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-calibrated-ear",
+      "path": "essays/the-calibrated-ear.md",
+      "title": "The Calibrated Ear",
+      "publishDate": "2026-05-30",
+      "category": "composition"
+    },
+    {
+      "slug": "the-risk-of-answering",
+      "path": "essays/the-risk-of-answering.md",
+      "title": "The Risk of Answering",
+      "publishDate": "2026-05-30",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-source-is-a-verdict",
+      "path": "essays/the-source-is-a-verdict.md",
+      "title": "The Source Is a Verdict",
+      "publishDate": "2026-05-30",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-commitment-function",
+      "path": "essays/the-commitment-function.md",
+      "title": "The Commitment Function",
+      "publishDate": "2026-05-29",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-partial-access-ear",
+      "path": "essays/the-partial-access-ear.md",
+      "title": "The Partial-Access Ear",
+      "publishDate": "2026-05-29",
+      "category": "composition"
+    },
+    {
+      "slug": "the-time-window-decides",
+      "path": "essays/the-time-window-decides.md",
+      "title": "The Time Window Decides",
+      "publishDate": "2026-05-29",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-withholding-test",
+      "path": "essays/the-identity-withholding-test.md",
+      "title": "The Identity-Withholding Test",
+      "publishDate": "2026-05-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-operational-identity",
+      "path": "essays/the-operational-identity.md",
+      "title": "The Operational Identity",
+      "publishDate": "2026-05-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-sourcehood-filter",
+      "path": "essays/the-sourcehood-filter.md",
+      "title": "The Sourcehood Filter",
+      "publishDate": "2026-05-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-hidden-name-of-the-sound",
+      "path": "essays/the-hidden-name-of-the-sound.md",
+      "title": "The Hidden Name of the Sound",
+      "publishDate": "2026-05-27",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "when-silence-becomes-instruction",
+      "path": "essays/when-silence-becomes-instruction.md",
+      "title": "When Silence Becomes Instruction",
+      "publishDate": "2026-05-27",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "sourcehood-as-a-compositional-parameter",
+      "path": "essays/sourcehood-as-a-compositional-parameter.md",
+      "title": "Sourcehood as a Compositional Parameter",
+      "publishDate": "2026-05-26",
+      "category": "composition"
+    },
+    {
+      "slug": "the-minimum-proof-of-sound",
+      "path": "essays/the-minimum-proof-of-sound.md",
+      "title": "The Minimum Proof of Sound",
+      "publishDate": "2026-05-26",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "sourcehood-before-signal",
+      "path": "essays/sourcehood-before-signal.md",
+      "title": "Sourcehood Before Signal",
+      "publishDate": "2026-05-25",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-decision-to-separate",
+      "path": "essays/the-decision-to-separate.md",
+      "title": "The Decision to Separate",
+      "publishDate": "2026-05-25",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-latency-contract",
+      "path": "essays/the-latency-contract.md",
+      "title": "The Latency Contract",
+      "publishDate": "2026-05-25",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-boundary-that-listens",
+      "path": "essays/the-boundary-that-listens.md",
+      "title": "The Boundary That Listens",
+      "publishDate": "2026-05-24",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-one-source-threshold",
+      "path": "essays/the-one-source-threshold.md",
+      "title": "The One-Source Threshold",
+      "publishDate": "2026-05-24",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-proof-of-a-source",
+      "path": "essays/the-proof-of-a-source.md",
+      "title": "The Proof Of A Source",
+      "publishDate": "2026-05-24",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-moment-of-enough",
+      "path": "essays/the-moment-of-enough.md",
+      "title": "The Moment of Enough",
+      "publishDate": "2026-05-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-sufficiency-threshold",
+      "path": "essays/the-sufficiency-threshold.md",
+      "title": "The Sufficiency Threshold",
+      "publishDate": "2026-05-23",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-attribution-layer",
+      "path": "essays/the-attribution-layer.md",
+      "title": "The Attribution Layer",
+      "publishDate": "2026-05-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-source-before-the-signal",
+      "path": "essays/the-source-before-the-signal.md",
+      "title": "The Source Before the Signal",
+      "publishDate": "2026-05-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-source-before-the-sound",
+      "path": "essays/the-source-before-the-sound.md",
+      "title": "The Source Before the Sound",
+      "publishDate": "2026-05-22",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-load-bearing-layer",
+      "path": "essays/the-load-bearing-layer.md",
+      "title": "The Load-Bearing Layer",
+      "publishDate": "2026-05-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-source-identity-budget",
+      "path": "essays/the-source-identity-budget.md",
+      "title": "The Source Identity Budget",
+      "publishDate": "2026-05-21",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-carrier-decides",
+      "path": "essays/the-carrier-decides.md",
+      "title": "The Carrier Decides: Composing What the Medium Lets Through",
+      "publishDate": "2026-05-20",
+      "category": "composition"
+    },
+    {
+      "slug": "the-invisible-coordinate",
+      "path": "essays/the-invisible-coordinate.md",
+      "title": "The Invisible Coordinate",
+      "publishDate": "2026-05-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-resolution-budget",
+      "path": "essays/the-resolution-budget.md",
+      "title": "The Resolution Budget",
+      "publishDate": "2026-05-20",
+      "category": "composition"
+    },
+    {
+      "slug": "the-fixed-frame",
+      "path": "essays/the-fixed-frame.md",
+      "title": "The Fixed Frame",
+      "publishDate": "2026-05-19",
+      "category": "composition"
+    },
+    {
+      "slug": "the-recoverable-window",
+      "path": "essays/the-recoverable-window.md",
+      "title": "The Recoverable Window",
+      "publishDate": "2026-05-19",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-thick-boundary-revisited",
+      "path": "essays/the-thick-boundary-revisited.md",
+      "title": "The Thick Boundary Revisited: Composing the Transition Zone",
+      "publishDate": "2026-05-19",
+      "category": "composition"
+    },
+    {
+      "slug": "the-instruction-under-the-sound",
+      "path": "essays/the-instruction-under-the-sound.md",
+      "title": "The Instruction Under The Sound",
+      "publishDate": "2026-05-18",
+      "category": "composition"
+    },
+    {
+      "slug": "the-readable-constraint",
+      "path": "essays/the-readable-constraint.md",
+      "title": "The Readable Constraint",
+      "publishDate": "2026-05-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-translation-layer",
+      "path": "essays/the-translation-layer.md",
+      "title": "The Translation Layer",
+      "publishDate": "2026-05-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-carrying-medium",
+      "path": "essays/the-carrying-medium.md",
+      "title": "The Carrying Medium",
+      "publishDate": "2026-05-17",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-relation-that-survives",
+      "path": "essays/the-relation-that-survives.md",
+      "title": "The Relation That Survives",
+      "publishDate": "2026-05-17",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-uncertain-edge",
+      "path": "essays/the-uncertain-edge.md",
+      "title": "The Uncertain Edge",
+      "publishDate": "2026-05-17",
+      "category": "composition"
+    },
+    {
+      "slug": "the-anticipatory-trace",
+      "path": "essays/the-anticipatory-trace.md",
+      "title": "The Anticipatory Trace",
+      "publishDate": "2026-05-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-first-cut-listens",
+      "path": "essays/the-first-cut-listens.md",
+      "title": "The First Cut Listens",
+      "publishDate": "2026-05-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-task-relevant-signal",
+      "path": "essays/the-task-relevant-signal.md",
+      "title": "The Task-Relevant Signal",
+      "publishDate": "2026-05-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-minimum-viable-gesture",
+      "path": "essays/the-minimum-viable-gesture.md",
+      "title": "The Minimum Viable Gesture",
+      "publishDate": "2026-05-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "style-as-redundant-code",
+      "path": "essays/style-as-redundant-code.md",
+      "title": "Style as Redundant Code",
+      "publishDate": "2026-05-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-control-plane-under-the-sound",
+      "path": "essays/the-control-plane-under-the-sound.md",
+      "title": "The Control Plane Under the Sound",
+      "publishDate": "2026-05-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-uncollapsed-accompaniment",
+      "path": "essays/the-uncollapsed-accompaniment.md",
+      "title": "The Uncollapsed Accompaniment",
+      "publishDate": "2026-05-14",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-hidden-bands-of-form",
+      "path": "essays/the-hidden-bands-of-form.md",
+      "title": "The Hidden Bands of Form",
+      "publishDate": "2026-05-13",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-matrix-between-things",
+      "path": "essays/the-matrix-between-things.md",
+      "title": "The Matrix Between Things",
+      "publishDate": "2026-05-13",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-precursor-field",
+      "path": "essays/the-precursor-field.md",
+      "title": "The Precursor Field",
+      "publishDate": "2026-05-13",
+      "category": "composition"
+    },
+    {
+      "slug": "the-carrier-carries-the-form",
+      "path": "essays/the-carrier-carries-the-form.md",
+      "title": "The Carrier Carries the Form",
+      "publishDate": "2026-05-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-fine-structure-decides",
+      "path": "essays/the-fine-structure-decides.md",
+      "title": "The Fine Structure Decides",
+      "publishDate": "2026-05-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-unnamed-layer",
+      "path": "essays/the-unnamed-layer.md",
+      "title": "The Unnamed Layer",
+      "publishDate": "2026-05-12",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-boundary-is-the-instrument",
+      "path": "essays/the-boundary-is-the-instrument.md",
+      "title": "The Boundary Is the Instrument",
+      "publishDate": "2026-05-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-nearest-accessible-form",
+      "path": "essays/the-nearest-accessible-form.md",
+      "title": "The Nearest Accessible Form",
+      "publishDate": "2026-05-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-pre-audible-turn",
+      "path": "essays/the-pre-audible-turn.md",
+      "title": "The Pre-Audible Turn",
+      "publishDate": "2026-05-11",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-coherence-contract",
+      "path": "essays/the-coherence-contract.md",
+      "title": "The Coherence Contract",
+      "publishDate": "2026-05-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-budget",
+      "path": "essays/the-identity-budget.md",
+      "title": "The Identity Budget",
+      "publishDate": "2026-05-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-preparatory-field",
+      "path": "essays/the-preparatory-field.md",
+      "title": "The Preparatory Field",
+      "publishDate": "2026-05-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-carrier-under-the-message",
+      "path": "essays/the-carrier-under-the-message.md",
+      "title": "The Carrier Under the Message",
+      "publishDate": "2026-05-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-signature-in-the-degrees-of-freedom",
+      "path": "essays/the-signature-in-the-degrees-of-freedom.md",
+      "title": "The Signature in the Degrees of Freedom",
+      "publishDate": "2026-05-09",
+      "category": "composition"
+    },
+    {
+      "slug": "the-thick-boundary",
+      "path": "essays/the-thick-boundary.md",
+      "title": "The Thick Boundary: Why Musical Edges Are Really Zones",
+      "publishDate": "2026-05-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-absent-cause",
+      "path": "essays/the-absent-cause.md",
+      "title": "The Absent Cause: Composing What the Listener Cannot See Yet",
+      "publishDate": "2026-05-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-coordinate-that-makes-motion",
+      "path": "essays/the-coordinate-that-makes-motion.md",
+      "title": "The Coordinate That Makes Motion: Why Musical Meaning Depends on the Map",
+      "publishDate": "2026-05-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-scale-that-holds",
+      "path": "essays/the-scale-that-holds.md",
+      "title": "The Scale That Holds: Why Musical Meaning Needs the Right Resolution",
+      "publishDate": "2026-05-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-thread-that-survives",
+      "path": "essays/the-thread-that-survives.md",
+      "title": "The Thread That Survives: Intelligibility, Identity, and Musical Transformation",
+      "publishDate": "2026-05-07",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-adaptation-boundary",
+      "path": "essays/the-adaptation-boundary.md",
+      "title": "The Adaptation Boundary",
+      "publishDate": "2026-05-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-inference-chain",
+      "path": "essays/the-inference-chain.md",
+      "title": "The Inference Chain",
+      "publishDate": "2026-05-06",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-aperture-of-rules",
+      "path": "essays/the-aperture-of-rules.md",
+      "title": "The Aperture of Rules",
+      "publishDate": "2026-05-05",
+      "category": "composition"
+    },
+    {
+      "slug": "the-hidden-band",
+      "path": "essays/the-hidden-band.md",
+      "title": "The Hidden Band",
+      "publishDate": "2026-05-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-listening-grid",
+      "path": "essays/the-listening-grid.md",
+      "title": "The Listening Grid",
+      "publishDate": "2026-05-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-handoff-between-maps",
+      "path": "essays/the-handoff-between-maps.md",
+      "title": "The Handoff Between Maps",
+      "publishDate": "2026-05-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-residue-that-remains",
+      "path": "essays/the-residue-that-remains.md",
+      "title": "The Residue That Remains",
+      "publishDate": "2026-05-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-style-inside-the-coordinates",
+      "path": "essays/the-style-inside-the-coordinates.md",
+      "title": "The Style Inside the Coordinates",
+      "publishDate": "2026-05-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-coordinate-system-hears-first",
+      "path": "essays/the-coordinate-system-hears-first.md",
+      "title": "The Coordinate System Hears First",
+      "publishDate": "2026-05-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-bandpass-principle",
+      "path": "essays/the-bandpass-principle.md",
+      "title": "The Bandpass Principle",
+      "publishDate": "2026-05-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-control-layer",
+      "path": "essays/the-control-layer.md",
+      "title": "The Control Layer",
+      "publishDate": "2026-05-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-instrument-is-a-theory",
+      "path": "essays/the-instrument-is-a-theory.md",
+      "title": "The Instrument Is a Theory",
+      "publishDate": "2026-05-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-configuration-is-the-score",
+      "path": "essays/the-configuration-is-the-score.md",
+      "title": "The Configuration Is the Score",
+      "publishDate": "2026-05-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-grain-of-alignment",
+      "path": "essays/the-grain-of-alignment.md",
+      "title": "The Grain of Alignment",
+      "publishDate": "2026-05-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-listener-in-the-filter",
+      "path": "essays/the-listener-in-the-filter.md",
+      "title": "The Listener in the Filter",
+      "publishDate": "2026-05-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-partial-mix",
+      "path": "essays/the-partial-mix.md",
+      "title": "The Partial Mix",
+      "publishDate": "2026-05-01",
+      "category": "perception"
+    },
+    {
+      "slug": "the-realization-layer",
+      "path": "essays/the-realization-layer.md",
+      "title": "The Realization Layer",
+      "publishDate": "2026-05-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-anticipation-budget",
+      "path": "essays/the-anticipation-budget.md",
+      "title": "The Anticipation Budget",
+      "publishDate": "2026-04-30",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-control-surface-before-the-utterance",
+      "path": "essays/the-control-surface-before-the-utterance.md",
+      "title": "The Control Surface Before the Utterance",
+      "publishDate": "2026-04-29",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-interface-is-the-instrument",
+      "path": "essays/the-interface-is-the-instrument.md",
+      "title": "The Interface Is the Instrument: Why Speech Systems Keep Moving Upstream",
+      "publishDate": "2026-04-29",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-front-end-keeps-the-beat",
+      "path": "essays/the-front-end-keeps-the-beat.md",
+      "title": "The Front End Keeps the Beat",
+      "publishDate": "2026-04-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-loop-that-keeps-time",
+      "path": "essays/the-loop-that-keeps-time.md",
+      "title": "The Loop That Keeps Time",
+      "publishDate": "2026-04-28",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-doubt-that-keeps-the-line-open",
+      "path": "essays/the-doubt-that-keeps-the-line-open.md",
+      "title": "The Doubt That Keeps the Line Open",
+      "publishDate": "2026-04-27",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-ear-that-checks-itself",
+      "path": "essays/the-ear-that-checks-itself.md",
+      "title": "The Ear That Checks Itself",
+      "publishDate": "2026-04-27",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-conversation-must-anticipate-itself",
+      "path": "essays/the-conversation-must-anticipate-itself.md",
+      "title": "The Conversation Must Anticipate Itself",
+      "publishDate": "2026-04-26",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-plan-that-survives-the-renderer",
+      "path": "essays/the-plan-that-survives-the-renderer.md",
+      "title": "The Plan That Survives the Renderer",
+      "publishDate": "2026-04-26",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-seam-that-teaches",
+      "path": "essays/the-seam-that-teaches.md",
+      "title": "The Seam That Teaches",
+      "publishDate": "2026-04-26",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-decision-before-the-bottleneck",
+      "path": "essays/the-decision-before-the-bottleneck.md",
+      "title": "The Decision Before the Bottleneck",
+      "publishDate": "2026-04-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-schema-is-the-score",
+      "path": "essays/the-schema-is-the-score.md",
+      "title": "The Schema Is the Score",
+      "publishDate": "2026-04-20",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-medium-is-the-map",
+      "path": "essays/the-medium-is-the-map.md",
+      "title": "The Medium Is the Map",
+      "publishDate": "2026-04-19",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-action-preserving-map",
+      "path": "essays/the-action-preserving-map.md",
+      "title": "The Action-Preserving Map",
+      "publishDate": "2026-04-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-constraint-that-calms",
+      "path": "essays/the-constraint-that-calms.md",
+      "title": "The Constraint That Calms",
+      "publishDate": "2026-04-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-category-that-leaks",
+      "path": "essays/the-category-that-leaks.md",
+      "title": "The Category That Leaks",
+      "publishDate": "2026-04-17",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-1-percent-move",
+      "path": "essays/the-1-percent-move.md",
+      "title": "The 1% Move",
+      "publishDate": "2026-04-16",
+      "category": "composition"
+    },
+    {
+      "slug": "the-coordinate-that-survives",
+      "path": "essays/the-coordinate-that-survives.md",
+      "title": "The Coordinate That Survives",
+      "publishDate": "2026-04-16",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-cue-that-survives",
+      "path": "essays/the-cue-that-survives.md",
+      "title": "The Cue That Survives",
+      "publishDate": "2026-04-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-split-you-keep",
+      "path": "essays/the-split-you-keep.md",
+      "title": "The Split You Keep",
+      "publishDate": "2026-04-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-who-when-what",
+      "path": "essays/the-who-when-what.md",
+      "title": "Who, When, What",
+      "publishDate": "2026-04-15",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-asymmetry-you-need",
+      "path": "essays/the-asymmetry-you-need.md",
+      "title": "The Asymmetry You Need",
+      "publishDate": "2026-04-11",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-ghost-at-the-grid-line",
       "path": "essays/the-ghost-at-the-grid-line.md",

@@ -1,7 +1,7 @@
 ---
 title: "The Three Means: How Ancient Mathematics Built the Language of Harmony"
 publishDate: 2026-03-04
-excerpt: "Ancient mathematicians derived the three classical means—arithmetic, geometric, harmonic—from music itself, revealing how different division philosophies create distinct harmonic characters and tuning systems."
+excerpt: "Ancient mathematicians derived the three classical means-arithmetic, geometric, harmonic-from music itself, revealing how different division philosophies create distinct harmonic characters and tuning systems."
 category: "mathematics"
 tags:
   - "mathematical-music-theory"

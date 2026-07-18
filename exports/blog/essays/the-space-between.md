@@ -1,7 +1,7 @@
 ---
 title: "The Space Between: Why Music's Relational Properties Resist AI"
 publishDate: 2026-03-06
-excerpt: "Three 2026 papers reveal why AI struggles with music: it's not about generating individual elements, but capturing the relational properties—groove, spatial acoustics, cross-dimensional analysis—that live in the space between."
+excerpt: "Three 2026 papers reveal why AI struggles with music: it's not about generating individual elements, but capturing the relational properties-groove, spatial acoustics, cross-dimensional analysis-that live in the space between."
 category: "interdisciplinary"
 tags:
   - "AI-music"

@@ -1,7 +1,7 @@
 ---
 title: "The Fourth Wall: When the Listener Is the Variable"
 publishDate: 2026-03-17
-excerpt: "Listener identity—gender, training, age, and culture—systematically shapes perceptual measurements of audio quality, revealing a fourth wall beyond noise, anchors, and entanglement. Measurement doesn't reveal objective truth; it reveals whose truth."
+excerpt: "Listener identity-gender, training, age, and culture-systematically shapes perceptual measurements of audio quality, revealing a fourth wall beyond noise, anchors, and entanglement. Measurement doesn't reveal objective truth; it reveals whose truth."
 category: "perception"
 tags:
   - "perception"

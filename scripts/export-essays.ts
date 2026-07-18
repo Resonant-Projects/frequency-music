@@ -6,8 +6,8 @@
  * Pure transform - no AI calls, no network.
  *
  * Usage:
- *   bun scripts/export-essays.ts
- *   bun scripts/export-essays.ts --output-dir exports/blog
+ *   vpx tsx scripts/export-essays.ts
+ *   vpx tsx scripts/export-essays.ts --output-dir exports/blog
  */
 
 import { execFileSync } from "node:child_process";
@@ -99,9 +99,7 @@ function parseArgs(): { outputDir: string } {
 }
 
 async function listEssayFiles(): Promise<string[]> {
-  return (await readdir(ESSAYS_DIR))
-    .filter((file) => file.endsWith(".md"))
-    .toSorted();
+  return (await readdir(ESSAYS_DIR)).filter((file) => file.endsWith(".md")).toSorted();
 }
 
 async function main() {
@@ -111,14 +109,9 @@ async function main() {
 
   let metadata: Record<string, MetadataEntry>;
   try {
-    metadata = JSON.parse(await readFile(METADATA_PATH, "utf8")) as Record<
-      string,
-      MetadataEntry
-    >;
+    metadata = JSON.parse(await readFile(METADATA_PATH, "utf8")) as Record<string, MetadataEntry>;
   } catch {
-    console.error(
-      "metadata.json not found. Run generate-essay-metadata.ts first.",
-    );
+    console.error("metadata.json not found. Run generate-essay-metadata.ts first.");
     process.exit(1);
   }
 
@@ -151,11 +144,7 @@ async function main() {
     const frontmatter = buildFrontmatter(essay, meta, publishDate);
     const relativePath = `essays/${essay.slug}.md`;
     const outputMarkdown = `${frontmatter}\n\n${essay.body}\n`;
-    await writeFile(
-      join(resolvedOutputDir, relativePath),
-      outputMarkdown,
-      "utf8",
-    );
+    await writeFile(join(resolvedOutputDir, relativePath), outputMarkdown, "utf8");
 
     manifestItems.push({
       slug: essay.slug,
@@ -187,9 +176,7 @@ async function main() {
     "utf8",
   );
 
-  console.log(
-    `Exported ${manifestItems.length} essays to ${resolvedOutputDir}/`,
-  );
+  console.log(`Exported ${manifestItems.length} essays to ${resolvedOutputDir}/`);
 
   if (missingMetadata.length > 0) {
     console.error(

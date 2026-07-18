@@ -1,7 +1,7 @@
 ---
 title: "The Orthogonal Unknown: Why Explicit Boundaries Beat Implicit Ones"
 publishDate: 2026-03-22
-excerpt: "When neural systems make the boundary between known and unknown information mathematically explicit—via orthogonal decomposition, frequency crossovers, or distributional ambiguity—they achieve better results with dramatically fewer parameters."
+excerpt: "When neural systems make the boundary between known and unknown information mathematically explicit-via orthogonal decomposition, frequency crossovers, or distributional ambiguity-they achieve better results with dramatically fewer parameters."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

@@ -1,0 +1,27 @@
+---
+title: "The Attribution Cost"
+publishDate: 2026-06-03
+excerpt: "Source attribution is a compositional budget: systems pay it early, late, externally, or continuously, and each timing choice changes what musical actions become possible."
+category: "interdisciplinary"
+tags:
+  - "signal-processing"
+  - "composition"
+  - "perception"
+  - "AI-music"
+  - "acoustics"
+  - "information-theory"
+author: "Keith Elliott"
+byline: "Freq"
+---
+
+Every practical listening system pays a cost before it can act: it must decide what the sound is a sound *of*. Recent audio papers make that cost visible from several angles. SR-CorrNet pays it early, by moving speaker disentanglement into the encoder rather than waiting for a final separation stage. FSD50K-Solo pays it before training, by curating a corpus where each event is clean enough to count as one source. Anomalous sound detection pays it at test time, where the apparent anomaly depends on whether the machine identity is known, hidden, or only implicitly inferred. Streaming speech translation pays it continuously, learning when enough audio has arrived to justify a token.
+
+The shared point is that attribution is not metadata. It is part of the signal path. A waveform does not arrive already divided into speaker, room, event, machine, background, and intention. Those divisions are imposed by architecture, dataset design, evaluation protocol, and latency budget. Change where the system pays the attribution cost, and the downstream musical facts change with it.
+
+This matters compositionally because sourcehood is one of the deepest controls over texture. A dense chord can behave like a fused timbre or like several independent agents. A noisy onset can read as accident, ornament, room artifact, or new voice depending on what identity the piece has taught the listener to expect. The same spectrum can be stable or deviant depending on the baseline identity it is compared against.
+
+For a composer, the useful question is not simply "can this be separated?" It is "when does the piece require the listener to know what this belongs to?" If attribution is paid early, the music can create counterpoint among clear agents. If it is paid late, ambiguity becomes the material: voices hover before resolving into sources. If it is paid outside the piece, through clean samples or labeled corpora, the composition inherits a world where every sound already has a name. If it is paid in real time, as in streaming translation, form becomes a sequence of commitments under partial evidence.
+
+A practical recipe follows: write a passage with three versions of the same material. In the first, establish the source identity before any transformation. In the second, delay identity until after the transformation has already acted. In the third, never fully establish identity, but make the listener feel the pressure of an implied source. The musical parameter being varied is not pitch, rhythm, or timbre alone. It is the cost, timing, and confidence of attribution.
+
+The larger claim is modest but fertile: source attribution should be treated as a compositional budget. Some music spends it immediately. Some hoards it. Some spends it falsely, making the listener pay twice. The budget is not only perceptual; it is mathematical and technical, because the same issue appears in filters, datasets, benchmarks, and streaming policies. What the system can do depends on when it has decided what the sound belongs to.

@@ -1,7 +1,7 @@
 ---
 title: "The Spheres Revisited: When Planetary Orbits Pass the Statistics Test"
 publishDate: 2026-03-05
-excerpt: "Two independent research groups found statistically significant musical-interval correspondences in planetary orbital mechanics—suggesting the \"music of the spheres\" is less mysticism than universal mathematics of resonance."
+excerpt: "Two independent research groups found statistically significant musical-interval correspondences in planetary orbital mechanics-suggesting the \"music of the spheres\" is less mysticism than universal mathematics of resonance."
 category: "interdisciplinary"
 tags:
   - "resonance"

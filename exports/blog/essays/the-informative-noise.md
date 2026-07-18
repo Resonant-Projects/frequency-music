@@ -1,7 +1,7 @@
 ---
 title: "The Informative Noise: Why Purity Degrades Perception"
 publishDate: 2026-03-23
-excerpt: "Signal purity paradoxically degrades AI perception—models achieve better performance with balanced noise rather than clean separation, revealing that context-embedded information outweighs clarity."
+excerpt: "Signal purity paradoxically degrades AI perception-models achieve better performance with balanced noise rather than clean separation, revealing that context-embedded information outweighs clarity."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

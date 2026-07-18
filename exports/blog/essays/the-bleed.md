@@ -1,7 +1,7 @@
 ---
 title: "The Bleed: When Leakage Is the Message"
 publishDate: 2026-03-18
-excerpt: "Acoustic bleed in live sound is not engineering failure but the coupling mechanism that enables emergent ensemble synchronization—the physics that makes live music sound alive."
+excerpt: "Acoustic bleed in live sound is not engineering failure but the coupling mechanism that enables emergent ensemble synchronization-the physics that makes live music sound alive."
 category: "physics-of-sound"
 tags:
   - "acoustics"

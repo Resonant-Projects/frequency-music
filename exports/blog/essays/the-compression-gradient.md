@@ -1,7 +1,7 @@
 ---
 title: "The Compression Gradient: Why Some Sounds Are Almost All Structure and Others Are Almost All Surprise"
 publishDate: 2026-03-21
-excerpt: "Sounds range from nearly pure structure—like engine noise reconstructible from two parameters—to nearly pure surprise, with implications for music, compression, and AI listening."
+excerpt: "Sounds range from nearly pure structure-like engine noise reconstructible from two parameters-to nearly pure surprise, with implications for music, compression, and AI listening."
 category: "interdisciplinary"
 tags:
   - "information-theory"

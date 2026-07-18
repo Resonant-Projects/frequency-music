@@ -1,7 +1,7 @@
 ---
 title: "The Polyphony Problem: Why Simultaneity Is Music's Deepest Challenge"
 publishDate: 2026-03-07
-excerpt: "Polyphony exposes a categorical gap in how AI—and music theory—represents simultaneity. When multiple voices overlap, the problem shifts from sequence modeling to configurational reasoning about what coexists meaningfully."
+excerpt: "Polyphony exposes a categorical gap in how AI-and music theory-represents simultaneity. When multiple voices overlap, the problem shifts from sequence modeling to configurational reasoning about what coexists meaningfully."
 category: "interdisciplinary"
 tags:
   - "composition"

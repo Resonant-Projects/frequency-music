@@ -1,7 +1,7 @@
 ---
 title: "Where the Signal Breaks"
 publishDate: 2026-04-08
-excerpt: "Audio systems break at boundaries between regimes—precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives."
+excerpt: "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

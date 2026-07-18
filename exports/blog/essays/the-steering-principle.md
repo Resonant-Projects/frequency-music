@@ -1,7 +1,7 @@
 ---
 title: "The Steering Principle: When Guidance Preserves What Control Destroys"
 publishDate: 2026-03-23
-excerpt: "Steering guides systems through directional constraints while preserving internal dynamics, contrasting with integration that risks contaminating learned priors—a principle unifying audio-visual separation, generative video-to-audio, and musical composition."
+excerpt: "Steering guides systems through directional constraints while preserving internal dynamics, contrasting with integration that risks contaminating learned priors-a principle unifying audio-visual separation, generative video-to-audio, and musical composition."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

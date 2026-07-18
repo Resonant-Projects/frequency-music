@@ -1,7 +1,7 @@
 ---
 title: "Duality All the Way Down"
 publishDate: 2026-02-27
-excerpt: "Musical duality appears across harmonic, algebraic, combinatorial, and geometric frameworks—from pentatonic/diatonic complementarity to major/minor reflection—suggesting a unified mathematical structure underlying how pitched sounds organize."
+excerpt: "Musical duality appears across harmonic, algebraic, combinatorial, and geometric frameworks-from pentatonic/diatonic complementarity to major/minor reflection-suggesting a unified mathematical structure underlying how pitched sounds organize."
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

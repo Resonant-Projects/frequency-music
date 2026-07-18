@@ -1,7 +1,7 @@
 ---
 title: "The Metric That Listens"
 publishDate: 2026-04-03
-excerpt: "Metrics fail because they measure absolute values, but perception works through relationships across timescales. The best expressiveness measures learn these multi-scale relational patterns—explaining why musicians were right about tempo variation and why click tracks miss the music."
+excerpt: "Metrics fail because they measure absolute values, but perception works through relationships across timescales. The best expressiveness measures learn these multi-scale relational patterns-explaining why musicians were right about tempo variation and why click tracks miss the music."
 category: "perception"
 tags:
   - "perception"

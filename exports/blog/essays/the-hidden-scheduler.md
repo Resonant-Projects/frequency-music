@@ -1,7 +1,7 @@
 ---
 title: "The Hidden Scheduler"
 publishDate: 2026-04-04
-excerpt: "Music and speech are controlled not by single clocks but by nested schedulers operating at different timescales—from micro-timing to phrase to form—each managing progress and return."
+excerpt: "Music and speech are controlled not by single clocks but by nested schedulers operating at different timescales-from micro-timing to phrase to form-each managing progress and return."
 category: "interdisciplinary"
 tags:
   - "rhythm"

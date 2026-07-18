@@ -1,7 +1,7 @@
 ---
 title: "The Density Horizon: Where Notes Dissolve Into Texture"
 publishDate: 2026-03-20
-excerpt: "At ~24-30 notes per second, individual musical notes dissolve into continuous texture—a critical phase transition where discrete melodic perception gives way to statistical texture listening."
+excerpt: "At ~24-30 notes per second, individual musical notes dissolve into continuous texture-a critical phase transition where discrete melodic perception gives way to statistical texture listening."
 category: "interdisciplinary"
 tags:
   - "perception"
