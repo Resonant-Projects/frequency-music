@@ -104,7 +104,7 @@ export function ThesisDetailPage() {
         thesisId: params().thesisId as Id<"theses">,
         kind: "thesis_summary",
       });
-      navigate({
+      void navigate({
         to: "/editorial/$artifactId",
         params: { artifactId: String(artifactId) },
       });
@@ -124,7 +124,7 @@ export function ThesisDetailPage() {
         kind: "what_changed_my_mind",
         hypothesisId,
       });
-      navigate({
+      void navigate({
         to: "/editorial/$artifactId",
         params: { artifactId: String(artifactId) },
       });

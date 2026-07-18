@@ -39,7 +39,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - `resonantprojects.art` (Astro): static “why”, curated posts, selected published findings
 - `app.resonantprojects.art` (SolidJS): dashboard, ingestion, briefs, hypotheses/recipes, compositions, feedback
 - Convex backend: data + actions + scheduled jobs
-- n8n: RSS polling + Notion scheduled sync + webhook pushes
+- Scheduling: Convex crons (feed polling every 6h, batch extraction every 8h, weekly briefs) — see `convex/crons.ts`.
 
 ## Strategic Docs
 
@@ -53,17 +53,17 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 ### Web app
 
 1. Install dependencies:
-   - `bun install`
-   - `cd web && bun install`
+   - `vp install`
+   - `cd web && vp install`
 2. Set web env:
    - Create `web/.env.local` and set `VITE_CONVEX_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`, and `VITE_CLERK_SIGN_UP_URL`.
 3. Run web app:
-   - `cd web && bun run dev`
+   - `cd web && vp run dev`
 
 ### Convex backend
 
-- The backend is self-hosted. Copy [`.env.example`](./.env.example) to `.env.local`; Bun auto-loads it.
-- Caution: `bunx convex dev`, `bunx convex codegen`, and `bunx convex deploy` talk to the live backend.
+- The backend is self-hosted. Copy [`.env.example`](./.env.example) to `.env.local`; scripts load it via `varlock/auto-load` (imported at the top of each env-reading script); Node does not auto-load `.env` files.
+- Caution: `vpx convex dev`, `vpx convex codegen`, and `vpx convex deploy` talk to the live backend.
 - For CLI mutation auth, see [Authentication in CLAUDE.md](./CLAUDE.md#authentication).
 
 ### Agent workspace & worker
@@ -74,10 +74,10 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 ### Verification
 
-- Convex: `bun test convex/*.test.ts`
-- Web: `bun run typecheck:web` and `bun run build:web`
-- Agent: `cd agent && bun run verify && bun test`
-- If present after Plan 003 lands: `bun run lint:check`, `bun run format:check`, and `bun run typecheck`
+- Convex: `vp test convex`
+- Web: `vp run typecheck:web` and `vp run build:web`
+- Agent: `cd agent && vp run verify && vp test`
+- Everything at once: `vp run verify`.
 
 ## App routes (TanStack Router)
 

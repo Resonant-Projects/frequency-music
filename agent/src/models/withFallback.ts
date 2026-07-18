@@ -14,13 +14,14 @@ function messageToText(content: BaseMessage["content"]): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content
-      .map((part) =>
-        typeof part === "string"
-          ? part
-          : part && typeof part === "object" && "text" in part
-            ? String((part as { text?: unknown }).text ?? "")
-            : "",
-      )
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part && typeof part === "object" && "text" in part) {
+          // oxlint-disable-next-line typescript/no-base-to-string -- Preserve legacy coercion for structured message text.
+          return String(part.text ?? "");
+        }
+        return "";
+      })
       .join("\n");
   }
   return JSON.stringify(content);

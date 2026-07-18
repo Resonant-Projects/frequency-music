@@ -1,13 +1,13 @@
 #!/usr/bin/env -S vpx tsx
 import { whyThisMattersEvaluator } from "./evaluators/why-matters";
-import { type EvalPrompt, runEval } from "./eval-helper";
+import { type EvalPrompt, runEval, stringifyPromptValue } from "./eval-helper";
 
 const PROMPTS: Record<string, EvalPrompt> = {
   v1: {
     system:
       "You are a research synthesis assistant. Generate a hypothesis with strong whyThisMatters language tied to compositional stakes.",
     user: (input) =>
-      `Source: ${input.sourceTitle}\nClaims: ${JSON.stringify(input.claims)}\nComposition parameters: ${JSON.stringify(input.compositionParameters)}\nTopics: ${JSON.stringify(input.topics)}\n\nReturn JSON: {title, question, hypothesis, whyThisMatters, rationaleMd}`,
+      `Source: ${stringifyPromptValue(input.sourceTitle)}\nClaims: ${JSON.stringify(input.claims)}\nComposition parameters: ${JSON.stringify(input.compositionParameters)}\nTopics: ${JSON.stringify(input.topics)}\n\nReturn JSON: {title, question, hypothesis, whyThisMatters, rationaleMd}`,
   },
 };
 

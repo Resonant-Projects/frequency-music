@@ -35,7 +35,8 @@ behind THIS directory excluded everything those waves already card. Where a
 plan here touches the same files as an arch-wave plan, its STOP conditions and
 maintenance notes say how to reconcile.
 
-**Standing constraint for every plan**: `bunx convex codegen|dev|deploy`
+**Standing constraint for every plan**: `bunx convex codegen|dev|deploy` — and
+equally the post-Vite+ `vpx convex codegen|dev|deploy` / `vpx convex run` —
 contact the LIVE self-hosted backend. No plan here requires them; executors
 never run them. Deployment of convex-touching changes (plans 002, 005, 010) is
 operator-gated.
@@ -52,7 +53,7 @@ adds a cron whose **activation is operator-gated** (needs a Convex deploy).
 | 012 | Fix `recipes.generateBatch` return validator (`whyThisMatters`) | P1 | S | — | DONE 2026-07-18 — fail-then-pass regression test included; `lint:check` gate pre-existing-broken on main (waived; carded into 015/016). |
 | 013 | Wire `reconcileReviewedRuns` cron + finalizer atomicity | P1 | S | — | DONE — code+tests landed 2026-07-18; cron activation deploy-pending (operator). Note: `lint:check` and root `typecheck:agent` gates are pre-existing-broken on main (waived; carded into 015). |
 | 014 | Security hardening: bump `ws` (GHSA), constant-time bypass compare | P2 | S | — | PARTIAL 2026-07-18 — root ws@8.21.0 via override, root audit clean. **Residual:** `web/` and `agent/` are separate installs with their own lockfiles (no root `workspaces` field), so the root override does not reach them; both still resolve `ws@8.18.0`, and `web/` additionally carries `ws@7.5.10` transitively via metro/react-native-dev-middleware/jayson. Carded as follow-up — not fixed here because `web/package.json` pins `vite`/`vitest` to `@latest` in overrides, so a reinstall would churn well beyond `ws`. Constant-time compare landed. `lint:check` gate pre-existing-broken on main (waived; carded into 015/016). |
-| 015 | Docs sweep (Bun→Vite+, stale facts) + aggregate `verify` command | P2 | S | — | TODO |
+| 015 | Docs sweep (Bun→Vite+, stale facts) + aggregate `verify` command | P2 | S | — | DONE 2026-07-18 — incl. root typecheck + fixed typecheck:agent script; `verify` green on the merged tree (016 lint/format debt cleared, lint scope corrected). |
 
 **Recommended order**: 011, 012, 013 (the P1 correctness/security fixes) first,
 then 014 and 015 (hygiene). All are S-effort and independent.

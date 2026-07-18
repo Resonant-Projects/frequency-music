@@ -27,7 +27,7 @@ export interface CodexTaskContextFile {
   /** Relative filename written into the scratch workspace (e.g. "candidate.json"). */
   name: string;
   /** File contents. Objects are JSON-serialized. */
-  content: string | unknown;
+  content: unknown;
 }
 
 export interface RunCodexTaskInput {

@@ -25,8 +25,9 @@ project design language (violet chips for domains; gold only on the decide actio
 
 ## Global constraints
 
-- `bunx convex codegen|dev|deploy` contact the LIVE backend — sequence commits so no broken
-  intermediate state pushes; deploys stay operator-gated.
+- `bunx convex codegen|dev|deploy` — and equally `vpx convex codegen|dev|deploy` / `vpx convex run`
+  — contact the LIVE backend; sequence commits so no broken intermediate state pushes; deploys stay
+  operator-gated.
 - Registry maturity axis is `known / provisional / experimental / deprecated` — triage moves entries
   along it; nothing is hard-deleted.
 - Existing seed paths stay: `seedMissionConceptDomains` and `scripts/seed-concept-domains.ts` remain

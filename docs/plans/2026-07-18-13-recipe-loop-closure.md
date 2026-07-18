@@ -44,7 +44,8 @@ routes `recipe-detail.tsx`, `agent-drafts.tsx`.
   shapes.
 - One recipe draft per hypothesis approval; re-approval or regeneration must not duplicate a pending
   draft for the same hypothesis (dedupe on pending `recipe_draft` payload.hypothesisId).
-- `bunx convex codegen|dev|deploy` contact the LIVE backend; deploys operator-gated.
+- `bunx convex codegen|dev|deploy` — and equally `vpx convex codegen|dev|deploy` / `vpx convex run`
+  — contact the LIVE backend; deploys operator-gated.
 
 ## Non-goals / rabbit holes
 

@@ -49,7 +49,7 @@ async function fetchReadwiseArticles(params: {
   if (params.category) queryParams.set("category", params.category);
   queryParams.set("page_size", String(params.pageSize || 100));
   const response = await fetch(
-    `https://readwise.io/api/v3/list/?${queryParams}`,
+    `https://readwise.io/api/v3/list/?${queryParams.toString()}`,
     {
       headers: {
         Authorization: `Token ${getReadwiseToken()}`,
