@@ -76,7 +76,13 @@ function parseHttpUrl(rawUrl: string): URL {
 export function assertPublicHttpUrl(rawUrl: string): URL {
   const url = parseHttpUrl(rawUrl);
 
-  const hostname = url.hostname.toLowerCase().replaceAll(/^\[|\]$/g, "");
+  // Strip the optional trailing DNS root dot before comparing: `localhost.`
+  // and `printer.local.` resolve identically to their dotless forms but would
+  // otherwise slip past the suffix checks below.
+  const hostname = url.hostname
+    .toLowerCase()
+    .replaceAll(/^\[|\]$/g, "")
+    .replace(/\.$/, "");
   const isInternalHostname =
     hostname === "localhost" ||
     hostname.endsWith(".localhost") ||
@@ -523,7 +529,10 @@ export const ingestUrl = action({
     }
 
     // Fetch the page
+    // assertPublicHttpUrl only vets the initial URL; following redirects would
+    // let a public host bounce this fetch to a loopback or metadata address.
     const response = await fetchWithTimeout(safeUrl.toString(), {
+      redirect: "error",
       headers: {
         "User-Agent": "ResonantProjects/1.0 (research aggregator)",
       },

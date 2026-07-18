@@ -54,6 +54,12 @@ describe("assertPublicHttpUrl", () => {
     "http://[::ffff:10.0.0.1]/",
     "http://[::ffff:8.8.8.8]/",
     "http://0.1.2.3/",
+    // Trailing DNS root dot resolves identically to the dotless form and must
+    // not slip past the internal-hostname suffix checks.
+    "http://localhost./",
+    "http://service.localhost./",
+    "http://printer.local./",
+    "http://foo.internal./",
   ])("rejects private or internal target %s", (url) => {
     expect(() => assertPublicHttpUrl(url)).toThrow(
       "blocked_url: refusing to fetch a private or loopback address",
