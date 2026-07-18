@@ -259,6 +259,20 @@ export {
   studioPromptVariantsValidator,
 };
 
+/**
+ * Shape of an AI-generated recipe payload as the generator actions return it.
+ * Referenced by BOTH recipes.generateFromHypothesis and recipes.generateBatch
+ * so their return validators cannot drift apart again (plan 012's root cause).
+ */
+export const generatedRecipeValidator = v.object({
+  title: v.string(),
+  whyThisMatters: v.optional(v.string()),
+  bodyMd: v.string(),
+  parameters: v.array(recipeParameterValidator),
+  dawChecklist: v.array(v.string()),
+  protocol: v.optional(recipeProtocolValidator),
+});
+
 export const recipeReturnValidator = v.object({
   _id: v.id("recipes"),
   _creationTime: v.number(),
