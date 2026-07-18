@@ -18,19 +18,19 @@ describe("assertPublicHttpUrl", () => {
     expect(assertPublicHttpUrl(url).toString()).toBe(url);
   });
 
-  test.each(["file:///etc/passwd", "ftp://example.com"])(
-    "rejects unsupported scheme in %s",
-    (url) => {
-      expect(() => assertPublicHttpUrl(url)).toThrow(
-        "invalid_url: only HTTP and HTTPS URLs are supported",
-      );
-    },
-  );
+  test.each([
+    "file:///etc/passwd",
+    "ftp://example.com",
+  ])("rejects unsupported scheme in %s", (url) => {
+    expect(() => assertPublicHttpUrl(url)).toThrow(
+      "invalid_url: only HTTP and HTTPS URLs are supported",
+    );
+  });
 
   test("rejects embedded credentials", () => {
-    expect(() =>
-      assertPublicHttpUrl("https://user:pass@example.com"),
-    ).toThrow("invalid_url: URLs with embedded credentials are rejected");
+    expect(() => assertPublicHttpUrl("https://user:pass@example.com")).toThrow(
+      "invalid_url: URLs with embedded credentials are rejected",
+    );
   });
 
   test.each([
