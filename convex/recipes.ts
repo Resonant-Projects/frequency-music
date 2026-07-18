@@ -543,6 +543,7 @@ export const generateBatch = action({
         model: v.string(),
         generated: v.object({
           title: v.string(),
+          whyThisMatters: v.optional(v.string()),
           bodyMd: v.string(),
           parameters: v.array(recipeParameterValidator),
           dawChecklist: v.array(v.string()),

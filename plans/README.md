@@ -49,7 +49,7 @@ adds a cron whose **activation is operator-gated** (needs a Convex deploy).
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 011 | SSRF guard on `ingestUrl` (block private/loopback targets) | P1 | S | — | TODO |
-| 012 | Fix `recipes.generateBatch` return validator (`whyThisMatters`) | P1 | S | — | TODO |
+| 012 | Fix `recipes.generateBatch` return validator (`whyThisMatters`) | P1 | S | — | DONE 2026-07-18 — fail-then-pass regression test included; `lint:check` gate pre-existing-broken on main (waived; carded into 015/016). |
 | 013 | Wire `reconcileReviewedRuns` cron + finalizer atomicity | P1 | S | — | TODO (cron activation operator-gated) |
 | 014 | Security hardening: bump `ws` (GHSA), constant-time bypass compare | P2 | S | — | TODO |
 | 015 | Docs sweep (Bun→Vite+, stale facts) + aggregate `verify` command | P2 | S | — | TODO |
