@@ -48,7 +48,13 @@ harness tests.
 
 **Interfaces (binding):** three human mutations, each list-aware
 (`list: "conceptDomain" | "parameterKind" | "relationshipKind"`), each recording
-`decidedAt`/`decidedBy` and a short optional note:
+`decidedAt`/`decidedBy` and a short optional note. Common contract: caller must be
+an authenticated operator (Clerk identity, or `devBypassSecret` under the standing
+`AUTH_BYPASS_ENABLED` service-identity model) with `decidedBy` derived server-side
+from the auth context, never caller-supplied; the source entry must be **currently
+provisional and belong to the named list** at transaction time — decided (known/
+deprecated/merged) or wrong-list sources reject, making repeated and stale
+operations safe. Tests cover unauthorized callers and stale/repeated decisions:
 
 - `vocabulary.promoteEntry { list, entryId, note? }` — provisional → `known`.
 - `vocabulary.rejectEntry { list, entryId, note? }` — provisional → `deprecated`; concepts keep their
@@ -57,7 +63,11 @@ harness tests.
 - `vocabulary.mergeEntry { list, sourceEntryId, targetEntryId, note? }` — remap references from
   source to target (concept domain memberships / parameter-kind uses / relationship-kind uses per
   list), then mark source `deprecated` with `mergedInto: targetId`. Same-entry merge rejected;
-  merging into a non-`known` target rejected.
+  merging into a non-`known` target rejected. **Semantics (binding):** the whole merge runs in ONE
+  Convex mutation (transactional by runtime guarantee — remap + deprecate commit together or not at
+  all); a reference that already carries the target is deduplicated, not doubled; a zero-reference
+  merge still deprecates the source; repeating an identical merge is a no-op (source already
+  `mergedInto` target ⇒ return success without re-remapping).
 
 **Merge fallback (pre-agreed):** if reference remapping for a list turns out to be genuinely
 hairy (e.g. relationship kinds embedded in edge rows beyond a simple field), keep `promoteEntry` +
@@ -65,7 +75,9 @@ hairy (e.g. relationship kinds embedded in edge rows beyond a simple field), kee
 `scripts/` — record which path was taken in the PR.
 
 - [ ] **Step 1:** Harness tests first (promote/reject/merge happy paths; merge remap count asserted;
-  same-entry and non-known-target rejections; deprecated exclusion from the mining read path).
+  same-entry and non-known-target rejections; duplicate-membership dedupe on merge; zero-reference
+  merge still deprecates; repeated identical merge is an idempotent no-op; deprecated exclusion from
+  the mining read path).
 - [ ] **Step 2:** Implement; codegen; commit.
 
 ---
@@ -92,15 +104,18 @@ visible the way review debt is on the draft queue.
 
 - [ ] **Step 1:** Keith (or DA-assisted session) walks the packet's recommendations through the new
   surface. The packet document gets a header note marking it decided-with-date and pointing at the
-  registry as the source of truth thereafter.
-- [ ] **Step 2:** Spot-check gate: `reviewSummary` shows 0 provisional concept domains; miner-facing
-  domain filter excludes deprecated entries; `vpx convex run vocabulary:reviewSummary '{}'` output
-  attached to the PR.
+  registry as the source of truth thereafter. **Completion is scoped to the packet snapshot** (the
+  entries listed in the 2026-07-12 doc): provisional entries minted after that cutoff are ordinary
+  new triage debt surfaced by the route's headline counts, not blockers on this plan's done-gate.
+- [ ] **Step 2:** Spot-check gate: `reviewSummary` shows 0 provisional **packet-snapshot** entries on
+  all three lists (concept domains, parameter kinds, relationship kinds); miner-facing domain filter
+  excludes deprecated entries; `vpx convex run vocabulary:reviewSummary '{}'` output attached to the
+  PR.
 
 ## Done means
 
 - Per-entry promote/reject/merge mutations exist with harness coverage (or documented merge-fallback
   for a specific list); nothing hard-deletes.
 - A triage route renders all three provisional lists and can decide entries end-to-end.
-- The 2026-07-12 packet is decided through the surface; provisional counts at zero; packet doc
-  annotated.
+- The 2026-07-12 packet is decided through the surface; provisional counts at zero across all three
+  lists; packet doc annotated.
