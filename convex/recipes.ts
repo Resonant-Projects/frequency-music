@@ -6,6 +6,7 @@ import { requireAuth } from "./auth";
 import { DEFAULT_MODEL, extractJsonObject } from "./llm";
 import { recipeStatusValidator } from "./schema";
 import {
+  generatedRecipeValidator,
   hypothesisReturnValidator,
   recipeParameterValidator,
   recipeProtocolValidator,
@@ -436,14 +437,7 @@ export const generateFromHypothesis = action({
   returns: v.object({
     recipeId: v.id("recipes"),
     model: v.string(),
-    generated: v.object({
-      title: v.string(),
-      whyThisMatters: v.optional(v.string()),
-      bodyMd: v.string(),
-      parameters: v.array(recipeParameterValidator),
-      dawChecklist: v.array(v.string()),
-      protocol: v.optional(recipeProtocolValidator),
-    }),
+    generated: generatedRecipeValidator,
   }),
   handler: async (ctx, args): Promise<GeneratedRecipeResult> => {
     await requireAuth(ctx, args);
@@ -541,14 +535,7 @@ export const generateBatch = action({
         success: v.literal(true),
         recipeId: v.id("recipes"),
         model: v.string(),
-        generated: v.object({
-          title: v.string(),
-          whyThisMatters: v.optional(v.string()),
-          bodyMd: v.string(),
-          parameters: v.array(recipeParameterValidator),
-          dawChecklist: v.array(v.string()),
-          protocol: v.optional(recipeProtocolValidator),
-        }),
+        generated: generatedRecipeValidator,
       }),
       v.object({
         success: v.literal(false),
