@@ -686,20 +686,21 @@ export async function finalizeRunNode(
             // A needs_review run with no persisted draft can never be closed by a
             // human. Fail the run so it leaves the review queue instead of
             // wedging. See plan 013.
+            const draftFailureMessage = errorMessage(draftError);
             auditEvents.push(
               ...(await appendRemoteAuditEvent(
                 state.agentRunId,
                 "error",
                 "Failed to persist human-review draft row",
                 {
-                  message: errorMessage(draftError),
+                  message: draftFailureMessage,
                 },
               )),
             );
             await callConvex("markAgentRunFailed", {
               runId: state.agentRunId,
               summary,
-              error: { messages: [...state.errors, String(draftError)] },
+              error: { messages: [...state.errors, draftFailureMessage] },
             });
           }
         }
