@@ -682,17 +682,25 @@ export async function finalizeRunNode(
                 ),
               );
             }
-          } catch (error) {
+          } catch (draftError) {
+            // A needs_review run with no persisted draft can never be closed by a
+            // human. Fail the run so it leaves the review queue instead of
+            // wedging. See plan 013.
             auditEvents.push(
               ...(await appendRemoteAuditEvent(
                 state.agentRunId,
                 "error",
                 "Failed to persist human-review draft row",
                 {
-                  message: errorMessage(error),
+                  message: errorMessage(draftError),
                 },
               )),
             );
+            await callConvex("markAgentRunFailed", {
+              runId: state.agentRunId,
+              summary,
+              error: { messages: [...state.errors, String(draftError)] },
+            });
           }
         }
       } else {
