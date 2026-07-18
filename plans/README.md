@@ -51,7 +51,7 @@ adds a cron whose **activation is operator-gated** (needs a Convex deploy).
 | 011 | SSRF guard on `ingestUrl` (block private/loopback targets) | P1 | S | — | TODO |
 | 012 | Fix `recipes.generateBatch` return validator (`whyThisMatters`) | P1 | S | — | TODO |
 | 013 | Wire `reconcileReviewedRuns` cron + finalizer atomicity | P1 | S | — | TODO (cron activation operator-gated) |
-| 014 | Security hardening: bump `ws` (GHSA), constant-time bypass compare | P2 | S | — | TODO |
+| 014 | Security hardening: bump `ws` (GHSA), constant-time bypass compare | P2 | S | — | DONE 2026-07-18 — ws@8.21.0 via override, audit clean; `lint:check` gate pre-existing-broken on main (waived; carded into 015/016). |
 | 015 | Docs sweep (Bun→Vite+, stale facts) + aggregate `verify` command | P2 | S | — | TODO |
 
 **Recommended order**: 011, 012, 013 (the P1 correctness/security fixes) first,
