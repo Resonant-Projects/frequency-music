@@ -92,7 +92,7 @@ An agent-proposed hypothesis or recipe payload awaiting human review; the only d
 _Avoid_: proposal, suggestion
 
 **Draft Promotion**:
-Human approval converting an agent draft into a real hypothesis or recipe, stamped with agent provenance and held to the same rigor as human creation. Promotion may carry operator amendments — the reviewer edits the payload before approving, the original agent payload is preserved, and provenance records approved-with-edits plus the changed fields.
+Human approval converting an agent draft into a real hypothesis or recipe, stamped with agent provenance and held to the same rigor as human creation. _Planned (plan 2026-07-07-07, not yet implemented):_ promotion may carry operator amendments — the reviewer edits the payload before approving, the original agent payload is preserved, and provenance records approved-with-edits plus the changed fields.
 
 **Agent-Tool Surface**:
 The secret-guarded HTTP interface through which external agents read project state and append audit events. Human decisions (approve/reject/supersede) are never part of it.

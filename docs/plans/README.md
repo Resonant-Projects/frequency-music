@@ -44,7 +44,7 @@ deferred by the 2026-07-18 decision, not dropped.
 
 ## 2. Unblock in parallel — operator items (ownership updated 2026-07-18)
 
-Small; none block the loop wave start but several gate specific plans.
+Small; none block the loop wave start but several gate-specific plans.
 
 1. **Golden eval datasets — DA-prepared, Keith-ratified.** The DA pre-ranks and
    annotates `data/eval/*-candidates.jsonl` (keep/swap + one-line rationale);
