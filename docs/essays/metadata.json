@@ -1,4 +1,18 @@
 {
+  "error-as-instrument": {
+    "excerpt": "Reconstruction error becomes compositional when it diagnoses what a representation can explain, what transformation it can track, and what residual should become new material.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "representation-learning",
+      "signal-processing",
+      "information-theory",
+      "music-production"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c5abfeae1d1d2908750b14d6909a671128b12a898abd2f9ad0df51572e36920a",
+    "generatedAt": "2026-07-18T19:03:00.000Z"
+  },
   "the-control-surface-inside-the-representation": {
     "excerpt": "A musical representation becomes an instrument when its coordinates afford specific actions: transposition, reconstruction, tracking, and reachable melodic continuation.",
     "tags": [

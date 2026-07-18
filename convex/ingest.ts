@@ -44,21 +44,87 @@ interface UrlTextResponse {
  * Validate a source URL and map it to the Jina Reader endpoint.
  */
 export function buildJinaReaderUrl(rawUrl: string): string {
+  return `${JINA_READER_URL}/${parseHttpUrl(rawUrl).toString()}`;
+}
+
+/**
+ * Parse a URL and apply the scheme + embedded-credential checks shared by
+ * every outbound-URL helper in this module.
+ */
+function parseHttpUrl(rawUrl: string): URL {
   let url: URL;
   try {
     url = new URL(rawUrl);
   } catch {
     throw new Error("invalid_url: URL is not valid");
   }
-
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("invalid_url: only HTTP and HTTPS URLs are supported");
   }
   if (url.username || url.password) {
     throw new Error("invalid_url: URLs with embedded credentials are rejected");
   }
+  return url;
+}
 
-  return `${JINA_READER_URL}/${url.toString()}`;
+/**
+ * Validate that a URL is safe for a direct fetch from the Convex runtime and
+ * return the parsed URL. This is a parse-time guard only; without DNS
+ * resolution it cannot prevent DNS rebinding from a public hostname to a
+ * private address.
+ */
+export function assertPublicHttpUrl(rawUrl: string): URL {
+  const url = parseHttpUrl(rawUrl);
+
+  // Strip the optional trailing DNS root dot before comparing: `localhost.`
+  // and `printer.local.` resolve identically to their dotless forms but would
+  // otherwise slip past the suffix checks below.
+  const hostname = url.hostname
+    .toLowerCase()
+    .replaceAll(/^\[|\]$/g, "")
+    .replace(/\.$/, "");
+  const isInternalHostname =
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".internal");
+
+  const octets = hostname.split(".");
+  const isIpv4Literal =
+    octets.length === 4 &&
+    octets.every((octet) => /^\d{1,3}$/.test(octet) && Number(octet) <= 255);
+  const [a, b] = isIpv4Literal ? octets.map(Number) : [];
+  const isPrivateIpv4 =
+    a !== undefined &&
+    b !== undefined &&
+    (a === 0 || // 0.0.0.0/8 ("this network") — includes 0.0.0.0 itself
+      a === 10 ||
+      a === 127 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127));
+
+  const isIpv6Literal = hostname.includes(":");
+  const isPrivateIpv6 =
+    isIpv6Literal &&
+    (hostname === "::" ||
+      hostname === "::1" ||
+      /^fe[89ab]/.test(hostname) ||
+      hostname.startsWith("fc") ||
+      hostname.startsWith("fd") ||
+      // IPv4-mapped IPv6 (::ffff:a.b.c.d) can smuggle a private IPv4 target
+      // past the dotted-quad check on dual-stack hosts; public IPv4 targets
+      // have no reason to use the mapped form, so reject it wholesale.
+      hostname.startsWith("::ffff:"));
+
+  if (isInternalHostname || isPrivateIpv4 || isPrivateIpv6) {
+    throw new Error(
+      "blocked_url: refusing to fetch a private or loopback address",
+    );
+  }
+
+  return url;
 }
 
 /**
@@ -447,8 +513,8 @@ export const ingestUrl = action({
     args,
   ): Promise<{ id: Id<"sources">; created: boolean }> => {
     await requireAuth(ctx, args);
+    const safeUrl = assertPublicHttpUrl(args.url);
     // Generate dedupeKey (canonical: keeps query string, matches sources.createFromUrlInput)
-    const urlObj = new URL(args.url);
     const dedupeKey = generateDedupeKey("url", { canonicalUrl: args.url });
 
     // Check if already exists
@@ -463,7 +529,10 @@ export const ingestUrl = action({
     }
 
     // Fetch the page
-    const response = await fetchWithTimeout(args.url, {
+    // assertPublicHttpUrl only vets the initial URL; following redirects would
+    // let a public host bounce this fetch to a loopback or metadata address.
+    const response = await fetchWithTimeout(safeUrl.toString(), {
+      redirect: "error",
       headers: {
         "User-Agent": "ResonantProjects/1.0 (research aggregator)",
       },
@@ -477,7 +546,7 @@ export const ingestUrl = action({
 
     // Extract title
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
-    const title = titleMatch ? stripHtml(titleMatch[1]!) : urlObj.hostname;
+    const title = titleMatch ? stripHtml(titleMatch[1]!) : safeUrl.hostname;
 
     // Extract main content (simplified - could use readability library)
     // For now, just strip HTML from body

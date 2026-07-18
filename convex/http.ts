@@ -2,6 +2,7 @@ import { httpRouter } from "convex/server";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { agentToolHttpHandlers } from "./agentToolsHttp";
+import { constantTimeEqual } from "./auth";
 import { AGENT_TOOL_NAMES } from "./shared/agentToolManifest";
 import { generateDedupeKey } from "./sourceUtils";
 
@@ -18,21 +19,6 @@ function json(data: unknown, status = 200) {
 
 function getConfiguredSecret() {
   return process.env.INGEST_SHARED_SECRET ?? process.env.N8N_INGEST_SECRET;
-}
-
-/**
- * Constant-time string comparison to prevent timing attacks
- */
-function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  const encoder = new TextEncoder();
-  const bufA = encoder.encode(a);
-  const bufB = encoder.encode(b);
-  let result = 0;
-  for (let i = 0; i < bufA.length; i++) {
-    result |= (bufA[i] as number) ^ (bufB[i] as number);
-  }
-  return result === 0;
 }
 
 function isAuthorized(request: Request, payloadSecret?: string): boolean {

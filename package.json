@@ -45,7 +45,8 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2",
+    "ws": "^8.20.1"
   },
   "devEngines": {
     "packageManager": {
