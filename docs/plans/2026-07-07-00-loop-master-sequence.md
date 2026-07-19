@@ -16,11 +16,16 @@
 
 ## Plans
 
+> **Archive note (2026-07-19):** landed plans 01–03 moved to
+> `docs/archive/plan-waves/` (each carries a `> Landed:` header with commit +
+> verification). Their schemas and interfaces are live in `convex/`; consult the
+> archived files if a later plan quotes their contracts.
+
 | # | Plan | Delivers | Depends on |
 |---|------|----------|------------|
-| 01 | `2026-07-07-01-loop-claims-table.md` | `claims` table + backfill from 1,580 extractions; extraction write path emits claim rows | arch 02, 04 |
-| 02 | `2026-07-07-02-loop-domains-and-relevance.md` | Domain registry seeded; LLM classification backfill (domains + on/off-mission); domains at concept creation; dead feeds removed | arch 03 |
-| 03 | `2026-07-07-03-loop-correspondences.md` | `correspondences` table, pair-keyed dedupe, lifecycle mutations, agent write surface | 01, 02, arch 05 |
+| 01 | `../archive/plan-waves/2026-07-07-01-loop-claims-table.md` — **landed `b2e0cbe`** | `claims` table + backfill from 1,580 extractions; extraction write path emits claim rows | arch 02, 04 |
+| 02 | `../archive/plan-waves/2026-07-07-02-loop-domains-and-relevance.md` — **landed `03dce57`** | Domain registry seeded; LLM classification backfill (domains + on/off-mission); domains at concept creation; dead feeds removed | arch 03 |
+| 03 | `../archive/plan-waves/2026-07-07-03-loop-correspondences.md` — **landed 2026-07-12** | `correspondences` table, pair-keyed dedupe, lifecycle mutations, agent write surface | 01, 02, arch 05 |
 | 04 | `2026-07-07-04-loop-embeddings.md` | Vector indexes on claims + concepts; backfill; incremental embedding on write | 01, 02 |
 | 05 | `2026-07-07-05-loop-miner-graphs.md` | Candidate generator (Convex) + miner and evidence-hunter LangGraph graphs | 03, 04 |
 | 06 | `2026-07-07-06-loop-drafting-graph.md` | Correspondence-driven hypothesis-drafting graph with WIP cap; `correspondenceId` provenance on hypotheses | 03, 05 |

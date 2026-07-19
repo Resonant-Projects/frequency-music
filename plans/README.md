@@ -7,8 +7,9 @@ starting, honor its STOP conditions, and update your row when done.
   Only 008 remains active; the rest are DONE.
 - **Wave 2 (2026-07-15)** — standard audit at commit `86f0751`, plans **011–015**,
   weighted to the 528-file "loop wave" (claims/domains/correspondences/classifier,
-  agent worker, `web/src` + `agent/src`) that Wave 1 did not cover. **The active
-  work is here** — see the "Wave 2" section below.
+  agent worker, `web/src` + `agent/src`) that Wave 1 did not cover. **All five
+  DONE 2026-07-18 and archived** — the table below stays as the ledger. The
+  active frontier is the knowledge-loop wave in `docs/plans/`.
 
 > **SEC-01 — resolved by operator decision (Keith, 2026-07-16):**
 > `AUTH_BYPASS_ENABLED=true` on the single production instance is
@@ -27,6 +28,11 @@ starting, honor its STOP conditions, and update your row when done.
 > moved to `plans/archive/`. Only 008 remains active from Wave 1. The Wave-1
 > table below stays as that wave's ledger. Cross-repo plan status:
 > `docs/plans/README.md`.
+>
+> **Archive note (2026-07-19):** Wave-2 plans 011–015 (all DONE 2026-07-18)
+> moved to `plans/archive/`. **Plan 008 is now the only file in `plans/`** —
+> the sole open item across both improve-skill waves, blocked on golden-dataset
+> ratification (see `docs/plans/README.md` §2).
 
 **Relationship to `docs/plans/`**: this repo already carries two committed plan
 waves — the 2026-07-01 agent-system-v2 and 2026-07-03 architecture-deepening

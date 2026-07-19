@@ -34,17 +34,21 @@ primary graph became `research-pipeline` rather than `weekly-brief`.
 | 2026-06-06 Proxmox monitoring stack | 1 | Executed (Pulse LXC 102 installed on prox2) |
 | 2026-07-01 agent system v2 | 00 + 01–05 + v2 status doc | **All landed** (`550fbbb`, `32166aa`) |
 | 2026-07-03 architecture deepening | 00 + 01–07 | **All landed** (see per-file `> Landed:` headers) |
+| 2026-07-07 knowledge loop (partial) | 01–03 | **Landed** (`b2e0cbe`, `03dce57`, 2026-07-12) — archived 2026-07-19; the rest of the wave (04–14) is still active in `docs/plans/` |
 
-The in-progress **2026-07-07 knowledge-loop wave stays in `docs/plans/`**
-(including its landed plans 01–03) because plans 04–11 reference the earlier
-plans' interfaces and the master sequence's gate order.
+The in-progress **2026-07-07 knowledge-loop wave's remaining plans (04–14) stay
+in `docs/plans/`** with the master sequence. Landed plans 01–03 were moved here
+2026-07-19; their schemas/interfaces are live in `convex/` — consult these
+files when a later plan quotes their contracts.
 
 ### `superseded/` — retired docs
 
 - `minimal-schema-for-loop.md` — early schema sketch; superseded by `docs/schema.md`
 - `mvp-screens-and-actions.md` — MVP screen inventory; the shipped app outgrew it
 
-### `../../plans/archive/` — completed improve-skill plans (2026-07-07 audit)
+### `../../plans/archive/` — completed improve-skill plans (both waves)
 
-Plans 001–007, 009, 010 — all DONE per the status table in `plans/README.md`,
-which stays as the ledger. Only 008 (eval baseline sweep) remains active.
+Wave 1 (2026-07-07 audit): plans 001–007, 009, 010 — all DONE. Wave 2
+(2026-07-15 audit): plans 011–015 — all DONE 2026-07-18, archived 2026-07-19.
+The status tables in `plans/README.md` stay as the ledger. Only 008 (eval
+baseline sweep) remains active.

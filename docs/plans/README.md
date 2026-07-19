@@ -2,15 +2,19 @@
 
 > Last full audit: 2026-07-15 (see [plan-status-report-2026-07-15.md](../plan-status-report-2026-07-15.md)).
 > Last planning session: 2026-07-18 (decision surfaces — see the decision-log entry of that date).
+> Last cleanup: 2026-07-19 — landed loop plans 01–03 and Wave-2 plans 011–015 archived.
 > Completed waves live in [docs/archive/](../archive/README.md). Decision history: [decision-log.md](../decision-log.md).
+> **Visual plan** (dependency graph + gate order, 2026-07-19): `plan-1511dbd302914c0a` on plans.rproj.art.
 
 ## Where things stand
 
 Every plan wave before the knowledge loop is **done**: the MVP (`planning/`,
 archived), the 2026-07-01 agent-system wave, the 2026-07-03 architecture wave,
-and the 2026-07-07 improve-skill audit plans (except 008). The meaning roadmap
+the 2026-07-07 improve-skill Wave 1 (except 008), and the 2026-07-15
+improve-skill Wave 2 (011–015, all DONE 2026-07-18). The meaning roadmap
 Phases 1–4 are implemented. The active frontier is the **2026-07-07 knowledge-loop
-wave**, of which plans 01–03 are landed and live.
+wave**, of which plans 01–03 are landed and live (archived to
+[plan-waves/](../archive/plan-waves/) with their landing evidence).
 
 The sequencing rule, per the 2026-07-07 decision-log entry: **synthesis is the
 bottleneck, not capture** (1,580+ extractions and a 5,400-concept graph had
@@ -20,13 +24,13 @@ phases.
 ## 1. Knowledge-loop wave — the active work (execute in gate order)
 
 From [2026-07-07-00-loop-master-sequence.md](./2026-07-07-00-loop-master-sequence.md).
-Plans 01–03 carry `> Landed:` headers; do not re-implement.
+Plans 01–03 carry `> Landed:` headers and are archived; do not re-implement.
 
 | # | Plan | Status |
 |---|------|--------|
-| 01 | Claims become first-class rows | ✅ Landed `b2e0cbe` (4,648 claims backfilled) |
-| 02 | Concept domains + mission relevance | ✅ Landed `03dce57` (5,444/5,444 classified) |
-| 03 | Correspondences table + agent write surface | ✅ Landed `2adca48` (live-gated) |
+| 01 | [Claims become first-class rows](../archive/plan-waves/2026-07-07-01-loop-claims-table.md) | ✅ Landed `b2e0cbe` (4,648 claims backfilled) — archived |
+| 02 | [Concept domains + mission relevance](../archive/plan-waves/2026-07-07-02-loop-domains-and-relevance.md) | ✅ Landed `03dce57` (5,444/5,444 classified) — archived |
+| 03 | [Correspondences table + agent write surface](../archive/plan-waves/2026-07-07-03-loop-correspondences.md) | ✅ Landed `2adca48` (live-gated) — archived |
 | 04 | **Embeddings + vector indexes** | ⬅️ **NEXT** (prereqs 01+02 satisfied) |
 | 12 | [Domain triage surface](./2026-07-18-12-domain-triage-surface.md) | Pending — **parallel to 04, must land before 05** |
 | 05 | Candidate generator + miner & evidence-hunter graphs | Pending (needs 03+04+12; gate: Proxmox worker healthy) |
