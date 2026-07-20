@@ -208,6 +208,17 @@ describe("vocabulary triage decisions", () => {
           .collect(),
       ),
     ).toHaveLength(1);
+
+    await t.run((ctx) =>
+      ctx.db.patch("conceptDomains", targetId, { status: "deprecated" }),
+    );
+    await expect(
+      asSystem.mutation(api.vocabulary.mergeEntry, {
+        list: "conceptDomain",
+        sourceEntryId: sourceId,
+        targetEntryId: targetId,
+      }),
+    ).rejects.toThrow(/known/i);
   });
 
   test("rejects same-entry merges and non-known merge targets", async () => {

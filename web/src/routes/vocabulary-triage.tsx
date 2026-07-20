@@ -203,6 +203,13 @@ function TriageRow(props: {
               display: "grid",
               gap: "3",
               p: "3",
+              "& select, & input": {
+                borderColor: "rgba(139, 92, 246, 0.42)",
+              },
+              "& select:focus-visible, & input:focus-visible": {
+                borderColor: "zodiac.violet",
+                boxShadow: "0 0 0 1px rgba(139, 92, 246, 0.4)",
+              },
             })}
           >
             <Show when={selectedDecision() === "merge"}>
@@ -284,11 +291,7 @@ function TriageSection(props: {
   data: TriageList | undefined;
 }) {
   return (
-    <UICard
-      class={css({
-        borderColor: "rgba(139, 92, 246, 0.22)",
-      })}
-    >
+    <UICard style={{ "border-color": "rgba(139, 92, 246, 0.22)" }}>
       <h2
         class={css({
           color: "zodiac.cream",
@@ -330,7 +333,7 @@ export function VocabularyTriagePage() {
 
   return (
     <section class={pageClass}>
-      <UICard class={css({ borderColor: "rgba(139, 92, 246, 0.22)" })}>
+      <UICard style={{ "border-color": "rgba(139, 92, 246, 0.22)" }}>
         <p class={eyebrowClass}>Domain Triage</p>
         <h1 class={pageTitleClass}>Curate the vocabulary registry.</h1>
         <p

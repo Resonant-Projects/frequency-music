@@ -521,6 +521,12 @@ export const mergeEntry = mutation({
       resolveRegistryEntry(ctx, args.list, args.sourceEntryId),
       resolveRegistryEntry(ctx, args.list, args.targetEntryId),
     ]);
+    if (target.status !== "known") {
+      triageError(
+        "MERGE_TARGET_NOT_KNOWN",
+        "Vocabulary merge target must have known status",
+      );
+    }
     if (
       source.status === "deprecated" &&
       source.mergedInto === String(target._id)
@@ -533,12 +539,6 @@ export const mergeEntry = mutation({
       };
     }
     requireProvisional(source);
-    if (target.status !== "known") {
-      triageError(
-        "MERGE_TARGET_NOT_KNOWN",
-        "Vocabulary merge target must have known status",
-      );
-    }
 
     let remapped = 0;
     if (args.list === "conceptDomain") {
