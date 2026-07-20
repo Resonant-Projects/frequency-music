@@ -87,4 +87,22 @@ crons.weekly(
   {},
 );
 
+// Mine new cross-domain correspondence candidates daily. The production worker
+// claims this audit row and owns execution under the normal lease contract.
+crons.daily(
+  "enqueue-correspondence-miner",
+  { hourUTC: 5, minuteUTC: 0 },
+  internal.agentRuns.enqueue,
+  { graphName: "correspondence-miner", input: { limit: 20 } },
+);
+
+// Hunt evidence after the miner window, offset so the single worker does not
+// receive both daily graph runs at the same instant.
+crons.daily(
+  "enqueue-evidence-hunter",
+  { hourUTC: 6, minuteUTC: 0 },
+  internal.agentRuns.enqueue,
+  { graphName: "evidence-hunter", input: { limit: 5 } },
+);
+
 export default crons;

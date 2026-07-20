@@ -116,9 +116,12 @@ pick_targets (conjectured, oldest-evidence-first, ≤5) ──► per target:
 **Files:**
 - Modify: `convex/crons.ts` (enqueue miner daily, hunter daily offset; enqueue = insert queued `agentRuns` row per found-state worker contract)
 
-- [ ] **Step 1:** Cron registration; codegen; commit.
+- [x] **Step 1:** Cron registration; codegen; commit.
+  - Offline completion: the cron uses existing generated `internal.agentRuns.enqueue`; prohibited live codegen was not run and no generated declaration changed.
 - [ ] **Step 2: Live gate.** Trigger one miner run via the worker. Verify: ≥1 and ≤20 correspondences written; each has statement, rationale, scores, run id, trace URL; run events tell a readable story. Paste run summary in PR.
+  - Operator-gated: requires the deployed Convex backend and a healthy Proxmox worker.
 - [ ] **Step 3:** Trigger a second identical run: zero duplicate pairs (upsert merges). Trigger one hunter run: evidence appended to ≥1 conjecture, statuses recomputed correctly.
+  - Operator-gated: requires live reruns and production evidence inspection.
 
 ---
 
