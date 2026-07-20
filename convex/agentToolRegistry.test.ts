@@ -35,6 +35,15 @@ const FROZEN_ARGS: Record<string, string> = {
     limit: field(number, true),
   }),
   getSelfImprovementStats: frozenArgs({ daysBack: field(number, true) }),
+  listCorrespondenceCandidates: frozenArgs({
+    limit: field(number, true),
+    seedConceptId: field(id("concepts"), true),
+  }),
+  searchClaimsSemantic: frozenArgs({
+    text: field(string),
+    limit: field(number, true),
+  }),
+  listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
   upsertCorrespondence: frozenArgs({
     conceptAId: field(id("concepts")),
     conceptBId: field(id("concepts")),

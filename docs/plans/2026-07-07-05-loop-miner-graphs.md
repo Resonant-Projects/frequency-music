@@ -56,9 +56,10 @@ returns: Array<{
 4. Score: `similarityScore` from the vector hit; `noveltyScore` penalized by co-mention/edge count (`edges` `by_from`/`by_to` counts).
 5. Return top-`limit` by `similarityScore × noveltyScore` with sample claims attached.
 
-- [ ] **Step 1:** Harness-test the pure scoring/pairing helpers (extract them pure; the vector search itself is action-only).
-- [ ] **Step 2:** Implement; expose via agent-tool registry as `list_correspondence_candidates` (read).
+- [x] **Step 1:** Harness-test the pure scoring/pairing helpers (extract them pure; the vector search itself is action-only).
+- [x] **Step 2:** Implement; expose via agent-tool registry as `list_correspondence_candidates` (read).
 - [ ] **Step 3:** Codegen; run once manually via `bunx convex run` and eyeball the top-10 pairs (paste in PR); commit.
+  - Operator-gated: generated declarations were updated by hand in generated style; live codegen and the manual Convex run were intentionally not executed.
 
 ---
 
