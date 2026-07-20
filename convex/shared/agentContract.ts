@@ -37,6 +37,18 @@ export const KNOWN_GRAPH_NAMES = [
 ] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
 
+export function normalizeTraceUrl(value: unknown): string | undefined {
+  if (typeof value !== "string" || !value) return undefined;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // Which side owns the terminal Convex status write for each graph.
 export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
   {

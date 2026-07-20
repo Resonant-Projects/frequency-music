@@ -22,6 +22,7 @@ export type MinerDecision = {
   candidate: CorrespondenceCandidate;
   verdict: MinerVerdict;
   supportingClaimIds: string[];
+  discardReason?: { reason: "judge_error"; message: string };
 };
 
 function replaceArray<T>(_left: T[], right: T[]): T[] {
@@ -39,6 +40,10 @@ export const CorrespondenceMinerAnnotation = Annotation.Root({
   decisions: Annotation<MinerDecision[]>({
     value: replaceArray,
     default: () => [],
+  }),
+  judgeErrorCount: Annotation<number>({
+    value: (_left, right) => right,
+    default: () => 0,
   }),
   acceptedCount: Annotation<number>({
     value: (_left, right) => right,

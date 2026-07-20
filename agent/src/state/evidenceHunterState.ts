@@ -18,11 +18,19 @@ export type StanceVerdict = {
   note: string;
 };
 
-export type EvidenceJudgment = {
-  target: EvidenceTarget;
-  claim: SemanticClaim;
-  verdict: StanceVerdict;
-};
+export type EvidenceJudgment =
+  | {
+      target: EvidenceTarget;
+      claim: SemanticClaim;
+      verdict: StanceVerdict;
+      discardReason?: never;
+    }
+  | {
+      target: EvidenceTarget;
+      claim: SemanticClaim;
+      discardReason: { reason: "judge_error"; message: string };
+      verdict?: never;
+    };
 
 function replaceArray<T>(_left: T[], right: T[]): T[] {
   return right;
@@ -44,11 +52,19 @@ export const EvidenceHunterAnnotation = Annotation.Root({
     value: replaceArray,
     default: () => [],
   }),
+  judgeErrorCount: Annotation<number>({
+    value: (_left, right) => right,
+    default: () => 0,
+  }),
   evidenceAddedCount: Annotation<number>({
     value: (_left, right) => right,
     default: () => 0,
   }),
   irrelevantCount: Annotation<number>({
+    value: (_left, right) => right,
+    default: () => 0,
+  }),
+  discardedCount: Annotation<number>({
     value: (_left, right) => right,
     default: () => 0,
   }),

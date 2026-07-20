@@ -10,6 +10,7 @@ import type {
 } from "../../state/evidenceHunterState.js";
 import { callConvex } from "../../tools/convexTools.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
+import { redactError } from "../../shared/redactError.js";
 import {
   appendRemoteAuditEvent,
   type AgentAuditEvent,
@@ -101,27 +102,85 @@ export async function searchClaimsNode(
 export async function judgeStanceNode(
   state: EvidenceHunterState,
 ): Promise<EvidenceHunterUpdate> {
-  const judge = getResearchModel({
-    requiresToolBinding: true,
-    temperature: 0,
-  }).withStructuredOutput(stanceOutputSchema);
-  const judgments: EvidenceJudgment[] = [];
-  for (const search of state.searches) {
-    for (const claim of search.claims) {
-      const verdict = stanceOutputSchema.parse(
-        await judge.invoke(stanceJudgePrompt(search.target, claim), {
-          configurable: {
-            agentRunId: state.agentRunId,
-            traceUrl: state.traceUrl,
-          },
-        }),
-      );
-      judgments.push({ target: search.target, claim, verdict });
+  return await createJudgeStanceNode()(state);
+}
+
+type StanceJudge = {
+  invoke: (
+    prompt: string,
+    options: {
+      configurable: { agentRunId?: string; traceUrl?: string };
+    },
+  ) => Promise<z.infer<typeof stanceOutputSchema>>;
+};
+
+export function createJudgeStanceNode(
+  dependencies: {
+    judge?: StanceJudge;
+    callTool?: ToolCaller;
+    resolveTraceUrl?: typeof resolveCurrentTraceUrl;
+  } = {},
+) {
+  const callTool = dependencies.callTool ?? callConvex;
+  const resolveTraceUrl =
+    dependencies.resolveTraceUrl ?? resolveCurrentTraceUrl;
+  const judge =
+    dependencies.judge ??
+    (getResearchModel({
+      requiresToolBinding: true,
+      temperature: 0,
+    }).withStructuredOutput(stanceOutputSchema) as StanceJudge);
+
+  return async (
+    state: Pick<EvidenceHunterState, "agentRunId" | "traceUrl" | "searches">,
+  ): Promise<EvidenceHunterUpdate> => {
+    const judgments: EvidenceJudgment[] = [];
+    const auditEvents: AgentAuditEvent[] = [];
+    let judgeErrorCount = 0;
+    for (const search of state.searches) {
+      for (const claim of search.claims) {
+        try {
+          const verdict = await judge.invoke(
+            stanceJudgePrompt(search.target, claim),
+            {
+              configurable: {
+                agentRunId: state.agentRunId,
+                traceUrl: state.traceUrl,
+              },
+            },
+          );
+          judgments.push({ target: search.target, claim, verdict });
+        } catch (error) {
+          judgeErrorCount += 1;
+          const message = redactError(error);
+          judgments.push({
+            target: search.target,
+            claim,
+            discardReason: { reason: "judge_error", message },
+          });
+          auditEvents.push(
+            ...(await appendRemoteAuditEvent(
+              callTool,
+              state.agentRunId,
+              "decision",
+              "Evidence hunter discarded claim after judge error",
+              {
+                pairKey: search.target.pairKey,
+                claimId: claim.claimId,
+                reason: "judge_error",
+                message,
+              },
+            )),
+          );
+        }
+      }
     }
-  }
-  return {
-    judgments,
-    traceUrl: await resolveCurrentTraceUrl(state.traceUrl),
+    return {
+      judgments,
+      judgeErrorCount,
+      auditEvents,
+      traceUrl: await resolveTraceUrl(state.traceUrl),
+    };
   };
 }
 
@@ -135,10 +194,15 @@ export function createAddEvidenceNode(callTool: ToolCaller = callConvex) {
     }
     let evidenceAddedCount = 0;
     let irrelevantCount = 0;
+    let discardedCount = 0;
     const evidenceAddedByTarget: Record<string, number> = {};
     const auditEvents: AgentAuditEvent[] = [];
 
     for (const judgment of state.judgments) {
+      if (judgment.discardReason) {
+        discardedCount += 1;
+        continue;
+      }
       auditEvents.push(
         ...(await appendRemoteAuditEvent(
           callTool,
@@ -188,6 +252,7 @@ export function createAddEvidenceNode(callTool: ToolCaller = callConvex) {
     return {
       evidenceAddedCount,
       irrelevantCount,
+      discardedCount,
       evidenceAddedByTarget,
       auditEvents,
     };
@@ -196,25 +261,45 @@ export function createAddEvidenceNode(callTool: ToolCaller = callConvex) {
 
 export const addEvidenceNode = createAddEvidenceNode();
 
-export async function summarizeNode(
-  state: EvidenceHunterState,
-): Promise<EvidenceHunterUpdate> {
-  const targetSummary = Object.entries(state.evidenceAddedByTarget)
-    .map(([targetId, count]) => `${targetId}: ${count}`)
-    .join(", ");
-  const summary =
-    state.targets.length === 0
-      ? "evidence-hunter completed: no conjectured targets"
-      : `evidence-hunter completed: ${state.evidenceAddedCount} evidence citations added across ${state.targets.length} targets; ${state.irrelevantCount} claims irrelevant${targetSummary ? ` (${targetSummary})` : ""}`;
-  if (state.agentRunId) {
-    await callConvex("markAgentRunCompleted", {
-      runId: state.agentRunId,
-      summary,
-      ...(state.traceUrl ? { traceUrl: state.traceUrl } : {}),
-    });
-  }
-  return { summary };
+export function createSummarizeNode(callTool: ToolCaller = callConvex) {
+  return async (state: EvidenceHunterState): Promise<EvidenceHunterUpdate> => {
+    const targetSummary = Object.entries(state.evidenceAddedByTarget)
+      .map(([targetId, count]) => `${targetId}: ${count}`)
+      .join(", ");
+    const allJudgesFailed =
+      state.judgments.length > 0 &&
+      state.judgeErrorCount === state.judgments.length;
+    const summary =
+      state.targets.length === 0
+        ? "evidence-hunter completed: no conjectured targets"
+        : allJudgesFailed
+          ? `evidence-hunter completed: zero judgments; ${state.judgeErrorCount} judge errors discarded across ${state.targets.length} targets`
+          : `evidence-hunter completed: ${state.evidenceAddedCount} evidence citations added across ${state.targets.length} targets; ${state.irrelevantCount} claims irrelevant, ${state.discardedCount} discarded${targetSummary ? ` (${targetSummary})` : ""}`;
+    const auditEvents: AgentAuditEvent[] = [];
+    if (state.agentRunId) {
+      try {
+        await callTool("markAgentRunCompleted", {
+          runId: state.agentRunId,
+          summary,
+          ...(state.traceUrl ? { traceUrl: state.traceUrl } : {}),
+        });
+      } catch (error) {
+        auditEvents.push(
+          ...(await appendRemoteAuditEvent(
+            callTool,
+            state.agentRunId,
+            "error",
+            "Failed to mark evidence-hunter run completed",
+            { message: redactError(error) },
+          )),
+        );
+      }
+    }
+    return { summary, auditEvents };
+  };
 }
+
+export const summarizeNode = createSummarizeNode();
 
 export function routeAfterTargets(state: EvidenceHunterState) {
   return state.targets.length === 0 ? "summarize" : "search_claims";

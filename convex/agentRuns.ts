@@ -11,6 +11,8 @@ import {
 import { agentRunEventKindValidator, agentRunStatusValidator } from "./schema";
 import {
   AGENT_RUN_STATUSES,
+  KNOWN_GRAPH_NAMES,
+  normalizeTraceUrl,
   STALE_RUN_MS,
   type AgentRunEventKind,
   type AgentRunStatus,
@@ -72,15 +74,7 @@ export function buildReviewedRunCompletionPatch(now: number) {
 }
 
 export function safeTraceUrl(value: string | undefined) {
-  if (!value) return undefined;
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:"
-      ? parsed.toString()
-      : undefined;
-  } catch {
-    return undefined;
-  }
+  return normalizeTraceUrl(value);
 }
 
 function isSmokeInput(input: unknown) {
@@ -316,7 +310,12 @@ export const enqueue = internalMutation({
     input: v.optional(v.any()),
     traceUrl: v.optional(v.string()),
   },
-  handler: (ctx, args) => insertQueuedRun(ctx, args),
+  handler: (ctx, args) => {
+    if (!(KNOWN_GRAPH_NAMES as readonly string[]).includes(args.graphName)) {
+      throw new Error(`Unknown graphName: ${args.graphName}`);
+    }
+    return insertQueuedRun(ctx, args);
+  },
 });
 
 // Atomically claim the oldest queued run (optionally for a specific graph).

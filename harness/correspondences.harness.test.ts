@@ -240,6 +240,49 @@ describe("correspondence pair identity and classification gates", () => {
 });
 
 describe("correspondence evidence target ordering", () => {
+  test("only considers the first 500 conjectures from the status index", async () => {
+    const t = convexTest(schema, modules);
+    const [conceptAId, conceptBId] = await Promise.all([
+      seedConcept(t, "bounded target a"),
+      seedConcept(t, "bounded target b"),
+    ]);
+    const evidenceClaimId = await seedClaim(t, 500);
+
+    await t.run(async (ctx) => {
+      for (let ordinal = 0; ordinal <= 500; ordinal += 1) {
+        await ctx.db.insert("correspondences", {
+          conceptAId,
+          conceptBId,
+          pairKey: `bounded-${ordinal}`,
+          statement: `Bounded target ${ordinal}`,
+          rationaleMd: "Bounded-read test fixture.",
+          evidence:
+            ordinal === 500
+              ? []
+              : [
+                  {
+                    claimId: evidenceClaimId,
+                    stance: "supports",
+                    addedBy: "human",
+                    addedAt: 1000 + ordinal,
+                  },
+                ],
+          status: "conjectured",
+          createdBy: "system",
+          createdAt: ordinal,
+          updatedAt: ordinal,
+        });
+      }
+    });
+
+    const targets = await t.query(
+      internal.correspondenceCandidates.listEvidenceTargets,
+      { limit: 1 },
+    );
+
+    expect(targets[0]?.pairKey).toBe("bounded-0");
+  });
+
   test("returns conjectures by oldest evidence even after a human status reset", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);

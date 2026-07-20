@@ -88,6 +88,21 @@ describe("agentRuns.claimNextPending", () => {
   });
 });
 
+describe("agentRuns.enqueue", () => {
+  test("rejects graph names outside the shared registry", async () => {
+    const t = convexTest(schema, modules);
+
+    await expect(
+      t.mutation(internal.agentRuns.enqueue, {
+        graphName: "unregistered-graph",
+      }),
+    ).rejects.toThrow(/Unknown graphName/);
+
+    const runs = await t.run((ctx) => ctx.db.query("agentRuns").collect());
+    expect(runs).toEqual([]);
+  });
+});
+
 describe("agentRuns.sweepStaleRuns", () => {
   test("fails a running run whose updatedAt is past the threshold, leaves fresh ones", async () => {
     const t = convexTest(schema, modules);

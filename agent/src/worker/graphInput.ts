@@ -6,6 +6,7 @@
 
 import {
   KNOWN_GRAPH_NAMES,
+  normalizeTraceUrl,
   TERMINAL_STATUS_OWNER,
   type KnownGraphName,
 } from "../../../convex/shared/agentContract";
@@ -86,7 +87,13 @@ function traceUrlFrom(input: unknown): string | undefined {
 }
 
 function claimedTraceUrl(claim: ClaimedRun): string | undefined {
-  return claim.traceUrl ?? traceUrlFrom(claim.input);
+  for (const value of [claim.traceUrl, traceUrlFrom(claim.input)]) {
+    if (!value) continue;
+    const normalized = normalizeTraceUrl(value);
+    if (normalized) return normalized;
+    console.warn("[worker] Ignoring invalid traceUrl at graph boundary");
+  }
+  return undefined;
 }
 
 // Maps a claimed run into the exact input shape the corresponding compiled graph
@@ -112,22 +119,24 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
     };
   }
   if (claim.graphName === "correspondence-miner") {
+    const traceUrl = claimedTraceUrl(claim);
     return {
       graphName: "correspondence-miner",
       input: {
         agentRunId: claim.runId,
         limit: resolveResearchLimit(claim.input, 20),
-        ...(claimedTraceUrl(claim) ? { traceUrl: claimedTraceUrl(claim) } : {}),
+        ...(traceUrl ? { traceUrl } : {}),
       },
     };
   }
   if (claim.graphName === "evidence-hunter") {
+    const traceUrl = claimedTraceUrl(claim);
     return {
       graphName: "evidence-hunter",
       input: {
         agentRunId: claim.runId,
         limit: Math.min(resolveResearchLimit(claim.input, 5), 5),
-        ...(claimedTraceUrl(claim) ? { traceUrl: claimedTraceUrl(claim) } : {}),
+        ...(traceUrl ? { traceUrl } : {}),
       },
     };
   }

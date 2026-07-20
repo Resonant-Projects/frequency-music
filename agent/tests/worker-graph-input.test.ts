@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import {
   HEARTBEAT_INTERVAL_MS,
   STALE_RUN_MS,
@@ -123,6 +123,24 @@ describe("worker graph-input mapping", () => {
       limit: 12,
       traceUrl: "https://trace.example/miner",
     });
+  });
+
+  test("drops and warns on a non-URL trace from claimed input", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const invocation = buildGraphInvocation({
+      runId: "run_invalid_trace",
+      graphName: "correspondence-miner",
+      input: { traceUrl: "not a URL" },
+    });
+
+    if (invocation.graphName !== "correspondence-miner")
+      throw new Error("narrowing");
+    expect(invocation.input.traceUrl).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(
+      "[worker] Ignoring invalid traceUrl at graph boundary",
+    );
+    warn.mockRestore();
   });
 
   test("evidence-hunter caps each run at five targets", () => {

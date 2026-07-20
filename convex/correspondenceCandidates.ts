@@ -27,6 +27,7 @@ const VECTOR_MATCH_LIMIT = 32;
 const STRUCTURAL_EDGE_LIMIT = 100;
 const MAX_PAIR_PROPOSALS = 256;
 const MAX_SAMPLE_POOL = 12;
+const EVIDENCE_TARGET_SCAN_LIMIT = 500;
 
 const candidateValidator = zodToConvex(correspondenceCandidateBaseZ);
 const richCandidateValidator = zodToConvex(correspondenceCandidateZ);
@@ -427,19 +428,29 @@ export const getCandidateSamples = internalQuery({
       }),
     }),
   ),
-  handler: async (ctx, args) =>
-    (
+  handler: async (ctx, args) => {
+    const [firstPair] = args.pairs;
+    if (!firstPair) return [];
+    const conceptA = await ctx.db.get("concepts", firstPair.conceptAId);
+    if (!conceptA) return [];
+    const probeSamples = await sampleClaimsForConcept(ctx, conceptA, []);
+
+    return (
       await Promise.all(
         args.pairs.map(async (pair) => {
-          const [conceptA, conceptB] = await Promise.all([
-            ctx.db.get("concepts", pair.conceptAId),
-            ctx.db.get("concepts", pair.conceptBId),
-          ]);
-          if (!conceptA || !conceptB) return null;
-          const [a, b] = await Promise.all([
-            sampleClaimsForConcept(ctx, conceptA, []),
-            sampleClaimsForConcept(ctx, conceptB, pair.hitClaimIds),
-          ]);
+          if (pair.conceptAId !== firstPair.conceptAId) {
+            throw new Error(
+              "getCandidateSamples requires one shared probe conceptAId",
+            );
+          }
+          const conceptB = await ctx.db.get("concepts", pair.conceptBId);
+          if (!conceptB) return null;
+          const b = await sampleClaimsForConcept(
+            ctx,
+            conceptB,
+            pair.hitClaimIds,
+          );
+          const a = probeSamples;
           const selected = selectCrossConceptSamples(a, b);
           if (!selected) return null;
           return {
@@ -454,7 +465,8 @@ export const getCandidateSamples = internalQuery({
           };
         }),
       )
-    ).filter((value): value is NonNullable<typeof value> => value !== null),
+    ).filter((value): value is NonNullable<typeof value> => value !== null);
+  },
 });
 
 export const generateCandidates = internalAction({
@@ -662,7 +674,7 @@ export const listEvidenceTargets = internalQuery({
     const rows = await ctx.db
       .query("correspondences")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
-      .collect();
+      .take(EVIDENCE_TARGET_SCAN_LIMIT);
     const lastEvidenceAt = (row: (typeof rows)[number]) =>
       row.evidence.reduce<number | undefined>(
         (latest, entry) => Math.max(latest ?? 0, entry.addedAt),
