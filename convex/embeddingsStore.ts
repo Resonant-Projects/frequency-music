@@ -2,7 +2,11 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
-import { conceptEmbeddingText, needsEmbedding } from "./shared/embeddingText";
+import {
+  conceptEmbeddingText,
+  EMBEDDING_MODEL,
+  needsEmbedding,
+} from "./shared/embeddingText";
 
 const embeddingWriteValidator = v.object({
   embedding: v.array(v.float64()),
@@ -203,7 +207,11 @@ export const hydrateProbeMatches = internalQuery({
       await Promise.all(
         args.matches.map(async (match) => {
           const claim = await ctx.db.get("claims", match.claimId);
-          return claim ? { claim, match } : null;
+          // Drop rows embedded under a different model: during a re-embed
+          // migration their vectors are not comparable to the probe vector.
+          return claim && claim.embeddingModel === EMBEDDING_MODEL
+            ? { claim, match }
+            : null;
         }),
       )
     ).filter((result): result is NonNullable<typeof result> => result !== null);

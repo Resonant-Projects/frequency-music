@@ -88,7 +88,7 @@ Scope: active claims whose source links ≥1 on-mission concept (query via edges
 
 - [ ] **Step 1:** Dry run — report counts and estimated cost.
 - [ ] **Step 2:** `--apply`; convergence re-run reports zero pending.
-- Operator-gated: requires deploy + `OPENAI_API_KEY`.
+- Operator-gated: deploy required for both dry-run and `--apply`; `OPENAI_API_KEY` required only for `--apply`.
 - [x] **Step 3:** Commit (report in PR).
 
 ---
@@ -114,7 +114,7 @@ Scheduled (`ctx.scheduler.runAfter(0, ...)`), never inline — extraction must n
 Given a claim id (or free text), run `ctx.vectorSearch` (via a small internal action) and print the top-10 nearest claims with source titles and their concepts' domains. This is the wave gate's verification tool and plan 05's debugging tool.
 
 - [ ] **Step 1:** Implement; run against a hand-picked cymatics claim; sanity-check neighbors by eye (expect: acoustics/wave-physics claims near; ASR noise absent because unembedded).
-- Operator-gated: requires deploy + `OPENAI_API_KEY`.
+- Operator-gated: requires deploy; `OPENAI_API_KEY` needed for free-text probes or when no current stored claim embedding can be reused (claim-id probes reuse stored embeddings).
 - [x] **Step 2:** Commit.
 
 ---
