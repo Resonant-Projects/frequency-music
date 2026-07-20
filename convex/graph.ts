@@ -20,9 +20,7 @@ const CONCEPT_DETAIL_LINK_LIMIT = 20;
 function leanConcept(
   concept: Doc<"concepts">,
 ): Omit<Doc<"concepts">, "embedding" | "embeddingModel"> {
-  const lean = { ...concept };
-  delete lean.embedding;
-  delete lean.embeddingModel;
+  const { embedding: _embedding, embeddingModel: _model, ...lean } = concept;
   return lean;
 }
 

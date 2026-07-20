@@ -41,19 +41,25 @@ export function parseEmbeddingResponse(value: unknown, expectedCount: number) {
   if (!value || typeof value !== "object" || !("data" in value)) return null;
   const data = (value as { data?: unknown }).data;
   if (!Array.isArray(data) || data.length !== expectedCount) return null;
-  const ordered = data.toSorted((left, right) => {
-    const leftIndex =
-      typeof left === "object" && left && "index" in left
-        ? Number(left.index)
-        : 0;
-    const rightIndex =
-      typeof right === "object" && right && "index" in right
-        ? Number(right.index)
-        : 0;
-    return leftIndex - rightIndex;
-  });
-  const embeddings = ordered.map((item) => {
+  // Place each item at its declared index; every item must carry a unique
+  // integer index in [0, expectedCount) or the whole response is rejected —
+  // a silently defaulted index could pair an embedding with the wrong text.
+  const embeddings: (number[] | null)[] = Array.from(
+    { length: expectedCount },
+    () => null,
+  );
+  for (const item of data) {
     if (!item || typeof item !== "object" || !("embedding" in item)) {
+      return null;
+    }
+    const index = "index" in item ? item.index : undefined;
+    if (
+      typeof index !== "number" ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= expectedCount ||
+      embeddings[index] !== null
+    ) {
       return null;
     }
     const embedding = item.embedding;
@@ -68,8 +74,8 @@ export function parseEmbeddingResponse(value: unknown, expectedCount: number) {
       if (typeof value !== "number" || !Number.isFinite(value)) return null;
       numbers.push(value);
     }
-    return numbers;
-  });
+    embeddings[index] = numbers;
+  }
   return embeddings.every(
     (embedding): embedding is number[] => embedding !== null,
   )
