@@ -2,6 +2,8 @@ import { writeMidi, type MidiData, type MidiEvent } from "midi-file";
 import {
   midiNoteNumber,
   parameterKind,
+  parsePitchToken,
+  ROOT_NOTE_KINDS,
   tuningIntervalsInCents,
   type CompositionParameter,
   type TuningSpec,
@@ -17,17 +19,29 @@ export interface SeedMidiGeneration {
 }
 
 const TICKS_PER_BEAT = 480;
-const DEFAULT_BARS = 8;
+const MIN_BARS = 8;
+const MAX_BARS = 16;
+const DEFAULT_BARS = MIN_BARS;
 const DEFAULT_TEMPO = 120;
+const MIN_TEMPO_BPM = 20;
+const MAX_TEMPO_BPM = 400;
+const NOTE_VELOCITY = 72;
 const SEED_KINDS = new Set([
   "chordprogression",
   "form",
-  "key",
-  "note",
   "rhythm",
-  "rootnote",
   "tempo",
+  ...ROOT_NOTE_KINDS,
 ]);
+const DEGREE_BY_ROMAN: Readonly<Record<string, number>> = {
+  I: 0,
+  II: 1,
+  III: 2,
+  IV: 3,
+  V: 4,
+  VI: 5,
+  VII: 6,
+};
 
 function kindOf(parameter: CompositionParameter): string {
   return parameterKind(parameter).toLowerCase();
@@ -56,11 +70,13 @@ function parseTempo(parameter: CompositionParameter): number | null {
   const fromDetails = detailsNumber(parameter, "bpm");
   const fromValue = Number(parameter.value.match(/\d+(?:\.\d+)?/)?.[0]);
   const tempo = fromDetails ?? (Number.isFinite(fromValue) ? fromValue : null);
-  return tempo !== null && tempo >= 20 && tempo <= 400 ? tempo : null;
+  return tempo !== null && tempo >= MIN_TEMPO_BPM && tempo <= MAX_TEMPO_BPM
+    ? tempo
+    : null;
 }
 
 function parseRoot(parameter: CompositionParameter): number | null {
-  const pitch = parameter.value.match(/[A-Ga-g][#b]?-?\d*/)?.[0];
+  const pitch = parsePitchToken(parameter.value);
   return pitch ? midiNoteNumber(pitch) : null;
 }
 
@@ -74,16 +90,7 @@ function rhythmTicks(value: string): number | null {
 
 function romanDegree(token: string): number | null {
   const normalized = token.toUpperCase().replaceAll(/[^IV]/g, "");
-  const degreeByRoman: Record<string, number> = {
-    I: 0,
-    II: 1,
-    III: 2,
-    IV: 3,
-    V: 4,
-    VI: 5,
-    VII: 6,
-  };
-  return degreeByRoman[normalized] ?? null;
+  return DEGREE_BY_ROMAN[normalized] ?? null;
 }
 
 function progressionDegrees(value: string): number[] | null {
@@ -144,7 +151,7 @@ export function generateSeedMidi(
         hasTempo = true;
         honored.add(index);
       }
-    } else if (["key", "note", "rootnote"].includes(kind) && !hasRoot) {
+    } else if (ROOT_NOTE_KINDS.has(kind) && !hasRoot) {
       const parsed = parseRoot(parameter);
       if (parsed !== null) {
         rootMidi = parsed;
@@ -165,7 +172,7 @@ export function generateSeedMidi(
       }
     } else if (kind === "form" && !hasForm) {
       const parsed = requestedBars(parameter);
-      if (parsed !== null && parsed >= 8 && parsed <= 16) {
+      if (parsed !== null && parsed >= MIN_BARS && parsed <= MAX_BARS) {
         bars = parsed;
         hasForm = true;
         honored.add(index);
@@ -217,7 +224,7 @@ export function generateSeedMidi(
         type: "noteOn",
         channel: 0,
         noteNumber,
-        velocity: 72,
+        velocity: NOTE_VELOCITY,
       });
       events.push({
         deltaTime: noteTicks,

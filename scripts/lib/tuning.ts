@@ -3,7 +3,6 @@ export interface CompositionParameter {
   type?: string;
   value: string;
   details?: unknown;
-  registryStatus?: "known" | "provisional" | "experimental" | "deprecated";
   canonicalKind?: string;
 }
 
@@ -25,13 +24,13 @@ export type TuningParseResult =
       reason: { code: TuningParseFailureCode; message: string };
     };
 
-type NamedTuning = {
+export interface NamedTuning {
   aliases: string[];
   intervals: Array<number | string>;
   referenceHz?: number;
-};
+}
 
-const NAMED_TUNINGS: Record<string, NamedTuning> = {
+export const NAMED_TUNINGS: Record<string, NamedTuning> = {
   "geometric-temperament": {
     aliases: ["geometric temperament"],
     intervals: [
@@ -103,6 +102,13 @@ const TUNING_KINDS = new Set([
 ]);
 
 const RATIO_PATTERN = /^\d+\s*[/:]\s*\d+$/;
+const MAX_EDO = 4096;
+
+export const ROOT_NOTE_KINDS: ReadonlySet<string> = new Set([
+  "key",
+  "note",
+  "rootnote",
+]);
 
 export function parameterKind(parameter: CompositionParameter): string {
   return (
@@ -117,9 +123,13 @@ export function isTuningParameter(parameter: CompositionParameter): boolean {
   return TUNING_KINDS.has(parameterKind(parameter).toLowerCase());
 }
 
+function normalizeRatio(value: string): string {
+  return value.trim().replace(":", "/").replaceAll(/\s/g, "");
+}
+
 function ratioValue(value: string): number | null {
   if (!RATIO_PATTERN.test(value.trim())) return null;
-  const [numeratorText, denominatorText] = value.split(/[/:]/);
+  const [numeratorText, denominatorText] = normalizeRatio(value).split("/");
   const numerator = Number(numeratorText);
   const denominator = Number(denominatorText);
   return numerator > 0 && denominator > 0 ? numerator / denominator : null;
@@ -131,6 +141,17 @@ function normalizeName(value: string): string {
     .toLowerCase()
     .replaceAll(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+export function slugify(value: string): string {
+  return (
+    value
+      .normalize("NFKD")
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9]+/g, "-")
+      .replaceAll(/^-|-$/g, "")
+      .slice(0, 72) || "recipe"
+  );
 }
 
 function namedTuning(value: string): TuningSpec | null {
@@ -156,7 +177,7 @@ function ratiosFrom(value: unknown): string[] | null {
   if (!Array.isArray(value) || value.length === 0) return null;
   const ratios = value.map((item) =>
     typeof item === "string" && ratioValue(item) !== null
-      ? item.trim().replace(":", "/").replaceAll(/\s/g, "")
+      ? normalizeRatio(item)
       : null,
   );
   return ratios.some((ratio) => ratio === null) ? null : (ratios as string[]);
@@ -189,7 +210,7 @@ function valueSpec(value: string): TuningSpec | null {
   );
   if (edo) {
     const divisions = Number(edo[1]);
-    if (Number.isInteger(divisions) && divisions >= 1 && divisions <= 4096) {
+    if (Number.isInteger(divisions) && divisions >= 1 && divisions <= MAX_EDO) {
       return { kind: "edo", divisions };
     }
   }
@@ -265,7 +286,7 @@ function normalizedIntervals(spec: TuningSpec): Array<number | string> {
     if (
       !Number.isInteger(spec.divisions) ||
       spec.divisions < 1 ||
-      spec.divisions > 4096
+      spec.divisions > MAX_EDO
     ) {
       throw new Error("EDO divisions must be an integer between 1 and 4096.");
     }
@@ -279,7 +300,7 @@ function normalizedIntervals(spec: TuningSpec): Array<number | string> {
   }
   if (spec.kind === "ji") {
     const ratios = spec.ratios
-      .map((ratio) => ratio.trim().replace(":", "/").replaceAll(/\s/g, ""))
+      .map(normalizeRatio)
       .filter((ratio) => ratio !== "1/1");
     if (ratios.some((ratio) => ratioValue(ratio) === null)) {
       throw new Error(
@@ -333,6 +354,13 @@ const NOTE_TO_SEMITONE: Record<string, number> = {
   Bb: 10,
   B: 11,
 };
+
+export function parsePitchToken(value: string): string | null {
+  return (
+    value.match(/(?<![A-Za-z])[A-Ga-g](?:#|b)?(?:-?\d+)?(?![A-Za-z])/)?.[0] ??
+    null
+  );
+}
 
 export function midiNoteNumber(note = "C4"): number | null {
   const match = note.trim().match(/^([A-Ga-g])([#b]?)(-?\d+)?$/);

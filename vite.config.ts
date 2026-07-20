@@ -3,7 +3,11 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   fmt: {},
   test: {
-    include: ["convex/*.test.ts", "harness/**/*.test.ts"],
+    include: [
+      "convex/*.test.ts",
+      "harness/**/*.test.ts",
+      "scripts/**/*.test.ts",
+    ],
     environment: "node",
   },
   lint: {

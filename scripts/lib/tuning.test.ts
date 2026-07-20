@@ -1,18 +1,34 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, test } from "vite-plus/test";
 import {
+  NAMED_TUNINGS,
+  parsePitchToken,
   parseTuningFromParameters,
   parseTuningFromParametersWithReason,
+  slugify,
   toKbm,
   toScl,
 } from "./tuning";
 
-function scalaBody(contents: string): string {
+function scalaLinesWithoutComments(contents: string): string[] {
   return contents
     .split("\n")
-    .filter((line) => !line.startsWith("!"))
-    .join("\n")
-    .replace(/^\n+/, "");
+    .filter((line) => !line.trimStart().startsWith("!"));
+}
+
+function scalaIntervals(contents: string): Array<number | string> {
+  const intervals = scalaLinesWithoutComments(contents)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const countText = intervals.shift();
+  expect(intervals).toHaveLength(Number(countText));
+  return intervals.map((interval) =>
+    interval.includes("/") ? interval : Number(interval),
+  );
+}
+
+function scalaBody(contents: string): string {
+  return scalaLinesWithoutComments(contents).join("\n").replace(/^\n+/, "");
 }
 
 async function scaleFixture(filename: string): Promise<string> {
@@ -23,31 +39,16 @@ async function scaleFixture(filename: string): Promise<string> {
 }
 
 describe("tuning parameters to Scala", () => {
-  test("matches the hand-written geometric temperament interval body", async () => {
-    const fixture = await scaleFixture("geometric-temperament.scl");
+  test.each(
+    Object.entries(NAMED_TUNINGS),
+  )("keeps named tuning %s aligned with its Scala file", async (name, tuning) => {
+    const fixture = await scaleFixture(`${name}.scl`);
     const spec = parseTuningFromParameters([
-      { type: "tuningSystem", value: "Geometric Temperament" },
+      { type: "tuningSystem", value: tuning.aliases[0]! },
     ]);
 
-    expect(spec).toEqual({ kind: "named", name: "geometric-temperament" });
-    expect(scalaBody(toScl(spec!, "Generated geometric temperament"))).toBe(
-      scalaBody(fixture),
-    );
-  });
-
-  test.each([
-    ["Precise Temperament Tuning", "grant-precise-temperament.scl"],
-    ["Pure Polygon Internal Angles Scale", "polygon-angles-pure.scl"],
-  ])("matches the hand-written %s interval body", async (name, filename) => {
-    const fixture = await scaleFixture(filename);
-    const spec = parseTuningFromParameters([
-      { type: "tuningSystem", value: name },
-    ]);
-
-    expect(spec?.kind).toBe("named");
-    expect(scalaBody(toScl(spec!, `Generated ${name}`))).toBe(
-      scalaBody(fixture),
-    );
+    expect(spec).toEqual({ kind: "named", name });
+    expect(scalaIntervals(fixture)).toEqual(tuning.intervals);
   });
 
   test("matches the hand-written geometric keyboard mapping body", async () => {
@@ -136,5 +137,20 @@ describe("tuning parameters to Scala", () => {
       spec: null,
       reason: { code: "invalid_tuning_details" },
     });
+  });
+
+  test.each([
+    ["key of C major", "C"],
+    ["Root: F#3", "F#3"],
+    ["Bb-1 drone", "Bb-1"],
+    ["prepared piano", null],
+  ])("extracts a pitch token from %s", (value, expected) => {
+    expect(parsePitchToken(value)).toBe(expected);
+  });
+
+  test("creates a filesystem-safe production slug", () => {
+    expect(slugify(" Golden Ratio & Tuning Study ")).toBe(
+      "golden-ratio-tuning-study",
+    );
   });
 });

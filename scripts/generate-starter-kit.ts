@@ -14,8 +14,10 @@ import { generateSeedMidi, isSeedParameter } from "./lib/seedMidi";
 import {
   isTuningParameter,
   parameterKind,
-  parseTuningFromParameters,
+  parsePitchToken,
   parseTuningFromParametersWithReason,
+  ROOT_NOTE_KINDS,
+  slugify,
   toKbm,
   toScl,
   type TuningSpec,
@@ -23,8 +25,17 @@ import {
 
 export type { StarterKitRecipe } from "./lib/parameterCard";
 
+const GENERATED_FILENAMES = [
+  "tuning.scl",
+  "tuning.kbm",
+  "seed.mid",
+  "card.md",
+] as const;
+
+export type GeneratedFilename = (typeof GENERATED_FILENAMES)[number];
+
 export interface StarterKitArtifact {
-  filename: "tuning.scl" | "tuning.kbm" | "seed.mid" | "card.md";
+  filename: GeneratedFilename;
   contents: string | Uint8Array;
 }
 
@@ -45,38 +56,22 @@ export interface StarterKitMetadata {
   manifest: string[];
 }
 
-const GENERATED_FILENAMES = [
-  "tuning.scl",
-  "tuning.kbm",
-  "seed.mid",
-  "card.md",
-] as const;
-
-function slugify(value: string): string {
-  return (
-    value
-      .normalize("NFKD")
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9]+/g, "-")
-      .replaceAll(/^-|-$/g, "")
-      .slice(0, 72) || "recipe"
-  );
-}
-
-function tuningParameterIndex(recipe: StarterKitRecipe): number | null {
-  for (const [index, parameter] of recipe.parameters.entries()) {
-    if (parseTuningFromParameters([parameter]) !== null) return index;
-  }
-  return null;
+function tuningParameterIndex(
+  recipe: StarterKitRecipe,
+  tuning: TuningSpec | null,
+): number | null {
+  if (tuning === null) return null;
+  const index = recipe.parameters.findIndex(isTuningParameter);
+  return index === -1 ? null : index;
 }
 
 function rootNote(recipe: StarterKitRecipe): string | undefined {
   const parameter = recipe.parameters.find((candidate) =>
-    ["key", "note", "rootnote"].includes(
-      parameterKind(candidate).toLowerCase(),
-    ),
+    ROOT_NOTE_KINDS.has(parameterKind(candidate).toLowerCase()),
   );
-  return parameter?.value.match(/[A-Ga-g][#b]?-?\d*/)?.[0];
+  return parameter
+    ? (parsePitchToken(parameter.value) ?? undefined)
+    : undefined;
 }
 
 function buildDispositions(
@@ -132,7 +127,7 @@ export function buildStarterKit(recipe: StarterKitRecipe): BuiltStarterKit {
   const degradationNotes: string[] = [];
   const tuningResult = parseTuningFromParametersWithReason(recipe.parameters);
   const tuning = tuningResult.spec;
-  const selectedTuningIndex = tuningParameterIndex(recipe);
+  const selectedTuningIndex = tuningParameterIndex(recipe, tuning);
   let seedIndexes: number[] = [];
 
   if (tuning) {
