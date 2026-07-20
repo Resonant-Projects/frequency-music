@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vite-plus/test";
 import {
   buildStarterKit,
+  starterKitMetadata,
   writeStarterKit,
   type StarterKitRecipe,
 } from "./generate-starter-kit";
@@ -113,5 +114,21 @@ describe("starter kit assembly", () => {
     await expect(writeStarterKit(ungeneratable, root)).rejects.toThrow(
       "No tuning or seed MIDI could be generated",
     );
+  });
+
+  test("builds stable recipe-link metadata from a written kit", () => {
+    expect(
+      starterKitMetadata(
+        {
+          slug: "geometric-listening-study",
+          manifest: ["tuning.scl", "tuning.kbm", "seed.mid", "card.md"],
+        },
+        1234,
+      ),
+    ).toEqual({
+      generatedAt: 1234,
+      path: "exports/starter-kits/geometric-listening-study",
+      manifest: ["tuning.scl", "tuning.kbm", "seed.mid", "card.md"],
+    });
   });
 });

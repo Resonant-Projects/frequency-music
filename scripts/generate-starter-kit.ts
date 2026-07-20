@@ -4,7 +4,7 @@ import { access, mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Id } from "../convex/_generated/dataModel";
 import { api } from "../convex/_generated/api";
-import { getConvexClient } from "./lib/convexClient";
+import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
 import {
   renderParameterCard,
   type ParameterDisposition,
@@ -36,6 +36,12 @@ export interface BuiltStarterKit {
 
 export interface WrittenStarterKit extends BuiltStarterKit {
   outputDirectory: string;
+}
+
+export interface StarterKitMetadata {
+  generatedAt: number;
+  path: string;
+  manifest: string[];
 }
 
 const TUNING_KINDS = new Set([
@@ -230,6 +236,17 @@ export async function writeStarterKit(
   return { ...kit, outputDirectory };
 }
 
+export function starterKitMetadata(
+  kit: Pick<WrittenStarterKit, "slug" | "manifest">,
+  generatedAt: number,
+): StarterKitMetadata {
+  return {
+    generatedAt,
+    path: `exports/starter-kits/${kit.slug}`,
+    manifest: kit.manifest,
+  };
+}
+
 function parseArguments(args: string[]): { recipeId: string; force: boolean } {
   let recipeId: string | undefined;
   let force = false;
@@ -257,6 +274,11 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     resolve(process.cwd(), "exports/starter-kits"),
     { force },
   );
+  await client.mutation(api.recipes.update, {
+    id: recipe._id,
+    starterKit: starterKitMetadata(result, Date.now()),
+    devBypassSecret: getDevBypassSecret(),
+  });
   console.log(`Wrote starter kit: ${result.outputDirectory}`);
   console.log(`Manifest: ${result.manifest.join(", ")}`);
 }

@@ -83,8 +83,8 @@ export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mappi
 **Files:**
 - Modify: `convex/schema.ts` — `recipes.starterKit: v.optional(v.object({ generatedAt: v.number(), path: v.string(), manifest: v.array(v.string()) }))`; CLI patches it on success.
 
-- [ ] **Step 1:** Schema + mirror + CLI patch; codegen; commit.
-- [ ] **Step 2: Acceptance (human).** Keith loads one generated `.scl`/`.kbm` into his tuning workflow and opens the seed MIDI in the DAW: files load clean, tuning is audibly the intended system. Result recorded in PR. (This is minutes of studio time, not a session — but only human ears can pass this gate.)
+- [x] **Step 1:** Schema + mirror + CLI patch; codegen; commit. *(Schema, return-validator mirror, auth-guarded patch, and CLI linkage are complete. Codegen was intentionally not run: the hard constraint forbids backend-contacting Convex commands, and no new Convex module was added.)*
+- [ ] **Step 2: Acceptance (human).** Keith loads one generated `.scl`/`.kbm` into his tuning workflow and opens the seed MIDI in the DAW: files load clean, tuning is audibly the intended system. Result recorded in PR. (This is minutes of studio time, not a session — but only human ears can pass this gate.) *(Operator-gated.)*
 
 ---
 
