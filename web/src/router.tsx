@@ -32,6 +32,7 @@ import { RecipesPage } from "./routes/recipes";
 import { ThesisDetailPage } from "./routes/thesis-detail";
 import { ThesesPage } from "./routes/theses";
 import { WeeklyTurnsPage } from "./routes/weekly-turns";
+import { VocabularyTriagePage } from "./routes/vocabulary-triage";
 
 function lazyRoute<T extends Component>(
   loader: () => Promise<{ default: T }>,
@@ -72,6 +73,7 @@ const appLinks = [
   { to: "/feedback", label: "Feedback" },
   { to: "/agent-runs", label: "Agent Runs" },
   { to: "/agent-drafts", label: "Review Queue" },
+  { to: "/vocabulary-triage", label: "Triage" },
   { to: "/admin", label: "Admin" },
 ] as const;
 
@@ -314,6 +316,12 @@ const agentDraftsRoute = createRoute({
   component: AgentDraftsPage,
 });
 
+const vocabularyTriageRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/vocabulary-triage",
+  component: VocabularyTriagePage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   ingestRoute,
@@ -337,6 +345,7 @@ const routeTree = rootRoute.addChildren([
   agentRunsRoute,
   agentRunDetailRoute,
   agentDraftsRoute,
+  vocabularyTriageRoute,
   adminRoute,
 ]);
 

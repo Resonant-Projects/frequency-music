@@ -43,6 +43,73 @@ describe("mission concept-domain seed", () => {
 });
 
 describe("concept classification persistence", () => {
+  test("does not recreate a domain that registry triage deprecated", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { conceptId, domainId } = await t.run(async (ctx) => {
+      const insertedDomainId = await ctx.db.insert("conceptDomains", {
+        name: "retired-domain",
+        status: "provisional",
+        introducedBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      const insertedConceptId = await ctx.db.insert("concepts", {
+        name: "deprecated-domain-proposal",
+        displayName: "Deprecated domain proposal",
+        aliases: [],
+        domain: "general",
+        domains: ["general"],
+        missionRelevance: "unreviewed",
+        mentionCount: 0,
+        hypothesisCount: 0,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      return {
+        conceptId: insertedConceptId,
+        domainId: insertedDomainId,
+      };
+    });
+
+    await asSystem.mutation(api.vocabulary.rejectEntry, {
+      list: "conceptDomain",
+      entryId: domainId,
+      note: "Do not mint this classifier label again.",
+    });
+    expect(
+      await asSystem.mutation(api.conceptClassifier.writeClassifications, {
+        classifications: [
+          {
+            conceptId,
+            domains: [" Retired Domain "],
+            missionRelevance: "on",
+            rationale: "The model repeated a deprecated registry label.",
+          },
+        ],
+        model: "test-model",
+        force: false,
+      }),
+    ).toMatchObject({ assigned: 0, unreviewed: 1, skipped: 0 });
+
+    const state = await t.run(async (ctx) => ({
+      concept: await ctx.db.get("concepts", conceptId),
+      domains: await ctx.db.query("conceptDomains").collect(),
+    }));
+    expect(state.domains).toHaveLength(1);
+    expect(state.domains[0]).toMatchObject({
+      _id: domainId,
+      name: "retired-domain",
+      status: "deprecated",
+    });
+    expect(state.concept).toMatchObject({
+      domain: "general",
+      domains: ["general"],
+      missionRelevance: "unreviewed",
+      relevanceRationale: "classifier proposed unknown domain: retired-domain",
+    });
+  });
+
   test("normalizes proposed slugs and reuses known and provisional registry rows", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
