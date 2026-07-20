@@ -1,6 +1,7 @@
 import type { FunctionArgs, FunctionReturnType } from "convex/server";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
+import { DECISION_NOTE_MAX_LENGTH } from "../../../convex/shared/vocabularyTriage";
 import { css } from "../../styled-system/css";
 import {
   fieldLabelClass,
@@ -20,6 +21,32 @@ type TriageEntry = TriageList["provisional"][number];
 type KnownTarget = TriageList["knownTargets"][number];
 type VocabularyList = FunctionArgs<typeof api.vocabulary.promoteEntry>["list"];
 type Decision = "promote" | "merge" | "reject";
+
+const SECTIONS = [
+  {
+    label: "Concept Domains",
+    key: "conceptDomains",
+    list: "conceptDomain",
+    tone: "violet",
+  },
+  {
+    label: "Parameter Kinds",
+    key: "parameterKinds",
+    list: "parameterKind",
+    tone: "cream",
+  },
+  {
+    label: "Relationship Kinds",
+    key: "relationshipKinds",
+    list: "relationshipKind",
+    tone: "cream",
+  },
+] as const satisfies ReadonlyArray<{
+  label: string;
+  key: keyof TriageBoard;
+  list: VocabularyList;
+  tone: "violet" | "cream";
+}>;
 
 const helperClass = css({
   color: "rgba(245, 240, 232, 0.62)",
@@ -246,7 +273,7 @@ function TriageRow(props: {
               <UIInput
                 id={`decision-note-${props.entry._id}`}
                 value={note()}
-                maxLength={500}
+                maxLength={DECISION_NOTE_MAX_LENGTH}
                 onInput={(event) => setNote(event.currentTarget.value)}
                 placeholder="Record the reasoning for this decision."
               />
@@ -354,28 +381,13 @@ export function VocabularyTriagePage() {
             mt: "5",
           })}
         >
-          <For
-            each={[
-              {
-                label: "Concept Domains",
-                count: board.data()?.conceptDomains.provisional.length ?? 0,
-              },
-              {
-                label: "Parameter Kinds",
-                count: board.data()?.parameterKinds.provisional.length ?? 0,
-              },
-              {
-                label: "Relationship Kinds",
-                count: board.data()?.relationshipKinds.provisional.length ?? 0,
-              },
-            ]}
-          >
-            {(summary) => (
-              <UIBadge
-                tone={summary.label === "Concept Domains" ? "violet" : "cream"}
-              >
-                {board.isLoading() ? "—" : summary.count} {summary.label}{" "}
-                remaining
+          <For each={SECTIONS}>
+            {(section) => (
+              <UIBadge tone={section.tone}>
+                {board.isLoading()
+                  ? "—"
+                  : (board.data()?.[section.key].provisional.length ?? 0)}{" "}
+                {section.label} remaining
               </UIBadge>
             )}
           </For>
@@ -406,21 +418,15 @@ export function VocabularyTriagePage() {
         </Show>
       </UICard>
 
-      <TriageSection
-        title="Concept Domains"
-        list="conceptDomain"
-        data={board.data()?.conceptDomains}
-      />
-      <TriageSection
-        title="Parameter Kinds"
-        list="parameterKind"
-        data={board.data()?.parameterKinds}
-      />
-      <TriageSection
-        title="Relationship Kinds"
-        list="relationshipKind"
-        data={board.data()?.relationshipKinds}
-      />
+      <For each={SECTIONS}>
+        {(section) => (
+          <TriageSection
+            title={section.label}
+            list={section.list}
+            data={board.data()?.[section.key]}
+          />
+        )}
+      </For>
     </section>
   );
 }

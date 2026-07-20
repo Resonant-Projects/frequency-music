@@ -2,7 +2,7 @@
  * Rewrite references for vocabulary merges that exceed the inline transaction.
  *
  * Dry run (default):
- *   vpx tsx scripts/merge-vocabulary-references.ts --list parameterKind --source <id> --target <id>
+ *   vpx tsx scripts/merge-vocabulary-references.ts --list conceptDomain --source <id> --target <id>
  * Apply:
  *   vpx tsx scripts/merge-vocabulary-references.ts --list relationshipKind --source <id> --target <id> --apply
  */
@@ -11,7 +11,7 @@ import "varlock/auto-load";
 import { api } from "../convex/_generated/api";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
 
-type FallbackList = "parameterKind" | "relationshipKind";
+type FallbackList = "conceptDomain" | "parameterKind" | "relationshipKind";
 type BatchResult = {
   sourceName: string;
   targetName: string;
@@ -34,8 +34,14 @@ function requiredFlag(flag: string) {
 
 function parseList(): FallbackList {
   const value = requiredFlag("--list");
-  if (value !== "parameterKind" && value !== "relationshipKind") {
-    throw new Error("--list must be parameterKind or relationshipKind");
+  if (
+    value !== "conceptDomain" &&
+    value !== "parameterKind" &&
+    value !== "relationshipKind"
+  ) {
+    throw new Error(
+      "--list must be conceptDomain, parameterKind, or relationshipKind",
+    );
   }
   return value;
 }
@@ -53,9 +59,9 @@ async function main() {
   const devBypassSecret = getDevBypassSecret();
   const client = getConvexClient();
 
-  // Parameter-kind mergeEntry intentionally records the registry decision
-  // before the heavy extraction documents are rewritten in bounded batches.
-  if (apply && list === "parameterKind") {
+  // Concept-domain and parameter-kind mergeEntry intentionally record the
+  // registry decision before unindexed references are rewritten in batches.
+  if (apply && list !== "relationshipKind") {
     await client.mutation(api.vocabulary.mergeEntry, {
       list,
       sourceEntryId,

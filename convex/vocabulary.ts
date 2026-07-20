@@ -12,6 +12,7 @@ import {
 import { requireAuth } from "./auth";
 import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { registryStatusValidator } from "./schema";
+import { DECISION_NOTE_MAX_LENGTH } from "./shared/vocabularyTriage";
 
 const KNOWN_PARAMETER_KINDS = new Set([
   "tempo",
@@ -57,8 +58,8 @@ const KNOWN_RELATIONSHIP_KINDS = new Set([
 ]);
 
 const PROVISIONAL_STATUS = "provisional" as const;
-const CONCEPT_MERGE_SCAN_LIMIT = 5_000;
 const RELATIONSHIP_INLINE_MERGE_LIMIT = 2_000;
+const MENTION_COUNT_CAP = 500;
 
 const vocabularyListValidator = v.union(
   v.literal("conceptDomain"),
@@ -80,10 +81,10 @@ function triageError(code: string, message: string): never {
 
 function decisionNote(note?: string) {
   const normalized = note?.trim();
-  if (normalized && normalized.length > 500) {
+  if (normalized && normalized.length > DECISION_NOTE_MAX_LENGTH) {
     triageError(
       "NOTE_TOO_LONG",
-      "Decision notes must be 500 characters or less",
+      `Decision notes must be ${DECISION_NOTE_MAX_LENGTH} characters or less`,
     );
   }
   return normalized || undefined;
@@ -440,6 +441,32 @@ const decisionResultValidator = v.object({
   status: registryStatusValidator,
 });
 
+type TerminalDecisionArgs = {
+  list: VocabularyList;
+  entryId: string;
+  note?: string;
+  devBypassSecret?: string;
+};
+
+async function decideTerminal(
+  ctx: MutationCtx,
+  args: TerminalDecisionArgs,
+  status: "known" | "deprecated",
+) {
+  const identity = await requireAuth(ctx, args);
+  const entry = await resolveRegistryEntry(ctx, args.list, args.entryId);
+  requireProvisional(entry);
+  const now = Date.now();
+  await ctx.db.patch(entry._id, {
+    status,
+    decidedAt: now,
+    decidedBy: decidedBy(identity),
+    decisionNote: decisionNote(args.note),
+    updatedAt: now,
+  });
+  return { entryId: String(entry._id), status };
+}
+
 export const promoteEntry = mutation({
   args: {
     list: vocabularyListValidator,
@@ -448,20 +475,7 @@ export const promoteEntry = mutation({
     devBypassSecret: v.optional(v.string()),
   },
   returns: decisionResultValidator,
-  handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx, args);
-    const entry = await resolveRegistryEntry(ctx, args.list, args.entryId);
-    requireProvisional(entry);
-    const now = Date.now();
-    await ctx.db.patch(entry._id, {
-      status: "known",
-      decidedAt: now,
-      decidedBy: decidedBy(identity),
-      decisionNote: decisionNote(args.note),
-      updatedAt: now,
-    });
-    return { entryId: entry._id, status: "known" as const };
-  },
+  handler: (ctx, args) => decideTerminal(ctx, args, "known"),
 });
 
 export const rejectEntry = mutation({
@@ -472,20 +486,7 @@ export const rejectEntry = mutation({
     devBypassSecret: v.optional(v.string()),
   },
   returns: decisionResultValidator,
-  handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx, args);
-    const entry = await resolveRegistryEntry(ctx, args.list, args.entryId);
-    requireProvisional(entry);
-    const now = Date.now();
-    await ctx.db.patch(entry._id, {
-      status: "deprecated",
-      decidedAt: now,
-      decidedBy: decidedBy(identity),
-      decisionNote: decisionNote(args.note),
-      updatedAt: now,
-    });
-    return { entryId: entry._id, status: "deprecated" as const };
-  },
+  handler: (ctx, args) => decideTerminal(ctx, args, "deprecated"),
 });
 
 const mergeResultValidator = v.object({
@@ -544,32 +545,27 @@ export const mergeEntry = mutation({
     if (args.list === "conceptDomain") {
       const concepts = await ctx.db
         .query("concepts")
-        .take(CONCEPT_MERGE_SCAN_LIMIT + 1);
-      if (concepts.length > CONCEPT_MERGE_SCAN_LIMIT) {
-        triageError(
-          "CONCEPT_MERGE_SCAN_LIMIT",
-          `Concept-domain merge exceeds the ${CONCEPT_MERGE_SCAN_LIMIT}-concept transactional scan limit`,
-        );
-      }
+        .withIndex("by_domain", (q) => q.eq("domain", source.name))
+        .collect();
       for (const concept of concepts) {
-        const primaryMatches = concept.domain === source.name;
-        const secondaryMatches =
-          concept.domains?.includes(source.name) ?? false;
-        if (!primaryMatches && !secondaryMatches) continue;
         const domains = concept.domains
-          ? dedupeDomains(
-              concept.domains.map((domain) =>
+          ? dedupeDomains([
+              target.name,
+              ...concept.domains.map((domain) =>
                 domain === source.name ? target.name : domain,
               ),
-            )
+            ])
           : undefined;
         await ctx.db.patch("concepts", concept._id, {
-          domain: primaryMatches ? target.name : concept.domain,
+          domain: target.name,
           domains,
           updatedAt: Date.now(),
         });
-        remapped++;
       }
+      remapped = concepts.length;
+      // Secondary-only memberships cannot use by_domain. The registry decision
+      // completes here; scripts/merge-vocabulary-references.ts rewrites those
+      // arrays later through bounded concept pagination.
     } else if (args.list === "relationshipKind") {
       const edges = await ctx.db
         .query("edges")
@@ -608,14 +604,9 @@ export const mergeEntry = mutation({
   },
 });
 
-const fallbackListValidator = v.union(
-  v.literal("parameterKind"),
-  v.literal("relationshipKind"),
-);
-
 export const mergeVocabularyReferenceBatch = mutation({
   args: {
-    list: fallbackListValidator,
+    list: vocabularyListValidator,
     sourceEntryId: v.string(),
     targetEntryId: v.string(),
     cursor: v.union(v.string(), v.null()),
@@ -654,6 +645,39 @@ export const mergeVocabularyReferenceBatch = mutation({
       );
     }
     const batchSize = Math.min(Math.max(args.batchSize ?? 25, 1), 100);
+
+    if (args.list === "conceptDomain") {
+      const page = await ctx.db
+        .query("concepts")
+        .paginate({ cursor: args.cursor, numItems: batchSize });
+      let remapped = 0;
+      for (const concept of page.page) {
+        if (
+          concept.domain === source.name ||
+          !concept.domains?.includes(source.name)
+        ) {
+          continue;
+        }
+        remapped++;
+        if (!args.apply) continue;
+        await ctx.db.patch("concepts", concept._id, {
+          domains: dedupeDomains(
+            concept.domains.map((domain) =>
+              domain === source.name ? target.name : domain,
+            ),
+          ),
+          updatedAt: Date.now(),
+        });
+      }
+      return {
+        sourceName: source.name,
+        targetName: target.name,
+        processed: page.page.length,
+        remapped,
+        isDone: page.isDone,
+        continueCursor: page.continueCursor,
+      };
+    }
 
     if (args.list === "parameterKind") {
       const page = await ctx.db
@@ -744,6 +768,36 @@ const triageListValidator = v.object({
   knownTargets: v.array(knownTargetValidator),
 });
 
+type RegistryDoc =
+  | Doc<"conceptDomains">
+  | Doc<"parameterKinds">
+  | Doc<"relationshipKinds">;
+
+function buildTriageEntry(
+  entry: RegistryDoc,
+  mentionCount: number | null,
+  mentionCountCapped = false,
+) {
+  return {
+    _id: String(entry._id),
+    name: entry.name,
+    displayLabel: entry.displayLabel,
+    description: entry.description,
+    notes: entry.notes,
+    createdAt: entry.createdAt,
+    mentionCount,
+    mentionCountCapped,
+  };
+}
+
+function buildKnownTargets<T extends { _id: string; name: string }>(
+  entries: T[],
+) {
+  return entries
+    .map((entry) => ({ _id: String(entry._id), name: entry.name }))
+    .toSorted((a, b) => a.name.localeCompare(b.name));
+}
+
 export const triageBoard = query({
   args: {},
   returns: v.object({
@@ -752,106 +806,89 @@ export const triageBoard = query({
     relationshipKinds: triageListValidator,
   }),
   handler: async (ctx) => {
-    const [conceptDomains, parameterKinds, relationshipKinds] =
-      await Promise.all([
-        ctx.db
-          .query("conceptDomains")
-          .withIndex("by_status", (q) => q.eq("status", "provisional"))
-          .collect(),
-        ctx.db
-          .query("parameterKinds")
-          .withIndex("by_status", (q) => q.eq("status", "provisional"))
-          .collect(),
-        ctx.db
-          .query("relationshipKinds")
-          .withIndex("by_status", (q) => q.eq("status", "provisional"))
-          .collect(),
-      ]);
-    const [knownConceptDomains, knownParameterKinds, knownRelationshipKinds] =
-      await Promise.all([
-        ctx.db
-          .query("conceptDomains")
-          .withIndex("by_status", (q) => q.eq("status", "known"))
-          .collect(),
-        ctx.db
-          .query("parameterKinds")
-          .withIndex("by_status", (q) => q.eq("status", "known"))
-          .collect(),
-        ctx.db
-          .query("relationshipKinds")
-          .withIndex("by_status", (q) => q.eq("status", "known"))
-          .collect(),
-      ]);
+    const [
+      conceptDomains,
+      parameterKinds,
+      relationshipKinds,
+      knownConceptDomains,
+      knownParameterKinds,
+      knownRelationshipKinds,
+    ] = await Promise.all([
+      ctx.db
+        .query("conceptDomains")
+        .withIndex("by_status", (q) => q.eq("status", "provisional"))
+        .collect(),
+      ctx.db
+        .query("parameterKinds")
+        .withIndex("by_status", (q) => q.eq("status", "provisional"))
+        .collect(),
+      ctx.db
+        .query("relationshipKinds")
+        .withIndex("by_status", (q) => q.eq("status", "provisional"))
+        .collect(),
+      ctx.db
+        .query("conceptDomains")
+        .withIndex("by_status", (q) => q.eq("status", "known"))
+        .collect(),
+      ctx.db
+        .query("parameterKinds")
+        .withIndex("by_status", (q) => q.eq("status", "known"))
+        .collect(),
+      ctx.db
+        .query("relationshipKinds")
+        .withIndex("by_status", (q) => q.eq("status", "known"))
+        .collect(),
+    ]);
 
-    const conceptEntries = await Promise.all(
-      conceptDomains.map(async (entry) => {
-        const mentions = await ctx.db
-          .query("concepts")
-          .withIndex("by_domain", (q) => q.eq("domain", entry.name))
-          .take(501);
-        return {
-          _id: String(entry._id),
-          name: entry.name,
-          displayLabel: entry.displayLabel,
-          description: entry.description,
-          notes: entry.notes,
-          createdAt: entry.createdAt,
-          mentionCount: Math.min(mentions.length, 500),
-          mentionCountCapped: mentions.length > 500,
-        };
-      }),
-    );
-    const relationshipEntries = await Promise.all(
-      relationshipKinds.map(async (entry) => {
-        const mentions = await ctx.db
-          .query("edges")
-          .withIndex("by_relationship", (q) => q.eq("relationship", entry.name))
-          .take(501);
-        return {
-          _id: String(entry._id),
-          name: entry.name,
-          displayLabel: entry.displayLabel,
-          description: entry.description,
-          notes: entry.notes,
-          createdAt: entry.createdAt,
-          mentionCount: Math.min(mentions.length, 500),
-          mentionCountCapped: mentions.length > 500,
-        };
-      }),
-    );
-    const withoutMentionCount = (entry: Doc<"parameterKinds">) => ({
-      _id: String(entry._id),
-      name: entry.name,
-      displayLabel: entry.displayLabel,
-      description: entry.description,
-      notes: entry.notes,
-      createdAt: entry.createdAt,
-      mentionCount: null,
-      mentionCountCapped: false,
-    });
-    const targets = <T extends { _id: string; name: string }>(entries: T[]) =>
-      entries
-        .map((entry) => ({ _id: String(entry._id), name: entry.name }))
-        .toSorted((a, b) => a.name.localeCompare(b.name));
+    const [conceptEntries, relationshipEntries] = await Promise.all([
+      Promise.all(
+        conceptDomains.map(async (entry) => {
+          const mentions = await ctx.db
+            .query("concepts")
+            .withIndex("by_domain", (q) => q.eq("domain", entry.name))
+            .take(MENTION_COUNT_CAP + 1);
+          return buildTriageEntry(
+            entry,
+            Math.min(mentions.length, MENTION_COUNT_CAP),
+            mentions.length > MENTION_COUNT_CAP,
+          );
+        }),
+      ),
+      Promise.all(
+        relationshipKinds.map(async (entry) => {
+          const mentions = await ctx.db
+            .query("edges")
+            .withIndex("by_relationship", (q) =>
+              q.eq("relationship", entry.name),
+            )
+            .take(MENTION_COUNT_CAP + 1);
+          return buildTriageEntry(
+            entry,
+            Math.min(mentions.length, MENTION_COUNT_CAP),
+            mentions.length > MENTION_COUNT_CAP,
+          );
+        }),
+      ),
+    ]);
 
     return {
       conceptDomains: {
         provisional: conceptEntries.toSorted((a, b) =>
           a.name.localeCompare(b.name),
         ),
-        knownTargets: targets(knownConceptDomains),
+        knownTargets: buildKnownTargets(knownConceptDomains),
       },
       parameterKinds: {
         provisional: parameterKinds
-          .map(withoutMentionCount)
+          .map((entry) => buildTriageEntry(entry, null))
           .toSorted((a, b) => a.name.localeCompare(b.name)),
-        knownTargets: targets(knownParameterKinds),
+        knownTargets: buildKnownTargets(knownParameterKinds),
       },
       relationshipKinds: {
         provisional: relationshipEntries.toSorted((a, b) =>
           a.name.localeCompare(b.name),
         ),
-        knownTargets: targets(knownRelationshipKinds),
+        knownTargets: buildKnownTargets(knownRelationshipKinds),
       },
     };
   },

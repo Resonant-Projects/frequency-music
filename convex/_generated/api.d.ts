@@ -59,6 +59,7 @@ import type * as shared_correspondenceKey from "../shared/correspondenceKey.js";
 import type * as shared_correspondences from "../shared/correspondences.js";
 import type * as shared_draftPayloads from "../shared/draftPayloads.js";
 import type * as shared_statuses from "../shared/statuses.js";
+import type * as shared_vocabularyTriage from "../shared/vocabularyTriage.js";
 import type * as sourceUtils from "../sourceUtils.js";
 import type * as sources from "../sources.js";
 import type * as testHelpers from "../testHelpers.js";
@@ -129,6 +130,7 @@ declare const fullApi: ApiFromModules<{
   "shared/correspondences": typeof shared_correspondences;
   "shared/draftPayloads": typeof shared_draftPayloads;
   "shared/statuses": typeof shared_statuses;
+  "shared/vocabularyTriage": typeof shared_vocabularyTriage;
   sourceUtils: typeof sourceUtils;
   sources: typeof sources;
   testHelpers: typeof testHelpers;

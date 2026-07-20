@@ -75,10 +75,11 @@ hairy (e.g. relationship kinds embedded in edge rows beyond a simple field), kee
 `rejectEntry` mutations for that list and cover its merges with a one-shot assisted script under
 `scripts/` — record which path was taken in the PR.
 
-Implemented merge paths: concept domains remap inline with a bounded 5,000-concept transactional
-scan (including secondary memberships); parameter-kind registry merges are inline while extraction
-references use `scripts/merge-vocabulary-references.ts` in bounded batches; relationship kinds
-remap inline through 2,000 edges, with the same fallback script for larger sets.
+Implemented merge paths: concept-domain primary memberships remap inline through the `by_domain`
+index, while secondary-only membership arrays use `scripts/merge-vocabulary-references.ts` in
+bounded batches; parameter-kind registry merges are inline while extraction references use the same
+fallback script; relationship kinds remap inline through 2,000 edges, with the fallback script for
+larger sets.
 
 - [x] **Step 1:** Harness tests first (promote/reject/merge happy paths; merge remap count asserted;
   same-entry and non-known-target rejections; duplicate-membership dedupe on merge; zero-reference

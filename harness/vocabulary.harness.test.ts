@@ -111,7 +111,7 @@ describe("vocabulary triage decisions", () => {
     });
   });
 
-  test("merges concept-domain primary and secondary memberships", async () => {
+  test("remaps primary concept-domain memberships inline and leaves secondary-only memberships for fallback", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
     const { sourceId, targetId } = await seedConceptDomainPair(t);
@@ -132,7 +132,7 @@ describe("vocabulary triage decisions", () => {
       targetEntryId: targetId,
     });
 
-    expect(result).toMatchObject({ remapped: 2, alreadyMerged: false });
+    expect(result).toMatchObject({ remapped: 1, alreadyMerged: false });
     const state = await t.run(async (ctx) => ({
       primary: await ctx.db.get("concepts", primaryId),
       secondary: await ctx.db.get("concepts", secondaryId),
@@ -144,7 +144,7 @@ describe("vocabulary triage decisions", () => {
     });
     expect(state.secondary).toMatchObject({
       domain: "acoustics",
-      domains: ["acoustics", "wave-physics"],
+      domains: ["acoustics", "physics-of-sound"],
     });
     expect(state.source).toMatchObject({
       status: "deprecated",
@@ -504,6 +504,51 @@ describe("vocabulary triage read and fallback surfaces", () => {
       await t.run((ctx) => ctx.db.get("extractions", extractionId)),
     ).toMatchObject({
       compositionParameters: [{ kind: "harmonicprofile", value: "bright" }],
+    });
+  });
+
+  test("rewrites secondary-only concept-domain memberships through the fallback batch", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { sourceId, targetId } = await seedConceptDomainPair(t);
+    const conceptId = await insertConcept(t, "resonance", "acoustics", [
+      "acoustics",
+      "physics-of-sound",
+      "wave-physics",
+    ]);
+
+    expect(
+      await asSystem.mutation(api.vocabulary.mergeEntry, {
+        list: "conceptDomain",
+        sourceEntryId: sourceId,
+        targetEntryId: targetId,
+      }),
+    ).toMatchObject({ remapped: 0, alreadyMerged: false });
+    expect(
+      await t.run((ctx) => ctx.db.get("concepts", conceptId)),
+    ).toMatchObject({
+      domain: "acoustics",
+      domains: ["acoustics", "physics-of-sound", "wave-physics"],
+    });
+
+    const batch = await asSystem.mutation(
+      api.vocabulary.mergeVocabularyReferenceBatch,
+      {
+        list: "conceptDomain",
+        sourceEntryId: sourceId,
+        targetEntryId: targetId,
+        cursor: null,
+        batchSize: 10,
+        apply: true,
+      },
+    );
+
+    expect(batch).toMatchObject({ processed: 1, remapped: 1, isDone: true });
+    expect(
+      await t.run((ctx) => ctx.db.get("concepts", conceptId)),
+    ).toMatchObject({
+      domain: "acoustics",
+      domains: ["acoustics", "wave-physics"],
     });
   });
 });
