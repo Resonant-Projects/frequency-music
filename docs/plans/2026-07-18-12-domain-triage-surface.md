@@ -75,11 +75,18 @@ hairy (e.g. relationship kinds embedded in edge rows beyond a simple field), kee
 `rejectEntry` mutations for that list and cover its merges with a one-shot assisted script under
 `scripts/` — record which path was taken in the PR.
 
-- [ ] **Step 1:** Harness tests first (promote/reject/merge happy paths; merge remap count asserted;
+Implemented merge paths: concept domains remap inline with a bounded 5,000-concept transactional
+scan (including secondary memberships); parameter-kind registry merges are inline while extraction
+references use `scripts/merge-vocabulary-references.ts` in bounded batches; relationship kinds
+remap inline through 2,000 edges, with the same fallback script for larger sets.
+
+- [x] **Step 1:** Harness tests first (promote/reject/merge happy paths; merge remap count asserted;
   same-entry and non-known-target rejections; duplicate-membership dedupe on merge; zero-reference
   merge still deprecates; repeated identical merge is an idempotent no-op; deprecated exclusion from
   the mining read path).
-- [ ] **Step 2:** Implement; codegen; commit.
+- [x] **Step 2:** Implement; codegen; commit. (Implementation and local commits complete; Convex
+  codegen was intentionally not run because this plan only extends an existing module and the
+  executor constraints prohibit commands that contact the live backend.)
 
 ---
 
@@ -96,8 +103,11 @@ merge — a target picker constrained to `known` entries of the same list. Per-r
 list live (Convex reactivity). Headline shows remaining-provisional counts per list so triage debt is
 visible the way review debt is on the draft queue.
 
-- [ ] **Step 1:** Implement against `reviewSummary`; `vp run typecheck:web`.
+- [x] **Step 1:** Implement against the prompt-authorized `triageBoard` read side;
+  `vp run typecheck:web`.
 - [ ] **Step 2:** Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit.
+
+Interceptor visual verification stays unticked because it is operator/deploy-gated for this task.
 
 ---
 
@@ -112,6 +122,8 @@ visible the way review debt is on the draft queue.
   all three lists (concept domains, parameter kinds, relationship kinds); miner-facing domain filter
   excludes deprecated entries; `vpx convex run vocabulary:reviewSummary '{}'` output attached to the
   PR.
+
+Packet decisions and the live-backend spot check stay unticked because they are operator/deploy-gated.
 
 ## Done means
 
