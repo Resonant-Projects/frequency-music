@@ -1,8 +1,10 @@
 "use node";
 
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
-import { internalAction } from "./_generated/server";
+import { makeFunctionReference } from "convex/server";
+import type { Id } from "./_generated/dataModel";
+import { action, internalAction } from "./_generated/server";
+import { requireAuth } from "./auth";
 import { chunkArray, conceptEmbeddingText } from "./shared/embeddingText";
 
 export const EMBEDDING_MODEL = "text-embedding-3-small";
@@ -133,6 +135,102 @@ const embeddingActionResultValidator = v.object({
   skipped: v.number(),
 });
 
+type EmbeddingActionResult = {
+  requested: number;
+  embedded: number;
+  skipped: number;
+};
+
+type ClaimEmbeddingRow = {
+  claimId: Id<"claims">;
+  text: string;
+  embedding?: number[];
+  embeddingModel?: string;
+};
+
+type ConceptEmbeddingRow = {
+  conceptId: Id<"concepts">;
+  displayName: string;
+  description?: string;
+  aliases: string[];
+  embedding?: number[];
+  embeddingModel?: string;
+};
+
+type BackfillPage = {
+  claimIds: Id<"claims">[];
+  conceptIds: Id<"concepts">[];
+  scanned: number;
+  pendingChars: number;
+  isDone: boolean;
+  continueCursor: string;
+};
+
+type BackfillBatchResult = {
+  kind: "claims" | "concepts";
+  scanned: number;
+  pending: number;
+  pendingChars: number;
+  embedded: number;
+  remaining: number;
+  isDone: boolean;
+  continueCursor: string;
+};
+
+const getClaimsRef = makeFunctionReference<
+  "query",
+  { claimIds: Id<"claims">[] },
+  ClaimEmbeddingRow[]
+>("embeddingsStore:getClaims");
+const getConceptsRef = makeFunctionReference<
+  "query",
+  { conceptIds: Id<"concepts">[] },
+  ConceptEmbeddingRow[]
+>("embeddingsStore:getConcepts");
+const getBackfillPageRef = makeFunctionReference<
+  "query",
+  {
+    kind: "claims" | "concepts";
+    cursor: string | null;
+    batchSize: number;
+    model: string;
+  },
+  BackfillPage
+>("embeddingsStore:getBackfillPage");
+const storeClaimEmbeddingsRef = makeFunctionReference<
+  "mutation",
+  {
+    entries: Array<{
+      claimId: Id<"claims">;
+      embedding: number[];
+      model: string;
+    }>;
+  },
+  number
+>("embeddingsStore:storeClaimEmbeddings");
+const storeConceptEmbeddingsRef = makeFunctionReference<
+  "mutation",
+  {
+    entries: Array<{
+      conceptId: Id<"concepts">;
+      embedding: number[];
+      model: string;
+    }>;
+  },
+  number
+>("embeddingsStore:storeConceptEmbeddings");
+
+const embedClaimsRef = makeFunctionReference<
+  "action",
+  { claimIds: Id<"claims">[] },
+  EmbeddingActionResult
+>("embeddings:embedClaims");
+const embedConceptsRef = makeFunctionReference<
+  "action",
+  { conceptIds: Id<"concepts">[] },
+  EmbeddingActionResult
+>("embeddings:embedConcepts");
+
 export const embedTexts = internalAction({
   args: { texts: v.array(v.string()) },
   returns: v.object({
@@ -150,7 +248,7 @@ export const embedClaims = internalAction({
   returns: embeddingActionResultValidator,
   handler: async (ctx, args) => {
     try {
-      const claims = await ctx.runQuery(internal.embeddingsStore.getClaims, {
+      const claims = await ctx.runQuery(getClaimsRef, {
         claimIds: args.claimIds,
       });
       const pending = claims.filter(
@@ -162,16 +260,13 @@ export const embedClaims = internalAction({
           texts: batch.map((claim) => claim.text),
         });
         if (!result) continue;
-        embedded += await ctx.runMutation(
-          internal.embeddingsStore.storeClaimEmbeddings,
-          {
-            entries: batch.map((claim, index) => ({
-              claimId: claim.claimId,
-              embedding: result.embeddings[index]!,
-              model: result.model,
-            })),
-          },
-        );
+        embedded += await ctx.runMutation(storeClaimEmbeddingsRef, {
+          entries: batch.map((claim, index) => ({
+            claimId: claim.claimId,
+            embedding: result.embeddings[index]!,
+            model: result.model,
+          })),
+        });
       }
       return {
         requested: args.claimIds.length,
@@ -197,10 +292,9 @@ export const embedConcepts = internalAction({
   returns: embeddingActionResultValidator,
   handler: async (ctx, args) => {
     try {
-      const concepts = await ctx.runQuery(
-        internal.embeddingsStore.getConcepts,
-        { conceptIds: args.conceptIds },
-      );
+      const concepts = await ctx.runQuery(getConceptsRef, {
+        conceptIds: args.conceptIds,
+      });
       const pending = concepts.filter(
         (concept) =>
           !concept.embedding || concept.embeddingModel !== EMBEDDING_MODEL,
@@ -211,16 +305,13 @@ export const embedConcepts = internalAction({
           texts: batch.map(conceptEmbeddingText),
         });
         if (!result) continue;
-        embedded += await ctx.runMutation(
-          internal.embeddingsStore.storeConceptEmbeddings,
-          {
-            entries: batch.map((concept, index) => ({
-              conceptId: concept.conceptId,
-              embedding: result.embeddings[index]!,
-              model: result.model,
-            })),
-          },
-        );
+        embedded += await ctx.runMutation(storeConceptEmbeddingsRef, {
+          entries: batch.map((concept, index) => ({
+            conceptId: concept.conceptId,
+            embedding: result.embeddings[index]!,
+            model: result.model,
+          })),
+        });
       }
       return {
         requested: args.conceptIds.length,
@@ -238,5 +329,56 @@ export const embedConcepts = internalAction({
         skipped: args.conceptIds.length,
       };
     }
+  },
+});
+
+export const backfillBatch = action({
+  args: {
+    kind: v.union(v.literal("claims"), v.literal("concepts")),
+    cursor: v.union(v.string(), v.null()),
+    batchSize: v.number(),
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    kind: v.union(v.literal("claims"), v.literal("concepts")),
+    scanned: v.number(),
+    pending: v.number(),
+    pendingChars: v.number(),
+    embedded: v.number(),
+    remaining: v.number(),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+  }),
+  handler: async (ctx, args): Promise<BackfillBatchResult> => {
+    await requireAuth(ctx, args);
+    const page = await ctx.runQuery(getBackfillPageRef, {
+      kind: args.kind,
+      cursor: args.cursor,
+      batchSize: args.batchSize,
+      model: EMBEDDING_MODEL,
+    });
+    const pending =
+      args.kind === "claims" ? page.claimIds.length : page.conceptIds.length;
+    let embedded = 0;
+    if (args.apply && pending > 0) {
+      const result =
+        args.kind === "claims"
+          ? await ctx.runAction(embedClaimsRef, { claimIds: page.claimIds })
+          : await ctx.runAction(embedConceptsRef, {
+              conceptIds: page.conceptIds,
+            });
+      embedded = result.embedded;
+    }
+    return {
+      kind: args.kind,
+      scanned: page.scanned,
+      pending,
+      pendingChars: page.pendingChars,
+      embedded,
+      remaining: pending - embedded,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
   },
 });
