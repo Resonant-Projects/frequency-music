@@ -67,10 +67,11 @@ describe("correspondence miner judge schema", () => {
 
 describe("correspondence miner write node", () => {
   test("writes accepted correspondence and cited evidence with run provenance", async () => {
-    const callTool = vi.fn(async (name: string, _args: Record<string, unknown>) =>
-      name === "upsertCorrespondence"
-        ? { id: "correspondence-1", created: true }
-        : { added: true, status: "evidenced" },
+    const callTool = vi.fn(
+      async (name: string, _args: Record<string, unknown>) =>
+        name === "upsertCorrespondence"
+          ? { id: "correspondence-1", created: true }
+          : { added: true, status: "evidenced" },
     );
     const decision: MinerDecision = {
       candidate,

@@ -106,8 +106,8 @@ pick_targets (conjectured, oldest-evidence-first, ≤5) ──► per target:
 ──► summarize (evidence added per target; status changes observed)
 ```
 
-- [ ] **Step 1:** Register `search_claims_semantic` (Convex action wrapping `ctx.vectorSearch` on claims by embedded query text; read-only).
-- [ ] **Step 2:** Implement graph; tests; typegate; commit.
+- [x] **Step 1:** Register `search_claims_semantic` (Convex action wrapping `ctx.vectorSearch` on claims by embedded query text; read-only).
+- [x] **Step 2:** Implement graph; tests; typegate; commit.
 
 ---
 

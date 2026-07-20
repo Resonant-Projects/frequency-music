@@ -154,13 +154,11 @@ export async function judgeLoopNode(
 }
 
 export function createWriteOrDiscardNode(callTool: ToolCaller = callConvex) {
-  return async (
-    state: {
-      agentRunId?: string;
-      traceUrl?: string;
-      decisions: MinerDecision[];
-    },
-  ): Promise<CorrespondenceMinerUpdate> => {
+  return async (state: {
+    agentRunId?: string;
+    traceUrl?: string;
+    decisions: MinerDecision[];
+  }): Promise<CorrespondenceMinerUpdate> => {
     if (!state.agentRunId) {
       throw new Error("correspondence-miner requires agentRunId provenance");
     }
