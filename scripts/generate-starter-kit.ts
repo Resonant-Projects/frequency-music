@@ -125,7 +125,8 @@ function buildDispositions(
       return {
         index,
         honored: false,
-        reason: "The parameter value could not be parsed within the starter-kit contract.",
+        reason:
+          "The parameter value could not be parsed within the starter-kit contract.",
       };
     }
     return {
@@ -174,7 +175,10 @@ export function buildStarterKit(recipe: StarterKitRecipe): BuiltStarterKit {
   degradationNotes.push(
     "Standard MIDI notes are pitch-class scaffolding; load the Scala files to apply the intended tuning.",
   );
-  const manifest = [...artifacts.map((artifact) => artifact.filename), "card.md"];
+  const manifest = [
+    ...artifacts.map((artifact) => artifact.filename),
+    "card.md",
+  ];
   const dispositions = buildDispositions(
     recipe,
     tuning,
@@ -256,7 +260,9 @@ function parseArguments(args: string[]): { recipeId: string; force: boolean } {
     else throw new Error(`Unexpected argument: ${argument}`);
   }
   if (!recipeId) {
-    throw new Error("Usage: vpx tsx scripts/generate-starter-kit.ts <recipeId> [--force]");
+    throw new Error(
+      "Usage: vpx tsx scripts/generate-starter-kit.ts <recipeId> [--force]",
+    );
   }
   return { recipeId, force };
 }

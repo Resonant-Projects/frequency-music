@@ -147,9 +147,7 @@ function ratiosFrom(value: unknown): string[] | null {
       ? item.trim().replace(":", "/").replaceAll(/\s/g, "")
       : null,
   );
-  return ratios.some((ratio) => ratio === null)
-    ? null
-    : (ratios as string[]);
+  return ratios.some((ratio) => ratio === null) ? null : (ratios as string[]);
 }
 
 function centsFrom(value: unknown): number[] | null {
@@ -340,8 +338,7 @@ export function toKbm(spec: TuningSpec, rootNote = "C4"): string {
     spec.kind === "named"
       ? (NAMED_TUNINGS[spec.name]?.referenceHz ?? 440)
       : 440;
-  const semitoneDistance =
-    ((referenceNote - middleNote) % 12 + 12) % 12;
+  const semitoneDistance = (((referenceNote - middleNote) % 12) + 12) % 12;
   const referenceDegree = Math.round((semitoneDistance * mapSize) / 12);
 
   return [

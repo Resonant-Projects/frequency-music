@@ -1,8 +1,4 @@
-import {
-  writeMidi,
-  type MidiData,
-  type MidiEvent,
-} from "midi-file";
+import { writeMidi, type MidiData, type MidiEvent } from "midi-file";
 import {
   midiNoteNumber,
   parameterKind,
@@ -29,7 +25,10 @@ function kindOf(parameter: CompositionParameter): string {
   return parameterKind(parameter).toLowerCase();
 }
 
-function detailsNumber(parameter: CompositionParameter, key: string): number | null {
+function detailsNumber(
+  parameter: CompositionParameter,
+  key: string,
+): number | null {
   if (
     !parameter.details ||
     typeof parameter.details !== "object" ||
@@ -96,7 +95,7 @@ function pitchClassPalette(spec: TuningSpec, rootMidi: number): number[] {
   const classes = new Set<number>([rootMidi % 12]);
   for (const cents of tuningIntervalsInCents(spec)) {
     const semitones = Math.round(cents / 100);
-    classes.add(((rootMidi + semitones) % 12 + 12) % 12);
+    classes.add((((rootMidi + semitones) % 12) + 12) % 12);
   }
   return [...classes];
 }
@@ -107,7 +106,7 @@ function midiNotesForPalette(palette: number[], rootMidi: number): number[] {
       const distance = (pitchClass - (rootMidi % 12) + 12) % 12;
       return rootMidi + distance;
     })
-    .sort((left, right) => left - right);
+    .toSorted((left, right) => left - right);
 }
 
 export function generateSeedMidi(
@@ -216,6 +215,8 @@ export function generateSeedMidi(
     tempoBpm,
     rootMidi,
     pitchClassPalette: palette,
-    honoredParameterIndexes: [...honored].sort((left, right) => left - right),
+    honoredParameterIndexes: [...honored].toSorted(
+      (left, right) => left - right,
+    ),
   };
 }

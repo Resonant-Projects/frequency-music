@@ -67,10 +67,9 @@ describe("recipe starter-kit linkage", () => {
       manifest: ["tuning.scl", "tuning.kbm", "seed.mid", "card.md"],
     };
 
-    await t.withIdentity({ subject: "user-1", tokenIdentifier: "test" }).mutation(
-      api.recipes.update,
-      { id: recipeId, starterKit },
-    );
+    await t
+      .withIdentity({ subject: "user-1", tokenIdentifier: "test" })
+      .mutation(api.recipes.update, { id: recipeId, starterKit });
 
     const recipe = await t.query(api.recipes.get, { id: recipeId });
     expect(recipe?.starterKit).toEqual(starterKit);

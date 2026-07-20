@@ -37,9 +37,9 @@ const fixtureRecipe: StarterKitRecipe = {
 
 afterEach(async () => {
   await Promise.all(
-    tempDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    tempDirectories
+      .splice(0)
+      .map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -60,15 +60,18 @@ describe("starter kit assembly", () => {
       "seed.mid",
       "card.md",
     ]);
-    await expect(readFile(join(result.outputDirectory, "tuning.scl"), "utf8"))
-      .resolves.toMatch(/^! tuning\.scl\n/);
-    await expect(readFile(join(result.outputDirectory, "tuning.kbm"), "utf8"))
-      .resolves.toMatch(/^! tuning\.kbm\n/);
+    await expect(
+      readFile(join(result.outputDirectory, "tuning.scl"), "utf8"),
+    ).resolves.toMatch(/^! tuning\.scl\n/);
+    await expect(
+      readFile(join(result.outputDirectory, "tuning.kbm"), "utf8"),
+    ).resolves.toMatch(/^! tuning\.kbm\n/);
     expect(
       (await readFile(join(result.outputDirectory, "seed.mid"))).subarray(0, 4),
     ).toEqual(Buffer.from("MThd"));
-    await expect(readFile(join(result.outputDirectory, "card.md"), "utf8"))
-      .resolves.toContain("# Geometric Listening Study");
+    await expect(
+      readFile(join(result.outputDirectory, "card.md"), "utf8"),
+    ).resolves.toContain("# Geometric Listening Study");
   });
 
   test("refuses to overwrite unless force is set", async () => {
@@ -78,13 +81,18 @@ describe("starter kit assembly", () => {
     await expect(writeStarterKit(fixtureRecipe, root)).rejects.toThrow(
       "already exists; pass --force",
     );
-    await expect(writeStarterKit(fixtureRecipe, root, { force: true })).resolves
-      .toMatchObject({ manifest: ["tuning.scl", "tuning.kbm", "seed.mid", "card.md"] });
+    await expect(
+      writeStarterKit(fixtureRecipe, root, { force: true }),
+    ).resolves.toMatchObject({
+      manifest: ["tuning.scl", "tuning.kbm", "seed.mid", "card.md"],
+    });
   });
 
   test("makes degradation explicit in the parameter card", () => {
     const kit = buildStarterKit(fixtureRecipe);
-    const card = kit.artifacts.find((artifact) => artifact.filename === "card.md");
+    const card = kit.artifacts.find(
+      (artifact) => artifact.filename === "card.md",
+    );
     expect(card?.contents).toContain(
       "| instrument | soft sine synth | — | No starter-kit generator supports this parameter kind. |",
     );
