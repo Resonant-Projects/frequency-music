@@ -346,6 +346,7 @@ export const approve = mutation({
 
     let promotedId: Id<"hypotheses"> | Id<"recipes">;
     let promotedKind: "hypothesis" | "recipe";
+    let promotedCorrespondenceId: Id<"correspondences"> | undefined;
     if (draft.kind === "hypothesis_draft") {
       if (!("statement" in draft.payload)) {
         throw new ConvexError({
@@ -369,6 +370,7 @@ export const approve = mutation({
       });
       promotedId = hypothesisId;
       promotedKind = "hypothesis";
+      promotedCorrespondenceId = draft.payload.correspondenceId;
     } else {
       if (!("parameters" in draft.payload)) {
         throw new ConvexError({
@@ -416,6 +418,19 @@ export const approve = mutation({
       payload: { draftId: args.draftId, promotedId, promotedKind },
       createdAt: now,
     });
+    if (promotedCorrespondenceId) {
+      await ctx.db.insert("agentRunEvents", {
+        runId: draft.agentRunId,
+        kind: "decision",
+        message: "Promoted correspondence-linked hypothesis",
+        payload: {
+          draftId: args.draftId,
+          hypothesisId: promotedId,
+          correspondenceId: promotedCorrespondenceId,
+        },
+        createdAt: now,
+      });
+    }
     await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
     return { draftId: args.draftId, promotedId, promotedKind };
   },

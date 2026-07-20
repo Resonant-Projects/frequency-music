@@ -134,6 +134,9 @@ export function buildHypothesisInsertFromPayload(input: {
     hypothesis: payload.statement,
     whyThisMatters: assertWhyThisMatters(payload.whyThisMatters),
     rationaleMd: payload.rationale,
+    ...(payload.correspondenceId
+      ? { correspondenceId: payload.correspondenceId }
+      : {}),
     ...(payload.thesisId ? { thesisId: payload.thesisId } : {}),
     sourceIds: payload.sourceIds,
     extractionIds: payload.extractionIds,

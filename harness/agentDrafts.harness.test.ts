@@ -48,12 +48,50 @@ const hypothesisPayload = {
 };
 
 describe("agentDrafts.approve promotes through the real interface", () => {
-  test("hypothesis draft becomes a hypotheses row with agent provenance", async () => {
+  test("correspondence-linked hypothesis draft preserves lineage on promotion", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
+    const correspondenceId = await t.run(async (ctx) => {
+      const conceptAId = await ctx.db.insert("concepts", {
+        name: "nonagon angles",
+        displayName: "Nonagon angles",
+        aliases: [],
+        domain: "geometry",
+        domains: ["geometry"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const conceptBId = await ctx.db.insert("concepts", {
+        name: "9-EDO",
+        displayName: "9-EDO",
+        aliases: [],
+        domain: "microtuning",
+        domains: ["microtuning"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return await ctx.db.insert("correspondences", {
+        conceptAId,
+        conceptBId,
+        pairKey: `${conceptAId}:${conceptBId}`,
+        statement: "Nonagon angles may map to 9-EDO intervals.",
+        rationaleMd: "Seeded correspondence for promotion coverage.",
+        evidence: [],
+        status: "conjectured",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
     const { agentRunId, draftId } = await seedRunAndDraft(
       t,
-      hypothesisPayload,
+      { ...hypothesisPayload, correspondenceId },
       "hypothesis_draft",
     );
 
@@ -70,6 +108,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(hypothesis?.agentDraftId).toBe(draftId);
     expect(hypothesis?.traceUrl).toBe("https://smith.langchain.com/r/test");
     expect(hypothesis?.hypothesis).toBe(hypothesisPayload.statement);
+    expect(hypothesis?.correspondenceId).toBe(correspondenceId);
 
     const draft = await t.run((ctx) => ctx.db.get(draftId));
     expect(draft?.status).toBe("approved");
@@ -77,6 +116,23 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(draft?.decidedBy).toBe("human");
     const run = await t.run((ctx) => ctx.db.get(agentRunId));
     expect(run?.status).toBe("completed");
+
+    const events = await t.run((ctx) =>
+      ctx.db
+        .query("agentRunEvents")
+        .withIndex("by_runId_createdAt", (q) => q.eq("runId", agentRunId))
+        .collect(),
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "decision",
+        payload: expect.objectContaining({
+          correspondenceId,
+          hypothesisId: result.promotedId,
+          draftId,
+        }),
+      }),
+    );
   });
 
   test("recipe draft becomes a recipes row with generated parameter kind", async () => {

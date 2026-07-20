@@ -35,8 +35,8 @@
 - Modify: promotion builder — carries the field through (loss-free contract).
 - Modify: on promotion, the hypothesis's correspondence gets an `agentRunEvents`-style trace: append a `decision` event on the originating run per found-state convention (cheap lineage; no new table).
 
-- [ ] **Step 1:** Harness test: draft with `correspondenceId` promotes to a hypothesis carrying it.
-- [ ] **Step 2:** Implement; codegen; commit.
+- [x] **Step 1:** Harness test: draft with `correspondenceId` promotes to a hypothesis carrying it.
+- [x] **Step 2:** Implement; codegen; commit. *(Implementation and offline typecheck complete; codegen intentionally skipped per operator constraint.)*
 
 ---
 
