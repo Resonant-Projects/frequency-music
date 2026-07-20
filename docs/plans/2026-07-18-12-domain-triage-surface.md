@@ -86,9 +86,11 @@ kinds remap inline through 2,000 edges, with the fallback script for larger sets
   same-entry and non-known-target rejections; duplicate-membership dedupe on merge; zero-reference
   merge still deprecates; repeated identical merge is an idempotent no-op; deprecated exclusion from
   the mining read path).
-- [x] **Step 2:** Implement; codegen; commit. (Implementation and local commits complete; Convex
-  codegen was intentionally not run because this plan only extends an existing module and the
-  executor constraints prohibit commands that contact the live backend.)
+- [x] **Step 2a:** Implement; commit. (Implementation and local commits complete; `_generated`
+  registration hand-edited in generated style because executor constraints prohibit commands that
+  contact the live backend.)
+- [ ] **Step 2b:** Operator-gated: run Convex codegen/deploy against the live backend and confirm
+  the generated API matches.
 
 ---
 
@@ -120,11 +122,12 @@ Interceptor visual verification stays unticked because it is operator/deploy-gat
   registry as the source of truth thereafter. **Completion is scoped to the packet snapshot** (the
   entries listed in the 2026-07-12 doc): provisional entries minted after that cutoff are ordinary
   new triage debt surfaced by the route's headline counts, not blockers on this plan's done-gate.
-- [ ] **Step 2:** Spot-check gate: compatibility query `reviewSummary` shows 0 provisional
-  **packet-snapshot** entries on
-  all three lists (concept domains, parameter kinds, relationship kinds); miner-facing domain filter
-  excludes deprecated entries; `vpx convex run vocabulary:reviewSummary '{}'` output attached to the
-  PR.
+- [ ] **Step 2:** Spot-check gate: compatibility query `reviewSummary` (which lists ALL current
+  provisional entries, not just the snapshot) is checked against the packet-snapshot list — the gate
+  passes when **no packet-snapshot entry** remains provisional on any of the three lists;
+  provisional entries minted after the 2026-07-12 cutoff may legitimately appear in the output and
+  are not blockers. Miner-facing domain filter excludes deprecated entries;
+  `vpx convex run vocabulary:reviewSummary '{}'` output attached to the PR.
 
 Packet decisions and the live-backend spot check stay unticked because they are operator/deploy-gated.
 

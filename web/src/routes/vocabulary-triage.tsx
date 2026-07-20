@@ -101,7 +101,16 @@ function TriageRow(props: {
 
   function chooseDecision(next: Decision) {
     setError(null);
+    setNote("");
+    setTargetEntryId("");
     setDecision(next);
+  }
+
+  function cancelDecision() {
+    setError(null);
+    setNote("");
+    setTargetEntryId("");
+    setDecision(null);
   }
 
   async function confirmDecision() {
@@ -300,7 +309,7 @@ function TriageRow(props: {
               <UIButton
                 variant="ghost"
                 disabled={busy()}
-                onClick={() => setDecision(null)}
+                onClick={cancelDecision}
               >
                 Cancel
               </UIButton>
