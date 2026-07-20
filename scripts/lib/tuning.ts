@@ -307,11 +307,16 @@ function normalizedIntervals(spec: TuningSpec): Array<number | string> {
         "JI ratios must have positive numerators and denominators.",
       );
     }
-    return ratios.at(-1) === "2/1" ? ratios : [...ratios, "2/1"];
+    const sortedRatios = ratios
+      .filter((ratio) => ratio !== "2/1")
+      .toSorted((left, right) => ratioValue(left)! - ratioValue(right)!);
+    return [...sortedRatios, "2/1"];
   }
   if (spec.kind === "cents") {
-    const values = spec.values.filter((value) => value > 0 && value <= 1200);
-    if (values.length === 0 || values.at(-1)! < 1200) values.push(1200);
+    const values = spec.values
+      .filter((value) => value > 0 && value < 1200)
+      .toSorted((left, right) => left - right);
+    values.push(1200);
     return values.map((value) => (value === 1200 ? "2/1" : value));
   }
   const named = NAMED_TUNINGS[spec.name];
@@ -327,7 +332,8 @@ export function toScl(spec: TuningSpec, description: string): string {
   const intervals = normalizedIntervals(spec);
   return [
     "! tuning.scl",
-    `! ${description}`,
+    "!",
+    description,
     String(intervals.length),
     "!",
     ...intervals.map(formatInterval),

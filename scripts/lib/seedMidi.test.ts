@@ -49,6 +49,20 @@ describe("deterministic seed MIDI", () => {
     expect(result.honoredParameterIndexes).toEqual([0, 1, 2, 3]);
   });
 
+  test("validates complete signed decimal tempo and bar tokens", () => {
+    const result = generateSeedMidi(
+      [
+        { type: "tempo", value: "-96 BPM" },
+        { type: "form", value: "8.5 bars" },
+      ],
+      tuning,
+    );
+
+    expect(result.tempoBpm).toBe(120);
+    expect(result.bars).toBe(8);
+    expect(result.honoredParameterIndexes).toEqual([]);
+  });
+
   test("gives every repeated rhythm and progression parameter a figure", () => {
     const repeated: CompositionParameter[] = [
       { type: "rhythm", value: "quarter notes" },
@@ -65,9 +79,11 @@ describe("deterministic seed MIDI", () => {
           event.type === "noteOff" ? [event.deltaTime] : [],
         ),
     );
+    const onlyFirstProgression = generateSeedMidi([repeated[2]!], tuning);
     const onlyLastProgression = generateSeedMidi([repeated[3]!], tuning);
 
     expect(noteLengths).toEqual(new Set([480, 960]));
+    expect(result.bytes).not.toEqual(onlyFirstProgression.bytes);
     expect(result.bytes).not.toEqual(onlyLastProgression.bytes);
     expect(result.honoredParameterIndexes).toEqual([0, 1, 2, 3]);
   });

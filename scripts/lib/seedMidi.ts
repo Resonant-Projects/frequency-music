@@ -66,10 +66,17 @@ function detailsNumber(
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function parseFirstSignedDecimal(value: string): number | null {
+  const token = value.match(/[+-]?(?:\d+\.?\d*|\.\d+)/)?.[0];
+  if (token === undefined) return null;
+  const parsed = Number(token);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function parseTempo(parameter: CompositionParameter): number | null {
   const fromDetails = detailsNumber(parameter, "bpm");
-  const fromValue = Number(parameter.value.match(/\d+(?:\.\d+)?/)?.[0]);
-  const tempo = fromDetails ?? (Number.isFinite(fromValue) ? fromValue : null);
+  const fromValue = parseFirstSignedDecimal(parameter.value);
+  const tempo = fromDetails ?? fromValue;
   return tempo !== null && tempo >= MIN_TEMPO_BPM && tempo <= MAX_TEMPO_BPM
     ? tempo
     : null;
@@ -105,8 +112,8 @@ function progressionDegrees(value: string): number[] | null {
 function requestedBars(parameter: CompositionParameter): number | null {
   const fromDetails =
     detailsNumber(parameter, "barsMin") ?? detailsNumber(parameter, "bars");
-  const fromValue = Number(parameter.value.match(/\d+/)?.[0]);
-  const bars = fromDetails ?? (Number.isFinite(fromValue) ? fromValue : null);
+  const fromValue = parseFirstSignedDecimal(parameter.value);
+  const bars = fromDetails ?? fromValue;
   return bars !== null && Number.isInteger(bars) ? bars : null;
 }
 

@@ -8,6 +8,7 @@ import {
   slugify,
   toKbm,
   toScl,
+  tuningIntervalsInCents,
 } from "./tuning";
 
 function scalaLinesWithoutComments(contents: string): string[] {
@@ -63,14 +64,14 @@ describe("tuning parameters to Scala", () => {
 
   test("emits an equal division of the octave", () => {
     expect(toScl({ kind: "edo", divisions: 4 }, "4-EDO")).toBe(
-      "! tuning.scl\n! 4-EDO\n4\n!\n300.00000\n600.00000\n900.00000\n2/1\n",
+      "! tuning.scl\n!\n4-EDO\n4\n!\n300.00000\n600.00000\n900.00000\n2/1\n",
     );
   });
 
   test("emits JI ratios without the implicit unison", () => {
     expect(
       toScl(
-        { kind: "ji", ratios: ["1/1", "9/8", "5/4", "3/2", "2/1"] },
+        { kind: "ji", ratios: ["2/1", "3/2", "1/1", "9/8", "5/4"] },
         "Five-note JI",
       ),
     ).toContain("4\n!\n9/8\n5/4\n3/2\n2/1\n");
@@ -78,8 +79,20 @@ describe("tuning parameters to Scala", () => {
 
   test("emits explicit cents and normalizes a 1200-cent octave", () => {
     expect(
-      toScl({ kind: "cents", values: [100, 386.31371, 1200] }, "Cents"),
+      toScl({ kind: "cents", values: [1200, 386.31371, 100, 1200] }, "Cents"),
     ).toContain("3\n!\n100.00000\n386.31371\n2/1\n");
+  });
+
+  test("converts JI ratios to ascending cents with a normalized octave", () => {
+    const cents = tuningIntervalsInCents({
+      kind: "ji",
+      ratios: ["3/2", "1/1", "5/4"],
+    });
+
+    expect(cents).toHaveLength(3);
+    expect(cents[0]).toBeCloseTo(386.31371, 5);
+    expect(cents[1]).toBeCloseTo(701.955, 5);
+    expect(cents[2]).toBeCloseTo(1200, 5);
   });
 
   test("returns a typed reason instead of throwing for an unsupported tuning", () => {

@@ -228,7 +228,8 @@ Feed domains span research publications, YouTube channels, and music-production 
 
 ```scala
 ! filename.scl
-! Description comment
+!
+Plain description
 12
 !
 100.00000

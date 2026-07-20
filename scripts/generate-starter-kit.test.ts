@@ -121,6 +121,10 @@ describe("starter kit assembly", () => {
     expect(card?.contents).toContain(
       "Does geometric tuning create a distinct attentional quality?",
     );
+    expect(card?.contents).toContain("- Study type: litmus");
+    expect(card?.contents).toContain("- Panel planned: self");
+    expect(card?.contents).toContain("- Listening context: Not specified");
+    expect(card?.contents).toContain("- Listening method: Not specified");
     expect(card?.contents).toContain("- What varies: tuning");
     expect(card?.contents).toContain(
       "- What stays constant: patch; MIDI velocity",

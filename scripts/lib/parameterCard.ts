@@ -37,8 +37,12 @@ function tableCell(value: string): string {
   return value.replaceAll("|", "\\|").replaceAll("\n", " ").trim();
 }
 
-function joined(values: string[] | undefined): string {
+function formatOptionalList(values: string[] | undefined): string {
   return values && values.length > 0 ? values.join("; ") : "Not specified";
+}
+
+function formatOptionalText(value: string | undefined): string {
+  return value?.trim() || "Not specified";
 }
 
 export function renderParameterCard(input: ParameterCardInput): string {
@@ -76,8 +80,12 @@ export function renderParameterCard(input: ParameterCardInput): string {
     "",
     "## Protocol",
     "",
-    `- What varies: ${joined(protocol?.whatVaries)}`,
-    `- What stays constant: ${joined(protocol?.whatStaysConstant)}`,
+    `- Study type: ${protocol?.studyType ?? "Not specified"}`,
+    `- Panel planned: ${formatOptionalList(protocol?.panelPlanned)}`,
+    `- Listening context: ${formatOptionalText(protocol?.listeningContext)}`,
+    `- Listening method: ${formatOptionalText(protocol?.listeningMethod)}`,
+    `- What varies: ${formatOptionalList(protocol?.whatVaries)}`,
+    `- What stays constant: ${formatOptionalList(protocol?.whatStaysConstant)}`,
     `- Duration: ${protocol ? `${protocol.durationSecs} seconds` : "Not specified"}`,
     "",
     "## DAW checklist",
