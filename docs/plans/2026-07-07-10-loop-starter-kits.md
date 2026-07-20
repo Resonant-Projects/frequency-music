@@ -73,8 +73,8 @@ export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mappi
 
 **CLI:** fetch recipe (ConvexHttpClient per script conventions) → generate all artifacts → write `exports/starter-kits/<slug>/{tuning.scl,tuning.kbm,seed.mid,card.md}` → print summary. `--force` to overwrite. Nonzero exit if *nothing* was generatable (a kit with only a card is a failure, not a kit).
 
-- [ ] **Step 1:** Implement; run against 3 real recipes spanning different tuning kinds.
-- [ ] **Step 2:** Commit with the 3 kit summaries in the PR.
+- [ ] **Step 1:** Implement; run against 3 real recipes spanning different tuning kinds. *(Offline implementation and fixture-driven full-kit test complete; real-recipe backend runs are operator-gated.)*
+- [ ] **Step 2:** Commit with the 3 kit summaries in the PR. *(Offline implementation is locally committed; the 3 live kit summaries remain operator-gated.)*
 
 ---
 
