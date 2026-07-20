@@ -64,9 +64,6 @@ export const evidenceTargetZ = z.object({
 
 export type CandidateConceptPayload = z.input<typeof candidateConceptZ>;
 export type CandidateClaimPayload = z.input<typeof candidateClaimZ>;
-export type CorrespondenceCandidateBasePayload = z.input<
-  typeof correspondenceCandidateBaseZ
->;
 export type CorrespondenceCandidatePayload = z.input<
   typeof correspondenceCandidateZ
 >;

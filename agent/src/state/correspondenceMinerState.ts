@@ -1,13 +1,7 @@
 import { Annotation } from "@langchain/langgraph";
-import type {
-  CandidateClaimPayload,
-  CandidateConceptPayload,
-  CorrespondenceCandidatePayload,
-} from "../../../convex/shared/correspondenceCandidates.js";
+import type { CorrespondenceCandidatePayload } from "../../../convex/shared/correspondenceCandidates.js";
 import type { AgentAuditEvent } from "../graphs/shared/audit.js";
 
-export type CandidateConcept = CandidateConceptPayload;
-export type CandidateClaim = CandidateClaimPayload;
 export type CorrespondenceCandidate = CorrespondenceCandidatePayload;
 
 export type MinerVerdict = {

@@ -33,7 +33,26 @@ import {
   summarizeNodeUpdate,
   TERMINAL_STATUS_OWNER,
   type ClaimedRun,
+  type KnownGraphName,
 } from "./graphInput.js";
+
+type StreamableGraph = {
+  stream: (
+    input: never,
+    options: {
+      streamMode: "updates";
+      configurable: { agentRunId: string };
+    },
+  ) => Promise<AsyncIterable<unknown>>;
+};
+
+const GRAPHS: Record<KnownGraphName, StreamableGraph> = {
+  "research-pipeline": researchPipelineGraph as unknown as StreamableGraph,
+  "weekly-brief": weeklyBriefAgent as unknown as StreamableGraph,
+  "correspondence-miner":
+    correspondenceMinerGraph as unknown as StreamableGraph,
+  "evidence-hunter": evidenceHunterGraph as unknown as StreamableGraph,
+};
 
 const POLL_INTERVAL_MS = resolveWorkerPollIntervalMs(
   process.env.WORKER_POLL_INTERVAL_MS,
@@ -139,11 +158,7 @@ async function markRunnerCompleted(
 // completion summaries).
 async function streamGraph(
   runId: string,
-  graphName:
-    | "research-pipeline"
-    | "weekly-brief"
-    | "correspondence-miner"
-    | "evidence-hunter",
+  graphName: KnownGraphName,
   invocationInput: unknown,
 ): Promise<{ messageCount: number }> {
   let messageCount = 0;
@@ -161,31 +176,11 @@ async function streamGraph(
     }
   };
 
-  if (graphName === "research-pipeline") {
-    const stream = await researchPipelineGraph.stream(
-      invocationInput as Parameters<typeof researchPipelineGraph.stream>[0],
-      { streamMode: "updates", configurable: { agentRunId: runId } },
-    );
-    for await (const chunk of stream) await handleChunk(chunk);
-  } else if (graphName === "weekly-brief") {
-    const stream = await weeklyBriefAgent.stream(
-      invocationInput as Parameters<typeof weeklyBriefAgent.stream>[0],
-      { streamMode: "updates", configurable: { agentRunId: runId } },
-    );
-    for await (const chunk of stream) await handleChunk(chunk);
-  } else if (graphName === "correspondence-miner") {
-    const stream = await correspondenceMinerGraph.stream(
-      invocationInput as Parameters<typeof correspondenceMinerGraph.stream>[0],
-      { streamMode: "updates", configurable: { agentRunId: runId } },
-    );
-    for await (const chunk of stream) await handleChunk(chunk);
-  } else {
-    const stream = await evidenceHunterGraph.stream(
-      invocationInput as Parameters<typeof evidenceHunterGraph.stream>[0],
-      { streamMode: "updates", configurable: { agentRunId: runId } },
-    );
-    for await (const chunk of stream) await handleChunk(chunk);
-  }
+  const stream = await GRAPHS[graphName].stream(invocationInput as never, {
+    streamMode: "updates",
+    configurable: { agentRunId: runId },
+  });
+  for await (const chunk of stream) await handleChunk(chunk);
 
   return { messageCount };
 }

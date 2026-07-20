@@ -67,6 +67,15 @@ function conceptDomains(concept: Doc<"concepts">): string[] {
   return Array.from(new Set(concept.domains ?? [concept.domain])).toSorted();
 }
 
+function describeConcept(concept: Doc<"concepts">) {
+  return {
+    name: concept.name,
+    displayName: concept.displayName,
+    description: concept.description,
+    domains: conceptDomains(concept),
+  };
+}
+
 const getProbeConceptRef = makeFunctionReference<
   "query",
   { seedConceptId?: Id<"concepts"> },
@@ -249,10 +258,7 @@ export const hydrateClaimMatches = internalQuery({
             )
             .map((concept) => ({
               conceptId: concept._id,
-              name: concept.name,
-              displayName: concept.displayName,
-              description: concept.description,
-              domains: conceptDomains(concept),
+              ...describeConcept(concept),
             }));
           return {
             claimId: claim._id,
@@ -609,17 +615,11 @@ export const hydrateAgentCandidates = internalQuery({
             ...candidate,
             conceptA: {
               id: conceptA._id,
-              name: conceptA.name,
-              displayName: conceptA.displayName,
-              description: conceptA.description,
-              domains: conceptDomains(conceptA),
+              ...describeConcept(conceptA),
             },
             conceptB: {
               id: conceptB._id,
-              name: conceptB.name,
-              displayName: conceptB.displayName,
-              description: conceptB.description,
-              domains: conceptDomains(conceptB),
+              ...describeConcept(conceptB),
             },
             sampleClaims: { a: claimsA, b: claimsB },
           };
@@ -702,13 +702,6 @@ export const listEvidenceTargets = internalQuery({
             ctx.db.get("concepts", row.conceptBId),
           ]);
           if (!conceptA || !conceptB) return null;
-          const describe = (concept: Doc<"concepts">) => ({
-            id: concept._id,
-            name: concept.name,
-            displayName: concept.displayName,
-            description: concept.description,
-            domains: conceptDomains(concept),
-          });
           return {
             correspondenceId: row._id,
             pairKey: row.pairKey,
@@ -716,8 +709,8 @@ export const listEvidenceTargets = internalQuery({
             rationaleMd: row.rationaleMd,
             existingClaimIds: row.evidence.map((entry) => entry.claimId),
             lastEvidenceAt: lastEvidenceAt(row),
-            conceptA: describe(conceptA),
-            conceptB: describe(conceptB),
+            conceptA: { id: conceptA._id, ...describeConcept(conceptA) },
+            conceptB: { id: conceptB._id, ...describeConcept(conceptB) },
           };
         }),
       )

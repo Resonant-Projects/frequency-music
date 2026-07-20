@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { getResearchModel } from "../../models/index.js";
 import type {
   EvidenceHunterState,
   EvidenceHunterUpdate,
@@ -10,12 +9,17 @@ import type {
 } from "../../state/evidenceHunterState.js";
 import { callConvex } from "../../tools/convexTools.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
-import { redactError } from "../../shared/redactError.js";
 import {
   appendRemoteAuditEvent,
+  finalizeRunCompleted,
   type AgentAuditEvent,
   type ToolCaller,
 } from "../shared/audit.js";
+import {
+  createStructuredJudge,
+  invokeJudgeOrError,
+  type StructuredJudge,
+} from "../shared/judge.js";
 import { evidenceSearchText, stanceJudgePrompt } from "./prompts.js";
 
 export const stanceOutputSchema = z.object({
@@ -105,14 +109,7 @@ export async function judgeStanceNode(
   return await createJudgeStanceNode()(state);
 }
 
-type StanceJudge = {
-  invoke: (
-    prompt: string,
-    options: {
-      configurable: { agentRunId?: string; traceUrl?: string };
-    },
-  ) => Promise<z.infer<typeof stanceOutputSchema>>;
-};
+type StanceJudge = StructuredJudge<z.infer<typeof stanceOutputSchema>>;
 
 export function createJudgeStanceNode(
   dependencies: {
@@ -124,12 +121,7 @@ export function createJudgeStanceNode(
   const callTool = dependencies.callTool ?? callConvex;
   const resolveTraceUrl =
     dependencies.resolveTraceUrl ?? resolveCurrentTraceUrl;
-  const judge =
-    dependencies.judge ??
-    (getResearchModel({
-      requiresToolBinding: true,
-      temperature: 0,
-    }).withStructuredOutput(stanceOutputSchema) as StanceJudge);
+  const judge = dependencies.judge ?? createStructuredJudge(stanceOutputSchema);
 
   return async (
     state: Pick<EvidenceHunterState, "agentRunId" | "traceUrl" | "searches">,
@@ -139,39 +131,35 @@ export function createJudgeStanceNode(
     let judgeErrorCount = 0;
     for (const search of state.searches) {
       for (const claim of search.claims) {
-        try {
-          const verdict = await judge.invoke(
-            stanceJudgePrompt(search.target, claim),
-            {
-              configurable: {
-                agentRunId: state.agentRunId,
-                traceUrl: state.traceUrl,
-              },
-            },
-          );
-          judgments.push({ target: search.target, claim, verdict });
-        } catch (error) {
+        const judged = await invokeJudgeOrError({
+          judge,
+          prompt: stanceJudgePrompt(search.target, claim),
+          callTool,
+          agentRunId: state.agentRunId,
+          traceUrl: state.traceUrl,
+          errorEventMessage:
+            "Evidence hunter discarded claim after judge error",
+          errorEventPayload: (message) => ({
+            pairKey: search.target.pairKey,
+            claimId: claim.claimId,
+            reason: "judge_error",
+            message,
+          }),
+        });
+        auditEvents.push(...judged.auditEvents);
+        if (judged.judgeError) {
           judgeErrorCount += 1;
-          const message = redactError(error);
           judgments.push({
             target: search.target,
             claim,
-            discardReason: { reason: "judge_error", message },
+            discardReason: judged.judgeError,
           });
-          auditEvents.push(
-            ...(await appendRemoteAuditEvent(
-              callTool,
-              state.agentRunId,
-              "decision",
-              "Evidence hunter discarded claim after judge error",
-              {
-                pairKey: search.target.pairKey,
-                claimId: claim.claimId,
-                reason: "judge_error",
-                message,
-              },
-            )),
-          );
+        } else {
+          judgments.push({
+            target: search.target,
+            claim,
+            verdict: judged.verdict,
+          });
         }
       }
     }
@@ -275,26 +263,12 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
         : allJudgesFailed
           ? `evidence-hunter completed: zero judgments; ${state.judgeErrorCount} judge errors discarded across ${state.targets.length} targets`
           : `evidence-hunter completed: ${state.evidenceAddedCount} evidence citations added across ${state.targets.length} targets; ${state.irrelevantCount} claims irrelevant, ${state.discardedCount} discarded${targetSummary ? ` (${targetSummary})` : ""}`;
-    const auditEvents: AgentAuditEvent[] = [];
-    if (state.agentRunId) {
-      try {
-        await callTool("markAgentRunCompleted", {
-          runId: state.agentRunId,
-          summary,
-          ...(state.traceUrl ? { traceUrl: state.traceUrl } : {}),
-        });
-      } catch (error) {
-        auditEvents.push(
-          ...(await appendRemoteAuditEvent(
-            callTool,
-            state.agentRunId,
-            "error",
-            "Failed to mark evidence-hunter run completed",
-            { message: redactError(error) },
-          )),
-        );
-      }
-    }
+    const auditEvents = await finalizeRunCompleted(
+      callTool,
+      state.agentRunId,
+      summary,
+      state.traceUrl,
+    );
     return { summary, auditEvents };
   };
 }

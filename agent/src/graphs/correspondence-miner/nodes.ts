@@ -1,8 +1,6 @@
 import { z } from "zod";
-import { getResearchModel } from "../../models/index.js";
 import { callConvex } from "../../tools/convexTools.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
-import { redactError } from "../../shared/redactError.js";
 import type {
   CorrespondenceCandidate,
   CorrespondenceMinerState,
@@ -11,9 +9,15 @@ import type {
 } from "../../state/correspondenceMinerState.js";
 import {
   appendRemoteAuditEvent,
+  finalizeRunCompleted,
   type AgentAuditEvent,
   type ToolCaller,
 } from "../shared/audit.js";
+import {
+  createStructuredJudge,
+  invokeJudgeOrError,
+  type StructuredJudge,
+} from "../shared/judge.js";
 import { correspondenceJudgePrompt } from "./prompts.js";
 
 export const judgeOutputSchema = z.object({
@@ -103,14 +107,7 @@ export async function judgeLoopNode(
   return await createJudgeLoopNode()(state);
 }
 
-type MinerJudge = {
-  invoke: (
-    prompt: string,
-    options: {
-      configurable: { agentRunId?: string; traceUrl?: string };
-    },
-  ) => Promise<z.infer<typeof judgeOutputSchema>>;
-};
+type MinerJudge = StructuredJudge<z.infer<typeof judgeOutputSchema>>;
 
 export function createJudgeLoopNode(
   dependencies: {
@@ -122,12 +119,7 @@ export function createJudgeLoopNode(
   const callTool = dependencies.callTool ?? callConvex;
   const resolveTraceUrl =
     dependencies.resolveTraceUrl ?? resolveCurrentTraceUrl;
-  const judge =
-    dependencies.judge ??
-    (getResearchModel({
-      requiresToolBinding: true,
-      temperature: 0,
-    }).withStructuredOutput(judgeOutputSchema) as MinerJudge);
+  const judge = dependencies.judge ?? createStructuredJudge(judgeOutputSchema);
 
   return async (
     state: Pick<
@@ -147,20 +139,25 @@ export function createJudgeLoopNode(
         decisions.push(stalePairVerdict(candidate));
         continue;
       }
-      try {
-        const verdict = await judge.invoke(
-          correspondenceJudgePrompt(candidate),
-          {
-            configurable: {
-              agentRunId: state.agentRunId,
-              traceUrl: state.traceUrl,
-            },
-          },
-        );
-        decisions.push(buildMinerDecision(candidate, verdict));
-      } catch (error) {
+      const judged = await invokeJudgeOrError({
+        judge,
+        prompt: correspondenceJudgePrompt(candidate),
+        callTool,
+        agentRunId: state.agentRunId,
+        traceUrl: state.traceUrl,
+        errorEventMessage:
+          "Correspondence judge discarded candidate after judge error",
+        errorEventPayload: (message) => ({
+          pairKey: candidate.pairKey,
+          accept: false,
+          reason: "judge_error",
+          message,
+        }),
+      });
+      auditEvents.push(...judged.auditEvents);
+      if (judged.judgeError) {
         judgeErrorCount += 1;
-        const message = redactError(error);
+        const { message } = judged.judgeError;
         decisions.push({
           candidate,
           verdict: {
@@ -170,22 +167,10 @@ export function createJudgeLoopNode(
             confidenceNote: `Discard: judge_error: ${message}`,
           },
           supportingClaimIds: [],
-          discardReason: { reason: "judge_error", message },
+          discardReason: judged.judgeError,
         });
-        auditEvents.push(
-          ...(await appendRemoteAuditEvent(
-            callTool,
-            state.agentRunId,
-            "decision",
-            "Correspondence judge discarded candidate after judge error",
-            {
-              pairKey: candidate.pairKey,
-              accept: false,
-              reason: "judge_error",
-              message,
-            },
-          )),
-        );
+      } else {
+        decisions.push(buildMinerDecision(candidate, judged.verdict));
       }
     }
     return {
@@ -316,26 +301,12 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
         : allJudgesFailed
           ? `correspondence-miner completed: zero judgments; ${state.judgeErrorCount} judge errors discarded`
           : `correspondence-miner completed: ${state.acceptedCount} accepted, ${state.discardedCount} discarded, ${state.evidenceAddedCount} evidence citations added`;
-    const auditEvents: AgentAuditEvent[] = [];
-    if (state.agentRunId) {
-      try {
-        await callTool("markAgentRunCompleted", {
-          runId: state.agentRunId,
-          summary,
-          ...(state.traceUrl ? { traceUrl: state.traceUrl } : {}),
-        });
-      } catch (error) {
-        auditEvents.push(
-          ...(await appendRemoteAuditEvent(
-            callTool,
-            state.agentRunId,
-            "error",
-            "Failed to mark correspondence-miner run completed",
-            { message: redactError(error) },
-          )),
-        );
-      }
-    }
+    const auditEvents = await finalizeRunCompleted(
+      callTool,
+      state.agentRunId,
+      summary,
+      state.traceUrl,
+    );
     return { summary, auditEvents };
   };
 }
