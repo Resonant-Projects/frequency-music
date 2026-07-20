@@ -1,4 +1,18 @@
 {
+  "the-authority-channel": {
+    "excerpt": "Authority channel names the layer allowed to steer a musical decision, from stems and room evidence to frequency-localized latents and vocal-breath biomarkers.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "signal-processing",
+      "acoustics",
+      "representation-learning",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "27da39012dfbdc743e5f419262903987943d1e25023ad5a7480e92b2f74990f7",
+    "generatedAt": "2026-07-20T19:00:00.000Z"
+  },
   "error-as-instrument": {
     "excerpt": "Reconstruction error becomes compositional when it diagnoses what a representation can explain, what transformation it can track, and what residual should become new material.",
     "tags": [
