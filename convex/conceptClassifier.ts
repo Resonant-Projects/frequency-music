@@ -15,6 +15,7 @@ import { requireAuth } from "./auth";
 import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { MODELS } from "./llm";
 import { relevanceEmbeddingFields } from "./shared/embeddingText";
+import { getNonDeprecatedConceptDomains } from "./vocabulary";
 
 const classificationValidator = v.object({
   conceptId: v.id("concepts"),
@@ -127,7 +128,13 @@ async function persistClassifications(
     force: boolean;
   },
 ) {
-  const registry = await ctx.db.query("conceptDomains").collect();
+  const [registry, deprecatedRegistry] = await Promise.all([
+    getNonDeprecatedConceptDomains(ctx),
+    ctx.db
+      .query("conceptDomains")
+      .withIndex("by_status", (q) => q.eq("status", "deprecated"))
+      .collect(),
+  ]);
   const registryBySlug = new Map<string, typeof registry>();
   for (const entry of registry) {
     const slug = normalizeConceptDomainSlug(entry.name);
@@ -135,6 +142,9 @@ async function persistClassifications(
     entries.push(entry);
     registryBySlug.set(slug, entries);
   }
+  const deprecatedSlugs = new Set(
+    deprecatedRegistry.map((entry) => normalizeConceptDomainSlug(entry.name)),
+  );
   const stagedProvisionalNames = new Set<string>();
   let assigned = 0;
   let unreviewed = 0;
@@ -165,7 +175,11 @@ async function persistClassifications(
     if (unknownDomains.length > 0) {
       const now = Date.now();
       for (const slug of unknownDomains) {
-        if (!registryBySlug.has(slug) && !stagedProvisionalNames.has(slug)) {
+        if (
+          !registryBySlug.has(slug) &&
+          !deprecatedSlugs.has(slug) &&
+          !stagedProvisionalNames.has(slug)
+        ) {
           await ctx.db.insert("conceptDomains", {
             name: slug,
             status: "provisional",
@@ -304,7 +318,7 @@ export const getClassificationInputs = internalQuery({
     ),
   }),
   handler: async (ctx, args) => {
-    const registry = await ctx.db.query("conceptDomains").collect();
+    const registry = await getNonDeprecatedConceptDomains(ctx);
     const concepts = [];
     for (const conceptId of args.conceptIds) {
       const concept = await ctx.db.get("concepts", conceptId);

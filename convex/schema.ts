@@ -785,6 +785,10 @@ export default defineSchema({
     displayLabel: v.optional(v.string()),
     color: v.optional(v.string()),
     notes: v.optional(v.string()),
+    decidedAt: v.optional(v.number()),
+    decidedBy: v.optional(v.string()),
+    decisionNote: v.optional(v.string()),
+    mergedInto: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -800,6 +804,10 @@ export default defineSchema({
     color: v.optional(v.string()),
     sectorMapping: v.optional(v.string()),
     notes: v.optional(v.string()),
+    decidedAt: v.optional(v.number()),
+    decidedBy: v.optional(v.string()),
+    decisionNote: v.optional(v.string()),
+    mergedInto: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -817,6 +825,10 @@ export default defineSchema({
     directional: v.optional(v.boolean()),
     symmetric: v.optional(v.boolean()),
     notes: v.optional(v.string()),
+    decidedAt: v.optional(v.number()),
+    decidedBy: v.optional(v.string()),
+    decisionNote: v.optional(v.string()),
+    mergedInto: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
