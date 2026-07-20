@@ -87,7 +87,8 @@ audit found several items further along than the roadmap assumes:
   free-text).
 - **Phase C — Export/connector**: productionize the `recipe_export_v1` +
   `.scl` emitter spike ([recipe-export-v1-design.md](../recipe-export-v1-design.md),
-  code in `scripts/spike-recipe-export.ts`) into Convex; add `.kbm`/MIDI seeds.
+  code archived at `scripts/archive/spike-recipe-export.ts`; production tuning
+  lib now at `scripts/lib/tuning.ts` per plan 10) into Convex; add `.kbm`/MIDI seeds.
 - **Phase D — DAW connector**: OSC/WebSocket bridge, then Max for Live (nothing
   started; plugin work stays deferred until the bridge proves the model).
 - **Phase E — Representation**: 3D explorer expansion (currently

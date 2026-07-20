@@ -4,7 +4,7 @@ import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { DEFAULT_MODEL, extractJsonObject } from "./llm";
-import { recipeStatusValidator } from "./schema";
+import { recipeStarterKitValidator, recipeStatusValidator } from "./schema";
 import {
   generatedRecipeValidator,
   hypothesisReturnValidator,
@@ -317,6 +317,7 @@ export const update = mutation({
     parameters: v.optional(v.array(recipeParameterValidator)),
     dawChecklist: v.optional(v.array(v.string())),
     protocol: v.optional(recipeProtocolValidator),
+    starterKit: v.optional(recipeStarterKitValidator),
     status: v.optional(recipeStatusValidator),
     devBypassSecret: v.optional(v.string()),
   },

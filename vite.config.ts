@@ -3,7 +3,13 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   fmt: {},
   test: {
-    include: ["convex/*.test.ts", "harness/**/*.test.ts"],
+    include: [
+      "convex/*.test.ts",
+      "harness/**/*.test.ts",
+      "scripts/**/*.test.ts",
+    ],
+    // Frozen one-shot reference scripts — never run their suites.
+    exclude: ["**/node_modules/**", "scripts/archive/**"],
     environment: "node",
   },
   lint: {

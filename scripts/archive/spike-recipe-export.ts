@@ -1,3 +1,4 @@
+// Production successor for tuning and Scala logic: scripts/lib/tuning.ts.
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";

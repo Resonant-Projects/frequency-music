@@ -166,6 +166,12 @@ export const recipeVerificationValidator = v.object({
   verifiedAt: v.number(),
 });
 
+export const recipeStarterKitValidator = v.object({
+  generatedAt: v.number(),
+  path: v.string(),
+  manifest: v.array(v.string()),
+});
+
 // Provenance stamped on hypotheses/recipes created by promoting an agent draft.
 export const agentOriginFields = {
   origin: v.optional(v.literal("agent")),
@@ -563,6 +569,9 @@ export default defineSchema({
 
     // Machine verification (plan-05 verifier attaches this before human review)
     verification: v.optional(recipeVerificationValidator),
+
+    // Generated studio scaffolding (plan-10 starter kits)
+    starterKit: v.optional(recipeStarterKitValidator),
 
     // Lifecycle
     status: recipeStatusValidator,

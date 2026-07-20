@@ -47,8 +47,8 @@ export function toScl(spec: TuningSpec, description: string): string;   // valid
 export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mapping w/ root
 ```
 
-- [ ] **Step 1:** Golden-fixture tests: an EDO spec reproduces a hand-written `scales/*.scl` byte-for-byte (modulo header comment); JI and cents cases; parse failures return null with reason (typed, not thrown).
-- [ ] **Step 2:** Implement; tests green; commit.
+- [x] **Step 1:** Golden-fixture tests: an EDO spec reproduces a hand-written `scales/*.scl` byte-for-byte (modulo header comment); JI and cents cases; parse failures return null with reason (typed, not thrown). *(Found-state adaptation: no handwritten EDO or full-JI fixture exists; all matching handwritten cents/named `.scl` fixtures and the available `.kbm` are golden-tested byte-for-byte modulo comments, with literal EDO and JI cases.)*
+- [x] **Step 2:** Implement; tests green; commit.
 
 ---
 
@@ -59,8 +59,8 @@ export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mappi
 
 **Contract:** a deliberately minimal sketch — 8–16 bars honoring tempo, root, and scale degrees from the tuning (as a pitch-class palette; standard MIDI notes + a card note explaining the tuning file does the retuning), one simple figure per `rhythm`/`chordProgression` parameter when present. It is scaffolding to audition the tuning, not a composition — resist making it musical.
 
-- [ ] **Step 1:** Tests: correct tempo meta, note set ⊆ scale palette, deterministic output for fixed input (no randomness — same recipe, same seed file).
-- [ ] **Step 2:** Implement; commit.
+- [x] **Step 1:** Tests: correct tempo meta, note set ⊆ scale palette, deterministic output for fixed input (no randomness — same recipe, same seed file).
+- [x] **Step 2:** Implement; commit.
 
 ---
 
@@ -73,8 +73,8 @@ export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mappi
 
 **CLI:** fetch recipe (ConvexHttpClient per script conventions) → generate all artifacts → write `exports/starter-kits/<slug>/{tuning.scl,tuning.kbm,seed.mid,card.md}` → print summary. `--force` to overwrite. Nonzero exit if *nothing* was generatable (a kit with only a card is a failure, not a kit).
 
-- [ ] **Step 1:** Implement; run against 3 real recipes spanning different tuning kinds.
-- [ ] **Step 2:** Commit with the 3 kit summaries in the PR.
+- [ ] **Step 1:** Implement; run against 3 real recipes spanning different tuning kinds. *(Offline implementation and fixture-driven full-kit test complete; real-recipe backend runs are operator-gated.)*
+- [ ] **Step 2:** Commit with the 3 kit summaries in the PR. *(Offline implementation is locally committed; the 3 live kit summaries remain operator-gated.)*
 
 ---
 
@@ -83,8 +83,9 @@ export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mappi
 **Files:**
 - Modify: `convex/schema.ts` — `recipes.starterKit: v.optional(v.object({ generatedAt: v.number(), path: v.string(), manifest: v.array(v.string()) }))`; CLI patches it on success.
 
-- [ ] **Step 1:** Schema + mirror + CLI patch; codegen; commit.
-- [ ] **Step 2: Acceptance (human).** Keith loads one generated `.scl`/`.kbm` into his tuning workflow and opens the seed MIDI in the DAW: files load clean, tuning is audibly the intended system. Result recorded in PR. (This is minutes of studio time, not a session — but only human ears can pass this gate.)
+- [x] **Step 1a — Implementation:** Schema + mirror + auth-guarded CLI patch; commit.
+- [ ] **Step 1b — Codegen (operator-gated):** Run Convex codegen. *(Not run because the hard constraint forbids backend-contacting Convex commands; no new Convex module was added.)*
+- [ ] **Step 2: Acceptance (human).** Keith loads one generated `.scl`/`.kbm` into his tuning workflow and opens the seed MIDI in the DAW: files load clean, tuning is audibly the intended system. Result recorded in PR. (This is minutes of studio time, not a session — but only human ears can pass this gate.) *(Operator-gated.)*
 
 ---
 
