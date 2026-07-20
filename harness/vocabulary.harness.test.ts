@@ -153,6 +153,39 @@ describe("vocabulary triage decisions", () => {
     });
   });
 
+  test("directs oversized primary concept-domain merges to the fallback script", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { sourceId, targetId } = await seedConceptDomainPair(t);
+    await t.run(async (ctx) => {
+      for (let index = 0; index < 2_001; index++) {
+        await ctx.db.insert("concepts", {
+          name: `oversized-domain-member-${index}`,
+          displayName: `Oversized domain member ${index}`,
+          aliases: [],
+          domain: "physics-of-sound",
+          domains: ["physics-of-sound"],
+          mentionCount: 0,
+          hypothesisCount: 0,
+          createdAt: now + index,
+          updatedAt: now + index,
+        });
+      }
+    });
+
+    await expect(
+      asSystem.mutation(api.vocabulary.mergeEntry, {
+        list: "conceptDomain",
+        sourceEntryId: sourceId,
+        targetEntryId: targetId,
+      }),
+    ).rejects.toThrow(/scripts\/merge-vocabulary-references\.ts/);
+
+    expect(
+      await t.run((ctx) => ctx.db.get("conceptDomains", sourceId)),
+    ).toMatchObject({ status: "provisional" });
+  });
+
   test("deduplicates an existing target domain membership during merge", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
@@ -550,5 +583,47 @@ describe("vocabulary triage read and fallback surfaces", () => {
       domain: "acoustics",
       domains: ["acoustics", "wave-physics"],
     });
+  });
+
+  test("rewrites primary concept-domain memberships before finalizing a fallback merge", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { sourceId, targetId } = await seedConceptDomainPair(t);
+    const conceptId = await insertConcept(
+      t,
+      "fallback-primary-member",
+      "physics-of-sound",
+      ["physics-of-sound", "wave-physics", "acoustics"],
+    );
+
+    const batch = await asSystem.mutation(
+      api.vocabulary.mergeVocabularyReferenceBatch,
+      {
+        list: "conceptDomain",
+        sourceEntryId: sourceId,
+        targetEntryId: targetId,
+        cursor: null,
+        batchSize: 10,
+        apply: true,
+      },
+    );
+
+    expect(batch).toMatchObject({ processed: 1, remapped: 1, isDone: true });
+    expect(
+      await t.run((ctx) => ctx.db.get("concepts", conceptId)),
+    ).toMatchObject({
+      domain: "wave-physics",
+      domains: ["wave-physics", "acoustics"],
+    });
+    expect(
+      await asSystem.mutation(api.vocabulary.mergeEntry, {
+        list: "conceptDomain",
+        sourceEntryId: sourceId,
+        targetEntryId: targetId,
+      }),
+    ).toMatchObject({ remapped: 0, alreadyMerged: false });
+    expect(
+      await t.run((ctx) => ctx.db.get("conceptDomains", sourceId)),
+    ).toMatchObject({ status: "deprecated", mergedInto: targetId });
   });
 });

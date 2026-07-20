@@ -58,7 +58,7 @@ const KNOWN_RELATIONSHIP_KINDS = new Set([
 ]);
 
 const PROVISIONAL_STATUS = "provisional" as const;
-const RELATIONSHIP_INLINE_MERGE_LIMIT = 2_000;
+const INLINE_REFERENCE_MERGE_LIMIT = 2_000;
 const MENTION_COUNT_CAP = 500;
 
 const vocabularyListValidator = v.union(
@@ -546,7 +546,13 @@ export const mergeEntry = mutation({
       const concepts = await ctx.db
         .query("concepts")
         .withIndex("by_domain", (q) => q.eq("domain", source.name))
-        .collect();
+        .take(INLINE_REFERENCE_MERGE_LIMIT + 1);
+      if (concepts.length > INLINE_REFERENCE_MERGE_LIMIT) {
+        triageError(
+          "CONCEPT_DOMAIN_MERGE_TOO_LARGE",
+          `More than ${INLINE_REFERENCE_MERGE_LIMIT} concepts use this primary domain; use scripts/merge-vocabulary-references.ts`,
+        );
+      }
       for (const concept of concepts) {
         const domains = concept.domains
           ? dedupeDomains([
@@ -563,18 +569,18 @@ export const mergeEntry = mutation({
         });
       }
       remapped = concepts.length;
-      // Secondary-only memberships cannot use by_domain. The registry decision
-      // completes here; scripts/merge-vocabulary-references.ts rewrites those
-      // arrays later through bounded concept pagination.
+      // scripts/merge-vocabulary-references.ts handles oversized primary sets
+      // before finalization and secondary-only memberships through bounded
+      // concept pagination.
     } else if (args.list === "relationshipKind") {
       const edges = await ctx.db
         .query("edges")
         .withIndex("by_relationship", (q) => q.eq("relationship", source.name))
-        .take(RELATIONSHIP_INLINE_MERGE_LIMIT + 1);
-      if (edges.length > RELATIONSHIP_INLINE_MERGE_LIMIT) {
+        .take(INLINE_REFERENCE_MERGE_LIMIT + 1);
+      if (edges.length > INLINE_REFERENCE_MERGE_LIMIT) {
         triageError(
           "RELATIONSHIP_MERGE_TOO_LARGE",
-          `More than ${RELATIONSHIP_INLINE_MERGE_LIMIT} edges reference this relationship; use scripts/merge-vocabulary-references.ts`,
+          `More than ${INLINE_REFERENCE_MERGE_LIMIT} edges reference this relationship; use scripts/merge-vocabulary-references.ts`,
         );
       }
       for (const edge of edges) {
@@ -652,20 +658,24 @@ export const mergeVocabularyReferenceBatch = mutation({
         .paginate({ cursor: args.cursor, numItems: batchSize });
       let remapped = 0;
       for (const concept of page.page) {
-        if (
-          concept.domain === source.name ||
-          !concept.domains?.includes(source.name)
-        ) {
+        const isPrimary = concept.domain === source.name;
+        if (!isPrimary && !concept.domains?.includes(source.name)) {
           continue;
         }
         remapped++;
         if (!args.apply) continue;
         await ctx.db.patch("concepts", concept._id, {
-          domains: dedupeDomains(
-            concept.domains.map((domain) =>
-              domain === source.name ? target.name : domain,
-            ),
-          ),
+          ...(isPrimary ? { domain: target.name } : {}),
+          ...(concept.domains
+            ? {
+                domains: dedupeDomains([
+                  ...(isPrimary ? [target.name] : []),
+                  ...concept.domains.map((domain) =>
+                    domain === source.name ? target.name : domain,
+                  ),
+                ]),
+              }
+            : {}),
           updatedAt: Date.now(),
         });
       }

@@ -315,7 +315,7 @@ function TriageRow(props: {
 function TriageSection(props: {
   title: string;
   list: VocabularyList;
-  data: TriageList | undefined;
+  data: TriageList;
 }) {
   return (
     <UICard style={{ "border-color": "rgba(139, 92, 246, 0.22)" }}>
@@ -333,14 +333,14 @@ function TriageSection(props: {
       </h2>
       <div class={css({ display: "grid", gap: "3", mt: "4" })}>
         <Show
-          when={(props.data?.provisional.length ?? 0) > 0}
+          when={props.data.provisional.length > 0}
           fallback={<p class={helperClass}>No provisional entries remain.</p>}
         >
-          <For each={props.data?.provisional ?? []}>
+          <For each={props.data.provisional}>
             {(entry) => (
               <TriageRow
                 entry={entry}
-                knownTargets={props.data?.knownTargets ?? []}
+                knownTargets={props.data.knownTargets}
                 list={props.list}
               />
             )}
@@ -384,9 +384,7 @@ export function VocabularyTriagePage() {
           <For each={SECTIONS}>
             {(section) => (
               <UIBadge tone={section.tone}>
-                {board.isLoading()
-                  ? "—"
-                  : (board.data()?.[section.key].provisional.length ?? 0)}{" "}
+                {board.data()?.[section.key].provisional.length ?? "—"}{" "}
                 {section.label} remaining
               </UIBadge>
             )}
@@ -418,15 +416,19 @@ export function VocabularyTriagePage() {
         </Show>
       </UICard>
 
-      <For each={SECTIONS}>
-        {(section) => (
-          <TriageSection
-            title={section.label}
-            list={section.list}
-            data={board.data()?.[section.key]}
-          />
+      <Show when={board.data()}>
+        {(data) => (
+          <For each={SECTIONS}>
+            {(section) => (
+              <TriageSection
+                title={section.label}
+                list={section.list}
+                data={data()[section.key]}
+              />
+            )}
+          </For>
         )}
-      </For>
+      </Show>
     </section>
   );
 }

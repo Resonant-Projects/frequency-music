@@ -5,6 +5,11 @@
  *   vpx tsx scripts/merge-vocabulary-references.ts --list conceptDomain --source <id> --target <id>
  * Apply:
  *   vpx tsx scripts/merge-vocabulary-references.ts --list relationshipKind --source <id> --target <id> --apply
+ *
+ * Concept-domain batches rewrite both primary `domain` and secondary `domains`
+ * references before the registry merge is finalized. Parameter-kind references
+ * are rewritten after merge finalization; relationship-kind batches also run
+ * before finalization.
  */
 // oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
 import "varlock/auto-load";
@@ -59,9 +64,9 @@ async function main() {
   const devBypassSecret = getDevBypassSecret();
   const client = getConvexClient();
 
-  // Concept-domain and parameter-kind mergeEntry intentionally record the
-  // registry decision before unindexed references are rewritten in batches.
-  if (apply && list !== "relationshipKind") {
+  // Parameter-kind registry decisions are recorded before their heavy,
+  // unindexed extraction references are rewritten in bounded batches.
+  if (apply && list === "parameterKind") {
     await client.mutation(api.vocabulary.mergeEntry, {
       list,
       sourceEntryId,
@@ -104,10 +109,10 @@ async function main() {
   }
   process.stdout.write("\n");
 
-  // Large relationship merges rewrite first; once the remaining indexed set
-  // is empty, mergeEntry atomically records the registry decision (and catches
-  // any final <=2,000 references inserted during the batched pass).
-  if (apply && list === "relationshipKind") {
+  // Concept-domain and relationship-kind fallbacks rewrite first. mergeEntry
+  // then atomically records the registry decision and catches any final
+  // inline-sized indexed references inserted during the batched pass.
+  if (apply && list !== "parameterKind") {
     await client.mutation(api.vocabulary.mergeEntry, {
       list,
       sourceEntryId,

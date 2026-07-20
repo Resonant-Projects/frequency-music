@@ -20,8 +20,9 @@ off-mission rejects) bakes junk provenance into correspondences that later triag
 
 **Tech stack:** Convex mutations in `convex/vocabulary.ts` (registry tables: `conceptDomains` at
 `convex/schema.ts:788`, plus parameter-kind and relationship-kind tables per found state); existing
-`vocabulary:reviewSummary` query as the read side; SolidJS route in `web/src/routes/` per the
-project design language (violet chips for domains; gold only on the decide actions).
+`vocabulary:triageBoard` query as the implemented UI read side (`vocabulary:reviewSummary` remains
+untouched for compatibility); SolidJS route in `web/src/routes/` per the project design language
+(violet chips for domains; gold only on the decide actions).
 
 ## Global constraints
 
@@ -76,10 +77,10 @@ hairy (e.g. relationship kinds embedded in edge rows beyond a simple field), kee
 `scripts/` — record which path was taken in the PR.
 
 Implemented merge paths: concept-domain primary memberships remap inline through the `by_domain`
-index, while secondary-only membership arrays use `scripts/merge-vocabulary-references.ts` in
-bounded batches; parameter-kind registry merges are inline while extraction references use the same
-fallback script; relationship kinds remap inline through 2,000 edges, with the fallback script for
-larger sets.
+index up to 2,000 matches; oversized primary sets and secondary-only membership arrays use
+`scripts/merge-vocabulary-references.ts` in bounded batches before finalization. Parameter-kind
+registry merges are inline while extraction references use the same fallback script; relationship
+kinds remap inline through 2,000 edges, with the fallback script for larger sets.
 
 - [x] **Step 1:** Harness tests first (promote/reject/merge happy paths; merge remap count asserted;
   same-entry and non-known-target rejections; duplicate-membership dedupe on merge; zero-reference
@@ -94,8 +95,8 @@ larger sets.
 ### Task 2: Triage UI
 
 **Files:** create `web/src/routes/vocabulary-triage.tsx` (+ route registration per found router
-state); reuse `vocabulary:reviewSummary` for the read side (extend it if per-entry ids/counts are
-missing).
+state); the implemented UI read side is `vocabulary:triageBoard`, while
+`vocabulary:reviewSummary` remains untouched for compatibility.
 
 **Layout contract:** three sections (concept domains / parameter kinds / relationship kinds), each a
 list of provisional entries showing: name, description/example mentions, mention count, and — for
@@ -119,7 +120,8 @@ Interceptor visual verification stays unticked because it is operator/deploy-gat
   registry as the source of truth thereafter. **Completion is scoped to the packet snapshot** (the
   entries listed in the 2026-07-12 doc): provisional entries minted after that cutoff are ordinary
   new triage debt surfaced by the route's headline counts, not blockers on this plan's done-gate.
-- [ ] **Step 2:** Spot-check gate: `reviewSummary` shows 0 provisional **packet-snapshot** entries on
+- [ ] **Step 2:** Spot-check gate: compatibility query `reviewSummary` shows 0 provisional
+  **packet-snapshot** entries on
   all three lists (concept domains, parameter kinds, relationship kinds); miner-facing domain filter
   excludes deprecated entries; `vpx convex run vocabulary:reviewSummary '{}'` output attached to the
   PR.
