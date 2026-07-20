@@ -52,6 +52,26 @@ describe("agentRuns.claimNextPending", () => {
     expect(claimed).toBeNull();
   });
 
+  test("returns stored trace provenance to the worker claim", async () => {
+    const t = convexTest(schema, modules);
+    await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "correspondence-miner",
+        status: "queued",
+        input: { limit: 20 },
+        traceUrl: "https://trace.example/miner",
+        createdAt: 1000,
+        updatedAt: 1000,
+      }),
+    );
+
+    const claimed = await t.mutation(internal.agentRuns.claimNextPending, {
+      workerId: "worker-a",
+    });
+
+    expect(claimed?.traceUrl).toBe("https://trace.example/miner");
+  });
+
   test("a second claim does not double-claim the same run", async () => {
     const t = convexTest(schema, modules);
     await seedRun(t, "queued", 1000);
@@ -65,6 +85,35 @@ describe("agentRuns.claimNextPending", () => {
 
     expect(first).not.toBeNull();
     expect(second).toBeNull();
+  });
+
+  test("skips unknown queued graphs without starving registered work", async () => {
+    const t = convexTest(schema, modules);
+    const unknownId = await seedRun(t, "queued", 500, "unknown-graph");
+    const registeredId = await seedRun(t, "queued", 1000);
+
+    const claimed = await t.mutation(internal.agentRuns.claimNextPending, {
+      workerId: "worker-a",
+    });
+
+    expect(claimed?.runId).toBe(registeredId);
+    const unknown = await t.run((ctx) => ctx.db.get(unknownId));
+    expect(unknown?.status).toBe("queued");
+  });
+});
+
+describe("agentRuns.enqueue", () => {
+  test("rejects graph names outside the shared registry", async () => {
+    const t = convexTest(schema, modules);
+
+    await expect(
+      t.mutation(internal.agentRuns.enqueue, {
+        graphName: "unregistered-graph",
+      }),
+    ).rejects.toThrow(/Unknown graphName/);
+
+    const runs = await t.run((ctx) => ctx.db.query("agentRuns").collect());
+    expect(runs).toEqual([]);
   });
 });
 

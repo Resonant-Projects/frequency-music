@@ -5,12 +5,22 @@
 // lets it be unit-tested without env/secrets or network access.
 
 import {
+  isKnownGraphName,
   KNOWN_GRAPH_NAMES,
+  normalizeTraceUrl,
   TERMINAL_STATUS_OWNER,
   type KnownGraphName,
 } from "../../../convex/shared/agentContract";
+import type { ClaimedRun } from "../../../convex/shared/agentRunClaim";
 
-export { KNOWN_GRAPH_NAMES, TERMINAL_STATUS_OWNER, type KnownGraphName };
+export {
+  isKnownGraphName,
+  KNOWN_GRAPH_NAMES,
+  TERMINAL_STATUS_OWNER,
+  type KnownGraphName,
+};
+export { redactError } from "../shared/redactError.js";
+export type { ClaimedRun };
 
 export const DEFAULT_RESEARCH_LIMIT = 10;
 export const MAX_RESEARCH_LIMIT = 100;
@@ -19,10 +29,6 @@ export const DEFAULT_WEEKLY_BRIEF_SEED =
   "Generate this week's research brief from the current Convex research state. " +
   "Follow the weekly-brief supervisor instructions and land the result as a " +
   "human-review draft. Do not publish or mutate research data directly.";
-
-export function isKnownGraphName(name: string): name is KnownGraphName {
-  return (KNOWN_GRAPH_NAMES as readonly string[]).includes(name);
-}
 
 export function resolveResearchLimit(
   input: unknown,
@@ -52,12 +58,6 @@ export function buildWeeklyBriefMessages(input: unknown): unknown[] {
   return [{ role: "user", content: DEFAULT_WEEKLY_BRIEF_SEED }];
 }
 
-export type ClaimedRun = {
-  runId: string;
-  graphName: string;
-  input?: unknown;
-};
-
 export type ResearchPipelineGraphInput = {
   runId: string;
   agentRunId: string;
@@ -68,9 +68,35 @@ export type ResearchPipelineGraphInput = {
 
 export type WeeklyBriefGraphInput = { messages: unknown[] };
 
+export type CorrespondenceMinerGraphInput = {
+  agentRunId: string;
+  limit: number;
+  traceUrl?: string;
+};
+
+export type EvidenceHunterGraphInput = CorrespondenceMinerGraphInput;
+
 export type GraphInvocation =
   | { graphName: "research-pipeline"; input: ResearchPipelineGraphInput }
-  | { graphName: "weekly-brief"; input: WeeklyBriefGraphInput };
+  | { graphName: "weekly-brief"; input: WeeklyBriefGraphInput }
+  | { graphName: "correspondence-miner"; input: CorrespondenceMinerGraphInput }
+  | { graphName: "evidence-hunter"; input: EvidenceHunterGraphInput };
+
+function traceUrlFrom(input: unknown): string | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const traceUrl = (input as { traceUrl?: unknown }).traceUrl;
+  return typeof traceUrl === "string" && traceUrl ? traceUrl : undefined;
+}
+
+function claimedTraceUrl(claim: ClaimedRun): string | undefined {
+  for (const value of [claim.traceUrl, traceUrlFrom(claim.input)]) {
+    if (!value) continue;
+    const normalized = normalizeTraceUrl(value);
+    if (normalized) return normalized;
+    console.warn("[worker] Ignoring invalid traceUrl at graph boundary");
+  }
+  return undefined;
+}
 
 // Maps a claimed run into the exact input shape the corresponding compiled graph
 // expects. For research-pipeline the claimed Convex run id is threaded in as
@@ -94,6 +120,28 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       input: { messages: buildWeeklyBriefMessages(claim.input) },
     };
   }
+  if (claim.graphName === "correspondence-miner") {
+    const traceUrl = claimedTraceUrl(claim);
+    return {
+      graphName: "correspondence-miner",
+      input: {
+        agentRunId: claim.runId,
+        limit: Math.min(resolveResearchLimit(claim.input, 20), 20),
+        ...(traceUrl ? { traceUrl } : {}),
+      },
+    };
+  }
+  if (claim.graphName === "evidence-hunter") {
+    const traceUrl = claimedTraceUrl(claim);
+    return {
+      graphName: "evidence-hunter",
+      input: {
+        agentRunId: claim.runId,
+        limit: Math.min(resolveResearchLimit(claim.input, 5), 5),
+        ...(traceUrl ? { traceUrl } : {}),
+      },
+    };
+  }
   throw new Error(`Unknown graphName: ${claim.graphName}`);
 }
 
@@ -106,16 +154,4 @@ export function summarizeNodeUpdate(
       ? Object.keys(update as Record<string, unknown>)
       : [];
   return { node, keys };
-}
-
-// Redact obvious secret material from an error before it is logged or sent to
-// the audit surface. Mirrors the redaction in research-pipeline nodes.ts.
-export function redactError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return message
-    .replaceAll(
-      /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
-      "$1[REDACTED]",
-    )
-    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }

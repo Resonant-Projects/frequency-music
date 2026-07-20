@@ -43,6 +43,13 @@ export const searchSourcesByConcept = makeAgentToolAction(
 export const getSelfImprovementStats = makeAgentToolAction(
   "getSelfImprovementStats",
 );
+export const listCorrespondenceCandidates = makeAgentToolAction(
+  "listCorrespondenceCandidates",
+);
+export const searchClaimsSemantic = makeAgentToolAction("searchClaimsSemantic");
+export const listCorrespondenceTargets = makeAgentToolAction(
+  "listCorrespondenceTargets",
+);
 export const upsertCorrespondence = makeAgentToolAction("upsertCorrespondence");
 export const addCorrespondenceEvidence = makeAgentToolAction(
   "addCorrespondenceEvidence",

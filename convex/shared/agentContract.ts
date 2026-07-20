@@ -29,12 +29,35 @@ if (HEARTBEAT_INTERVAL_MS >= STALE_RUN_MS) {
   );
 }
 
-export const KNOWN_GRAPH_NAMES = ["research-pipeline", "weekly-brief"] as const;
+export const KNOWN_GRAPH_NAMES = [
+  "research-pipeline",
+  "weekly-brief",
+  "correspondence-miner",
+  "evidence-hunter",
+] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
+
+export function isKnownGraphName(name: string): name is KnownGraphName {
+  return (KNOWN_GRAPH_NAMES as readonly string[]).includes(name);
+}
+
+export function normalizeTraceUrl(value: unknown): string | undefined {
+  if (typeof value !== "string" || !value) return undefined;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 // Which side owns the terminal Convex status write for each graph.
 export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
   {
     "research-pipeline": "graph",
     "weekly-brief": "runner",
+    "correspondence-miner": "graph",
+    "evidence-hunter": "graph",
   };

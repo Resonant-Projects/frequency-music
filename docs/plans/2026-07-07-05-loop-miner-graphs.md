@@ -11,11 +11,11 @@
 
 **Why (session decisions Q8, Q9, Q10):** embeddings propose (cheap, exhaustive, reproducible) → symbolic features score novelty (co-mention *penalizes*) → LLM judges a shortlist. Judgment-over-alternatives work lives in LangGraph; mining is continuous graph enrichment with no review queue.
 
-**Tech Stack:** Bun, Convex actions (`ctx.vectorSearch`), LangGraph TS in `agent/`, LangSmith tracing (best-effort), existing worker (`agent/src/worker/runner.ts`).
+**Tech Stack:** Node 24 via Vite+, Convex actions (`ctx.vectorSearch`), LangGraph TS in `agent/`, LangSmith tracing (best-effort), existing worker (`agent/src/worker/runner.ts`).
 
 ## Global Constraints
 
-- `bunx convex codegen` deploys live. `cd agent && bunx tsc --noEmit` is the agent typegate.
+- Convex codegen deploys live and remains operator-gated. The current post-Vite+ agent typegate is `cd agent && vpx tsc --noEmit`; earlier `bunx tsc --noEmit` text in this plan predates that migration.
 - Agents write only through the plan-03 tool surface. The miner never touches `hypotheses`/`recipes`/`agentReviewDrafts`.
 - Every miner/hunter run is an `agentRuns` row with `agentRunEvents` (`node`, `decision`, `tool_call`) — the existing audit contract.
 - Model doctrine: Sonnet-class for judging. Never Llama.
@@ -56,9 +56,10 @@ returns: Array<{
 4. Score: `similarityScore` from the vector hit; `noveltyScore` penalized by co-mention/edge count (`edges` `by_from`/`by_to` counts).
 5. Return top-`limit` by `similarityScore × noveltyScore` with sample claims attached.
 
-- [ ] **Step 1:** Harness-test the pure scoring/pairing helpers (extract them pure; the vector search itself is action-only).
-- [ ] **Step 2:** Implement; expose via agent-tool registry as `list_correspondence_candidates` (read).
-- [ ] **Step 3:** Codegen; run once manually via `bunx convex run` and eyeball the top-10 pairs (paste in PR); commit.
+- [x] **Step 1:** Harness-test the pure scoring/pairing helpers (extract them pure; the vector search itself is action-only).
+- [x] **Step 2:** Implement; expose via agent-tool registry as `list_correspondence_candidates` (read).
+- [ ] **Step 3:** Codegen; run once manually via `vpx convex run` and eyeball the top-10 pairs (paste in PR); commit.
+  - Operator-gated: `convex/_generated/api.d.ts` was hand-edited in generated style; codegen itself and the manual Convex run were intentionally not executed.
 
 ---
 
@@ -83,9 +84,9 @@ fetch_candidates ──► judge_loop (per candidate, ≤ limit) ──► write
 
 **Per accepted candidate:** `upsert_correspondence` with scores + provenance, then `add_correspondence_evidence` for sample claims the judge cited as directly supporting (stance `supports`). Discards log a `decision` event with the reason — discard reasons are eval data.
 
-- [ ] **Step 1:** Agent tests: judge-output schema round-trip; write-node calls tools with provenance (mock the tool layer per found-state test conventions).
-- [ ] **Step 2:** Implement graph + register with worker.
-- [ ] **Step 3:** `bunx tsc --noEmit` + agent tests green; commit.
+- [x] **Step 1:** Agent tests: judge-output schema round-trip; write-node calls tools with provenance (mock the tool layer per found-state test conventions).
+- [x] **Step 2:** Implement graph + register with worker.
+- [x] **Step 3:** `vpx tsc --noEmit` + agent tests green; commit.
 
 ---
 
@@ -105,8 +106,8 @@ pick_targets (conjectured, oldest-evidence-first, ≤5) ──► per target:
 ──► summarize (evidence added per target; status changes observed)
 ```
 
-- [ ] **Step 1:** Register `search_claims_semantic` (Convex action wrapping `ctx.vectorSearch` on claims by embedded query text; read-only).
-- [ ] **Step 2:** Implement graph; tests; typegate; commit.
+- [x] **Step 1:** Register `search_claims_semantic` (Convex action wrapping `ctx.vectorSearch` on claims by embedded query text; read-only).
+- [x] **Step 2:** Implement graph; tests; typegate; commit.
 
 ---
 
@@ -115,9 +116,12 @@ pick_targets (conjectured, oldest-evidence-first, ≤5) ──► per target:
 **Files:**
 - Modify: `convex/crons.ts` (enqueue miner daily, hunter daily offset; enqueue = insert queued `agentRuns` row per found-state worker contract)
 
-- [ ] **Step 1:** Cron registration; codegen; commit.
+- [x] **Step 1:** Cron registration; generated declaration update; commit.
+  - Offline completion: the cron uses existing generated `internal.agentRuns.enqueue`; `convex/_generated/api.d.ts` was hand-edited in generated style, while codegen itself was intentionally not run.
 - [ ] **Step 2: Live gate.** Trigger one miner run via the worker. Verify: ≥1 and ≤20 correspondences written; each has statement, rationale, scores, run id, trace URL; run events tell a readable story. Paste run summary in PR.
+  - Operator-gated: requires the deployed Convex backend and a healthy Proxmox worker.
 - [ ] **Step 3:** Trigger a second identical run: zero duplicate pairs (upsert merges). Trigger one hunter run: evidence appended to ≥1 conjecture, statuses recomputed correctly.
+  - Operator-gated: requires live reruns and production evidence inspection.
 
 ---
 

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { zodToConvex } from "convex-helpers/server/zod4";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -10,10 +11,14 @@ import {
 import { agentRunEventKindValidator, agentRunStatusValidator } from "./schema";
 import {
   AGENT_RUN_STATUSES,
+  isKnownGraphName,
+  KNOWN_GRAPH_NAMES,
+  normalizeTraceUrl,
   STALE_RUN_MS,
   type AgentRunEventKind,
   type AgentRunStatus,
 } from "./shared/agentContract";
+import { claimedAgentRunZ } from "./shared/agentRunClaim";
 import { requireAuth } from "./auth";
 
 const agentRunStatuses = AGENT_RUN_STATUSES;
@@ -70,15 +75,7 @@ export function buildReviewedRunCompletionPatch(now: number) {
 }
 
 export function safeTraceUrl(value: string | undefined) {
-  if (!value) return undefined;
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:"
-      ? parsed.toString()
-      : undefined;
-  } catch {
-    return undefined;
-  }
+  return normalizeTraceUrl(value);
 }
 
 function isSmokeInput(input: unknown) {
@@ -314,7 +311,12 @@ export const enqueue = internalMutation({
     input: v.optional(v.any()),
     traceUrl: v.optional(v.string()),
   },
-  handler: (ctx, args) => insertQueuedRun(ctx, args),
+  handler: (ctx, args) => {
+    if (!(KNOWN_GRAPH_NAMES as readonly string[]).includes(args.graphName)) {
+      throw new Error(`Unknown graphName: ${args.graphName}`);
+    }
+    return insertQueuedRun(ctx, args);
+  },
 });
 
 // Atomically claim the oldest queued run (optionally for a specific graph).
@@ -322,8 +324,12 @@ export const enqueue = internalMutation({
 // prevents a two-worker future from double-running the same run.
 export const claimNextPending = internalMutation({
   args: { workerId: v.string(), graphName: v.optional(v.string()) },
+  returns: zodToConvex(claimedAgentRunZ.nullable()),
   handler: async (ctx, args) => {
     const now = Date.now();
+    if (args.graphName && !isKnownGraphName(args.graphName)) {
+      throw new Error(`Unknown graphName: ${args.graphName}`);
+    }
     const candidate = args.graphName
       ? await ctx.db
           .query("agentRuns")
@@ -335,9 +341,19 @@ export const claimNextPending = internalMutation({
       : await ctx.db
           .query("agentRuns")
           .withIndex("by_status_updatedAt", (q) => q.eq("status", "queued"))
+          .filter((q) =>
+            q.or(
+              ...KNOWN_GRAPH_NAMES.map((graphName) =>
+                q.eq(q.field("graphName"), graphName),
+              ),
+            ),
+          )
           .order("asc")
           .first();
     if (!candidate || candidate.status !== "queued") return null;
+    if (!isKnownGraphName(candidate.graphName)) {
+      throw new Error(`Unknown graphName: ${candidate.graphName}`);
+    }
 
     await ctx.db.patch(candidate._id, buildClaimPatch(args.workerId, now));
     await appendRunEvent(
@@ -354,6 +370,7 @@ export const claimNextPending = internalMutation({
       runId: candidate._id,
       graphName: candidate.graphName,
       input: candidate.input ?? null,
+      traceUrl: candidate.traceUrl,
       status: "running" as const,
       workerId: args.workerId,
       startedAt: now,

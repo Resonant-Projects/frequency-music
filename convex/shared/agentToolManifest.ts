@@ -104,6 +104,27 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Accepts optional `daysBack` (default 7, max 90) and degrades to all-zero counts and empty note arrays when the window is empty. Prompt/policy promotions are not included because they live in `docs/eval-baselines.md` and the decision log via `scripts/langsmith/promote.ts`; wire a field here once a queryable store exists.",
   ),
   entry(
+    "listCorrespondenceCandidates",
+    "read",
+    "internal.correspondenceCandidates:listForAgent",
+    "Generate deterministic, scored cross-domain correspondence candidates with concept and claim context.",
+    "Uses one least-recently-probed on-mission concept unless seedConceptId is supplied; existing correspondence pairs are excluded.",
+  ),
+  entry(
+    "searchClaimsSemantic",
+    "read",
+    "internal.correspondenceCandidates:searchClaimsSemantic",
+    "Semantically search active claims and return source and on-mission domain context.",
+    "Use to seek supporting or contradicting evidence for a concrete correspondence statement, not for broad source discovery.",
+  ),
+  entry(
+    "listCorrespondenceTargets",
+    "read",
+    "internal.correspondenceCandidates:listEvidenceTargets",
+    "List up to five conjectured correspondences with hydrated concept text, oldest evidence first.",
+    "Evidence-hunter target selection only; existing claim ids are included so reruns can skip already-cited evidence.",
+  ),
+  entry(
     "getCorrespondence",
     "read",
     "correspondences:getByPairKey",

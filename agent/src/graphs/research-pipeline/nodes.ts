@@ -10,6 +10,11 @@ import {
   type ResearchDraftSpecialistInput,
 } from "../../agents/research-pipeline/deepAgent.js";
 import { runCodexTask } from "../../subagents/codexWorker.js";
+import { redactError } from "../../shared/redactError.js";
+import {
+  appendRemoteAuditEvent,
+  finalizeRunCompleted,
+} from "../shared/audit.js";
 import { findHallucinatedIds, hallucinatedIdError } from "./idGate.js";
 import type {
   AuditEvent,
@@ -33,47 +38,10 @@ function nowEvent(
   };
 }
 
-function errorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  return message
-    .replaceAll(
-      /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
-      "$1[REDACTED]",
-    )
-    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
-}
-
 function runIdFrom(value: unknown) {
   if (!value || typeof value !== "object") return undefined;
   const runId = (value as { runId?: unknown }).runId;
   return typeof runId === "string" ? runId : undefined;
-}
-
-async function appendRemoteAuditEvent(
-  agentRunId: string | undefined,
-  kind: AuditEvent["kind"],
-  message: string,
-  payload?: unknown,
-): Promise<AuditEvent[]> {
-  const localEvent = nowEvent(kind, message, payload);
-  if (!agentRunId) return [localEvent];
-
-  try {
-    await callConvex("appendAgentRunEvent", {
-      runId: agentRunId,
-      kind,
-      message,
-      payload,
-    });
-    return [localEvent];
-  } catch (error) {
-    return [
-      localEvent,
-      nowEvent("error", "Failed to append remote agent-run audit event", {
-        message: errorMessage(error),
-      }),
-    ];
-  }
 }
 
 export async function initializeRunNode(
@@ -87,6 +55,7 @@ export async function initializeRunNode(
     return {
       agentRunId: state.agentRunId,
       auditEvents: await appendRemoteAuditEvent(
+        callConvex,
         state.agentRunId,
         "status",
         "Reused claimed Convex agent-run audit record",
@@ -120,7 +89,7 @@ export async function initializeRunNode(
     return {
       auditEvents: [
         nowEvent("error", "Convex agent-run audit initialization unavailable", {
-          message: errorMessage(error),
+          message: redactError(error),
         }),
       ],
     };
@@ -229,7 +198,7 @@ export async function loadScopeNode(
       try {
         return { key, value: await invoke() };
       } catch (error) {
-        return { key, error: errorMessage(error) };
+        return { key, error: redactError(error) };
       }
     }),
   );
@@ -263,6 +232,7 @@ export async function loadScopeNode(
       values.recommendedActions,
     ),
     auditEvents: await appendRemoteAuditEvent(
+      callConvex,
       state.agentRunId,
       warnings.length > 0 ? "status" : "tool_call",
       warnings.length > 0
@@ -329,6 +299,7 @@ export async function selectCandidatesNode(
       route: "stop",
       seenIds: candidates.map((candidate) => candidate.id),
       auditEvents: await appendRemoteAuditEvent(
+        callConvex,
         state.agentRunId,
         "decision",
         "Selected research-pipeline smoke candidate",
@@ -348,6 +319,7 @@ export async function selectCandidatesNode(
     route: selectedCandidate?.route ?? "stop",
     seenIds: candidates.map((candidate) => candidate.id),
     auditEvents: await appendRemoteAuditEvent(
+      callConvex,
       state.agentRunId,
       "decision",
       "Selected research-pipeline candidate",
@@ -484,7 +456,7 @@ async function createReviewDraftViaCodex(
       input,
       fallbackOptions,
     );
-    const codexMessage = errorMessage(error);
+    const codexMessage = redactError(error);
     return {
       ...fallback,
       usedFallback: true,
@@ -543,6 +515,7 @@ export async function createReviewDraftNode(
   // provider used, model, usage, and threadId when Codex answered.
   const modelCallEvents = outcome.modelCall
     ? await appendRemoteAuditEvent(
+        callConvex,
         state.agentRunId,
         "model_call",
         `Recorded ${outcome.modelCall.provider} specialist model call`,
@@ -565,6 +538,7 @@ export async function createReviewDraftNode(
         auditEvents: [
           ...modelCallEvents,
           ...(await appendRemoteAuditEvent(
+            callConvex,
             state.agentRunId,
             "error",
             "Rejected research-pipeline draft: hallucinated-ID gate tripped",
@@ -581,7 +555,7 @@ export async function createReviewDraftNode(
     candidateIds: draft.candidateIds,
     provider: outcome.provider,
     usedFallback: outcome.usedFallback,
-    warning: outcome.warning ? errorMessage(outcome.warning) : undefined,
+    warning: outcome.warning ? redactError(outcome.warning) : undefined,
   };
 
   return {
@@ -590,6 +564,7 @@ export async function createReviewDraftNode(
     auditEvents: [
       ...modelCallEvents,
       ...(await appendRemoteAuditEvent(
+        callConvex,
         state.agentRunId,
         "review_request",
         outcome.usedFallback
@@ -614,7 +589,8 @@ export async function finalizeRunNode(
   const hasErrors = state.errors.length > 0;
   const needsReview = state.draft?.needsReview === true;
 
-  const auditEvents = await appendRemoteAuditEvent(
+  const auditEvents: AuditEvent[] = await appendRemoteAuditEvent(
+    callConvex,
     state.agentRunId,
     hasErrors ? "error" : needsReview ? "review_request" : "status",
     hasErrors
@@ -686,9 +662,10 @@ export async function finalizeRunNode(
             // A needs_review run with no persisted draft can never be closed by a
             // human. Fail the run so it leaves the review queue instead of
             // wedging. See plan 013.
-            const draftFailureMessage = errorMessage(draftError);
+            const draftFailureMessage = redactError(draftError);
             auditEvents.push(
               ...(await appendRemoteAuditEvent(
+                callConvex,
                 state.agentRunId,
                 "error",
                 "Failed to persist human-review draft row",
@@ -711,7 +688,7 @@ export async function finalizeRunNode(
                   "error",
                   "Failed to mark run failed after draft-write error",
                   {
-                    message: errorMessage(markError),
+                    message: redactError(markError),
                   },
                 ),
               );
@@ -719,15 +696,18 @@ export async function finalizeRunNode(
           }
         }
       } else {
-        await callConvex("markAgentRunCompleted", {
-          runId: state.agentRunId,
-          summary,
-        });
+        auditEvents.push(
+          ...(await finalizeRunCompleted(
+            callConvex,
+            state.agentRunId,
+            summary,
+          )),
+        );
       }
     } catch (error) {
       auditEvents.push(
         nowEvent("error", "Failed to mark remote agent run terminal status", {
-          message: errorMessage(error),
+          message: redactError(error),
         }),
       );
     }
@@ -757,6 +737,7 @@ export async function unsupportedWriteRouteNode(
   return {
     errors: [error],
     auditEvents: await appendRemoteAuditEvent(
+      callConvex,
       state.agentRunId,
       "decision",
       "Stopped before write-producing specialist route",

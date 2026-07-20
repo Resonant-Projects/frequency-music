@@ -869,6 +869,7 @@ export default defineSchema({
     classifierModel: v.optional(v.string()),
     embedding: v.optional(v.array(v.float64())),
     embeddingModel: v.optional(v.string()),
+    lastProbedAt: v.optional(v.number()),
 
     // Metadata
     wikipedia: v.optional(v.string()), // Wikipedia URL
@@ -884,6 +885,10 @@ export default defineSchema({
     .index("by_name", ["name"])
     .index("by_domain", ["domain"])
     .index("by_missionRelevance", ["missionRelevance"])
+    .index("by_missionRelevance_lastProbedAt", [
+      "missionRelevance",
+      "lastProbedAt",
+    ])
     .index("by_mentionCount", ["mentionCount"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",

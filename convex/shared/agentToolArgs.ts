@@ -29,6 +29,15 @@ export const agentToolArgs = {
   getSelfImprovementStats: z.object({
     daysBack: z.number().int().positive().max(90).optional(),
   }),
+  listCorrespondenceCandidates: z.object({
+    limit,
+    seedConceptId: zid("concepts").optional(),
+  }),
+  searchClaimsSemantic: z.object({
+    text: z.string().trim().min(1),
+    limit,
+  }),
+  listCorrespondenceTargets: z.object({ limit }),
   upsertCorrespondence: upsertCorrespondenceArgsZ,
   addCorrespondenceEvidence: addCorrespondenceEvidenceArgsZ,
   getCorrespondence: getCorrespondenceArgsZ,

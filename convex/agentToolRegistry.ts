@@ -15,6 +15,7 @@ export type AgentToolDef = AgentToolManifestEntry & {
 
 const queryRef = (name: string) => makeFunctionReference<"query">(name);
 const mutationRef = (name: string) => makeFunctionReference<"mutation">(name);
+const actionRef = (name: string) => makeFunctionReference<"action">(name);
 
 function omitUndefined<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(
@@ -61,6 +62,24 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ctx.runQuery(internal.agentTools.selfImprovementStats, {
       daysBack: args.daysBack as number | undefined,
     }),
+  listCorrespondenceCandidates: (ctx, args) =>
+    ctx.runAction(
+      actionRef("correspondenceCandidates:listForAgent"),
+      omitUndefined({
+        limit: args.limit,
+        seedConceptId: args.seedConceptId,
+      }),
+    ),
+  searchClaimsSemantic: (ctx, args) =>
+    ctx.runAction(
+      actionRef("correspondenceCandidates:searchClaimsSemantic"),
+      omitUndefined({ text: args.text, limit: args.limit }),
+    ),
+  listCorrespondenceTargets: (ctx, args) =>
+    ctx.runQuery(
+      queryRef("correspondenceCandidates:listEvidenceTargets"),
+      omitUndefined({ limit: args.limit }),
+    ),
   getCorrespondence: (ctx, args) =>
     ctx.runQuery(queryRef("correspondences:getByPairKey"), {
       pairKey: args.pairKey,
