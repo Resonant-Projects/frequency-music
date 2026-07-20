@@ -31,7 +31,11 @@ export function needsEmbedding(
   row: { embedding?: unknown[]; embeddingModel?: string },
   model: string,
 ): boolean {
-  return !row.embedding || row.embeddingModel !== model;
+  return (
+    !row.embedding ||
+    row.embedding.length !== EMBEDDING_DIMENSIONS ||
+    row.embeddingModel !== model
+  );
 }
 
 export function relevanceEmbeddingFields(

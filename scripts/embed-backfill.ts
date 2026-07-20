@@ -11,6 +11,7 @@
  */
 // oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
 import "varlock/auto-load";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "../convex/_generated/api";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
 
@@ -18,16 +19,12 @@ const BATCH_SIZE = 100;
 const USD_PER_MILLION_TOKENS = 0.02;
 
 type BackfillKind = "claims" | "concepts";
-type BackfillBatchResult = {
-  kind: BackfillKind;
-  scanned: number;
-  pending: number;
-  pendingChars: number;
-  embedded: number;
-  remaining: number;
-  isDone: boolean;
-  continueCursor: string;
-};
+type BackfillBatchResult = FunctionReturnType<
+  typeof api.embeddings.backfillBatch
+>;
+
+const sleep = (milliseconds: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
 function printUsage() {
   console.log("Usage: vpx tsx scripts/embed-backfill.ts [--apply]");
@@ -65,6 +62,7 @@ async function processKind(kind: BackfillKind, apply: boolean) {
     cursor = result.continueCursor;
     isDone = result.isDone;
     process.stderr.write(`\r${kind}: scanned ${totals.scanned} rows...`);
+    if (apply && !isDone) await sleep(250);
   }
   process.stderr.write("\n");
   return totals;

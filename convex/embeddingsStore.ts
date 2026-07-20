@@ -24,12 +24,12 @@ export const getClaims = internalQuery({
       args.claimIds.map((claimId) => ctx.db.get("claims", claimId)),
     );
     return claims
-      .filter((claim) => claim?.status === "active")
+      .filter((claim): claim is Doc<"claims"> => claim?.status === "active")
       .map((claim) => ({
-        claimId: claim!._id,
-        text: claim!.text,
-        embedding: claim!.embedding,
-        embeddingModel: claim!.embeddingModel,
+        claimId: claim._id,
+        text: claim.text,
+        embedding: claim.embedding,
+        embeddingModel: claim.embeddingModel,
       }));
   },
 });
@@ -51,14 +51,17 @@ export const getConcepts = internalQuery({
       args.conceptIds.map((conceptId) => ctx.db.get("concepts", conceptId)),
     );
     return concepts
-      .filter((concept) => concept?.missionRelevance === "on")
+      .filter(
+        (concept): concept is Doc<"concepts"> =>
+          concept?.missionRelevance === "on",
+      )
       .map((concept) => ({
-        conceptId: concept!._id,
-        displayName: concept!.displayName,
-        description: concept!.description,
-        aliases: concept!.aliases,
-        embedding: concept!.embedding,
-        embeddingModel: concept!.embeddingModel,
+        conceptId: concept._id,
+        displayName: concept.displayName,
+        description: concept.description,
+        aliases: concept.aliases,
+        embedding: concept.embedding,
+        embeddingModel: concept.embeddingModel,
       }));
   },
 });
@@ -129,7 +132,7 @@ export const getSweepCandidates = internalQuery({
   }),
   handler: async (ctx, args) => {
     const limit = Math.min(Math.max(Math.floor(args.limit), 1), 500);
-    // Equivalent to needsEmbedding; Convex query expressions cannot call JS helpers.
+    // Mirrors needsEmbedding except its vector-length check, which Convex filters cannot express; matching models imply valid deployed dimensions.
     const [claims, concepts] = await Promise.all([
       ctx.db
         .query("claims")

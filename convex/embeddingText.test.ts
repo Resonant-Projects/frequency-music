@@ -2,9 +2,12 @@ import { describe, expect, test } from "vite-plus/test";
 import {
   chunkArray,
   conceptEmbeddingText,
+  EMBEDDING_DIMENSIONS,
   needsEmbedding,
   relevanceEmbeddingFields,
 } from "./shared/embeddingText";
+
+const validEmbedding = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 1);
 
 describe("conceptEmbeddingText", () => {
   test("combines the display name, description, and aliases", () => {
@@ -43,19 +46,46 @@ describe("chunkArray", () => {
 });
 
 describe("embedding state helpers", () => {
-  test("identifies missing and stale embeddings", () => {
+  test("identifies missing, malformed, and stale embeddings", () => {
     expect(needsEmbedding({}, "current")).toBe(true);
     expect(
-      needsEmbedding({ embedding: [1], embeddingModel: "stale" }, "current"),
+      needsEmbedding({ embedding: [], embeddingModel: "current" }, "current"),
     ).toBe(true);
     expect(
       needsEmbedding({ embedding: [1], embeddingModel: "current" }, "current"),
+    ).toBe(true);
+    expect(
+      needsEmbedding(
+        { embedding: validEmbedding, embeddingModel: "stale" },
+        "current",
+      ),
+    ).toBe(true);
+    expect(
+      needsEmbedding(
+        { embedding: validEmbedding, embeddingModel: "current" },
+        "current",
+      ),
     ).toBe(false);
   });
 
   test("preserves embeddings only for on-mission concepts", () => {
-    const existing = { embedding: [1], embeddingModel: "current" };
+    const existing = {
+      embedding: validEmbedding,
+      embeddingModel: "current",
+    };
     expect(relevanceEmbeddingFields("on", existing)).toEqual(existing);
+    expect(
+      relevanceEmbeddingFields("on", {
+        embedding: [],
+        embeddingModel: "current",
+      }),
+    ).toEqual({ embedding: [], embeddingModel: "current" });
+    expect(
+      relevanceEmbeddingFields("on", {
+        embedding: [1],
+        embeddingModel: "current",
+      }),
+    ).toEqual({ embedding: [1], embeddingModel: "current" });
     expect(relevanceEmbeddingFields("off", existing)).toEqual({
       embedding: undefined,
       embeddingModel: undefined,

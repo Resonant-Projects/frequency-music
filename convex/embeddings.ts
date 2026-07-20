@@ -2,6 +2,7 @@
 /* eslint-disable no-underscore-dangle -- Convex vector results use `_id` and `_score`. */
 
 import { ConvexError, v } from "convex/values";
+import type { Infer } from "convex/values";
 import { makeFunctionReference } from "convex/server";
 import type { Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
@@ -18,6 +19,7 @@ export { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL };
 const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
 const MAX_BATCH_SIZE = 100;
 const RETRY_DELAYS_MS = [250, 500] as const;
+const MAX_RETRY_AFTER_MS = 10_000;
 
 type EmbeddingResult = {
   embeddings: number[][];
@@ -35,7 +37,7 @@ type FetchEmbeddingOptions = {
 const sleep = (milliseconds: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
-function parseEmbeddingResponse(value: unknown, expectedCount: number) {
+export function parseEmbeddingResponse(value: unknown, expectedCount: number) {
   if (!value || typeof value !== "object" || !("data" in value)) return null;
   const data = (value as { data?: unknown }).data;
   if (!Array.isArray(data) || data.length !== expectedCount) return null;
@@ -75,6 +77,26 @@ function parseEmbeddingResponse(value: unknown, expectedCount: number) {
     : null;
 }
 
+class EmbeddingRequestError extends Error {
+  constructor(
+    message: string,
+    readonly retryAfterMs?: number,
+  ) {
+    super(message);
+  }
+}
+
+function parseRetryAfter(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(seconds * 1000, MAX_RETRY_AFTER_MS);
+  }
+  const retryAt = Date.parse(value);
+  if (!Number.isFinite(retryAt)) return undefined;
+  return Math.min(Math.max(retryAt - Date.now(), 0), MAX_RETRY_AFTER_MS);
+}
+
 export async function fetchEmbeddingBatch(
   options: FetchEmbeddingOptions,
 ): Promise<EmbeddingResult | null> {
@@ -108,10 +130,14 @@ export async function fetchEmbeddingBatch(
           dimensions: EMBEDDING_DIMENSIONS,
           encoding_format: "float",
         }),
+        signal: AbortSignal.timeout(30_000),
       });
       if (!response.ok) {
-        throw new Error(
+        throw new EmbeddingRequestError(
           `OpenAI embeddings request failed (${response.status})`,
+          response.status === 429
+            ? parseRetryAfter(response.headers.get("Retry-After"))
+            : undefined,
         );
       }
       const embeddings = parseEmbeddingResponse(
@@ -124,8 +150,14 @@ export async function fetchEmbeddingBatch(
       return { embeddings, model: EMBEDDING_MODEL };
     } catch (error) {
       lastError = error;
-      const delay = RETRY_DELAYS_MS[attempt];
-      if (delay !== undefined) await wait(delay);
+      const defaultDelay = RETRY_DELAYS_MS[attempt];
+      if (defaultDelay !== undefined) {
+        const retryAfterDelay =
+          error instanceof EmbeddingRequestError
+            ? error.retryAfterMs
+            : undefined;
+        await wait(retryAfterDelay ?? defaultDelay);
+      }
     }
   }
   warn(
@@ -141,11 +173,7 @@ const embeddingActionResultValidator = v.object({
   skipped: v.number(),
 });
 
-type EmbeddingActionResult = {
-  requested: number;
-  embedded: number;
-  skipped: number;
-};
+type EmbeddingActionResult = Infer<typeof embeddingActionResultValidator>;
 
 type ClaimEmbeddingRow = {
   claimId: Id<"claims">;

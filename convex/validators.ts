@@ -499,8 +499,6 @@ export const conceptReturnValidator = v.object({
   relevanceRationale: v.optional(v.string()),
   classifiedAt: v.optional(v.number()),
   classifierModel: v.optional(v.string()),
-  embedding: v.optional(v.array(v.float64())),
-  embeddingModel: v.optional(v.string()),
   wikipedia: v.optional(v.string()),
   definitionSource: v.optional(v.id("sources")),
   mentionCount: v.number(),
