@@ -6,10 +6,15 @@ import { makeFunctionReference } from "convex/server";
 import type { Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { chunkArray, conceptEmbeddingText } from "./shared/embeddingText";
+import {
+  chunkArray,
+  conceptEmbeddingText,
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+  needsEmbedding,
+} from "./shared/embeddingText";
 
-export const EMBEDDING_MODEL = "text-embedding-3-small";
-export const EMBEDDING_DIMENSIONS = 1536;
+export { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL };
 const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
 const MAX_BATCH_SIZE = 100;
 const RETRY_DELAYS_MS = [250, 500] as const;
@@ -268,6 +273,54 @@ const embedConceptsRef = makeFunctionReference<
   EmbeddingActionResult
 >("embeddings:embedConcepts");
 
+type EmbedRowsOptions<Row, StoreEntry> = {
+  fetchRows: () => Promise<Row[]>;
+  toText: (row: Row) => string;
+  toStoreEntry: (row: Row, embedding: number[], model: string) => StoreEntry;
+  store: (entries: StoreEntry[]) => Promise<number>;
+  label: string;
+};
+
+async function embedRows<
+  Row extends { embedding?: unknown[]; embeddingModel?: string },
+  StoreEntry,
+>(
+  requestedIds: readonly unknown[],
+  options: EmbedRowsOptions<Row, StoreEntry>,
+): Promise<EmbeddingActionResult> {
+  try {
+    const rows = await options.fetchRows();
+    const pending = rows.filter((row) => needsEmbedding(row, EMBEDDING_MODEL));
+    let embedded = 0;
+    for (const batch of chunkArray(pending, MAX_BATCH_SIZE)) {
+      const result = await fetchEmbeddingBatch({
+        texts: batch.map(options.toText),
+      });
+      if (!result) continue;
+      embedded += await options.store(
+        batch.map((row, index) =>
+          options.toStoreEntry(row, result.embeddings[index]!, result.model),
+        ),
+      );
+    }
+    return {
+      requested: requestedIds.length,
+      embedded,
+      skipped: requestedIds.length - embedded,
+    };
+  } catch (error) {
+    console.warn(
+      `${options.label} embedding failed; skipping`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return {
+      requested: requestedIds.length,
+      embedded: 0,
+      skipped: requestedIds.length,
+    };
+  }
+}
+
 export const embedTexts = internalAction({
   args: { texts: v.array(v.string()) },
   returns: v.object({
@@ -283,90 +336,43 @@ export const embedTexts = internalAction({
 export const embedClaims = internalAction({
   args: { claimIds: v.array(v.id("claims")) },
   returns: embeddingActionResultValidator,
-  handler: async (ctx, args) => {
-    try {
-      const claims = await ctx.runQuery(getClaimsRef, {
-        claimIds: args.claimIds,
-      });
-      const pending = claims.filter(
-        (claim) => !claim.embedding || claim.embeddingModel !== EMBEDDING_MODEL,
-      );
-      let embedded = 0;
-      for (const batch of chunkArray(pending, MAX_BATCH_SIZE)) {
-        const result = await fetchEmbeddingBatch({
-          texts: batch.map((claim) => claim.text),
-        });
-        if (!result) continue;
-        embedded += await ctx.runMutation(storeClaimEmbeddingsRef, {
-          entries: batch.map((claim, index) => ({
-            claimId: claim.claimId,
-            embedding: result.embeddings[index]!,
-            model: result.model,
-          })),
-        });
-      }
-      return {
-        requested: args.claimIds.length,
-        embedded,
-        skipped: args.claimIds.length - embedded,
-      };
-    } catch (error) {
-      console.warn(
-        "Claim embedding failed; skipping",
-        error instanceof Error ? error.message : String(error),
-      );
-      return {
-        requested: args.claimIds.length,
-        embedded: 0,
-        skipped: args.claimIds.length,
-      };
-    }
-  },
+  handler: async (ctx, args) =>
+    await embedRows(args.claimIds, {
+      fetchRows: async () =>
+        await ctx.runQuery(getClaimsRef, {
+          claimIds: args.claimIds,
+        }),
+      toText: (claim) => claim.text,
+      toStoreEntry: (claim, embedding, model) => ({
+        claimId: claim.claimId,
+        embedding,
+        model,
+      }),
+      store: async (entries) =>
+        await ctx.runMutation(storeClaimEmbeddingsRef, { entries }),
+      label: "Claim",
+    }),
 });
 
 export const embedConcepts = internalAction({
   args: { conceptIds: v.array(v.id("concepts")) },
   returns: embeddingActionResultValidator,
-  handler: async (ctx, args) => {
-    try {
-      const concepts = await ctx.runQuery(getConceptsRef, {
-        conceptIds: args.conceptIds,
-      });
-      const pending = concepts.filter(
-        (concept) =>
-          !concept.embedding || concept.embeddingModel !== EMBEDDING_MODEL,
-      );
-      let embedded = 0;
-      for (const batch of chunkArray(pending, MAX_BATCH_SIZE)) {
-        const result = await fetchEmbeddingBatch({
-          texts: batch.map(conceptEmbeddingText),
-        });
-        if (!result) continue;
-        embedded += await ctx.runMutation(storeConceptEmbeddingsRef, {
-          entries: batch.map((concept, index) => ({
-            conceptId: concept.conceptId,
-            embedding: result.embeddings[index]!,
-            model: result.model,
-          })),
-        });
-      }
-      return {
-        requested: args.conceptIds.length,
-        embedded,
-        skipped: args.conceptIds.length - embedded,
-      };
-    } catch (error) {
-      console.warn(
-        "Concept embedding failed; skipping",
-        error instanceof Error ? error.message : String(error),
-      );
-      return {
-        requested: args.conceptIds.length,
-        embedded: 0,
-        skipped: args.conceptIds.length,
-      };
-    }
-  },
+  handler: async (ctx, args) =>
+    await embedRows(args.conceptIds, {
+      fetchRows: async () =>
+        await ctx.runQuery(getConceptsRef, {
+          conceptIds: args.conceptIds,
+        }),
+      toText: conceptEmbeddingText,
+      toStoreEntry: (concept, embedding, model) => ({
+        conceptId: concept.conceptId,
+        embedding,
+        model,
+      }),
+      store: async (entries) =>
+        await ctx.runMutation(storeConceptEmbeddingsRef, { entries }),
+      label: "Concept",
+    }),
 });
 
 export const backfillBatch = action({

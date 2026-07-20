@@ -1,7 +1,8 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
-import { conceptEmbeddingText } from "./shared/embeddingText";
+import { conceptEmbeddingText, needsEmbedding } from "./shared/embeddingText";
 
 const embeddingWriteValidator = v.object({
   embedding: v.array(v.float64()),
@@ -84,8 +85,8 @@ export const getBackfillPage = internalQuery({
         .query("claims")
         .withIndex("by_status", (q) => q.eq("status", "active"))
         .paginate({ cursor: args.cursor, numItems });
-      const pending = page.page.filter(
-        (claim) => !claim.embedding || claim.embeddingModel !== args.model,
+      const pending = page.page.filter((claim) =>
+        needsEmbedding(claim, args.model),
       );
       return {
         claimIds: pending.map((claim) => claim._id),
@@ -103,8 +104,8 @@ export const getBackfillPage = internalQuery({
       .query("concepts")
       .withIndex("by_missionRelevance", (q) => q.eq("missionRelevance", "on"))
       .paginate({ cursor: args.cursor, numItems });
-    const pending = page.page.filter(
-      (concept) => !concept.embedding || concept.embeddingModel !== args.model,
+    const pending = page.page.filter((concept) =>
+      needsEmbedding(concept, args.model),
     );
     return {
       claimIds: [],
@@ -128,6 +129,7 @@ export const getSweepCandidates = internalQuery({
   }),
   handler: async (ctx, args) => {
     const limit = Math.min(Math.max(Math.floor(args.limit), 1), 500);
+    // Equivalent to needsEmbedding; Convex query expressions cannot call JS helpers.
     const [claims, concepts] = await Promise.all([
       ctx.db
         .query("claims")
@@ -194,27 +196,43 @@ export const hydrateProbeMatches = internalQuery({
     }),
   ),
   handler: async (ctx, args) => {
-    const results = await Promise.all(
-      args.matches.map(async (match) => {
-        const claim = await ctx.db.get("claims", match.claimId);
-        if (!claim) return null;
+    const hydratedMatches = (
+      await Promise.all(
+        args.matches.map(async (match) => {
+          const claim = await ctx.db.get("claims", match.claimId);
+          return claim ? { claim, match } : null;
+        }),
+      )
+    ).filter((result): result is NonNullable<typeof result> => result !== null);
+
+    const conceptByName = new Map<string, Promise<Doc<"concepts"> | null>>();
+    const loadConcept = (name: string) => {
+      const cached = conceptByName.get(name);
+      if (cached) return cached;
+      const concept = ctx.db
+        .query("concepts")
+        .withIndex("by_name", (q) => q.eq("name", name))
+        .first();
+      conceptByName.set(name, concept);
+      return concept;
+    };
+
+    const sourceDetails = await Promise.all(
+      Array.from(
+        new Set(hydratedMatches.map(({ claim }) => claim.sourceId)),
+      ).map(async (sourceId) => {
         const [source, edges] = await Promise.all([
-          ctx.db.get("sources", claim.sourceId),
+          ctx.db.get("sources", sourceId),
           ctx.db
             .query("edges")
             .withIndex("by_from", (q) =>
-              q.eq("fromType", "source").eq("fromId", claim.sourceId),
+              q.eq("fromType", "source").eq("fromId", sourceId),
             )
             .filter((q) => q.eq(q.field("toType"), "concept"))
             .collect(),
         ]);
         const concepts = await Promise.all(
-          edges.map((edge) =>
-            ctx.db
-              .query("concepts")
-              .withIndex("by_name", (q) => q.eq("name", edge.toId))
-              .first(),
-          ),
+          edges.map((edge) => loadConcept(edge.toId)),
         );
         const domains = Array.from(
           new Set(
@@ -223,18 +241,29 @@ export const hydrateProbeMatches = internalQuery({
             ),
           ),
         ).toSorted();
-        return {
-          claimId: claim._id,
-          score: match.score,
-          text: claim.text,
-          sourceTitle: source?.title ?? "(untitled source)",
-          domains,
-        };
+        return [
+          sourceId,
+          {
+            sourceTitle: source?.title ?? "(untitled source)",
+            domains,
+          },
+        ] as const;
       }),
     );
-    return results.filter(
-      (result): result is NonNullable<typeof result> => result !== null,
-    );
+    const sourceDetailsById = new Map(sourceDetails);
+
+    return hydratedMatches.map(({ claim, match }) => {
+      const details = sourceDetailsById.get(claim.sourceId) ?? {
+        sourceTitle: "(untitled source)",
+        domains: [],
+      };
+      return {
+        claimId: claim._id,
+        score: match.score,
+        text: claim.text,
+        ...details,
+      };
+    });
   },
 });
 
@@ -249,17 +278,20 @@ export const storeClaimEmbeddings = internalMutation({
   },
   returns: v.number(),
   handler: async (ctx, args) => {
-    let stored = 0;
-    for (const entry of args.entries) {
-      const claim = await ctx.db.get("claims", entry.claimId);
-      if (!claim || claim.status !== "active") continue;
+    const rows = await Promise.all(
+      args.entries.map(async (entry) => ({
+        entry,
+        claim: await ctx.db.get("claims", entry.claimId),
+      })),
+    );
+    const eligible = rows.filter(({ claim }) => claim?.status === "active");
+    for (const { entry } of eligible) {
       await ctx.db.patch("claims", entry.claimId, {
         embedding: entry.embedding,
         embeddingModel: entry.model,
       });
-      stored++;
     }
-    return stored;
+    return eligible.length;
   },
 });
 
@@ -274,16 +306,21 @@ export const storeConceptEmbeddings = internalMutation({
   },
   returns: v.number(),
   handler: async (ctx, args) => {
-    let stored = 0;
-    for (const entry of args.entries) {
-      const concept = await ctx.db.get("concepts", entry.conceptId);
-      if (!concept || concept.missionRelevance !== "on") continue;
+    const rows = await Promise.all(
+      args.entries.map(async (entry) => ({
+        entry,
+        concept: await ctx.db.get("concepts", entry.conceptId),
+      })),
+    );
+    const eligible = rows.filter(
+      ({ concept }) => concept?.missionRelevance === "on",
+    );
+    for (const { entry } of eligible) {
       await ctx.db.patch("concepts", entry.conceptId, {
         embedding: entry.embedding,
         embeddingModel: entry.model,
       });
-      stored++;
     }
-    return stored;
+    return eligible.length;
   },
 });

@@ -4,6 +4,10 @@ import { describe, expect, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
+import {
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+} from "../convex/shared/embeddingText";
 import { modules } from "./modules";
 
 describe("mission concept-domain seed", () => {
@@ -192,8 +196,8 @@ describe("concept classification persistence", () => {
         missionRelevance: "on",
         classifiedAt: 1000,
         classifierModel: "old-model",
-        embedding: Array.from({ length: 1536 }, () => 0),
-        embeddingModel: "text-embedding-3-small",
+        embedding: Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0),
+        embeddingModel: EMBEDDING_MODEL,
         mentionCount: 1,
         hypothesisCount: 0,
         createdAt: 1000,

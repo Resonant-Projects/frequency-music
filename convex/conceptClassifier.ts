@@ -14,6 +14,7 @@ import {
 import { requireAuth } from "./auth";
 import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { MODELS } from "./llm";
+import { relevanceEmbeddingFields } from "./shared/embeddingText";
 
 const classificationValidator = v.object({
   conceptId: v.id("concepts"),
@@ -180,8 +181,7 @@ async function persistClassifications(
         missionRelevance: "unreviewed",
         relevanceRationale: `classifier proposed unknown domain: ${unknownDomains.join(", ")}`,
         classifierModel: args.model,
-        embedding: undefined,
-        embeddingModel: undefined,
+        ...relevanceEmbeddingFields("unreviewed", concept),
         updatedAt: now,
       });
       unreviewed++;
@@ -192,8 +192,7 @@ async function persistClassifications(
         missionRelevance: "unreviewed",
         relevanceRationale: "classifier returned no usable domain",
         classifierModel: args.model,
-        embedding: undefined,
-        embeddingModel: undefined,
+        ...relevanceEmbeddingFields("unreviewed", concept),
         updatedAt: Date.now(),
       });
       unreviewed++;
@@ -211,14 +210,7 @@ async function persistClassifications(
       relevanceRationale: classification.rationale.trim(),
       classifiedAt: now,
       classifierModel: args.model,
-      embedding:
-        classification.missionRelevance === "on"
-          ? concept.embedding
-          : undefined,
-      embeddingModel:
-        classification.missionRelevance === "on"
-          ? concept.embeddingModel
-          : undefined,
+      ...relevanceEmbeddingFields(classification.missionRelevance, concept),
       updatedAt: now,
     });
     if (

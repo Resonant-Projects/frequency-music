@@ -1,3 +1,6 @@
+export const EMBEDDING_MODEL = "text-embedding-3-small";
+export const EMBEDDING_DIMENSIONS = 1536;
+
 export type ConceptEmbeddingInput = {
   displayName: string;
   description?: string;
@@ -22,4 +25,23 @@ export function chunkArray<T>(items: readonly T[], size: number): T[][] {
     chunks.push(items.slice(index, index + size));
   }
   return chunks;
+}
+
+export function needsEmbedding(
+  row: { embedding?: unknown[]; embeddingModel?: string },
+  model: string,
+): boolean {
+  return !row.embedding || row.embeddingModel !== model;
+}
+
+export function relevanceEmbeddingFields(
+  missionRelevance: "on" | "off" | "unreviewed",
+  existing: { embedding?: number[]; embeddingModel?: string },
+): { embedding: number[] | undefined; embeddingModel: string | undefined } {
+  return missionRelevance === "on"
+    ? {
+        embedding: existing.embedding,
+        embeddingModel: existing.embeddingModel,
+      }
+    : { embedding: undefined, embeddingModel: undefined };
 }

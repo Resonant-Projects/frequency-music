@@ -9,6 +9,7 @@ import {
   agentReviewDraftPayloadValidator,
   recipeProtocolValidator,
 } from "./shared/draftPayloads";
+import { EMBEDDING_DIMENSIONS } from "./shared/embeddingText";
 import {
   claimCitationValidator,
   claimValidator,
@@ -426,7 +427,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 1536,
+      dimensions: EMBEDDING_DIMENSIONS,
       filterFields: ["status", "sourceId"],
     }),
 
@@ -865,7 +866,7 @@ export default defineSchema({
     .index("by_mentionCount", ["mentionCount"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 1536,
+      dimensions: EMBEDDING_DIMENSIONS,
       filterFields: ["missionRelevance", "domain"],
     })
     .searchIndex("search_concepts", {

@@ -2,6 +2,10 @@ import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
+import {
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+} from "../convex/shared/embeddingText";
 import { modules } from "./modules";
 
 afterEach(() => {
@@ -98,7 +102,7 @@ describe("embedding hygiene selection", () => {
         createdBy: "system",
         createdAt: 1000,
       });
-      const embedding = Array.from({ length: 1536 }, () => 0);
+      const embedding = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0);
       for (let ordinal = 0; ordinal < 2; ordinal++) {
         await ctx.db.insert("claims", {
           extractionId,
@@ -109,7 +113,7 @@ describe("embedding hygiene selection", () => {
           citations: [],
           status: "active",
           embedding,
-          embeddingModel: "text-embedding-3-small",
+          embeddingModel: EMBEDDING_MODEL,
           createdBy: "system",
           createdAt: 1000,
         });
@@ -131,7 +135,7 @@ describe("embedding hygiene selection", () => {
 
     const candidates = await t.query(
       internal.embeddingsStore.getSweepCandidates,
-      { limit: 1, model: "text-embedding-3-small" },
+      { limit: 1, model: EMBEDDING_MODEL },
     );
     expect(candidates.claimIds).toEqual([missingClaimId]);
   });
