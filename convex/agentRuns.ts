@@ -11,6 +11,7 @@ import {
 import { agentRunEventKindValidator, agentRunStatusValidator } from "./schema";
 import {
   AGENT_RUN_STATUSES,
+  isKnownGraphName,
   KNOWN_GRAPH_NAMES,
   normalizeTraceUrl,
   STALE_RUN_MS,
@@ -326,6 +327,9 @@ export const claimNextPending = internalMutation({
   returns: zodToConvex(claimedAgentRunZ.nullable()),
   handler: async (ctx, args) => {
     const now = Date.now();
+    if (args.graphName && !isKnownGraphName(args.graphName)) {
+      throw new Error(`Unknown graphName: ${args.graphName}`);
+    }
     const candidate = args.graphName
       ? await ctx.db
           .query("agentRuns")
@@ -337,9 +341,19 @@ export const claimNextPending = internalMutation({
       : await ctx.db
           .query("agentRuns")
           .withIndex("by_status_updatedAt", (q) => q.eq("status", "queued"))
+          .filter((q) =>
+            q.or(
+              ...KNOWN_GRAPH_NAMES.map((graphName) =>
+                q.eq(q.field("graphName"), graphName),
+              ),
+            ),
+          )
           .order("asc")
           .first();
     if (!candidate || candidate.status !== "queued") return null;
+    if (!isKnownGraphName(candidate.graphName)) {
+      throw new Error(`Unknown graphName: ${candidate.graphName}`);
+    }
 
     await ctx.db.patch(candidate._id, buildClaimPatch(args.workerId, now));
     await appendRunEvent(

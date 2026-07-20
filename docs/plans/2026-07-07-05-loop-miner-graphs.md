@@ -11,11 +11,11 @@
 
 **Why (session decisions Q8, Q9, Q10):** embeddings propose (cheap, exhaustive, reproducible) → symbolic features score novelty (co-mention *penalizes*) → LLM judges a shortlist. Judgment-over-alternatives work lives in LangGraph; mining is continuous graph enrichment with no review queue.
 
-**Tech Stack:** Bun, Convex actions (`ctx.vectorSearch`), LangGraph TS in `agent/`, LangSmith tracing (best-effort), existing worker (`agent/src/worker/runner.ts`).
+**Tech Stack:** Node 24 via Vite+, Convex actions (`ctx.vectorSearch`), LangGraph TS in `agent/`, LangSmith tracing (best-effort), existing worker (`agent/src/worker/runner.ts`).
 
 ## Global Constraints
 
-- `bunx convex codegen` deploys live. `cd agent && bunx tsc --noEmit` is the agent typegate.
+- Convex codegen deploys live and remains operator-gated. The current post-Vite+ agent typegate is `cd agent && vpx tsc --noEmit`; earlier `bunx tsc --noEmit` text in this plan predates that migration.
 - Agents write only through the plan-03 tool surface. The miner never touches `hypotheses`/`recipes`/`agentReviewDrafts`.
 - Every miner/hunter run is an `agentRuns` row with `agentRunEvents` (`node`, `decision`, `tool_call`) — the existing audit contract.
 - Model doctrine: Sonnet-class for judging. Never Llama.
@@ -58,8 +58,8 @@ returns: Array<{
 
 - [x] **Step 1:** Harness-test the pure scoring/pairing helpers (extract them pure; the vector search itself is action-only).
 - [x] **Step 2:** Implement; expose via agent-tool registry as `list_correspondence_candidates` (read).
-- [ ] **Step 3:** Codegen; run once manually via `bunx convex run` and eyeball the top-10 pairs (paste in PR); commit.
-  - Operator-gated: generated declarations were updated by hand in generated style; live codegen and the manual Convex run were intentionally not executed.
+- [ ] **Step 3:** Codegen; run once manually via `vpx convex run` and eyeball the top-10 pairs (paste in PR); commit.
+  - Operator-gated: `convex/_generated/api.d.ts` was hand-edited in generated style; codegen itself and the manual Convex run were intentionally not executed.
 
 ---
 
@@ -116,8 +116,8 @@ pick_targets (conjectured, oldest-evidence-first, ≤5) ──► per target:
 **Files:**
 - Modify: `convex/crons.ts` (enqueue miner daily, hunter daily offset; enqueue = insert queued `agentRuns` row per found-state worker contract)
 
-- [x] **Step 1:** Cron registration; codegen; commit.
-  - Offline completion: the cron uses existing generated `internal.agentRuns.enqueue`; prohibited live codegen was not run and no generated declaration changed.
+- [x] **Step 1:** Cron registration; generated declaration update; commit.
+  - Offline completion: the cron uses existing generated `internal.agentRuns.enqueue`; `convex/_generated/api.d.ts` was hand-edited in generated style, while codegen itself was intentionally not run.
 - [ ] **Step 2: Live gate.** Trigger one miner run via the worker. Verify: ≥1 and ≤20 correspondences written; each has statement, rationale, scores, run id, trace URL; run events tell a readable story. Paste run summary in PR.
   - Operator-gated: requires the deployed Convex backend and a healthy Proxmox worker.
 - [ ] **Step 3:** Trigger a second identical run: zero duplicate pairs (upsert merges). Trigger one hunter run: evidence appended to ≥1 conjecture, statuses recomputed correctly.

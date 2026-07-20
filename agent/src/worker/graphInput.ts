@@ -5,6 +5,7 @@
 // lets it be unit-tested without env/secrets or network access.
 
 import {
+  isKnownGraphName,
   KNOWN_GRAPH_NAMES,
   normalizeTraceUrl,
   TERMINAL_STATUS_OWNER,
@@ -12,7 +13,12 @@ import {
 } from "../../../convex/shared/agentContract";
 import type { ClaimedRun } from "../../../convex/shared/agentRunClaim";
 
-export { KNOWN_GRAPH_NAMES, TERMINAL_STATUS_OWNER, type KnownGraphName };
+export {
+  isKnownGraphName,
+  KNOWN_GRAPH_NAMES,
+  TERMINAL_STATUS_OWNER,
+  type KnownGraphName,
+};
 export { redactError } from "../shared/redactError.js";
 export type { ClaimedRun };
 
@@ -23,10 +29,6 @@ export const DEFAULT_WEEKLY_BRIEF_SEED =
   "Generate this week's research brief from the current Convex research state. " +
   "Follow the weekly-brief supervisor instructions and land the result as a " +
   "human-review draft. Do not publish or mutate research data directly.";
-
-export function isKnownGraphName(name: string): name is KnownGraphName {
-  return (KNOWN_GRAPH_NAMES as readonly string[]).includes(name);
-}
 
 export function resolveResearchLimit(
   input: unknown,
@@ -124,7 +126,7 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       graphName: "correspondence-miner",
       input: {
         agentRunId: claim.runId,
-        limit: resolveResearchLimit(claim.input, 20),
+        limit: Math.min(resolveResearchLimit(claim.input, 20), 20),
         ...(traceUrl ? { traceUrl } : {}),
       },
     };

@@ -37,6 +37,10 @@ export const KNOWN_GRAPH_NAMES = [
 ] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
 
+export function isKnownGraphName(name: string): name is KnownGraphName {
+  return (KNOWN_GRAPH_NAMES as readonly string[]).includes(name);
+}
+
 export function normalizeTraceUrl(value: unknown): string | undefined {
   if (typeof value !== "string" || !value) return undefined;
   try {

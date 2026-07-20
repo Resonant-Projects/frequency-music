@@ -23,9 +23,9 @@ import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from "./shared/embeddingText";
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
+const MAX_CANDIDATE_EXECUTION_LIMIT = 25;
 const VECTOR_MATCH_LIMIT = 32;
 const STRUCTURAL_EDGE_LIMIT = 100;
-const MAX_PAIR_PROPOSALS = 256;
 const MAX_SAMPLE_POOL = 12;
 const EVIDENCE_TARGET_SCAN_LIMIT = 500;
 
@@ -35,6 +35,7 @@ const semanticClaimValidator = zodToConvex(semanticClaimZ);
 const evidenceTargetValidator = zodToConvex(evidenceTargetZ);
 
 type Candidate = z.infer<typeof correspondenceCandidateBaseZ>;
+type RichCandidate = z.infer<typeof correspondenceCandidateZ>;
 
 type ProbeConcept = {
   conceptId: Id<"concepts">;
@@ -61,6 +62,10 @@ type HydratedMatch = {
 function clampLimit(limit: number | undefined, fallback = DEFAULT_LIMIT) {
   if (!limit || !Number.isFinite(limit)) return fallback;
   return Math.max(1, Math.min(Math.floor(limit), MAX_LIMIT));
+}
+
+export function clampCandidateGenerationLimit(limit: number | undefined) {
+  return Math.min(clampLimit(limit), MAX_CANDIDATE_EXECUTION_LIMIT);
 }
 
 function conceptDomains(concept: Doc<"concepts">): string[] {
@@ -128,7 +133,7 @@ const getCandidateSamplesRef = makeFunctionReference<
 const hydrateAgentCandidatesRef = makeFunctionReference<
   "query",
   { candidates: Candidate[] },
-  unknown[]
+  RichCandidate[]
 >("correspondenceCandidates:hydrateAgentCandidates");
 const generateCandidatesRef = makeFunctionReference<
   "action",
@@ -384,23 +389,28 @@ async function sampleClaimsForConcept(
       claim.embeddingModel === EMBEDDING_MODEL &&
       claim.embedding?.length === EMBEDDING_DIMENSIONS,
   );
-  const claims = [...preferred];
-  for (const sourceId of Array.from(sourceIds).slice(0, 12)) {
-    if (claims.length >= MAX_SAMPLE_POOL) break;
-    const sourceClaims = await ctx.db
-      .query("claims")
-      .withIndex("by_sourceId_status", (q) =>
-        q.eq("sourceId", sourceId as Id<"sources">).eq("status", "active"),
-      )
-      .take(3);
-    claims.push(
-      ...sourceClaims.filter(
+  const claimsBySource = await Promise.all(
+    Array.from(sourceIds)
+      .slice(0, 12)
+      .map((sourceId) =>
+        ctx.db
+          .query("claims")
+          .withIndex("by_sourceId_status", (q) =>
+            q.eq("sourceId", sourceId as Id<"sources">).eq("status", "active"),
+          )
+          .take(3),
+      ),
+  );
+  const claims = [
+    ...preferred,
+    ...claimsBySource.flatMap((sourceClaims) =>
+      sourceClaims.filter(
         (claim) =>
           claim.embeddingModel === EMBEDDING_MODEL &&
           claim.embedding?.length === EMBEDDING_DIMENSIONS,
       ),
-    );
-  }
+    ),
+  ];
   return Array.from(
     new Map(
       claims.map((claim) => [
@@ -482,6 +492,7 @@ export const generateCandidates = internalAction({
   },
   returns: v.array(candidateValidator),
   handler: async (ctx, args): Promise<Candidate[]> => {
+    const effectiveLimit = clampCandidateGenerationLimit(args.limit);
     const probe = await ctx.runQuery(getProbeConceptRef, {
       seedConceptId: args.seedConceptId,
     });
@@ -510,7 +521,9 @@ export const generateCandidates = internalAction({
           right.similarityScore - left.similarityScore ||
           left.pairKey.localeCompare(right.pairKey),
       )
-      .slice(0, MAX_PAIR_PROPOSALS)
+      // Bound every downstream per-proposal query to the requested output
+      // size, itself capped for worst-case per-pair action-budget safety.
+      .slice(0, effectiveLimit)
       .map((proposal) => ({
         ...proposal,
         conceptAId: proposal.conceptAId as Id<"concepts">,
@@ -561,7 +574,7 @@ export const generateCandidates = internalAction({
           correspondenceExists: true,
         }),
       })),
-      clampLimit(args.limit),
+      effectiveLimit,
     );
     return ranked.map((candidate) => ({
       conceptAId: candidate.conceptAId,
@@ -636,6 +649,7 @@ export const listForAgent = internalAction({
     limit: v.optional(v.number()),
     seedConceptId: v.optional(v.id("concepts")),
   },
+  returns: v.array(richCandidateValidator),
   handler: async (ctx, args) => {
     const candidates = await ctx.runAction(generateCandidatesRef, args);
     return await ctx.runQuery(hydrateAgentCandidatesRef, { candidates });

@@ -86,6 +86,20 @@ describe("agentRuns.claimNextPending", () => {
     expect(first).not.toBeNull();
     expect(second).toBeNull();
   });
+
+  test("skips unknown queued graphs without starving registered work", async () => {
+    const t = convexTest(schema, modules);
+    const unknownId = await seedRun(t, "queued", 500, "unknown-graph");
+    const registeredId = await seedRun(t, "queued", 1000);
+
+    const claimed = await t.mutation(internal.agentRuns.claimNextPending, {
+      workerId: "worker-a",
+    });
+
+    expect(claimed?.runId).toBe(registeredId);
+    const unknown = await t.run((ctx) => ctx.db.get(unknownId));
+    expect(unknown?.status).toBe("queued");
+  });
 });
 
 describe("agentRuns.enqueue", () => {
