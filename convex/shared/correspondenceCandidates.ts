@@ -109,6 +109,26 @@ type RankedCandidateInput = {
   correspondenceExists: boolean;
 };
 
+type DraftableCorrespondenceRank = {
+  status: string;
+  similarityScore?: number;
+  noveltyScore?: number;
+  pairKey: string;
+};
+
+export function compareDraftableCorrespondences(
+  left: DraftableCorrespondenceRank,
+  right: DraftableCorrespondenceRank,
+): number {
+  const statusRank = (status: string) => (status === "evidenced" ? 0 : 1);
+  return (
+    statusRank(left.status) - statusRank(right.status) ||
+    (right.similarityScore ?? 0) * (right.noveltyScore ?? 0) -
+      (left.similarityScore ?? 0) * (left.noveltyScore ?? 0) ||
+    left.pairKey.localeCompare(right.pairKey)
+  );
+}
+
 function normalizedDomains(domains: readonly string[]): string[] {
   return Array.from(new Set(domains)).sort();
 }

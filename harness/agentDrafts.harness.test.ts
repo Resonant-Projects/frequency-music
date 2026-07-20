@@ -253,10 +253,10 @@ describe("agentDrafts pending hypothesis WIP cap", () => {
       status: "pending_review",
     });
     await expect(
-      t.query(api.agentDrafts.countPending, { kind: "hypothesis_draft" }),
+      t.query(internal.agentDrafts.countPending, { kind: "hypothesis_draft" }),
     ).resolves.toBe(3);
     await expect(
-      t.query(api.agentDrafts.countPending, { kind: "recipe_draft" }),
+      t.query(internal.agentDrafts.countPending, { kind: "recipe_draft" }),
     ).resolves.toBe(1);
 
     await asSystem.mutation(api.agentDrafts.approve, {
@@ -271,7 +271,7 @@ describe("agentDrafts pending hypothesis WIP cap", () => {
 describe("agentDrafts draftable correspondence read", () => {
   test("excludes targets with an existing hypothesis or pending draft", async () => {
     const t = convexTest(schema, modules);
-    const { eligibleId } = await t.run(async (ctx) => {
+    const { agentRunId, eligibleId, pendingId } = await t.run(async (ctx) => {
       const conceptAId = await ctx.db.insert("concepts", {
         name: "modal spacing",
         displayName: "Modal spacing",
@@ -347,13 +347,30 @@ describe("agentDrafts draftable correspondence read", () => {
         createdAt: 1,
         updatedAt: 1,
       });
-      return { eligibleId: draftableId };
+      return { agentRunId, eligibleId: draftableId, pendingId };
     });
 
-    const rows = await t.query(api.agentDrafts.listDraftableCorrespondences, {
-      limit: 20,
-    });
+    const rows = await t.query(
+      internal.agentDrafts.listDraftableCorrespondences,
+      {
+        limit: 20,
+      },
+    );
     expect(rows.map((row) => row.correspondenceId)).toEqual([eligibleId]);
+
+    await expect(
+      t.mutation(internal.agentDrafts.createFromAgentRun, {
+        agentRunId,
+        draft: {
+          kind: "hypothesis_draft",
+          title: "Duplicate target",
+          summary: "Must not enter the review queue.",
+          candidateIds: [pendingId],
+          needsReview: true,
+          payload: { ...hypothesisPayload, correspondenceId: pendingId },
+        },
+      }),
+    ).rejects.toThrow(/DraftTargetUnavailable/);
   });
 });
 

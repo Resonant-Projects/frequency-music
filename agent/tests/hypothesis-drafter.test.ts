@@ -65,6 +65,17 @@ describe("hypothesis drafter capacity", () => {
       expect.anything(),
     );
   });
+
+  test("fails closed when the capacity tool returns a malformed count", async () => {
+    const callTool = vi.fn(async () => ({ count: 0 }));
+    await expect(
+      createCheckCapacityNode(callTool)({ agentRunId: "run-malformed" }),
+    ).rejects.toThrow(/invalid count/);
+    expect(callTool).not.toHaveBeenCalledWith(
+      "listDraftableCorrespondences",
+      expect.anything(),
+    );
+  });
 });
 
 describe("hypothesis drafter target selection", () => {
@@ -113,7 +124,6 @@ describe("hypothesis drafter payload contract", () => {
       rationale: "Claim claim-1 reports the same directional relationship.",
       whyThisMatters:
         "It turns the correspondence into one controllable studio variable.",
-      concepts: ["modal spacing", "auditory roughness"],
       confidence: 0.72,
     });
 
@@ -122,6 +132,7 @@ describe("hypothesis drafter payload contract", () => {
       sourceIds: ["source-1"],
       extractionIds: ["extraction-1"],
       correspondenceId: "corr-eligible",
+      concepts: ["modal spacing", "auditory roughness"],
     });
     expect(reviewDraft.kind).toBe("hypothesis_draft");
     expect(reviewDraft.needsReview).toBe(true);

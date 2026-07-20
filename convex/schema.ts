@@ -278,6 +278,7 @@ export default defineSchema({
       "updatedAt",
     ])
     .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_status_kind_updatedAt", ["status", "kind", "updatedAt"])
     .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
 
   // ==========================================================================
@@ -512,7 +513,7 @@ export default defineSchema({
     .index("by_visibility_updatedAt", ["visibility", "updatedAt"]),
 
   // ==========================================================================
-  // HYPOTHESES - Testable claims derived from extractions
+  // HYPOTHESES - Testable claims derived from extractions or correspondences
   // ==========================================================================
   hypotheses: defineTable({
     title: v.string(),

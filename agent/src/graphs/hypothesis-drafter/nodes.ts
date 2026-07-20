@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PENDING_DRAFT_CAP } from "../../../../convex/shared/agentContract.js";
+import { compareDraftableCorrespondences } from "../../../../convex/shared/correspondenceCandidates.js";
 import { hypothesisDraftPayloadZ } from "../../../../convex/shared/draftPayloads.js";
 import { redactError } from "../../shared/redactError.js";
 import type {
@@ -72,8 +73,10 @@ export function createCheckCapacityNode(callTool: ToolCaller = callConvex) {
     const rawCount = await callTool("countPendingDrafts", {
       kind: "hypothesis_draft",
     });
-    const pendingCount =
-      typeof rawCount === "number" && Number.isFinite(rawCount) ? rawCount : 0;
+    if (typeof rawCount !== "number" || !Number.isFinite(rawCount)) {
+      throw new Error("countPendingDrafts returned an invalid count");
+    }
+    const pendingCount = rawCount;
     const capReached = pendingCount >= PENDING_DRAFT_CAP;
     const auditEvents = await appendRemoteAuditEvent(
       callTool,
@@ -106,13 +109,7 @@ export function selectDraftTarget(candidates: DraftableCorrespondence[]) {
       (candidate) =>
         !candidate.hasExistingHypothesis && !candidate.hasPendingDraft,
     )
-    .sort(
-      (left, right) =>
-        (left.status === "evidenced" ? 0 : 1) -
-          (right.status === "evidenced" ? 0 : 1) ||
-        targetScore(right) - targetScore(left) ||
-        left.pairKey.localeCompare(right.pairKey),
-    );
+    .sort(compareDraftableCorrespondences);
   return { target: ranked[0], runnerUp: ranked[1] };
 }
 
@@ -228,6 +225,13 @@ export function buildReviewDraft(
 ) {
   const payload = hypothesisDraftPayloadZ.parse({
     ...output,
+    concepts: Array.from(
+      new Set([
+        target.conceptA.name,
+        target.conceptB.name,
+        ...(output.concepts ?? []),
+      ]),
+    ),
     sourceIds: Array.from(
       new Set(target.evidenceClaims.map((claim) => claim.sourceId)),
     ),

@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import {
+  internalQuery,
   internalMutation,
   mutation,
   query,
@@ -18,6 +19,7 @@ import {
 } from "./agentDraftPromotion";
 import { completeReviewedRunIfReady } from "./agentRuns";
 import { PENDING_DRAFT_CAP } from "./shared/agentContract";
+import { compareDraftableCorrespondences } from "./shared/correspondenceCandidates";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
 const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
@@ -30,9 +32,11 @@ async function countPendingDraftsByKind(
 ) {
   const rows = await ctx.db
     .query("agentReviewDrafts")
-    .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
+    .withIndex("by_status_kind_updatedAt", (q) =>
+      q.eq("status", "pending_review").eq("kind", kind),
+    )
     .collect();
-  return rows.filter((row) => row.kind === kind).length;
+  return rows.length;
 }
 
 function redactOperationalSecrets(value: string) {
@@ -209,6 +213,42 @@ export const createFromAgentRun = internalMutation({
         message: `Pending hypothesis drafts are capped at ${PENDING_DRAFT_CAP}`,
       });
     }
+    if (
+      row.kind === "hypothesis_draft" &&
+      "payload" in row &&
+      row.payload &&
+      "statement" in row.payload &&
+      row.payload.correspondenceId
+    ) {
+      const correspondenceId = row.payload.correspondenceId;
+      const [existingHypothesis, pendingDrafts] = await Promise.all([
+        ctx.db
+          .query("hypotheses")
+          .withIndex("by_correspondenceId", (q) =>
+            q.eq("correspondenceId", correspondenceId),
+          )
+          .first(),
+        ctx.db
+          .query("agentReviewDrafts")
+          .withIndex("by_status_kind_updatedAt", (q) =>
+            q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
+          )
+          .collect(),
+      ]);
+      const pendingTarget = pendingDrafts.some(
+        (draft) =>
+          draft.payload &&
+          "statement" in draft.payload &&
+          draft.payload.correspondenceId === correspondenceId,
+      );
+      if (existingHypothesis || pendingTarget) {
+        throw new ConvexError({
+          code: "DraftTargetUnavailable",
+          message:
+            "Correspondence already has a hypothesis or pending hypothesis draft",
+        });
+      }
+    }
 
     const draftId = await ctx.db.insert("agentReviewDrafts", row);
     const now = Date.now();
@@ -321,7 +361,7 @@ export const countPendingPublic = query({
 });
 
 /** Kind-specific pending count used by WIP-capped agent graphs. */
-export const countPending = query({
+export const countPending = internalQuery({
   args: {
     kind: v.union(v.literal("hypothesis_draft"), v.literal("recipe_draft")),
   },
@@ -333,14 +373,16 @@ export const countPending = query({
  * Existing hypotheses and pending drafts are excluded at the read boundary;
  * the graph repeats those checks defensively before selecting a target.
  */
-export const listDraftableCorrespondences = query({
+export const listDraftableCorrespondences = internalQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 20), 20));
     const pendingDrafts = await ctx.db
       .query("agentReviewDrafts")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
-      .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT);
+      .withIndex("by_status_kind_updatedAt", (q) =>
+        q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
+      )
+      .collect();
     const pendingCorrespondenceIds = new Set(
       pendingDrafts.flatMap((draft) => {
         if (
@@ -364,16 +406,9 @@ export const listDraftableCorrespondences = query({
         .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
         .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT),
     ]);
-    const ranked = [...evidenced, ...conjectured].toSorted((left, right) => {
-      const statusRank = (status: typeof left.status) =>
-        status === "evidenced" ? 0 : 1;
-      return (
-        statusRank(left.status) - statusRank(right.status) ||
-        (right.similarityScore ?? 0) * (right.noveltyScore ?? 0) -
-          (left.similarityScore ?? 0) * (left.noveltyScore ?? 0) ||
-        left._id.localeCompare(right._id)
-      );
-    });
+    const ranked = [...evidenced, ...conjectured].toSorted(
+      compareDraftableCorrespondences,
+    );
     const selected = [];
     for (const row of ranked) {
       if (selected.length >= limit) break;
