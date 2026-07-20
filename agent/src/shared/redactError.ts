@@ -9,5 +9,7 @@ export function redactError(error: unknown): string {
       /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
       "$1[REDACTED]",
     )
-    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
+    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]")
+    .replaceAll(/(bearer\s+)[\w.~+/-]+=*/gi, "$1[REDACTED]")
+    .replaceAll(/(\/\/[^\s/:@]+:)[^\s@]+(@)/g, "$1[REDACTED]$2");
 }
