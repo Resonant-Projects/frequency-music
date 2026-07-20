@@ -180,6 +180,8 @@ async function persistClassifications(
         missionRelevance: "unreviewed",
         relevanceRationale: `classifier proposed unknown domain: ${unknownDomains.join(", ")}`,
         classifierModel: args.model,
+        embedding: undefined,
+        embeddingModel: undefined,
         updatedAt: now,
       });
       unreviewed++;
@@ -190,6 +192,8 @@ async function persistClassifications(
         missionRelevance: "unreviewed",
         relevanceRationale: "classifier returned no usable domain",
         classifierModel: args.model,
+        embedding: undefined,
+        embeddingModel: undefined,
         updatedAt: Date.now(),
       });
       unreviewed++;
@@ -207,6 +211,14 @@ async function persistClassifications(
       relevanceRationale: classification.rationale.trim(),
       classifiedAt: now,
       classifierModel: args.model,
+      embedding:
+        classification.missionRelevance === "on"
+          ? concept.embedding
+          : undefined,
+      embeddingModel:
+        classification.missionRelevance === "on"
+          ? concept.embeddingModel
+          : undefined,
       updatedAt: now,
     });
     if (

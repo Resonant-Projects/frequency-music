@@ -120,6 +120,43 @@ export const getBackfillPage = internalQuery({
   },
 });
 
+export const getSweepCandidates = internalQuery({
+  args: { limit: v.number(), model: v.string() },
+  returns: v.object({
+    claimIds: v.array(v.id("claims")),
+    conceptIds: v.array(v.id("concepts")),
+  }),
+  handler: async (ctx, args) => {
+    const limit = Math.min(Math.max(Math.floor(args.limit), 1), 500);
+    const [claims, concepts] = await Promise.all([
+      ctx.db
+        .query("claims")
+        .withIndex("by_status", (q) => q.eq("status", "active"))
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("embedding"), undefined),
+            q.neq(q.field("embeddingModel"), args.model),
+          ),
+        )
+        .take(limit),
+      ctx.db
+        .query("concepts")
+        .withIndex("by_missionRelevance", (q) => q.eq("missionRelevance", "on"))
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("embedding"), undefined),
+            q.neq(q.field("embeddingModel"), args.model),
+          ),
+        )
+        .take(limit),
+    ]);
+    return {
+      claimIds: claims.map((claim) => claim._id),
+      conceptIds: concepts.map((concept) => concept._id),
+    };
+  },
+});
+
 export const getProbeClaim = internalQuery({
   args: { claimId: v.id("claims") },
   returns: v.union(

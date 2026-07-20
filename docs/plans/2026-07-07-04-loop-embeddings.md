@@ -115,7 +115,7 @@ Given a claim id (or free text), run `ctx.vectorSearch` (via a small internal ac
 
 - [ ] **Step 1:** Implement; run against a hand-picked cymatics claim; sanity-check neighbors by eye (expect: acoustics/wave-physics claims near; ASR noise absent because unembedded).
 - Operator-gated: requires deploy + `OPENAI_API_KEY`.
-- [ ] **Step 2:** Commit.
+- [x] **Step 2:** Commit.
 
 ---
 

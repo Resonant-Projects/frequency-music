@@ -219,6 +219,11 @@ const getBackfillPageRef = makeFunctionReference<
   },
   BackfillPage
 >("embeddingsStore:getBackfillPage");
+const getSweepCandidatesRef = makeFunctionReference<
+  "query",
+  { limit: number; model: string },
+  { claimIds: Id<"claims">[]; conceptIds: Id<"concepts">[] }
+>("embeddingsStore:getSweepCandidates");
 const storeClaimEmbeddingsRef = makeFunctionReference<
   "mutation",
   {
@@ -422,33 +427,23 @@ export const sweepMissingEmbeddings = internalAction({
     conceptsScheduled: v.number(),
   }),
   handler: async (ctx) => {
-    const [claimPage, conceptPage] = await Promise.all([
-      ctx.runQuery(getBackfillPageRef, {
-        kind: "claims",
-        cursor: null,
-        batchSize: 500,
-        model: EMBEDDING_MODEL,
-      }),
-      ctx.runQuery(getBackfillPageRef, {
-        kind: "concepts",
-        cursor: null,
-        batchSize: 500,
-        model: EMBEDDING_MODEL,
-      }),
-    ]);
-    if (claimPage.claimIds.length > 0) {
+    const candidates = await ctx.runQuery(getSweepCandidatesRef, {
+      limit: 500,
+      model: EMBEDDING_MODEL,
+    });
+    if (candidates.claimIds.length > 0) {
       await ctx.scheduler.runAfter(0, embedClaimsRef, {
-        claimIds: claimPage.claimIds,
+        claimIds: candidates.claimIds,
       });
     }
-    if (conceptPage.conceptIds.length > 0) {
+    if (candidates.conceptIds.length > 0) {
       await ctx.scheduler.runAfter(0, embedConceptsRef, {
-        conceptIds: conceptPage.conceptIds,
+        conceptIds: candidates.conceptIds,
       });
     }
     return {
-      claimsScheduled: claimPage.claimIds.length,
-      conceptsScheduled: conceptPage.conceptIds.length,
+      claimsScheduled: candidates.claimIds.length,
+      conceptsScheduled: candidates.conceptIds.length,
     };
   },
 });

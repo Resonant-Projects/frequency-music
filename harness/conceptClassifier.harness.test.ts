@@ -172,6 +172,53 @@ describe("concept classification persistence", () => {
     });
   });
 
+  test("clears stored embeddings when a concept is forced off-mission", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const conceptId = await t.run(async (ctx) => {
+      await ctx.db.insert("conceptDomains", {
+        name: "cymatics",
+        status: "known",
+        introducedBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      return await ctx.db.insert("concepts", {
+        name: "embedded-concept",
+        displayName: "Embedded concept",
+        aliases: [],
+        domain: "cymatics",
+        domains: ["cymatics"],
+        missionRelevance: "on",
+        classifiedAt: 1000,
+        classifierModel: "old-model",
+        embedding: Array.from({ length: 1536 }, () => 0),
+        embeddingModel: "text-embedding-3-small",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+    });
+
+    await asSystem.mutation(api.conceptClassifier.writeClassifications, {
+      classifications: [
+        {
+          conceptId,
+          domains: ["cymatics"],
+          missionRelevance: "off",
+          rationale: "Incidental to the research program.",
+        },
+      ],
+      model: "test-model",
+      force: true,
+    });
+    const concept = await t.run((ctx) => ctx.db.get("concepts", conceptId));
+    expect(concept?.missionRelevance).toBe("off");
+    expect(concept?.embedding).toBeUndefined();
+    expect(concept?.embeddingModel).toBeUndefined();
+  });
+
   test("assigns only registered domains and stages unknown proposals", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
