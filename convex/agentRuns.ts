@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { zodToConvex } from "convex-helpers/server/zod4";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -14,6 +15,7 @@ import {
   type AgentRunEventKind,
   type AgentRunStatus,
 } from "./shared/agentContract";
+import { claimedAgentRunZ } from "./shared/agentRunClaim";
 import { requireAuth } from "./auth";
 
 const agentRunStatuses = AGENT_RUN_STATUSES;
@@ -322,6 +324,7 @@ export const enqueue = internalMutation({
 // prevents a two-worker future from double-running the same run.
 export const claimNextPending = internalMutation({
   args: { workerId: v.string(), graphName: v.optional(v.string()) },
+  returns: zodToConvex(claimedAgentRunZ.nullable()),
   handler: async (ctx, args) => {
     const now = Date.now();
     const candidate = args.graphName

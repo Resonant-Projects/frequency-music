@@ -240,26 +240,50 @@ describe("correspondence pair identity and classification gates", () => {
 });
 
 describe("correspondence evidence target ordering", () => {
-  test("returns conjectures by oldest creation time without a preselection window", async () => {
+  test("returns conjectures by oldest evidence even after a human status reset", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);
-    const olderPair = await seedValidPair(t, "-older");
-    const newerPair = await seedValidPair(t, "-newer");
-    const newer = await upsertAsAgent(
+    const olderCreatedPair = await seedValidPair(t, "-older-created");
+    const newerCreatedPair = await seedValidPair(t, "-newer-created");
+    const [newerEvidenceClaimId, olderEvidenceClaimId] = await Promise.all([
+      seedClaim(t, 20),
+      seedClaim(t, 21),
+    ]);
+    const newerCreated = await upsertAsAgent(
       t,
       agentRunId,
-      newerPair.conceptAId,
-      newerPair.conceptBId,
+      newerCreatedPair.conceptAId,
+      newerCreatedPair.conceptBId,
     );
-    const older = await upsertAsAgent(
+    const olderCreated = await upsertAsAgent(
       t,
       agentRunId,
-      olderPair.conceptAId,
-      olderPair.conceptBId,
+      olderCreatedPair.conceptAId,
+      olderCreatedPair.conceptBId,
     );
     await t.run(async (ctx) => {
-      await ctx.db.patch(older.id, { createdAt: 1000 });
-      await ctx.db.patch(newer.id, { createdAt: 2000 });
+      await ctx.db.patch(olderCreated.id, {
+        createdAt: 1000,
+        evidence: [
+          {
+            claimId: newerEvidenceClaimId,
+            stance: "supports",
+            addedBy: "human",
+            addedAt: 9000,
+          },
+        ],
+      });
+      await ctx.db.patch(newerCreated.id, {
+        createdAt: 2000,
+        evidence: [
+          {
+            claimId: olderEvidenceClaimId,
+            stance: "supports",
+            addedBy: "human",
+            addedAt: 5000,
+          },
+        ],
+      });
     });
 
     const targets = await t.query(
@@ -268,8 +292,11 @@ describe("correspondence evidence target ordering", () => {
     );
 
     expect(targets.map((target) => target.correspondenceId)).toEqual([
-      older.id,
-      newer.id,
+      newerCreated.id,
+      olderCreated.id,
+    ]);
+    expect(targets.map((target) => target.lastEvidenceAt)).toEqual([
+      5000, 9000,
     ]);
   });
 });

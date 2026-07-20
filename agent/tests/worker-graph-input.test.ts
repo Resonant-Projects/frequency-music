@@ -16,8 +16,27 @@ import {
   summarizeNodeUpdate,
   TERMINAL_STATUS_OWNER,
 } from "../src/worker/graphInput";
+import { claimedAgentRunZ } from "../../convex/shared/agentRunClaim";
 
 describe("worker graph-input mapping", () => {
+  test("shared claimed-run contract round-trips worker provenance", () => {
+    expect(
+      claimedAgentRunZ.parse({
+        runId: "run_contract",
+        graphName: "correspondence-miner",
+        input: { limit: 20 },
+        traceUrl: "https://trace.example/run_contract",
+        status: "running",
+        workerId: "worker-a",
+        startedAt: 123,
+      }),
+    ).toMatchObject({
+      runId: "run_contract",
+      traceUrl: "https://trace.example/run_contract",
+      status: "running",
+    });
+  });
+
   test("recognizes the four registered graphs", () => {
     expect(isKnownGraphName("research-pipeline")).toBe(true);
     expect(isKnownGraphName("weekly-brief")).toBe(true);

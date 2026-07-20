@@ -79,6 +79,18 @@ describe("correspondence miner judge schema", () => {
     );
     expect(decision.supportingClaimIds).toEqual([]);
   });
+
+  test("does not treat a confidence caveat as supporting evidence", () => {
+    const decision = buildMinerDecision(candidate, {
+      accept: true,
+      statement: "A specific prediction involving claim-a.",
+      rationaleMd: "The rationale does not cite an addressable sample claim.",
+      confidenceNote: "Caveat: claim-b may point in another direction.",
+    });
+
+    expect(decision.verdict.accept).toBe(false);
+    expect(decision.supportingClaimIds).toEqual([]);
+  });
 });
 
 describe("correspondence miner write node", () => {

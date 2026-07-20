@@ -46,7 +46,7 @@ export function buildMinerDecision(
 ): MinerDecision {
   const supportingClaimIds = citedSampleClaimIds(
     candidate,
-    `${verdict.statement}\n${verdict.rationaleMd}\n${verdict.confidenceNote}`,
+    verdict.rationaleMd,
   );
   return {
     candidate,

@@ -9,8 +9,11 @@ import {
   TERMINAL_STATUS_OWNER,
   type KnownGraphName,
 } from "../../../convex/shared/agentContract";
+import type { ClaimedRun } from "../../../convex/shared/agentRunClaim";
 
 export { KNOWN_GRAPH_NAMES, TERMINAL_STATUS_OWNER, type KnownGraphName };
+export { redactError } from "../shared/redactError.js";
+export type { ClaimedRun };
 
 export const DEFAULT_RESEARCH_LIMIT = 10;
 export const MAX_RESEARCH_LIMIT = 100;
@@ -51,13 +54,6 @@ export function buildWeeklyBriefMessages(input: unknown): unknown[] {
   }
   return [{ role: "user", content: DEFAULT_WEEKLY_BRIEF_SEED }];
 }
-
-export type ClaimedRun = {
-  runId: string;
-  graphName: string;
-  input?: unknown;
-  traceUrl?: string;
-};
 
 export type ResearchPipelineGraphInput = {
   runId: string;
@@ -147,16 +143,4 @@ export function summarizeNodeUpdate(
       ? Object.keys(update as Record<string, unknown>)
       : [];
   return { node, keys };
-}
-
-// Redact obvious secret material from an error before it is logged or sent to
-// the audit surface. Mirrors the redaction in research-pipeline nodes.ts.
-export function redactError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return message
-    .replaceAll(
-      /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
-      "$1[REDACTED]",
-    )
-    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }

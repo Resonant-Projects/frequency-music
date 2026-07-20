@@ -658,23 +658,38 @@ export const listEvidenceTargets = internalQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(evidenceTargetValidator),
   handler: async (ctx, args) => {
+    const limit = Math.min(clampLimit(args.limit, 5), 5);
     const rows = await ctx.db
       .query("correspondences")
-      .withIndex("by_status_createdAt", (q) => q.eq("status", "conjectured"))
-      .order("asc")
-      .take(Math.min(clampLimit(args.limit, 5), 5));
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
+      .collect();
+    const lastEvidenceAt = (row: (typeof rows)[number]) =>
+      row.evidence.reduce<number | undefined>(
+        (latest, entry) => Math.max(latest ?? 0, entry.addedAt),
+        undefined,
+      );
+    const selected = rows
+      .toSorted((left, right) => {
+        const leftEvidence = lastEvidenceAt(left);
+        const rightEvidence = lastEvidenceAt(right);
+        if (leftEvidence === undefined && rightEvidence !== undefined)
+          return -1;
+        if (leftEvidence !== undefined && rightEvidence === undefined) return 1;
+        return (
+          (leftEvidence ?? 0) - (rightEvidence ?? 0) ||
+          left.createdAt - right.createdAt ||
+          left._id.localeCompare(right._id)
+        );
+      })
+      .slice(0, limit);
     return (
       await Promise.all(
-        rows.map(async (row) => {
+        selected.map(async (row) => {
           const [conceptA, conceptB] = await Promise.all([
             ctx.db.get("concepts", row.conceptAId),
             ctx.db.get("concepts", row.conceptBId),
           ]);
           if (!conceptA || !conceptB) return null;
-          const lastEvidenceAt = row.evidence.reduce<number | undefined>(
-            (latest, entry) => Math.max(latest ?? 0, entry.addedAt),
-            undefined,
-          );
           const describe = (concept: Doc<"concepts">) => ({
             id: concept._id,
             name: concept.name,
@@ -688,7 +703,7 @@ export const listEvidenceTargets = internalQuery({
             statement: row.statement,
             rationaleMd: row.rationaleMd,
             existingClaimIds: row.evidence.map((entry) => entry.claimId),
-            lastEvidenceAt,
+            lastEvidenceAt: lastEvidenceAt(row),
             conceptA: describe(conceptA),
             conceptB: describe(conceptB),
           };

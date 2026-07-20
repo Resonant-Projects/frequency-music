@@ -462,7 +462,6 @@ export default defineSchema({
   })
     .index("by_pairKey", ["pairKey"])
     .index("by_status_updatedAt", ["status", "updatedAt"])
-    .index("by_status_createdAt", ["status", "createdAt"])
     .index("by_conceptAId", ["conceptAId"])
     .index("by_conceptBId", ["conceptBId"]),
 

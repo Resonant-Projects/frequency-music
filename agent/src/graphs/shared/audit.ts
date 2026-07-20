@@ -1,5 +1,6 @@
 import type { AgentRunEventKind } from "../../../../convex/shared/agentContract.js";
 import type { AgentToolName } from "../../../../convex/shared/agentToolArgs.js";
+import { redactError } from "../../shared/redactError.js";
 
 export type ToolCaller = (
   name: AgentToolName,
@@ -19,16 +20,6 @@ function localEvent(
   payload?: unknown,
 ): AgentAuditEvent {
   return { kind, message, payload, createdAt: new Date().toISOString() };
-}
-
-function redactedError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return message
-    .replaceAll(
-      /((?:api[_-]?key|secret|token|password|passwd)\s*[=:]\s*)[^\s"'}]+/gi,
-      "$1[REDACTED]",
-    )
-    .replaceAll(/(PVEAPIToken=)[^\s"'}]+/gi, "$1[REDACTED]");
 }
 
 export async function appendRemoteAuditEvent(
@@ -52,7 +43,7 @@ export async function appendRemoteAuditEvent(
     return [
       event,
       localEvent("error", "Failed to append remote agent-run audit event", {
-        message: redactedError(error),
+        message: redactError(error),
       }),
     ];
   }
