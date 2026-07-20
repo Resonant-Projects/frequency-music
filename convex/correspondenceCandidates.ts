@@ -84,7 +84,7 @@ function describeConcept(concept: Doc<"concepts">) {
 const getProbeConceptRef = makeFunctionReference<
   "query",
   { seedConceptId?: Id<"concepts"> },
-  ProbeConcept | null
+  { probe: ProbeConcept | null; staleConceptIds: Id<"concepts">[] }
 >("correspondenceCandidates:getProbeConcept");
 const markConceptProbedRef = makeFunctionReference<
   "mutation",
@@ -146,45 +146,70 @@ const embedTextsRef = makeFunctionReference<
   { embeddings: number[][]; model: string }
 >("embeddings:embedTexts");
 
+const PROBE_SCAN_LIMIT = 10;
+
 export const getProbeConcept = internalQuery({
   args: { seedConceptId: v.optional(v.id("concepts")) },
-  returns: v.union(
-    v.object({
-      conceptId: v.id("concepts"),
-      domains: v.array(v.string()),
-      embedding: v.array(v.float64()),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args): Promise<ProbeConcept | null> => {
-    const concept = args.seedConceptId
-      ? await ctx.db.get("concepts", args.seedConceptId)
-      : await ctx.db
-          .query("concepts")
-          .withIndex("by_missionRelevance_lastProbedAt", (q) =>
-            q.eq("missionRelevance", "on"),
-          )
-          .filter((q) =>
-            q.and(
-              q.neq(q.field("embedding"), undefined),
-              q.eq(q.field("embeddingModel"), EMBEDDING_MODEL),
-            ),
-          )
-          .order("asc")
-          .first();
-    if (
-      !concept ||
-      concept.missionRelevance !== "on" ||
-      concept.embeddingModel !== EMBEDDING_MODEL ||
-      concept.embedding?.length !== EMBEDDING_DIMENSIONS
-    ) {
-      return null;
-    }
-    return {
+  returns: v.object({
+    probe: v.union(
+      v.object({
+        conceptId: v.id("concepts"),
+        domains: v.array(v.string()),
+        embedding: v.array(v.float64()),
+      }),
+      v.null(),
+    ),
+    // Selected-but-unusable rows (e.g. wrong-length embedding). The caller
+    // must advance their lastProbedAt cursor or round-robin re-picks them
+    // forever and probing starves.
+    staleConceptIds: v.array(v.id("concepts")),
+  }),
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    probe: ProbeConcept | null;
+    staleConceptIds: Id<"concepts">[];
+  }> => {
+    const isUsable = (concept: Doc<"concepts"> | null) =>
+      concept !== null &&
+      concept.missionRelevance === "on" &&
+      concept.embeddingModel === EMBEDDING_MODEL &&
+      concept.embedding?.length === EMBEDDING_DIMENSIONS;
+    const toProbe = (concept: Doc<"concepts">): ProbeConcept => ({
       conceptId: concept._id,
       domains: conceptDomains(concept),
-      embedding: concept.embedding,
-    };
+      embedding: concept.embedding!,
+    });
+
+    if (args.seedConceptId) {
+      const concept = await ctx.db.get("concepts", args.seedConceptId);
+      return {
+        probe: isUsable(concept) ? toProbe(concept!) : null,
+        staleConceptIds: [],
+      };
+    }
+    const candidates = await ctx.db
+      .query("concepts")
+      .withIndex("by_missionRelevance_lastProbedAt", (q) =>
+        q.eq("missionRelevance", "on"),
+      )
+      .filter((q) =>
+        q.and(
+          q.neq(q.field("embedding"), undefined),
+          q.eq(q.field("embeddingModel"), EMBEDDING_MODEL),
+        ),
+      )
+      .order("asc")
+      .take(PROBE_SCAN_LIMIT);
+    const staleConceptIds: Id<"concepts">[] = [];
+    for (const concept of candidates) {
+      if (isUsable(concept)) {
+        return { probe: toProbe(concept), staleConceptIds };
+      }
+      staleConceptIds.push(concept._id);
+    }
+    return { probe: null, staleConceptIds };
   },
 });
 
@@ -196,6 +221,7 @@ export const markConceptProbed = internalMutation({
     if (concept?.missionRelevance === "on") {
       await ctx.db.patch("concepts", args.conceptId, {
         lastProbedAt: args.probedAt,
+        updatedAt: args.probedAt,
       });
     }
     return null;
@@ -493,9 +519,17 @@ export const generateCandidates = internalAction({
   returns: v.array(candidateValidator),
   handler: async (ctx, args): Promise<Candidate[]> => {
     const effectiveLimit = clampCandidateGenerationLimit(args.limit);
-    const probe = await ctx.runQuery(getProbeConceptRef, {
+    const { probe, staleConceptIds } = await ctx.runQuery(getProbeConceptRef, {
       seedConceptId: args.seedConceptId,
     });
+    // Advance the round-robin cursor past unusable rows (wrong-length
+    // embeddings) so they cannot be reselected forever.
+    for (const staleConceptId of staleConceptIds) {
+      await ctx.runMutation(markConceptProbedRef, {
+        conceptId: staleConceptId,
+        probedAt: Date.now(),
+      });
+    }
     if (!probe) return [];
     const matches = await ctx.vectorSearch("claims", "by_embedding", {
       vector: probe.embedding,
@@ -688,6 +722,7 @@ export const listEvidenceTargets = internalQuery({
     const rows = await ctx.db
       .query("correspondences")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
+      .order("asc")
       .take(EVIDENCE_TARGET_SCAN_LIMIT);
     const lastEvidenceAt = (row: (typeof rows)[number]) =>
       row.evidence.reduce<number | undefined>(
