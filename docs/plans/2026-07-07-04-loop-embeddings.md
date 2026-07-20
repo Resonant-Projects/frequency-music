@@ -52,7 +52,7 @@ embeddingModel: v.optional(v.string()),
 
 Claim on-mission-ness is derived from its source's concepts at candidate time (claims don't carry `missionRelevance`; filtering claims happens in the generator, plan 05). If found-state Convex version limits filterFields, keep `missionRelevance` on concepts and drop the rest — the generator over-fetches and filters in code.
 
-- [ ] **Step 1:** Schema + codegen; commit.
+- [x] **Step 1:** Schema + codegen; commit.
 
 ---
 
@@ -74,8 +74,8 @@ returns: { embeddings: number[][], model: string }
 
 One module owns the API call, batching, retry-with-backoff, and the warn-and-skip failure mode. Nothing else imports the OpenAI client.
 
-- [ ] **Step 1:** Implement with a unit-testable pure text-assembly helper (concept text composition is the only logic worth testing without the network).
-- [ ] **Step 2:** Codegen; commit.
+- [x] **Step 1:** Implement with a unit-testable pure text-assembly helper (concept text composition is the only logic worth testing without the network).
+- [x] **Step 2:** Codegen; commit.
 
 ---
 
@@ -88,7 +88,8 @@ Scope: active claims whose source links ≥1 on-mission concept (query via edges
 
 - [ ] **Step 1:** Dry run — report counts and estimated cost.
 - [ ] **Step 2:** `--apply`; convergence re-run reports zero pending.
-- [ ] **Step 3:** Commit (report in PR).
+- Operator-gated: requires deploy + `OPENAI_API_KEY`.
+- [x] **Step 3:** Commit (report in PR).
 
 ---
 
@@ -100,8 +101,8 @@ Scope: active claims whose source links ≥1 on-mission concept (query via edges
 
 Scheduled (`ctx.scheduler.runAfter(0, ...)`), never inline — extraction must not block or fail on the embedding service. A weekly cron sweeps rows missing embeddings (same belt-and-braces pattern as plan 02's classification sweep; can be one shared "hygiene" cron).
 
-- [ ] **Step 1:** Harness test — storing an extraction schedules embedding (assert on scheduler, not the network).
-- [ ] **Step 2:** Implement; codegen; commit.
+- [x] **Step 1:** Harness test — storing an extraction schedules embedding (assert on scheduler, not the network).
+- [x] **Step 2:** Implement; codegen; commit.
 
 ---
 
@@ -113,6 +114,7 @@ Scheduled (`ctx.scheduler.runAfter(0, ...)`), never inline — extraction must n
 Given a claim id (or free text), run `ctx.vectorSearch` (via a small internal action) and print the top-10 nearest claims with source titles and their concepts' domains. This is the wave gate's verification tool and plan 05's debugging tool.
 
 - [ ] **Step 1:** Implement; run against a hand-picked cymatics claim; sanity-check neighbors by eye (expect: acoustics/wave-physics claims near; ASR noise absent because unembedded).
+- Operator-gated: requires deploy + `OPENAI_API_KEY`.
 - [ ] **Step 2:** Commit.
 
 ---

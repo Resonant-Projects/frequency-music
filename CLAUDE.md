@@ -159,6 +159,7 @@ Convex env vars: `AUTH_BYPASS_ENABLED=true`, `AUTH_BYPASS_SECRET=<set via 1Passw
 ```
 CONVEX_SELF_HOSTED_URL='https://convex.resonantprojects.art'
 OPENROUTER_API_KEY=...
+OPENAI_API_KEY=...  # text-embedding-3-small for claim/concept vector indexes
 GROQ_API_KEY=...
 KERNEL_API_KEY=...  # Kernel.sh cloud browser (5 concurrent sessions)
 ```

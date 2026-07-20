@@ -120,6 +120,87 @@ export const getBackfillPage = internalQuery({
   },
 });
 
+export const getProbeClaim = internalQuery({
+  args: { claimId: v.id("claims") },
+  returns: v.union(
+    v.object({
+      claimId: v.id("claims"),
+      text: v.string(),
+      embedding: v.optional(v.array(v.float64())),
+      embeddingModel: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const claim = await ctx.db.get("claims", args.claimId);
+    if (!claim) return null;
+    return {
+      claimId: claim._id,
+      text: claim.text,
+      embedding: claim.embedding,
+      embeddingModel: claim.embeddingModel,
+    };
+  },
+});
+
+export const hydrateProbeMatches = internalQuery({
+  args: {
+    matches: v.array(v.object({ claimId: v.id("claims"), score: v.float64() })),
+  },
+  returns: v.array(
+    v.object({
+      claimId: v.id("claims"),
+      score: v.float64(),
+      text: v.string(),
+      sourceTitle: v.string(),
+      domains: v.array(v.string()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const results = await Promise.all(
+      args.matches.map(async (match) => {
+        const claim = await ctx.db.get("claims", match.claimId);
+        if (!claim) return null;
+        const [source, edges] = await Promise.all([
+          ctx.db.get("sources", claim.sourceId),
+          ctx.db
+            .query("edges")
+            .withIndex("by_from", (q) =>
+              q.eq("fromType", "source").eq("fromId", claim.sourceId),
+            )
+            .filter((q) => q.eq(q.field("toType"), "concept"))
+            .collect(),
+        ]);
+        const concepts = await Promise.all(
+          edges.map((edge) =>
+            ctx.db
+              .query("concepts")
+              .withIndex("by_name", (q) => q.eq("name", edge.toId))
+              .first(),
+          ),
+        );
+        const domains = Array.from(
+          new Set(
+            concepts.flatMap((concept) =>
+              concept ? (concept.domains ?? [concept.domain]) : [],
+            ),
+          ),
+        ).toSorted();
+        return {
+          claimId: claim._id,
+          score: match.score,
+          text: claim.text,
+          sourceTitle: source?.title ?? "(untitled source)",
+          domains,
+        };
+      }),
+    );
+    return results.filter(
+      (result): result is NonNullable<typeof result> => result !== null,
+    );
+  },
+});
+
 export const storeClaimEmbeddings = internalMutation({
   args: {
     entries: v.array(

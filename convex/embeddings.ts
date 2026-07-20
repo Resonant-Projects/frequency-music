@@ -1,6 +1,7 @@
 "use node";
+/* eslint-disable no-underscore-dangle -- Convex vector results use `_id` and `_score`. */
 
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { makeFunctionReference } from "convex/server";
 import type { Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
@@ -177,6 +178,27 @@ type BackfillBatchResult = {
   continueCursor: string;
 };
 
+type ProbeClaim = {
+  claimId: Id<"claims">;
+  text: string;
+  embedding?: number[];
+  embeddingModel?: string;
+};
+
+type ProbeMatch = {
+  claimId: Id<"claims">;
+  score: number;
+  text: string;
+  sourceTitle: string;
+  domains: string[];
+};
+
+type ProbeResult = {
+  queryText: string;
+  reusedStoredEmbedding: boolean;
+  results: ProbeMatch[];
+};
+
 const getClaimsRef = makeFunctionReference<
   "query",
   { claimIds: Id<"claims">[] },
@@ -219,6 +241,16 @@ const storeConceptEmbeddingsRef = makeFunctionReference<
   },
   number
 >("embeddingsStore:storeConceptEmbeddings");
+const getProbeClaimRef = makeFunctionReference<
+  "query",
+  { claimId: Id<"claims"> },
+  ProbeClaim | null
+>("embeddingsStore:getProbeClaim");
+const hydrateProbeMatchesRef = makeFunctionReference<
+  "query",
+  { matches: Array<{ claimId: Id<"claims">; score: number }> },
+  ProbeMatch[]
+>("embeddingsStore:hydrateProbeMatches");
 
 const embedClaimsRef = makeFunctionReference<
   "action",
@@ -418,5 +450,77 @@ export const sweepMissingEmbeddings = internalAction({
       claimsScheduled: claimPage.claimIds.length,
       conceptsScheduled: conceptPage.conceptIds.length,
     };
+  },
+});
+
+export const probe = action({
+  args: {
+    claimId: v.optional(v.id("claims")),
+    text: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    queryText: v.string(),
+    reusedStoredEmbedding: v.boolean(),
+    results: v.array(
+      v.object({
+        claimId: v.id("claims"),
+        score: v.float64(),
+        text: v.string(),
+        sourceTitle: v.string(),
+        domains: v.array(v.string()),
+      }),
+    ),
+  }),
+  handler: async (ctx, args): Promise<ProbeResult> => {
+    await requireAuth(ctx, args);
+    const suppliedText = args.text?.trim();
+    if ((args.claimId ? 1 : 0) + (suppliedText ? 1 : 0) !== 1) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "Provide exactly one claimId or non-empty text",
+      });
+    }
+
+    let queryText = suppliedText ?? "";
+    let vector: number[] | undefined;
+    let reusedStoredEmbedding = false;
+    if (args.claimId) {
+      const claim = await ctx.runQuery(getProbeClaimRef, {
+        claimId: args.claimId,
+      });
+      if (!claim) {
+        throw new ConvexError({
+          code: "NOT_FOUND",
+          message: `Claim ${args.claimId} was not found`,
+        });
+      }
+      queryText = claim.text;
+      if (
+        claim.embeddingModel === EMBEDDING_MODEL &&
+        claim.embedding?.length === EMBEDDING_DIMENSIONS
+      ) {
+        vector = claim.embedding;
+        reusedStoredEmbedding = true;
+      }
+    }
+    if (!vector) {
+      const embedded = await fetchEmbeddingBatch({ texts: [queryText] });
+      vector = embedded?.embeddings[0];
+    }
+    if (!vector) return { queryText, reusedStoredEmbedding, results: [] };
+
+    const matches = await ctx.vectorSearch("claims", "by_embedding", {
+      vector,
+      limit: 10,
+      filter: (q) => q.eq("status", "active"),
+    });
+    const results = await ctx.runQuery(hydrateProbeMatchesRef, {
+      matches: matches.map((match) => ({
+        claimId: match._id,
+        score: match._score,
+      })),
+    });
+    return { queryText, reusedStoredEmbedding, results };
   },
 });
