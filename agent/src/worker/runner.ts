@@ -18,6 +18,7 @@ import { pathToFileURL } from "node:url";
 import { HEARTBEAT_INTERVAL_MS } from "../../../convex/shared/agentContract";
 import { callConvex } from "../tools/convexTools.js";
 import { graph as researchPipelineGraph } from "../graphs/research-pipeline/index.js";
+import { graph as correspondenceMinerGraph } from "../graphs/correspondence-miner/index.js";
 import { agent as weeklyBriefAgent } from "../agents/weekly-brief/index.js";
 import { loadRootEnvLocalForResearchSmoke } from "../../scripts/smoke-research-pipeline.js";
 import {
@@ -137,7 +138,7 @@ async function markRunnerCompleted(
 // completion summaries).
 async function streamGraph(
   runId: string,
-  graphName: "research-pipeline" | "weekly-brief",
+  graphName: "research-pipeline" | "weekly-brief" | "correspondence-miner",
   invocationInput: unknown,
 ): Promise<{ messageCount: number }> {
   let messageCount = 0;
@@ -161,9 +162,15 @@ async function streamGraph(
       { streamMode: "updates", configurable: { agentRunId: runId } },
     );
     for await (const chunk of stream) await handleChunk(chunk);
-  } else {
+  } else if (graphName === "weekly-brief") {
     const stream = await weeklyBriefAgent.stream(
       invocationInput as Parameters<typeof weeklyBriefAgent.stream>[0],
+      { streamMode: "updates", configurable: { agentRunId: runId } },
+    );
+    for await (const chunk of stream) await handleChunk(chunk);
+  } else {
+    const stream = await correspondenceMinerGraph.stream(
+      invocationInput as Parameters<typeof correspondenceMinerGraph.stream>[0],
       { streamMode: "updates", configurable: { agentRunId: runId } },
     );
     for await (const chunk of stream) await handleChunk(chunk);

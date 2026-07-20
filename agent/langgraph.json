@@ -1,7 +1,8 @@
 {
   "graphs": {
     "weekly-brief": "./src/agents/weekly-brief/index.ts:agent",
-    "research-pipeline": "./src/graphs/research-pipeline/index.ts:graph"
+    "research-pipeline": "./src/graphs/research-pipeline/index.ts:graph",
+    "correspondence-miner": "./src/graphs/correspondence-miner/index.ts:graph"
   },
   "env": ".env"
 }

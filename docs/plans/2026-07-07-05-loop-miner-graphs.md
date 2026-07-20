@@ -84,9 +84,9 @@ fetch_candidates ──► judge_loop (per candidate, ≤ limit) ──► write
 
 **Per accepted candidate:** `upsert_correspondence` with scores + provenance, then `add_correspondence_evidence` for sample claims the judge cited as directly supporting (stance `supports`). Discards log a `decision` event with the reason — discard reasons are eval data.
 
-- [ ] **Step 1:** Agent tests: judge-output schema round-trip; write-node calls tools with provenance (mock the tool layer per found-state test conventions).
-- [ ] **Step 2:** Implement graph + register with worker.
-- [ ] **Step 3:** `bunx tsc --noEmit` + agent tests green; commit.
+- [x] **Step 1:** Agent tests: judge-output schema round-trip; write-node calls tools with provenance (mock the tool layer per found-state test conventions).
+- [x] **Step 2:** Implement graph + register with worker.
+- [x] **Step 3:** `vpx tsc --noEmit` + agent tests green; commit.
 
 ---
 

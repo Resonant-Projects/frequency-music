@@ -18,9 +18,10 @@ import {
 } from "../src/worker/graphInput";
 
 describe("worker graph-input mapping", () => {
-  test("recognizes only the two registered graphs", () => {
+  test("recognizes the three registered graphs", () => {
     expect(isKnownGraphName("research-pipeline")).toBe(true);
     expect(isKnownGraphName("weekly-brief")).toBe(true);
+    expect(isKnownGraphName("correspondence-miner")).toBe(true);
     expect(isKnownGraphName("source-intake-triage")).toBe(false);
     expect(isKnownGraphName("")).toBe(false);
   });
@@ -88,6 +89,21 @@ describe("worker graph-input mapping", () => {
     expect(buildWeeklyBriefMessages({ messages: [msg] })).toEqual([msg]);
   });
 
+  test("correspondence-miner receives claimed-run provenance and bounded input", () => {
+    const invocation = buildGraphInvocation({
+      runId: "run_miner",
+      graphName: "correspondence-miner",
+      input: { limit: 12, traceUrl: "https://trace.example/miner" },
+    });
+    if (invocation.graphName !== "correspondence-miner")
+      throw new Error("narrowing");
+    expect(invocation.input).toEqual({
+      agentRunId: "run_miner",
+      limit: 12,
+      traceUrl: "https://trace.example/miner",
+    });
+  });
+
   test("unknown graph name throws in buildGraphInvocation", () => {
     expect(() =>
       buildGraphInvocation({ runId: "r", graphName: "nope" }),
@@ -97,6 +113,7 @@ describe("worker graph-input mapping", () => {
   test("terminal-status ownership is split correctly", () => {
     expect(TERMINAL_STATUS_OWNER["research-pipeline"]).toBe("graph");
     expect(TERMINAL_STATUS_OWNER["weekly-brief"]).toBe("runner");
+    expect(TERMINAL_STATUS_OWNER["correspondence-miner"]).toBe("graph");
   });
 
   test("summarizeNodeUpdate reports node name and update keys", () => {

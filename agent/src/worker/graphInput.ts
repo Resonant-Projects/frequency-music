@@ -68,9 +68,22 @@ export type ResearchPipelineGraphInput = {
 
 export type WeeklyBriefGraphInput = { messages: unknown[] };
 
+export type CorrespondenceMinerGraphInput = {
+  agentRunId: string;
+  limit: number;
+  traceUrl?: string;
+};
+
 export type GraphInvocation =
   | { graphName: "research-pipeline"; input: ResearchPipelineGraphInput }
-  | { graphName: "weekly-brief"; input: WeeklyBriefGraphInput };
+  | { graphName: "weekly-brief"; input: WeeklyBriefGraphInput }
+  | { graphName: "correspondence-miner"; input: CorrespondenceMinerGraphInput };
+
+function traceUrlFrom(input: unknown): string | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const traceUrl = (input as { traceUrl?: unknown }).traceUrl;
+  return typeof traceUrl === "string" && traceUrl ? traceUrl : undefined;
+}
 
 // Maps a claimed run into the exact input shape the corresponding compiled graph
 // expects. For research-pipeline the claimed Convex run id is threaded in as
@@ -92,6 +105,18 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
     return {
       graphName: "weekly-brief",
       input: { messages: buildWeeklyBriefMessages(claim.input) },
+    };
+  }
+  if (claim.graphName === "correspondence-miner") {
+    return {
+      graphName: "correspondence-miner",
+      input: {
+        agentRunId: claim.runId,
+        limit: resolveResearchLimit(claim.input, 20),
+        ...(traceUrlFrom(claim.input)
+          ? { traceUrl: traceUrlFrom(claim.input) }
+          : {}),
+      },
     };
   }
   throw new Error(`Unknown graphName: ${claim.graphName}`);

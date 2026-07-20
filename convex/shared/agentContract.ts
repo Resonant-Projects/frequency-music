@@ -29,7 +29,11 @@ if (HEARTBEAT_INTERVAL_MS >= STALE_RUN_MS) {
   );
 }
 
-export const KNOWN_GRAPH_NAMES = ["research-pipeline", "weekly-brief"] as const;
+export const KNOWN_GRAPH_NAMES = [
+  "research-pipeline",
+  "weekly-brief",
+  "correspondence-miner",
+] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
 
 // Which side owns the terminal Convex status write for each graph.
@@ -37,4 +41,5 @@ export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
   {
     "research-pipeline": "graph",
     "weekly-brief": "runner",
+    "correspondence-miner": "graph",
   };
