@@ -26,6 +26,8 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./editCaptures.ts": () => import("../convex/editCaptures"),
   "./editorialArtifacts.ts": () => import("../convex/editorialArtifacts"),
   "./editorialExports.ts": () => import("../convex/editorialExports"),
+  "./embeddings.ts": () => import("../convex/embeddings"),
+  "./embeddingsStore.ts": () => import("../convex/embeddingsStore"),
   "./extract.ts": () => import("../convex/extract"),
   "./extractInternal.ts": () => import("../convex/extractInternal"),
   "./extractions.ts": () => import("../convex/extractions"),

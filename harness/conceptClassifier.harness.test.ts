@@ -4,6 +4,10 @@ import { describe, expect, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
+import {
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+} from "../convex/shared/embeddingText";
 import { modules } from "./modules";
 
 describe("mission concept-domain seed", () => {
@@ -102,6 +106,7 @@ describe("concept classification persistence", () => {
       knownConcept: await ctx.db.get("concepts", knownConceptId),
       provisionalConcept: await ctx.db.get("concepts", provisionalConceptId),
       registry: await ctx.db.query("conceptDomains").collect(),
+      scheduled: await ctx.db.system.query("_scheduled_functions").collect(),
     }));
     expect(state.knownConcept?.domain).toBe("mathematical-music-theory");
     expect(state.provisionalConcept).toMatchObject({
@@ -114,6 +119,8 @@ describe("concept classification persistence", () => {
       "mathematical-music-theory",
       "signal processing",
     ]);
+    expect(state.scheduled).toHaveLength(1);
+    expect(state.scheduled[0]?.name).toContain("embeddings:embedConcepts");
   });
 
   test("merges duplicate provisional rows by normalized slug idempotently", async () => {
@@ -167,6 +174,53 @@ describe("concept classification persistence", () => {
       deleted: 0,
       renamed: 0,
     });
+  });
+
+  test("clears stored embeddings when a concept is forced off-mission", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const conceptId = await t.run(async (ctx) => {
+      await ctx.db.insert("conceptDomains", {
+        name: "cymatics",
+        status: "known",
+        introducedBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+      return await ctx.db.insert("concepts", {
+        name: "embedded-concept",
+        displayName: "Embedded concept",
+        aliases: [],
+        domain: "cymatics",
+        domains: ["cymatics"],
+        missionRelevance: "on",
+        classifiedAt: 1000,
+        classifierModel: "old-model",
+        embedding: Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0),
+        embeddingModel: EMBEDDING_MODEL,
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+    });
+
+    await asSystem.mutation(api.conceptClassifier.writeClassifications, {
+      classifications: [
+        {
+          conceptId,
+          domains: ["cymatics"],
+          missionRelevance: "off",
+          rationale: "Incidental to the research program.",
+        },
+      ],
+      model: "test-model",
+      force: true,
+    });
+    const concept = await t.run((ctx) => ctx.db.get("concepts", conceptId));
+    expect(concept?.missionRelevance).toBe("off");
+    expect(concept?.embedding).toBeUndefined();
+    expect(concept?.embeddingModel).toBeUndefined();
   });
 
   test("assigns only registered domains and stages unknown proposals", async () => {

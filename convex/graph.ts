@@ -17,6 +17,13 @@ import { conceptReturnValidator, edgeReturnValidator } from "./validators";
 
 const CONCEPT_DETAIL_LINK_LIMIT = 20;
 
+function leanConcept(
+  concept: Doc<"concepts">,
+): Omit<Doc<"concepts">, "embedding" | "embeddingModel"> {
+  const { embedding: _embedding, embeddingModel: _model, ...lean } = concept;
+  return lean;
+}
+
 // Deliberate collaborator-circle decision: authenticated means authorized for
 // the private workbench; unauthenticated callers degrade to the public scope
 // (the zodiac graph is browsable logged-out). Revisit if the circle grows.
@@ -59,10 +66,11 @@ export const getConcept = query({
   returns: v.union(conceptReturnValidator, v.null()),
   handler: async (ctx, args) => {
     const normalized = args.name.toLowerCase().trim();
-    return await ctx.db
+    const concept = await ctx.db
       .query("concepts")
       .withIndex("by_name", (q) => q.eq("name", normalized))
       .first();
+    return concept ? leanConcept(concept) : null;
   },
 });
 
@@ -83,7 +91,7 @@ export const searchConcepts = query({
       )
       .take(limit);
 
-    return results;
+    return results.map(leanConcept);
   },
 });
 
@@ -95,10 +103,11 @@ export const listByDomain = query({
   returns: v.array(conceptReturnValidator),
   handler: async (ctx, args) => {
     const normalized = args.domain.toLowerCase().trim();
-    return await ctx.db
+    const concepts = await ctx.db
       .query("concepts")
       .withIndex("by_domain", (q) => q.eq("domain", normalized))
       .take(args.limit ?? 50);
+    return concepts.map(leanConcept);
   },
 });
 
@@ -109,11 +118,12 @@ export const getTopConcepts = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(conceptReturnValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const concepts = await ctx.db
       .query("concepts")
       .withIndex("by_mentionCount")
       .order("desc")
       .take(args.limit ?? 20);
+    return concepts.map(leanConcept);
   },
 });
 
@@ -355,7 +365,9 @@ export const getConceptsFor = query({
           .query("concepts")
           .withIndex("by_name", (q) => q.eq("name", edge.toId))
           .first();
-        return concept ? { ...concept, relationship: edge.relationship } : null;
+        return concept
+          ? { ...leanConcept(concept), relationship: edge.relationship }
+          : null;
       }),
     );
 
@@ -737,7 +749,7 @@ export const getConceptsForDomain = query({
       return b.mentionCount - a.mentionCount;
     });
 
-    return results.slice(0, limit);
+    return results.slice(0, limit).map(leanConcept);
   },
 });
 
@@ -897,7 +909,7 @@ async function readConceptDetail(
   ).filter((r): r is NonNullable<typeof r> => r !== null);
 
   return {
-    concept,
+    concept: leanConcept(concept),
     linkedSources,
     linkedHypotheses,
     linkedRecipes,

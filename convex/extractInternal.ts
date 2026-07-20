@@ -84,8 +84,9 @@ export const storeExtraction = internalMutation({
       createdAt,
     });
 
+    const claimIds: Id<"claims">[] = [];
     for (const [ordinal, claim] of args.claims.entries()) {
-      await ctx.db.insert("claims", {
+      const claimId = await ctx.db.insert("claims", {
         extractionId,
         sourceId: args.sourceId,
         ordinal,
@@ -93,6 +94,12 @@ export const storeExtraction = internalMutation({
         status: "active",
         createdBy,
         createdAt,
+      });
+      claimIds.push(claimId);
+    }
+    if (claimIds.length > 0) {
+      await ctx.scheduler.runAfter(0, internal.embeddings.embedClaims, {
+        claimIds,
       });
     }
 
