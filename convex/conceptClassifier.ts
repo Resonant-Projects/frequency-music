@@ -14,6 +14,7 @@ import {
 import { requireAuth } from "./auth";
 import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { MODELS } from "./llm";
+import { getNonDeprecatedConceptDomains } from "./vocabulary";
 
 const classificationValidator = v.object({
   conceptId: v.id("concepts"),
@@ -121,7 +122,7 @@ async function persistClassifications(
     force: boolean;
   },
 ) {
-  const registry = await ctx.db.query("conceptDomains").collect();
+  const registry = await getNonDeprecatedConceptDomains(ctx);
   const registryBySlug = new Map<string, typeof registry>();
   for (const entry of registry) {
     const slug = normalizeConceptDomainSlug(entry.name);
@@ -283,7 +284,7 @@ export const getClassificationInputs = internalQuery({
     ),
   }),
   handler: async (ctx, args) => {
-    const registry = await ctx.db.query("conceptDomains").collect();
+    const registry = await getNonDeprecatedConceptDomains(ctx);
     const concepts = [];
     for (const conceptId of args.conceptIds) {
       const concept = await ctx.db.get("concepts", conceptId);
