@@ -3,6 +3,7 @@ import {
   buildPairProposals,
   noveltyScore,
   rankCandidateScores,
+  selectCrossConceptSamples,
 } from "./shared/correspondenceCandidates";
 
 describe("correspondence candidate scoring", () => {
@@ -92,5 +93,28 @@ describe("correspondence candidate scoring", () => {
     expect(ranked.map((candidate) => candidate.noveltyScore)).toEqual([
       1, 0.25,
     ]);
+  });
+
+  test("selects the top claims on each side from cross-concept cosine pairs", () => {
+    expect(
+      selectCrossConceptSamples(
+        [
+          { claimId: "a-near-x", embedding: [1, 0] },
+          { claimId: "a-near-y", embedding: [0, 1] },
+          { claimId: "a-diagonal", embedding: [1, 1] },
+        ],
+        [
+          { claimId: "b-x", embedding: [1, 0] },
+          { claimId: "b-y", embedding: [0, 1] },
+        ],
+        2,
+      ),
+    ).toEqual({
+      similarityScore: 1,
+      sampleClaimIds: {
+        a: ["a-near-x", "a-near-y"],
+        b: ["b-x", "b-y"],
+      },
+    });
   });
 });

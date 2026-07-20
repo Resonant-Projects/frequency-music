@@ -52,6 +52,26 @@ describe("agentRuns.claimNextPending", () => {
     expect(claimed).toBeNull();
   });
 
+  test("returns stored trace provenance to the worker claim", async () => {
+    const t = convexTest(schema, modules);
+    await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "correspondence-miner",
+        status: "queued",
+        input: { limit: 20 },
+        traceUrl: "https://trace.example/miner",
+        createdAt: 1000,
+        updatedAt: 1000,
+      }),
+    );
+
+    const claimed = await t.mutation(internal.agentRuns.claimNextPending, {
+      workerId: "worker-a",
+    });
+
+    expect(claimed?.traceUrl).toBe("https://trace.example/miner");
+  });
+
   test("a second claim does not double-claim the same run", async () => {
     const t = convexTest(schema, modules);
     await seedRun(t, "queued", 1000);

@@ -1,33 +1,14 @@
 import { Annotation } from "@langchain/langgraph";
+import type {
+  CandidateClaimPayload,
+  CandidateConceptPayload,
+  CorrespondenceCandidatePayload,
+} from "../../../convex/shared/correspondenceCandidates.js";
+import type { AgentAuditEvent } from "../graphs/shared/audit.js";
 
-export type CandidateConcept = {
-  id: string;
-  name: string;
-  displayName: string;
-  description?: string;
-  domains: string[];
-};
-
-export type CandidateClaim = {
-  id: string;
-  text: string;
-  sourceId: string;
-  sourceTitle: string;
-};
-
-export type CorrespondenceCandidate = {
-  conceptAId: string;
-  conceptBId: string;
-  pairKey: string;
-  similarityScore: number;
-  noveltyScore: number;
-  domainsA: string[];
-  domainsB: string[];
-  sampleClaimIds: { a: string[]; b: string[] };
-  conceptA: CandidateConcept;
-  conceptB: CandidateConcept;
-  sampleClaims: { a: CandidateClaim[]; b: CandidateClaim[] };
-};
+export type CandidateConcept = CandidateConceptPayload;
+export type CandidateClaim = CandidateClaimPayload;
+export type CorrespondenceCandidate = CorrespondenceCandidatePayload;
 
 export type MinerVerdict = {
   accept: boolean;
@@ -70,6 +51,10 @@ export const CorrespondenceMinerAnnotation = Annotation.Root({
   evidenceAddedCount: Annotation<number>({
     value: (_left, right) => right,
     default: () => 0,
+  }),
+  auditEvents: Annotation<AgentAuditEvent[]>({
+    value: (left, right) => left.concat(right),
+    default: () => [],
   }),
   summary: Annotation<string | undefined>,
 });

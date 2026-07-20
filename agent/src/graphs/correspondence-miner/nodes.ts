@@ -1,12 +1,18 @@
 import { z } from "zod";
 import { getResearchModel } from "../../models/index.js";
 import { callConvex } from "../../tools/convexTools.js";
+import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
 import type {
   CorrespondenceCandidate,
   CorrespondenceMinerState,
   CorrespondenceMinerUpdate,
   MinerDecision,
 } from "../../state/correspondenceMinerState.js";
+import {
+  appendRemoteAuditEvent,
+  type AgentAuditEvent,
+  type ToolCaller,
+} from "../shared/audit.js";
 import { correspondenceJudgePrompt } from "./prompts.js";
 
 export const judgeOutputSchema = z.object({
@@ -17,57 +23,8 @@ export const judgeOutputSchema = z.object({
   confidenceNote: z.string(),
 });
 
-export type ToolCaller = (
-  name: string,
-  args: Record<string, unknown>,
-) => Promise<unknown>;
-
 function asCandidates(value: unknown): CorrespondenceCandidate[] {
   return Array.isArray(value) ? (value as CorrespondenceCandidate[]) : [];
-}
-
-async function appendDecision(
-  callTool: ToolCaller,
-  agentRunId: string | undefined,
-  decision: MinerDecision,
-): Promise<void> {
-  if (!agentRunId) return;
-  try {
-    await callTool("appendAgentRunEvent", {
-      runId: agentRunId,
-      kind: "decision",
-      message: decision.verdict.accept
-        ? "Correspondence judge accepted candidate"
-        : "Correspondence judge discarded candidate",
-      payload: {
-        pairKey: decision.candidate.pairKey,
-        accept: decision.verdict.accept,
-        reason: decision.verdict.confidenceNote,
-        supportingClaimIds: decision.supportingClaimIds,
-      },
-    });
-  } catch (error) {
-    console.warn("Failed to append correspondence-miner decision event", error);
-  }
-}
-
-async function appendToolCall(
-  callTool: ToolCaller,
-  agentRunId: string | undefined,
-  message: string,
-  payload: Record<string, unknown>,
-): Promise<void> {
-  if (!agentRunId) return;
-  try {
-    await callTool("appendAgentRunEvent", {
-      runId: agentRunId,
-      kind: "tool_call",
-      message,
-      payload,
-    });
-  } catch (error) {
-    console.warn("Failed to append correspondence-miner tool event", error);
-  }
 }
 
 export function citedSampleClaimIds(
@@ -83,6 +40,28 @@ export function citedSampleClaimIds(
   );
 }
 
+export function buildMinerDecision(
+  candidate: CorrespondenceCandidate,
+  verdict: z.infer<typeof judgeOutputSchema>,
+): MinerDecision {
+  const supportingClaimIds = citedSampleClaimIds(
+    candidate,
+    `${verdict.statement}\n${verdict.rationaleMd}\n${verdict.confidenceNote}`,
+  );
+  return {
+    candidate,
+    verdict:
+      verdict.accept && supportingClaimIds.length === 0
+        ? {
+            ...verdict,
+            accept: false,
+            confidenceNote: `Discard: accepted verdict cited no valid sample claim ids. ${verdict.confidenceNote}`,
+          }
+        : verdict,
+    supportingClaimIds,
+  };
+}
+
 export async function fetchCandidatesNode(
   state: CorrespondenceMinerState,
 ): Promise<CorrespondenceMinerUpdate> {
@@ -90,16 +69,17 @@ export async function fetchCandidatesNode(
   const candidates = asCandidates(
     await callConvex("listCorrespondenceCandidates", { limit }),
   );
-  await appendToolCall(
+  const auditEvents = await appendRemoteAuditEvent(
     callConvex,
     state.agentRunId,
+    "tool_call",
     "Fetched correspondence candidates",
     {
       requestedLimit: limit,
       returned: candidates.length,
     },
   );
-  return { candidates };
+  return { candidates, auditEvents };
 }
 
 function stalePairVerdict(candidate: CorrespondenceCandidate): MinerDecision {
@@ -141,16 +121,12 @@ export async function judgeLoopNode(
         },
       }),
     );
-    decisions.push({
-      candidate,
-      verdict,
-      supportingClaimIds: citedSampleClaimIds(
-        candidate,
-        `${verdict.statement}\n${verdict.rationaleMd}\n${verdict.confidenceNote}`,
-      ),
-    });
+    decisions.push(buildMinerDecision(candidate, verdict));
   }
-  return { decisions };
+  return {
+    decisions,
+    traceUrl: await resolveCurrentTraceUrl(state.traceUrl),
+  };
 }
 
 export function createWriteOrDiscardNode(callTool: ToolCaller = callConvex) {
@@ -165,9 +141,25 @@ export function createWriteOrDiscardNode(callTool: ToolCaller = callConvex) {
     let acceptedCount = 0;
     let discardedCount = 0;
     let evidenceAddedCount = 0;
+    const auditEvents: AgentAuditEvent[] = [];
 
     for (const decision of state.decisions) {
-      await appendDecision(callTool, state.agentRunId, decision);
+      auditEvents.push(
+        ...(await appendRemoteAuditEvent(
+          callTool,
+          state.agentRunId,
+          "decision",
+          decision.verdict.accept
+            ? "Correspondence judge accepted candidate"
+            : "Correspondence judge discarded candidate",
+          {
+            pairKey: decision.candidate.pairKey,
+            accept: decision.verdict.accept,
+            reason: decision.verdict.confidenceNote,
+            supportingClaimIds: decision.supportingClaimIds,
+          },
+        )),
+      );
       if (!decision.verdict.accept) {
         discardedCount += 1;
         continue;
@@ -191,15 +183,18 @@ export function createWriteOrDiscardNode(callTool: ToolCaller = callConvex) {
         );
       }
       acceptedCount += 1;
-      await appendToolCall(
-        callTool,
-        state.agentRunId,
-        "Upserted accepted correspondence",
-        {
-          pairKey: decision.candidate.pairKey,
-          correspondenceId: result.id,
-          created: result.created === true,
-        },
+      auditEvents.push(
+        ...(await appendRemoteAuditEvent(
+          callTool,
+          state.agentRunId,
+          "tool_call",
+          "Upserted accepted correspondence",
+          {
+            pairKey: decision.candidate.pairKey,
+            correspondenceId: result.id,
+            created: result.created === true,
+          },
+        )),
       );
 
       for (const claimId of decision.supportingClaimIds) {
@@ -211,20 +206,28 @@ export function createWriteOrDiscardNode(callTool: ToolCaller = callConvex) {
           agentRunId: state.agentRunId,
         })) as { added?: unknown; status?: unknown };
         if (evidence.added === true) evidenceAddedCount += 1;
-        await appendToolCall(
-          callTool,
-          state.agentRunId,
-          "Added miner-cited correspondence evidence",
-          {
-            correspondenceId: result.id,
-            claimId,
-            added: evidence.added === true,
-            status: evidence.status,
-          },
+        auditEvents.push(
+          ...(await appendRemoteAuditEvent(
+            callTool,
+            state.agentRunId,
+            "tool_call",
+            "Added miner-cited correspondence evidence",
+            {
+              correspondenceId: result.id,
+              claimId,
+              added: evidence.added === true,
+              status: evidence.status,
+            },
+          )),
         );
       }
     }
-    return { acceptedCount, discardedCount, evidenceAddedCount };
+    return {
+      acceptedCount,
+      discardedCount,
+      evidenceAddedCount,
+      auditEvents,
+    };
   };
 }
 

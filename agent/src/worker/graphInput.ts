@@ -56,6 +56,7 @@ export type ClaimedRun = {
   runId: string;
   graphName: string;
   input?: unknown;
+  traceUrl?: string;
 };
 
 export type ResearchPipelineGraphInput = {
@@ -88,6 +89,10 @@ function traceUrlFrom(input: unknown): string | undefined {
   return typeof traceUrl === "string" && traceUrl ? traceUrl : undefined;
 }
 
+function claimedTraceUrl(claim: ClaimedRun): string | undefined {
+  return claim.traceUrl ?? traceUrlFrom(claim.input);
+}
+
 // Maps a claimed run into the exact input shape the corresponding compiled graph
 // expects. For research-pipeline the claimed Convex run id is threaded in as
 // `agentRunId` so initializeRunNode reuses it instead of creating a second run.
@@ -116,9 +121,7 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       input: {
         agentRunId: claim.runId,
         limit: resolveResearchLimit(claim.input, 20),
-        ...(traceUrlFrom(claim.input)
-          ? { traceUrl: traceUrlFrom(claim.input) }
-          : {}),
+        ...(claimedTraceUrl(claim) ? { traceUrl: claimedTraceUrl(claim) } : {}),
       },
     };
   }
@@ -128,9 +131,7 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       input: {
         agentRunId: claim.runId,
         limit: Math.min(resolveResearchLimit(claim.input, 5), 5),
-        ...(traceUrlFrom(claim.input)
-          ? { traceUrl: traceUrlFrom(claim.input) }
-          : {}),
+        ...(claimedTraceUrl(claim) ? { traceUrl: claimedTraceUrl(claim) } : {}),
       },
     };
   }

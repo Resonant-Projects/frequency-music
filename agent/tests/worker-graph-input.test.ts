@@ -94,7 +94,8 @@ describe("worker graph-input mapping", () => {
     const invocation = buildGraphInvocation({
       runId: "run_miner",
       graphName: "correspondence-miner",
-      input: { limit: 12, traceUrl: "https://trace.example/miner" },
+      traceUrl: "https://trace.example/miner",
+      input: { limit: 12, traceUrl: "https://stale.example/miner" },
     });
     if (invocation.graphName !== "correspondence-miner")
       throw new Error("narrowing");

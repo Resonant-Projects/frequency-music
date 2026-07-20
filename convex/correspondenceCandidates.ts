@@ -1,6 +1,8 @@
 /* eslint-disable no-underscore-dangle -- Convex document and vector ids use underscore names. */
 import { makeFunctionReference } from "convex/server";
+import { zodToConvex } from "convex-helpers/server/zod4";
 import { v } from "convex/values";
+import type { z } from "zod";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalAction,
@@ -10,7 +12,12 @@ import {
 } from "./_generated/server";
 import {
   buildPairProposals,
+  correspondenceCandidateBaseZ,
+  correspondenceCandidateZ,
+  evidenceTargetZ,
   rankCandidateScores,
+  selectCrossConceptSamples,
+  semanticClaimZ,
 } from "./shared/correspondenceCandidates";
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from "./shared/embeddingText";
 
@@ -18,47 +25,15 @@ const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
 const VECTOR_MATCH_LIMIT = 32;
 const STRUCTURAL_EDGE_LIMIT = 100;
-const TARGET_SCAN_LIMIT = 100;
+const MAX_PAIR_PROPOSALS = 256;
+const MAX_SAMPLE_POOL = 12;
 
-const candidateValidator = v.object({
-  conceptAId: v.id("concepts"),
-  conceptBId: v.id("concepts"),
-  pairKey: v.string(),
-  similarityScore: v.float64(),
-  noveltyScore: v.float64(),
-  domainsA: v.array(v.string()),
-  domainsB: v.array(v.string()),
-  sampleClaimIds: v.object({
-    a: v.array(v.id("claims")),
-    b: v.array(v.id("claims")),
-  }),
-});
+const candidateValidator = zodToConvex(correspondenceCandidateBaseZ);
+const richCandidateValidator = zodToConvex(correspondenceCandidateZ);
+const semanticClaimValidator = zodToConvex(semanticClaimZ);
+const evidenceTargetValidator = zodToConvex(evidenceTargetZ);
 
-const candidateConceptValidator = v.object({
-  id: v.id("concepts"),
-  name: v.string(),
-  displayName: v.string(),
-  description: v.optional(v.string()),
-  domains: v.array(v.string()),
-});
-
-const sampleClaimValidator = v.object({
-  id: v.id("claims"),
-  text: v.string(),
-  sourceId: v.id("sources"),
-  sourceTitle: v.string(),
-});
-
-type Candidate = {
-  conceptAId: Id<"concepts">;
-  conceptBId: Id<"concepts">;
-  pairKey: string;
-  similarityScore: number;
-  noveltyScore: number;
-  domainsA: string[];
-  domainsB: string[];
-  sampleClaimIds: { a: Id<"claims">[]; b: Id<"claims">[] };
-};
+type Candidate = z.infer<typeof correspondenceCandidateBaseZ>;
 
 type ProbeConcept = {
   conceptId: Id<"concepts">;
@@ -128,12 +103,15 @@ const getCandidateSamplesRef = makeFunctionReference<
     pairs: Array<{
       conceptAId: Id<"concepts">;
       conceptBId: Id<"concepts">;
+      pairKey: string;
       hitClaimIds: Id<"claims">[];
     }>;
   },
   Array<{
     conceptAId: Id<"concepts">;
     conceptBId: Id<"concepts">;
+    pairKey: string;
+    similarityScore: number;
     sampleClaimIds: { a: Id<"claims">[]; b: Id<"claims">[] };
   }>
 >("correspondenceCandidates:getCandidateSamples");
@@ -386,7 +364,7 @@ async function sampleClaimsForConcept(
   ctx: QueryCtx,
   concept: Doc<"concepts">,
   preferredClaimIds: readonly Id<"claims">[],
-): Promise<Id<"claims">[]> {
+): Promise<Array<{ claimId: Id<"claims">; embedding: number[] }>> {
   const sourceIds = await sourceIdsForConcept(ctx, concept.name);
   const preferred = (
     await Promise.all(
@@ -394,20 +372,36 @@ async function sampleClaimsForConcept(
     )
   ).filter(
     (claim): claim is Doc<"claims"> =>
-      claim?.status === "active" && sourceIds.has(claim.sourceId),
+      claim?.status === "active" &&
+      sourceIds.has(claim.sourceId) &&
+      claim.embeddingModel === EMBEDDING_MODEL &&
+      claim.embedding?.length === EMBEDDING_DIMENSIONS,
   );
   const claims = [...preferred];
   for (const sourceId of Array.from(sourceIds).slice(0, 12)) {
-    if (claims.length >= 3) break;
+    if (claims.length >= MAX_SAMPLE_POOL) break;
     const sourceClaims = await ctx.db
       .query("claims")
       .withIndex("by_sourceId_status", (q) =>
         q.eq("sourceId", sourceId as Id<"sources">).eq("status", "active"),
       )
       .take(3);
-    claims.push(...sourceClaims);
+    claims.push(
+      ...sourceClaims.filter(
+        (claim) =>
+          claim.embeddingModel === EMBEDDING_MODEL &&
+          claim.embedding?.length === EMBEDDING_DIMENSIONS,
+      ),
+    );
   }
-  return Array.from(new Set(claims.map((claim) => claim._id))).slice(0, 3);
+  return Array.from(
+    new Map(
+      claims.map((claim) => [
+        claim._id,
+        { claimId: claim._id, embedding: claim.embedding! },
+      ]),
+    ).values(),
+  ).slice(0, MAX_SAMPLE_POOL);
 }
 
 export const getCandidateSamples = internalQuery({
@@ -416,6 +410,7 @@ export const getCandidateSamples = internalQuery({
       v.object({
         conceptAId: v.id("concepts"),
         conceptBId: v.id("concepts"),
+        pairKey: v.string(),
         hitClaimIds: v.array(v.id("claims")),
       }),
     ),
@@ -424,6 +419,8 @@ export const getCandidateSamples = internalQuery({
     v.object({
       conceptAId: v.id("concepts"),
       conceptBId: v.id("concepts"),
+      pairKey: v.string(),
+      similarityScore: v.float64(),
       sampleClaimIds: v.object({
         a: v.array(v.id("claims")),
         b: v.array(v.id("claims")),
@@ -443,10 +440,17 @@ export const getCandidateSamples = internalQuery({
             sampleClaimsForConcept(ctx, conceptA, []),
             sampleClaimsForConcept(ctx, conceptB, pair.hitClaimIds),
           ]);
+          const selected = selectCrossConceptSamples(a, b);
+          if (!selected) return null;
           return {
             conceptAId: pair.conceptAId,
             conceptBId: pair.conceptBId,
-            sampleClaimIds: { a, b },
+            pairKey: pair.pairKey,
+            similarityScore: selected.similarityScore,
+            sampleClaimIds: {
+              a: selected.sampleClaimIds.a as Id<"claims">[],
+              b: selected.sampleClaimIds.b as Id<"claims">[],
+            },
           };
         }),
       )
@@ -482,15 +486,46 @@ export const generateCandidates = internalAction({
     const proposals = buildPairProposals(
       { conceptId: probe.conceptId, domains: probe.domains },
       hydrated,
-    ).map((proposal) => ({
-      ...proposal,
-      conceptAId: proposal.conceptAId as Id<"concepts">,
-      conceptBId: proposal.conceptBId as Id<"concepts">,
-      hitClaimIds: proposal.hitClaimIds as Id<"claims">[],
-    }));
+    )
+      .toSorted(
+        (left, right) =>
+          right.similarityScore - left.similarityScore ||
+          left.pairKey.localeCompare(right.pairKey),
+      )
+      .slice(0, MAX_PAIR_PROPOSALS)
+      .map((proposal) => ({
+        ...proposal,
+        conceptAId: proposal.conceptAId as Id<"concepts">,
+        conceptBId: proposal.conceptBId as Id<"concepts">,
+        hitClaimIds: proposal.hitClaimIds as Id<"claims">[],
+      }));
     if (proposals.length === 0) return [];
-    const structural = await ctx.runQuery(getStructuralScoresRef, {
+    const samples = await ctx.runQuery(getCandidateSamplesRef, {
       pairs: proposals.map((proposal) => ({
+        conceptAId: proposal.conceptAId,
+        conceptBId: proposal.conceptBId,
+        pairKey: proposal.pairKey,
+        hitClaimIds: proposal.hitClaimIds,
+      })),
+    });
+    const samplesByPair = new Map(
+      samples.map((sample) => [sample.pairKey, sample]),
+    );
+    const sampledProposals = proposals.flatMap((proposal) => {
+      const sample = samplesByPair.get(proposal.pairKey);
+      return sample
+        ? [
+            {
+              ...proposal,
+              similarityScore: sample.similarityScore,
+              sampleClaimIds: sample.sampleClaimIds,
+            },
+          ]
+        : [];
+    });
+    if (sampledProposals.length === 0) return [];
+    const structural = await ctx.runQuery(getStructuralScoresRef, {
+      pairs: sampledProposals.map((proposal) => ({
         conceptAId: proposal.conceptAId,
         conceptBId: proposal.conceptBId,
         pairKey: proposal.pairKey,
@@ -500,7 +535,7 @@ export const generateCandidates = internalAction({
       structural.map((score) => [score.pairKey, score]),
     );
     const ranked = rankCandidateScores(
-      proposals.map((proposal) => ({
+      sampledProposals.map((proposal) => ({
         ...proposal,
         ...(structuralByPair.get(proposal.pairKey) ?? {
           coMentions: 0,
@@ -510,19 +545,6 @@ export const generateCandidates = internalAction({
       })),
       clampLimit(args.limit),
     );
-    const samples = await ctx.runQuery(getCandidateSamplesRef, {
-      pairs: ranked.map((candidate) => ({
-        conceptAId: candidate.conceptAId,
-        conceptBId: candidate.conceptBId,
-        hitClaimIds: candidate.hitClaimIds,
-      })),
-    });
-    const samplesByPair = new Map(
-      samples.map((sample) => [
-        `${sample.conceptAId}:${sample.conceptBId}`,
-        sample.sampleClaimIds,
-      ]),
-    );
     return ranked.map((candidate) => ({
       conceptAId: candidate.conceptAId,
       conceptBId: candidate.conceptBId,
@@ -531,9 +553,7 @@ export const generateCandidates = internalAction({
       noveltyScore: candidate.noveltyScore,
       domainsA: candidate.domainsA,
       domainsB: candidate.domainsB,
-      sampleClaimIds: samplesByPair.get(
-        `${candidate.conceptAId}:${candidate.conceptBId}`,
-      ) ?? { a: [], b: candidate.hitClaimIds.slice(0, 3) },
+      sampleClaimIds: candidate.sampleClaimIds,
     }));
   },
 });
@@ -561,17 +581,7 @@ async function hydrateSampleClaims(
 
 export const hydrateAgentCandidates = internalQuery({
   args: { candidates: v.array(candidateValidator) },
-  returns: v.array(
-    v.object({
-      ...candidateValidator.fields,
-      conceptA: candidateConceptValidator,
-      conceptB: candidateConceptValidator,
-      sampleClaims: v.object({
-        a: v.array(sampleClaimValidator),
-        b: v.array(sampleClaimValidator),
-      }),
-    }),
-  ),
+  returns: v.array(richCandidateValidator),
   handler: async (ctx, args) =>
     (
       await Promise.all(
@@ -622,16 +632,7 @@ export const listForAgent = internalAction({
 
 export const searchClaimsSemantic = internalAction({
   args: { text: v.string(), limit: v.optional(v.number()) },
-  returns: v.array(
-    v.object({
-      claimId: v.id("claims"),
-      score: v.float64(),
-      text: v.string(),
-      sourceId: v.id("sources"),
-      sourceTitle: v.string(),
-      domains: v.array(v.string()),
-    }),
-  ),
+  returns: v.array(semanticClaimValidator),
   handler: async (ctx, args) => {
     const text = args.text.trim();
     if (!text) return [];
@@ -655,67 +656,43 @@ export const searchClaimsSemantic = internalAction({
 
 export const listEvidenceTargets = internalQuery({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(
-    v.object({
-      correspondenceId: v.id("correspondences"),
-      pairKey: v.string(),
-      statement: v.string(),
-      rationaleMd: v.string(),
-      existingClaimIds: v.array(v.id("claims")),
-      lastEvidenceAt: v.optional(v.number()),
-      conceptA: candidateConceptValidator,
-      conceptB: candidateConceptValidator,
-    }),
-  ),
+  returns: v.array(evidenceTargetValidator),
   handler: async (ctx, args) => {
     const rows = await ctx.db
       .query("correspondences")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
+      .withIndex("by_status_createdAt", (q) => q.eq("status", "conjectured"))
       .order("asc")
-      .take(TARGET_SCAN_LIMIT);
-    const sorted = rows.toSorted((left, right) => {
-      const leftAt = Math.max(
-        left.createdAt,
-        ...left.evidence.map((entry) => entry.addedAt),
-      );
-      const rightAt = Math.max(
-        right.createdAt,
-        ...right.evidence.map((entry) => entry.addedAt),
-      );
-      return leftAt - rightAt || left.pairKey.localeCompare(right.pairKey);
-    });
+      .take(Math.min(clampLimit(args.limit, 5), 5));
     return (
       await Promise.all(
-        sorted
-          .slice(0, Math.min(clampLimit(args.limit, 5), 5))
-          .map(async (row) => {
-            const [conceptA, conceptB] = await Promise.all([
-              ctx.db.get("concepts", row.conceptAId),
-              ctx.db.get("concepts", row.conceptBId),
-            ]);
-            if (!conceptA || !conceptB) return null;
-            const lastEvidenceAt = row.evidence.reduce<number | undefined>(
-              (latest, entry) => Math.max(latest ?? 0, entry.addedAt),
-              undefined,
-            );
-            const describe = (concept: Doc<"concepts">) => ({
-              id: concept._id,
-              name: concept.name,
-              displayName: concept.displayName,
-              description: concept.description,
-              domains: conceptDomains(concept),
-            });
-            return {
-              correspondenceId: row._id,
-              pairKey: row.pairKey,
-              statement: row.statement,
-              rationaleMd: row.rationaleMd,
-              existingClaimIds: row.evidence.map((entry) => entry.claimId),
-              lastEvidenceAt,
-              conceptA: describe(conceptA),
-              conceptB: describe(conceptB),
-            };
-          }),
+        rows.map(async (row) => {
+          const [conceptA, conceptB] = await Promise.all([
+            ctx.db.get("concepts", row.conceptAId),
+            ctx.db.get("concepts", row.conceptBId),
+          ]);
+          if (!conceptA || !conceptB) return null;
+          const lastEvidenceAt = row.evidence.reduce<number | undefined>(
+            (latest, entry) => Math.max(latest ?? 0, entry.addedAt),
+            undefined,
+          );
+          const describe = (concept: Doc<"concepts">) => ({
+            id: concept._id,
+            name: concept.name,
+            displayName: concept.displayName,
+            description: concept.description,
+            domains: conceptDomains(concept),
+          });
+          return {
+            correspondenceId: row._id,
+            pairKey: row.pairKey,
+            statement: row.statement,
+            rationaleMd: row.rationaleMd,
+            existingClaimIds: row.evidence.map((entry) => entry.claimId),
+            lastEvidenceAt,
+            conceptA: describe(conceptA),
+            conceptB: describe(conceptB),
+          };
+        }),
       )
     ).filter((target): target is NonNullable<typeof target> => target !== null);
   },

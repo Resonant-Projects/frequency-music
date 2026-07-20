@@ -1,25 +1,12 @@
 import { Annotation } from "@langchain/langgraph";
-import type { CandidateConcept } from "./correspondenceMinerState.js";
+import type {
+  EvidenceTargetPayload,
+  SemanticClaimPayload,
+} from "../../../convex/shared/correspondenceCandidates.js";
+import type { AgentAuditEvent } from "../graphs/shared/audit.js";
 
-export type EvidenceTarget = {
-  correspondenceId: string;
-  pairKey: string;
-  statement: string;
-  rationaleMd: string;
-  existingClaimIds: string[];
-  lastEvidenceAt?: number;
-  conceptA: CandidateConcept;
-  conceptB: CandidateConcept;
-};
-
-export type SemanticClaim = {
-  claimId: string;
-  score: number;
-  text: string;
-  sourceId: string;
-  sourceTitle: string;
-  domains: string[];
-};
+export type EvidenceTarget = EvidenceTargetPayload;
+export type SemanticClaim = SemanticClaimPayload;
 
 export type TargetClaimSearch = {
   target: EvidenceTarget;
@@ -68,6 +55,10 @@ export const EvidenceHunterAnnotation = Annotation.Root({
   evidenceAddedByTarget: Annotation<Record<string, number>>({
     value: (_left, right) => right,
     default: () => ({}),
+  }),
+  auditEvents: Annotation<AgentAuditEvent[]>({
+    value: (left, right) => left.concat(right),
+    default: () => [],
   }),
   summary: Annotation<string | undefined>,
 });

@@ -9,17 +9,18 @@ import type {
   TargetClaimSearch,
 } from "../../state/evidenceHunterState.js";
 import { callConvex } from "../../tools/convexTools.js";
+import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
+import {
+  appendRemoteAuditEvent,
+  type AgentAuditEvent,
+  type ToolCaller,
+} from "../shared/audit.js";
 import { evidenceSearchText, stanceJudgePrompt } from "./prompts.js";
 
 export const stanceOutputSchema = z.object({
   stance: z.enum(["supports", "contradicts", "irrelevant"]),
   note: z.string().trim().min(1),
 });
-
-export type ToolCaller = (
-  name: string,
-  args: Record<string, unknown>,
-) => Promise<unknown>;
 
 function asTargets(value: unknown): EvidenceTarget[] {
   return Array.isArray(value) ? (value as EvidenceTarget[]) : [];
@@ -29,26 +30,6 @@ function asClaims(value: unknown): SemanticClaim[] {
   return Array.isArray(value) ? (value as SemanticClaim[]) : [];
 }
 
-async function appendAudit(
-  callTool: ToolCaller,
-  agentRunId: string | undefined,
-  kind: "decision" | "tool_call",
-  message: string,
-  payload: Record<string, unknown>,
-): Promise<void> {
-  if (!agentRunId) return;
-  try {
-    await callTool("appendAgentRunEvent", {
-      runId: agentRunId,
-      kind,
-      message,
-      payload,
-    });
-  } catch (error) {
-    console.warn(`Failed to append evidence-hunter ${kind} event`, error);
-  }
-}
-
 export async function pickTargetsNode(
   state: EvidenceHunterState,
 ): Promise<EvidenceHunterUpdate> {
@@ -56,14 +37,14 @@ export async function pickTargetsNode(
   const targets = asTargets(
     await callConvex("listCorrespondenceTargets", { limit }),
   );
-  await appendAudit(
+  const auditEvents = await appendRemoteAuditEvent(
     callConvex,
     state.agentRunId,
     "tool_call",
     "Picked oldest-evidence conjectures",
     { requestedLimit: limit, returned: targets.length },
   );
-  return { targets };
+  return { targets, auditEvents };
 }
 
 function mergeClaims(
@@ -90,6 +71,7 @@ export async function searchClaimsNode(
   state: EvidenceHunterState,
 ): Promise<EvidenceHunterUpdate> {
   const searches: TargetClaimSearch[] = [];
+  const auditEvents: AgentAuditEvent[] = [];
   for (const target of state.targets) {
     const [sideA, sideB] = await Promise.all([
       callConvex("searchClaimsSemantic", {
@@ -103,15 +85,17 @@ export async function searchClaimsNode(
     ]);
     const claims = mergeClaims(target, asClaims(sideA), asClaims(sideB));
     searches.push({ target, claims });
-    await appendAudit(
-      callConvex,
-      state.agentRunId,
-      "tool_call",
-      "Searched claims for correspondence evidence",
-      { pairKey: target.pairKey, candidates: claims.length },
+    auditEvents.push(
+      ...(await appendRemoteAuditEvent(
+        callConvex,
+        state.agentRunId,
+        "tool_call",
+        "Searched claims for correspondence evidence",
+        { pairKey: target.pairKey, candidates: claims.length },
+      )),
     );
   }
-  return { searches };
+  return { searches, auditEvents };
 }
 
 export async function judgeStanceNode(
@@ -135,7 +119,10 @@ export async function judgeStanceNode(
       judgments.push({ target: search.target, claim, verdict });
     }
   }
-  return { judgments };
+  return {
+    judgments,
+    traceUrl: await resolveCurrentTraceUrl(state.traceUrl),
+  };
 }
 
 export function createAddEvidenceNode(callTool: ToolCaller = callConvex) {
@@ -149,19 +136,22 @@ export function createAddEvidenceNode(callTool: ToolCaller = callConvex) {
     let evidenceAddedCount = 0;
     let irrelevantCount = 0;
     const evidenceAddedByTarget: Record<string, number> = {};
+    const auditEvents: AgentAuditEvent[] = [];
 
     for (const judgment of state.judgments) {
-      await appendAudit(
-        callTool,
-        state.agentRunId,
-        "decision",
-        "Evidence hunter judged claim stance",
-        {
-          pairKey: judgment.target.pairKey,
-          claimId: judgment.claim.claimId,
-          stance: judgment.verdict.stance,
-          note: judgment.verdict.note,
-        },
+      auditEvents.push(
+        ...(await appendRemoteAuditEvent(
+          callTool,
+          state.agentRunId,
+          "decision",
+          "Evidence hunter judged claim stance",
+          {
+            pairKey: judgment.target.pairKey,
+            claimId: judgment.claim.claimId,
+            stance: judgment.verdict.stance,
+            note: judgment.verdict.note,
+          },
+        )),
       );
       if (judgment.verdict.stance === "irrelevant") {
         irrelevantCount += 1;
@@ -179,24 +169,27 @@ export function createAddEvidenceNode(callTool: ToolCaller = callConvex) {
         evidenceAddedByTarget[judgment.target.correspondenceId] =
           (evidenceAddedByTarget[judgment.target.correspondenceId] ?? 0) + 1;
       }
-      await appendAudit(
-        callTool,
-        state.agentRunId,
-        "tool_call",
-        "Added judged correspondence evidence",
-        {
-          correspondenceId: judgment.target.correspondenceId,
-          claimId: judgment.claim.claimId,
-          stance: judgment.verdict.stance,
-          added: result.added === true,
-          observedStatus: result.status,
-        },
+      auditEvents.push(
+        ...(await appendRemoteAuditEvent(
+          callTool,
+          state.agentRunId,
+          "tool_call",
+          "Added judged correspondence evidence",
+          {
+            correspondenceId: judgment.target.correspondenceId,
+            claimId: judgment.claim.claimId,
+            stance: judgment.verdict.stance,
+            added: result.added === true,
+            observedStatus: result.status,
+          },
+        )),
       );
     }
     return {
       evidenceAddedCount,
       irrelevantCount,
       evidenceAddedByTarget,
+      auditEvents,
     };
   };
 }

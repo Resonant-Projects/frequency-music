@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
+  buildMinerDecision,
   createWriteOrDiscardNode,
   judgeOutputSchema,
 } from "../src/graphs/correspondence-miner/nodes";
@@ -62,6 +63,21 @@ describe("correspondence miner judge schema", () => {
     expect(() =>
       judgeOutputSchema.parse({ ...verdict, confidenceNote: undefined }),
     ).toThrow();
+  });
+
+  test("turns an accepted verdict without a valid sample citation into a discard", () => {
+    const decision = buildMinerDecision(candidate, {
+      accept: true,
+      statement: "A specific prediction.",
+      rationaleMd: "This rationale cites no addressable sample claim.",
+      confidenceNote: "Moderate confidence.",
+    });
+
+    expect(decision.verdict.accept).toBe(false);
+    expect(decision.verdict.confidenceNote).toMatch(
+      /cited no valid sample claim ids/,
+    );
+    expect(decision.supportingClaimIds).toEqual([]);
   });
 });
 

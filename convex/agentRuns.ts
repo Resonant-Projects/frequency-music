@@ -354,6 +354,7 @@ export const claimNextPending = internalMutation({
       runId: candidate._id,
       graphName: candidate.graphName,
       input: candidate.input ?? null,
+      traceUrl: candidate.traceUrl,
       status: "running" as const,
       workerId: args.workerId,
       startedAt: now,

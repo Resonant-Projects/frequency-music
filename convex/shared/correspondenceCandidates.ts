@@ -1,4 +1,77 @@
+/* eslint-disable unicorn/no-array-sort -- The agent's ES target does not include Array#toSorted. */
+
+import { zid } from "convex-helpers/server/zod4";
+import { z } from "zod";
 import { pairKey } from "./correspondenceKey";
+
+export const candidateConceptZ = z.object({
+  id: zid("concepts"),
+  name: z.string(),
+  displayName: z.string(),
+  description: z.string().optional(),
+  domains: z.array(z.string()),
+});
+
+export const candidateClaimZ = z.object({
+  id: zid("claims"),
+  text: z.string(),
+  sourceId: zid("sources"),
+  sourceTitle: z.string(),
+});
+
+export const correspondenceCandidateBaseZ = z.object({
+  conceptAId: zid("concepts"),
+  conceptBId: zid("concepts"),
+  pairKey: z.string(),
+  similarityScore: z.number(),
+  noveltyScore: z.number(),
+  domainsA: z.array(z.string()),
+  domainsB: z.array(z.string()),
+  sampleClaimIds: z.object({
+    a: z.array(zid("claims")),
+    b: z.array(zid("claims")),
+  }),
+});
+
+export const correspondenceCandidateZ = correspondenceCandidateBaseZ.extend({
+  conceptA: candidateConceptZ,
+  conceptB: candidateConceptZ,
+  sampleClaims: z.object({
+    a: z.array(candidateClaimZ),
+    b: z.array(candidateClaimZ),
+  }),
+});
+
+export const semanticClaimZ = z.object({
+  claimId: zid("claims"),
+  score: z.number(),
+  text: z.string(),
+  sourceId: zid("sources"),
+  sourceTitle: z.string(),
+  domains: z.array(z.string()),
+});
+
+export const evidenceTargetZ = z.object({
+  correspondenceId: zid("correspondences"),
+  pairKey: z.string(),
+  statement: z.string(),
+  rationaleMd: z.string(),
+  existingClaimIds: z.array(zid("claims")),
+  lastEvidenceAt: z.number().optional(),
+  conceptA: candidateConceptZ,
+  conceptB: candidateConceptZ,
+});
+
+export type CandidateConceptPayload = z.input<typeof candidateConceptZ>;
+export type CandidateClaimPayload = z.input<typeof candidateClaimZ>;
+export type CorrespondenceCandidateBasePayload = z.input<
+  typeof correspondenceCandidateBaseZ
+>;
+export type CorrespondenceCandidatePayload = z.input<
+  typeof correspondenceCandidateZ
+>;
+export type SemanticClaimPayload = z.input<typeof semanticClaimZ>;
+export type EvidenceTargetPayload = z.input<typeof evidenceTargetZ>;
 
 export type PairingConcept = {
   conceptId: string;
@@ -21,6 +94,16 @@ export type PairProposal = {
   hitClaimIds: string[];
 };
 
+export type ClaimVector = {
+  claimId: string;
+  embedding: number[];
+};
+
+export type CrossConceptSamples = {
+  similarityScore: number;
+  sampleClaimIds: { a: string[]; b: string[] };
+};
+
 type RankedCandidateInput = {
   pairKey: string;
   similarityScore: number;
@@ -30,7 +113,7 @@ type RankedCandidateInput = {
 };
 
 function normalizedDomains(domains: readonly string[]): string[] {
-  return Array.from(new Set(domains)).toSorted();
+  return Array.from(new Set(domains)).sort();
 }
 
 export function domainSetsDiffer(
@@ -86,7 +169,7 @@ export function buildPairProposals(
 
   return Array.from(grouped.values())
     .map(({ claims, ...proposal }) => {
-      const rankedClaims = Array.from(claims.entries()).toSorted(
+      const rankedClaims = Array.from(claims.entries()).sort(
         ([leftId, leftScore], [rightId, rightScore]) =>
           rightScore - leftScore || leftId.localeCompare(rightId),
       );
@@ -96,7 +179,7 @@ export function buildPairProposals(
         hitClaimIds: rankedClaims.slice(0, 3).map(([claimId]) => claimId),
       };
     })
-    .toSorted((left, right) => left.pairKey.localeCompare(right.pairKey));
+    .sort((left, right) => left.pairKey.localeCompare(right.pairKey));
 }
 
 export function noveltyScore(input: {
@@ -120,11 +203,67 @@ export function rankCandidateScores<T extends RankedCandidateInput>(
       noveltyScore: noveltyScore(candidate),
     }))
     .filter((candidate) => candidate.noveltyScore > 0)
-    .toSorted(
+    .sort(
       (left, right) =>
         right.similarityScore * right.noveltyScore -
           left.similarityScore * left.noveltyScore ||
         left.pairKey.localeCompare(right.pairKey),
     )
     .slice(0, Math.max(0, Math.floor(limit)));
+}
+
+function cosineSimilarity(left: readonly number[], right: readonly number[]) {
+  if (left.length === 0 || left.length !== right.length) return -1;
+  let dot = 0;
+  let leftMagnitude = 0;
+  let rightMagnitude = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    const a = left[index] ?? 0;
+    const b = right[index] ?? 0;
+    dot += a * b;
+    leftMagnitude += a * a;
+    rightMagnitude += b * b;
+  }
+  if (leftMagnitude === 0 || rightMagnitude === 0) return -1;
+  return dot / Math.sqrt(leftMagnitude * rightMagnitude);
+}
+
+export function selectCrossConceptSamples(
+  claimsA: readonly ClaimVector[],
+  claimsB: readonly ClaimVector[],
+  limit = 3,
+): CrossConceptSamples | null {
+  if (claimsA.length === 0 || claimsB.length === 0) return null;
+  const scoresA = new Map<string, number>();
+  const scoresB = new Map<string, number>();
+  let similarityScore = -1;
+  for (const claimA of claimsA) {
+    for (const claimB of claimsB) {
+      const score = cosineSimilarity(claimA.embedding, claimB.embedding);
+      similarityScore = Math.max(similarityScore, score);
+      scoresA.set(
+        claimA.claimId,
+        Math.max(scoresA.get(claimA.claimId) ?? -1, score),
+      );
+      scoresB.set(
+        claimB.claimId,
+        Math.max(scoresB.get(claimB.claimId) ?? -1, score),
+      );
+    }
+  }
+  if (!Number.isFinite(similarityScore) || similarityScore < -0.999_999) {
+    return null;
+  }
+  const rankedIds = (scores: Map<string, number>) =>
+    Array.from(scores.entries())
+      .sort(
+        ([leftId, leftScore], [rightId, rightScore]) =>
+          rightScore - leftScore || leftId.localeCompare(rightId),
+      )
+      .slice(0, Math.max(1, Math.floor(limit)))
+      .map(([claimId]) => claimId);
+  return {
+    similarityScore,
+    sampleClaimIds: { a: rankedIds(scoresA), b: rankedIds(scoresB) },
+  };
 }

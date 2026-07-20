@@ -239,6 +239,41 @@ describe("correspondence pair identity and classification gates", () => {
   });
 });
 
+describe("correspondence evidence target ordering", () => {
+  test("returns conjectures by oldest creation time without a preselection window", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const olderPair = await seedValidPair(t, "-older");
+    const newerPair = await seedValidPair(t, "-newer");
+    const newer = await upsertAsAgent(
+      t,
+      agentRunId,
+      newerPair.conceptAId,
+      newerPair.conceptBId,
+    );
+    const older = await upsertAsAgent(
+      t,
+      agentRunId,
+      olderPair.conceptAId,
+      olderPair.conceptBId,
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.patch(older.id, { createdAt: 1000 });
+      await ctx.db.patch(newer.id, { createdAt: 2000 });
+    });
+
+    const targets = await t.query(
+      internal.correspondenceCandidates.listEvidenceTargets,
+      { limit: 2 },
+    );
+
+    expect(targets.map((target) => target.correspondenceId)).toEqual([
+      older.id,
+      newer.id,
+    ]);
+  });
+});
+
 describe("correspondence evidence lifecycle", () => {
   test("recomputes from evidence counts and dedupes claim + stance", async () => {
     const t = convexTest(schema, modules);
