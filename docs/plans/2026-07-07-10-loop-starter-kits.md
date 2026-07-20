@@ -59,8 +59,8 @@ export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mappi
 
 **Contract:** a deliberately minimal sketch — 8–16 bars honoring tempo, root, and scale degrees from the tuning (as a pitch-class palette; standard MIDI notes + a card note explaining the tuning file does the retuning), one simple figure per `rhythm`/`chordProgression` parameter when present. It is scaffolding to audition the tuning, not a composition — resist making it musical.
 
-- [ ] **Step 1:** Tests: correct tempo meta, note set ⊆ scale palette, deterministic output for fixed input (no randomness — same recipe, same seed file).
-- [ ] **Step 2:** Implement; commit.
+- [x] **Step 1:** Tests: correct tempo meta, note set ⊆ scale palette, deterministic output for fixed input (no randomness — same recipe, same seed file).
+- [x] **Step 2:** Implement; commit.
 
 ---
 
