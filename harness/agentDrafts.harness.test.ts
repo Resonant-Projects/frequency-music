@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import schema from "../convex/schema";
 import { modules } from "./modules";
@@ -203,6 +203,68 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     await expect(
       asSystem.mutation(api.agentDrafts.approve, { draftId }),
     ).rejects.toThrow();
+  });
+});
+
+describe("agentDrafts pending hypothesis WIP cap", () => {
+  test("blocks the fourth hypothesis draft, ignores recipes, and reopens after approval", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const agentRunId = await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "hypothesis-drafter",
+        status: "needs_review",
+        input: null,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const createDraft = async (
+      kind: "hypothesis_draft" | "recipe_draft",
+      suffix: string,
+    ) =>
+      await t.mutation(internal.agentDrafts.createFromAgentRun, {
+        agentRunId,
+        draft: {
+          kind,
+          title: `${kind} ${suffix}`,
+          summary: `Cap harness ${suffix}`,
+          candidateIds: [`candidate-${suffix}`],
+          needsReview: true,
+          ...(kind === "hypothesis_draft"
+            ? {
+                payload: {
+                  ...hypothesisPayload,
+                  title: `Hypothesis ${suffix}`,
+                },
+              }
+            : {}),
+        },
+      });
+
+    const first = await createDraft("hypothesis_draft", "1");
+    await createDraft("hypothesis_draft", "2");
+    await createDraft("hypothesis_draft", "3");
+
+    await expect(createDraft("hypothesis_draft", "4-blocked")).rejects.toThrow(
+      /DraftCapExceeded/,
+    );
+    await expect(createDraft("recipe_draft", "recipe")).resolves.toMatchObject({
+      status: "pending_review",
+    });
+    await expect(
+      t.query(api.agentDrafts.countPending, { kind: "hypothesis_draft" }),
+    ).resolves.toBe(3);
+    await expect(
+      t.query(api.agentDrafts.countPending, { kind: "recipe_draft" }),
+    ).resolves.toBe(1);
+
+    await asSystem.mutation(api.agentDrafts.approve, {
+      draftId: first.draftId,
+    });
+    await expect(
+      createDraft("hypothesis_draft", "4-reopened"),
+    ).resolves.toMatchObject({ status: "pending_review" });
   });
 });
 

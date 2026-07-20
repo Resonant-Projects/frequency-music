@@ -5,6 +5,7 @@ import {
   AGENT_RUN_STATUSES,
   HEARTBEAT_INTERVAL_MS,
   KNOWN_GRAPH_NAMES,
+  PENDING_DRAFT_CAP,
   STALE_RUN_MS,
   TERMINAL_STATUS_OWNER,
 } from "./agentContract";
@@ -40,6 +41,10 @@ describe("agentContract", () => {
   test("a healthy worker can never be swept", () => {
     expect(HEARTBEAT_INTERVAL_MS).toBeLessThan(STALE_RUN_MS);
     expect(STALE_RUN_MS / HEARTBEAT_INTERVAL_MS).toBeGreaterThanOrEqual(2);
+  });
+
+  test("pending hypothesis draft work is capped at three", () => {
+    expect(PENDING_DRAFT_CAP).toBe(3);
   });
 
   test("every known graph has a terminal-status owner", () => {

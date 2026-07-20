@@ -17,10 +17,22 @@ import {
   buildRecipeInsertFromPayload,
 } from "./agentDraftPromotion";
 import { completeReviewedRunIfReady } from "./agentRuns";
+import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
 
 type AgentReviewDraftKind = "hypothesis_draft" | "recipe_draft";
+
+async function countPendingDraftsByKind(
+  ctx: Pick<QueryCtx, "db">,
+  kind: AgentReviewDraftKind,
+) {
+  const rows = await ctx.db
+    .query("agentReviewDrafts")
+    .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
+    .collect();
+  return rows.filter((row) => row.kind === kind).length;
+}
 
 function redactOperationalSecrets(value: string) {
   return value
@@ -187,6 +199,15 @@ export const createFromAgentRun = internalMutation({
       draft: args.draft,
     });
     if (!row) throw new Error("Invalid human-review draft");
+    if (
+      row.kind === "hypothesis_draft" &&
+      (await countPendingDraftsByKind(ctx, row.kind)) >= PENDING_DRAFT_CAP
+    ) {
+      throw new ConvexError({
+        code: "DraftCapExceeded",
+        message: `Pending hypothesis drafts are capped at ${PENDING_DRAFT_CAP}`,
+      });
+    }
 
     const draftId = await ctx.db.insert("agentReviewDrafts", row);
     const now = Date.now();
@@ -296,6 +317,14 @@ export const countPendingPublic = query({
       .collect();
     return rows.length;
   },
+});
+
+/** Kind-specific pending count used by WIP-capped agent graphs. */
+export const countPending = query({
+  args: {
+    kind: v.union(v.literal("hypothesis_draft"), v.literal("recipe_draft")),
+  },
+  handler: async (ctx, args) => countPendingDraftsByKind(ctx, args.kind),
 });
 
 // ============================================================================

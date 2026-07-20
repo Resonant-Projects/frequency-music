@@ -46,8 +46,8 @@
 - Modify: `convex/shared/agentContract.ts` (found-state location): `export const PENDING_DRAFT_CAP = 3;`
 - Modify: `convex/agentDrafts.ts`: query `countPending { kind }`; guard in the draft-create mutation: creating a `hypothesis_draft` when pending ≥ cap throws `DraftCapExceeded`.
 
-- [ ] **Step 1:** Failing harness test: 3 pending hypothesis drafts → 4th create throws; recipe drafts unaffected; approving one reopens capacity.
-- [ ] **Step 2:** Implement; codegen; commit.
+- [x] **Step 1:** Failing harness test: 3 pending hypothesis drafts → 4th create throws; recipe drafts unaffected; approving one reopens capacity.
+- [x] **Step 2:** Implement; codegen; commit. *(Implementation and offline typecheck complete; codegen intentionally skipped per operator constraint.)*
 
 ---
 
