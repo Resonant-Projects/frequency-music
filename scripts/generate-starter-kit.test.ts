@@ -88,6 +88,25 @@ describe("starter kit assembly", () => {
     });
   });
 
+  test("force removes generated files that are stale after degradation", async () => {
+    const root = await temporaryDirectory();
+    const first = await writeStarterKit(fixtureRecipe, root);
+    const degraded: StarterKitRecipe = {
+      ...fixtureRecipe,
+      parameters: [{ type: "tempo", value: "90 BPM" }],
+    };
+
+    const second = await writeStarterKit(degraded, root, { force: true });
+
+    expect(second.manifest).toEqual(["seed.mid", "card.md"]);
+    await expect(
+      readFile(join(first.outputDirectory, "tuning.scl"), "utf8"),
+    ).rejects.toThrow();
+    await expect(
+      readFile(join(first.outputDirectory, "tuning.kbm"), "utf8"),
+    ).rejects.toThrow();
+  });
+
   test("makes degradation explicit in the parameter card", () => {
     const kit = buildStarterKit(fixtureRecipe);
     const card = kit.artifacts.find(

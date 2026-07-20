@@ -113,6 +113,18 @@ export function parameterKind(parameter: CompositionParameter): string {
   );
 }
 
+export function isTuningParameter(parameter: CompositionParameter): boolean {
+  return TUNING_KINDS.has(parameterKind(parameter).toLowerCase());
+}
+
+function ratioValue(value: string): number | null {
+  if (!RATIO_PATTERN.test(value.trim())) return null;
+  const [numeratorText, denominatorText] = value.split(/[/:]/);
+  const numerator = Number(numeratorText);
+  const denominator = Number(denominatorText);
+  return numerator > 0 && denominator > 0 ? numerator / denominator : null;
+}
+
 function normalizeName(value: string): string {
   return value
     .normalize("NFKD")
@@ -143,7 +155,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function ratiosFrom(value: unknown): string[] | null {
   if (!Array.isArray(value) || value.length === 0) return null;
   const ratios = value.map((item) =>
-    typeof item === "string" && RATIO_PATTERN.test(item.trim())
+    typeof item === "string" && ratioValue(item) !== null
       ? item.trim().replace(":", "/").replaceAll(/\s/g, "")
       : null,
   );
@@ -184,11 +196,11 @@ function valueSpec(value: string): TuningSpec | null {
 
   const ratios = value.match(/\d+\s*[/:]\s*\d+/g);
   if (ratios && ratios.length > 0) {
+    const normalized = ratiosFrom(ratios);
+    if (!normalized) return null;
     return {
       kind: "ji",
-      ratios: ratios.map((ratio) =>
-        ratio.trim().replace(":", "/").replaceAll(/\s/g, ""),
-      ),
+      ratios: normalized,
     };
   }
 
@@ -205,9 +217,7 @@ function valueSpec(value: string): TuningSpec | null {
 export function parseTuningFromParametersWithReason(
   params: CompositionParameter[],
 ): TuningParseResult {
-  const tuningParameters = params.filter((parameter) =>
-    TUNING_KINDS.has(parameterKind(parameter).toLowerCase()),
-  );
+  const tuningParameters = params.filter(isTuningParameter);
   if (tuningParameters.length === 0) {
     return {
       spec: null,
@@ -271,6 +281,11 @@ function normalizedIntervals(spec: TuningSpec): Array<number | string> {
     const ratios = spec.ratios
       .map((ratio) => ratio.trim().replace(":", "/").replaceAll(/\s/g, ""))
       .filter((ratio) => ratio !== "1/1");
+    if (ratios.some((ratio) => ratioValue(ratio) === null)) {
+      throw new Error(
+        "JI ratios must have positive numerators and denominators.",
+      );
+    }
     return ratios.at(-1) === "2/1" ? ratios : [...ratios, "2/1"];
   }
   if (spec.kind === "cents") {
@@ -338,8 +353,8 @@ export function toKbm(spec: TuningSpec, rootNote = "C4"): string {
     spec.kind === "named"
       ? (NAMED_TUNINGS[spec.name]?.referenceHz ?? 440)
       : 440;
-  const semitoneDistance = (((referenceNote - middleNote) % 12) + 12) % 12;
-  const referenceDegree = Math.round((semitoneDistance * mapSize) / 12);
+  const referenceDegree =
+    (((referenceNote - middleNote) % mapSize) + mapSize) % mapSize;
 
   return [
     "! tuning.kbm",

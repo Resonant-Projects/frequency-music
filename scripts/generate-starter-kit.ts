@@ -1,6 +1,6 @@
 // oxlint-disable-next-line import/no-unassigned-import -- Loads env-backed values before client resolution.
 import "varlock/auto-load";
-import { access, mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Id } from "../convex/_generated/dataModel";
 import { api } from "../convex/_generated/api";
@@ -10,8 +10,9 @@ import {
   type ParameterDisposition,
   type StarterKitRecipe,
 } from "./lib/parameterCard";
-import { generateSeedMidi } from "./lib/seedMidi";
+import { generateSeedMidi, isSeedParameter } from "./lib/seedMidi";
 import {
+  isTuningParameter,
   parameterKind,
   parseTuningFromParameters,
   parseTuningFromParametersWithReason,
@@ -44,22 +45,12 @@ export interface StarterKitMetadata {
   manifest: string[];
 }
 
-const TUNING_KINDS = new Set([
-  "edo",
-  "scale",
-  "temperament",
-  "tuning",
-  "tuningsystem",
-]);
-const SEED_KINDS = new Set([
-  "chordprogression",
-  "form",
-  "key",
-  "note",
-  "rhythm",
-  "rootnote",
-  "tempo",
-]);
+const GENERATED_FILENAMES = [
+  "tuning.scl",
+  "tuning.kbm",
+  "seed.mid",
+  "card.md",
+] as const;
 
 function slugify(value: string): string {
   return (
@@ -96,7 +87,6 @@ function buildDispositions(
 ): ParameterDisposition[] {
   const honoredBySeed = new Set(seedIndexes);
   return recipe.parameters.map((parameter, index) => {
-    const kind = parameterKind(parameter).toLowerCase();
     if (index === tuningIndex && tuning) {
       return {
         index,
@@ -104,7 +94,7 @@ function buildDispositions(
         reason: "Generated tuning.scl and tuning.kbm from this parameter.",
       };
     }
-    if (TUNING_KINDS.has(kind)) {
+    if (isTuningParameter(parameter)) {
       return {
         index,
         honored: false,
@@ -121,7 +111,7 @@ function buildDispositions(
         reason: "Applied to the deterministic seed MIDI.",
       };
     }
-    if (SEED_KINDS.has(kind)) {
+    if (isSeedParameter(parameter)) {
       return {
         index,
         honored: false,
@@ -225,13 +215,21 @@ export async function writeStarterKit(
   }
 
   const outputDirectory = resolve(rootDirectory, kit.slug);
-  if ((await pathExists(outputDirectory)) && !options.force) {
+  const outputExists = await pathExists(outputDirectory);
+  if (outputExists && !options.force) {
     throw new Error(
       `Starter kit ${outputDirectory} already exists; pass --force to overwrite generated files.`,
     );
   }
 
   await mkdir(outputDirectory, { recursive: true });
+  if (outputExists && options.force) {
+    await Promise.all(
+      GENERATED_FILENAMES.map((filename) =>
+        rm(resolve(outputDirectory, filename), { force: true }),
+      ),
+    );
+  }
   await Promise.all(
     kit.artifacts.map((artifact) =>
       writeFile(resolve(outputDirectory, artifact.filename), artifact.contents),

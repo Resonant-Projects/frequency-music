@@ -19,10 +19,22 @@ export interface SeedMidiGeneration {
 const TICKS_PER_BEAT = 480;
 const DEFAULT_BARS = 8;
 const DEFAULT_TEMPO = 120;
-const SCALE_DEGREE_OFFSETS = [0, 2, 4, 5, 7, 9, 11];
+const SEED_KINDS = new Set([
+  "chordprogression",
+  "form",
+  "key",
+  "note",
+  "rhythm",
+  "rootnote",
+  "tempo",
+]);
 
 function kindOf(parameter: CompositionParameter): string {
   return parameterKind(parameter).toLowerCase();
+}
+
+export function isSeedParameter(parameter: CompositionParameter): boolean {
+  return SEED_KINDS.has(kindOf(parameter));
 }
 
 function detailsNumber(
@@ -116,40 +128,46 @@ export function generateSeedMidi(
   const honored = new Set<number>();
   let tempoBpm = DEFAULT_TEMPO;
   let rootMidi = 60;
-  let noteTicks = TICKS_PER_BEAT;
   let bars = DEFAULT_BARS;
-  let progression: number[] | null = null;
+  let hasTempo = false;
+  let hasRoot = false;
+  let hasForm = false;
+  const rhythmFigures: number[] = [];
+  const progressionFigures: number[][] = [];
 
   for (const [index, parameter] of parameters.entries()) {
     const kind = kindOf(parameter);
-    if (kind === "tempo") {
+    if (kind === "tempo" && !hasTempo) {
       const parsed = parseTempo(parameter);
       if (parsed !== null) {
         tempoBpm = parsed;
+        hasTempo = true;
         honored.add(index);
       }
-    } else if (["key", "note", "rootnote"].includes(kind)) {
+    } else if (["key", "note", "rootnote"].includes(kind) && !hasRoot) {
       const parsed = parseRoot(parameter);
       if (parsed !== null) {
         rootMidi = parsed;
+        hasRoot = true;
         honored.add(index);
       }
     } else if (kind === "rhythm") {
       const parsed = rhythmTicks(parameter.value);
       if (parsed !== null) {
-        noteTicks = parsed;
+        rhythmFigures.push(parsed);
         honored.add(index);
       }
     } else if (kind === "chordprogression") {
       const parsed = progressionDegrees(parameter.value);
       if (parsed !== null) {
-        progression = parsed;
+        progressionFigures.push(parsed);
         honored.add(index);
       }
-    } else if (kind === "form") {
+    } else if (kind === "form" && !hasForm) {
       const parsed = requestedBars(parameter);
       if (parsed !== null && parsed >= 8 && parsed <= 16) {
         bars = parsed;
+        hasForm = true;
         honored.add(index);
       }
     }
@@ -177,13 +195,21 @@ export function generateSeedMidi(
   ];
 
   const barTicks = TICKS_PER_BEAT * 4;
-  const notesPerBar = Math.max(1, Math.floor(barTicks / noteTicks));
   for (let bar = 0; bar < bars; bar += 1) {
+    const noteTicks =
+      rhythmFigures.length > 0
+        ? rhythmFigures[bar % rhythmFigures.length]!
+        : TICKS_PER_BEAT;
+    const progression =
+      progressionFigures.length > 0
+        ? progressionFigures[bar % progressionFigures.length]
+        : undefined;
     const progressionDegree = progression?.[bar % progression.length];
+    const notesPerBar = Math.max(1, Math.floor(barTicks / noteTicks));
     const startingIndex =
       progressionDegree === undefined
         ? bar % notes.length
-        : SCALE_DEGREE_OFFSETS[progressionDegree]! % notes.length;
+        : progressionDegree % notes.length;
     for (let step = 0; step < notesPerBar; step += 1) {
       const noteNumber = notes[(startingIndex + step) % notes.length]!;
       events.push({

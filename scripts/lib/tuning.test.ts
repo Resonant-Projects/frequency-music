@@ -15,12 +15,16 @@ function scalaBody(contents: string): string {
     .replace(/^\n+/, "");
 }
 
+async function scaleFixture(filename: string): Promise<string> {
+  return await readFile(
+    new URL(`../../scales/${filename}`, import.meta.url),
+    "utf8",
+  );
+}
+
 describe("tuning parameters to Scala", () => {
   test("matches the hand-written geometric temperament interval body", async () => {
-    const fixture = await readFile(
-      new URL("../../scales/geometric-temperament.scl", import.meta.url),
-      "utf8",
-    );
+    const fixture = await scaleFixture("geometric-temperament.scl");
     const spec = parseTuningFromParameters([
       { type: "tuningSystem", value: "Geometric Temperament" },
     ]);
@@ -29,6 +33,31 @@ describe("tuning parameters to Scala", () => {
     expect(scalaBody(toScl(spec!, "Generated geometric temperament"))).toBe(
       scalaBody(fixture),
     );
+  });
+
+  test.each([
+    ["Precise Temperament Tuning", "grant-precise-temperament.scl"],
+    ["Pure Polygon Internal Angles Scale", "polygon-angles-pure.scl"],
+  ])("matches the hand-written %s interval body", async (name, filename) => {
+    const fixture = await scaleFixture(filename);
+    const spec = parseTuningFromParameters([
+      { type: "tuningSystem", value: name },
+    ]);
+
+    expect(spec?.kind).toBe("named");
+    expect(scalaBody(toScl(spec!, `Generated ${name}`))).toBe(
+      scalaBody(fixture),
+    );
+  });
+
+  test("matches the hand-written geometric keyboard mapping body", async () => {
+    const fixture = await scaleFixture("geometric-temperament.kbm");
+    const generated = toKbm(
+      { kind: "named", name: "geometric-temperament" },
+      "C4",
+    );
+
+    expect(scalaBody(generated)).toBe(scalaBody(fixture));
   });
 
   test("emits an equal division of the octave", () => {
@@ -87,10 +116,25 @@ describe("tuning parameters to Scala", () => {
   });
 
   test("maps the requested root note in a valid KBM", () => {
-    const kbm = toKbm({ kind: "edo", divisions: 12 }, "D4");
+    const kbm = toKbm({ kind: "edo", divisions: 19 }, "D4");
     expect(kbm).toContain("! Middle note (scale degree 0)\n62\n");
     expect(kbm).toContain("! Reference note\n69\n");
     expect(kbm).toContain("! Reference frequency\n440.00000\n");
     expect(kbm).toContain("! Reference scale degree\n7\n");
+  });
+
+  test("rejects a zero-denominator ratio as a typed parse failure", () => {
+    expect(
+      parseTuningFromParametersWithReason([
+        {
+          type: "tuningSystem",
+          value: "custom JI",
+          details: { ratios: ["1/1", "3/0", "2/1"] },
+        },
+      ]),
+    ).toMatchObject({
+      spec: null,
+      reason: { code: "invalid_tuning_details" },
+    });
   });
 });

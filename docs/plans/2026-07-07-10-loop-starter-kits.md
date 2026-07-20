@@ -47,7 +47,7 @@ export function toScl(spec: TuningSpec, description: string): string;   // valid
 export function toKbm(spec: TuningSpec, rootNote?: string): string;     // mapping w/ root
 ```
 
-- [x] **Step 1:** Golden-fixture tests: an EDO spec reproduces a hand-written `scales/*.scl` byte-for-byte (modulo header comment); JI and cents cases; parse failures return null with reason (typed, not thrown). *(Found-state adaptation: no handwritten EDO fixture exists; the geometric cents scale is golden-tested byte-for-byte modulo comments, with literal EDO and JI cases.)*
+- [x] **Step 1:** Golden-fixture tests: an EDO spec reproduces a hand-written `scales/*.scl` byte-for-byte (modulo header comment); JI and cents cases; parse failures return null with reason (typed, not thrown). *(Found-state adaptation: no handwritten EDO or full-JI fixture exists; all matching handwritten cents/named `.scl` fixtures and the available `.kbm` are golden-tested byte-for-byte modulo comments, with literal EDO and JI cases.)*
 - [x] **Step 2:** Implement; tests green; commit.
 
 ---

@@ -48,4 +48,27 @@ describe("deterministic seed MIDI", () => {
     const result = generateSeedMidi(parameters, tuning);
     expect(result.honoredParameterIndexes).toEqual([0, 1, 2, 3]);
   });
+
+  test("gives every repeated rhythm and progression parameter a figure", () => {
+    const repeated: CompositionParameter[] = [
+      { type: "rhythm", value: "quarter notes" },
+      { type: "rhythm", value: "half notes" },
+      { type: "chordProgression", value: "I" },
+      { type: "chordProgression", value: "V" },
+    ];
+    const result = generateSeedMidi(repeated, tuning);
+    const parsed = parseMidi(result.bytes);
+    const noteLengths = new Set(
+      parsed.tracks
+        .flat()
+        .flatMap((event) =>
+          event.type === "noteOff" ? [event.deltaTime] : [],
+        ),
+    );
+    const onlyLastProgression = generateSeedMidi([repeated[3]!], tuning);
+
+    expect(noteLengths).toEqual(new Set([480, 960]));
+    expect(result.bytes).not.toEqual(onlyLastProgression.bytes);
+    expect(result.honoredParameterIndexes).toEqual([0, 1, 2, 3]);
+  });
 });
