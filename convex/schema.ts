@@ -423,7 +423,12 @@ export default defineSchema({
     .index("by_extractionId_ordinal", ["extractionId", "ordinal"])
     .index("by_sourceId", ["sourceId"])
     .index("by_sourceId_status", ["sourceId", "status"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 1536,
+      filterFields: ["status", "sourceId"],
+    }),
 
   // ==========================================================================
   // CORRESPONDENCES - Cross-domain assertions between canonical concepts
@@ -840,6 +845,8 @@ export default defineSchema({
     relevanceRationale: v.optional(v.string()),
     classifiedAt: v.optional(v.number()),
     classifierModel: v.optional(v.string()),
+    embedding: v.optional(v.array(v.float64())),
+    embeddingModel: v.optional(v.string()),
 
     // Metadata
     wikipedia: v.optional(v.string()), // Wikipedia URL
@@ -856,6 +863,11 @@ export default defineSchema({
     .index("by_domain", ["domain"])
     .index("by_missionRelevance", ["missionRelevance"])
     .index("by_mentionCount", ["mentionCount"])
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 1536,
+      filterFields: ["missionRelevance", "domain"],
+    })
     .searchIndex("search_concepts", {
       searchField: "displayName",
       filterFields: ["domain"],
