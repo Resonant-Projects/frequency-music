@@ -16,8 +16,8 @@
 69
 ! Frequency of reference note (A=432Hz)
 432.00000
-! Scale degree for reference note
-9
+! Scale degree to consider as formal octave
+12
 ! Mapping (scale degree for each keyboard key)
 0
 1
