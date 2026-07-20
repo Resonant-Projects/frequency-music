@@ -14,6 +14,7 @@ import {
 import { requireAuth } from "./auth";
 import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { MODELS } from "./llm";
+import { relevanceEmbeddingFields } from "./shared/embeddingText";
 import { getNonDeprecatedConceptDomains } from "./vocabulary";
 
 const classificationValidator = v.object({
@@ -113,6 +114,11 @@ const listStaleUnreviewedRef = makeFunctionReference<
   { cutoff: number; limit: number },
   Id<"concepts">[]
 >("conceptClassifier:listStaleUnreviewed");
+const embedConceptsRef = makeFunctionReference<
+  "action",
+  { conceptIds: Id<"concepts">[] },
+  { requested: number; embedded: number; skipped: number }
+>("embeddings:embedConcepts");
 
 async function persistClassifications(
   ctx: MutationCtx,
@@ -143,6 +149,7 @@ async function persistClassifications(
   let assigned = 0;
   let unreviewed = 0;
   let skipped = 0;
+  const newlyOnMissionConceptIds: Id<"concepts">[] = [];
 
   for (const classification of args.classifications) {
     const concept = await ctx.db.get("concepts", classification.conceptId);
@@ -188,6 +195,7 @@ async function persistClassifications(
         missionRelevance: "unreviewed",
         relevanceRationale: `classifier proposed unknown domain: ${unknownDomains.join(", ")}`,
         classifierModel: args.model,
+        ...relevanceEmbeddingFields("unreviewed", concept),
         updatedAt: now,
       });
       unreviewed++;
@@ -198,6 +206,7 @@ async function persistClassifications(
         missionRelevance: "unreviewed",
         relevanceRationale: "classifier returned no usable domain",
         classifierModel: args.model,
+        ...relevanceEmbeddingFields("unreviewed", concept),
         updatedAt: Date.now(),
       });
       unreviewed++;
@@ -215,9 +224,21 @@ async function persistClassifications(
       relevanceRationale: classification.rationale.trim(),
       classifiedAt: now,
       classifierModel: args.model,
+      ...relevanceEmbeddingFields(classification.missionRelevance, concept),
       updatedAt: now,
     });
+    if (
+      classification.missionRelevance === "on" &&
+      concept.missionRelevance !== "on"
+    ) {
+      newlyOnMissionConceptIds.push(classification.conceptId);
+    }
     assigned++;
+  }
+  if (newlyOnMissionConceptIds.length > 0) {
+    await ctx.scheduler.runAfter(0, embedConceptsRef, {
+      conceptIds: newlyOnMissionConceptIds,
+    });
   }
   return { assigned, unreviewed, skipped };
 }

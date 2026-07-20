@@ -71,6 +71,14 @@ crons.interval(
   {},
 );
 
+// Repair missing or stale embeddings without blocking write paths.
+crons.weekly(
+  "embed-missing-sweep",
+  { dayOfWeek: "sunday", hourUTC: 15, minuteUTC: 0 },
+  internal.embeddings.sweepMissingEmbeddings,
+  {},
+);
+
 // Park unresolved conjectures that have shown no evidence or movement in 90 days.
 crons.weekly(
   "retire-stale-correspondences",

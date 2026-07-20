@@ -54,6 +54,12 @@ describe("extractInternal.storeExtraction", () => {
     expect(extraction?.compositionParameters[0]!.kind).toBe("drive_frequency");
     expect(extraction?.createdBy).toBe("system");
 
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0]?.name).toContain("embeddings:embedClaims");
+
     const kinds = await t.run((ctx) =>
       ctx.db.query("parameterKinds").collect(),
     );
