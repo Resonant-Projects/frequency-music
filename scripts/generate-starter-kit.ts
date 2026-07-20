@@ -56,15 +56,6 @@ export interface StarterKitMetadata {
   manifest: string[];
 }
 
-function tuningParameterIndex(
-  recipe: StarterKitRecipe,
-  tuning: TuningSpec | null,
-): number | null {
-  if (tuning === null) return null;
-  const index = recipe.parameters.findIndex(isTuningParameter);
-  return index === -1 ? null : index;
-}
-
 function rootNote(recipe: StarterKitRecipe): string | undefined {
   const parameter = recipe.parameters.find((candidate) =>
     ROOT_NOTE_KINDS.has(parameterKind(candidate).toLowerCase()),
@@ -127,7 +118,7 @@ export function buildStarterKit(recipe: StarterKitRecipe): BuiltStarterKit {
   const degradationNotes: string[] = [];
   const tuningResult = parseTuningFromParametersWithReason(recipe.parameters);
   const tuning = tuningResult.spec;
-  const selectedTuningIndex = tuningParameterIndex(recipe, tuning);
+  const selectedTuningIndex = tuningResult.parameterIndex;
   let seedIndexes: number[] = [];
 
   if (tuning) {
@@ -155,11 +146,12 @@ export function buildStarterKit(recipe: StarterKitRecipe): BuiltStarterKit {
       );
     }
     artifacts.push({ filename: "seed.mid", contents: seed.bytes });
+    degradationNotes.push(
+      "Standard MIDI notes are pitch-class scaffolding; load the Scala files to apply the intended tuning.",
+    );
   }
 
-  degradationNotes.push(
-    "Standard MIDI notes are pitch-class scaffolding; load the Scala files to apply the intended tuning.",
-  );
+  const generatedArtifactCount = artifacts.length;
   const manifest = [
     ...artifacts.map((artifact) => artifact.filename),
     "card.md",
@@ -184,7 +176,7 @@ export function buildStarterKit(recipe: StarterKitRecipe): BuiltStarterKit {
     slug: slugify(recipe.title),
     artifacts,
     manifest,
-    generatedArtifactCount: artifacts.length - 1,
+    generatedArtifactCount,
   };
 }
 
@@ -244,12 +236,17 @@ export function starterKitMetadata(
   };
 }
 
-function parseArguments(args: string[]): { recipeId: string; force: boolean } {
+export function parseArguments(args: string[]): {
+  recipeId: string;
+  force: boolean;
+} {
   let recipeId: string | undefined;
   let force = false;
   for (const argument of args) {
     if (argument === "--force") force = true;
-    else if (!recipeId) recipeId = argument;
+    else if (argument.startsWith("-")) {
+      throw new Error(`Unexpected argument: ${argument}`);
+    } else if (!recipeId) recipeId = argument;
     else throw new Error(`Unexpected argument: ${argument}`);
   }
   if (!recipeId) {
@@ -258,6 +255,14 @@ function parseArguments(args: string[]): { recipeId: string; force: boolean } {
     );
   }
   return { recipeId, force };
+}
+
+export function starterKitLinkFailureMessage(
+  outputDirectory: string,
+  error: unknown,
+): string {
+  const detail = error instanceof Error ? error.message : String(error);
+  return `Starter kit written to ${outputDirectory}, but recipe row was NOT updated — re-run with --force after fixing the update failure. Cause: ${detail}`;
 }
 
 export async function main(args = process.argv.slice(2)): Promise<void> {
@@ -273,11 +278,20 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     resolve(process.cwd(), "exports/starter-kits"),
     { force },
   );
-  await client.mutation(api.recipes.update, {
-    id: recipe._id,
-    starterKit: starterKitMetadata(result, Date.now()),
-    devBypassSecret: getDevBypassSecret(),
-  });
+  try {
+    await client.mutation(api.recipes.update, {
+      id: recipe._id,
+      starterKit: starterKitMetadata(result, Date.now()),
+      devBypassSecret: getDevBypassSecret(),
+    });
+  } catch (error) {
+    throw new Error(
+      starterKitLinkFailureMessage(result.outputDirectory, error),
+      {
+        cause: error,
+      },
+    );
+  }
   console.log(`Wrote starter kit: ${result.outputDirectory}`);
   console.log(`Manifest: ${result.manifest.join(", ")}`);
 }

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, test } from "vite-plus/test";
 import {
   NAMED_TUNINGS,
+  midiNoteNumber,
   parsePitchToken,
   parseTuningFromParameters,
   parseTuningFromParametersWithReason,
@@ -102,6 +103,7 @@ describe("tuning parameters to Scala", () => {
       ]),
     ).toEqual({
       spec: null,
+      parameterIndex: null,
       reason: {
         code: "unsupported_tuning",
         message: 'Unsupported tuning system: "Quarter-comma meantone".',
@@ -134,7 +136,21 @@ describe("tuning parameters to Scala", () => {
     expect(kbm).toContain("! Middle note (scale degree 0)\n62\n");
     expect(kbm).toContain("! Reference note\n69\n");
     expect(kbm).toContain("! Reference frequency\n440.00000\n");
-    expect(kbm).toContain("! Reference scale degree\n7\n");
+    expect(kbm).toContain("! Formal octave degree\n19\n");
+  });
+
+  test("reports the parameter index that supplied the selected tuning", () => {
+    expect(
+      parseTuningFromParametersWithReason([
+        { type: "instrument", value: "sine" },
+        { type: "tuningSystem", value: "unsupported" },
+        { type: "tuningSystem", value: "19-EDO" },
+      ]),
+    ).toEqual({
+      spec: { kind: "edo", divisions: 19 },
+      parameterIndex: 2,
+      reason: null,
+    });
   });
 
   test("rejects a zero-denominator ratio as a typed parse failure", () => {
@@ -159,6 +175,16 @@ describe("tuning parameters to Scala", () => {
     ["prepared piano", null],
   ])("extracts a pitch token from %s", (value, expected) => {
     expect(parsePitchToken(value)).toBe(expected);
+  });
+
+  test.each([
+    ["C4", 60],
+    ["B#3", 60],
+    ["Cb4", 59],
+    ["E#4", 65],
+    ["Fb4", 64],
+  ])("converts %s to MIDI note %i", (note, expected) => {
+    expect(midiNoteNumber(note)).toBe(expected);
   });
 
   test("creates a filesystem-safe production slug", () => {

@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vite-plus/test";
 import {
   buildStarterKit,
+  parseArguments,
+  starterKitLinkFailureMessage,
   starterKitMetadata,
   writeStarterKit,
   type StarterKitRecipe,
@@ -60,6 +62,7 @@ describe("starter kit assembly", () => {
       "seed.mid",
       "card.md",
     ]);
+    expect(result.generatedArtifactCount).toBe(3);
     await expect(
       readFile(join(result.outputDirectory, "tuning.scl"), "utf8"),
     ).resolves.toMatch(/^! tuning\.scl\n/);
@@ -99,6 +102,7 @@ describe("starter kit assembly", () => {
     const second = await writeStarterKit(degraded, root, { force: true });
 
     expect(second.manifest).toEqual(["seed.mid", "card.md"]);
+    expect(second.generatedArtifactCount).toBe(1);
     await expect(
       readFile(join(first.outputDirectory, "tuning.scl"), "utf8"),
     ).rejects.toThrow();
@@ -142,8 +146,35 @@ describe("starter kit assembly", () => {
       parameters: [{ type: "instrument", value: "prepared piano" }],
     };
 
+    const card = buildStarterKit(ungeneratable).artifacts.find(
+      (artifact) => artifact.filename === "card.md",
+    );
+
+    expect(card?.contents).not.toContain(
+      "Standard MIDI notes are pitch-class scaffolding",
+    );
     await expect(writeStarterKit(ungeneratable, root)).rejects.toThrow(
       "No tuning or seed MIDI could be generated",
+    );
+  });
+
+  test("attributes tuning artifacts to the parameter the parser selected", () => {
+    const kit = buildStarterKit({
+      ...fixtureRecipe,
+      parameters: [
+        { type: "tuningSystem", value: "unsupported" },
+        { type: "tuningSystem", value: "19-EDO" },
+      ],
+    });
+    const card = kit.artifacts.find(
+      (artifact) => artifact.filename === "card.md",
+    );
+
+    expect(card?.contents).toContain(
+      "| tuningSystem | unsupported | — | This comparison tuning was not selected; one kit emits one tuning file pair. |",
+    );
+    expect(card?.contents).toContain(
+      "| tuningSystem | 19-EDO | ✓ | Generated tuning.scl and tuning.kbm from this parameter. |",
     );
   });
 
@@ -161,5 +192,35 @@ describe("starter kit assembly", () => {
       path: "exports/starter-kits/geometric-listening-study",
       manifest: ["tuning.scl", "tuning.kbm", "seed.mid", "card.md"],
     });
+  });
+
+  test("parses a recipe id and force flag in either order", () => {
+    expect(parseArguments(["recipe-123", "--force"])).toEqual({
+      recipeId: "recipe-123",
+      force: true,
+    });
+    expect(parseArguments(["--force", "recipe-123"])).toEqual({
+      recipeId: "recipe-123",
+      force: true,
+    });
+  });
+
+  test("rejects a missing recipe id and unknown flags", () => {
+    expect(() => parseArguments([])).toThrow("Usage:");
+    expect(() => parseArguments(["--force"])).toThrow("Usage:");
+    expect(() => parseArguments(["--unknown", "recipe-123"])).toThrow(
+      "Unexpected argument: --unknown",
+    );
+  });
+
+  test("reports that written files remain when recipe linkage fails", () => {
+    expect(
+      starterKitLinkFailureMessage(
+        "/tmp/starter-kits/test-kit",
+        new Error("mutation rejected"),
+      ),
+    ).toBe(
+      "Starter kit written to /tmp/starter-kits/test-kit, but recipe row was NOT updated — re-run with --force after fixing the update failure. Cause: mutation rejected",
+    );
   });
 });

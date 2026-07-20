@@ -1,6 +1,6 @@
 import { parseMidi } from "midi-file";
 import { describe, expect, test } from "vite-plus/test";
-import { generateSeedMidi } from "./seedMidi";
+import { generateSeedMidi, isSeedParameter } from "./seedMidi";
 import type { CompositionParameter, TuningSpec } from "./tuning";
 
 const tuning: TuningSpec = {
@@ -16,6 +16,20 @@ const parameters: CompositionParameter[] = [
 ];
 
 describe("deterministic seed MIDI", () => {
+  test.each([
+    "tempo",
+    "rootNote",
+    "rhythm",
+    "chordProgression",
+    "form",
+  ])("recognizes %s as a seed parameter", (type) => {
+    expect(isSeedParameter({ type, value: "test" })).toBe(true);
+  });
+
+  test("does not classify unsupported parameters as seed parameters", () => {
+    expect(isSeedParameter({ type: "instrument", value: "sine" })).toBe(false);
+  });
+
   test("writes the requested tempo and only notes from the tuning palette", () => {
     const result = generateSeedMidi(parameters, tuning);
     const parsed = parseMidi(result.bytes);

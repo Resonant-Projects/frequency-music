@@ -18,9 +18,10 @@ export type TuningParseFailureCode =
   | "unsupported_tuning";
 
 export type TuningParseResult =
-  | { spec: TuningSpec; reason: null }
+  | { spec: TuningSpec; parameterIndex: number; reason: null }
   | {
       spec: null;
+      parameterIndex: null;
       reason: { code: TuningParseFailureCode; message: string };
     };
 
@@ -238,10 +239,13 @@ function valueSpec(value: string): TuningSpec | null {
 export function parseTuningFromParametersWithReason(
   params: CompositionParameter[],
 ): TuningParseResult {
-  const tuningParameters = params.filter(isTuningParameter);
+  const tuningParameters = params.flatMap((parameter, parameterIndex) =>
+    isTuningParameter(parameter) ? [{ parameter, parameterIndex }] : [],
+  );
   if (tuningParameters.length === 0) {
     return {
       spec: null,
+      parameterIndex: null,
       reason: {
         code: "missing_tuning",
         message: "No tuning parameter was provided.",
@@ -249,12 +253,12 @@ export function parseTuningFromParametersWithReason(
     };
   }
 
-  for (const parameter of tuningParameters) {
+  for (const { parameter, parameterIndex } of tuningParameters) {
     const parsed = detailsSpec(parameter.details) ?? valueSpec(parameter.value);
-    if (parsed) return { spec: parsed, reason: null };
+    if (parsed) return { spec: parsed, parameterIndex, reason: null };
   }
 
-  const parameter = tuningParameters[0];
+  const parameter = tuningParameters[0]?.parameter;
   const details = asRecord(parameter?.details);
   const hasExplicitDetails = Boolean(
     details &&
@@ -264,6 +268,7 @@ export function parseTuningFromParametersWithReason(
   );
   return {
     spec: null,
+    parameterIndex: null,
     reason: {
       code: hasExplicitDetails
         ? "invalid_tuning_details"
@@ -341,23 +346,13 @@ export function toScl(spec: TuningSpec, description: string): string {
   ].join("\n");
 }
 
-const NOTE_TO_SEMITONE: Record<string, number> = {
+const NATURAL_NOTE_TO_SEMITONE: Readonly<Record<string, number>> = {
   C: 0,
-  "C#": 1,
-  Db: 1,
   D: 2,
-  "D#": 3,
-  Eb: 3,
   E: 4,
   F: 5,
-  "F#": 6,
-  Gb: 6,
   G: 7,
-  "G#": 8,
-  Ab: 8,
   A: 9,
-  "A#": 10,
-  Bb: 10,
   B: 11,
 };
 
@@ -371,9 +366,10 @@ export function parsePitchToken(value: string): string | null {
 export function midiNoteNumber(note = "C4"): number | null {
   const match = note.trim().match(/^([A-Ga-g])([#b]?)(-?\d+)?$/);
   if (!match) return null;
-  const pitch = `${match[1]?.toUpperCase()}${match[2] ?? ""}`;
-  const semitone = NOTE_TO_SEMITONE[pitch];
-  if (semitone === undefined) return null;
+  const naturalSemitone = NATURAL_NOTE_TO_SEMITONE[match[1]!.toUpperCase()];
+  if (naturalSemitone === undefined) return null;
+  const accidentalOffset = match[2] === "#" ? 1 : match[2] === "b" ? -1 : 0;
+  const semitone = naturalSemitone + accidentalOffset;
   const octave = match[3] === undefined ? 4 : Number(match[3]);
   const midi = (octave + 1) * 12 + semitone;
   return midi >= 0 && midi <= 127 ? midi : null;
@@ -387,8 +383,6 @@ export function toKbm(spec: TuningSpec, rootNote = "C4"): string {
     spec.kind === "named"
       ? (NAMED_TUNINGS[spec.name]?.referenceHz ?? 440)
       : 440;
-  const referenceDegree =
-    (((referenceNote - middleNote) % mapSize) + mapSize) % mapSize;
 
   return [
     "! tuning.kbm",
@@ -405,8 +399,8 @@ export function toKbm(spec: TuningSpec, rootNote = "C4"): string {
     String(referenceNote),
     "! Reference frequency",
     referenceHz.toFixed(5),
-    "! Reference scale degree",
-    String(referenceDegree),
+    "! Formal octave degree",
+    String(mapSize),
     "! Mapping",
     ...Array.from({ length: mapSize }, (_, index) => String(index)),
     "",
