@@ -84,8 +84,8 @@ check_capacity ──► pick_target ──► gather_context ──► draft �
 **Files:**
 - Modify: `convex/crons.ts` — weekly enqueue (pulsed cadence, before the Friday brief so fresh drafts appear in it; pick the exact offset from the found-state brief cron).
 
-- [ ] **Step 1:** Cron; codegen; commit.
-- [ ] **Step 2: Live gate.** Seed ≥1 evidenced correspondence (plan 05 output). Run the graph: a real draft appears in `agent-drafts` with correspondence provenance. Approve it in the existing UI: hypothesis row carries `correspondenceId`. Then artificially hold 3 pending drafts and run again: clean refusal with status event. Paste both run summaries in PR.
+- [x] **Step 1:** Cron; codegen; commit. *(Cron and offline verification complete; codegen intentionally skipped per operator constraint.)*
+- [ ] **Step 2: Live gate.** Seed ≥1 evidenced correspondence (plan 05 output). Run the graph: a real draft appears in `agent-drafts` with correspondence provenance. Approve it in the existing UI: hypothesis row carries `correspondenceId`. Then artificially hold 3 pending drafts and run again: clean refusal with status event. Paste both run summaries in PR. **Operator note:** intentionally not run; this gate requires live Convex mutations, which are prohibited for this implementation pass.
 
 ---
 
