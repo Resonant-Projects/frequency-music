@@ -88,9 +88,16 @@ function parseRoot(parameter: CompositionParameter): number | null {
 }
 
 function rhythmTicks(value: string): number | null {
-  if (/\beighth|1\/8\b/i.test(value)) return TICKS_PER_BEAT / 2;
-  if (/\bquarter|1\/4\b/i.test(value)) return TICKS_PER_BEAT;
-  if (/\bhalf|1\/2\b/i.test(value)) return TICKS_PER_BEAT * 2;
+  // Fractions need explicit digit guards: a bare \b lets "11/8" match "1/8".
+  if (/\beighth\b/i.test(value) || /(?<![\d/])1\/8(?!\d)/.test(value)) {
+    return TICKS_PER_BEAT / 2;
+  }
+  if (/\bquarter\b/i.test(value) || /(?<![\d/])1\/4(?!\d)/.test(value)) {
+    return TICKS_PER_BEAT;
+  }
+  if (/\bhalf\b/i.test(value) || /(?<![\d/])1\/2(?!\d)/.test(value)) {
+    return TICKS_PER_BEAT * 2;
+  }
   if (/\bwhole\b/i.test(value)) return TICKS_PER_BEAT * 4;
   return null;
 }
@@ -130,7 +137,10 @@ function midiNotesForPalette(palette: number[], rootMidi: number): number[] {
   return palette
     .map((pitchClass) => {
       const distance = (pitchClass - (rootMidi % 12) + 12) % 12;
-      return rootMidi + distance;
+      const note = rootMidi + distance;
+      // Roots above MIDI 116 would push some palette notes past 127; wrap
+      // those down an octave so every note stays valid and keeps its class.
+      return note > 127 ? note - 12 : note;
     })
     .toSorted((left, right) => left - right);
 }

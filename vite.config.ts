@@ -8,6 +8,8 @@ export default defineConfig({
       "harness/**/*.test.ts",
       "scripts/**/*.test.ts",
     ],
+    // Frozen one-shot reference scripts — never run their suites.
+    exclude: ["**/node_modules/**", "scripts/archive/**"],
     environment: "node",
   },
   lint: {
