@@ -32,6 +32,8 @@ import type * as domainMappings from "../domainMappings.js";
 import type * as editCaptures from "../editCaptures.js";
 import type * as editorialArtifacts from "../editorialArtifacts.js";
 import type * as editorialExports from "../editorialExports.js";
+import type * as embeddings from "../embeddings.js";
+import type * as embeddingsStore from "../embeddingsStore.js";
 import type * as extract from "../extract.js";
 import type * as extractInternal from "../extractInternal.js";
 import type * as extractions from "../extractions.js";
@@ -102,6 +104,8 @@ declare const fullApi: ApiFromModules<{
   editCaptures: typeof editCaptures;
   editorialArtifacts: typeof editorialArtifacts;
   editorialExports: typeof editorialExports;
+  embeddings: typeof embeddings;
+  embeddingsStore: typeof embeddingsStore;
   extract: typeof extract;
   extractInternal: typeof extractInternal;
   extractions: typeof extractions;
