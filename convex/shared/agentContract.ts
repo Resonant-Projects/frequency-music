@@ -36,6 +36,7 @@ export const KNOWN_GRAPH_NAMES = [
   "weekly-brief",
   "correspondence-miner",
   "evidence-hunter",
+  "hypothesis-drafter",
 ] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
 
@@ -62,4 +63,5 @@ export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
     "weekly-brief": "runner",
     "correspondence-miner": "graph",
     "evidence-hunter": "graph",
+    "hypothesis-drafter": "graph",
   };

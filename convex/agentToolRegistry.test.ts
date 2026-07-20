@@ -27,6 +27,10 @@ const FROZEN_ARGS: Record<string, string> = {
   listRecentHypotheses: frozenArgs({ limit: field(number, true) }),
   listActiveTheses: frozenArgs({ limit: field(number, true) }),
   listFailureArchive: frozenArgs({ limit: field(number, true) }),
+  countPendingDrafts: frozenArgs({
+    kind: field(union(literal("hypothesis_draft"), literal("recipe_draft"))),
+  }),
+  listDraftableCorrespondences: frozenArgs({ limit: field(number, true) }),
   getEditorialSignals: frozenArgs({ limit: field(number, true) }),
   getRecentRecipes: frozenArgs({ limit: field(number, true) }),
   getRecommendedActions: frozenArgs({}),

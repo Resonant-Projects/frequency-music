@@ -20,6 +20,7 @@ import { completeReviewedRunIfReady } from "./agentRuns";
 import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
+const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
 
 type AgentReviewDraftKind = "hypothesis_draft" | "recipe_draft";
 
@@ -325,6 +326,113 @@ export const countPending = query({
     kind: v.union(v.literal("hypothesis_draft"), v.literal("recipe_draft")),
   },
   handler: async (ctx, args) => countPendingDraftsByKind(ctx, args.kind),
+});
+
+/**
+ * Bounded, hydrated correspondence candidates for the hypothesis drafter.
+ * Existing hypotheses and pending drafts are excluded at the read boundary;
+ * the graph repeats those checks defensively before selecting a target.
+ */
+export const listDraftableCorrespondences = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 20), 20));
+    const pendingDrafts = await ctx.db
+      .query("agentReviewDrafts")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
+      .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT);
+    const pendingCorrespondenceIds = new Set(
+      pendingDrafts.flatMap((draft) => {
+        if (
+          draft.kind !== "hypothesis_draft" ||
+          !draft.payload ||
+          !("statement" in draft.payload) ||
+          !draft.payload.correspondenceId
+        ) {
+          return [];
+        }
+        return [String(draft.payload.correspondenceId)];
+      }),
+    );
+    const [evidenced, conjectured] = await Promise.all([
+      ctx.db
+        .query("correspondences")
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", "evidenced"))
+        .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT),
+      ctx.db
+        .query("correspondences")
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
+        .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT),
+    ]);
+    const ranked = [...evidenced, ...conjectured].toSorted((left, right) => {
+      const statusRank = (status: typeof left.status) =>
+        status === "evidenced" ? 0 : 1;
+      return (
+        statusRank(left.status) - statusRank(right.status) ||
+        (right.similarityScore ?? 0) * (right.noveltyScore ?? 0) -
+          (left.similarityScore ?? 0) * (left.noveltyScore ?? 0) ||
+        left._id.localeCompare(right._id)
+      );
+    });
+    const selected = [];
+    for (const row of ranked) {
+      if (selected.length >= limit) break;
+      if (pendingCorrespondenceIds.has(String(row._id))) continue;
+      const existingHypothesis = await ctx.db
+        .query("hypotheses")
+        .withIndex("by_correspondenceId", (q) =>
+          q.eq("correspondenceId", row._id),
+        )
+        .first();
+      if (existingHypothesis) continue;
+      const [conceptA, conceptB, evidenceClaims] = await Promise.all([
+        ctx.db.get("concepts", row.conceptAId),
+        ctx.db.get("concepts", row.conceptBId),
+        Promise.all(
+          row.evidence.map(async (entry) => {
+            const claim = await ctx.db.get("claims", entry.claimId);
+            return claim
+              ? {
+                  claimId: claim._id,
+                  text: claim.text,
+                  sourceId: claim.sourceId,
+                  extractionId: claim.extractionId,
+                  stance: entry.stance,
+                  ...(entry.note ? { note: entry.note } : {}),
+                }
+              : null;
+          }),
+        ),
+      ]);
+      if (!conceptA || !conceptB) continue;
+      const describeConcept = (concept: typeof conceptA) => ({
+        id: concept._id,
+        name: concept.name,
+        displayName: concept.displayName,
+        ...(concept.description ? { description: concept.description } : {}),
+        domains: Array.from(
+          new Set(concept.domains ?? [concept.domain]),
+        ).toSorted(),
+      });
+      selected.push({
+        correspondenceId: row._id,
+        pairKey: row.pairKey,
+        statement: row.statement,
+        rationaleMd: row.rationaleMd,
+        status: row.status,
+        similarityScore: row.similarityScore,
+        noveltyScore: row.noveltyScore,
+        hasExistingHypothesis: false,
+        hasPendingDraft: false,
+        conceptA: describeConcept(conceptA),
+        conceptB: describeConcept(conceptB),
+        evidenceClaims: evidenceClaims.filter(
+          (claim): claim is NonNullable<typeof claim> => claim !== null,
+        ),
+      });
+    }
+    return selected;
+  },
 });
 
 // ============================================================================

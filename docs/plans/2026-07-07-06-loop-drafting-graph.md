@@ -74,8 +74,8 @@ check_capacity ──► pick_target ──► gather_context ──► draft �
 - **self_check:** structured pass — is it testable in a micro-study? does it vary ONE thing? does rationale actually cite the evidence? Fail → one revision loop, then discard with `decision` event (do not write a bad draft to burn cap slots).
 - **write_draft:** existing draft-write tool with the extended payload.
 
-- [ ] **Step 1:** Agent tests: capacity short-circuit; target dedupe (correspondence with existing hypothesis never picked); payload schema round-trip.
-- [ ] **Step 2:** Implement; typegate; commit.
+- [x] **Step 1:** Agent tests: capacity short-circuit; target dedupe (correspondence with existing hypothesis never picked); payload schema round-trip.
+- [x] **Step 2:** Implement; typegate; commit.
 
 ---
 

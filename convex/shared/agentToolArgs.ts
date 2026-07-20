@@ -19,6 +19,10 @@ export const agentToolArgs = {
   listRecentHypotheses: z.object({ limit }),
   listActiveTheses: z.object({ limit }),
   listFailureArchive: z.object({ limit }),
+  countPendingDrafts: z.object({
+    kind: z.union([z.literal("hypothesis_draft"), z.literal("recipe_draft")]),
+  }),
+  listDraftableCorrespondences: z.object({ limit }),
   getEditorialSignals: z.object({ limit }),
   getRecentRecipes: z.object({ limit }),
   getRecommendedActions: z.object({}),

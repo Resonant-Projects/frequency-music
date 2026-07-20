@@ -32,6 +32,10 @@ export const getExtraction = makeAgentToolAction("getExtraction");
 export const listRecentHypotheses = makeAgentToolAction("listRecentHypotheses");
 export const listActiveTheses = makeAgentToolAction("listActiveTheses");
 export const listFailureArchive = makeAgentToolAction("listFailureArchive");
+export const countPendingDrafts = makeAgentToolAction("countPendingDrafts");
+export const listDraftableCorrespondences = makeAgentToolAction(
+  "listDraftableCorrespondences",
+);
 export const getEditorialSignals = makeAgentToolAction("getEditorialSignals");
 export const getRecentRecipes = makeAgentToolAction("getRecentRecipes");
 export const getRecommendedActions = makeAgentToolAction(
