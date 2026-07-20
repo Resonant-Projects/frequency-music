@@ -382,3 +382,41 @@ export const backfillBatch = action({
     };
   },
 });
+
+export const sweepMissingEmbeddings = internalAction({
+  args: {},
+  returns: v.object({
+    claimsScheduled: v.number(),
+    conceptsScheduled: v.number(),
+  }),
+  handler: async (ctx) => {
+    const [claimPage, conceptPage] = await Promise.all([
+      ctx.runQuery(getBackfillPageRef, {
+        kind: "claims",
+        cursor: null,
+        batchSize: 500,
+        model: EMBEDDING_MODEL,
+      }),
+      ctx.runQuery(getBackfillPageRef, {
+        kind: "concepts",
+        cursor: null,
+        batchSize: 500,
+        model: EMBEDDING_MODEL,
+      }),
+    ]);
+    if (claimPage.claimIds.length > 0) {
+      await ctx.scheduler.runAfter(0, embedClaimsRef, {
+        claimIds: claimPage.claimIds,
+      });
+    }
+    if (conceptPage.conceptIds.length > 0) {
+      await ctx.scheduler.runAfter(0, embedConceptsRef, {
+        conceptIds: conceptPage.conceptIds,
+      });
+    }
+    return {
+      claimsScheduled: claimPage.claimIds.length,
+      conceptsScheduled: conceptPage.conceptIds.length,
+    };
+  },
+});

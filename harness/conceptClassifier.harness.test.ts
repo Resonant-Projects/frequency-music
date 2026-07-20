@@ -102,6 +102,7 @@ describe("concept classification persistence", () => {
       knownConcept: await ctx.db.get("concepts", knownConceptId),
       provisionalConcept: await ctx.db.get("concepts", provisionalConceptId),
       registry: await ctx.db.query("conceptDomains").collect(),
+      scheduled: await ctx.db.system.query("_scheduled_functions").collect(),
     }));
     expect(state.knownConcept?.domain).toBe("mathematical-music-theory");
     expect(state.provisionalConcept).toMatchObject({
@@ -114,6 +115,8 @@ describe("concept classification persistence", () => {
       "mathematical-music-theory",
       "signal processing",
     ]);
+    expect(state.scheduled).toHaveLength(1);
+    expect(state.scheduled[0]?.name).toContain("embeddings:embedConcepts");
   });
 
   test("merges duplicate provisional rows by normalized slug idempotently", async () => {
