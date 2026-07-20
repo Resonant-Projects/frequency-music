@@ -1,0 +1,378 @@
+export interface CompositionParameter {
+  kind?: string;
+  type?: string;
+  value: string;
+  details?: unknown;
+  registryStatus?: "known" | "provisional" | "experimental" | "deprecated";
+  canonicalKind?: string;
+}
+
+export type TuningSpec =
+  | { kind: "edo"; divisions: number }
+  | { kind: "ji"; ratios: string[] }
+  | { kind: "cents"; values: number[] }
+  | { kind: "named"; name: string };
+
+export type TuningParseFailureCode =
+  | "missing_tuning"
+  | "invalid_tuning_details"
+  | "unsupported_tuning";
+
+export type TuningParseResult =
+  | { spec: TuningSpec; reason: null }
+  | {
+      spec: null;
+      reason: { code: TuningParseFailureCode; message: string };
+    };
+
+type NamedTuning = {
+  aliases: string[];
+  intervals: Array<number | string>;
+  referenceHz?: number;
+};
+
+const NAMED_TUNINGS: Record<string, NamedTuning> = {
+  "geometric-temperament": {
+    aliases: ["geometric temperament"],
+    intervals: [
+      100.89,
+      200,
+      300,
+      386.31371,
+      498.045,
+      600,
+      701.955,
+      800,
+      884.35871,
+      1000,
+      1088.26871,
+      "2/1",
+    ],
+    referenceHz: 432,
+  },
+  "grant-precise-temperament": {
+    aliases: [
+      "grant precise temperament",
+      "precise temperament tuning",
+      "robert edward grant precise temperament tuning",
+    ],
+    intervals: [
+      99.64,
+      199.29,
+      301.19,
+      400.83,
+      498.04,
+      600,
+      701.96,
+      799.17,
+      898.81,
+      1003.15,
+      1102.79,
+      "2/1",
+    ],
+    referenceHz: 432,
+  },
+  "polygon-angles-pure": {
+    aliases: [
+      "polygon angles pure",
+      "pure polygon internal angles scale",
+      "polygon angle scale",
+    ],
+    intervals: [
+      200,
+      300,
+      360,
+      400,
+      428.57143,
+      450,
+      466.66667,
+      480,
+      490.90909,
+      500,
+      "2/1",
+    ],
+  },
+};
+
+const TUNING_KINDS = new Set([
+  "edo",
+  "scale",
+  "temperament",
+  "tuning",
+  "tuningsystem",
+]);
+
+const RATIO_PATTERN = /^\d+\s*[/:]\s*\d+$/;
+
+export function parameterKind(parameter: CompositionParameter): string {
+  return (
+    parameter.canonicalKind?.trim() ||
+    parameter.kind?.trim() ||
+    parameter.type?.trim() ||
+    "unknown"
+  );
+}
+
+function normalizeName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function namedTuning(value: string): TuningSpec | null {
+  const normalized = normalizeName(value);
+  for (const [name, entry] of Object.entries(NAMED_TUNINGS)) {
+    if (
+      normalizeName(name) === normalized ||
+      entry.aliases.some((alias) => normalizeName(alias) === normalized)
+    ) {
+      return { kind: "named", name };
+    }
+  }
+  return null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function ratiosFrom(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const ratios = value.map((item) =>
+    typeof item === "string" && RATIO_PATTERN.test(item.trim())
+      ? item.trim().replace(":", "/").replaceAll(/\s/g, "")
+      : null,
+  );
+  return ratios.some((ratio) => ratio === null)
+    ? null
+    : (ratios as string[]);
+}
+
+function centsFrom(value: unknown): number[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const cents = value.map((item) =>
+    typeof item === "number" && Number.isFinite(item) ? item : null,
+  );
+  return cents.some((cent) => cent === null) ? null : (cents as number[]);
+}
+
+function detailsSpec(details: unknown): TuningSpec | null {
+  const record = asRecord(details);
+  if (!record) return null;
+  const ratios = ratiosFrom(record.ratios ?? record.intervals);
+  if (ratios) return { kind: "ji", ratios };
+  const values = centsFrom(record.cents ?? record.values ?? record.intervals);
+  if (values) return { kind: "cents", values };
+  return null;
+}
+
+function valueSpec(value: string): TuningSpec | null {
+  const named = namedTuning(value);
+  if (named) return named;
+
+  const edo = value.match(
+    /(?:^|\b)(\d{1,4})\s*(?:-\s*)?(?:edo|tet|tone\s+equal\s+temperament)\b/i,
+  );
+  if (edo) {
+    const divisions = Number(edo[1]);
+    if (Number.isInteger(divisions) && divisions >= 1 && divisions <= 4096) {
+      return { kind: "edo", divisions };
+    }
+  }
+
+  const ratios = value.match(/\d+\s*[/:]\s*\d+/g);
+  if (ratios && ratios.length > 0) {
+    return {
+      kind: "ji",
+      ratios: ratios.map((ratio) =>
+        ratio.trim().replace(":", "/").replaceAll(/\s/g, ""),
+      ),
+    };
+  }
+
+  const cents = [...value.matchAll(/(-?\d+(?:\.\d+)?)\s*(?:cents?|¢)/gi)].map(
+    (match) => Number(match[1]),
+  );
+  if (cents.length > 0 && cents.every(Number.isFinite)) {
+    return { kind: "cents", values: cents };
+  }
+
+  return null;
+}
+
+export function parseTuningFromParametersWithReason(
+  params: CompositionParameter[],
+): TuningParseResult {
+  const tuningParameters = params.filter((parameter) =>
+    TUNING_KINDS.has(parameterKind(parameter).toLowerCase()),
+  );
+  if (tuningParameters.length === 0) {
+    return {
+      spec: null,
+      reason: {
+        code: "missing_tuning",
+        message: "No tuning parameter was provided.",
+      },
+    };
+  }
+
+  for (const parameter of tuningParameters) {
+    const parsed = detailsSpec(parameter.details) ?? valueSpec(parameter.value);
+    if (parsed) return { spec: parsed, reason: null };
+  }
+
+  const parameter = tuningParameters[0];
+  const details = asRecord(parameter?.details);
+  const hasExplicitDetails = Boolean(
+    details &&
+      ["ratios", "cents", "values", "intervals"].some(
+        (key) => details[key] !== undefined,
+      ),
+  );
+  return {
+    spec: null,
+    reason: {
+      code: hasExplicitDetails
+        ? "invalid_tuning_details"
+        : "unsupported_tuning",
+      message: hasExplicitDetails
+        ? `Tuning details for "${parameter?.value ?? "unknown"}" are not a numeric cents list or ratio list.`
+        : `Unsupported tuning system: "${parameter?.value ?? "unknown"}".`,
+    },
+  };
+}
+
+export function parseTuningFromParameters(
+  params: CompositionParameter[],
+): TuningSpec | null {
+  return parseTuningFromParametersWithReason(params).spec;
+}
+
+function normalizedIntervals(spec: TuningSpec): Array<number | string> {
+  if (spec.kind === "edo") {
+    if (
+      !Number.isInteger(spec.divisions) ||
+      spec.divisions < 1 ||
+      spec.divisions > 4096
+    ) {
+      throw new Error("EDO divisions must be an integer between 1 and 4096.");
+    }
+    return [
+      ...Array.from(
+        { length: spec.divisions - 1 },
+        (_, index) => ((index + 1) * 1200) / spec.divisions,
+      ),
+      "2/1",
+    ];
+  }
+  if (spec.kind === "ji") {
+    const ratios = spec.ratios
+      .map((ratio) => ratio.trim().replace(":", "/").replaceAll(/\s/g, ""))
+      .filter((ratio) => ratio !== "1/1");
+    return ratios.at(-1) === "2/1" ? ratios : [...ratios, "2/1"];
+  }
+  if (spec.kind === "cents") {
+    const values = spec.values.filter((value) => value > 0 && value <= 1200);
+    if (values.length === 0 || values.at(-1)! < 1200) values.push(1200);
+    return values.map((value) => (value === 1200 ? "2/1" : value));
+  }
+  const named = NAMED_TUNINGS[spec.name];
+  if (!named) throw new Error(`Unknown named tuning: ${spec.name}`);
+  return named.intervals;
+}
+
+function formatInterval(interval: number | string): string {
+  return typeof interval === "number" ? interval.toFixed(5) : interval;
+}
+
+export function toScl(spec: TuningSpec, description: string): string {
+  const intervals = normalizedIntervals(spec);
+  return [
+    "! tuning.scl",
+    `! ${description}`,
+    String(intervals.length),
+    "!",
+    ...intervals.map(formatInterval),
+    "",
+  ].join("\n");
+}
+
+const NOTE_TO_SEMITONE: Record<string, number> = {
+  C: 0,
+  "C#": 1,
+  Db: 1,
+  D: 2,
+  "D#": 3,
+  Eb: 3,
+  E: 4,
+  F: 5,
+  "F#": 6,
+  Gb: 6,
+  G: 7,
+  "G#": 8,
+  Ab: 8,
+  A: 9,
+  "A#": 10,
+  Bb: 10,
+  B: 11,
+};
+
+export function midiNoteNumber(note = "C4"): number | null {
+  const match = note.trim().match(/^([A-Ga-g])([#b]?)(-?\d+)?$/);
+  if (!match) return null;
+  const pitch = `${match[1]?.toUpperCase()}${match[2] ?? ""}`;
+  const semitone = NOTE_TO_SEMITONE[pitch];
+  if (semitone === undefined) return null;
+  const octave = match[3] === undefined ? 4 : Number(match[3]);
+  const midi = (octave + 1) * 12 + semitone;
+  return midi >= 0 && midi <= 127 ? midi : null;
+}
+
+export function toKbm(spec: TuningSpec, rootNote = "C4"): string {
+  const mapSize = normalizedIntervals(spec).length;
+  const middleNote = midiNoteNumber(rootNote) ?? 60;
+  const referenceNote = 69;
+  const referenceHz =
+    spec.kind === "named"
+      ? (NAMED_TUNINGS[spec.name]?.referenceHz ?? 440)
+      : 440;
+  const semitoneDistance =
+    ((referenceNote - middleNote) % 12 + 12) % 12;
+  const referenceDegree = Math.round((semitoneDistance * mapSize) / 12);
+
+  return [
+    "! tuning.kbm",
+    `! Keyboard mapping rooted at MIDI note ${middleNote}`,
+    "! Size of map",
+    String(mapSize),
+    "! First MIDI note number to retune",
+    "0",
+    "! Last MIDI note number to retune",
+    "127",
+    "! Middle note (scale degree 0)",
+    String(middleNote),
+    "! Reference note",
+    String(referenceNote),
+    "! Reference frequency",
+    referenceHz.toFixed(5),
+    "! Reference scale degree",
+    String(referenceDegree),
+    "! Mapping",
+    ...Array.from({ length: mapSize }, (_, index) => String(index)),
+    "",
+  ].join("\n");
+}
+
+export function tuningIntervalsInCents(spec: TuningSpec): number[] {
+  return normalizedIntervals(spec).map((interval) => {
+    if (typeof interval === "number") return interval;
+    const [numeratorText, denominatorText] = interval.split("/");
+    const numerator = Number(numeratorText);
+    const denominator = Number(denominatorText);
+    return 1200 * Math.log2(numerator / denominator);
+  });
+}
