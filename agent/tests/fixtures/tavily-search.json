@@ -1,0 +1,18 @@
+{
+  "query": "cymatics Chladni peer reviewed",
+  "results": [
+    {
+      "title": "Modal analysis of Chladni figures",
+      "url": "https://example.org/chladni-modal-analysis",
+      "content": "Measured plate modes connect forcing frequency to nodal geometry.",
+      "score": 0.91,
+      "published_date": "2025-11-04"
+    },
+    {
+      "title": "Acoustic visualization review",
+      "url": "https://example.org/acoustic-visualization",
+      "content": "A review of physical methods for visualizing resonant modes.",
+      "score": 0.82
+    }
+  ]
+}

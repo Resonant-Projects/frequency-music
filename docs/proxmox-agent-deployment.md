@@ -95,6 +95,7 @@ Create `agent/.env` on the host (NOT committed) with:
 CONVEX_SITE_URL=<convex http actions url>
 AGENT_TOOL_SECRET=<agent tool secret>
 OPENROUTER_API_KEY=<openrouter key>
+TAVILY_API_KEY=<tavily key>
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=<langsmith key>          # op item s37crgkfad35vq6wyoymg3szja
 CODEX_ENABLED=true
@@ -121,7 +122,7 @@ docker compose -f agent/docker-compose.yml up -d langgraph-worker
 ```
 The compose services build from the repository root so the image can copy the
 agent workspace together with its imported `convex/shared` contracts.
-Egress required: Convex site URL, OpenRouter, OpenAI/ChatGPT, LangSmith.
+Egress required: Convex site URL, OpenRouter, OpenAI/ChatGPT, Tavily, LangSmith.
 
 ### 5. Verify
 - `vpx convex run agentRuns:... ` enqueue a `research-pipeline` run; watch the worker

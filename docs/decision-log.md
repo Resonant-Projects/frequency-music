@@ -13,6 +13,8 @@ Add entries when:
 
 Do not use this file for ordinary implementation notes or commit-style changelogs.
 
+- 2026-07-20 — Scout search provider: Tavily (REST, zero-dep fetch; Exa noted as alternative)
+
 ## Decision Entry Template
 
 ```md
