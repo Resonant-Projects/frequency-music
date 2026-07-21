@@ -277,12 +277,7 @@ export function WeeklyBriefDetailPage() {
 
             <Show when={notice()}>
               {(msg) => (
-                <p
-                  aria-live="polite"
-                  class={css({ color: "zodiac.cream", mt: "2" })}
-                >
-                  {msg()}
-                </p>
+                <p class={css({ color: "zodiac.cream", mt: "2" })}>{msg()}</p>
               )}
             </Show>
 
@@ -515,8 +510,10 @@ export function WeeklyBriefDetailPage() {
                       <For each={loopReport().correspondences.topMovers}>
                         {(mover) => (
                           <Link
-                            to="/agent-drafts"
-                            hash={String(mover.correspondenceId)}
+                            to="/correspondences/$correspondenceId"
+                            params={{
+                              correspondenceId: String(mover.correspondenceId),
+                            }}
                             class={loopLinkClass}
                           >
                             <span

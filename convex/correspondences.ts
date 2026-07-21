@@ -419,6 +419,12 @@ export const listByStatus = query({
       .take(clampLimit(args.limit)),
 });
 
+export const get = query({
+  args: { id: v.id("correspondences") },
+  returns: v.union(correspondenceReturnValidator, v.null()),
+  handler: async (ctx, args) => await ctx.db.get("correspondences", args.id),
+});
+
 export const listForConcept = query({
   args: { conceptId: v.id("concepts"), limit: v.optional(v.number()) },
   returns: v.array(correspondenceReturnValidator),

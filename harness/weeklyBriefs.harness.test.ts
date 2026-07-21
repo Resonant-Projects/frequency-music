@@ -145,7 +145,9 @@ describe("weekly brief loop report", () => {
         key: "contradicted",
         statement: "Became contradicted",
         status: "contradicted",
-        createdAt: since - DAY_MS,
+        // Created in-window, then transitioned: it remains a new conjecture
+        // for movement-count purposes even though its current status changed.
+        createdAt: since + 50,
         updatedAt: since + 500,
         statusChangedAt: since + 300,
         recentEvidence: 1,
@@ -385,7 +387,7 @@ describe("weekly brief loop report", () => {
     const report = await t.run((ctx) => computeLoopReport(ctx.db, NOW));
 
     expect(report.correspondences).toEqual({
-      newConjectures: 1,
+      newConjectures: 2,
       gainedEvidence: 3,
       contradicted: 1,
       autoRetired: 1,

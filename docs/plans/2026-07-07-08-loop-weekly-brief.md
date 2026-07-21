@@ -96,7 +96,7 @@ Render `loopReport` between the narrative and studio prompts: movement stat row 
 
 ### Task 4: Live gate
 
-- [ ] **Step 1:** Generate a real brief (found-state command/cron path). Verify all sections populate from production data and every number is reproducible by running its query by hand. Paste the brief's loop section in the PR.
+- [ ] **Step 1 (operator-gated; not run):** Generate a real brief (found-state command/cron path). Verify all sections populate from production data and every number is reproducible by running its query by hand. Paste the brief's loop section in the PR.
 
 ---
 

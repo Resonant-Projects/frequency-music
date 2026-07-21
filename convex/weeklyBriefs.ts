@@ -6,6 +6,10 @@ import {
   type RecommendationContext,
   type RecommendedAction,
 } from "./campaigns";
+import {
+  countPendingDraftsByKind,
+  findOldestPendingDraftByKind,
+} from "./agentDrafts";
 import { listRecentMovementRows } from "./correspondences";
 import { computeEditorialSignals } from "./dashboard";
 import {
@@ -495,31 +499,32 @@ export async function computeLoopReport(
   );
   const since = previousCreatedAt || now - 7 * DAY_MS;
 
-  const [movement, pendingDrafts, inUseRecipes, renderedCompositions, feeds] =
-    await Promise.all([
-      listRecentMovementRows(db, since),
-      db
-        .query("agentReviewDrafts")
-        .withIndex("by_status_kind_updatedAt", (q) =>
-          q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
-        )
-        .order("asc")
-        .collect(),
-      db
-        .query("recipes")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", "in_use"))
-        .order("asc")
-        .take(EXPERIMENT_DEBT_SCAN_LIMIT),
-      db
-        .query("compositions")
-        .withIndex("by_status_updatedAt", (q) => q.eq("status", "rendered"))
-        .order("asc")
-        .take(EXPERIMENT_DEBT_SCAN_LIMIT),
-      db
-        .query("feeds")
-        .withIndex("by_enabled", (q) => q.eq("enabled", false))
-        .take(PROPOSED_FEED_SCAN_LIMIT),
-    ]);
+  const [
+    movement,
+    pendingDraftCount,
+    oldestPendingDraft,
+    inUseRecipes,
+    renderedCompositions,
+    feeds,
+  ] = await Promise.all([
+    listRecentMovementRows(db, since),
+    countPendingDraftsByKind({ db }, "hypothesis_draft"),
+    findOldestPendingDraftByKind({ db }, "hypothesis_draft"),
+    db
+      .query("recipes")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "in_use"))
+      .order("asc")
+      .take(EXPERIMENT_DEBT_SCAN_LIMIT),
+    db
+      .query("compositions")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "rendered"))
+      .order("asc")
+      .take(EXPERIMENT_DEBT_SCAN_LIMIT),
+    db
+      .query("feeds")
+      .withIndex("by_enabled", (q) => q.eq("enabled", false))
+      .take(PROPOSED_FEED_SCAN_LIMIT),
+  ]);
 
   const recentEvidenceCount = (row: Doc<"correspondences">) =>
     row.evidence.filter((citation) => citation.addedAt >= since).length;
@@ -539,7 +544,7 @@ export async function computeLoopReport(
       evidenceDelta,
     }));
 
-  const oldestPendingAt = pendingDrafts[0]?.updatedAt;
+  const oldestPendingAt = oldestPendingDraft?.updatedAt;
 
   type DebtCandidate = {
     report: LoopReport["experimentDebt"][number];
@@ -627,9 +632,7 @@ export async function computeLoopReport(
 
   return {
     correspondences: {
-      newConjectures: movement.filter(
-        (row) => row.status === "conjectured" && row.createdAt >= since,
-      ).length,
+      newConjectures: movement.filter((row) => row.createdAt >= since).length,
       gainedEvidence: movement.reduce(
         (count, row) => count + recentEvidenceCount(row),
         0,
@@ -650,9 +653,9 @@ export async function computeLoopReport(
       topMovers,
     },
     reviewQueue: {
-      pendingDrafts: pendingDrafts.length,
+      pendingDrafts: pendingDraftCount,
       cap: PENDING_DRAFT_CAP,
-      agentBlocked: pendingDrafts.length >= PENDING_DRAFT_CAP,
+      agentBlocked: pendingDraftCount >= PENDING_DRAFT_CAP,
       ...(oldestPendingAt === undefined
         ? {}
         : { oldestPendingDays: ageInDays(now, oldestPendingAt) }),

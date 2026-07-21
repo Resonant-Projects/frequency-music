@@ -46,11 +46,24 @@ async function listPendingDraftsByKind(
     .collect();
 }
 
-async function countPendingDraftsByKind(
+export async function countPendingDraftsByKind(
   ctx: Pick<QueryCtx, "db">,
   kind: AgentReviewDraftKind,
 ) {
   return (await listPendingDraftsByKind(ctx, kind)).length;
+}
+
+export async function findOldestPendingDraftByKind(
+  ctx: Pick<QueryCtx, "db">,
+  kind: AgentReviewDraftKind,
+) {
+  return await ctx.db
+    .query("agentReviewDrafts")
+    .withIndex("by_status_kind_updatedAt", (q) =>
+      q.eq("status", "pending_review").eq("kind", kind),
+    )
+    .order("asc")
+    .first();
 }
 
 function redactOperationalSecrets(value: string) {
