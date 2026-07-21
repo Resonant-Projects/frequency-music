@@ -25,6 +25,16 @@ const SCOUT_CONJECTURE_SCAN_LIMIT = 100;
 const SCOUT_TARGET_LIMIT = 5;
 export const AUTO_RETIRE_AFTER_MS = 90 * 24 * 60 * 60 * 1000;
 
+export function scoutConceptLimitPerDomain(domainCount: number): number {
+  return Math.max(
+    1,
+    Math.min(
+      SCOUT_CONCEPTS_PER_DOMAIN_LIMIT,
+      Math.floor(SCOUT_TOTAL_CONCEPT_LIMIT / Math.max(1, domainCount)),
+    ),
+  );
+}
+
 type CorrespondenceStatus = Doc<"correspondences">["status"];
 type Evidence = Doc<"correspondences">["evidence"][number];
 
@@ -85,20 +95,19 @@ export const scoutTargets = query({
       .filter((domain) => domain.status !== "deprecated")
       .toSorted((left, right) => left.name.localeCompare(right.name));
 
-    let conceptsScanned = 0;
+    const conceptLimitPerDomain = scoutConceptLimitPerDomain(
+      activeDomains.length,
+    );
     const domainCounts: Array<{
       domain: string;
       onMissionConceptCount: number;
       sourceCount: number;
     }> = [];
     for (const domain of activeDomains) {
-      const remaining = SCOUT_TOTAL_CONCEPT_LIMIT - conceptsScanned;
-      if (remaining <= 0) break;
       const domainConcepts = await ctx.db
         .query("concepts")
         .withIndex("by_domain", (q) => q.eq("domain", domain.name))
-        .take(Math.min(SCOUT_CONCEPTS_PER_DOMAIN_LIMIT, remaining));
-      conceptsScanned += domainConcepts.length;
+        .take(conceptLimitPerDomain);
       const concepts = domainConcepts.filter(
         (concept) => concept.missionRelevance === "on",
       );

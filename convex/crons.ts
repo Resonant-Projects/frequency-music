@@ -114,4 +114,12 @@ crons.weekly(
   { graphName: "hypothesis-drafter", input: {} },
 );
 
+// Scout graph gaps before the drafting/brief window, offset from daily agents.
+crons.weekly(
+  "enqueue-source-scout",
+  { dayOfWeek: "wednesday", hourUTC: 16, minuteUTC: 0 },
+  internal.agentRuns.enqueue,
+  { graphName: "source-scout", input: {} },
+);
+
 export default crons;

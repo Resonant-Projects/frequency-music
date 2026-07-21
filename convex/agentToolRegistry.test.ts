@@ -11,6 +11,8 @@ const field = (fieldType: unknown, optional = false) => ({
 const string = { type: "string" };
 const number = { type: "number" };
 const any = { type: "any" };
+const array = (value: unknown) => ({ type: "array", value });
+const object = (value: Record<string, unknown>) => ({ type: "object", value });
 const id = (tableName: string) => ({ type: "id", tableName });
 const literal = (value: string) => ({ type: "literal", value });
 const union = (...value: unknown[]) => ({ type: "union", value });
@@ -49,6 +51,31 @@ const FROZEN_ARGS: Record<string, string> = {
   }),
   listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
   getScoutTargets: frozenArgs({}),
+  ingestScoutedSource: frozenArgs({
+    url: field(string),
+    title: field(string, true),
+    publishedAt: field(number, true),
+    query: field(string),
+    rationale: field(string),
+    agentRunId: field(id("agentRuns")),
+  }),
+  proposeFeed: frozenArgs({
+    name: field(string),
+    url: field(string),
+    type: field(union(literal("rss"), literal("podcast"), literal("youtube"))),
+    rationale: field(string),
+    sampleItems: field(
+      array(
+        object({
+          title: field(string),
+          url: field(string),
+          snippet: field(string),
+          publishedAt: field(string, true),
+        }),
+      ),
+    ),
+    agentRunId: field(id("agentRuns")),
+  }),
   upsertCorrespondence: frozenArgs({
     conceptAId: field(id("concepts")),
     conceptBId: field(id("concepts")),

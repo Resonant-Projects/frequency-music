@@ -382,6 +382,52 @@ export const upsertExternal = internalMutation({
 });
 
 /**
+ * Canonical URL intake for source-scout discoveries. Existing dedupe keys are
+ * a true no-op so scout provenance never overwrites an earlier intake path.
+ */
+export const createScoutedSource = internalMutation({
+  args: {
+    url: v.string(),
+    title: v.optional(v.string()),
+    publishedAt: v.optional(v.number()),
+    query: v.string(),
+    rationale: v.string(),
+    agentRunId: v.id("agentRuns"),
+  },
+  returns: v.object({ id: v.id("sources"), created: v.boolean() }),
+  handler: async (ctx, args) => {
+    if (!(await ctx.db.get("agentRuns", args.agentRunId))) {
+      throw new Error("Agent run not found");
+    }
+    const dedupeKey = generateDedupeKey("url", {
+      canonicalUrl: args.url,
+    });
+    const existing = await ctx.db
+      .query("sources")
+      .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
+      .first();
+    if (existing) return { id: existing._id, created: false };
+
+    const result = await upsertExternalSource(ctx, {
+      dedupeKey,
+      type: "url",
+      canonicalUrl: args.url,
+      title: args.title,
+      publishedAt: args.publishedAt,
+      createdBy: "system",
+      metadata: {
+        scoutedBy: {
+          agentRunId: args.agentRunId,
+          query: args.query,
+          rationale: args.rationale,
+        },
+      },
+    });
+    return { id: result.id, created: result.created };
+  },
+});
+
+/**
  * Promote source visibility
  */
 export const setVisibility = mutation({

@@ -146,6 +146,20 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Source-scout target selection only; results are bounded to five domains and five conjectures.",
   ),
   entry(
+    "ingestScoutedSource",
+    "research_write",
+    "internal.sources:createScoutedSource",
+    "Ingest one judged source through canonical URL intake with source-scout provenance.",
+    "Canonical dedupe rejects are no-ops; the graph logs the decision and never retries.",
+  ),
+  entry(
+    "proposeFeed",
+    "research_write",
+    "internal.feeds:proposeFeed",
+    "Create a disabled recurring-feed proposal with source-scout rationale and sample items.",
+    "The mutation always inserts enabled false; duplicate URLs are no-ops and only humans enable feeds.",
+  ),
+  entry(
     "getCorrespondence",
     "read",
     "correspondences:getByPairKey",

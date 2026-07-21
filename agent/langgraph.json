@@ -4,7 +4,8 @@
     "research-pipeline": "./src/graphs/research-pipeline/index.ts:graph",
     "correspondence-miner": "./src/graphs/correspondence-miner/index.ts:graph",
     "evidence-hunter": "./src/graphs/evidence-hunter/index.ts:graph",
-    "hypothesis-drafter": "./src/graphs/hypothesis-drafter/index.ts:graph"
+    "hypothesis-drafter": "./src/graphs/hypothesis-drafter/index.ts:graph",
+    "source-scout": "./src/graphs/source-scout/index.ts:graph"
   },
   "env": ".env"
 }

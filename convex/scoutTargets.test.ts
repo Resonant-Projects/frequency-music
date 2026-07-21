@@ -3,10 +3,18 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { scoutConceptLimitPerDomain } from "./correspondences";
 import schema from "./schema";
 import { modules } from "../harness/modules";
 
 describe("source scout target census", () => {
+  test("shares the bounded concept budget across every scanned domain", () => {
+    expect(scoutConceptLimitPerDomain(1)).toBe(50);
+    expect(scoutConceptLimitPerDomain(4)).toBe(50);
+    expect(scoutConceptLimitPerDomain(10)).toBe(20);
+    expect(scoutConceptLimitPerDomain(50)).toBe(4);
+  });
+
   test("returns the thinnest on-mission domains and oldest low-evidence conjectures", async () => {
     const t = convexTest(schema, modules);
     const seeded = await t.run(async (ctx) => {
@@ -125,9 +133,11 @@ describe("source scout target census", () => {
           updatedAt,
         });
 
-      const olderWithEvidence = await makeCorrespondence("older with evidence", 1, [
-        { claimId, stance: "supports", addedBy: "agent", addedAt: 1 },
-      ]);
+      const olderWithEvidence = await makeCorrespondence(
+        "older with evidence",
+        1,
+        [{ claimId, stance: "supports", addedBy: "agent", addedAt: 1 }],
+      );
       const oldestStarved = await makeCorrespondence("oldest starved", 2);
       const newerStarved = await makeCorrespondence("newer starved", 3);
       return { olderWithEvidence, oldestStarved, newerStarved };

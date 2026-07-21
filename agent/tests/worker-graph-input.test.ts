@@ -61,12 +61,13 @@ describe("worker graph-input mapping", () => {
     ).toThrow();
   });
 
-  test("recognizes the five registered graphs", () => {
+  test("recognizes the six registered graphs", () => {
     expect(isKnownGraphName("research-pipeline")).toBe(true);
     expect(isKnownGraphName("weekly-brief")).toBe(true);
     expect(isKnownGraphName("correspondence-miner")).toBe(true);
     expect(isKnownGraphName("evidence-hunter")).toBe(true);
     expect(isKnownGraphName("hypothesis-drafter")).toBe(true);
+    expect(isKnownGraphName("source-scout")).toBe(true);
     expect(isKnownGraphName("source-intake-triage")).toBe(false);
     expect(isKnownGraphName("")).toBe(false);
   });
@@ -221,12 +222,28 @@ describe("worker graph-input mapping", () => {
     });
   });
 
+  test("source-scout receives claimed-run provenance", () => {
+    const invocation = buildGraphInvocation(
+      claimedRun({
+        runId: "run_scout",
+        graphName: "source-scout",
+        traceUrl: "https://trace.example/scout",
+      }),
+    );
+    if (invocation.graphName !== "source-scout") throw new Error("narrowing");
+    expect(invocation.input).toEqual({
+      agentRunId: "run_scout",
+      traceUrl: "https://trace.example/scout",
+    });
+  });
+
   test("terminal-status ownership is split correctly", () => {
     expect(TERMINAL_STATUS_OWNER["research-pipeline"]).toBe("graph");
     expect(TERMINAL_STATUS_OWNER["weekly-brief"]).toBe("runner");
     expect(TERMINAL_STATUS_OWNER["correspondence-miner"]).toBe("graph");
     expect(TERMINAL_STATUS_OWNER["evidence-hunter"]).toBe("graph");
     expect(TERMINAL_STATUS_OWNER["hypothesis-drafter"]).toBe("graph");
+    expect(TERMINAL_STATUS_OWNER["source-scout"]).toBe("graph");
   });
 
   test("summarizeNodeUpdate reports node name and update keys", () => {

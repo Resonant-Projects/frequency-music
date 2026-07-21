@@ -74,6 +74,54 @@ export const create = mutation({
   },
 });
 
+const proposalSampleItemValidator = v.object({
+  title: v.string(),
+  url: v.string(),
+  snippet: v.string(),
+  publishedAt: v.optional(v.string()),
+});
+
+/** Insert a human-enable-only recurring feed proposal from Source Scout. */
+export const proposeFeed = internalMutation({
+  args: {
+    name: v.string(),
+    url: v.string(),
+    type: v.union(v.literal("rss"), v.literal("podcast"), v.literal("youtube")),
+    rationale: v.string(),
+    sampleItems: v.array(proposalSampleItemValidator),
+    agentRunId: v.id("agentRuns"),
+  },
+  returns: v.object({ id: v.id("feeds"), created: v.boolean() }),
+  handler: async (ctx, args) => {
+    if (!(await ctx.db.get("agentRuns", args.agentRunId))) {
+      throw new Error("Agent run not found");
+    }
+    const existing = await ctx.db
+      .query("feeds")
+      .withIndex("by_url", (q) => q.eq("url", args.url))
+      .first();
+    if (existing) return { id: existing._id, created: false };
+
+    const now = Date.now();
+    const id = await ctx.db.insert("feeds", {
+      name: args.name,
+      url: args.url,
+      type: args.type,
+      enabled: false,
+      metadata: {
+        proposal: {
+          agentRunId: args.agentRunId,
+          rationale: args.rationale,
+          sampleItems: args.sampleItems,
+        },
+      },
+      createdAt: now,
+      updatedAt: now,
+    });
+    return { id, created: true };
+  },
+});
+
 /**
  * Update feed poll timestamp
  */

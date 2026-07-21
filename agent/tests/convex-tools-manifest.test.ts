@@ -32,6 +32,14 @@ describe("convexTools derive from the manifest", () => {
     ).toBe(false);
   });
 
+  test("exposes the binding source-scout read name in snake case", () => {
+    expect(
+      convexTools.some(
+        (toolDefinition) => toolDefinition.name === "get_scout_targets",
+      ),
+    ).toBe(true);
+  });
+
   test("binds research-write provenance from run context, not model args", () => {
     const definition = AGENT_TOOL_MANIFEST.find(
       (candidate) => candidate.name === "upsertCorrespondence",
@@ -55,5 +63,18 @@ describe("convexTools derive from the manifest", () => {
       agentRunId: "run-context",
       traceUrl: "https://trace.example/run",
     });
+  });
+
+  test("keeps source-scout write provenance out of model-controlled args", () => {
+    for (const name of ["ingestScoutedSource", "proposeFeed"] as const) {
+      const definition = AGENT_TOOL_MANIFEST.find(
+        (candidate) => candidate.name === name,
+      );
+      if (!definition) throw new Error(`${name} is missing`);
+      expect(Object.keys(definition.args.shape)).toContain("agentRunId");
+      expect(Object.keys(agentModelSchema(definition).shape)).not.toContain(
+        "agentRunId",
+      );
+    }
   });
 });

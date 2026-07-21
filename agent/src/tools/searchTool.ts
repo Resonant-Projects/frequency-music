@@ -1,6 +1,9 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { appendRemoteAuditEvent, type ToolCaller } from "../graphs/shared/audit.js";
+import {
+  appendRemoteAuditEvent,
+  type ToolCaller,
+} from "../graphs/shared/audit.js";
 import { redactError } from "../shared/redactError.js";
 import { callConvex } from "./convexTools.js";
 
@@ -58,8 +61,7 @@ function mapResults(payload: unknown, maxResults: number): WebSearchResult[] {
           title: result.title,
           url: result.url,
           snippet: result.content,
-          ...(typeof result.published_date === "string" &&
-          result.published_date
+          ...(typeof result.published_date === "string" && result.published_date
             ? { publishedAt: result.published_date }
             : {}),
         },

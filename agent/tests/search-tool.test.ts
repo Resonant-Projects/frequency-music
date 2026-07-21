@@ -4,11 +4,12 @@ import { createWebSearch } from "../src/tools/searchTool";
 
 describe("Tavily web_search", () => {
   test("maps a recorded response and logs the motivating gap", async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response(JSON.stringify(fixture), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(JSON.stringify(fixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
     );
     const callTool = vi.fn(async () => ({ ok: true }));
     const search = createWebSearch({
@@ -33,8 +34,7 @@ describe("Tavily web_search", () => {
       {
         title: "Acoustic visualization review",
         url: "https://example.org/acoustic-visualization",
-        snippet:
-          "A review of physical methods for visualizing resonant modes.",
+        snippet: "A review of physical methods for visualizing resonant modes.",
       },
     ]);
 
