@@ -56,14 +56,17 @@ export const agentToolArgs = {
     url: z.string().url(),
     type: z.enum(["rss", "podcast", "youtube"]),
     rationale: z.string().trim().min(1),
-    sampleItems: z.array(
-      z.object({
-        title: z.string(),
-        url: z.string().url(),
-        snippet: z.string(),
-        publishedAt: z.string().optional(),
-      }),
-    ),
+    // Model-controlled input — keep the tool payload bounded.
+    sampleItems: z
+      .array(
+        z.object({
+          title: z.string(),
+          url: z.string().url(),
+          snippet: z.string(),
+          publishedAt: z.string().optional(),
+        }),
+      )
+      .max(10),
     agentRunId: zid("agentRuns"),
   }),
   upsertCorrespondence: upsertCorrespondenceArgsZ,
