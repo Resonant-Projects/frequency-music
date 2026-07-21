@@ -9,7 +9,7 @@ import {
   Show,
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   Markdown,
   UIBadge,
@@ -90,6 +90,16 @@ const reviewQueueBlockedClass = css({
   bg: "rgba(200, 168, 75, 0.14)",
   borderColor: "rgba(200, 168, 75, 0.62)",
   "& span:last-child": { color: "zodiac.gold" },
+});
+
+const violetAccentContainerClass = css({
+  bg: "rgba(139, 92, 246, 0.07)",
+  borderColor: "rgba(139, 92, 246, 0.3)",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  mt: "3",
+  p: "3",
 });
 
 type FeedEnableState = { id: Id<"feeds">; enabled: boolean };
@@ -483,16 +493,7 @@ export function WeeklyBriefDetailPage() {
                 role="dialog"
                 aria-modal="false"
                 aria-label="Confirm weekly brief publication"
-                class={css({
-                  bg: "rgba(139, 92, 246, 0.07)",
-                  borderColor: "rgba(139, 92, 246, 0.3)",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  display: "grid",
-                  gap: "3",
-                  mt: "3",
-                  p: "3",
-                })}
+                class={cx(violetAccentContainerClass, css({ gap: "3" }))}
               >
                 <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>
                   Publishing makes this weekly brief public in the app and
@@ -520,18 +521,7 @@ export function WeeklyBriefDetailPage() {
             </Show>
 
             <Show when={editMode()}>
-              <div
-                class={css({
-                  bg: "rgba(139, 92, 246, 0.07)",
-                  borderColor: "rgba(139, 92, 246, 0.3)",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  display: "grid",
-                  gap: "2",
-                  mt: "3",
-                  p: "3",
-                })}
-              >
+              <div class={cx(violetAccentContainerClass, css({ gap: "2" }))}>
                 <div
                   class={css({
                     alignItems: "center",

@@ -14,6 +14,28 @@ import { createQueryWithStatus } from "../integrations/convex";
 
 const LIST_LIMIT = 25;
 
+const STATUS_SECTIONS = [
+  {
+    status: "conjectured",
+    description:
+      "Unresolved correspondences waiting for evidence or experiment.",
+  },
+  {
+    status: "evidenced",
+    description: "Correspondences whose supporting evidence currently leads.",
+  },
+  {
+    status: "contradicted",
+    description:
+      "Correspondences whose contradicting evidence currently leads.",
+  },
+  {
+    status: "retired",
+    description:
+      "Correspondences deliberately removed from active consideration.",
+  },
+] as const;
+
 const rowLinkClass = css({
   borderColor: "rgba(139, 92, 246, 0.22)",
   borderRadius: "l2",
@@ -44,54 +66,13 @@ function formatUpdatedAt(value: number) {
 }
 
 export function CorrespondencesPage() {
-  const conjectured = createQueryWithStatus(
-    api.correspondences.listByStatus,
-    () => ({ status: "conjectured" as const, limit: LIST_LIMIT }),
-  );
-  const evidenced = createQueryWithStatus(
-    api.correspondences.listByStatus,
-    () => ({
-      status: "evidenced" as const,
+  const sections = STATUS_SECTIONS.map((section) => ({
+    ...section,
+    query: createQueryWithStatus(api.correspondences.listByStatus, () => ({
+      status: section.status,
       limit: LIST_LIMIT,
-    }),
-  );
-  const contradicted = createQueryWithStatus(
-    api.correspondences.listByStatus,
-    () => ({ status: "contradicted" as const, limit: LIST_LIMIT }),
-  );
-  const retired = createQueryWithStatus(
-    api.correspondences.listByStatus,
-    () => ({
-      status: "retired" as const,
-      limit: LIST_LIMIT,
-    }),
-  );
-
-  const sections = [
-    {
-      status: "conjectured",
-      description:
-        "Unresolved correspondences waiting for evidence or experiment.",
-      query: conjectured,
-    },
-    {
-      status: "evidenced",
-      description: "Correspondences whose supporting evidence currently leads.",
-      query: evidenced,
-    },
-    {
-      status: "contradicted",
-      description:
-        "Correspondences whose contradicting evidence currently leads.",
-      query: contradicted,
-    },
-    {
-      status: "retired",
-      description:
-        "Correspondences deliberately removed from active consideration.",
-      query: retired,
-    },
-  ] as const;
+    })),
+  }));
 
   return (
     <section class={pageClass}>

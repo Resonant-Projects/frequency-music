@@ -142,6 +142,7 @@ function DecideBar(props: {
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   let noteInput: HTMLTextAreaElement | undefined;
+  let overflowTrigger: HTMLButtonElement | undefined;
 
   const draft = () => props.context.draft;
 
@@ -238,6 +239,12 @@ function DecideBar(props: {
   }
 
   function handleShortcut(event: KeyboardEvent) {
+    if (event.key === "Escape" && overflowOpen()) {
+      event.preventDefault();
+      setOverflowOpen(false);
+      queueMicrotask(() => overflowTrigger?.focus());
+      return;
+    }
     if (event.key === "Escape" && decision()) {
       event.preventDefault();
       cancelDecision();
@@ -301,6 +308,9 @@ function DecideBar(props: {
           </UIButton>
           <div class={css({ position: "relative" })}>
             <UIButton
+              ref={(element) => {
+                overflowTrigger = element;
+              }}
               variant="outline"
               disabled={busy() || alternatives().length === 0}
               aria-expanded={overflowOpen()}

@@ -45,6 +45,7 @@ export function CorrespondenceDetailPage() {
         setReviewOpen(false);
         setNextStatus("evidenced");
         setStatusReason("");
+        setSaving(false);
         setNotice(null);
       },
     ),
@@ -61,23 +62,31 @@ export function CorrespondenceDetailPage() {
     const row = correspondence.data();
     const reason = statusReason().trim();
     if (!row || !reason) return;
+    const submittedCorrespondenceId = row._id;
+    const submittedStatus = nextStatus();
+    const isCurrentCorrespondence = () =>
+      params().correspondenceId === String(submittedCorrespondenceId);
     setSaving(true);
     setNotice(null);
     try {
       await setStatus({
-        correspondenceId: row._id,
-        status: nextStatus(),
+        correspondenceId: submittedCorrespondenceId,
+        status: submittedStatus,
         statusReason: reason,
       });
-      setReviewOpen(false);
-      setStatusReason("");
-      setNotice(`Status set to ${nextStatus()}.`);
+      if (isCurrentCorrespondence()) {
+        setReviewOpen(false);
+        setStatusReason("");
+        setNotice(`Status set to ${submittedStatus}.`);
+      }
     } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : "Unable to update status.",
-      );
+      if (isCurrentCorrespondence()) {
+        setNotice(
+          error instanceof Error ? error.message : "Unable to update status.",
+        );
+      }
     } finally {
-      setSaving(false);
+      if (isCurrentCorrespondence()) setSaving(false);
     }
   }
 
@@ -117,6 +126,8 @@ export function CorrespondenceDetailPage() {
                 variant="outline"
                 onClick={() => beginReview(row().status)}
                 disabled={saving()}
+                aria-expanded={reviewOpen()}
+                aria-controls="correspondence-review-panel"
               >
                 Review lifecycle
               </UIButton>
@@ -124,6 +135,7 @@ export function CorrespondenceDetailPage() {
 
             <Show when={reviewOpen()}>
               <div
+                id="correspondence-review-panel"
                 role="dialog"
                 aria-modal="false"
                 aria-label="Review correspondence lifecycle"

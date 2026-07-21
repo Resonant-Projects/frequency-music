@@ -93,7 +93,11 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     ) {
       fields.push("openQuestions");
     }
-    if (Number(confidenceText()) !== props.extraction.confidence) {
+    const confidenceValue = confidenceText().trim();
+    if (
+      confidenceValue !== "" &&
+      Number(confidenceValue) !== props.extraction.confidence
+    ) {
       fields.push("confidence");
     }
     return fields;
@@ -116,8 +120,13 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     setSaving(true);
     setNotice(null);
     try {
-      const confidence = Number(confidenceText());
-      if (fields.includes("confidence") && !Number.isFinite(confidence)) {
+      const confidenceValue = confidenceText().trim();
+      const confidence =
+        confidenceValue === "" ? undefined : Number(confidenceValue);
+      if (
+        fields.includes("confidence") &&
+        (confidence === undefined || !Number.isFinite(confidence))
+      ) {
         throw new Error("Confidence must be a number.");
       }
       await editExtraction({
@@ -144,7 +153,9 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
         ...(fields.includes("openQuestions")
           ? { openQuestions: parseLines(questionsText()) }
           : {}),
-        ...(fields.includes("confidence") ? { confidence } : {}),
+        ...(fields.includes("confidence") && confidence !== undefined
+          ? { confidence }
+          : {}),
       });
       setEditMode(false);
       setNotice("Extraction correction saved with edit provenance.");
@@ -409,6 +420,7 @@ export function CompositionDetailPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = createSignal(false);
   const [deleting, setDeleting] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string | null>(null);
+  let deleteConfirmButton: HTMLButtonElement | undefined;
 
   async function handleDeleteComposition() {
     const row = lineage()?.composition;
@@ -432,6 +444,12 @@ export function CompositionDetailPage() {
   createEffect(() => {
     const row = lineage()?.composition;
     if (row) document.title = `${row.title} — Frequency Music`;
+  });
+
+  createEffect(() => {
+    if (deleteConfirmOpen()) {
+      queueMicrotask(() => deleteConfirmButton?.focus());
+    }
   });
 
   return (
@@ -523,6 +541,9 @@ export function CompositionDetailPage() {
                   class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
                 >
                   <UIButton
+                    ref={(element) => {
+                      deleteConfirmButton = element;
+                    }}
                     variant="solid"
                     disabled={deleting()}
                     onClick={handleDeleteComposition}
