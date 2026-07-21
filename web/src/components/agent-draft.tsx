@@ -3,9 +3,12 @@ import type { FunctionReturnType } from "convex/server";
 import { For, type JSX, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import type {
+  HypothesisDraftPayload,
+  RecipeDraftPayload,
+} from "../../../convex/shared/draftPayloads";
 import { css, cx } from "../../styled-system/css";
-import { fieldLabelClass } from "./ui";
-import { UIBadge } from "./ui";
+import { fieldLabelClass, UIBadge, UIInput, UITextarea } from "./ui";
 
 // ---------------------------------------------------------------------------
 // Shared types + rendering for agent human-review drafts. These mirror the
@@ -21,48 +24,8 @@ export type AgentDraftStatus =
   | "rejected"
   | "superseded";
 
-export type HypothesisDraftPayload = {
-  title: string;
-  question: string;
-  statement: string;
-  rationale: string;
-  whyThisMatters: string;
-  concepts?: string[];
-  sourceIds: string[];
-  extractionIds: string[];
-  correspondenceId?: string;
-  thesisId?: string;
-  confidence?: number;
-};
-
-export type RecipeDraftParameter = {
-  kind?: string;
-  type?: string;
-  value: string;
-  details?: unknown;
-  canonicalKind?: string;
-};
-
-export type RecipeDraftPayload = {
-  hypothesisId?: string;
-  title: string;
-  parameters: RecipeDraftParameter[];
-  whyThisMatters: string;
-  bodyMd?: string;
-  dawChecklist?: string[];
-  instrumentationNotes?: string;
-  protocol?: {
-    studyType?: string;
-    durationSecs?: number;
-    panelPlanned?: string[];
-    whatVaries?: string[];
-    whatStaysConstant?: string[];
-    listeningContext?: string;
-    listeningMethod?: string;
-  };
-};
-
 export type AgentDraftPayload = HypothesisDraftPayload | RecipeDraftPayload;
+export type { HypothesisDraftPayload, RecipeDraftPayload };
 export type DraftReviewContext = FunctionReturnType<
   typeof api.agentDrafts.getReviewContext
 >;
@@ -80,6 +43,7 @@ export type PersistedReviewDraft = {
   createdAt: number;
   updatedAt: number;
   payload?: AgentDraftPayload;
+  amendedPayload?: AgentDraftPayload;
   decidedAt?: number;
   decidedBy?: "human";
   decisionNote?: string;
@@ -355,10 +319,44 @@ function humanize(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function EditableTextField(props: {
+  id: string;
+  label: string;
+  value: string;
+  multiline?: boolean;
+  onInput: (value: string) => void;
+}) {
+  return (
+    <div class={css({ display: "grid", gap: "2" })}>
+      <label class={fieldLabelClass} for={props.id}>
+        {props.label}
+      </label>
+      <Show
+        when={props.multiline}
+        fallback={
+          <UIInput
+            id={props.id}
+            value={props.value}
+            onInput={(event) => props.onInput(event.currentTarget.value)}
+          />
+        }
+      >
+        <UITextarea
+          id={props.id}
+          value={props.value}
+          onInput={(event) => props.onInput(event.currentTarget.value)}
+        />
+      </Show>
+    </div>
+  );
+}
+
 /** The plan-07 five-section reading order for a single review decision. */
 export function DraftReviewStory(props: {
   context: DraftReviewContext;
   payload?: AgentDraftPayload;
+  editMode?: boolean;
+  onPayloadChange?: (payload: AgentDraftPayload) => void;
   decide: JSX.Element;
 }) {
   const payload = () => props.payload ?? props.context.draft.payload;
@@ -535,22 +533,81 @@ export function DraftReviewStory(props: {
         <Show when={hypothesisPayload()}>
           {(proposal) => (
             <div class={css({ display: "grid", gap: "4" })}>
-              <div>
-                <p class={reviewEyebrowClass}>Title</p>
-                <h2 class={reviewHeadingClass}>{proposal().title}</h2>
-              </div>
-              <div>
-                <p class={reviewEyebrowClass}>Question</p>
-                <p class={reviewBodyClass}>{proposal().question}</p>
-              </div>
-              <div>
-                <p class={reviewEyebrowClass}>Statement</p>
-                <p class={reviewBodyClass}>{proposal().statement}</p>
-              </div>
-              <div>
-                <p class={reviewEyebrowClass}>Why this matters</p>
-                <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
-              </div>
+              <Show
+                when={props.editMode}
+                fallback={
+                  <>
+                    <div>
+                      <p class={reviewEyebrowClass}>Title</p>
+                      <h2 class={reviewHeadingClass}>{proposal().title}</h2>
+                    </div>
+                    <div>
+                      <p class={reviewEyebrowClass}>Question</p>
+                      <p class={reviewBodyClass}>{proposal().question}</p>
+                    </div>
+                    <div>
+                      <p class={reviewEyebrowClass}>Statement</p>
+                      <p class={reviewBodyClass}>{proposal().statement}</p>
+                    </div>
+                    <div>
+                      <p class={reviewEyebrowClass}>Why this matters</p>
+                      <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
+                    </div>
+                  </>
+                }
+              >
+                <div
+                  class={css({
+                    bg: "rgba(139, 92, 246, 0.08)",
+                    borderColor: "rgba(139, 92, 246, 0.32)",
+                    borderRadius: "l2",
+                    borderWidth: "1px",
+                    display: "grid",
+                    gap: "3",
+                    p: "3",
+                  })}
+                >
+                  <UIBadge tone="violet">Edit mode</UIBadge>
+                  <EditableTextField
+                    id={`edit-title-${props.context.draft._id}`}
+                    label="Title"
+                    value={proposal().title}
+                    onInput={(title) =>
+                      props.onPayloadChange?.({ ...proposal(), title })
+                    }
+                  />
+                  <EditableTextField
+                    id={`edit-question-${props.context.draft._id}`}
+                    label="Question"
+                    value={proposal().question}
+                    multiline
+                    onInput={(question) =>
+                      props.onPayloadChange?.({ ...proposal(), question })
+                    }
+                  />
+                  <EditableTextField
+                    id={`edit-statement-${props.context.draft._id}`}
+                    label="Statement"
+                    value={proposal().statement}
+                    multiline
+                    onInput={(statement) =>
+                      props.onPayloadChange?.({ ...proposal(), statement })
+                    }
+                  />
+                  <EditableTextField
+                    id={`edit-why-${props.context.draft._id}`}
+                    label="Why this matters"
+                    value={proposal().whyThisMatters}
+                    multiline
+                    onInput={(whyThisMatters) =>
+                      props.onPayloadChange?.({
+                        ...proposal(),
+                        whyThisMatters,
+                      })
+                    }
+                  />
+                </div>
+              </Show>
               <details>
                 <summary
                   class={css({
@@ -574,14 +631,91 @@ export function DraftReviewStory(props: {
         <Show when={recipePayload()}>
           {(proposal) => (
             <div class={css({ display: "grid", gap: "4" })}>
-              <div>
-                <p class={reviewEyebrowClass}>Recipe title</p>
-                <h2 class={reviewHeadingClass}>{proposal().title}</h2>
-              </div>
-              <div>
-                <p class={reviewEyebrowClass}>Why this matters</p>
-                <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
-              </div>
+              <Show
+                when={props.editMode}
+                fallback={
+                  <>
+                    <div>
+                      <p class={reviewEyebrowClass}>Recipe title</p>
+                      <h2 class={reviewHeadingClass}>{proposal().title}</h2>
+                    </div>
+                    <div>
+                      <p class={reviewEyebrowClass}>Why this matters</p>
+                      <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
+                    </div>
+                  </>
+                }
+              >
+                <div
+                  class={css({
+                    bg: "rgba(139, 92, 246, 0.08)",
+                    borderColor: "rgba(139, 92, 246, 0.32)",
+                    borderRadius: "l2",
+                    borderWidth: "1px",
+                    display: "grid",
+                    gap: "3",
+                    p: "3",
+                  })}
+                >
+                  <UIBadge tone="violet">Edit mode</UIBadge>
+                  <EditableTextField
+                    id={`edit-title-${props.context.draft._id}`}
+                    label="Recipe title"
+                    value={proposal().title}
+                    onInput={(title) =>
+                      props.onPayloadChange?.({ ...proposal(), title })
+                    }
+                  />
+                  <EditableTextField
+                    id={`edit-why-${props.context.draft._id}`}
+                    label="Why this matters"
+                    value={proposal().whyThisMatters}
+                    multiline
+                    onInput={(whyThisMatters) =>
+                      props.onPayloadChange?.({
+                        ...proposal(),
+                        whyThisMatters,
+                      })
+                    }
+                  />
+                  <EditableTextField
+                    id={`edit-body-${props.context.draft._id}`}
+                    label="Recipe body"
+                    value={proposal().bodyMd ?? ""}
+                    multiline
+                    onInput={(bodyMd) =>
+                      props.onPayloadChange?.({ ...proposal(), bodyMd })
+                    }
+                  />
+                  <EditableTextField
+                    id={`edit-instrumentation-${props.context.draft._id}`}
+                    label="Instrumentation notes"
+                    value={proposal().instrumentationNotes ?? ""}
+                    multiline
+                    onInput={(instrumentationNotes) =>
+                      props.onPayloadChange?.({
+                        ...proposal(),
+                        instrumentationNotes,
+                      })
+                    }
+                  />
+                  <EditableTextField
+                    id={`edit-checklist-${props.context.draft._id}`}
+                    label="DAW checklist (one item per line)"
+                    value={(proposal().dawChecklist ?? []).join("\n")}
+                    multiline
+                    onInput={(value) =>
+                      props.onPayloadChange?.({
+                        ...proposal(),
+                        dawChecklist: value
+                          .split("\n")
+                          .map((item) => item.trim())
+                          .filter(Boolean),
+                      })
+                    }
+                  />
+                </div>
+              </Show>
               <DraftPayloadPreview kind="recipe_draft" payload={proposal()} />
             </div>
           )}

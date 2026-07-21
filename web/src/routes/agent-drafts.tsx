@@ -14,6 +14,7 @@ import { css } from "../../styled-system/css";
 import {
   type DraftReviewContext,
   DraftReviewStory,
+  type AgentDraftPayload,
   type PersistedReviewDraft,
   PromotedLink,
   draftLabel,
@@ -120,6 +121,11 @@ function queuePair(draft: PersistedReviewDraft) {
 function DecideBar(props: {
   context: DraftReviewContext;
   pendingDrafts: PersistedReviewDraft[];
+  payload?: AgentDraftPayload;
+  editMode: boolean;
+  editedFields: string[];
+  onEnterEdit: () => void;
+  onCancelEdit: () => void;
   onApproved: (promotion: Promotion) => void;
 }) {
   const approve = createMutation(api.agentDrafts.approve);
@@ -132,12 +138,12 @@ function DecideBar(props: {
   const [error, setError] = createSignal<string | null>(null);
   let noteInput: HTMLTextAreaElement | undefined;
 
-  const draft = () => props.context.draft as PersistedReviewDraft;
+  const draft = () => props.context.draft;
   const alternatives = createMemo(() =>
     props.pendingDrafts.filter((row) => row._id !== draft()._id),
   );
   const canConfirm = createMemo(() => {
-    if (decision() === "approve") return Boolean(draft().payload);
+    if (decision() === "approve") return Boolean(props.payload);
     if (decision() === "reject") return note().trim().length > 0;
     if (decision() === "supersede") return supersedingDraftId().length > 0;
     return false;
@@ -167,6 +173,9 @@ function DecideBar(props: {
         const result = await approve({
           draftId: draft()._id,
           ...(note().trim() ? { decisionNote: note().trim() } : {}),
+          ...(props.editedFields.length > 0 && props.payload
+            ? { amendedPayload: props.payload }
+            : {}),
         });
         props.onApproved({
           kind: draft().kind,
@@ -219,6 +228,10 @@ function DecideBar(props: {
       event.preventDefault();
       chooseDecision("reject");
     }
+    if (event.key.toLowerCase() === "e" && draft().payload) {
+      event.preventDefault();
+      props.onEnterEdit();
+    }
   }
 
   onMount(() => window.addEventListener("keydown", handleShortcut));
@@ -238,11 +251,12 @@ function DecideBar(props: {
         <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
           <UIButton
             variant="solid"
-            disabled={busy() || !draft().payload}
+            disabled={busy() || !props.payload}
             aria-keyshortcuts="A"
             onClick={() => chooseDecision("approve")}
           >
-            Approve · A
+            {props.editedFields.length > 0 ? "Approve with edits" : "Approve"}
+            {" · A"}
           </UIButton>
           <UIButton
             variant="solid"
@@ -259,6 +273,27 @@ function DecideBar(props: {
           >
             Supersede
           </UIButton>
+          <Show
+            when={props.editMode}
+            fallback={
+              <UIButton
+                variant="solid"
+                disabled={busy() || !draft().payload}
+                aria-keyshortcuts="E"
+                onClick={props.onEnterEdit}
+              >
+                Edit · E
+              </UIButton>
+            }
+          >
+            <UIButton
+              variant="solid"
+              disabled={busy()}
+              onClick={props.onCancelEdit}
+            >
+              Cancel edits
+            </UIButton>
+          </Show>
         </div>
         <span class={eyebrowClass}>Shortcuts select, then focus the note</span>
       </div>
@@ -313,11 +348,25 @@ function DecideBar(props: {
           >
             <p class={helperClass}>
               {selected() === "approve"
-                ? `Approval will create a ${draft().kind === "hypothesis_draft" ? "hypothesis" : "recipe"} titled “${draft().payload?.title ?? draft().title}”.`
+                ? `${props.editedFields.length > 0 ? "Approval with edits" : "Approval"} will create a ${draft().kind === "hypothesis_draft" ? "hypothesis" : "recipe"} titled “${props.payload?.title ?? draft().title}”.`
                 : selected() === "reject"
                   ? "Rejection closes this draft and preserves the note as learning signal."
                   : "Superseding closes this draft in favor of the selected pending draft."}
             </p>
+            <Show
+              when={selected() === "approve" && props.editedFields.length > 0}
+            >
+              <div class={css({ display: "grid", gap: "2" })}>
+                <p class={eyebrowClass}>Changed fields</p>
+                <div
+                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                >
+                  <For each={props.editedFields}>
+                    {(field) => <UIBadge tone="violet">{field}</UIBadge>}
+                  </For>
+                </div>
+              </div>
+            </Show>
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
               <UIButton
                 variant="solid"
@@ -326,7 +375,9 @@ function DecideBar(props: {
               >
                 {busy()
                   ? "Deciding…"
-                  : `Confirm ${selected() === "approve" ? "approval" : selected()}`}
+                  : selected() === "approve" && props.editedFields.length > 0
+                    ? "Approve with edits"
+                    : `Confirm ${selected() === "approve" ? "approval" : selected()}`}
               </UIButton>
               <UIButton
                 variant="ghost"
@@ -354,6 +405,96 @@ function DecideBar(props: {
         )}
       </Show>
     </div>
+  );
+}
+
+function editablePayloadProjection(
+  kind: PersistedReviewDraft["kind"],
+  payload: AgentDraftPayload,
+): Record<string, unknown> {
+  if (kind === "hypothesis_draft" && "statement" in payload) {
+    return {
+      title: payload.title,
+      question: payload.question,
+      statement: payload.statement,
+      whyThisMatters: payload.whyThisMatters,
+    };
+  }
+  if (kind === "recipe_draft" && "parameters" in payload) {
+    return {
+      title: payload.title,
+      whyThisMatters: payload.whyThisMatters,
+      bodyMd: payload.bodyMd,
+      instrumentationNotes: payload.instrumentationNotes,
+      dawChecklist: payload.dawChecklist,
+    };
+  }
+  return {};
+}
+
+function editableFieldDiff(
+  kind: PersistedReviewDraft["kind"],
+  original: AgentDraftPayload | undefined,
+  working: AgentDraftPayload | undefined,
+) {
+  if (!original || !working) return [];
+  const originalFields = editablePayloadProjection(kind, original);
+  const workingFields = editablePayloadProjection(kind, working);
+  return Object.keys(originalFields).filter(
+    (field) =>
+      JSON.stringify(originalFields[field]) !==
+      JSON.stringify(workingFields[field]),
+  );
+}
+
+function ReviewWorkspace(props: {
+  context: DraftReviewContext;
+  pendingDrafts: PersistedReviewDraft[];
+  onApproved: (promotion: Promotion) => void;
+}) {
+  const [editMode, setEditMode] = createSignal(false);
+  const [workingPayload, setWorkingPayload] = createSignal<
+    AgentDraftPayload | undefined
+  >(props.context.draft.payload);
+
+  createEffect(() => {
+    const draft = props.context.draft;
+    setEditMode(false);
+    setWorkingPayload(draft.payload);
+  });
+
+  const editedFields = createMemo(() =>
+    editableFieldDiff(
+      props.context.draft.kind,
+      props.context.draft.payload,
+      workingPayload(),
+    ),
+  );
+
+  function cancelEdits() {
+    setWorkingPayload(props.context.draft.payload);
+    setEditMode(false);
+  }
+
+  return (
+    <DraftReviewStory
+      context={props.context}
+      payload={workingPayload()}
+      editMode={editMode()}
+      onPayloadChange={setWorkingPayload}
+      decide={
+        <DecideBar
+          context={props.context}
+          pendingDrafts={props.pendingDrafts}
+          payload={workingPayload()}
+          editMode={editMode()}
+          editedFields={editedFields()}
+          onEnterEdit={() => setEditMode(true)}
+          onCancelEdit={cancelEdits}
+          onApproved={props.onApproved}
+        />
+      }
+    />
   );
 }
 
@@ -522,15 +663,10 @@ export function AgentDraftsPage() {
               }
             >
               {(reviewContext) => (
-                <DraftReviewStory
+                <ReviewWorkspace
                   context={reviewContext()}
-                  decide={
-                    <DecideBar
-                      context={reviewContext()}
-                      pendingDrafts={rows()}
-                      onApproved={setLastPromotion}
-                    />
-                  }
+                  pendingDrafts={rows()}
+                  onApproved={setLastPromotion}
                 />
               )}
             </Show>

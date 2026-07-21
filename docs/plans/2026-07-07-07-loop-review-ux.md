@@ -105,7 +105,7 @@ Queue list view: pending count headline ("2 drafts awaiting review — agent blo
 > allowlist on `amendedPayload` — plan 2026-07-18-13 extends amendment to structured recipe
 > parameters through the same argument, so a hard allowlist now would be churn. The shared schema
 > validation + `editedFields` provenance is the interim guard.
-- [ ] **Step 2:** Edit-mode UI + confirm dialog; `vp run typecheck:web`; Interceptor visual pass; commit.
+- [ ] **Step 2:** Edit-mode UI + confirm dialog; `vp run typecheck:web`; Interceptor visual pass; commit. **Operator-gated:** edit mode, changed-field confirmation, and `vp run typecheck:web` are complete; Interceptor and the live visual gate were not run in this execution.
 
 ---
 
@@ -113,7 +113,7 @@ Queue list view: pending count headline ("2 drafts awaiting review — agent blo
 
 **Files:** none (operational; results in PR)
 
-- [ ] **Step 1:** With ≥2 real drafts pending (plan 06 output), Keith reviews both — one approve, one reject — **timed**. Gate: each decision under 2 minutes with no tab-switching to look things up. If he had to leave the page to decide, the card is missing information: record what, fix, re-test. At least one decision should exercise edit-before-approve.
+- [ ] **Step 1:** With ≥2 real drafts pending (plan 06 output), Keith reviews both — one approve, one reject — **timed**. Gate: each decision under 2 minutes with no tab-switching to look things up. If he had to leave the page to decide, the card is missing information: record what, fix, re-test. At least one decision should exercise edit-before-approve. **Operator-gated:** requires real pending drafts, a human reviewer, and timed live decisions; not attempted in this execution.
 
 ---
 
