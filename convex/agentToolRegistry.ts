@@ -89,6 +89,8 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
       queryRef("correspondenceCandidates:listEvidenceTargets"),
       omitUndefined({ limit: args.limit }),
     ),
+  getScoutTargets: (ctx) =>
+    ctx.runQuery(queryRef("correspondences:scoutTargets"), {}),
   getCorrespondence: (ctx, args) =>
     ctx.runQuery(queryRef("correspondences:getByPairKey"), {
       pairKey: args.pairKey,

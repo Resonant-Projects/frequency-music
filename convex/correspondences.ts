@@ -17,6 +17,12 @@ const DEFAULT_LIST_LIMIT = 20;
 const MAX_LIST_LIMIT = 100;
 const MOVEMENT_LIMIT_PER_STATUS = 1000;
 const AUTO_RETIRE_PAGE_SIZE = 500;
+const SCOUT_DOMAIN_SCAN_LIMIT = 50;
+const SCOUT_CONCEPTS_PER_DOMAIN_LIMIT = 50;
+const SCOUT_TOTAL_CONCEPT_LIMIT = 200;
+const SCOUT_SOURCE_EDGES_PER_CONCEPT_LIMIT = 100;
+const SCOUT_CONJECTURE_SCAN_LIMIT = 100;
+const SCOUT_TARGET_LIMIT = 5;
 export const AUTO_RETIRE_AFTER_MS = 90 * 24 * 60 * 60 * 1000;
 
 type CorrespondenceStatus = Doc<"correspondences">["status"];
@@ -50,6 +56,118 @@ function clampLimit(limit: number | undefined): number {
   if (!limit || !Number.isFinite(limit)) return DEFAULT_LIST_LIMIT;
   return Math.max(1, Math.min(Math.floor(limit), MAX_LIST_LIMIT));
 }
+
+export const scoutTargets = query({
+  args: {},
+  returns: v.object({
+    thinDomains: v.array(
+      v.object({
+        domain: v.string(),
+        onMissionConceptCount: v.number(),
+        sourceCount: v.number(),
+      }),
+    ),
+    starvedConjectures: v.array(
+      v.object({
+        correspondenceId: v.id("correspondences"),
+        statement: v.string(),
+        conceptA: v.string(),
+        conceptB: v.string(),
+        evidenceCount: v.number(),
+      }),
+    ),
+  }),
+  handler: async (ctx) => {
+    const domainRows = await ctx.db
+      .query("conceptDomains")
+      .take(SCOUT_DOMAIN_SCAN_LIMIT);
+    const activeDomains = domainRows
+      .filter((domain) => domain.status !== "deprecated")
+      .toSorted((left, right) => left.name.localeCompare(right.name));
+
+    let conceptsScanned = 0;
+    const domainCounts: Array<{
+      domain: string;
+      onMissionConceptCount: number;
+      sourceCount: number;
+    }> = [];
+    for (const domain of activeDomains) {
+      const remaining = SCOUT_TOTAL_CONCEPT_LIMIT - conceptsScanned;
+      if (remaining <= 0) break;
+      const domainConcepts = await ctx.db
+        .query("concepts")
+        .withIndex("by_domain", (q) => q.eq("domain", domain.name))
+        .take(Math.min(SCOUT_CONCEPTS_PER_DOMAIN_LIMIT, remaining));
+      conceptsScanned += domainConcepts.length;
+      const concepts = domainConcepts.filter(
+        (concept) => concept.missionRelevance === "on",
+      );
+      if (concepts.length === 0) continue;
+
+      const sourceIds = new Set<string>();
+      for (const concept of concepts) {
+        const edges = await ctx.db
+          .query("edges")
+          .withIndex("by_to_fromType", (q) =>
+            q
+              .eq("toType", "concept")
+              .eq("toId", concept.name)
+              .eq("fromType", "source"),
+          )
+          .take(SCOUT_SOURCE_EDGES_PER_CONCEPT_LIMIT);
+        for (const edge of edges) sourceIds.add(edge.fromId);
+      }
+      domainCounts.push({
+        domain: domain.name,
+        onMissionConceptCount: concepts.length,
+        sourceCount: sourceIds.size,
+      });
+    }
+
+    const conjectures = await ctx.db
+      .query("correspondences")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
+      .order("asc")
+      .take(SCOUT_CONJECTURE_SCAN_LIMIT);
+    const rankedConjectures = conjectures.toSorted(
+      (left, right) =>
+        left.evidence.length - right.evidence.length ||
+        left.updatedAt - right.updatedAt ||
+        left._id.localeCompare(right._id),
+    );
+    const hydratedConjectures = await Promise.all(
+      rankedConjectures.map(async (correspondence) => {
+        const [conceptA, conceptB] = await Promise.all([
+          ctx.db.get("concepts", correspondence.conceptAId),
+          ctx.db.get("concepts", correspondence.conceptBId),
+        ]);
+        if (!conceptA || !conceptB) return null;
+        return {
+          correspondenceId: correspondence._id,
+          statement: correspondence.statement,
+          conceptA: conceptA.name,
+          conceptB: conceptB.name,
+          evidenceCount: correspondence.evidence.length,
+        };
+      }),
+    );
+
+    return {
+      thinDomains: domainCounts
+        .toSorted(
+          (left, right) =>
+            left.sourceCount - right.sourceCount ||
+            left.domain.localeCompare(right.domain),
+        )
+        .slice(0, SCOUT_TARGET_LIMIT),
+      starvedConjectures: hydratedConjectures
+        .filter(
+          (target): target is NonNullable<typeof target> => target !== null,
+        )
+        .slice(0, SCOUT_TARGET_LIMIT),
+    };
+  },
+});
 
 function normalizedDomains(concept: Doc<"concepts">): string[] {
   if (

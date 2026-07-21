@@ -5,9 +5,9 @@ import { agentToolArgs } from "./agentToolArgs";
 import { AGENT_TOOL_MANIFEST, AGENT_TOOL_NAMES } from "./agentToolManifest";
 
 describe("agent tool manifest", () => {
-  test("covers all 28 current tools with unique names and schemas", () => {
-    expect(AGENT_TOOL_MANIFEST).toHaveLength(28);
-    expect(new Set(AGENT_TOOL_NAMES).size).toBe(28);
+  test("covers all 29 current tools with unique names and schemas", () => {
+    expect(AGENT_TOOL_MANIFEST).toHaveLength(29);
+    expect(new Set(AGENT_TOOL_NAMES).size).toBe(29);
     for (const entry of AGENT_TOOL_MANIFEST) {
       expect(entry.description.length).toBeGreaterThan(10);
       expect(entry.context.length).toBeGreaterThan(10);

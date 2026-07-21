@@ -54,6 +54,7 @@ export const searchClaimsSemantic = makeAgentToolAction("searchClaimsSemantic");
 export const listCorrespondenceTargets = makeAgentToolAction(
   "listCorrespondenceTargets",
 );
+export const getScoutTargets = makeAgentToolAction("getScoutTargets");
 export const upsertCorrespondence = makeAgentToolAction("upsertCorrespondence");
 export const addCorrespondenceEvidence = makeAgentToolAction(
   "addCorrespondenceEvidence",

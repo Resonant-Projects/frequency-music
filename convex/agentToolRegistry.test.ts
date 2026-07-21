@@ -48,6 +48,7 @@ const FROZEN_ARGS: Record<string, string> = {
     limit: field(number, true),
   }),
   listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
+  getScoutTargets: frozenArgs({}),
   upsertCorrespondence: frozenArgs({
     conceptAId: field(id("concepts")),
     conceptBId: field(id("concepts")),

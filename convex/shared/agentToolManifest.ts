@@ -139,6 +139,13 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Evidence-hunter target selection only; existing claim ids are included so reruns can skip already-cited evidence.",
   ),
   entry(
+    "getScoutTargets",
+    "read",
+    "correspondences:scoutTargets",
+    "Fetch under-represented on-mission domains and low-evidence conjectures for need-directed source discovery.",
+    "Source-scout target selection only; results are bounded to five domains and five conjectures.",
+  ),
+  entry(
     "getCorrespondence",
     "read",
     "correspondences:getByPairKey",

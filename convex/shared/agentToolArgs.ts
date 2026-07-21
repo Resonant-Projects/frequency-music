@@ -42,6 +42,7 @@ export const agentToolArgs = {
     limit,
   }),
   listCorrespondenceTargets: z.object({ limit }),
+  getScoutTargets: z.object({}),
   upsertCorrespondence: upsertCorrespondenceArgsZ,
   addCorrespondenceEvidence: addCorrespondenceEvidenceArgsZ,
   getCorrespondence: getCorrespondenceArgsZ,
