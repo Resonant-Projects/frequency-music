@@ -38,7 +38,10 @@ recommended order:
   evidence confirmation, contradiction, retirement, and explicit override to conjectured. No
   authoring UI was added for `upsertConjecture` or `addEvidence`; those remain intentionally
   CLI/agent-side.
-- [ ] **Weekly-brief edit + publish.**
+- [x] **Weekly-brief edit + publish.** Added an explicit edit mode for `bodyMd`, `todo`, and all
+  three studio-prompt variants, including changed-field chips and the existing mutation's
+  generated-vs-edited provenance behavior. Wired `weeklyBriefs.publish` behind an in-app publish
+  confirmation while preserving `publishToNotion` as a separate existing action.
 - [ ] **Draft supersede.**
 - [ ] **Extraction correction.**
 - [ ] **Listening-session visibility + composition delete.**
@@ -46,6 +49,8 @@ recommended order:
 ## Operator-gated verification
 
 - [ ] Interceptor visual pass and PR screenshots for item 1 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 2 — operator-gated; no automated
   Interceptor run was performed by this implementation agent.
 
 ## Global constraints
