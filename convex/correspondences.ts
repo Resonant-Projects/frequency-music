@@ -7,6 +7,7 @@ import {
   mutation,
   query,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { requireAuth, type AppIdentity } from "./auth";
 import { pairKey } from "./shared/correspondenceKey";
@@ -442,38 +443,44 @@ export const listForConcept = query({
 export const listRecentMovement = query({
   args: { since: v.number() },
   returns: v.array(correspondenceReturnValidator),
-  handler: async (ctx, args) => {
-    const statuses: CorrespondenceStatus[] = [
-      "conjectured",
-      "evidenced",
-      "contradicted",
-      "retired",
-    ];
-    const rows = await Promise.all(
-      statuses.map((status) =>
-        ctx.db
-          .query("correspondences")
-          .withIndex("by_status_updatedAt", (q) =>
-            q.eq("status", status).gte("updatedAt", args.since),
-          )
-          // Descending so the cap keeps the NEWEST movements, not the oldest —
-          // an ascending take() would silently drop the most recent rows when a
-          // status has more than the cap of movements in the window.
-          .order("desc")
-          .take(MOVEMENT_LIMIT_PER_STATUS),
-      ),
-    );
-    return rows
-      .flat()
-      .filter(
-        (row) =>
-          (row.statusChangedAt !== undefined &&
-            row.statusChangedAt >= args.since) ||
-          row.evidence.some((citation) => citation.addedAt >= args.since),
-      )
-      .toSorted((left, right) => right.updatedAt - left.updatedAt);
-  },
+  handler: async (ctx, args) =>
+    await listRecentMovementRows(ctx.db, args.since),
 });
+
+export async function listRecentMovementRows(
+  db: QueryCtx["db"],
+  since: number,
+) {
+  const statuses: CorrespondenceStatus[] = [
+    "conjectured",
+    "evidenced",
+    "contradicted",
+    "retired",
+  ];
+  const rows = await Promise.all(
+    statuses.map((status) =>
+      db
+        .query("correspondences")
+        .withIndex("by_status_updatedAt", (q) =>
+          q.eq("status", status).gte("updatedAt", since),
+        )
+        // Descending so the cap keeps the NEWEST movements, not the oldest —
+        // an ascending take() would silently drop the most recent rows when a
+        // status has more than the cap of movements in the window.
+        .order("desc")
+        .take(MOVEMENT_LIMIT_PER_STATUS),
+    ),
+  );
+  return rows
+    .flat()
+    .filter(
+      (row) =>
+        row.createdAt >= since ||
+        (row.statusChangedAt !== undefined && row.statusChangedAt >= since) ||
+        row.evidence.some((citation) => citation.addedAt >= since),
+    )
+    .toSorted((left, right) => right.updatedAt - left.updatedAt);
+}
 
 const autoRetireStaleRef = makeFunctionReference<"mutation">(
   "correspondences:autoRetireStale",

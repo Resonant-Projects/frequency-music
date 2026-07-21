@@ -7,6 +7,7 @@ import {
   generateBriefCore,
   mergeBriefContent,
   parseBriefResponse,
+  renderLoopReportForPrompt,
   selectBriefContent,
   selectRecentBriefInputs,
 } from "./weeklyBriefs";
@@ -115,6 +116,79 @@ Research summary.
     ).rejects.toThrow(
       "No recent hypotheses or recipes found. Generate some first.",
     );
+  });
+
+  test("threads the exact loop report through the prompt and persisted row", async () => {
+    const loopReport = {
+      correspondences: {
+        newConjectures: 2,
+        gainedEvidence: 3,
+        contradicted: 1,
+        autoRetired: 0,
+        topMovers: [
+          {
+            correspondenceId:
+              "correspondence-1" as Doc<"correspondences">["_id"],
+            statement: "Fixture mover",
+            status: "evidenced",
+            evidenceDelta: 3,
+          },
+        ],
+      },
+      reviewQueue: {
+        pendingDrafts: 3,
+        cap: 3,
+        agentBlocked: true,
+        oldestPendingDays: 5,
+      },
+      experimentDebt: [],
+      proposedFeeds: [],
+    };
+    let actionArgs: Record<string, unknown> | undefined;
+    let mutationArgs: Record<string, unknown> | undefined;
+    const ctx = {
+      runQuery: async () => ({
+        recommendationContext: {
+          campaign: null,
+          theses: [],
+          hypotheses: [
+            {
+              _id: "hypothesis-1",
+              title: "Recent hypothesis",
+              question: "Can the prompt carry fixed inputs?",
+              hypothesis: "It can",
+              whyThisMatters: "Honest synthesis",
+              sourceIds: [],
+              createdAt: Date.now(),
+            } as unknown as Doc<"hypotheses">,
+          ],
+          recipes: [],
+          actions: [],
+          failureArchive: [],
+        },
+        extraActiveTheses: [],
+        editorialSignals: { highYieldClusters: [], lowYieldClusters: [] },
+        loopReport,
+      }),
+      runAction: async (_reference: unknown, args: Record<string, unknown>) => {
+        actionArgs = args;
+        return { text: "# Fixture brief" };
+      },
+      runMutation: async (
+        _reference: unknown,
+        args: Record<string, unknown>,
+      ) => {
+        mutationArgs = args;
+        return "brief-1";
+      },
+    };
+
+    await generateBriefCore(ctx as any, {});
+
+    expect(actionArgs?.system).toContain("OPENING must explicitly say");
+    expect(actionArgs?.prompt).toContain(renderLoopReportForPrompt(loopReport));
+    expect(actionArgs?.promptVersion).toBe("v2.loop-report");
+    expect(mutationArgs?.loopReport).toEqual(loopReport);
   });
 });
 

@@ -78,8 +78,8 @@ loopReport: v.optional(v.object({
 - Experiment-debt rule v1: recipe `in_use` with no composition (any age) → `in_use_no_composition`; composition `rendered` with no listening session for >14 days → `composed_no_listening`. Constants next to `PENDING_DRAFT_CAP`.
 - The narrative prompt gets one added instruction: *if `agentBlocked`, the brief's opening must say so* — the WIP signal is the headline, not a footnote.
 
-- [ ] **Step 1:** Harness tests for the section queries (fixture data → exact numbers).
-- [ ] **Step 2:** Implement; codegen; commit.
+- [x] **Step 1:** Harness tests for the section queries (fixture data → exact numbers).
+- [x] **Step 2:** Implement; codegen intentionally not run per operator constraint; commit.
 
 ---
 
