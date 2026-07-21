@@ -44,6 +44,7 @@ export type PersistedReviewDraft = {
   updatedAt: number;
   payload?: AgentDraftPayload;
   amendedPayload?: AgentDraftPayload;
+  reviewPair?: { conceptA: string; conceptB: string };
   decidedAt?: number;
   decidedBy?: "human";
   decisionNote?: string;
@@ -531,7 +532,7 @@ export function DraftReviewStory(props: {
 
       <ReviewSection index={3} label="The proposed hypothesis">
         <Show when={hypothesisPayload()}>
-          {(proposal) => (
+          {(draftPayload) => (
             <div class={css({ display: "grid", gap: "4" })}>
               <Show
                 when={props.editMode}
@@ -539,19 +540,21 @@ export function DraftReviewStory(props: {
                   <>
                     <div>
                       <p class={reviewEyebrowClass}>Title</p>
-                      <h2 class={reviewHeadingClass}>{proposal().title}</h2>
+                      <h2 class={reviewHeadingClass}>{draftPayload().title}</h2>
                     </div>
                     <div>
                       <p class={reviewEyebrowClass}>Question</p>
-                      <p class={reviewBodyClass}>{proposal().question}</p>
+                      <p class={reviewBodyClass}>{draftPayload().question}</p>
                     </div>
                     <div>
                       <p class={reviewEyebrowClass}>Statement</p>
-                      <p class={reviewBodyClass}>{proposal().statement}</p>
+                      <p class={reviewBodyClass}>{draftPayload().statement}</p>
                     </div>
                     <div>
                       <p class={reviewEyebrowClass}>Why this matters</p>
-                      <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
+                      <p class={reviewBodyClass}>
+                        {draftPayload().whyThisMatters}
+                      </p>
                     </div>
                   </>
                 }
@@ -571,37 +574,37 @@ export function DraftReviewStory(props: {
                   <EditableTextField
                     id={`edit-title-${props.context.draft._id}`}
                     label="Title"
-                    value={proposal().title}
+                    value={draftPayload().title}
                     onInput={(title) =>
-                      props.onPayloadChange?.({ ...proposal(), title })
+                      props.onPayloadChange?.({ ...draftPayload(), title })
                     }
                   />
                   <EditableTextField
                     id={`edit-question-${props.context.draft._id}`}
                     label="Question"
-                    value={proposal().question}
+                    value={draftPayload().question}
                     multiline
                     onInput={(question) =>
-                      props.onPayloadChange?.({ ...proposal(), question })
+                      props.onPayloadChange?.({ ...draftPayload(), question })
                     }
                   />
                   <EditableTextField
                     id={`edit-statement-${props.context.draft._id}`}
                     label="Statement"
-                    value={proposal().statement}
+                    value={draftPayload().statement}
                     multiline
                     onInput={(statement) =>
-                      props.onPayloadChange?.({ ...proposal(), statement })
+                      props.onPayloadChange?.({ ...draftPayload(), statement })
                     }
                   />
                   <EditableTextField
                     id={`edit-why-${props.context.draft._id}`}
                     label="Why this matters"
-                    value={proposal().whyThisMatters}
+                    value={draftPayload().whyThisMatters}
                     multiline
                     onInput={(whyThisMatters) =>
                       props.onPayloadChange?.({
-                        ...proposal(),
+                        ...draftPayload(),
                         whyThisMatters,
                       })
                     }
@@ -622,14 +625,14 @@ export function DraftReviewStory(props: {
                   Draft rationale
                 </summary>
                 <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
-                  {proposal().rationale}
+                  {draftPayload().rationale}
                 </p>
               </details>
             </div>
           )}
         </Show>
         <Show when={recipePayload()}>
-          {(proposal) => (
+          {(draftPayload) => (
             <div class={css({ display: "grid", gap: "4" })}>
               <Show
                 when={props.editMode}
@@ -637,11 +640,13 @@ export function DraftReviewStory(props: {
                   <>
                     <div>
                       <p class={reviewEyebrowClass}>Recipe title</p>
-                      <h2 class={reviewHeadingClass}>{proposal().title}</h2>
+                      <h2 class={reviewHeadingClass}>{draftPayload().title}</h2>
                     </div>
                     <div>
                       <p class={reviewEyebrowClass}>Why this matters</p>
-                      <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
+                      <p class={reviewBodyClass}>
+                        {draftPayload().whyThisMatters}
+                      </p>
                     </div>
                   </>
                 }
@@ -661,19 +666,19 @@ export function DraftReviewStory(props: {
                   <EditableTextField
                     id={`edit-title-${props.context.draft._id}`}
                     label="Recipe title"
-                    value={proposal().title}
+                    value={draftPayload().title}
                     onInput={(title) =>
-                      props.onPayloadChange?.({ ...proposal(), title })
+                      props.onPayloadChange?.({ ...draftPayload(), title })
                     }
                   />
                   <EditableTextField
                     id={`edit-why-${props.context.draft._id}`}
                     label="Why this matters"
-                    value={proposal().whyThisMatters}
+                    value={draftPayload().whyThisMatters}
                     multiline
                     onInput={(whyThisMatters) =>
                       props.onPayloadChange?.({
-                        ...proposal(),
+                        ...draftPayload(),
                         whyThisMatters,
                       })
                     }
@@ -681,20 +686,20 @@ export function DraftReviewStory(props: {
                   <EditableTextField
                     id={`edit-body-${props.context.draft._id}`}
                     label="Recipe body"
-                    value={proposal().bodyMd ?? ""}
+                    value={draftPayload().bodyMd ?? ""}
                     multiline
                     onInput={(bodyMd) =>
-                      props.onPayloadChange?.({ ...proposal(), bodyMd })
+                      props.onPayloadChange?.({ ...draftPayload(), bodyMd })
                     }
                   />
                   <EditableTextField
                     id={`edit-instrumentation-${props.context.draft._id}`}
                     label="Instrumentation notes"
-                    value={proposal().instrumentationNotes ?? ""}
+                    value={draftPayload().instrumentationNotes ?? ""}
                     multiline
                     onInput={(instrumentationNotes) =>
                       props.onPayloadChange?.({
-                        ...proposal(),
+                        ...draftPayload(),
                         instrumentationNotes,
                       })
                     }
@@ -702,11 +707,11 @@ export function DraftReviewStory(props: {
                   <EditableTextField
                     id={`edit-checklist-${props.context.draft._id}`}
                     label="DAW checklist (one item per line)"
-                    value={(proposal().dawChecklist ?? []).join("\n")}
+                    value={(draftPayload().dawChecklist ?? []).join("\n")}
                     multiline
                     onInput={(value) =>
                       props.onPayloadChange?.({
-                        ...proposal(),
+                        ...draftPayload(),
                         dawChecklist: value
                           .split("\n")
                           .map((item) => item.trim())
@@ -716,7 +721,10 @@ export function DraftReviewStory(props: {
                   />
                 </div>
               </Show>
-              <DraftPayloadPreview kind="recipe_draft" payload={proposal()} />
+              <DraftPayloadPreview
+                kind="recipe_draft"
+                payload={draftPayload()}
+              />
             </div>
           )}
         </Show>

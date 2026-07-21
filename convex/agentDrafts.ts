@@ -10,7 +10,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { assertWhyThisMatters } from "./hypotheses";
-import { projectHypothesisFailureHits } from "./failures";
+import { projectFailureArchiveHitsForHypotheses } from "./failures";
 import {
   assertDecisionNote,
   assertDraftPending,
@@ -30,6 +30,7 @@ const REVIEW_EVIDENCE_LIMIT = 20;
 const REVIEW_CORRESPONDENCE_LIMIT_PER_INDEX = 20;
 const REVIEW_HYPOTHESES_LIMIT_PER_CORRESPONDENCE = 5;
 const REVIEW_RELATED_HYPOTHESES_LIMIT = 20;
+const REVIEW_HYPOTHESIS_EDGES_PER_CONCEPT = 20;
 
 type AgentReviewDraftKind = "hypothesis_draft" | "recipe_draft";
 
@@ -380,7 +381,32 @@ async function listPendingDrafts(ctx: QueryCtx, args: { limit?: number }) {
     .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
     .order("asc")
     .take(limit);
-  return rows.map(summarizeAgentReviewDraft);
+  return await Promise.all(
+    rows.map(async (draft) => {
+      const summary = summarizeAgentReviewDraft(draft);
+      const correspondenceId =
+        draft.kind === "hypothesis_draft" &&
+        draft.payload &&
+        "statement" in draft.payload
+          ? draft.payload.correspondenceId
+          : undefined;
+      if (!correspondenceId) return summary;
+      const correspondence = await ctx.db.get(correspondenceId);
+      if (!correspondence) return summary;
+      const [conceptA, conceptB] = await Promise.all([
+        ctx.db.get(correspondence.conceptAId),
+        ctx.db.get(correspondence.conceptBId),
+      ]);
+      if (!conceptA || !conceptB) return summary;
+      return {
+        ...summary,
+        reviewPair: {
+          conceptA: conceptA.displayName,
+          conceptB: conceptB.displayName,
+        },
+      };
+    }),
+  );
 }
 
 /** Pending-review queue for the authenticated human review UI. */
@@ -441,6 +467,29 @@ async function listRelatedHypotheses(
     listReviewCorrespondencesForConcept(ctx, correspondence.conceptAId),
     listReviewCorrespondencesForConcept(ctx, correspondence.conceptBId),
   ]);
+  const conceptNames = await Promise.all([
+    ctx.db.get(correspondence.conceptAId),
+    ctx.db.get(correspondence.conceptBId),
+  ]);
+  const graphEdges = (
+    await Promise.all(
+      conceptNames.flatMap((concept) =>
+        concept
+          ? [
+              ctx.db
+                .query("edges")
+                .withIndex("by_to_fromType", (q) =>
+                  q
+                    .eq("toType", "concept")
+                    .eq("toId", concept.name)
+                    .eq("fromType", "hypothesis"),
+                )
+                .take(REVIEW_HYPOTHESIS_EDGES_PER_CONCEPT),
+            ]
+          : [],
+      ),
+    )
+  ).flat();
   const uniqueCorrespondenceIds = Array.from(
     new Set(
       correspondenceRows
@@ -460,9 +509,16 @@ async function listRelatedHypotheses(
         .take(REVIEW_HYPOTHESES_LIMIT_PER_CORRESPONDENCE),
     ),
   );
+  const graphHypotheses = await Promise.all(
+    graphEdges.map((edge) =>
+      ctx.db.get("hypotheses", edge.fromId as Id<"hypotheses">),
+    ),
+  );
   const seen = new Set<string>();
-  return rows
-    .flat()
+  return [...rows.flat(), ...graphHypotheses]
+    .filter(
+      (hypothesis): hypothesis is Doc<"hypotheses"> => hypothesis !== null,
+    )
     .filter((hypothesis) => {
       if (seen.has(String(hypothesis._id))) return false;
       seen.add(String(hypothesis._id));
@@ -485,6 +541,11 @@ export const getReviewContext = query({
       throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
     }
     const run = await ctx.db.get(draft.agentRunId);
+    const runTrace = {
+      runId: draft.agentRunId,
+      traceUrl: run?.traceUrl ?? null,
+      summary: run?.summary ?? draft.summary,
+    };
     const payloadCorrespondenceId =
       draft.kind === "hypothesis_draft" &&
       draft.payload &&
@@ -500,11 +561,7 @@ export const getReviewContext = query({
         draft: summarizeAgentReviewDraft(draft),
         correspondence: null,
         related: { priorHypotheses: [], failures: [] },
-        runTrace: {
-          runId: draft.agentRunId,
-          traceUrl: run?.traceUrl ?? null,
-          summary: run?.summary ?? draft.summary,
-        },
+        runTrace,
       };
     }
 
@@ -533,6 +590,10 @@ export const getReviewContext = query({
         ),
         listRelatedHypotheses(ctx, correspondence),
       ]);
+    const failureHits = await projectFailureArchiveHitsForHypotheses(
+      ctx.db,
+      relatedHypotheses,
+    );
     return {
       draft: summarizeAgentReviewDraft(draft),
       correspondence:
@@ -552,13 +613,9 @@ export const getReviewContext = query({
           status: hypothesis.status,
           resolution: hypothesis.resolution ?? null,
         })),
-        failures: projectHypothesisFailureHits(relatedHypotheses),
+        failures: failureHits,
       },
-      runTrace: {
-        runId: draft.agentRunId,
-        traceUrl: run?.traceUrl ?? null,
-        summary: run?.summary ?? draft.summary,
-      },
+      runTrace,
     };
   },
 });

@@ -60,15 +60,18 @@ type CompositionFailureContext = {
 async function getBranchRootId(
   db: DbReader,
   composition: Doc<"compositions">,
+  maxDepth = Number.POSITIVE_INFINITY,
 ): Promise<Id<"compositions">> {
   let current = composition;
   const seen = new Set([String(composition._id)]);
-  while (current.revisionParentId) {
+  let depth = 0;
+  while (current.revisionParentId && depth < maxDepth) {
     if (seen.has(String(current.revisionParentId))) break;
     seen.add(String(current.revisionParentId));
     const parent = await db.get("compositions", current.revisionParentId);
     if (!parent) break;
     current = parent;
+    depth += 1;
   }
   return current._id;
 }
@@ -289,6 +292,111 @@ export function projectHypothesisFailureHits(
       hits.push({ title: hypothesis.title, reason: "retired_hypothesis" });
     }
     return hits;
+  });
+}
+
+const REVIEW_FAILURE_ROWS_PER_PARENT = 10;
+const REVIEW_FAILURE_SESSIONS_PER_COMPOSITION = 20;
+
+/** Bounded failure-archive hits for hypotheses already selected by a review query. */
+export async function projectFailureArchiveHitsForHypotheses(
+  db: DbReader,
+  hypotheses: Doc<"hypotheses">[],
+): Promise<Array<{ title: string; reason: FailureReason }>> {
+  const hits = projectHypothesisFailureHits(hypotheses);
+  const recipeRows = (
+    await Promise.all(
+      hypotheses.map((hypothesis) =>
+        db
+          .query("recipes")
+          .withIndex("by_hypothesisId_updatedAt", (q: any) =>
+            q.eq("hypothesisId", hypothesis._id),
+          )
+          .order("desc")
+          .take(REVIEW_FAILURE_ROWS_PER_PARENT),
+      ),
+    )
+  ).flat();
+  for (const recipe of recipeRows) {
+    if (recipe.status === "archived") {
+      hits.push({ title: recipe.title, reason: "archived_recipe" });
+    }
+  }
+
+  const compositionRows = (
+    await Promise.all(
+      recipeRows.map((recipe) =>
+        db
+          .query("compositions")
+          .withIndex("by_recipeId_updatedAt", (q: any) =>
+            q.eq("recipeId", recipe._id),
+          )
+          .order("desc")
+          .take(REVIEW_FAILURE_ROWS_PER_PARENT),
+      ),
+    )
+  ).flat();
+  const sessionsByComposition = new Map<string, Doc<"listeningSessions">[]>();
+  await Promise.all(
+    compositionRows.map(async (composition) => {
+      const sessions = await db
+        .query("listeningSessions")
+        .withIndex("by_compositionId_createdAt", (q: any) =>
+          q.eq("compositionId", composition._id),
+        )
+        .order("desc")
+        .take(REVIEW_FAILURE_SESSIONS_PER_COMPOSITION);
+      sessionsByComposition.set(String(composition._id), sessions);
+      if (getLocalFailureStatus(sessions)) {
+        hits.push({
+          title: composition.title,
+          reason: "low_expandability_composition",
+        });
+      }
+    }),
+  );
+
+  const branchGroups = new Map<
+    string,
+    { title: string; sessions: Doc<"listeningSessions">[] }
+  >();
+  for (const composition of compositionRows) {
+    const rootId = await getBranchRootId(
+      db,
+      composition,
+      REVIEW_FAILURE_ROWS_PER_PARENT,
+    );
+    const group: {
+      title: string;
+      sessions: Doc<"listeningSessions">[];
+    } = branchGroups.get(String(rootId)) ?? {
+      title:
+        composition._id === rootId
+          ? composition.title
+          : ((await db.get("compositions", rootId))?.title ??
+            composition.title),
+      sessions: [],
+    };
+    group.sessions.push(
+      ...(sessionsByComposition.get(String(composition._id)) ?? []),
+    );
+    branchGroups.set(String(rootId), group);
+  }
+  for (const group of branchGroups.values()) {
+    if (getBranchFailureStatus(group.sessions)) {
+      hits.push({
+        title: group.title,
+        reason: "repeat_no_expand_composition",
+      });
+    }
+  }
+
+  const seen = new Set<string>();
+  return hits.filter((hit) => {
+    const key = `${hit.reason}:${hit.title}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
 }
 

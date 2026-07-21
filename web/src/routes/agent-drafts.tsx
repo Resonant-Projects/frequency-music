@@ -108,6 +108,9 @@ function queueStatement(draft: PersistedReviewDraft) {
 }
 
 function queuePair(draft: PersistedReviewDraft) {
+  if (draft.reviewPair) {
+    return `${draft.reviewPair.conceptA} × ${draft.reviewPair.conceptB}`;
+  }
   if (draft.payload && "statement" in draft.payload) {
     const concepts = draft.payload.concepts ?? [];
     if (concepts.length >= 2) return `${concepts[0]} × ${concepts[1]}`;
@@ -163,6 +166,12 @@ function DecideBar(props: {
     setSupersedingDraftId("");
   }
 
+  function enterEditMode() {
+    setDecision(null);
+    setError(null);
+    props.onEnterEdit();
+  }
+
   async function confirmDecision() {
     const selected = decision();
     if (!selected || !canConfirm()) return;
@@ -210,6 +219,11 @@ function DecideBar(props: {
   }
 
   function handleShortcut(event: KeyboardEvent) {
+    if (event.key === "Escape" && decision()) {
+      event.preventDefault();
+      cancelDecision();
+      return;
+    }
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     const target = event.target;
     if (
@@ -230,7 +244,7 @@ function DecideBar(props: {
     }
     if (event.key.toLowerCase() === "e" && draft().payload) {
       event.preventDefault();
-      props.onEnterEdit();
+      enterEditMode();
     }
   }
 
@@ -277,17 +291,17 @@ function DecideBar(props: {
             when={props.editMode}
             fallback={
               <UIButton
-                variant="solid"
+                variant="outline"
                 disabled={busy() || !draft().payload}
                 aria-keyshortcuts="E"
-                onClick={props.onEnterEdit}
+                onClick={enterEditMode}
               >
                 Edit · E
               </UIButton>
             }
           >
             <UIButton
-              variant="solid"
+              variant="ghost"
               disabled={busy()}
               onClick={props.onCancelEdit}
             >
@@ -336,6 +350,9 @@ function DecideBar(props: {
       <Show when={decision()}>
         {(selected) => (
           <div
+            role="dialog"
+            aria-modal="false"
+            aria-label={`Confirm ${selected()}`}
             class={css({
               bg: "rgba(200, 168, 75, 0.08)",
               borderColor: "rgba(200, 168, 75, 0.28)",
@@ -506,6 +523,9 @@ export function AgentDraftsPage() {
   const pending = createQueryWithStatus(api.agentDrafts.listPending, () => ({
     limit: 50,
   }));
+  const pendingCount = createQueryWithStatus(
+    api.agentDrafts.countPendingPublic,
+  );
   const [activeDraftId, setActiveDraftId] =
     createSignal<Id<"agentReviewDrafts"> | null>(null);
   const [lastPromotion, setLastPromotion] = createSignal<Promotion | null>(
@@ -556,10 +576,15 @@ export function AgentDraftsPage() {
               hypothesisPendingCount() >= PENDING_DRAFT_CAP ? "violet" : "cream"
             }
           >
-            {rows().length} draft{rows().length === 1 ? "" : "s"} awaiting
+            {pendingCount.data() ?? rows().length} draft
+            {(pendingCount.data() ?? rows().length) === 1 ? "" : "s"} awaiting
             review
           </UIBadge>
-          <span class={eyebrowClass}>agent blocked at {PENDING_DRAFT_CAP}</span>
+          <span class={eyebrowClass}>
+            {hypothesisPendingCount() >= PENDING_DRAFT_CAP
+              ? `agent blocked at ${PENDING_DRAFT_CAP}`
+              : `${hypothesisPendingCount()} of ${PENDING_DRAFT_CAP} hypothesis slots filled`}
+          </span>
         </div>
       </UICard>
 
