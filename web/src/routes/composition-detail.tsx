@@ -1,18 +1,23 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, For, Show } from "solid-js";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   Markdown,
   UIBadge,
+  UIButton,
   UICard,
+  UIInput,
+  UITextarea,
   backLink,
   detailTitleClass,
+  fieldLabelClass,
   goldDivider,
+  metaLine,
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { createQuery } from "../integrations/convex";
+import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
 const lineItem = css({
@@ -22,11 +27,286 @@ const lineItem = css({
   p: "3",
 });
 
+function parseLines(value: string) {
+  return value
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseJsonArray<T>(value: string, label: string): T[] {
+  const parsed: unknown = JSON.parse(value);
+  if (!Array.isArray(parsed)) {
+    throw new Error(`${label} must be a JSON array.`);
+  }
+  return parsed as T[];
+}
+
+function jsonArrayChanged(value: string, original: unknown[]) {
+  try {
+    return JSON.stringify(JSON.parse(value)) !== JSON.stringify(original);
+  } catch {
+    return true;
+  }
+}
+
+function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
+  const editExtraction = createMutation(api.extractions.editExtraction);
+  const [editMode, setEditMode] = createSignal(false);
+  const [saving, setSaving] = createSignal(false);
+  const [notice, setNotice] = createSignal<string | null>(null);
+  const [summary, setSummary] = createSignal("");
+  const [claimsJson, setClaimsJson] = createSignal("");
+  const [parametersJson, setParametersJson] = createSignal("");
+  const [topicsText, setTopicsText] = createSignal("");
+  const [questionsText, setQuestionsText] = createSignal("");
+  const [confidenceText, setConfidenceText] = createSignal("");
+
+  const originalClaimsJson = () =>
+    JSON.stringify(props.extraction.claims, null, 2);
+  const originalParametersJson = () =>
+    JSON.stringify(props.extraction.compositionParameters, null, 2);
+
+  const changedFields = createMemo(() => {
+    if (!editMode()) return [];
+    const fields: string[] = [];
+    if (summary() !== props.extraction.summary) fields.push("summary");
+    if (jsonArrayChanged(claimsJson(), props.extraction.claims)) {
+      fields.push("claims");
+    }
+    if (
+      jsonArrayChanged(parametersJson(), props.extraction.compositionParameters)
+    ) {
+      fields.push("compositionParameters");
+    }
+    if (
+      JSON.stringify(parseLines(topicsText())) !==
+      JSON.stringify(props.extraction.topics)
+    ) {
+      fields.push("topics");
+    }
+    if (
+      JSON.stringify(parseLines(questionsText())) !==
+      JSON.stringify(props.extraction.openQuestions)
+    ) {
+      fields.push("openQuestions");
+    }
+    if (Number(confidenceText()) !== props.extraction.confidence) {
+      fields.push("confidence");
+    }
+    return fields;
+  });
+
+  function beginEdit() {
+    setSummary(props.extraction.summary);
+    setClaimsJson(originalClaimsJson());
+    setParametersJson(originalParametersJson());
+    setTopicsText(props.extraction.topics.join("\n"));
+    setQuestionsText(props.extraction.openQuestions.join("\n"));
+    setConfidenceText(String(props.extraction.confidence));
+    setNotice(null);
+    setEditMode(true);
+  }
+
+  async function saveCorrection() {
+    const fields = changedFields();
+    if (fields.length === 0) return;
+    setSaving(true);
+    setNotice(null);
+    try {
+      const confidence = Number(confidenceText());
+      if (fields.includes("confidence") && !Number.isFinite(confidence)) {
+        throw new Error("Confidence must be a number.");
+      }
+      await editExtraction({
+        id: props.extraction._id,
+        ...(fields.includes("summary") ? { summary: summary() } : {}),
+        ...(fields.includes("claims")
+          ? {
+              claims: parseJsonArray<Doc<"extractions">["claims"][number]>(
+                claimsJson(),
+                "Claims",
+              ),
+            }
+          : {}),
+        ...(fields.includes("compositionParameters")
+          ? {
+              compositionParameters: parseJsonArray<
+                Doc<"extractions">["compositionParameters"][number]
+              >(parametersJson(), "Composition parameters"),
+            }
+          : {}),
+        ...(fields.includes("topics")
+          ? { topics: parseLines(topicsText()) }
+          : {}),
+        ...(fields.includes("openQuestions")
+          ? { openQuestions: parseLines(questionsText()) }
+          : {}),
+        ...(fields.includes("confidence") ? { confidence } : {}),
+      });
+      setEditMode(false);
+      setNotice("Extraction correction saved with edit provenance.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Could not save extraction.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <div
+        class={css({
+          alignItems: "center",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "2",
+          justifyContent: "space-between",
+          mt: "2",
+        })}
+      >
+        <span class={metaLine}>
+          confidence {props.extraction.confidence} ·{" "}
+          {props.extraction.topics.length} topics
+        </span>
+        <UIButton variant="outline" disabled={editMode()} onClick={beginEdit}>
+          Correct extraction
+        </UIButton>
+      </div>
+
+      <Show when={editMode()}>
+        <div
+          class={css({
+            bg: "rgba(139, 92, 246, 0.07)",
+            borderColor: "rgba(139, 92, 246, 0.3)",
+            borderRadius: "l2",
+            borderWidth: "1px",
+            display: "grid",
+            gap: "2",
+            mt: "3",
+            p: "3",
+          })}
+        >
+          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <For each={changedFields()}>
+              {(field) => <UIBadge tone="violet">changed: {field}</UIBadge>}
+            </For>
+          </div>
+          <p class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
+            Saving preserves the generated and edited field sets as eval
+            provenance. Claims and parameters use their stored JSON shape.
+          </p>
+          <label
+            class={fieldLabelClass}
+            for={`extraction-summary-${props.extraction._id}`}
+          >
+            Summary
+          </label>
+          <UITextarea
+            id={`extraction-summary-${props.extraction._id}`}
+            value={summary()}
+            onInput={(event) => setSummary(event.currentTarget.value)}
+          />
+          <label
+            class={fieldLabelClass}
+            for={`extraction-claims-${props.extraction._id}`}
+          >
+            Claims JSON
+          </label>
+          <UITextarea
+            id={`extraction-claims-${props.extraction._id}`}
+            value={claimsJson()}
+            onInput={(event) => setClaimsJson(event.currentTarget.value)}
+            class={css({ minH: "72" })}
+          />
+          <label
+            class={fieldLabelClass}
+            for={`extraction-parameters-${props.extraction._id}`}
+          >
+            Composition parameters JSON
+          </label>
+          <UITextarea
+            id={`extraction-parameters-${props.extraction._id}`}
+            value={parametersJson()}
+            onInput={(event) => setParametersJson(event.currentTarget.value)}
+            class={css({ minH: "56" })}
+          />
+          <label
+            class={fieldLabelClass}
+            for={`extraction-topics-${props.extraction._id}`}
+          >
+            Topics (one per line)
+          </label>
+          <UITextarea
+            id={`extraction-topics-${props.extraction._id}`}
+            value={topicsText()}
+            onInput={(event) => setTopicsText(event.currentTarget.value)}
+          />
+          <label
+            class={fieldLabelClass}
+            for={`extraction-questions-${props.extraction._id}`}
+          >
+            Open questions (one per line)
+          </label>
+          <UITextarea
+            id={`extraction-questions-${props.extraction._id}`}
+            value={questionsText()}
+            onInput={(event) => setQuestionsText(event.currentTarget.value)}
+          />
+          <label
+            class={fieldLabelClass}
+            for={`extraction-confidence-${props.extraction._id}`}
+          >
+            Confidence
+          </label>
+          <UIInput
+            id={`extraction-confidence-${props.extraction._id}`}
+            type="number"
+            step="0.01"
+            value={confidenceText()}
+            onInput={(event) => setConfidenceText(event.currentTarget.value)}
+          />
+          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <UIButton
+              variant="solid"
+              disabled={saving() || changedFields().length === 0}
+              onClick={saveCorrection}
+            >
+              {saving() ? "Saving…" : "Save correction"}
+            </UIButton>
+            <UIButton
+              variant="ghost"
+              disabled={saving()}
+              onClick={() => setEditMode(false)}
+            >
+              Cancel
+            </UIButton>
+          </div>
+        </div>
+      </Show>
+
+      <Show when={notice()}>
+        {(message) => (
+          <p aria-live="polite" class={css({ color: "zodiac.cream", mt: "2" })}>
+            {message()}
+          </p>
+        )}
+      </Show>
+    </>
+  );
+}
+
 export function CompositionDetailPage() {
   const params = useParams({ from: "/compositions/$compositionId" });
-  const lineage = createQuery(api.compositions.getLineage, () => ({
-    id: params().compositionId as Id<"compositions">,
-  }));
+  const lineageQuery = createQueryWithStatus(
+    api.compositions.getLineage,
+    () => ({
+      id: params().compositionId as Id<"compositions">,
+    }),
+  );
+  const lineage = lineageQuery.data;
 
   createEffect(() => {
     const row = lineage()?.composition;
@@ -45,7 +325,17 @@ export function CompositionDetailPage() {
         when={lineage()}
         fallback={
           <UICard>
-            <p class={css({ color: "zodiac.cream" })}>Loading composition...</p>
+            <p
+              class={css({
+                color: lineageQuery.isError() ? "zodiac.error" : "zodiac.cream",
+              })}
+            >
+              {lineageQuery.isLoading()
+                ? "Loading composition..."
+                : lineageQuery.error()
+                  ? `Unable to load composition: ${lineageQuery.error()?.message}`
+                  : "Composition not found."}
+            </p>
           </UICard>
         }
       >
@@ -333,6 +623,7 @@ export function CompositionDetailPage() {
                         {extraction.claims.length} claims ·{" "}
                         {extraction.compositionParameters.length} parameters
                       </p>
+                      <ExtractionCorrection extraction={extraction} />
                     </div>
                   )}
                 </For>

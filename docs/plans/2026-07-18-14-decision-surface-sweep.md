@@ -46,7 +46,10 @@ recommended order:
   `agentDrafts.supersede` with `draftId`, replacement `byDraftId`, and optional `decisionNote`.
   Moved the signal into a decide-bar overflow menu while preserving its replacement selector and
   explicit confirmation step.
-- [ ] **Extraction correction.**
+- [x] **Extraction correction.** Found no source-detail route; the full extraction rows render in
+  the composition detail provenance section, so the correction affordance lives there. It exposes
+  exactly the existing `editExtraction` fields, identifies changed fields before save, and explains
+  that the mutation records generated-vs-edited eval provenance.
 - [ ] **Listening-session visibility + composition delete.**
 
 ## Operator-gated verification
@@ -56,6 +59,8 @@ recommended order:
 - [ ] Interceptor visual pass and PR screenshots for item 2 — operator-gated; no automated
   Interceptor run was performed by this implementation agent.
 - [ ] Interceptor visual pass and PR screenshots for item 3 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 4 — operator-gated; no automated
   Interceptor run was performed by this implementation agent.
 
 ## Global constraints
