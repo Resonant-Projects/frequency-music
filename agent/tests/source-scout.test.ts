@@ -189,6 +189,40 @@ describe("source scout canonical write nodes", () => {
     );
   });
 
+  test("dedupes source URLs before applying the per-run ingest cap", async () => {
+    let writes = 0;
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "ingestScoutedSource") {
+        writes += 1;
+        return { id: `source-${writes}`, created: true };
+      }
+      return { ok: true };
+    });
+    const duplicate = judgment(99, "source");
+    duplicate.searchHit.result.url = searchHit(0).result.url;
+
+    await createIngestSourcesNode(callTool)({
+      agentRunId: "run-scout",
+      judgments: [
+        judgment(0, "source"),
+        duplicate,
+        ...Array.from({ length: MAX_INGESTS_PER_RUN - 1 }, (_, index) =>
+          judgment(index + 1, "source"),
+        ),
+      ],
+    });
+
+    const ingestUrls = callTool.mock.calls
+      .filter(([name]) => name === "ingestScoutedSource")
+      .map(([, args]) => (args as { url: string }).url);
+    expect(ingestUrls).toEqual(
+      Array.from(
+        { length: MAX_INGESTS_PER_RUN },
+        (_, index) => `https://example.org/${index}`,
+      ),
+    );
+  });
+
   test("proposes judged feeds without an enabled field and records exact provenance inputs", async () => {
     const callTool = vi.fn(async (name: string) =>
       name === "proposeFeed" ? { id: "feed-1", created: true } : { ok: true },

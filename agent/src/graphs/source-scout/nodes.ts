@@ -287,11 +287,18 @@ export function createIngestSourcesNode(callTool: ToolCaller = callConvex) {
       throw new Error("source-scout requires agentRunId provenance");
     const sourceWrites: ScoutWriteResult[] = [];
     const auditEvents: AgentAuditEvent[] = [];
+    const seenUrls = new Set<string>();
     const candidates = state.judgments
       .filter(
         (judgment): judgment is Extract<ScoutJudgment, { verdict: object }> =>
           judgment.verdict?.kind === "source",
       )
+      .filter((judgment) => {
+        const url = judgment.searchHit.result.url;
+        if (seenUrls.has(url)) return false;
+        seenUrls.add(url);
+        return true;
+      })
       .slice(0, MAX_INGESTS_PER_RUN);
     for (const judgment of candidates) {
       const rationale = rationaleFor(judgment);

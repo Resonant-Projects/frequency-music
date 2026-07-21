@@ -104,6 +104,7 @@ export const scoutTargets = query({
       sourceCount: number;
     }> = [];
     for (const domain of activeDomains) {
+      // Counts intentionally approximate a bounded window and may miss later on-mission concepts.
       const domainConcepts = await ctx.db
         .query("concepts")
         .withIndex("by_domain", (q) => q.eq("domain", domain.name))
@@ -145,20 +146,22 @@ export const scoutTargets = query({
         left._id.localeCompare(right._id),
     );
     const hydratedConjectures = await Promise.all(
-      rankedConjectures.map(async (correspondence) => {
-        const [conceptA, conceptB] = await Promise.all([
-          ctx.db.get("concepts", correspondence.conceptAId),
-          ctx.db.get("concepts", correspondence.conceptBId),
-        ]);
-        if (!conceptA || !conceptB) return null;
-        return {
-          correspondenceId: correspondence._id,
-          statement: correspondence.statement,
-          conceptA: conceptA.name,
-          conceptB: conceptB.name,
-          evidenceCount: correspondence.evidence.length,
-        };
-      }),
+      rankedConjectures
+        .slice(0, SCOUT_TARGET_LIMIT)
+        .map(async (correspondence) => {
+          const [conceptA, conceptB] = await Promise.all([
+            ctx.db.get("concepts", correspondence.conceptAId),
+            ctx.db.get("concepts", correspondence.conceptBId),
+          ]);
+          if (!conceptA || !conceptB) return null;
+          return {
+            correspondenceId: correspondence._id,
+            statement: correspondence.statement,
+            conceptA: conceptA.name,
+            conceptB: conceptB.name,
+            evidenceCount: correspondence.evidence.length,
+          };
+        }),
     );
 
     return {
@@ -169,11 +172,9 @@ export const scoutTargets = query({
             left.domain.localeCompare(right.domain),
         )
         .slice(0, SCOUT_TARGET_LIMIT),
-      starvedConjectures: hydratedConjectures
-        .filter(
-          (target): target is NonNullable<typeof target> => target !== null,
-        )
-        .slice(0, SCOUT_TARGET_LIMIT),
+      starvedConjectures: hydratedConjectures.filter(
+        (target): target is NonNullable<typeof target> => target !== null,
+      ),
     };
   },
 });
