@@ -36,6 +36,34 @@ describe("feed enable-state lookup", () => {
     ]);
   });
 
+  test("omits a non-existent id mixed with a valid feed id", async () => {
+    const t = convexTest(schema, modules);
+    const [validId, missingId] = await t.run(async (ctx) => {
+      const insertedValidId = await ctx.db.insert("feeds", {
+        name: "Existing proposal",
+        url: "https://example.com/existing.xml",
+        type: "rss",
+        enabled: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const insertedMissingId = await ctx.db.insert("feeds", {
+        name: "Deleted proposal",
+        url: "https://example.com/deleted.xml",
+        type: "rss",
+        enabled: false,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.delete(insertedMissingId);
+      return [insertedValidId, insertedMissingId] as const;
+    });
+
+    await expect(
+      t.query(api.feeds.getByIds, { ids: [validId, missingId] }),
+    ).resolves.toEqual([{ id: validId, enabled: true }]);
+  });
+
   test("rejects lookups larger than the public bound", async () => {
     const t = convexTest(schema, modules);
     const ids = await t.run(async (ctx) => {

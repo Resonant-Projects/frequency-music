@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import type { Doc } from "./_generated/dataModel";
+import type { ActionCtx } from "./_generated/server";
 import {
   type BriefEditableContent,
   briefContentChanged,
@@ -107,10 +108,10 @@ Research summary.
         editorialSignals: { highYieldClusters: [], lowYieldClusters: [] },
       }),
       runAction: async () => ({ text: "" }),
-    };
+    } as unknown as Partial<ActionCtx>;
 
     await expect(
-      generateBriefCore(ctx as any, {
+      generateBriefCore(ctx as unknown as ActionCtx, {
         daysBack: 7,
       }),
     ).rejects.toThrow(
@@ -125,6 +126,7 @@ Research summary.
         gainedEvidence: 3,
         contradicted: 1,
         autoRetired: 0,
+        countsCapped: true,
         topMovers: [
           {
             correspondenceId:
@@ -181,12 +183,15 @@ Research summary.
         mutationArgs = args;
         return "brief-1";
       },
-    };
+    } as unknown as Partial<ActionCtx>;
 
-    await generateBriefCore(ctx as any, {});
+    await generateBriefCore(ctx as unknown as ActionCtx, {});
 
     expect(actionArgs?.system).toContain("OPENING must explicitly say");
     expect(actionArgs?.prompt).toContain(renderLoopReportForPrompt(loopReport));
+    expect(actionArgs?.prompt).toContain(
+      "correspondence movement counts are capped lower bounds",
+    );
     expect(actionArgs?.promptVersion).toBe("v2.loop-report");
     expect(mutationArgs?.loopReport).toEqual(loopReport);
   });

@@ -13,11 +13,11 @@ import {
   pageClass,
   sectionLabel,
 } from "../components/ui";
-import { createQuery } from "../integrations/convex";
+import { createQueryWithStatus } from "../integrations/convex";
 
 export function CorrespondenceDetailPage() {
   const params = useParams({ from: "/correspondences/$correspondenceId" });
-  const correspondence = createQuery(api.correspondences.get, () => ({
+  const correspondence = createQueryWithStatus(api.correspondences.get, () => ({
     id: params().correspondenceId as Id<"correspondences">,
   }));
 
@@ -29,11 +29,15 @@ export function CorrespondenceDetailPage() {
         </Link>
       </div>
       <Show
-        when={correspondence()}
+        when={correspondence.data()}
         fallback={
           <UICard>
             <p class={css({ color: "zodiac.cream" })}>
-              Loading correspondence...
+              {correspondence.isLoading()
+                ? "Loading correspondence…"
+                : correspondence.error()
+                  ? `Unable to load correspondence: ${correspondence.error()?.message}`
+                  : "Correspondence not found."}
             </p>
           </UICard>
         }

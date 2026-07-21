@@ -150,6 +150,7 @@ export const loopReportValidator = v.object({
     gainedEvidence: v.number(),
     contradicted: v.number(),
     autoRetired: v.number(),
+    countsCapped: v.optional(v.boolean()),
     topMovers: v.array(
       v.object({
         correspondenceId: v.id("correspondences"),

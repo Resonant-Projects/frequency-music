@@ -17,7 +17,7 @@
 
 - Deterministic sections are computed by queries and stored as structured fields — the LLM narrates around them but cannot hallucinate the numbers.
 - Schema additions optional-only (old briefs render unchanged).
-- `bunx convex codegen` deploys live; `bun run typecheck:web` for the view.
+- Pre-Vite+ commands: `bunx convex codegen` deploys live; `bun run typecheck:web` checked the view. Current typecheck command: `vp run typecheck:web`.
 
 ## Non-goals / rabbit holes
 
@@ -39,6 +39,7 @@ loopReport: v.optional(v.object({
   correspondences: v.object({
     newConjectures: v.number(), gainedEvidence: v.number(),
     contradicted: v.number(), autoRetired: v.number(),
+    countsCapped: v.optional(v.boolean()),              // true => lower bounds
     topMovers: v.array(v.object({
       correspondenceId: v.id("correspondences"),
       statement: v.string(), status: v.string(),

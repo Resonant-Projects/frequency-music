@@ -553,6 +553,13 @@ export function WeeklyBriefDetailPage() {
                     </For>
                   </dl>
 
+                  <Show when={loopReport().correspondences.countsCapped}>
+                    <p class={metaLine}>
+                      Counts capped at 1,000 movements per status; displayed
+                      totals are lower bounds.
+                    </p>
+                  </Show>
+
                   <Show
                     when={loopReport().correspondences.topMovers.length > 0}
                   >

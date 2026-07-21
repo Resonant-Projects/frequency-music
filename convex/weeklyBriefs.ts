@@ -10,7 +10,7 @@ import {
   countPendingDraftsByKind,
   findOldestPendingDraftByKind,
 } from "./agentDrafts";
-import { listRecentMovementRows } from "./correspondences";
+import { listRecentMovementRowsWithCap } from "./correspondences";
 import { computeEditorialSignals } from "./dashboard";
 import {
   action,
@@ -470,7 +470,10 @@ function ageInDays(now: number, startedAt: number): number {
 }
 
 export function renderLoopReportForPrompt(loopReport: LoopReport): string {
-  return JSON.stringify(loopReport);
+  const rendered = JSON.stringify(loopReport);
+  return loopReport.correspondences.countsCapped
+    ? `${rendered}\nNote: correspondence movement counts are capped lower bounds.`
+    : rendered;
 }
 
 export async function computeLoopReport(
@@ -495,14 +498,14 @@ export async function computeLoopReport(
   const since = previousCreatedAt || now - 7 * DAY_MS;
 
   const [
-    movement,
+    movementResult,
     pendingDraftCount,
     oldestPendingDraft,
     inUseRecipes,
     renderedCompositions,
     feeds,
   ] = await Promise.all([
-    listRecentMovementRows(db, since),
+    listRecentMovementRowsWithCap(db, since),
     countPendingDraftsByKind({ db }, "hypothesis_draft"),
     findOldestPendingDraftByKind({ db }, "hypothesis_draft"),
     db
@@ -520,6 +523,7 @@ export async function computeLoopReport(
       .withIndex("by_enabled", (q) => q.eq("enabled", false))
       .take(PROPOSED_FEED_SCAN_LIMIT),
   ]);
+  const { rows: movement, countsCapped } = movementResult;
 
   const recentEvidenceCount = (row: Doc<"correspondences">) =>
     row.evidence.filter((citation) => citation.addedAt >= since).length;
@@ -629,6 +633,8 @@ export async function computeLoopReport(
 
   return {
     correspondences: {
+      // Reads stay bounded at 1,000 rows per status. If a bucket reaches that
+      // bound, these movement counts are lower bounds rather than exact totals.
       newConjectures: movement.filter((row) => row.createdAt >= since).length,
       gainedEvidence: movement.reduce(
         (count, row) => count + recentEvidenceCount(row),
@@ -647,6 +653,7 @@ export async function computeLoopReport(
           row.statusChangedAt !== undefined &&
           row.statusChangedAt >= since,
       ).length,
+      ...(countsCapped ? { countsCapped: true } : {}),
       topMovers,
     },
     reviewQueue: {

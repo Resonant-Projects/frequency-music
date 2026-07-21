@@ -457,6 +457,13 @@ export async function listRecentMovementRows(
   db: QueryCtx["db"],
   since: number,
 ) {
+  return (await listRecentMovementRowsWithCap(db, since)).rows;
+}
+
+export async function listRecentMovementRowsWithCap(
+  db: QueryCtx["db"],
+  since: number,
+) {
   const statuses: CorrespondenceStatus[] = [
     "conjectured",
     "evidenced",
@@ -477,7 +484,10 @@ export async function listRecentMovementRows(
         .take(MOVEMENT_LIMIT_PER_STATUS),
     ),
   );
-  return rows
+  const countsCapped = rows.some(
+    (statusRows) => statusRows.length === MOVEMENT_LIMIT_PER_STATUS,
+  );
+  const filteredRows = rows
     .flat()
     .filter(
       (row) =>
@@ -486,6 +496,7 @@ export async function listRecentMovementRows(
         row.evidence.some((citation) => citation.addedAt >= since),
     )
     .toSorted((left, right) => right.updatedAt - left.updatedAt);
+  return { rows: filteredRows, countsCapped };
 }
 
 const autoRetireStaleRef = makeFunctionReference<"mutation">(
