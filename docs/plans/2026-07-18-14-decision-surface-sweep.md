@@ -29,6 +29,50 @@ recommended order:
 5. **Listening-session visibility + composition delete.** `listening.updateVisibility`,
    `compositions.deleteById` — small admin affordances, lowest priority.
 
+## Execution checklist
+
+- [x] **Correspondence adjudication view.** Reused the bounded
+  `correspondences.listByStatus` query (25 rows per lifecycle section), added the list route and
+  navigation entry, and wired the existing `correspondences.setStatus` mutation on the existing
+  detail route. The required `statusReason` is presented as a decision note; status choices expose
+  evidence confirmation, contradiction, retirement, and explicit override to conjectured. No
+  authoring UI was added for `upsertConjecture` or `addEvidence`; those remain intentionally
+  CLI/agent-side.
+- [x] **Weekly-brief edit + publish.** Added an explicit edit mode for `bodyMd`, `todo`, and all
+  three studio-prompt variants, including changed-field chips and the existing mutation's
+  generated-vs-edited provenance behavior. Wired `weeklyBriefs.publish` behind an in-app publish
+  confirmation while preserving `publishToNotion` as a separate existing action.
+- [x] **Draft supersede.** Verified the found plan-07 review card already called
+  `agentDrafts.supersede` with `draftId`, replacement `byDraftId`, and optional `decisionNote`.
+  Moved the signal into a decide-bar overflow menu while preserving its replacement selector and
+  explicit confirmation step.
+- [x] **Extraction correction.** Found no source-detail route; the full extraction rows render in
+  the composition detail provenance section, so the correction affordance lives there. It exposes
+  exactly the existing `editExtraction` fields, identifies changed fields before save, and explains
+  that the mutation records generated-vs-edited eval provenance.
+- [x] **Listening-session visibility + composition delete.** Added an explicit per-session
+  visibility selector on composition detail, wired to the existing owner-checked
+  `listening.updateVisibility` mutation; sessions not owned by the signed-in user render read-only.
+  Added `compositions.deleteById` to the same detail page behind a confirm dialog, with navigation
+  back to the composition list after success.
+
+All mutations named by this plan were present in found state; there are no additional not-found or
+intentionally CLI-only mutation gaps to record. Correspondence authoring mutations remain
+CLI/agent-side by the plan's explicit non-goal.
+
+## Operator-gated verification
+
+- [ ] Interceptor visual pass and PR screenshots for item 1 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 2 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 3 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 4 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 5 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+
 ## Global constraints
 
 - Presentation + wiring of **existing** mutations only; the only new backend surface allowed is the

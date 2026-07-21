@@ -4,18 +4,21 @@ import {
   createMemo,
   createSignal,
   For,
+  on,
   onCleanup,
   Show,
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   Markdown,
   UIBadge,
   UIButton,
   UICard,
+  UITextarea,
   backLink,
   detailTitleClass,
+  fieldLabelClass,
   goldDivider,
   metaLine,
   pageClass,
@@ -89,6 +92,16 @@ const reviewQueueBlockedClass = css({
   "& span:last-child": { color: "zodiac.gold" },
 });
 
+const violetAccentContainerClass = css({
+  bg: "rgba(139, 92, 246, 0.07)",
+  borderColor: "rgba(139, 92, 246, 0.3)",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  mt: "3",
+  p: "3",
+});
+
 type FeedEnableState = { id: Id<"feeds">; enabled: boolean };
 
 function createLiveFeedStates(feedIds: () => Id<"feeds">[]) {
@@ -135,9 +148,10 @@ export function WeeklyBriefDetailPage() {
   const params = useParams({ from: "/weekly-turns/$briefId" });
   const navigate = useNavigate();
 
-  const brief = createQuery(api.weeklyBriefs.get, () => ({
+  const briefQuery = createQueryWithStatus(api.weeklyBriefs.get, () => ({
     id: params().briefId as Id<"weeklyBriefs">,
   }));
+  const brief = briefQuery.data;
   const campaignQuery = createQueryWithStatus(api.campaigns.get, () => {
     const campaignId = brief()?.campaignId;
     return campaignId ? { id: campaignId } : "skip";
@@ -166,12 +180,23 @@ export function WeeklyBriefDetailPage() {
   });
 
   const publishToNotion = createAction(api.weeklyBriefs.publishToNotion);
+  const publishBrief = createMutation(api.weeklyBriefs.publish);
+  const editBrief = createMutation(api.weeklyBriefs.editBrief);
   const createRecapDraft = createMutation(
     api.editorialArtifacts.createDraftFromWeeklyBrief,
   );
   const setFeedEnabled = createMutation(api.feeds.setEnabled);
   const [notice, setNotice] = createSignal<string | null>(null);
-  const [publishing, setPublishing] = createSignal(false);
+  const [publishingToNotion, setPublishingToNotion] = createSignal(false);
+  const [publishingBrief, setPublishingBrief] = createSignal(false);
+  const [publishConfirmOpen, setPublishConfirmOpen] = createSignal(false);
+  const [editMode, setEditMode] = createSignal(false);
+  const [savingEdit, setSavingEdit] = createSignal(false);
+  const [bodyMd, setBodyMd] = createSignal("");
+  const [todoText, setTodoText] = createSignal("");
+  const [tenMinuteMd, setTenMinuteMd] = createSignal("");
+  const [thirtyMinuteMd, setThirtyMinuteMd] = createSignal("");
+  const [ninetyMinuteMd, setNinetyMinuteMd] = createSignal("");
   const [creatingRecap, setCreatingRecap] = createSignal(false);
   const [enablingFeedId, setEnablingFeedId] = createSignal<Id<"feeds"> | null>(
     null,
@@ -180,10 +205,99 @@ export function WeeklyBriefDetailPage() {
     new Set(),
   );
 
-  async function handlePublish() {
+  createEffect(
+    on(
+      () => params().briefId,
+      () => {
+        setEditMode(false);
+        setSavingEdit(false);
+        setBodyMd("");
+        setTodoText("");
+        setTenMinuteMd("");
+        setThirtyMinuteMd("");
+        setNinetyMinuteMd("");
+        setNotice(null);
+        setPublishConfirmOpen(false);
+        setPublishingBrief(false);
+      },
+    ),
+  );
+
+  const editedFields = createMemo(() => {
+    const row = brief();
+    if (!row || !editMode()) return [];
+    const fields: string[] = [];
+    if (bodyMd() !== row.bodyMd) fields.push("bodyMd");
+    if (
+      JSON.stringify(parseTodo(todoText())) !== JSON.stringify(row.todo ?? [])
+    ) {
+      fields.push("todo");
+    }
+    if (
+      tenMinuteMd() !== (row.studioPrompts?.tenMinuteMd ?? "") ||
+      thirtyMinuteMd() !== (row.studioPrompts?.thirtyMinuteMd ?? "") ||
+      ninetyMinuteMd() !== (row.studioPrompts?.ninetyMinuteMd ?? "")
+    ) {
+      fields.push("studioPrompts");
+    }
+    return fields;
+  });
+
+  function parseTodo(value: string) {
+    return value
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function beginEdit() {
+    const row = brief();
+    if (!row) return;
+    setBodyMd(row.bodyMd);
+    setTodoText((row.todo ?? []).join("\n"));
+    setTenMinuteMd(row.studioPrompts?.tenMinuteMd ?? "");
+    setThirtyMinuteMd(row.studioPrompts?.thirtyMinuteMd ?? "");
+    setNinetyMinuteMd(row.studioPrompts?.ninetyMinuteMd ?? "");
+    setNotice(null);
+    setEditMode(true);
+  }
+
+  async function handleSaveEdit() {
+    const row = brief();
+    const fields = editedFields();
+    if (!row || fields.length === 0) return;
+    setSavingEdit(true);
+    setNotice(null);
+    try {
+      await editBrief({
+        id: row._id,
+        ...(fields.includes("bodyMd") ? { bodyMd: bodyMd() } : {}),
+        ...(fields.includes("todo") ? { todo: parseTodo(todoText()) } : {}),
+        ...(fields.includes("studioPrompts")
+          ? {
+              studioPrompts: {
+                tenMinuteMd: tenMinuteMd(),
+                thirtyMinuteMd: thirtyMinuteMd(),
+                ninetyMinuteMd: ninetyMinuteMd(),
+              },
+            }
+          : {}),
+      });
+      setEditMode(false);
+      setNotice("Weekly brief changes saved with edit provenance.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Could not save weekly brief.",
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function handlePublishToNotion() {
     const b = brief();
     if (!b) return;
-    setPublishing(true);
+    setPublishingToNotion(true);
     setNotice(null);
     try {
       const result = await publishToNotion({ id: b._id as Id<"weeklyBriefs"> });
@@ -192,7 +306,27 @@ export function WeeklyBriefDetailPage() {
       console.error("Weekly brief publish failed", error);
       setNotice("Publish failed. Please try again or contact support.");
     } finally {
-      setPublishing(false);
+      setPublishingToNotion(false);
+    }
+  }
+
+  async function handlePublishBrief() {
+    const row = brief();
+    if (!row) return;
+    setPublishingBrief(true);
+    setNotice(null);
+    try {
+      await publishBrief({ id: row._id });
+      setPublishConfirmOpen(false);
+      setNotice("Weekly brief published in the app.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not publish weekly brief.",
+      );
+    } finally {
+      setPublishingBrief(false);
     }
   }
 
@@ -244,7 +378,17 @@ export function WeeklyBriefDetailPage() {
         when={brief()}
         fallback={
           <UICard>
-            <p class={css({ color: "zodiac.cream" })}>Loading brief...</p>
+            <p
+              class={css({
+                color: briefQuery.isError() ? "zodiac.error" : "zodiac.cream",
+              })}
+            >
+              {briefQuery.isLoading()
+                ? "Loading brief..."
+                : briefQuery.error()
+                  ? `Unable to load brief: ${briefQuery.error()?.message}`
+                  : "Weekly brief not found."}
+            </p>
           </UICard>
         }
       >
@@ -319,16 +463,156 @@ export function WeeklyBriefDetailPage() {
               >
                 {creatingRecap() ? "Creating recap..." : "Create recap draft"}
               </UIButton>
+              <UIButton
+                variant="outline"
+                onClick={beginEdit}
+                disabled={editMode() || savingEdit()}
+              >
+                Edit brief
+              </UIButton>
               <Show when={b().visibility === "private"}>
                 <UIButton
                   variant="solid"
-                  onClick={handlePublish}
-                  disabled={publishing()}
+                  onClick={() => setPublishConfirmOpen(true)}
+                  disabled={publishingBrief()}
                 >
-                  {publishing() ? "Publishing..." : "Publish to Notion"}
+                  Publish brief
+                </UIButton>
+              </Show>
+              <Show when={!b().notionPageId}>
+                <UIButton
+                  variant="outline"
+                  onClick={handlePublishToNotion}
+                  disabled={publishingToNotion()}
+                >
+                  {publishingToNotion() ? "Publishing..." : "Publish to Notion"}
                 </UIButton>
               </Show>
             </div>
+
+            <Show when={publishConfirmOpen()}>
+              <div
+                role="dialog"
+                aria-modal="false"
+                aria-label="Confirm weekly brief publication"
+                class={cx(violetAccentContainerClass, css({ gap: "3" }))}
+              >
+                <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>
+                  Publishing makes this weekly brief public in the app and
+                  records its publication time.
+                </p>
+                <div
+                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                >
+                  <UIButton
+                    variant="solid"
+                    disabled={publishingBrief()}
+                    onClick={handlePublishBrief}
+                  >
+                    {publishingBrief() ? "Publishing..." : "Confirm publish"}
+                  </UIButton>
+                  <UIButton
+                    variant="ghost"
+                    disabled={publishingBrief()}
+                    onClick={() => setPublishConfirmOpen(false)}
+                  >
+                    Cancel
+                  </UIButton>
+                </div>
+              </div>
+            </Show>
+
+            <Show when={editMode()}>
+              <div class={cx(violetAccentContainerClass, css({ gap: "2" }))}>
+                <div
+                  class={css({
+                    alignItems: "center",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "2",
+                    justifyContent: "space-between",
+                  })}
+                >
+                  <span class={sectionLabel}>Edit generated brief</span>
+                  <div
+                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                  >
+                    <For each={editedFields()}>
+                      {(field) => (
+                        <UIBadge tone="violet">changed: {field}</UIBadge>
+                      )}
+                    </For>
+                  </div>
+                </div>
+                <p class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
+                  Saved changes preserve the generated and edited values as eval
+                  provenance.
+                </p>
+                <label class={fieldLabelClass} for="weekly-brief-body">
+                  Brief markdown
+                </label>
+                <UITextarea
+                  id="weekly-brief-body"
+                  value={bodyMd()}
+                  onInput={(event) => setBodyMd(event.currentTarget.value)}
+                  class={css({ minH: "96" })}
+                />
+                <label class={fieldLabelClass} for="weekly-brief-todo">
+                  Action items (one per line)
+                </label>
+                <UITextarea
+                  id="weekly-brief-todo"
+                  value={todoText()}
+                  onInput={(event) => setTodoText(event.currentTarget.value)}
+                />
+                <label class={fieldLabelClass} for="weekly-brief-prompt-10">
+                  10-minute studio prompt
+                </label>
+                <UITextarea
+                  id="weekly-brief-prompt-10"
+                  value={tenMinuteMd()}
+                  onInput={(event) => setTenMinuteMd(event.currentTarget.value)}
+                />
+                <label class={fieldLabelClass} for="weekly-brief-prompt-30">
+                  30-minute studio prompt
+                </label>
+                <UITextarea
+                  id="weekly-brief-prompt-30"
+                  value={thirtyMinuteMd()}
+                  onInput={(event) =>
+                    setThirtyMinuteMd(event.currentTarget.value)
+                  }
+                />
+                <label class={fieldLabelClass} for="weekly-brief-prompt-90">
+                  90-minute studio prompt
+                </label>
+                <UITextarea
+                  id="weekly-brief-prompt-90"
+                  value={ninetyMinuteMd()}
+                  onInput={(event) =>
+                    setNinetyMinuteMd(event.currentTarget.value)
+                  }
+                />
+                <div
+                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                >
+                  <UIButton
+                    variant="solid"
+                    disabled={savingEdit() || editedFields().length === 0}
+                    onClick={handleSaveEdit}
+                  >
+                    {savingEdit() ? "Saving..." : "Save changes"}
+                  </UIButton>
+                  <UIButton
+                    variant="ghost"
+                    disabled={savingEdit()}
+                    onClick={() => setEditMode(false)}
+                  >
+                    Cancel
+                  </UIButton>
+                </div>
+              </div>
+            </Show>
 
             <Show when={notice()}>
               {(msg) => (
