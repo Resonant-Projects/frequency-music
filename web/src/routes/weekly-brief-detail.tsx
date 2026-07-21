@@ -703,7 +703,7 @@ export function WeeklyBriefDetailPage() {
                                 <a
                                   href={feed.url}
                                   target="_blank"
-                                  rel="noreferrer"
+                                  rel="noopener noreferrer"
                                   class={css({
                                     color: "zodiac.cream",
                                     textDecorationColor:
