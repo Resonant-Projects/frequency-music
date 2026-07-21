@@ -10,9 +10,44 @@ import { modules } from "../harness/modules";
 describe("source scout target census", () => {
   test("shares the bounded concept budget across every scanned domain", () => {
     expect(scoutConceptLimitPerDomain(1)).toBe(50);
-    expect(scoutConceptLimitPerDomain(4)).toBe(50);
-    expect(scoutConceptLimitPerDomain(10)).toBe(20);
-    expect(scoutConceptLimitPerDomain(50)).toBe(4);
+    expect(scoutConceptLimitPerDomain(4)).toBe(25);
+    expect(scoutConceptLimitPerDomain(10)).toBe(10);
+    expect(scoutConceptLimitPerDomain(50)).toBe(2);
+  });
+
+  test("includes newly-added domains in the bounded census window", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (let index = 0; index < 51; index += 1) {
+        const domain = index === 0 ? "old-domain" : `domain-${index}`;
+        await ctx.db.insert("conceptDomains", {
+          name: domain,
+          status: "known",
+          introducedBy: "system",
+          createdAt: index,
+          updatedAt: index,
+        });
+      }
+      await ctx.db.insert("concepts", {
+        name: "new-domain-concept",
+        displayName: "New domain concept",
+        aliases: [],
+        domain: "domain-50",
+        missionRelevance: "on",
+        mentionCount: 0,
+        hypothesisCount: 0,
+        createdAt: 50,
+        updatedAt: 50,
+      });
+    });
+
+    const targets = await t.query(api.correspondences.scoutTargets, {});
+
+    expect(targets.thinDomains).toContainEqual({
+      domain: "domain-50",
+      onMissionConceptCount: 1,
+      sourceCount: 0,
+    });
   });
 
   test("returns the thinnest on-mission domains and oldest low-evidence conjectures", async () => {

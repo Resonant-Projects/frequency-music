@@ -8,6 +8,7 @@ import { redactError } from "../shared/redactError.js";
 import { callConvex } from "./convexTools.js";
 
 const TAVILY_SEARCH_URL = "https://api.tavily.com/search";
+const TAVILY_SEARCH_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_RESULTS = 5;
 const MAX_RESULTS = 10;
 
@@ -87,21 +88,58 @@ export function createWebSearch(
   ): Promise<WebSearchResult[]> => {
     const args = webSearchInputSchema.parse(input);
     const maxResults = args.maxResults ?? DEFAULT_MAX_RESULTS;
+    const auditSearch = async (
+      outcome:
+        | { status: "ok"; returned: number }
+        | { status: "failed"; error: string },
+    ) =>
+      await appendRemoteAuditEvent(
+        callTool,
+        context.agentRunId,
+        "tool_call",
+        outcome.status === "ok"
+          ? "Searched Tavily for source-scout candidates"
+          : "Tavily search failed; source-scout skipped query",
+        {
+          query: args.query,
+          ...(context.targetGap ? { targetGap: context.targetGap } : {}),
+          requested: maxResults,
+          returned: outcome.status === "ok" ? outcome.returned : 0,
+          status: outcome.status,
+          ...(outcome.status === "failed" ? { error: outcome.error } : {}),
+        },
+      );
     try {
       const apiKey = configuredApiKey ?? process.env.TAVILY_API_KEY;
       if (!apiKey) throw new Error("TAVILY_API_KEY is required");
-      const response = await fetchImpl(TAVILY_SEARCH_URL, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          api_key: apiKey,
-          query: args.query,
-          max_results: maxResults,
-          search_depth: "basic",
-          include_answer: false,
-          include_raw_content: false,
-        }),
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(
+        () =>
+          controller.abort(
+            new Error(
+              `Tavily search timed out after ${TAVILY_SEARCH_TIMEOUT_MS}ms`,
+            ),
+          ),
+        TAVILY_SEARCH_TIMEOUT_MS,
+      );
+      let response: Response;
+      try {
+        response = await fetchImpl(TAVILY_SEARCH_URL, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            api_key: apiKey,
+            query: args.query,
+            max_results: maxResults,
+            search_depth: "basic",
+            include_answer: false,
+            include_raw_content: false,
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
       if (!response.ok) {
         const detail = (await response.text()).slice(0, 240);
         throw new Error(
@@ -109,19 +147,7 @@ export function createWebSearch(
         );
       }
       const results = mapResults(await response.json(), maxResults);
-      await appendRemoteAuditEvent(
-        callTool,
-        context.agentRunId,
-        "tool_call",
-        "Searched Tavily for source-scout candidates",
-        {
-          query: args.query,
-          ...(context.targetGap ? { targetGap: context.targetGap } : {}),
-          requested: maxResults,
-          returned: results.length,
-          status: "ok",
-        },
-      );
+      await auditSearch({ status: "ok", returned: results.length });
       return results;
     } catch (error) {
       const message = redactError(error);
@@ -129,20 +155,7 @@ export function createWebSearch(
         "[source-scout] Tavily search failed; skipping query:",
         message,
       );
-      await appendRemoteAuditEvent(
-        callTool,
-        context.agentRunId,
-        "tool_call",
-        "Tavily search failed; source-scout skipped query",
-        {
-          query: args.query,
-          ...(context.targetGap ? { targetGap: context.targetGap } : {}),
-          requested: maxResults,
-          returned: 0,
-          status: "failed",
-          error: message,
-        },
-      );
+      await auditSearch({ status: "failed", error: message });
       return [];
     }
   };

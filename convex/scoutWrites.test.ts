@@ -33,6 +33,7 @@ describe("source scout canonical writes", () => {
     const first = await t.mutation(internal.sources.createScoutedSource, input);
     const duplicate = await t.mutation(internal.sources.createScoutedSource, {
       ...input,
+      url: "http://EXAMPLE.ORG/research?b=2&a=1",
       title: "Duplicate must not overwrite",
       rationale: "Duplicate must not overwrite provenance.",
     });

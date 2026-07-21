@@ -27,6 +27,7 @@ import {
   type StructuredJudge,
 } from "../shared/judge.js";
 import {
+  MAX_FEED_PROPOSALS_PER_RUN,
   MAX_INGESTS_PER_RUN,
   MAX_RESULTS_PER_SEARCH,
   MAX_SEARCH_CALLS,
@@ -368,11 +369,20 @@ export function createProposeFeedsNode(callTool: ToolCaller = callConvex) {
     const feedWrites: ScoutWriteResult[] = [];
     const auditEvents: AgentAuditEvent[] = [];
     const seenUrls = new Set<string>();
-    for (const judgment of state.judgments) {
-      if (!judgment.verdict || judgment.verdict.kind !== "feed") continue;
+    const candidates = state.judgments
+      .filter(
+        (judgment): judgment is Extract<ScoutJudgment, { verdict: object }> =>
+          judgment.verdict?.kind === "feed",
+      )
+      .filter((judgment) => {
+        const url = judgment.searchHit.result.url;
+        if (seenUrls.has(url)) return false;
+        seenUrls.add(url);
+        return true;
+      })
+      .slice(0, MAX_FEED_PROPOSALS_PER_RUN);
+    for (const judgment of candidates) {
       const url = judgment.searchHit.result.url;
-      if (seenUrls.has(url)) continue;
-      seenUrls.add(url);
       const rationale = rationaleFor(judgment);
       const result = (await callTool("proposeFeed", {
         name: judgment.searchHit.result.title,

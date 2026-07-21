@@ -5,9 +5,12 @@ import {
   createProposeFeedsNode,
   createSearchLoopNode,
   queryPlanOutputSchema,
+  routeAfterQueries,
+  routeAfterTargets,
   scoutVerdictSchema,
 } from "../src/graphs/source-scout/nodes";
 import {
+  MAX_FEED_PROPOSALS_PER_RUN,
   MAX_INGESTS_PER_RUN,
   MAX_SEARCH_CALLS,
 } from "../src/graphs/source-scout/config";
@@ -74,6 +77,33 @@ describe("source scout structured outputs", () => {
         })),
       }),
     ).toThrow();
+  });
+});
+
+describe("source scout routing", () => {
+  test("summarizes immediately when the census has no targets", () => {
+    expect(
+      routeAfterTargets({
+        targets: { thinDomains: [], starvedConjectures: [] },
+      }),
+    ).toBe("summarize");
+    expect(
+      routeAfterTargets({
+        targets: {
+          thinDomains: [
+            { domain: "cymatics", onMissionConceptCount: 1, sourceCount: 0 },
+          ],
+          starvedConjectures: [],
+        },
+      }),
+    ).toBe("plan_queries");
+  });
+
+  test("summarizes when planning returns no queries", () => {
+    expect(routeAfterQueries({ plannedQueries: [] })).toBe("summarize");
+    expect(routeAfterQueries({ plannedQueries: [searchHit(0).query] })).toBe(
+      "search_loop",
+    );
   });
 });
 
@@ -251,5 +281,39 @@ describe("source scout canonical write nodes", () => {
     expect(result.feedWrites).toEqual([
       expect.objectContaining({ id: "feed-1", created: true }),
     ]);
+  });
+
+  test("proposes no more than five unique feeds per run", async () => {
+    let writes = 0;
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "proposeFeed") {
+        writes += 1;
+        return { id: `feed-${writes}`, created: true };
+      }
+      return { ok: true };
+    });
+    const duplicate = judgment(99, "feed");
+    duplicate.searchHit.result.url = searchHit(0).result.url;
+
+    await createProposeFeedsNode(callTool)({
+      agentRunId: "run-scout",
+      judgments: [
+        judgment(0, "feed"),
+        duplicate,
+        ...Array.from({ length: MAX_FEED_PROPOSALS_PER_RUN }, (_, index) =>
+          judgment(index + 1, "feed"),
+        ),
+      ],
+    });
+
+    const proposalUrls = callTool.mock.calls
+      .filter(([name]) => name === "proposeFeed")
+      .map(([, args]) => (args as { url: string }).url);
+    expect(proposalUrls).toEqual(
+      Array.from(
+        { length: MAX_FEED_PROPOSALS_PER_RUN },
+        (_, index) => `https://example.org/${index}`,
+      ),
+    );
   });
 });

@@ -108,4 +108,66 @@ describe("Tavily web_search", () => {
     );
     warn.mockRestore();
   });
+
+  test("skips the provider call and warns when the API key is missing", async () => {
+    const fetchImpl = vi.fn(async () => new Response());
+    const callTool = vi.fn(async () => ({ ok: true }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const search = createWebSearch({ apiKey: "", fetchImpl, callTool });
+
+    await expect(
+      search({ query: "cymatics source" }, { agentRunId: "run-scout" }),
+    ).resolves.toEqual([]);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      "[source-scout] Tavily search failed; skipping query:",
+      "TAVILY_API_KEY is required",
+    );
+    expect(callTool).toHaveBeenCalledWith(
+      "appendAgentRunEvent",
+      expect.objectContaining({
+        runId: "run-scout",
+        payload: expect.objectContaining({
+          status: "failed",
+          error: "TAVILY_API_KEY is required",
+        }),
+      }),
+    );
+    warn.mockRestore();
+  });
+
+  test("aborts a slow provider call and follows the warn-and-skip path", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = vi.fn(
+      async (_input: string | URL | Request, init?: RequestInit) =>
+        await new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(init.signal?.reason),
+            { once: true },
+          );
+        }),
+    );
+    const callTool = vi.fn(async () => ({ ok: true }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const search = createWebSearch({
+      apiKey: "fixture-key",
+      fetchImpl,
+      callTool,
+    });
+
+    try {
+      const result = search({ query: "slow resonance evidence" });
+      await vi.advanceTimersByTimeAsync(15_000);
+
+      await expect(result).resolves.toEqual([]);
+      expect(warn).toHaveBeenCalledWith(
+        "[source-scout] Tavily search failed; skipping query:",
+        "Tavily search timed out after 15000ms",
+      );
+    } finally {
+      warn.mockRestore();
+      vi.useRealTimers();
+    }
+  });
 });

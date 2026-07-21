@@ -7,6 +7,7 @@ import {
   mutation,
   query,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { requireAuth, type AppIdentity } from "./auth";
 import { pairKey } from "./shared/correspondenceKey";
@@ -19,8 +20,8 @@ const MOVEMENT_LIMIT_PER_STATUS = 1000;
 const AUTO_RETIRE_PAGE_SIZE = 500;
 const SCOUT_DOMAIN_SCAN_LIMIT = 50;
 const SCOUT_CONCEPTS_PER_DOMAIN_LIMIT = 50;
-const SCOUT_TOTAL_CONCEPT_LIMIT = 200;
-const SCOUT_SOURCE_EDGES_PER_CONCEPT_LIMIT = 100;
+const SCOUT_TOTAL_CONCEPT_LIMIT = 100;
+const SCOUT_SOURCE_EDGES_PER_CONCEPT_LIMIT = 50;
 const SCOUT_CONJECTURE_SCAN_LIMIT = 100;
 const SCOUT_TARGET_LIMIT = 5;
 export const AUTO_RETIRE_AFTER_MS = 90 * 24 * 60 * 60 * 1000;
@@ -67,6 +68,115 @@ function clampLimit(limit: number | undefined): number {
   return Math.max(1, Math.min(Math.floor(limit), MAX_LIST_LIMIT));
 }
 
+type ThinDomain = {
+  domain: string;
+  onMissionConceptCount: number;
+  sourceCount: number;
+};
+
+type StarvedConjecture = {
+  correspondenceId: Id<"correspondences">;
+  statement: string;
+  conceptA: string;
+  conceptB: string;
+  evidenceCount: number;
+};
+
+async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
+  // A descending creation-time window includes newly-added domains immediately.
+  // This stays approximate and bounded; a persisted rotation cursor is overkill here.
+  const domainRows = await ctx.db
+    .query("conceptDomains")
+    .order("desc")
+    .take(SCOUT_DOMAIN_SCAN_LIMIT);
+  const activeDomains = domainRows
+    .filter((domain) => domain.status !== "deprecated")
+    .toSorted((left, right) => left.name.localeCompare(right.name));
+
+  const conceptLimitPerDomain = scoutConceptLimitPerDomain(
+    activeDomains.length,
+  );
+  const domainCounts: ThinDomain[] = [];
+  for (const domain of activeDomains) {
+    // Worst case: 50 domain + 100 concept + (100 x 50) edge reads = 5,150.
+    // Counts intentionally approximate a bounded window and may miss later on-mission concepts.
+    const domainConcepts = await ctx.db
+      .query("concepts")
+      .withIndex("by_domain", (q) => q.eq("domain", domain.name))
+      .take(conceptLimitPerDomain);
+    const concepts = domainConcepts.filter(
+      (concept) => concept.missionRelevance === "on",
+    );
+    if (concepts.length === 0) continue;
+
+    const sourceIds = new Set<string>();
+    for (const concept of concepts) {
+      const edges = await ctx.db
+        .query("edges")
+        .withIndex("by_to_fromType", (q) =>
+          q
+            .eq("toType", "concept")
+            .eq("toId", concept.name)
+            .eq("fromType", "source"),
+        )
+        .take(SCOUT_SOURCE_EDGES_PER_CONCEPT_LIMIT);
+      for (const edge of edges) sourceIds.add(edge.fromId);
+    }
+    domainCounts.push({
+      domain: domain.name,
+      onMissionConceptCount: concepts.length,
+      sourceCount: sourceIds.size,
+    });
+  }
+
+  return domainCounts
+    .toSorted(
+      (left, right) =>
+        left.sourceCount - right.sourceCount ||
+        left.domain.localeCompare(right.domain),
+    )
+    .slice(0, SCOUT_TARGET_LIMIT);
+}
+
+async function computeStarvedConjectures(
+  ctx: QueryCtx,
+): Promise<StarvedConjecture[]> {
+  // Adds at most 100 correspondence reads plus 10 concept hydrations, keeping
+  // the complete scout census at no more than about 5,260 document reads.
+  const conjectures = await ctx.db
+    .query("correspondences")
+    .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
+    .order("asc")
+    .take(SCOUT_CONJECTURE_SCAN_LIMIT);
+  const rankedConjectures = conjectures.toSorted(
+    (left, right) =>
+      left.evidence.length - right.evidence.length ||
+      left.updatedAt - right.updatedAt ||
+      left._id.localeCompare(right._id),
+  );
+  const hydratedConjectures = await Promise.all(
+    rankedConjectures
+      .slice(0, SCOUT_TARGET_LIMIT)
+      .map(async (correspondence) => {
+        const [conceptA, conceptB] = await Promise.all([
+          ctx.db.get("concepts", correspondence.conceptAId),
+          ctx.db.get("concepts", correspondence.conceptBId),
+        ]);
+        if (!conceptA || !conceptB) return null;
+        return {
+          correspondenceId: correspondence._id,
+          statement: correspondence.statement,
+          conceptA: conceptA.name,
+          conceptB: conceptB.name,
+          evidenceCount: correspondence.evidence.length,
+        };
+      }),
+  );
+  return hydratedConjectures.filter(
+    (target): target is NonNullable<typeof target> => target !== null,
+  );
+}
+
 export const scoutTargets = query({
   args: {},
   returns: v.object({
@@ -88,93 +198,9 @@ export const scoutTargets = query({
     ),
   }),
   handler: async (ctx) => {
-    const domainRows = await ctx.db
-      .query("conceptDomains")
-      .take(SCOUT_DOMAIN_SCAN_LIMIT);
-    const activeDomains = domainRows
-      .filter((domain) => domain.status !== "deprecated")
-      .toSorted((left, right) => left.name.localeCompare(right.name));
-
-    const conceptLimitPerDomain = scoutConceptLimitPerDomain(
-      activeDomains.length,
-    );
-    const domainCounts: Array<{
-      domain: string;
-      onMissionConceptCount: number;
-      sourceCount: number;
-    }> = [];
-    for (const domain of activeDomains) {
-      // Counts intentionally approximate a bounded window and may miss later on-mission concepts.
-      const domainConcepts = await ctx.db
-        .query("concepts")
-        .withIndex("by_domain", (q) => q.eq("domain", domain.name))
-        .take(conceptLimitPerDomain);
-      const concepts = domainConcepts.filter(
-        (concept) => concept.missionRelevance === "on",
-      );
-      if (concepts.length === 0) continue;
-
-      const sourceIds = new Set<string>();
-      for (const concept of concepts) {
-        const edges = await ctx.db
-          .query("edges")
-          .withIndex("by_to_fromType", (q) =>
-            q
-              .eq("toType", "concept")
-              .eq("toId", concept.name)
-              .eq("fromType", "source"),
-          )
-          .take(SCOUT_SOURCE_EDGES_PER_CONCEPT_LIMIT);
-        for (const edge of edges) sourceIds.add(edge.fromId);
-      }
-      domainCounts.push({
-        domain: domain.name,
-        onMissionConceptCount: concepts.length,
-        sourceCount: sourceIds.size,
-      });
-    }
-
-    const conjectures = await ctx.db
-      .query("correspondences")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
-      .order("asc")
-      .take(SCOUT_CONJECTURE_SCAN_LIMIT);
-    const rankedConjectures = conjectures.toSorted(
-      (left, right) =>
-        left.evidence.length - right.evidence.length ||
-        left.updatedAt - right.updatedAt ||
-        left._id.localeCompare(right._id),
-    );
-    const hydratedConjectures = await Promise.all(
-      rankedConjectures
-        .slice(0, SCOUT_TARGET_LIMIT)
-        .map(async (correspondence) => {
-          const [conceptA, conceptB] = await Promise.all([
-            ctx.db.get("concepts", correspondence.conceptAId),
-            ctx.db.get("concepts", correspondence.conceptBId),
-          ]);
-          if (!conceptA || !conceptB) return null;
-          return {
-            correspondenceId: correspondence._id,
-            statement: correspondence.statement,
-            conceptA: conceptA.name,
-            conceptB: conceptB.name,
-            evidenceCount: correspondence.evidence.length,
-          };
-        }),
-    );
-
     return {
-      thinDomains: domainCounts
-        .toSorted(
-          (left, right) =>
-            left.sourceCount - right.sourceCount ||
-            left.domain.localeCompare(right.domain),
-        )
-        .slice(0, SCOUT_TARGET_LIMIT),
-      starvedConjectures: hydratedConjectures.filter(
-        (target): target is NonNullable<typeof target> => target !== null,
-      ),
+      thinDomains: await computeThinDomains(ctx),
+      starvedConjectures: await computeStarvedConjectures(ctx),
     };
   },
 });

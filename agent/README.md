@@ -8,6 +8,7 @@ This directory hosts LangGraph/LangChain agents for the research-to-composition 
 
 - `weekly-brief` — existing DeepAgents weekly brief graph.
 - `research-pipeline` — new dry-run LangGraph skeleton for externalizing orchestration from Convex.
+- `source-scout` — need-directed source and feed discovery driven by graph gaps.
 
 ## Architecture boundary
 
