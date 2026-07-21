@@ -90,7 +90,7 @@ loopReport: v.optional(v.object({
 
 Render `loopReport` between the narrative and studio prompts: movement stat row (monospace eyebrows), top movers with links, review-queue banner (gold when `agentBlocked` — a working agent waiting on you is the "gold is earned" moment), experiment-debt list linking to recipes, proposed feeds with an **Enable** action (wired to the existing feed mutation; appears only when non-empty). Old briefs without `loopReport` render exactly as before.
 
-- [ ] **Step 1:** Implement; `bun run typecheck:web`; Interceptor visual pass on a real generated brief; screenshots in PR; commit.
+- [ ] **Step 1:** Implemented and `vp run typecheck:web` passed; Interceptor visual pass on a real generated brief and PR screenshots remain operator-gated; commit.
 
 ---
 
