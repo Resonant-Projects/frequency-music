@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/solid-router";
+import type { FunctionReturnType } from "convex/server";
 import { For, type JSX, Show } from "solid-js";
+import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import { fieldLabelClass } from "./ui";
 import { UIBadge } from "./ui";
 
@@ -28,6 +30,7 @@ export type HypothesisDraftPayload = {
   concepts?: string[];
   sourceIds: string[];
   extractionIds: string[];
+  correspondenceId?: string;
   thesisId?: string;
   confidence?: number;
 };
@@ -60,6 +63,9 @@ export type RecipeDraftPayload = {
 };
 
 export type AgentDraftPayload = HypothesisDraftPayload | RecipeDraftPayload;
+export type DraftReviewContext = FunctionReturnType<
+  typeof api.agentDrafts.getReviewContext
+>;
 
 export type PersistedReviewDraft = {
   _id: Id<"agentReviewDrafts">;
@@ -267,6 +273,440 @@ export function DraftPayloadPreview(props: {
         </div>
       )}
     </Show>
+  );
+}
+
+const reviewSectionClass = css({
+  borderTopColor: "rgba(245, 240, 232, 0.12)",
+  borderTopWidth: "1px",
+  display: "grid",
+  gap: "3",
+  pt: "5",
+});
+
+const reviewEyebrowClass = css({
+  color: "rgba(245, 240, 232, 0.58)",
+  fontFamily: "mono",
+  fontSize: "2xs",
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+});
+
+const reviewHeadingClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: { base: "xl", md: "2xl" },
+  fontWeight: "normal",
+  lineHeight: "1.2",
+});
+
+const reviewBodyClass = css({
+  color: "rgba(245, 240, 232, 0.82)",
+  fontFamily: "display",
+  fontSize: "lg",
+  lineHeight: "1.65",
+  maxW: "72ch",
+});
+
+function ReviewSection(props: {
+  index: number;
+  label: string;
+  children: JSX.Element;
+}) {
+  return (
+    <section class={reviewSectionClass}>
+      <p class={reviewEyebrowClass}>
+        {String(props.index).padStart(2, "0")} · {props.label}
+      </p>
+      {props.children}
+    </section>
+  );
+}
+
+function ConceptPanel(props: {
+  concept: NonNullable<DraftReviewContext["correspondence"]>["conceptA"];
+}) {
+  return (
+    <div
+      class={css({
+        bg: "rgba(26, 15, 53, 0.34)",
+        borderColor: "rgba(139, 92, 246, 0.2)",
+        borderRadius: "l2",
+        borderWidth: "1px",
+        display: "grid",
+        gap: "2",
+        p: "3",
+      })}
+    >
+      <h3 class={reviewHeadingClass}>{props.concept.displayName}</h3>
+      <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+        <For each={props.concept.domains}>
+          {(domain) => <UIBadge tone="violet">{domain}</UIBadge>}
+        </For>
+      </div>
+      <Show when={props.concept.description}>
+        {(description) => <p class={reviewBodyClass}>{description()}</p>}
+      </Show>
+    </div>
+  );
+}
+
+function humanize(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+/** The plan-07 five-section reading order for a single review decision. */
+export function DraftReviewStory(props: {
+  context: DraftReviewContext;
+  payload?: AgentDraftPayload;
+  decide: JSX.Element;
+}) {
+  const payload = () => props.payload ?? props.context.draft.payload;
+  const hypothesisPayload = () =>
+    props.context.draft.kind === "hypothesis_draft"
+      ? (payload() as HypothesisDraftPayload | undefined)
+      : undefined;
+  const recipePayload = () =>
+    props.context.draft.kind === "recipe_draft"
+      ? (payload() as RecipeDraftPayload | undefined)
+      : undefined;
+  const hasPriorWork = () =>
+    props.context.related.priorHypotheses.length > 0 ||
+    props.context.related.failures.length > 0;
+
+  return (
+    <article class={css({ display: "grid", gap: "5" })}>
+      <ReviewSection index={1} label="The claim being made">
+        <Show
+          when={props.context.correspondence}
+          fallback={
+            <div class={css({ display: "grid", gap: "2" })}>
+              <UIBadge tone="cream">Legacy draft</UIBadge>
+              <p class={reviewBodyClass}>
+                No correspondence lineage was recorded for this draft.
+              </p>
+            </div>
+          }
+        >
+          {(correspondence) => (
+            <div class={css({ display: "grid", gap: "4" })}>
+              <div
+                class={css({
+                  alignItems: "flex-start",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "3",
+                  justifyContent: "space-between",
+                })}
+              >
+                <h2 class={reviewHeadingClass}>
+                  {correspondence().row.statement}
+                </h2>
+                <UIBadge tone="cream">{correspondence().row.status}</UIBadge>
+              </div>
+              <Show
+                when={
+                  correspondence().row.similarityScore !== undefined ||
+                  correspondence().row.noveltyScore !== undefined
+                }
+              >
+                <p class={reviewEyebrowClass}>
+                  {correspondence().row.similarityScore !== undefined
+                    ? `Similarity ${Math.round((correspondence().row.similarityScore ?? 0) * 100)}%`
+                    : ""}
+                  {correspondence().row.similarityScore !== undefined &&
+                  correspondence().row.noveltyScore !== undefined
+                    ? " · "
+                    : ""}
+                  {correspondence().row.noveltyScore !== undefined
+                    ? `Novelty ${Math.round((correspondence().row.noveltyScore ?? 0) * 100)}%`
+                    : ""}
+                </p>
+              </Show>
+              <div
+                class={css({
+                  display: "grid",
+                  gap: "3",
+                  gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+                })}
+              >
+                <ConceptPanel concept={correspondence().conceptA} />
+                <ConceptPanel concept={correspondence().conceptB} />
+              </div>
+              <details>
+                <summary
+                  class={css({
+                    color: "rgba(245, 240, 232, 0.72)",
+                    cursor: "pointer",
+                    fontFamily: "mono",
+                    fontSize: "xs",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                  })}
+                >
+                  Correspondence rationale
+                </summary>
+                <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
+                  {correspondence().row.rationaleMd}
+                </p>
+              </details>
+            </div>
+          )}
+        </Show>
+      </ReviewSection>
+
+      <ReviewSection index={2} label="The evidence">
+        <Show
+          when={(props.context.correspondence?.evidence.length ?? 0) > 0}
+          fallback={<p class={reviewBodyClass}>No evidence is attached.</p>}
+        >
+          <div class={css({ display: "grid", gap: "3" })}>
+            <For each={props.context.correspondence?.evidence ?? []}>
+              {(evidence) => {
+                const contradicts = evidence.stance === "contradicts";
+                return (
+                  <div
+                    class={css({
+                      bg: contradicts
+                        ? "rgba(139, 92, 246, 0.14)"
+                        : "rgba(245, 240, 232, 0.035)",
+                      borderColor: contradicts
+                        ? "rgba(139, 92, 246, 0.56)"
+                        : "rgba(245, 240, 232, 0.12)",
+                      borderLeftWidth: "3px",
+                      borderRadius: "l2",
+                      display: "grid",
+                      gap: "2",
+                      p: "3",
+                    })}
+                  >
+                    <div
+                      class={css({
+                        alignItems: "center",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "2",
+                      })}
+                    >
+                      <span aria-hidden="true">{contradicts ? "⊘" : "✓"}</span>
+                      <UIBadge tone={contradicts ? "violet" : "cream"}>
+                        {evidence.stance}
+                      </UIBadge>
+                      <span class={reviewEyebrowClass}>
+                        {humanize(evidence.claim.evidenceLevel)}
+                        {evidence.claim.truthConfidence
+                          ? ` · ${humanize(evidence.claim.truthConfidence)} confidence`
+                          : ""}
+                      </span>
+                    </div>
+                    <p class={reviewBodyClass}>{evidence.claim.text}</p>
+                    <Show
+                      when={evidence.sourceUrl}
+                      fallback={
+                        <span class={reviewEyebrowClass}>
+                          {evidence.sourceTitle}
+                        </span>
+                      }
+                    >
+                      {(sourceUrl) => (
+                        <a
+                          class={css({
+                            color: "zodiac.violet",
+                            fontFamily: "mono",
+                            fontSize: "xs",
+                          })}
+                          href={sourceUrl()}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {evidence.sourceTitle} ↗
+                        </a>
+                      )}
+                    </Show>
+                  </div>
+                );
+              }}
+            </For>
+          </div>
+        </Show>
+      </ReviewSection>
+
+      <ReviewSection index={3} label="The proposed hypothesis">
+        <Show when={hypothesisPayload()}>
+          {(proposal) => (
+            <div class={css({ display: "grid", gap: "4" })}>
+              <div>
+                <p class={reviewEyebrowClass}>Title</p>
+                <h2 class={reviewHeadingClass}>{proposal().title}</h2>
+              </div>
+              <div>
+                <p class={reviewEyebrowClass}>Question</p>
+                <p class={reviewBodyClass}>{proposal().question}</p>
+              </div>
+              <div>
+                <p class={reviewEyebrowClass}>Statement</p>
+                <p class={reviewBodyClass}>{proposal().statement}</p>
+              </div>
+              <div>
+                <p class={reviewEyebrowClass}>Why this matters</p>
+                <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
+              </div>
+              <details>
+                <summary
+                  class={css({
+                    color: "rgba(245, 240, 232, 0.72)",
+                    cursor: "pointer",
+                    fontFamily: "mono",
+                    fontSize: "xs",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                  })}
+                >
+                  Draft rationale
+                </summary>
+                <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
+                  {proposal().rationale}
+                </p>
+              </details>
+            </div>
+          )}
+        </Show>
+        <Show when={recipePayload()}>
+          {(proposal) => (
+            <div class={css({ display: "grid", gap: "4" })}>
+              <div>
+                <p class={reviewEyebrowClass}>Recipe title</p>
+                <h2 class={reviewHeadingClass}>{proposal().title}</h2>
+              </div>
+              <div>
+                <p class={reviewEyebrowClass}>Why this matters</p>
+                <p class={reviewBodyClass}>{proposal().whyThisMatters}</p>
+              </div>
+              <DraftPayloadPreview kind="recipe_draft" payload={proposal()} />
+            </div>
+          )}
+        </Show>
+        <Show when={!payload()}>
+          <p class={reviewBodyClass}>
+            This legacy draft has no structured payload and cannot be promoted.
+          </p>
+        </Show>
+        <div class={css({ display: "flex", flexWrap: "wrap", gap: "3" })}>
+          <Link
+            to="/agent-runs/$runId"
+            params={{ runId: String(props.context.runTrace.runId) }}
+            class={css({
+              color: "zodiac.violet",
+              fontFamily: "mono",
+              fontSize: "xs",
+            })}
+          >
+            Open run ↗
+          </Link>
+          <Show when={props.context.runTrace.traceUrl}>
+            {(traceUrl) => (
+              <a
+                class={css({
+                  color: "zodiac.violet",
+                  fontFamily: "mono",
+                  fontSize: "xs",
+                })}
+                href={traceUrl()}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open trace ↗
+              </a>
+            )}
+          </Show>
+        </div>
+        <details>
+          <summary
+            class={css({
+              color: "rgba(245, 240, 232, 0.72)",
+              cursor: "pointer",
+              fontFamily: "mono",
+              fontSize: "xs",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            })}
+          >
+            Agent run summary
+          </summary>
+          <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
+            {props.context.runTrace.summary}
+          </p>
+        </details>
+      </ReviewSection>
+
+      <ReviewSection index={4} label="What already happened">
+        <Show
+          when={hasPriorWork()}
+          fallback={<p class={reviewBodyClass}>no prior work on this pair</p>}
+        >
+          <div
+            class={css({
+              display: "grid",
+              gap: "4",
+              gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            })}
+          >
+            <div class={css({ display: "grid", gap: "2" })}>
+              <p class={reviewEyebrowClass}>Prior hypotheses</p>
+              <For each={props.context.related.priorHypotheses}>
+                {(hypothesis) => (
+                  <div
+                    class={css({
+                      borderColor: "rgba(245, 240, 232, 0.12)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      display: "grid",
+                      gap: "2",
+                      p: "3",
+                    })}
+                  >
+                    <p class={reviewBodyClass}>{hypothesis.title}</p>
+                    <span class={reviewEyebrowClass}>
+                      {hypothesis.status}
+                      {hypothesis.resolution
+                        ? ` · ${hypothesis.resolution}`
+                        : ""}
+                    </span>
+                  </div>
+                )}
+              </For>
+            </div>
+            <div class={css({ display: "grid", gap: "2" })}>
+              <p class={reviewEyebrowClass}>Failure archive hits</p>
+              <For each={props.context.related.failures}>
+                {(failure) => (
+                  <div
+                    class={css({
+                      bg: "rgba(139, 92, 246, 0.1)",
+                      borderColor: "rgba(139, 92, 246, 0.32)",
+                      borderRadius: "l2",
+                      borderWidth: "1px",
+                      display: "grid",
+                      gap: "2",
+                      p: "3",
+                    })}
+                  >
+                    <p class={reviewBodyClass}>{failure.title}</p>
+                    <span class={reviewEyebrowClass}>
+                      {humanize(failure.reason)}
+                    </span>
+                  </div>
+                )}
+              </For>
+            </div>
+          </div>
+        </Show>
+      </ReviewSection>
+
+      <ReviewSection index={5} label="Decide">
+        {props.decide}
+      </ReviewSection>
+    </article>
   );
 }
 

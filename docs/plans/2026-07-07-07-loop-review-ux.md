@@ -74,8 +74,8 @@
 
 Queue list view: pending count headline ("2 drafts awaiting review — agent blocked at 3"), oldest-first, per-card one-line statement + pair so triage order is obvious.
 
-- [ ] **Step 1:** Implement list + card against `getReviewContext`.
-- [ ] **Step 2:** `vp run typecheck:web`; Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit.
+- [x] **Step 1:** Implement list + card against `getReviewContext`.
+- [ ] **Step 2:** `vp run typecheck:web`; Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit. **Operator-gated:** `vp run typecheck:web` passed locally after Panda-only codegen; Interceptor, screenshots, and the live visual gate were not run in this execution.
 
 ---
 

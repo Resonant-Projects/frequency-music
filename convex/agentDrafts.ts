@@ -344,7 +344,7 @@ async function listPendingDrafts(ctx: QueryCtx, args: { limit?: number }) {
   const rows = await ctx.db
     .query("agentReviewDrafts")
     .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
-    .order("desc")
+    .order("asc")
     .take(limit);
   return rows.map(summarizeAgentReviewDraft);
 }
