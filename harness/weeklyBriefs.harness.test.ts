@@ -340,7 +340,13 @@ describe("weekly brief loop report", () => {
           proposal: {
             agentRunId,
             rationale: "Closes a gap in cymatics coverage",
-            sampleItems: ["one"],
+            sampleItems: [
+              {
+                title: "Cymatics primer",
+                url: "https://example.com/cymatics",
+                snippet: "Standing-wave imagery",
+              },
+            ],
           },
         },
         createdAt: 1,

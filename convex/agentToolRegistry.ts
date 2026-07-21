@@ -2,6 +2,7 @@
 // and behavior. Cross-workspace consumers import the manifest, not this file.
 import { makeFunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import type { AgentToolName } from "./shared/agentToolArgs";
 import {
@@ -88,6 +89,37 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ctx.runQuery(
       queryRef("correspondenceCandidates:listEvidenceTargets"),
       omitUndefined({ limit: args.limit }),
+    ),
+  getScoutTargets: (ctx) =>
+    ctx.runQuery(queryRef("correspondences:scoutTargets"), {}),
+  ingestScoutedSource: (ctx, args) =>
+    ctx.runMutation(
+      internal.sources.createScoutedSource,
+      omitUndefined({
+        url: args.url as string,
+        title: args.title as string | undefined,
+        publishedAt: args.publishedAt as number | undefined,
+        query: args.query as string,
+        rationale: args.rationale as string,
+        agentRunId: args.agentRunId as Id<"agentRuns">,
+      }),
+    ),
+  proposeFeed: (ctx, args) =>
+    ctx.runMutation(
+      internal.feeds.proposeFeed,
+      omitUndefined({
+        name: args.name as string,
+        url: args.url as string,
+        type: args.type as "rss" | "podcast" | "youtube",
+        rationale: args.rationale as string,
+        sampleItems: args.sampleItems as Array<{
+          title: string;
+          url: string;
+          snippet: string;
+          publishedAt?: string;
+        }>,
+        agentRunId: args.agentRunId as Id<"agentRuns">,
+      }),
     ),
   getCorrespondence: (ctx, args) =>
     ctx.runQuery(queryRef("correspondences:getByPairKey"), {

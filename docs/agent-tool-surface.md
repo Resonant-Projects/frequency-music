@@ -2,7 +2,7 @@
 
 This document defines the narrow Convex surface exposed to external LangGraph/LangChain agents.
 
-Agents can read research state, write audit-only agent-run lifecycle records, **propose** structured hypothesis and recipe drafts, and directly enrich the reversible graph through provenance-stamped correspondences. Hypotheses and recipes still enter through the **draft → human-approval** path. Agents must never approve their own work — the decision mutations are Clerk-authenticated and are deliberately **not** exposed on `/agent-tools/*`.
+Agents can read research state, write audit-only agent-run lifecycle records, **propose** structured hypothesis and recipe drafts, directly enrich the reversible graph through provenance-stamped correspondences, and run Source Scout's canonical source intake or disabled feed-proposal writes. Hypotheses and recipes still enter through the **draft → human-approval** path. Agents must never approve their own work — the decision mutations are Clerk-authenticated and are deliberately **not** exposed on `/agent-tools/*`.
 
 ## Authentication
 
@@ -35,16 +35,19 @@ All tool calls require `AGENT_TOOL_SECRET`.
 | `listCorrespondenceCandidates` | `/agent-tools/listCorrespondenceCandidates` | `internal.correspondenceCandidates:listForAgent` | Generate deterministic, scored cross-domain correspondence candidates with concept and claim context. | Uses one least-recently-probed on-mission concept unless seedConceptId is supplied; existing correspondence pairs are excluded. |
 | `searchClaimsSemantic` | `/agent-tools/searchClaimsSemantic` | `internal.correspondenceCandidates:searchClaimsSemantic` | Semantically search active claims and return source and on-mission domain context. | Use to seek supporting or contradicting evidence for a concrete correspondence statement, not for broad source discovery. |
 | `listCorrespondenceTargets` | `/agent-tools/listCorrespondenceTargets` | `internal.correspondenceCandidates:listEvidenceTargets` | List up to five conjectured correspondences with hydrated concept text, oldest evidence first. | Evidence-hunter target selection only; existing claim ids are included so reruns can skip already-cited evidence. |
+| `getScoutTargets` | `/agent-tools/getScoutTargets` | `correspondences:scoutTargets` | Fetch under-represented on-mission domains and low-evidence conjectures for need-directed source discovery. | Source-scout target selection only; results are bounded to five domains and five conjectures. |
 | `getCorrespondence` | `/agent-tools/getCorrespondence` | `correspondences:getByPairKey` | Fetch the unique correspondence for a canonical concept pair key. | Compute the key with the shared pairKey helper; concept order never changes identity. |
 | `listCorrespondences` | `/agent-tools/listCorrespondences` | `correspondences:listByStatus` | List recent correspondences in one lifecycle status. | Accepts a lifecycle status and an optional bounded limit. |
 | `listConceptCorrespondences` | `/agent-tools/listConceptCorrespondences` | `correspondences:listForConcept` | List correspondences involving one concept on either side of the canonical pair. | The backing query unions both concept indexes and returns newest movement first. |
 
-### Direct graph-enrichment write tools
+### Direct provenance-stamped research write tools
 
-Correspondences are reversible, provenance-stamped graph enrichment. They bypass the draft-review door but enforce cross-domain and mission invariants in their mutations.
+These provenance-stamped research writes are limited to reversible graph enrichment, canonical source intake, and disabled feed proposals. They enforce their domain-specific invariants in Convex mutations.
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
+| `ingestScoutedSource` | `/agent-tools/ingestScoutedSource` | `internal.sources:createScoutedSource` | Ingest one judged source through canonical URL intake with source-scout provenance. | Canonical dedupe rejects are no-ops; the graph logs the decision and never retries. |
+| `proposeFeed` | `/agent-tools/proposeFeed` | `internal.feeds:proposeFeed` | Create a disabled recurring-feed proposal with source-scout rationale and sample items. | The mutation always inserts enabled false; duplicate URLs are no-ops and only humans enable feeds. |
 | `upsertCorrespondence` | `/agent-tools/upsertCorrespondence` | `internal.correspondences:upsertConjectureFromAgent` | Create or strengthen one cross-domain conjecture without duplicating its concept pair. | Requires agent-run provenance; rejects same-domain, off-mission, and unclassified concepts. |
 | `addCorrespondenceEvidence` | `/agent-tools/addCorrespondenceEvidence` | `internal.correspondences:addEvidenceFromAgent` | Attach a supporting or contradicting claim citation to a correspondence. | Requires agent-run provenance; duplicate claim-and-stance citations are ignored and status recomputes by evidence counts. |
 
@@ -83,7 +86,7 @@ Draft promotion is where agent proposals become real research data. These are Cl
 - Promoted rows are indistinguishable in rigor from human-authored ones, differing only in provenance fields.
 - Only `pending_review` drafts can be decided; approving/rejecting an already-decided draft is rejected.
 
-Remaining deferred research-data tools: direct source mutation tools and `markFailure`.
+Remaining deferred research-data tool: `markFailure`. Source Scout's only source write is canonical, deduped URL intake; its feed write creates disabled proposals that require human enablement.
 
 ## Dataset Quality Criteria
 

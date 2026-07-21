@@ -47,7 +47,8 @@ returns: {
 }
 ```
 
-- [ ] **Step 1:** Harness test with fixtures; implement; expose read-only via tool registry (`get_scout_targets`); codegen; commit.
+- [x] **Step 1:** Harness test with fixtures; implement; expose read-only via tool registry (`get_scout_targets`); commit.
+  - Operator-gated: Convex codegen was not run per the 2026-07-20 executor constraint. The query was added to the existing `correspondences` module, so `_generated/api.d.ts` already derives it through the module type and needs no hand edit.
 
 ---
 
@@ -58,7 +59,7 @@ returns: {
 
 **Interfaces (binding):** `web_search { query, maxResults? } → Array<{ title, url, snippet, publishedAt? }>`. Provider choice + key documented; tool logs each call as a `tool_call` run event.
 
-- [ ] **Step 1:** Implement with a recorded-fixture test (no live network in tests); typegate; commit.
+- [x] **Step 1:** Implement with a recorded-fixture test (no live network in tests); typegate; commit.
 
 ---
 
@@ -82,12 +83,14 @@ fetch_targets ──► plan_queries (LLM: targets → ≤10 concrete queries, e
 
 **New write tools to register (zod-first):** `ingest_scouted_source`, `propose_feed` — thin wrappers on canonical intake + feed insert with the provenance shapes above.
 
-- [ ] **Step 1:** Agent tests: judge schema; ingest wrapper hits canonical intake (mock); feed proposal never sets enabled.
-- [ ] **Step 2:** Implement; typegate; commit.
+- [x] **Step 1:** Agent tests: judge schema; ingest wrapper hits canonical intake (mock); feed proposal never sets enabled.
+- [x] **Step 2:** Implement; typegate; commit.
 
 ---
 
 ### Task 4: Brief hookup + live gate
+
+> Deferred in the 2026-07-20 executor scope: plan 08 is being built in parallel. No live Convex commands were run; the entire live gate remains operator-gated.
 
 **Files:**
 - Modify: plan 08's `proposedFeeds` section query — populate from `feeds` where `enabled === false && metadata.proposal` exists.
