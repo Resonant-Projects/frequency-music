@@ -31,17 +31,17 @@ Plans 01–03 carry `> Landed:` headers and are archived; do not re-implement.
 | 01 | [Claims become first-class rows](../archive/plan-waves/2026-07-07-01-loop-claims-table.md) | ✅ Landed `b2e0cbe` (4,648 claims backfilled) — archived |
 | 02 | [Concept domains + mission relevance](../archive/plan-waves/2026-07-07-02-loop-domains-and-relevance.md) | ✅ Landed `03dce57` (5,444/5,444 classified) — archived |
 | 03 | [Correspondences table + agent write surface](../archive/plan-waves/2026-07-07-03-loop-correspondences.md) | ✅ Landed `2adca48` (live-gated) — archived |
-| 04 | **Embeddings + vector indexes** | ⬅️ **NEXT** (prereqs 01+02 satisfied) |
-| 12 | [Domain triage surface](./2026-07-18-12-domain-triage-surface.md) | Pending — **parallel to 04, must land before 05** |
-| 05 | Candidate generator + miner & evidence-hunter graphs | Pending (needs 03+04+12; gate: Proxmox worker healthy) |
-| 06 | Drafting graph + WIP cap (N=3) | Pending |
-| 07 | Review UX — **amended 2026-07-18**: edit-before-approve added | Pending |
-| 13 | [Recipe loop closure](./2026-07-18-13-recipe-loop-closure.md) | Pending (after 07; golden datasets curated first) |
-| 08 | Weekly brief integration | Pending |
-| 09 | Source scout | Pending |
-| 14 | [Decision-surface sweep](./2026-07-18-14-decision-surface-sweep.md) (card-level) | Pending (after 08/09) |
-| 10 | Composition starter kits | Pending (independent — pull forward any time) |
-| 11 | Self-render spike (bounded) | Pending (spike framing reaffirmed 2026-07-18) |
+| 04 | [Embeddings + vector indexes](./2026-07-07-04-loop-embeddings.md) | ✅ Merged 2026-07-20 (PR #28) — deploy + `OPENAI_API_KEY` + backfill/probe operator-gated |
+| 12 | [Domain triage surface](./2026-07-18-12-domain-triage-surface.md) | ✅ Merged 2026-07-20 (PR #29) — deploy + packet decision (Keith/DA) operator-gated |
+| 05 | [Candidate generator + miner & evidence-hunter graphs](./2026-07-07-05-loop-miner-graphs.md) | ✅ Merged 2026-07-20 (PR #31) — live-run gates + **Proxmox worker healthy** operator-gated |
+| 06 | [Drafting graph + WIP cap (N=3)](./2026-07-07-06-loop-drafting-graph.md) | ✅ Merged 2026-07-20 (PR #32) — live gate (first real draft reviewed) operator-gated |
+| 07 | [Review UX + edit-before-approve](./2026-07-07-07-loop-review-ux.md) | ✅ Merged 2026-07-20 (PR #33) — Interceptor screenshots + timed <2min gate (Keith) operator-gated |
+| 13 | [Recipe loop closure](./2026-07-18-13-recipe-loop-closure.md) | ⬅️ **NEXT** — blocked on golden-dataset ratification (Keith, §2 item 1; DA prep done) |
+| 08 | [Weekly brief integration](./2026-07-07-08-loop-weekly-brief.md) | ✅ Merged 2026-07-20 (PR #34) — real-brief live gate operator-gated |
+| 09 | [Source scout](./2026-07-07-09-loop-source-scout.md) | ✅ Merged 2026-07-20 (PR #35) — `TAVILY_API_KEY` + first live run operator-gated |
+| 14 | [Decision-surface sweep](./2026-07-18-14-decision-surface-sweep.md) (card-level) | ✅ Merged 2026-07-21 (PR #36) — Interceptor passes operator-gated |
+| 10 | [Composition starter kits](./2026-07-07-10-loop-starter-kits.md) | ✅ Merged 2026-07-20 (PR #30) — 3-real-recipe run + studio acceptance (Keith) operator-gated |
+| 11 | Self-render spike (bounded) | Deferred to a Keith/DA studio session (needs audio engine install, real kits, human A/B listening) |
 
 After 11: **generator steering** (model/prompt/scope knobs in the UI) is the next roadmapped item —
 deferred by the 2026-07-18 decision, not dropped.
