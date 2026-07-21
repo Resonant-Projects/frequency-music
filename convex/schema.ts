@@ -178,6 +178,8 @@ export const agentOriginFields = {
   agentRunId: v.optional(v.id("agentRuns")),
   agentDraftId: v.optional(v.id("agentReviewDrafts")),
   traceUrl: v.optional(v.string()),
+  approvedWithEdits: v.optional(v.literal(true)),
+  editedFields: v.optional(v.array(v.string())),
 };
 
 export default defineSchema({
@@ -254,6 +256,9 @@ export default defineSchema({
     // with legacy dry-run drafts (payload-less drafts are acknowledge-only,
     // never promotable into real hypotheses/recipes).
     payload: v.optional(agentReviewDraftPayloadValidator),
+    // Complete operator-amended payload used for promotion. The original
+    // agent payload above remains untouched as training/evaluation provenance.
+    amendedPayload: v.optional(agentReviewDraftPayloadValidator),
     status: v.union(
       v.literal("pending_review"),
       v.literal("approved"),

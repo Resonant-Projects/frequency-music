@@ -76,23 +76,26 @@ async function getBranchRootId(
 async function getBranchCompositionIds(
   db: DbReader,
   rootId: Id<"compositions">,
+  readLimit = Number.POSITIVE_INFINITY,
 ): Promise<Id<"compositions">[]> {
   const seen = new Set<string>();
   const queue: Id<"compositions">[] = [rootId];
   const ids: Id<"compositions">[] = [];
 
-  while (queue.length > 0) {
+  while (queue.length > 0 && ids.length < readLimit) {
     const nextId = queue.shift()!;
     if (seen.has(String(nextId))) continue;
     seen.add(String(nextId));
     ids.push(nextId);
 
-    const children = await db
+    const childQuery = db
       .query("compositions")
       .withIndex("by_revisionParentId_updatedAt", (q: any) =>
         q.eq("revisionParentId", nextId),
-      )
-      .collect();
+      );
+    const children = Number.isFinite(readLimit)
+      ? await childQuery.take(Math.max(0, readLimit - ids.length))
+      : await childQuery.collect();
 
     for (const child of children) {
       queue.push(child._id);
@@ -105,15 +108,23 @@ async function getBranchCompositionIds(
 async function getListeningSessionsForCompositionIds(
   db: DbReader,
   compositionIds: Id<"compositions">[],
+  readLimit = Number.POSITIVE_INFINITY,
 ): Promise<Doc<"listeningSessions">[]> {
   const sessions = await Promise.all(
     compositionIds.map((compositionId) =>
-      db
-        .query("listeningSessions")
-        .withIndex("by_compositionId_createdAt", (q: any) =>
-          q.eq("compositionId", compositionId),
-        )
-        .collect(),
+      Number.isFinite(readLimit)
+        ? db
+            .query("listeningSessions")
+            .withIndex("by_compositionId_createdAt", (q: any) =>
+              q.eq("compositionId", compositionId),
+            )
+            .take(readLimit)
+        : db
+            .query("listeningSessions")
+            .withIndex("by_compositionId_createdAt", (q: any) =>
+              q.eq("compositionId", compositionId),
+            )
+            .collect(),
     ),
   );
 
@@ -123,13 +134,16 @@ async function getListeningSessionsForCompositionIds(
 async function getListeningSessionsForComposition(
   db: DbReader,
   compositionId: Id<"compositions">,
+  readLimit = Number.POSITIVE_INFINITY,
 ): Promise<Doc<"listeningSessions">[]> {
-  return await db
+  const query = db
     .query("listeningSessions")
     .withIndex("by_compositionId_createdAt", (q: any) =>
       q.eq("compositionId", compositionId),
-    )
-    .collect();
+    );
+  return Number.isFinite(readLimit)
+    ? await query.take(readLimit)
+    : await query.collect();
 }
 
 function getLocalFailureStatus(
@@ -158,6 +172,7 @@ async function loadBranchFailureContext(
   db: DbReader,
   composition: Doc<"compositions">,
   cache: Map<string, BranchFailureContext>,
+  readLimit = Number.POSITIVE_INFINITY,
 ): Promise<BranchFailureContext> {
   const revisionBranchRootId = await getBranchRootId(db, composition);
   const cached = cache.get(String(revisionBranchRootId));
@@ -174,10 +189,12 @@ async function loadBranchFailureContext(
   const branchCompositionIds = await getBranchCompositionIds(
     db,
     revisionBranchRootId,
+    readLimit,
   );
   const branchListeningSessions = await getListeningSessionsForCompositionIds(
     db,
     branchCompositionIds,
+    readLimit,
   );
   const context = {
     rootComposition,
@@ -194,6 +211,7 @@ async function loadCompositionContext(
   db: DbReader,
   composition: Doc<"compositions">,
   branchCache: Map<string, BranchFailureContext>,
+  readLimit = Number.POSITIVE_INFINITY,
 ): Promise<CompositionFailureContext> {
   const recipe = await db.get("recipes", composition.recipeId);
   const hypothesis = recipe
@@ -205,8 +223,14 @@ async function loadCompositionContext(
   const localListeningSessions = await getListeningSessionsForComposition(
     db,
     composition._id,
+    readLimit,
   );
-  const branch = await loadBranchFailureContext(db, composition, branchCache);
+  const branch = await loadBranchFailureContext(
+    db,
+    composition,
+    branchCache,
+    readLimit,
+  );
 
   return {
     recipe,
@@ -230,6 +254,8 @@ function makeFailureEntry(
 type FailureDerivationFilter = {
   reason?: FailureReason;
   thesisId?: Id<"theses">;
+  hypothesisIds?: ReadonlySet<Id<"hypotheses">>;
+  readLimit?: number;
 };
 
 const HYPOTHESIS_REASONS: Set<FailureReason> = new Set([
@@ -274,14 +300,22 @@ async function deriveHypothesisFailures(
   filter: FailureDerivationFilter,
 ): Promise<FailureArchiveEntry[]> {
   const entries: FailureArchiveEntry[] = [];
-  const hypotheses = filter.thesisId
-    ? await db
-        .query("hypotheses")
-        .withIndex("by_thesisId_updatedAt", (q: any) =>
-          q.eq("thesisId", filter.thesisId),
+  const hypotheses = filter.hypothesisIds
+    ? (
+        await Promise.all(
+          [...filter.hypothesisIds].map((hypothesisId) =>
+            db.get("hypotheses", hypothesisId),
+          ),
         )
-        .collect()
-    : await db.query("hypotheses").collect();
+      ).filter((row): row is Doc<"hypotheses"> => row !== null)
+    : filter.thesisId
+      ? await db
+          .query("hypotheses")
+          .withIndex("by_thesisId_updatedAt", (q: any) =>
+            q.eq("thesisId", filter.thesisId),
+          )
+          .collect()
+      : await db.query("hypotheses").collect();
 
   for (const hypothesis of hypotheses) {
     const thesis = hypothesis.thesisId
@@ -307,12 +341,33 @@ async function deriveHypothesisFailures(
   return entries;
 }
 
+async function listRecipesForFailureFilter(
+  db: DbReader,
+  filter: FailureDerivationFilter,
+): Promise<Doc<"recipes">[]> {
+  if (!filter.hypothesisIds) return db.query("recipes").collect();
+
+  return (
+    await Promise.all(
+      [...filter.hypothesisIds].map((hypothesisId) =>
+        db
+          .query("recipes")
+          .withIndex("by_hypothesisId_updatedAt", (q: any) =>
+            q.eq("hypothesisId", hypothesisId),
+          )
+          .order("desc")
+          .take(filter.readLimit ?? 10),
+      ),
+    )
+  ).flat();
+}
+
 async function deriveRecipeFailures(
   db: DbReader,
   filter: FailureDerivationFilter,
 ): Promise<FailureArchiveEntry[]> {
   const entries: FailureArchiveEntry[] = [];
-  const recipes = await db.query("recipes").collect();
+  const recipes = await listRecipesForFailureFilter(db, filter);
 
   for (const recipe of recipes) {
     if (recipe.status !== "archived") continue;
@@ -353,10 +408,31 @@ async function deriveCompositionFailures(
   const entries: FailureArchiveEntry[] = [];
   const emittedBranchRoots = new Set<string>();
   const branchCache = new Map<string, BranchFailureContext>();
-  const compositions = await db.query("compositions").collect();
+  const compositions = filter.hypothesisIds
+    ? (
+        await Promise.all(
+          (
+            await listRecipesForFailureFilter(db, filter)
+          ).map((recipe) =>
+            db
+              .query("compositions")
+              .withIndex("by_recipeId_updatedAt", (q: any) =>
+                q.eq("recipeId", recipe._id),
+              )
+              .order("desc")
+              .take(filter.readLimit ?? 10),
+          ),
+        )
+      ).flat()
+    : await db.query("compositions").collect();
 
   for (const composition of compositions) {
-    const context = await loadCompositionContext(db, composition, branchCache);
+    const context = await loadCompositionContext(
+      db,
+      composition,
+      branchCache,
+      filter.readLimit,
+    );
     if (filter.thesisId && context.thesis?._id !== filter.thesisId) continue;
 
     const localFailureStatus = getLocalFailureStatus(
@@ -480,6 +556,18 @@ async function deriveFilteredFailureArchive(
   ]);
 
   return parts.flat().toSorted((a, b) => b.createdAt - a.createdAt);
+}
+
+/** Bounded projection through the same derivation used by listArchive. */
+export async function projectFailureArchiveHitsForHypotheses(
+  db: DbReader,
+  hypotheses: Doc<"hypotheses">[],
+): Promise<Array<{ title: string; reason: FailureReason }>> {
+  const archive = await deriveFilteredFailureArchive(db, {
+    hypothesisIds: new Set(hypotheses.map(({ _id }) => _id)),
+    readLimit: 10,
+  });
+  return archive.map(({ title, reason }) => ({ title, reason }));
 }
 
 export function deriveFailureArchiveEntries(

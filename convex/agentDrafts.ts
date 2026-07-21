@@ -10,6 +10,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { assertWhyThisMatters } from "./hypotheses";
+import { projectFailureArchiveHitsForHypotheses } from "./failures";
 import {
   assertDecisionNote,
   assertDraftPending,
@@ -21,9 +22,15 @@ import { completeReviewedRunIfReady } from "./agentRuns";
 import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 import { compareDraftableCorrespondences } from "./shared/correspondenceCandidates";
 import { describeConcept } from "./shared/conceptProjection";
+import { agentReviewDraftPayloadValidator } from "./shared/draftPayloads";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
 const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
+const REVIEW_EVIDENCE_LIMIT = 20;
+const REVIEW_CORRESPONDENCE_LIMIT_PER_INDEX = 20;
+const REVIEW_HYPOTHESES_LIMIT_PER_CORRESPONDENCE = 5;
+const REVIEW_RELATED_HYPOTHESES_LIMIT = 20;
+const REVIEW_HYPOTHESIS_EDGES_PER_CONCEPT = 20;
 
 type AgentReviewDraftKind = "hypothesis_draft" | "recipe_draft";
 
@@ -187,6 +194,9 @@ export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
     // Decision + payload fields only appear once set, so legacy drafts and the
     // existing exact-equality summary tests round-trip unchanged.
     ...(draft.payload !== undefined ? { payload: draft.payload } : {}),
+    ...(draft.amendedPayload !== undefined
+      ? { amendedPayload: draft.amendedPayload }
+      : {}),
     ...(draft.decidedAt !== undefined ? { decidedAt: draft.decidedAt } : {}),
     ...(draft.decidedBy !== undefined ? { decidedBy: draft.decidedBy } : {}),
     ...(draft.decisionNote !== undefined
@@ -194,6 +204,36 @@ export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
       : {}),
     ...(draft.promotedId !== undefined ? { promotedId: draft.promotedId } : {}),
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+/** Deterministic dot-path diff for promotion provenance. Arrays are one field. */
+export function diffDraftPayloadFields(
+  original: unknown,
+  amended: unknown,
+  prefix = "",
+): string[] {
+  if (Object.is(original, amended)) return [];
+  if (Array.isArray(original) || Array.isArray(amended)) {
+    return JSON.stringify(original) === JSON.stringify(amended) ? [] : [prefix];
+  }
+  if (isRecord(original) && isRecord(amended)) {
+    return Array.from(
+      new Set([...Object.keys(original), ...Object.keys(amended)]),
+    )
+      .toSorted()
+      .flatMap((key) =>
+        diffDraftPayloadFields(
+          original[key],
+          amended[key],
+          prefix ? `${prefix}.${key}` : key,
+        ),
+      );
+  }
+  return [prefix];
 }
 
 export const createFromAgentRun = internalMutation({
@@ -339,9 +379,34 @@ async function listPendingDrafts(ctx: QueryCtx, args: { limit?: number }) {
   const rows = await ctx.db
     .query("agentReviewDrafts")
     .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
-    .order("desc")
+    .order("asc")
     .take(limit);
-  return rows.map(summarizeAgentReviewDraft);
+  return await Promise.all(
+    rows.map(async (draft) => {
+      const summary = summarizeAgentReviewDraft(draft);
+      const correspondenceId =
+        draft.kind === "hypothesis_draft" &&
+        draft.payload &&
+        "statement" in draft.payload
+          ? draft.payload.correspondenceId
+          : undefined;
+      if (!correspondenceId) return summary;
+      const correspondence = await ctx.db.get(correspondenceId);
+      if (!correspondence) return summary;
+      const [conceptA, conceptB] = await Promise.all([
+        ctx.db.get(correspondence.conceptAId),
+        ctx.db.get(correspondence.conceptBId),
+      ]);
+      if (!conceptA || !conceptB) return summary;
+      return {
+        ...summary,
+        reviewPair: {
+          conceptA: conceptA.displayName,
+          conceptB: conceptB.displayName,
+        },
+      };
+    }),
+  );
 }
 
 /** Pending-review queue for the authenticated human review UI. */
@@ -368,6 +433,193 @@ export const listPendingPublic = query({
   },
 });
 
+async function listReviewCorrespondencesForConcept(
+  ctx: Pick<QueryCtx, "db">,
+  conceptId: Id<"concepts">,
+) {
+  const [asConceptA, asConceptB] = await Promise.all([
+    ctx.db
+      .query("correspondences")
+      .withIndex("by_conceptAId", (q) => q.eq("conceptAId", conceptId))
+      .take(REVIEW_CORRESPONDENCE_LIMIT_PER_INDEX),
+    ctx.db
+      .query("correspondences")
+      .withIndex("by_conceptBId", (q) => q.eq("conceptBId", conceptId))
+      .take(REVIEW_CORRESPONDENCE_LIMIT_PER_INDEX),
+  ]);
+  return [...asConceptA, ...asConceptB];
+}
+
+function projectReviewConcept(concept: Doc<"concepts">) {
+  const description = describeConcept(concept);
+  return {
+    displayName: description.displayName,
+    domains: description.domains,
+    description: description.description,
+  };
+}
+
+async function listRelatedHypotheses(
+  ctx: Pick<QueryCtx, "db">,
+  correspondence: Doc<"correspondences">,
+) {
+  const correspondenceRows = await Promise.all([
+    listReviewCorrespondencesForConcept(ctx, correspondence.conceptAId),
+    listReviewCorrespondencesForConcept(ctx, correspondence.conceptBId),
+  ]);
+  const conceptNames = await Promise.all([
+    ctx.db.get(correspondence.conceptAId),
+    ctx.db.get(correspondence.conceptBId),
+  ]);
+  const graphEdges = (
+    await Promise.all(
+      conceptNames.flatMap((concept) =>
+        concept
+          ? [
+              ctx.db
+                .query("edges")
+                .withIndex("by_to_fromType", (q) =>
+                  q
+                    .eq("toType", "concept")
+                    .eq("toId", concept.name)
+                    .eq("fromType", "hypothesis"),
+                )
+                .take(REVIEW_HYPOTHESIS_EDGES_PER_CONCEPT),
+            ]
+          : [],
+      ),
+    )
+  ).flat();
+  const uniqueCorrespondenceIds = Array.from(
+    new Set(
+      correspondenceRows
+        .flat()
+        .map((row) => row._id)
+        .concat(correspondence._id),
+    ),
+  );
+  const rows = await Promise.all(
+    uniqueCorrespondenceIds.map((correspondenceId) =>
+      ctx.db
+        .query("hypotheses")
+        .withIndex("by_correspondenceId", (q) =>
+          q.eq("correspondenceId", correspondenceId),
+        )
+        .order("desc")
+        .take(REVIEW_HYPOTHESES_LIMIT_PER_CORRESPONDENCE),
+    ),
+  );
+  const graphHypotheses = await Promise.all(
+    graphEdges.map((edge) =>
+      ctx.db.get("hypotheses", edge.fromId as Id<"hypotheses">),
+    ),
+  );
+  const seen = new Set<string>();
+  return [...rows.flat(), ...graphHypotheses]
+    .filter(
+      (hypothesis): hypothesis is Doc<"hypotheses"> => hypothesis !== null,
+    )
+    .filter((hypothesis) => {
+      if (seen.has(String(hypothesis._id))) return false;
+      seen.add(String(hypothesis._id));
+      return true;
+    })
+    .toSorted((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, REVIEW_RELATED_HYPOTHESES_LIMIT);
+}
+
+/** One-round-trip context for the authenticated draft-review surface. */
+export const getReviewContext = query({
+  args: {
+    draftId: v.id("agentReviewDrafts"),
+    devBypassSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const draft = await ctx.db.get(args.draftId);
+    if (!draft) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+    }
+    const run = await ctx.db.get(draft.agentRunId);
+    const runTrace = {
+      runId: draft.agentRunId,
+      traceUrl: run?.traceUrl ?? null,
+      summary: run?.summary ?? draft.summary,
+    };
+    const payloadCorrespondenceId =
+      draft.kind === "hypothesis_draft" &&
+      draft.payload &&
+      "statement" in draft.payload
+        ? draft.payload.correspondenceId
+        : undefined;
+    const correspondence = payloadCorrespondenceId
+      ? await ctx.db.get(payloadCorrespondenceId)
+      : null;
+
+    if (!correspondence) {
+      return {
+        draft: summarizeAgentReviewDraft(draft),
+        correspondence: null,
+        related: { priorHypotheses: [], failures: [] },
+        runTrace,
+      };
+    }
+
+    const [conceptA, conceptB, evidenceRows, relatedHypotheses] =
+      await Promise.all([
+        ctx.db.get(correspondence.conceptAId),
+        ctx.db.get(correspondence.conceptBId),
+        Promise.all(
+          correspondence.evidence
+            .slice(0, REVIEW_EVIDENCE_LIMIT)
+            .map(async (entry) => {
+              const claim = await ctx.db.get(entry.claimId);
+              if (!claim) return null;
+              const source = await ctx.db.get(claim.sourceId);
+              return {
+                claim: {
+                  text: claim.text,
+                  evidenceLevel: claim.evidenceLevel,
+                  truthConfidence: claim.truthConfidence ?? null,
+                },
+                stance: entry.stance,
+                sourceTitle: source?.title ?? "Untitled source",
+                sourceUrl: source?.canonicalUrl ?? null,
+              };
+            }),
+        ),
+        listRelatedHypotheses(ctx, correspondence),
+      ]);
+    const failureHits = await projectFailureArchiveHitsForHypotheses(
+      ctx.db,
+      relatedHypotheses,
+    );
+    return {
+      draft: summarizeAgentReviewDraft(draft),
+      correspondence:
+        conceptA && conceptB
+          ? {
+              row: correspondence,
+              conceptA: projectReviewConcept(conceptA),
+              conceptB: projectReviewConcept(conceptB),
+              evidence: evidenceRows.filter(
+                (row): row is NonNullable<typeof row> => row !== null,
+              ),
+            }
+          : null,
+      related: {
+        priorHypotheses: relatedHypotheses.map((hypothesis) => ({
+          title: hypothesis.title,
+          status: hypothesis.status,
+          resolution: hypothesis.resolution ?? null,
+        })),
+        failures: failureHits,
+      },
+      runTrace,
+    };
+  },
+});
+
 /** Lightweight public count for navigation badges; does not expose draft content. */
 export const countPendingPublic = query({
   args: {},
@@ -375,6 +627,20 @@ export const countPendingPublic = query({
     const rows = await ctx.db
       .query("agentReviewDrafts")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "pending_review"))
+      .collect();
+    return rows.length;
+  },
+});
+
+/** Exact hypothesis count for the review queue's WIP-cap signal. */
+export const countPendingHypothesesPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query("agentReviewDrafts")
+      .withIndex("by_status_kind_updatedAt", (q) =>
+        q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
+      )
       .collect();
     return rows.length;
   },
@@ -494,6 +760,7 @@ export const approve = mutation({
   args: {
     draftId: v.id("agentReviewDrafts"),
     decisionNote: v.optional(v.string()),
+    amendedPayload: v.optional(agentReviewDraftPayloadValidator),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({
@@ -516,6 +783,20 @@ export const approve = mutation({
       });
     }
 
+    const promotionPayload = args.amendedPayload ?? draft.payload;
+    const amendmentMatchesKind =
+      (draft.kind === "hypothesis_draft" && "statement" in promotionPayload) ||
+      (draft.kind === "recipe_draft" && "parameters" in promotionPayload);
+    if (!amendmentMatchesKind) {
+      throw new ConvexError({
+        code: "INVALID_STATE",
+        message: `${draft.kind} amended payload shape mismatch`,
+        field: "amendedPayload",
+      });
+    }
+    const editedFields = args.amendedPayload
+      ? diffDraftPayloadFields(draft.payload, args.amendedPayload)
+      : [];
     const now = Date.now();
     const createdBy =
       identity.subject === "system"
@@ -526,13 +807,16 @@ export const approve = mutation({
       agentRunId: draft.agentRunId,
       agentDraftId: draft._id,
       ...(run?.traceUrl ? { traceUrl: run.traceUrl } : {}),
+      ...(editedFields.length > 0
+        ? { approvedWithEdits: true as const, editedFields }
+        : {}),
     };
 
     let promotedId: Id<"hypotheses"> | Id<"recipes">;
     let promotedKind: "hypothesis" | "recipe";
     let promotedCorrespondenceId: Id<"correspondences"> | undefined;
     if (draft.kind === "hypothesis_draft") {
-      if (!("statement" in draft.payload)) {
+      if (!("statement" in promotionPayload)) {
         throw new ConvexError({
           code: "INVALID_STATE",
           message: "hypothesis_draft payload shape mismatch",
@@ -542,7 +826,7 @@ export const approve = mutation({
       const hypothesisId = await ctx.db.insert(
         "hypotheses",
         buildHypothesisInsertFromPayload({
-          payload: draft.payload,
+          payload: promotionPayload,
           provenance,
           createdBy,
           now,
@@ -554,16 +838,16 @@ export const approve = mutation({
       });
       promotedId = hypothesisId;
       promotedKind = "hypothesis";
-      promotedCorrespondenceId = draft.payload.correspondenceId;
+      promotedCorrespondenceId = promotionPayload.correspondenceId;
     } else {
-      if (!("parameters" in draft.payload)) {
+      if (!("parameters" in promotionPayload)) {
         throw new ConvexError({
           code: "INVALID_STATE",
           message: "recipe_draft payload shape mismatch",
           field: "payload",
         });
       }
-      const hypothesisId = assertRecipeHypothesisId(draft.payload);
+      const hypothesisId = assertRecipeHypothesisId(promotionPayload);
       const hypothesis = await ctx.db.get(hypothesisId);
       if (!hypothesis) {
         throw new ConvexError({
@@ -575,7 +859,7 @@ export const approve = mutation({
       const recipeId = await ctx.db.insert(
         "recipes",
         buildRecipeInsertFromPayload({
-          payload: draft.payload,
+          payload: promotionPayload,
           provenance,
           createdBy,
           now,
@@ -590,6 +874,7 @@ export const approve = mutation({
       promotedId,
       decidedAt: now,
       decidedBy: "human",
+      ...(args.amendedPayload ? { amendedPayload: args.amendedPayload } : {}),
       ...(args.decisionNote?.trim()
         ? { decisionNote: args.decisionNote.trim() }
         : {}),

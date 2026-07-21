@@ -25,9 +25,28 @@ export interface AgentPromotionProvenance {
   agentRunId: Id<"agentRuns">;
   agentDraftId: Id<"agentReviewDrafts">;
   traceUrl?: string;
+  approvedWithEdits?: true;
+  editedFields?: string[];
 }
 
 type CreatedBy = Id<"users"> | "system";
+
+function buildAgentPromotionProvenanceFields(
+  provenance: AgentPromotionProvenance,
+) {
+  return {
+    origin: "agent" as const,
+    agentRunId: provenance.agentRunId,
+    agentDraftId: provenance.agentDraftId,
+    ...(provenance.traceUrl ? { traceUrl: provenance.traceUrl } : {}),
+    ...(provenance.approvedWithEdits
+      ? {
+          approvedWithEdits: true as const,
+          editedFields: provenance.editedFields ?? [],
+        }
+      : {}),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Transition guards
@@ -143,10 +162,7 @@ export function buildHypothesisInsertFromPayload(input: {
     ...(payload.concepts ? { concepts: payload.concepts } : {}),
     status: "draft" as const,
     visibility: "private" as const,
-    origin: "agent" as const,
-    agentRunId: provenance.agentRunId,
-    agentDraftId: provenance.agentDraftId,
-    ...(provenance.traceUrl ? { traceUrl: provenance.traceUrl } : {}),
+    ...buildAgentPromotionProvenanceFields(provenance),
     createdBy,
     createdAt: now,
     updatedAt: now,
@@ -171,10 +187,7 @@ export function buildRecipeInsertFromPayload(input: {
     ...(payload.protocol ? { protocol: payload.protocol } : {}),
     status: "draft" as const,
     visibility: "private" as const,
-    origin: "agent" as const,
-    agentRunId: provenance.agentRunId,
-    agentDraftId: provenance.agentDraftId,
-    ...(provenance.traceUrl ? { traceUrl: provenance.traceUrl } : {}),
+    ...buildAgentPromotionProvenanceFields(provenance),
     createdBy,
     createdAt: now,
     updatedAt: now,

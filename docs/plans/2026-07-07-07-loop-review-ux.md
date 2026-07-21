@@ -55,7 +55,7 @@
 }
 ```
 
-- [ ] **Step 1:** Harness test (null-correspondence legacy drafts still work); implement; codegen; commit.
+- [x] **Step 1:** Harness test (null-correspondence legacy drafts still work); implement; commit. **Operator note:** codegen was not run because this execution explicitly forbids all Convex commands; no new module was added, so `_generated/api.d.ts` did not require a hand edit.
 
 ---
 
@@ -74,8 +74,8 @@
 
 Queue list view: pending count headline ("2 drafts awaiting review — agent blocked at 3"), oldest-first, per-card one-line statement + pair so triage order is obvious.
 
-- [ ] **Step 1:** Implement list + card against `getReviewContext`.
-- [ ] **Step 2:** `vp run typecheck:web`; Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit.
+- [x] **Step 1:** Implement list + card against `getReviewContext`.
+- [ ] **Step 2:** `vp run typecheck:web`; Interceptor visual pass (desktop + one phone viewport); screenshots in PR; commit. **Operator-gated:** `vp run typecheck:web` passed locally after Panda-only codegen; Interceptor, screenshots, and the live visual gate were not run in this execution.
 
 ---
 
@@ -96,16 +96,16 @@ Queue list view: pending count headline ("2 drafts awaiting review — agent blo
 - Draft patch on approval stores `amendedPayload` beside the untouched original `payload`; promoted-row provenance gains `approvedWithEdits: true` + `editedFields: string[]` (top-level field diff) when edits exist.
 - UI: edit is an **explicit mode** entered from the decide bar (`e`), not always-editable fields. Evidence and prior work stay visible while editing. Approve becomes "Approve with edits" and the confirm dialog lists the changed fields. Scope for this pass: text-level fields (title/question/statement/why-this-matters and recipe text fields); structured recipe-parameter editing lands with the recipe-loop-closure plan (2026-07-18-13).
 
-- [ ] **Step 1:** Harness tests: amended payload promotes with edited provenance; **the draft row still
+- [x] **Step 1:** Harness tests: amended payload promotes with edited provenance; **the draft row still
   carries the untouched original `payload` after approval and the promoted row reflects the
   amendment**; invalid amendment rejected; kind mismatch rejected; legacy no-amendment approve
-  unchanged. Implement; codegen; commit.
+  unchanged. Implement; commit. **Operator note:** codegen was not run because this execution explicitly forbids all Convex commands; the shared generated API module map already references `agentDrafts.ts`.
 
 > Reviewer note (2026-07-18): this pass deliberately does NOT server-enforce a text-field-only
 > allowlist on `amendedPayload` — plan 2026-07-18-13 extends amendment to structured recipe
 > parameters through the same argument, so a hard allowlist now would be churn. The shared schema
 > validation + `editedFields` provenance is the interim guard.
-- [ ] **Step 2:** Edit-mode UI + confirm dialog; `vp run typecheck:web`; Interceptor visual pass; commit.
+- [ ] **Step 2:** Edit-mode UI + confirm dialog; `vp run typecheck:web`; Interceptor visual pass; commit. **Operator-gated:** edit mode, changed-field confirmation, and `vp run typecheck:web` are complete; Interceptor and the live visual gate were not run in this execution.
 
 ---
 
@@ -113,7 +113,7 @@ Queue list view: pending count headline ("2 drafts awaiting review — agent blo
 
 **Files:** none (operational; results in PR)
 
-- [ ] **Step 1:** With ≥2 real drafts pending (plan 06 output), Keith reviews both — one approve, one reject — **timed**. Gate: each decision under 2 minutes with no tab-switching to look things up. If he had to leave the page to decide, the card is missing information: record what, fix, re-test. At least one decision should exercise edit-before-approve.
+- [ ] **Step 1:** With ≥2 real drafts pending (plan 06 output), Keith reviews both — one approve, one reject — **timed**. Gate: each decision under 2 minutes with no tab-switching to look things up. If he had to leave the page to decide, the card is missing information: record what, fix, re-test. At least one decision should exercise edit-before-approve. **Operator-gated:** requires real pending drafts, a human reviewer, and timed live decisions; not attempted in this execution.
 
 ---
 

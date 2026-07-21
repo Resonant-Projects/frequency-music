@@ -109,11 +109,14 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(hypothesis?.traceUrl).toBe("https://smith.langchain.com/r/test");
     expect(hypothesis?.hypothesis).toBe(hypothesisPayload.statement);
     expect(hypothesis?.correspondenceId).toBe(correspondenceId);
+    expect(hypothesis?.approvedWithEdits).toBeUndefined();
+    expect(hypothesis?.editedFields).toBeUndefined();
 
     const draft = await t.run((ctx) => ctx.db.get(draftId));
     expect(draft?.status).toBe("approved");
     expect(draft?.promotedId).toBe(result.promotedId);
     expect(draft?.decidedBy).toBe("human");
+    expect(draft?.amendedPayload).toBeUndefined();
     const run = await t.run((ctx) => ctx.db.get(agentRunId));
     expect(run?.status).toBe("completed");
 
@@ -178,6 +181,83 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(recipe?.origin).toBe("agent");
     expect(recipe?.agentRunId).toBe(agentRunId);
     expect(recipe?.agentDraftId).toBe(draftId);
+  });
+
+  test("amended payload promotes with edit provenance and preserves the original", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const originalPayload = { ...hypothesisPayload };
+    const amendedPayload = {
+      ...originalPayload,
+      title: "Amended polygon-angle study",
+      statement: "Nonagon angles map to distinct 9-EDO roughness bands",
+    };
+    const { draftId } = await seedRunAndDraft(
+      t,
+      originalPayload,
+      "hypothesis_draft",
+    );
+
+    const result = await asSystem.mutation(api.agentDrafts.approve, {
+      draftId,
+      amendedPayload,
+    });
+
+    const promoted = await t.run((ctx) =>
+      ctx.db.get(result.promotedId as Id<"hypotheses">),
+    );
+    expect(promoted?.title).toBe(amendedPayload.title);
+    expect(promoted?.hypothesis).toBe(amendedPayload.statement);
+    expect(promoted?.approvedWithEdits).toBe(true);
+    expect(promoted?.editedFields).toEqual(["statement", "title"]);
+
+    const decidedDraft = await t.run((ctx) => ctx.db.get(draftId));
+    expect(decidedDraft?.payload).toEqual(originalPayload);
+    expect(decidedDraft?.amendedPayload).toEqual(amendedPayload);
+  });
+
+  test("shared whole-payload validation rejects an invalid amendment", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { draftId } = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+
+    await expect(
+      asSystem.mutation(api.agentDrafts.approve, {
+        draftId,
+        amendedPayload: { ...hypothesisPayload, whyThisMatters: "" },
+      }),
+    ).rejects.toThrow();
+
+    const draft = await t.run((ctx) => ctx.db.get(draftId));
+    expect(draft?.status).toBe("pending_review");
+  });
+
+  test("kind-changing amendment rejects with INVALID_STATE", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { draftId } = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+
+    await expect(
+      asSystem.mutation(api.agentDrafts.approve, {
+        draftId,
+        amendedPayload: {
+          title: "Wrong payload kind",
+          parameters: [],
+          whyThisMatters: "This must not change a hypothesis into a recipe.",
+        },
+      }),
+    ).rejects.toThrow(/INVALID_STATE|shape mismatch/);
+
+    const draft = await t.run((ctx) => ctx.db.get(draftId));
+    expect(draft?.status).toBe("pending_review");
   });
 
   test("payload-less draft is acknowledge-only: approve throws INVALID_STATE", async () => {
@@ -258,13 +338,257 @@ describe("agentDrafts pending hypothesis WIP cap", () => {
     await expect(
       t.query(internal.agentDrafts.countPending, { kind: "recipe_draft" }),
     ).resolves.toBe(1);
+    await expect(
+      asSystem.query(api.agentDrafts.countPendingHypothesesPublic, {}),
+    ).resolves.toBe(3);
 
     await asSystem.mutation(api.agentDrafts.approve, {
       draftId: first.draftId,
     });
     await expect(
+      asSystem.query(api.agentDrafts.countPendingHypothesesPublic, {}),
+    ).resolves.toBe(2);
+    await expect(
       createDraft("hypothesis_draft", "4-reopened"),
     ).resolves.toMatchObject({ status: "pending_review" });
+  });
+});
+
+describe("agentDrafts.getReviewContext", () => {
+  test("hydrates the correspondence story and bounded related work", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const correspondenceId = await t.run(async (ctx) => {
+      const sourceId = await ctx.db.insert("sources", {
+        type: "url",
+        title: "Auditory geometry study",
+        canonicalUrl: "https://example.test/auditory-geometry",
+        status: "extracted",
+        dedupeKey: "auditory-geometry",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const extractionId = await ctx.db.insert("extractions", {
+        sourceId,
+        model: "test-model",
+        promptVersion: "test",
+        inputHash: "review-context",
+        summary: "Review-context evidence.",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const claimId = await ctx.db.insert("claims", {
+        extractionId,
+        sourceId,
+        ordinal: 0,
+        text: "Ninefold geometry produces a measurable tuning relation.",
+        evidenceLevel: "peer_reviewed",
+        truthConfidence: "high",
+        citations: [],
+        status: "active",
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const conceptAId = await ctx.db.insert("concepts", {
+        name: "ninefold geometry",
+        displayName: "Ninefold geometry",
+        description: "Geometry organized around ninefold symmetry.",
+        aliases: [],
+        domain: "geometry",
+        domains: ["geometry"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const conceptBId = await ctx.db.insert("concepts", {
+        name: "nine edo",
+        displayName: "9-EDO",
+        description: "Equal division of the octave into nine steps.",
+        aliases: [],
+        domain: "microtuning",
+        domains: ["microtuning", "psychoacoustics"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const seededCorrespondenceId = await ctx.db.insert("correspondences", {
+        conceptAId,
+        conceptBId,
+        pairKey: `${conceptAId}:${conceptBId}`,
+        statement: "Ninefold geometry may organize audible 9-EDO relations.",
+        rationaleMd:
+          "The shared ninefold structure motivates a listening test.",
+        evidence: [
+          {
+            claimId,
+            stance: "supports",
+            addedBy: "human",
+            addedAt: 1,
+          },
+        ],
+        status: "evidenced",
+        similarityScore: 0.82,
+        noveltyScore: 0.71,
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const priorHypothesisId = await ctx.db.insert("hypotheses", {
+        title: "Earlier ninefold listening test",
+        question: "Did the first test work?",
+        hypothesis: "The first test predicts a clear preference.",
+        rationaleMd: "Seeded prior work.",
+        correspondenceId: seededCorrespondenceId,
+        sourceIds: [],
+        status: "retired",
+        resolution: "contradicted",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 2,
+        updatedAt: 2,
+      });
+      await ctx.db.insert("recipes", {
+        hypothesisId: priorHypothesisId,
+        title: "Archived ninefold recipe",
+        whyThisMatters: "Records an earlier low-yield route.",
+        bodyMd: "Earlier protocol.",
+        parameters: [],
+        dawChecklist: [],
+        status: "archived",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 2,
+        updatedAt: 2,
+      });
+      const graphLinkedHypothesisId = await ctx.db.insert("hypotheses", {
+        title: "Graph-linked geometry test",
+        question: "Does geometry alone predict the result?",
+        hypothesis: "Ninefold geometry changes interval grouping.",
+        rationaleMd: "Linked directly through the concept graph.",
+        sourceIds: [],
+        concepts: ["ninefold geometry"],
+        status: "active",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 3,
+        updatedAt: 3,
+      });
+      await ctx.db.insert("edges", {
+        fromType: "hypothesis",
+        fromId: graphLinkedHypothesisId,
+        toType: "concept",
+        toId: "ninefold geometry",
+        relationship: "tests",
+        autoGenerated: true,
+        createdAt: 3,
+        createdBy: "system",
+      });
+      return seededCorrespondenceId;
+    });
+    const seeded = await seedRunAndDraft(
+      t,
+      { ...hypothesisPayload, correspondenceId },
+      "hypothesis_draft",
+    );
+    await t.run((ctx) =>
+      ctx.db.patch(seeded.agentRunId, {
+        summary: "Drafted from the strongest evidenced correspondence.",
+      }),
+    );
+
+    const result = await asSystem.query(api.agentDrafts.getReviewContext, {
+      draftId: seeded.draftId,
+    });
+
+    expect(result.draft._id).toBe(seeded.draftId);
+    expect(result.correspondence?.row._id).toBe(correspondenceId);
+    expect(result.correspondence?.conceptA).toEqual({
+      displayName: "Ninefold geometry",
+      description: "Geometry organized around ninefold symmetry.",
+      domains: ["geometry"],
+    });
+    expect(result.correspondence?.evidence).toEqual([
+      {
+        claim: {
+          text: "Ninefold geometry produces a measurable tuning relation.",
+          evidenceLevel: "peer_reviewed",
+          truthConfidence: "high",
+        },
+        stance: "supports",
+        sourceTitle: "Auditory geometry study",
+        sourceUrl: "https://example.test/auditory-geometry",
+      },
+    ]);
+    expect(result.related.priorHypotheses).toEqual([
+      {
+        title: "Graph-linked geometry test",
+        status: "active",
+        resolution: null,
+      },
+      {
+        title: "Earlier ninefold listening test",
+        status: "retired",
+        resolution: "contradicted",
+      },
+    ]);
+    expect(result.related.failures).toEqual([
+      {
+        title: "Earlier ninefold listening test",
+        reason: "contradicted_hypothesis",
+      },
+      {
+        title: "Earlier ninefold listening test",
+        reason: "retired_hypothesis",
+      },
+      {
+        title: "Archived ninefold recipe",
+        reason: "archived_recipe",
+      },
+    ]);
+    expect(result.runTrace).toMatchObject({
+      traceUrl: "https://smith.langchain.com/r/test",
+      summary: "Drafted from the strongest evidenced correspondence.",
+    });
+    const queue = await asSystem.query(api.agentDrafts.listPending, {
+      limit: 10,
+    });
+    expect(queue.find((draft) => draft._id === seeded.draftId)).toMatchObject({
+      reviewPair: {
+        conceptA: "Ninefold geometry",
+        conceptB: "9-EDO",
+      },
+    });
+  });
+
+  test("legacy payload-less and correspondence-less drafts return null context", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const payloadless = await seedRunAndDraft(t, undefined, "hypothesis_draft");
+    const correspondenceLess = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+
+    for (const draftId of [payloadless.draftId, correspondenceLess.draftId]) {
+      const result = await asSystem.query(api.agentDrafts.getReviewContext, {
+        draftId,
+      });
+      expect(result.correspondence).toBeNull();
+      expect(result.related).toEqual({ priorHypotheses: [], failures: [] });
+      expect(result.runTrace.runId).toBeDefined();
+    }
   });
 });
 
