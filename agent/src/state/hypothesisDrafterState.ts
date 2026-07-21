@@ -75,6 +75,12 @@ export const HypothesisDrafterAnnotation = Annotation.Root({
     value: (_left, right) => right,
     default: () => false,
   }),
+  // True only when markAgentRunNeedsReview succeeded; a written draft whose
+  // mark failed must still be finalized or the run wedges non-terminal.
+  needsReviewMarked: Annotation<boolean>({
+    value: (_left, right) => right,
+    default: () => false,
+  }),
   draftId: Annotation<string | undefined>,
   auditEvents: Annotation<AgentAuditEvent[]>({
     value: (left, right) => left.concat(right),
