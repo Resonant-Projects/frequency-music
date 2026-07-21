@@ -47,6 +47,11 @@ type DraftOutput = z.infer<typeof draftOutputSchema>;
 type DraftJudge = StructuredJudge<DraftOutput>;
 type SelfCheckJudge = StructuredJudge<z.infer<typeof selfCheckOutputSchema>>;
 
+const SOURCE_CONTEXT_LIMIT = 12;
+const PRIOR_HYPOTHESIS_CONTEXT_LIMIT = 10;
+const FAILURE_ARCHIVE_CONTEXT_LIMIT = 10;
+const CONTEXT_ITEM_MAX_CHARS = 1_500;
+
 function asRecords(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value)
     ? value.filter(
@@ -67,6 +72,19 @@ function includesConcept(value: Record<string, unknown>, names: string[]) {
     .join(" ")
     .toLowerCase();
   return names.some((name) => searchable.includes(name));
+}
+
+function boundContextRecords(
+  records: Record<string, unknown>[],
+  limit: number,
+) {
+  return records.slice(0, limit).map((record) => {
+    const serialized = JSON.stringify(record);
+    if (serialized.length <= CONTEXT_ITEM_MAX_CHARS) return record;
+    return {
+      excerpt: `${serialized.slice(0, CONTEXT_ITEM_MAX_CHARS - 1)}…`,
+    };
+  });
 }
 
 export function createCheckCapacityNode(callTool: ToolCaller = callConvex) {
@@ -178,21 +196,32 @@ export function createGatherContextNode(callTool: ToolCaller = callConvex) {
         callTool("listRecentHypotheses", { limit: 50 }),
         callTool("listFailureArchive", { limit: 50 }),
       ]);
-    const sources = Array.from(
-      new Map(
-        [...asRecords(sourcesA), ...asRecords(sourcesB)].map((source) => [
-          String(source._id ?? JSON.stringify(source)),
-          source,
-        ]),
-      ).values(),
+    const sources = boundContextRecords(
+      Array.from(
+        new Map(
+          [...asRecords(sourcesA), ...asRecords(sourcesB)].map((source) => [
+            String(source._id ?? JSON.stringify(source)),
+            source,
+          ]),
+        ).values(),
+      ),
+      SOURCE_CONTEXT_LIMIT,
+    );
+    const priorHypotheses = boundContextRecords(
+      asRecords(recentHypotheses).filter((hypothesis) =>
+        includesConcept(hypothesis, names),
+      ),
+      PRIOR_HYPOTHESIS_CONTEXT_LIMIT,
+    );
+    const boundedFailureArchive = boundContextRecords(
+      asRecords(failureArchive),
+      FAILURE_ARCHIVE_CONTEXT_LIMIT,
     );
     const context: HypothesisDraftContext = {
       evidenceClaims: state.target.evidenceClaims,
       sources,
-      priorHypotheses: asRecords(recentHypotheses).filter((hypothesis) =>
-        includesConcept(hypothesis, names),
-      ),
-      failureArchive: asRecords(failureArchive),
+      priorHypotheses,
+      failureArchive: boundedFailureArchive,
     };
     const auditEvents = await appendRemoteAuditEvent(
       callTool,
@@ -463,18 +492,37 @@ export function createWriteDraftNode(callTool: ToolCaller = callConvex) {
       if (typeof persisted.draftId !== "string") {
         throw new Error("createAgentReviewDraft returned no draftId");
       }
-      await callTool("markAgentRunNeedsReview", {
-        runId: state.agentRunId,
-        summary: `Hypothesis draft ${persisted.draftId} awaits human review`,
-        reviewDraft: {
-          kind: reviewDraft.kind,
-          title: reviewDraft.title,
-          summary: reviewDraft.summary,
-          candidateIds: reviewDraft.candidateIds,
-          needsReview: true,
-        },
-      });
-      return { draftWritten: true, draftId: persisted.draftId };
+      try {
+        await callTool("markAgentRunNeedsReview", {
+          runId: state.agentRunId,
+          summary: `Hypothesis draft ${persisted.draftId} awaits human review`,
+          reviewDraft: {
+            kind: reviewDraft.kind,
+            title: reviewDraft.title,
+            summary: reviewDraft.summary,
+            candidateIds: reviewDraft.candidateIds,
+            needsReview: true,
+          },
+        });
+        return { draftWritten: true, draftId: persisted.draftId };
+      } catch (error) {
+        const auditEvents = await appendRemoteAuditEvent(
+          callTool,
+          state.agentRunId,
+          "status",
+          "Draft persisted but run could not be marked needs_review",
+          {
+            draftId: persisted.draftId,
+            correspondenceId: state.target.correspondenceId,
+            message: redactError(error),
+          },
+        );
+        return {
+          draftWritten: true,
+          draftId: persisted.draftId,
+          auditEvents,
+        };
+      }
     } catch (error) {
       const message = redactError(error);
       if (message.includes("DraftCapExceeded")) {

@@ -158,6 +158,46 @@ describe("hypothesis drafter context", () => {
       limit: 50,
     });
   });
+
+  test("bounds context row counts and serialized item text", async () => {
+    const longText = "x".repeat(5_000);
+    const callTool = vi.fn(
+      async (name: string, args: Record<string, unknown>) => {
+        if (name === "listRecentHypotheses") {
+          return Array.from({ length: 25 }, (_, index) => ({
+            title: `Modal spacing hypothesis ${index}`,
+            body: longText,
+          }));
+        }
+        if (name === "listFailureArchive") {
+          return Array.from({ length: 25 }, (_, index) => ({
+            title: `Failure ${index}`,
+            summary: longText,
+          }));
+        }
+        if (name === "searchSourcesByConcept") {
+          return Array.from({ length: 20 }, (_, index) => ({
+            _id: `${String(args.conceptName)}-${String(index)}`,
+            fullText: longText,
+          }));
+        }
+        return { ok: true };
+      },
+    );
+
+    const result = await createGatherContextNode(callTool)({ target });
+
+    expect(result.context?.sources).toHaveLength(12);
+    expect(result.context?.priorHypotheses).toHaveLength(10);
+    expect(result.context?.failureArchive).toHaveLength(10);
+    for (const entry of [
+      ...(result.context?.sources ?? []),
+      ...(result.context?.priorHypotheses ?? []),
+      ...(result.context?.failureArchive ?? []),
+    ]) {
+      expect(JSON.stringify(entry).length).toBeLessThan(1_600);
+    }
+  });
 });
 
 describe("hypothesis drafter self-check", () => {
@@ -226,6 +266,49 @@ describe("hypothesis drafter self-check", () => {
 });
 
 describe("hypothesis drafter write guard", () => {
+  test("keeps a persisted draft and audits when needs_review marking fails", async () => {
+    const calls: string[] = [];
+    const callTool = vi.fn(async (name: string) => {
+      calls.push(name);
+      if (name === "createAgentReviewDraft") return { draftId: "draft-1" };
+      if (name === "markAgentRunNeedsReview") {
+        throw new Error("status endpoint unavailable");
+      }
+      return { ok: true };
+    });
+    const draft = buildReviewDraft(target, {
+      title: "Modal spacing roughness micro-study",
+      question: "Does reducing modal spacing increase perceived roughness?",
+      statement:
+        "A 20% reduction in modal spacing increases roughness ratings versus baseline.",
+      rationale: "Claim claim-1 reports the same directional relationship.",
+      whyThisMatters:
+        "It turns the correspondence into one controllable studio variable.",
+    }).payload;
+
+    const result = await createWriteDraftNode(callTool)({
+      agentRunId: "run-write",
+      target,
+      draft,
+    });
+
+    expect(result).toMatchObject({
+      draftWritten: true,
+      draftId: "draft-1",
+      auditEvents: [
+        expect.objectContaining({
+          kind: "status",
+          message: "Draft persisted but run could not be marked needs_review",
+        }),
+      ],
+    });
+    expect(calls).toEqual([
+      "createAgentReviewDraft",
+      "markAgentRunNeedsReview",
+      "appendAgentRunEvent",
+    ]);
+  });
+
   test("completes cleanly when a concurrent run claims the target first", async () => {
     const callTool = vi.fn(async (name: string) => {
       if (name === "createAgentReviewDraft") {

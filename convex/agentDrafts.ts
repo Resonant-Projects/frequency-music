@@ -27,17 +27,23 @@ const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
 
 type AgentReviewDraftKind = "hypothesis_draft" | "recipe_draft";
 
-async function countPendingDraftsByKind(
+async function listPendingDraftsByKind(
   ctx: Pick<QueryCtx, "db">,
   kind: AgentReviewDraftKind,
 ) {
-  const rows = await ctx.db
+  return await ctx.db
     .query("agentReviewDrafts")
     .withIndex("by_status_kind_updatedAt", (q) =>
       q.eq("status", "pending_review").eq("kind", kind),
     )
     .collect();
-  return rows.length;
+}
+
+async function countPendingDraftsByKind(
+  ctx: Pick<QueryCtx, "db">,
+  kind: AgentReviewDraftKind,
+) {
+  return (await listPendingDraftsByKind(ctx, kind)).length;
 }
 
 function redactOperationalSecrets(value: string) {
@@ -207,48 +213,61 @@ export const createFromAgentRun = internalMutation({
     if (!row) throw new Error("Invalid human-review draft");
     if (
       row.kind === "hypothesis_draft" &&
-      (await countPendingDraftsByKind(ctx, row.kind)) >= PENDING_DRAFT_CAP
-    ) {
-      throw new ConvexError({
-        code: "DraftCapExceeded",
-        message: `Pending hypothesis drafts are capped at ${PENDING_DRAFT_CAP}`,
-      });
-    }
-    if (
-      row.kind === "hypothesis_draft" &&
       "payload" in row &&
       row.payload &&
       "statement" in row.payload &&
       row.payload.correspondenceId
     ) {
       const correspondenceId = row.payload.correspondenceId;
-      const [existingHypothesis, pendingDrafts] = await Promise.all([
-        ctx.db
-          .query("hypotheses")
-          .withIndex("by_correspondenceId", (q) =>
-            q.eq("correspondenceId", correspondenceId),
-          )
-          .first(),
-        ctx.db
-          .query("agentReviewDrafts")
-          .withIndex("by_status_kind_updatedAt", (q) =>
-            q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
-          )
-          .collect(),
-      ]);
-      const pendingTarget = pendingDrafts.some(
+      const pendingDrafts = await listPendingDraftsByKind(ctx, row.kind);
+      const pendingTarget = pendingDrafts.find(
         (draft) =>
           draft.payload &&
           "statement" in draft.payload &&
           draft.payload.correspondenceId === correspondenceId,
       );
-      if (existingHypothesis || pendingTarget) {
+      if (pendingTarget?.agentRunId === args.agentRunId) {
+        return {
+          draftId: pendingTarget._id,
+          agentRunId: args.agentRunId,
+          status: pendingTarget.status,
+          updatedAt: pendingTarget.updatedAt,
+        };
+      }
+      if (pendingTarget) {
         throw new ConvexError({
           code: "DraftTargetUnavailable",
           message:
             "Correspondence already has a hypothesis or pending hypothesis draft",
         });
       }
+      if (pendingDrafts.length >= PENDING_DRAFT_CAP) {
+        throw new ConvexError({
+          code: "DraftCapExceeded",
+          message: `Pending hypothesis drafts are capped at ${PENDING_DRAFT_CAP}`,
+        });
+      }
+      const existingHypothesis = await ctx.db
+        .query("hypotheses")
+        .withIndex("by_correspondenceId", (q) =>
+          q.eq("correspondenceId", correspondenceId),
+        )
+        .first();
+      if (existingHypothesis) {
+        throw new ConvexError({
+          code: "DraftTargetUnavailable",
+          message:
+            "Correspondence already has a hypothesis or pending hypothesis draft",
+        });
+      }
+    } else if (
+      row.kind === "hypothesis_draft" &&
+      (await countPendingDraftsByKind(ctx, row.kind)) >= PENDING_DRAFT_CAP
+    ) {
+      throw new ConvexError({
+        code: "DraftCapExceeded",
+        message: `Pending hypothesis drafts are capped at ${PENDING_DRAFT_CAP}`,
+      });
     }
 
     const draftId = await ctx.db.insert("agentReviewDrafts", row);
@@ -377,7 +396,7 @@ export const countPending = internalQuery({
 export const listDraftableCorrespondences = internalQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 20), 20));
+    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 20), 100));
     const pendingDrafts = await ctx.db
       .query("agentReviewDrafts")
       .withIndex("by_status_kind_updatedAt", (q) =>
@@ -410,17 +429,27 @@ export const listDraftableCorrespondences = internalQuery({
     const ranked = [...evidenced, ...conjectured]
       .filter((row) => row.evidence.length > 0)
       .toSorted(compareDraftableCorrespondences);
+    const hypothesisMembership = await Promise.all(
+      ranked.map(async (row) => ({
+        correspondenceId: String(row._id),
+        hypothesis: await ctx.db
+          .query("hypotheses")
+          .withIndex("by_correspondenceId", (q) =>
+            q.eq("correspondenceId", row._id),
+          )
+          .first(),
+      })),
+    );
+    const hypothesizedCorrespondenceIds = new Set(
+      hypothesisMembership
+        .filter(({ hypothesis }) => hypothesis !== null)
+        .map(({ correspondenceId }) => correspondenceId),
+    );
     const selected = [];
     for (const row of ranked) {
       if (selected.length >= limit) break;
       if (pendingCorrespondenceIds.has(String(row._id))) continue;
-      const existingHypothesis = await ctx.db
-        .query("hypotheses")
-        .withIndex("by_correspondenceId", (q) =>
-          q.eq("correspondenceId", row._id),
-        )
-        .first();
-      if (existingHypothesis) continue;
+      if (hypothesizedCorrespondenceIds.has(String(row._id))) continue;
       const [conceptA, conceptB, evidenceClaims] = await Promise.all([
         ctx.db.get("concepts", row.conceptAId),
         ctx.db.get("concepts", row.conceptBId),

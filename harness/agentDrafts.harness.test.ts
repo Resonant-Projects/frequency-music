@@ -275,6 +275,7 @@ describe("agentDrafts draftable correspondence read", () => {
       agentRunId: seededRunId,
       eligibleId,
       pendingId: seededPendingId,
+      pendingDraftId,
     } = await t.run(async (ctx) => {
       const sourceId = await ctx.db.insert("sources", {
         type: "url",
@@ -380,12 +381,12 @@ describe("agentDrafts draftable correspondence read", () => {
       });
       const agentRunId = await ctx.db.insert("agentRuns", {
         graphName: "hypothesis-drafter",
-        status: "needs_review",
+        status: "running",
         input: null,
         createdAt: 1,
         updatedAt: 1,
       });
-      await ctx.db.insert("agentReviewDrafts", {
+      const createdPendingDraftId = await ctx.db.insert("agentReviewDrafts", {
         agentRunId,
         graphName: "hypothesis-drafter",
         kind: "hypothesis_draft",
@@ -398,7 +399,12 @@ describe("agentDrafts draftable correspondence read", () => {
         createdAt: 1,
         updatedAt: 1,
       });
-      return { agentRunId, eligibleId: draftableId, pendingId };
+      return {
+        agentRunId,
+        eligibleId: draftableId,
+        pendingId,
+        pendingDraftId: createdPendingDraftId,
+      };
     });
 
     const rows = await t.query(
@@ -424,7 +430,126 @@ describe("agentDrafts draftable correspondence read", () => {
           },
         },
       }),
+    ).resolves.toMatchObject({ draftId: pendingDraftId });
+
+    const competingRunId = await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "hypothesis-drafter",
+        status: "running",
+        input: null,
+        createdAt: 2,
+        updatedAt: 2,
+      }),
+    );
+    await expect(
+      t.mutation(internal.agentDrafts.createFromAgentRun, {
+        agentRunId: competingRunId,
+        draft: {
+          kind: "hypothesis_draft",
+          title: "Duplicate target",
+          summary: "Must not enter the review queue.",
+          candidateIds: [seededPendingId],
+          needsReview: true,
+          payload: {
+            ...hypothesisPayload,
+            correspondenceId: seededPendingId,
+          },
+        },
+      }),
     ).rejects.toThrow(/DraftTargetUnavailable/);
+  });
+
+  test("honors requested limits above the default of twenty", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const sourceId = await ctx.db.insert("sources", {
+        type: "url",
+        title: "Limit study",
+        status: "extracted",
+        dedupeKey: "limit-study",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const extractionId = await ctx.db.insert("extractions", {
+        sourceId,
+        model: "test-model",
+        promptVersion: "test",
+        inputHash: "limit-input",
+        summary: "Limit evidence.",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const claimId = await ctx.db.insert("claims", {
+        extractionId,
+        sourceId,
+        ordinal: 0,
+        text: "Limit evidence claim.",
+        evidenceLevel: "peer_reviewed",
+        citations: [],
+        status: "active",
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const conceptAId = await ctx.db.insert("concepts", {
+        name: "limit concept a",
+        displayName: "Limit concept A",
+        aliases: [],
+        domain: "cymatics",
+        domains: ["cymatics"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const conceptBId = await ctx.db.insert("concepts", {
+        name: "limit concept b",
+        displayName: "Limit concept B",
+        aliases: [],
+        domain: "psychoacoustics",
+        domains: ["psychoacoustics"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      for (let index = 0; index < 25; index += 1) {
+        await ctx.db.insert("correspondences", {
+          conceptAId,
+          conceptBId,
+          pairKey: `${conceptAId}:${conceptBId}:${String(index)}`,
+          statement: `Correspondence ${String(index)}`,
+          rationaleMd: "Harness rationale.",
+          evidence: [
+            {
+              claimId,
+              stance: "supports",
+              addedBy: "human",
+              addedAt: 1,
+            },
+          ],
+          status: "evidenced",
+          createdBy: "system",
+          createdAt: index + 1,
+          updatedAt: index + 1,
+        });
+      }
+    });
+
+    await expect(
+      t.query(internal.agentDrafts.listDraftableCorrespondences, {}),
+    ).resolves.toHaveLength(20);
+    await expect(
+      t.query(internal.agentDrafts.listDraftableCorrespondences, { limit: 25 }),
+    ).resolves.toHaveLength(25);
   });
 });
 
