@@ -632,6 +632,20 @@ export const countPendingPublic = query({
   },
 });
 
+/** Exact hypothesis count for the review queue's WIP-cap signal. */
+export const countPendingHypothesesPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query("agentReviewDrafts")
+      .withIndex("by_status_kind_updatedAt", (q) =>
+        q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
+      )
+      .collect();
+    return rows.length;
+  },
+});
+
 /** Kind-specific pending count used by WIP-capped agent graphs. */
 export const countPending = internalQuery({
   args: {

@@ -338,10 +338,16 @@ describe("agentDrafts pending hypothesis WIP cap", () => {
     await expect(
       t.query(internal.agentDrafts.countPending, { kind: "recipe_draft" }),
     ).resolves.toBe(1);
+    await expect(
+      asSystem.query(api.agentDrafts.countPendingHypothesesPublic, {}),
+    ).resolves.toBe(3);
 
     await asSystem.mutation(api.agentDrafts.approve, {
       draftId: first.draftId,
     });
+    await expect(
+      asSystem.query(api.agentDrafts.countPendingHypothesesPublic, {}),
+    ).resolves.toBe(2);
     await expect(
       createDraft("hypothesis_draft", "4-reopened"),
     ).resolves.toMatchObject({ status: "pending_review" });

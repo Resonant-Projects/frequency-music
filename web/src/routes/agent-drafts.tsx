@@ -526,6 +526,9 @@ export function AgentDraftsPage() {
   const pendingCount = createQueryWithStatus(
     api.agentDrafts.countPendingPublic,
   );
+  const pendingHypothesisCount = createQueryWithStatus(
+    api.agentDrafts.countPendingHypothesesPublic,
+  );
   const [activeDraftId, setActiveDraftId] =
     createSignal<Id<"agentReviewDrafts"> | null>(null);
   const [lastPromotion, setLastPromotion] = createSignal<Promotion | null>(
@@ -535,7 +538,9 @@ export function AgentDraftsPage() {
     () => (pending.data() ?? []) as PersistedReviewDraft[],
   );
   const hypothesisPendingCount = createMemo(
-    () => rows().filter((draft) => draft.kind === "hypothesis_draft").length,
+    () =>
+      pendingHypothesisCount.data() ??
+      rows().filter((draft) => draft.kind === "hypothesis_draft").length,
   );
   const context = createQueryWithStatus(
     api.agentDrafts.getReviewContext,
