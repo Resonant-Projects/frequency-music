@@ -20,6 +20,7 @@ import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
 import { DEFAULT_MODEL } from "./llm";
 import {
+  loopReportValidator,
   recommendedActionValidator,
   studioPromptVariantsValidator,
 } from "./schema";
@@ -176,6 +177,7 @@ export const create = internalMutation({
     referencedFailureKeys: v.optional(v.array(v.string())),
     studioPrompts: studioPromptVariantsValidator,
     recommendedActions: v.array(recommendedActionValidator),
+    loopReport: v.optional(loopReportValidator),
     todo: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {

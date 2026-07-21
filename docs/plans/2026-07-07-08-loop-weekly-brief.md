@@ -63,7 +63,7 @@ loopReport: v.optional(v.object({
 })),
 ```
 
-- [ ] **Step 1:** Schema + mirror; codegen; commit.
+- [x] **Step 1:** Schema + mirror; codegen intentionally not run per operator constraint; commit.
 
 ---
 
