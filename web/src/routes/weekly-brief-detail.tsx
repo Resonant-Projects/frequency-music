@@ -4,6 +4,7 @@ import {
   createMemo,
   createSignal,
   For,
+  on,
   onCleanup,
   Show,
 } from "solid-js";
@@ -194,6 +195,22 @@ export function WeeklyBriefDetailPage() {
     new Set(),
   );
 
+  createEffect(
+    on(
+      () => params().briefId,
+      () => {
+        setEditMode(false);
+        setSavingEdit(false);
+        setBodyMd("");
+        setTodoText("");
+        setTenMinuteMd("");
+        setThirtyMinuteMd("");
+        setNinetyMinuteMd("");
+        setNotice(null);
+      },
+    ),
+  );
+
   const editedFields = createMemo(() => {
     const row = brief();
     if (!row || !editMode()) return [];
@@ -235,19 +252,24 @@ export function WeeklyBriefDetailPage() {
 
   async function handleSaveEdit() {
     const row = brief();
-    if (!row || editedFields().length === 0) return;
+    const fields = editedFields();
+    if (!row || fields.length === 0) return;
     setSavingEdit(true);
     setNotice(null);
     try {
       await editBrief({
         id: row._id,
-        bodyMd: bodyMd(),
-        todo: parseTodo(todoText()),
-        studioPrompts: {
-          tenMinuteMd: tenMinuteMd(),
-          thirtyMinuteMd: thirtyMinuteMd(),
-          ninetyMinuteMd: ninetyMinuteMd(),
-        },
+        ...(fields.includes("bodyMd") ? { bodyMd: bodyMd() } : {}),
+        ...(fields.includes("todo") ? { todo: parseTodo(todoText()) } : {}),
+        ...(fields.includes("studioPrompts")
+          ? {
+              studioPrompts: {
+                tenMinuteMd: tenMinuteMd(),
+                thirtyMinuteMd: thirtyMinuteMd(),
+                ninetyMinuteMd: ninetyMinuteMd(),
+              },
+            }
+          : {}),
       });
       setEditMode(false);
       setNotice("Weekly brief changes saved with edit provenance.");

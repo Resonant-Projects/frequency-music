@@ -1,5 +1,5 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, on, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -37,6 +37,18 @@ export function CorrespondenceDetailPage() {
   const [statusReason, setStatusReason] = createSignal("");
   const [saving, setSaving] = createSignal(false);
   const [notice, setNotice] = createSignal<string | null>(null);
+
+  createEffect(
+    on(
+      () => params().correspondenceId,
+      () => {
+        setReviewOpen(false);
+        setNextStatus("evidenced");
+        setStatusReason("");
+        setNotice(null);
+      },
+    ),
+  );
 
   function beginReview(current: CorrespondenceStatus) {
     setNextStatus(current === "conjectured" ? "evidenced" : current);
