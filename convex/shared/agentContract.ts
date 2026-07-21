@@ -5,6 +5,9 @@ import { AGENT_RUN_STATUSES, type AgentRunStatus } from "./statuses";
 export { AGENT_RUN_STATUSES, type AgentRunStatus };
 
 export const PENDING_DRAFT_CAP = 3;
+export const DAY_MS = 24 * 60 * 60 * 1000;
+export const LISTENING_DEBT_AFTER_MS = 14 * DAY_MS;
+export const MAX_FEED_ENABLE_STATE_IDS = 20;
 
 export const AGENT_RUN_EVENT_KINDS = [
   "tool_call",

@@ -18,6 +18,7 @@ import { AgentRunDetailPage } from "./routes/agent-run-detail";
 import { AgentRunsPage } from "./routes/agent-runs";
 import { CompositionDetailPage } from "./routes/composition-detail";
 import { CompositionsPage } from "./routes/compositions";
+import { CorrespondenceDetailPage } from "./routes/correspondence-detail";
 import { DisplayPage } from "./routes/display";
 import { EditorialDetailPage } from "./routes/editorial-detail";
 import { EditorialPage } from "./routes/editorial";
@@ -244,6 +245,12 @@ const recipeDetailRoute = createRoute({
   component: RecipeDetailPage,
 });
 
+const correspondenceDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/correspondences/$correspondenceId",
+  component: CorrespondenceDetailPage,
+});
+
 const weeklyTurnsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/weekly-turns",
@@ -334,6 +341,7 @@ const routeTree = rootRoute.addChildren([
   thesisDetailRoute,
   recipesRoute,
   recipeDetailRoute,
+  correspondenceDetailRoute,
   weeklyTurnsRoute,
   weeklyBriefDetailRoute,
   compositionsRoute,
