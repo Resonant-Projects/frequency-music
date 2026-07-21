@@ -185,6 +185,9 @@ export const loopReportValidator = v.object({
       rationale: v.string(),
     }),
   ),
+  // True when the disabled-feed scan hit its bound — proposals beyond the
+  // window may be omitted (mirror of correspondences.countsCapped).
+  proposedFeedsCapped: v.optional(v.boolean()),
 });
 
 // ============================================================================

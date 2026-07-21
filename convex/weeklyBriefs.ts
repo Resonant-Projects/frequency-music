@@ -630,6 +630,9 @@ export async function computeLoopReport(
         left.name.localeCompare(right.name) ||
         left.url.localeCompare(right.url),
     );
+  // Non-proposal disabled feeds consume scan budget too; at the bound, real
+  // proposals past the window may be missing — surface that like countsCapped.
+  const proposedFeedsCapped = feeds.length >= PROPOSED_FEED_SCAN_LIMIT;
 
   return {
     correspondences: {
@@ -669,6 +672,7 @@ export async function computeLoopReport(
     },
     experimentDebt,
     proposedFeeds,
+    ...(proposedFeedsCapped ? { proposedFeedsCapped: true } : {}),
   };
 }
 
