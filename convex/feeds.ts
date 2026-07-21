@@ -1,6 +1,7 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { MAX_FEED_ENABLE_STATE_IDS } from "./shared/agentContract";
 import { feedReturnValidator } from "./validators";
 
 // ============================================================================
@@ -40,6 +41,30 @@ export const get = query({
   returns: v.union(feedReturnValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get("feeds", args.id);
+  },
+});
+
+/**
+ * Get the live enable state for a bounded set of feeds.
+ */
+export const getByIds = query({
+  args: { ids: v.array(v.id("feeds")) },
+  returns: v.array(
+    v.object({
+      id: v.id("feeds"),
+      enabled: v.boolean(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    if (args.ids.length > MAX_FEED_ENABLE_STATE_IDS) {
+      throw new ConvexError(
+        `Feed enable-state lookup accepts at most ${MAX_FEED_ENABLE_STATE_IDS} ids`,
+      );
+    }
+    const feeds = await Promise.all(args.ids.map((id) => ctx.db.get(id)));
+    return feeds.flatMap((feed) =>
+      feed === null ? [] : [{ id: feed._id, enabled: feed.enabled }],
+    );
   },
 });
 

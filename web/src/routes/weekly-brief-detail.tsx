@@ -1,5 +1,12 @@
 import { Link, useNavigate, useParams } from "@tanstack/solid-router";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  Show,
+} from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
@@ -19,8 +26,10 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  useConvexClient,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+import { MAX_FEED_ENABLE_STATE_IDS } from "../../../convex/shared/agentContract";
 import { extractTitle } from "../lib/markdown-utils";
 
 const loopSubheadingClass = css({
@@ -80,6 +89,48 @@ const reviewQueueBlockedClass = css({
   "& span:last-child": { color: "zodiac.gold" },
 });
 
+type FeedEnableState = { id: Id<"feeds">; enabled: boolean };
+
+function createLiveFeedStates(feedIds: () => Id<"feeds">[]) {
+  const convex = useConvexClient();
+  const [states, setStates] = createSignal<FeedEnableState[]>([]);
+
+  createEffect(() => {
+    const ids = feedIds();
+    const statesByBatch: FeedEnableState[][] = [];
+    const unsubscribes: Array<() => void> = [];
+    setStates([]);
+
+    for (
+      let start = 0;
+      start < ids.length;
+      start += MAX_FEED_ENABLE_STATE_IDS
+    ) {
+      const batchIndex = start / MAX_FEED_ENABLE_STATE_IDS;
+      const batchIds = ids.slice(start, start + MAX_FEED_ENABLE_STATE_IDS);
+      unsubscribes.push(
+        convex.onUpdate(
+          api.feeds.getByIds,
+          { ids: batchIds },
+          (result) => {
+            statesByBatch[batchIndex] = result;
+            setStates(statesByBatch.flat());
+          },
+          (error) => {
+            console.error("Feed enable-state subscription failed", error);
+          },
+        ),
+      );
+    }
+
+    onCleanup(() => {
+      for (const unsubscribe of unsubscribes) unsubscribe();
+    });
+  });
+
+  return states;
+}
+
 export function WeeklyBriefDetailPage() {
   const params = useParams({ from: "/weekly-turns/$briefId" });
   const navigate = useNavigate();
@@ -97,6 +148,10 @@ export function WeeklyBriefDetailPage() {
   const referencedFailureEntries = createQuery(api.failures.getByKeys, () => ({
     keys: brief()?.referencedFailureKeys ?? [],
   }));
+  const proposedFeedIds = createMemo(() =>
+    (brief()?.loopReport?.proposedFeeds ?? []).map((feed) => feed.feedId),
+  );
+  const liveFeedStates = createLiveFeedStates(proposedFeedIds);
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
@@ -619,7 +674,11 @@ export function WeeklyBriefDetailPage() {
                       <For each={loopReport().proposedFeeds}>
                         {(feed) => {
                           const enabled = () =>
-                            enabledFeedIds().has(feed.feedId);
+                            enabledFeedIds().has(feed.feedId) ||
+                            (liveFeedStates() ?? []).some(
+                              (state) =>
+                                state.id === feed.feedId && state.enabled,
+                            );
                           return (
                             <div
                               class={css({

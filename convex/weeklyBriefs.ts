@@ -35,6 +35,7 @@ import {
   LISTENING_DEBT_AFTER_MS,
   PENDING_DRAFT_CAP,
 } from "./shared/agentContract";
+import { feedProposalZ } from "./shared/feedProposals";
 import {
   campaignReturnValidator,
   failureArchiveEntryValidator,
@@ -457,16 +458,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function proposalRationale(metadata: unknown): string | undefined {
-  if (!isRecord(metadata) || !isRecord(metadata.proposal)) return undefined;
-  const proposal = metadata.proposal;
-  if (
-    typeof proposal.agentRunId !== "string" ||
-    typeof proposal.rationale !== "string" ||
-    !Array.isArray(proposal.sampleItems)
-  ) {
-    return undefined;
-  }
-  const rationale = proposal.rationale.trim();
+  if (!isRecord(metadata)) return undefined;
+  const result = feedProposalZ.safeParse(metadata.proposal);
+  if (!result.success) return undefined;
+  const rationale = result.data.rationale.trim();
   return rationale.length > 0 ? rationale : undefined;
 }
 
@@ -568,6 +563,7 @@ export async function computeLoopReport(
         recipeId: recipe._id,
         title: recipe.title,
         state: "in_use_no_composition",
+        // updatedAt proxies the state transition; unrelated patches reset this clock because no dedicated transition timestamp exists.
         ageDays: ageInDays(now, recipe.updatedAt),
       },
     });
@@ -601,6 +597,7 @@ export async function computeLoopReport(
         recipeId: recipe._id,
         title: recipe.title,
         state: "composed_no_listening",
+        // updatedAt proxies the state transition; unrelated patches reset this clock because no dedicated transition timestamp exists.
         ageDays: ageInDays(now, composition.updatedAt),
       },
     });
@@ -658,7 +655,10 @@ export async function computeLoopReport(
       agentBlocked: pendingDraftCount >= PENDING_DRAFT_CAP,
       ...(oldestPendingAt === undefined
         ? {}
-        : { oldestPendingDays: ageInDays(now, oldestPendingAt) }),
+        : {
+            // updatedAt proxies the state transition; unrelated patches reset this clock because no dedicated transition timestamp exists.
+            oldestPendingDays: ageInDays(now, oldestPendingAt),
+          }),
     },
     experimentDebt,
     proposedFeeds,
