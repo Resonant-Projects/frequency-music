@@ -22,6 +22,7 @@ import { completeReviewedRunIfReady } from "./agentRuns";
 import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 import { compareDraftableCorrespondences } from "./shared/correspondenceCandidates";
 import { describeConcept } from "./shared/conceptProjection";
+import { agentReviewDraftPayloadValidator } from "./shared/draftPayloads";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
 const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
@@ -192,6 +193,9 @@ export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
     // Decision + payload fields only appear once set, so legacy drafts and the
     // existing exact-equality summary tests round-trip unchanged.
     ...(draft.payload !== undefined ? { payload: draft.payload } : {}),
+    ...(draft.amendedPayload !== undefined
+      ? { amendedPayload: draft.amendedPayload }
+      : {}),
     ...(draft.decidedAt !== undefined ? { decidedAt: draft.decidedAt } : {}),
     ...(draft.decidedBy !== undefined ? { decidedBy: draft.decidedBy } : {}),
     ...(draft.decisionNote !== undefined
@@ -199,6 +203,36 @@ export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
       : {}),
     ...(draft.promotedId !== undefined ? { promotedId: draft.promotedId } : {}),
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+/** Deterministic dot-path diff for promotion provenance. Arrays are one field. */
+export function diffDraftPayloadFields(
+  original: unknown,
+  amended: unknown,
+  prefix = "",
+): string[] {
+  if (Object.is(original, amended)) return [];
+  if (Array.isArray(original) || Array.isArray(amended)) {
+    return JSON.stringify(original) === JSON.stringify(amended) ? [] : [prefix];
+  }
+  if (isRecord(original) && isRecord(amended)) {
+    return Array.from(
+      new Set([...Object.keys(original), ...Object.keys(amended)]),
+    )
+      .toSorted()
+      .flatMap((key) =>
+        diffDraftPayloadFields(
+          original[key],
+          amended[key],
+          prefix ? `${prefix}.${key}` : key,
+        ),
+      );
+  }
+  return [prefix];
 }
 
 export const createFromAgentRun = internalMutation({
@@ -662,6 +696,7 @@ export const approve = mutation({
   args: {
     draftId: v.id("agentReviewDrafts"),
     decisionNote: v.optional(v.string()),
+    amendedPayload: v.optional(agentReviewDraftPayloadValidator),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({
@@ -684,6 +719,20 @@ export const approve = mutation({
       });
     }
 
+    const promotionPayload = args.amendedPayload ?? draft.payload;
+    const amendmentMatchesKind =
+      (draft.kind === "hypothesis_draft" && "statement" in promotionPayload) ||
+      (draft.kind === "recipe_draft" && "parameters" in promotionPayload);
+    if (!amendmentMatchesKind) {
+      throw new ConvexError({
+        code: "INVALID_STATE",
+        message: `${draft.kind} amended payload shape mismatch`,
+        field: "amendedPayload",
+      });
+    }
+    const editedFields = args.amendedPayload
+      ? diffDraftPayloadFields(draft.payload, args.amendedPayload)
+      : [];
     const now = Date.now();
     const createdBy =
       identity.subject === "system"
@@ -694,13 +743,16 @@ export const approve = mutation({
       agentRunId: draft.agentRunId,
       agentDraftId: draft._id,
       ...(run?.traceUrl ? { traceUrl: run.traceUrl } : {}),
+      ...(editedFields.length > 0
+        ? { approvedWithEdits: true as const, editedFields }
+        : {}),
     };
 
     let promotedId: Id<"hypotheses"> | Id<"recipes">;
     let promotedKind: "hypothesis" | "recipe";
     let promotedCorrespondenceId: Id<"correspondences"> | undefined;
     if (draft.kind === "hypothesis_draft") {
-      if (!("statement" in draft.payload)) {
+      if (!("statement" in promotionPayload)) {
         throw new ConvexError({
           code: "INVALID_STATE",
           message: "hypothesis_draft payload shape mismatch",
@@ -710,7 +762,7 @@ export const approve = mutation({
       const hypothesisId = await ctx.db.insert(
         "hypotheses",
         buildHypothesisInsertFromPayload({
-          payload: draft.payload,
+          payload: promotionPayload,
           provenance,
           createdBy,
           now,
@@ -722,16 +774,16 @@ export const approve = mutation({
       });
       promotedId = hypothesisId;
       promotedKind = "hypothesis";
-      promotedCorrespondenceId = draft.payload.correspondenceId;
+      promotedCorrespondenceId = promotionPayload.correspondenceId;
     } else {
-      if (!("parameters" in draft.payload)) {
+      if (!("parameters" in promotionPayload)) {
         throw new ConvexError({
           code: "INVALID_STATE",
           message: "recipe_draft payload shape mismatch",
           field: "payload",
         });
       }
-      const hypothesisId = assertRecipeHypothesisId(draft.payload);
+      const hypothesisId = assertRecipeHypothesisId(promotionPayload);
       const hypothesis = await ctx.db.get(hypothesisId);
       if (!hypothesis) {
         throw new ConvexError({
@@ -743,7 +795,7 @@ export const approve = mutation({
       const recipeId = await ctx.db.insert(
         "recipes",
         buildRecipeInsertFromPayload({
-          payload: draft.payload,
+          payload: promotionPayload,
           provenance,
           createdBy,
           now,
@@ -758,6 +810,7 @@ export const approve = mutation({
       promotedId,
       decidedAt: now,
       decidedBy: "human",
+      ...(args.amendedPayload ? { amendedPayload: args.amendedPayload } : {}),
       ...(args.decisionNote?.trim()
         ? { decisionNote: args.decisionNote.trim() }
         : {}),

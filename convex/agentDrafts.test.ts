@@ -3,6 +3,7 @@ import type { Id } from "./_generated/dataModel";
 
 import {
   buildAgentReviewDraftInsert,
+  diffDraftPayloadFields,
   safeAgentReviewDraft,
   summarizeAgentReviewDraft,
   summarizeAgentReviewDraftPublic,
@@ -257,5 +258,23 @@ describe("structured payload handling", () => {
       decisionNote: "solid",
       promotedId: "hyp-9",
     });
+  });
+
+  test("payload diffs report deterministic dot paths and whole-array fields", () => {
+    expect(
+      diffDraftPayloadFields(
+        {
+          title: "Original",
+          protocol: { listeningContext: "studio", whatVaries: ["tuning"] },
+        },
+        {
+          title: "Amended",
+          protocol: {
+            listeningContext: "headphones",
+            whatVaries: ["tuning", "register"],
+          },
+        },
+      ),
+    ).toEqual(["protocol.listeningContext", "protocol.whatVaries", "title"]);
   });
 });

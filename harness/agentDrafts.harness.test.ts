@@ -109,11 +109,14 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(hypothesis?.traceUrl).toBe("https://smith.langchain.com/r/test");
     expect(hypothesis?.hypothesis).toBe(hypothesisPayload.statement);
     expect(hypothesis?.correspondenceId).toBe(correspondenceId);
+    expect(hypothesis?.approvedWithEdits).toBeUndefined();
+    expect(hypothesis?.editedFields).toBeUndefined();
 
     const draft = await t.run((ctx) => ctx.db.get(draftId));
     expect(draft?.status).toBe("approved");
     expect(draft?.promotedId).toBe(result.promotedId);
     expect(draft?.decidedBy).toBe("human");
+    expect(draft?.amendedPayload).toBeUndefined();
     const run = await t.run((ctx) => ctx.db.get(agentRunId));
     expect(run?.status).toBe("completed");
 
@@ -178,6 +181,83 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(recipe?.origin).toBe("agent");
     expect(recipe?.agentRunId).toBe(agentRunId);
     expect(recipe?.agentDraftId).toBe(draftId);
+  });
+
+  test("amended payload promotes with edit provenance and preserves the original", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const originalPayload = { ...hypothesisPayload };
+    const amendedPayload = {
+      ...originalPayload,
+      title: "Amended polygon-angle study",
+      statement: "Nonagon angles map to distinct 9-EDO roughness bands",
+    };
+    const { draftId } = await seedRunAndDraft(
+      t,
+      originalPayload,
+      "hypothesis_draft",
+    );
+
+    const result = await asSystem.mutation(api.agentDrafts.approve, {
+      draftId,
+      amendedPayload,
+    });
+
+    const promoted = await t.run((ctx) =>
+      ctx.db.get(result.promotedId as Id<"hypotheses">),
+    );
+    expect(promoted?.title).toBe(amendedPayload.title);
+    expect(promoted?.hypothesis).toBe(amendedPayload.statement);
+    expect(promoted?.approvedWithEdits).toBe(true);
+    expect(promoted?.editedFields).toEqual(["statement", "title"]);
+
+    const decidedDraft = await t.run((ctx) => ctx.db.get(draftId));
+    expect(decidedDraft?.payload).toEqual(originalPayload);
+    expect(decidedDraft?.amendedPayload).toEqual(amendedPayload);
+  });
+
+  test("shared whole-payload validation rejects an invalid amendment", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { draftId } = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+
+    await expect(
+      asSystem.mutation(api.agentDrafts.approve, {
+        draftId,
+        amendedPayload: { ...hypothesisPayload, whyThisMatters: "" },
+      }),
+    ).rejects.toThrow();
+
+    const draft = await t.run((ctx) => ctx.db.get(draftId));
+    expect(draft?.status).toBe("pending_review");
+  });
+
+  test("kind-changing amendment rejects with INVALID_STATE", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const { draftId } = await seedRunAndDraft(
+      t,
+      hypothesisPayload,
+      "hypothesis_draft",
+    );
+
+    await expect(
+      asSystem.mutation(api.agentDrafts.approve, {
+        draftId,
+        amendedPayload: {
+          title: "Wrong payload kind",
+          parameters: [],
+          whyThisMatters: "This must not change a hypothesis into a recipe.",
+        },
+      }),
+    ).rejects.toThrow(/INVALID_STATE|shape mismatch/);
+
+    const draft = await t.run((ctx) => ctx.db.get(draftId));
+    expect(draft?.status).toBe("pending_review");
   });
 
   test("payload-less draft is acknowledge-only: approve throws INVALID_STATE", async () => {
