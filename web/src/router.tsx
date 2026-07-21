@@ -19,6 +19,7 @@ import { AgentRunsPage } from "./routes/agent-runs";
 import { CompositionDetailPage } from "./routes/composition-detail";
 import { CompositionsPage } from "./routes/compositions";
 import { CorrespondenceDetailPage } from "./routes/correspondence-detail";
+import { CorrespondencesPage } from "./routes/correspondences";
 import { DisplayPage } from "./routes/display";
 import { EditorialDetailPage } from "./routes/editorial-detail";
 import { EditorialPage } from "./routes/editorial";
@@ -67,6 +68,7 @@ const appLinks = [
   { to: "/hypotheses", label: "Hypotheses" },
   { to: "/theses", label: "Theses" },
   { to: "/recipes", label: "Recipes" },
+  { to: "/correspondences", label: "Correspondences" },
   { to: "/weekly-turns", label: "Weekly Turns" },
   { to: "/compositions", label: "Compositions" },
   { to: "/editorial", label: "Editorial" },
@@ -251,6 +253,12 @@ const correspondenceDetailRoute = createRoute({
   component: CorrespondenceDetailPage,
 });
 
+const correspondencesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/correspondences",
+  component: CorrespondencesPage,
+});
+
 const weeklyTurnsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/weekly-turns",
@@ -341,6 +349,7 @@ const routeTree = rootRoute.addChildren([
   thesisDetailRoute,
   recipesRoute,
   recipeDetailRoute,
+  correspondencesRoute,
   correspondenceDetailRoute,
   weeklyTurnsRoute,
   weeklyBriefDetailRoute,

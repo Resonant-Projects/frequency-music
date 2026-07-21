@@ -29,6 +29,25 @@ recommended order:
 5. **Listening-session visibility + composition delete.** `listening.updateVisibility`,
    `compositions.deleteById` — small admin affordances, lowest priority.
 
+## Execution checklist
+
+- [x] **Correspondence adjudication view.** Reused the bounded
+  `correspondences.listByStatus` query (25 rows per lifecycle section), added the list route and
+  navigation entry, and wired the existing `correspondences.setStatus` mutation on the existing
+  detail route. The required `statusReason` is presented as a decision note; status choices expose
+  evidence confirmation, contradiction, retirement, and explicit override to conjectured. No
+  authoring UI was added for `upsertConjecture` or `addEvidence`; those remain intentionally
+  CLI/agent-side.
+- [ ] **Weekly-brief edit + publish.**
+- [ ] **Draft supersede.**
+- [ ] **Extraction correction.**
+- [ ] **Listening-session visibility + composition delete.**
+
+## Operator-gated verification
+
+- [ ] Interceptor visual pass and PR screenshots for item 1 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+
 ## Global constraints
 
 - Presentation + wiring of **existing** mutations only; the only new backend surface allowed is the
