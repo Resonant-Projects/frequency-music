@@ -55,7 +55,7 @@
 }
 ```
 
-- [ ] **Step 1:** Harness test (null-correspondence legacy drafts still work); implement; codegen; commit.
+- [x] **Step 1:** Harness test (null-correspondence legacy drafts still work); implement; commit. **Operator note:** codegen was not run because this execution explicitly forbids all Convex commands; no new module was added, so `_generated/api.d.ts` did not require a hand edit.
 
 ---
 

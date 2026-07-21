@@ -269,6 +269,29 @@ function buildHypothesisEntry(
   });
 }
 
+/**
+ * Failure-archive projection for a caller that already owns a bounded set of
+ * hypotheses. Keeping this beside listArchive means review surfaces share the
+ * archive's reason vocabulary without widening into an all-table scan.
+ */
+export function projectHypothesisFailureHits(
+  hypotheses: Doc<"hypotheses">[],
+): Array<{ title: string; reason: FailureReason }> {
+  return hypotheses.flatMap((hypothesis) => {
+    const hits: Array<{ title: string; reason: FailureReason }> = [];
+    if (hypothesis.resolution === "contradicted") {
+      hits.push({
+        title: hypothesis.title,
+        reason: "contradicted_hypothesis",
+      });
+    }
+    if (hypothesis.status === "retired") {
+      hits.push({ title: hypothesis.title, reason: "retired_hypothesis" });
+    }
+    return hits;
+  });
+}
+
 async function deriveHypothesisFailures(
   db: DbReader,
   filter: FailureDerivationFilter,

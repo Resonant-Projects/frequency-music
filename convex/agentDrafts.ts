@@ -10,6 +10,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { assertWhyThisMatters } from "./hypotheses";
+import { projectHypothesisFailureHits } from "./failures";
 import {
   assertDecisionNote,
   assertDraftPending,
@@ -24,6 +25,10 @@ import { describeConcept } from "./shared/conceptProjection";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
 const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
+const REVIEW_EVIDENCE_LIMIT = 20;
+const REVIEW_CORRESPONDENCE_LIMIT_PER_INDEX = 20;
+const REVIEW_HYPOTHESES_LIMIT_PER_CORRESPONDENCE = 5;
+const REVIEW_RELATED_HYPOTHESES_LIMIT = 20;
 
 type AgentReviewDraftKind = "hypothesis_draft" | "recipe_draft";
 
@@ -365,6 +370,162 @@ export const listPendingPublic = query({
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     return listPendingDrafts(ctx, args);
+  },
+});
+
+async function listReviewCorrespondencesForConcept(
+  ctx: Pick<QueryCtx, "db">,
+  conceptId: Id<"concepts">,
+) {
+  const [asConceptA, asConceptB] = await Promise.all([
+    ctx.db
+      .query("correspondences")
+      .withIndex("by_conceptAId", (q) => q.eq("conceptAId", conceptId))
+      .take(REVIEW_CORRESPONDENCE_LIMIT_PER_INDEX),
+    ctx.db
+      .query("correspondences")
+      .withIndex("by_conceptBId", (q) => q.eq("conceptBId", conceptId))
+      .take(REVIEW_CORRESPONDENCE_LIMIT_PER_INDEX),
+  ]);
+  return [...asConceptA, ...asConceptB];
+}
+
+function projectReviewConcept(concept: Doc<"concepts">) {
+  const description = describeConcept(concept);
+  return {
+    displayName: description.displayName,
+    domains: description.domains,
+    description: description.description,
+  };
+}
+
+async function listRelatedHypotheses(
+  ctx: Pick<QueryCtx, "db">,
+  correspondence: Doc<"correspondences">,
+) {
+  const correspondenceRows = await Promise.all([
+    listReviewCorrespondencesForConcept(ctx, correspondence.conceptAId),
+    listReviewCorrespondencesForConcept(ctx, correspondence.conceptBId),
+  ]);
+  const uniqueCorrespondenceIds = Array.from(
+    new Set(
+      correspondenceRows
+        .flat()
+        .map((row) => row._id)
+        .concat(correspondence._id),
+    ),
+  );
+  const rows = await Promise.all(
+    uniqueCorrespondenceIds.map((correspondenceId) =>
+      ctx.db
+        .query("hypotheses")
+        .withIndex("by_correspondenceId", (q) =>
+          q.eq("correspondenceId", correspondenceId),
+        )
+        .order("desc")
+        .take(REVIEW_HYPOTHESES_LIMIT_PER_CORRESPONDENCE),
+    ),
+  );
+  const seen = new Set<string>();
+  return rows
+    .flat()
+    .filter((hypothesis) => {
+      if (seen.has(String(hypothesis._id))) return false;
+      seen.add(String(hypothesis._id));
+      return true;
+    })
+    .toSorted((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, REVIEW_RELATED_HYPOTHESES_LIMIT);
+}
+
+/** One-round-trip context for the authenticated draft-review surface. */
+export const getReviewContext = query({
+  args: {
+    draftId: v.id("agentReviewDrafts"),
+    devBypassSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const draft = await ctx.db.get(args.draftId);
+    if (!draft) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+    }
+    const run = await ctx.db.get(draft.agentRunId);
+    const payloadCorrespondenceId =
+      draft.kind === "hypothesis_draft" &&
+      draft.payload &&
+      "statement" in draft.payload
+        ? draft.payload.correspondenceId
+        : undefined;
+    const correspondence = payloadCorrespondenceId
+      ? await ctx.db.get(payloadCorrespondenceId)
+      : null;
+
+    if (!correspondence) {
+      return {
+        draft: summarizeAgentReviewDraft(draft),
+        correspondence: null,
+        related: { priorHypotheses: [], failures: [] },
+        runTrace: {
+          runId: draft.agentRunId,
+          traceUrl: run?.traceUrl ?? null,
+          summary: run?.summary ?? draft.summary,
+        },
+      };
+    }
+
+    const [conceptA, conceptB, evidenceRows, relatedHypotheses] =
+      await Promise.all([
+        ctx.db.get(correspondence.conceptAId),
+        ctx.db.get(correspondence.conceptBId),
+        Promise.all(
+          correspondence.evidence
+            .slice(0, REVIEW_EVIDENCE_LIMIT)
+            .map(async (entry) => {
+              const claim = await ctx.db.get(entry.claimId);
+              if (!claim) return null;
+              const source = await ctx.db.get(claim.sourceId);
+              return {
+                claim: {
+                  text: claim.text,
+                  evidenceLevel: claim.evidenceLevel,
+                  truthConfidence: claim.truthConfidence ?? null,
+                },
+                stance: entry.stance,
+                sourceTitle: source?.title ?? "Untitled source",
+                sourceUrl: source?.canonicalUrl ?? null,
+              };
+            }),
+        ),
+        listRelatedHypotheses(ctx, correspondence),
+      ]);
+    return {
+      draft: summarizeAgentReviewDraft(draft),
+      correspondence:
+        conceptA && conceptB
+          ? {
+              row: correspondence,
+              conceptA: projectReviewConcept(conceptA),
+              conceptB: projectReviewConcept(conceptB),
+              evidence: evidenceRows.filter(
+                (row): row is NonNullable<typeof row> => row !== null,
+              ),
+            }
+          : null,
+      related: {
+        priorHypotheses: relatedHypotheses.map((hypothesis) => ({
+          title: hypothesis.title,
+          status: hypothesis.status,
+          resolution: hypothesis.resolution ?? null,
+        })),
+        failures: projectHypothesisFailureHits(relatedHypotheses),
+      },
+      runTrace: {
+        runId: draft.agentRunId,
+        traceUrl: run?.traceUrl ?? null,
+        summary: run?.summary ?? draft.summary,
+      },
+    };
   },
 });
 
