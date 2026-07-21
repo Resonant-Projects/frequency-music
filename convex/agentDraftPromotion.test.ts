@@ -30,6 +30,7 @@ const hypPayload: AgentDraftHypothesisPayload = {
   concepts: ["beating", "amplitude modulation"],
   sourceIds: ["src-1" as Id<"sources">],
   extractionIds: ["ext-1" as Id<"extractions">],
+  correspondenceId: "corr-1" as Id<"correspondences">,
 };
 
 const recipePayload: AgentDraftRecipePayload = {
@@ -106,6 +107,7 @@ describe("insert-row builders", () => {
       hypothesis: hypPayload.statement,
       rationaleMd: hypPayload.rationale,
       whyThisMatters: hypPayload.whyThisMatters,
+      correspondenceId: hypPayload.correspondenceId,
       sourceIds: hypPayload.sourceIds,
       extractionIds: hypPayload.extractionIds,
       concepts: hypPayload.concepts,

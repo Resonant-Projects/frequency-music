@@ -19,6 +19,7 @@ import {
   selectCrossConceptSamples,
   semanticClaimZ,
 } from "./shared/correspondenceCandidates";
+import { conceptDomains, describeConcept } from "./shared/conceptProjection";
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from "./shared/embeddingText";
 
 const DEFAULT_LIMIT = 25;
@@ -66,19 +67,6 @@ function clampLimit(limit: number | undefined, fallback = DEFAULT_LIMIT) {
 
 export function clampCandidateGenerationLimit(limit: number | undefined) {
   return Math.min(clampLimit(limit), MAX_CANDIDATE_EXECUTION_LIMIT);
-}
-
-function conceptDomains(concept: Doc<"concepts">): string[] {
-  return Array.from(new Set(concept.domains ?? [concept.domain])).toSorted();
-}
-
-function describeConcept(concept: Doc<"concepts">) {
-  return {
-    name: concept.name,
-    displayName: concept.displayName,
-    description: concept.description,
-    domains: conceptDomains(concept),
-  };
 }
 
 const getProbeConceptRef = makeFunctionReference<

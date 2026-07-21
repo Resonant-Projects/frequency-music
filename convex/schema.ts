@@ -278,6 +278,7 @@ export default defineSchema({
       "updatedAt",
     ])
     .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_status_kind_updatedAt", ["status", "kind", "updatedAt"])
     .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
 
   // ==========================================================================
@@ -512,7 +513,7 @@ export default defineSchema({
     .index("by_visibility_updatedAt", ["visibility", "updatedAt"]),
 
   // ==========================================================================
-  // HYPOTHESES - Testable claims derived from extractions
+  // HYPOTHESES - Testable claims derived from extractions or correspondences
   // ==========================================================================
   hypotheses: defineTable({
     title: v.string(),
@@ -520,6 +521,7 @@ export default defineSchema({
     hypothesis: v.string(),
     whyThisMatters: v.optional(v.string()),
     rationaleMd: v.string(),
+    correspondenceId: v.optional(v.id("correspondences")),
     thesisId: v.optional(v.id("theses")),
     sourceIds: v.array(v.id("sources")),
     extractionIds: v.optional(v.array(v.id("extractions"))),
@@ -550,6 +552,7 @@ export default defineSchema({
   })
     .index("by_status_updatedAt", ["status", "updatedAt"])
     .index("by_visibility_updatedAt", ["visibility", "updatedAt"])
+    .index("by_correspondenceId", ["correspondenceId"])
     .index("by_thesisId_updatedAt", ["thesisId", "updatedAt"])
     .index("by_extractionIds", ["extractionIds"]),
 

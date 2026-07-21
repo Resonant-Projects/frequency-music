@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import schema from "../convex/schema";
 import { modules } from "./modules";
@@ -48,12 +48,50 @@ const hypothesisPayload = {
 };
 
 describe("agentDrafts.approve promotes through the real interface", () => {
-  test("hypothesis draft becomes a hypotheses row with agent provenance", async () => {
+  test("correspondence-linked hypothesis draft preserves lineage on promotion", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });
+    const correspondenceId = await t.run(async (ctx) => {
+      const conceptAId = await ctx.db.insert("concepts", {
+        name: "nonagon angles",
+        displayName: "Nonagon angles",
+        aliases: [],
+        domain: "geometry",
+        domains: ["geometry"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const conceptBId = await ctx.db.insert("concepts", {
+        name: "9-EDO",
+        displayName: "9-EDO",
+        aliases: [],
+        domain: "microtuning",
+        domains: ["microtuning"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return await ctx.db.insert("correspondences", {
+        conceptAId,
+        conceptBId,
+        pairKey: `${conceptAId}:${conceptBId}`,
+        statement: "Nonagon angles may map to 9-EDO intervals.",
+        rationaleMd: "Seeded correspondence for promotion coverage.",
+        evidence: [],
+        status: "conjectured",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
     const { agentRunId, draftId } = await seedRunAndDraft(
       t,
-      hypothesisPayload,
+      { ...hypothesisPayload, correspondenceId },
       "hypothesis_draft",
     );
 
@@ -70,6 +108,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(hypothesis?.agentDraftId).toBe(draftId);
     expect(hypothesis?.traceUrl).toBe("https://smith.langchain.com/r/test");
     expect(hypothesis?.hypothesis).toBe(hypothesisPayload.statement);
+    expect(hypothesis?.correspondenceId).toBe(correspondenceId);
 
     const draft = await t.run((ctx) => ctx.db.get(draftId));
     expect(draft?.status).toBe("approved");
@@ -77,6 +116,23 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     expect(draft?.decidedBy).toBe("human");
     const run = await t.run((ctx) => ctx.db.get(agentRunId));
     expect(run?.status).toBe("completed");
+
+    const events = await t.run((ctx) =>
+      ctx.db
+        .query("agentRunEvents")
+        .withIndex("by_runId_createdAt", (q) => q.eq("runId", agentRunId))
+        .collect(),
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "decision",
+        payload: expect.objectContaining({
+          correspondenceId,
+          hypothesisId: result.promotedId,
+          draftId,
+        }),
+      }),
+    );
   });
 
   test("recipe draft becomes a recipes row with generated parameter kind", async () => {
@@ -147,6 +203,353 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     await expect(
       asSystem.mutation(api.agentDrafts.approve, { draftId }),
     ).rejects.toThrow();
+  });
+});
+
+describe("agentDrafts pending hypothesis WIP cap", () => {
+  test("blocks the fourth hypothesis draft, ignores recipes, and reopens after approval", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const agentRunId = await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "hypothesis-drafter",
+        status: "needs_review",
+        input: null,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const createDraft = async (
+      kind: "hypothesis_draft" | "recipe_draft",
+      suffix: string,
+    ) =>
+      await t.mutation(internal.agentDrafts.createFromAgentRun, {
+        agentRunId,
+        draft: {
+          kind,
+          title: `${kind} ${suffix}`,
+          summary: `Cap harness ${suffix}`,
+          candidateIds: [`candidate-${suffix}`],
+          needsReview: true,
+          ...(kind === "hypothesis_draft"
+            ? {
+                payload: {
+                  ...hypothesisPayload,
+                  title: `Hypothesis ${suffix}`,
+                },
+              }
+            : {}),
+        },
+      });
+
+    const first = await createDraft("hypothesis_draft", "1");
+    await createDraft("hypothesis_draft", "2");
+    await createDraft("hypothesis_draft", "3");
+
+    await expect(createDraft("hypothesis_draft", "4-blocked")).rejects.toThrow(
+      /DraftCapExceeded/,
+    );
+    await expect(createDraft("recipe_draft", "recipe")).resolves.toMatchObject({
+      status: "pending_review",
+    });
+    await expect(
+      t.query(internal.agentDrafts.countPending, { kind: "hypothesis_draft" }),
+    ).resolves.toBe(3);
+    await expect(
+      t.query(internal.agentDrafts.countPending, { kind: "recipe_draft" }),
+    ).resolves.toBe(1);
+
+    await asSystem.mutation(api.agentDrafts.approve, {
+      draftId: first.draftId,
+    });
+    await expect(
+      createDraft("hypothesis_draft", "4-reopened"),
+    ).resolves.toMatchObject({ status: "pending_review" });
+  });
+});
+
+describe("agentDrafts draftable correspondence read", () => {
+  test("excludes targets without evidence, with an existing hypothesis, or with a pending draft", async () => {
+    const t = convexTest(schema, modules);
+    const {
+      agentRunId: seededRunId,
+      eligibleId,
+      pendingId: seededPendingId,
+      pendingDraftId,
+    } = await t.run(async (ctx) => {
+      const sourceId = await ctx.db.insert("sources", {
+        type: "url",
+        title: "Roughness study",
+        status: "extracted",
+        dedupeKey: "roughness-study",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const extractionId = await ctx.db.insert("extractions", {
+        sourceId,
+        model: "test-model",
+        promptVersion: "test",
+        inputHash: "roughness-input",
+        summary: "Roughness evidence.",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const claimId = await ctx.db.insert("claims", {
+        extractionId,
+        sourceId,
+        ordinal: 0,
+        text: "Closer partial spacing increased measured roughness.",
+        evidenceLevel: "peer_reviewed",
+        citations: [],
+        status: "active",
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const conceptAId = await ctx.db.insert("concepts", {
+        name: "modal spacing",
+        displayName: "Modal spacing",
+        aliases: [],
+        domain: "cymatics",
+        domains: ["cymatics"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const conceptBId = await ctx.db.insert("concepts", {
+        name: "auditory roughness",
+        displayName: "Auditory roughness",
+        aliases: [],
+        domain: "psychoacoustics",
+        domains: ["psychoacoustics"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const makeCorrespondence = (suffix: string, withEvidence = true) =>
+        ctx.db.insert("correspondences", {
+          conceptAId,
+          conceptBId,
+          pairKey: `${conceptAId}:${conceptBId}:${suffix}`,
+          statement: `Correspondence ${suffix}`,
+          rationaleMd: "Harness rationale.",
+          evidence: withEvidence
+            ? [
+                {
+                  claimId,
+                  stance: "supports" as const,
+                  addedBy: "human" as const,
+                  addedAt: 1,
+                },
+              ]
+            : [],
+          status: withEvidence
+            ? ("evidenced" as const)
+            : ("conjectured" as const),
+          similarityScore: 0.8,
+          noveltyScore: 0.7,
+          createdBy: "system" as const,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      const existingId = await makeCorrespondence("existing");
+      const pendingId = await makeCorrespondence("pending");
+      const draftableId = await makeCorrespondence("eligible");
+      await makeCorrespondence("no-evidence", false);
+      await ctx.db.insert("hypotheses", {
+        title: "Existing hypothesis",
+        question: "Already drafted?",
+        hypothesis: "Already covered.",
+        rationaleMd: "Existing lineage.",
+        sourceIds: [],
+        status: "draft" as const,
+        visibility: "private" as const,
+        createdBy: "system" as const,
+        createdAt: 1,
+        updatedAt: 1,
+        correspondenceId: existingId,
+      });
+      const agentRunId = await ctx.db.insert("agentRuns", {
+        graphName: "hypothesis-drafter",
+        status: "running",
+        input: null,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const createdPendingDraftId = await ctx.db.insert("agentReviewDrafts", {
+        agentRunId,
+        graphName: "hypothesis-drafter",
+        kind: "hypothesis_draft",
+        title: "Pending hypothesis",
+        summary: "Already awaiting review.",
+        candidateIds: [pendingId],
+        payload: { ...hypothesisPayload, correspondenceId: pendingId },
+        status: "pending_review",
+        createdBy: "agent",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return {
+        agentRunId,
+        eligibleId: draftableId,
+        pendingId,
+        pendingDraftId: createdPendingDraftId,
+      };
+    });
+
+    const rows = await t.query(
+      internal.agentDrafts.listDraftableCorrespondences,
+      {
+        limit: 20,
+      },
+    );
+    expect(rows.map((row) => row.correspondenceId)).toEqual([eligibleId]);
+
+    await expect(
+      t.mutation(internal.agentDrafts.createFromAgentRun, {
+        agentRunId: seededRunId,
+        draft: {
+          kind: "hypothesis_draft",
+          title: "Duplicate target",
+          summary: "Must not enter the review queue.",
+          candidateIds: [seededPendingId],
+          needsReview: true,
+          payload: {
+            ...hypothesisPayload,
+            correspondenceId: seededPendingId,
+          },
+        },
+      }),
+    ).resolves.toMatchObject({ draftId: pendingDraftId });
+
+    const competingRunId = await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "hypothesis-drafter",
+        status: "running",
+        input: null,
+        createdAt: 2,
+        updatedAt: 2,
+      }),
+    );
+    await expect(
+      t.mutation(internal.agentDrafts.createFromAgentRun, {
+        agentRunId: competingRunId,
+        draft: {
+          kind: "hypothesis_draft",
+          title: "Duplicate target",
+          summary: "Must not enter the review queue.",
+          candidateIds: [seededPendingId],
+          needsReview: true,
+          payload: {
+            ...hypothesisPayload,
+            correspondenceId: seededPendingId,
+          },
+        },
+      }),
+    ).rejects.toThrow(/DraftTargetUnavailable/);
+  });
+
+  test("honors requested limits above the default of twenty", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const sourceId = await ctx.db.insert("sources", {
+        type: "url",
+        title: "Limit study",
+        status: "extracted",
+        dedupeKey: "limit-study",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const extractionId = await ctx.db.insert("extractions", {
+        sourceId,
+        model: "test-model",
+        promptVersion: "test",
+        inputHash: "limit-input",
+        summary: "Limit evidence.",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const claimId = await ctx.db.insert("claims", {
+        extractionId,
+        sourceId,
+        ordinal: 0,
+        text: "Limit evidence claim.",
+        evidenceLevel: "peer_reviewed",
+        citations: [],
+        status: "active",
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const conceptAId = await ctx.db.insert("concepts", {
+        name: "limit concept a",
+        displayName: "Limit concept A",
+        aliases: [],
+        domain: "cymatics",
+        domains: ["cymatics"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const conceptBId = await ctx.db.insert("concepts", {
+        name: "limit concept b",
+        displayName: "Limit concept B",
+        aliases: [],
+        domain: "psychoacoustics",
+        domains: ["psychoacoustics"],
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      for (let index = 0; index < 25; index += 1) {
+        await ctx.db.insert("correspondences", {
+          conceptAId,
+          conceptBId,
+          pairKey: `${conceptAId}:${conceptBId}:${String(index)}`,
+          statement: `Correspondence ${String(index)}`,
+          rationaleMd: "Harness rationale.",
+          evidence: [
+            {
+              claimId,
+              stance: "supports",
+              addedBy: "human",
+              addedAt: 1,
+            },
+          ],
+          status: "evidenced",
+          createdBy: "system",
+          createdAt: index + 1,
+          updatedAt: index + 1,
+        });
+      }
+    });
+
+    await expect(
+      t.query(internal.agentDrafts.listDraftableCorrespondences, {}),
+    ).resolves.toHaveLength(20);
+    await expect(
+      t.query(internal.agentDrafts.listDraftableCorrespondences, { limit: 25 }),
+    ).resolves.toHaveLength(25);
   });
 });
 

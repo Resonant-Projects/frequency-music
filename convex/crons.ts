@@ -105,4 +105,13 @@ crons.daily(
   { graphName: "evidence-hunter", input: { limit: 5 } },
 );
 
+// Draft one correspondence-driven hypothesis before the Friday brief. The graph
+// exits cleanly when the three-slot human-review queue is full.
+crons.weekly(
+  "enqueue-hypothesis-drafter",
+  { dayOfWeek: "thursday", hourUTC: 16, minuteUTC: 0 },
+  internal.agentRuns.enqueue,
+  { graphName: "hypothesis-drafter", input: {} },
+);
+
 export default crons;

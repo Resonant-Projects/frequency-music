@@ -29,6 +29,7 @@ export const hypothesisDraftPayloadZ = z.object({
   concepts: z.array(z.string()).optional(),
   sourceIds: z.array(zid("sources")),
   extractionIds: z.array(zid("extractions")),
+  correspondenceId: zid("correspondences").optional(),
   thesisId: zid("theses").optional(),
   confidence: z.number().min(0).max(1).optional(),
 });

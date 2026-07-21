@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import {
+  internalQuery,
   internalMutation,
   mutation,
   query,
@@ -17,10 +18,33 @@ import {
   buildRecipeInsertFromPayload,
 } from "./agentDraftPromotion";
 import { completeReviewedRunIfReady } from "./agentRuns";
+import { PENDING_DRAFT_CAP } from "./shared/agentContract";
+import { compareDraftableCorrespondences } from "./shared/correspondenceCandidates";
+import { describeConcept } from "./shared/conceptProjection";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
+const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
 
 type AgentReviewDraftKind = "hypothesis_draft" | "recipe_draft";
+
+async function listPendingDraftsByKind(
+  ctx: Pick<QueryCtx, "db">,
+  kind: AgentReviewDraftKind,
+) {
+  return await ctx.db
+    .query("agentReviewDrafts")
+    .withIndex("by_status_kind_updatedAt", (q) =>
+      q.eq("status", "pending_review").eq("kind", kind),
+    )
+    .collect();
+}
+
+async function countPendingDraftsByKind(
+  ctx: Pick<QueryCtx, "db">,
+  kind: AgentReviewDraftKind,
+) {
+  return (await listPendingDraftsByKind(ctx, kind)).length;
+}
 
 function redactOperationalSecrets(value: string) {
   return value
@@ -187,6 +211,64 @@ export const createFromAgentRun = internalMutation({
       draft: args.draft,
     });
     if (!row) throw new Error("Invalid human-review draft");
+    if (
+      row.kind === "hypothesis_draft" &&
+      "payload" in row &&
+      row.payload &&
+      "statement" in row.payload &&
+      row.payload.correspondenceId
+    ) {
+      const correspondenceId = row.payload.correspondenceId;
+      const pendingDrafts = await listPendingDraftsByKind(ctx, row.kind);
+      const pendingTarget = pendingDrafts.find(
+        (draft) =>
+          draft.payload &&
+          "statement" in draft.payload &&
+          draft.payload.correspondenceId === correspondenceId,
+      );
+      if (pendingTarget?.agentRunId === args.agentRunId) {
+        return {
+          draftId: pendingTarget._id,
+          agentRunId: args.agentRunId,
+          status: pendingTarget.status,
+          updatedAt: pendingTarget.updatedAt,
+        };
+      }
+      if (pendingTarget) {
+        throw new ConvexError({
+          code: "DraftTargetUnavailable",
+          message:
+            "Correspondence already has a hypothesis or pending hypothesis draft",
+        });
+      }
+      if (pendingDrafts.length >= PENDING_DRAFT_CAP) {
+        throw new ConvexError({
+          code: "DraftCapExceeded",
+          message: `Pending hypothesis drafts are capped at ${PENDING_DRAFT_CAP}`,
+        });
+      }
+      const existingHypothesis = await ctx.db
+        .query("hypotheses")
+        .withIndex("by_correspondenceId", (q) =>
+          q.eq("correspondenceId", correspondenceId),
+        )
+        .first();
+      if (existingHypothesis) {
+        throw new ConvexError({
+          code: "DraftTargetUnavailable",
+          message:
+            "Correspondence already has a hypothesis or pending hypothesis draft",
+        });
+      }
+    } else if (
+      row.kind === "hypothesis_draft" &&
+      (await countPendingDraftsByKind(ctx, row.kind)) >= PENDING_DRAFT_CAP
+    ) {
+      throw new ConvexError({
+        code: "DraftCapExceeded",
+        message: `Pending hypothesis drafts are capped at ${PENDING_DRAFT_CAP}`,
+      });
+    }
 
     const draftId = await ctx.db.insert("agentReviewDrafts", row);
     const now = Date.now();
@@ -298,6 +380,108 @@ export const countPendingPublic = query({
   },
 });
 
+/** Kind-specific pending count used by WIP-capped agent graphs. */
+export const countPending = internalQuery({
+  args: {
+    kind: v.union(v.literal("hypothesis_draft"), v.literal("recipe_draft")),
+  },
+  handler: async (ctx, args) => countPendingDraftsByKind(ctx, args.kind),
+});
+
+/**
+ * Bounded, hydrated correspondence candidates for the hypothesis drafter.
+ * Existing hypotheses, pending drafts, and evidence-less correspondences are
+ * excluded at the read boundary.
+ */
+export const listDraftableCorrespondences = internalQuery({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 20), 100));
+    const pendingDrafts = await ctx.db
+      .query("agentReviewDrafts")
+      .withIndex("by_status_kind_updatedAt", (q) =>
+        q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
+      )
+      .collect();
+    const pendingCorrespondenceIds = new Set(
+      pendingDrafts.flatMap((draft) => {
+        if (
+          draft.kind !== "hypothesis_draft" ||
+          !draft.payload ||
+          !("statement" in draft.payload) ||
+          !draft.payload.correspondenceId
+        ) {
+          return [];
+        }
+        return [String(draft.payload.correspondenceId)];
+      }),
+    );
+    const [evidenced, conjectured] = await Promise.all([
+      ctx.db
+        .query("correspondences")
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", "evidenced"))
+        .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT),
+      ctx.db
+        .query("correspondences")
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
+        .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT),
+    ]);
+    const ranked = [...evidenced, ...conjectured]
+      .filter((row) => row.evidence.length > 0)
+      .toSorted(compareDraftableCorrespondences);
+    const selected = [];
+    for (const row of ranked) {
+      if (selected.length >= limit) break;
+      if (pendingCorrespondenceIds.has(String(row._id))) continue;
+      // Lazy membership check: only rows that survive the cheaper filters and
+      // are still needed pay the by_correspondenceId read (avoids an up-front
+      // query per ranked row).
+      const existingHypothesis = await ctx.db
+        .query("hypotheses")
+        .withIndex("by_correspondenceId", (q) =>
+          q.eq("correspondenceId", row._id),
+        )
+        .first();
+      if (existingHypothesis !== null) continue;
+      const [conceptA, conceptB, evidenceClaims] = await Promise.all([
+        ctx.db.get("concepts", row.conceptAId),
+        ctx.db.get("concepts", row.conceptBId),
+        Promise.all(
+          row.evidence.map(async (entry) => {
+            const claim = await ctx.db.get("claims", entry.claimId);
+            return claim
+              ? {
+                  claimId: claim._id,
+                  text: claim.text,
+                  sourceId: claim.sourceId,
+                  extractionId: claim.extractionId,
+                  stance: entry.stance,
+                  ...(entry.note ? { note: entry.note } : {}),
+                }
+              : null;
+          }),
+        ),
+      ]);
+      if (!conceptA || !conceptB) continue;
+      selected.push({
+        correspondenceId: row._id,
+        pairKey: row.pairKey,
+        statement: row.statement,
+        rationaleMd: row.rationaleMd,
+        status: row.status,
+        similarityScore: row.similarityScore,
+        noveltyScore: row.noveltyScore,
+        conceptA: { id: conceptA._id, ...describeConcept(conceptA) },
+        conceptB: { id: conceptB._id, ...describeConcept(conceptB) },
+        evidenceClaims: evidenceClaims.filter(
+          (claim): claim is NonNullable<typeof claim> => claim !== null,
+        ),
+      });
+    }
+    return selected;
+  },
+});
+
 // ============================================================================
 // HUMAN DECISION MUTATIONS
 // ============================================================================
@@ -346,6 +530,7 @@ export const approve = mutation({
 
     let promotedId: Id<"hypotheses"> | Id<"recipes">;
     let promotedKind: "hypothesis" | "recipe";
+    let promotedCorrespondenceId: Id<"correspondences"> | undefined;
     if (draft.kind === "hypothesis_draft") {
       if (!("statement" in draft.payload)) {
         throw new ConvexError({
@@ -369,6 +554,7 @@ export const approve = mutation({
       });
       promotedId = hypothesisId;
       promotedKind = "hypothesis";
+      promotedCorrespondenceId = draft.payload.correspondenceId;
     } else {
       if (!("parameters" in draft.payload)) {
         throw new ConvexError({
@@ -416,6 +602,19 @@ export const approve = mutation({
       payload: { draftId: args.draftId, promotedId, promotedKind },
       createdAt: now,
     });
+    if (promotedCorrespondenceId) {
+      await ctx.db.insert("agentRunEvents", {
+        runId: draft.agentRunId,
+        kind: "decision",
+        message: "Promoted correspondence-linked hypothesis",
+        payload: {
+          draftId: args.draftId,
+          hypothesisId: promotedId,
+          correspondenceId: promotedCorrespondenceId,
+        },
+        createdAt: now,
+      });
+    }
     await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
     return { draftId: args.draftId, promotedId, promotedKind };
   },

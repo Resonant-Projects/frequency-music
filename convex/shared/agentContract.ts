@@ -4,6 +4,8 @@ import { AGENT_RUN_STATUSES, type AgentRunStatus } from "./statuses";
 
 export { AGENT_RUN_STATUSES, type AgentRunStatus };
 
+export const PENDING_DRAFT_CAP = 3;
+
 export const AGENT_RUN_EVENT_KINDS = [
   "tool_call",
   "decision",
@@ -34,6 +36,7 @@ export const KNOWN_GRAPH_NAMES = [
   "weekly-brief",
   "correspondence-miner",
   "evidence-hunter",
+  "hypothesis-drafter",
 ] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
 
@@ -60,4 +63,5 @@ export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
     "weekly-brief": "runner",
     "correspondence-miner": "graph",
     "evidence-hunter": "graph",
+    "hypothesis-drafter": "graph",
   };

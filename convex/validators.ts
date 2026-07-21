@@ -227,6 +227,7 @@ export const hypothesisReturnValidator = v.object({
   hypothesis: v.string(),
   whyThisMatters: v.optional(v.string()),
   rationaleMd: v.string(),
+  correspondenceId: v.optional(v.id("correspondences")),
   thesisId: v.optional(v.id("theses")),
   sourceIds: v.array(v.id("sources")),
   extractionIds: v.optional(v.array(v.id("extractions"))),

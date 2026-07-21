@@ -35,8 +35,8 @@
 - Modify: promotion builder — carries the field through (loss-free contract).
 - Modify: on promotion, the hypothesis's correspondence gets an `agentRunEvents`-style trace: append a `decision` event on the originating run per found-state convention (cheap lineage; no new table).
 
-- [ ] **Step 1:** Harness test: draft with `correspondenceId` promotes to a hypothesis carrying it.
-- [ ] **Step 2:** Implement; codegen; commit.
+- [x] **Step 1:** Harness test: draft with `correspondenceId` promotes to a hypothesis carrying it.
+- [x] **Step 2:** Implement; codegen; commit. *(Implementation and offline typecheck complete; codegen intentionally skipped per operator constraint.)*
 
 ---
 
@@ -46,8 +46,8 @@
 - Modify: `convex/shared/agentContract.ts` (found-state location): `export const PENDING_DRAFT_CAP = 3;`
 - Modify: `convex/agentDrafts.ts`: query `countPending { kind }`; guard in the draft-create mutation: creating a `hypothesis_draft` when pending ≥ cap throws `DraftCapExceeded`.
 
-- [ ] **Step 1:** Failing harness test: 3 pending hypothesis drafts → 4th create throws; recipe drafts unaffected; approving one reopens capacity.
-- [ ] **Step 2:** Implement; codegen; commit.
+- [x] **Step 1:** Failing harness test: 3 pending hypothesis drafts → 4th create throws; recipe drafts unaffected; approving one reopens capacity.
+- [x] **Step 2:** Implement; codegen; commit. *(Implementation and offline typecheck complete; codegen intentionally skipped per operator constraint.)*
 
 ---
 
@@ -74,8 +74,8 @@ check_capacity ──► pick_target ──► gather_context ──► draft �
 - **self_check:** structured pass — is it testable in a micro-study? does it vary ONE thing? does rationale actually cite the evidence? Fail → one revision loop, then discard with `decision` event (do not write a bad draft to burn cap slots).
 - **write_draft:** existing draft-write tool with the extended payload.
 
-- [ ] **Step 1:** Agent tests: capacity short-circuit; target dedupe (correspondence with existing hypothesis never picked); payload schema round-trip.
-- [ ] **Step 2:** Implement; typegate; commit.
+- [x] **Step 1:** Agent tests: capacity short-circuit; target dedupe (correspondence with existing hypothesis never picked); payload schema round-trip.
+- [x] **Step 2:** Implement; typegate; commit.
 
 ---
 
@@ -84,8 +84,8 @@ check_capacity ──► pick_target ──► gather_context ──► draft �
 **Files:**
 - Modify: `convex/crons.ts` — weekly enqueue (pulsed cadence, before the Friday brief so fresh drafts appear in it; pick the exact offset from the found-state brief cron).
 
-- [ ] **Step 1:** Cron; codegen; commit.
-- [ ] **Step 2: Live gate.** Seed ≥1 evidenced correspondence (plan 05 output). Run the graph: a real draft appears in `agent-drafts` with correspondence provenance. Approve it in the existing UI: hypothesis row carries `correspondenceId`. Then artificially hold 3 pending drafts and run again: clean refusal with status event. Paste both run summaries in PR.
+- [x] **Step 1:** Cron; codegen; commit. *(Cron and offline verification complete; codegen intentionally skipped per operator constraint.)*
+- [ ] **Step 2: Live gate.** Seed ≥1 evidenced correspondence (plan 05 output). Run the graph: a real draft appears in `agent-drafts` with correspondence provenance. Approve it in the existing UI: hypothesis row carries `correspondenceId`. Then artificially hold 3 pending drafts and run again: clean refusal with status event. Paste both run summaries in PR. **Operator note:** intentionally not run; this gate requires live Convex mutations, which are prohibited for this implementation pass.
 
 ---
 

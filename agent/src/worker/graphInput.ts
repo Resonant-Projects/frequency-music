@@ -75,12 +75,17 @@ export type CorrespondenceMinerGraphInput = {
 };
 
 export type EvidenceHunterGraphInput = CorrespondenceMinerGraphInput;
+export type HypothesisDrafterGraphInput = {
+  agentRunId: string;
+  traceUrl?: string;
+};
 
 export type GraphInvocation =
   | { graphName: "research-pipeline"; input: ResearchPipelineGraphInput }
   | { graphName: "weekly-brief"; input: WeeklyBriefGraphInput }
   | { graphName: "correspondence-miner"; input: CorrespondenceMinerGraphInput }
-  | { graphName: "evidence-hunter"; input: EvidenceHunterGraphInput };
+  | { graphName: "evidence-hunter"; input: EvidenceHunterGraphInput }
+  | { graphName: "hypothesis-drafter"; input: HypothesisDrafterGraphInput };
 
 function traceUrlFrom(input: unknown): string | undefined {
   if (!input || typeof input !== "object") return undefined;
@@ -138,6 +143,16 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       input: {
         agentRunId: claim.runId,
         limit: Math.min(resolveResearchLimit(claim.input, 5), 5),
+        ...(traceUrl ? { traceUrl } : {}),
+      },
+    };
+  }
+  if (claim.graphName === "hypothesis-drafter") {
+    const traceUrl = claimedTraceUrl(claim);
+    return {
+      graphName: "hypothesis-drafter",
+      input: {
+        agentRunId: claim.runId,
         ...(traceUrl ? { traceUrl } : {}),
       },
     };

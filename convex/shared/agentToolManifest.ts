@@ -69,6 +69,20 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Use to avoid recommending ideas already contradicted, retired, archived, or repeatedly low-yield.",
   ),
   entry(
+    "countPendingDrafts",
+    "read",
+    "internal.agentDrafts:countPending",
+    "Count pending human-review drafts of one kind without exposing their contents.",
+    "The hypothesis drafter checks this before doing judgment work; the draft-create mutation independently enforces the cap.",
+  ),
+  entry(
+    "listDraftableCorrespondences",
+    "read",
+    "internal.agentDrafts:listDraftableCorrespondences",
+    "List bounded, hydrated, evidence-backed correspondence targets that have neither an existing hypothesis nor a pending hypothesis draft.",
+    "Returns evidence-backed targets only: evidenced first, then conjectured targets ranked by similarity times novelty, with exact evidence-claim provenance.",
+  ),
+  entry(
     "getEditorialSignals",
     "read",
     "dashboard:editorialSignals",

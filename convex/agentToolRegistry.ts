@@ -43,6 +43,15 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ctx.runQuery(queryRef("failures:listArchive"), {
       limit: (args.limit as number) ?? 20,
     }),
+  countPendingDrafts: (ctx, args) =>
+    ctx.runQuery(internal.agentDrafts.countPending, {
+      kind: args.kind as "hypothesis_draft" | "recipe_draft",
+    }),
+  listDraftableCorrespondences: (ctx, args) =>
+    ctx.runQuery(
+      internal.agentDrafts.listDraftableCorrespondences,
+      omitUndefined({ limit: args.limit as number | undefined }),
+    ),
   getEditorialSignals: (ctx, args) =>
     ctx.runQuery(queryRef("dashboard:editorialSignals"), {
       limit: (args.limit as number) ?? 24,
