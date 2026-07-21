@@ -6,6 +6,11 @@ import {
   type RecommendationContext,
   type RecommendedAction,
 } from "./campaigns";
+import {
+  countPendingDraftsByKind,
+  findOldestPendingDraftByKind,
+} from "./agentDrafts";
+import { listRecentMovementRowsWithCap } from "./correspondences";
 import { computeEditorialSignals } from "./dashboard";
 import {
   action,
@@ -15,14 +20,22 @@ import {
   mutation,
   query,
   type ActionCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
 import { DEFAULT_MODEL } from "./llm";
 import {
+  loopReportValidator,
   recommendedActionValidator,
   studioPromptVariantsValidator,
 } from "./schema";
+import {
+  DAY_MS,
+  LISTENING_DEBT_AFTER_MS,
+  PENDING_DRAFT_CAP,
+} from "./shared/agentContract";
+import { feedProposalZ } from "./shared/feedProposals";
 import {
   campaignReturnValidator,
   failureArchiveEntryValidator,
@@ -176,6 +189,7 @@ export const create = internalMutation({
     referencedFailureKeys: v.optional(v.array(v.string())),
     studioPrompts: studioPromptVariantsValidator,
     recommendedActions: v.array(recommendedActionValidator),
+    loopReport: v.optional(loopReportValidator),
     todo: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -273,7 +287,8 @@ Format your output as a markdown document with:
 
 Be practical and DAW-focused. Each experiment should be completable in a single studio session.
 For each recommended experiment, explain both what to try and why it matters musically or perceptually.
-Explicitly mention when a line of work contradicts prior work or has repeatedly failed to expand.`;
+Explicitly mention when a line of work contradicts prior work or has repeatedly failed to expand.
+Treat the supplied Loop Report numbers as fixed facts; if reviewQueue.agentBlocked is true, the brief's OPENING must explicitly say the agent is blocked (headline signal, not a footnote).`;
 
 const BRIEF_USER_PROMPT = `Create a weekly research brief.
 
@@ -304,6 +319,9 @@ Low-yield concept areas:
 **Recommended Actions**:
 {{recommendedActions}}
 
+**Loop Report (deterministic — do not change these numbers)**:
+{{loopReport}}
+
 Generate a comprehensive weekly brief in markdown format. Include:
 1. A catchy title for the week's theme
 2. 3-10 experiment cards sorted by priority (high/medium/low)
@@ -332,6 +350,7 @@ const DEFAULT_STUDIO_PROMPTS: StudioPromptVariants = {
   ninetyMinuteMd:
     "Use the current weekly brief to expand the most promising branch into a structured study that could plausibly become a finished piece.",
 };
+const BRIEF_PROMPT_VERSION = "v2.loop-report";
 
 export function selectRecentBriefInputs(args: {
   hypotheses: Doc<"hypotheses">[];
@@ -420,12 +439,242 @@ interface GenerateBriefResult {
 }
 
 type EditorialSignals = Awaited<ReturnType<typeof computeEditorialSignals>>;
+export type LoopReport = NonNullable<Doc<"weeklyBriefs">["loopReport"]>;
 
 type LoadBriefContext = {
   recommendationContext: RecommendationContext;
   extraActiveTheses: Doc<"theses">[];
   editorialSignals: EditorialSignals;
+  loopReport: LoopReport;
 };
+
+const LOOP_REPORT_TOP_MOVERS_LIMIT = 5;
+const EXPERIMENT_DEBT_LIMIT = 10;
+const EXPERIMENT_DEBT_SCAN_LIMIT = 100;
+const PROPOSED_FEED_SCAN_LIMIT = 100;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function proposalRationale(metadata: unknown): string | undefined {
+  if (!isRecord(metadata)) return undefined;
+  const result = feedProposalZ.safeParse(metadata.proposal);
+  if (!result.success) return undefined;
+  const rationale = result.data.rationale.trim();
+  return rationale.length > 0 ? rationale : undefined;
+}
+
+function ageInDays(now: number, startedAt: number): number {
+  return Math.max(0, Math.floor((now - startedAt) / DAY_MS));
+}
+
+export function renderLoopReportForPrompt(loopReport: LoopReport): string {
+  const rendered = JSON.stringify(loopReport);
+  return loopReport.correspondences.countsCapped
+    ? `${rendered}\nNote: correspondence movement counts are capped lower bounds.`
+    : rendered;
+}
+
+export async function computeLoopReport(
+  db: QueryCtx["db"],
+  now = Date.now(),
+): Promise<LoopReport> {
+  const previousBriefs = await Promise.all(
+    (["private", "followers", "public"] as const).map((visibility) =>
+      db
+        .query("weeklyBriefs")
+        .withIndex("by_visibility_createdAt", (q) =>
+          q.eq("visibility", visibility),
+        )
+        .order("desc")
+        .first(),
+    ),
+  );
+  const previousCreatedAt = previousBriefs.reduce(
+    (latest, brief) => Math.max(latest, brief?.createdAt ?? 0),
+    0,
+  );
+  const since = previousCreatedAt || now - 7 * DAY_MS;
+
+  const [
+    movementResult,
+    pendingDraftCount,
+    oldestPendingDraft,
+    inUseRecipes,
+    renderedCompositions,
+    feeds,
+  ] = await Promise.all([
+    listRecentMovementRowsWithCap(db, since),
+    countPendingDraftsByKind({ db }, "hypothesis_draft"),
+    findOldestPendingDraftByKind({ db }, "hypothesis_draft"),
+    db
+      .query("recipes")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "in_use"))
+      .order("asc")
+      .take(EXPERIMENT_DEBT_SCAN_LIMIT),
+    db
+      .query("compositions")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "rendered"))
+      .order("asc")
+      .take(EXPERIMENT_DEBT_SCAN_LIMIT),
+    db
+      .query("feeds")
+      .withIndex("by_enabled", (q) => q.eq("enabled", false))
+      .take(PROPOSED_FEED_SCAN_LIMIT),
+  ]);
+  const { rows: movement, countsCapped } = movementResult;
+
+  const recentEvidenceCount = (row: Doc<"correspondences">) =>
+    row.evidence.filter((citation) => citation.addedAt >= since).length;
+  const topMovers = movement
+    .map((row) => ({ row, evidenceDelta: recentEvidenceCount(row) }))
+    .toSorted(
+      (left, right) =>
+        right.evidenceDelta - left.evidenceDelta ||
+        right.row.updatedAt - left.row.updatedAt ||
+        String(left.row._id).localeCompare(String(right.row._id)),
+    )
+    .slice(0, LOOP_REPORT_TOP_MOVERS_LIMIT)
+    .map(({ row, evidenceDelta }) => ({
+      correspondenceId: row._id,
+      statement: row.statement,
+      status: row.status,
+      evidenceDelta,
+    }));
+
+  const oldestPendingAt = oldestPendingDraft?.updatedAt;
+
+  type DebtCandidate = {
+    report: LoopReport["experimentDebt"][number];
+    startedAt: number;
+  };
+  const debtByRecipe = new Map<string, DebtCandidate>();
+  const noCompositionRows = await Promise.all(
+    inUseRecipes.map(async (recipe) => ({
+      recipe,
+      composition: await db
+        .query("compositions")
+        .withIndex("by_recipeId_updatedAt", (q) => q.eq("recipeId", recipe._id))
+        .first(),
+    })),
+  );
+  for (const { recipe, composition } of noCompositionRows) {
+    if (composition) continue;
+    debtByRecipe.set(String(recipe._id), {
+      startedAt: recipe.updatedAt,
+      report: {
+        recipeId: recipe._id,
+        title: recipe.title,
+        state: "in_use_no_composition",
+        // updatedAt proxies the state transition; unrelated patches reset this clock because no dedicated transition timestamp exists.
+        ageDays: ageInDays(now, recipe.updatedAt),
+      },
+    });
+  }
+
+  const overdueRendered = renderedCompositions.filter(
+    (composition) => now - composition.updatedAt > LISTENING_DEBT_AFTER_MS,
+  );
+  const unlistenedRows = await Promise.all(
+    overdueRendered.map(async (composition) => {
+      const [recipe, listeningSession] = await Promise.all([
+        db.get("recipes", composition.recipeId),
+        db
+          .query("listeningSessions")
+          .withIndex("by_compositionId_createdAt", (q) =>
+            q.eq("compositionId", composition._id),
+          )
+          .first(),
+      ]);
+      return { composition, listeningSession, recipe };
+    }),
+  );
+  for (const { composition, listeningSession, recipe } of unlistenedRows) {
+    if (!recipe || listeningSession) continue;
+    const key = String(recipe._id);
+    const existing = debtByRecipe.get(key);
+    if (existing && existing.startedAt <= composition.updatedAt) continue;
+    debtByRecipe.set(key, {
+      startedAt: composition.updatedAt,
+      report: {
+        recipeId: recipe._id,
+        title: recipe.title,
+        state: "composed_no_listening",
+        // updatedAt proxies the state transition; unrelated patches reset this clock because no dedicated transition timestamp exists.
+        ageDays: ageInDays(now, composition.updatedAt),
+      },
+    });
+  }
+
+  const experimentDebt = [...debtByRecipe.values()]
+    .toSorted(
+      (left, right) =>
+        left.startedAt - right.startedAt ||
+        String(left.report.recipeId).localeCompare(
+          String(right.report.recipeId),
+        ),
+    )
+    .slice(0, EXPERIMENT_DEBT_LIMIT)
+    .map(({ report }) => report);
+
+  const proposedFeeds = feeds
+    .flatMap((feed) => {
+      const rationale = proposalRationale(feed.metadata);
+      return rationale
+        ? [{ feedId: feed._id, name: feed.name, url: feed.url, rationale }]
+        : [];
+    })
+    .toSorted(
+      (left, right) =>
+        left.name.localeCompare(right.name) ||
+        left.url.localeCompare(right.url),
+    );
+  // Non-proposal disabled feeds consume scan budget too; at the bound, real
+  // proposals past the window may be missing — surface that like countsCapped.
+  const proposedFeedsCapped = feeds.length >= PROPOSED_FEED_SCAN_LIMIT;
+
+  return {
+    correspondences: {
+      // Reads stay bounded at 1,000 rows per status. If a bucket reaches that
+      // bound, these movement counts are lower bounds rather than exact totals.
+      newConjectures: movement.filter((row) => row.createdAt >= since).length,
+      gainedEvidence: movement.reduce(
+        (count, row) => count + recentEvidenceCount(row),
+        0,
+      ),
+      contradicted: movement.filter(
+        (row) =>
+          row.status === "contradicted" &&
+          row.statusChangedAt !== undefined &&
+          row.statusChangedAt >= since,
+      ).length,
+      autoRetired: movement.filter(
+        (row) =>
+          row.status === "retired" &&
+          row.statusReason === "stale conjecture (auto)" &&
+          row.statusChangedAt !== undefined &&
+          row.statusChangedAt >= since,
+      ).length,
+      ...(countsCapped ? { countsCapped: true } : {}),
+      topMovers,
+    },
+    reviewQueue: {
+      pendingDrafts: pendingDraftCount,
+      cap: PENDING_DRAFT_CAP,
+      agentBlocked: pendingDraftCount >= PENDING_DRAFT_CAP,
+      ...(oldestPendingAt === undefined
+        ? {}
+        : {
+            // updatedAt proxies the state transition; unrelated patches reset this clock because no dedicated transition timestamp exists.
+            oldestPendingDays: ageInDays(now, oldestPendingAt),
+          }),
+    },
+    experimentDebt,
+    proposedFeeds,
+    ...(proposedFeedsCapped ? { proposedFeedsCapped: true } : {}),
+  };
+}
 
 const yieldBandValidator = v.union(
   v.literal("high"),
@@ -469,6 +718,7 @@ const loadBriefContextReturnsValidator = v.object({
     highYieldClusters: v.array(editorialSignalClusterValidator),
     lowYieldClusters: v.array(editorialSignalClusterValidator),
   }),
+  loopReport: loopReportValidator,
 });
 
 // Actions have no ctx.db, so brief generation reads all its DB-derived context
@@ -478,13 +728,15 @@ export const loadBriefContext = internalQuery({
   args: {},
   returns: loadBriefContextReturnsValidator,
   handler: async (ctx) => {
-    const [recommendationContext, editorialSignals] = await Promise.all([
-      computeRecommendedActionContext(ctx.db, { limit: 5 }),
-      computeEditorialSignals(
-        ctx.db as unknown as Parameters<typeof computeEditorialSignals>[0],
-        8,
-      ),
-    ]);
+    const [recommendationContext, editorialSignals, loopReport] =
+      await Promise.all([
+        computeRecommendedActionContext(ctx.db, { limit: 5 }),
+        computeEditorialSignals(
+          ctx.db as unknown as Parameters<typeof computeEditorialSignals>[0],
+          8,
+        ),
+        computeLoopReport(ctx.db),
+      ]);
     const extraActiveTheses =
       recommendationContext.theses.length > 0
         ? ([] as Doc<"theses">[])
@@ -493,7 +745,12 @@ export const loadBriefContext = internalQuery({
             .withIndex("by_status_updatedAt", (q) => q.eq("status", "active"))
             .order("desc")
             .take(10);
-    return { recommendationContext, extraActiveTheses, editorialSignals };
+    return {
+      recommendationContext,
+      extraActiveTheses,
+      editorialSignals,
+      loopReport,
+    };
   },
 });
 
@@ -514,8 +771,12 @@ export async function generateBriefCore(
     internal.weeklyBriefs.loadBriefContext,
     {},
   );
-  const { recommendationContext, extraActiveTheses, editorialSignals } =
-    briefContext;
+  const {
+    recommendationContext,
+    extraActiveTheses,
+    editorialSignals,
+    loopReport,
+  } = briefContext;
   const hypotheses = recommendationContext.hypotheses;
   const recipes = recommendationContext.recipes;
   const { recentHypotheses, recentRecipes, sourceIds } =
@@ -632,9 +893,10 @@ Theses: ${
     .replace("{{failures}}", failuresText)
     .replace("{{highYield}}", highYieldText)
     .replace("{{lowYield}}", lowYieldText)
-    .replace("{{recommendedActions}}", recommendedActionsText);
+    .replace("{{recommendedActions}}", recommendedActionsText)
+    .replace("{{loopReport}}", renderLoopReportForPrompt(loopReport));
 
-  // Call AI (traced as brief_v2.phase3 in the Node-runtime internal action)
+  // Call AI (trace name remains brief_v2.phase3 for eval-baseline continuity).
   const modelId = args.model || DEFAULT_MODEL;
 
   const { text } = await ctx.runAction(
@@ -644,7 +906,7 @@ Theses: ${
       prompt,
       model: modelId,
       weekOf,
-      promptVersion: "v2.phase3",
+      promptVersion: BRIEF_PROMPT_VERSION,
       numHypotheses: recentHypotheses.length,
       numRecipes: recentRecipes.length,
       ...(recommendationContext.campaign?._id
@@ -661,7 +923,7 @@ Theses: ${
   const briefId = await ctx.runMutation(internal.weeklyBriefs.create, {
     weekOf,
     model: modelId,
-    promptVersion: "v2.phase3",
+    promptVersion: BRIEF_PROMPT_VERSION,
     bodyMd: parsed.cleanBodyMd,
     sourceIds: persistedSourceIds,
     campaignId: recommendationContext.campaign?._id,
@@ -675,6 +937,7 @@ Theses: ${
     referencedFailureKeys: recentFailures.map((failure) => failure.key),
     studioPrompts: parsed.studioPrompts,
     recommendedActions: recommendedActions as RecommendedAction[],
+    loopReport,
     todo: parsed.todo.length > 0 ? parsed.todo : undefined,
   });
 

@@ -1,5 +1,12 @@
 import { Link, useNavigate, useParams } from "@tanstack/solid-router";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  Show,
+} from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
@@ -19,9 +26,110 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  useConvexClient,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+import { MAX_FEED_ENABLE_STATE_IDS } from "../../../convex/shared/agentContract";
 import { extractTitle } from "../lib/markdown-utils";
+
+const loopSubheadingClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "xl",
+  fontWeight: "normal",
+  lineHeight: "1.35",
+  mb: "2",
+  mt: "5",
+});
+
+const loopEyebrowClass = css({
+  color: "rgba(245, 240, 232, 0.62)",
+  fontFamily: "mono",
+  fontSize: "2xs",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+});
+
+const loopLinkClass = css({
+  borderBottom: "1px solid rgba(200, 168, 75, 0.16)",
+  color: "inherit",
+  display: "grid",
+  gap: "1",
+  p: "3",
+  textDecoration: "none",
+  transitionDuration: "normal",
+  transitionProperty: "background-color, border-color",
+  _hover: {
+    bg: "rgba(200, 168, 75, 0.05)",
+    borderColor: "rgba(200, 168, 75, 0.42)",
+  },
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
+});
+
+const reviewQueueBannerClass = css({
+  bg: "rgba(245, 240, 232, 0.04)",
+  borderColor: "rgba(245, 240, 232, 0.14)",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  color: "zodiac.cream",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  justifyContent: "space-between",
+  p: "3",
+});
+
+const reviewQueueBlockedClass = css({
+  bg: "rgba(200, 168, 75, 0.14)",
+  borderColor: "rgba(200, 168, 75, 0.62)",
+  "& span:last-child": { color: "zodiac.gold" },
+});
+
+type FeedEnableState = { id: Id<"feeds">; enabled: boolean };
+
+function createLiveFeedStates(feedIds: () => Id<"feeds">[]) {
+  const convex = useConvexClient();
+  const [states, setStates] = createSignal<FeedEnableState[]>([]);
+
+  createEffect(() => {
+    const ids = feedIds();
+    const statesByBatch: FeedEnableState[][] = [];
+    const unsubscribes: Array<() => void> = [];
+    setStates([]);
+
+    for (
+      let start = 0;
+      start < ids.length;
+      start += MAX_FEED_ENABLE_STATE_IDS
+    ) {
+      const batchIndex = start / MAX_FEED_ENABLE_STATE_IDS;
+      const batchIds = ids.slice(start, start + MAX_FEED_ENABLE_STATE_IDS);
+      unsubscribes.push(
+        convex.onUpdate(
+          api.feeds.getByIds,
+          { ids: batchIds },
+          (result) => {
+            statesByBatch[batchIndex] = result;
+            setStates(statesByBatch.flat());
+          },
+          (error) => {
+            console.error("Feed enable-state subscription failed", error);
+          },
+        ),
+      );
+    }
+
+    onCleanup(() => {
+      for (const unsubscribe of unsubscribes) unsubscribe();
+    });
+  });
+
+  return states;
+}
 
 export function WeeklyBriefDetailPage() {
   const params = useParams({ from: "/weekly-turns/$briefId" });
@@ -40,6 +148,10 @@ export function WeeklyBriefDetailPage() {
   const referencedFailureEntries = createQuery(api.failures.getByKeys, () => ({
     keys: brief()?.referencedFailureKeys ?? [],
   }));
+  const proposedFeedIds = createMemo(() =>
+    (brief()?.loopReport?.proposedFeeds ?? []).map((feed) => feed.feedId),
+  );
+  const liveFeedStates = createLiveFeedStates(proposedFeedIds);
   const activeTheses = createMemo<Doc<"theses">[]>(
     () => (activeThesesQuery() ?? []) as Doc<"theses">[],
   );
@@ -57,9 +169,16 @@ export function WeeklyBriefDetailPage() {
   const createRecapDraft = createMutation(
     api.editorialArtifacts.createDraftFromWeeklyBrief,
   );
+  const setFeedEnabled = createMutation(api.feeds.setEnabled);
   const [notice, setNotice] = createSignal<string | null>(null);
   const [publishing, setPublishing] = createSignal(false);
   const [creatingRecap, setCreatingRecap] = createSignal(false);
+  const [enablingFeedId, setEnablingFeedId] = createSignal<Id<"feeds"> | null>(
+    null,
+  );
+  const [enabledFeedIds, setEnabledFeedIds] = createSignal<Set<Id<"feeds">>>(
+    new Set(),
+  );
 
   async function handlePublish() {
     const b = brief();
@@ -95,6 +214,21 @@ export function WeeklyBriefDetailPage() {
       setNotice("Could not create an editorial recap draft.");
     } finally {
       setCreatingRecap(false);
+    }
+  }
+
+  async function handleEnableFeed(feedId: Id<"feeds">, name: string) {
+    setEnablingFeedId(feedId);
+    setNotice(null);
+    try {
+      await setFeedEnabled({ id: feedId, enabled: true });
+      setEnabledFeedIds((current) => new Set([...current, feedId]));
+      setNotice(`${name} enabled.`);
+    } catch (error) {
+      console.error("Proposed feed enable failed", error);
+      setNotice(`Could not enable ${name}.`);
+    } finally {
+      setEnablingFeedId(null);
     }
   }
 
@@ -359,6 +493,260 @@ export function WeeklyBriefDetailPage() {
                   }}
                 </For>
               </div>
+            </Show>
+
+            <Show when={b().loopReport}>
+              {(loopReport) => (
+                <>
+                  <hr class={goldDivider} />
+                  <div class={sectionLabel}>Loop Report</div>
+
+                  <h2 class={loopSubheadingClass}>Correspondence movement</h2>
+                  <dl
+                    class={css({
+                      borderBottom: "1px solid rgba(245, 240, 232, 0.1)",
+                      borderTop: "1px solid rgba(245, 240, 232, 0.1)",
+                      display: "grid",
+                      gridTemplateColumns: {
+                        base: "repeat(2, minmax(0, 1fr))",
+                        md: "repeat(4, minmax(0, 1fr))",
+                      },
+                      m: "0",
+                    })}
+                  >
+                    <For
+                      each={[
+                        {
+                          label: "New conjectures",
+                          value: loopReport().correspondences.newConjectures,
+                        },
+                        {
+                          label: "Evidence added",
+                          value: loopReport().correspondences.gainedEvidence,
+                        },
+                        {
+                          label: "Contradicted",
+                          value: loopReport().correspondences.contradicted,
+                        },
+                        {
+                          label: "Auto-retired",
+                          value: loopReport().correspondences.autoRetired,
+                        },
+                      ]}
+                    >
+                      {(stat) => (
+                        <div class={css({ p: { base: "3", md: "4" } })}>
+                          <dt class={loopEyebrowClass}>{stat.label}</dt>
+                          <dd
+                            class={css({
+                              color: "zodiac.gold",
+                              fontFamily: "mono",
+                              fontSize: "xl",
+                              m: "0",
+                              mt: "1",
+                            })}
+                          >
+                            {stat.value}
+                          </dd>
+                        </div>
+                      )}
+                    </For>
+                  </dl>
+
+                  <Show when={loopReport().correspondences.countsCapped}>
+                    <p class={metaLine}>
+                      Counts capped at 1,000 movements per status; displayed
+                      totals are lower bounds.
+                    </p>
+                  </Show>
+
+                  <Show
+                    when={loopReport().correspondences.topMovers.length > 0}
+                  >
+                    <h3 class={loopSubheadingClass}>Top movers</h3>
+                    <div
+                      class={css({
+                        borderTop: "1px solid rgba(200, 168, 75, 0.16)",
+                      })}
+                    >
+                      <For each={loopReport().correspondences.topMovers}>
+                        {(mover) => (
+                          <Link
+                            to="/correspondences/$correspondenceId"
+                            params={{
+                              correspondenceId: String(mover.correspondenceId),
+                            }}
+                            class={loopLinkClass}
+                          >
+                            <span
+                              class={css({
+                                alignItems: "center",
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "2",
+                                justifyContent: "space-between",
+                              })}
+                            >
+                              <span>{mover.statement}</span>
+                              <span class={loopEyebrowClass}>
+                                {mover.status} · +{mover.evidenceDelta} evidence
+                              </span>
+                            </span>
+                          </Link>
+                        )}
+                      </For>
+                    </div>
+                  </Show>
+
+                  <h2 class={loopSubheadingClass}>Review queue</h2>
+                  <div
+                    role="status"
+                    class={`${reviewQueueBannerClass} ${
+                      loopReport().reviewQueue.agentBlocked
+                        ? reviewQueueBlockedClass
+                        : ""
+                    }`}
+                  >
+                    <span>
+                      <strong>{loopReport().reviewQueue.pendingDrafts}</strong>
+                      {" pending hypothesis drafts"}
+                      <Show
+                        when={
+                          loopReport().reviewQueue.oldestPendingDays !==
+                          undefined
+                        }
+                      >
+                        {` · oldest ${loopReport().reviewQueue.oldestPendingDays}d`}
+                      </Show>
+                    </span>
+                    <span class={loopEyebrowClass}>
+                      {loopReport().reviewQueue.agentBlocked
+                        ? `Agent blocked at cap ${loopReport().reviewQueue.cap}`
+                        : `${loopReport().reviewQueue.pendingDrafts} of ${loopReport().reviewQueue.cap} slots`}
+                    </span>
+                  </div>
+
+                  <h2 class={loopSubheadingClass}>Experiment debt</h2>
+                  <Show
+                    when={loopReport().experimentDebt.length > 0}
+                    fallback={
+                      <p class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
+                        No recipes are waiting on composition or listening.
+                      </p>
+                    }
+                  >
+                    <div
+                      class={css({
+                        borderTop: "1px solid rgba(200, 168, 75, 0.16)",
+                      })}
+                    >
+                      <For each={loopReport().experimentDebt}>
+                        {(debt) => (
+                          <Link
+                            to="/recipes/$recipeId"
+                            params={{ recipeId: String(debt.recipeId) }}
+                            class={loopLinkClass}
+                          >
+                            <span
+                              class={css({
+                                alignItems: "center",
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "2",
+                                justifyContent: "space-between",
+                              })}
+                            >
+                              <span>{debt.title}</span>
+                              <span class={loopEyebrowClass}>
+                                {debt.state === "in_use_no_composition"
+                                  ? "Needs composition"
+                                  : "Needs listening"}
+                                {` · ${debt.ageDays}d`}
+                              </span>
+                            </span>
+                          </Link>
+                        )}
+                      </For>
+                    </div>
+                  </Show>
+
+                  <Show when={loopReport().proposedFeeds.length > 0}>
+                    <h2 class={loopSubheadingClass}>Proposed feeds</h2>
+                    <div
+                      class={css({
+                        borderTop: "1px solid rgba(200, 168, 75, 0.16)",
+                        display: "grid",
+                      })}
+                    >
+                      <For each={loopReport().proposedFeeds}>
+                        {(feed) => {
+                          const enabled = () =>
+                            enabledFeedIds().has(feed.feedId) ||
+                            (liveFeedStates() ?? []).some(
+                              (state) =>
+                                state.id === feed.feedId && state.enabled,
+                            );
+                          return (
+                            <div
+                              class={css({
+                                alignItems: { base: "start", md: "center" },
+                                borderBottom:
+                                  "1px solid rgba(200, 168, 75, 0.16)",
+                                display: "flex",
+                                flexDirection: { base: "column", md: "row" },
+                                gap: "3",
+                                justifyContent: "space-between",
+                                p: "3",
+                              })}
+                            >
+                              <div>
+                                <a
+                                  href={feed.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class={css({
+                                    color: "zodiac.cream",
+                                    textDecorationColor:
+                                      "rgba(200, 168, 75, 0.45)",
+                                    textUnderlineOffset: "3px",
+                                  })}
+                                >
+                                  {feed.name}
+                                </a>
+                                <p
+                                  class={css({
+                                    color: "rgba(245, 240, 232, 0.68)",
+                                    m: "0",
+                                    mt: "1",
+                                  })}
+                                >
+                                  {feed.rationale}
+                                </p>
+                              </div>
+                              <UIButton
+                                type="button"
+                                variant={enabled() ? "ghost" : "solid"}
+                                disabled={
+                                  enabled() || enablingFeedId() === feed.feedId
+                                }
+                                onClick={() =>
+                                  void handleEnableFeed(feed.feedId, feed.name)
+                                }
+                              >
+                                {enabled()
+                                  ? "Enabled"
+                                  : enablingFeedId() === feed.feedId
+                                    ? "Enabling..."
+                                    : "Enable"}
+                              </UIButton>
+                            </div>
+                          );
+                        }}
+                      </For>
+                    </div>
+                  </Show>
+                </>
+              )}
             </Show>
 
             {/* Rendered Markdown Body */}

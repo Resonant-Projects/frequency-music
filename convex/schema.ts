@@ -144,6 +144,52 @@ export const recommendedActionValidator = v.object({
   reason: v.string(),
 });
 
+export const loopReportValidator = v.object({
+  correspondences: v.object({
+    newConjectures: v.number(),
+    gainedEvidence: v.number(),
+    contradicted: v.number(),
+    autoRetired: v.number(),
+    countsCapped: v.optional(v.boolean()),
+    topMovers: v.array(
+      v.object({
+        correspondenceId: v.id("correspondences"),
+        statement: v.string(),
+        status: v.string(),
+        evidenceDelta: v.number(),
+      }),
+    ),
+  }),
+  reviewQueue: v.object({
+    pendingDrafts: v.number(),
+    cap: v.number(),
+    agentBlocked: v.boolean(),
+    oldestPendingDays: v.optional(v.number()),
+  }),
+  experimentDebt: v.array(
+    v.object({
+      recipeId: v.id("recipes"),
+      title: v.string(),
+      state: v.union(
+        v.literal("in_use_no_composition"),
+        v.literal("composed_no_listening"),
+      ),
+      ageDays: v.number(),
+    }),
+  ),
+  proposedFeeds: v.array(
+    v.object({
+      feedId: v.id("feeds"),
+      name: v.string(),
+      url: v.string(),
+      rationale: v.string(),
+    }),
+  ),
+  // True when the disabled-feed scan hit its bound — proposals beyond the
+  // window may be omitted (mirror of correspondences.countsCapped).
+  proposedFeedsCapped: v.optional(v.boolean()),
+});
+
 // ============================================================================
 // AGENT REVIEW DRAFT PAYLOADS - structured data promotion carries into real rows
 // ============================================================================
@@ -706,6 +752,7 @@ export default defineSchema({
     referencedFailureKeys: v.optional(v.array(v.string())),
     studioPrompts: v.optional(studioPromptVariantsValidator),
     recommendedActions: v.optional(v.array(recommendedActionValidator)),
+    loopReport: v.optional(loopReportValidator),
     todo: v.optional(v.array(v.string())),
 
     // Publishing
