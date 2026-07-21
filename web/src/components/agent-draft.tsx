@@ -462,7 +462,11 @@ export function DraftReviewStory(props: {
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={props.context.correspondence?.evidence ?? []}>
               {(evidence) => {
-                const contradicts = evidence.stance === "contradicts";
+                // Persisted review context can contain the legacy neutral value
+                // even though current correspondence writes use the narrower enum.
+                const stance = String(evidence.stance);
+                const supports = stance === "supports";
+                const contradicts = stance === "contradicts";
                 return (
                   <div
                     class={css({
@@ -487,9 +491,20 @@ export function DraftReviewStory(props: {
                         gap: "2",
                       })}
                     >
-                      <span aria-hidden="true">{contradicts ? "⊘" : "✓"}</span>
+                      <span
+                        aria-hidden="true"
+                        class={css({
+                          color: contradicts
+                            ? "zodiac.violet"
+                            : supports
+                              ? "#51c475"
+                              : "rgba(245, 240, 232, 0.58)",
+                        })}
+                      >
+                        {contradicts ? "⊘" : supports ? "✓" : "—"}
+                      </span>
                       <UIBadge tone={contradicts ? "violet" : "cream"}>
-                        {evidence.stance}
+                        {stance}
                       </UIBadge>
                       <span class={reviewEyebrowClass}>
                         {humanize(evidence.claim.evidenceLevel)}
@@ -648,6 +663,10 @@ export function DraftReviewStory(props: {
                         {draftPayload().whyThisMatters}
                       </p>
                     </div>
+                    <DraftPayloadPreview
+                      kind="recipe_draft"
+                      payload={draftPayload()}
+                    />
                   </>
                 }
               >
@@ -721,10 +740,6 @@ export function DraftReviewStory(props: {
                   />
                 </div>
               </Show>
-              <DraftPayloadPreview
-                kind="recipe_draft"
-                payload={draftPayload()}
-              />
             </div>
           )}
         </Show>

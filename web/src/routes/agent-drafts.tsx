@@ -3,6 +3,7 @@ import {
   createMemo,
   createSignal,
   For,
+  on,
   onCleanup,
   onMount,
   Show,
@@ -107,7 +108,7 @@ function queueStatement(draft: PersistedReviewDraft) {
   return draft.summary;
 }
 
-function queuePair(draft: PersistedReviewDraft) {
+function queueContextLabel(draft: PersistedReviewDraft) {
   if (draft.reviewPair) {
     return `${draft.reviewPair.conceptA} × ${draft.reviewPair.conceptB}`;
   }
@@ -116,7 +117,7 @@ function queuePair(draft: PersistedReviewDraft) {
     if (concepts.length >= 2) return `${concepts[0]} × ${concepts[1]}`;
   }
   if (draft.payload && "parameters" in draft.payload) {
-    return `Recipe for ${draft.payload.hypothesisId ?? "unlinked hypothesis"}`;
+    return draft.title;
   }
   return "No correspondence lineage";
 }
@@ -416,7 +417,7 @@ function DecideBar(props: {
       </Show>
       <Show when={error()}>
         {(message) => (
-          <p aria-live="polite" class={css({ color: "zodiac.violet" })}>
+          <p aria-live="polite" class={css({ color: "zodiac.error" })}>
             {message()}
           </p>
         )}
@@ -474,11 +475,15 @@ function ReviewWorkspace(props: {
     AgentDraftPayload | undefined
   >(props.context.draft.payload);
 
-  createEffect(() => {
-    const draft = props.context.draft;
-    setEditMode(false);
-    setWorkingPayload(draft.payload);
-  });
+  createEffect(
+    on(
+      () => props.context.draft._id,
+      () => {
+        setEditMode(false);
+        setWorkingPayload(props.context.draft.payload);
+      },
+    ),
+  );
 
   const editedFields = createMemo(() =>
     editableFieldDiff(
@@ -675,7 +680,7 @@ export function AgentDraftsPage() {
                   >
                     {queueStatement(draft)}
                   </p>
-                  <span class={eyebrowClass}>{queuePair(draft)}</span>
+                  <span class={eyebrowClass}>{queueContextLabel(draft)}</span>
                 </button>
               )}
             </For>
