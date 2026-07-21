@@ -504,7 +504,11 @@ export function createWriteDraftNode(callTool: ToolCaller = callConvex) {
             needsReview: true,
           },
         });
-        return { draftWritten: true, draftId: persisted.draftId };
+        return {
+          draftWritten: true,
+          needsReviewMarked: true,
+          draftId: persisted.draftId,
+        };
       } catch (error) {
         const auditEvents = await appendRemoteAuditEvent(
           callTool,
@@ -519,6 +523,7 @@ export function createWriteDraftNode(callTool: ToolCaller = callConvex) {
         );
         return {
           draftWritten: true,
+          needsReviewMarked: false,
           draftId: persisted.draftId,
           auditEvents,
         };
@@ -575,14 +580,18 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
           : state.draftWritten
             ? `hypothesis-drafter completed: draft ${state.draftId} awaits human review`
             : "hypothesis-drafter completed: no draft written";
-    const auditEvents = state.draftWritten
-      ? []
-      : await finalizeRunCompleted(
-          callTool,
-          state.agentRunId,
-          summary,
-          state.traceUrl,
-        );
+    // A written draft whose needs_review mark succeeded is terminal via that
+    // mark; every other path (including a failed mark) must finalize or the
+    // run wedges non-terminal.
+    const auditEvents =
+      state.draftWritten && state.needsReviewMarked
+        ? []
+        : await finalizeRunCompleted(
+            callTool,
+            state.agentRunId,
+            summary,
+            state.traceUrl,
+          );
     return { summary, auditEvents };
   };
 }

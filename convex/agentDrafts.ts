@@ -429,27 +429,20 @@ export const listDraftableCorrespondences = internalQuery({
     const ranked = [...evidenced, ...conjectured]
       .filter((row) => row.evidence.length > 0)
       .toSorted(compareDraftableCorrespondences);
-    const hypothesisMembership = await Promise.all(
-      ranked.map(async (row) => ({
-        correspondenceId: String(row._id),
-        hypothesis: await ctx.db
-          .query("hypotheses")
-          .withIndex("by_correspondenceId", (q) =>
-            q.eq("correspondenceId", row._id),
-          )
-          .first(),
-      })),
-    );
-    const hypothesizedCorrespondenceIds = new Set(
-      hypothesisMembership
-        .filter(({ hypothesis }) => hypothesis !== null)
-        .map(({ correspondenceId }) => correspondenceId),
-    );
     const selected = [];
     for (const row of ranked) {
       if (selected.length >= limit) break;
       if (pendingCorrespondenceIds.has(String(row._id))) continue;
-      if (hypothesizedCorrespondenceIds.has(String(row._id))) continue;
+      // Lazy membership check: only rows that survive the cheaper filters and
+      // are still needed pay the by_correspondenceId read (avoids an up-front
+      // query per ranked row).
+      const existingHypothesis = await ctx.db
+        .query("hypotheses")
+        .withIndex("by_correspondenceId", (q) =>
+          q.eq("correspondenceId", row._id),
+        )
+        .first();
+      if (existingHypothesis !== null) continue;
       const [conceptA, conceptB, evidenceClaims] = await Promise.all([
         ctx.db.get("concepts", row.conceptAId),
         ctx.db.get("concepts", row.conceptBId),
