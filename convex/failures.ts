@@ -60,18 +60,15 @@ type CompositionFailureContext = {
 async function getBranchRootId(
   db: DbReader,
   composition: Doc<"compositions">,
-  maxDepth = Number.POSITIVE_INFINITY,
 ): Promise<Id<"compositions">> {
   let current = composition;
   const seen = new Set([String(composition._id)]);
-  let depth = 0;
-  while (current.revisionParentId && depth < maxDepth) {
+  while (current.revisionParentId) {
     if (seen.has(String(current.revisionParentId))) break;
     seen.add(String(current.revisionParentId));
     const parent = await db.get("compositions", current.revisionParentId);
     if (!parent) break;
     current = parent;
-    depth += 1;
   }
   return current._id;
 }
@@ -177,11 +174,7 @@ async function loadBranchFailureContext(
   cache: Map<string, BranchFailureContext>,
   readLimit = Number.POSITIVE_INFINITY,
 ): Promise<BranchFailureContext> {
-  const revisionBranchRootId = await getBranchRootId(
-    db,
-    composition,
-    readLimit,
-  );
+  const revisionBranchRootId = await getBranchRootId(db, composition);
   const cached = cache.get(String(revisionBranchRootId));
   if (cached) return cached;
 

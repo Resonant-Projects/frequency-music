@@ -4,6 +4,7 @@ import {
   deriveFailureArchiveEntries,
   getBranchFailureStatusForComposition,
   getFailureStatusForComposition,
+  projectFailureArchiveHitsForHypotheses,
 } from "./failures";
 
 function makeId<TableName extends TableNames>(value: string) {
@@ -74,6 +75,26 @@ function makeDb(data: {
             sortRows(
               tables.compositions.filter(
                 (row) => String(row.revisionParentId) === String(value),
+              ),
+            ),
+          );
+        }
+
+        if (table === "recipes" && index === "by_hypothesisId_updatedAt") {
+          return createQueryResult(
+            sortRows(
+              tables.recipes.filter(
+                (row) => String(row.hypothesisId) === String(value),
+              ),
+            ),
+          );
+        }
+
+        if (table === "compositions" && index === "by_recipeId_updatedAt") {
+          return createQueryResult(
+            sortRows(
+              tables.compositions.filter(
+                (row) => String(row.recipeId) === String(value),
               ),
             ),
           );
@@ -277,5 +298,56 @@ describe("failure archive derivation", () => {
     expect(repeatEntries[0]?.key).toBe(
       `composition:${rootId}:repeat_no_expand`,
     );
+  });
+
+  test("finds the true branch root beyond bounded projection reads", async () => {
+    const hypothesisId = makeId<"hypotheses">("hypothesis-deep");
+    const recipeId = makeId<"recipes">("recipe-deep");
+    const compositionIds = Array.from({ length: 12 }, (_, index) =>
+      makeId<"compositions">(`composition-${index}`),
+    );
+    const hypothesis = {
+      _id: hypothesisId,
+      title: "Deep hypothesis",
+      status: "active",
+    };
+    const db = makeDb({
+      hypotheses: [hypothesis],
+      recipes: [
+        {
+          _id: recipeId,
+          title: "Deep recipe",
+          hypothesisId,
+          status: "draft",
+          updatedAt: 1,
+        },
+      ],
+      compositions: compositionIds.map((compositionId, index) => ({
+        _id: compositionId,
+        title: index === 0 ? "True root" : `Revision ${index}`,
+        recipeId,
+        status: "idea",
+        artifactType: "microStudy",
+        version: `v${index + 1}`,
+        ...(index > 0 ? { revisionParentId: compositionIds[index - 1] } : {}),
+        updatedAt: index,
+      })),
+      listeningSessions: [1, 2].map((index) => ({
+        _id: makeId<"listeningSessions">(`session-${index}`),
+        compositionId: compositionIds[index],
+        createdAt: index,
+        expandVerdict: "no",
+        ratings: { expandability: 1 },
+      })),
+    });
+
+    const hits = await projectFailureArchiveHitsForHypotheses(db as any, [
+      hypothesis as any,
+    ]);
+
+    expect(
+      hits.find(({ reason }) => reason === "repeat_no_expand_composition")
+        ?.title,
+    ).toBe("True root");
   });
 });

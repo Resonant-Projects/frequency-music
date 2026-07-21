@@ -143,6 +143,20 @@ function DecideBar(props: {
   let noteInput: HTMLTextAreaElement | undefined;
 
   const draft = () => props.context.draft;
+
+  createEffect(
+    on(
+      () => props.context.draft._id,
+      () => {
+        setDecision(null);
+        setNote("");
+        setSupersedingDraftId("");
+        setBusy(false);
+        setError(null);
+      },
+    ),
+  );
+
   const alternatives = createMemo(() =>
     props.pendingDrafts.filter((row) => row._id !== draft()._id),
   );
@@ -180,11 +194,12 @@ function DecideBar(props: {
     setError(null);
     try {
       if (selected === "approve") {
+        const payload = normalizePayloadForApproval(props.payload);
         const result = await approve({
           draftId: draft()._id,
           ...(note().trim() ? { decisionNote: note().trim() } : {}),
-          ...(props.editedFields.length > 0 && props.payload
-            ? { amendedPayload: props.payload }
+          ...(props.editedFields.length > 0 && payload
+            ? { amendedPayload: payload }
             : {}),
         });
         props.onApproved({
@@ -424,6 +439,20 @@ function DecideBar(props: {
       </Show>
     </div>
   );
+}
+
+function normalizePayloadForApproval(
+  payload: AgentDraftPayload | undefined,
+): AgentDraftPayload | undefined {
+  if (!payload || !("parameters" in payload) || !payload.dawChecklist) {
+    return payload;
+  }
+  return {
+    ...payload,
+    dawChecklist: payload.dawChecklist
+      .map((item) => item.trim())
+      .filter(Boolean),
+  };
 }
 
 function editablePayloadProjection(

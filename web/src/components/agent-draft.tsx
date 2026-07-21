@@ -731,10 +731,7 @@ export function DraftReviewStory(props: {
                     onInput={(value) =>
                       props.onPayloadChange?.({
                         ...draftPayload(),
-                        dawChecklist: value
-                          .split("\n")
-                          .map((item) => item.trim())
-                          .filter(Boolean),
+                        dawChecklist: value.split("\n"),
                       })
                     }
                   />
