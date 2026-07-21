@@ -5,6 +5,7 @@ import type { AuthAdapter } from "../convex";
 interface ClerkAuthSnapshot {
   isLoaded: boolean;
   isSignedIn: boolean;
+  userId: string | null;
   orgId: string | null;
   orgRole: string | null;
 }
@@ -12,6 +13,7 @@ interface ClerkAuthSnapshot {
 const [authSnapshot, setAuthSnapshot] = createSignal<ClerkAuthSnapshot>({
   isLoaded: false,
   isSignedIn: false,
+  userId: null,
   orgId: null,
   orgRole: null,
 });
@@ -30,6 +32,7 @@ function updateAuthSnapshotFromClerk(clerk: Clerk) {
   setAuthSnapshot({
     isLoaded: clerk.loaded,
     isSignedIn: !!clerk.user && !!clerk.session,
+    userId: clerk.user?.id ?? null,
     orgId: clerk.organization?.id ?? null,
     orgRole: null,
   });

@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/solid-router";
+import { Link, useNavigate, useParams } from "@tanstack/solid-router";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -8,6 +8,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UISelect,
   UITextarea,
   backLink,
   detailTitleClass,
@@ -19,6 +20,7 @@ import {
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+import { useClerkAuthSnapshot } from "../integrations/clerk";
 
 const lineItem = css({
   borderColor: "rgba(200, 168, 75, 0.18)",
@@ -298,8 +300,104 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
   );
 }
 
+type Visibility = Doc<"listeningSessions">["visibility"];
+
+function ListeningVisibilityControl(props: {
+  session: Doc<"listeningSessions">;
+}) {
+  const auth = useClerkAuthSnapshot();
+  const updateVisibility = createMutation(api.listening.updateVisibility);
+  const [visibility, setVisibility] = createSignal<Visibility>(
+    props.session.visibility,
+  );
+  const [saving, setSaving] = createSignal(false);
+  const [notice, setNotice] = createSignal<string | null>(null);
+  const authBypass = import.meta.env.VITE_AUTH_BYPASS === "1";
+  const canEdit = createMemo(
+    () =>
+      !authBypass &&
+      auth().userId !== null &&
+      auth().userId === String(props.session.createdBy),
+  );
+
+  async function saveVisibility() {
+    if (visibility() === props.session.visibility) return;
+    setSaving(true);
+    setNotice(null);
+    try {
+      await updateVisibility({
+        id: props.session._id,
+        visibility: visibility(),
+      });
+      setNotice(`Visibility set to ${visibility()}.`);
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Could not update visibility.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div class={css({ display: "grid", gap: "2", mt: "3" })}>
+      <label
+        class={fieldLabelClass}
+        for={`listening-visibility-${props.session._id}`}
+      >
+        Session visibility
+      </label>
+      <div
+        class={css({
+          alignItems: "center",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "2",
+        })}
+      >
+        <UISelect
+          id={`listening-visibility-${props.session._id}`}
+          value={visibility()}
+          disabled={!canEdit()}
+          onChange={(event) =>
+            setVisibility(event.currentTarget.value as Visibility)
+          }
+          class={css({ maxW: "52" })}
+        >
+          <option value="private">Private</option>
+          <option value="followers">Followers</option>
+          <option value="public">Public</option>
+        </UISelect>
+        <UIButton
+          variant="solid"
+          disabled={
+            !canEdit() || saving() || visibility() === props.session.visibility
+          }
+          onClick={saveVisibility}
+        >
+          {saving() ? "Saving…" : "Confirm visibility"}
+        </UIButton>
+      </div>
+      <Show when={!canEdit()}>
+        <p class={metaLine}>
+          Visibility is read-only here because the existing mutation is limited
+          to the session creator.
+        </p>
+      </Show>
+      <Show when={notice()}>
+        {(message) => (
+          <p aria-live="polite" class={css({ color: "zodiac.cream" })}>
+            {message()}
+          </p>
+        )}
+      </Show>
+    </div>
+  );
+}
+
 export function CompositionDetailPage() {
   const params = useParams({ from: "/compositions/$compositionId" });
+  const navigate = useNavigate();
   const lineageQuery = createQueryWithStatus(
     api.compositions.getLineage,
     () => ({
@@ -307,6 +405,29 @@ export function CompositionDetailPage() {
     }),
   );
   const lineage = lineageQuery.data;
+  const deleteComposition = createMutation(api.compositions.deleteById);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = createSignal(false);
+  const [deleting, setDeleting] = createSignal(false);
+  const [deleteError, setDeleteError] = createSignal<string | null>(null);
+
+  async function handleDeleteComposition() {
+    const row = lineage()?.composition;
+    if (!row) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteComposition({ id: row._id });
+      void navigate({ to: "/compositions" });
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Could not delete composition.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   createEffect(() => {
     const row = lineage()?.composition;
@@ -363,6 +484,71 @@ export function CompositionDetailPage() {
             </div>
 
             <h1 class={detailTitleClass}>{row().composition.title}</h1>
+
+            <div class={css({ display: "flex", gap: "2", mt: "3" })}>
+              <UIButton
+                variant="outline"
+                disabled={deleting()}
+                onClick={() => {
+                  setDeleteError(null);
+                  setDeleteConfirmOpen(true);
+                }}
+              >
+                Delete composition
+              </UIButton>
+            </div>
+
+            <Show when={deleteConfirmOpen()}>
+              <div
+                role="alertdialog"
+                aria-modal="false"
+                aria-label="Confirm composition deletion"
+                class={css({
+                  bg: "rgba(139, 92, 246, 0.07)",
+                  borderColor: "rgba(139, 92, 246, 0.3)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  display: "grid",
+                  gap: "3",
+                  mt: "3",
+                  p: "3",
+                })}
+              >
+                <p class={css({ color: "rgba(245, 240, 232, 0.74)" })}>
+                  Delete “{row().composition.title}”? This uses the existing
+                  composition deletion path and cannot be undone from this
+                  screen.
+                </p>
+                <div
+                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
+                >
+                  <UIButton
+                    variant="solid"
+                    disabled={deleting()}
+                    onClick={handleDeleteComposition}
+                  >
+                    {deleting() ? "Deleting…" : "Confirm delete"}
+                  </UIButton>
+                  <UIButton
+                    variant="ghost"
+                    disabled={deleting()}
+                    onClick={() => setDeleteConfirmOpen(false)}
+                  >
+                    Cancel
+                  </UIButton>
+                </div>
+                <Show when={deleteError()}>
+                  {(message) => (
+                    <p
+                      aria-live="polite"
+                      class={css({ color: "zodiac.error" })}
+                    >
+                      {message()}
+                    </p>
+                  )}
+                </Show>
+              </div>
+            </Show>
 
             <p
               class={css({
@@ -732,6 +918,7 @@ export function CompositionDetailPage() {
                           </ul>
                         </div>
                       </Show>
+                      <ListeningVisibilityControl session={session} />
                     </div>
                   )}
                 </For>

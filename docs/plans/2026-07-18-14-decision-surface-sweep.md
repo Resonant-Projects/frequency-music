@@ -50,7 +50,15 @@ recommended order:
   the composition detail provenance section, so the correction affordance lives there. It exposes
   exactly the existing `editExtraction` fields, identifies changed fields before save, and explains
   that the mutation records generated-vs-edited eval provenance.
-- [ ] **Listening-session visibility + composition delete.**
+- [x] **Listening-session visibility + composition delete.** Added an explicit per-session
+  visibility selector on composition detail, wired to the existing owner-checked
+  `listening.updateVisibility` mutation; sessions not owned by the signed-in user render read-only.
+  Added `compositions.deleteById` to the same detail page behind a confirm dialog, with navigation
+  back to the composition list after success.
+
+All mutations named by this plan were present in found state; there are no additional not-found or
+intentionally CLI-only mutation gaps to record. Correspondence authoring mutations remain
+CLI/agent-side by the plan's explicit non-goal.
 
 ## Operator-gated verification
 
@@ -61,6 +69,8 @@ recommended order:
 - [ ] Interceptor visual pass and PR screenshots for item 3 — operator-gated; no automated
   Interceptor run was performed by this implementation agent.
 - [ ] Interceptor visual pass and PR screenshots for item 4 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 5 — operator-gated; no automated
   Interceptor run was performed by this implementation agent.
 
 ## Global constraints
