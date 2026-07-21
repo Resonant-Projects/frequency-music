@@ -42,7 +42,10 @@ recommended order:
   three studio-prompt variants, including changed-field chips and the existing mutation's
   generated-vs-edited provenance behavior. Wired `weeklyBriefs.publish` behind an in-app publish
   confirmation while preserving `publishToNotion` as a separate existing action.
-- [ ] **Draft supersede.**
+- [x] **Draft supersede.** Verified the found plan-07 review card already called
+  `agentDrafts.supersede` with `draftId`, replacement `byDraftId`, and optional `decisionNote`.
+  Moved the signal into a decide-bar overflow menu while preserving its replacement selector and
+  explicit confirmation step.
 - [ ] **Extraction correction.**
 - [ ] **Listening-session visibility + composition delete.**
 
@@ -51,6 +54,8 @@ recommended order:
 - [ ] Interceptor visual pass and PR screenshots for item 1 — operator-gated; no automated
   Interceptor run was performed by this implementation agent.
 - [ ] Interceptor visual pass and PR screenshots for item 2 — operator-gated; no automated
+  Interceptor run was performed by this implementation agent.
+- [ ] Interceptor visual pass and PR screenshots for item 3 — operator-gated; no automated
   Interceptor run was performed by this implementation agent.
 
 ## Global constraints

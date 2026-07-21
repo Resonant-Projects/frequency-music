@@ -136,6 +136,7 @@ function DecideBar(props: {
   const reject = createMutation(api.agentDrafts.reject);
   const supersede = createMutation(api.agentDrafts.supersede);
   const [decision, setDecision] = createSignal<Decision | null>(null);
+  const [overflowOpen, setOverflowOpen] = createSignal(false);
   const [note, setNote] = createSignal("");
   const [supersedingDraftId, setSupersedingDraftId] = createSignal("");
   const [busy, setBusy] = createSignal(false);
@@ -149,6 +150,7 @@ function DecideBar(props: {
       () => props.context.draft._id,
       () => {
         setDecision(null);
+        setOverflowOpen(false);
         setNote("");
         setSupersedingDraftId("");
         setBusy(false);
@@ -169,6 +171,7 @@ function DecideBar(props: {
 
   function chooseDecision(next: Decision) {
     setDecision(next);
+    setOverflowOpen(false);
     setError(null);
     if (next === "approve" || next === "reject") {
       queueMicrotask(() => noteInput?.focus());
@@ -296,13 +299,45 @@ function DecideBar(props: {
           >
             Reject · R
           </UIButton>
-          <UIButton
-            variant="solid"
-            disabled={busy() || alternatives().length === 0}
-            onClick={() => chooseDecision("supersede")}
-          >
-            Supersede
-          </UIButton>
+          <div class={css({ position: "relative" })}>
+            <UIButton
+              variant="outline"
+              disabled={busy() || alternatives().length === 0}
+              aria-expanded={overflowOpen()}
+              aria-haspopup="menu"
+              onClick={() => setOverflowOpen((open) => !open)}
+            >
+              More decisions ···
+            </UIButton>
+            <Show when={overflowOpen()}>
+              <div
+                role="menu"
+                aria-label="Additional draft decisions"
+                class={css({
+                  bg: "rgba(13, 6, 32, 0.98)",
+                  borderColor: "rgba(139, 92, 246, 0.42)",
+                  borderRadius: "l2",
+                  borderWidth: "1px",
+                  display: "grid",
+                  left: "0",
+                  minW: "48",
+                  mt: "1",
+                  p: "1",
+                  position: "absolute",
+                  top: "full",
+                  zIndex: "20",
+                })}
+              >
+                <UIButton
+                  variant="ghost"
+                  role="menuitem"
+                  onClick={() => chooseDecision("supersede")}
+                >
+                  Supersede with draft…
+                </UIButton>
+              </div>
+            </Show>
+          </div>
           <Show
             when={props.editMode}
             fallback={
