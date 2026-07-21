@@ -116,15 +116,21 @@ type DraftableCorrespondenceRank = {
   pairKey: string;
 };
 
+function draftableStatusRank(status: string) {
+  return status === "evidenced" ? 0 : 1;
+}
+
+export function draftableScore(candidate: DraftableCorrespondenceRank) {
+  return (candidate.similarityScore ?? 0) * (candidate.noveltyScore ?? 0);
+}
+
 export function compareDraftableCorrespondences(
   left: DraftableCorrespondenceRank,
   right: DraftableCorrespondenceRank,
 ): number {
-  const statusRank = (status: string) => (status === "evidenced" ? 0 : 1);
   return (
-    statusRank(left.status) - statusRank(right.status) ||
-    (right.similarityScore ?? 0) * (right.noveltyScore ?? 0) -
-      (left.similarityScore ?? 0) * (left.noveltyScore ?? 0) ||
+    draftableStatusRank(left.status) - draftableStatusRank(right.status) ||
+    draftableScore(right) - draftableScore(left) ||
     left.pairKey.localeCompare(right.pairKey)
   );
 }

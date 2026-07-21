@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { PENDING_DRAFT_CAP } from "../../../../convex/shared/agentContract.js";
-import { compareDraftableCorrespondences } from "../../../../convex/shared/correspondenceCandidates.js";
+import {
+  compareDraftableCorrespondences,
+  draftableScore,
+} from "../../../../convex/shared/correspondenceCandidates.js";
 import { hypothesisDraftPayloadZ } from "../../../../convex/shared/draftPayloads.js";
 import { redactError } from "../../shared/redactError.js";
 import type {
@@ -99,17 +102,8 @@ export function routeAfterCapacity(
   return state.capReached ? "summarize" : "pick_target";
 }
 
-function targetScore(candidate: DraftableCorrespondence) {
-  return (candidate.similarityScore ?? 0) * (candidate.noveltyScore ?? 0);
-}
-
 export function selectDraftTarget(candidates: DraftableCorrespondence[]) {
-  const ranked = candidates
-    .filter(
-      (candidate) =>
-        !candidate.hasExistingHypothesis && !candidate.hasPendingDraft,
-    )
-    .sort(compareDraftableCorrespondences);
+  const ranked = [...candidates].sort(compareDraftableCorrespondences);
   return { target: ranked[0], runnerUp: ranked[1] };
 }
 
@@ -137,20 +131,20 @@ export function createPickTargetNode(callTool: ToolCaller = callConvex) {
               correspondenceId: target.correspondenceId,
               pairKey: target.pairKey,
               status: target.status,
-              score: targetScore(target),
+              score: draftableScore(target),
             },
             runnerUp: runnerUp
               ? {
                   correspondenceId: runnerUp.correspondenceId,
                   pairKey: runnerUp.pairKey,
                   status: runnerUp.status,
-                  score: targetScore(runnerUp),
+                  score: draftableScore(runnerUp),
                 }
               : null,
           }
         : { candidates: candidates.length },
     );
-    return { candidates, target, runnerUp, auditEvents };
+    return { target, auditEvents };
   };
 }
 
@@ -494,6 +488,20 @@ export function createWriteDraftNode(callTool: ToolCaller = callConvex) {
         return {
           capReached: true,
           pendingCount: PENDING_DRAFT_CAP,
+          draftWritten: false,
+          discardReason: message,
+          auditEvents,
+        };
+      }
+      if (message.includes("DraftTargetUnavailable")) {
+        const auditEvents = await appendRemoteAuditEvent(
+          callTool,
+          state.agentRunId,
+          "status",
+          "drafting skipped: correspondence target became unavailable",
+          { correspondenceId: state.target.correspondenceId },
+        );
+        return {
           draftWritten: false,
           discardReason: message,
           auditEvents,

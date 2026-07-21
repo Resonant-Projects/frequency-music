@@ -5,6 +5,7 @@ import {
   createCheckCapacityNode,
   createGatherContextNode,
   createSelfCheckNode,
+  createWriteDraftNode,
   routeAfterCapacity,
   routeAfterSelfCheck,
   selectDraftTarget,
@@ -19,8 +20,6 @@ const target: DraftableCorrespondence = {
   status: "evidenced",
   similarityScore: 0.7,
   noveltyScore: 0.8,
-  hasExistingHypothesis: false,
-  hasPendingDraft: false,
   conceptA: {
     id: "concept-a",
     name: "modal spacing",
@@ -79,21 +78,7 @@ describe("hypothesis drafter capacity", () => {
 });
 
 describe("hypothesis drafter target selection", () => {
-  test("never selects an existing hypothesis or pending draft target", () => {
-    const existing = {
-      ...target,
-      correspondenceId: "corr-existing",
-      hasExistingHypothesis: true,
-      similarityScore: 1,
-      noveltyScore: 1,
-    };
-    const pending = {
-      ...target,
-      correspondenceId: "corr-pending",
-      hasPendingDraft: true,
-      similarityScore: 1,
-      noveltyScore: 1,
-    };
+  test("prefers evidenced targets before higher-scoring conjectures", () => {
     const conjectured = {
       ...target,
       correspondenceId: "corr-conjectured",
@@ -102,12 +87,7 @@ describe("hypothesis drafter target selection", () => {
       noveltyScore: 0.99,
     };
 
-    const selected = selectDraftTarget([
-      conjectured,
-      existing,
-      pending,
-      target,
-    ]);
+    const selected = selectDraftTarget([conjectured, target]);
 
     expect(selected.target?.correspondenceId).toBe("corr-eligible");
     expect(selected.runnerUp?.correspondenceId).toBe("corr-conjectured");
@@ -241,6 +221,45 @@ describe("hypothesis drafter self-check", () => {
     expect(callTool).not.toHaveBeenCalledWith(
       "createAgentReviewDraft",
       expect.anything(),
+    );
+  });
+});
+
+describe("hypothesis drafter write guard", () => {
+  test("completes cleanly when a concurrent run claims the target first", async () => {
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "createAgentReviewDraft") {
+        throw new Error("DraftTargetUnavailable: target already claimed");
+      }
+      return { ok: true };
+    });
+    const draft = buildReviewDraft(target, {
+      title: "Modal spacing roughness micro-study",
+      question: "Does reducing modal spacing increase perceived roughness?",
+      statement:
+        "A 20% reduction in modal spacing increases roughness ratings versus baseline.",
+      rationale: "Claim claim-1 reports the same directional relationship.",
+      whyThisMatters:
+        "It turns the correspondence into one controllable studio variable.",
+    }).payload;
+
+    const result = await createWriteDraftNode(callTool)({
+      agentRunId: "run-race",
+      target,
+      draft,
+    });
+
+    expect(result).toMatchObject({
+      draftWritten: false,
+      discardReason: expect.stringContaining("DraftTargetUnavailable"),
+    });
+    expect(callTool).toHaveBeenCalledWith(
+      "appendAgentRunEvent",
+      expect.objectContaining({
+        kind: "status",
+        message: "drafting skipped: correspondence target became unavailable",
+        payload: { correspondenceId: target.correspondenceId },
+      }),
     );
   });
 });

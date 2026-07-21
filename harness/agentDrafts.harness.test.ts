@@ -269,9 +269,48 @@ describe("agentDrafts pending hypothesis WIP cap", () => {
 });
 
 describe("agentDrafts draftable correspondence read", () => {
-  test("excludes targets with an existing hypothesis or pending draft", async () => {
+  test("excludes targets without evidence, with an existing hypothesis, or with a pending draft", async () => {
     const t = convexTest(schema, modules);
-    const { agentRunId, eligibleId, pendingId } = await t.run(async (ctx) => {
+    const {
+      agentRunId: seededRunId,
+      eligibleId,
+      pendingId: seededPendingId,
+    } = await t.run(async (ctx) => {
+      const sourceId = await ctx.db.insert("sources", {
+        type: "url",
+        title: "Roughness study",
+        status: "extracted",
+        dedupeKey: "roughness-study",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const extractionId = await ctx.db.insert("extractions", {
+        sourceId,
+        model: "test-model",
+        promptVersion: "test",
+        inputHash: "roughness-input",
+        summary: "Roughness evidence.",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const claimId = await ctx.db.insert("claims", {
+        extractionId,
+        sourceId,
+        ordinal: 0,
+        text: "Closer partial spacing increased measured roughness.",
+        evidenceLevel: "peer_reviewed",
+        citations: [],
+        status: "active",
+        createdBy: "system",
+        createdAt: 1,
+      });
       const conceptAId = await ctx.db.insert("concepts", {
         name: "modal spacing",
         displayName: "Modal spacing",
@@ -296,15 +335,26 @@ describe("agentDrafts draftable correspondence read", () => {
         createdAt: 1,
         updatedAt: 1,
       });
-      const makeCorrespondence = (suffix: string) =>
+      const makeCorrespondence = (suffix: string, withEvidence = true) =>
         ctx.db.insert("correspondences", {
           conceptAId,
           conceptBId,
           pairKey: `${conceptAId}:${conceptBId}:${suffix}`,
           statement: `Correspondence ${suffix}`,
           rationaleMd: "Harness rationale.",
-          evidence: [],
-          status: "evidenced" as const,
+          evidence: withEvidence
+            ? [
+                {
+                  claimId,
+                  stance: "supports" as const,
+                  addedBy: "human" as const,
+                  addedAt: 1,
+                },
+              ]
+            : [],
+          status: withEvidence
+            ? ("evidenced" as const)
+            : ("conjectured" as const),
           similarityScore: 0.8,
           noveltyScore: 0.7,
           createdBy: "system" as const,
@@ -314,6 +364,7 @@ describe("agentDrafts draftable correspondence read", () => {
       const existingId = await makeCorrespondence("existing");
       const pendingId = await makeCorrespondence("pending");
       const draftableId = await makeCorrespondence("eligible");
+      await makeCorrespondence("no-evidence", false);
       await ctx.db.insert("hypotheses", {
         title: "Existing hypothesis",
         question: "Already drafted?",
@@ -360,14 +411,17 @@ describe("agentDrafts draftable correspondence read", () => {
 
     await expect(
       t.mutation(internal.agentDrafts.createFromAgentRun, {
-        agentRunId,
+        agentRunId: seededRunId,
         draft: {
           kind: "hypothesis_draft",
           title: "Duplicate target",
           summary: "Must not enter the review queue.",
-          candidateIds: [pendingId],
+          candidateIds: [seededPendingId],
           needsReview: true,
-          payload: { ...hypothesisPayload, correspondenceId: pendingId },
+          payload: {
+            ...hypothesisPayload,
+            correspondenceId: seededPendingId,
+          },
         },
       }),
     ).rejects.toThrow(/DraftTargetUnavailable/);

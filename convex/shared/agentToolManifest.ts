@@ -79,8 +79,8 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "listDraftableCorrespondences",
     "read",
     "internal.agentDrafts:listDraftableCorrespondences",
-    "List bounded, hydrated correspondence targets that have neither an existing hypothesis nor a pending hypothesis draft.",
-    "Returns evidenced targets first, then conjectured targets ranked by similarity times novelty, with exact evidence-claim provenance.",
+    "List bounded, hydrated, evidence-backed correspondence targets that have neither an existing hypothesis nor a pending hypothesis draft.",
+    "Returns evidence-backed targets only: evidenced first, then conjectured targets ranked by similarity times novelty, with exact evidence-claim provenance.",
   ),
   entry(
     "getEditorialSignals",

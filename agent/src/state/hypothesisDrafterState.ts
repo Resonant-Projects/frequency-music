@@ -27,8 +27,6 @@ export type DraftableCorrespondence = {
   status: "evidenced" | "conjectured";
   similarityScore?: number;
   noveltyScore?: number;
-  hasExistingHypothesis: boolean;
-  hasPendingDraft: boolean;
   conceptA: DrafterConcept;
   conceptB: DrafterConcept;
   evidenceClaims: DrafterEvidenceClaim[];
@@ -49,10 +47,6 @@ export type HypothesisSelfCheck = {
   feedback: string;
 };
 
-function replaceArray<T>(_left: T[], right: T[]): T[] {
-  return right;
-}
-
 export const HypothesisDrafterAnnotation = Annotation.Root({
   agentRunId: Annotation<string | undefined>,
   traceUrl: Annotation<string | undefined>,
@@ -64,12 +58,7 @@ export const HypothesisDrafterAnnotation = Annotation.Root({
     value: (_left, right) => right,
     default: () => false,
   }),
-  candidates: Annotation<DraftableCorrespondence[]>({
-    value: replaceArray,
-    default: () => [],
-  }),
   target: Annotation<DraftableCorrespondence | undefined>,
-  runnerUp: Annotation<DraftableCorrespondence | undefined>,
   context: Annotation<HypothesisDraftContext | undefined>,
   draft: Annotation<HypothesisDraftPayload | undefined>,
   revisionCount: Annotation<number>({

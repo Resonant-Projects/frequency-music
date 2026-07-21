@@ -20,6 +20,7 @@ import {
 import { completeReviewedRunIfReady } from "./agentRuns";
 import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 import { compareDraftableCorrespondences } from "./shared/correspondenceCandidates";
+import { describeConcept } from "./shared/conceptProjection";
 
 const draftKinds = new Set(["hypothesis_draft", "recipe_draft"]);
 const DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT = 100;
@@ -370,8 +371,8 @@ export const countPending = internalQuery({
 
 /**
  * Bounded, hydrated correspondence candidates for the hypothesis drafter.
- * Existing hypotheses and pending drafts are excluded at the read boundary;
- * the graph repeats those checks defensively before selecting a target.
+ * Existing hypotheses, pending drafts, and evidence-less correspondences are
+ * excluded at the read boundary.
  */
 export const listDraftableCorrespondences = internalQuery({
   args: { limit: v.optional(v.number()) },
@@ -406,9 +407,9 @@ export const listDraftableCorrespondences = internalQuery({
         .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
         .take(DRAFTABLE_CORRESPONDENCE_SCAN_LIMIT),
     ]);
-    const ranked = [...evidenced, ...conjectured].toSorted(
-      compareDraftableCorrespondences,
-    );
+    const ranked = [...evidenced, ...conjectured]
+      .filter((row) => row.evidence.length > 0)
+      .toSorted(compareDraftableCorrespondences);
     const selected = [];
     for (const row of ranked) {
       if (selected.length >= limit) break;
@@ -440,15 +441,6 @@ export const listDraftableCorrespondences = internalQuery({
         ),
       ]);
       if (!conceptA || !conceptB) continue;
-      const describeConcept = (concept: typeof conceptA) => ({
-        id: concept._id,
-        name: concept.name,
-        displayName: concept.displayName,
-        ...(concept.description ? { description: concept.description } : {}),
-        domains: Array.from(
-          new Set(concept.domains ?? [concept.domain]),
-        ).toSorted(),
-      });
       selected.push({
         correspondenceId: row._id,
         pairKey: row.pairKey,
@@ -457,10 +449,8 @@ export const listDraftableCorrespondences = internalQuery({
         status: row.status,
         similarityScore: row.similarityScore,
         noveltyScore: row.noveltyScore,
-        hasExistingHypothesis: false,
-        hasPendingDraft: false,
-        conceptA: describeConcept(conceptA),
-        conceptB: describeConcept(conceptB),
+        conceptA: { id: conceptA._id, ...describeConcept(conceptA) },
+        conceptB: { id: conceptB._id, ...describeConcept(conceptB) },
         evidenceClaims: evidenceClaims.filter(
           (claim): claim is NonNullable<typeof claim> => claim !== null,
         ),
