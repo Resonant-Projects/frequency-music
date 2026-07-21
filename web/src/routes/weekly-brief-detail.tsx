@@ -217,6 +217,8 @@ export function WeeklyBriefDetailPage() {
         setThirtyMinuteMd("");
         setNinetyMinuteMd("");
         setNotice(null);
+        setPublishConfirmOpen(false);
+        setPublishingBrief(false);
       },
     ),
   );

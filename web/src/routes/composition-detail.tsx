@@ -1,5 +1,12 @@
 import { Link, useNavigate, useParams } from "@tanstack/solid-router";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  on,
+  Show,
+} from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
@@ -37,7 +44,12 @@ function parseLines(value: string) {
 }
 
 function parseJsonArray<T>(value: string, label: string): T[] {
-  const parsed: unknown = JSON.parse(value);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new Error(`${label} is not valid JSON — expected a JSON array.`);
+  }
   if (!Array.isArray(parsed)) {
     throw new Error(`${label} must be a JSON array.`);
   }
@@ -323,6 +335,15 @@ function ListeningVisibilityControl(props: {
   );
   const [saving, setSaving] = createSignal(false);
   const [notice, setNotice] = createSignal<string | null>(null);
+  // Keep the select synced to the source of truth when the query refreshes
+  // the session (e.g. after a successful mutation).
+  createEffect(
+    on(
+      () => props.session.visibility,
+      (next) => setVisibility(next),
+      { defer: true },
+    ),
+  );
   const authBypass = import.meta.env.VITE_AUTH_BYPASS === "1";
   const canEdit = createMemo(
     () =>
@@ -420,6 +441,20 @@ export function CompositionDetailPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = createSignal(false);
   const [deleting, setDeleting] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string | null>(null);
+
+  // Lineage links navigate composition→composition without unmounting, so
+  // per-composition dialog state must reset on the route param.
+  createEffect(
+    on(
+      () => params().compositionId,
+      () => {
+        setDeleteConfirmOpen(false);
+        setDeleting(false);
+        setDeleteError(null);
+      },
+      { defer: true },
+    ),
+  );
   let deleteConfirmButton: HTMLButtonElement | undefined;
 
   async function handleDeleteComposition() {
