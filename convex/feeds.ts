@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { MAX_FEED_ENABLE_STATE_IDS } from "./shared/agentContract";
+import { feedProposalZ } from "./shared/feedProposals";
 import { feedReturnValidator } from "./validators";
 
 // ============================================================================
@@ -128,18 +129,19 @@ export const proposeFeed = internalMutation({
     if (existing) return { id: existing._id, created: false };
 
     const now = Date.now();
+    // Validated against the shared reader contract (weekly brief consumes
+    // metadata.proposal via feedProposalZ) so writer and reader cannot drift.
+    const proposal = feedProposalZ.parse({
+      agentRunId: args.agentRunId,
+      rationale: args.rationale,
+      sampleItems: args.sampleItems,
+    });
     const id = await ctx.db.insert("feeds", {
       name: args.name,
       url: args.url,
       type: args.type,
       enabled: false,
-      metadata: {
-        proposal: {
-          agentRunId: args.agentRunId,
-          rationale: args.rationale,
-          sampleItems: args.sampleItems,
-        },
-      },
+      metadata: { proposal },
       createdAt: now,
       updatedAt: now,
     });
