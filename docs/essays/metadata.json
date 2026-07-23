@@ -1,4 +1,18 @@
 {
+  "the-trajectory-inside-the-voice": {
+    "excerpt": "Voice becomes programmable when identity is separated from the trajectories that carry accent, timing, translation, room, and noise.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "speech-synthesis",
+      "signal-processing",
+      "prosody",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b1e13c342fdd72d2598846b2f1b60ed2b1a9028f3b5643c63eac1b01bbbcaa51",
+    "generatedAt": "2026-07-23T19:02:00.000Z"
+  },
   "the-authority-channel": {
     "excerpt": "Authority channel names the layer allowed to steer a musical decision, from stems and room evidence to frequency-localized latents and vocal-breath biomarkers.",
     "tags": [
