@@ -4212,6 +4212,20 @@
     "contentHash": "176bdb6c7ac83305b3144f513aa0f0be2131b9b5b130a59631d007846fddfb1f",
     "generatedAt": "2026-06-17T19:05:41.900Z"
   },
+  "style-is-a-mutualism": {
+    "excerpt": "Style becomes composable when per-stem effect chains act like reciprocal contracts: each part keeps contributing a specific responsibility while making the others more legible.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "music-production",
+      "signal-processing",
+      "representation-learning",
+      "mixing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4287bd7b8782c3876059721f4b4882cab3d82357d2dd866b7d351713590ddc23",
+    "generatedAt": "2026-07-23T11:02:00.000Z"
+  },
   "where-the-signal-breaks": {
     "excerpt": "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
     "tags": [
