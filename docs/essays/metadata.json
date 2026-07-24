@@ -1,4 +1,18 @@
 {
+  "the-readable-frame": {
+    "excerpt": "A control becomes expressive when the listener can infer what did not move; readable constraints give vocal trajectories an address.",
+    "tags": [
+      "composition",
+      "prosody",
+      "speech-synthesis",
+      "signal-processing",
+      "poetic-form",
+      "constraint"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "36c0c6e5314072537254a8ca902b9789d30bd9b191d221be22b7c252ef642032",
+    "generatedAt": "2026-07-24T03:02:00.000Z"
+  },
   "the-trajectory-inside-the-voice": {
     "excerpt": "Voice becomes programmable when identity is separated from the trajectories that carry accent, timing, translation, room, and noise.",
     "tags": [
