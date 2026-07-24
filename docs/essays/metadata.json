@@ -4268,6 +4268,21 @@
     "contentHash": "4287bd7b8782c3876059721f4b4882cab3d82357d2dd866b7d351713590ddc23",
     "generatedAt": "2026-07-23T11:02:00.000Z"
   },
+  "the-carrier-can-change": {
+    "excerpt": "Musical identity becomes composable when content, carrier, and rendering can move on different axes: text, timbre, contour, melody, and style do not have to survive transformation in the same way.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "voice",
+      "speech-synthesis",
+      "timbre",
+      "melody",
+      "representation-learning"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7340ca60ef79dfe2298015584f0d090ae82118c27964389c03e02f973b7c9420",
+    "generatedAt": "2026-07-24T19:02:00.000Z"
+  },
   "where-the-signal-breaks": {
     "excerpt": "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
     "tags": [
