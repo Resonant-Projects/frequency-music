@@ -1,4 +1,18 @@
 {
+  "constraint-as-control-signal": {
+    "excerpt": "A constraint becomes compositional when it changes what actions are available, perceptible, or meaningful.",
+    "tags": [
+      "composition",
+      "constraint",
+      "poetic-form",
+      "mathematics",
+      "non-auditory-communication",
+      "AI-narratives"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a2194a507da7afd040d1a4598c3a6c7818e8ec52db8511445d490643434302dd",
+    "generatedAt": "2026-07-24T11:02:00.000Z"
+  },
   "the-readable-frame": {
     "excerpt": "A control becomes expressive when the listener can infer what did not move; readable constraints give vocal trajectories an address.",
     "tags": [
