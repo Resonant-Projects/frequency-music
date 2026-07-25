@@ -2,6 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { Client } from "langsmith";
 import {
+  assertRowsHaveKeys,
   type ExampleLike,
   buildMissingExamples,
   parseJsonlRows,
@@ -69,6 +70,8 @@ for (const ds of DATASETS) {
     console.warn(`  ${ds.name}: ${message}, skipping`);
     continue;
   }
+
+  assertRowsHaveKeys(rows, [...ds.inputKeys, ...ds.outputKeys], ds.path);
 
   let dataset: Awaited<ReturnType<typeof client.readDataset>>;
   try {

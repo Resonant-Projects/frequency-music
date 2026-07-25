@@ -26,6 +26,36 @@ async function writeJsonl(path: string, rows: unknown[]) {
   console.log("wrote " + rows.length + " rows to " + path);
 }
 
+type Row = Record<string, any>;
+
+async function getSource(sourceId: string | undefined) {
+  if (!sourceId) return null;
+  return (await client.query("sources:get" as any, {
+    id: sourceId,
+  })) as Row | null;
+}
+
+async function getExtractionsForHypothesis(hypothesis: Row) {
+  const linked = await Promise.all(
+    (hypothesis.extractionIds ?? []).map(
+      async (id: string) =>
+        (await client.query("extractions:get" as any, { id })) as Row | null,
+    ),
+  );
+  const present = linked.filter((row): row is Row => row !== null);
+  if (present.length > 0) return present;
+
+  const bySource = await Promise.all(
+    (hypothesis.sourceIds ?? []).map(
+      async (sourceId: string) =>
+        (await client.query("extractions:getBySourceId" as any, {
+          sourceId,
+        })) as Row[],
+    ),
+  );
+  return bySource.flatMap((rows) => rows.slice(0, 1));
+}
+
 await mkdir("data/eval", { recursive: true });
 
 const extractions = (await client.action(
@@ -47,9 +77,21 @@ const extractionCandidates = extractions.filter((extraction) => {
   return claims.length >= 3 && parameters.length >= 1 && !allSpeculative;
 });
 
+const enrichedExtractionCandidates = await Promise.all(
+  extractionCandidates.map(async (extraction) => {
+    const source = await getSource(extraction.sourceId);
+    return {
+      sourceTitle: source?.title ?? "(untitled source)",
+      sourceType: source?.type ?? "url",
+      rawText: source?.rawText ?? source?.transcript ?? "",
+      ...extraction,
+    };
+  }),
+);
+
 await writeJsonl(
   "data/eval/extractions-candidates.jsonl",
-  extractionCandidates,
+  enrichedExtractionCandidates,
 );
 
 const hypotheses = (await client.action(
@@ -82,7 +124,30 @@ const hypothesisCandidates = hypotheses.filter((hypothesis) => {
   );
 });
 
-await writeJsonl("data/eval/hypotheses-candidates.jsonl", hypothesisCandidates);
+const enrichedHypothesisCandidates = await Promise.all(
+  hypothesisCandidates.map(async (hypothesis) => {
+    const [source, linkedExtractions] = await Promise.all([
+      getSource(hypothesis.sourceIds?.[0]),
+      getExtractionsForHypothesis(hypothesis),
+    ]);
+    return {
+      sourceTitle: source?.title ?? "(untitled source)",
+      claims: linkedExtractions.flatMap((row) => row.claims ?? []),
+      compositionParameters: linkedExtractions.flatMap(
+        (row) => row.compositionParameters ?? [],
+      ),
+      topics: [
+        ...new Set(linkedExtractions.flatMap((row) => row.topics ?? [])),
+      ],
+      ...hypothesis,
+    };
+  }),
+);
+
+await writeJsonl(
+  "data/eval/hypotheses-candidates.jsonl",
+  enrichedHypothesisCandidates,
+);
 
 const weeklyBriefs = (await client.query("weeklyBriefs:list" as any, {
   limit: 25,
@@ -101,7 +166,44 @@ const weeklyBriefCandidates = weeklyBriefs.filter((brief) => {
   return activeTheses.length > 0 && actions.length >= 3 && mentionsWeakPath;
 });
 
+const enrichedWeeklyBriefCandidates = await Promise.all(
+  weeklyBriefCandidates.map(async (brief) => {
+    const [linkedHypotheses, linkedRecipes, theses, linkedFailures] =
+      await Promise.all([
+        Promise.all(
+          (brief.recommendedHypothesisIds ?? []).map(
+            async (id: string) =>
+              (await client.query("hypotheses:get" as any, {
+                id,
+              })) as Row | null,
+          ),
+        ),
+        Promise.all(
+          (brief.recommendedRecipeIds ?? []).map(
+            async (id: string) =>
+              (await client.query("recipes:get" as any, {
+                id,
+              })) as Row | null,
+          ),
+        ),
+        client.query("theses:getByIds" as any, {
+          ids: brief.activeThesisIds ?? [],
+        }) as Promise<Row[]>,
+        client.query("failures:getByKeys" as any, {
+          keys: brief.referencedFailureKeys ?? [],
+        }) as Promise<Row[]>,
+      ]);
+    return {
+      hypotheses: linkedHypotheses.filter((row): row is Row => row !== null),
+      recipes: linkedRecipes.filter((row): row is Row => row !== null),
+      theses,
+      failures: linkedFailures,
+      ...brief,
+    };
+  }),
+);
+
 await writeJsonl(
   "data/eval/weekly-briefs-candidates.jsonl",
-  weeklyBriefCandidates,
+  enrichedWeeklyBriefCandidates,
 );

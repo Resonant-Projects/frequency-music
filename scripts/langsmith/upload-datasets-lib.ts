@@ -1,5 +1,6 @@
 export interface ExampleLike {
   inputs?: Record<string, unknown>;
+  outputs?: Record<string, unknown>;
 }
 
 export interface ExampleCreateLike {
@@ -35,11 +36,54 @@ export function pickKeys(row: Record<string, unknown>, keys: string[]) {
   return Object.fromEntries(keys.map((key) => [key, row[key]]));
 }
 
+export function assertRowsHaveKeys(
+  rows: Record<string, unknown>[],
+  keys: string[],
+  path: string,
+) {
+  rows.forEach((row, index) => {
+    const missing = keys.filter((key) => !(key in row));
+    if (missing.length > 0) {
+      throw new Error(
+        `${path}:${index + 1}: missing configured fields: ${missing.join(", ")}`,
+      );
+    }
+  });
+}
+
 export function canonicalInputKey(
   rowOrInputs: Record<string, unknown>,
   inputKeys: string[],
 ) {
-  return JSON.stringify(inputKeys.map((key) => [key, rowOrInputs[key]]));
+  return stableStringify(inputKeys.map((key) => [key, rowOrInputs[key]]));
+}
+
+function sortJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortJson);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .toSorted(([left], [right]) => left.localeCompare(right))
+        .map(([key, child]) => [key, sortJson(child)]),
+    );
+  }
+  return value;
+}
+
+function stableStringify(value: unknown) {
+  return JSON.stringify(sortJson(value));
+}
+
+export function canonicalExampleKey(
+  inputs: Record<string, unknown>,
+  outputs: Record<string, unknown>,
+  inputKeys: string[],
+  outputKeys: string[],
+) {
+  return stableStringify([
+    inputKeys.map((key) => [key, inputs[key]]),
+    outputKeys.map((key) => [key, outputs[key]]),
+  ]);
 }
 
 export function buildMissingExamples(
@@ -50,20 +94,34 @@ export function buildMissingExamples(
 ) {
   const existingKeys = new Set(
     existing
-      .map((example) => example.inputs)
-      .filter((inputs): inputs is Record<string, unknown> => Boolean(inputs))
-      .map((inputs) => canonicalInputKey(inputs, inputKeys)),
+      .filter(
+        (
+          example,
+        ): example is {
+          inputs: Record<string, unknown>;
+          outputs: Record<string, unknown>;
+        } => Boolean(example.inputs) && Boolean(example.outputs),
+      )
+      .map((example) =>
+        canonicalExampleKey(
+          example.inputs,
+          example.outputs,
+          inputKeys,
+          outputKeys,
+        ),
+      ),
   );
 
   const missing: ExampleCreateLike[] = [];
   for (const row of rows) {
     const inputs = pickKeys(row, inputKeys);
-    const key = canonicalInputKey(inputs, inputKeys);
+    const outputs = pickKeys(row, outputKeys);
+    const key = canonicalExampleKey(inputs, outputs, inputKeys, outputKeys);
     if (existingKeys.has(key)) continue;
 
     missing.push({
       inputs,
-      outputs: pickKeys(row, outputKeys),
+      outputs,
     });
     existingKeys.add(key);
   }

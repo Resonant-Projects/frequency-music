@@ -14,18 +14,18 @@ import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { registryStatusValidator } from "./schema";
 import { DECISION_NOTE_MAX_LENGTH } from "./shared/vocabularyTriage";
 
-const KNOWN_PARAMETER_KINDS = new Set([
-  "tempo",
-  "key",
-  "tuningSystem",
-  "rootNote",
-  "chordProgression",
-  "rhythm",
-  "instrument",
-  "synthWaveform",
-  "harmonicProfile",
-  "frequency",
-  "note",
+const CANONICAL_PARAMETER_KIND_NAMES = new Map([
+  ["tempo", "tempo"],
+  ["key", "key"],
+  ["tuningsystem", "tuningSystem"],
+  ["rootnote", "rootNote"],
+  ["chordprogression", "chordProgression"],
+  ["rhythm", "rhythm"],
+  ["instrument", "instrument"],
+  ["synthwaveform", "synthWaveform"],
+  ["harmonicprofile", "harmonicProfile"],
+  ["frequency", "frequency"],
+  ["note", "note"],
 ]);
 
 const KNOWN_CONCEPT_DOMAINS = new Set([
@@ -163,8 +163,10 @@ export const ensureParameterKind = internalMutation({
     status: registryStatusValidator,
   }),
   handler: async (ctx, args) => {
-    const name = normalizeName(args.name);
-    if (!name) return { status: PROVISIONAL_STATUS };
+    const normalizedName = normalizeName(args.name);
+    if (!normalizedName) return { status: PROVISIONAL_STATUS };
+    const name =
+      CANONICAL_PARAMETER_KIND_NAMES.get(normalizedName) ?? normalizedName;
 
     const existing = await ctx.db
       .query("parameterKinds")
@@ -173,7 +175,9 @@ export const ensureParameterKind = internalMutation({
     if (existing) return { status: existing.status };
 
     const now = Date.now();
-    const status = inferStatus(name, KNOWN_PARAMETER_KINDS);
+    const status = CANONICAL_PARAMETER_KIND_NAMES.has(normalizedName)
+      ? ("known" as const)
+      : PROVISIONAL_STATUS;
     await ctx.db.insert("parameterKinds", {
       name,
       status,
@@ -433,6 +437,124 @@ export const ensureRelationshipKind = internalMutation({
       updatedAt: now,
     });
     return { status };
+  },
+});
+
+export const seedKnownRelationshipKinds = mutation({
+  args: {
+    names: v.array(v.string()),
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    created: v.number(),
+    updated: v.number(),
+    unchanged: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const now = Date.now();
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+
+    for (const rawName of args.names) {
+      const name = normalizeName(rawName);
+      if (!name) continue;
+      const existing = await ctx.db
+        .query("relationshipKinds")
+        .withIndex("by_name", (q) => q.eq("name", name))
+        .first();
+
+      if (!existing) {
+        created++;
+        if (args.apply) {
+          await ctx.db.insert("relationshipKinds", {
+            name,
+            status: "known",
+            introducedBy: "system",
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      } else if (
+        existing.status !== "known" ||
+        existing.introducedBy !== "system"
+      ) {
+        updated++;
+        if (args.apply) {
+          await ctx.db.patch(existing._id, {
+            status: "known",
+            introducedBy: "system",
+            updatedAt: now,
+          });
+        }
+      } else {
+        unchanged++;
+      }
+    }
+
+    return { created, updated, unchanged };
+  },
+});
+
+export const seedKnownParameterKinds = mutation({
+  args: {
+    names: v.array(v.string()),
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    created: v.number(),
+    updated: v.number(),
+    unchanged: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const now = Date.now();
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+
+    for (const rawName of args.names) {
+      const normalizedName = normalizeName(rawName);
+      if (!normalizedName) continue;
+      const name =
+        CANONICAL_PARAMETER_KIND_NAMES.get(normalizedName) ?? rawName.trim();
+      const existing = await ctx.db
+        .query("parameterKinds")
+        .withIndex("by_name", (q) => q.eq("name", name))
+        .first();
+
+      if (!existing) {
+        created++;
+        if (args.apply) {
+          await ctx.db.insert("parameterKinds", {
+            name,
+            status: "known",
+            introducedBy: "system",
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      } else if (
+        existing.status !== "known" ||
+        existing.introducedBy !== "system"
+      ) {
+        updated++;
+        if (args.apply) {
+          await ctx.db.patch(existing._id, {
+            status: "known",
+            introducedBy: "system",
+            updatedAt: now,
+          });
+        }
+      } else {
+        unchanged++;
+      }
+    }
+
+    return { created, updated, unchanged };
   },
 });
 
