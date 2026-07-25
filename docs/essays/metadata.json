@@ -1,4 +1,18 @@
 {
+  "the-sound-with-more-than-one-address": {
+    "excerpt": "A sound becomes composable when it can be addressed at more than one operational layer: partial layout, frame evidence, or reflection geometry.",
+    "tags": [
+      "composition",
+      "psychoacoustics",
+      "signal-processing",
+      "AI-music",
+      "acoustics",
+      "spatial-audio"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "00d646a6f5ba2d8d88d66117972e6b4d1321949df7ebd65def42a357b2ff290a",
+    "generatedAt": "2026-07-25T19:03:00.000Z"
+  },
   "the-control-surface-under-the-sound": {
     "excerpt": "Every generative audio system has a control surface under the sound; composition begins by deciding which coordinates survive transformation.",
     "tags": [
