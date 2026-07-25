@@ -1,4 +1,18 @@
 {
+  "the-control-surface-under-the-sound": {
+    "excerpt": "Every generative audio system has a control surface under the sound; composition begins by deciding which coordinates survive transformation.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "speech-synthesis",
+      "acoustics",
+      "representation-learning",
+      "spatial-audio"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "23bde64d943b4d3245a25dae9fa6d10b33ab8435b7cffa6a291868d56bd00094",
+    "generatedAt": "2026-07-25T11:02:00.000Z"
+  },
   "the-addressable-layer": {
     "excerpt": "Composition begins where a system can name the layer it is allowed to move: voice, contour, melody, or room.",
     "tags": [
