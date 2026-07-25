@@ -5,9 +5,6 @@
 # Bun did. Bun is retained ONLY as the lockfile-authoritative installer
 # (bun.lock); it is no longer the runtime.
 #
-# UNBUILT / UNTESTED: this Dockerfile was updated as part of the Bun -> Vite+
-# migration but has not been built or run. Validate the image build and a worker
-# boot before shipping.
 FROM node:24-slim AS base
 WORKDIR /app/agent
 
@@ -36,15 +33,14 @@ ENV CODEX_ENABLED=true
 
 # bun.lock is authoritative; Bun installs dependencies into node_modules. The
 # worker then runs under Node, not Bun.
-COPY agent/package.json agent/bun.lock ./
+COPY --chown=agent:agent agent/package.json agent/bun.lock ./
 RUN bun install --frozen-lockfile
 
-COPY agent/. ./
-COPY convex/shared /app/convex/shared
+COPY --chown=agent:agent agent/. ./
+COPY --chown=agent:agent convex/shared /app/convex/shared
 # convex/shared files resolve their imports (zod, convex-helpers, convex)
 # upward from /app/convex — link them to the agent install.
 RUN ln -s /app/agent/node_modules /app/node_modules
-RUN chown -R agent:agent /app
 USER agent
 EXPOSE 2024
 
