@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from "vite-plus/test";
-import fixture from "./fixtures/tavily-search.json";
+import fixture from "./fixtures/firecrawl-search.json";
 import { createWebSearch } from "../src/tools/searchTool";
 
-describe("Tavily web_search", () => {
+describe("Firecrawl web_search", () => {
   test("maps a recorded response and logs the motivating gap", async () => {
     const fetchImpl = vi.fn(
       async () =>
@@ -29,7 +29,6 @@ describe("Tavily web_search", () => {
         url: "https://example.org/chladni-modal-analysis",
         snippet:
           "Measured plate modes connect forcing frequency to nodal geometry.",
-        publishedAt: "2025-11-04",
       },
       {
         title: "Acoustic visualization review",
@@ -39,27 +38,27 @@ describe("Tavily web_search", () => {
     ]);
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://api.tavily.com/search",
+      "https://api.firecrawl.dev/v2/search",
       expect.objectContaining({
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          authorization: "Bearer fixture-key",
+          "content-type": "application/json",
+        },
       }),
     );
     const request = JSON.parse(
       (fetchImpl.mock.calls[0]?.[1] as RequestInit).body as string,
     );
     expect(request).toEqual({
-      api_key: "fixture-key",
       query: fixture.query,
-      max_results: 2,
-      search_depth: "basic",
-      include_answer: false,
-      include_raw_content: false,
+      limit: 2,
+      sources: ["web"],
     });
     expect(callTool).toHaveBeenCalledWith("appendAgentRunEvent", {
       runId: "run-scout",
       kind: "tool_call",
-      message: "Searched Tavily for source-scout candidates",
+      message: "Searched Firecrawl for source-scout candidates",
       payload: {
         query: fixture.query,
         targetGap: "thin domain: cymatics",
@@ -89,7 +88,7 @@ describe("Tavily web_search", () => {
       ),
     ).resolves.toEqual([]);
     expect(warn).toHaveBeenCalledWith(
-      "[source-scout] Tavily search failed; skipping query:",
+      "[source-scout] Firecrawl search failed; skipping query:",
       "temporary token=[REDACTED] provider failure",
     );
     expect(callTool).toHaveBeenCalledWith(
@@ -120,8 +119,8 @@ describe("Tavily web_search", () => {
     ).resolves.toEqual([]);
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledWith(
-      "[source-scout] Tavily search failed; skipping query:",
-      "TAVILY_API_KEY is required",
+      "[source-scout] Firecrawl search failed; skipping query:",
+      "FIRECRAWL_API_KEY is required",
     );
     expect(callTool).toHaveBeenCalledWith(
       "appendAgentRunEvent",
@@ -129,7 +128,7 @@ describe("Tavily web_search", () => {
         runId: "run-scout",
         payload: expect.objectContaining({
           status: "failed",
-          error: "TAVILY_API_KEY is required",
+          error: "FIRECRAWL_API_KEY is required",
         }),
       }),
     );
@@ -162,8 +161,8 @@ describe("Tavily web_search", () => {
 
       await expect(result).resolves.toEqual([]);
       expect(warn).toHaveBeenCalledWith(
-        "[source-scout] Tavily search failed; skipping query:",
-        "Tavily search timed out after 15000ms",
+        "[source-scout] Firecrawl search failed; skipping query:",
+        "Firecrawl search timed out after 15000ms",
       );
     } finally {
       warn.mockRestore();
