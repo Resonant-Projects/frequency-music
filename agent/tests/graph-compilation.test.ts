@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { graph as correspondenceMinerGraph } from "../src/graphs/correspondence-miner";
 import { graph as evidenceHunterGraph } from "../src/graphs/evidence-hunter";
 import { graph as hypothesisDrafterGraph } from "../src/graphs/hypothesis-drafter";
