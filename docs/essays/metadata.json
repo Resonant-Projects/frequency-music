@@ -1,4 +1,18 @@
 {
+  "the-addressable-layer": {
+    "excerpt": "Composition begins where a system can name the layer it is allowed to move: voice, contour, melody, or room.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "speech-synthesis",
+      "acoustics",
+      "spatial-audio",
+      "representation-learning"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b9c46958208233f31784c42be13b2e875d043f199bf2324a6307485932033d20",
+    "generatedAt": "2026-07-25T03:02:00.000Z"
+  },
   "constraint-as-control-signal": {
     "excerpt": "A constraint becomes compositional when it changes what actions are available, perceptible, or meaningful.",
     "tags": [
