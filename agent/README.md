@@ -78,7 +78,7 @@ Optional model/provider variables:
 - `CODEX_SANDBOX_MODE` (`read-only` | `workspace-write`)
 - `CODEX_WORKDIR` (scratch working directory for Codex threads)
 - `OPENROUTER_API_KEY`
-- `TAVILY_API_KEY` (Source Scout web discovery; failed searches warn and skip)
+- `FIRECRAWL_API_KEY` (Source Scout web discovery; failed searches warn and skip)
 - `WEEKLY_BRIEF_AGENT_MODEL`
 
 Optional tracing variables:

@@ -1,5 +1,14 @@
-import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { getConvexUrl, getDevBypassSecret } from "./convexClient";
+
+vi.mock("varlock/auto-load", () => ({}));
 
 const SAVED = {
   CONVEX_SELF_HOSTED_URL: process.env.CONVEX_SELF_HOSTED_URL,
