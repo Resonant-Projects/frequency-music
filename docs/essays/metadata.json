@@ -1,4 +1,18 @@
 {
+  "the-test-that-becomes-the-instrument": {
+    "excerpt": "A musical representation is shaped by the transformations it is asked to survive; the test is part of the instrument.",
+    "tags": [
+      "composition",
+      "representation-learning",
+      "signal-processing",
+      "acoustics",
+      "rhythm",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8f7a24f079e69fbe0285ef7156302d19d3fdfd745aa889cf44c24e9d0fecb089",
+    "generatedAt": "2026-07-26T03:03:00.000Z"
+  },
   "the-sound-with-more-than-one-address": {
     "excerpt": "A sound becomes composable when it can be addressed at more than one operational layer: partial layout, frame evidence, or reflection geometry.",
     "tags": [
