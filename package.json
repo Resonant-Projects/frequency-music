@@ -41,12 +41,13 @@
     "@varlock/1password-plugin": "^1.2.0",
     "convex-test": "^0.0.54",
     "tsx": "^4.19.2",
+    "typescript": "^7.0.2",
     "varlock": "^1.6.1",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2",
     "vite-plus": "0.2.2"
   },
   "peerDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.2",
