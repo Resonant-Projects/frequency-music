@@ -4367,5 +4367,20 @@
     "category": "interdisciplinary",
     "contentHash": "b6fdd50fa20ecf11e19b1c4e4dd1380c763cf8bf97cfcef8d4bfbd2e8313ebc8",
     "generatedAt": "2026-07-27T11:03:00.000Z"
+  },
+  "the-control-insertion-point": {
+    "excerpt": "Control has anatomy: adapter updates, projectors, filters, stems, and FX chains matter because they choose where intervention still has leverage over musical identity.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "music-production",
+      "signal-processing",
+      "acoustics",
+      "representation-learning",
+      "audio-effects"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "18cd90582eceff5df7935f6ab72c9419836b2f979af20bb36bae8b08e39f557e",
+    "generatedAt": "2026-07-27T19:03:00.000Z"
   }
 }
