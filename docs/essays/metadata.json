@@ -1,4 +1,18 @@
 {
+  "the-encoding-is-the-instrument": {
+    "excerpt": "A representation is a listening position: the encoding decides which musical variables become stable, uncertain, separable, or cheap enough to act on.",
+    "tags": [
+      "composition",
+      "representation-learning",
+      "signal-processing",
+      "AI-music",
+      "spectral-analysis",
+      "music-information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3878fc7d4a3469b006020f8a4c173d96ea97f4d19ae672a94ca4d074da2bae98",
+    "generatedAt": "2026-07-28T11:03:00.000Z"
+  },
   "the-distance-inside-the-signal": {
     "excerpt": "Distance becomes compositional when a listener can infer the path from transformed evidence: spectral shift, attenuation, envelope stretch, graph walk, and controlled forgetting.",
     "tags": [
