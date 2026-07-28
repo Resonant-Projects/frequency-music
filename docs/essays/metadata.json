@@ -1,4 +1,18 @@
 {
+  "the-distance-inside-the-signal": {
+    "excerpt": "Distance becomes compositional when a listener can infer the path from transformed evidence: spectral shift, attenuation, envelope stretch, graph walk, and controlled forgetting.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "spectral-analysis",
+      "mathematics",
+      "algorithmic-composition",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c32a29637b73c19716befa338ab27a7ef6f30d2123bfb8151e010e7e287b9059",
+    "generatedAt": "2026-07-28T03:03:00.000Z"
+  },
   "the-test-that-becomes-the-instrument": {
     "excerpt": "A musical representation is shaped by the transformations it is asked to survive; the test is part of the instrument.",
     "tags": [
