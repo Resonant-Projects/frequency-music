@@ -1,4 +1,18 @@
 {
+  "the-room-has-a-timeline": {
+    "excerpt": "Generated audio becomes compositionally accountable when it obeys both the space it claims and the timeline it promises.",
+    "tags": [
+      "composition",
+      "generative-audio",
+      "acoustics",
+      "text-to-audio",
+      "spatial-audio",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "eb46b7583e1aebb8de4b5b7b33af86d7921a3df92c3864451e9c89d61edd216d",
+    "generatedAt": "2026-07-28T19:03:00.000Z"
+  },
   "the-encoding-is-the-instrument": {
     "excerpt": "A representation is a listening position: the encoding decides which musical variables become stable, uncertain, separable, or cheap enough to act on.",
     "tags": [
