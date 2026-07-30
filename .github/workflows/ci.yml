@@ -18,7 +18,7 @@ jobs:
           node-version: '24'
           cache: true
           run-install: false
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
       - run: vp run lint:check
       - run: vp run format:check
       - run: vp test convex
@@ -41,9 +41,9 @@ jobs:
           run-install: false
       # web tsc typechecks ../convex sources via _generated/api, which import
       # root-only packages — install root deps too or tsc fails on clean checkouts
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
         working-directory: .
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
       - run: vpx panda codegen && vpx panda cssgen
       - run: vpx tsc --noEmit
 
@@ -64,8 +64,8 @@ jobs:
           run-install: false
       # agent tsc reaches ../convex/shared, whose imports (zod, convex-helpers)
       # resolve from root node_modules — install root deps too
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
         working-directory: .
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
       - run: vp run verify
       - run: vp test
