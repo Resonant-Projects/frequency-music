@@ -200,7 +200,7 @@ describe("agent tool registry", () => {
 
   test("generated agent-tool documentation is fresh", () => {
     const result = spawnSync(
-      "bun",
+      process.env.BUN_EXEC_PATH ?? "bun",
       ["scripts/generate-agent-tool-docs.ts", "--check"],
       { cwd: `${import.meta.dirname}/..` },
     );
