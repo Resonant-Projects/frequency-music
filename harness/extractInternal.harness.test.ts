@@ -64,7 +64,10 @@ describe("extractInternal.storeExtraction", () => {
       ctx.db.query("parameterKinds").collect(),
     );
     expect(kinds).toHaveLength(1);
-    expect(kinds[0]!.name).toBe("drive_frequency");
+    // Registry keys are separator-free so `drive_frequency`, `drive frequency`,
+    // and `Drive-Frequency` all dedupe onto one row; the extraction keeps the
+    // model's original `kind` spelling.
+    expect(kinds[0]!.name).toBe("drivefrequency");
   });
 
   test("emits ordered claim rows and supersedes them on re-extraction", async () => {

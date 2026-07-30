@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import { getNonDeprecatedConceptDomains } from "../convex/vocabulary";
 import { modules } from "./modules";
@@ -51,6 +51,70 @@ async function insertConcept(
     }),
   );
 }
+
+describe("parameter kind normalization", () => {
+  test("resolves separator and casing variants to the same canonical kind", async () => {
+    const t = convexTest(schema, modules);
+
+    for (const variant of [
+      "tuning system",
+      "tuning_system",
+      "Tuning-System",
+      "  TUNINGSYSTEM  ",
+    ]) {
+      expect(
+        await t.mutation(internal.vocabulary.ensureParameterKind, {
+          name: variant,
+        }),
+      ).toEqual({ status: "known" });
+    }
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(rows.map((row) => row.name)).toEqual(["tuningSystem"]);
+  });
+
+  test("dedupes non-canonical kinds across ensure and seed on one key", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    expect(
+      await t.mutation(internal.vocabulary.ensureParameterKind, {
+        name: "Custom Thing",
+      }),
+    ).toEqual({ status: "provisional" });
+
+    // Same kind, different casing/separator — must update the existing row
+    // rather than insert a second `parameterKinds` entry.
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["custom_thing"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 0, updated: 1, unchanged: 0 });
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ name: "customthing", status: "known" });
+  });
+
+  test("seeds canonical kinds under their camelCase display name", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["chord progression", "Synth-Waveform"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 2, updated: 0, unchanged: 0 });
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(rows.map((row) => row.name).sort()).toEqual([
+      "chordProgression",
+      "synthWaveform",
+    ]);
+  });
+});
 
 describe("vocabulary triage decisions", () => {
   test("promotes a provisional entry and records the server-derived operator", async () => {

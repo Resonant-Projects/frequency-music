@@ -147,6 +147,21 @@ function normalizeName(name: string) {
   return name.trim().toLowerCase();
 }
 
+/**
+ * Lookup/dedup key for `parameterKinds`. Canonical parameter kinds are stored
+ * camelCase (`tuningSystem`) and keyed separator-free (`tuningsystem`), so
+ * `"tuning system"`, `"tuning_system"`, and `"Tuning-System"` must all collapse
+ * onto the same key. Every read and write of `parameterKinds.name` goes through
+ * this so `by_name` stays a true dedup index.
+ *
+ * Deliberately *not* applied to `relationshipKinds` — those are canonically
+ * snake_case (`related_to`, `part_of`) and would collide if separators were
+ * stripped.
+ */
+function normalizeParameterKindKey(name: string) {
+  return normalizeName(name).replaceAll(/[\s_-]+/g, "");
+}
+
 function inferStatus(
   name: string,
   knownSet: Set<string>,
@@ -163,10 +178,9 @@ export const ensureParameterKind = internalMutation({
     status: registryStatusValidator,
   }),
   handler: async (ctx, args) => {
-    const normalizedName = normalizeName(args.name);
-    if (!normalizedName) return { status: PROVISIONAL_STATUS };
-    const name =
-      CANONICAL_PARAMETER_KIND_NAMES.get(normalizedName) ?? normalizedName;
+    const lookupKey = normalizeParameterKindKey(args.name);
+    if (!lookupKey) return { status: PROVISIONAL_STATUS };
+    const name = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
 
     const existing = await ctx.db
       .query("parameterKinds")
@@ -175,7 +189,7 @@ export const ensureParameterKind = internalMutation({
     if (existing) return { status: existing.status };
 
     const now = Date.now();
-    const status = CANONICAL_PARAMETER_KIND_NAMES.has(normalizedName)
+    const status = CANONICAL_PARAMETER_KIND_NAMES.has(lookupKey)
       ? ("known" as const)
       : PROVISIONAL_STATUS;
     await ctx.db.insert("parameterKinds", {
@@ -517,10 +531,9 @@ export const seedKnownParameterKinds = mutation({
     let unchanged = 0;
 
     for (const rawName of args.names) {
-      const normalizedName = normalizeName(rawName);
-      if (!normalizedName) continue;
-      const name =
-        CANONICAL_PARAMETER_KIND_NAMES.get(normalizedName) ?? rawName.trim();
+      const lookupKey = normalizeParameterKindKey(rawName);
+      if (!lookupKey) continue;
+      const name = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
       const existing = await ctx.db
         .query("parameterKinds")
         .withIndex("by_name", (q) => q.eq("name", name))
