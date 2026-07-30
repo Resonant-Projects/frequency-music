@@ -14,18 +14,18 @@ import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { registryStatusValidator } from "./schema";
 import { DECISION_NOTE_MAX_LENGTH } from "./shared/vocabularyTriage";
 
-const KNOWN_PARAMETER_KINDS = new Set([
-  "tempo",
-  "key",
-  "tuningSystem",
-  "rootNote",
-  "chordProgression",
-  "rhythm",
-  "instrument",
-  "synthWaveform",
-  "harmonicProfile",
-  "frequency",
-  "note",
+const CANONICAL_PARAMETER_KIND_NAMES = new Map([
+  ["tempo", "tempo"],
+  ["key", "key"],
+  ["tuningsystem", "tuningSystem"],
+  ["rootnote", "rootNote"],
+  ["chordprogression", "chordProgression"],
+  ["rhythm", "rhythm"],
+  ["instrument", "instrument"],
+  ["synthwaveform", "synthWaveform"],
+  ["harmonicprofile", "harmonicProfile"],
+  ["frequency", "frequency"],
+  ["note", "note"],
 ]);
 
 const KNOWN_CONCEPT_DOMAINS = new Set([
@@ -147,6 +147,21 @@ function normalizeName(name: string) {
   return name.trim().toLowerCase();
 }
 
+/**
+ * Lookup/dedup key for `parameterKinds`. Canonical parameter kinds are stored
+ * camelCase (`tuningSystem`) and keyed separator-free (`tuningsystem`), so
+ * `"tuning system"`, `"tuning_system"`, and `"Tuning-System"` must all collapse
+ * onto the same key. Every read and write of `parameterKinds.name` goes through
+ * this so `by_name` stays a true dedup index.
+ *
+ * Deliberately *not* applied to `relationshipKinds` — those are canonically
+ * snake_case (`related_to`, `part_of`) and would collide if separators were
+ * stripped.
+ */
+function normalizeParameterKindKey(name: string) {
+  return normalizeName(name).replaceAll(/[\s_-]+/g, "");
+}
+
 function inferStatus(
   name: string,
   knownSet: Set<string>,
@@ -163,8 +178,9 @@ export const ensureParameterKind = internalMutation({
     status: registryStatusValidator,
   }),
   handler: async (ctx, args) => {
-    const name = normalizeName(args.name);
-    if (!name) return { status: PROVISIONAL_STATUS };
+    const lookupKey = normalizeParameterKindKey(args.name);
+    if (!lookupKey) return { status: PROVISIONAL_STATUS };
+    const name = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
 
     const existing = await ctx.db
       .query("parameterKinds")
@@ -173,7 +189,9 @@ export const ensureParameterKind = internalMutation({
     if (existing) return { status: existing.status };
 
     const now = Date.now();
-    const status = inferStatus(name, KNOWN_PARAMETER_KINDS);
+    const status = CANONICAL_PARAMETER_KIND_NAMES.has(lookupKey)
+      ? ("known" as const)
+      : PROVISIONAL_STATUS;
     await ctx.db.insert("parameterKinds", {
       name,
       status,
@@ -433,6 +451,189 @@ export const ensureRelationshipKind = internalMutation({
       updatedAt: now,
     });
     return { status };
+  },
+});
+
+const seedResultValidator = v.object({
+  created: v.number(),
+  updated: v.number(),
+  unchanged: v.number(),
+});
+
+const seedArgs = {
+  names: v.array(v.string()),
+  apply: v.boolean(),
+  devBypassSecret: v.optional(v.string()),
+};
+
+/**
+ * Shared body for the "mark these names as known vocabulary" mutations. The two
+ * registries differ only in table and in how a raw name becomes the stored
+ * `name`, so the write path — dedupe, lookup, insert-or-promote, counting —
+ * lives here and any fix to it applies to both.
+ *
+ * Promotes `status` only. `introducedBy` records who first introduced the entry
+ * and is left alone: seeding a canonical vocabulary should not rewrite a
+ * user-introduced kind's attribution to `"system"`.
+ */
+async function seedKnownNames(
+  ctx: MutationCtx,
+  table: "relationshipKinds" | "parameterKinds",
+  names: string[],
+  apply: boolean,
+  toStoredName: (rawName: string) => string,
+) {
+  const now = Date.now();
+  let created = 0;
+  let updated = 0;
+  let unchanged = 0;
+
+  // Variants that normalize to the same name would otherwise each be counted,
+  // so a dry run would report more rows than an apply run creates.
+  const seen = new Set<string>();
+
+  for (const rawName of names) {
+    const name = toStoredName(rawName);
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+
+    const existing = await ctx.db
+      .query(table)
+      .withIndex("by_name", (q) => q.eq("name", name))
+      .first();
+
+    if (!existing) {
+      created++;
+      if (apply) {
+        await ctx.db.insert(table, {
+          name,
+          status: "known",
+          introducedBy: "system",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    } else if (existing.status !== "known") {
+      updated++;
+      if (apply) {
+        await ctx.db.patch(existing._id, {
+          status: "known",
+          updatedAt: now,
+        });
+      }
+    } else {
+      unchanged++;
+    }
+  }
+
+  return { created, updated, unchanged };
+}
+
+export const seedKnownRelationshipKinds = mutation({
+  args: seedArgs,
+  returns: seedResultValidator,
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    return await seedKnownNames(
+      ctx,
+      "relationshipKinds",
+      args.names,
+      args.apply,
+      normalizeName,
+    );
+  },
+});
+
+export const seedKnownParameterKinds = mutation({
+  args: seedArgs,
+  returns: seedResultValidator,
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    return await seedKnownNames(
+      ctx,
+      "parameterKinds",
+      args.names,
+      args.apply,
+      (rawName) => {
+        const lookupKey = normalizeParameterKindKey(rawName);
+        return CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
+      },
+    );
+  },
+});
+
+/**
+ * One-shot migration for `parameterKinds` rows written before the registry key
+ * became separator-free. `drive_frequency` no longer resolves under the
+ * `drivefrequency` lookup, so without this a second semantic duplicate is
+ * inserted on the next `ensureParameterKind` call.
+ *
+ * Preview with `apply: false` first — the return value lists every rename and
+ * merge it would perform. Renames are in-place; when the destination name is
+ * already taken the legacy row is deprecated into it, matching `mergeEntry`
+ * semantics so triage history stays intact.
+ *
+ * `extractions.compositionParameters[].kind` keeps the model's original
+ * spelling and is never used as the registry key, so no extraction rows need
+ * remapping.
+ */
+export const rekeyLegacyParameterKinds = mutation({
+  args: {
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    renamed: v.array(v.object({ from: v.string(), to: v.string() })),
+    merged: v.array(v.object({ from: v.string(), into: v.string() })),
+    unchanged: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const now = Date.now();
+    const rows = await ctx.db.query("parameterKinds").collect();
+    const byName = new Map(rows.map((row) => [row.name, row]));
+    const renamed: { from: string; to: string }[] = [];
+    const merged: { from: string; into: string }[] = [];
+    let unchanged = 0;
+
+    for (const row of rows) {
+      if (row.status === "deprecated") {
+        unchanged++;
+        continue;
+      }
+      const lookupKey = normalizeParameterKindKey(row.name);
+      const target = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
+      if (!target || target === row.name) {
+        unchanged++;
+        continue;
+      }
+
+      const destination = byName.get(target);
+      if (destination && destination._id !== row._id) {
+        merged.push({ from: row.name, into: target });
+        if (args.apply) {
+          await ctx.db.patch(row._id, {
+            status: "deprecated",
+            mergedInto: String(destination._id),
+            updatedAt: now,
+          });
+        }
+        continue;
+      }
+
+      renamed.push({ from: row.name, to: target });
+      if (args.apply) {
+        await ctx.db.patch(row._id, { name: target, updatedAt: now });
+      }
+      // Projected in both modes, not just under `apply` — otherwise two legacy
+      // rows collapsing onto one target (`drive_frequency` and
+      // `drive frequency`) would preview as two renames but apply as one
+      // rename plus one merge.
+      byName.delete(row.name);
+      byName.set(target, { ...row, name: target });
+    }
+
+    return { renamed, merged, unchanged };
   },
 });
 

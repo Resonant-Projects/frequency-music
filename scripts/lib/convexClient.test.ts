@@ -6,9 +6,13 @@ import {
   test,
   vi,
 } from "vite-plus/test";
-import { getConvexUrl, getDevBypassSecret } from "./convexClient";
 
+// Declared before the module under test is imported: `convexClient` pulls in
+// `varlock/auto-load` as a side effect, which would otherwise resolve secrets
+// from `.env.local`/1Password and make these tests environment-dependent.
 vi.mock("varlock/auto-load", () => ({}));
+
+import { getConvexUrl, getDevBypassSecret } from "./convexClient";
 
 const SAVED = {
   CONVEX_SELF_HOSTED_URL: process.env.CONVEX_SELF_HOSTED_URL,

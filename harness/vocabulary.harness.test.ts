@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import { getNonDeprecatedConceptDomains } from "../convex/vocabulary";
 import { modules } from "./modules";
@@ -51,6 +51,244 @@ async function insertConcept(
     }),
   );
 }
+
+describe("parameter kind normalization", () => {
+  test("resolves separator and casing variants to the same canonical kind", async () => {
+    const t = convexTest(schema, modules);
+
+    for (const variant of [
+      "tuning system",
+      "tuning_system",
+      "Tuning-System",
+      "  TUNINGSYSTEM  ",
+    ]) {
+      expect(
+        await t.mutation(internal.vocabulary.ensureParameterKind, {
+          name: variant,
+        }),
+      ).toEqual({ status: "known" });
+    }
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(rows.map((row) => row.name)).toEqual(["tuningSystem"]);
+  });
+
+  test("dedupes non-canonical kinds across ensure and seed on one key", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    expect(
+      await t.mutation(internal.vocabulary.ensureParameterKind, {
+        name: "Custom Thing",
+      }),
+    ).toEqual({ status: "provisional" });
+
+    // Same kind, different casing/separator — must update the existing row
+    // rather than insert a second `parameterKinds` entry.
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["custom_thing"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 0, updated: 1, unchanged: 0 });
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ name: "customthing", status: "known" });
+  });
+
+  test("counts each normalized variant once in a dry run", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["tuning system", "tuning_system", "Tuning-System"],
+        apply: false,
+      }),
+    ).toMatchObject({ created: 1, updated: 0, unchanged: 0 });
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownRelationshipKinds, {
+        names: ["related_to", " RELATED_TO ", "related_to"],
+        apply: false,
+      }),
+    ).toMatchObject({ created: 1, updated: 0, unchanged: 0 });
+  });
+
+  test("rekeys legacy separator-bearing rows and merges collisions", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    await t.run(async (ctx) => {
+      for (const name of [
+        "drive_frequency", // legacy provisional -> rename to drivefrequency
+        "tuning system", // legacy canonical -> rename to tuningSystem
+        "reverb_time", // legacy provisional, collides with reverbtime below
+        "reverbtime", // already correctly keyed
+        "tempo", // already correct, untouched
+      ]) {
+        await ctx.db.insert("parameterKinds", {
+          name,
+          status: "provisional",
+          introducedBy: "system",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    const preview = await asSystem.mutation(
+      api.vocabulary.rekeyLegacyParameterKinds,
+      { apply: false },
+    );
+    expect(preview.renamed).toEqual(
+      expect.arrayContaining([
+        { from: "drive_frequency", to: "drivefrequency" },
+        { from: "tuning system", to: "tuningSystem" },
+      ]),
+    );
+    expect(preview.merged).toEqual([
+      { from: "reverb_time", into: "reverbtime" },
+    ]);
+    expect(preview.unchanged).toBe(2);
+
+    // Preview must not have written anything.
+    expect(
+      (await t.run((ctx) => ctx.db.query("parameterKinds").collect()))
+        .map((row) => row.name)
+        .sort(),
+    ).toEqual([
+      "drive_frequency",
+      "reverb_time",
+      "reverbtime",
+      "tempo",
+      "tuning system",
+    ]);
+
+    await asSystem.mutation(api.vocabulary.rekeyLegacyParameterKinds, {
+      apply: true,
+    });
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(
+      rows
+        .filter((row) => row.status !== "deprecated")
+        .map((row) => row.name)
+        .sort(),
+    ).toEqual(["drivefrequency", "reverbtime", "tempo", "tuningSystem"]);
+    expect(rows.find((row) => row.status === "deprecated")).toMatchObject({
+      name: "reverb_time",
+      mergedInto: String(rows.find((row) => row.name === "reverbtime")!._id),
+    });
+
+    // The migrated rows are now reachable through the live lookup path.
+    expect(
+      await t.mutation(internal.vocabulary.ensureParameterKind, {
+        name: "Drive-Frequency",
+      }),
+    ).toEqual({ status: "provisional" });
+    expect(
+      await t.run((ctx) => ctx.db.query("parameterKinds").collect()),
+    ).toHaveLength(rows.length);
+  });
+
+  test("promotes status without rewriting introducedBy", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const userId = await t.run((ctx) =>
+      ctx.db.insert("users", {
+        clerkUserId: "clerk|operator",
+        role: "collaborator",
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("parameterKinds", {
+        name: "tempo",
+        status: "provisional",
+        introducedBy: userId,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["tempo"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 0, updated: 1, unchanged: 0 });
+
+    const [row] = await t.run((ctx) =>
+      ctx.db.query("parameterKinds").collect(),
+    );
+    expect(row).toMatchObject({ status: "known", introducedBy: userId });
+
+    // Already known — nothing left to promote, and attribution stays put.
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["tempo"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 0, updated: 0, unchanged: 1 });
+  });
+
+  test("previews the same rename/merge split that apply performs", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    // Two legacy spellings collapsing onto one target that does not yet exist.
+    await t.run(async (ctx) => {
+      for (const name of ["drive_frequency", "drive frequency"]) {
+        await ctx.db.insert("parameterKinds", {
+          name,
+          status: "provisional",
+          introducedBy: "system",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    const preview = await asSystem.mutation(
+      api.vocabulary.rekeyLegacyParameterKinds,
+      { apply: false },
+    );
+    const applied = await asSystem.mutation(
+      api.vocabulary.rekeyLegacyParameterKinds,
+      { apply: true },
+    );
+
+    expect(preview).toEqual(applied);
+    expect(preview.renamed).toHaveLength(1);
+    expect(preview.merged).toHaveLength(1);
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(
+      rows.filter((row) => row.status !== "deprecated").map((row) => row.name),
+    ).toEqual(["drivefrequency"]);
+  });
+
+  test("seeds canonical kinds under their camelCase display name", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["chord progression", "Synth-Waveform"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 2, updated: 0, unchanged: 0 });
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(rows.map((row) => row.name).sort()).toEqual([
+      "chordProgression",
+      "synthWaveform",
+    ]);
+  });
+});
 
 describe("vocabulary triage decisions", () => {
   test("promotes a provisional entry and records the server-derived operator", async () => {

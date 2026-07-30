@@ -3,6 +3,13 @@
 import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { mkdir, writeFile } from "node:fs/promises";
+import {
+  createEvalQuery,
+  enrichHypothesis,
+  getSource,
+  withPlaceholderTheses,
+  type Row,
+} from "./lib/eval-dataset-helpers";
 
 const convexUrl = process.env.CONVEX_URL ?? process.env.CONVEX_SELF_HOSTED_URL;
 const agentSecret = process.env.AGENT_TOOL_SECRET;
@@ -16,6 +23,7 @@ if (!agentSecret) {
 }
 
 const client = new ConvexHttpClient(convexUrl);
+const query = createEvalQuery(client);
 
 function toJsonl(rows: unknown[]) {
   return rows.map((row) => JSON.stringify(row)).join("\n");
@@ -47,9 +55,21 @@ const extractionCandidates = extractions.filter((extraction) => {
   return claims.length >= 3 && parameters.length >= 1 && !allSpeculative;
 });
 
+const enrichedExtractionCandidates = await Promise.all(
+  extractionCandidates.map(async (extraction) => {
+    const source = await getSource(query, extraction.sourceId);
+    return {
+      sourceTitle: source?.title ?? "(untitled source)",
+      sourceType: source?.type ?? "url",
+      rawText: source?.rawText ?? source?.transcript ?? "",
+      ...extraction,
+    };
+  }),
+);
+
 await writeJsonl(
   "data/eval/extractions-candidates.jsonl",
-  extractionCandidates,
+  enrichedExtractionCandidates,
 );
 
 const hypotheses = (await client.action(
@@ -82,7 +102,16 @@ const hypothesisCandidates = hypotheses.filter((hypothesis) => {
   );
 });
 
-await writeJsonl("data/eval/hypotheses-candidates.jsonl", hypothesisCandidates);
+const enrichedHypothesisCandidates = await Promise.all(
+  hypothesisCandidates.map((hypothesis) =>
+    enrichHypothesis(query, hypothesis, "skip"),
+  ),
+);
+
+await writeJsonl(
+  "data/eval/hypotheses-candidates.jsonl",
+  enrichedHypothesisCandidates,
+);
 
 const weeklyBriefs = (await client.query("weeklyBriefs:list" as any, {
   limit: 25,
@@ -101,7 +130,40 @@ const weeklyBriefCandidates = weeklyBriefs.filter((brief) => {
   return activeTheses.length > 0 && actions.length >= 3 && mentionsWeakPath;
 });
 
+const enrichedWeeklyBriefCandidates = await Promise.all(
+  weeklyBriefCandidates.map(async (brief) => {
+    const [linkedHypotheses, linkedRecipes, storedTheses, linkedFailures] =
+      await Promise.all([
+        Promise.all(
+          (brief.recommendedHypothesisIds ?? []).map((id: string) =>
+            query.hypothesis(id),
+          ),
+        ),
+        Promise.all(
+          (brief.recommendedRecipeIds ?? []).map((id: string) =>
+            query.recipe(id),
+          ),
+        ),
+        query.thesesByIds(brief.activeThesisIds ?? []),
+        query.failuresByKeys(brief.referencedFailureKeys ?? []),
+      ]);
+    return {
+      // Enriched the same way as `hypotheses-candidates.jsonl`, so the same
+      // hypothesis id materializes identically whether standalone or embedded.
+      hypotheses: await Promise.all(
+        linkedHypotheses
+          .filter((row): row is Row => row !== null)
+          .map((hypothesis) => enrichHypothesis(query, hypothesis, "skip")),
+      ),
+      recipes: linkedRecipes.filter((row): row is Row => row !== null),
+      theses: withPlaceholderTheses(brief, storedTheses),
+      failures: linkedFailures,
+      ...brief,
+    };
+  }),
+);
+
 await writeJsonl(
   "data/eval/weekly-briefs-candidates.jsonl",
-  weeklyBriefCandidates,
+  enrichedWeeklyBriefCandidates,
 );
