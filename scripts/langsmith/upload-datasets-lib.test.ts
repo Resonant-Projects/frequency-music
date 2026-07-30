@@ -81,7 +81,7 @@ describe("upload dataset helpers", () => {
     );
   });
 
-  test("returns only local rows whose input key is not already uploaded", () => {
+  test("skips rows matching an uploaded example's configured inputs and outputs", () => {
     const missing = buildMissingExamples(
       [
         { sourceTitle: "A", rawText: "old", summary: "old summary" },
