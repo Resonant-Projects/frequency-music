@@ -104,22 +104,31 @@ export async function enrichHypothesis(
 
 /**
  * Weekly briefs from the e2e era reference thesis rows that have since been
- * deleted. Rather than emitting an empty `theses` array, synthesize placeholders
- * from the `e2e-*` titles the brief body still quotes.
+ * deleted. Rather than dropping them, emit one row per `activeThesisId` — the
+ * stored row when it still exists, otherwise a placeholder titled from the
+ * `e2e-*` names the brief body still quotes.
+ *
+ * Resolved per id rather than "all or nothing": a partially-deleted thesis set
+ * would otherwise silently shrink `theses` below the ids the brief cites.
  */
 export function withPlaceholderTheses(brief: Row, storedTheses: Row[]) {
-  if (storedTheses.length > 0) return storedTheses;
+  const activeThesisIds: string[] = brief.activeThesisIds ?? [];
+  if (activeThesisIds.length === 0) return storedTheses;
 
+  const storedById = new Map(
+    storedTheses.map((thesis) => [String(thesis._id), thesis]),
+  );
   const placeholderTitles = [
     ...String(brief.bodyMd ?? "").matchAll(/`(e2e-\d+)`/g),
   ].map((match) => match[1]);
 
-  return (brief.activeThesisIds ?? []).map(
-    (thesisId: string, index: number) => ({
-      _id: thesisId,
-      title: placeholderTitles[index] ?? `Unavailable thesis ${index + 1}`,
-      statement:
-        "Historical placeholder referenced by the ratified weekly brief; the original thesis row is no longer present.",
-    }),
+  return activeThesisIds.map(
+    (thesisId, index) =>
+      storedById.get(thesisId) ?? {
+        _id: thesisId,
+        title: placeholderTitles[index] ?? `Unavailable thesis ${index + 1}`,
+        statement:
+          "Historical placeholder referenced by the ratified weekly brief; the original thesis row is no longer present.",
+      },
   );
 }

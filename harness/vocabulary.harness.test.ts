@@ -97,6 +97,102 @@ describe("parameter kind normalization", () => {
     expect(rows[0]).toMatchObject({ name: "customthing", status: "known" });
   });
 
+  test("counts each normalized variant once in a dry run", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["tuning system", "tuning_system", "Tuning-System"],
+        apply: false,
+      }),
+    ).toMatchObject({ created: 1, updated: 0, unchanged: 0 });
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownRelationshipKinds, {
+        names: ["related_to", " RELATED_TO ", "related_to"],
+        apply: false,
+      }),
+    ).toMatchObject({ created: 1, updated: 0, unchanged: 0 });
+  });
+
+  test("rekeys legacy separator-bearing rows and merges collisions", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    await t.run(async (ctx) => {
+      for (const name of [
+        "drive_frequency", // legacy provisional -> rename to drivefrequency
+        "tuning system", // legacy canonical -> rename to tuningSystem
+        "reverb_time", // legacy provisional, collides with reverbtime below
+        "reverbtime", // already correctly keyed
+        "tempo", // already correct, untouched
+      ]) {
+        await ctx.db.insert("parameterKinds", {
+          name,
+          status: "provisional",
+          introducedBy: "system",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    const preview = await asSystem.mutation(
+      api.vocabulary.rekeyLegacyParameterKinds,
+      { apply: false },
+    );
+    expect(preview.renamed).toEqual(
+      expect.arrayContaining([
+        { from: "drive_frequency", to: "drivefrequency" },
+        { from: "tuning system", to: "tuningSystem" },
+      ]),
+    );
+    expect(preview.merged).toEqual([
+      { from: "reverb_time", into: "reverbtime" },
+    ]);
+    expect(preview.unchanged).toBe(2);
+
+    // Preview must not have written anything.
+    expect(
+      (await t.run((ctx) => ctx.db.query("parameterKinds").collect()))
+        .map((row) => row.name)
+        .sort(),
+    ).toEqual([
+      "drive_frequency",
+      "reverb_time",
+      "reverbtime",
+      "tempo",
+      "tuning system",
+    ]);
+
+    await asSystem.mutation(api.vocabulary.rekeyLegacyParameterKinds, {
+      apply: true,
+    });
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(
+      rows
+        .filter((row) => row.status !== "deprecated")
+        .map((row) => row.name)
+        .sort(),
+    ).toEqual(["drivefrequency", "reverbtime", "tempo", "tuningSystem"]);
+    expect(rows.find((row) => row.status === "deprecated")).toMatchObject({
+      name: "reverb_time",
+      mergedInto: String(rows.find((row) => row.name === "reverbtime")!._id),
+    });
+
+    // The migrated rows are now reachable through the live lookup path.
+    expect(
+      await t.mutation(internal.vocabulary.ensureParameterKind, {
+        name: "Drive-Frequency",
+      }),
+    ).toEqual({ status: "provisional" });
+    expect(
+      await t.run((ctx) => ctx.db.query("parameterKinds").collect()),
+    ).toHaveLength(rows.length);
+  });
+
   test("seeds canonical kinds under their camelCase display name", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });

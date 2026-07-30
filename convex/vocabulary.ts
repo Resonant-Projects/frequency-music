@@ -472,9 +472,14 @@ export const seedKnownRelationshipKinds = mutation({
     let updated = 0;
     let unchanged = 0;
 
+    // Variants that normalize to the same name would otherwise each be counted,
+    // so a dry run would report more rows than an apply run creates.
+    const seen = new Set<string>();
+
     for (const rawName of args.names) {
       const name = normalizeName(rawName);
-      if (!name) continue;
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
       const existing = await ctx.db
         .query("relationshipKinds")
         .withIndex("by_name", (q) => q.eq("name", name))
@@ -530,9 +535,13 @@ export const seedKnownParameterKinds = mutation({
     let updated = 0;
     let unchanged = 0;
 
+    // See `seedKnownRelationshipKinds` — dedupe so dry-run counts match apply.
+    const seen = new Set<string>();
+
     for (const rawName of args.names) {
       const lookupKey = normalizeParameterKindKey(rawName);
-      if (!lookupKey) continue;
+      if (!lookupKey || seen.has(lookupKey)) continue;
+      seen.add(lookupKey);
       const name = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
       const existing = await ctx.db
         .query("parameterKinds")
@@ -568,6 +577,77 @@ export const seedKnownParameterKinds = mutation({
     }
 
     return { created, updated, unchanged };
+  },
+});
+
+/**
+ * One-shot migration for `parameterKinds` rows written before the registry key
+ * became separator-free. `drive_frequency` no longer resolves under the
+ * `drivefrequency` lookup, so without this a second semantic duplicate is
+ * inserted on the next `ensureParameterKind` call.
+ *
+ * Preview with `apply: false` first — the return value lists every rename and
+ * merge it would perform. Renames are in-place; when the destination name is
+ * already taken the legacy row is deprecated into it, matching `mergeEntry`
+ * semantics so triage history stays intact.
+ *
+ * `extractions.compositionParameters[].kind` keeps the model's original
+ * spelling and is never used as the registry key, so no extraction rows need
+ * remapping.
+ */
+export const rekeyLegacyParameterKinds = mutation({
+  args: {
+    apply: v.boolean(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    renamed: v.array(v.object({ from: v.string(), to: v.string() })),
+    merged: v.array(v.object({ from: v.string(), into: v.string() })),
+    unchanged: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const now = Date.now();
+    const rows = await ctx.db.query("parameterKinds").collect();
+    const byName = new Map(rows.map((row) => [row.name, row]));
+    const renamed: { from: string; to: string }[] = [];
+    const merged: { from: string; into: string }[] = [];
+    let unchanged = 0;
+
+    for (const row of rows) {
+      if (row.status === "deprecated") {
+        unchanged++;
+        continue;
+      }
+      const lookupKey = normalizeParameterKindKey(row.name);
+      const target = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
+      if (!target || target === row.name) {
+        unchanged++;
+        continue;
+      }
+
+      const destination = byName.get(target);
+      if (destination && destination._id !== row._id) {
+        merged.push({ from: row.name, into: target });
+        if (args.apply) {
+          await ctx.db.patch(row._id, {
+            status: "deprecated",
+            mergedInto: String(destination._id),
+            updatedAt: now,
+          });
+        }
+        continue;
+      }
+
+      renamed.push({ from: row.name, to: target });
+      if (args.apply) {
+        await ctx.db.patch(row._id, { name: target, updatedAt: now });
+        byName.delete(row.name);
+        byName.set(target, { ...row, name: target });
+      }
+    }
+
+    return { renamed, merged, unchanged };
   },
 });
 
