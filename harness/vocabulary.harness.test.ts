@@ -193,6 +193,84 @@ describe("parameter kind normalization", () => {
     ).toHaveLength(rows.length);
   });
 
+  test("promotes status without rewriting introducedBy", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const userId = await t.run((ctx) =>
+      ctx.db.insert("users", {
+        clerkUserId: "clerk|operator",
+        role: "collaborator",
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("parameterKinds", {
+        name: "tempo",
+        status: "provisional",
+        introducedBy: userId,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["tempo"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 0, updated: 1, unchanged: 0 });
+
+    const [row] = await t.run((ctx) =>
+      ctx.db.query("parameterKinds").collect(),
+    );
+    expect(row).toMatchObject({ status: "known", introducedBy: userId });
+
+    // Already known — nothing left to promote, and attribution stays put.
+    expect(
+      await asSystem.mutation(api.vocabulary.seedKnownParameterKinds, {
+        names: ["tempo"],
+        apply: true,
+      }),
+    ).toMatchObject({ created: 0, updated: 0, unchanged: 1 });
+  });
+
+  test("previews the same rename/merge split that apply performs", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+
+    // Two legacy spellings collapsing onto one target that does not yet exist.
+    await t.run(async (ctx) => {
+      for (const name of ["drive_frequency", "drive frequency"]) {
+        await ctx.db.insert("parameterKinds", {
+          name,
+          status: "provisional",
+          introducedBy: "system",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    const preview = await asSystem.mutation(
+      api.vocabulary.rekeyLegacyParameterKinds,
+      { apply: false },
+    );
+    const applied = await asSystem.mutation(
+      api.vocabulary.rekeyLegacyParameterKinds,
+      { apply: true },
+    );
+
+    expect(preview).toEqual(applied);
+    expect(preview.renamed).toHaveLength(1);
+    expect(preview.merged).toHaveLength(1);
+
+    const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
+    expect(
+      rows.filter((row) => row.status !== "deprecated").map((row) => row.name),
+    ).toEqual(["drivefrequency"]);
+  });
+
   test("seeds canonical kinds under their camelCase display name", async () => {
     const t = convexTest(schema, modules);
     const asSystem = t.withIdentity({ subject: "system" });

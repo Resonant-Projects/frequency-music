@@ -454,129 +454,111 @@ export const ensureRelationshipKind = internalMutation({
   },
 });
 
+const seedResultValidator = v.object({
+  created: v.number(),
+  updated: v.number(),
+  unchanged: v.number(),
+});
+
+const seedArgs = {
+  names: v.array(v.string()),
+  apply: v.boolean(),
+  devBypassSecret: v.optional(v.string()),
+};
+
+/**
+ * Shared body for the "mark these names as known vocabulary" mutations. The two
+ * registries differ only in table and in how a raw name becomes the stored
+ * `name`, so the write path — dedupe, lookup, insert-or-promote, counting —
+ * lives here and any fix to it applies to both.
+ *
+ * Promotes `status` only. `introducedBy` records who first introduced the entry
+ * and is left alone: seeding a canonical vocabulary should not rewrite a
+ * user-introduced kind's attribution to `"system"`.
+ */
+async function seedKnownNames(
+  ctx: MutationCtx,
+  table: "relationshipKinds" | "parameterKinds",
+  names: string[],
+  apply: boolean,
+  toStoredName: (rawName: string) => string,
+) {
+  const now = Date.now();
+  let created = 0;
+  let updated = 0;
+  let unchanged = 0;
+
+  // Variants that normalize to the same name would otherwise each be counted,
+  // so a dry run would report more rows than an apply run creates.
+  const seen = new Set<string>();
+
+  for (const rawName of names) {
+    const name = toStoredName(rawName);
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+
+    const existing = await ctx.db
+      .query(table)
+      .withIndex("by_name", (q) => q.eq("name", name))
+      .first();
+
+    if (!existing) {
+      created++;
+      if (apply) {
+        await ctx.db.insert(table, {
+          name,
+          status: "known",
+          introducedBy: "system",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    } else if (existing.status !== "known") {
+      updated++;
+      if (apply) {
+        await ctx.db.patch(existing._id, {
+          status: "known",
+          updatedAt: now,
+        });
+      }
+    } else {
+      unchanged++;
+    }
+  }
+
+  return { created, updated, unchanged };
+}
+
 export const seedKnownRelationshipKinds = mutation({
-  args: {
-    names: v.array(v.string()),
-    apply: v.boolean(),
-    devBypassSecret: v.optional(v.string()),
-  },
-  returns: v.object({
-    created: v.number(),
-    updated: v.number(),
-    unchanged: v.number(),
-  }),
+  args: seedArgs,
+  returns: seedResultValidator,
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const now = Date.now();
-    let created = 0;
-    let updated = 0;
-    let unchanged = 0;
-
-    // Variants that normalize to the same name would otherwise each be counted,
-    // so a dry run would report more rows than an apply run creates.
-    const seen = new Set<string>();
-
-    for (const rawName of args.names) {
-      const name = normalizeName(rawName);
-      if (!name || seen.has(name)) continue;
-      seen.add(name);
-      const existing = await ctx.db
-        .query("relationshipKinds")
-        .withIndex("by_name", (q) => q.eq("name", name))
-        .first();
-
-      if (!existing) {
-        created++;
-        if (args.apply) {
-          await ctx.db.insert("relationshipKinds", {
-            name,
-            status: "known",
-            introducedBy: "system",
-            createdAt: now,
-            updatedAt: now,
-          });
-        }
-      } else if (
-        existing.status !== "known" ||
-        existing.introducedBy !== "system"
-      ) {
-        updated++;
-        if (args.apply) {
-          await ctx.db.patch(existing._id, {
-            status: "known",
-            introducedBy: "system",
-            updatedAt: now,
-          });
-        }
-      } else {
-        unchanged++;
-      }
-    }
-
-    return { created, updated, unchanged };
+    return await seedKnownNames(
+      ctx,
+      "relationshipKinds",
+      args.names,
+      args.apply,
+      normalizeName,
+    );
   },
 });
 
 export const seedKnownParameterKinds = mutation({
-  args: {
-    names: v.array(v.string()),
-    apply: v.boolean(),
-    devBypassSecret: v.optional(v.string()),
-  },
-  returns: v.object({
-    created: v.number(),
-    updated: v.number(),
-    unchanged: v.number(),
-  }),
+  args: seedArgs,
+  returns: seedResultValidator,
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
-    const now = Date.now();
-    let created = 0;
-    let updated = 0;
-    let unchanged = 0;
-
-    // See `seedKnownRelationshipKinds` — dedupe so dry-run counts match apply.
-    const seen = new Set<string>();
-
-    for (const rawName of args.names) {
-      const lookupKey = normalizeParameterKindKey(rawName);
-      if (!lookupKey || seen.has(lookupKey)) continue;
-      seen.add(lookupKey);
-      const name = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
-      const existing = await ctx.db
-        .query("parameterKinds")
-        .withIndex("by_name", (q) => q.eq("name", name))
-        .first();
-
-      if (!existing) {
-        created++;
-        if (args.apply) {
-          await ctx.db.insert("parameterKinds", {
-            name,
-            status: "known",
-            introducedBy: "system",
-            createdAt: now,
-            updatedAt: now,
-          });
-        }
-      } else if (
-        existing.status !== "known" ||
-        existing.introducedBy !== "system"
-      ) {
-        updated++;
-        if (args.apply) {
-          await ctx.db.patch(existing._id, {
-            status: "known",
-            introducedBy: "system",
-            updatedAt: now,
-          });
-        }
-      } else {
-        unchanged++;
-      }
-    }
-
-    return { created, updated, unchanged };
+    return await seedKnownNames(
+      ctx,
+      "parameterKinds",
+      args.names,
+      args.apply,
+      (rawName) => {
+        const lookupKey = normalizeParameterKindKey(rawName);
+        return CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
+      },
+    );
   },
 });
 
@@ -642,9 +624,13 @@ export const rekeyLegacyParameterKinds = mutation({
       renamed.push({ from: row.name, to: target });
       if (args.apply) {
         await ctx.db.patch(row._id, { name: target, updatedAt: now });
-        byName.delete(row.name);
-        byName.set(target, { ...row, name: target });
       }
+      // Projected in both modes, not just under `apply` — otherwise two legacy
+      // rows collapsing onto one target (`drive_frequency` and
+      // `drive frequency`) would preview as two renames but apply as one
+      // rename plus one merge.
+      byName.delete(row.name);
+      byName.set(target, { ...row, name: target });
     }
 
     return { renamed, merged, unchanged };

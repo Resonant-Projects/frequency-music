@@ -63,7 +63,12 @@ function sortJson(value: unknown): unknown {
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
-        .toSorted(([left], [right]) => left.localeCompare(right))
+        // Code-unit order, not `localeCompare` — a canonical key must not vary
+        // with the host locale, or the same row fingerprints differently
+        // across upload environments.
+        .toSorted(([left], [right]) =>
+          left < right ? -1 : left > right ? 1 : 0,
+        )
         .map(([key, child]) => [key, sortJson(child)]),
     );
   }
