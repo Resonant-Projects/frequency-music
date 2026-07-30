@@ -4,6 +4,7 @@ import {
   resolveHypothesisExtractions,
   withPlaceholderTheses,
   type EvalQuery,
+  type Row,
 } from "./eval-dataset-helpers";
 
 const BRIEF = {
@@ -11,13 +12,25 @@ const BRIEF = {
   bodyMd: "cites `e2e-111` then `e2e-222` then `e2e-333`",
 };
 
-/** Stub query resolving `name:id` keys, returning null for anything unlisted. */
-function stubQuery(rows: Record<string, unknown>): EvalQuery {
-  return async (name, args) => {
-    if (name === "extractions:getBySourceId") {
-      return rows[`bySource:${String(args.sourceId)}`] ?? [];
-    }
-    return rows[`${name}:${String(args.id)}`] ?? null;
+interface StubRows {
+  sources?: Record<string, Row>;
+  extractions?: Record<string, Row>;
+  bySource?: Record<string, Row[]>;
+}
+
+/** In-memory `EvalQuery`; anything unlisted resolves to null/empty. */
+function stubQuery(rows: StubRows): EvalQuery {
+  const unused = () => Promise.reject(new Error("not used by these tests"));
+  return {
+    source: (id) => Promise.resolve(rows.sources?.[id] ?? null),
+    extraction: (id) => Promise.resolve(rows.extractions?.[id] ?? null),
+    extractionsBySource: (sourceId) =>
+      Promise.resolve(rows.bySource?.[sourceId] ?? []),
+    hypothesis: unused,
+    recipe: unused,
+    weeklyBrief: unused,
+    thesesByIds: unused,
+    failuresByKeys: unused,
   };
 }
 
@@ -65,15 +78,15 @@ describe("resolveHypothesisExtractions", () => {
   const hypothesis = { extractionIds: ["e1", "e2"], sourceIds: ["s1"] };
 
   test("throws on a dangling extraction id under the golden policy", async () => {
-    const query = stubQuery({ "extractions:get:e1": { _id: "e1" } });
+    const query = stubQuery({ extractions: { e1: { _id: "e1" } } });
 
     await expect(
       resolveHypothesisExtractions(query, hypothesis, "throw"),
-    ).rejects.toThrow("extractions:get did not return e2");
+    ).rejects.toThrow("extraction did not return e2");
   });
 
   test("drops a dangling extraction id under the candidate policy", async () => {
-    const query = stubQuery({ "extractions:get:e1": { _id: "e1" } });
+    const query = stubQuery({ extractions: { e1: { _id: "e1" } } });
 
     expect(
       await resolveHypothesisExtractions(query, hypothesis, "skip"),
@@ -82,7 +95,7 @@ describe("resolveHypothesisExtractions", () => {
 
   test("falls back to one extraction per source when none are linked", async () => {
     const query = stubQuery({
-      "bySource:s1": [{ _id: "newest" }, { _id: "older" }],
+      bySource: { s1: [{ _id: "newest" }, { _id: "older" }] },
     });
 
     expect(
@@ -94,16 +107,18 @@ describe("resolveHypothesisExtractions", () => {
 describe("enrichHypothesis", () => {
   test("aggregates claims, parameters, and deduped topics onto the row", async () => {
     const query = stubQuery({
-      "sources:get:s1": { title: "A Paper" },
-      "extractions:get:e1": {
-        claims: [{ text: "one" }],
-        compositionParameters: [{ kind: "tempo" }],
-        topics: ["shared", "only-e1"],
-      },
-      "extractions:get:e2": {
-        claims: [{ text: "two" }],
-        compositionParameters: [],
-        topics: ["shared", "only-e2"],
+      sources: { s1: { title: "A Paper" } },
+      extractions: {
+        e1: {
+          claims: [{ text: "one" }],
+          compositionParameters: [{ kind: "tempo" }],
+          topics: ["shared", "only-e1"],
+        },
+        e2: {
+          claims: [{ text: "two" }],
+          compositionParameters: [],
+          topics: ["shared", "only-e2"],
+        },
       },
     });
 

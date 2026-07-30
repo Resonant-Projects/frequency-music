@@ -67,7 +67,7 @@ const client = new ConvexHttpClient(convexUrl);
 const query = createEvalQuery(client);
 
 async function materializeExtraction(id: string) {
-  const extraction = await requireRow(query, "extractions:get", id);
+  const extraction = await requireRow(query, "extraction", id);
   const source = await getSource(query, extraction.sourceId);
   return {
     sourceTitle: source?.title ?? "(untitled source)",
@@ -78,14 +78,14 @@ async function materializeExtraction(id: string) {
 }
 
 async function materializeHypothesis(id: string) {
-  const hypothesis = await requireRow(query, "hypotheses:get", id);
+  const hypothesis = await requireRow(query, "hypothesis", id);
   const repointed = HYPOTHESIS_EXTRACTION_REPOINTS[id];
   if (repointed) hypothesis.extractionIds = [...repointed];
   return await enrichHypothesis(query, hypothesis, "throw");
 }
 
 async function materializeBrief(id: string) {
-  const brief = await requireRow(query, "weeklyBriefs:get", id);
+  const brief = await requireRow(query, "weeklyBrief", id);
   const [hypotheses, recipes, storedTheses, failures] = await Promise.all([
     Promise.all(
       (brief.recommendedHypothesisIds ?? []).map((hypothesisId: string) =>
@@ -94,15 +94,11 @@ async function materializeBrief(id: string) {
     ),
     Promise.all(
       (brief.recommendedRecipeIds ?? []).map((recipeId: string) =>
-        requireRow(query, "recipes:get", recipeId),
+        requireRow(query, "recipe", recipeId),
       ),
     ),
-    query("theses:getByIds", { ids: brief.activeThesisIds ?? [] }) as Promise<
-      Row[]
-    >,
-    query("failures:getByKeys", {
-      keys: brief.referencedFailureKeys ?? [],
-    }) as Promise<Row[]>,
+    query.thesesByIds(brief.activeThesisIds ?? []),
+    query.failuresByKeys(brief.referencedFailureKeys ?? []),
   ]);
 
   return {

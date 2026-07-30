@@ -6,7 +6,6 @@ import { mkdir, writeFile } from "node:fs/promises";
 import {
   createEvalQuery,
   enrichHypothesis,
-  getRow,
   getSource,
   withPlaceholderTheses,
   type Row,
@@ -137,20 +136,16 @@ const enrichedWeeklyBriefCandidates = await Promise.all(
       await Promise.all([
         Promise.all(
           (brief.recommendedHypothesisIds ?? []).map((id: string) =>
-            getRow(query, "hypotheses:get", id),
+            query.hypothesis(id),
           ),
         ),
         Promise.all(
           (brief.recommendedRecipeIds ?? []).map((id: string) =>
-            getRow(query, "recipes:get", id),
+            query.recipe(id),
           ),
         ),
-        query("theses:getByIds", {
-          ids: brief.activeThesisIds ?? [],
-        }) as Promise<Row[]>,
-        query("failures:getByKeys", {
-          keys: brief.referencedFailureKeys ?? [],
-        }) as Promise<Row[]>,
+        query.thesesByIds(brief.activeThesisIds ?? []),
+        query.failuresByKeys(brief.referencedFailureKeys ?? []),
       ]);
     return {
       // Enriched the same way as `hypotheses-candidates.jsonl`, so the same

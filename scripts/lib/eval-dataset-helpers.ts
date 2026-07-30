@@ -1,11 +1,31 @@
 import type { ConvexHttpClient } from "convex/browser";
+import { api } from "../../convex/_generated/api";
+import type { Id, TableNames } from "../../convex/_generated/dataModel";
 
+/**
+ * A materialized eval row: a Convex document plus the enrichment fields this
+ * module adds. Kept open-ended because the generated datasets are deliberately
+ * heterogeneous (a hypothesis row carries aggregated `claims`, an extraction row
+ * carries `rawText`), but each read below is typed at its call site by the
+ * generated `api` reference rather than a string name.
+ */
 export type Row = Record<string, any>;
 
-export type EvalQuery = (
-  name: string,
-  args: Record<string, unknown>,
-) => Promise<unknown>;
+/**
+ * Reads the eval datasets need. Typed against the generated `api` so a renamed
+ * or re-signatured Convex function breaks the build here instead of producing an
+ * empty golden file at runtime.
+ */
+export interface EvalQuery {
+  source(id: string): Promise<Row | null>;
+  extraction(id: string): Promise<Row | null>;
+  extractionsBySource(sourceId: string): Promise<Row[]>;
+  hypothesis(id: string): Promise<Row | null>;
+  recipe(id: string): Promise<Row | null>;
+  weeklyBrief(id: string): Promise<Row | null>;
+  thesesByIds(ids: string[]): Promise<Row[]>;
+  failuresByKeys(keys: string[]): Promise<Row[]>;
+}
 
 /**
  * How a linked row that no longer exists in Convex is handled.
@@ -17,29 +37,45 @@ export type EvalQuery = (
  */
 export type MissingRowPolicy = "throw" | "skip";
 
+/**
+ * Convex ids are branded strings; the curation sheet and the exported JSONL
+ * carry them as plain strings. This is the one place that conversion happens.
+ */
+function asId<T extends TableNames>(id: string) {
+  return id as Id<T>;
+}
+
 export function createEvalQuery(client: ConvexHttpClient): EvalQuery {
-  return (name, args) => client.query(name as any, args);
+  return {
+    source: (id) => client.query(api.sources.get, { id: asId<"sources">(id) }),
+    extraction: (id) =>
+      client.query(api.extractions.get, { id: asId<"extractions">(id) }),
+    extractionsBySource: (sourceId) =>
+      client.query(api.extractions.getBySourceId, {
+        sourceId: asId<"sources">(sourceId),
+      }),
+    hypothesis: (id) =>
+      client.query(api.hypotheses.get, { id: asId<"hypotheses">(id) }),
+    recipe: (id) => client.query(api.recipes.get, { id: asId<"recipes">(id) }),
+    weeklyBrief: (id) =>
+      client.query(api.weeklyBriefs.get, { id: asId<"weeklyBriefs">(id) }),
+    thesesByIds: (ids) =>
+      client.query(api.theses.getByIds, {
+        ids: ids.map((id) => asId<"theses">(id)),
+      }),
+    failuresByKeys: (keys) => client.query(api.failures.getByKeys, { keys }),
+  };
 }
 
-export async function getRow(query: EvalQuery, name: string, id: string) {
-  return (await query(name, { id })) as Row | null;
-}
-
-export async function requireRow(query: EvalQuery, name: string, id: string) {
-  const row = await getRow(query, name, id);
-  if (!row) throw new Error(`${name} did not return ${id}`);
-  return row;
-}
-
-export async function resolveRow(
+/** Reads a single row, naming the lookup in the error when it is missing. */
+export async function requireRow(
   query: EvalQuery,
-  name: string,
+  reader: "source" | "extraction" | "hypothesis" | "recipe" | "weeklyBrief",
   id: string,
-  onMissing: MissingRowPolicy,
 ) {
-  return onMissing === "throw"
-    ? await requireRow(query, name, id)
-    : await getRow(query, name, id);
+  const row = await query[reader](id);
+  if (!row) throw new Error(`${reader} did not return ${id}`);
+  return row;
 }
 
 export async function getSource(
@@ -47,7 +83,7 @@ export async function getSource(
   sourceId: string | undefined,
 ) {
   if (!sourceId) return null;
-  return await getRow(query, "sources:get", sourceId);
+  return await query.source(sourceId);
 }
 
 /**
@@ -61,16 +97,17 @@ export async function resolveHypothesisExtractions(
 ) {
   const linked = await Promise.all(
     (hypothesis.extractionIds ?? []).map((id: string) =>
-      resolveRow(query, "extractions:get", id, onMissing),
+      onMissing === "throw"
+        ? requireRow(query, "extraction", id)
+        : query.extraction(id),
     ),
   );
   const present = linked.filter((row): row is Row => row !== null);
   if (present.length > 0) return present;
 
   const bySource = await Promise.all(
-    (hypothesis.sourceIds ?? []).map(
-      async (sourceId: string) =>
-        (await query("extractions:getBySourceId", { sourceId })) as Row[],
+    (hypothesis.sourceIds ?? []).map((sourceId: string) =>
+      query.extractionsBySource(sourceId),
     ),
   );
   return bySource.flatMap((rows) => rows.slice(0, 1));
