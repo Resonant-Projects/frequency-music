@@ -3,6 +3,14 @@
 import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { mkdir, writeFile } from "node:fs/promises";
+import {
+  createEvalQuery,
+  enrichHypothesis,
+  getRow,
+  getSource,
+  withPlaceholderTheses,
+  type Row,
+} from "./lib/eval-dataset-helpers";
 
 const convexUrl = process.env.CONVEX_URL ?? process.env.CONVEX_SELF_HOSTED_URL;
 const agentSecret = process.env.AGENT_TOOL_SECRET;
@@ -16,6 +24,7 @@ if (!agentSecret) {
 }
 
 const client = new ConvexHttpClient(convexUrl);
+const query = createEvalQuery(client);
 
 function toJsonl(rows: unknown[]) {
   return rows.map((row) => JSON.stringify(row)).join("\n");
@@ -24,36 +33,6 @@ function toJsonl(rows: unknown[]) {
 async function writeJsonl(path: string, rows: unknown[]) {
   await writeFile(path, rows.length > 0 ? toJsonl(rows) + "\n" : "");
   console.log("wrote " + rows.length + " rows to " + path);
-}
-
-type Row = Record<string, any>;
-
-async function getSource(sourceId: string | undefined) {
-  if (!sourceId) return null;
-  return (await client.query("sources:get" as any, {
-    id: sourceId,
-  })) as Row | null;
-}
-
-async function getExtractionsForHypothesis(hypothesis: Row) {
-  const linked = await Promise.all(
-    (hypothesis.extractionIds ?? []).map(
-      async (id: string) =>
-        (await client.query("extractions:get" as any, { id })) as Row | null,
-    ),
-  );
-  const present = linked.filter((row): row is Row => row !== null);
-  if (present.length > 0) return present;
-
-  const bySource = await Promise.all(
-    (hypothesis.sourceIds ?? []).map(
-      async (sourceId: string) =>
-        (await client.query("extractions:getBySourceId" as any, {
-          sourceId,
-        })) as Row[],
-    ),
-  );
-  return bySource.flatMap((rows) => rows.slice(0, 1));
 }
 
 await mkdir("data/eval", { recursive: true });
@@ -79,7 +58,7 @@ const extractionCandidates = extractions.filter((extraction) => {
 
 const enrichedExtractionCandidates = await Promise.all(
   extractionCandidates.map(async (extraction) => {
-    const source = await getSource(extraction.sourceId);
+    const source = await getSource(query, extraction.sourceId);
     return {
       sourceTitle: source?.title ?? "(untitled source)",
       sourceType: source?.type ?? "url",
@@ -125,23 +104,9 @@ const hypothesisCandidates = hypotheses.filter((hypothesis) => {
 });
 
 const enrichedHypothesisCandidates = await Promise.all(
-  hypothesisCandidates.map(async (hypothesis) => {
-    const [source, linkedExtractions] = await Promise.all([
-      getSource(hypothesis.sourceIds?.[0]),
-      getExtractionsForHypothesis(hypothesis),
-    ]);
-    return {
-      sourceTitle: source?.title ?? "(untitled source)",
-      claims: linkedExtractions.flatMap((row) => row.claims ?? []),
-      compositionParameters: linkedExtractions.flatMap(
-        (row) => row.compositionParameters ?? [],
-      ),
-      topics: [
-        ...new Set(linkedExtractions.flatMap((row) => row.topics ?? [])),
-      ],
-      ...hypothesis,
-    };
-  }),
+  hypothesisCandidates.map((hypothesis) =>
+    enrichHypothesis(query, hypothesis, "skip"),
+  ),
 );
 
 await writeJsonl(
@@ -168,35 +133,35 @@ const weeklyBriefCandidates = weeklyBriefs.filter((brief) => {
 
 const enrichedWeeklyBriefCandidates = await Promise.all(
   weeklyBriefCandidates.map(async (brief) => {
-    const [linkedHypotheses, linkedRecipes, theses, linkedFailures] =
+    const [linkedHypotheses, linkedRecipes, storedTheses, linkedFailures] =
       await Promise.all([
         Promise.all(
-          (brief.recommendedHypothesisIds ?? []).map(
-            async (id: string) =>
-              (await client.query("hypotheses:get" as any, {
-                id,
-              })) as Row | null,
+          (brief.recommendedHypothesisIds ?? []).map((id: string) =>
+            getRow(query, "hypotheses:get", id),
           ),
         ),
         Promise.all(
-          (brief.recommendedRecipeIds ?? []).map(
-            async (id: string) =>
-              (await client.query("recipes:get" as any, {
-                id,
-              })) as Row | null,
+          (brief.recommendedRecipeIds ?? []).map((id: string) =>
+            getRow(query, "recipes:get", id),
           ),
         ),
-        client.query("theses:getByIds" as any, {
+        query("theses:getByIds", {
           ids: brief.activeThesisIds ?? [],
         }) as Promise<Row[]>,
-        client.query("failures:getByKeys" as any, {
+        query("failures:getByKeys", {
           keys: brief.referencedFailureKeys ?? [],
         }) as Promise<Row[]>,
       ]);
     return {
-      hypotheses: linkedHypotheses.filter((row): row is Row => row !== null),
+      // Enriched the same way as `hypotheses-candidates.jsonl`, so the same
+      // hypothesis id materializes identically whether standalone or embedded.
+      hypotheses: await Promise.all(
+        linkedHypotheses
+          .filter((row): row is Row => row !== null)
+          .map((hypothesis) => enrichHypothesis(query, hypothesis, "skip")),
+      ),
       recipes: linkedRecipes.filter((row): row is Row => row !== null),
-      theses,
+      theses: withPlaceholderTheses(brief, storedTheses),
       failures: linkedFailures,
       ...brief,
     };

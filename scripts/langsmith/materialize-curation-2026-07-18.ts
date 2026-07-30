@@ -1,9 +1,17 @@
 #!/usr/bin/env -S vpx tsx
 
+// oxlint-disable-next-line import/no-unassigned-import -- Loads .env.local before Convex URL resolution.
+import "varlock/auto-load";
 import { writeFile } from "node:fs/promises";
 import { ConvexHttpClient } from "convex/browser";
-
-type Row = Record<string, any>;
+import {
+  createEvalQuery,
+  enrichHypothesis,
+  getSource,
+  requireRow,
+  withPlaceholderTheses,
+  type Row,
+} from "../lib/eval-dataset-helpers";
 
 const EXTRACTION_IDS = [
   "j97f7yq3rv85mv7jkhvy1r0fbx8arevy",
@@ -38,47 +46,29 @@ const WEEKLY_BRIEF_IDS = [
   "k57atxwnwddzgahmwvn6x9794x8aa6w6",
 ] as const;
 
+/**
+ * Curation-sheet overrides (`data/eval/curation-2026-07-18.md`).
+ *
+ * H2 (`jh72zwgdmb…`) cites extraction `j97ckxzz5n…`, which the sheet SKIPs as a
+ * duplicate re-extraction of the same paper; row #17 (`j97d7hq5d3…`) is the copy
+ * that was KEPT into `extractions-golden.jsonl`. The sheet's own note calls for
+ * the repoint, so it is applied here rather than hand-edited into the JSONL, and
+ * survives re-materialization.
+ */
+const HYPOTHESIS_EXTRACTION_REPOINTS: Record<string, readonly string[]> = {
+  jh72zwgdmb5nytqka5nvbsbhv58afm5e: ["j97d7hq5d3kndbx5sq26qppqwn8afr0d"],
+};
+
 const convexUrl =
   process.env.CONVEX_URL ??
   process.env.CONVEX_SELF_HOSTED_URL ??
   "https://convex.resonantprojects.art";
 const client = new ConvexHttpClient(convexUrl);
-
-async function query(name: string, args: Record<string, unknown>) {
-  return await client.query(name as any, args);
-}
-
-async function requireRow(name: string, id: string) {
-  const row = (await query(name, { id })) as Row | null;
-  if (!row) throw new Error(`${name} did not return ${id}`);
-  return row;
-}
-
-async function getSource(sourceId: string | undefined) {
-  if (!sourceId) return null;
-  return (await query("sources:get", { id: sourceId })) as Row | null;
-}
-
-async function getHypothesisExtractions(hypothesis: Row) {
-  const linked = await Promise.all(
-    (hypothesis.extractionIds ?? []).map((id: string) =>
-      requireRow("extractions:get", id),
-    ),
-  );
-  if (linked.length > 0) return linked;
-
-  const bySource = await Promise.all(
-    (hypothesis.sourceIds ?? []).map(
-      async (sourceId: string) =>
-        (await query("extractions:getBySourceId", { sourceId })) as Row[],
-    ),
-  );
-  return bySource.flatMap((rows) => rows.slice(0, 1));
-}
+const query = createEvalQuery(client);
 
 async function materializeExtraction(id: string) {
-  const extraction = await requireRow("extractions:get", id);
-  const source = await getSource(extraction.sourceId);
+  const extraction = await requireRow(query, "extractions:get", id);
+  const source = await getSource(query, extraction.sourceId);
   return {
     sourceTitle: source?.title ?? "(untitled source)",
     sourceType: source?.type ?? "url",
@@ -88,33 +78,23 @@ async function materializeExtraction(id: string) {
 }
 
 async function materializeHypothesis(id: string) {
-  const hypothesis = await requireRow("hypotheses:get", id);
-  const [source, extractions] = await Promise.all([
-    getSource(hypothesis.sourceIds?.[0]),
-    getHypothesisExtractions(hypothesis),
-  ]);
-  return {
-    sourceTitle: source?.title ?? "(untitled source)",
-    claims: extractions.flatMap((row) => row.claims ?? []),
-    compositionParameters: extractions.flatMap(
-      (row) => row.compositionParameters ?? [],
-    ),
-    topics: [...new Set(extractions.flatMap((row) => row.topics ?? []))],
-    ...hypothesis,
-  };
+  const hypothesis = await requireRow(query, "hypotheses:get", id);
+  const repointed = HYPOTHESIS_EXTRACTION_REPOINTS[id];
+  if (repointed) hypothesis.extractionIds = [...repointed];
+  return await enrichHypothesis(query, hypothesis, "throw");
 }
 
 async function materializeBrief(id: string) {
-  const brief = await requireRow("weeklyBriefs:get", id);
+  const brief = await requireRow(query, "weeklyBriefs:get", id);
   const [hypotheses, recipes, storedTheses, failures] = await Promise.all([
     Promise.all(
       (brief.recommendedHypothesisIds ?? []).map((hypothesisId: string) =>
-        requireRow("hypotheses:get", hypothesisId),
+        materializeHypothesis(hypothesisId),
       ),
     ),
     Promise.all(
       (brief.recommendedRecipeIds ?? []).map((recipeId: string) =>
-        requireRow("recipes:get", recipeId),
+        requireRow(query, "recipes:get", recipeId),
       ),
     ),
     query("theses:getByIds", { ids: brief.activeThesisIds ?? [] }) as Promise<
@@ -125,23 +105,13 @@ async function materializeBrief(id: string) {
     }) as Promise<Row[]>,
   ]);
 
-  const placeholderTitles = [
-    ...String(brief.bodyMd ?? "").matchAll(/`(e2e-\d+)`/g),
-  ].map((match) => match[1]);
-  const theses =
-    storedTheses.length > 0
-      ? storedTheses
-      : (brief.activeThesisIds ?? []).map(
-          (thesisId: string, index: number) => ({
-            _id: thesisId,
-            title:
-              placeholderTitles[index] ?? `Unavailable thesis ${index + 1}`,
-            statement:
-              "Historical placeholder referenced by the ratified weekly brief; the original thesis row is no longer present.",
-          }),
-        );
-
-  return { hypotheses, recipes, theses, failures, ...brief };
+  return {
+    hypotheses,
+    recipes,
+    theses: withPlaceholderTheses(brief, storedTheses),
+    failures,
+    ...brief,
+  };
 }
 
 async function writeJsonl(path: string, rows: Row[]) {
