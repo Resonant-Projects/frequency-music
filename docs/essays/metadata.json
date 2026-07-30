@@ -1,4 +1,144 @@
 {
+  "the-room-has-a-timeline": {
+    "excerpt": "Generated audio becomes compositionally accountable when it obeys both the space it claims and the timeline it promises.",
+    "tags": [
+      "composition",
+      "generative-audio",
+      "acoustics",
+      "text-to-audio",
+      "spatial-audio",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "eb46b7583e1aebb8de4b5b7b33af86d7921a3df92c3864451e9c89d61edd216d",
+    "generatedAt": "2026-07-28T19:03:00.000Z"
+  },
+  "the-encoding-is-the-instrument": {
+    "excerpt": "A representation is a listening position: the encoding decides which musical variables become stable, uncertain, separable, or cheap enough to act on.",
+    "tags": [
+      "composition",
+      "representation-learning",
+      "signal-processing",
+      "AI-music",
+      "spectral-analysis",
+      "music-information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "3878fc7d4a3469b006020f8a4c173d96ea97f4d19ae672a94ca4d074da2bae98",
+    "generatedAt": "2026-07-28T11:03:00.000Z"
+  },
+  "the-distance-inside-the-signal": {
+    "excerpt": "Distance becomes compositional when a listener can infer the path from transformed evidence: spectral shift, attenuation, envelope stretch, graph walk, and controlled forgetting.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "spectral-analysis",
+      "mathematics",
+      "algorithmic-composition",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c32a29637b73c19716befa338ab27a7ef6f30d2123bfb8151e010e7e287b9059",
+    "generatedAt": "2026-07-28T03:03:00.000Z"
+  },
+  "the-test-that-becomes-the-instrument": {
+    "excerpt": "A musical representation is shaped by the transformations it is asked to survive; the test is part of the instrument.",
+    "tags": [
+      "composition",
+      "representation-learning",
+      "signal-processing",
+      "acoustics",
+      "rhythm",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8f7a24f079e69fbe0285ef7156302d19d3fdfd745aa889cf44c24e9d0fecb089",
+    "generatedAt": "2026-07-26T03:03:00.000Z"
+  },
+  "the-sound-with-more-than-one-address": {
+    "excerpt": "A sound becomes composable when it can be addressed at more than one operational layer: partial layout, frame evidence, or reflection geometry.",
+    "tags": [
+      "composition",
+      "psychoacoustics",
+      "signal-processing",
+      "AI-music",
+      "acoustics",
+      "spatial-audio"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "00d646a6f5ba2d8d88d66117972e6b4d1321949df7ebd65def42a357b2ff290a",
+    "generatedAt": "2026-07-25T19:03:00.000Z"
+  },
+  "the-control-surface-under-the-sound": {
+    "excerpt": "Every generative audio system has a control surface under the sound; composition begins by deciding which coordinates survive transformation.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "speech-synthesis",
+      "acoustics",
+      "representation-learning",
+      "spatial-audio"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "23bde64d943b4d3245a25dae9fa6d10b33ab8435b7cffa6a291868d56bd00094",
+    "generatedAt": "2026-07-25T11:02:00.000Z"
+  },
+  "the-addressable-layer": {
+    "excerpt": "Composition begins where a system can name the layer it is allowed to move: voice, contour, melody, or room.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "speech-synthesis",
+      "acoustics",
+      "spatial-audio",
+      "representation-learning"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b9c46958208233f31784c42be13b2e875d043f199bf2324a6307485932033d20",
+    "generatedAt": "2026-07-25T03:02:00.000Z"
+  },
+  "constraint-as-control-signal": {
+    "excerpt": "A constraint becomes compositional when it changes what actions are available, perceptible, or meaningful.",
+    "tags": [
+      "composition",
+      "constraint",
+      "poetic-form",
+      "mathematics",
+      "non-auditory-communication",
+      "AI-narratives"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a2194a507da7afd040d1a4598c3a6c7818e8ec52db8511445d490643434302dd",
+    "generatedAt": "2026-07-24T11:02:00.000Z"
+  },
+  "the-readable-frame": {
+    "excerpt": "A control becomes expressive when the listener can infer what did not move; readable constraints give vocal trajectories an address.",
+    "tags": [
+      "composition",
+      "prosody",
+      "speech-synthesis",
+      "signal-processing",
+      "poetic-form",
+      "constraint"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "36c0c6e5314072537254a8ca902b9789d30bd9b191d221be22b7c252ef642032",
+    "generatedAt": "2026-07-24T03:02:00.000Z"
+  },
+  "the-trajectory-inside-the-voice": {
+    "excerpt": "Voice becomes programmable when identity is separated from the trajectories that carry accent, timing, translation, room, and noise.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "speech-synthesis",
+      "signal-processing",
+      "prosody",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b1e13c342fdd72d2598846b2f1b60ed2b1a9028f3b5643c63eac1b01bbbcaa51",
+    "generatedAt": "2026-07-23T19:02:00.000Z"
+  },
   "the-authority-channel": {
     "excerpt": "Authority channel names the layer allowed to steer a musical decision, from stems and room evidence to frequency-localized latents and vocal-breath biomarkers.",
     "tags": [
@@ -4212,6 +4352,35 @@
     "contentHash": "176bdb6c7ac83305b3144f513aa0f0be2131b9b5b130a59631d007846fddfb1f",
     "generatedAt": "2026-06-17T19:05:41.900Z"
   },
+  "style-is-a-mutualism": {
+    "excerpt": "Style becomes composable when per-stem effect chains act like reciprocal contracts: each part keeps contributing a specific responsibility while making the others more legible.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "music-production",
+      "signal-processing",
+      "representation-learning",
+      "mixing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4287bd7b8782c3876059721f4b4882cab3d82357d2dd866b7d351713590ddc23",
+    "generatedAt": "2026-07-23T11:02:00.000Z"
+  },
+  "the-carrier-can-change": {
+    "excerpt": "Musical identity becomes composable when content, carrier, and rendering can move on different axes: text, timbre, contour, melody, and style do not have to survive transformation in the same way.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "voice",
+      "speech-synthesis",
+      "timbre",
+      "melody",
+      "representation-learning"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7340ca60ef79dfe2298015584f0d090ae82118c27964389c03e02f973b7c9420",
+    "generatedAt": "2026-07-24T19:02:00.000Z"
+  },
   "where-the-signal-breaks": {
     "excerpt": "Audio systems break at boundaries between regimes-precision levels, acoustic domains, physical and statistical zones. Musicians have always known this: the clarinet break, vocal passaggio, and orchestral seams are where expressiveness lives.",
     "tags": [
@@ -4225,5 +4394,35 @@
     "category": "interdisciplinary",
     "contentHash": "d9be33e4353a8d34ddb00e6ed9e18f35df7c446d5e2a9f1d64e7605e470ec995",
     "generatedAt": "2026-04-10T18:41:33.937Z"
+  },
+  "the-editable-carrier": {
+    "excerpt": "Music generation becomes compositional when the carrier layer stays editable: stems, effect chains, melody cues, and production surfaces become handles for preserving identity while changing sound.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "music-production",
+      "mixing",
+      "signal-processing",
+      "representation-learning",
+      "audio-effects"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b6fdd50fa20ecf11e19b1c4e4dd1380c763cf8bf97cfcef8d4bfbd2e8313ebc8",
+    "generatedAt": "2026-07-27T11:03:00.000Z"
+  },
+  "the-control-insertion-point": {
+    "excerpt": "Control has anatomy: adapter updates, projectors, filters, stems, and FX chains matter because they choose where intervention still has leverage over musical identity.",
+    "tags": [
+      "composition",
+      "AI-music",
+      "music-production",
+      "signal-processing",
+      "acoustics",
+      "representation-learning",
+      "audio-effects"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "18cd90582eceff5df7935f6ab72c9419836b2f979af20bb36bae8b08e39f557e",
+    "generatedAt": "2026-07-27T19:03:00.000Z"
   }
 }

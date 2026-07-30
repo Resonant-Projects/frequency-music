@@ -17,7 +17,7 @@ export const graph = new StateGraph(HypothesisDrafterAnnotation)
   .addNode("check_capacity", checkCapacityNode)
   .addNode("pick_target", pickTargetNode)
   .addNode("gather_context", gatherContextNode)
-  .addNode("draft", draftNode)
+  .addNode("generate_draft", draftNode)
   .addNode("self_check", selfCheckNode)
   .addNode("write_draft", writeDraftNode)
   .addNode("summarize", summarizeNode)
@@ -30,10 +30,10 @@ export const graph = new StateGraph(HypothesisDrafterAnnotation)
     gather_context: "gather_context",
     summarize: "summarize",
   })
-  .addEdge("gather_context", "draft")
-  .addEdge("draft", "self_check")
+  .addEdge("gather_context", "generate_draft")
+  .addEdge("generate_draft", "self_check")
   .addConditionalEdges("self_check", routeAfterSelfCheck, {
-    draft: "draft",
+    draft: "generate_draft",
     write_draft: "write_draft",
     summarize: "summarize",
   })

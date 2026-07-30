@@ -7,8 +7,8 @@ import {
 import { redactError } from "../shared/redactError.js";
 import { callConvex } from "./convexTools.js";
 
-const TAVILY_SEARCH_URL = "https://api.tavily.com/search";
-const TAVILY_SEARCH_TIMEOUT_MS = 15_000;
+const FIRECRAWL_SEARCH_URL = "https://api.firecrawl.dev/v2/search";
+const FIRECRAWL_SEARCH_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_RESULTS = 5;
 const MAX_RESULTS = 10;
 
@@ -35,25 +35,33 @@ type FetchLike = (
   init?: RequestInit,
 ) => Promise<Response>;
 
-type TavilyResult = {
+type FirecrawlResult = {
   title?: unknown;
   url?: unknown;
-  content?: unknown;
-  published_date?: unknown;
+  description?: unknown;
+  markdown?: unknown;
 };
 
 function mapResults(payload: unknown, maxResults: number): WebSearchResult[] {
   if (!payload || typeof payload !== "object") return [];
-  const results = (payload as { results?: unknown }).results;
+  const data = (payload as { data?: unknown }).data;
+  if (!data || typeof data !== "object") return [];
+  const results = (data as { web?: unknown }).web;
   if (!Array.isArray(results)) return [];
   return results
     .flatMap((entry): WebSearchResult[] => {
       if (!entry || typeof entry !== "object") return [];
-      const result = entry as TavilyResult;
+      const result = entry as FirecrawlResult;
+      const snippet =
+        typeof result.description === "string" && result.description
+          ? result.description
+          : typeof result.markdown === "string"
+            ? result.markdown
+            : undefined;
       if (
         typeof result.title !== "string" ||
         typeof result.url !== "string" ||
-        typeof result.content !== "string"
+        !snippet
       ) {
         return [];
       }
@@ -61,10 +69,7 @@ function mapResults(payload: unknown, maxResults: number): WebSearchResult[] {
         {
           title: result.title,
           url: result.url,
-          snippet: result.content,
-          ...(typeof result.published_date === "string" && result.published_date
-            ? { publishedAt: result.published_date }
-            : {}),
+          snippet,
         },
       ];
     })
@@ -98,8 +103,8 @@ export function createWebSearch(
         context.agentRunId,
         "tool_call",
         outcome.status === "ok"
-          ? "Searched Tavily for source-scout candidates"
-          : "Tavily search failed; source-scout skipped query",
+          ? "Searched Firecrawl for source-scout candidates"
+          : "Firecrawl search failed; source-scout skipped query",
         {
           query: args.query,
           ...(context.targetGap ? { targetGap: context.targetGap } : {}),
@@ -110,30 +115,30 @@ export function createWebSearch(
         },
       );
     try {
-      const apiKey = configuredApiKey ?? process.env.TAVILY_API_KEY;
-      if (!apiKey) throw new Error("TAVILY_API_KEY is required");
+      const apiKey = configuredApiKey ?? process.env.FIRECRAWL_API_KEY;
+      if (!apiKey) throw new Error("FIRECRAWL_API_KEY is required");
       const controller = new AbortController();
       const timeout = setTimeout(
         () =>
           controller.abort(
             new Error(
-              `Tavily search timed out after ${TAVILY_SEARCH_TIMEOUT_MS}ms`,
+              `Firecrawl search timed out after ${FIRECRAWL_SEARCH_TIMEOUT_MS}ms`,
             ),
           ),
-        TAVILY_SEARCH_TIMEOUT_MS,
+        FIRECRAWL_SEARCH_TIMEOUT_MS,
       );
       let response: Response;
       try {
-        response = await fetchImpl(TAVILY_SEARCH_URL, {
+        response = await fetchImpl(FIRECRAWL_SEARCH_URL, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: {
+            authorization: `Bearer ${apiKey}`,
+            "content-type": "application/json",
+          },
           body: JSON.stringify({
-            api_key: apiKey,
             query: args.query,
-            max_results: maxResults,
-            search_depth: "basic",
-            include_answer: false,
-            include_raw_content: false,
+            limit: maxResults,
+            sources: ["web"],
           }),
           signal: controller.signal,
         });
@@ -143,7 +148,7 @@ export function createWebSearch(
       if (!response.ok) {
         const detail = (await response.text()).slice(0, 240);
         throw new Error(
-          `Tavily search failed with ${response.status}${detail ? `: ${detail}` : ""}`,
+          `Firecrawl search failed with ${response.status}${detail ? `: ${detail}` : ""}`,
         );
       }
       const results = mapResults(await response.json(), maxResults);
@@ -152,7 +157,7 @@ export function createWebSearch(
     } catch (error) {
       const message = redactError(error);
       console.warn(
-        "[source-scout] Tavily search failed; skipping query:",
+        "[source-scout] Firecrawl search failed; skipping query:",
         message,
       );
       await auditSearch({ status: "failed", error: message });
@@ -178,7 +183,7 @@ export const webSearchTool = tool(
   {
     name: "web_search",
     description:
-      "Search the web with Tavily for source-scout candidates. Provider failures return no results.",
+      "Search the web with Firecrawl for source-scout candidates. Provider failures return no results.",
     schema: webSearchInputSchema,
   },
 );
