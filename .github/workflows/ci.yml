@@ -15,6 +15,11 @@ jobs:
           node-version: '24'
           cache: true
           run-install: false
+      - name: Diagnose package manager bootstrap
+        run: |
+          vp --version
+          bun --version
+          command -v bun
       - run: vp install --frozen-lockfile
       - run: vp run lint:check
       - run: vp run format:check
