@@ -7,7 +7,7 @@ on:
 
 jobs:
   root:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     steps:
       - uses: actions/checkout@v4
       - uses: voidzero-dev/setup-vp@v1
@@ -21,7 +21,7 @@ jobs:
       - run: vp run test:harness
 
   web:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     defaults:
       run:
         working-directory: web
@@ -40,7 +40,7 @@ jobs:
       - run: vpx tsc --noEmit
 
   agent:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     defaults:
       run:
         working-directory: agent
