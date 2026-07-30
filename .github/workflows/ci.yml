@@ -7,53 +7,65 @@ on:
 
 jobs:
   root:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
       - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: '24'
           cache: true
-      - run: vp install --frozen-lockfile
+          run-install: false
+      - run: bun install --frozen-lockfile
       - run: vp run lint:check
       - run: vp run format:check
       - run: vp test convex
       - run: vp run test:harness
 
   web:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     defaults:
       run:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
       - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: '24'
           cache: true
+          run-install: false
       # web tsc typechecks ../convex sources via _generated/api, which import
       # root-only packages — install root deps too or tsc fails on clean checkouts
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
         working-directory: .
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
       - run: vpx panda codegen && vpx panda cssgen
       - run: vpx tsc --noEmit
 
   agent:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     defaults:
       run:
         working-directory: agent
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
       - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: '24'
           cache: true
+          run-install: false
       # agent tsc reaches ../convex/shared, whose imports (zod, convex-helpers)
       # resolve from root node_modules — install root deps too
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
         working-directory: .
-      - run: vp install --frozen-lockfile
+      - run: bun install --frozen-lockfile
       - run: vp run verify
       - run: vp test

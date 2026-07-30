@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
-import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { renderAgentToolDocs } from "../scripts/lib/agentToolDocs";
 import * as agentTools from "./agentTools";
 import { AGENT_TOOL_REGISTRY, agentToolByName } from "./agentToolRegistry";
 import { AGENT_TOOL_MANIFEST } from "./shared/agentToolManifest";
@@ -199,11 +200,10 @@ describe("agent tool registry", () => {
   });
 
   test("generated agent-tool documentation is fresh", () => {
-    const result = spawnSync(
-      "bun",
-      ["scripts/generate-agent-tool-docs.ts", "--check"],
-      { cwd: `${import.meta.dirname}/..` },
+    const current = readFileSync(
+      new URL("../docs/agent-tool-surface.md", import.meta.url),
+      "utf8",
     );
-    expect(result.status).toBe(0);
+    expect(renderAgentToolDocs(current)).toBe(current);
   });
 });
