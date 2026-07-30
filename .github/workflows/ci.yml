@@ -10,16 +10,14 @@ jobs:
     runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
       - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: '24'
           cache: true
           run-install: false
-      - name: Diagnose package manager bootstrap
-        run: |
-          vp --version
-          bun --version
-          command -v bun
       - run: vp install --frozen-lockfile
       - run: vp run lint:check
       - run: vp run format:check
@@ -33,6 +31,9 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
       - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: '24'
@@ -53,6 +54,9 @@ jobs:
         working-directory: agent
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
       - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: '24'
