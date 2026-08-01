@@ -27,9 +27,12 @@ function envWithoutSchemaSecrets(): typeof process.env {
 
 describe("ingest-manifest CLI", () => {
   test("dry-runs by default without contacting Convex", () => {
+    // `vpx tsx`, not `bun run`: bun's JS runtime dies on the GARM pool's
+    // non-AVX CPUs (see the note in claude.yml), and `vpx tsx` is how every
+    // other script in this repo is invoked anyway.
     const result = spawnSync(
-      "bun",
-      ["run", "scripts/ingest-manifest.ts", "data/example-manifest.json"],
+      "vpx",
+      ["tsx", "scripts/ingest-manifest.ts", "data/example-manifest.json"],
       {
         cwd: repoRoot,
         encoding: "utf8",
@@ -47,7 +50,12 @@ describe("ingest-manifest CLI", () => {
       },
     );
 
-    expect(result.status).toBe(0);
+    // Check spawn/signal before status: a bare `expected null to be 0` says
+    // nothing about whether the binary was missing or the process was killed.
+    if (result.error)
+      throw new Error(`could not spawn: ${result.error.message}`);
+    expect(result.signal, `killed by ${result.signal}`).toBeNull();
+    expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("DRY RUN:");
     expect(result.stdout).toContain("sources=2");
     expect(result.stdout).not.toContain("Ingesting");
