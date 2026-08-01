@@ -39,6 +39,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # `bun install` below runs package lifecycle scripts. Without this, the
+          # push-capable token sits in the local Git credential store while they
+          # run. The commit step supplies the token explicitly instead.
+          persist-credentials: false
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -90,6 +94,8 @@ jobs:
 
       - name: Commit refreshed export
         id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           if git diff --quiet -- docs/essays/metadata.json exports/blog; then
@@ -102,7 +108,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/essays/metadata.json exports/blog
           git commit -m "chore(essays): refresh public export"
-          git push origin HEAD:main
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Trigger Resonant Projects deployment
@@ -115,7 +121,11 @@ jobs:
             echo "::error::RPROJ_VERCEL_DEPLOY_HOOK_URL is not configured. See docs/reference/essay-publishing.md."
             exit 1
           fi
+          # Bounded so a stalled hook cannot hold the `publish-essays`
+          # concurrency group and stall every queued run behind it.
           curl --fail-with-body --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 60 \
             --request POST \
             --output /dev/null \
             "$DEPLOY_HOOK_URL"

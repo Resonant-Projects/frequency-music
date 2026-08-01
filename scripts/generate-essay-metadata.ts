@@ -130,6 +130,22 @@ async function main() {
     .toSorted();
   const metadata = await loadMetadata();
 
+  // Entries generated before the excerpt budget was enforced can exceed the
+  // limit, and the contentHash check below skips them forever. Backfill the
+  // invariant across everything already on disk — this is a pure string
+  // transform, so it costs no OpenRouter calls.
+  let backfilled = 0;
+  for (const entry of Object.values(metadata)) {
+    const normalized = normalizeExcerpt(entry.excerpt);
+    if (normalized !== entry.excerpt) {
+      entry.excerpt = normalized;
+      backfilled++;
+    }
+  }
+  if (backfilled > 0) {
+    console.log(`Normalized ${backfilled} pre-existing excerpts.`);
+  }
+
   let processed = 0;
   let skipped = 0;
   const failures: string[] = [];
