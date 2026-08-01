@@ -25,6 +25,10 @@ The AI-distilled structured reading of a source: claims, parameters, and topics.
 An addressable assertion with its own identity and provenance (which extraction produced it, from which source), carrying its own evidence level, truth confidence, and interest level. Claims are the knowledge atoms of the system — correspondences cite them as evidence. Not a fragment of an extraction; the extraction is the generative act, the claim is what it produced.
 _Avoid_: fact, finding
 
+**Passage**:
+A verbatim span of a source's full text, addressable by its position within the source and retrievable by semantic search across the whole corpus. A passage is evidence prose — what the source actually says — as distinct from a Claim, which is an asserted distillation. Every passage carries provenance back to its source. Passages are never edited or curated; they change only when the source's text changes.
+_Avoid_: chunk (storage mechanics, not domain language), snippet, excerpt
+
 **Domain**:
 A registry-governed discipline (microtuning, cymatics, psychoacoustics, sacred geometry, …) assigned to concepts; correspondences must cross domains. A concept may live in several domains. Registry maturity (known/provisional/experimental/deprecated) and mission relevance are separate axes from domain membership.
 
