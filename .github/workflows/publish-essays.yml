@@ -1,0 +1,132 @@
+name: Publish Essays
+
+# Regenerates essay metadata and the public export whenever an essay changes on
+# main, then triggers the resonantprojects.art production build.
+#
+# Runs alongside `public-editorial-export.yml`, which is a different route: that
+# one is manual (`workflow_dispatch`), pulls evidence-card data out of Convex,
+# and publishes to the orphan `editorial-export` branch. This workflow is
+# automatic and covers only the static `docs/essays/*.md` corpus.
+#
+# Loop safety: the trigger filter matches `docs/essays/*.md`, but the commit
+# below only ever touches `docs/essays/metadata.json` and `exports/blog`.
+# Neither matches the filter, so the bot's own push cannot re-trigger this run.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/essays/*.md"
+      - "scripts/generate-essay-metadata.ts"
+      - "scripts/export-essays.ts"
+      - "scripts/lib/essay-metadata.ts"
+      - "scripts/lib/parse-essay.ts"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-essays
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
+    steps:
+      - name: Checkout main with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # `bun install` below runs package lifecycle scripts. Without this, the
+          # push-capable token sits in the local Git credential store while they
+          # run. The commit step supplies the token explicitly instead.
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: '24'
+          cache: true
+          run-install: false
+
+      - run: bun install --frozen-lockfile
+
+      - name: Load OpenRouter key from 1Password
+        uses: 1password/load-secrets-action@v4
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OPENROUTER_API_KEY: "op://Country Manor Lab/OpenRouter API Key - Frequency Music/credential"
+
+      - name: Generate metadata and public export
+        run: vp run essays:publish
+
+      - name: Validate export
+        run: |
+          cat > "${RUNNER_TEMP}/validate-export.mjs" <<'NODE'
+          import { readdirSync, readFileSync } from "node:fs";
+
+          const manifest = JSON.parse(
+            readFileSync("exports/blog/manifest.json", "utf8"),
+          );
+          const markdownFiles = readdirSync("exports/blog/essays").filter(
+            (file) => file.endsWith(".md"),
+          );
+
+          if (manifest.version !== "frequency_essays_v1") {
+            throw new Error(`Unexpected manifest version: ${manifest.version}`);
+          }
+          if (manifest.items.length !== markdownFiles.length) {
+            throw new Error(
+              `Manifest has ${manifest.items.length} items but export has ${markdownFiles.length} Markdown files`,
+            );
+          }
+
+          console.log(`Validated ${manifest.items.length} exported essays.`);
+          NODE
+          vp node "${RUNNER_TEMP}/validate-export.mjs"
+
+      - name: Commit refreshed export
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/essays/metadata.json exports/blog; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Essay export is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/essays/metadata.json exports/blog
+          git commit -m "chore(essays): refresh public export"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Resonant Projects deployment
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.RPROJ_VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "::error::RPROJ_VERCEL_DEPLOY_HOOK_URL is not configured. See docs/reference/essay-publishing.md."
+            exit 1
+          fi
+          # Bounded so a stalled hook cannot hold the `publish-essays`
+          # concurrency group and stall every queued run behind it.
+          curl --fail-with-body --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 60 \
+            --request POST \
+            --output /dev/null \
+            "$DEPLOY_HOOK_URL"
+          echo "Triggered the Resonant Projects production build."
