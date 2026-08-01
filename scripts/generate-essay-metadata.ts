@@ -18,12 +18,13 @@ import { join } from "node:path";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, Output } from "ai";
 import { z } from "zod";
+import { MODELS } from "../convex/llm.ts";
 import { normalizeExcerpt } from "./lib/essay-metadata";
 import { parseEssay } from "./lib/parse-essay";
 
 const ESSAYS_DIR = join(import.meta.dirname, "../docs/essays");
 const METADATA_PATH = join(ESSAYS_DIR, "metadata.json");
-const MODEL_ID = "anthropic/claude-haiku-4.5";
+const MODEL_ID = MODELS.luna;
 
 const TAG_VOCABULARY = [
   "microtuning",

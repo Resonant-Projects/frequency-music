@@ -193,6 +193,7 @@ export const MODELS = {
   quality: "openai/gpt-5.6-terra",
   sonnet: "anthropic/claude-sonnet-4.6",
   haiku: "anthropic/claude-haiku-4.5",
+  luna: "openai/gpt-5.6-luna", // essay metadata generation
   gemini: "google/gemini-2.5-flash",
   gpt4: "openai/gpt-4o",
   deepseek: "deepseek/deepseek-chat-v3-0324",
