@@ -10,6 +10,7 @@
  *   bun scripts/generate-essay-metadata.ts --force   # regenerate all
  */
 
+// oxlint-disable-next-line import/no-unassigned-import -- varlock populates process.env as a side effect.
 import "varlock/auto-load";
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
@@ -17,6 +18,7 @@ import { join } from "node:path";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, Output } from "ai";
 import { z } from "zod";
+import { normalizeExcerpt } from "./lib/essay-metadata";
 import { parseEssay } from "./lib/parse-essay";
 
 const ESSAYS_DIR = join(import.meta.dirname, "../docs/essays");
@@ -77,10 +79,6 @@ type EssayMetadataEntry = z.infer<typeof metadataSchema> & {
 
 type MetadataFile = Record<string, EssayMetadataEntry>;
 
-function normalizeExcerpt(excerpt: string): string {
-  return excerpt.trim().replaceAll(/\s+/g, " ");
-}
-
 function normalizeTags(tags: string[]): EssayMetadataEntry["tags"] {
   const uniqueTags = Array.from(
     new Set(
@@ -114,8 +112,13 @@ async function main() {
   const force = process.argv.includes("--force");
 
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    console.error("OPENROUTER_API_KEY env var is required");
+  // An unresolved varlock/1Password reference is still a non-empty string, so a
+  // bare presence check would send `op://...` to OpenRouter and fail as a 401
+  // far from the real cause. Reject the reference form explicitly.
+  if (!apiKey || apiKey.startsWith("op(") || apiKey.startsWith("op://")) {
+    console.error(
+      "OPENROUTER_API_KEY must be resolved to a real key before running metadata generation",
+    );
     process.exit(1);
   }
 

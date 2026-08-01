@@ -7,6 +7,14 @@ The `frequency-music` Vercel project deploys the SolidJS app in `web/`.
 - **Framework preset:** Vite
 - **Install / Build:** defaults — `bun install` then `bun run build`, run **inside `web/`**
 
+## SPA route fallback
+
+The Solid app uses client-side routing, so requests for routes such as
+`/essays` and `/recipes/:recipeId` must serve `index.html` and let the router
+resolve the page. `web/vercel.json` defines the catch-all rewrite; without it,
+direct navigation and browser refreshes return Vercel's 404 even though
+in-app navigation works.
+
 ## The `convex/server` resolution gotcha
 
 The web app imports the repo-root generated Convex client, e.g.:
