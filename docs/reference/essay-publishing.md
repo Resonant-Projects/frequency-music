@@ -40,8 +40,11 @@ the export is committed and the website is rebuilt.
 `.github/workflows/publish-essays.yml` runs when a top-level
 `docs/essays/*.md` file changes on `main`.
 
-1. The official 1Password action resolves `OPENROUTER_API_KEY` using the
-   existing `OP_SERVICE_ACCOUNT_TOKEN` GitHub Actions secret.
+1. The generate step runs with `APP_ENV=ci` and `OP_SERVICE_ACCOUNT_TOKEN`, so
+   `varlock/auto-load` resolves `OPENROUTER_API_KEY` (and the rest of
+   `.env.schema`) through the 1Password service account. `APP_ENV=ci` is
+   required: the schema commits `APP_ENV=dev` and only permits desktop-app auth
+   in `dev`, which cannot work on a headless runner.
 2. `scripts/generate-essay-metadata.ts` creates metadata only for new or
    content-changed essays.
 3. `scripts/export-essays.ts` rebuilds the deterministic Astro export.
@@ -150,11 +153,14 @@ Then check:
 
 ### Metadata generation fails
 
-Confirm `OP_SERVICE_ACCOUNT_TOKEN` is present and can read the OpenRouter item
-referenced by the workflow and `.env.schema`. Re-run the workflow. The generator
-is incremental, so already-current entries are not regenerated. Locally, run
-through `op read` as shown above; an unresolved `op(...)` or `op://` reference
-is rejected before any API calls are made.
+Confirm `OP_SERVICE_ACCOUNT_TOKEN` is present and that the step still sets
+`APP_ENV=ci`. Because `varlock/auto-load` resolves the **whole** schema, the
+service account needs read access to every `op()` item in `.env.schema`, not
+just the OpenRouter one — a newly added secret the account cannot read will
+fail this step even though it is unrelated to essays. Re-run the workflow; the
+generator is incremental, so already-current entries are not regenerated.
+Locally, run through `op read` as shown above; an unresolved `op(...)` or
+`op://` reference is rejected before any API calls are made.
 
 ### Export reports missing metadata
 
