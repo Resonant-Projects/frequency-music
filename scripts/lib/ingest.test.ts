@@ -1,4 +1,18 @@
-import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
+
+// Declared before the module under test is imported: `ingest` reaches
+// `convexClient`, which pulls in `varlock/auto-load` — that would otherwise
+// resolve secrets from `.env.local`/1Password and make these tests
+// environment-dependent.
+vi.mock("varlock/auto-load", () => ({}));
+
 import { type MinimalClient, createSourceIngestor } from "./ingest";
 
 type Call = {

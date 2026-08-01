@@ -11,6 +11,10 @@ describe("ingest-manifest CLI", () => {
         encoding: "utf8",
         env: {
           ...process.env,
+          // The CLI loads `varlock/auto-load` for real; APP_ENV=test resolves
+          // every secret from the committed .env.test placeholders so the
+          // subprocess never reaches for 1Password.
+          APP_ENV: "test",
           AUTH_BYPASS_SECRET: "test-only-placeholder",
           CONVEX_SELF_HOSTED_URL: "http://127.0.0.1:1",
           CONVEX_URL: "http://127.0.0.1:1",
