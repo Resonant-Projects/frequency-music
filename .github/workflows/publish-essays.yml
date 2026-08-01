@@ -110,8 +110,31 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/essays/metadata.json exports/blog
           git commit -m "chore(essays): refresh public export"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
-          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+          # Metadata generation takes minutes, and the concurrency group only
+          # serialises this workflow against itself — main can still move under
+          # us mid-run. Rebase onto whatever landed and retry instead of failing
+          # and leaving the export stale. The commit only touches metadata.json
+          # and exports/blog, so a rebase conflict means a human edited the
+          # generated export by hand and should look at it.
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for attempt in 1 2 3; do
+            if git push "$remote" HEAD:main; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Push rejected on attempt ${attempt}; rebasing onto latest main."
+            git fetch "$remote" main
+            if ! git rebase FETCH_HEAD; then
+              git rebase --abort || true
+              echo "::error::Rebase onto main conflicted. Resolve docs/essays/metadata.json or exports/blog by hand."
+              exit 1
+            fi
+          done
+
+          echo "::error::Could not push the refreshed export after 3 attempts."
+          exit 1
 
       - name: Trigger Resonant Projects deployment
         if: steps.commit.outputs.changed == 'true'
