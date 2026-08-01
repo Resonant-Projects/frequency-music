@@ -56,15 +56,17 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - name: Load OpenRouter key from 1Password
-        uses: 1password/load-secrets-action@v4
-        with:
-          export-env: true
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          OPENROUTER_API_KEY: "op://Country Manor Lab/OpenRouter API Key - Frequency Music/credential"
-
       - name: Generate metadata and public export
+        # generate-essay-metadata.ts imports `varlock/auto-load`, which resolves
+        # the whole .env.schema through the 1Password CLI. `.env.schema` commits
+        # APP_ENV=dev and declares @initOp(allowAppAuth=forEnv(dev)), so without
+        # APP_ENV=ci the CLI falls back to desktop-app auth and fails on a
+        # headless runner. This is the schema's documented CI contract; varlock
+        # resolves OPENROUTER_API_KEY itself, so no separate secret-loading step
+        # is needed.
+        env:
+          APP_ENV: ci
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: vp run essays:publish
 
       - name: Validate export
