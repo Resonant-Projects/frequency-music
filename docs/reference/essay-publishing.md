@@ -170,11 +170,19 @@ silently omitting a public essay.
 
 ### Workflow cannot push its export commit
 
-Confirm the workflow still declares `permissions: contents: write` and that the
-default-branch rules allow fast-forward GitHub Actions commits. If `main` gains
-branch protection requiring reviews, this step will fail and the workflow will
-need to open a PR instead of pushing directly. Re-run after any concurrent push
-to `main` has settled.
+The commit step rebases onto the latest `main` and retries up to three times, so
+an ordinary concurrent push no longer fails the run — generation takes minutes
+and `main` moves under it regularly. A failure here means one of:
+
+- **Rebase conflict.** Someone hand-edited `docs/essays/metadata.json` or a file
+  under `exports/blog`. Those are generated; reconcile by re-running
+  `vp run essays:publish` locally rather than resolving the conflict by hand.
+- **Still rejected after three attempts.** `main` is taking sustained concurrent
+  writes. Re-run once it settles.
+- **Permissions.** Confirm the workflow still declares
+  `permissions: contents: write`. If `main` gains branch protection requiring
+  reviews, this step cannot push at all and the workflow would need to open a PR
+  instead.
 
 ### Website deployment is not triggered
 
