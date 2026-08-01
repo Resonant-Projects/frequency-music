@@ -46,6 +46,21 @@ Plans 01–03 carry `> Landed:` headers and are archived; do not re-implement.
 After 11: **generator steering** (model/prompt/scope knobs in the UI) is the next roadmapped item —
 deferred by the 2026-07-18 decision, not dropped.
 
+## 1b. Passage-retrieval program (planned 2026-08-01)
+
+Grilling session 2026-08-01 (Keith): make source prose retrievable via the
+`@convex-dev/rag` component. Language: **Passage** in `CONTEXT.md`; decision
+record: [ADR 0001](../adr/0001-split-embedding-spaces-for-passages.md)
+(3-large passages / 3-small claims, split space, migration is a follow-on).
+
+| # | Plan | Status |
+|---|------|--------|
+| 15 | [Passage index foundation + `searchSourcePassages` agent tool](./2026-08-01-15-passage-index.md) | 📝 Planned — wave one |
+| — | Hypothesis cross-source context (ship directly, no flag) | Follow-on, unplanned |
+| — | Extraction full-text fix (send all ≤100k chars; not a RAG change) | Follow-on, trivial |
+| — | Recipe context (inherits hypothesis pattern) | Follow-on, last |
+| — | Migrate claims/concepts to 3-large | Roadmap follow-on (ADR 0001) |
+
 ## 2. Unblock in parallel — operator items (ownership updated 2026-07-18)
 
 Small; none block the loop wave start but several gate-specific plans.
