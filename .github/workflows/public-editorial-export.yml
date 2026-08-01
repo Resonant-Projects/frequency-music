@@ -15,6 +15,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # The publish step below clones separately with an explicit
+          # x-access-token remote, so nothing here needs a token persisted
+          # into .git/config.
+          persist-credentials: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -47,7 +52,10 @@ jobs:
           set -euo pipefail
           remote_url="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           rm -rf .editorial-export
-          if git ls-remote --exit-code --heads origin "${EXPORT_BRANCH}" >/dev/null 2>&1; then
+          # Probe via remote_url, not `origin`: with persist-credentials off,
+          # `origin` has no token, so this would depend on the repo staying
+          # public to resolve.
+          if git ls-remote --exit-code --heads "${remote_url}" "${EXPORT_BRANCH}" >/dev/null 2>&1; then
             git clone --depth 1 --branch "${EXPORT_BRANCH}" "${remote_url}" .editorial-export
           else
             git clone --depth 1 "${remote_url}" .editorial-export
