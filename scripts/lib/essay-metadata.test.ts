@@ -31,4 +31,13 @@ describe("normalizeExcerpt", () => {
     expect(result.endsWith("…")).toBe(true);
     expect(result).not.toMatch(/[,:;—-]…$/);
   });
+
+  test("still honours the budget when there is no word boundary to cut on", () => {
+    const result = normalizeExcerpt("x".repeat(400));
+
+    // No space exists, so the cut lands mid-token by design. The budget is the
+    // invariant that must hold; the word boundary is best-effort.
+    expect(result.length).toBeLessThanOrEqual(200);
+    expect(result.endsWith("…")).toBe(true);
+  });
 });

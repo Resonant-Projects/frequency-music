@@ -5,8 +5,10 @@ const EXCERPT_MAX_LENGTH = 200;
  * card layout assumes. The model is asked for a short excerpt but is not bound
  * by it, so this is the enforcement point rather than a formatting nicety.
  *
- * Prefers cutting at a sentence boundary; falls back to a word boundary with an
- * ellipsis so a truncated excerpt never ends mid-word or on dangling punctuation.
+ * Prefers cutting at a sentence boundary; otherwise falls back to the last word
+ * boundary and appends an ellipsis, trimming dangling punctuation. The word-
+ * boundary step is best-effort: an excerpt with no spaces in its first 199
+ * characters has no boundary to cut on and is truncated mid-token.
  */
 export function normalizeExcerpt(excerpt: string): string {
   const normalized = excerpt.trim().replaceAll(/\s+/g, " ");
