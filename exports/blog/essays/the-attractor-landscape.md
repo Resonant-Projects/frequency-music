@@ -1,7 +1,7 @@
 ---
 title: "The Attractor Landscape: Music as Dynamical System"
 publishDate: 2026-03-10
-excerpt: "Music operates as a dissipative dynamical system where keys, cadences, and modulations correspond to attractors, bifurcations, and phase-space topology—providing a unified mathematical framework connecting perception, composition, and the physics of tonal structure."
+excerpt: "Music operates as a dissipative dynamical system where keys, cadences, and modulations correspond to attractors, bifurcations, and phase-space topology-providing a unified mathematical framework…"
 category: "mathematics"
 tags:
   - "mathematical-music-theory"

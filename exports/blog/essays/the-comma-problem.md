@@ -1,7 +1,7 @@
 ---
 title: "The Comma Problem: Why Perfect Tuning Is Mathematically Impossible (And What Composers Did About It)"
 publishDate: 2026-02-21
-excerpt: "The Pythagorean comma proves perfect tuning is mathematically impossible—but history shows how composers weaponized this constraint into expressive power by strategically placing sonic impurity."
+excerpt: "The Pythagorean comma proves perfect tuning is mathematically impossible-but history shows how composers weaponized this constraint into expressive power by strategically placing sonic impurity."
 category: "music-theory"
 tags:
   - "tuning-systems"

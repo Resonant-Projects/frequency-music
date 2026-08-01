@@ -1,7 +1,7 @@
 ---
 title: "Every Basis Has a Bias"
 publishDate: 2026-04-07
-excerpt: "The coordinate system you choose determines what's easy and impossible—a lesson from AI, signal processing, and centuries of musical temperament."
+excerpt: "The coordinate system you choose determines what's easy and impossible-a lesson from AI, signal processing, and centuries of musical temperament."
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

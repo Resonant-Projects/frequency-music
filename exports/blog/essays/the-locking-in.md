@@ -1,7 +1,7 @@
 ---
 title: "The Locking In: Mode-Locking and the Physics of Musical Affinity"
 publishDate: 2026-03-10
-excerpt: "Mode-locking explains how coupled oscillators snap into simple frequency ratios—from Huygens' pendulum clocks to cochlear consonance to groove. The physics beneath music's deepest structures."
+excerpt: "Mode-locking explains how coupled oscillators snap into simple frequency ratios-from Huygens' pendulum clocks to cochlear consonance to groove. The physics beneath music's deepest structures."
 category: "interdisciplinary"
 tags:
   - "resonance"

@@ -1,7 +1,7 @@
 ---
 title: "The Fidelity Trade: What Audio Codecs and Tuning Systems Sacrifice in the Same Way"
 publishDate: 2026-03-25
-excerpt: "Audio codecs and tuning systems make identical fidelity trade-offs: sacrificing precision where the ear is least sensitive. MP3's frequency cutoff mirrors equal temperament's interval rounding; adaptive encoding mirrors adaptive just intonation."
+excerpt: "Audio codecs and tuning systems make identical fidelity trade-offs: sacrificing precision where the ear is least sensitive."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

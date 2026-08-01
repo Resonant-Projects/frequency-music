@@ -1,7 +1,7 @@
 ---
 title: "The Cost of Moving"
 publishDate: 2026-04-02
-excerpt: "Voice leading is optimal transport: the mathematical framework for moving sand efficiently also describes how composers transform chords. Scales, timbres, and rhythms all inhabit a Wasserstein manifold where distance equals transformation cost."
+excerpt: "Voice leading is optimal transport: the mathematical framework for moving sand efficiently also describes how composers transform chords."
 category: "mathematics"
 tags:
   - "mathematical-music-theory"

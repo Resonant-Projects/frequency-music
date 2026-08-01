@@ -1,7 +1,7 @@
 ---
 title: "The Tuning Codec: Temperament as Lossy Compression"
 publishDate: 2026-03-09
-excerpt: "Tuning systems and audio codecs solve the same problem: compressing infinite possibilities into finite, playable representations. Both distribute quantization error through perceptual weighting, making temperament the acoustic analog of lossy compression."
+excerpt: "Tuning systems and audio codecs solve the same problem: compressing infinite possibilities into finite, playable representations."
 category: "interdisciplinary"
 tags:
   - "temperament"

@@ -1,7 +1,7 @@
 ---
 title: "The Prime Dimensions: Why Primes Are the Atoms of Harmony"
 publishDate: 2026-03-11
-excerpt: "Primes are the fundamental dimensions of harmonic space—each prime opens a new axis of musical possibility, from medieval fifths through Renaissance thirds to the blue notes of jazz and blues."
+excerpt: "Primes are the fundamental dimensions of harmonic space-each prime opens a new axis of musical possibility, from medieval fifths through Renaissance thirds to the blue notes of jazz and blues."
 category: "mathematics"
 tags:
   - "number-theory"

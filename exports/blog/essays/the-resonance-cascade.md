@@ -1,7 +1,7 @@
 ---
 title: "The Resonance Cascade"
 publishDate: 2026-03-10
-excerpt: "Resonance operates across seven scales—from vibrating strings to cultural convention—each level filtering and amplifying musical experience through the same fundamental mechanism of selective amplification."
+excerpt: "Resonance operates across seven scales-from vibrating strings to cultural convention-each level filtering and amplifying musical experience through the same fundamental mechanism of selective…"
 category: "interdisciplinary"
 tags:
   - "resonance"

@@ -1,7 +1,7 @@
 ---
 title: "The Geometry Inside Sound"
 publishDate: 2026-04-07
-excerpt: "Sound encodes navigable internal geometry—revealed through signal curvature in RIFT and latent directions in MusicRFM—that transforms how we analyze, generate, and compose music."
+excerpt: "Sound encodes navigable internal geometry-revealed through signal curvature in RIFT and latent directions in MusicRFM-that transforms how we analyze, generate, and compose music."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

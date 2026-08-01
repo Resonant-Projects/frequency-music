@@ -1,0 +1,35 @@
+---
+title: "The Measurement Position"
+publishDate: 2026-06-22
+excerpt: "A sound is never measured from nowhere."
+category: "interdisciplinary"
+tags:
+  - "signal-processing"
+  - "perception"
+  - "composition"
+  - "acoustics"
+  - "psychoacoustics"
+  - "mathematical-music-theory"
+author: "Keith Elliott"
+byline: "Freq"
+---
+
+The newest extraction cluster keeps pointing at a quiet but decisive variable: a sound is never measured from nowhere.
+
+That is obvious for spatial audio, but the pattern is wider than space. A binaural renderer decides where a moving talker is without first naming a direction of arrival. An ASR metric estimates enhancement quality through a model that may already be robust to noise and language context. An ALS speech challenge treats small changes in voice production as clinical evidence. A producer's recorded legacy reminds us that microphones, rooms, and signal chains also become historical listening positions. Even the irrelevant and truncated sources are useful warnings: if the measurement position is poorly chosen, the extraction sees only a headline-shaped shadow.
+
+The spatial-audio extraction is the cleanest version of the idea. Its system uses implicit localization and a mixture of binaural filters rather than explicit direction-of-arrival estimates. That means "where" is not a preliminary label. It is an internal control signal that steers how the sound is filtered, emphasized, or suppressed. For composition, this is an important shift. Spatial position does not have to be a coordinate printed onto a score. It can be a continuously inferred tendency: the degree to which a sound asks to be foregrounded from one angle and hidden from another.
+
+The ASR-evaluation extraction shows the danger of forgetting the measurement position. A modern recognizer can correlate well with human word error rate and still be a bad proxy for acoustic quality when its robustness and language model fill in what the signal itself does not clearly carry. The metric is listening from inside a trained expectation. That is useful for intelligibility, but it is not neutral acoustics. In musical terms, it is like judging a noisy cadence with a listener who already knows the key: the answer may be right, while the sound's actual evidence has been overestimated.
+
+The ALS speech-biomarker extraction adds a bodily position. Here the voice is not only a communication channel but a trace of motor control, breath, articulation, and disease progression. The measured signal carries physiology. That makes the old division between "musical expression" and "technical feature" too simple. F0 stability, vowel-space movement, jitter, shimmer, timing irregularity, and noise components are not just descriptors. They are places where a body leaves measurable structure in sound.
+
+This suggests a useful compositional rule: choose the measurement position as deliberately as the pitch material.
+
+A piece could present the same event through several listeners: a spatial tracker that hears direction, a recognizer that hears linguistic recoverability, a clinical analyzer that hears vocal degradation, and a studio ear that hears microphone distance or compression. None of those perspectives is the sound's final truth. Each one reveals a different actionable layer.
+
+The musical payoff is not just analysis. It gives a way to compose transformations that feel meaningful without relying on narrative explanation. Move a voice through a space while keeping the waveform mostly constant; the spatial listener hears motion. Add noise that leaves transcription intact but damages timbral clarity; the language-aware listener hears stability while the acoustic listener hears loss. Gradually alter phonation parameters while preserving pitch contour; the melodic listener hears continuity while the bodily listener hears change.
+
+That is the deeper connection across these sources: measurement is orchestration. The same waveform can become a location, a word, a symptom, a production style, or a failed extraction depending on the instrument that measures it. A composer can write for those instruments too.
+
+_Sources: recent extractions on mixture-of-experts binaural rendering with implicit localization (`j977mfhbbvtvhcm8agme56kxxd86m8ns`), ASR as a speech-enhancement evaluation proxy (`j976gffwnjtmt3yh046sbsq1kx86nmmd`), ALS speech biomarkers and progressive dysarthria (`j970gwvmrg0dczbbr0fvdqa8zd86ng2v`), Jack Douglas production history (`j9780zbrfxnf3gtxzaqz0j03s186qdge`), and several truncated Nautilus snippets that demonstrate the extraction risk of under-specified evidence._

@@ -1,7 +1,7 @@
 ---
 title: "The Silent Majority: Why Machines Don't Listen"
 publishDate: 2026-03-26
-excerpt: "AI systems inherit Western culture's visual bias, subordinating hearing to seeing—from benchmark design to model architecture. What would change if we took listening seriously?"
+excerpt: "AI systems inherit Western culture's visual bias, subordinating hearing to seeing-from benchmark design to model architecture. What would change if we took listening seriously?"
 category: "interdisciplinary"
 tags:
   - "perception"

@@ -1,7 +1,7 @@
 ---
 title: "What We Measure Isn't What We Hear"
 publishDate: 2026-04-01
-excerpt: "Audio quality metrics excel at detecting surface artifacts but miss structural musical elements entirely—revealing that what we measure systematically differs from what we actually hear."
+excerpt: "Audio quality metrics excel at detecting surface artifacts but miss structural musical elements entirely-revealing that what we measure systematically differs from what we actually hear."
 category: "perception"
 tags:
   - "perception"

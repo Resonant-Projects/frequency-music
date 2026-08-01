@@ -1,7 +1,7 @@
 ---
 title: "Beyond the Integers: How Richer Number Systems Unlock New Music"
 publishDate: 2026-02-25
-excerpt: "Discover how moving beyond integers and rationals to Gaussian integers, algebraic units, and modular arithmetic unlocks new musical structures—from integrating the tritone to closing tuning systems under difference tones."
+excerpt: "Discover how moving beyond integers and rationals to Gaussian integers, algebraic units, and modular arithmetic unlocks new musical structures-from integrating the tritone to closing tuning systems…"
 category: "mathematics"
 tags:
   - "number-theory"

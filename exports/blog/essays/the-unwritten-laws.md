@@ -1,7 +1,7 @@
 ---
 title: "The Unwritten Laws: How Genres Encode Ethics, Not Just Sound"
 publishDate: 2026-03-08
-excerpt: "Genres aren't sonic categories but ethical frameworks that define what counts as authenticity, craft, and virtue. The same musical act may be heroic under rock law but criminal under jazz law—and understanding these competing moral systems reframes how we judge music."
+excerpt: "Genres aren't sonic categories but ethical frameworks that define what counts as authenticity, craft, and virtue."
 category: "music-theory"
 tags:
   - "composition"

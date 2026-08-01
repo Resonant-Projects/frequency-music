@@ -1,7 +1,7 @@
 ---
 title: "The Observer's Instrument: Why Representation Shapes Musical Reality"
 publishDate: 2026-03-15
-excerpt: "Musical representations aren't neutral windows onto reality—they're instruments that fundamentally reshape what we perceive as music itself, determining which patterns become visible and where understanding can emerge."
+excerpt: "Musical representations aren't neutral windows onto reality-they're instruments that fundamentally reshape what we perceive as music itself, determining which patterns become visible and where…"
 category: "interdisciplinary"
 tags:
   - "perception"

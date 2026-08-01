@@ -1,7 +1,7 @@
 ---
 title: "The Involuntary Broadcast"
 publishDate: 2026-04-04
-excerpt: "Bodies broadcast their physiological and emotional state involuntarily through acoustic channels—a pre-linguistic communication system that music learned to compose for, where the deepest power lies in arousal rather than intentional expression."
+excerpt: "Bodies broadcast their physiological and emotional state involuntarily through acoustic channels-a pre-linguistic communication system that music learned to compose for, where the deepest power lies…"
 category: "interdisciplinary"
 tags:
   - "psychoacoustics"

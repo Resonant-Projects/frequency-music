@@ -1,7 +1,7 @@
 ---
 title: "The Signal-Structure Gap: Why Machines Hear Surfaces While Musicians Hear Shapes"
 publishDate: 2026-03-30
-excerpt: "Machines excel at detecting acoustic surfaces—timbre, noise, spectral artifacts—while remaining blind to musical structure: harmony, form, and coherence. This signal-structure gap reveals where musical meaning actually lives."
+excerpt: "Machines excel at detecting acoustic surfaces-timbre, noise, spectral artifacts-while remaining blind to musical structure: harmony, form, and coherence."
 category: "interdisciplinary"
 tags:
   - "AI-music"

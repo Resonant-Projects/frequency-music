@@ -1,7 +1,7 @@
 ---
 title: "The Lonely Runner: What Number Theory Knows About Musical Independence"
 publishDate: 2026-03-07
-excerpt: "The Lonely Runner Conjecture from number theory reveals a hidden mathematical guarantee in music: every voice in a polyphonic texture will eventually achieve maximum independence from all others, connecting contrapuntal practice to Diophantine approximation."
+excerpt: "The Lonely Runner Conjecture from number theory reveals a hidden mathematical guarantee in music: every voice in a polyphonic texture will eventually achieve maximum independence from all others…"
 category: "mathematics"
 tags:
   - "number-theory"

@@ -1,7 +1,7 @@
 ---
 title: "The Grain of the Signal"
 publishDate: 2026-04-08
-excerpt: "The choice of analytical grain—whether we analyze signals at the level of atoms or gestalts—determines what we can perceive and explain. Music and speech systems must navigate competing scales simultaneously to capture meaning across multiple levels."
+excerpt: "The choice of analytical grain-whether we analyze signals at the level of atoms or gestalts-determines what we can perceive and explain."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

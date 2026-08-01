@@ -1,7 +1,7 @@
 ---
 title: "What the Hierarchy Hides"
 publishDate: 2026-04-07
-excerpt: "Hierarchical systems in audio and music hide their information at the top level—optimizing notes or fine details can degrade overall quality, while coarse properties like energy and form often carry more meaning than local spectral features."
+excerpt: "Hierarchical systems in audio and music hide their information at the top level-optimizing notes or fine details can degrade overall quality, while coarse properties like energy and form often carry…"
 category: "interdisciplinary"
 tags:
   - "composition"

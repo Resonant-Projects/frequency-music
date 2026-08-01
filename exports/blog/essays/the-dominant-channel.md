@@ -1,7 +1,7 @@
 ---
 title: "The Dominant Channel: Why Structure Suppresses Signal"
 publishDate: 2026-03-23
-excerpt: "When competing information channels converge, the more structured one always dominates unless subordinate channels receive explicit, temporally-protected coupling—a principle that explains why models ignore acoustic cues and suggests how composers can break this hierarchy."
+excerpt: "When competing information channels converge, the more structured one always dominates unless subordinate channels receive explicit, temporally-protected coupling-a principle that explains why…"
 category: "interdisciplinary"
 tags:
   - "perception"

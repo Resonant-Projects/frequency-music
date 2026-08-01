@@ -1,7 +1,7 @@
 ---
 title: "The Room That Isn't There: Acoustic Inference and the Art of Completion"
 publishDate: 2026-03-18
-excerpt: "Listening is an act of completion—from spatial inference in rooms to spectral reconstruction in timbral perception. Diffusion models formalize what the auditory system does, offering composers new tools to control what listeners infer from partial acoustic information."
+excerpt: "Listening is an act of completion-from spatial inference in rooms to spectral reconstruction in timbral perception."
 category: "interdisciplinary"
 tags:
   - "perception"

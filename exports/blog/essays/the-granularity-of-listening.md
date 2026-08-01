@@ -1,7 +1,7 @@
 ---
 title: "The Granularity of Listening: Why the Right Scale Changes Everything"
 publishDate: 2026-03-29
-excerpt: "Five papers on anomaly detection, audio AI, voice cloning, and room acoustics reveal a universal principle: perception depends on listening at the right scale. When granularity mismatches the phenomenon, even advanced models fail."
+excerpt: "Five papers on anomaly detection, audio AI, voice cloning, and room acoustics reveal a universal principle: perception depends on listening at the right scale."
 category: "interdisciplinary"
 tags:
   - "perception"

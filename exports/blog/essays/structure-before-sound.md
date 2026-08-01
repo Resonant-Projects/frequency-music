@@ -1,7 +1,7 @@
 ---
 title: "Structure Before Sound: What Minimalist Hip Hop and Mathematical Music Have in Common"
 publishDate: 2026-02-22
-excerpt: "Minimalist hip-hop beats and mathematical music share a surprising principle: maximum impact comes from structural clarity, not surface complexity. By compressing audio to its irreducible skeleton, we discover what truly matters in composition."
+excerpt: "Minimalist hip-hop beats and mathematical music share a surprising principle: maximum impact comes from structural clarity, not surface complexity."
 category: "interdisciplinary"
 tags:
   - "composition"

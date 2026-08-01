@@ -1,7 +1,7 @@
 ---
 title: "The Cost of Moving Sound: Optimal Transport from Chords to Timbres"
 publishDate: 2026-03-02
-excerpt: "Optimal transport theory, from Monge's 1781 soil-moving problem, unifies voice leading, timbral morphing, and rhythmic transformation as instances of minimizing cost across distributions—revealing a deep geometric principle underlying centuries of musical aesthetics."
+excerpt: "Optimal transport theory, from Monge's 1781 soil-moving problem, unifies voice leading, timbral morphing, and rhythmic transformation as instances of minimizing cost across distributions-revealing a…"
 category: "mathematics"
 tags:
   - "mathematical-music-theory"

@@ -1,7 +1,7 @@
 ---
 title: "The Measurement Wall: Why We Can't Fully Score What We Hear"
 publishDate: 2026-03-17
-excerpt: "Three converging research areas reveal an inescapable ceiling on audio quality metrics: statistical noise in listeners, undefined perceptual anchors, and entangled measurement dimensions all create irreducible limits to predicting subjective experience from objective signals."
+excerpt: "Three converging research areas reveal an inescapable ceiling on audio quality metrics: statistical noise in listeners, undefined perceptual anchors, and entangled measurement dimensions all create…"
 category: "perception"
 tags:
   - "psychoacoustics"

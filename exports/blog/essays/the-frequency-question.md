@@ -1,7 +1,7 @@
 ---
 title: "The Frequency Question: What Specific Pitches Actually Do to Bodies"
 publishDate: 2026-03-06
-excerpt: "Specific frequencies might produce measurable physiological effects, but claims like '528 Hz repairs DNA' vastly overstate evidence. This essay separates real science from mysticism while acknowledging genuine gaps in our understanding."
+excerpt: "Specific frequencies might produce measurable physiological effects, but claims like '528 Hz repairs DNA' vastly overstate evidence."
 category: "interdisciplinary"
 tags:
   - "psychoacoustics"

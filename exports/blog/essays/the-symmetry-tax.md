@@ -1,7 +1,7 @@
 ---
 title: "The Symmetry Tax: What Music Pays for Being Intelligible"
 publishDate: 2026-03-13
-excerpt: "Every musical symmetry—repetition, transposition, pattern—reduces information content but enables listener comprehension. Composers pay a 'symmetry tax' trading variety for intelligibility, optimized when asymmetry carries the meaning."
+excerpt: "Every musical symmetry-repetition, transposition, pattern-reduces information content but enables listener comprehension."
 category: "interdisciplinary"
 tags:
   - "group-theory"

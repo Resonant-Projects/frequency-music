@@ -1,7 +1,7 @@
 ---
 title: "The Attractor in the Copy: What Iterative Degradation Reveals About Sound"
 publishDate: 2026-03-29
-excerpt: "Iterative degradation reveals what systems actually capture versus approximate—from Lucier's room feedback loops to modern TTS evaluation. The attractor emerges as both technical insight and compositional tool."
+excerpt: "Iterative degradation reveals what systems actually capture versus approximate-from Lucier's room feedback loops to modern TTS evaluation."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

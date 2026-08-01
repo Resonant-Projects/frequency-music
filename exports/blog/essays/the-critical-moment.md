@@ -1,7 +1,7 @@
 ---
 title: "The Critical Moment: Phase Transitions in Musical Systems"
 publishDate: 2026-03-14
-excerpt: "Musical transitions map precisely onto phase transitions from physics—order parameters, symmetry breaking, and critical phenomena reveal the deep mathematics of how music changes states."
+excerpt: "Musical transitions map precisely onto phase transitions from physics-order parameters, symmetry breaking, and critical phenomena reveal the deep mathematics of how music changes states."
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

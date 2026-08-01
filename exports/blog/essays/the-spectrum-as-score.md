@@ -1,7 +1,7 @@
 ---
 title: "The Spectrum as Score: Why Pitch and Timbre Are the Same Thing"
 publishDate: 2026-03-12
-excerpt: "Pitch and timbre are the same physical phenomenon—spectral structure—perceived at different timescales. Fourier analysis, spectral composition, and the cochlea's time-frequency representation reveal how musical parameters dissolve into unified periodicity patterns."
+excerpt: "Pitch and timbre are the same physical phenomenon-spectral structure-perceived at different timescales."
 category: "interdisciplinary"
 tags:
   - "microtuning"

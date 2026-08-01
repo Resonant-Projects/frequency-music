@@ -1,7 +1,7 @@
 ---
 title: "The Interference Pattern: Superposition as Music's Deepest Structural Principle"
 publishDate: 2026-03-14
-excerpt: "Superposition is music's deepest structural principle: timbre, harmony, rhythm, and form all emerge from interference patterns across different scales, unified by the mathematics of signal addition in vector spaces."
+excerpt: "Superposition is music's deepest structural principle: timbre, harmony, rhythm, and form all emerge from interference patterns across different scales, unified by the mathematics of signal addition…"
 category: "interdisciplinary"
 tags:
   - "wave-physics"

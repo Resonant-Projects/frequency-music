@@ -1,7 +1,7 @@
 ---
 title: "The Mirror in the Chord"
 publishDate: 2026-02-27
-excerpt: "Major and minor chords are geometric reflections of each other across a symmetry axis in the frequency-period plane, revealing that music's emotional and perceptual character emerges from wave physics itself."
+excerpt: "Major and minor chords are geometric reflections of each other across a symmetry axis in the frequency-period plane, revealing that music's emotional and perceptual character emerges from wave…"
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

@@ -1,7 +1,7 @@
 ---
 title: "The Grain of Listening"
 publishDate: 2026-04-02
-excerpt: "Perception discretizes continuous signals into events at multiple grain sizes—from notes to phrases to forms. This essay explores why discrete representations carry more useful information than continuous ones, and what this means for composition and musical analysis."
+excerpt: "Perception discretizes continuous signals into events at multiple grain sizes-from notes to phrases to forms."
 category: "perception"
 tags:
   - "perception"

@@ -1,7 +1,7 @@
 ---
 title: "The Gesture Before the Sound"
 publishDate: 2026-04-06
-excerpt: "The acoustic signal is a projection of what came before it. Four papers on speech processing reveal a pattern: systems improve by modeling the gesture, breath, and cognition that generate sound, not just the sound itself. This changes how we think about musical expression and notation."
+excerpt: "The acoustic signal is a projection of what came before it."
 category: "interdisciplinary"
 tags:
   - "composition"

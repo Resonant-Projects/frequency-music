@@ -1,7 +1,7 @@
 ---
 title: "The Frame Is the Signal: When Context Overpowers Content"
 publishDate: 2026-03-28
-excerpt: "Musical meaning emerges from context and position as much as from the notes themselves—a principle that machine learning reveals about how signals work in structured temporal media."
+excerpt: "Musical meaning emerges from context and position as much as from the notes themselves-a principle that machine learning reveals about how signals work in structured temporal media."
 category: "interdisciplinary"
 tags:
   - "perception"

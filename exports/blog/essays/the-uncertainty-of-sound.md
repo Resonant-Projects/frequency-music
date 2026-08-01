@@ -1,7 +1,7 @@
 ---
 title: "The Uncertainty of Sound: Why You Can't Know Both When and What"
 publishDate: 2026-03-14
-excerpt: "The uncertainty principle constrains music at every level: physics dictates that sharp attacks sacrifice pitch clarity, perception integrates over windows inversely tied to frequency, and composition must navigate this fundamental tradeoff between temporal and spectral precision."
+excerpt: "The uncertainty principle constrains music at every level: physics dictates that sharp attacks sacrifice pitch clarity, perception integrates over windows inversely tied to frequency, and…"
 category: "physics-of-sound"
 tags:
   - "wave-physics"

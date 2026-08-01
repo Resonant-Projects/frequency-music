@@ -1,7 +1,7 @@
 ---
 title: "The Color of Chaos: Why Music Lives at the Edge of Order"
 publishDate: 2026-03-12
-excerpt: "Music across all genres clusters around pink noise (1/f scaling), occupying the critical boundary between order and chaos where prediction errors are maximally informative and structure exists at every timescale."
+excerpt: "Music across all genres clusters around pink noise (1/f scaling), occupying the critical boundary between order and chaos where prediction errors are maximally informative and structure exists at…"
 category: "interdisciplinary"
 tags:
   - "signal-processing"

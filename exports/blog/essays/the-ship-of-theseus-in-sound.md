@@ -1,7 +1,7 @@
 ---
 title: "The Ship of Theseus in Sound: What Survives Transformation?"
 publishDate: 2026-03-30
-excerpt: "Four recent papers on audio fingerprinting, voice anonymization, speaker verification, and AI music detection reveal acoustic identity as a multi-dimensional, temporally distributed property that survives transformation but has a definable boundary—opening new compositional design spaces."
+excerpt: "Four recent papers on audio fingerprinting, voice anonymization, speaker verification, and AI music detection reveal acoustic identity as a multi-dimensional, temporally distributed property that…"
 category: "interdisciplinary"
 tags:
   - "signal-processing"

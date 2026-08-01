@@ -1,7 +1,7 @@
 ---
 title: "The Timing Engine: Why Rhythm Fixes Things It Shouldn't"
 publishDate: 2026-03-19
-excerpt: "Rhythm isn't just music—it's a motor timing system. When children with stuttering trained on rhythm games, their speech improved, revealing that the neural clock orchestrating music and speech is one and the same."
+excerpt: "Rhythm isn't just music-it's a motor timing system."
 category: "interdisciplinary"
 tags:
   - "rhythm"

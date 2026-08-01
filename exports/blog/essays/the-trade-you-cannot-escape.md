@@ -1,7 +1,7 @@
 ---
 title: "The Trade You Cannot Escape"
 publishDate: 2026-04-10
-excerpt: "The time-frequency uncertainty principle isn't just physics—it's a compositional constraint. Learned representations, musical notation, and orchestration all navigate the inescapable trade-off between temporal precision and spectral richness."
+excerpt: "The time-frequency uncertainty principle isn't just physics-it's a compositional constraint."
 category: "interdisciplinary"
 tags:
   - "wave-physics"

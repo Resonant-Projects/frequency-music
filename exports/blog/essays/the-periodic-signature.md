@@ -1,7 +1,7 @@
 ---
 title: "The Periodic Signature: How Repetition Becomes Identity"
 publishDate: 2026-03-22
-excerpt: "Periodicity—not raw waveforms—is what makes sound recognizable. From neural network activations to whale songs, identity emerges from repeated patterns at multiple timescales."
+excerpt: "Periodicity-not raw waveforms-is what makes sound recognizable. From neural network activations to whale songs, identity emerges from repeated patterns at multiple timescales."
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

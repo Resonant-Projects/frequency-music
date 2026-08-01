@@ -1,7 +1,7 @@
 ---
 title: "The Codec Ear: What Neural Audio Compression Reveals About Musical Perception"
 publishDate: 2026-02-01
-excerpt: "Neural audio codecs reveal what the ear truly tracks by compressing sound to extreme ratios—discovering that harmonic skeletons, spectral shape, and slow envelopes matter far more than noise texture and micro-timing."
+excerpt: "Neural audio codecs reveal what the ear truly tracks by compressing sound to extreme ratios-discovering that harmonic skeletons, spectral shape, and slow envelopes matter far more than noise texture…"
 category: "interdisciplinary"
 tags:
   - "signal-processing"

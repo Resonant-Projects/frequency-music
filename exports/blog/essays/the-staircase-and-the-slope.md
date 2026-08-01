@@ -1,7 +1,7 @@
 ---
 title: "The Staircase and the Slope: Music at the Boundary of Discrete and Continuous"
 publishDate: 2026-03-11
-excerpt: "Music emerges at the boundary where continuous physics becomes discrete perception—a tension that generates structure through quantization, mode-locking, and the mathematical devil's staircase."
+excerpt: "Music emerges at the boundary where continuous physics becomes discrete perception-a tension that generates structure through quantization, mode-locking, and the mathematical devil's staircase."
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

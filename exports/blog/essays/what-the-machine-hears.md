@@ -1,7 +1,7 @@
 ---
 title: "What the Machine Hears"
 publishDate: 2026-04-08
-excerpt: "When AI models learn to generate music, do they rediscover acoustic physics or encode cultural conventions? Exploring what concept directions in neural networks reveal about the boundary between universal sound physics and learned musical culture."
+excerpt: "When AI models learn to generate music, do they rediscover acoustic physics or encode cultural conventions?"
 category: "interdisciplinary"
 tags:
   - "AI-music"

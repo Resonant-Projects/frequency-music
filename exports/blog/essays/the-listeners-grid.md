@@ -1,7 +1,7 @@
 ---
 title: "The Listener's Grid"
 publishDate: 2026-02-28
-excerpt: "Goodman's cylinder organizes pitch by fifths and octaves to model how listeners decompose polyphonic sound into fundamentals and harmonics—revealing a source/echo duality that mirrors the composer's harmonic navigation."
+excerpt: "Goodman's cylinder organizes pitch by fifths and octaves to model how listeners decompose polyphonic sound into fundamentals and harmonics-revealing a source/echo duality that mirrors the composer's…"
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

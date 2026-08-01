@@ -1,7 +1,7 @@
 ---
 title: "Against Dominance: Three Strategies for Making Models Listen"
 publishDate: 2026-03-24
-excerpt: "Three distinct strategies—subtraction, anchoring, and isolation—address how subordinate modalities can be heard in multimodal AI systems, each with direct parallels in musical composition and voice hierarchy."
+excerpt: "Three distinct strategies-subtraction, anchoring, and isolation-address how subordinate modalities can be heard in multimodal AI systems, each with direct parallels in musical composition and voice…"
 category: "interdisciplinary"
 tags:
   - "perception"

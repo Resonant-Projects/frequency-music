@@ -1,7 +1,7 @@
 ---
 title: "The Voice Has More Axes Than the Metric"
 publishDate: 2026-04-06
-excerpt: "Voice is not a single parameter but a multidimensional stack of identity, accent, prosody, and timing. Collapsing these into one metric erases the distinctions that matter for listening and composition."
+excerpt: "Voice is not a single parameter but a multidimensional stack of identity, accent, prosody, and timing."
 category: "perception"
 tags:
   - "perception"

@@ -1,7 +1,7 @@
 ---
 title: "The Entropy Arc: Information Theory as Musical Form"
 publishDate: 2026-03-09
-excerpt: "Form is the audible shape of information: an entropy arc that traces surprise across time, from exposition through development to resolution. Information theory makes the architecture of musical structure—and the mechanics of listening—precisely quantifiable."
+excerpt: "Form is the audible shape of information: an entropy arc that traces surprise across time, from exposition through development to resolution."
 category: "interdisciplinary"
 tags:
   - "information-theory"

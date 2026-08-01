@@ -1,7 +1,7 @@
 ---
 title: "The State of the Music"
 publishDate: 2026-03-04
-excerpt: "State space models from control engineering reveal how music organizes temporal memory across multiple scales—from fast ornamental flourishes to slow harmonic evolution—offering new insights into composition and AI music generation."
+excerpt: "State space models from control engineering reveal how music organizes temporal memory across multiple scales-from fast ornamental flourishes to slow harmonic evolution-offering new insights into…"
 category: "interdisciplinary"
 tags:
   - "mathematical-music-theory"

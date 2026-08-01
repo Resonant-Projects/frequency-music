@@ -1,7 +1,7 @@
 ---
 title: "The Instrument as Equation: Boundary Conditions and the Shape of Music"
 publishDate: 2026-03-12
-excerpt: "Every musical instrument solves a specific differential equation with particular boundary conditions, generating unique eigenfrequencies that determine its timbre and shape the musical systems built around it."
+excerpt: "Every musical instrument solves a specific differential equation with particular boundary conditions, generating unique eigenfrequencies that determine its timbre and shape the musical systems built…"
 category: "physics-of-sound"
 tags:
   - "wave-physics"

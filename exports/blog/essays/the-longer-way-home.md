@@ -1,7 +1,7 @@
 ---
 title: "The Longer Way Home"
 publishDate: 2026-04-05
-excerpt: "Modern audio systems and composition share a counterintuitive principle: working in over-resolved spaces—temporal, spectral, or relational—before returning to the final output produces clearer, more robust results."
+excerpt: "Modern audio systems and composition share a counterintuitive principle: working in over-resolved spaces-temporal, spectral, or relational-before returning to the final output produces clearer, more…"
 category: "interdisciplinary"
 tags:
   - "signal-processing"

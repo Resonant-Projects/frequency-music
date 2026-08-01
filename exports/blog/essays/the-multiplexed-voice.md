@@ -1,7 +1,7 @@
 ---
 title: "The Multiplexed Voice: Every Utterance Is a Broadcast"
 publishDate: 2026-03-01
-excerpt: "The human voice transmits six simultaneous channels—from linguistic content to emotional state, identity, social position, physical condition, and acoustic environment—all entangled in a single broadcast. Recent AI research reveals how machines stumble by treating this multiplexed signal as single-channel, while composers have always known the full spectrum."
+excerpt: "The human voice transmits six simultaneous channels-from linguistic content to emotional state, identity, social position, physical condition, and acoustic environment-all entangled in a single…"
 category: "interdisciplinary"
 tags:
   - "signal-processing"

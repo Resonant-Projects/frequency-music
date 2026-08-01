@@ -1,7 +1,7 @@
 ---
 title: "The Reconstruction Limit: Where Recovery Becomes Invention"
 publishDate: 2026-03-21
-excerpt: "Three seemingly unrelated audio AI problems reveal a unified principle: when signal information becomes insufficient, recovery transforms into invention. Explores the reconstruction limit across frequency, sources, and perception."
+excerpt: "Three seemingly unrelated audio AI problems reveal a unified principle: when signal information becomes insufficient, recovery transforms into invention."
 category: "interdisciplinary"
 tags:
   - "signal-processing"

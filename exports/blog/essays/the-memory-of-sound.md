@@ -1,7 +1,7 @@
 ---
 title: "The Memory of Sound: Why Music Is a Time Art of Prediction"
 publishDate: 2026-03-13
-excerpt: "Music exploits the listener's hierarchical memory architecture—from echoic buffers to cultural transmission—to create temporal structures that match how humans remember, predict, and process information."
+excerpt: "Music exploits the listener's hierarchical memory architecture-from echoic buffers to cultural transmission-to create temporal structures that match how humans remember, predict, and process…"
 category: "perception"
 tags:
   - "perception"
