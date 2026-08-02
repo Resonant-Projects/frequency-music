@@ -10,8 +10,12 @@ builds it on GitHub-hosted runners; the Proxmox LXC is a runtime, not a builder.
   `ghcr.io/resonant-projects/frequency-music-agent:sha-<full-commit>`;
 - manual dispatch accepts an exact `source_ref`, which supports an artifact-only
   migration of an already-deployed commit;
+- the pinned, multi-stage Node image contains production dependencies only, retains
+  neither Bun nor npm, and must pass a runtime-tooling smoke test;
+- `bun audit --prod` must report no vulnerable production packages;
 - the pushed image carries BuildKit SBOM and provenance attestations;
-- Trivy rejects fixable critical vulnerabilities before the digest is promoted;
+- Trivy rejects every high or critical runtime vulnerability, including findings
+  without an available fix, before the digest is promoted;
 - GitHub attaches a build-provenance attestation to the digest; and
 - the run uploads `deployment.json` with the exact `image@sha256:...` reference.
 
