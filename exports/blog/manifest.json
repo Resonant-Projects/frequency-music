@@ -1,11 +1,18 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-02T11:06:36.195Z",
+  "generatedAt": "2026-08-02T19:09:35.864Z",
   "items": [
     {
       "slug": "the-attention-score",
       "path": "essays/the-attention-score.md",
       "title": "The Attention Score",
+      "publishDate": "2026-08-02",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-cue-becomes-the-instrument",
+      "path": "essays/the-cue-becomes-the-instrument.md",
+      "title": "The Cue Becomes the Instrument",
       "publishDate": "2026-08-02",
       "category": "interdisciplinary"
     },
