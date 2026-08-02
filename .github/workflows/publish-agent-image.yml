@@ -97,6 +97,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ steps.metadata.outputs.image_ref }}
+          version: v0.70.0
           format: table
           exit-code: '1'
           ignore-unfixed: false
@@ -201,6 +202,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ steps.metadata.outputs.image_name }}@${{ steps.build.outputs.digest }}
+          version: v0.70.0
           format: table
           exit-code: '1'
           ignore-unfixed: false

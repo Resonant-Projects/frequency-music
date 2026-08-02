@@ -20,10 +20,12 @@ builds it on GitHub-hosted runners; the Proxmox LXC is a runtime, not a builder.
 - GitHub attaches a build-provenance attestation to the digest; and
 - the run uploads `deployment.json` with the exact `image@sha256:...` reference.
 
-Do not deploy the readable tag by itself. Copy the `deploy` value from the manifest
-into the reviewed infrastructure declaration. A later release automation step may
-open that infrastructure pull request, but it must use a narrowly installed GitHub
-App rather than a personal access token or the source repository's `GITHUB_TOKEN`.
+The readable `sha-<full-commit>` tag is a lookup aid and remains mutable in GHCR;
+the manifest digest is the immutability boundary. Do not deploy the tag by itself.
+Copy the `deploy` value from the manifest into the reviewed infrastructure
+declaration. A later release automation step may open that infrastructure pull
+request, but it must use a narrowly installed GitHub App rather than a personal
+access token or the source repository's `GITHUB_TOKEN`.
 
 For the first migration from an in-guest Git build, dispatch the workflow with the
 commit already declared by infrastructure. This proves the artifact path without
