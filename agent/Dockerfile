@@ -2,9 +2,10 @@
 # which strips TypeScript and resolves the worker's `.js`-specifier -> `.ts`
 # source imports. Bun and the LangGraph development CLI stay in the dependency
 # stage; the runtime receives production node_modules only.
-ARG NODE_IMAGE=node:24.18.1-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7
+ARG BUILD_NODE_IMAGE=node:24.18.1-trixie-slim@sha256:ac39e4b5fcb2b1b34b20364fd58b2e898f3bb80731ee6f62a7536f9df3d6aadc
+ARG RUNTIME_NODE_IMAGE=node:24.18.1-alpine3.23@sha256:c2cc26d8f991c2db236ad51a61efee843c482372d6d22570787309d511694110
 
-FROM ${NODE_IMAGE} AS dependencies
+FROM ${BUILD_NODE_IMAGE} AS dependencies
 WORKDIR /app/agent
 
 ARG BUN_VERSION=1.3.14
@@ -18,13 +19,13 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY agent/package.json agent/bun.lock ./
-RUN bun install --frozen-lockfile --production
+RUN bun install --frozen-lockfile --production --omit=peer
 
-FROM ${NODE_IMAGE} AS runtime
+FROM ${RUNTIME_NODE_IMAGE} AS runtime
 WORKDIR /app/agent
 
-ARG CODEX_CLI_VERSION=0.142.5
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG CODEX_CLI_VERSION=0.146.0
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 # Codex AUTH is never baked — auth.json is seeded once at runtime into the
 # CODEX_HOME volume. npm is needed only to install the pinned CLI; removing it
@@ -34,7 +35,7 @@ RUN npm install -g "@openai/codex@${CODEX_CLI_VERSION}" \
     && npm cache clean --force \
     && rm -rf /root/.npm /usr/local/lib/node_modules/npm \
     && rm -f /usr/local/bin/npm /usr/local/bin/npx
-RUN useradd --create-home --shell /bin/bash agent \
+RUN adduser -D -h /home/agent -s /bin/sh agent \
     && mkdir -p /data/codex-home /data/codex-scratch \
     && chown -R agent:agent /data
 

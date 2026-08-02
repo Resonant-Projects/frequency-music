@@ -20,7 +20,7 @@
     "@langchain/core": "1.2.4",
     "@langchain/langgraph": "1.4.8",
     "@langchain/langgraph-sdk": "1.9.28",
-    "@openai/codex-sdk": "^0.142.5",
+    "@openai/codex-sdk": "0.146.0",
     "convex": "1.34.1",
     "convex-helpers": "0.1.120",
     "deepagents": "1.12.1",

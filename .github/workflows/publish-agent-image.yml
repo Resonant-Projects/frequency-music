@@ -88,6 +88,7 @@ jobs:
             command -v codex
             ! command -v npm
             test ! -d /usr/local/lib/node_modules/npm
+            test ! -e node_modules/@typescript/typescript-linux-x64
             node_modules/.bin/tsx --version
             codex --version
           '
@@ -191,6 +192,7 @@ jobs:
             command -v codex
             ! command -v npm
             test ! -d /usr/local/lib/node_modules/npm
+            test ! -e node_modules/@typescript/typescript-linux-x64
             node_modules/.bin/tsx --version
             codex --version
           '
