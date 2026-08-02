@@ -18,7 +18,7 @@ on:
     inputs:
       source_ref:
         description: Git commit to build; use the deployed commit for artifact-only migration
-        required: false
+        required: true
         type: string
 
 concurrency:
@@ -83,10 +83,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      attestations: write
+      attestations: write # Attach GitHub provenance to the published digest.
       contents: read
-      id-token: write
-      packages: write
+      id-token: write # Mint the OIDC identity used to sign the attestation.
+      packages: write # Push the immutable image and its attestations to GHCR.
     steps:
       - name: Check out selected source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -97,10 +97,23 @@ jobs:
 
       - name: Derive immutable image coordinates
         id: metadata
+        env:
+          REQUESTED_SOURCE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || '' }}
         shell: bash
         run: |
           set -euo pipefail
           source_sha="$(git rev-parse HEAD)"
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            requested_source_sha="${REQUESTED_SOURCE_REF,,}"
+            if [[ ! "$requested_source_sha" =~ ^[0-9a-f]{40}$ ]]; then
+              echo 'source_ref must be a full 40-character commit SHA' >&2
+              exit 1
+            fi
+            if [[ "$requested_source_sha" != "$source_sha" ]]; then
+              echo 'source_ref does not match the checked-out commit' >&2
+              exit 1
+            fi
+          fi
           image_name="${IMAGE_NAME,,}"
           printf 'source_sha=%s\n' "$source_sha" >> "$GITHUB_OUTPUT"
           printf 'image_name=%s\n' "$image_name" >> "$GITHUB_OUTPUT"
