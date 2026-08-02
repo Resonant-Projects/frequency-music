@@ -1,28 +1,41 @@
-# Always-on agent image. node:24 provides the Node.js runtime + Codex CLI +
-# langgraphjs dev server. The worker runs under `tsx` (Node + esbuild loader),
+# Always-on agent image. The worker runs under `tsx` (Node + esbuild loader),
 # which strips TypeScript and resolves the worker's `.js`-specifier -> `.ts`
-# source imports (e.g. `../tools/convexTools.js` -> convexTools.ts) the same way
-# Bun did. Bun is retained ONLY as the lockfile-authoritative installer
-# (bun.lock); it is no longer the runtime.
-#
-FROM node:24-slim AS base
+# source imports. Bun and the LangGraph development CLI stay in the dependency
+# stage; the runtime receives production node_modules only.
+ARG BUILD_NODE_IMAGE=node:24.18.1-trixie-slim@sha256:ac39e4b5fcb2b1b34b20364fd58b2e898f3bb80731ee6f62a7536f9df3d6aadc
+ARG RUNTIME_NODE_IMAGE=node:24.18.1-alpine3.23@sha256:c2cc26d8f991c2db236ad51a61efee843c482372d6d22570787309d511694110
+
+FROM ${BUILD_NODE_IMAGE} AS dependencies
 WORKDIR /app/agent
 
-ARG CODEX_CLI_VERSION=0.142.5
 ARG BUN_VERSION=1.3.14
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Bake the Codex CLI binary (fine to bake) and Bun (installer only). Codex AUTH
-# is never baked — auth.json is seeded once at runtime into the CODEX_HOME
-# volume (see runbook).
 ENV BUN_INSTALL=/usr/local
 ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates unzip \
-    && npm install -g @openai/codex@${CODEX_CLI_VERSION} \
     && curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN useradd --create-home --shell /bin/bash agent \
+
+COPY agent/package.json agent/bun.lock ./
+RUN bun install --frozen-lockfile --production --omit=peer
+
+FROM ${RUNTIME_NODE_IMAGE} AS runtime
+WORKDIR /app/agent
+
+ARG CODEX_CLI_VERSION=0.146.0
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
+# Codex AUTH is never baked — auth.json is seeded once at runtime into the
+# CODEX_HOME volume. npm is needed only to install the pinned CLI; removing it
+# also removes its package-manager dependency tree from the runtime image.
+RUN npm install -g "@openai/codex@${CODEX_CLI_VERSION}" \
+    && codex --version \
+    && npm cache clean --force \
+    && rm -rf /root/.npm /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx
+RUN adduser -D -h /home/agent -s /bin/sh agent \
     && mkdir -p /data/codex-home /data/codex-scratch \
     && chown -R agent:agent /data
 
@@ -31,11 +44,7 @@ ENV CODEX_HOME=/data/codex-home
 ENV CODEX_WORKDIR=/data/codex-scratch
 ENV CODEX_ENABLED=true
 
-# bun.lock is authoritative; Bun installs dependencies into node_modules. The
-# worker then runs under Node, not Bun.
-COPY --chown=agent:agent agent/package.json agent/bun.lock ./
-RUN bun install --frozen-lockfile
-
+COPY --from=dependencies --chown=agent:agent /app/agent/node_modules ./node_modules
 COPY --chown=agent:agent agent/. ./
 COPY --chown=agent:agent convex/shared /app/convex/shared
 # convex/shared files resolve their imports (zod, convex-helpers, convex)
