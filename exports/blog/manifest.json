@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-01T21:34:16.633Z",
+  "generatedAt": "2026-08-02T03:08:02.283Z",
   "items": [
+    {
+      "slug": "the-attention-score",
+      "path": "essays/the-attention-score.md",
+      "title": "The Attention Score",
+      "publishDate": "2026-08-02",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-control-surface",
       "path": "essays/the-control-surface.md",

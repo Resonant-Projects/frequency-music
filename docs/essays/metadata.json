@@ -722,6 +722,19 @@
     "contentHash": "e386ec047e471b26cd61c0c6736b7751c9b1d5878d75b69e601cf5acd5e5d5eb",
     "generatedAt": "2026-05-17T08:28:31.966Z"
   },
+  "the-attention-score": {
+    "excerpt": "Audio AI reveals listening as a relevance policy: systems choose what to foreground, separate, describe, or ignore. Composition can score attention through cues, response, delay, and silence.",
+    "tags": [
+      "AI-music",
+      "perception",
+      "signal-processing",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "2d9ee1989a0e8dcfc1c9fdd3bbe0c0c1905dfa35e8e8f4782f7dcea50810b146",
+    "generatedAt": "2026-08-02T03:07:59.804Z"
+  },
   "the-attractor-in-the-copy": {
     "excerpt": "Iterative degradation reveals what systems actually capture versus approximate-from Lucier's room feedback loops to modern TTS evaluation.",
     "tags": [
