@@ -9,11 +9,15 @@ jobs:
   root:
     runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # These jobs only read the repo — never let checkout leave a
+          # write-capable token in .git/config for later steps to reuse.
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.3.14'
-      - uses: voidzero-dev/setup-vp@v1
+      - uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
         with:
           node-version: '24'
           cache: true
@@ -21,7 +25,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: vp run lint:check
       - run: vp run format:check
-      - run: vp test convex
+      # `vp run test` (= vp test convex scripts) rather than a hardcoded subset,
+      # so CI coverage tracks package.json instead of drifting from it.
+      - run: vp run test
       - run: vp run test:harness
 
   web:
@@ -30,11 +36,15 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # These jobs only read the repo — never let checkout leave a
+          # write-capable token in .git/config for later steps to reuse.
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.3.14'
-      - uses: voidzero-dev/setup-vp@v1
+      - uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
         with:
           node-version: '24'
           cache: true
@@ -53,11 +63,15 @@ jobs:
       run:
         working-directory: agent
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # These jobs only read the repo — never let checkout leave a
+          # write-capable token in .git/config for later steps to reuse.
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.3.14'
-      - uses: voidzero-dev/setup-vp@v1
+      - uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
         with:
           node-version: '24'
           cache: true

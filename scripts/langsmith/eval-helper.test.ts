@@ -1,4 +1,10 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
+
+// Declared before the module under test is imported: `eval-helper` pulls in
+// `varlock/auto-load`, which would otherwise resolve secrets from
+// `.env.local`/1Password and make these tests environment-dependent.
+vi.mock("varlock/auto-load", () => ({}));
+
 import {
   parseJsonObjectFromText,
   requireOpenRouterApiKey,

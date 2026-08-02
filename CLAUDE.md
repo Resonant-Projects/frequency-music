@@ -164,6 +164,18 @@ GROQ_API_KEY=...
 KERNEL_API_KEY=...  # Kernel.sh cloud browser (5 concurrent sessions)
 ```
 
+### Env in tests
+
+Tests must never reach 1Password — CI has no desktop app and the unit-test job
+gets no service-account token. Two rules:
+
+- **In-process unit tests:** `vi.mock("varlock/auto-load", () => ({}))` above the
+  import of the module under test. Needed for anything that transitively touches
+  `scripts/lib/convexClient.ts` or another `varlock/auto-load` importer.
+- **Tests that spawn a CLI subprocess:** pass `APP_ENV: "test"` in the child env.
+  The committed `.env.test` holds inert placeholders for every op()-backed var.
+  Adding a secret to `.env.schema` means adding a placeholder to `.env.test`.
+
 ## Data Pipeline
 
 ```

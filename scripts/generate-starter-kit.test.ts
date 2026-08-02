@@ -1,7 +1,13 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, test } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+
+// Declared before the module under test is imported: `generate-starter-kit`
+// pulls in `varlock/auto-load`, which would otherwise resolve secrets from
+// `.env.local`/1Password and make these tests environment-dependent.
+vi.mock("varlock/auto-load", () => ({}));
+
 import {
   buildStarterKit,
   parseArguments,
