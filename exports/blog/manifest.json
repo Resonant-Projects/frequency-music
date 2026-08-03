@@ -1,11 +1,18 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-03T11:07:43.394Z",
+  "generatedAt": "2026-08-03T19:10:06.463Z",
   "items": [
     {
       "slug": "the-coordinate-that-acts",
       "path": "essays/the-coordinate-that-acts.md",
       "title": "The Coordinate That Acts",
+      "publishDate": "2026-08-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-invariance-budget",
+      "path": "essays/the-invariance-budget.md",
+      "title": "The Invariance Budget",
       "publishDate": "2026-08-03",
       "category": "interdisciplinary"
     },
