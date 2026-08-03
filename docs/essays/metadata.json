@@ -2514,6 +2514,20 @@
     "contentHash": "c3cd98b6d38de24a3093c319a4309cae70f2b52347a0b4483d3be5fc5a1f462d",
     "generatedAt": "2026-04-10T18:38:50.986Z"
   },
+  "the-invariance-budget": {
+    "excerpt": "An invariance budget is the limited set of musical or forensic features a system chooses to preserve as sound moves through pitch, room, noise, or synthesis.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "composition",
+      "acoustics",
+      "information-theory",
+      "source-separation"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1f57f2452518d5b117c3fa47a2d6d66a11f2b9fc1a2607a6e913fbeb8ad2bfe8",
+    "generatedAt": "2026-08-03T19:03:00.000Z"
+  },
   "the-invariant-voice": {
     "excerpt": "The voice persists not as a fixed object but as a set of invariants—phonetic structure, acoustic continuity, speaker identity—each preservable independently.",
     "tags": [
