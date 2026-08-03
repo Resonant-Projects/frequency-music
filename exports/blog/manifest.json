@@ -1,11 +1,18 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-03T03:08:08.357Z",
+  "generatedAt": "2026-08-03T11:07:43.394Z",
   "items": [
     {
       "slug": "the-coordinate-that-acts",
       "path": "essays/the-coordinate-that-acts.md",
       "title": "The Coordinate That Acts",
+      "publishDate": "2026-08-03",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-time-that-has-to-be-inferred",
+      "path": "essays/the-time-that-has-to-be-inferred.md",
+      "title": "The Time That Has to Be Inferred",
       "publishDate": "2026-08-03",
       "category": "interdisciplinary"
     },
