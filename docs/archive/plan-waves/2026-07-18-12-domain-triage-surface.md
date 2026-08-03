@@ -1,5 +1,7 @@
 # 12 — Domain Triage Surface — Implementation Plan
 
+> **Archived 2026-08-03:** implementation merged in PR #29 (`e8f5516`). Remaining deploy/packet-decision acceptance is tracked in `docs/plans/README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
 > **Sequencing:** parallel to plan 04 (embeddings) — touches the vocabulary registry, not embeddings. **Must land before plan 05** so the miner filters on a curated registry.
 > **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). Vocabulary: `CONTEXT.md` → Domain Triage.
@@ -7,7 +9,7 @@
 ## Executor brief
 
 - Make domain triage **executable**: today the triage packet
-  ([docs/review/domain-triage-2026-07-12.md](../review/domain-triage-2026-07-12.md) — 49 provisional
+  ([docs/review/domain-triage-2026-07-12.md](../../review/domain-triage-2026-07-12.md) — 49 provisional
   concept domains, 19 parameter kinds, 126 relationship kinds) has Promote/Merge/Reject columns and no
   backing mutations. Decisions parked in markdown don't happen; decisions with buttons do.
 - Build the per-entry triage mutations plus a minimal UI, then **decide the packet through the new

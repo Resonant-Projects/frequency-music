@@ -31,8 +31,8 @@ starting, honor its STOP conditions, and update your row when done.
 >
 > **Archive note (2026-07-19):** Wave-2 plans 011–015 (all DONE 2026-07-18)
 > moved to `plans/archive/`. **Plan 008 is now the only file in `plans/`** —
-> the sole open item across both improve-skill waves, blocked on golden-dataset
-> ratification (see `docs/plans/README.md` §2).
+> the sole open item across both improve-skill waves. Golden datasets were
+> ratified in `d2487c1`; plan 008 is ready when live API access is available.
 
 **Relationship to `docs/plans/`**: this repo already carries two committed plan
 waves — the 2026-07-01 agent-system-v2 and 2026-07-03 architecture-deepening
@@ -86,7 +86,7 @@ trivial merge. 011/012/013 touch disjoint files and parallelize freely.
 | 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | DONE — operator must deploy + run first `recomputeStats`; counts read 0 until then |
 | 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | DONE |
 | 007 | Dependency hygiene: dead deps, npm lockfile, linter split | P3 | S | 006 | DONE |
-| 008 | Run first eval baseline sweep (operational) | P2 | S–M | — (needs live API keys) | TODO |
+| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | TODO |
 | 009 | Spike: `recipe_export_v1` contract + .scl emitter | P3 | M | — (needs `.env.local`) | DONE — [Open questions](../docs/recipe-export-v1-design.md#6-open-questions) |
 | 010 | Spike: autonomous ingest design + URL-fetch prototype | P3 | M | — (see its STOP 1 re: arch plan 06) | DONE — see `docs/autonomous-ingest-design.md` §7 build slices |
 
@@ -112,8 +112,8 @@ action in `convex/ingest.ts` — don't run 004 and 010 concurrently).
   registry plan's seam-handoff rules).
 - **Deferred dep upgrades** (see 007 maintenance notes): AI SDK v6→v7 must wait
   for arch plan 2026-07-03-03 (archived).
-- **008** needs `OPENROUTER_API_KEY` + `LANGSMITH_API_KEY` and possibly human
-  dataset curation — it STOPs cleanly if either is missing.
+- **008** needs `OPENROUTER_API_KEY` + `LANGSMITH_API_KEY`. Human dataset
+  curation is complete (`d2487c1`); it STOPs cleanly if either key is missing.
 
 ## Audit findings that did NOT become plans
 

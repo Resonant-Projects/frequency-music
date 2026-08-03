@@ -1,8 +1,8 @@
 # Plans — What Remains, In Order
 
-> Last full audit: 2026-07-15 (see [plan-status-report-2026-07-15.md](../plan-status-report-2026-07-15.md)).
+> Last full code audit: 2026-07-15 (see [plan-status-report-2026-07-15.md](../plan-status-report-2026-07-15.md)).
 > Last planning session: 2026-07-18 (decision surfaces — see the decision-log entry of that date).
-> Last cleanup: 2026-07-19 — landed loop plans 01–03 and Wave-2 plans 011–015 archived.
+> Last plan-status/archive audit: 2026-08-03 — implementation-complete loop plans 04–10, 12, and 14 archived.
 > Completed waves live in [docs/archive/](../archive/README.md). Decision history: [decision-log.md](../decision-log.md).
 > **Visual plan** (dependency graph + gate order, 2026-07-19): `plan-1511dbd302914c0a` on plans.rproj.art.
 
@@ -12,35 +12,42 @@ Every plan wave before the knowledge loop is **done**: the MVP (`planning/`,
 archived), the 2026-07-01 agent-system wave, the 2026-07-03 architecture wave,
 the 2026-07-07 improve-skill Wave 1 (except 008), and the 2026-07-15
 improve-skill Wave 2 (011–015, all DONE 2026-07-18). The meaning roadmap
-Phases 1–4 are implemented. The active frontier is the **2026-07-07 knowledge-loop
-wave**, of which plans 01–03 are landed and live (archived to
-[plan-waves/](../archive/plan-waves/) with their landing evidence).
+Phases 1–4 are implemented. Knowledge-loop plans **01–10, 12, and 14 are
+implemented and archived** in [plan-waves/](../archive/plan-waves/); remaining
+live/operator acceptance is listed below rather than keeping implementation
+specs in the active folder.
+
+The active plan files are now: **008** (next, operator-gated eval baseline
+sweep), **13** (recipe loop closure, blocked on 008), **11** (deferred studio
+spike), **15** (passage-index foundation), and the autonomous Proxmox operations
+plan.
 
 The sequencing rule, per the 2026-07-07 decision-log entry: **synthesis is the
 bottleneck, not capture** (1,580+ extractions and a 5,400-concept graph had
 produced only 19 hypotheses). Finish the loop wave before starting next-wave
 phases.
 
-## 1. Knowledge-loop wave — the active work (execute in gate order)
+## 1. Knowledge-loop wave — implementation ledger and remaining work
 
 From [2026-07-07-00-loop-master-sequence.md](./2026-07-07-00-loop-master-sequence.md).
-Plans 01–03 carry `> Landed:` headers and are archived; do not re-implement.
+Plans 01–10, 12, and 14 are archived; do not re-implement them. An archived
+implementation may still have an operator/live acceptance item in §2.
 
 | # | Plan | Status |
 |---|------|--------|
 | 01 | [Claims become first-class rows](../archive/plan-waves/2026-07-07-01-loop-claims-table.md) | ✅ Landed `b2e0cbe` (4,648 claims backfilled) — archived |
 | 02 | [Concept domains + mission relevance](../archive/plan-waves/2026-07-07-02-loop-domains-and-relevance.md) | ✅ Landed `03dce57` (5,444/5,444 classified) — archived |
 | 03 | [Correspondences table + agent write surface](../archive/plan-waves/2026-07-07-03-loop-correspondences.md) | ✅ Landed `2adca48` (live-gated) — archived |
-| 04 | [Embeddings + vector indexes](./2026-07-07-04-loop-embeddings.md) | ✅ Merged 2026-07-20 (PR #28) — deploy + `OPENAI_API_KEY` + backfill/probe operator-gated |
-| 12 | [Domain triage surface](./2026-07-18-12-domain-triage-surface.md) | ✅ Merged 2026-07-20 (PR #29) — deploy + packet decision (Keith/DA) operator-gated |
-| 05 | [Candidate generator + miner & evidence-hunter graphs](./2026-07-07-05-loop-miner-graphs.md) | ✅ Merged 2026-07-20 (PR #31) — live-run gates + **Proxmox worker healthy** operator-gated |
-| 06 | [Drafting graph + WIP cap (N=3)](./2026-07-07-06-loop-drafting-graph.md) | ✅ Merged 2026-07-20 (PR #32) — live gate (first real draft reviewed) operator-gated |
-| 07 | [Review UX + edit-before-approve](./2026-07-07-07-loop-review-ux.md) | ✅ Merged 2026-07-20 (PR #33) — Interceptor screenshots + timed <2min gate (Keith) operator-gated |
-| 13 | [Recipe loop closure](./2026-07-18-13-recipe-loop-closure.md) | ⬅️ **NEXT** — blocked on golden-dataset ratification (Keith, §2 item 1; DA prep done) |
-| 08 | [Weekly brief integration](./2026-07-07-08-loop-weekly-brief.md) | ✅ Merged 2026-07-20 (PR #34) — real-brief live gate operator-gated |
-| 09 | [Source scout](./2026-07-07-09-loop-source-scout.md) | ✅ Merged 2026-07-20 (PR #35) — provider switched to `FIRECRAWL_API_KEY` 2026-07-23; first live run operator-gated |
-| 14 | [Decision-surface sweep](./2026-07-18-14-decision-surface-sweep.md) (card-level) | ✅ Merged 2026-07-21 (PR #36) — Interceptor passes operator-gated |
-| 10 | [Composition starter kits](./2026-07-07-10-loop-starter-kits.md) | ✅ Merged 2026-07-20 (PR #30) — 3-real-recipe run + studio acceptance (Keith) operator-gated |
+| 04 | [Embeddings + vector indexes](../archive/plan-waves/2026-07-07-04-loop-embeddings.md) | ✅ Implemented in PR #28 (`4622c2b`) — archived; backfill/probe acceptance remains |
+| 12 | [Domain triage surface](../archive/plan-waves/2026-07-18-12-domain-triage-surface.md) | ✅ Implemented in PR #29 (`e8f5516`) — archived; packet decision remains |
+| 05 | [Candidate generator + miner & evidence-hunter graphs](../archive/plan-waves/2026-07-07-05-loop-miner-graphs.md) | ✅ Implemented in PR #31 (`3600ec5`) — archived; worker/live-run acceptance remains |
+| 06 | [Drafting graph + WIP cap (N=3)](../archive/plan-waves/2026-07-07-06-loop-drafting-graph.md) | ✅ Implemented in PR #32 (`f3556d5`) — archived; first live draft gate remains |
+| 07 | [Review UX + edit-before-approve](../archive/plan-waves/2026-07-07-07-loop-review-ux.md) | ✅ Implemented in PR #33 (`1d69ae4`) — archived; visual/timed acceptance remains |
+| 13 | [Recipe loop closure](./2026-07-18-13-recipe-loop-closure.md) | ⏸️ **BLOCKED on plan 008.** Golden datasets are ratified, but the required baseline sweep is not recorded yet |
+| 08 | [Weekly brief integration](../archive/plan-waves/2026-07-07-08-loop-weekly-brief.md) | ✅ Implemented in PR #34 (`60cca5e`) — archived; real-brief acceptance remains |
+| 09 | [Source scout](../archive/plan-waves/2026-07-07-09-loop-source-scout.md) | ✅ Implemented in PR #35 (`073cb94`) — archived; first live run remains |
+| 14 | [Decision-surface sweep](../archive/plan-waves/2026-07-18-14-decision-surface-sweep.md) (card-level) | ✅ Implemented in PR #36 (`236e6f0`) — archived; visual acceptance remains |
+| 10 | [Composition starter kits](../archive/plan-waves/2026-07-07-10-loop-starter-kits.md) | ✅ Implemented in PR #30 (`3b72b5c`) — archived; real-recipe/studio acceptance remains |
 | 11 | Self-render spike (bounded) | Deferred to a Keith/DA studio session (needs audio engine install, real kits, human A/B listening) |
 
 After 11: **generator steering** (model/prompt/scope knobs in the UI) is the next roadmapped item —
@@ -61,18 +68,16 @@ record: [ADR 0001](../adr/0001-split-embedding-spaces-for-passages.md)
 | — | Recipe context (inherits hypothesis pattern) | Follow-on, last |
 | — | Migrate claims/concepts to 3-large | Roadmap follow-on (ADR 0001) |
 
-## 2. Unblock in parallel — operator items (ownership updated 2026-07-18)
+## 2. Operator/live acceptance items
 
-Small; none block the loop wave start but several gate-specific plans.
+Small; several are gate-specific, and item 1 must finish before plan 13 starts.
 
-1. **Golden eval datasets — DA-prepared, Keith-ratified.** The DA pre-ranks and
-   annotates `data/eval/*-candidates.jsonl` (keep/swap + one-line rationale);
-   Keith does a single accept/reject pass (~30 min) producing
-   `extractions/hypotheses/weekly-briefs-golden.jsonl` (targets ≥15/≥15/≥6).
-   Scheduled **before plan 13 (recipe loop closure) starts**; sole blocker for
-   [`plans/008`](../../plans/008-eval-baseline-sweep.md).
+1. **Eval baseline — NEXT, operator-gated.** Golden datasets were ratified in
+   `d2487c1`, so [`plans/008`](../../plans/008-eval-baseline-sweep.md) is ready
+   when live API access and spend authorization are available. Record that
+   baseline before starting plan 13 so its generator changes remain measurable.
 2. **Domain triage** — now carded as
-   [plan 12](./2026-07-18-12-domain-triage-surface.md): the packet is decided
+   [plan 12](../archive/plan-waves/2026-07-18-12-domain-triage-surface.md): the packet is decided
    *through* the new surface, not hand-applied.
 3. **Proxmox worker — DA-executed** (SSH / 1Password / OpenTofu): restart with
    the fresh `AGENT_TOOL_SECRET`, refresh `agent/.env` on the host, hunt the
@@ -117,7 +122,7 @@ audit found several items further along than the roadmap assumes:
 ## Ledgers & references
 
 - Improvement backlog + session ledgers: [improvements-2026-07-10.md](../improvements-2026-07-10.md)
-- Improve-skill wave ledger (008 still open): [`plans/README.md`](../../plans/README.md)
+- Improve-skill wave ledger (008 ready, still open): [`plans/README.md`](../../plans/README.md)
 - Living operating docs (not plans): vision-and-meaning, loop-spec-v1.1,
   cadence-and-operating-rules, schema, agent-tool-surface, eval-baselines,
   langsmith-runbook, parameter-extraction, metrics-and-dissonance.

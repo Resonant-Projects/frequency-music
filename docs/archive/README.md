@@ -34,12 +34,13 @@ primary graph became `research-pipeline` rather than `weekly-brief`.
 | 2026-06-06 Proxmox monitoring stack | 1 | Executed (Pulse LXC 102 installed on prox2) |
 | 2026-07-01 agent system v2 | 00 + 01–05 + v2 status doc | **All landed** (`550fbbb`, `32166aa`) |
 | 2026-07-03 architecture deepening | 00 + 01–07 | **All landed** (see per-file `> Landed:` headers) |
-| 2026-07-07 knowledge loop (partial) | 01–03 | **Landed** (`b2e0cbe`, `03dce57`, 2026-07-12) — archived 2026-07-19; the rest of the wave (04–14) is still active in `docs/plans/` |
+| 2026-07-07 knowledge loop | 01–10, 12, 14 | **Implemented** — 01–03 landed/live before the 2026-07-19 archive; 04–10, 12, and 14 merged in PRs #28–#36 and were archived 2026-08-03. Remaining live/operator acceptance stays visible in `docs/plans/README.md`; 11 and 13 remain active. |
 
-The in-progress **2026-07-07 knowledge-loop wave's remaining plans (04–14) stay
-in `docs/plans/`** with the master sequence. Landed plans 01–03 were moved here
-2026-07-19; their schemas/interfaces are live in `convex/` — consult these
-files when a later plan quotes their contracts.
+The knowledge-loop implementation specs live here once their code lands.
+Plans 01–10, 12, and 14 are archived; plans 11 and 13 remain active beside the
+master sequence in `docs/plans/`. Some archived plans still have live or human
+acceptance steps; those are operational checklists in `docs/plans/README.md`,
+not reasons to re-implement the archived specs.
 
 ### `superseded/` — retired docs
 

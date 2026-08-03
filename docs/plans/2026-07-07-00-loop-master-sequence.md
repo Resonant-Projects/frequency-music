@@ -16,23 +16,24 @@
 
 ## Plans
 
-> **Archive note (2026-07-19):** landed plans 01–03 moved to
-> `docs/archive/plan-waves/` (each carries a `> Landed:` header with commit +
-> verification). Their schemas and interfaces are live in `convex/`; consult the
-> archived files if a later plan quotes their contracts.
+> **Archive status (2026-08-03):** plans 01–10 are implemented; their
+> specs moved to `docs/archive/plan-waves/`. Plan 11 remains active as a deferred
+> studio spike. Wave extensions 12 and 14 are also implemented/archived; plan 13
+> remains active but requires the plan 008 eval baseline first. See
+> `docs/plans/README.md` for current work and remaining operator acceptance.
 
 | # | Plan | Delivers | Depends on |
 |---|------|----------|------------|
 | 01 | `../archive/plan-waves/2026-07-07-01-loop-claims-table.md` — **landed `b2e0cbe`** | `claims` table + backfill from 1,580 extractions; extraction write path emits claim rows | arch 02, 04 |
 | 02 | `../archive/plan-waves/2026-07-07-02-loop-domains-and-relevance.md` — **landed `03dce57`** | Domain registry seeded; LLM classification backfill (domains + on/off-mission); domains at concept creation; dead feeds removed | arch 03 |
 | 03 | `../archive/plan-waves/2026-07-07-03-loop-correspondences.md` — **landed 2026-07-12** | `correspondences` table, pair-keyed dedupe, lifecycle mutations, agent write surface | 01, 02, arch 05 |
-| 04 | `2026-07-07-04-loop-embeddings.md` | Vector indexes on claims + concepts; backfill; incremental embedding on write | 01, 02 |
-| 05 | `2026-07-07-05-loop-miner-graphs.md` | Candidate generator (Convex) + miner and evidence-hunter LangGraph graphs | 03, 04 |
-| 06 | `2026-07-07-06-loop-drafting-graph.md` | Correspondence-driven hypothesis-drafting graph with WIP cap; `correspondenceId` provenance on hypotheses | 03, 05 |
-| 07 | `2026-07-07-07-loop-review-ux.md` | Draft review redesign: decidable in <2 minutes with correspondence context | 06 |
-| 08 | `2026-07-07-08-loop-weekly-brief.md` | Brief sections: correspondence movement, pending drafts, experiment debt, feed proposals | 03, 06 |
-| 09 | `2026-07-07-09-loop-source-scout.md` | Need-directed scout graph; direct-ingest sources; feed proposals for human enablement | 02, 03, 05 |
-| 10 | `2026-07-07-10-loop-starter-kits.md` | Recipe → `.scl`/`.kbm` + seed MIDI + parameter card generation | none (any time) |
+| 04 | `../archive/plan-waves/2026-07-07-04-loop-embeddings.md` — **implemented `4622c2b`** | Vector indexes on claims + concepts; backfill; incremental embedding on write | 01, 02 |
+| 05 | `../archive/plan-waves/2026-07-07-05-loop-miner-graphs.md` — **implemented `3600ec5`** | Candidate generator (Convex) + miner and evidence-hunter LangGraph graphs | 03, 04 |
+| 06 | `../archive/plan-waves/2026-07-07-06-loop-drafting-graph.md` — **implemented `f3556d5`** | Correspondence-driven hypothesis-drafting graph with WIP cap; `correspondenceId` provenance on hypotheses | 03, 05 |
+| 07 | `../archive/plan-waves/2026-07-07-07-loop-review-ux.md` — **implemented `1d69ae4`** | Draft review redesign: decidable in <2 minutes with correspondence context | 06 |
+| 08 | `../archive/plan-waves/2026-07-07-08-loop-weekly-brief.md` — **implemented `60cca5e`** | Brief sections: correspondence movement, pending drafts, experiment debt, feed proposals | 03, 06 |
+| 09 | `../archive/plan-waves/2026-07-07-09-loop-source-scout.md` — **implemented `073cb94`** | Need-directed scout graph; direct-ingest sources; feed proposals for human enablement | 02, 03, 05 |
+| 10 | `../archive/plan-waves/2026-07-07-10-loop-starter-kits.md` — **implemented `3b72b5c`** | Recipe → `.scl`/`.kbm` + seed MIDI + parameter card generation | none (any time) |
 | 11 | `2026-07-07-11-loop-selfrender-spike.md` | Bounded spike: machine-rendered micro-studies + validation protocol | 10 |
 
 ---

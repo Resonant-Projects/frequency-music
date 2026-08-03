@@ -1,5 +1,7 @@
 # Candidate Generator + Miner & Evidence-Hunter Graphs — Implementation Plan
 
+> **Archived 2026-08-03:** implementation merged in PR #31 (`3600ec5`). Remaining worker/live-run acceptance is tracked in `docs/plans/README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
 > **Found-state rule (wave 2026-07-07):** adapt to found state; interfaces and gates binding. **Prerequisites: plans 03 (correspondences) and 04 (embeddings).**
 

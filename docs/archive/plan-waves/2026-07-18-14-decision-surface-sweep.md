@@ -1,5 +1,7 @@
 # 14 — Decision-Surface Sweep — Implementation Plan (card-level)
 
+> **Archived 2026-08-03:** implementation merged in PR #36 (`236e6f0`). Remaining visual acceptance is tracked in `docs/plans/README.md`.
+
 > **For agentic workers:** card-level plan — each item is small and independent; expand to checkbox
 > detail at execution time against found state.
 > **Sequencing:** after plans 08/09 — none of these block the loop; they close the audited long tail

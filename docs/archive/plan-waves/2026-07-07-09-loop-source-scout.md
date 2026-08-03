@@ -1,5 +1,7 @@
 # Source Scout — Need-Directed Discovery — Implementation Plan
 
+> **Archived 2026-08-03:** implementation merged in PR #35 (`073cb94`). Remaining first-live-run acceptance is tracked in `docs/plans/README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
 > **Found-state rule (wave 2026-07-07):** adapt to found state; interfaces and gates binding. **Prerequisites: plans 02 (domain census), 03 (conjectures), 05 (worker patterns to copy).**
 

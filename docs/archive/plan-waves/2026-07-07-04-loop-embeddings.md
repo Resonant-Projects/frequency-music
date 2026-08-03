@@ -1,5 +1,7 @@
 # Embeddings + Vector Indexes — Implementation Plan
 
+> **Archived 2026-08-03:** implementation merged in PR #28 (`4622c2b`). Remaining live backfill/probe acceptance is tracked in `docs/plans/README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > **Found-state rule (wave 2026-07-07):** adapt to found state; schemas, interfaces, gates binding. **Prerequisites: plan 01 (claims rows exist), plan 02 (relevance flags exist — they're filter fields).**
 

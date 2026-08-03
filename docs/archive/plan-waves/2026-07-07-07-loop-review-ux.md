@@ -1,5 +1,7 @@
 # Draft Review UX — Decidable in Two Minutes, Editable Before Approve — Implementation Plan
 
+> **Archived 2026-08-03:** implementation merged in PR #33 (`1d69ae4`). Remaining timed human/visual acceptance is tracked in `docs/plans/README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
 > **Found-state rule (wave 2026-07-07):** adapt to found state; interfaces and gates binding. **Prerequisite: plan 06 (payloads carry `correspondenceId`).**
 > **Amended 2026-07-18** (decision-log entry of same date): scope now includes **edit-before-approve**. UI reference: visual plan `plan-6c6d455f77974bd3` on plans.rproj.art (canvas: queue → review card → edit mode → promote confirm).

@@ -14,6 +14,7 @@
 
 ## Status
 
+- **Execution status**: READY — golden datasets ratified in `d2487c1`; live API credentials and spend authorization remain runtime preconditions
 - **Priority**: P2
 - **Effort**: S–M (mostly wall-clock waiting on eval runs)
 - **Risk**: LOW (writes numbers into a doc; no runtime behavior changes until someone runs a promotion)
