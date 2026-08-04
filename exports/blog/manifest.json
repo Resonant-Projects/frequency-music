@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-03T19:10:06.463Z",
+  "generatedAt": "2026-08-04T03:08:10.355Z",
   "items": [
+    {
+      "slug": "the-stability-scaffold",
+      "path": "essays/the-stability-scaffold.md",
+      "title": "The Stability Scaffold",
+      "publishDate": "2026-08-04",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-coordinate-that-acts",
       "path": "essays/the-coordinate-that-acts.md",

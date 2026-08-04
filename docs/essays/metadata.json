@@ -4127,6 +4127,20 @@
     "contentHash": "bc1dba90c696e938a9626b3dab0a1b246f00382b248b9fa4eabf59f43a3913fd",
     "generatedAt": "2026-05-17T08:29:05.940Z"
   },
+  "the-stability-scaffold": {
+    "excerpt": "Stable acoustic objects are continuously scaffolded by representation geometry, identity embeddings, physical boundary conditions, or local adaptive memory.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "composition",
+      "acoustics",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "24099eca627a39ff05e763b8b4a6adb446cc0acc437dbf866e3cfb9ede46cc0a",
+    "generatedAt": "2026-08-04T03:03:00.000Z"
+  },
   "the-staircase-and-the-slope": {
     "excerpt": "Music emerges at the boundary where continuous physics becomes discrete perception-a tension that generates structure through quantization, mode-locking, and the mathematical devil's staircase.",
     "tags": [
@@ -4168,20 +4182,6 @@
     "category": "interdisciplinary",
     "contentHash": "e75d87c3b294730968842df2248bf5d0c3475057c83c98200057de1570b24c25",
     "generatedAt": "2026-04-10T18:40:42.617Z"
-  },
-  "the-stability-scaffold": {
-    "excerpt": "Stable acoustic objects are continuously scaffolded by representation geometry, identity embeddings, physical boundary conditions, or local adaptive memory.",
-    "tags": [
-      "signal-processing",
-      "AI-music",
-      "composition",
-      "acoustics",
-      "information-theory",
-      "psychoacoustics"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "24099eca627a39ff05e763b8b4a6adb446cc0acc437dbf866e3cfb9ede46cc0a",
-    "generatedAt": "2026-08-04T03:03:00.000Z"
   },
   "the-style-inside-the-coordinates": {
     "excerpt": "Tonnetz geometry, basso continuo griffs, and score-understanding benchmarks point to one compositional principle: representation decides which motions, styles, and meanings can leave fingerprints.",
