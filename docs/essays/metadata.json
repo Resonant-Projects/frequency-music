@@ -2281,18 +2281,46 @@
     "generatedAt": "2026-06-17T19:04:54.094Z"
   },
   "the-identity-budget": {
-    "excerpt": "Sound identity is a distributed budget of time, latent structure, guidance, and boundaries. Composers can spend it deliberately to preserve, blur, or transform the sense of sourcehood.",
+    "excerpt": "Music has an identity budget: every transformation preserves some features and spends others.",
+    "tags": [
+      "composition",
+      "perception",
+      "signal-processing",
+      "information-theory",
+      "mathematical-music-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "321a4f1dccfd1dd450e7f54ee53d1419ee6cec91cbc117a3bc772f6559dcdb7f",
+    "generatedAt": "2026-08-04T19:07:19.834Z"
+  },
+  "the-identity-budget-2026-08-04": {
+    "excerpt": "Sound identity depends on temporal resolution, latent capacity, model guidance, and acoustic boundaries.",
+    "tags": [
+      "AI-music",
+      "acoustics",
+      "perception",
+      "signal-processing",
+      "information-theory",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c7da54a28ad6489dc8a0bcd599100881627c3c5ac17341c0f68f6999af23737e",
+    "generatedAt": "2026-08-04T19:07:09.045Z"
+  },
+  "the-identity-carrier": {
+    "excerpt": "Identity can survive distortion when its carrier is preserved. This essay connects codecs, vocal stems, voice attribution, and modulation effects into a practical compositional strategy.",
     "tags": [
       "AI-music",
       "perception",
       "signal-processing",
-      "acoustics",
       "composition",
-      "resonance"
+      "information-theory",
+      "acoustics"
     ],
     "category": "interdisciplinary",
-    "contentHash": "c7da54a28ad6489dc8a0bcd599100881627c3c5ac17341c0f68f6999af23737e",
-    "generatedAt": "2026-08-04T11:09:31.173Z"
+    "contentHash": "787e9502f6d966b93290f8cf26b68358958e791a6a4152ac195cf141ad6e5ae0",
+    "generatedAt": "2026-08-04T19:07:23.269Z"
   },
   "the-identity-clock": {
     "excerpt": "Identity in sound emerges through time—machines and listeners must accumulate spectral, spatial, and temporal evidence before recognizing a source.",

@@ -1,7 +1,21 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-04T11:09:33.634Z",
+  "generatedAt": "2026-08-04T19:07:24.638Z",
   "items": [
+    {
+      "slug": "the-identity-budget-2026-08-04",
+      "path": "essays/the-identity-budget-2026-08-04.md",
+      "title": "The Identity Budget",
+      "publishDate": "2026-08-04",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-carrier",
+      "path": "essays/the-identity-carrier.md",
+      "title": "The Identity Carrier",
+      "publishDate": "2026-08-04",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-stability-scaffold",
       "path": "essays/the-stability-scaffold.md",
