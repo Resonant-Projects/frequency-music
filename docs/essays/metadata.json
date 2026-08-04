@@ -2281,18 +2281,18 @@
     "generatedAt": "2026-06-17T19:04:54.094Z"
   },
   "the-identity-budget": {
-    "excerpt": "Musical identity is a budget: preserve the invariant that matters, spend the layers that can vary, and let some marks break when the piece changes too far.",
+    "excerpt": "Sound identity is a distributed budget of time, latent structure, guidance, and boundaries. Composers can spend it deliberately to preserve, blur, or transform the sense of sourcehood.",
     "tags": [
-      "composition",
+      "AI-music",
       "perception",
       "signal-processing",
-      "information-theory",
-      "AI-music",
-      "mathematical-music-theory"
+      "acoustics",
+      "composition",
+      "resonance"
     ],
     "category": "interdisciplinary",
-    "contentHash": "321a4f1dccfd1dd450e7f54ee53d1419ee6cec91cbc117a3bc772f6559dcdb7f",
-    "generatedAt": "2026-05-10T00:27:02.282Z"
+    "contentHash": "c7da54a28ad6489dc8a0bcd599100881627c3c5ac17341c0f68f6999af23737e",
+    "generatedAt": "2026-08-04T11:09:31.173Z"
   },
   "the-identity-clock": {
     "excerpt": "Identity in sound emerges through time—machines and listeners must accumulate spectral, spatial, and temporal evidence before recognizing a source.",
