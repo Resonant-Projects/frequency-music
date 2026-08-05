@@ -2376,6 +2376,20 @@
     "contentHash": "4f95e3a7ca1cacf7442db49ea2ce7955bbeb5660698860a8a2f68225be89b4ed",
     "generatedAt": "2026-06-01T01:29:00.000Z"
   },
+  "the-identity-under-the-note": {
+    "excerpt": "A note is more than its pitch: string, speaker, room, and context reveal the causal story behind a sound. Composition can shape that evidence, not just the signal.",
+    "tags": [
+      "perception",
+      "acoustics",
+      "signal-processing",
+      "AI-music",
+      "composition",
+      "resonance"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6b406e562c44f53899aadadd4e245b6321316aa3bbb44c3889f25da43e94583a",
+    "generatedAt": "2026-08-05T19:10:27.083Z"
+  },
   "the-identity-window": {
     "excerpt": "Source identity isn't instantaneous—it emerges over time through acoustic evidence. This essay explores how the 'identity window' shapes both machine listening architectures and compositional form.",
     "tags": [

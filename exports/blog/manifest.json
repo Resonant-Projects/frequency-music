@@ -1,11 +1,18 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-05T03:08:33.412Z",
+  "generatedAt": "2026-08-05T19:10:28.338Z",
   "items": [
     {
       "slug": "identity-is-not-a-formant",
       "path": "essays/identity-is-not-a-formant.md",
       "title": "Identity Is Not A Formant",
+      "publishDate": "2026-08-05",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-identity-under-the-note",
+      "path": "essays/the-identity-under-the-note.md",
+      "title": "The Identity Under the Note",
       "publishDate": "2026-08-05",
       "category": "interdisciplinary"
     },
