@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-04T19:07:24.638Z",
+  "generatedAt": "2026-08-05T03:08:33.412Z",
   "items": [
+    {
+      "slug": "identity-is-not-a-formant",
+      "path": "essays/identity-is-not-a-formant.md",
+      "title": "Identity Is Not A Formant",
+      "publishDate": "2026-08-05",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-identity-budget-2026-08-04",
       "path": "essays/the-identity-budget-2026-08-04.md",

@@ -237,6 +237,19 @@
     "contentHash": "42ed599441baf6e10b177881e2dd13b0ecccd63ee45c4ca5198b1ea4737dfe10",
     "generatedAt": "2026-07-06T00:03:51.703Z"
   },
+  "identity-is-not-a-formant": {
+    "excerpt": "Vocal identity is not a fixed formant or embedding, but a negotiation among resonance, performance, and conversational context—an idea that turns recognition failures into compositional possibilities.",
+    "tags": [
+      "perception",
+      "AI-music",
+      "acoustics",
+      "composition",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "ef1278025f4527bb1fb5d5ff1d0a1f54585f75485d70c768a59f93d7588fb2b3",
+    "generatedAt": "2026-08-05T03:08:30.836Z"
+  },
   "implicit-evidence": {
     "excerpt": "Useful listening systems act on evidence they never explicitly name—compressed handles that guide action before explanation arrives.",
     "tags": [
