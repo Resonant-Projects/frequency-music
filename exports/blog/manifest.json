@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-05T19:10:28.338Z",
+  "generatedAt": "2026-08-06T11:10:32.363Z",
   "items": [
+    {
+      "slug": "the-metric-chooses-what-survives",
+      "path": "essays/the-metric-chooses-what-survives.md",
+      "title": "The Metric Chooses What Survives",
+      "publishDate": "2026-08-06",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "identity-is-not-a-formant",
       "path": "essays/identity-is-not-a-formant.md",

@@ -2931,6 +2931,20 @@
     "contentHash": "e0bb51c0cfc354a762820b3a150fda4495705478ae168ef3131b27930343e3d0",
     "generatedAt": "2026-04-10T18:39:19.994Z"
   },
+  "the-metric-chooses-what-survives": {
+    "excerpt": "Every codec, metric, graph, and phase transition preserves different features. For composers, choosing what remains invariant may matter more than choosing the transformation itself.",
+    "tags": [
+      "information-theory",
+      "signal-processing",
+      "perception",
+      "geometry",
+      "mathematical-music-theory",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7ecec960ce6d3966d8f0948a2743dc3d369da1da1834ab74046fe4a8a98c2b22",
+    "generatedAt": "2026-08-06T11:10:31.028Z"
+  },
   "the-metric-that-listens": {
     "excerpt": "Metrics fail because they measure absolute values, but perception works through relationships across timescales.",
     "tags": [
