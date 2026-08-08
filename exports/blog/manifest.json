@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-07T03:08:42.462Z",
+  "generatedAt": "2026-08-08T03:08:06.585Z",
   "items": [
+    {
+      "slug": "the-resolution-grid",
+      "path": "essays/the-resolution-grid.md",
+      "title": "The Resolution Grid",
+      "publishDate": "2026-08-08",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-small-descriptor-becomes-the-instrument",
       "path": "essays/the-small-descriptor-becomes-the-instrument.md",
