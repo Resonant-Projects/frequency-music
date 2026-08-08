@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-08T11:07:27.206Z",
+  "generatedAt": "2026-08-08T19:10:04.402Z",
   "items": [
+    {
+      "slug": "the-fair-test",
+      "path": "essays/the-fair-test.md",
+      "title": "The Fair Test",
+      "publishDate": "2026-08-08",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-plastic-tone",
       "path": "essays/the-plastic-tone.md",

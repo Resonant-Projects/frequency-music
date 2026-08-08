@@ -1865,6 +1865,20 @@
     "contentHash": "75822b377e16e63ce7cf6384f83a39c907da4ab76977b5dedf219874908c4294",
     "generatedAt": "2026-04-10T18:37:34.662Z"
   },
+  "the-fair-test": {
+    "excerpt": "A benchmark is an instrument: its allowed evidence determines what an audio model can appear to know.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "acoustics",
+      "perception",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "cf296538a99f9425bdbfe35a2f69c5614a96d3ba0678da180a77b56c571d921d",
+    "generatedAt": "2026-08-08T19:03:00.000Z"
+  },
   "the-fidelity-trade": {
     "excerpt": "Audio codecs and tuning systems make identical fidelity trade-offs: sacrificing precision where the ear is least sensitive.",
     "tags": [
@@ -1974,20 +1988,6 @@
     "category": "interdisciplinary",
     "contentHash": "a46bba148211f500b464ca61869de71862ed4bb9c2f73cb6c83a9566ba2f7706",
     "generatedAt": "2026-04-10T18:37:43.639Z"
-  },
-  "the-fair-test": {
-    "excerpt": "A benchmark is an instrument: its allowed evidence determines what an audio model can appear to know.",
-    "tags": [
-      "AI-music",
-      "signal-processing",
-      "acoustics",
-      "perception",
-      "composition",
-      "information-theory"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "cf296538a99f9425bdbfe35a2f69c5614a96d3ba0678da180a77b56c571d921d",
-    "generatedAt": "2026-08-08T19:03:00.000Z"
   },
   "the-frequency-question": {
     "excerpt": "Specific frequencies might produce measurable physiological effects, but claims like '528 Hz repairs DNA' vastly overstate evidence.",
