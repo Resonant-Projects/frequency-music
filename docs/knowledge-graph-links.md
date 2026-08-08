@@ -2,6 +2,25 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-08 - The Fair Test
+
+- `fair test` -> `semantic alignment`: align examples so models cannot solve the wrong high-level distinction.
+- `fair test` -> `data leakage`: withhold unavailable deployment inputs, especially target-position acoustic fingerprints.
+- `fair test` -> `annotation trimming`: tighten boundary targets when wide tolerance inflates structure-analysis scores.
+- `fair test` -> `representation probing`: measure which latent factors an audio encoder actually preserves.
+- `fair test` -> `uncertainty modeling`: represent distributed human judgments instead of forcing a single point target.
+- `semantic alignment` -> `music deepfake detection`: generated and bona-fide tracks should be matched at the song-descriptor or waveform-conditioned level before detector cues are trusted.
+- `room fingerprint` -> `receiver-position generalization`: a target impulse response can identify a measured position without teaching transferable room behavior.
+- `boundary tolerance` -> `musical form`: section-boundary scores depend on how much temporal ambiguity the benchmark allows.
+
+Evidence context:
+
+- Echoes music deepfake extraction: `j97bt3nyk8vhkpchhncydmk7v18av5ta`
+- Music structure analysis extraction: `j97449t2gg1cqfff5nrqf1fa5d8atd0x`
+- SARL spatial-audio probing extraction: `j9718kahkvm0zmm4watm7bt0kd8avqh4`
+- Room-acoustics input-availability extraction: `j97679y1jf7cnhkg7f2v6t2mz18b0wvf`
+- Song-aesthetics uncertainty extraction: `j974tpzp5kn0t4vkymg6bfhbz98ax0gv`
+
 ## 2026-08-08 - The Resolution Grid
 
 - `resolution grid` -> `translation loss`: a representation preserves identity only on the layer/grid it can resolve.
