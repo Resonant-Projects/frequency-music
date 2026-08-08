@@ -20,3 +20,19 @@ Evidence context:
 - PHALAR extraction: `j978zvv39t3wqdw578e6g057b18683jf`
 - MSU-Bench extraction: `j978mypywk23f3gtf3ykz84q4x85j102`
 - Ice phases extraction: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`
+
+## 2026-08-08 - The Plastic Tone
+
+- `plastic tone` -> `pitch strength`: pitch identity can be treated as a variable salience rather than a binary property.
+- `plastic tone` -> `inharmonicity`: a tone's transformation space depends on whether inharmonicity comes from noise or from discrete partial interactions.
+- `plastic tone` -> `spectral flatness`: lower flatness can mark tonal structure that remains available for developmental or compositional transformation.
+- `plastic tone` -> `harmonic complex tone`: a single source can distribute pitch authority across upper partials and imply multiple melodic lines.
+- `plastic tone` -> `developmental vocal plasticity`: learnable vocal identity can be modeled as change across age-conditioned latent trajectories.
+- `pitch authority` -> `composition control`: a producer-facing control can specify where tonal evidence should be strongest without changing nominal pitch.
+
+Evidence context:
+
+- Pitch strength extraction: `j978yxjgnckm2px83ae5dqwgq18ajxwm`
+- Inharmonicity/noisiness extraction: `j9762aqawbwmrwvhgfwrns5m398aj4d3`
+- Trajectory variance birdsong extraction: `j97ckpqqxzkj19gbw70dkwhk218ahj6w`
+- Harmonic complex tone extraction: source title "Musical phrase perception from monophonic harmonic complex tones" in recent candidates
