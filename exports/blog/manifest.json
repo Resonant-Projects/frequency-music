@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-08T03:08:06.585Z",
+  "generatedAt": "2026-08-08T11:07:27.206Z",
   "items": [
+    {
+      "slug": "the-plastic-tone",
+      "path": "essays/the-plastic-tone.md",
+      "title": "The Plastic Tone",
+      "publishDate": "2026-08-08",
+      "category": "perception"
+    },
     {
       "slug": "the-resolution-grid",
       "path": "essays/the-resolution-grid.md",

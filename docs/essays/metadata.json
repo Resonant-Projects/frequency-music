@@ -3277,6 +3277,19 @@
     "contentHash": "d9265447a53011b5e0da4c2889ccbc93d7f137cf915e6d4394de2401a1954554",
     "generatedAt": "2026-05-17T08:29:02.492Z"
   },
+  "the-plastic-tone": {
+    "excerpt": "Pitch is not fixed: spectral structure, inharmonicity, learning, and listening can reshape a tone’s authority. Explore composition through tones that transform without losing identity.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "acoustics",
+      "composition",
+      "signal-processing"
+    ],
+    "category": "perception",
+    "contentHash": "db3d1cba41071ad06ce9d6e2158545f4d1c66e08d74a116682e1bd6a44ab5f19",
+    "generatedAt": "2026-08-08T11:07:25.765Z"
+  },
   "the-polyphony-problem": {
     "excerpt": "Polyphony exposes a categorical gap in how AI-and music theory-represents simultaneity.",
     "tags": [
