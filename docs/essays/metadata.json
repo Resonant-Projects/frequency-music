@@ -1810,6 +1810,20 @@
     "contentHash": "adad4856b29c3f506d483dadac36700af0c8beab5fcff9d49514d5889c7e432e",
     "generatedAt": "2026-06-22T03:02:00.000Z"
   },
+  "the-evidence-carrier": {
+    "excerpt": "A sound’s identity depends on the evidence carrying it. Explore how voice, pitch, timbre, room, and timing can shift while musical objects remain recognizably intact.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "signal-processing",
+      "acoustics",
+      "AI-music",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7a1f59d353cf1765e9b755ee6c3e62a9ccfe1fbd8ad3619f6272035422ad0390",
+    "generatedAt": "2026-08-09T11:09:23.153Z"
+  },
   "the-evidence-horizon": {
     "excerpt": "The evidence horizon marks when enough signal has arrived for a system to act—a concept spanning speech processing, sound design, and composition.",
     "tags": [
