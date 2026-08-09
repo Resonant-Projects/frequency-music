@@ -2,6 +2,22 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-09 - The Evidence Carrier
+
+- `evidence carrier` -> `voice between domains`: voice identity can be borne by phone content, pitch contour, timbre, turn-taking, or stem relation.
+- `evidence carrier` -> `fair test`: benchmark validity depends on controlling which evidence carriers are legitimate for the task.
+- `evidence carrier` -> `plastic tone`: pitch identity can move between the fundamental, upper partials, noise, and spectral salience.
+- `evidence carrier` -> `semantic alignment`: matching high-level musical meaning removes an irrelevant evidence carrier from deepfake detection.
+- `evidence carrier` -> `room fingerprint`: a target-position impulse response can carry location identity without proving transferable acoustic understanding.
+- `evidence carrier` -> `pitch authority`: pitch strength names how strongly a spectral carrier is allowed to count as a tone.
+- `carrier reassignment` -> `composition control`: identity can remain partly recognizable while the evidence path that supports it changes.
+
+Evidence context:
+
+- Voice-between-domains essay and extractions: `j97e60hzvdd4v5pvvab4dv4jed8av6vz`, `j977bjx4mn520e8ebrmvjvnrw58agpf6`, `j97d5cc9xwxhv524jre9q1r36s8at5bn`, `j97f7yq3rv85mv7jkhvy1r0fbx8arevy`
+- Fair-test essay and extractions: `j97bt3nyk8vhkpchhncydmk7v18av5ta`, `j97679y1jf7cnhkg7f2v6t2mz18b0wvf`, `j97449t2gg1cqfff5nrqf1fa5d8atd0x`, `j9718kahkvm0zmm4watm7bt0kd8avqh4`
+- Plastic-tone essay and extractions: `j978yxjgnckm2px83ae5dqwgq18ajxwm`, `j9762aqawbwmrwvhgfwrns5m398aj4d3`
+
 ## 2026-08-09 - The Voice Between Domains
 
 - `voice between domains` -> `phonetic posteriorgram`: phone-like content can be separated from pitch and timbral identity for voice conversion.
