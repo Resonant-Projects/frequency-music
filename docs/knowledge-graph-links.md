@@ -2,6 +2,28 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-09 - The Coordinate You Choose
+
+- `coordinate system` -> `audio tool design`: every tool makes a sound actionable by selecting the axes on which it can be changed or judged.
+- `restoration trajectory` -> `speech enhancement`: denoising and dereverberation can be heard as movement along a path between witness and reconstruction.
+- `FX-chain coordinate` -> `mixing style`: mix identity can be represented as ordered, editable stem-level effect decisions.
+- `source coordinate` -> `guitar string identity`: the same pitch can retain a physical-source trace through MFCCs, band energies, and spectral statistics.
+- `boundary coordinate` -> `musical form`: trimming annotations changes which temporal evidence counts as a real section boundary.
+- `phone-feature coordinate` -> `vocal identity`: phone error patterns expose articulatory structure while abstracting away other vocal carriers.
+- `pitch-strength coordinate` -> `plastic tone`: tone can be controlled by changing the salience of pitch evidence rather than changing pitch height.
+- `coordinate choice` -> `fair test`: evaluation validity depends on matching the measured coordinate to the actual musical question.
+
+Evidence context:
+
+- Schrödinger Bridge Mamba extraction: `j97d337kfk4agn4a6h0vqktdcn8b3b4e`
+- StemFX extraction: `j972b99xapwke0nsrs9mydqez58b2v83`
+- Fretiq extraction: `j976hka8k1xqgt9rbagkz562e18b12er`
+- Echoes extraction: `j97bt3nyk8vhkpchhncydmk7v18av5ta`
+- Music-structure trimming extraction: `j97449t2gg1cqfff5nrqf1fa5d8atd0x`
+- SARL extraction: `j9718kahkvm0zmm4watm7bt0kd8avqh4`
+- PhoneticXEUS extraction: `j977bjx4mn520e8ebrmvjvnrw58agpf6`
+- Pitch-strength extraction: `j978yxjgnckm2px83ae5dqwgq18ajxwm`
+
 ## 2026-08-09 - The Evidence Carrier
 
 - `evidence carrier` -> `voice between domains`: voice identity can be borne by phone content, pitch contour, timbre, turn-taking, or stem relation.
