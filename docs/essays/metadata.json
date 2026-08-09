@@ -1422,6 +1422,20 @@
     "contentHash": "31a1d36c136506cfc7a3b0875e3e22bc622f65497659ba99432b393561b4d538",
     "generatedAt": "2026-04-16T19:06:04.684Z"
   },
+  "the-coordinate-you-choose": {
+    "excerpt": "Every audio tool creates a musical object through the coordinates it chooses—from restoration paths and FX chains to string identity and pitch strength. Change the frame, and the musical fact changes.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "AI-music",
+      "acoustics",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8e7e6c158f11fa18561ca981f34fcb83da184ff06a9b3e26906a98e1e1dafe33",
+    "generatedAt": "2026-08-09T19:09:54.935Z"
+  },
   "the-cost-of-moving": {
     "excerpt": "Voice leading is optimal transport: the mathematical framework for moving sand efficiently also describes how composers transform chords.",
     "tags": [
