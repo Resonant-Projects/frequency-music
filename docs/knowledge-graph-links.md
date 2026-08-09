@@ -2,6 +2,24 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-09 - The Voice Between Domains
+
+- `voice between domains` -> `phonetic posteriorgram`: phone-like content can be separated from pitch and timbral identity for voice conversion.
+- `voice between domains` -> `pitch contour`: speech and singing share a controllable trajectory layer that is not identical to symbolic notes.
+- `voice between domains` -> `speaker identity`: timbre conditioning can act as performer identity when a music model is adapted to voice.
+- `voice between domains` -> `turn-taking prosody`: conversational naturalness depends on social timing, not only utterance-level audio quality.
+- `voice between domains` -> `stem boundary`: vocal and accompaniment separation can be generated as a hard edit surface or softened as an entangled musical relation.
+- `phone content` -> `vocal identity`: a vocal transformation can preserve who is heard while damaging what is said, or preserve articulatory content while changing the performer.
+- `symbolic hierarchy` -> `vocal control`: pitch register and rhythmic density provide higher-level structure that complements waveform-level phone, prosody, and timbre controls.
+
+Evidence context:
+
+- Diffusion-based music-to-voice conversion extraction: `j97e60hzvdd4v5pvvab4dv4jed8av6vz`
+- Dialogs expressive conversational speech corpus extraction: `j97d5cc9xwxhv524jre9q1r36s8at5bn`
+- WanSong diffusion song-generation extraction: `j97f7yq3rv85mv7jkhvy1r0fbx8arevy`
+- MIDI-RAE-JEPA symbolic hierarchy extraction: `j970n5akmsx33bh4mbg65yfmex8ape41`
+- PhoneticXEUS universal phone-recognition extraction: `j977bjx4mn520e8ebrmvjvnrw58agpf6`
+
 ## 2026-08-08 - The Fair Test
 
 - `fair test` -> `semantic alignment`: align examples so models cannot solve the wrong high-level distinction.
