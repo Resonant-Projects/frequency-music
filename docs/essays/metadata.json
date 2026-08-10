@@ -1436,6 +1436,19 @@
     "contentHash": "8e7e6c158f11fa18561ca981f34fcb83da184ff06a9b3e26906a98e1e1dafe33",
     "generatedAt": "2026-08-09T19:09:54.935Z"
   },
+  "the-correction-surface": {
+    "excerpt": "Audio restoration is never neutral: systems choose a correction surface—alignment, phonetics, identity, latency, or space—that defines what gets preserved and repaired.",
+    "tags": [
+      "signal-processing",
+      "acoustics",
+      "perception",
+      "AI-music",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "af37d48cf36b40a5389e96cf274586ab6c7f4984e98b9cb16d5fc7f7e1d4bdee",
+    "generatedAt": "2026-08-10T19:08:31.253Z"
+  },
   "the-cost-of-moving": {
     "excerpt": "Voice leading is optimal transport: the mathematical framework for moving sand efficiently also describes how composers transform chords.",
     "tags": [

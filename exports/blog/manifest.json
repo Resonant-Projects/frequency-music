@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-10T11:10:57.501Z",
+  "generatedAt": "2026-08-10T19:08:33.768Z",
   "items": [
+    {
+      "slug": "the-correction-surface",
+      "path": "essays/the-correction-surface.md",
+      "title": "The Correction Surface",
+      "publishDate": "2026-08-10",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "what-the-system-is-allowed-to-know",
       "path": "essays/what-the-system-is-allowed-to-know.md",
