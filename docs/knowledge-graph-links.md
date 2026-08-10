@@ -40,6 +40,25 @@ Evidence context:
 - Fair-test essay and extractions: `j97bt3nyk8vhkpchhncydmk7v18av5ta`, `j97679y1jf7cnhkg7f2v6t2mz18b0wvf`, `j97449t2gg1cqfff5nrqf1fa5d8atd0x`, `j9718kahkvm0zmm4watm7bt0kd8avqh4`
 - Plastic-tone essay and extractions: `j978yxjgnckm2px83ae5dqwgq18ajxwm`, `j9762aqawbwmrwvhgfwrns5m398aj4d3`
 
+## 2026-08-10 - The Weighting Function
+
+- `weighting function` -> `temporal pooling`: pooling is an allocation of musical importance, not only a statistical reduction.
+- `relative deviation pooling` -> `audio-event salience`: deviations over time can mark attacks, instability, or rare events as more informative than steady-state texture.
+- `sequential stem blending` -> `mix commitment`: a stem's meaning changes after earlier balance decisions have been made.
+- `bandwidth-conditioned reconstruction` -> `durable witness`: missing high-frequency content is inferred from the surviving low-band evidence.
+- `tone disentanglement` -> `global tone representation`: guitar identity can move as a production surface partly independent from frame-level notes and timing.
+- `affective authenticity` -> `voice trajectory`: vocal identity detection must weight prosody and emotional motion, not only static timbral fingerprints.
+- `weighting function` -> `composition control`: a piece can specify which moments, bands, stems, and identity axes should count more than their duration or energy.
+
+Evidence context:
+
+- Temporal pooling / RDP extraction: `j974w97y32xk496mm83r05nyms8c60tc`
+- Diff2Mix extraction: `j971e93bmbyhgjtsdfwsvy2d5d8c6sea`
+- Sequential stem-blending extraction: `j972es5zkfz17y8a4r6rvfkxa58c4dxm`
+- FiPA-SR bandwidth-extension extraction: `j973kajnet5hvv4d2dmg9mpehn8c6vvq`
+- EG-VAE guitar-tone extraction: `j977y2zzwg0w054n6t8xvm8fa18ajxwm`
+- AffectDF expressive voice-authenticity extraction: `j972va646xannqrbmdcd7pvk418c55yq`
+
 ## 2026-08-09 - The Voice Between Domains
 
 - `voice between domains` -> `phonetic posteriorgram`: phone-like content can be separated from pitch and timbral identity for voice conversion.
