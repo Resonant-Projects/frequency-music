@@ -4999,6 +4999,20 @@
     "contentHash": "a50a6e0bcbb74fa45c922ea7590bf8d296287421ca3a753a8e2fce968be61dcc",
     "generatedAt": "2026-04-10T18:41:26.772Z"
   },
+  "what-the-system-is-allowed-to-know": {
+    "excerpt": "What a sound system knows shapes what it can make. From tone-marked speech and model capacity to vocal diversity and room acoustics, composers can make evidence boundaries audible.",
+    "tags": [
+      "AI-music",
+      "information-theory",
+      "perception",
+      "acoustics",
+      "composition",
+      "signal-processing"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "f22926b6b7d684bc96444f3d9da4d42bb55f80b3b3f08e5f1ed0830638053ade",
+    "generatedAt": "2026-08-10T03:09:52.887Z"
+  },
   "what-we-measure": {
     "excerpt": "Audio quality metrics excel at detecting surface artifacts but miss structural musical elements entirely-revealing that what we measure systematically differs from what we actually hear.",
     "tags": [

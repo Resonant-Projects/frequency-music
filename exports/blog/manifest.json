@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-09T19:09:57.456Z",
+  "generatedAt": "2026-08-10T03:09:56.188Z",
   "items": [
+    {
+      "slug": "what-the-system-is-allowed-to-know",
+      "path": "essays/what-the-system-is-allowed-to-know.md",
+      "title": "What The System Is Allowed To Know",
+      "publishDate": "2026-08-10",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-coordinate-you-choose",
       "path": "essays/the-coordinate-you-choose.md",
