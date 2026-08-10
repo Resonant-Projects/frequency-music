@@ -59,6 +59,24 @@ Evidence context:
 - EG-VAE guitar-tone extraction: `j977y2zzwg0w054n6t8xvm8fa18ajxwm`
 - AffectDF expressive voice-authenticity extraction: `j972va646xannqrbmdcd7pvk418c55yq`
 
+## 2026-08-10 - The Correction Surface
+
+- `correction surface` -> `alignment surface`: skip and repeat failures become trainable when TTS errors are represented as latent trajectory perturbations.
+- `correction surface` -> `phonetic bottleneck`: speech enhancement can reduce hallucination by requiring degraded audio to pass through content-aware phonetic and acoustic representations.
+- `correction surface` -> `latency budget`: hearing-aid enhancement is constrained by the time at which correction remains perceptually fused with the input.
+- `correction surface` -> `speaker enrollment`: target-speaker extraction uses an enrolled voice as the surface that selects which source should survive.
+- `correction surface` -> `spatial energy map`: acoustic localization can turn microphone-array audio into an azimuth-elevation image before estimating direction.
+- `restoration target` -> `what the system is allowed to know`: every correction protocol encodes which evidence is admissible for saving the sound.
+- `spatial energy map` -> `source coordinate`: source direction becomes actionable only after the signal is projected onto a coordinate surface.
+
+Evidence context:
+
+- RobustSpeechFlow extraction: `j977wwdpwejgazdj8mea667d998ax4ms`
+- UniPASE extraction: `j974dj9b7efc9g420nm765sw298ayfbj`
+- Embedded-FPGA hearing-aid enhancement extraction: `j9777kbqpsnwfbjh5rvfq2bqmn8ax01d`
+- REAL-TSE target-speaker extraction challenge: `j97bg9wewsss2gge7xba13q4058awb8q`
+- UAV acoustic-imaging extraction: `j97d5b98j50xca1sh2bk18msh18ax806`
+
 ## 2026-08-09 - The Voice Between Domains
 
 - `voice between domains` -> `phonetic posteriorgram`: phone-like content can be separated from pitch and timbral identity for voice conversion.
