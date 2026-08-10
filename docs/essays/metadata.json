@@ -4902,6 +4902,19 @@
     "contentHash": "21f04c09522cc60e57761d1bb83363dbc7d4e8ddd4eaa1cf98736ef1be6d5042",
     "generatedAt": "2026-08-01T21:34:10.924Z"
   },
+  "the-weighting-function": {
+    "excerpt": "Every audio system contains a weighting function: averaging persistence, amplifying deviations, preserving sequence, or inferring what is missing.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "perception",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "c58cfa62382ff35443abe2850924f02d7b373159e9b2ce8f06d7f8c7cde68dce",
+    "generatedAt": "2026-08-10T11:10:55.059Z"
+  },
   "the-who-when-what": {
     "excerpt": "Voice signals encode identity, timing, and content as separable dimensions-a structural insight that applies equally to speech systems and musical composition.",
     "tags": [

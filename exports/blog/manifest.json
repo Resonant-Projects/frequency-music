@@ -1,6 +1,6 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-10T03:09:56.188Z",
+  "generatedAt": "2026-08-10T11:10:57.501Z",
   "items": [
     {
       "slug": "what-the-system-is-allowed-to-know",
@@ -153,6 +153,13 @@
       "slug": "the-live-layer",
       "path": "essays/the-live-layer.md",
       "title": "The Live Layer",
+      "publishDate": "2026-08-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-weighting-function",
+      "path": "essays/the-weighting-function.md",
+      "title": "The Weighting Function",
       "publishDate": "2026-08-01",
       "category": "interdisciplinary"
     },
