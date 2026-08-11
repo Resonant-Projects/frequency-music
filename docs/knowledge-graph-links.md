@@ -2,6 +2,24 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-11 - The Admissible Signal
+
+- `admissible signal` -> `fair test`: evaluation should expose only the evidence that belongs to the claimed task.
+- `admissible signal` -> `semantic alignment`: deepfake detection needs real and generated music aligned so high-level content cannot become a shortcut.
+- `admissible signal` -> `annotation trimming`: structure-analysis scores depend on which temporal tolerance window is allowed to count as boundary evidence.
+- `admissible signal` -> `spatial representation probing`: source position and room acoustics require different evidence carriers inside pretrained encoders.
+- `admissible signal` -> `room fingerprint`: target-position impulse responses can be inadmissible evidence when the task is prediction at unmeasured positions.
+- `admissible signal` -> `frequency-localized latent basis`: pitch control improves when the representation preserves separable time-frequency primitives.
+- `Gabor Latent Refactorization` -> `pitch steerability`: refactoring latents into a frequency-localized basis can restore musically useful pitch evidence.
+
+Evidence context:
+
+- Echoes music-deepfake extraction: `j97bt3nyk8vhkpchhncydmk7v18av5ta`
+- Music-structure trimming extraction: `j97449t2gg1cqfff5nrqf1fa5d8atd0x`
+- SARL spatial-audio probing extraction: `j9718kahkvm0zmm4watm7bt0kd8avqh4`
+- Room-acoustics input-availability extraction: `j978rj9jtfn8y8wkhrfrxpgrhd8as7dy`
+- Structural frequency bottleneck / GLRF extraction: `j97cs7s2wqevgarwtn5vtjc2rh8ab3rq`
+
 ## 2026-08-09 - The Coordinate You Choose
 
 - `coordinate system` -> `audio tool design`: every tool makes a sound actionable by selecting the axes on which it can be changed or judged.
