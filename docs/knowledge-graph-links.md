@@ -2,6 +2,22 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-11 - The Change Vector
+
+- `change vector` -> `trajectory instrument`: musical control can target the direction a sound is under, not only its current state.
+- `change vector` -> `restoration trajectory`: denoising and dereverberation can be modeled as movement from degraded witness toward clearer speech.
+- `change vector` -> `alignment surface`: skipped and repeated TTS content are route failures, not only frame-level audio defects.
+- `change vector` -> `latent temporal compression`: long-form synthesis needs a path representation light enough to preserve continuity across minutes.
+- `change vector` -> `developmental vocal plasticity`: learnable vocal gestures can be measured by how many age-conditioned futures remain plausible.
+- `trajectory lane` -> `composition control`: automation can specify restoration pressure, alignment pressure, plasticity, and continuity budget over time.
+
+Evidence context:
+
+- Schrodinger Bridge Mamba speech-enhancement extraction: `j97d337kfk4agn4a6h0vqktdcn8b3b4e`
+- RobustSpeechFlow trajectory-correction extraction: `j977wwdpwejgazdj8mea667d998ax4ms`
+- ZipL-Dialog long-dialog latent-flow extraction: `j976e5vb7x58dvzmpyf8rv69318anrwg`
+- Trajectory variance birdsong extraction: `j97ckpqqxzkj19gbw70dkwhk218ahj6w`
+
 ## 2026-08-11 - The Admissible Signal
 
 - `admissible signal` -> `fair test`: evaluation should expose only the evidence that belongs to the claimed task.
