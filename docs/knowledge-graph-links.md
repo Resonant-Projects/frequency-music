@@ -2,6 +2,22 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-11 - The Pitch Field
+
+- `pitch field` -> `melodic constraint`: scale structure can be understood as a distribution of locally cheap and costly pitch motions.
+- `pitch field` -> `lexical tone contour`: tonal-language synthesis shows pitch identity as contextual trajectory, not only fixed height.
+- `pitch field` -> `detune density`: stacked sawtooth layers can move a chord from readable harmony into fused timbral pressure.
+- `pitch field` -> `harmonic-complex multipitch`: one monophonic source can expose multiple internal pitch paths when upper partials become audible enough.
+- `adjacency field` -> `scale design`: 1-3 semitone step preferences suggest a compositional control for local melodic reachability.
+- `partial field` -> `composition control`: pitch controls can target which harmonics are allowed to act as voices.
+
+Evidence context:
+
+- Global scale-structure extraction: `j974tgk5gh6tc1deh6bse6vzg98avknh`
+- Yoruba situational speech-synthesizer extraction: `j97ddkgf0a35qtesengcwa16w58b02hb`
+- A. G. Cook Super*Saw extraction: `j97c0c18c59gs2hkhr70xgnyys8aq40b`
+- Harmonic-complex-tone generative music extraction: `j977947yy1vh3x3jhxef6heb218akdxv`
+
 ## 2026-08-11 - The Change Vector
 
 - `change vector` -> `trajectory instrument`: musical control can target the direction a sound is under, not only its current state.
