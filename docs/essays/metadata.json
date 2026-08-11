@@ -623,6 +623,20 @@
     "contentHash": "b9c46958208233f31784c42be13b2e875d043f199bf2324a6307485932033d20",
     "generatedAt": "2026-07-25T03:02:00.000Z"
   },
+  "the-admissible-signal": {
+    "excerpt": "What counts as evidence in musical AI? From aligned deepfake datasets to latent frequency bases, fair protocols reveal how shortcuts shape what systems hear, predict, and control.",
+    "tags": [
+      "AI-music",
+      "signal-processing",
+      "information-theory",
+      "perception",
+      "acoustics",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "384472ab68d095b809999c6bb5310de53d6e374a293f5981f9a453467fe95603",
+    "generatedAt": "2026-08-11T03:08:17.003Z"
+  },
   "the-aligned-control-surface": {
     "excerpt": "Control begins when a system can hold one sonic identity steady while another dimension moves, linking source separation, transcription, TTS prosody, authenticity detection, and activation steering.",
     "tags": [
