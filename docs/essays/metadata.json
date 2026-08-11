@@ -3345,6 +3345,19 @@
     "contentHash": "209af078091f2d5352efe634a770e5a41a7a4e756415a9fdb5ddac8ca80c1679",
     "generatedAt": "2026-04-10T18:39:47.544Z"
   },
+  "the-pitch-field": {
+    "excerpt": "Pitch is not a fixed location but a field of constraints: adjacency, contour, detuning, and partials shape whether tones become melody, speech, texture, or polyphony.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "acoustics",
+      "composition",
+      "tuning-systems"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4896093bf215ea325b42bd8c2d0471e1a70f8e5667d273b6c36cdb3e0a1cd37e",
+    "generatedAt": "2026-08-11T19:07:46.145Z"
+  },
   "the-plan-that-survives-the-renderer": {
     "excerpt": "AI music systems fail when renderers override structural plans. The solution: keep evidence, plan, and rendering separate-like musical notation does.",
     "tags": [
