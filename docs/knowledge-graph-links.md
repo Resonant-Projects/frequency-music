@@ -2,6 +2,24 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-12 - The Control Surface
+
+- `control surface` -> `compositional intervention`: a sound becomes practically musical where hidden structure can be steered.
+- `control surface` -> `pitch field`: pitch control should expose adjacency, contour, density, and partial authority rather than only note value.
+- `control surface` -> `change vector`: temporal control can target the direction a sound is under, not only its current state.
+- `control surface` -> `admissible signal`: evaluation and composition both depend on deciding which evidence traces are allowed to count.
+- `control surface` -> `correction surface`: repair tools embody different geometries of what can be saved or selected from a signal.
+- `control surface` -> `weighting function`: musical importance can be assigned across time, bands, stems, identity axes, and affective motion.
+- `surface selection` -> `instrument design`: a mature parameter exposes the regime under which a value is heard, inferred, or transformed.
+
+Evidence context:
+
+- Pitch-field extraction cluster: `j974tgk5gh6tc1deh6bse6vzg98avknh`, `j97ddkgf0a35qtesengcwa16w58b02hb`, `j97c0c18c59gs2hkhr70xgnyys8aq40b`, `j977947yy1vh3x3jhxef6heb218akdxv`
+- Change-vector extraction cluster: `j97d337kfk4agn4a6h0vqktdcn8b3b4e`, `j977wwdpwejgazdj8mea667d998ax4ms`, `j976e5vb7x58dvzmpyf8rv69318anrwg`, `j97ckpqqxzkj19gbw70dkwhk218ahj6w`
+- Admissible-signal extraction cluster: `j97bt3nyk8vhkpchhncydmk7v18av5ta`, `j97449t2gg1cqfff5nrqf1fa5d8atd0x`, `j9718kahkvm0zmm4watm7bt0kd8avqh4`, `j978rj9jtfn8y8wkhrfrxpgrhd8as7dy`, `j97cs7s2wqevgarwtn5vtjc2rh8ab3rq`
+- Correction-surface extraction cluster: `j977wwdpwejgazdj8mea667d998ax4ms`, `j974dj9b7efc9g420nm765sw298ayfbj`, `j9777kbqpsnwfbjh5rvfq2bqmn8ax01d`, `j97bg9wewsss2gge7xba13q4058awb8q`, `j97d5b98j50xca1sh2bk18msh18ax806`
+- Weighting-function extraction cluster: `j974w97y32xk496mm83r05nyms8c60tc`, `j971e93bmbyhgjtsdfwsvy2d5d8c6sea`, `j972es5zkfz17y8a4r6rvfkxa58c4dxm`, `j973kajnet5hvv4d2dmg9mpehn8c6vvq`, `j977y2zzwg0w054n6t8xvm8fa18ajxwm`, `j972va646xannqrbmdcd7pvk418c55yq`
+
 ## 2026-08-11 - The Pitch Field
 
 - `pitch field` -> `melodic constraint`: scale structure can be understood as a distribution of locally cheap and costly pitch motions.
