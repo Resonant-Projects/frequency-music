@@ -1311,17 +1311,18 @@
     "generatedAt": "2026-05-14T00:26:53.548Z"
   },
   "the-control-surface": {
-    "excerpt": "Across adaptive games, generative models, live-room separation, and neural codecs, composition emerges through control surfaces that steer musical state between intention and waveform.",
+    "excerpt": "A musical parameter becomes powerful when it exposes a control surface—not just a value. This essay maps how pitch, time, evidence, correction, and salience become compositional regimes.",
     "tags": [
-      "AI-music",
       "composition",
       "signal-processing",
-      "acoustics",
-      "perception"
+      "perception",
+      "mathematical-music-theory",
+      "AI-music",
+      "acoustics"
     ],
     "category": "interdisciplinary",
-    "contentHash": "9a1e7336ce91ea3debe7d2955acc2b67d71394aa9864ce7a9d20c9b4f9923d8a",
-    "generatedAt": "2026-08-01T21:33:23.423Z"
+    "contentHash": "d7757c4cc5a00efe64325b26b6e3fa26a2f6d1e72fa46eaa2e760c30c2cbfe51",
+    "generatedAt": "2026-08-12T03:08:51.431Z"
   },
   "the-control-surface-before-the-utterance": {
     "excerpt": "Timing is a control surface, not decoration-dialogue systems, music generation, and ensemble playing all hinge on when to enter, yield, and overlap rather than just what to say.",
