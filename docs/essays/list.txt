@@ -75,6 +75,7 @@ the-carrying-medium
 the-category-that-leaks
 the-clock-inside-the-listener
 the-codec-ear
+the-chord-that-becomes-texture
 the-coherence-contract
 the-coherence-imperative
 the-color-of-chaos

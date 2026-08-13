@@ -216,3 +216,18 @@ Evidence context:
 - Inharmonicity/noisiness extraction: `j9762aqawbwmrwvhgfwrns5m398aj4d3`
 - Trajectory variance birdsong extraction: `j97ckpqqxzkj19gbw70dkwhk218ahj6w`
 - Harmonic complex tone extraction: source title "Musical phrase perception from monophonic harmonic complex tones" in recent candidates
+
+## 2026-08-13 - The Chord That Becomes Texture
+
+- `pitch-to-texture threshold` -> `supersaw synthesis`: dense detuned sawtooth layers can preserve chordal content while making mass, width, and impact the primary percept.
+- `pitch authority` -> `harmonic density`: pitch remains in the signal, but its authority is redistributed as voices, beating, and spectral width increase.
+- `melodic constraint` -> `scale structure`: local step accessibility can organize scale material before harmonic-ratio explanation becomes decisive.
+- `harmonic complex tone` -> `implied polyphony`: one source can imply multiple melodic lines when upper harmonics become pitch-bearing evidence.
+- `texture-as-harmony` -> `composition control`: a producer can treat harmony as a temporary state of texture rather than texture as ornamented harmony.
+
+Evidence context:
+
+- Super*Saw / A. G. Cook extraction: `j97c0c18c59gs2hkhr70xgnyys8aq40b`
+- Pitch-strength extraction: `j978yxjgnckm2px83ae5dqwgq18ajxwm`
+- Global scale-structure extraction: `j97ed8sbvnndbsxqxm0p6k4vkn8ap7jh`
+- Harmonic complex-tone source/candidate: `jx7athsx7pfkmycrmqerst9krx8aj9xa`
