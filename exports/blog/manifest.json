@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-12T03:08:54.888Z",
+  "generatedAt": "2026-08-13T19:08:13.361Z",
   "items": [
+    {
+      "slug": "the-chord-that-becomes-texture",
+      "path": "essays/the-chord-that-becomes-texture.md",
+      "title": "The Chord That Becomes Texture",
+      "publishDate": "2026-08-13",
+      "category": "perception"
+    },
     {
       "slug": "the-admissible-signal",
       "path": "essays/the-admissible-signal.md",
