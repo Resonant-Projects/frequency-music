@@ -4403,6 +4403,20 @@
     "contentHash": "e75d87c3b294730968842df2248bf5d0c3475057c83c98200057de1570b24c25",
     "generatedAt": "2026-04-10T18:40:42.617Z"
   },
+  "the-structured-tone": {
+    "excerpt": "Tone is not raw material before structure; pitch strength, inharmonicity, harmonic partials, and vocal plasticity show tonal organization itself can be composed.",
+    "tags": [
+      "perception",
+      "psychoacoustics",
+      "acoustics",
+      "composition",
+      "signal-processing",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "db6d29baff9c5bd00119badee30ed3368627bf235528ad4ffa56b2373db73f79",
+    "generatedAt": "2026-08-14T03:03:00.000Z"
+  },
   "the-style-inside-the-coordinates": {
     "excerpt": "Tonnetz geometry, basso continuo griffs, and score-understanding benchmarks point to one compositional principle: representation decides which motions, styles, and meanings can leave fingerprints.",
     "tags": [

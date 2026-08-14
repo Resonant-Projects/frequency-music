@@ -2,6 +2,22 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-14 - The Structured Tone
+
+- `structured tone` -> `pitch strength`: pitch salience becomes one dimension of a broader tonal organization control.
+- `structured tone` -> `inharmonic organization`: discrete-partial inharmonicity can preserve tonal structure differently than broadband noise.
+- `structured tone` -> `harmonic-complex multipitch`: a single source can distribute musical function across upper partials that begin to act like voices.
+- `structured tone` -> `developmental vocal plasticity`: tonal, lower-flatness spectra may provide handles for learnable vocal transformation.
+- `structured tone` -> `composition control`: a musician can keep nominal pitch fixed while moving where tonal evidence lives in the spectrum.
+- `partial voice` -> `internal counterpoint`: polyphonic implication can emerge from one monophonic source when upper partials gain enough authority.
+
+Evidence context:
+
+- Pitch-strength extraction: `j978yxjgnckm2px83ae5dqwgq18ajxwm`
+- Inharmonicity/noisiness extraction: `j9762aqawbwmrwvhgfwrns5m398aj4d3`
+- Harmonic-complex-tone candidate source: `jx7athsx7pfkmycrmqerst9krx8aj9xa`
+- Trajectory-variance birdsong extraction: `j97ckpqqxzkj19gbw70dkwhk218ahj6w`
+
 ## 2026-08-12 - The Control Surface
 
 - `control surface` -> `compositional intervention`: a sound becomes practically musical where hidden structure can be steered.

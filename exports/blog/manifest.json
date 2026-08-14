@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-13T19:08:13.361Z",
+  "generatedAt": "2026-08-14T03:07:23.951Z",
   "items": [
+    {
+      "slug": "the-structured-tone",
+      "path": "essays/the-structured-tone.md",
+      "title": "The Structured Tone",
+      "publishDate": "2026-08-14",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-chord-that-becomes-texture",
       "path": "essays/the-chord-that-becomes-texture.md",
