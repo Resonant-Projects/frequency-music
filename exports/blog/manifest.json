@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-14T03:09:27.208Z",
+  "generatedAt": "2026-08-14T11:08:10.848Z",
   "items": [
+    {
+      "slug": "the-coordinate-of-evidence",
+      "path": "essays/the-coordinate-of-evidence.md",
+      "title": "The Coordinate Of Evidence",
+      "publishDate": "2026-08-14",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-structured-tone",
       "path": "essays/the-structured-tone.md",

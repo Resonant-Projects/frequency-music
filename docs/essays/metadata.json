@@ -1408,6 +1408,20 @@
     "contentHash": "15ef8f5a150eb2256f7c7d29c758ee7ac7e003aedcbed902a348e35ca1c22023",
     "generatedAt": "2026-08-01T21:33:26.638Z"
   },
+  "the-coordinate-of-evidence": {
+    "excerpt": "Across scales, deepfake detection, spatial audio, and pitch design, the key question is where musical evidence lives—and how exposing that coordinate makes it composable.",
+    "tags": [
+      "perception",
+      "AI-music",
+      "acoustics",
+      "signal-processing",
+      "composition",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "24fdcc0f7dfdfc0d0af0fb5a7474261e01ab16a44ed3ab12223e20924d22d21f",
+    "generatedAt": "2026-08-14T11:08:07.991Z"
+  },
   "the-coordinate-system-hears-first": {
     "excerpt": "Across Tonnetz geometry, geo-acoustic embeddings, sound-speed physics, spatial localization, and speech tokenization, sound becomes composable only after it is placed in a coordinate system that…",
     "tags": [
