@@ -2,6 +2,21 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-14 - The Coordinate Of Evidence
+
+- `coordinate of evidence` -> `melodic constraint`: global scale structure can be carried by local motion cost rather than only consonant-ratio targets.
+- `coordinate of evidence` -> `semantic alignment`: deepfake detection becomes fairer when song meaning is held still and shortcut evidence is removed.
+- `coordinate of evidence` -> `spatial representation probing`: source position and room acoustics are separate evidence coordinates inside pretrained encoders.
+- `coordinate of evidence` -> `pitch strength`: production controls improve when pitch authority is exposed as a low-level perceptual coordinate.
+- `evidence coordinate` -> `instrument design`: a tool becomes playable when the musician can steer the feature actually carrying the musical proof.
+
+Evidence context:
+
+- Global scale-structure extraction: `j97ed8sbvnndbsxqxm0p6k4vkn8ap7jh`
+- Echoes semantic-alignment extraction: `j971f5dxbtd4xkjge9gcj6y3p18aqmfv`
+- SARL spatial-representation extraction: `j971crpns779mes78xt6s6794s8aq2d3`
+- Pitch-strength extraction: `j978yxjgnckm2px83ae5dqwgq18ajxwm`
+
 ## 2026-08-14 - The Structured Tone
 
 - `structured tone` -> `pitch strength`: pitch salience becomes one dimension of a broader tonal organization control.
