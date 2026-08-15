@@ -1,5 +1,6 @@
 ---
 title: "The Shortcut That Disappears"
+publishDate: 2026-08-15
 excerpt: "When semantic, annotation, and spatial shortcuts disappear, audio representations have to reveal what evidence they really preserve."
 category: "interdisciplinary"
 tags:
