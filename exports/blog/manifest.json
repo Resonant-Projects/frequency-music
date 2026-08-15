@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-15T03:07:54.342Z",
+  "generatedAt": "2026-08-15T11:08:20.169Z",
   "items": [
+    {
+      "slug": "the-degrees-of-freedom-that-remain",
+      "path": "essays/the-degrees-of-freedom-that-remain.md",
+      "title": "the-degrees-of-freedom-that-remain",
+      "publishDate": "2026-08-15",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-test-time-instrument",
       "path": "essays/the-test-time-instrument.md",

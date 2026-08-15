@@ -1697,6 +1697,19 @@
     "contentHash": "8a230addc837afc6928f57ce64d6df5dcfbc2b8e05ea6237572e6d3fa03b51d3",
     "generatedAt": "2026-05-25T00:26:00.000Z"
   },
+  "the-degrees-of-freedom-that-remain": {
+    "excerpt": "A musical system is defined not only by what it generates, but by what remains editable: room behavior, alignment, pitch, latent timbre, and separable stems.",
+    "tags": [
+      "AI-music",
+      "composition",
+      "signal-processing",
+      "acoustics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "296c76360edfbce820f98f26c44ddd07130be32aaae1aa98965bf901b6cde37e",
+    "generatedAt": "2026-08-15T11:08:16.471Z"
+  },
   "the-density-horizon": {
     "excerpt": "At ~24-30 notes per second, individual musical notes dissolve into continuous texture-a critical phase transition where discrete melodic perception gives way to statistical texture listening.",
     "tags": [
