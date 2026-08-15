@@ -1,6 +1,6 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-15T11:08:20.169Z",
+  "generatedAt": "2026-08-15T19:06:12.139Z",
   "items": [
     {
       "slug": "the-degrees-of-freedom-that-remain",
@@ -2639,6 +2639,13 @@
       "path": "essays/the-codec-ear.md",
       "title": "The Codec Ear: What Neural Audio Compression Reveals About Musical Perception",
       "publishDate": "2026-02-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-shortcut-that-disappears",
+      "path": "essays/the-shortcut-that-disappears.md",
+      "title": "The Shortcut That Disappears",
+      "publishDate": null,
       "category": "interdisciplinary"
     }
   ]

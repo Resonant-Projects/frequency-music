@@ -4069,6 +4069,20 @@
     "contentHash": "4ca5099e10a8b8faf5b0defb0473229da548d2b58bc4a4b89cf295cb801372f9",
     "generatedAt": "2026-04-10T18:40:19.287Z"
   },
+  "the-shortcut-that-disappears": {
+    "excerpt": "When semantic, annotation, and spatial shortcuts disappear, audio representations have to reveal what evidence they really preserve.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "perception",
+      "composition",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "45c8cc6a79667f5e00b8702f1001cd255c11209afa96bc7ed166ef8b2c9c2b41",
+    "generatedAt": "2026-08-15T19:05:57.540Z"
+  },
   "the-signal-structure-gap": {
     "excerpt": "Machines excel at detecting acoustic surfaces-timbre, noise, spectral artifacts-while remaining blind to musical structure: harmony, form, and coherence.",
     "tags": [

@@ -194,6 +194,21 @@ Evidence context:
 - EG-VAE guitar-tone extraction: `j977y2zzwg0w054n6t8xvm8fa18ajxwm`
 - AffectDF expressive voice-authenticity extraction: `j972va646xannqrbmdcd7pvk418c55yq`
 
+## 2026-08-15 - The Shortcut That Disappears
+
+- `shortcut collapse` -> `semantic alignment`: matching high-level musical content forces detectors to rely on residual signal/process evidence instead of genre or descriptor mismatch.
+- `shortcut collapse` -> `boundary trimming`: tightening annotation tolerance tests whether structure embeddings carry precise boundary evidence rather than broad-neighborhood plausibility.
+- `shortcut collapse` -> `spatial representation bias`: separating source-level and room-level probes reveals when a model preserves localization cues more readily than room acoustics.
+- `semantic alignment` -> `music deepfake detection`: provider-diverse, waveform- or descriptor-conditioned examples make deepfake detection a test of transferable generation cues.
+- `barwise embeddings` -> `correlation block-matching`: bar-level representations become musically useful when downstream matching exposes recurring formal blocks.
+- `room-level acoustics` -> `composition control`: RT60, volume, and shape can be held apart from source identity and position as independent musical variables.
+
+Evidence context:
+
+- Echoes music deepfake extraction: `j97bt3nyk8vhkpchhncydmk7v18av5ta`
+- Music structure analysis extraction: `j97449t2gg1cqfff5nrqf1fa5d8atd0x`
+- SARL spatial-audio probing extraction: `j9718kahkvm0zmm4watm7bt0kd8avqh4`
+
 ## 2026-08-10 - The Correction Surface
 
 - `correction surface` -> `alignment surface`: skip and repeat failures become trainable when TTS errors are represented as latent trajectory perturbations.
