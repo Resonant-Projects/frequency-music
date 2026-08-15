@@ -2,6 +2,24 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-15 - The Degrees Of Freedom That Remain
+
+- `reachable degrees of freedom` -> `test-time evidence`: what remains knowable at action time determines which musical transformations can still be played.
+- `reachable degrees of freedom` -> `room fingerprint`: measured target-position evidence gives spatial control that inferred-room protocols do not.
+- `reachable degrees of freedom` -> `alignment relation`: score time and performed time become editable only after a binding protocol preserves their relation.
+- `reachable degrees of freedom` -> `symbolic equivariance`: pitch and time shifts are compositional handles when embedding distance preserves transformation magnitude.
+- `reachable degrees of freedom` -> `frequency-localized latent basis`: pitch and timbre become steerable when latent audio is refactored into reachable time-frequency coordinates.
+- `reachable degrees of freedom` -> `stem-level output contract`: separable vocal and accompaniment stems preserve post-generation action paths.
+- `output interface` -> `compositional intervention`: a generated artifact is more instrument-like when later editing surfaces remain exposed.
+
+Evidence context:
+
+- Room-acoustic input-availability extraction: `j978rj9jtfn8y8wkhrfrxpgrhd8as7dy`
+- MulTTiPop audio-MIDI alignment extraction: `j9710z6b29rheh8h9zfkkj6acd8acydm`
+- MIDI-RAE-JEPA symbolic equivariance extraction: `j970n5akmsx33bh4mbg65yfmex8ape41`
+- GLRF frequency-localized latent extraction: `j97cs7s2wqevgarwtn5vtjc2rh8ab3rq`
+- WanSong dual-stem song-generation extraction: `j97f7yq3rv85mv7jkhvy1r0fbx8arevy`
+
 ## 2026-08-15 - The Test-Time Instrument
 
 - `test-time instrument` -> `input availability`: what the system can know at action time changes the musical object it can play.
