@@ -2,6 +2,24 @@
 
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
+## 2026-08-15 - The Test-Time Instrument
+
+- `test-time instrument` -> `input availability`: what the system can know at action time changes the musical object it can play.
+- `test-time instrument` -> `room fingerprint`: a target impulse response can become a position-specific instrument rather than transferable acoustic knowledge.
+- `test-time instrument` -> `audio-MIDI alignment`: anchor beats, beat tracking, and tempo warping define which temporal evidence binds score to recording.
+- `test-time instrument` -> `equivariant symbolic representation`: pitch and time shifts become playable coordinates when the representation preserves their measurable distance.
+- `test-time instrument` -> `frequency-localized latent basis`: pitch control improves when latent audio features are re-expressed in a basis the instrument can reach.
+- `test-time instrument` -> `stem-level output contract`: generated vocals and accompaniment become editable when separability is exposed at output time.
+- `evidence contract` -> `composition control`: a piece can compose with when evidence becomes available, which coordinates remain separable, and which layers are exposed for action.
+
+Evidence context:
+
+- Room-acoustic input-availability extraction: `j978rj9jtfn8y8wkhrfrxpgrhd8as7dy`
+- MulTTiPop audio-MIDI alignment extraction: `j9710z6b29rheh8h9zfkkj6acd8acydm`
+- MIDI-RAE-JEPA symbolic equivariance extraction: `j970n5akmsx33bh4mbg65yfmex8ape41`
+- GLRF frequency-localized latent extraction: `j97cs7s2wqevgarwtn5vtjc2rh8ab3rq`
+- WanSong dual-stem song-generation extraction: `j97f7yq3rv85mv7jkhvy1r0fbx8arevy`
+
 ## 2026-08-14 - The Coordinate Of Evidence
 
 - `coordinate of evidence` -> `melodic constraint`: global scale structure can be carried by local motion cost rather than only consonant-ratio targets.
