@@ -224,6 +224,23 @@ Evidence context:
 - Music structure analysis extraction: `j97449t2gg1cqfff5nrqf1fa5d8atd0x`
 - SARL spatial-audio probing extraction: `j9718kahkvm0zmm4watm7bt0kd8avqh4`
 
+## 2026-08-16 - The Chain That Makes The Sound
+
+- `executable sound chain` -> `mixing style`: style can be represented as ordered, variable-length per-stem FX decisions rather than only as a global timbral target.
+- `executable sound chain` -> `tone realization`: lexical and contour tones become controllable when orthography, unit inventory, and contextual phonological rules remain explicit.
+- `executable sound chain` -> `model capacity cliff`: pruning is musically safe only while the remaining architecture can still carry the transformations needed for intelligible and natural sound.
+- `executable sound chain` -> `feature parity`: train/inference mel-filterbank or rotary-embedding mismatches can break the sound-making procedure without changing the nominal model.
+- `executable sound chain` -> `restoration trajectory`: denoising and dereverberation can be treated as a learned path from corrupted to clean audio, not only as endpoint matching.
+- `effect-chain syntax` -> `composition control`: processor order, parameters, and stem assignment become a compositional grammar when exposed as editable structure.
+- `procedure location` -> `composition concept`: a sound parameter becomes musically actionable when it has a clear place in the chain that produces the sound.
+
+Evidence context:
+
+- StemFX extraction: `j972b99xapwke0nsrs9mydqez58b2v83`
+- TTSYoruba extraction source: `jx70dp7xbjqv3d4gdjx5gjyrnd8b037b`
+- Hindi depth-pruning TTS extraction: `j9700sw1kkjkwtyhp6427r5n0x8b1erd`
+- Schrodinger Bridge Mamba extraction: `j97d337kfk4agn4a6h0vqktdcn8b3b4e`
+
 ## 2026-08-10 - The Correction Surface
 
 - `correction surface` -> `alignment surface`: skip and repeat failures become trainable when TTS errors are represented as latent trajectory perturbations.
