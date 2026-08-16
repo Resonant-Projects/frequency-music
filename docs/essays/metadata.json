@@ -1056,6 +1056,19 @@
     "contentHash": "4c144ea1918b4020628bda5d3a5cf3c5d1eee00e29a19d8da414b6d695ba141e",
     "generatedAt": "2026-04-17T03:05:51.834Z"
   },
+  "the-chain-that-makes-the-sound": {
+    "excerpt": "Audio models do more than reproduce sound: they learn chains of transformations that keep it possible.",
+    "tags": [
+      "AI-music",
+      "composition",
+      "signal-processing",
+      "information-theory",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "b6db0095626e94eba57ff039731611af39489797d88c90600f4ce4f603dae7b0",
+    "generatedAt": "2026-08-16T11:07:40.408Z"
+  },
   "the-change-vector": {
     "excerpt": "The change vector reframes sound as directed motion: a learned tendency toward clarity, alignment, continuity, or transformation. What a sound is becoming becomes a compositional parameter.",
     "tags": [

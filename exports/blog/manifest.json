@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-16T03:08:11.688Z",
+  "generatedAt": "2026-08-16T11:07:43.447Z",
   "items": [
+    {
+      "slug": "the-chain-that-makes-the-sound",
+      "path": "essays/the-chain-that-makes-the-sound.md",
+      "title": "The Chain That Makes the Sound",
+      "publishDate": "2026-08-16",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-residue-test",
       "path": "essays/the-residue-test.md",
