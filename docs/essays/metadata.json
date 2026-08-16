@@ -3775,6 +3775,20 @@
     "contentHash": "c9bd2906347414d0610a4333673a8c4ba3019934db779469405ac6f3a5cdb9da",
     "generatedAt": "2026-06-01T17:34:00.000Z"
   },
+  "the-residue-test": {
+    "excerpt": "The residue test asks what musical evidence survives after easy cues—genre, timing, source location—are equalized, revealing process traces, structure, room acoustics, and compositional depth.",
+    "tags": [
+      "AI-music",
+      "perception",
+      "signal-processing",
+      "acoustics",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6c0c70857509a4d2da7164dedb9f98bdf350e430097381fc0ea78bb6ef37c4d6",
+    "generatedAt": "2026-08-16T03:08:08.745Z"
+  },
   "the-residue-that-remains": {
     "excerpt": "Tonnetz geometry, basso continuo griffs, and score-understanding benchmarks show that every musical representation leaves a residue; the compositional opportunity is to make that omission playable.",
     "tags": [

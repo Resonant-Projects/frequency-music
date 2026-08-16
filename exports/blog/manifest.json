@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-15T19:08:48.706Z",
+  "generatedAt": "2026-08-16T03:08:11.688Z",
   "items": [
+    {
+      "slug": "the-residue-test",
+      "path": "essays/the-residue-test.md",
+      "title": "The Residue Test",
+      "publishDate": "2026-08-16",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-degrees-of-freedom-that-remain",
       "path": "essays/the-degrees-of-freedom-that-remain.md",
