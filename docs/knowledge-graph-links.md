@@ -194,6 +194,21 @@ Evidence context:
 - EG-VAE guitar-tone extraction: `j977y2zzwg0w054n6t8xvm8fa18ajxwm`
 - AffectDF expressive voice-authenticity extraction: `j972va646xannqrbmdcd7pvk418c55yq`
 
+## 2026-08-16 - The Residue Test
+
+- `residue test` -> `shortcut collapse`: after an easy proxy is removed, the remaining evidence reveals whether the representation learned the intended musical property.
+- `residue test` -> `semantic alignment`: matched genre, form, and descriptor cues force deepfake detection toward process-level artifacts and transferable generation traces.
+- `residue test` -> `boundary trimming`: narrower annotation tolerance exposes whether barwise embeddings carry precise structural transition evidence.
+- `residue test` -> `spatial representation bias`: holding source cues apart from room cues tests whether an encoder preserves environmental evidence, not only localization.
+- `residual evidence` -> `composition control`: composers can neutralize obvious descriptors and make the remaining signal layer carry the musical contrast.
+- `room-level acoustics` -> `residual evidence`: RT60, room volume, shape, and reflection history can survive as meaningful information after source identity and position are controlled.
+
+Evidence context:
+
+- Echoes music deepfake extraction: `j97bt3nyk8vhkpchhncydmk7v18av5ta`
+- Music structure analysis extraction: `j97449t2gg1cqfff5nrqf1fa5d8atd0x`
+- SARL spatial-audio probing extraction: `j9718kahkvm0zmm4watm7bt0kd8avqh4`
+
 ## 2026-08-15 - The Shortcut That Disappears
 
 - `shortcut collapse` -> `semantic alignment`: matching high-level musical content forces detectors to rely on residual signal/process evidence instead of genre or descriptor mismatch.
