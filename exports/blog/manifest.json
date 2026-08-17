@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-16T11:07:43.447Z",
+  "generatedAt": "2026-08-17T03:09:41.557Z",
   "items": [
+    {
+      "slug": "the-scene-takes-the-cue",
+      "path": "essays/the-scene-takes-the-cue.md",
+      "title": "The Scene Takes The Cue",
+      "publishDate": "2026-08-17",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-chain-that-makes-the-sound",
       "path": "essays/the-chain-that-makes-the-sound.md",

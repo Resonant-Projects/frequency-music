@@ -3970,6 +3970,20 @@
     "contentHash": "756cf24814b0c59a15896c55718a5c5d65878571c6bc0dd707970bb305f732ed",
     "generatedAt": "2026-05-08T00:26:57.610Z"
   },
+  "the-scene-takes-the-cue": {
+    "excerpt": "Sound is becoming more than an object: it can cue visuals, extract voices, preserve dialogue memory, and reorganize a mixed scene. A compositional framework for hearing cross-modal causality.",
+    "tags": [
+      "AI-music",
+      "perception",
+      "signal-processing",
+      "composition",
+      "acoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "1b53383b3b618c32738520e870ad6f17ee8e4284d693d8b2969d854ed5a51e74",
+    "generatedAt": "2026-08-17T03:09:36.490Z"
+  },
   "the-schema-is-the-score": {
     "excerpt": "Recent audio systems are converging on explicit schemas, uncertainty bands, and layered representations, suggesting that good listening tools preserve distinctions instead of collapsing them into…",
     "tags": [
