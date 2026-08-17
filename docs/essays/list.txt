@@ -281,6 +281,7 @@ the-seam-that-teaches
 the-self-measuring-sound
 the-self-measuring-voice
 the-self-teaching-signal
+the-scene-takes-the-cue
 the-semantic-split
 the-separable-sound
 the-shape-of-musical-choice

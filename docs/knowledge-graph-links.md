@@ -345,3 +345,19 @@ Evidence context:
 - Pitch-strength extraction: `j978yxjgnckm2px83ae5dqwgq18ajxwm`
 - Global scale-structure extraction: `j97ed8sbvnndbsxqxm0p6k4vkn8ap7jh`
 - Harmonic complex-tone source/candidate: `jx7athsx7pfkmycrmqerst9krx8aj9xa`
+
+## 2026-08-17 - The Scene Takes The Cue
+
+- `cue graph` -> `cross-modal control`: a signal can act as evidence or instruction for another perceptual layer, not only as the object being rendered.
+- `music-driven scene generation` -> `composition control`: musical density, affect, rhythm, and sectional shape can steer visual or spatial behavior.
+- `audio-visual enhancement` -> `cross-modal evidence`: visual timing and language-shaped rewards can decide which speech features should survive enhancement.
+- `target speaker extraction` -> `foreground authority`: an enrollment cue reorganizes a mixture by naming which voice is allowed to become foreground.
+- `dialogue memory` -> `prosodic continuity`: long-form spoken synthesis needs conversational state, not just isolated utterance quality.
+- `cue graph` -> `scene authority`: composition can route authority among sound, image, room, speaker identity, and memory traces.
+
+Evidence context:
+
+- Bring Music The Horizon extraction: `j97ew31wh4x6nr72xa9y9n7y3s8amm58`
+- LLM-guided audio-visual speech enhancement extraction: `j974yd33462rqhtvpb249eyccx8anewd`
+- ZipL-Dialog long-form dialogue synthesis extraction: `j976e5vb7x58dvzmpyf8rv69318anrwg`
+- REAL-TSE target-speaker extraction extraction: `j97bg9wewsss2gge7xba13q4058awb8q`
