@@ -1,11 +1,18 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-18T03:10:38.045Z",
+  "generatedAt": "2026-08-18T19:08:28.497Z",
   "items": [
     {
       "slug": "the-relational-ear",
       "path": "essays/the-relational-ear.md",
       "title": "The Relational Ear",
+      "publishDate": "2026-08-18",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-unmeasured-coordinate",
+      "path": "essays/the-unmeasured-coordinate.md",
+      "title": "The Unmeasured Coordinate",
       "publishDate": "2026-08-18",
       "category": "interdisciplinary"
     },
