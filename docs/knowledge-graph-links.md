@@ -1,5 +1,13 @@
 # Knowledge Graph Links
 
+## 2026-08-18 - Relational Ear
+
+- New essay: `docs/essays/the-relational-ear.md`
+- Proposed concept: **relational ear** - listening in which musical knowledge depends on relations among sources, performers, rooms, bodies, and contexts rather than isolated labels.
+- Link to extraction concepts: musician communication, performer intention, stable musical spaces, spatial sound reasoning, binaural audio, acoustic scene analysis, 3D sound-field reconstruction, Acoustic Transfer Function magnitude, phonation, voice quality, context-aware generative music, in-vehicle music systems.
+- Related existing concepts: source identity, operational identity, evidence horizon, proxy listener, calibrated listening, recoverable window, spatial representation bias.
+- Source extraction IDs: `j979m5d7j46g5gpyers5f4bwq18cmn2f`, `j974w4tqezzhxp1jn0np02qnd18cntg1`, `j975hrvpnqe2jasp5e97dvhb0d8cm382`, `j972kpmt82f8db6453arh3x87d8cmrg3`, `j978v8dn0vqrw2d4p4rmg5xt318cm87d`, `j970d2benvkagep1rbkay9fexh8cq1em`.
+
 Durable in-repo concept links captured when live Convex graph writes are unavailable.
 
 ## 2026-08-15 - The Degrees Of Freedom That Remain
