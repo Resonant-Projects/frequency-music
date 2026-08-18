@@ -1,5 +1,19 @@
 # Knowledge Graph Links
 
+## 2026-08-18 - The Unmeasured Coordinate
+
+- New essay: `docs/essays/the-unmeasured-coordinate.md`
+- Proposed concept: **unmeasured coordinate** - a musically important dimension required for action but absent, weakly encoded, or only indirectly recoverable in the representation.
+- `unmeasured coordinate` -> `sparse spatial sampling`: high-order room detail is needed for Ambisonics but only partially captured by sparse or irregular arrays.
+- `unmeasured coordinate` -> `posterior sampling`: generative reconstruction can enforce measurement consistency while inferring plausible spatial structure beyond the direct observation.
+- `unmeasured coordinate` -> `transposition equivalence`: local piano-roll statistics can be learned while the pitch-translation relation remains poorly preserved.
+- `unmeasured coordinate` -> `cross-modal cue binding`: acoustic and visual cues can be individually extracted yet fail to become a shared situational judgment.
+- `missing coordinate` -> `composition control`: composers can decide which musical dimension is measured, inferred, withheld, or made perceptibly unstable.
+- Related existing concepts: coordinate of evidence, evidence carrier, relational ear, spatial representation bias, test-time instrument, admissible signal.
+- Source extraction IDs: `j974sa77g2r17h4abcfrweqtqn8cpr3g`, `j974jrzc77gtf2xvzj7tag560s8cqdjj`, `j97d4x09m35xs3z5ga8w6x7f7h8cpyjf`.
+
+Durable in-repo concept links captured when live Convex graph writes are unavailable.
+
 ## 2026-08-18 - Relational Ear
 
 - New essay: `docs/essays/the-relational-ear.md`
