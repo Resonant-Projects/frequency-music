@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-18T19:08:28.497Z",
+  "generatedAt": "2026-08-19T03:06:18.962Z",
   "items": [
+    {
+      "slug": "the-reachable-identity",
+      "path": "essays/the-reachable-identity.md",
+      "title": "The Reachable Identity",
+      "publishDate": "2026-08-19",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-relational-ear",
       "path": "essays/the-relational-ear.md",

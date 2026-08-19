@@ -1,5 +1,20 @@
 # Knowledge Graph Links
 
+## 2026-08-19 - The Reachable Identity
+
+- New essay: `docs/essays/the-reachable-identity.md`
+- Proposed concept: **reachable identity** - the layer of a sound, structure, or process that remains recognizable because path, bandwidth, perception, or representation makes it easier to preserve than its alternatives.
+- `reachable identity` -> `metastability`: phase transitions can settle into nearest accessible states rather than globally optimal ones.
+- `reachable identity` -> `critical band processing`: perceptual frequency bins determine which spectral separations remain actionable to the ear.
+- `reachable identity` -> `semi-fragile watermarking`: benign transformations preserve one identity carrier while semantic edits destroy it.
+- `reachable identity` -> `ultra-low bitrate intelligibility`: extreme compression reveals a separable speech layer that can survive without full acoustic fidelity.
+- `reachable identity` -> `phase-aware coherence`: phase and pitch equivariance preserve stem belonging better than semantic labels alone.
+- `reachable identity` -> `rhythm formants`: low-frequency amplitude modulation can carry language or style identity before fine spectral detail is added.
+- Related existing concepts: evidence carrier, weighting function, control surface, admissible signal, unmeasured coordinate, residue test.
+- Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j977tjh3ka74caprsf86d4e3y185maah`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j978zvv39t3wqdw578e6g057b18683jf`, `j9793cmwt6f6t1s819xdqpay7x854g86`, `j97dmcxraattrt4e9gsc7dsp4185rj2e`.
+
+Durable in-repo concept links captured because live Convex graph writes failed during this cron run.
+
 ## 2026-08-18 - The Unmeasured Coordinate
 
 - New essay: `docs/essays/the-unmeasured-coordinate.md`
