@@ -2554,20 +2554,6 @@
     "contentHash": "5afc25362ffd902c3365192e2f09c4f5fa2d7ec9a04856ff176d7bdaa2b409e9",
     "generatedAt": "2026-06-17T19:04:58.712Z"
   },
-  "the-input-contract": {
-    "excerpt": "Input availability, test protocols, stems, microphones, and corpus coverage define what an audio system can honestly claim to know.",
-    "tags": [
-      "signal-processing",
-      "AI-music",
-      "composition",
-      "acoustics",
-      "perception",
-      "information-theory"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "da35aa1df3b585e1e88148c2935a95d061b939cb3ade95ca41d038c31df53d3e",
-    "generatedAt": "2026-08-21T11:05:00.000Z"
-  },
   "the-inference-chain": {
     "excerpt": "Musical understanding behaves like an inference chain: graph paths, continuo realizations, and score-reading systems must carry constraints across layers while leaving style-bearing freedom intact.",
     "tags": [
@@ -2609,6 +2595,20 @@
     "category": "interdisciplinary",
     "contentHash": "4a467d5488284ad4a4ac1e926bb5dd0a66d37cae753e10c62f67cbe9e4a09118",
     "generatedAt": "2026-04-10T18:38:41.803Z"
+  },
+  "the-input-contract": {
+    "excerpt": "Input availability, test protocols, stems, microphones, and corpus coverage define what an audio system can honestly claim to know.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "composition",
+      "acoustics",
+      "perception",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "da35aa1df3b585e1e88148c2935a95d061b939cb3ade95ca41d038c31df53d3e",
+    "generatedAt": "2026-08-21T11:05:00.000Z"
   },
   "the-instruction-under-the-sound": {
     "excerpt": "A sound can carry an instruction beneath its audible surface-a traversal rule, hidden signature, or performative constraint that survives musical transformation.",
