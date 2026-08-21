@@ -59,8 +59,10 @@ SHA.
    revalidation.
 
 The workflow can also be run manually from GitHub Actions with
-**Publish Essays -> Run workflow**. Manual dispatch is the recovery path for a
-stale export or a failed prior run.
+**Publish Essays -> Run workflow**. Manual dispatch always calls revalidation,
+even when the export is already current, so it is the recovery path for a
+stale export or for a prior run that pushed successfully and then failed while
+revalidating.
 
 ### Why this cannot loop
 
@@ -198,12 +200,17 @@ and `main` moves under it regularly. A failure here means one of:
 ### Website ISR is not revalidated
 
 First confirm the export actually changed — an unchanged export skips
-revalidation by design. If it did change, confirm both revalidation secrets
-exist and still match the values configured for the `resonant-projects`
-project. A 401 points to `RPROJ_ISR_BYPASS_TOKEN`; a Vercel security checkpoint
-or 429 points to `RPROJ_VERCEL_AUTOMATION_BYPASS_SECRET`. Replace the affected
-secret and manually dispatch **Publish Essays**. Do not commit or print either
-value.
+revalidation on push, while a manual dispatch forces it for recovery. If it
+did change, confirm both revalidation secrets exist and still match the values
+configured for the `resonant-projects` project. A 401 points to
+`RPROJ_ISR_BYPASS_TOKEN`; a Vercel security-checkpoint response points to the
+automation bypass configuration. A 429 is rate limiting, not proof of an
+invalid secret: inspect the captured headers and body, honor `Retry-After`, and
+retry with bounded backoff before rotating credentials. The workflow performs
+two bounded retries automatically. The endpoint returns 502 with per-path
+statuses when one of its nested page requests fails; use those statuses to
+identify the affected route. After correcting a persistent failure, manually
+dispatch **Publish Essays**. Do not commit or print either secret value.
 
 ### Revalidation succeeds but the site is stale
 

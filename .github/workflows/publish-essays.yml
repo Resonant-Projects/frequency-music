@@ -137,7 +137,10 @@ jobs:
           exit 1
 
       - name: Revalidate Resonant Projects pages
-        if: steps.commit.outputs.changed == 'true'
+        # A manual run is also the recovery path when a prior run pushed the
+        # export but failed here. In that case the export is already current,
+        # so `changed` is false even though revalidation still needs to run.
+        if: steps.commit.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         env:
           ISR_BYPASS_TOKEN: ${{ secrets.RPROJ_ISR_BYPASS_TOKEN }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.RPROJ_VERCEL_AUTOMATION_BYPASS_SECRET }}
@@ -161,14 +164,21 @@ jobs:
           # `publish-essays` concurrency group and stall every queued run
           # behind it.
           response_file="${RUNNER_TEMP}/rproj-revalidate.json"
+          headers_file="${RUNNER_TEMP}/rproj-revalidate.headers"
           if ! curl --fail-with-body --silent --show-error \
               --connect-timeout 10 \
               --max-time 60 \
+              --retry 2 \
+              --retry-all-errors \
+              --retry-max-time 120 \
               --request POST \
               --header "Authorization: Bearer ${ISR_BYPASS_TOKEN}" \
               --header "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
+              --dump-header "$headers_file" \
               --output "$response_file" \
               "https://www.resonantprojects.art/api/revalidate"; then
+            head -c 2000 "$headers_file" || true
+            echo
             head -c 2000 "$response_file" || true
             echo
             echo "::error::Resonant Projects ISR revalidation failed."
