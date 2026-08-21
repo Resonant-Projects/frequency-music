@@ -1,5 +1,21 @@
 # Knowledge Graph Links
 
+## 2026-08-21 - The Input Contract
+
+- New essay: `docs/essays/the-input-contract.md`
+- Proposed concept: **input contract** - the explicit or hidden agreement that defines what evidence an audio system may use, when it may use it, and what musical or analytic claim that evidence is allowed to support.
+- `input contract` -> `admissible signal`: evaluation validity depends on whether the evidence exposed to the system belongs to the claimed task.
+- `input contract` -> `test-time instrument`: a tool's playable surface is defined by what it can actually know at action time.
+- `input contract` -> `room fingerprint`: target-position impulse responses can identify position without proving transferable acoustic understanding.
+- `input contract` -> `stem-level control`: source-separated inputs justify editable per-stem FX-chain outputs.
+- `input contract` -> `source ambiguity`: ordinary guitar audio can carry physical string identity even when pitch is shared.
+- `input contract` -> `phonetic/acoustic split`: speech enhancement may protect linguistic content while reshaping fragile vocal identity.
+- `input contract` -> `benchmark coverage`: robust listening claims depend on which accents, ages, languages, and domains are included in evaluation.
+- Related existing concepts: admissible signal, evidence carrier, coordinate of evidence, test-time instrument, reachable degrees of freedom, coordinate choice.
+- Source extraction IDs: `j97679y1jf7cnhkg7f2v6t2mz18b0wvf`, `j972b99xapwke0nsrs9mydqez58b2v83`, `j976hka8k1xqgt9rbagkz562e18b12er`, `j974dj9b7efc9g420nm765sw298ayfbj`, `j977a50mq9hqrg3jm67wj0b8es8b187g`.
+
+Durable in-repo concept links captured because live Convex graph writes failed during this cron run.
+
 ## 2026-08-19 - The Reachable Identity
 
 - New essay: `docs/essays/the-reachable-identity.md`

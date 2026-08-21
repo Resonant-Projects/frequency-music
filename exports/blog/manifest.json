@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-19T03:09:21.465Z",
+  "generatedAt": "2026-08-21T11:03:53.948Z",
   "items": [
+    {
+      "slug": "the-input-contract",
+      "path": "essays/the-input-contract.md",
+      "title": "The Input Contract",
+      "publishDate": "2026-08-21",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-reachable-identity",
       "path": "essays/the-reachable-identity.md",
