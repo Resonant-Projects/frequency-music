@@ -1,7 +1,7 @@
 name: Publish Essays
 
 # Regenerates essay metadata and the public export whenever an essay changes on
-# main, then triggers the resonantprojects.art production build.
+# main, then revalidates the resonantprojects.art ISR pages that consume it.
 #
 # Runs alongside `public-editorial-export.yml`, which is a different route: that
 # one is manual (`workflow_dispatch`), pulls evidence-card data out of Convex,
@@ -136,22 +136,54 @@ jobs:
           echo "::error::Could not push the refreshed export after 3 attempts."
           exit 1
 
-      - name: Trigger Resonant Projects deployment
-        if: steps.commit.outputs.changed == 'true'
+      - name: Revalidate Resonant Projects pages
+        # A manual run is also the recovery path when a prior run pushed the
+        # export but failed here. In that case the export is already current,
+        # so `changed` is false even though revalidation still needs to run.
+        if: steps.commit.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         env:
-          DEPLOY_HOOK_URL: ${{ secrets.RPROJ_VERCEL_DEPLOY_HOOK_URL }}
+          ISR_BYPASS_TOKEN: ${{ secrets.RPROJ_ISR_BYPASS_TOKEN }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.RPROJ_VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           set -euo pipefail
-          if [ -z "$DEPLOY_HOOK_URL" ]; then
-            echo "::error::RPROJ_VERCEL_DEPLOY_HOOK_URL is not configured. See docs/reference/essay-publishing.md."
+          if [ -z "$ISR_BYPASS_TOKEN" ]; then
+            echo "::error::RPROJ_ISR_BYPASS_TOKEN is not configured. See docs/reference/essay-publishing.md."
             exit 1
           fi
-          # Bounded so a stalled hook cannot hold the `publish-essays`
-          # concurrency group and stall every queued run behind it.
-          curl --fail-with-body --silent --show-error \
-            --connect-timeout 10 \
-            --max-time 60 \
-            --request POST \
-            --output /dev/null \
-            "$DEPLOY_HOOK_URL"
-          echo "Triggered the Resonant Projects production build."
+          if [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+            echo "::error::RPROJ_VERCEL_AUTOMATION_BYPASS_SECRET is not configured. See docs/reference/essay-publishing.md."
+            exit 1
+          fi
+
+          # The website now reads the GitHub export at request time behind ISR;
+          # a same-SHA Vercel deploy is both unnecessary and intentionally
+          # skipped by rproj-website. Ask its authenticated endpoint to expire
+          # the affected pages instead. The Vercel bypass header keeps this
+          # machine-to-machine request out of the browser security challenge.
+          # Keep the call bounded so a stalled endpoint cannot hold the
+          # `publish-essays` concurrency group and stall every queued run
+          # behind it.
+          response_file="${RUNNER_TEMP}/rproj-revalidate.json"
+          headers_file="${RUNNER_TEMP}/rproj-revalidate.headers"
+          if ! curl --fail-with-body --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 60 \
+              --retry 2 \
+              --retry-all-errors \
+              --retry-max-time 120 \
+              --request POST \
+              --header "Authorization: Bearer ${ISR_BYPASS_TOKEN}" \
+              --header "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
+              --dump-header "$headers_file" \
+              --output "$response_file" \
+              "https://www.resonantprojects.art/api/revalidate"; then
+            head -c 2000 "$headers_file" || true
+            echo
+            head -c 2000 "$response_file" || true
+            echo
+            echo "::error::Resonant Projects ISR revalidation failed."
+            exit 1
+          fi
+          cat "$response_file"
+          echo
+          echo "Revalidated the Resonant Projects ISR pages."

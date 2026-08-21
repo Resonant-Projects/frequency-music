@@ -13,7 +13,7 @@ Two publishing routes exist and they are deliberately kept separate:
 | Trigger | automatic on `docs/essays/*.md` push to `main`, plus manual | manual only (`workflow_dispatch`) |
 | Source | static Markdown in `docs/essays/` | Convex evidence-card data |
 | Output | `exports/blog/` committed to `main` | orphan `editorial-export` branch |
-| Consumer | `rproj-website` Astro build → `/blog` | the `/writing` editorial surface |
+| Consumer | `rproj-website` SSR/ISR blog routes | the `/writing` editorial surface |
 
 They share no scripts and no output paths. Changing one does not affect the
 other. Do not merge them: the essay corpus is a static-Markdown route that
@@ -26,14 +26,16 @@ docs/essays/*.md
   -> docs/essays/metadata.json
   -> exports/blog/manifest.json + exports/blog/essays/*.md
   -> GitHub Raw on frequency-music/main
-  -> rproj-website Astro content loader
-  -> Vercel project resonant-projects
+  -> rproj-website request-time loader
+  -> Vercel SSR + ISR
   -> https://www.resonantprojects.art/blog
 ```
 
-`rproj-website` reads the checked-in export from `frequency-music/main` during
-its Astro build. Updating an essay does not update the public site until both
-the export is committed and the website is rebuilt.
+`rproj-website` reads the checked-in export from `frequency-music/main` at
+request time. Its blog pages use one-hour Vercel ISR, so the publishing
+workflow calls the website's authenticated revalidation endpoint after it
+commits a changed export rather than rebuilding the website at the same Git
+SHA.
 
 ## Normal automated flow
 
@@ -50,15 +52,17 @@ the export is committed and the website is rebuilt.
 3. `scripts/export-essays.ts` rebuilds the deterministic Astro export.
 4. The workflow validates the manifest/file counts and commits changed
    metadata and export files back to `main`.
-5. **When the commit step changed something**, it calls the
-   `resonant-projects` Vercel deploy hook, which rebuilds the latest
-   `rproj-website/main` against the new export. A run that finds the export
-   already current stops before the deploy hook rather than spending a
-   production build on a no-op.
+5. **When the commit step changed something**, it calls
+   `https://www.resonantprojects.art/api/revalidate`. That authenticated route
+   expires `/`, `/writing`, `/blog`, and `/rss.xml` so their next requests read
+   the new export. A run that finds the export already current skips
+   revalidation.
 
 The workflow can also be run manually from GitHub Actions with
-**Publish Essays -> Run workflow**. Manual dispatch is the recovery path for a
-stale export or a failed prior run.
+**Publish Essays -> Run workflow**. Manual dispatch always calls revalidation,
+even when the export is already current, so it is the recovery path for a
+stale export or for a prior run that pushed successfully and then failed while
+revalidating.
 
 ### Why this cannot loop
 
@@ -93,17 +97,25 @@ not holding steady.
 The `frequency-music` GitHub repository needs these Actions secrets:
 
 - `OP_SERVICE_ACCOUNT_TOKEN`: existing 1Password service-account token.
-- `RPROJ_VERCEL_DEPLOY_HOOK_URL`: Vercel deploy hook for the
-  `resonant-projects` project and `main` branch.
+- `RPROJ_ISR_BYPASS_TOKEN`: the same value as `ISR_BYPASS_TOKEN` in the
+  `resonant-projects` Vercel project. The website uses it to authorize the
+  revalidation request and Vercel uses it internally to expire ISR pages.
+- `RPROJ_VERCEL_AUTOMATION_BYPASS_SECRET`: a Vercel Protection Bypass for
+  Automation secret for `resonant-projects`. It lets the workflow reach the
+  API route without being stopped by Vercel's browser security challenge.
 
-Create or rotate the deploy hook in Vercel:
+Create or rotate the automation credentials in Vercel:
 
-1. Open **resonant-projects -> Settings -> Git -> Deploy Hooks**.
-2. Create one hook named `Frequency essay exports` for branch `main`.
-3. Store the generated URL as the `RPROJ_VERCEL_DEPLOY_HOOK_URL` Actions secret
-   in `Resonant-Projects/frequency-music`.
-4. Never paste the hook URL into a workflow, issue, log, or committed file. The
-   URL is a credential; revoke and recreate it if exposed.
+1. Set `ISR_BYPASS_TOKEN` for the `resonant-projects` production environment
+   and store the same value as the `RPROJ_ISR_BYPASS_TOKEN` Actions secret in
+   `Resonant-Projects/frequency-music`.
+2. Open **resonant-projects -> Settings -> Deployment Protection -> Protection
+   Bypass for Automation** and create a secret named `Frequency essay exports`.
+3. Store that value as the `RPROJ_VERCEL_AUTOMATION_BYPASS_SECRET` Actions
+   secret in `Resonant-Projects/frequency-music`.
+4. Redeploy `rproj-website` after adding or rotating either Vercel-side value.
+5. Never paste either credential into a workflow, issue, log, or committed
+   file. Revoke and recreate a credential if it is exposed.
 
 ## Manual publishing and recovery
 
@@ -137,14 +149,15 @@ The workflow should report all of the following:
 - the exporter skipped zero non-draft essays;
 - the manifest item count equals the number of exported Markdown files;
 - the export commit reached `frequency-music/main` when files changed;
-- the Vercel deploy-hook request succeeded, or was correctly skipped because
-  nothing changed.
+- the website ISR revalidation request succeeded, or was correctly skipped
+  because nothing changed.
 
 Then check:
 
 1. The newest item in `exports/blog/manifest.json` has the expected slug and
    publish date.
-2. The latest `resonant-projects` production deployment is `Ready`.
+2. The revalidation response reports success for `/`, `/writing`, `/blog`, and
+   `/rss.xml`.
 3. `/blog` lists the essay.
 4. `/blog/<essay-slug>` returns the complete essay.
 5. The homepage latest-post section and `/rss.xml` include it when expected.
@@ -184,15 +197,25 @@ and `main` moves under it regularly. A failure here means one of:
   reviews, this step cannot push at all and the workflow would need to open a PR
   instead.
 
-### Website deployment is not triggered
+### Website ISR is not revalidated
 
-First confirm the export actually changed — an unchanged export skips the hook
-by design. If it did change, confirm the deploy-hook secret exists. If the hook
-was revoked, create a new one, replace the GitHub secret, and manually dispatch
-**Publish Essays**. Do not commit or print the hook URL.
+First confirm the export actually changed — an unchanged export skips
+revalidation on push, while a manual dispatch forces it for recovery. If it
+did change, confirm both revalidation secrets exist and still match the values
+configured for the `resonant-projects` project. A 401 points to
+`RPROJ_ISR_BYPASS_TOKEN`; a Vercel security-checkpoint response points to the
+automation bypass configuration. A 429 is rate limiting, not proof of an
+invalid secret: inspect the captured headers and body, honor `Retry-After`, and
+retry with bounded backoff before rotating credentials. The workflow performs
+two bounded retries automatically. The endpoint returns 502 with per-path
+statuses when one of its nested page requests fails; use those statuses to
+identify the affected route. After correcting a persistent failure, manually
+dispatch **Publish Essays**. Do not commit or print either secret value.
 
-### Deployment succeeds but the site is stale
+### Revalidation succeeds but the site is stale
 
-Confirm the deployment built `rproj-website/main`, not an older local checkout
-or preview branch. The website loader consumes GitHub Raw during the build, so
-redeploying the current production build is required after the export changes.
+Inspect the revalidation response in the workflow log and confirm all four
+paths returned successful statuses. If revalidation succeeded, allow for
+GitHub Raw propagation and request the stale route again. The site also expires
+ISR entries automatically after one hour, so a transient revalidation failure
+does not require a production rebuild.
