@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-21T11:06:26.407Z",
+  "generatedAt": "2026-08-23T11:05:11.341Z",
   "items": [
+    {
+      "slug": "the-prior-that-plays",
+      "path": "essays/the-prior-that-plays.md",
+      "title": "The Prior That Plays",
+      "publishDate": "2026-08-23",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-input-contract",
       "path": "essays/the-input-contract.md",
