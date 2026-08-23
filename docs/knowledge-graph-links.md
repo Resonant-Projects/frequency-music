@@ -1,5 +1,19 @@
 # Knowledge Graph Links
 
+## 2026-08-23 - The Prior That Plays
+
+- New essay: `docs/essays/the-prior-that-plays.md`
+- Proposed concept: **playable prior** - the learned, perceptual, procedural, or social expectation that supplies structure when the measured signal does not determine the musical answer.
+- `playable prior` -> `unmeasured coordinate`: missing spatial, relational, or cross-modal coordinates are filled by learned or imposed expectations.
+- `playable prior` -> `input contract`: priors are constrained by what evidence the system is allowed to see at action time.
+- `playable prior` -> `reachable identity`: what survives pressure or bandwidth is partly determined by the prior's identity hierarchy.
+- `playable prior` -> `benchmark coverage`: corpus design installs a population prior about whose voices count as ordinary evidence.
+- `playable prior` -> `composition control`: composers can expose measurement-bound, prior-driven, and contract-breaking modes as explicit musical surfaces.
+- Related existing concepts: unmeasured coordinate, input contract, evidence carrier, test-time instrument, reachable identity, coordinate of evidence.
+- Source extraction IDs: `j974sa77g2r17h4abcfrweqtqn8cpr3g`, `j974jrzc77gtf2xvzj7tag560s8cqdjj`, `j977a50mq9hqrg3jm67wj0b8es8b187g`, `j9793cmwt6f6t1s819xdqpay7x854g86`, `j97679y1jf7cnhkg7f2v6t2mz18b0wvf`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this cron run.
+
 ## 2026-08-21 - The Input Contract
 
 - New essay: `docs/essays/the-input-contract.md`
