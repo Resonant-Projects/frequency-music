@@ -3552,6 +3552,19 @@
     "contentHash": "0c8b13bb1e82451cd892d139b0898fe7392758a8f036be5a55c9f68c85f6e332",
     "generatedAt": "2026-08-23T11:05:08.421Z"
   },
+  "the-operating-clock": {
+    "excerpt": "Musical AI systems become playable when their update rates are named: phrase-scale affect, slow latent plans, gesture clocks, and audio-rate repair each hear time differently.",
+    "tags": [
+      "AI-music",
+      "rhythm",
+      "signal-processing",
+      "composition",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "8ab5f04fda9ef9b3d8510b8a5fa86af517a9de1c322a7e08eea93e784b4323d4",
+    "generatedAt": "2026-08-24T11:00:00.000Z"
+  },
   "the-promptable-room": {
     "excerpt": "Generative models can now create room impulse responses from natural-language descriptions, transforming acoustic space from a measured artifact into a compositional parameter that lives between…",
     "tags": [

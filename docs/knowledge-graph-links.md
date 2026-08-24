@@ -1,5 +1,19 @@
 # Knowledge Graph Links
 
+## 2026-08-24 - The Operating Clock
+
+- New essay: `docs/essays/the-operating-clock.md`
+- Proposed concept: **operating clock** - the temporal rate at which a musical system samples evidence, commits structure, or exposes control.
+- `operating clock` -> `time window`: the window defines how much time a system may use; the clock defines how often its control coordinates update inside that window.
+- `operating clock` -> `control surface`: a playable coordinate is incomplete until its update rate is known.
+- `operating clock` -> `latent temporal compression`: 25 Hz, 12.5 Hz, and 6.25 Hz latent rates trade acoustic detail for long-form continuity and efficient generation.
+- `operating clock` -> `phrase-level affect`: four-bar valence-arousal analysis treats emotion as a phrase-scale control stream rather than a frame-scale feature.
+- `operating clock` -> `hierarchical temporal planning`: minute-scale dance generation needs separate clocks for full-track plan, keyframes, local refinement, and frame-level motion.
+- Related existing concepts: time window, temporal obligation, control surface, coordinate that acts, invariance budget, latent temporal compression, task-specific time.
+- Source extraction IDs: `j97ew31wh4x6nr72xa9y9n7y3s8amm58`, `j976e5vb7x58dvzmpyf8rv69318anrwg`, `j97d7hq5d3kndbx5sq26qppqwn8afr0d`, `j97bw3c6d199ghsv0fnshtgpex8afycn`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this cron run.
+
 ## 2026-08-23 - The Prior That Plays
 
 - New essay: `docs/essays/the-prior-that-plays.md`
