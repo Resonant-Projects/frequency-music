@@ -167,7 +167,11 @@ Then check:
 2. The revalidation response reports success for `/`, `/writing`, `/blog`, and
    `/rss.xml`.
 3. `/blog` lists the essay.
-4. `/blog/<essay-slug>` returns the complete essay.
+4. `/essay/<essay-slug>` returns the complete essay. Note the route is
+   `/essay/`, not `/blog/` — `/blog` is the paginated index that links to it.
+   Individual essay pages are not in the revalidation list, so an edit to an
+   already-published essay waits out the one-hour ISR expiry; only brand-new
+   essays appear immediately, via the freshly expired index.
 5. The homepage latest-post section and `/rss.xml` include it when expected.
 
 ## Failure modes
