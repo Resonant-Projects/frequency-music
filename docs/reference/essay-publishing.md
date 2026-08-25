@@ -108,12 +108,20 @@ Create or rotate the automation credentials in Vercel:
 
 1. Set `ISR_BYPASS_TOKEN` for the `resonant-projects` production environment
    and store the same value as the `RPROJ_ISR_BYPASS_TOKEN` Actions secret in
-   `Resonant-Projects/frequency-music`.
+   `Resonant-Projects/frequency-music`. Vercel requires exactly 32 characters
+   (`python3 -c "import secrets;print(secrets.token_hex(16))"`) because
+   `astro.config.ts` passes it straight through to the ISR
+   `prerender-config.json`.
 2. Open **resonant-projects -> Settings -> Deployment Protection -> Protection
    Bypass for Automation** and create a secret named `Frequency essay exports`.
 3. Store that value as the `RPROJ_VERCEL_AUTOMATION_BYPASS_SECRET` Actions
    secret in `Resonant-Projects/frequency-music`.
 4. Redeploy `rproj-website` after adding or rotating either Vercel-side value.
+   `ISR_BYPASS_TOKEN` is read at **build** time, so an env-var change alone
+   does nothing until a new production build exists. `scripts/vercel-ignore-build.sh`
+   cancels rebuilds at an unchanged git SHA, which is every redeploy in this
+   situation — set `FORCE_BUILD=1` as a `resonant-projects` environment
+   variable, run one deployment, then remove it.
 5. Never paste either credential into a workflow, issue, log, or committed
    file. Revoke and recreate a credential if it is exposed.
 
@@ -211,6 +219,20 @@ two bounded retries automatically. The endpoint returns 502 with per-path
 statuses when one of its nested page requests fails; use those statuses to
 identify the affected route. After correcting a persistent failure, manually
 dispatch **Publish Essays**. Do not commit or print either secret value.
+
+### Revalidation returns 403
+
+`Cross-site POST form submissions are forbidden` is Astro's `checkOrigin` CSRF
+guard rejecting the request before `src/pages/api/revalidate.ts` runs. The
+workflow sends `Content-Type: application/json` and `Origin` to satisfy it;
+if either header is dropped the step fails here with the credentials perfectly
+valid.
+
+### Revalidation returns 501
+
+`ISR_BYPASS_TOKEN is not configured` means the running production deployment
+has no such variable. Setting it in Vercel is not enough on its own — see step
+4 of **Required configuration** for the rebuild the change requires.
 
 ### Revalidation succeeds but the site is stale
 
