@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-25T02:32:59.394Z",
+  "generatedAt": "2026-08-25T03:06:30.831Z",
   "items": [
+    {
+      "slug": "the-accessible-next-state",
+      "path": "essays/the-accessible-next-state.md",
+      "title": "The Accessible Next State",
+      "publishDate": "2026-08-25",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-operating-clock",
       "path": "essays/the-operating-clock.md",

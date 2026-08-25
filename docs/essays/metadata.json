@@ -525,6 +525,20 @@
     "contentHash": "58f7298d851c7088d736f2f33b7c48b2d16c9cd3072fcb89162eebb60658930a",
     "generatedAt": "2026-08-01T21:33:11.951Z"
   },
+  "the-accessible-next-state": {
+    "excerpt": "Musical form follows reachable states, not ideal destinations.",
+    "tags": [
+      "composition",
+      "perception",
+      "psychoacoustics",
+      "signal-processing",
+      "wave-physics",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "003fb48da0fd0377b90940542b2c141cd0cd966afb373bd02d991eb66c791450",
+    "generatedAt": "2026-08-25T03:06:27.784Z"
+  },
   "the-accessible-phase": {
     "excerpt": "Composition moves through reachable states, not ideal states: phase-transition path dependence, codec intelligibility, and Tonnetz geometry all point to identity-preserving accessibility as a…",
     "tags": [
