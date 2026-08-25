@@ -442,3 +442,23 @@ Evidence context:
 - LLM-guided audio-visual speech enhancement extraction: `j974yd33462rqhtvpb249eyccx8anewd`
 - ZipL-Dialog long-form dialogue synthesis extraction: `j976e5vb7x58dvzmpyf8rv69318anrwg`
 - REAL-TSE target-speaker extraction extraction: `j97bg9wewsss2gge7xba13q4058awb8q`
+
+## 2026-08-25 - The Accessible Next State
+
+- `accessible next state` -> `reachable representation`: transformation follows the representation that remains available at the moment of change.
+- `accessible next state` -> `metastable musical form`: local accessibility can matter more than global resolution, echoing Ostwald's step rule.
+- `Ostwald voice-leading` -> `path-dependence`: harmonic or timbral motion can choose nearest viable states instead of ideal endpoints.
+- `critical-band orchestration` -> `perceptual reachability`: Bark-scale bands define where spectral changes are separable for the listener.
+- `semi-fragile musical identity` -> `controlled survivability`: a musical trace can be designed to survive benign transformations and fail under identity-changing ones.
+- `phase coherence` -> `reachable representation`: phase-preserving representations keep relational timing available for stem matching and ensemble coherence.
+- `notation as accessibility` -> `score understanding`: ABC notation and visual score PDFs expose different musical facts to model reasoning.
+- `degraded attractor` -> `encoder-defined evidence`: silence, masking, and compression can push audio models into stable failure states such as hallucination or repetition.
+
+Evidence context:
+
+- Ice phases / Ostwald's step rule extraction: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`
+- Bark24 psychoacoustic dynamics extraction: `j977tjh3ka74caprsf86d4e3y185maah`
+- StreamMark semi-fragile watermark extraction: `j97b5cq4em4evnpz1dzpjk37y1854ztc`
+- PHALAR phase- and pitch-equivariant representations extraction: `j978zvv39t3wqdw578e6g057b18683jf`
+- MSU-Bench score-understanding extraction: `j978mypywk23f3gtf3ykz84q4x85j102`
+- Speech-recognition encoder bias extraction: `j97795a7x76skzbg4d8pcdhpqh85k5zb`
