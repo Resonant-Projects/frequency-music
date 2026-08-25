@@ -160,6 +160,9 @@ jobs:
           # skipped by rproj-website. Ask its authenticated endpoint to expire
           # the affected pages instead. The Vercel bypass header keeps this
           # machine-to-machine request out of the browser security challenge.
+          # The Content-Type and Origin headers satisfy Astro's `checkOrigin`
+          # CSRF guard, which otherwise answers 403 "Cross-site POST form
+          # submissions are forbidden" before the route handler ever runs.
           # Keep the call bounded so a stalled endpoint cannot hold the
           # `publish-essays` concurrency group and stall every queued run
           # behind it.
@@ -174,6 +177,8 @@ jobs:
               --request POST \
               --header "Authorization: Bearer ${ISR_BYPASS_TOKEN}" \
               --header "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
+              --header "Content-Type: application/json" \
+              --header "Origin: https://www.resonantprojects.art" \
               --dump-header "$headers_file" \
               --output "$response_file" \
               "https://www.resonantprojects.art/api/revalidate"; then
