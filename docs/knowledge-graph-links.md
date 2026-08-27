@@ -1,5 +1,20 @@
 # Knowledge Graph Links
 
+## 2026-08-27 - The Contour That Survives
+
+- New essay: `docs/essays/the-contour-that-survives.md`
+- Proposed concept: **surviving contour** - the reduced time-varying trajectory that remains actionable after a sound system discards full acoustic detail.
+- `surviving contour` -> `operating clock`: a contour is incomplete until its update rate is known, from four-bar affect windows to 25 Hz latent generation.
+- `surviving contour` -> `control surface`: a reduced trajectory becomes compositional when a musician can draw, automate, invert, or resist it.
+- `surviving contour` -> `pitch field`: pitch strength can act as a contour that moves sound between tonal center and texture without changing nominal notes.
+- `surviving contour` -> `unmeasured coordinate`: every contour makes some dimensions actionable while pushing other musical evidence outside the representation.
+- `surviving contour` -> `reachable identity`: the contour defines which identity layer is likely to survive compression, generation, enhancement, or developmental transformation.
+- Link to extraction concepts: music emotion recognition, valence-arousal models, bar-level temporal segmentation, latent-space audio generation, temporal compression, natural-language audio description, audio quality metrics, pitch strength, spectral flatness, vocal plasticity, age-conditioned trajectory modeling.
+- Related existing concepts: operating clock, control surface, unmeasured coordinate, reachable identity, input contract, evidence carrier, pitch field, weighting function.
+- Source extraction IDs: `j97ew31wh4x6nr72xa9y9n7y3s8amm58`, `j976e5vb7x58dvzmpyf8rv69318anrwg`, `j974yd33462rqhtvpb249eyccx8anewd`, `j978yxjgnckm2px83ae5dqwgq18ajxwm`, `j97ckpqqxzkj19gbw70dkwhk218ahj6w`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this cron run.
+
 ## 2026-08-24 - The Operating Clock
 
 - New essay: `docs/essays/the-operating-clock.md`
