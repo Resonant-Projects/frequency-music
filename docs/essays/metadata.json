@@ -3414,6 +3414,20 @@
     "contentHash": "08d6789090e04c274d75f5850e994bdf50ab6179b7a0a8b658cb15074976e9c2",
     "generatedAt": "2026-06-17T19:05:18.099Z"
   },
+  "the-partial-authority": {
+    "excerpt": "Partial authority reframes pitch as a negotiable spectral force: harmonics, inharmonic partials, and noise can act as competing musical voices within a single tone.",
+    "tags": [
+      "psychoacoustics",
+      "signal-processing",
+      "perception",
+      "acoustics",
+      "composition",
+      "wave-physics"
+    ],
+    "category": "physics-of-sound",
+    "contentHash": "f75c9f6dab3635364f727976a30cde791569bfc177fab60e9e183e7dc8521f5f",
+    "generatedAt": "2026-08-29T19:06:03.575Z"
+  },
   "the-partial-mix": {
     "excerpt": "Sona uses neural networks to mediate listening by selectively attenuating sounds-functioning like a mix engineer for reality.",
     "tags": [

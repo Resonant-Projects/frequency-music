@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-27T03:07:15.069Z",
+  "generatedAt": "2026-08-29T19:06:07.098Z",
   "items": [
+    {
+      "slug": "the-partial-authority",
+      "path": "essays/the-partial-authority.md",
+      "title": "The Partial Authority",
+      "publishDate": "2026-08-29",
+      "category": "physics-of-sound"
+    },
     {
       "slug": "the-contour-that-survives",
       "path": "essays/the-contour-that-survives.md",
