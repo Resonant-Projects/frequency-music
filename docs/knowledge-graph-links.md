@@ -1,5 +1,19 @@
 # Knowledge Graph Links
 
+## 2026-08-29 - The Partial Authority
+
+- New essay: `docs/essays/the-partial-authority.md`
+- Proposed concept: **partial authority** - the degree to which a component of a spectrum is allowed to behave as musical evidence.
+- `partial authority` -> `pitch strength`: pitch salience is distributed across spectral evidence, not only attached to a fundamental frequency label.
+- `partial authority` -> `harmonic-complex multipitch`: a monophonic source can imply internal counterpoint when upper partials gain enough perceptual authority.
+- `partial authority` -> `inharmonic organization`: discrete inharmonic partials can retain compositional structure even when they resist harmonic-series explanation.
+- `partial authority` -> `spectral flatness`: lower flatness can supply stable handles for plastic vocal transformation.
+- `partial authority` -> `control surface`: a musician can keep nominal pitch fixed while automating which spectral components are allowed to count as tone, voice, texture, or instability.
+- Related existing concepts: structured tone, pitch field, control surface, surviving contour, evidence carrier, weighting function.
+- Source extraction IDs: `j978yxjgnckm2px83ae5dqwgq18ajxwm`, `jx7athsx7pfkmycrmqerst9krx8aj9xa`, `j9762aqawbwmrwvhgfwrns5m398aj4d3`, `j97ckpqqxzkj19gbw70dkwhk218ahj6w`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this cron run.
+
 ## 2026-08-27 - The Contour That Survives
 
 - New essay: `docs/essays/the-contour-that-survives.md`
