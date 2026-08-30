@@ -1,5 +1,19 @@
 # Knowledge Graph Links
 
+## 2026-08-30 - The Decision Rate of Sound
+
+- New essay: `docs/essays/the-decision-rate-of-sound.md`
+- Proposed concept: **decision rate** - the temporal rate at which a musical system decides which evidence is allowed to count.
+- `decision rate` -> `partial authority`: spectral components only become musically forceful over a chosen temporal window.
+- `decision rate` -> `surviving contour`: a reduced contour is inseparable from the sampling contract that decides which motion survives.
+- `decision rate` -> `operating clock`: the operating clock exposes the update rate; decision rate names the musical permission granted at that rate.
+- `decision rate` -> `control surface`: composers can steer not only evidence values, but when those values become eligible to act.
+- `decision rate` -> `pitch strength`: a pitch-strength trace can behave as attack color, inner voice, or formal pressure depending on persistence.
+- Related existing concepts: partial authority, surviving contour, operating clock, control surface, pitch field, evidence carrier, weighting function.
+- Source extraction IDs: `j97ew31wh4x6nr72xa9y9n7y3s8amm58`, `j976e5vb7x58dvzmpyf8rv69318anrwg`, `j97d7hq5d3kndbx5sq26qppqwn8afr0d`, `j97bw3c6d199ghsv0fnshtgpex8afycn`, `j974yd33462rqhtvpb249eyccx8anewd`, `j978yxjgnckm2px83ae5dqwgq18ajxwm`, `j97ckpqqxzkj19gbw70dkwhk218ahj6w`, `jx7athsx7pfkmycrmqerst9krx8aj9xa`, `j9762aqawbwmrwvhgfwrns5m398aj4d3`.
+
+Durable in-repo concept links captured because live Convex extraction/list/link calls returned 503 during this cron run.
+
 ## 2026-08-29 - The Partial Authority
 
 - New essay: `docs/essays/the-partial-authority.md`

@@ -1724,6 +1724,20 @@
     "contentHash": "4b22194960f1555d51e36ea0b92c9bef59dda2116611b68ada10d6070f2df567",
     "generatedAt": "2026-06-17T19:04:43.310Z"
   },
+  "the-decision-rate-of-sound": {
+    "excerpt": "Decision rate—the speed at which a system decides what acoustic evidence counts—connects spectral authority, contour, perception, and musical form.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "composition",
+      "acoustics",
+      "AI-music",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7e7d8678d4237b23b1a30f58a338b5a0eab2a2254cf27aa34d2986f9f790a919",
+    "generatedAt": "2026-08-30T03:04:28.832Z"
+  },
   "the-decision-to-separate": {
     "excerpt": "Single-source curation, correlation-based speech separation, and streaming translation all expose source identity as a decision under uncertainty.",
     "tags": [
