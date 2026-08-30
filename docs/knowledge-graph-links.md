@@ -1,5 +1,19 @@
 # Knowledge Graph Links
 
+## 2026-08-30 - The Layer That Answers
+
+- New essay: `docs/essays/the-layer-that-answers.md`
+- Proposed concept: **answering layer** - the representational, perceptual, procedural, or physical layer that supplies decisive evidence for a musical identity claim under constraint.
+- `answering layer` -> `reachable identity`: identity survives where a layer remains reachable enough to testify for the piece.
+- `answering layer` -> `resolution budget`: resolution matters because some layer must retain enough precision to answer.
+- `answering layer` -> `translation loss`: translation loss occurs when the answering layer is weakened while less decisive layers remain polished.
+- `answering layer` -> `hidden degrees of freedom`: the answering layer often lives in the residue left open by rules, such as voicing habits, traversal choices, or phase microstructure.
+- `answering layer` -> `decision rate`: evidence cannot answer until the system's temporal window admits it as actionable.
+- Related existing concepts: reachable identity, resolution budget, translation loss, invisible coordinate, hidden degrees of freedom, load-bearing layer, phase coherence, perceptual banding, graph traversal habit.
+- Source IDs: `jx7a6svn6bw13mgz33j5pjf73h85dp8c`, `jx7cpq9xmaekwyq7jj7ajsae5h85eycc`, `jx7afrabhjjj4aab4k0bk2s6gn85fycv`, `jx7402s3g0ndbjwmfh8qnpvd9n85ndzb`, `jx75ff9jca456jv63hh8tngqhn85dh7x`, `jx72yj3ez4q7t2pqt9c0jmcbjx86hbek`, `jx78j7ze7qdtvv1jzwvrgwt1as85smq1`, `jx7dc14cbm6v0cme1ymrv0mmzd8567ga`, `jx7ctrab09mtbkdbghq2qqhm75851vkc`, `jx78nvpygk3a3ehen35mwswkhd85w0pt`, `jx7awge62ymkd5ywnpz9ddyymx85ntkj`, `jx7e7qw7dt6jtemah5bj363y2h84xrsq`, `jx7fk4jg1jw1mbsnkfk8fckn01869sfn`, `jx70dhsw26kwd55qeh0xgyw3xx85fp1n`, `jx74r61g2tqd5bcy6aam4aqwes85f9kt`.
+
+Durable in-repo concept links captured because live Convex extraction/list/link calls returned 503 during this cron run.
+
 ## 2026-08-30 - The Decision Rate of Sound
 
 - New essay: `docs/essays/the-decision-rate-of-sound.md`
