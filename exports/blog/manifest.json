@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-29T19:06:07.098Z",
+  "generatedAt": "2026-08-30T03:07:34.260Z",
   "items": [
+    {
+      "slug": "the-decision-rate-of-sound",
+      "path": "essays/the-decision-rate-of-sound.md",
+      "title": "The Decision Rate of Sound",
+      "publishDate": "2026-08-30",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-partial-authority",
       "path": "essays/the-partial-authority.md",
