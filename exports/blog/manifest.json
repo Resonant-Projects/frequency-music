@@ -1,11 +1,18 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-30T03:07:34.260Z",
+  "generatedAt": "2026-08-30T11:07:02.603Z",
   "items": [
     {
       "slug": "the-decision-rate-of-sound",
       "path": "essays/the-decision-rate-of-sound.md",
       "title": "The Decision Rate of Sound",
+      "publishDate": "2026-08-30",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-layer-that-answers",
+      "path": "essays/the-layer-that-answers.md",
+      "title": "The Layer That Answers",
       "publishDate": "2026-08-30",
       "category": "interdisciplinary"
     },
