@@ -518,4 +518,19 @@ Evidence context:
 - StreamMark semi-fragile watermark extraction: `j97b5cq4em4evnpz1dzpjk37y1854ztc`
 - PHALAR phase- and pitch-equivariant representations extraction: `j978zvv39t3wqdw578e6g057b18683jf`
 - MSU-Bench score-understanding extraction: `j978mypywk23f3gtf3ykz84q4x85j102`
+
+## 2026-08-30 - The Teaching Window
+
+- `teaching window` -> `decision rate`: the rate of decision determines how long evidence has to become musically actionable.
+- `teaching window` -> `answering layer`: the layer that answers for identity is trained by the temporal and representational window that receives reliable evidence.
+- `teaching window` -> `accessible next state`: transformation follows what the current window has learned to keep reachable.
+- `teaching window` -> `resolution budget`: precision is allocated not only to features, but to the windows over which those features can prove continuity.
+- `teaching window` -> `translation loss`: translation changes the curriculum by changing which musical facts get enough context to survive.
+- `teaching window` -> `composition control`: a composer can choose which identity a system should learn over transient, beat, bar, phrase, or section spans.
+
+Evidence context:
+
+- Decision-rate essay and operating-clock/surviving-contour extraction clusters: `j97ew31wh4x6nr72xa9y9n7y3s8amm58`, `j976e5vb7x58dvzmpyf8rv69318anrwg`, `j974yd33462rqhtvpb249eyccx8anewd`, `j978yxjgnckm2px83ae5dqwgq18ajxwm`, `j97ckpqqxzkj19gbw70dkwhk218ahj6w`
+- Answering-layer synthesis sources: cached synthesis outputs from 2026-05-20 and 2026-05-21.
+- Accessible-next-state extraction cluster: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j977tjh3ka74caprsf86d4e3y185maah`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j978zvv39t3wqdw578e6g057b18683jf`, `j978mypywk23f3gtf3ykz84q4x85j102`
 - Speech-recognition encoder bias extraction: `j97795a7x76skzbg4d8pcdhpqh85k5zb`

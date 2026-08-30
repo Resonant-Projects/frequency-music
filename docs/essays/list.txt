@@ -322,6 +322,7 @@ the-symmetry-tax
 the-task-relevant-signal
 the-temporal-contract
 the-test-that-becomes-the-instrument
+the-teaching-window
 the-thick-boundary
 the-thick-boundary-revisited
 the-thread-that-survives
