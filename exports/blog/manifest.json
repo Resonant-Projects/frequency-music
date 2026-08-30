@@ -1,6 +1,6 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-30T11:07:02.603Z",
+  "generatedAt": "2026-08-30T19:04:54.745Z",
   "items": [
     {
       "slug": "the-decision-rate-of-sound",
@@ -13,6 +13,13 @@
       "slug": "the-layer-that-answers",
       "path": "essays/the-layer-that-answers.md",
       "title": "The Layer That Answers",
+      "publishDate": "2026-08-30",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-teaching-window",
+      "path": "essays/the-teaching-window.md",
+      "title": "The Teaching Window",
       "publishDate": "2026-08-30",
       "category": "interdisciplinary"
     },

@@ -4747,6 +4747,19 @@
     "contentHash": "2e1673daa1998b8364b537ac3d25e994d71932b85a710db9bedfa58b2d8df380",
     "generatedAt": "2026-05-16T00:33:00.000Z"
   },
+  "the-teaching-window": {
+    "excerpt": "The teaching window defines which musical identities become learnable across time, from transient attacks and groove to phrase, affect, and large-scale form.",
+    "tags": [
+      "perception",
+      "signal-processing",
+      "composition",
+      "psychoacoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "6672b025fdff66e687010e2104c2cbaa7a8ccdbfd7270e813649c8eddae1fc78",
+    "generatedAt": "2026-08-30T19:04:51.562Z"
+  },
   "the-temporal-contract": {
     "excerpt": "Music and machine learning both navigate temporal contracts—agreements between process and time window. Composition becomes a control surface for commitment time, occupancy time, and risk time.",
     "tags": [
