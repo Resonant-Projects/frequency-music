@@ -534,3 +534,19 @@ Evidence context:
 - Answering-layer synthesis sources: cached synthesis outputs from 2026-05-20 and 2026-05-21.
 - Accessible-next-state extraction cluster: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j977tjh3ka74caprsf86d4e3y185maah`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j978zvv39t3wqdw578e6g057b18683jf`, `j978mypywk23f3gtf3ykz84q4x85j102`
 - Speech-recognition encoder bias extraction: `j97795a7x76skzbg4d8pcdhpqh85k5zb`
+
+## 2026-08-31 - The Addressable Intervention
+
+- `addressable intervention` -> `control surface`: an analysis feature becomes compositionally useful when it returns a handle where musical action can land.
+- `addressable intervention` -> `decision rate`: the system must decide both when evidence can act and where the resulting action is addressed.
+- `addressable intervention` -> `teaching window`: a teaching window can train not just identity, but the layer or parameter that should receive intervention.
+- `Schrodinger Bridge restoration` -> `accessible next state`: one-step enhancement treats corrupted audio as a state moved toward a reachable cleaner state.
+- `FX-chain grammar` -> `mixing style`: per-stem effect choice, ordering, and parameterization make style editable as a token sequence.
+- `string-route identity` -> `pitch authority`: the same nominal pitch can carry different physical authority depending on which guitar string produced it.
+- `hidden performance coordinate` -> `composition control`: machine-audible but weakly conscious distinctions can become playable once routed to an intervention surface.
+
+Evidence context:
+
+- Schrodinger Bridge Mamba extraction candidate: `j97d337kfk4agn4a6h0vqktdcn8b3b4e`
+- StemFX extraction candidate: `j972b99xapwke0nsrs9mydqez58b2v83`
+- Fretiq extraction candidate: `j976hka8k1xqgt9rbagkz562e18b12er`
