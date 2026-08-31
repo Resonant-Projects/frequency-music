@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-30T19:04:54.745Z",
+  "generatedAt": "2026-08-31T03:30:00.351Z",
   "items": [
+    {
+      "slug": "the-addressable-intervention",
+      "path": "essays/the-addressable-intervention.md",
+      "title": "The Addressable Intervention",
+      "publishDate": "2026-08-31",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-decision-rate-of-sound",
       "path": "essays/the-decision-rate-of-sound.md",
