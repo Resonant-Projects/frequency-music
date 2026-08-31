@@ -1,6 +1,6 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-31T03:30:00.351Z",
+  "generatedAt": "2026-08-31T11:23:23.297Z",
   "items": [
     {
       "slug": "the-addressable-intervention",
@@ -8,6 +8,13 @@
       "title": "The Addressable Intervention",
       "publishDate": "2026-08-31",
       "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-pitch-that-thickens",
+      "path": "essays/the-pitch-that-thickens.md",
+      "title": "The Pitch That Thickens",
+      "publishDate": "2026-08-31",
+      "category": "perception"
     },
     {
       "slug": "the-decision-rate-of-sound",

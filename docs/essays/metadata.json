@@ -3522,6 +3522,19 @@
     "contentHash": "4896093bf215ea325b42bd8c2d0471e1a70f8e5667d273b6c36cdb3e0a1cd37e",
     "generatedAt": "2026-08-11T19:07:46.145Z"
   },
+  "the-pitch-that-thickens": {
+    "excerpt": "Pitch thickness describes how a sound can retain a clear pitch center while accumulating spectral complexity, inharmonic partials, and hidden melodic cues—a practical compositional control between…",
+    "tags": [
+      "psychoacoustics",
+      "perception",
+      "acoustics",
+      "wave-physics",
+      "composition"
+    ],
+    "category": "perception",
+    "contentHash": "d273d980c1cf064f88aa99d27ae7074841727f4cd930434c349c100c5509ab92",
+    "generatedAt": "2026-08-31T11:23:20.040Z"
+  },
   "the-plan-that-survives-the-renderer": {
     "excerpt": "AI music systems fail when renderers override structural plans. The solution: keep evidence, plan, and rendering separate-like musical notation does.",
     "tags": [
