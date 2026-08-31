@@ -1,6 +1,6 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-31T11:23:23.297Z",
+  "generatedAt": "2026-08-31T19:06:44.005Z",
   "items": [
     {
       "slug": "the-addressable-intervention",
@@ -15,6 +15,13 @@
       "title": "The Pitch That Thickens",
       "publishDate": "2026-08-31",
       "category": "perception"
+    },
+    {
+      "slug": "the-scale-that-keeps-the-signal",
+      "path": "essays/the-scale-that-keeps-the-signal.md",
+      "title": "The Scale That Keeps The Signal",
+      "publishDate": "2026-08-31",
+      "category": "interdisciplinary"
     },
     {
       "slug": "the-decision-rate-of-sound",
