@@ -4133,6 +4133,20 @@
     "contentHash": "756cf24814b0c59a15896c55718a5c5d65878571c6bc0dd707970bb305f732ed",
     "generatedAt": "2026-05-08T00:26:57.610Z"
   },
+  "the-scale-that-keeps-the-signal": {
+    "excerpt": "A signal is preserved by choosing the scale where its useful structure remains actionable: rhythm formants, tokenizer alignment, codecs, wavelets, and Tonnetz geometry all say so.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "AI-music",
+      "composition",
+      "information-theory",
+      "mathematical-music-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "a8585af6a6045dacbe0fda307864c6ede27f0620ad3288f123d7711bc356cb8b",
+    "generatedAt": "2026-08-31T19:02:00.000Z"
+  },
   "the-scene-takes-the-cue": {
     "excerpt": "Sound is becoming more than an object: it can cue visuals, extract voices, preserve dialogue memory, and reorganize a mixed scene. A compositional framework for hearing cross-modal causality.",
     "tags": [
@@ -5476,19 +5490,5 @@
     "category": "interdisciplinary",
     "contentHash": "69a821d563076708e14db151ffa63c9cf70422e2163ad537d5e80e479790cf75",
     "generatedAt": "2026-08-01T21:34:13.848Z"
-  },
-  "the-scale-that-keeps-the-signal": {
-    "excerpt": "A signal is preserved by choosing the scale where its useful structure remains actionable: rhythm formants, tokenizer alignment, codecs, wavelets, and Tonnetz geometry all say so.",
-    "tags": [
-      "signal-processing",
-      "perception",
-      "AI-music",
-      "composition",
-      "information-theory",
-      "mathematical-music-theory"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "a8585af6a6045dacbe0fda307864c6ede27f0620ad3288f123d7711bc356cb8b",
-    "generatedAt": "2026-08-31T19:02:00.000Z"
   }
 }
