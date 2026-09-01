@@ -1,6 +1,6 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-01T03:05:16.951Z",
+  "generatedAt": "2026-09-01T11:04:19.948Z",
   "items": [
     {
       "slug": "the-permitted-failure",
@@ -2779,6 +2779,13 @@
       "path": "essays/the-codec-ear.md",
       "title": "The Codec Ear: What Neural Audio Compression Reveals About Musical Perception",
       "publishDate": "2026-02-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-shortcut-resistant-ear",
+      "path": "essays/the-shortcut-resistant-ear.md",
+      "title": "The Shortcut-Resistant Ear",
+      "publishDate": null,
       "category": "interdisciplinary"
     }
   ]
