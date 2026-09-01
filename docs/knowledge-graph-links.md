@@ -565,3 +565,20 @@ Evidence context:
 - Schrodinger Bridge Mamba extraction candidate: `j97d337kfk4agn4a6h0vqktdcn8b3b4e`
 - StemFX extraction candidate: `j972b99xapwke0nsrs9mydqez58b2v83`
 - Fretiq extraction candidate: `j976hka8k1xqgt9rbagkz562e18b12er`
+
+## 2026-09-01 - The Parity Layer
+
+- `parity layer` -> `translation loss`: a musical fact survives a representation change only when the implementation preserves the evidence that made it audible.
+- `parity layer` -> `tone-to-sound mapping`: tone-marked text needs rule, unit, and F0-contour agreement before lexical tone becomes acoustic motion.
+- `parity layer` -> `model distillation`: pruning a voice model is a musical negotiation, because capacity and feature-convention drift can change timing, contour, and timbre.
+- `parity layer` -> `sampling-rate contract`: restoration should distinguish recovered acoustic detail from interpolated high-rate surface.
+- `parity layer` -> `feature parity`: browser-native listening must compute the same spectral evidence that training used.
+- `string-route identity` -> `parity layer`: alternate guitar-string identity becomes compositional control only if the analysis pipeline preserves that hidden coordinate across environments.
+- `addressable intervention` -> `parity layer`: an intervention address remains playable only when its representation boundaries keep the address stable.
+
+Evidence context:
+
+- TTSYoruba extraction candidate: `j97ddkgf0a35qtesengcwa16w58b02hb`
+- Hindi depth-pruning TTS extraction candidate: `j9700sw1kkjkwtyhp6427r5n0x8b1erd`
+- UniPASE extraction candidate: `j974dj9b7efc9g420nm765sw298ayfbj`
+- Fretiq extraction candidate: `j976hka8k1xqgt9rbagkz562e18b12er`

@@ -1,5 +1,6 @@
 ---
 title: "The Shortcut-Resistant Ear"
+publishDate: 2026-09-01
 excerpt: "Shortcut-resistant listening tests whether audio systems perceive the intended musical cause—or merely exploit convenient proxies such as labels, location fingerprints, loudness, or genre."
 category: "interdisciplinary"
 tags:

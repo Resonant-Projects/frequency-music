@@ -3441,6 +3441,19 @@
     "contentHash": "d1f76961c661dcd2ecc4ec939ee53b542945a744a69c3189698a0807379380d7",
     "generatedAt": "2026-04-10T18:39:45.281Z"
   },
+  "the-parity-layer": {
+    "excerpt": "The parity layer preserves musical identity across translation—from tone-marked text to speech, model compression, restoration, and browser-based guitar classification.",
+    "tags": [
+      "signal-processing",
+      "AI-music",
+      "perception",
+      "acoustics",
+      "composition"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "762dd0c445c0d59f0fff955b416bbead96d251e8f97ec9802f6e6d19aae4b564",
+    "generatedAt": "2026-09-01T19:04:55.850Z"
+  },
   "the-partial-access-ear": {
     "excerpt": "A compositional principle treating musical ambiguity as a deliberate distribution of access across listeners, performers, and machines—designing what each perceives and when.",
     "tags": [
