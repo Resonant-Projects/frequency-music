@@ -3509,6 +3509,20 @@
     "contentHash": "209af078091f2d5352efe634a770e5a41a7a4e756415a9fdb5ddac8ca80c1679",
     "generatedAt": "2026-04-10T18:39:47.544Z"
   },
+  "the-permitted-failure": {
+    "excerpt": "Robust musical systems become usable when they define which transformations may break surface detail without breaking identity, evidence, or control.",
+    "tags": [
+      "signal-processing",
+      "composition",
+      "AI-music",
+      "perception",
+      "information-theory",
+      "psychoacoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "83f36548e6684741c39c484f7d551f2fad2f091996b37e879f3a1a5a2ec553f5",
+    "generatedAt": "2026-09-01T03:02:00.000Z"
+  },
   "the-pitch-field": {
     "excerpt": "Pitch is not a fixed location but a field of constraints: adjacency, contour, detuning, and partials shape whether tones become melody, speech, texture, or polyphony.",
     "tags": [

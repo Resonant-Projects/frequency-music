@@ -1,5 +1,20 @@
 # Knowledge Graph Links
 
+## 2026-09-01 - The Permitted Failure
+
+- New essay: `docs/essays/the-permitted-failure.md`
+- Proposed concept: **permitted failure** - the explicit boundary between transformations a musical system may absorb and transformations that invalidate its identity, evidence, or control claim.
+- `permitted failure` -> `reachable identity`: identity survives where a system declares which losses preserve the same musical object.
+- `permitted failure` -> `input contract`: an input contract is incomplete until it names which missing or degraded evidence may still count.
+- `permitted failure` -> `resolution budget`: acceptable loss depends on how much detail a task needs before failure becomes false evidence.
+- `permitted failure` -> `scale-preserving representation`: choosing the preservation scale also chooses what may be discarded at other scales.
+- `permitted failure` -> `semi-fragile watermarking`: a useful watermark survives benign transformations and breaks when the identity claim changes.
+- `permitted failure` -> `compositional control`: a composer can treat failure mode as a playable parameter when the boundary is explicit.
+- Related existing concepts: reachable identity, input contract, resolution budget, scale-preserving representation, answering layer, decision rate, critical-band masking, phase coherence, score hierarchy, graceful degradation, hallucination boundary.
+- Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j977tjh3ka74caprsf86d4e3y185maah`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j978zvv39t3wqdw578e6g057b18683jf`, `j978mypywk23f3gtf3ykz84q4x85j102`, `j97795a7x76skzbg4d8pcdhpqh85k5zb`.
+
+Durable in-repo concept links captured because live Convex extraction/list/link calls returned a bare CLI `Error` during this cron run.
+
 ## 2026-08-30 - The Layer That Answers
 
 - New essay: `docs/essays/the-layer-that-answers.md`

@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-08-31T19:14:38.877Z",
+  "generatedAt": "2026-09-01T03:05:16.951Z",
   "items": [
+    {
+      "slug": "the-permitted-failure",
+      "path": "essays/the-permitted-failure.md",
+      "title": "The Permitted Failure",
+      "publishDate": "2026-09-01",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-addressable-intervention",
       "path": "essays/the-addressable-intervention.md",
