@@ -64,7 +64,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 - The backend is self-hosted. Copy [`.env.example`](./.env.example) to `.env.local`; scripts load it via `varlock/auto-load` (imported at the top of each env-reading script); Node does not auto-load `.env` files.
 - Caution: `vpx convex dev`, `vpx convex codegen`, and `vpx convex deploy` talk to the live backend.
-- For CLI mutation auth, see [Authentication in CLAUDE.md](./CLAUDE.md#authentication).
+- For CLI mutation auth, see [Guardrails in AGENTS.md](./AGENTS.md#guardrails).
 
 ### Agent workspace & worker
 
