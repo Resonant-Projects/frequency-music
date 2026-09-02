@@ -9,7 +9,7 @@
 ## Guardrails
 
 - Convex is one live self-hosted deployment. `run`, `dev`, `codegen`, and `deploy` commands can contact production; confirm the target and effects before running them.
-- Model policy: pick from `MODELS` in `convex/llm.ts`. GPT-5.6 Terra is the default for automated cron extractions and Opus for manual re-extractions; Llama models are excluded by policy, whatever a provider offers.
+- Model policy: automated cron extractions use `DEFAULT_MODEL` (GPT-5.6 Terra); a manual re-extraction may pass a stronger model, historically Claude Opus, through the `model` override. Register any new model id in `MODELS` so `scripts/check-model-catalog.ts` verifies it. Llama models are excluded by policy, whatever a provider offers.
 - `AUTH_BYPASS_ENABLED=true` is an intentional standing non-human service identity, not a development misconfiguration.
 - CLI mutations require `devBypassSecret`. Resolve it through Varlock and 1Password; never print, paste, or commit the value.
 - `/agent-tools/*` uses `AGENT_TOOL_SECRET`. Irreversible hypothesis and recipe publication remains human-approved; agents may prepare drafts and reversible provenance-bearing data only within the documented tool contract.
