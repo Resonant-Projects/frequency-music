@@ -1,5 +1,22 @@
 # Knowledge Graph Links
 
+## 2026-09-02 - The Resolution That Counts
+
+- New essay: `docs/essays/the-resolution-that-counts.md`
+- Proposed concept: **counting resolution** - the level of temporal, spectral, symbolic, or perceptual detail at which a system has enough evidence to make the claim it is designed to make.
+- `counting resolution` -> `resolution budget`: a budget is musically meaningful only relative to the claim whose evidence must survive.
+- `counting resolution` -> `answering layer`: the answering layer determines which resolution is allowed to count as decisive.
+- `counting resolution` -> `decision rate`: temporal resolution becomes compositional when a system decides how often evidence may act.
+- `counting resolution` -> `reachable identity`: different identities survive at different counted scales, from rhythm formants to intelligibility to source identity.
+- `counting resolution` -> `input contract`: the task contract chooses whether envelope rhythm, words, prosody, spectral artifacts, or acoustic fidelity matter most.
+- `counting resolution` -> `rhythm formants`: low-frequency amplitude modulation can preserve identity before fine acoustic detail enters.
+- `counting resolution` -> `ultra-low bitrate intelligibility`: 200 bps speech coding shows that intelligibility can survive after many other identity layers are discarded.
+- `counting resolution` -> `wavelet scattering transform`: subtle synthetic artifacts require finer time-frequency resolution than intelligibility alone.
+- Related existing concepts: resolution budget, answering layer, decision rate, reachable identity, input contract, permitted failure, surviving contour, partial authority, acoustic-linguistic encoding.
+- Source extraction IDs: `j97dmcxraattrt4e9gsc7dsp4185rj2e`, `j976p8wbe356x1qy5xtvfsjvvs856gj1`, `j9793cmwt6f6t1s819xdqpay7x854g86`, `j971a4crv4z7nqcz7v24yfgvjh85x5zq`.
+
+Durable in-repo concept links captured because live Convex extraction/list/link calls returned a bare CLI `Error` during this cron run.
+
 ## 2026-09-01 - The Permitted Failure
 
 - New essay: `docs/essays/the-permitted-failure.md`
