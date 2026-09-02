@@ -31,7 +31,7 @@
   // root project applies the wrong compiler boundary; package.json typechecks
   // each workspace separately via typecheck:web and typecheck:agent.
   // scripts/archive/ holds completed one-shot scripts kept byte-identical for
-  // reference and never run (see CLAUDE.md); they carry stale relative imports
+  // reference and never run (see AGENTS.md); they carry stale relative imports
   // and Bun globals, so exclude them from the root typecheck.
   "exclude": ["node_modules", "web", "agent", "scripts/archive"]
 }
