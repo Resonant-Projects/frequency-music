@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-01T19:07:57.251Z",
+  "generatedAt": "2026-09-03T03:07:29.346Z",
   "items": [
+    {
+      "slug": "the-admissible-witness",
+      "path": "essays/the-admissible-witness.md",
+      "title": "The Admissible Witness",
+      "publishDate": "2026-09-03",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-parity-layer",
       "path": "essays/the-parity-layer.md",
@@ -13,6 +20,13 @@
       "slug": "the-permitted-failure",
       "path": "essays/the-permitted-failure.md",
       "title": "The Permitted Failure",
+      "publishDate": "2026-09-01",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-resolution-that-counts",
+      "path": "essays/the-resolution-that-counts.md",
+      "title": "The Resolution That Counts",
       "publishDate": "2026-09-01",
       "category": "interdisciplinary"
     },
