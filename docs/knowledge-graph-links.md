@@ -599,3 +599,24 @@ Evidence context:
 - Hindi depth-pruning TTS extraction candidate: `j9700sw1kkjkwtyhp6427r5n0x8b1erd`
 - UniPASE extraction candidate: `j974dj9b7efc9g420nm765sw298ayfbj`
 - Fretiq extraction candidate: `j976hka8k1xqgt9rbagkz562e18b12er`
+
+## 2026-09-03 - The Admissible Witness
+
+- `admissible witness` -> `translation loss`: translation is risky when the representation allowed to testify no longer carries the musical fact being judged.
+- `admissible witness` -> `parity layer`: parity preserves the agreement needed for a witness to remain qualified across implementation boundaries.
+- `admissible witness` -> `counting resolution`: counting resolution asks how much evidence is enough; admissible witness asks which evidence is allowed to answer.
+- `accessible next state` -> `admissible witness`: in metastable or path-dependent systems, process can be the valid witness for identity.
+- `perceptual banding` -> `admissible witness`: Bark-scale processing lets listener-resolvable critical bands testify for spectral motion.
+- `semi-fragile identity` -> `admissible witness`: controlled watermark failure marks the point where a transformation no longer counts as benign variation.
+- `phase coherence` -> `admissible witness`: phase-sensitive representations can testify for stem belonging and musical coherence.
+- `modality gap` -> `admissible witness`: ABC notation, visual score, and audio expose different facts, so each answers different questions well.
+- `encoder bias` -> `admissible witness`: a damaged or compressed encoder can make downstream language confidence an unreliable witness.
+
+Evidence context:
+
+- Complex ice phase extraction: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`
+- Bark24 psychoacoustic dynamics extraction: `j977tjh3ka74caprsf86d4e3y185maah`
+- StreamMark semi-fragile watermark extraction: `j97b5cq4em4evnpz1dzpjk37y1854ztc`
+- PHALAR phase-equivariant representations extraction: `j978zvv39t3wqdw578e6g057b18683jf`
+- MSU-Bench score-understanding extraction: `j978mypywk23f3gtf3ykz84q4x85j102`
+- Speech-recognition encoder bias extraction: `j97795a7x76skzbg4d8pcdhpqh85k5zb`
