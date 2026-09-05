@@ -1,5 +1,23 @@
 # Knowledge Graph Links
 
+## 2026-09-05 - Anticipatory Trace Backfill
+
+- Existing essay linked: `docs/essays/the-anticipatory-trace.md`.
+- Backfilled concepts from cached synthesis pack `data/generated/synthesis/2026-05-16T16-26-36-174Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **anticipatory trace** - the measurable cue-field distributed before an event that makes the event feel reachable, earned, or inevitable without requiring literal prediction.
+- `anticipatory trace` -> `decision rate`: a cue only becomes anticipatory when the listening system samples it within a window that can act before the event.
+- `anticipatory trace` -> `operating clock`: the pre-event clock controls whether prosodic, spectral, rhythmic, or source cues arrive early enough to matter.
+- `anticipatory trace` -> `reachable identity`: an arrival feels continuous when the preceding trace makes that identity the nearest accessible state.
+- `anticipatory trace` -> `answering layer`: the trace identifies which layer will answer at the arrival: call-response, phase/spectral bias, absent source, or process path.
+- Proposed concept: **cue-field** - the short pre-arrival region whose pitch, energy, onset, spectral, silence, and source-implication features prepare how a later event will be heard.
+- `cue-field` -> `time window`: the three-second pre-event window from speech prediction becomes a studio-scale analysis window for arrivals.
+- `cue-field` -> `hidden source implication`: off-screen or acousmatic evidence can prepare a source before it appears in the foreground.
+- `cue-field` -> `subsurface setup`: phase and adjacent-bin spectral relations can bias the arrival without becoming a consciously named motif.
+- `cue-field` -> `severity-selective foreshadowing`: reserve strong preparation for state-changing events so hierarchy survives.
+- Related existing concepts: decision rate, operating clock, reachable identity, answering layer, time window, hidden degrees of freedom, phase coherence, relational ear, permitted failure.
+- Source extraction IDs: `j9792ckdpne6ycbt2nwccy5b7185d3rp`, `j97f14ww3grvkgbgx82zppkj5x86hmsg`, `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97fk7qb2z23h2jm0yzmry6jsd860akk`, `j970nv2kdv5dtv1d1dc6ns2s5n863fv6`, `j9735j1x9c8dxr97dax746vccd86q4tz`.
+
+
 ## 2026-09-05 - Listening Grid / Relation Matrix Backfill
 
 - Existing essays linked: `docs/essays/the-listening-grid.md`, `docs/essays/the-matrix-between-things.md`.
