@@ -1,5 +1,25 @@
 # Knowledge Graph Links
 
+## 2026-09-05 - Listening Grid / Relation Matrix Backfill
+
+- Existing essays linked: `docs/essays/the-listening-grid.md`, `docs/essays/the-matrix-between-things.md`.
+- Backfilled concepts from cached synthesis packs because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **listening grid** - the analysis or processing coordinate system that decides which acoustic distinctions become available as musical evidence.
+- `listening grid` -> `resolution budget`: a grid spends resolution on particular temporal, spectral, perceptual, or encoded distinctions.
+- `listening grid` -> `counting resolution`: what counts as evidence depends on the grid's granularity and boundaries.
+- `listening grid` -> `rhythm formants`: low-frequency amplitude modulation is one grid that turns groove and speech rhythm into spectral structure.
+- `listening grid` -> `wavelet scattering transform`: multi-scale scattering exposes artifacts that coarser grids can hide.
+- `listening grid` -> `encoder bottleneck`: compression and encoder design are implicit listening grids that can preserve, erase, or bias musical identity.
+- `listening grid` -> `critical-band orchestration`: Bark-scale bands turn perceptual separability into a compositional lane system.
+- Proposed concept: **relation matrix** - the table of distances, correspondences, adjacencies, alignments, and permissions between fixed musical objects.
+- `relation matrix` -> `answering layer`: a phrase answers by relation, not by isolated material alone.
+- `relation matrix` -> `reachable identity`: identity survives when the relational path remains accessible under transformation.
+- `relation matrix` -> `harmonic graph adjacency`: Tonnetz-like graphs make harmonic motion a relation-first operation.
+- `relation matrix` -> `spatial distance matrix`: localization demonstrates that source identity can be recovered from constrained distance relations.
+- `relation matrix` -> `alignment matrix`: symbolic and acoustic layers can both be correct but musically unstable when their correspondences drift.
+- Related existing concepts: resolution budget, counting resolution, answering layer, reachable identity, fixed frame, invisible coordinate, graph traversal habit, perceptual banding, phase coherence.
+- Source extraction IDs: `j97dmcxraattrt4e9gsc7dsp4185rj2e`, `j971a4crv4z7nqcz7v24yfgvjh85x5zq`, `j97795a7x76skzbg4d8pcdhpqh85k5zb`, `j977tjh3ka74caprsf86d4e3y185maah`, `j9792ckdpne6ycbt2nwccy5b7185d3rp`, `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97a50as5v3xbfw82z24ptdj9185b6w6`, `j97e4vddm3p52bn5y1xntd0dw186wz2b`, `j978mypywk23f3gtf3ykz84q4x85j102`, `j9740a29b94bc2n0d5zjzt1kr186aq3z`.
+
 ## 2026-09-02 - The Resolution That Counts
 
 - New essay: `docs/essays/the-resolution-that-counts.md`
