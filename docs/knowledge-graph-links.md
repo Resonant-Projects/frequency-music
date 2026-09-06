@@ -679,3 +679,24 @@ Evidence context:
 - Source extraction IDs: `jx7402s3g0ndbjwmfh8qnpvd9n85ndzb`, `jx728k53rhpv5ye61qsvb8b9fh85ayjd`, `jx7ady5b74ettfwnrgzq10p2mn86g6bk`, `jx7dn2qe73n69wb2keprdw1xm984wjxd`, `jx7awwpndbmcnas4926276wxfn85e65h`, `jx7c7e1e75npm6wa6bzkzk0gq984xs82`, `jx7awge62ymkd5ywnpz9ddyymx85ntkj`, `j97erghbc7ad3p5p34jhxsgbcn85nn4m`, `j9712m9d4c5g8t6s1nbac2exws85nqxp`, `j97a759sjc6q974wvnhh9v6dsd85ngdg`, `j97e09z3x1dkjp7f0m501s8y0d85ntv4`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-06 - Carrying Medium / Embedded Instruction Backfill
+
+- Existing essays linked: `docs/essays/the-carrying-medium.md`, `docs/essays/the-instruction-under-the-sound.md`.
+- Backfilled concepts from cached synthesis packs `data/generated/synthesis/2026-05-17T16-26-36-161Z/` and `data/generated/synthesis/2026-05-18T00-26-33-810Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **carrying medium** - the physical, symbolic, electrical, architectural, encoded, or model-internal substrate that determines which musical relations survive transmission.
+- `carrying medium` -> `carrier-preserved relation`: a phrase's identity changes depending on whether stress, timbre, pressure, intelligibility, or responsiveness is the relation the medium is built to preserve.
+- `carrying medium` -> `reachable representation`: like metastable ice phases, a musical structure must be reachable through its actual carrier, not merely possible in abstraction.
+- `carrying medium` -> `prosodic annotation`: stress, punctuation, and phoneme labels become symbolic carriers that let spoken or sung emphasis survive denoising and synthesis.
+- `carrying medium` -> `material coloration`: transformers, saturation, codecs, rooms, and transmission channels should be treated as scored constraints rather than transparent aftermath.
+- `carrying medium` -> `operating clock`: chunk size, latency, and duplex feedback define which musical decisions can remain continuous through time.
+- Proposed concept: **embedded instruction** - a recoverable or generative rule carried below the obvious sonic surface, such as a watermark, graph adjacency rule, style trace, or call-response obligation.
+- `embedded instruction` -> `recoverable signature`: watermarking and performer-identification both show that identity can be encoded in dimensions not heard as foreground material.
+- `embedded instruction` -> `graph instruction`: Tonnetz and combinatorial harmonic resources act less like sounds than like instructions for legal adjacency.
+- `embedded instruction` -> `reachable rule`: a rule becomes musically usable only when it specifies not just possible states but reachable transitions.
+- `embedded instruction` -> `surface-matched control`: two passages can share audible material while carrying different hidden obligations, provenance, or generative constraints.
+- `embedded instruction` -> `admissible witness`: the layer allowed to prove identity may be hidden under the sound rather than identical to the heard surface.
+- Related existing concepts: reachable representation, accessible next state, translation layer, parity layer, admissible witness, instruction under the sound, carrying medium, relation matrix, Tonnetz, phase coherence, recoverable trace.
+- Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97csjd85gqkf09nd5mx8ye18x86cghr`, `j977jy2m88pp1b118hc0wgyt9s85n04g`, `j97agm7nembdpb3j3zjcadesc186hfwb`, `j97a98yt7kjr1ve2fgrb7d59qs86b02g`, `j9713cn14r4r3xtz74ad0pzp0d85ytkv`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j97ckpqqxzkj19gbw70dkwhk218ahj6w`, `j97bztvkx8cq71ntpc1fshmzqs85wvnw`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
