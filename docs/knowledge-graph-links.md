@@ -700,3 +700,20 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97csjd85gqkf09nd5mx8ye18x86cghr`, `j977jy2m88pp1b118hc0wgyt9s85n04g`, `j97agm7nembdpb3j3zjcadesc186hfwb`, `j97a98yt7kjr1ve2fgrb7d59qs86b02g`, `j9713cn14r4r3xtz74ad0pzp0d85ytkv`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j97ckpqqxzkj19gbw70dkwhk218ahj6w`, `j97bztvkx8cq71ntpc1fshmzqs85wvnw`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-06 - Carrier Counterpoint Backfill
+
+- Existing essay linked: `docs/essays/the-carrier-decides.md`.
+- Backfilled concepts from cached synthesis pack `data/generated/synthesis/2026-05-20T00-26-42-346Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **carrier counterpoint** - a compositional practice where the pitch/rhythm surface stays fixed while different carrier layers preserve different relations: stress, coloration, pressure, transmission, segmentation, or responsiveness.
+- `carrier counterpoint` -> `carrying medium`: carrier counterpoint is the contrapuntal use of the carrying medium as a scored voice rather than as neutral infrastructure.
+- `carrier counterpoint` -> `carrier-preserved relation`: each carrier should be judged by the relation it preserves, not by generic fidelity.
+- `path-dependent carrier` -> `reachable identity`: a motif reaches different perceived states depending on the rate, path, and medium through which it is realized.
+- `prosodic carrier` -> `embedded instruction`: stress, punctuation, phoneme labels, and performance accents carry instructions under the obvious word or note sequence.
+- `sub-audible pressure` -> `material coloration`: room pressure, saturation, and transformer coloration are carrier choices that can change musical state without changing nominal pitch content; infrasound claims remain speculative and should be handled cautiously.
+- `chirp transmission` -> `translation layer`: compression and chirp-like modulation expose the transport layer as an audible translation rather than a transparent path.
+- `chunked listening` -> `operating clock`: 600 ms windows and duplex feedback make temporal segmentation part of the musical carrier.
+- Related existing concepts: carrying medium, carrier-preserved relation, embedded instruction, operating clock, translation layer, reachable identity, material coloration, resolution budget, answering layer, admissible witness.
+- Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97csjd85gqkf09nd5mx8ye18x86cghr`, `j977jy2m88pp1b118hc0wgyt9s85n04g`, `j97agm7nembdpb3j3zjcadesc186hfwb`, `j97a98yt7kjr1ve2fgrb7d59qs86b02g`, `j9713cn14r4r3xtz74ad0pzp0d85ytkv`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
