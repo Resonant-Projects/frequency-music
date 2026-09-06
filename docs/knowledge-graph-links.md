@@ -658,3 +658,24 @@ Evidence context:
 - PHALAR phase-equivariant representations extraction: `j978zvv39t3wqdw578e6g057b18683jf`
 - MSU-Bench score-understanding extraction: `j978mypywk23f3gtf3ykz84q4x85j102`
 - Speech-recognition encoder bias extraction: `j97795a7x76skzbg4d8pcdhpqh85k5zb`
+
+## 2026-09-06 - Uncertain Edge / Translation Layer Backfill
+
+- Existing essays linked: `docs/essays/the-uncertain-edge.md`, `docs/essays/the-translation-layer.md`.
+- Backfilled concepts from cached synthesis packs `data/generated/synthesis/2026-05-17T08-26-29-173Z/` and `data/generated/synthesis/2026-05-18T16-26-47-933Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **uncertain edge** - a structured transition region where a musical state becomes audible by ordered clarification rather than by a point-like cut or generic blur.
+- `uncertain edge` -> `gradient boundary`: the edge has width; speech-boundary confidence intervals become a compositional model for note, chord, source, and texture transitions.
+- `uncertain edge` -> `ordered clarification`: uncertainty is useful only when the composer controls which dimension becomes certain first: pitch, noise, rhythm, source identity, or semantic intent.
+- `uncertain edge` -> `reachable identity`: a transition feels directed when the next identity is path-connected to the current state rather than merely juxtaposed.
+- `uncertain edge` -> `metastable plateau`: an in-between state can carry form if it is locally coherent, reachable from the source, and biased toward the destination.
+- `uncertain edge` -> `operating clock`: symbolic and acoustic clocks can drift through the boundary before aligning, making timing itself part of the edge.
+- Proposed concept: **translation layer** - the intermediate representation through which a musical relation must pass during analysis, transformation, encoding, notation, or rendering.
+- `translation layer` -> `listening grid`: the translation chooses a grid: Bark bands, arbitrary bands, phase-aware features, score notation, or compressed audio front ends.
+- `translation layer` -> `translation loss`: loss occurs when the layer preserves surface polish while weakening the relation that carried musical identity.
+- `translation layer` -> `answering layer`: a representation is musically adequate only if the layer allowed to answer still survives the translation.
+- `translation layer` -> `phase-preserved coherence`: phase-aware representations show that identity can live in relations a magnitude-only translation may discard.
+- `translation layer` -> `notation codec`: ABC, PDF, staff, piano-roll, and audio views preserve different score relations and therefore invite different musical inferences.
+- Related existing concepts: reachable identity, operating clock, answering layer, listening grid, translation loss, relation matrix, resolution budget, phase coherence, critical-band orchestration, permitted failure.
+- Source extraction IDs: `jx7402s3g0ndbjwmfh8qnpvd9n85ndzb`, `jx728k53rhpv5ye61qsvb8b9fh85ayjd`, `jx7ady5b74ettfwnrgzq10p2mn86g6bk`, `jx7dn2qe73n69wb2keprdw1xm984wjxd`, `jx7awwpndbmcnas4926276wxfn85e65h`, `jx7c7e1e75npm6wa6bzkzk0gq984xs82`, `jx7awge62ymkd5ywnpz9ddyymx85ntkj`, `j97erghbc7ad3p5p34jhxsgbcn85nn4m`, `j9712m9d4c5g8t6s1nbac2exws85nqxp`, `j97a759sjc6q974wvnhh9v6dsd85ngdg`, `j97e09z3x1dkjp7f0m501s8y0d85ntv4`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
