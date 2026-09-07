@@ -748,3 +748,20 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - `two-layer tuning effect` -> `psychoacoustic memory`: tuning changes become musical when they interact with the listener's short-term intonation window.
 - Related existing concepts: reachable identity, relation matrix, resolution budget, listening grid, graph-constrained resolution, nearest accessible form, phase coherence, control surface.
 - Source IDs: `jx75wkgkgz6mtkzbc5f7c5e7cd81tr1g`, `jx78fax65x4qbb0jc48007bkrd81v6b0`, `jx723zh9434d669xgxvwm8yjxd81tmyp`, `jx7etc80rvn379gnkxadezhs8981vm8p`, `jx740pjhg25eykbn1qx851q0cd81tjha`, `jx78r3789cz8et74b2b8cr6pk581twa6`, `jx71tnc8eh6kqa0nv5d2q3vdb181vdz1`, `jx77kge8bq2k04edr2azdctnk181tvxe`.
+
+## 2026-09-07 - Comma Placement as Tension
+
+- New essay: `docs/essays/comma-placement-as-tension.md`.
+- Backfilled from cached synthesis packs `data/generated/synthesis/2026-02-23T02-44-19-824Z/` and `data/generated/synthesis/2026-02-23T02-57-29-616Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **comma placement** - the compositional assignment of unavoidable tuning discrepancy to particular intervals, keys, transitions, or formal regions.
+- `comma placement` -> `two-layer tuning effect`: comma placement controls the trade between local acoustic evidence and harmonic path identity.
+- `comma placement` -> `resolution budget`: temperament spends limited pitch precision on different musical claims: pure thirds, usable fifths, chromatic mobility, or modulation continuity.
+- `comma placement` -> `nearest accessible form`: a tuning system makes some harmonic destinations close and others expensive, so modulation follows a reachability map rather than an abstract circle alone.
+- `comma placement` -> `psychoacoustic memory`: comma shifts become musically legible when beating and intonation drift persist inside the listener's short-term pitch-memory window.
+- `meantone geography` -> `style aperture`: quarter-comma meantone creates favored corridors and wolf regions, giving a style a map of sweet and dangerous moves.
+- `local acoustic truth` -> `path identity`: just intonation can maximize present-chord alignment while making later movement more historically constrained.
+- `distributed shimmer` -> `material coloration`: 12-TET's broadly spread interval error can be scored as a persistent surface color rather than treated only as compromise.
+- Related existing concepts: two-layer tuning effect, roughness/consonance layer, path identity, adaptive retuning, resolution budget, nearest accessible form, relation matrix, reachable identity, psychoacoustic memory, material coloration.
+- Source IDs: `jx7ccx92kkm9539kfdfzyecgj581dcbk`, `jx74cjt6ppgggzt3fxc9w6d03x81d3zf`, `jx754hd6c4vf256e206r9834dh81c0vy`, `jx735sjatw41r9pgqw6r8mwztn81ddbr`, `jx70hfp3mre8mje414z18d6vvn81cx5h`, `jx7a9h63cs3gqte5egyke6p6m981chqz`, `jx7anm5a3r0vyg5j7eq77cq3d981d6nq`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
