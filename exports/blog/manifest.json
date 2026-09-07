@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-03T03:07:29.346Z",
+  "generatedAt": "2026-09-07T11:07:50.037Z",
   "items": [
+    {
+      "slug": "the-two-layer-tuning-effect",
+      "path": "essays/the-two-layer-tuning-effect.md",
+      "title": "The Two-Layer Tuning Effect",
+      "publishDate": "2026-09-07",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-admissible-witness",
       "path": "essays/the-admissible-witness.md",
