@@ -717,3 +717,20 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97csjd85gqkf09nd5mx8ye18x86cghr`, `j977jy2m88pp1b118hc0wgyt9s85n04g`, `j97agm7nembdpb3j3zjcadesc186hfwb`, `j97a98yt7kjr1ve2fgrb7d59qs86b02g`, `j9713cn14r4r3xtz74ad0pzp0d85ytkv`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-07 - Uncollapsed Accompaniment Backfill
+
+- Existing essay linked: `docs/essays/the-uncollapsed-accompaniment.md`.
+- Backfilled concepts from cached synthesis pack `data/generated/synthesis/2026-05-20T08-26-40-901Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **uncollapsed accompaniment** - the structured possibility field that surrounds a musical surface before harmony, voicing, response, measurement, or hidden signal constraints collapse it into one audible realization.
+- `uncollapsed accompaniment` -> `realization layer`: latent musical structure becomes audible only through a realization function: performer, decoder, graph traversal, oracle, or mix decision.
+- `uncollapsed accompaniment` -> `nearest accessible form`: the field is constrained by reachability; the next state is selected from locally available options, not from abstract optimum alone.
+- `uncollapsed accompaniment` -> `style aperture`: personal style appears in the degrees of freedom a rule system leaves open, as in basso continuo griffs under shared harmonic grammar.
+- `uncollapsed accompaniment` -> `coherence before measurement`: coupled melody-harmony, call-response, and phase-signature decisions can lose force when collapsed into isolated choices too early.
+- `phase signature` -> `embedded instruction`: phase bins and adjacent spectral differences can carry recoverable information under the audible surface.
+- `coherent oracle` -> `answering layer`: an oracle or validator matters only if the representation it consumes still carries the coupled relation being judged.
+- `continuo fingerprint` -> `realization layer`: measured performer identity in basso continuo shows that the act of realization leaves a stable musical signature.
+- Related existing concepts: realization layer, nearest accessible form, embedded instruction, answering layer, carrying medium, phase-preserved coherence, reachable identity, style aperture, graph instruction, admissible witness.
+- Source extraction IDs: `j9792ckdpne6ycbt2nwccy5b7185d3rp`, `j97386jb54vcs64m90p3f621zs85nz45`, `j97eag5wx2pp6czsd8rrs1b50x85n9ys`, `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j978wc8spg7xjg8v7d09pzw79985df6w`, `j97f14ww3grvkgbgx82zppkj5x86hmsg`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
