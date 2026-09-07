@@ -734,3 +734,17 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source extraction IDs: `j9792ckdpne6ycbt2nwccy5b7185d3rp`, `j97386jb54vcs64m90p3f621zs85nz45`, `j97eag5wx2pp6czsd8rrs1b50x85n9ys`, `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j978wc8spg7xjg8v7d09pzw79985df6w`, `j97f14ww3grvkgbgx82zppkj5x86hmsg`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-07 - The Two-Layer Tuning Effect
+
+- New essay: `docs/essays/the-two-layer-tuning-effect.md`.
+- Backfilled from cached synthesis pack `data/generated/synthesis/2026-02-27T16-25-24-852Z/` after live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **two-layer tuning effect** - the separation between local acoustic tuning evidence (roughness, beating, partial alignment, difference tones) and structural path evidence (voice-leading continuity, Tonnetz adjacency, learned line-of-fifths motion) when one progression is rendered in multiple tunings.
+- `two-layer tuning effect` -> `roughness/consonance layer`: tuning arms should separate most strongly where local partial alignment and beating are exposed.
+- `two-layer tuning effect` -> `path identity`: the same harmonic traversal can remain recognizable even when acoustic consonance changes.
+- `two-layer tuning effect` -> `tritone stress test`: tritone-rich windows reveal where a tuning system spends its compromises.
+- `two-layer tuning effect` -> `adaptive retuning`: dynamic JI renegotiates local consonance while risking pitch-memory drift during rapid modulation.
+- `two-layer tuning effect` -> `harmonic graph adjacency`: Tonnetz or neo-Riemannian paths can carry continuity independently of exact frequency ratios.
+- `two-layer tuning effect` -> `psychoacoustic memory`: tuning changes become musical when they interact with the listener's short-term intonation window.
+- Related existing concepts: reachable identity, relation matrix, resolution budget, listening grid, graph-constrained resolution, nearest accessible form, phase coherence, control surface.
+- Source IDs: `jx75wkgkgz6mtkzbc5f7c5e7cd81tr1g`, `jx78fax65x4qbb0jc48007bkrd81v6b0`, `jx723zh9434d669xgxvwm8yjxd81tmyp`, `jx7etc80rvn379gnkxadezhs8981vm8p`, `jx740pjhg25eykbn1qx851q0cd81tjha`, `jx78r3789cz8et74b2b8cr6pk581twa6`, `jx71tnc8eh6kqa0nv5d2q3vdb181vdz1`, `jx77kge8bq2k04edr2azdctnk181tvxe`.
