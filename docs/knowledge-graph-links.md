@@ -765,3 +765,23 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source IDs: `jx7ccx92kkm9539kfdfzyecgj581dcbk`, `jx74cjt6ppgggzt3fxc9w6d03x81d3zf`, `jx754hd6c4vf256e206r9834dh81c0vy`, `jx735sjatw41r9pgqw6r8mwztn81ddbr`, `jx70hfp3mre8mje414z18d6vvn81cx5h`, `jx7a9h63cs3gqte5egyke6p6m981chqz`, `jx7anm5a3r0vyg5j7eq77cq3d981d6nq`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-08 - Carrier Counterpoint
+
+- New essay: `docs/essays/carrier-counterpoint.md`.
+- Backfilled concepts from cached synthesis pack `data/generated/synthesis/2026-05-20T00-26-42-346Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **carrier counterpoint** - counterpoint between the media that carry a fixed musical object, where timbre, prosody, transmission, segmentation, room pressure, or processing change what the same notes can claim.
+- `carrier counterpoint` -> `evidence carrier`: the evidence carrier becomes contrapuntal when it moves independently of pitch content while still carrying musical identity.
+- `carrier counterpoint` -> `reachable identity`: the same motif reaches different identities as carrier constraints change which layers survive.
+- `carrier counterpoint` -> `translation loss`: carrier changes expose whether a transformation is preserving the load-bearing layer or only polishing the surface.
+- `carrier counterpoint` -> `path-dependent carrier`: physical and signal paths act like compositional routes toward nearest accessible sonic states.
+- `carrier counterpoint` -> `prosodic carrier`: stress, punctuation, and phoneme cues can carry phrasing identity beyond lexical or pitch labels.
+- `carrier counterpoint` -> `chunked listening`: fixed 600 ms audio chunks can become phrase atoms whose segmentation participates in form.
+- Proposed concept: **path-dependent carrier** - a realization medium whose rate, route, processing order, and constraints help determine the musical state a fixed object becomes.
+- `path-dependent carrier` -> `nearest accessible form`: carrier choice determines which version of a musical object is easiest to realize under pressure.
+- `path-dependent carrier` -> `executable sound chain`: the producing chain is part of the musical object when changing it changes the perceived state.
+- Proposed concept: **chunked listening** - listening organized by explicit or implicit audio windows that become formal units rather than neutral processing buffers.
+- `chunked listening` -> `operating clock`: a chunk length is an operating clock for when evidence can update.
+- `chunked listening` -> `decision rate`: a chunk boundary controls when a motif can be reinterpreted, interrupted, or transmitted.
+- Related existing concepts: evidence carrier, reachable identity, translation loss, load-bearing layer, executable sound chain, operating clock, decision rate, prosodic carrier, transformer coloration, chirp transmission.
+- Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97csjd85gqkf09nd5mx8ye18x86cghr`, `j977jy2m88pp1b118hc0wgyt9s85n04g`, `j97agm7nembdpb3j3zjcadesc186hfwb`, `j97a98yt7kjr1ve2fgrb7d59qs86b02g`, `j9713cn14r4r3xtz74ad0pzp0d85ytkv`.
