@@ -804,3 +804,23 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - `chunked listening` -> `decision rate`: a chunk boundary controls when a motif can be reinterpreted, interrupted, or transmitted.
 - Related existing concepts: evidence carrier, reachable identity, translation loss, load-bearing layer, executable sound chain, operating clock, decision rate, prosodic carrier, transformer coloration, chirp transmission.
 - Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97csjd85gqkf09nd5mx8ye18x86cghr`, `j977jy2m88pp1b118hc0wgyt9s85n04g`, `j97agm7nembdpb3j3zjcadesc186hfwb`, `j97a98yt7kjr1ve2fgrb7d59qs86b02g`, `j9713cn14r4r3xtz74ad0pzp0d85ytkv`.
+
+## 2026-09-08 - Thick Boundary Control
+
+- New essay: `docs/essays/thick-boundary-control.md`
+- Backfilled concepts from cached synthesis context `data/generated/synthesis/2026-05-19T16-26-34-040Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **thick boundary** - a composed transition region where musical evidence changes membership over a structured window rather than at a single timestamp or through a uniform blur.
+- `thick boundary` -> `gradient alignment`: forced-alignment confidence intervals show that an acoustic boundary can be a range whose evidence changes continuously.
+- `thick boundary` -> `latent transition space`: pitch, intensity, noise, formants, and high-frequency content can cross the boundary on different curves.
+- `thick boundary` -> `path-dependent reachability`: the transition window constrains which destination feels reachable from the current state.
+- `thick boundary` -> `decision rate`: each layer's clock determines when its evidence becomes eligible to act inside the boundary.
+- `thick boundary` -> `resolution budget`: spend fine boundary detail where the transition carries identity, form, or narrative evidence.
+- Proposed concept: **boundary score** - an explicit plan for the order, timing, and responsibility of pitch, timbre, intensity, noise, rhythm, and space inside a transition window.
+- `boundary score` -> `answering layer`: the score declares which layer proves the state change: breath/noise, formant color, harmonic motion, amplitude arrival, or spatial shift.
+- `boundary score` -> `fixed frame`: a boundary is more legible when one frame remains stable enough for the staggered transition to be measured.
+- `boundary score` -> `recoverable window`: the boundary window is the smallest region where the before/after relation becomes recoverable rather than merely labeled.
+- `boundary score` -> `critical-band score`: different perceptual bands can carry different crossing times and responsibilities inside the same boundary.
+- Related existing concepts: gradient alignment, latent transition space, adaptive token alignment, rare-event annotation, path-dependent reachability, decision rate, resolution budget, answering layer, fixed frame, recoverable window, critical-band score.
+- Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97a50as5v3xbfw82z24ptdj9185b6w6`, `j97cj4gq3betmf030d5b8e9wes86gnme`, `j97ckpv4ccacc1ct47ch9m0hf5855km4`, `j97618r3fm0es9esrds1zp2zsn85kknx`, `j97cc4de2gqr1tqp4hz05p5mg5856q7k`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
