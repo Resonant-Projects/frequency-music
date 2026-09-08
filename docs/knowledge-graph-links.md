@@ -1,5 +1,24 @@
 # Knowledge Graph Links
 
+## 2026-09-08 - The Critical-Band Score
+
+- New essay: `docs/essays/the-critical-band-score.md`
+- Backfilled concepts from cached synthesis contexts `data/generated/synthesis/2026-05-21T00-26-47-882Z/` and `data/generated/synthesis/2026-05-20T16-26-49-940Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **critical-band score** - a compositional map that assigns musical evidence and responsibility to perceptual frequency bands rather than treating the spectrum as equal-width technical space.
+- `critical-band score` -> `listening grid`: critical bands define a listener-shaped grid for what spectral distinctions can become evidence.
+- `critical-band score` -> `resolution budget`: each band spends limited resolution on pulse, source identity, harmonic pressure, attack proof, or hidden continuity.
+- `critical-band score` -> `translation loss`: translation becomes musically dangerous when it weakens the band that carries the identity claim while preserving less decisive surface quality.
+- `critical-band score` -> `evidence carrier`: a band can carry proof below foreground attention, like semi-fragile watermarking or recurrent spectral fingerprints.
+- `critical-band score` -> `phase coherence`: the band map must include phase/onset relations, not only magnitude or EQ balance.
+- Proposed concept: **band responsibility** - the declared role a perceptual band must preserve under masking, compression, transformation, or orchestration.
+- `band responsibility` -> `answering layer`: a band answers only when it has been assigned the evidence needed for the musical claim.
+- `band responsibility` -> `permitted failure`: a band can be blurred or damaged only if it is not carrying the identity-critical layer.
+- `band responsibility` -> `rhythm formants`: low-frequency modulation bands can carry groove and temporal identity before pitch or timbre detail enters.
+- Related existing concepts: listening grid, resolution budget, translation loss, evidence carrier, layer that answers, critical-band orchestration, rhythm formants, semi-fragile watermarking, phase coherence, intelligibility-first compression.
+- Source extraction IDs: `j977tjh3ka74caprsf86d4e3y185maah`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j978zvv39t3wqdw578e6g057b18683jf`, `j9793cmwt6f6t1s819xdqpay7x854g86`, `j97dmcxraattrt4e9gsc7dsp4185rj2e`, `j978mypywk23f3gtf3ykz84q4x85j102`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
 ## 2026-09-05 - Anticipatory Trace Backfill
 
 - Existing essay linked: `docs/essays/the-anticipatory-trace.md`.
