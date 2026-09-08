@@ -55,6 +55,33 @@
     "contentHash": "6c03480223f4b5d8155662f8c809da983c06d6e7a6dc84e8b9b5c520a83519d3",
     "generatedAt": "2026-06-03T01:34:00.000Z"
   },
+  "carrier-counterpoint": {
+    "excerpt": "A fixed motif can become a different musical state when its carrier changes. Carrier counterpoint treats timbre, transmission, prosody, and room pressure as compositional structure.",
+    "tags": [
+      "composition",
+      "perception",
+      "signal-processing",
+      "acoustics",
+      "psychoacoustics",
+      "resonance"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "7303a9546dc829675f6ed6c21e4106ef7b2e3d1aee7efdfd9e451811c8820c92",
+    "generatedAt": "2026-09-08T11:08:14.519Z"
+  },
+  "comma-placement-as-tension": {
+    "excerpt": "Temperament doesn’t eliminate error—it decides where tension lives.",
+    "tags": [
+      "tuning-systems",
+      "temperament",
+      "psychoacoustics",
+      "composition",
+      "acoustics"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "859473de8dc03743242e1c878ab994e4f1f3461dce9d6a9e20f8ea982122409b",
+    "generatedAt": "2026-09-08T11:08:18.415Z"
+  },
   "constraint-as-control-signal": {
     "excerpt": "A constraint becomes compositional when it changes what actions are available, perceptible, or meaningful.",
     "tags": [
@@ -1628,6 +1655,20 @@
     "category": "perception",
     "contentHash": "791e2a6066d6b2ffae2cb36d24bfa9dceff13dc1e26ca75c6ecdeee3bff98b2a",
     "generatedAt": "2026-05-17T08:28:38.554Z"
+  },
+  "the-critical-band-score": {
+    "excerpt": "The ear does not resolve sound in equal slices.",
+    "tags": [
+      "psychoacoustics",
+      "perception",
+      "composition",
+      "signal-processing",
+      "acoustics",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "2859e867876a4d308204a2c1e1d7eaf56c4c9878c872c7474109524da432788a",
+    "generatedAt": "2026-09-08T11:08:22.181Z"
   },
   "the-critical-moment": {
     "excerpt": "Musical transitions map precisely onto phase transitions from physics-order parameters, symmetry breaking, and critical phenomena reveal the deep mathematics of how music changes states.",

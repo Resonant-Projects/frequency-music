@@ -1,7 +1,28 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-07T11:07:50.037Z",
+  "generatedAt": "2026-09-08T11:08:25.256Z",
   "items": [
+    {
+      "slug": "carrier-counterpoint",
+      "path": "essays/carrier-counterpoint.md",
+      "title": "Carrier Counterpoint",
+      "publishDate": "2026-09-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-critical-band-score",
+      "path": "essays/the-critical-band-score.md",
+      "title": "The Critical-Band Score",
+      "publishDate": "2026-09-08",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "comma-placement-as-tension",
+      "path": "essays/comma-placement-as-tension.md",
+      "title": "Comma Placement as Tension",
+      "publishDate": "2026-09-07",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-two-layer-tuning-effect",
       "path": "essays/the-two-layer-tuning-effect.md",
