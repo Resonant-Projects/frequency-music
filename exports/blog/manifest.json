@@ -1,6 +1,6 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-08T11:08:25.256Z",
+  "generatedAt": "2026-09-08T19:08:44.216Z",
   "items": [
     {
       "slug": "carrier-counterpoint",
@@ -1597,6 +1597,13 @@
       "title": "The Thick Boundary Revisited: Composing the Transition Zone",
       "publishDate": "2026-05-19",
       "category": "composition"
+    },
+    {
+      "slug": "thick-boundary-control",
+      "path": "essays/thick-boundary-control.md",
+      "title": "Thick Boundary Control",
+      "publishDate": "2026-05-19",
+      "category": "interdisciplinary"
     },
     {
       "slug": "the-instruction-under-the-sound",
