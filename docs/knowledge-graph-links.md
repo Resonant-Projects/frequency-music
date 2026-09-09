@@ -824,3 +824,23 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97a50as5v3xbfw82z24ptdj9185b6w6`, `j97cj4gq3betmf030d5b8e9wes86gnme`, `j97ckpv4ccacc1ct47ch9m0hf5855km4`, `j97618r3fm0es9esrds1zp2zsn85kknx`, `j97cc4de2gqr1tqp4hz05p5mg5856q7k`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-09 - The Reachable Representation
+
+- New essay: `docs/essays/the-reachable-representation.md`
+- Backfilled concepts from cached synthesis context `data/generated/synthesis/2026-05-18T16-26-47-933Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **reachable representation** - a map whose coordinates remain actionable under the transformations the music must survive, preserving the relation that carries continuity rather than merely preserving surface detail.
+- `reachable representation` -> `reachable identity`: identity survives when the representation makes the decisive evidence path accessible under pressure.
+- `reachable representation` -> `translation layer`: a translation layer is successful only when it preserves the relation the next representation can still act on.
+- `reachable representation` -> `listening grid`: perceptual grids such as Bark bands decide which spectral distinctions remain reachable to the ear.
+- `reachable representation` -> `permitted failure`: failure tests reveal whether the representation protects the right coordinate across degradation, silence, compression, phase disturbance, or notation changes.
+- `reachable representation` -> `phase coherence`: phase becomes load-bearing when it supplies the relation that makes stems, attacks, or textures feel mutually coherent.
+- Proposed concept: **path cost** - the musical resistance between states imposed by harmony, perception, phase, notation, encoding, or process history.
+- `path cost` -> `nearest accessible form`: a valid destination is musically reachable only when the intervening path makes it feel earned.
+- `path cost` -> `harmonic graph adjacency`: graph traversal turns harmonic possibility into a locally weighted path rather than a teleport between labels.
+- `path cost` -> `thick boundary`: transition regions expose the cost of arrival before the new state fully commits.
+- `path cost` -> `front-end fairness`: encoder and codec choices can make some cues unreachable before later reasoning begins.
+- Related existing concepts: reachable identity, translation layer, listening grid, evidence carrier, critical-band score, permitted failure, phase coherence, nearest accessible form, thick boundary, front-end fairness, notation codec.
+- Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j977tjh3ka74caprsf86d4e3y185maah`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j978zvv39t3wqdw578e6g057b18683jf`, `j978mypywk23f3gtf3ykz84q4x85j102`, `j97795a7x76skzbg4d8pcdhpqh85k5zb`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
