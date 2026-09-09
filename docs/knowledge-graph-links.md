@@ -865,3 +865,24 @@ Durable in-repo concept links captured because live Convex graph writes were una
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
 
+
+## 2026-09-09 - Relational Rank / Rank Budget
+
+- New essay: `docs/essays/the-rank-of-a-musical-situation.md`.
+- Backfilled concepts from cached synthesis context `data/generated/synthesis/2026-05-13T08-27-24-618Z/` because live Convex extraction/list calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **relational rank** - the number of independent, audible, playable, and reachable relations required to determine a musical situation; an analogy to matrix rank that must be defined relative to a chosen representation.
+- `relational rank` -> `relation matrix`: the relation matrix lists correspondences, while relational rank distinguishes independent relations from redundant coordinates.
+- `relational rank` -> `spatial distance matrix`: rank-reduced Gram and Euclidean-distance geometry show how relative constraints can determine source configuration more economically than raw coordinate search.
+- `relational rank` -> `harmonic graph adjacency`: a chord inventory gains an independent musical dimension when adjacency or traversal imposes a relation not reducible to chord labels alone.
+- `relational rank` -> `alignment matrix`: symbolic and acoustic objects can remain correct while a newly independent timing correspondence makes the situation stable, expressive, or unstable.
+- `relational rank` -> `fixed frame`: an invariant frame makes an adaptive relation independently legible rather than allowing both layers to drift together.
+- `relational rank` -> `reachable representation`: a nominal relation counts compositionally only when the instrument, listener, room, and representation can act on it.
+- Proposed concept: **rank budget** - the number of independently moving musical obligations a passage can expose before its identity becomes unreadable under current tempo, orchestration, room, playback, notation, and listener conditions.
+- `rank budget` -> `resolution budget`: resolution budget allocates detail within a relation; rank budget limits how many relations can remain separately intelligible.
+- `rank budget` -> `answering layer`: declaring which layer proves a change reduces accidental competition among relations.
+- `rank budget` -> `thick boundary`: staggered transitions can spend rank over time instead of switching every independent relation at once.
+- `rank budget` -> `call and response`: beat-, phrase-, timbral-, spatial-, and sectional answers may reinforce one relation or become separately moving obligations.
+- Related existing concepts: relation matrix, spatial distance matrix, harmonic graph adjacency, alignment matrix, fixed frame, reachable representation, resolution budget, answering layer, thick boundary, call and response, path cost.
+- Source extraction IDs: `j9792ckdpne6ycbt2nwccy5b7185d3rp`, `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97a50as5v3xbfw82z24ptdj9185b6w6`, `j975dd9v10rhc7w92v593rqn0986469p`, `j978wc8spg7xjg8v7d09pzw79985df6w`, `j97a8k67pm7ysxbzxb4nt62g85858646`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.

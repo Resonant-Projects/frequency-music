@@ -3839,6 +3839,20 @@
     "contentHash": "073a4621ef7fdcb74a0969eff47c7f49b2fd232986c45d36b02ebbacbdc64ad1",
     "generatedAt": "2026-08-01T21:33:47.547Z"
   },
+  "the-rank-of-a-musical-situation": {
+    "excerpt": "Musical complexity may depend less on object count than on relational rank: how many independent, audible, playable, and reachable obligations can move at once.",
+    "tags": [
+      "composition",
+      "mathematical-music-theory",
+      "geometry",
+      "information-theory",
+      "signal-processing",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "73be9e8885725bc006f818e17326c801f30b3ba3cc2a8eab08f80550f83d0371",
+    "generatedAt": "2026-09-09T19:02:00.000Z"
+  },
   "the-rate-of-handles": {
     "excerpt": "Audio becomes composable when high-dimensional sound is projected into slower, named handle spaces whose rates match musical intervention.",
     "tags": [
