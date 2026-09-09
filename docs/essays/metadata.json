@@ -5640,5 +5640,19 @@
     "category": "interdisciplinary",
     "contentHash": "69a821d563076708e14db151ffa63c9cf70422e2163ad537d5e80e479790cf75",
     "generatedAt": "2026-08-01T21:34:13.848Z"
+  },
+  "grid-bias": {
+    "excerpt": "The grid is already listening: analysis windows, encoders, codecs, and perceptual bands change which musical differences survive as salient structure.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "composition",
+      "AI-music",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "888a7bfbb1ca8303116855c2a17fd5571d2d5302cb9e5c887dc57e78d33766a4",
+    "generatedAt": "2026-09-09T11:02:00.000Z"
   }
 }

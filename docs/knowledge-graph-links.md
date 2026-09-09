@@ -844,3 +844,24 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source extraction IDs: `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j977tjh3ka74caprsf86d4e3y185maah`, `j97b5cq4em4evnpz1dzpjk37y1854ztc`, `j978zvv39t3wqdw578e6g057b18683jf`, `j978mypywk23f3gtf3ykz84q4x85j102`, `j97795a7x76skzbg4d8pcdhpqh85k5zb`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+## 2026-09-09 - Grid Bias
+
+- New essay: `docs/essays/grid-bias.md`.
+- Backfilled concepts from cached synthesis context `data/generated/synthesis/2026-05-05T16-26-57-645Z/` because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **grid bias** - the compositional pressure introduced by the analysis or processing grid itself, where windows, filterbanks, encoders, codecs, or perceptual bands decide which differences survive as musical evidence.
+- `grid bias` -> `listening grid`: grid bias is the audible consequence of choosing one listening grid rather than another.
+- `grid bias` -> `reachable representation`: a representation becomes reachable only when its grid preserves the coordinate the piece needs to act on.
+- `grid bias` -> `critical-band score`: Bark-style perceptual bands show that frequency grids carry foreground/background responsibility, not just technical crossover decisions.
+- `grid bias` -> `readable constraint`: the constraint a listener can read depends on the grid that exposes rhythm formants, artifacts, codec losses, or masking boundaries.
+- `grid bias` -> `front-end fairness`: encoder and compression choices decide which cues enter downstream judgment, making the front end an ethical and musical filter.
+- Proposed concept: **rhythm formant composition** - using the low-frequency amplitude-modulation spectrum of a musical texture as a compositional parameter for groove identity, phrase pressure, and rhythmic dialect.
+- `rhythm formant composition` -> `covert groove`: low-frequency modulation can carry groove identity beneath surface onset notation.
+- `rhythm formant composition` -> `operating clock`: dominant AM peaks define practical clocks for how rhythmic evidence updates.
+- Proposed concept: **perceptual band responsibility** - assigning musical proof, masking, or foreground attention to specific perceptual frequency regions rather than arbitrary technical bands.
+- `perceptual band responsibility` -> `critical-band score`: a critical-band score names which perceptual band carries which musical evidence.
+- `perceptual band responsibility` -> `masking boundary`: band choice can make a cue independent, fused, or hidden.
+- Related existing concepts: listening grid, critical-band score, reachable representation, readable constraint, front-end fairness, permitted failure, rhythm formants, encoder bottleneck, masking boundary, covert groove.
+- Source extraction IDs: `j97dmcxraattrt4e9gsc7dsp4185rj2e`, `j971a4crv4z7nqcz7v24yfgvjh85x5zq`, `j97795a7x76skzbg4d8pcdhpqh85k5zb`, `j977tjh3ka74caprsf86d4e3y185maah`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+

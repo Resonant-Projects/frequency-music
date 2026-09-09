@@ -13,6 +13,7 @@ every-basis-has-a-bias
 everything-is-a-resonant-body
 finding-one
 geometric-microtuning-composition
+grid-bias
 hearing-backwards
 identity-is-a-listening-condition
 identity-is-not-a-formant
@@ -74,9 +75,9 @@ the-carrier-decides
 the-carrier-under-the-message
 the-carrying-medium
 the-category-that-leaks
+the-chord-that-becomes-texture
 the-clock-inside-the-listener
 the-codec-ear
-the-chord-that-becomes-texture
 the-coherence-contract
 the-coherence-imperative
 the-color-of-chaos
@@ -277,12 +278,12 @@ the-room-is-a-source
 the-room-is-part-of-the-source
 the-room-that-isnt-there
 the-scale-that-holds
+the-scene-takes-the-cue
 the-schema-is-the-score
 the-seam-that-teaches
 the-self-measuring-sound
 the-self-measuring-voice
 the-self-teaching-signal
-the-scene-takes-the-cue
 the-semantic-split
 the-separable-sound
 the-shape-of-musical-choice
@@ -321,9 +322,9 @@ the-survival-layer
 the-survival-test
 the-symmetry-tax
 the-task-relevant-signal
+the-teaching-window
 the-temporal-contract
 the-test-that-becomes-the-instrument
-the-teaching-window
 the-thick-boundary
 the-thick-boundary-revisited
 the-thread-that-survives
