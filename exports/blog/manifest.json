@@ -1,11 +1,18 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-09T11:08:12.068Z",
+  "generatedAt": "2026-09-09T19:13:17.494Z",
   "items": [
     {
       "slug": "grid-bias",
       "path": "essays/grid-bias.md",
       "title": "Grid Bias",
+      "publishDate": "2026-09-09",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-rank-of-a-musical-situation",
+      "path": "essays/the-rank-of-a-musical-situation.md",
+      "title": "The Rank of a Musical Situation",
       "publishDate": "2026-09-09",
       "category": "interdisciplinary"
     },
