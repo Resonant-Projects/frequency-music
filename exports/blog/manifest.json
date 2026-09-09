@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-09T03:09:54.322Z",
+  "generatedAt": "2026-09-09T11:08:12.068Z",
   "items": [
+    {
+      "slug": "grid-bias",
+      "path": "essays/grid-bias.md",
+      "title": "Grid Bias",
+      "publishDate": "2026-09-09",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-reachable-representation",
       "path": "essays/the-reachable-representation.md",

@@ -236,6 +236,20 @@
     "contentHash": "7eabd8ce8520f2c34568e991c94010a5520b2f03503fac0e38284e710ae78162",
     "generatedAt": "2026-04-10T18:36:12.501Z"
   },
+  "grid-bias": {
+    "excerpt": "The grid is already listening: analysis windows, encoders, codecs, and perceptual bands change which musical differences survive as salient structure.",
+    "tags": [
+      "signal-processing",
+      "perception",
+      "psychoacoustics",
+      "composition",
+      "AI-music",
+      "information-theory"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "888a7bfbb1ca8303116855c2a17fd5571d2d5302cb9e5c887dc57e78d33766a4",
+    "generatedAt": "2026-09-09T11:02:00.000Z"
+  },
   "hearing-backwards": {
     "excerpt": "Sound encodes the physical geometry of its source-rooms, bodies, authenticity-and these geometric signatures can be recovered through inverse problems.",
     "tags": [
@@ -5640,19 +5654,5 @@
     "category": "interdisciplinary",
     "contentHash": "69a821d563076708e14db151ffa63c9cf70422e2163ad537d5e80e479790cf75",
     "generatedAt": "2026-08-01T21:34:13.848Z"
-  },
-  "grid-bias": {
-    "excerpt": "The grid is already listening: analysis windows, encoders, codecs, and perceptual bands change which musical differences survive as salient structure.",
-    "tags": [
-      "signal-processing",
-      "perception",
-      "psychoacoustics",
-      "composition",
-      "AI-music",
-      "information-theory"
-    ],
-    "category": "interdisciplinary",
-    "contentHash": "888a7bfbb1ca8303116855c2a17fd5571d2d5302cb9e5c887dc57e78d33766a4",
-    "generatedAt": "2026-09-09T11:02:00.000Z"
   }
 }
