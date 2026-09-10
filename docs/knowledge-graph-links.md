@@ -910,3 +910,26 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source IDs: `jx72yj3ez4q7t2pqt9c0jmcbjx86hbek`, `jx75ff9jca456jv63hh8tngqhn85dh7x`, `jx7afrabhjjj4aab4k0bk2s6gn85fycv`, `jx7402s3g0ndbjwmfh8qnpvd9n85ndzb`, `jx7aa290nckw0wt9xn8y3xpe5s865h5c`, `jx731xk7jnvfy3k2caqszwn83n86a21d`, `jx743vna2yd4hyvvhf93yc1v1h85xvj4`, `jx78j7ze7qdtvv1jzwvrgwt1as85smq1`, `jx70dhsw26kwd55qeh0xgyw3xx85fp1n`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-10 - Order of Recognition
+
+- New essay: `docs/essays/the-order-of-recognition.md`.
+- Backfilled concepts from cached synthesis packs because live Convex extraction/list/link calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **order of recognition** - the sequence in which distinct musical facts become sufficiently supported for a listener or system to act on them, independent of the order in which their sounds begin.
+- `order of recognition` -> `decoding window`: each musical relation crosses into recoverability after a different amount and kind of evidence.
+- `order of recognition` -> `evidence horizon`: an evidence horizon gives a threshold for one claim; recognition order compares the crossing times of several claims.
+- `order of recognition` -> `answering layer`: the layer that answers a musical question can change as later evidence becomes actionable.
+- `order of recognition` -> `operating clock`: attacks, modulation cycles, bars, phrases, and graph traversals expose evidence on different clocks.
+- Proposed concept: **evidence polyphony** - concurrent streams of musical evidence whose source, pitch, rhythm, spatial, and formal meanings approach recognizability at different rates.
+- `evidence polyphony` -> `relation multiplexing`: multiplexed carriers become polyphonic evidence when their complementary instructions accumulate on separate timescales.
+- `evidence polyphony` -> `instruction bandwidth`: each evidential stream needs enough carrier capacity to reach its own recognition threshold before its deadline.
+- `evidence polyphony` -> `rank budget`: only a limited number of independently moving evidence streams can remain legible under a given listening condition.
+- Proposed concept: **recognition counterpoint** - deliberately staggering when different musical relations become possible, probable, and actionable.
+- `recognition counterpoint` -> `thick boundary`: a scored transition window lets noise, timbre, pitch, intensity, and spatial evidence arrive in a chosen order.
+- `recognition counterpoint` -> `anticipatory trace`: a precursor can make an arrival knowable before its destination or source identity is settled.
+- `recognition counterpoint` -> `carrier counterpoint`: carrier counterpoint separates the moving channels; recognition counterpoint separates when their meanings become usable.
+- `recognition counterpoint` -> `fixed frame`: a stable reference lets staggered recognition read as structured disclosure rather than unrelated ambiguity.
+- Related existing concepts: decoding window, evidence horizon, answering layer, operating clock, relation multiplexing, instruction bandwidth, rank budget, thick boundary, anticipatory trace, carrier counterpoint, fixed frame, recoverable window.
+- Source extraction IDs: `j97fk7qb2z23h2jm0yzmry6jsd860akk`, `j9735j1x9c8dxr97dax746vccd86q4tz`, `j978wc8spg7xjg8v7d09pzw79985df6w`, `j97ckpv4ccacc1ct47ch9m0hf5855km4`, `j97cj4gq3betmf030d5b8e9wes86gnme`, `j97dmcxraattrt4e9gsc7dsp4185rj2e`, `j97a50as5v3xbfw82z24ptdj9185b6w6`, `j97eag5wx2pp6czsd8rrs1b50x85n9ys`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
