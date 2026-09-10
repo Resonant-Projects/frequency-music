@@ -886,3 +886,27 @@ Durable in-repo concept links captured because live Convex graph writes were una
 - Source extraction IDs: `j9792ckdpne6ycbt2nwccy5b7185d3rp`, `j97dwcq0crkhg0n8z2tmyqypfd86f0ny`, `j97a50as5v3xbfw82z24ptdj9185b6w6`, `j975dd9v10rhc7w92v593rqn0986469p`, `j978wc8spg7xjg8v7d09pzw79985df6w`, `j97a8k67pm7ysxbzxb4nt62g85858646`.
 
 Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
+## 2026-09-10 - Instruction Bandwidth
+
+- New essay: `docs/essays/the-bandwidth-of-a-musical-instruction.md`.
+- Backfilled concepts from cached synthesis packs `data/generated/synthesis/2026-05-18T00-26-33-810Z/`, `data/generated/synthesis/2026-05-17T16-26-36-161Z/`, and `data/generated/synthesis/2026-05-12T00-27-14-364Z/` because live Convex extraction and graph calls returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **instruction bandwidth** - the amount of latent musical rule that a carrier can make recoverable within a relevant decision window without forcing the rule to become foreground.
+- `instruction bandwidth` -> `embedded instruction`: an embedded rule becomes musically effective only when its carrier exposes enough evidence for recovery.
+- `instruction bandwidth` -> `carrying medium`: each medium preserves a different budget of stress, contour, phase, voicing, pulse, spectral identity, and response timing.
+- `instruction bandwidth` -> `rank budget`: rank budget limits how many independent obligations can remain legible, while instruction bandwidth describes how much of those obligations can reach the listener in time.
+- `instruction bandwidth` -> `reachable representation`: a representation is reachable when it preserves not only a coordinate but enough usable evidence to act on that coordinate.
+- `instruction bandwidth` -> `grid bias`: analysis and playback grids allocate bandwidth unevenly, making some latent rules recoverable and others effectively absent.
+- Proposed concept: **decoding window** - the shortest span in which enough evidence accumulates for a governing musical relation to become recoverable.
+- `decoding window` -> `evidence window`: the evidence window gathers cues; the decoding window marks when those cues become sufficient to infer the rule.
+- `decoding window` -> `operating clock`: attacks, 600 ms interaction chunks, bars, phrases, and sections provide different clocks for instruction recovery.
+- `decoding window` -> `rhythm formant composition`: low-frequency modulation requires a long enough window to reveal periodic or clustered groove identity.
+- `decoding window` -> `style trace`: a performer-like identity may need recurrent voicing choices rather than one isolated event.
+- Proposed concept: **relation multiplexing** - assigning complementary parts of one musical instruction to different carriers or timescales so they can be integrated without simple doubling.
+- `relation multiplexing` -> `carrier counterpoint`: independently moving carriers can transmit distinct parts of one identity or formal obligation.
+- `relation multiplexing` -> `fixed frame`: one stable layer gives separately carried instructions a common reference for integration.
+- `relation multiplexing` -> `permitted failure`: carrier-specific removal tests whether the instruction is truly distributed or secretly dependent on one channel.
+- Related existing concepts: embedded instruction, carrying medium, latent score, rank budget, reachable representation, grid bias, evidence window, operating clock, rhythm formant composition, style trace, carrier counterpoint, fixed frame, permitted failure.
+- Source IDs: `jx72yj3ez4q7t2pqt9c0jmcbjx86hbek`, `jx75ff9jca456jv63hh8tngqhn85dh7x`, `jx7afrabhjjj4aab4k0bk2s6gn85fycv`, `jx7402s3g0ndbjwmfh8qnpvd9n85ndzb`, `jx7aa290nckw0wt9xn8y3xpe5s865h5c`, `jx731xk7jnvfy3k2caqszwn83n86a21d`, `jx743vna2yd4hyvvhf93yc1v1h85xvj4`, `jx78j7ze7qdtvv1jzwvrgwt1as85smq1`, `jx70dhsw26kwd55qeh0xgyw3xx85fp1n`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
