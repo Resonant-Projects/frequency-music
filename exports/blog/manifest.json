@@ -1,7 +1,21 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-09T19:13:17.494Z",
+  "generatedAt": "2026-09-10T11:13:00.178Z",
   "items": [
+    {
+      "slug": "the-bandwidth-of-a-musical-instruction",
+      "path": "essays/the-bandwidth-of-a-musical-instruction.md",
+      "title": "The Bandwidth of a Musical Instruction",
+      "publishDate": "2026-09-10",
+      "category": "interdisciplinary"
+    },
+    {
+      "slug": "the-order-of-recognition",
+      "path": "essays/the-order-of-recognition.md",
+      "title": "The Order of Recognition",
+      "publishDate": "2026-09-10",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "grid-bias",
       "path": "essays/grid-bias.md",
