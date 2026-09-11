@@ -1,5 +1,24 @@
 # Knowledge Graph Links
 
+## 2026-09-11 - Representation Debt
+
+- New essay: `docs/essays/representation-debt.md`
+- Synthesized from cached packs because live Convex extraction, recent-extraction reads, workflow status, and graph writes returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **representation debt** - the downstream inference, correction, or control required because an earlier representation made a musically necessary relation inaccessible.
+- `representation debt` -> `first cut`: the initial partition determines which relations remain directly answerable and which must later be guessed.
+- `representation debt` -> `translation loss`: debt appears when surface quality survives while a load-bearing identity or control layer is weakened.
+- `representation debt` -> `resolution budget`: reducing detail is not itself debt; spending precision on the wrong layer for the promised action is.
+- `representation debt` -> `readable constraint`: compact representations remain solvent when they preserve the relation that must guide the next decision.
+- `representation debt` -> `reachable representation`: once a relation falls outside the reachable coordinates, later stages can imitate its effects but cannot verify recovery of its original cause.
+- Proposed concept: **representational interest** - the repeated cost of reconstructing the same omitted relation across multiple downstream stages.
+- `representational interest` -> `inference chain`: a guessed relation can compound through separation, transcription, arrangement, and rendering even when every local stage appears reasonable.
+- `representational interest` -> `addressable layer`: preserving an explicit carrier upstream prevents several later tools from independently reconstructing the same musical fact.
+- `representational interest` -> `permitted failure`: declared omissions are useful when responsibility for reconstruction is explicit; hidden omissions become brittle promises.
+- Related existing concepts: first cut, translation loss, resolution budget, readable constraint, reachable representation, carrier-preserved relation, style aperture, input contract, uncertainty field, addressable intervention.
+- Cached source extraction IDs: `jx7awge62ymkd5ywnpz9ddyymx85ntkj`, `jx7e7qw7dt6jtemah5bj363y2h84xrsq`, `jx7fk4jg1jw1mbsnkfk8fckn01869sfn`, `jx74r61g2tqd5bcy6aam4aqwes85f9kt`, `jx78j7ze7qdtvv1jzwvrgwt1as85smq1`, `jx7ctrab09mtbkdbghq2qqhm75851vkc`, `jx78nvpygk3a3ehen35mwswkhd85w0pt`, `jx75ff9jca456jv63hh8tngqhn85dh7x`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
 ## 2026-09-08 - The Critical-Band Score
 
 - New essay: `docs/essays/the-critical-band-score.md`

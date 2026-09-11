@@ -25,6 +25,7 @@ perceptual-resolution
 pitch-is-a-negotiation
 plasticity-is-a-trajectory
 recognition-through-distortion
+representation-debt
 representation-pressure
 sourcehood-as-a-compositional-parameter
 sourcehood-before-signal

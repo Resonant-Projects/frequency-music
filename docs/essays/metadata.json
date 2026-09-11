@@ -401,6 +401,19 @@
     "contentHash": "c2bbae2c1e0da07fcf39e3e68691a6630a7953e8b59656c8084cd1831609d7a6",
     "generatedAt": "2026-08-01T21:33:09.573Z"
   },
+  "representation-debt": {
+    "excerpt": "Representation debt is the downstream cost of rebuilding musical relations that an earlier notation, codec, grid, or feature space discarded.",
+    "tags": [
+      "composition",
+      "signal-processing",
+      "information-theory",
+      "AI-music",
+      "perception"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "5c0610aa1270532cfab31f0511def61c508cf367cb677577d5fc94e04a9ed712",
+    "generatedAt": "2026-09-11T03:02:00.000Z"
+  },
   "representation-pressure": {
     "excerpt": "Representation pressure names the task, dataset, body, or tradition that decides which musical facts remain legible enough to act on.",
     "tags": [
