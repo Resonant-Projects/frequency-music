@@ -261,6 +261,7 @@ the-rate-of-handles
 the-readable-constraint
 the-readable-frame
 the-realization-layer
+the-recognition-margin
 the-reconstruction-limit
 the-recoverable-residue
 the-recoverable-window

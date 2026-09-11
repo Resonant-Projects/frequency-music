@@ -1,5 +1,24 @@
 # Knowledge Graph Links
 
+## 2026-09-11 - The Recognition Margin
+
+- New essay: `docs/essays/the-recognition-margin.md`
+- Synthesized from cached packs because live Convex extraction, recent-extraction reads, workflow status, and graph writes returned a bare CLI `Error` during this scheduled run.
+- Proposed concept: **recognition margin** - the difference between evidence supporting an intended musical interpretation and evidence supporting its strongest plausible alternative, relative to a declared task, listener or model, candidate set, and time window.
+- `recognition margin` -> `fixed frame`: a stable relation can widen the margin by supporting the intended reading while excluding nearby alternatives.
+- `recognition margin` -> `resolution budget`: precision is valuable where it distinguishes the target from its nearest rival, not merely where it adds the most detail.
+- `recognition margin` -> `invisible coordinate`: voicing habits, graph traversal, phase, or spectral microstructure matter when they separate otherwise confusable realizations.
+- `recognition margin` -> `translation loss`: a polished translation can preserve the winning identity while shrinking its lead over a plausible imitation.
+- `recognition margin` -> `sufficiency threshold`: evidence is sufficient only for a specified action and acceptable error/latency cost; the margin supplies one possible task-relative proxy.
+- Proposed concept: **margin trajectory** - the time-varying lead of one musical interpretation over its nearest competitor.
+- `margin trajectory` -> `thick boundary`: a transition can deliberately move from old-state dominance through a near-tie to destination dominance.
+- `margin trajectory` -> `order of recognition`: different pulse, source, harmonic, timbral, and formal interpretations can acquire decisive margins in different sequences.
+- `margin trajectory` -> `anticipatory trace`: a target-specific pre-arrival cue widens the destination's margin before the event itself occurs.
+- Related existing concepts: fixed frame, resolution budget, invisible coordinate, translation loss, sufficiency threshold, thick boundary, order of recognition, anticipatory trace, answering layer, permitted failure.
+- Cached source extraction IDs: `jx7402s3g0ndbjwmfh8qnpvd9n85ndzb`, `jx764ke9nz50zaqrr0cjsbk149864vyj`, `jx7afrabhjjj4aab4k0bk2s6gn85fycv`, `jx78j7ze7qdtvv1jzwvrgwt1as85smq1`, `jx7e7qw7dt6jtemah5bj363y2h84xrsq`, `jx7fk4jg1jw1mbsnkfk8fckn01869sfn`.
+
+Durable in-repo concept links captured because live Convex graph writes were unavailable during this scheduled run.
+
 ## 2026-09-11 - Representation Debt
 
 - New essay: `docs/essays/representation-debt.md`

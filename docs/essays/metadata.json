@@ -3977,6 +3977,19 @@
     "contentHash": "18d66512f0ad9c408a63001310979e4bfe299f7a3e0a881a5945e05ce34d7d27",
     "generatedAt": "2026-05-01T20:06:39.222Z"
   },
+  "the-recognition-margin": {
+    "excerpt": "Recognition is not binary: musical clarity depends on how decisively the intended interpretation leads its nearest plausible rival.",
+    "tags": [
+      "perception",
+      "composition",
+      "information-theory",
+      "signal-processing",
+      "AI-music"
+    ],
+    "category": "interdisciplinary",
+    "contentHash": "4b5daa526a24df175396253f1f7ca82e7a0d91bf928ae5dcfc74cf4e12feab78",
+    "generatedAt": "2026-09-11T19:05:57.209Z"
+  },
   "the-reconstruction-limit": {
     "excerpt": "Three seemingly unrelated audio AI problems reveal a unified principle: when signal information becomes insufficient, recovery transforms into invention.",
     "tags": [
