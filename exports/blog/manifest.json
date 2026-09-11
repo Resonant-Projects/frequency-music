@@ -1,7 +1,14 @@
 {
   "version": "frequency_essays_v1",
-  "generatedAt": "2026-09-10T11:13:00.178Z",
+  "generatedAt": "2026-09-11T03:11:03.551Z",
   "items": [
+    {
+      "slug": "representation-debt",
+      "path": "essays/representation-debt.md",
+      "title": "Representation Debt",
+      "publishDate": "2026-09-11",
+      "category": "interdisciplinary"
+    },
     {
       "slug": "the-bandwidth-of-a-musical-instruction",
       "path": "essays/the-bandwidth-of-a-musical-instruction.md",
