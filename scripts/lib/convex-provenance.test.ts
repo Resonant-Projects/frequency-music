@@ -4,10 +4,58 @@ import { dirname } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
   compareDeployedModules,
+  deployedModuleDelta,
   manifestFromPushRequest,
   readDeployedModuleHashes,
   verifyManifestSnapshot,
 } from "./convex-provenance";
+
+test("offline delta preserves exact added, removed and changed module identities without accepting mismatch", () => {
+  const manifest = manifestFromPushRequest(request);
+  const deployed = {
+    moduleHashes: [
+      { ...manifest.modules[0]!, hash: "0".repeat(64) },
+      {
+        path: "deployed-only.js",
+        environment: "isolate",
+        hash: "1".repeat(64),
+      },
+    ],
+    privateConfig: "must-not-leak",
+  };
+  const delta = deployedModuleDelta(manifest, deployed);
+  expect(delta).toMatchObject({
+    deployedCount: 2,
+    releaseCount: 2,
+    unchangedCount: 0,
+    deploymentAuthorized: false,
+  });
+  expect(delta.added.map((item) => item.path)).toEqual(["z.js"]);
+  expect(delta.removed.map((item) => item.path)).toEqual(["deployed-only.js"]);
+  expect(delta.changed[0]).toMatchObject({
+    path: "a.js",
+    before: { hash: "0".repeat(64) },
+    after: manifest.modules[0],
+  });
+  expect(JSON.stringify(delta)).not.toContain("must-not-leak");
+  expect(() => compareDeployedModules(manifest, deployed)).toThrow(
+    "does not match",
+  );
+});
+
+test("offline delta rejects malformed or duplicate identities", () => {
+  const manifest = manifestFromPushRequest(request);
+  expect(() =>
+    deployedModuleDelta(manifest, {
+      moduleHashes: [manifest.modules[0], manifest.modules[0]],
+    }),
+  ).toThrow();
+  expect(() =>
+    deployedModuleDelta(manifest, {
+      moduleHashes: [{ ...manifest.modules[0], hash: "not-a-hash" }],
+    }),
+  ).toThrow();
+});
 
 test.each([
   false,

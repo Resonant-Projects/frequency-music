@@ -129,7 +129,7 @@ describe("operator queue snapshot", () => {
         100,
         transport,
       ),
-    ).rejects.toThrow("page limit");
+    ).rejects.toThrow("page_limit");
   });
 
   test("authentication denial or snapshot expiry fails without retry", async () => {

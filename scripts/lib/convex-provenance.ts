@@ -105,6 +105,39 @@ export function compareDeployedModules(
   return { rootModuleArtifactMatches: true, moduleCount: expected.length };
 }
 
+/** Offline review aid only: a delta never establishes provenance or authorizes deployment. */
+export function deployedModuleDelta(
+  releaseManifest: unknown,
+  backendResponse: unknown,
+) {
+  const expected = sortedUnique(manifestSchema.parse(releaseManifest).modules);
+  const actual = sortedUnique(
+    z.object({ moduleHashes: identities }).parse(backendResponse).moduleHashes,
+  );
+  const before = new Map(actual.map((module) => [module.path, module]));
+  const after = new Map(expected.map((module) => [module.path, module]));
+  const added = expected.filter((module) => !before.has(module.path));
+  const removed = actual.filter((module) => !after.has(module.path));
+  const changed = expected.flatMap((module) => {
+    const deployed = before.get(module.path);
+    return deployed &&
+      (deployed.hash !== module.hash ||
+        deployed.environment !== module.environment)
+      ? [{ path: module.path, before: deployed, after: module }]
+      : [];
+  });
+  return {
+    scope: "root-module-identities-only",
+    deploymentAuthorized: false,
+    deployedCount: actual.length,
+    releaseCount: expected.length,
+    unchangedCount: expected.length - added.length - changed.length,
+    added,
+    removed,
+    changed,
+  };
+}
+
 /** Existing privileged CLI API; POST is a read here (cli/lib/config.ts).
  * Never log the response, headers, or key: config can contain provider details. */
 export async function readDeployedModuleHashes(

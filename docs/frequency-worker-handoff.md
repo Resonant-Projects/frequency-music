@@ -131,6 +131,13 @@ Both readers allow only `https://convex.resonantprojects.art`; a new deployment
 origin requires a reviewed source change. The provenance verifier gives `gh` a
 private read-only copy of the captured manifest bytes and removes it afterward.
 
+The Mac coordinator verified credential metadata on September 12: vault
+`Country Manor Lab`, item `Convex - Coolify` (`i4pg5qajepkxhgwqpe4oic75oq`),
+field ID `password` labeled `adminKey`, stored deployment URL matching the
+approved origin. `.env.schema` now references that item/field instead of the
+nonexistent `convex-self-hosted-admin-key` item. This metadata correction neither
+retrieves credentials nor changes the inherited-only operator-script contract.
+
 After the separately approved backend deployment has installed this query:
 
 ```sh
@@ -146,6 +153,22 @@ bounded to 200 returned rows, 201 scanned rows and a 4 MiB read budget. A requir
 split can be retried as a fresh entire scan with a smaller page size. Never join
 partial scans or silently fall back to different timestamps. Large queues that
 cannot finish within these bounds remain an acceptance gate.
+
+On failure the collector exits 1 and emits bounded JSON to stderr with
+`complete:false`, a fixed `code`, `stage`, `pageNumber`, and, when observed,
+`httpStatus` and an allowlisted `envelope` classification. It never emits partial
+counts, cursor/timestamp contents, backend error messages, function logs, or job
+data. Each timestamp/page HTTP response is capped at 64 KiB before SDK decoding.
+
+`convex_error` means the backend returned an error envelope, including when HTTP
+status was 200; it does **not** diagnose an absent query. `invalid_page_shape`,
+`invalid_counts`, `invalid_page_total`, and `invalid_cursor` identify client
+contract rejection. `split_required`, `page_limit`, and `deadline_exceeded`
+identify bounded-scan gates. `invalid_timestamp`, `invalid_envelope`,
+`invalid_json`, `value_decode_failure`, `http_failure`, `transport_failure`, and
+`response_too_large` distinguish transport/protocol failures. A `pause_changed`
+result rejects a changing environment observation. Share this fixed diagnostic
+record with the source owner; do not attach the raw backend response.
 
 Counts cover all six statuses at one database snapshot, including old runs.
 They are not worker/process counts or proof that external effects have stopped.
@@ -222,6 +245,25 @@ complete queue snapshot. Unsupported admin hash/snapshot APIs, missing release
 attestation, differing deployed bytes, or unavailable existing admin access are
 explicit gates. Publishing or merging this preparation satisfies none of those
 live deployment gates by itself.
+
+The failed September 12 Mac checks and the complete candidate inventory are
+tracked in [backend deployment preparation](frequency-backend-deployment-preparation.md).
+The current deployment remains unidentified. Use retained sanitized identities
+to calculate the root-module delta offline, without repeating live reads:
+
+```sh
+vpx tsx scripts/convex-module-delta.ts \
+  /tmp/frequency-convex-release/convex-root-modules.json \
+  /tmp/frequency-deployed-module-identities.json
+```
+
+The second file must contain only `{ "moduleHashes": [{ "path": "...",
+"environment": "isolate", "hash": "<64 lowercase hex characters>" }] }` using
+actual recorded identities. The script emits all added/removed/changed root
+module identities and hashes with both input-file digests. It accepts no
+credentials and makes no network calls. This is a comparison aid, not an
+attestation, complete deployment delta, or rollback artifact; the strict
+provenance matcher continues to reject mismatches.
 
 ## Later tracked production steps (not authorized by this source merge)
 
