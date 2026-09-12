@@ -1,0 +1,72 @@
+name: Convex source artifact provenance
+
+# Preparation only: never deploys a backend or starts a worker.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - convex/**
+      - scripts/convex-provenance-build.ts
+      - scripts/lib/convex-provenance*
+      - .github/workflows/convex-provenance.yml
+      - package.json
+      - bun.lock
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.3.14'
+          no-cache: true
+      - uses: voidzero-dev/setup-vp@313600b80b104eadebb9111787d37a2e83e014ca # v1.17.0
+        with:
+          node-version: '24'
+          run-install: false
+      - run: bun install --frozen-lockfile
+      - name: Validate offline root module artifact build
+        run: vpx tsx scripts/convex-provenance-build.ts convex-root-modules.json
+
+  artifact:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.3.14'
+          no-cache: true
+      - uses: voidzero-dev/setup-vp@313600b80b104eadebb9111787d37a2e83e014ca # v1.17.0
+        with:
+          node-version: '24'
+          run-install: false
+      - run: bun install --frozen-lockfile
+      - name: Build root module hash manifest without backend access
+        run: vpx tsx scripts/convex-provenance-build.ts convex-root-modules.json
+      - name: Attest exact manifest and checked-out source
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: convex-root-modules.json
+      - name: Upload sanitized manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: convex-root-modules-${{ github.sha }}
+          path: convex-root-modules.json
+          if-no-files-found: error

@@ -14,6 +14,7 @@
 - CLI mutations require `devBypassSecret`. Resolve it through Varlock and 1Password; never print, paste, or commit the value.
 - `/agent-tools/*` uses `AGENT_TOOL_SECRET`. Irreversible hypothesis and recipe publication remains human-approved; agents may prepare drafts and reversible provenance-bearing data only within the documented tool contract.
 - Run TypeScript with `vpx tsx` and install with `vp install`. Node scripts read `.env.local` only through `import "varlock/auto-load"` at the top of the file; the runtime loads nothing on its own.
+- Operator evidence exception: `scripts/frequency-queue-evidence.ts` and `scripts/convex-provenance-verify.ts` use inherited `CONVEX_SELF_HOSTED_ADMIN_KEY` only, without `.env` or Varlock loading. See `docs/frequency-worker-handoff.md` for their read-only scope and deployment prerequisites.
 - In-process unit tests mock `varlock/auto-load`. Tests that spawn a CLI subprocess set `APP_ENV=test`; keep `.env.test` synchronized with `.env.schema` using inert placeholders.
 - Keep contracts shared across runtime seams in `convex/shared/`.
 - `scripts/archive/` is frozen reference: read it, never run, format, or edit it.

@@ -106,11 +106,122 @@ that a signal during a held claim/active job does not exit early, release the
 synthetic job, then require exactly one completion/effect and no second claim.
 No production credentials or `app_codex-home` mount belong in that test.
 
-Also obtain the still-missing **read-only** deployed Convex revision and sanitized
-counts of queued/running/failed jobs through an existing reviewed interface.
+Also obtain the still-missing **read-only** deployed Convex artifact identity and
+complete scalar queue counts through the operator interfaces below.
 Do not call `claimNextPendingRun` as a read-only probe: it mutates production.
 Record endpoint identity, timestamp and scalar counts only. An unavailable
 read-only interface remains a gate; do not print secrets or job payloads.
+
+## Privileged queue and deployed-artifact evidence
+
+`statusCountsPublic` and authenticated `statusCounts` both describe at most the
+latest 100 runs. Neither establishes total queue size or absence of older running
+jobs. `agentRuns:opsStatusCountsPage` is an **internal query**, callable only with
+existing Convex administrative access. It grants no new public access. It reads
+the whole `agentRuns` table in immutable creation order and returns per-status
+scalar counts, an opaque cursor, completion/split information, observation time,
+and the effective claim-pause boolean. It returns no job records or worker IDs.
+
+The operator script uses the existing admin credential from inherited
+`CONVEX_SELF_HOSTED_ADMIN_KEY`; it does not load `.env`, Varlock, or 1Password.
+Use the coordinator's already-authorized credential delivery mechanism; never
+put the key in command arguments, shell history, evidence files, or chat. This
+interface does not justify issuing a new broadly privileged credential.
+Both readers allow only `https://convex.resonantprojects.art`; a new deployment
+origin requires a reviewed source change. The provenance verifier gives `gh` a
+private read-only copy of the captured manifest bytes and removes it afterward.
+
+After the separately approved backend deployment has installed this query:
+
+```sh
+vpx tsx scripts/frequency-queue-evidence.ts https://convex.resonantprojects.art
+```
+
+The optional second argument is page size, an integer from 1 to 200 (default
+100). The script reads **one fixed Convex query timestamp** across all pages.
+Only a completed scan prints evidence. It fails without partial totals on an
+expired/unsupported snapshot, authentication failure, required page split,
+repeated cursor, 1,000-page limit, or 20-second deadline. Each backend page is
+bounded to 200 returned rows, 201 scanned rows and a 4 MiB read budget. A required
+split can be retried as a fresh entire scan with a smaller page size. Never join
+partial scans or silently fall back to different timestamps. Large queues that
+cannot finish within these bounds remain an acceptance gate.
+
+Counts cover all six statuses at one database snapshot, including old runs.
+They are not worker/process counts or proof that external effects have stopped.
+The pause boolean must agree across pages, but deployment environment values
+are not part of the database snapshot. Keep backend deployments and pause-value
+changes frozen during collection. The timestamps printed are the collection
+window, not a claimed exact wall-clock conversion of Convex's internal timestamp.
+
+### Verify the deployed code artifact
+
+The existing privileged Convex 1.34.1 CLI interface `POST /api/get_config_hashes`
+returns actual deployed root module hashes. The verification script reads this
+interface without deploying or executing any job. The full config response is
+discarded; only validated module identities are compared in memory.
+
+The `Convex source artifact provenance` workflow
+(`.github/workflows/convex-provenance.yml`) produces an attested
+`convex-root-modules-<source-sha>` artifact containing `convex-root-modules.json`.
+Publication is manual, from `main`; it needs no backend credentials. Its offline
+builder uses the pinned installed Convex 1.34.1 bundle pipeline, inert explicit
+credentials, and a network-denying preload. It hashes the exact generated module
+source plus source map using Convex's own comparison algorithm. **Do not run a
+plain `convex deploy --dry-run` to reproduce this:** that command alone contacts
+the backend. Use only the guarded preparation script:
+
+```sh
+vpx tsx scripts/convex-provenance-build.ts /tmp/convex-root-modules.json
+```
+
+A locally generated manifest is useful for offline validation but is not release
+provenance. For acceptance, download the artifact from the successful reviewed
+`main` workflow run, note its source SHA and run URL, and use a modern `gh` with
+`attestation verify` support:
+
+```sh
+gh run download RELEASE_RUN_ID --repo Resonant-Projects/frequency-music \
+  --name convex-root-modules-REVIEWED_SOURCE_SHA --dir /tmp/frequency-convex-release
+vpx tsx scripts/convex-provenance-verify.ts \
+  /tmp/frequency-convex-release/convex-root-modules.json \
+  REVIEWED_SOURCE_SHA https://convex.resonantprojects.art
+```
+
+Replace the run ID and SHA with the actual release coordinates, not a guessed
+deployed revision. The verifier requires GitHub's cryptographic attestation for
+the manifest bytes, this repository, the exact provenance workflow, the expected
+source SHA, `refs/heads/main`, and a GitHub-hosted runner. It then requires an
+exact match of the complete deployed root module set, including environments and
+hashes. A client-supplied SHA alone can never produce successful evidence.
+Record the sanitized result and release run URL. Verify artifact equality before
+and after the queue scan while deployment changes are frozen; independent reads
+cannot rule out an intervening deploy-and-revert.
+
+This identifies **root function modules only**. It does not verify component
+deployments, schema/index readiness, dependency installation, environment values,
+the worker image, or the current process state. Different bundler/dependency
+versions or source-map bytes can produce a mismatch; mismatches block acceptance
+and must not be waived by writing a version string into the backend.
+
+### Deployment prerequisites and merge side effects
+
+The tracked GitHub workflows do not deploy Convex on a source merge. The tracked
+Vercel contract (`docs/reference/vercel-web-deploy.md`, `web/package.json`)
+builds the web SPA in `web/`; it does not run Convex deployment. This preparation
+adds no automatic backend deploy. The provenance workflow's release operation
+only publishes a hash artifact and attestation; it does not activate a worker.
+Untracked deployment-setting overrides are not established by repository code.
+
+The Mac/backend coordinator must separately approve the exact backend deployment
+target and full function/schema/component/cron delta from the currently deployed
+artifact to the reviewed release. Preserve a rollback artifact and do not remove
+claim-pause support while it is relied upon. Deploy through the existing approved
+backend procedure, then verify the attested root-module artifact and collect the
+complete queue snapshot. Unsupported admin hash/snapshot APIs, missing release
+attestation, differing deployed bytes, or unavailable existing admin access are
+explicit gates. Publishing or merging this preparation satisfies none of those
+live deployment gates by itself.
 
 ## Later tracked production steps (not authorized by this source merge)
 
