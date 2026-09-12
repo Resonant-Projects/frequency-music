@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { z } from "zod";
+import { validateOpsOrigin } from "./frequency-queue-evidence";
 
 const moduleIdentity = z.object({
   path: z.string().min(1).max(1024),
@@ -14,6 +18,21 @@ const manifestSchema = z.object({
   modules: identities,
 });
 export type ConvexProvenanceManifest = z.infer<typeof manifestSchema>;
+
+/** Verify the captured bytes, independent of further changes to the input path. */
+export function verifyManifestSnapshot(
+  bytes: Buffer,
+  verify: (path: string) => void,
+) {
+  const directory = mkdtempSync(join(tmpdir(), "frequency-manifest-verify-"));
+  try {
+    const path = join(directory, "manifest.json");
+    writeFileSync(path, bytes, { mode: 0o400, flag: "wx" });
+    verify(path);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
 
 function sortedUnique(modules: z.infer<typeof identities>) {
   if (new Set(modules.map((module) => module.path)).size !== modules.length) {
@@ -93,16 +112,8 @@ export async function readDeployedModuleHashes(
   adminKey: string,
   fetcher: typeof fetch = fetch,
 ) {
-  const url = new URL(origin);
-  if (
-    url.protocol !== "https:" ||
-    url.username ||
-    url.password ||
-    url.pathname !== "/" ||
-    url.search ||
-    url.hash ||
-    !adminKey
-  ) {
+  const url = new URL(validateOpsOrigin(origin));
+  if (!adminKey) {
     throw new Error(
       "An HTTPS deployment origin and existing admin key are required",
     );

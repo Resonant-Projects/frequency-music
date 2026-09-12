@@ -1,7 +1,7 @@
 import { ConvexHttpClient } from "convex/browser";
-import { makeFunctionReference } from "convex/server";
-import type { FunctionReturnType } from "convex/server";
-import type { internal } from "../../convex/_generated/api";
+import { getFunctionName, makeFunctionReference } from "convex/server";
+import type { FunctionArgs, FunctionReturnType } from "convex/server";
+import { internal } from "../../convex/_generated/api";
 import {
   AGENT_RUN_STATUSES,
   type AgentRunStatus,
@@ -15,6 +15,7 @@ export function validateOpsOrigin(value: string): string {
   const url = new URL(value);
   if (
     url.protocol !== "https:" ||
+    url.origin !== "https://convex.resonantprojects.art" ||
     url.username ||
     url.password ||
     url.pathname !== "/" ||
@@ -52,7 +53,14 @@ export async function collectQueueEvidence(
   (
     client as ConvexHttpClient & { setAdminAuth(key: string): void }
   ).setAdminAuth(adminKey);
-  const query = makeFunctionReference<"query">("agentRuns:opsStatusCountsPage");
+  const internalQuery = internal.agentRuns.opsStatusCountsPage;
+  // consistentQuery's public typings exclude internal functions even with
+  // admin auth. Adapt visibility while retaining the generated name/contract.
+  const query = makeFunctionReference<
+    "query",
+    FunctionArgs<typeof internalQuery>,
+    FunctionReturnType<typeof internalQuery>
+  >(getFunctionName(internalQuery));
   const counts = Object.fromEntries(
     AGENT_RUN_STATUSES.map((s) => [s, 0]),
   ) as Record<AgentRunStatus, number>;

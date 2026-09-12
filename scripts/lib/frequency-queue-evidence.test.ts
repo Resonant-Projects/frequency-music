@@ -21,7 +21,11 @@ function page(overrides: Record<string, unknown> = {}) {
 }
 
 function fixture(pages: ReturnType<typeof page>[]) {
-  const requests: Array<{ url: string; body: any; init?: RequestInit }> = [];
+  const requests: Array<{
+    url: string;
+    body: { ts?: string; path?: string };
+    init?: RequestInit;
+  }> = [];
   let index = 0;
   const transport: typeof fetch = async (input, init) => {
     if (
@@ -45,7 +49,7 @@ describe("operator queue snapshot", () => {
       page(),
     ]);
     const result = await collectQueueEvidence(
-      "https://backend.example",
+      "https://convex.resonantprojects.art",
       "inert-test-key",
       100,
       transport,
@@ -83,7 +87,12 @@ describe("operator queue snapshot", () => {
   ])("fails closed for incomplete or malformed page %j", async (override) => {
     const { transport } = fixture([page(override)]);
     await expect(
-      collectQueueEvidence("https://backend.example", "inert", 100, transport),
+      collectQueueEvidence(
+        "https://convex.resonantprojects.art",
+        "inert",
+        100,
+        transport,
+      ),
     ).rejects.toThrow();
   });
 
@@ -98,7 +107,7 @@ describe("operator queue snapshot", () => {
       ]);
       await expect(
         collectQueueEvidence(
-          "https://backend.example",
+          "https://convex.resonantprojects.art",
           "inert",
           100,
           transport,
@@ -114,7 +123,12 @@ describe("operator queue snapshot", () => {
       ),
     );
     await expect(
-      collectQueueEvidence("https://backend.example", "inert", 100, transport),
+      collectQueueEvidence(
+        "https://convex.resonantprojects.art",
+        "inert",
+        100,
+        transport,
+      ),
     ).rejects.toThrow("page limit");
   });
 
@@ -126,22 +140,37 @@ describe("operator queue snapshot", () => {
       return new Response("denied or expired", { status: 400 });
     };
     await expect(
-      collectQueueEvidence("https://backend.example", "inert", 100, transport),
+      collectQueueEvidence(
+        "https://convex.resonantprojects.art",
+        "inert",
+        100,
+        transport,
+      ),
     ).rejects.toThrow();
     expect(calls).toBe(2);
   });
 
   test.each([
+    "https://unapproved.example",
+    "https://convex.resonantprojects.art:8443",
     "http://backend.example",
     "https://user:secret@backend.example",
-    "https://backend.example/path",
-    "https://backend.example/?key=secret",
+    "https://convex.resonantprojects.art/path",
+    "https://convex.resonantprojects.art/?key=secret",
   ])("rejects unsafe target %s", (url) => {
     expect(() => validateOpsOrigin(url)).toThrow();
   });
 
   test("rejects missing credentials and invalid page size before networking", async () => {
     const { transport, requests } = fixture([]);
+    await expect(
+      collectQueueEvidence(
+        "https://unapproved.example",
+        "inert",
+        100,
+        transport,
+      ),
+    ).rejects.toThrow();
     for (const [key, size] of [
       ["", 100],
       ["inert", 201],
@@ -149,7 +178,12 @@ describe("operator queue snapshot", () => {
       ["inert", 1.5],
     ] as const) {
       await expect(
-        collectQueueEvidence("https://backend.example", key, size, transport),
+        collectQueueEvidence(
+          "https://convex.resonantprojects.art",
+          key,
+          size,
+          transport,
+        ),
       ).rejects.toThrow();
     }
     expect(requests).toHaveLength(0);

@@ -8,6 +8,7 @@ import { resolve } from "node:path";
 import {
   compareDeployedModules,
   readDeployedModuleHashes,
+  verifyManifestSnapshot,
 } from "./lib/convex-provenance";
 import { validateOpsOrigin } from "./lib/frequency-queue-evidence";
 
@@ -30,31 +31,30 @@ try {
   if (statSync(path).size > 4 * 1024 * 1024)
     throw new Error("Manifest too large");
   const manifestBytes = readFileSync(path);
-  const verification = spawnSync(
-    "gh",
-    [
-      "attestation",
-      "verify",
-      path,
-      "--repo",
-      "Resonant-Projects/frequency-music",
-      "--signer-workflow",
-      "Resonant-Projects/frequency-music/.github/workflows/convex-provenance.yml",
-      "--source-digest",
-      expectedSourceSha,
-      "--source-ref",
-      "refs/heads/main",
-      "--deny-self-hosted-runners",
-      "--format",
-      "json",
-    ],
-    { encoding: "utf8", timeout: 120_000, maxBuffer: 4 * 1024 * 1024 },
-  );
-  if (verification.error || verification.status !== 0)
-    throw new Error("Attestation verification failed");
-  // Prevent a changed file between reading it and gh verifying its bytes.
-  if (!manifestBytes.equals(readFileSync(path)))
-    throw new Error("Manifest changed during verification");
+  verifyManifestSnapshot(manifestBytes, (snapshotPath) => {
+    const verification = spawnSync(
+      "gh",
+      [
+        "attestation",
+        "verify",
+        snapshotPath,
+        "--repo",
+        "Resonant-Projects/frequency-music",
+        "--signer-workflow",
+        "Resonant-Projects/frequency-music/.github/workflows/convex-provenance.yml",
+        "--source-digest",
+        expectedSourceSha,
+        "--source-ref",
+        "refs/heads/main",
+        "--deny-self-hosted-runners",
+        "--format",
+        "json",
+      ],
+      { encoding: "utf8", timeout: 120_000, maxBuffer: 4 * 1024 * 1024 },
+    );
+    if (verification.error || verification.status !== 0)
+      throw new Error("Attestation verification failed");
+  });
   const deployed = await readDeployedModuleHashes(
     target,
     process.env.CONVEX_SELF_HOSTED_ADMIN_KEY ?? "",

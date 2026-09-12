@@ -127,6 +127,9 @@ The operator script uses the existing admin credential from inherited
 Use the coordinator's already-authorized credential delivery mechanism; never
 put the key in command arguments, shell history, evidence files, or chat. This
 interface does not justify issuing a new broadly privileged credential.
+Both readers allow only `https://convex.resonantprojects.art`; a new deployment
+origin requires a reviewed source change. The provenance verifier gives `gh` a
+private read-only copy of the captured manifest bytes and removes it afterward.
 
 After the separately approved backend deployment has installed this query:
 

@@ -1,10 +1,32 @@
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { dirname } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
   compareDeployedModules,
   manifestFromPushRequest,
   readDeployedModuleHashes,
+  verifyManifestSnapshot,
 } from "./convex-provenance";
+
+test.each([
+  false,
+  true,
+])("private manifest snapshot is exact and removed after verifier failure=%s", (fail) => {
+  let privatePath = "";
+  const bytes = Buffer.from("synthetic captured manifest");
+  const run = () =>
+    verifyManifestSnapshot(bytes, (path) => {
+      privatePath = path;
+      expect(readFileSync(path)).toEqual(bytes);
+      expect(statSync(dirname(path)).mode & 0o777).toBe(0o700);
+      expect(statSync(path).mode & 0o777).toBe(0o400);
+      if (fail) throw new Error("synthetic attestation rejection");
+    });
+  if (fail) expect(run).toThrow("synthetic attestation rejection");
+  else run();
+  expect(existsSync(dirname(privatePath))).toBe(false);
+});
 
 const request = {
   adminKey: "frequency-offline-inert",
@@ -86,7 +108,7 @@ describe("Convex artifact evidence", () => {
       );
     expect(
       await readDeployedModuleHashes(
-        "https://convex.example",
+        "https://convex.resonantprojects.art",
         "inert",
         fetcher,
       ),
@@ -94,7 +116,9 @@ describe("Convex artifact evidence", () => {
     const [url, options] = fetcher.mock.calls[0]!;
     expect(url).toBeInstanceOf(URL);
     if (!(url instanceof URL)) throw new Error("Expected URL request");
-    expect(url.href).toBe("https://convex.example/api/get_config_hashes");
+    expect(url.href).toBe(
+      "https://convex.resonantprojects.art/api/get_config_hashes",
+    );
     expect(options).toMatchObject({
       method: "POST",
       redirect: "error",
@@ -106,10 +130,12 @@ describe("Convex artifact evidence", () => {
   test("rejects missing auth and unsafe origins before request", async () => {
     const fetcher = vi.fn<typeof fetch>();
     for (const [url, key] of [
+      ["https://unapproved.example", "inert"],
+      ["https://convex.resonantprojects.art:8443", "inert"],
       ["http://convex.example", "inert"],
       ["https://user:pass@convex.example", "inert"],
-      ["https://convex.example/path", "inert"],
-      ["https://convex.example", ""],
+      ["https://convex.resonantprojects.art/path", "inert"],
+      ["https://convex.resonantprojects.art", ""],
     ]) {
       await expect(
         readDeployedModuleHashes(url!, key!, fetcher),
@@ -123,19 +149,31 @@ describe("Convex artifact evidence", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(new Response("private", { status: 401 }));
     await expect(
-      readDeployedModuleHashes("https://convex.example", "inert", denied),
+      readDeployedModuleHashes(
+        "https://convex.resonantprojects.art",
+        "inert",
+        denied,
+      ),
     ).rejects.toThrow("HTTP 401");
     const oversized = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response("x".repeat(4 * 1024 * 1024 + 1)));
     await expect(
-      readDeployedModuleHashes("https://convex.example", "inert", oversized),
+      readDeployedModuleHashes(
+        "https://convex.resonantprojects.art",
+        "inert",
+        oversized,
+      ),
     ).rejects.toThrow("4 MiB");
     const invalid = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response("private-not-json"));
     await expect(
-      readDeployedModuleHashes("https://convex.example", "inert", invalid),
+      readDeployedModuleHashes(
+        "https://convex.resonantprojects.art",
+        "inert",
+        invalid,
+      ),
     ).rejects.toThrow(
       "Deployment artifact response has invalid module identities",
     );

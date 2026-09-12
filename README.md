@@ -64,6 +64,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 - The backend is self-hosted. Copy [`.env.example`](./.env.example) to `.env.local`; scripts load it via `varlock/auto-load` (imported at the top of each env-reading script); Node does not auto-load `.env` files.
 - Caution: `vpx convex dev`, `vpx convex codegen`, and `vpx convex deploy` talk to the live backend.
+- The two [operator evidence scripts](./docs/frequency-worker-handoff.md#privileged-queue-and-deployed-artifact-evidence) use inherited administrative credentials only; their environment-loading exception is documented in [AGENTS.md](./AGENTS.md#guardrails).
 - For CLI mutation auth, see [Guardrails in AGENTS.md](./AGENTS.md#guardrails).
 
 ### Agent workspace & worker
