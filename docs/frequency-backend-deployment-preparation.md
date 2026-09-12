@@ -94,21 +94,7 @@ These schedules can produce jobs and external effects. Claim pause does not free
 
 ## Remaining read-only evidence request for Mac
 
-Because the actual hash response was not retained, one new bounded read is necessary. From this reviewed source checkout, with the existing admin credential in the child environment only, run:
-
-```sh
-vpx tsx scripts/convex-module-identities.ts https://convex.resonantprojects.art \
-  > /tmp/frequency-deployed-module-identities.json
-vpx tsx scripts/convex-module-delta.ts \
-  /tmp/frequency-convex-release-07aa/convex-root-modules.json \
-  /tmp/frequency-deployed-module-identities.json \
-  > /tmp/frequency-root-module-delta.json
-vpx tsx scripts/frequency-queue-evidence.ts https://convex.resonantprojects.art
-```
-
-Check each exit status; the first command emits complete validated identities or exits 1, never a partial identity list. Its response limit is 4 MiB and timeout 30 seconds, with redirects blocked and no automatic retries. Return the identities/delta JSON (paths, environments, hashes and timestamps only) and the queue collector's fixed-code failure JSON or complete scalar success. The offline delta adds no live reads. These are new observations, not replacements for the earlier timestamp. No raw config, source maps, credentials, backend error bodies or job data should be shared.
-
-Alongside those outputs, provide existing backend runtime image digest/version and any already-retained deployment artifact/release or backup/restore receipt identities. Return only identities, timestamps and compatibility/restore-test outcomes; keep protected contents and storage access details local. This establishes which inspection contracts below are compatible and whether a recoverable prior artifact exists. Do not start a backup/export or restore to manufacture that evidence under this read-only request.
+The identity recapture and bounded queue probe are complete. See [the retained evidence and analysis](frequency-backend-observation-20260912.md). Do not repeat those reads. The next smallest backend read is the existing privileged root function-metadata query described there; it is conditional on confirming the deployed version's inspection contract. No deployment, export, backup or restore is included.
 
 The following existing interfaces were verified in upstream backend source at commit `8ccdd1097dbcb1da1be662d7909cc2c9117b5092`; availability on the actual self-hosted backend version remains a gate. The installed CLI verifies only the `/api/get_config_hashes` contract. No private system function should be deployed or rewritten to expose this information publicly.
 

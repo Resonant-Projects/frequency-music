@@ -82,6 +82,8 @@ const request = {
   appDefinition: {
     udfServerVersion: "1.34.1",
     unchangedModuleHashes: [],
+    definition: null,
+    schema: null,
     changedModules: [
       { path: "z.js", environment: "node", source: "z", sourceMap: "map" },
       { path: "a.js", environment: "isolate", source: "a" },
@@ -102,6 +104,137 @@ describe("Convex artifact evidence", () => {
     expect(JSON.stringify(manifest)).not.toContain("frequency-offline-inert");
     expect(JSON.stringify(manifest)).not.toContain("sourceMap");
     expect(manifest).not.toHaveProperty("sourceSha");
+  });
+
+  test("includes separately bundled schema and definition in the exact deployed root set", () => {
+    const schema = {
+      path: "schema.js",
+      environment: "isolate",
+      source: "schema-source",
+      sourceMap: "schema-map",
+    };
+    const definition = {
+      path: "convex.config.js",
+      environment: "isolate",
+      source: "definition-source",
+    };
+    const manifest = manifestFromPushRequest({
+      ...request,
+      appDefinition: { ...request.appDefinition, schema, definition },
+    });
+    expect(manifest.modules.map((module) => module.path)).toEqual([
+      "a.js",
+      "convex.config.js",
+      "schema.js",
+      "z.js",
+    ]);
+    expect(
+      manifest.modules.find((module) => module.path === "schema.js")?.hash,
+    ).toBe(
+      createHash("sha256").update("schema-sourceschema-map").digest("hex"),
+    );
+    expect(
+      manifest.modules.find((module) => module.path === "convex.config.js")
+        ?.hash,
+    ).toBe(createHash("sha256").update("definition-source").digest("hex"));
+    expect(
+      compareDeployedModules(manifest, { moduleHashes: manifest.modules }),
+    ).toEqual({ rootModuleArtifactMatches: true, moduleCount: 4 });
+    expect(() =>
+      compareDeployedModules(manifest, {
+        moduleHashes: manifestFromPushRequest(request).modules,
+      }),
+    ).toThrow("does not match");
+  });
+
+  test("rejects malformed or omitted nullable special modules", () => {
+    for (const key of ["schema", "definition"]) {
+      for (const value of [
+        undefined,
+        {},
+        "schema.js",
+        { path: "schema.js", environment: "isolate" },
+        {
+          path: "schema.js",
+          environment: "isolate",
+          source: "x",
+          sourceMap: null,
+        },
+      ]) {
+        expect(() =>
+          manifestFromPushRequest({
+            ...request,
+            appDefinition: { ...request.appDefinition, [key]: value },
+          }),
+        ).toThrow();
+      }
+    }
+  });
+
+  test("rejects duplicates across normal, schema and definition modules", () => {
+    const module = {
+      path: "a.js",
+      environment: "isolate",
+      source: "duplicate",
+    };
+    for (const change of [
+      { schema: module },
+      { definition: module },
+      {
+        schema: { ...module, path: "special.js" },
+        definition: { ...module, path: "special.js" },
+      },
+    ]) {
+      expect(() =>
+        manifestFromPushRequest({
+          ...request,
+          appDefinition: { ...request.appDefinition, ...change },
+        }),
+      ).toThrow("Duplicate module paths");
+    }
+  });
+
+  test("bounds the combined module set including special modules", () => {
+    const changedModules = Array.from({ length: 10_000 }, (_, i) => ({
+      path: `module${i}.js`,
+      environment: "isolate",
+      source: "",
+    }));
+    expect(() =>
+      manifestFromPushRequest({
+        ...request,
+        appDefinition: {
+          ...request.appDefinition,
+          changedModules,
+          schema: { path: "schema.js", environment: "isolate", source: "" },
+        },
+      }),
+    ).toThrow();
+  });
+
+  test("historical 127-module manifests still compare strictly without upgrading their claims", () => {
+    const modules = Array.from({ length: 127 }, (_, i) => ({
+      path: `legacy${i}.js`,
+      environment: "isolate",
+      hash: "a".repeat(64),
+    }));
+    const legacyManifest = {
+      format: "frequency-convex-root-modules-v1",
+      convexVersion: "1.34.1",
+      scope: "root-modules-only",
+      modules,
+    };
+    expect(
+      compareDeployedModules(legacyManifest, { moduleHashes: modules }),
+    ).toEqual({ rootModuleArtifactMatches: true, moduleCount: 127 });
+    expect(() =>
+      compareDeployedModules(legacyManifest, {
+        moduleHashes: [
+          ...modules,
+          { path: "schema.js", environment: "isolate", hash: "b".repeat(64) },
+        ],
+      }),
+    ).toThrow("does not match");
   });
 
   test("requires complete pinned inert dry-run bundles", () => {
