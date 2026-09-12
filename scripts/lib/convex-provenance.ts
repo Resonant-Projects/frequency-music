@@ -10,6 +10,12 @@ const moduleIdentity = z.object({
   environment: z.enum(["isolate", "node"]),
   hash: z.string().regex(/^[a-f0-9]{64}$/),
 });
+const bundledModule = z.object({
+  path: moduleIdentity.shape.path,
+  environment: moduleIdentity.shape.environment,
+  source: z.string(),
+  sourceMap: z.string().optional(),
+});
 const identities = z.array(moduleIdentity).min(1).max(10_000);
 const manifestSchema = z.object({
   format: z.literal("frequency-convex-root-modules-v1"),
@@ -43,7 +49,8 @@ function sortedUnique(modules: z.infer<typeof identities>) {
   );
 }
 
-/** Convex 1.34.1 cli/lib/components.ts hashes source followed by sourceMap. */
+/** Convex 1.34.1 hashes source followed by sourceMap. The deployed root set
+ * includes separately bundled schema/definition as well as changedModules. */
 export function manifestFromPushRequest(
   input: unknown,
 ): ConvexProvenanceManifest {
@@ -54,17 +61,10 @@ export function manifestFromPushRequest(
       appDefinition: z.object({
         udfServerVersion: z.literal("1.34.1"),
         unchangedModuleHashes: z.array(z.unknown()).length(0),
-        changedModules: z
-          .array(
-            z.object({
-              path: moduleIdentity.shape.path,
-              environment: moduleIdentity.shape.environment,
-              source: z.string(),
-              sourceMap: z.string().optional(),
-            }),
-          )
-          .min(1)
-          .max(10_000),
+        // Pinned 1.34.1 AppDefinitionConfig requires both keys, allowing null.
+        definition: bundledModule.nullable(),
+        schema: bundledModule.nullable(),
+        changedModules: z.array(bundledModule).min(1).max(10_000),
       }),
     })
     .parse(input);
@@ -73,14 +73,24 @@ export function manifestFromPushRequest(
     convexVersion: "1.34.1",
     scope: "root-modules-only",
     modules: sortedUnique(
-      request.appDefinition.changedModules.map((module) => ({
-        path: module.path,
-        environment: module.environment,
-        hash: createHash("sha256")
-          .update(module.source)
-          .update(module.sourceMap ?? "")
-          .digest("hex"),
-      })),
+      identities.parse(
+        [
+          ...request.appDefinition.changedModules,
+          ...(request.appDefinition.schema
+            ? [request.appDefinition.schema]
+            : []),
+          ...(request.appDefinition.definition
+            ? [request.appDefinition.definition]
+            : []),
+        ].map((module) => ({
+          path: module.path,
+          environment: module.environment,
+          hash: createHash("sha256")
+            .update(module.source)
+            .update(module.sourceMap ?? "")
+            .digest("hex"),
+        })),
+      ),
     ),
   };
 }

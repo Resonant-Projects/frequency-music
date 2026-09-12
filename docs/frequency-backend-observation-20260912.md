@@ -27,9 +27,11 @@ The other two deployed-only entries exactly match the candidate's separately bun
 | `appDefinition.schema` | `schema.js` | `452ea4dfc2735e5f893d5ff5504f4b1c212123f19235e52c39b0953c84bef452` |
 | `appDefinition.definition` | `convex.config.js` | `496012d978aa2e1a54d6710cbf78b6b72d56220380ba7dff8382be44ad615f94` |
 
-The attested manifest contains `appDefinition.changedModules` only. These two exact matches explain the apparent deletion in that comparison; they do not prove the active schema, applied component configuration, or complete deployment matches the candidate. Whether these runtime entries reflect a legacy deployment layout or the current backend's packaging contract remains unresolved. Do not append or exclude identities to force equality. These locally computed separate-object identities are not additions to the signed release manifest.
+The attested manifest contains `appDefinition.changedModules` only. These two exact matches explain the apparent deletion in that comparison; they do not prove the active schema, applied component configuration, or complete deployment matches the candidate. Upstream component push code at `8ccdd1097dbcb1da1be662d7909cc2c9117b5092` packages runtime functions followed by schema and definition (`crates/model/src/components/types.rs`, `all_modules`); module metadata retrieval excludes only system paths (`crates/model/src/modules/mod.rs`, `get_application_metadata`). The builder therefore omitted two stored root modules. The correction hashes the actual separate bundle objects and preserves strict comparison; it does not hard-code observed hashes. Runtime-version compatibility remains a gate. These locally computed separate-object identities are not additions to the old signed release manifest. A newly published and independently verified attestation is required for the corrected manifest; the 07aa attestation does not transfer to new bytes.
 
 The 16 changed named modules are agentDraftPromotion, agentDrafts, agentRuns, auth.config, conceptClassifier, conceptClassifierInternal, extract, hypotheses, hypothesesInternal, llm, llmNode, recipes, recipesInternal, vocabulary, weeklyBriefs, and weeklyBriefsInternal (all `.js`). `auth.config.js` has no imports; its mismatch cannot be attributed to dependency filenames. The candidate requires `CLERK_JWT_ISSUER_DOMAIN` and uses Clerk application ID `convex`; deployed authentication semantics remain unknown.
+
+The corrected offline builder emits 129 identities. Comparing those unsigned local bytes with the retained observation yields 106 unchanged, seven added dependency chunks, seven removed dependency chunks, and 16 changed named modules. It still fails equality. This corrected local comparison does not change the original evidence files or establish deployed provenance.
 
 ## Runtime and rollback evidence supplied by Mac
 
@@ -48,7 +50,7 @@ POST https://convex.resonantprojects.art/api/query
 Authorization: Convex <existing child-environment admin key>
 Content-Type: application/json
 
-{"path":"_system/frontend/modules:list","format":"convex_encoded_json","args":{"componentId":null}}
+{"path":"_system/frontend/modules:list","format":"convex_encoded_json","args":[{"componentId":null}]}
 ```
 
 This is an invocation specification, not permission to print a credential or raw response. The upstream contract is linked in [deployment preparation](frequency-backend-deployment-preparation.md). Use a 30-second total deadline, a 4-MiB streamed response cap, no redirects and no retries. Failure, malformed response, duplicate root module/function entries, or exceeded limits yields incomplete evidence; do not infer function absence from any of them.

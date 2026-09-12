@@ -248,10 +248,9 @@ live deployment gates by itself.
 
 The failed September 12 Mac checks and the complete candidate inventory are
 tracked in [backend deployment preparation](frequency-backend-deployment-preparation.md).
-The current deployment remains unidentified. The Mac coordinator confirmed the
-original 129 identities were not retained. Follow the preparation document's
-one new bounded identity capture, then reuse that sanitized file for offline
-comparison without further live reads:
+The current deployment remains unidentified. The original 129 identities were not retained, but the new 16:55 observation
+was retained and verified. Use [that evidence and its next-step limits](frequency-backend-observation-20260912.md)
+for offline comparison without further identity or queue reads:
 
 ```sh
 vpx tsx scripts/convex-module-delta.ts \
