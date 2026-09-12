@@ -26,7 +26,10 @@ its current poll to settle. A poll includes the outstanding claim request, graph
 execution, and awaited terminal-status writes. If a claim returns after the
 signal, the worker executes that claimed run once before exiting: abandoning it
 would leave an ambiguous running row. Repeated signals do not force exit. Idle
-poll sleep wakes immediately. Heartbeats continue during graph drain.
+poll sleep wakes immediately. Heartbeats continue during graph drain; each
+heartbeat HTTP request has a 30-second abort timeout, with its timer cleared when
+the request settles. This timeout applies only to heartbeat metadata, never to
+claims, graph execution or terminal writes.
 
 The worker does not mark a run failed just because shutdown was requested and
 does not automatically requeue or retry a run. A graph failure still follows its

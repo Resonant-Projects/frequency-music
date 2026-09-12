@@ -16,7 +16,7 @@ vi.mock("../scripts/smoke-research-pipeline.js", () => ({
   loadRootEnvLocalForResearchSmoke: vi.fn(),
 }));
 import { runWorkerLoop } from "../src/worker/lifecycle";
-import { pollOnce } from "../src/worker/runner";
+import { pollOnce, WORKER_HEARTBEAT_TIMEOUT_MS } from "../src/worker/runner";
 import { HEARTBEAT_INTERVAL_MS } from "../../convex/shared/agentContract";
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -173,6 +173,63 @@ describe("worker graceful drain with synthetic queue and graph", () => {
     heartbeatGate.resolve();
     await worker.loop;
     expect(worker.done).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  test("aborts a stuck heartbeat after 30 seconds while claims and terminal writes stay unbounded", async () => {
+    vi.useFakeTimers();
+    const graphStarted = deferred<void>();
+    const graphGate = deferred<void>();
+    const terminalStarted = deferred<void>();
+    let heartbeatSignal: AbortSignal | undefined;
+    mocks.callConvex.mockImplementation(
+      async (
+        name: string,
+        args: Record<string, unknown>,
+        signal?: AbortSignal,
+      ) => {
+        if (name === "claimNextPendingRun") return claim;
+        if (
+          name === "appendAgentRunEvent" &&
+          args.message === "Worker heartbeat"
+        ) {
+          heartbeatSignal = signal;
+          await new Promise<void>((_resolve, reject) => {
+            signal?.addEventListener(
+              "abort",
+              () => reject(new Error("synthetic heartbeat timeout")),
+              { once: true },
+            );
+          });
+        }
+        if (name === "markAgentRunCompleted") terminalStarted.resolve();
+      },
+    );
+    mocks.stream.mockImplementation(async function* () {
+      graphStarted.resolve();
+      await graphGate.promise;
+    });
+    const worker = start();
+    await graphStarted.promise;
+    worker.signals.emit("SIGTERM");
+    await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+    expect(heartbeatSignal).toBeInstanceOf(AbortSignal);
+    graphGate.resolve();
+    await terminalStarted.promise;
+    await vi.advanceTimersByTimeAsync(WORKER_HEARTBEAT_TIMEOUT_MS - 1);
+    expect(worker.done).not.toHaveBeenCalled();
+    expect(heartbeatSignal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await worker.loop;
+    expect(heartbeatSignal?.aborted).toBe(true);
+    expect(worker.done).toHaveBeenCalledTimes(1);
+    for (const call of mocks.callConvex.mock.calls.filter(
+      ([name]) =>
+        name === "claimNextPendingRun" || name === "markAgentRunCompleted",
+    )) {
+      expect(call).toHaveLength(2);
+    }
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   test("wakes idle sleep immediately without another claim", async () => {

@@ -88,16 +88,31 @@ async function appendNodeEvent(
   }
 }
 
+// Heartbeats are best-effort maintenance, unlike claims and terminal writes.
+// Bound their HTTP lifetime so an abandoned heartbeat cannot hold a drained run.
+export const WORKER_HEARTBEAT_TIMEOUT_MS = 30_000;
+
 async function appendWorkerHeartbeat(runId: string): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    WORKER_HEARTBEAT_TIMEOUT_MS,
+  );
   try {
-    await callConvex("appendAgentRunEvent", {
-      runId,
-      kind: "status",
-      message: "Worker heartbeat",
-      payload: { reason: "worker_heartbeat" },
-    });
+    await callConvex(
+      "appendAgentRunEvent",
+      {
+        runId,
+        kind: "status",
+        message: "Worker heartbeat",
+        payload: { reason: "worker_heartbeat" },
+      },
+      controller.signal,
+    );
   } catch (error) {
     log(`failed to append heartbeat for run ${runId}:`, redactError(error));
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
