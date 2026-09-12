@@ -113,8 +113,6 @@ export async function collectQueueEvidence(
     diagnostic.stage = "page";
     if (!isRecord(page)) fail("invalid_page_shape");
     if (page.pageStatus === "SplitRequired") fail("split_required");
-    if (claimsPaused !== undefined && claimsPaused !== page.claimsPaused)
-      fail("pause_changed");
     if (
       typeof page.isDone !== "boolean" ||
       typeof page.claimsPaused !== "boolean" ||
@@ -125,6 +123,8 @@ export async function collectQueueEvidence(
     ) {
       fail("invalid_page_shape");
     }
+    if (claimsPaused !== undefined && claimsPaused !== page.claimsPaused)
+      fail("pause_changed");
     claimsPaused = page.claimsPaused;
     let pageTotal = 0;
     for (const status of AGENT_RUN_STATUSES) {

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
+import { queueFailureReport } from "./queue-diagnostics";
 import { AGENT_RUN_STATUSES } from "../../convex/shared/statuses";
 import {
   collectQueueEvidence,
@@ -113,6 +114,33 @@ describe("operator queue snapshot", () => {
           transport,
         ),
       ).rejects.toThrow();
+    }
+  });
+
+  test.each([
+    null,
+    "true",
+    1,
+  ])("invalid pause type on page two remains a shape failure: %s", async (claimsPaused) => {
+    const { transport } = fixture([
+      page({ isDone: false, cursor: "next" }),
+      page({ claimsPaused }),
+    ]);
+    try {
+      await collectQueueEvidence(
+        "https://convex.resonantprojects.art",
+        "inert",
+        100,
+        transport,
+      );
+      throw new Error("Expected rejection");
+    } catch (error) {
+      expect(queueFailureReport(error)).toMatchObject({
+        complete: false,
+        code: "invalid_page_shape",
+        stage: "page",
+        pageNumber: 2,
+      });
     }
   });
 

@@ -6,7 +6,7 @@ This is preparation, not a deployment approval. The exact current-to-candidate d
 
 Candidate source is `07aa3d4d524b421bfd577ced008e8f8190e972c9`, published by [run 34704787115](https://github.com/Resonant-Projects/frequency-music/actions/runs/34704787115). The attested `convex-root-modules.json` has SHA-256 `6b8bb954ceab03948b9b0cef2051bf4f739d227ff024af5fc5ae6a56fae5a9bb` and 127 root module identities. It does not attest component bundles, schema, or a recoverable backend image.
 
-At 2026-09-12T16:29:23Z the Mac coordinator obtained 129 live root module identities and failed strict equality with this manifest. HTTP 200 from the queue timestamp/query endpoints did not produce accepted complete counts. Neither result identifies the deployed source revision or proves the internal query absent. The raw evidence remains on Mac; only sanitized comparison results belong in this repository.
+At 2026-09-12T16:29:23.251Z the Mac coordinator obtained 129 live root module identities and failed strict equality with this manifest. HTTP 200 from the queue timestamp/query endpoints did not produce accepted complete counts. Neither result identifies the deployed source revision or proves the internal query absent. Only the sanitized observation record was retained on Mac; the process discarded the actual 129 identities. The retained `missingFunction:false` fields are not semantic checks: that diagnostic inspected error text only for non-2xx responses, and all three responses were HTTP 200. Candidate identities cannot reconstruct deployed identities.
 
 ## Candidate inventory
 
@@ -94,7 +94,21 @@ These schedules can produce jobs and external effects. Claim pause does not free
 
 ## Remaining read-only evidence request for Mac
 
-First use the already captured hash response to produce sorted path/environment comparisons: candidate-only, deployed-only, and same-path changed identities. Return names and hashes only. Do not perform duplicate reads just to regenerate this comparison. HTTP success and module count differences alone cannot identify the delta.
+Because the actual hash response was not retained, one new bounded read is necessary. From this reviewed source checkout, with the existing admin credential in the child environment only, run:
+
+```sh
+vpx tsx scripts/convex-module-identities.ts https://convex.resonantprojects.art \
+  > /tmp/frequency-deployed-module-identities.json
+vpx tsx scripts/convex-module-delta.ts \
+  /tmp/frequency-convex-release-07aa/convex-root-modules.json \
+  /tmp/frequency-deployed-module-identities.json \
+  > /tmp/frequency-root-module-delta.json
+vpx tsx scripts/frequency-queue-evidence.ts https://convex.resonantprojects.art
+```
+
+Check each exit status; the first command emits complete validated identities or exits 1, never a partial identity list. Its response limit is 4 MiB and timeout 30 seconds, with redirects blocked and no automatic retries. Return the identities/delta JSON (paths, environments, hashes and timestamps only) and the queue collector's fixed-code failure JSON or complete scalar success. The offline delta adds no live reads. These are new observations, not replacements for the earlier timestamp. No raw config, source maps, credentials, backend error bodies or job data should be shared.
+
+Alongside those outputs, provide existing backend runtime image digest/version and any already-retained deployment artifact/release or backup/restore receipt identities. Return only identities, timestamps and compatibility/restore-test outcomes; keep protected contents and storage access details local. This establishes which inspection contracts below are compatible and whether a recoverable prior artifact exists. Do not start a backup/export or restore to manufacture that evidence under this read-only request.
 
 The following existing interfaces were verified in upstream backend source at commit `8ccdd1097dbcb1da1be662d7909cc2c9117b5092`; availability on the actual self-hosted backend version remains a gate. The installed CLI verifies only the `/api/get_config_hashes` contract. No private system function should be deployed or rewritten to expose this information publicly.
 
