@@ -127,7 +127,7 @@ The operator script uses the existing admin credential from inherited
 Use the coordinator's already-authorized credential delivery mechanism; never
 put the key in command arguments, shell history, evidence files, or chat. This
 interface does not justify issuing a new broadly privileged credential.
-Both readers allow only `https://convex.resonantprojects.art`; a new deployment
+All privileged readers allow only `https://convex.resonantprojects.art`; a new deployment
 origin requires a reviewed source change. The provenance verifier gives `gh` a
 private read-only copy of the captured manifest bytes and removes it afterward.
 
@@ -248,8 +248,10 @@ live deployment gates by itself.
 
 The failed September 12 Mac checks and the complete candidate inventory are
 tracked in [backend deployment preparation](frequency-backend-deployment-preparation.md).
-The current deployment remains unidentified. Use retained sanitized identities
-to calculate the root-module delta offline, without repeating live reads:
+The current deployment remains unidentified. The Mac coordinator confirmed the
+original 129 identities were not retained. Follow the preparation document's
+one new bounded identity capture, then reuse that sanitized file for offline
+comparison without further live reads:
 
 ```sh
 vpx tsx scripts/convex-module-delta.ts \
