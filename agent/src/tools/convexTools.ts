@@ -24,6 +24,7 @@ function stripLargeTextFields(value: unknown): unknown {
 export async function callConvex<T>(
   path: string,
   body: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<T> {
   const convexUrl = process.env.CONVEX_SITE_URL;
   const agentSecret = process.env.AGENT_TOOL_SECRET;
@@ -34,6 +35,7 @@ export async function callConvex<T>(
     convexUrl.replace(/\/$/, "") + "/agent-tools/" + path,
     {
       method: "POST",
+      ...(signal ? { signal } : {}),
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ secret: agentSecret, ...body }),
     },

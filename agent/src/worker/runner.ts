@@ -5,14 +5,13 @@
 // surface), and ensures the run reaches a terminal status without double-marking.
 //
 // Concurrency is fixed at 1: each poll fully awaits the claimed run before
-// claiming another. A SIGTERM/SIGINT handler fails any in-flight run so an
-// interrupted run does not linger as `running` forever.
+// claiming another. SIGTERM/SIGINT stops future claims and waits for any
+// outstanding claim, active graph, and terminal writes to finish.
 //
 // All live calls are guarded on a Convex URL + AGENT_TOOL_SECRET; if either is
 // missing the process prints a message and exits cleanly.
 
 import { hostname } from "node:os";
-import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 
 import { HEARTBEAT_INTERVAL_MS } from "../../../convex/shared/agentContract";
@@ -38,6 +37,8 @@ import {
   type KnownGraphName,
 } from "./graphInput.js";
 
+import { runWorkerLoop } from "./lifecycle.js";
+
 type StreamableGraph = {
   stream: (
     input: never,
@@ -61,8 +62,6 @@ const GRAPHS: Record<KnownGraphName, StreamableGraph> = {
 const POLL_INTERVAL_MS = resolveWorkerPollIntervalMs(
   process.env.WORKER_POLL_INTERVAL_MS,
 );
-let shuttingDown = false;
-let currentRunId: string | undefined;
 
 function log(message: string, ...rest: unknown[]): void {
   console.log(`[worker] ${message}`, ...rest);
@@ -89,25 +88,46 @@ async function appendNodeEvent(
   }
 }
 
+// Heartbeats are best-effort maintenance, unlike claims and terminal writes.
+// Bound their HTTP lifetime so an abandoned heartbeat cannot hold a drained run.
+export const WORKER_HEARTBEAT_TIMEOUT_MS = 30_000;
+
 async function appendWorkerHeartbeat(runId: string): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    WORKER_HEARTBEAT_TIMEOUT_MS,
+  );
   try {
-    await callConvex("appendAgentRunEvent", {
-      runId,
-      kind: "status",
-      message: "Worker heartbeat",
-      payload: { reason: "worker_heartbeat" },
-    });
+    await callConvex(
+      "appendAgentRunEvent",
+      {
+        runId,
+        kind: "status",
+        message: "Worker heartbeat",
+        payload: { reason: "worker_heartbeat" },
+      },
+      controller.signal,
+    );
   } catch (error) {
     log(`failed to append heartbeat for run ${runId}:`, redactError(error));
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
-function startRunHeartbeat(runId: string): () => void {
+function startRunHeartbeat(runId: string): () => Promise<void> {
+  const pending = new Set<Promise<void>>();
   const timer = setInterval(() => {
-    void appendWorkerHeartbeat(runId);
+    const heartbeat = appendWorkerHeartbeat(runId);
+    pending.add(heartbeat);
+    void heartbeat.finally(() => pending.delete(heartbeat));
   }, HEARTBEAT_INTERVAL_MS);
   (timer as { unref?: () => void }).unref?.();
-  return () => clearInterval(timer);
+  return async () => {
+    clearInterval(timer);
+    await Promise.all(pending);
+  };
 }
 
 async function markFailed(
@@ -228,12 +248,12 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
       message: redactError(error),
     });
   } finally {
-    stopHeartbeat();
+    await stopHeartbeat();
   }
 }
 
 // Claims and executes at most one run. Returns true when a run was claimed.
-async function pollOnce(
+export async function pollOnce(
   workerId: string,
   graphName?: string,
 ): Promise<boolean> {
@@ -246,29 +266,9 @@ async function pollOnce(
   }
 
   log(`claimed run ${claim.runId} for graph '${claim.graphName}'`);
-  currentRunId = claim.runId;
-  try {
-    await runClaimedGraph(claim);
-  } finally {
-    currentRunId = undefined;
-  }
+  // A claim already sent when shutdown arrives must still run to completion.
+  await runClaimedGraph(claim);
   return true;
-}
-
-async function handleShutdown(signal: string): Promise<void> {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  log(`received ${signal}; shutting down`);
-
-  const runId = currentRunId;
-  if (runId) {
-    log(`failing in-flight run ${runId} due to ${signal}`);
-    await markFailed(runId, `Worker received ${signal} during run`, {
-      reason: "worker_shutdown",
-      signal,
-    });
-  }
-  process.exit(0);
 }
 
 export async function main(): Promise<void> {
@@ -289,26 +289,18 @@ export async function main(): Promise<void> {
     process.env.WORKER_ID ?? `worker-${hostname()}-${process.pid}`;
   const graphFilter = process.env.WORKER_GRAPH_NAME;
 
-  process.on("SIGTERM", () => void handleShutdown("SIGTERM"));
-  process.on("SIGINT", () => void handleShutdown("SIGINT"));
-
   log(
     `started workerId=${workerId} pollIntervalMs=${POLL_INTERVAL_MS}` +
       (graphFilter ? ` graphFilter=${graphFilter}` : ""),
   );
 
-  while (true) {
-    if (shuttingDown) break;
-    let claimed = false;
-    try {
-      claimed = await pollOnce(workerId, graphFilter);
-    } catch (error) {
-      log("poll iteration failed:", redactError(error));
-    }
-
-    if (shuttingDown) break;
-    if (!claimed) await sleep(POLL_INTERVAL_MS);
-  }
+  await runWorkerLoop({
+    poll: () => pollOnce(workerId, graphFilter),
+    pollIntervalMs: POLL_INTERVAL_MS,
+    signals: process,
+    log,
+    onPollError: (error) => log("poll iteration failed:", redactError(error)),
+  });
 
   log("worker loop exited");
 }

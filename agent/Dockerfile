@@ -24,6 +24,9 @@ RUN bun install --frozen-lockfile --production --omit=peer
 FROM ${RUNTIME_NODE_IMAGE} AS runtime
 WORKDIR /app/agent
 
+# Patch the pinned base for CVE-2026-14456; keep Node/Codex unchanged.
+RUN apk add --no-cache libcrypto3=3.5.8-r0 libssl3=3.5.8-r0
+
 ARG CODEX_CLI_VERSION=0.146.0
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
