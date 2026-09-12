@@ -663,6 +663,53 @@ export const getPublic = query({
   },
 });
 
+/**
+ * Privileged, read-only migration evidence. Each invocation is one query snapshot;
+ * callers must pin a common snapshot or treat a multi-page scan as non-atomic.
+ * Never use a SplitRequired page as complete evidence. No job data leaves here.
+ */
+export const opsStatusCountsPage = internalQuery({
+  args: {
+    cursor: v.union(v.string(), v.null()),
+    pageSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const pageSize = args.pageSize ?? 100;
+    if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 200) {
+      throw new Error("pageSize must be an integer between 1 and 200");
+    }
+    if (
+      args.cursor !== null &&
+      (args.cursor.length === 0 || args.cursor.length > 16384)
+    ) {
+      throw new Error(
+        "cursor must be null or a nonempty opaque cursor of at most 16384 characters",
+      );
+    }
+    // Default order is immutable creation time, not mutable status/updatedAt.
+    const result = await ctx.db
+      .query("agentRuns")
+      .order("asc")
+      .paginate({
+        cursor: args.cursor,
+        numItems: pageSize,
+        // One-row headroom avoids classifying a full 200-item page as split.
+        maximumRowsRead: 201,
+        maximumBytesRead: 4 * 1024 * 1024,
+      });
+    const pauseValue = process.env.FREQUENCY_WORKER_CLAIMS_PAUSED;
+    return {
+      counts: buildAgentRunStatusCounts(result.page),
+      rowsRead: result.page.length,
+      cursor: result.isDone ? null : result.continueCursor,
+      isDone: result.isDone,
+      scannedAt: Date.now(),
+      claimsPaused: Boolean(pauseValue && pauseValue !== "false"),
+      pageStatus: result.pageStatus ?? null,
+    };
+  },
+});
+
 export const statusCountsPublic = query({
   args: { limit: v.optional(v.number()), graphName: v.optional(v.string()) },
   handler: async (ctx, args) => {
