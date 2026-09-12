@@ -1,0 +1,303 @@
+{
+  "releaseManifestSha256": "6b8bb954ceab03948b9b0cef2051bf4f739d227ff024af5fc5ae6a56fae5a9bb",
+  "deployedIdentitiesSha256": "2a81c73538038f83f8a92a8bb0fc8856b7ce4a1a2f87cff5904affb552f92c8f",
+  "scope": "root-module-identities-only",
+  "deploymentAuthorized": false,
+  "deployedCount": 129,
+  "releaseCount": 127,
+  "unchangedCount": 104,
+  "added": [
+    {
+      "path": "_deps/BUMM5S53.js",
+      "environment": "isolate",
+      "hash": "e1a4003d610bc82e3df4eb23a1699741c659107f3ddba1daabb0c9e2f52eef76"
+    },
+    {
+      "path": "_deps/CDHW6WAE.js",
+      "environment": "isolate",
+      "hash": "f99ad046f29285facab939240635a50d0ce8b384f7b806b5e6d96f72e2cddcee"
+    },
+    {
+      "path": "_deps/FZCTIQQK.js",
+      "environment": "isolate",
+      "hash": "6aca68040c2b7da80cd16ca042cabe6cb065fae59915160bfd4883157d06ed93"
+    },
+    {
+      "path": "_deps/OWYE2LE3.js",
+      "environment": "isolate",
+      "hash": "3cd845e9eb954fd8768cc6ab5c09d3f2e0da5449beabe8e12d08ccd41f4d9148"
+    },
+    {
+      "path": "_deps/U4LU3C2N.js",
+      "environment": "isolate",
+      "hash": "a227eedd5bf3ad9f1cd099abc37fc66b03eeb1f7fd2a58c2ca63412582f83a2a"
+    },
+    {
+      "path": "_deps/VWZL5UNK.js",
+      "environment": "isolate",
+      "hash": "e7838b2f7f5d116c912752b47835e88df66e22328dddf1a0c866d5c0bfca8bcd"
+    },
+    {
+      "path": "_deps/node/MNA6XR3T.js",
+      "environment": "node",
+      "hash": "7edcba8f5c4f469d8234e8767913af219a6a2d80974d94ebacee207f5ec661ba"
+    }
+  ],
+  "removed": [
+    {
+      "path": "_deps/66WX27CK.js",
+      "environment": "isolate",
+      "hash": "eedf9689afd8f5004c23438627afb498c34fcb1be366b995c44676f8710c552e"
+    },
+    {
+      "path": "_deps/6INHWZU7.js",
+      "environment": "isolate",
+      "hash": "0dd605897151f3bd7aecbb13c2da12e7f33c6c4faa503c13362b20c7777bba87"
+    },
+    {
+      "path": "_deps/IPXHIX4S.js",
+      "environment": "isolate",
+      "hash": "3dce2f7e71ecaa2c66015611bb75d015c3e6fba2672a4d030e8089fad3cf8d1c"
+    },
+    {
+      "path": "_deps/TDMJWNID.js",
+      "environment": "isolate",
+      "hash": "8d87c5c81948cf0bdf16496676fbca0a9369fce8b60d6814f2a6dff4a4684704"
+    },
+    {
+      "path": "_deps/VTMZ6X3Z.js",
+      "environment": "isolate",
+      "hash": "770fd5dcfe179e3b56a18750193656b556ae33f177bae47068fb39b212804a32"
+    },
+    {
+      "path": "_deps/XVTQHMB2.js",
+      "environment": "isolate",
+      "hash": "8f8ba9188b12476d8d0705dcf53e748dc9a9f45134afc44b0b5db3cb58a19b6e"
+    },
+    {
+      "path": "_deps/node/XIVNWTLR.js",
+      "environment": "node",
+      "hash": "ab990859404cb75dcc13d7ecd49f8ff364e296e03b2060f256e8f156b8620d3c"
+    },
+    {
+      "path": "convex.config.js",
+      "environment": "isolate",
+      "hash": "496012d978aa2e1a54d6710cbf78b6b72d56220380ba7dff8382be44ad615f94"
+    },
+    {
+      "path": "schema.js",
+      "environment": "isolate",
+      "hash": "452ea4dfc2735e5f893d5ff5504f4b1c212123f19235e52c39b0953c84bef452"
+    }
+  ],
+  "changed": [
+    {
+      "path": "agentDraftPromotion.js",
+      "before": {
+        "path": "agentDraftPromotion.js",
+        "environment": "isolate",
+        "hash": "cff2cbc316c7b789513a4c8e66706cce948ccd9c233cb0615732d2fca456f4ec"
+      },
+      "after": {
+        "path": "agentDraftPromotion.js",
+        "environment": "isolate",
+        "hash": "721206a28e88e69c5c90da7e3c0df00c48c8d3ac7ee4dabcf97192d5a0f12a0c"
+      }
+    },
+    {
+      "path": "agentDrafts.js",
+      "before": {
+        "path": "agentDrafts.js",
+        "environment": "isolate",
+        "hash": "2df6e50c416451bd699d7e48c309312d851242b5327483755a79433a39723926"
+      },
+      "after": {
+        "path": "agentDrafts.js",
+        "environment": "isolate",
+        "hash": "28dd88446e8fb4a60f33bdaf805f615380f17a60fae4824583352aaaca0cdef7"
+      }
+    },
+    {
+      "path": "agentRuns.js",
+      "before": {
+        "path": "agentRuns.js",
+        "environment": "isolate",
+        "hash": "401277c1d23c9cae98b8c870d0e70b977d6d6c03e010ffa3df4985ff03107f05"
+      },
+      "after": {
+        "path": "agentRuns.js",
+        "environment": "isolate",
+        "hash": "8fb4058913b828677230a6ec96c12ef0b96a5488707bdd3c80805c954d09e8a7"
+      }
+    },
+    {
+      "path": "auth.config.js",
+      "before": {
+        "path": "auth.config.js",
+        "environment": "isolate",
+        "hash": "494d370e93ef6e3bb749e333e173aa4d645881b52ab3b614c6e7432016b02f10"
+      },
+      "after": {
+        "path": "auth.config.js",
+        "environment": "isolate",
+        "hash": "23927172fd9b6253eca852ebb04d70e80b5921816a4b2d85f69f380aedbb628f"
+      }
+    },
+    {
+      "path": "conceptClassifier.js",
+      "before": {
+        "path": "conceptClassifier.js",
+        "environment": "isolate",
+        "hash": "83dc9d9a827ccd9a292cb4863d105bc17d4519db71ee5fc92a9f3c53cfa024d6"
+      },
+      "after": {
+        "path": "conceptClassifier.js",
+        "environment": "isolate",
+        "hash": "130fbbd7d1db24964d34afccc93662f8124d999a6f3d8e724f0158ace00387f9"
+      }
+    },
+    {
+      "path": "conceptClassifierInternal.js",
+      "before": {
+        "path": "conceptClassifierInternal.js",
+        "environment": "node",
+        "hash": "eea281c393d41d1afee96d08a61eef21d68e9996883f6d6d949356be7ed9465a"
+      },
+      "after": {
+        "path": "conceptClassifierInternal.js",
+        "environment": "node",
+        "hash": "f0abda80a639da861cb6841d4987cc416fcc6bda53ca4353866287ebd33e16e7"
+      }
+    },
+    {
+      "path": "extract.js",
+      "before": {
+        "path": "extract.js",
+        "environment": "node",
+        "hash": "01746de6271aabcdef0fbfae93c245e929cf545ec4d665603d74459606c23842"
+      },
+      "after": {
+        "path": "extract.js",
+        "environment": "node",
+        "hash": "c1e438f3429fe7c7211dd7311844c16d41a2e7bd58f7f714c2b00fab4b081392"
+      }
+    },
+    {
+      "path": "hypotheses.js",
+      "before": {
+        "path": "hypotheses.js",
+        "environment": "isolate",
+        "hash": "671123919f049a14907f2fda2d4dad88cd7d900c38b6e1af64007f14c3390fee"
+      },
+      "after": {
+        "path": "hypotheses.js",
+        "environment": "isolate",
+        "hash": "3139eaa23e719509c568237dab9837f6d139fa939e4b83325931ba9f4bda4f3b"
+      }
+    },
+    {
+      "path": "hypothesesInternal.js",
+      "before": {
+        "path": "hypothesesInternal.js",
+        "environment": "node",
+        "hash": "8e36d0901f41c01065ce25add8a6b2da0f95659e47d0197b9ca18fff9cfb8efd"
+      },
+      "after": {
+        "path": "hypothesesInternal.js",
+        "environment": "node",
+        "hash": "8366f3d70b4f128a5c9122c0b94f931a55e372697d35e293853dafe5cf587ecc"
+      }
+    },
+    {
+      "path": "llm.js",
+      "before": {
+        "path": "llm.js",
+        "environment": "isolate",
+        "hash": "3b6e3145ebb96017431c6bd8c832cc2750fcf96666d0e462d11c6152992bc3d4"
+      },
+      "after": {
+        "path": "llm.js",
+        "environment": "isolate",
+        "hash": "4b71f55d696944b86159d68cbbd00bfa51cd87fc0e58704a7fc59844337b9b02"
+      }
+    },
+    {
+      "path": "llmNode.js",
+      "before": {
+        "path": "llmNode.js",
+        "environment": "node",
+        "hash": "283186e25b62cbb8e594d9a318325b4aea46abdcad0cb4681bb4169080ea1018"
+      },
+      "after": {
+        "path": "llmNode.js",
+        "environment": "node",
+        "hash": "d389d355f8360d83c426de572f2b847dc0e65b8658a7dea8306a980a2c45b49c"
+      }
+    },
+    {
+      "path": "recipes.js",
+      "before": {
+        "path": "recipes.js",
+        "environment": "isolate",
+        "hash": "20e7956ae20d7d07114ffc92f54550f7016a3bf3d06ce04726670dfd67597795"
+      },
+      "after": {
+        "path": "recipes.js",
+        "environment": "isolate",
+        "hash": "98e315dba95d924cd0ee07723774f95f62f09fc330af801a3ed9b603f233363a"
+      }
+    },
+    {
+      "path": "recipesInternal.js",
+      "before": {
+        "path": "recipesInternal.js",
+        "environment": "node",
+        "hash": "d2e057da89f4873be67607cc9c54d4acf2e12e8d3f213da15feb498f0f51c67b"
+      },
+      "after": {
+        "path": "recipesInternal.js",
+        "environment": "node",
+        "hash": "96cd8c8e1ad1f0cd5f55ac8f229e620c62ea62a132d9ade9ab43a28b5c629dca"
+      }
+    },
+    {
+      "path": "vocabulary.js",
+      "before": {
+        "path": "vocabulary.js",
+        "environment": "isolate",
+        "hash": "a6c225a2d9b0fd1b43ab6bed8e55ea72b773831c223a29e96ed6120846df621c"
+      },
+      "after": {
+        "path": "vocabulary.js",
+        "environment": "isolate",
+        "hash": "bba5956d3ec0d4b70fb2c395fd6015ae1d2798fa2b332909034807ef964cd353"
+      }
+    },
+    {
+      "path": "weeklyBriefs.js",
+      "before": {
+        "path": "weeklyBriefs.js",
+        "environment": "isolate",
+        "hash": "c7217b36e8b307cb04ba8813cd6398ef132aefb87c3b2fad5a087a8652b078b0"
+      },
+      "after": {
+        "path": "weeklyBriefs.js",
+        "environment": "isolate",
+        "hash": "d7cddbc2674df132009ab4e9e93fdfb8e087ca9ab7f09251dbc05a2c4e2f134f"
+      }
+    },
+    {
+      "path": "weeklyBriefsInternal.js",
+      "before": {
+        "path": "weeklyBriefsInternal.js",
+        "environment": "node",
+        "hash": "71add27138e0ecbeea69164ffd085446bc6280953e67d9c06a4d5dff45327449"
+      },
+      "after": {
+        "path": "weeklyBriefsInternal.js",
+        "environment": "node",
+        "hash": "f5b862a45dc5d8f0dccbc61cf31d01f7fa79c85378385bb008d98ab979022810"
+      }
+    }
+  ]
+}
