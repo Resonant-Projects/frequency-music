@@ -7,6 +7,14 @@ import {
   type AgentRunStatus,
 } from "../../convex/shared/statuses";
 
+import {
+  inspectQueueResponse,
+  isRecord,
+  QueueEvidenceFailure,
+  type QueueDiagnostic,
+  type QueueFailureCode,
+} from "./queue-diagnostics";
+
 export const MAX_QUEUE_EVIDENCE_PAGES = 1000;
 export const QUEUE_EVIDENCE_TIMEOUT_MS = 20_000;
 
@@ -44,10 +52,31 @@ export async function collectQueueEvidence(
   }
   const startedAt = new Date().toISOString();
   const signal = AbortSignal.timeout(QUEUE_EVIDENCE_TIMEOUT_MS);
+  const diagnostic: QueueDiagnostic = { stage: "input", pageNumber: 0 };
+  function fail(code: QueueFailureCode): never {
+    throw new QueueEvidenceFailure(code, { ...diagnostic });
+  }
   const client = new ConvexHttpClient(target, {
     logger: false,
-    fetch: (input, init) =>
-      transport(input, { ...init, signal, redirect: "error" }),
+    fetch: async (input, init) => {
+      diagnostic.stage =
+        typeof input === "string" && input.endsWith("/api/query_ts")
+          ? "timestamp"
+          : "query";
+      delete diagnostic.httpStatus;
+      delete diagnostic.envelope;
+      try {
+        const response = await transport(input, {
+          ...init,
+          signal,
+          redirect: "error",
+        });
+        return await inspectQueueResponse(response, diagnostic);
+      } catch (error) {
+        if (error instanceof QueueEvidenceFailure) throw error;
+        return fail(signal.aborted ? "deadline_exceeded" : "transport_failure");
+      }
+    },
   });
   // The SDK intentionally hides this admin-only API from its public typings.
   (
@@ -69,37 +98,48 @@ export async function collectQueueEvidence(
   let rowsRead = 0;
   let claimsPaused: boolean | undefined;
   for (let pages = 1; pages <= MAX_QUEUE_EVIDENCE_PAGES; pages++) {
-    signal.throwIfAborted();
+    if (signal.aborted) fail("deadline_exceeded");
+    diagnostic.pageNumber = pages;
     // One client caches one timestamp. Never retry at a newer timestamp.
-    const page: FunctionReturnType<
-      typeof internal.agentRuns.opsStatusCountsPage
-    > = await client.consistentQuery(query, { cursor, pageSize });
+    let page: FunctionReturnType<typeof internal.agentRuns.opsStatusCountsPage>;
+    try {
+      page = await client.consistentQuery(query, { cursor, pageSize });
+    } catch (error) {
+      if (error instanceof QueueEvidenceFailure) throw error;
+      return fail(
+        signal.aborted ? "deadline_exceeded" : "value_decode_failure",
+      );
+    }
+    diagnostic.stage = "page";
+    if (!isRecord(page)) fail("invalid_page_shape");
+    if (page.pageStatus === "SplitRequired") fail("split_required");
     if (
-      page.pageStatus === "SplitRequired" ||
       typeof page.isDone !== "boolean" ||
       typeof page.claimsPaused !== "boolean" ||
       !Number.isSafeInteger(page.rowsRead) ||
       page.rowsRead < 0 ||
       page.rowsRead > 200 ||
-      (claimsPaused !== undefined && claimsPaused !== page.claimsPaused)
+      (page.pageStatus !== null && page.pageStatus !== "SplitRecommended")
     ) {
-      throw new Error("Incomplete or inconsistent queue evidence");
+      fail("invalid_page_shape");
     }
+    if (claimsPaused !== undefined && claimsPaused !== page.claimsPaused)
+      fail("pause_changed");
     claimsPaused = page.claimsPaused;
     let pageTotal = 0;
     for (const status of AGENT_RUN_STATUSES) {
       const count = page.counts?.[status];
       if (!Number.isSafeInteger(count) || count < 0) {
-        throw new Error("Invalid scalar counts");
+        fail("invalid_counts");
       }
       counts[status] += count;
       pageTotal += count;
     }
-    if (pageTotal !== page.rowsRead) throw new Error("Invalid page total");
+    if (pageTotal !== page.rowsRead) fail("invalid_page_total");
     rowsRead += pageTotal;
-    signal.throwIfAborted();
+    if (signal.aborted) fail("deadline_exceeded");
     if (page.isDone) {
-      if (page.cursor !== null) throw new Error("Invalid terminal cursor");
+      if (page.cursor !== null) fail("invalid_cursor");
       return {
         target,
         complete: true,
@@ -119,10 +159,10 @@ export async function collectQueueEvidence(
       !page.cursor ||
       cursors.has(page.cursor)
     ) {
-      throw new Error("Invalid or repeated pagination cursor");
+      fail("invalid_cursor");
     }
     cursor = page.cursor;
     cursors.add(cursor);
   }
-  throw new Error("Queue scan page limit exceeded; no complete evidence");
+  fail("page_limit");
 }
