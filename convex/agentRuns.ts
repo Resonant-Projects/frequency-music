@@ -326,6 +326,12 @@ export const claimNextPending = internalMutation({
   args: { workerId: v.string(), graphName: v.optional(v.string()) },
   returns: zodToConvex(claimedAgentRunZ.nullable()),
   handler: async (ctx, args) => {
+    // Central admission pause also covers deployed workers that predate drain
+    // support. Preserve queued/running records; only unset, empty, or literal
+    // "false" admits claims so a misspelled pause value fails closed.
+    const claimsPaused = process.env.FREQUENCY_WORKER_CLAIMS_PAUSED;
+    if (claimsPaused && claimsPaused !== "false") return null;
+
     const now = Date.now();
     if (args.graphName && !isKnownGraphName(args.graphName)) {
       throw new Error(`Unknown graphName: ${args.graphName}`);
