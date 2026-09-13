@@ -2,13 +2,14 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { candidateInventory } from "./lib/convex-candidate-inventory";
 import { manifestFromPushRequest } from "./lib/convex-provenance";
 
 // Deliberately no Varlock/.env import: this build has no runtime credentials.
-const [output, ...extra] = process.argv.slice(2);
+const [output, inventoryOutput, ...extra] = process.argv.slice(2);
 if (!output || extra.length) {
   throw new Error(
-    "Usage: vpx tsx scripts/convex-provenance-build.ts OUTPUT.json",
+    "Usage: vpx tsx scripts/convex-provenance-build.ts OUTPUT.json [INVENTORY.json]",
   );
 }
 const installed = JSON.parse(
@@ -75,9 +76,13 @@ globalThis.fetch = deny;
   if (result.status !== 0 || result.error) {
     throw new Error(`Offline Convex bundle failed: ${result.stderr}`);
   }
-  const manifest = manifestFromPushRequest(
-    JSON.parse(readFileSync(`${requestPath}.json`, "utf8")),
-  );
+  const request = JSON.parse(readFileSync(`${requestPath}.json`, "utf8"));
+  const manifest = manifestFromPushRequest(request);
+  const inventory = inventoryOutput ? candidateInventory(request) : undefined;
+  if (inventoryOutput && resolve(output) === resolve(inventoryOutput))
+    throw new Error("Manifest and inventory outputs must differ");
+  if (inventoryOutput)
+    writeFileSync(inventoryOutput, `${JSON.stringify(inventory, null, 2)}\n`);
   writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(
     `Wrote ${manifest.modules.length} root module hashes to ${output}`,

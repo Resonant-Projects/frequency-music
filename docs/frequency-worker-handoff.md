@@ -248,7 +248,7 @@ live deployment gates by itself.
 
 The failed September 12 Mac checks and the complete candidate inventory are
 tracked in [backend deployment preparation](frequency-backend-deployment-preparation.md).
-The current deployment remains unidentified. The original 129 identities were not retained, but the new 16:55 observation
+The current deployment remains unidentified by source revision. The September 13 Mac metadata observation confirms that `opsStatusCountsPage` is absent; see [deployment readiness](frequency-deployment-readiness.md). The original 129 identities were not retained, but the new 16:55 observation
 was retained and verified. Use [that evidence and its next-step limits](frequency-backend-observation-20260912.md)
 for offline comparison without further identity or queue reads:
 

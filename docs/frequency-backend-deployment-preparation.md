@@ -94,7 +94,7 @@ These schedules can produce jobs and external effects. Claim pause does not free
 
 ## Remaining read-only evidence request for Mac
 
-The identity recapture and bounded queue probe are complete. See [the retained evidence and analysis](frequency-backend-observation-20260912.md). Do not repeat those reads. The next smallest backend read is the existing privileged root function-metadata query described there; it is conditional on confirming the deployed version's inspection contract. No deployment, export, backup or restore is included.
+The identity recapture and bounded queue probe are complete. See [the retained evidence and analysis](frequency-backend-observation-20260912.md). Do not repeat those reads. The subsequent September 13 root function-metadata observation confirms the count function is absent; do not repeat that diagnostic. Remaining semantic metadata requirements and bounded tooling are in [deployment readiness](frequency-deployment-readiness.md). No deployment, export, backup or restore is included.
 
 The following existing interfaces were verified in upstream backend source at commit `8ccdd1097dbcb1da1be662d7909cc2c9117b5092`; availability on the actual self-hosted backend version remains a gate. The installed CLI verifies only the `/api/get_config_hashes` contract. No private system function should be deployed or rewritten to expose this information publicly.
 

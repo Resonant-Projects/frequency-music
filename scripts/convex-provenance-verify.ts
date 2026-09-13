@@ -74,7 +74,7 @@ try {
           .update(manifestBytes)
           .digest("hex"),
         scope:
-          "root-function-modules-only; excludes schema, components, environment and worker image",
+          "stored-root-module-identities-only; excludes applied schema state, component instances, environment and worker image",
       },
       null,
       2,

@@ -39,25 +39,13 @@ CT113 on prox5 runs `app-convex-backend-1`. Mac reported image ID and RepoDigest
 
 The existing `lab-postgresql-backup.service` receipt reports success, exit 0, inactive at `2026-09-12 02:57:29 UTC`. It is not a restore test. August native-backup and CT914 restore receipts in the infrastructure repository predate this image's creation. No matching current deployment artifact or current restore receipt has been established. Root hashes cannot reconstruct executable source or a component-aware rollback.
 
-## Smallest next Mac request
+## Follow-up observation: missing count function confirmed
 
-First use local, existing container/image metadata only to check for the exact image's OCI version/revision/source labels or an already-retained build receipt. Return allowlisted version/revision/source values and the inspected image identity; do not return environment, full inspection output or labels wholesale. A label alone is a provenance claim, not verified source linkage. If no version linkage exists, report that gap; do not substitute a current tag or perform a backend upgrade.
+The user supplied this observation from the Mac acceptance owner, thread `4b75ff0f-07c3-4258-a531-258452e7e4a6` (Complete Backend Acceptance Gates), via the original coordinator. At `2026-09-13T01:07:27.373Z`, exactly one bounded privileged root metadata query returned HTTP 200 with a success envelope. The complete list passed shape validation with no duplicate module/function entries. It contained 74 root modules carrying analyzed metadata; `agentRuns.js` was present and `opsStatusCountsPage` was absent. Type and visibility are not applicable.
 
-Once the deployed backend's read-only contract is confirmed, make one bounded privileged root metadata query with the existing child-only credential:
+This is an attributed sanitized observation supplied by the user, not a DevBox backend read or retained raw-response attestation. No raw metadata, cron specs, source-package values or error text was retained. The 74 analyzed modules are not comparable to the 129 stored root module identities. The earlier queue probe's error envelope alone did not establish absence; this later complete metadata observation does. The missing deployed function is now established, resolving that diagnosis. It does not prove that every other possible queue query failure is excluded, or satisfy deployment/queue-count acceptance. Do not repeat the missing-function diagnostic.
 
-```text
-POST https://convex.resonantprojects.art/api/query
-Authorization: Convex <existing child-environment admin key>
-Content-Type: application/json
-
-{"path":"_system/frontend/modules:list","format":"convex_encoded_json","args":[{"componentId":null}]}
-```
-
-This is an invocation specification, not permission to print a credential or raw response. The upstream contract is linked in [deployment preparation](frequency-backend-deployment-preparation.md). Use a 30-second total deadline, a 4-MiB streamed response cap, no redirects and no retries. Failure, malformed response, duplicate root module/function entries, or exceeded limits yields incomplete evidence; do not infer function absence from any of them.
-
-Privately validate the success envelope and complete `[modulePath, metadata][]` value, select only `agentRuns.js`, then its function named `opsStatusCountsPage`. Return only observation time, HTTP status, fixed envelope classification, module-present/function-present booleans, and the selected function's allowlisted `udfType`/`visibility.kind`. Expected values are `Query` and `internal`; these are expectations, not observations. Do not share other function metadata, source-package values, cron specs/arguments, backend error text or job data. An error envelope should return only a fixed `metadata_query_error` classification. If the function is present, metadata alone still does not prove its implementation, argument contract or query-time behavior; report the result before another probe.
-
-Do not repeat module hashes or queue counts for this request. Do not call get_config, export, deploy, backup, restore, or any mutation. There is no request to stop CT107 or activate a consumer.
+The remaining metadata contract and current-state requirements are in [deployment readiness](frequency-deployment-readiness.md). Recovery inventory and isolated restore preparation belong to the Mac owner; DevBox owns candidate semantics, source tooling and this acceptance record. Route requests through coordinator `f9d19c38-31f3-44c7-8e26-e5319dee81cb`.
 
 ## Remaining acceptance gates
 
