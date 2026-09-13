@@ -25,6 +25,7 @@
 - Domain vocabulary: `CONTEXT.md`
 - Current work and ordering: `docs/plans/README.md`
 - Agent API, runtime, and tracing: `docs/agent-tool-surface.md`, `agent/README.md`, `docs/langsmith-runbook.md`
+- Backend recovery inventory and isolated restore rehearsal tooling: `docs/frequency-backend-recovery-preparation-20260913.md`, `scripts/recovery/`
 - Product doctrine: `docs/vision-and-meaning.md`
 - Web UI design system (palette, type, opacity, components): `web/docs/zodiac-style-guide.md`
 
