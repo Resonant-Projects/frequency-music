@@ -148,6 +148,41 @@ export function deployedModuleDelta(
   };
 }
 
+/** Offline comparison of two sanitized identity envelopes, for example a
+ * retained deployed observation against an isolated restore's observation.
+ * Neither side is a release manifest, and equality never attests provenance. */
+export function moduleIdentityDelta(
+  leftResponse: unknown,
+  rightResponse: unknown,
+) {
+  const envelope = z.object({ moduleHashes: identities });
+  const left = sortedUnique(envelope.parse(leftResponse).moduleHashes);
+  const right = sortedUnique(envelope.parse(rightResponse).moduleHashes);
+  const leftByPath = new Map(left.map((module) => [module.path, module]));
+  const rightByPath = new Map(right.map((module) => [module.path, module]));
+  const onlyRight = right.filter((module) => !leftByPath.has(module.path));
+  const onlyLeft = left.filter((module) => !rightByPath.has(module.path));
+  const changed = left.flatMap((module) => {
+    const other = rightByPath.get(module.path);
+    return other &&
+      (other.hash !== module.hash || other.environment !== module.environment)
+      ? [{ path: module.path, left: module, right: other }]
+      : [];
+  });
+  return {
+    scope: "root-module-identities-only",
+    provenanceEstablished: false,
+    leftCount: left.length,
+    rightCount: right.length,
+    unchangedCount: left.length - onlyLeft.length - changed.length,
+    identical:
+      onlyLeft.length === 0 && onlyRight.length === 0 && changed.length === 0,
+    onlyLeft,
+    onlyRight,
+    changed,
+  };
+}
+
 /** Existing privileged CLI API; POST is a read here (cli/lib/config.ts).
  * Never log the response, headers, or key: config can contain provider details. */
 export async function readDeployedModuleHashes(
