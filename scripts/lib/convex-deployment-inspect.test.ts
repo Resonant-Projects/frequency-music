@@ -12,6 +12,7 @@ function fixture() {
       success([
         {
           id: "root",
+          name: null,
           path: "",
           state: "active",
           httpPrefix: null,
@@ -89,7 +90,7 @@ describe("privileged deployment metadata inspection", () => {
       deploymentAuthorized: false,
       functionValidatorsIncluded: false,
       consistency: "separate-query-snapshots-not-atomic",
-      components: [{ argsCount: 1, argsOmitted: true }],
+      components: [{ name: null, argsCount: 1, argsOmitted: true }],
     });
     expect(JSON.stringify(result)).not.toMatch(/PRIVATE_|INERT_ADMIN/);
     expect(result.modules[0]?.modules[0]?.functions[0]?.name).toBe(

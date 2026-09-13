@@ -133,6 +133,8 @@ Keep worker handoff gated by [the handoff protocol](frequency-worker-handoff.md)
 
 ## Recoverable rollback acceptance owned by Mac
 
+The [reported September 13 recovery inventory](frequency-deployment-readiness.md#recovery-inventory-reported-september-13) identifies candidate archives and a database snapshot but no current tested coherent recovery set. Module-store mtime is not deployment provenance; a newer database snapshot layered onto an older archive is not automatically coherent. The Mac owner is revising its isolated procedure; no restore or new backup is authorized here.
+
 The isolated restore owner must produce a receipt for the **current** protected
 backend state, not merely a historical restore of a different image. It must
 identify the backend image/version, protected database and object-store backup

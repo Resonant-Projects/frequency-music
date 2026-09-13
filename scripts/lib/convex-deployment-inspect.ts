@@ -7,7 +7,7 @@ const componentsSchema = z
   .array(
     z.object({
       id: label,
-      name: label.optional(),
+      name: label.nullable().optional(),
       path: label,
       state: label,
       httpPrefix: label.nullable(),

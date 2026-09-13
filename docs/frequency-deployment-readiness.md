@@ -36,6 +36,19 @@ Successful output includes observations' start/end times, component identities/p
 
 Return the complete sanitized output or the fixed failure JSON, plus the exact reviewed script commit and observation time. Retain bytes with restrictive local permissions and a SHA-256 receipt; no raw backend body or job data should be shared. Read-only metadata from different moments can miss a concurrent deployment (including a change and reversal); before final approval the owner must establish a configuration freeze or a coherent protected capture, not just compare timestamps.
 
+## Recovery inventory reported September 13
+
+The user supplied the following sanitized inventory from Mac owner `4b75ff0f-07c3-4258-a531-258452e7e4a6`, reviewed by the coordinator. DevBox did not inspect protected backup contents or run a restore.
+
+- Whole CT113 archive `vzdump-lxc-113-2026_09_07-10_31_51.tar.zst`: 17,516,650,393 bytes, SHA-256 `3f4e5817e5d4a8688d1b75803687731e9d38e323c84110a74ccfc7ea1bee5f25`. Zstd integrity passed; coverage includes rootfs and the data mount. Reported PG/Convex image pins match, but the archive includes old Hatchet/RabbitMQ configuration and five-day-old database/search state. This is not current tested rollback.
+- Newest native snapshot `20260912T025545Z`: checksums verified, no restore proof. It covers the database only; layering it onto the old whole archive does not by itself establish a coherent recovery set.
+- Last whole-CT restore test: August 5. Dump validation passed September 7; the recent five dumps remain unvalidated. A next full archive was expected around September 13 05:00Z, but no receipt has been verified. Do not substitute an expected schedule for an observed artifact.
+- File storage was observed empty and S3 unset. Recovery still needs coordinated database and local-state coverage. Backend `/version` remains unknown; image labels remain provenance claims, not verified source linkage.
+
+Module-store mtime (including July 24) is **not** a last-deployment timestamp or proof of matching source/runtime. Do not use it to choose a rollback source revision. The Mac owner is revising a proposed isolated CT913/prox4 procedure to suppress autostart offline before first boot, contain copied credentials, sanitize bounded output on the guest, compare identity envelopes correctly, bound waits and scope cleanup. The proposal has not run; no restore or new backup is approved by this record. Its concrete method and approval remain with Mac/coordinator.
+
+The next recovery return needed here is the revised procedure and coverage matrix, then the separately approved isolated test receipt if/when performed. Do not duplicate the inventory or request another restore from DevBox. The current tested rollback gate remains open.
+
 ## Precise remaining protected inputs
 
 These are requirements for the existing Mac workstream, not authorization to repeat live reads. Prefer its retained recovery artifacts. Where those do not contain a field, report the gap before proposing additional collection.
