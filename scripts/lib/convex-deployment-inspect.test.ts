@@ -36,7 +36,16 @@ function fixture() {
                   },
                 ],
                 sourcePackageId: "PRIVATE_PACKAGE",
-                cronSpecs: [["scheduled", { args: ["PRIVATE_CRON_SECRET"] }]],
+                cronSpecs: [
+                  [
+                    "scheduled",
+                    {
+                      udfPath: "worker:execute",
+                      cronSchedule: { type: "hourly" },
+                      udfArgs: "PRIVATE_CRON_SECRET",
+                    },
+                  ],
+                ],
               },
             ],
           ],
@@ -217,8 +226,14 @@ describe("privileged deployment metadata inspection", () => {
       {
         functions: [],
         cronSpecs: [
-          ["same", {}],
-          ["same", {}],
+          [
+            "same",
+            { udfPath: "worker:execute", cronSchedule: { type: "hourly" } },
+          ],
+          [
+            "same",
+            { udfPath: "worker:execute", cronSchedule: { type: "hourly" } },
+          ],
         ],
       },
     ]) {
@@ -231,6 +246,118 @@ describe("privileged deployment metadata inspection", () => {
       );
       expect(fetcher).toHaveBeenCalledTimes(2);
     }
+  });
+
+  test("decodes only bounded cron schedule integers and strips argument values", async () => {
+    const integer = (value: bigint) => {
+      const bytes = Buffer.alloc(8);
+      bytes.writeBigInt64LE(value);
+      return { $integer: bytes.toString("base64") };
+    };
+    async function inspectSchedule(schedule: unknown) {
+      const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(success([]))
+        .mockResolvedValueOnce(
+          success([
+            [
+              null,
+              [
+                [
+                  "crons.js",
+                  {
+                    functions: [],
+                    cronSpecs: [
+                      [
+                        "daily",
+                        {
+                          udfPath: "worker:execute",
+                          udfArgs: { $bytes: "PRIVATE_SECRET" },
+                          cronSchedule: schedule,
+                          private: "PRIVATE_EXTRA",
+                        },
+                      ],
+                    ],
+                  },
+                ],
+              ],
+            ],
+          ]),
+        )
+        .mockResolvedValueOnce(success({}));
+      return inspectDeployment(origin, "inert", fetcher);
+    }
+    const result = await inspectSchedule({
+      type: "daily",
+      hourUTC: integer(9n),
+      minuteUTC: integer(30n),
+      private: "PRIVATE_SCHEDULE",
+    });
+    expect(result.modules[0]?.modules[0]?.crons[0]).toEqual({
+      identifier: "daily",
+      udfPath: "worker:execute",
+      schedule: { type: "daily", hourUTC: 9, minuteUTC: 30 },
+      argsOmitted: true,
+    });
+    expect(JSON.stringify(result)).not.toContain("PRIVATE_");
+    for (const schedule of [
+      { type: "daily", hourUTC: integer(24n) },
+      { type: "interval", seconds: integer(-1n) },
+      { type: "weekly", dayOfWeek: integer(7n), hourUTC: integer(0n) },
+      { type: "monthly", day: integer(0n), hourUTC: integer(0n) },
+      { type: "hourly", minuteUTC: 30 },
+      { type: "cron", cronExpr: "PRIVATE_TOKEN" },
+    ])
+      await expect(inspectSchedule(schedule)).rejects.toThrow();
+    expect(
+      (await inspectSchedule({ type: "cron", cronExpr: "*/5 * * * *" }))
+        .modules[0]?.modules[0]?.crons[0]?.schedule,
+    ).toEqual({ type: "cron", cronExpr: "*/5 * * * *" });
+  });
+
+  test("rejects aggregate response bytes even when each response is within its limit", async () => {
+    const padded = (value: unknown) =>
+      new Response(
+        JSON.stringify({
+          status: "success",
+          value,
+          ignoredPadding: "x".repeat(3_500_000),
+        }),
+      );
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        padded([
+          {
+            id: "one",
+            path: "one",
+            state: "active",
+            httpPrefix: null,
+            args: {},
+          },
+          {
+            id: "two",
+            path: "two",
+            state: "active",
+            httpPrefix: null,
+            args: {},
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        padded([
+          [null, []],
+          ["one", []],
+          ["two", []],
+        ]),
+      )
+      .mockResolvedValueOnce(padded({}))
+      .mockResolvedValueOnce(padded({}))
+      .mockResolvedValueOnce(padded({}));
+    await expect(inspectDeployment(origin, "inert", fetcher)).rejects.toThrow(
+      "limit",
+    );
+    expect(fetcher).toHaveBeenCalledTimes(5);
   });
 
   test("canonical schema hashes ignore object key order but preserve changes and reject deep input", () => {

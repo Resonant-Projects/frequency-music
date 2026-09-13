@@ -15,6 +15,54 @@ const componentsSchema = z
     }),
   )
   .max(100);
+// Decode only selected schedule integers; ignored udfArgs bytes never decoded.
+function scheduleInteger(minimum: number, maximum: number) {
+  return z
+    .object({ $integer: z.string().regex(/^[A-Za-z0-9+/]{11}=$/) })
+    .transform((value, ctx) => {
+      const bytes = Buffer.from(value.$integer, "base64");
+      const integer = bytes.readBigInt64LE();
+      if (integer < BigInt(minimum) || integer > BigInt(maximum)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Schedule integer outside bounds",
+        });
+        return z.NEVER;
+      }
+      return Number(integer);
+    });
+}
+const minuteUTC = scheduleInteger(0, 59).optional();
+const hourUTC = scheduleInteger(0, 23);
+const cronSchedule = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("interval"),
+    seconds: scheduleInteger(0, Number.MAX_SAFE_INTEGER),
+  }),
+  z.object({ type: z.literal("hourly"), minuteUTC }),
+  z.object({ type: z.literal("daily"), hourUTC, minuteUTC }),
+  z.object({
+    type: z.literal("weekly"),
+    dayOfWeek: scheduleInteger(0, 6),
+    hourUTC,
+    minuteUTC,
+  }),
+  z.object({
+    type: z.literal("monthly"),
+    day: scheduleInteger(1, 31),
+    hourUTC,
+    minuteUTC,
+  }),
+  // Numeric five-field expressions only; unsupported syntax fails closed.
+  z.object({
+    type: z.literal("cron"),
+    cronExpr: z
+      .string()
+      .max(256)
+      .regex(/^[0-9*,/-]+(?:[ \t]+[0-9*,/-]+){4}$/),
+  }),
+]);
+const cronSpec = z.object({ udfPath: label, cronSchedule });
 const modulesSchema = z
   .array(
     z.tuple([
@@ -41,7 +89,7 @@ const modulesSchema = z
                 )
                 .max(10_000),
               cronSpecs: z
-                .array(z.tuple([label, z.unknown()]))
+                .array(z.tuple([label, cronSpec]))
                 .max(1000)
                 .optional(),
             }),
@@ -208,6 +256,7 @@ export async function inspectDeployment(
     deploymentAuthorized: false,
     functionValidatorsIncluded: false,
     cronSpecsIncluded: false,
+    cronSchedulesAndTargetsIncluded: true,
     componentArgumentsIncluded: false,
     schemaStructuralDeltaIncluded: false,
     components: components.map(({ args, ...component }) => ({
@@ -220,9 +269,11 @@ export async function inspectDeployment(
       modules: entries.map(([path, module]) => ({
         path,
         functions: module.functions,
-        crons: (module.cronSpecs ?? []).map(([identifier]) => ({
+        crons: (module.cronSpecs ?? []).map(([identifier, spec]) => ({
           identifier,
-          specOmitted: true,
+          udfPath: spec.udfPath,
+          schedule: spec.cronSchedule,
+          argsOmitted: true,
         })),
       })),
     })),
