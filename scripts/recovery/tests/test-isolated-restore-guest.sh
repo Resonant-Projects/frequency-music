@@ -17,6 +17,11 @@ export ISOLATED_RESTORE_SLEEP=0
 export ISOLATED_RESTORE_READY_SECONDS=2
 export PATH="$work/bin:$PATH"
 
+cat > "$work/bin/timeout" <<'EOF'
+#!/usr/bin/env bash
+# shim: record the deadline, then run the command (never hangs in tests)
+echo "timeout $1" >> "$SHIM_STATE/calls.log"; shift; exec "$@"
+EOF
 cat > "$work/bin/hostname" <<'EOF'
 #!/usr/bin/env bash
 cat "$SHIM_STATE/hostname"
@@ -205,6 +210,7 @@ printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo starting;
 expect 1 "wait-boot exits non-zero when systemd never settles" wait-boot 913
 printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo degraded; exit 1; }; exit 0\n' > "$SHIM_STATE/exec.sh"
 expect 0 "wait-boot accepts degraded" wait-boot 913
+grep -q '^timeout 20$' "$SHIM_STATE/calls.log" || { echo "FAIL boot probes not wrapped in a host-side timeout"; failn=$((failn+1)); }
 
 # --- verify ---
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
@@ -291,12 +297,17 @@ reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolate
 printf 'app-postgres-1\napp-convex-backend-1\n' > "$SHIM_STATE/running"
 echo '{"moduleHashes":[{"path":"a.js","environment":"isolate","hash":"'"$(printf 'a%.0s' $(seq 1 64))"'"}]}' > "$SHIM_STATE/guest-identities.json"
 expect 0 "read-identities pulls and shape-checks the sanitized file" read-identities 913 "$here/../guest-module-identities.py"
-[ -f "$work/runs/913-module-identities.json" ] || { echo "FAIL identities file missing"; failn=$((failn+1)); }
+ls "$work/runs"/913-*-module-identities.json >/dev/null 2>&1 || { echo "FAIL per-run identities file missing"; failn=$((failn+1)); }
+grep -q 'trap "rm -f /root/.restore-admin-key" EXIT HUP INT TERM' "$SHIM_STATE/calls.log" || { echo "FAIL guest-side key trap not installed"; failn=$((failn+1)); }
 expect 1 "read-identities refuses to overwrite existing evidence" --msg "refusing to overwrite evidence" read-identities 913 "$here/../guest-module-identities.py"
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
 printf 'app-postgres-1\napp-convex-backend-1\n' > "$SHIM_STATE/running"
 sed -i.bak 's#^  sh) exit 0 ;;#  sh) case "$3" in *generate_admin_key*) exit 1 ;; *) exit 0 ;; esac ;;#' "$SHIM_STATE/exec.sh"
 expect 1 "read-identities fails when the guest read fails" --msg "identity read failed inside guest" read-identities 913 "$here/../guest-module-identities.py"
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
+printf 'app-postgres-1\napp-convex-backend-1\n' > "$SHIM_STATE/running"
+sed -i.bak 's#^  sh) exit 0 ;;#  sh) case "$3" in *"! -e /root/.restore-admin-key"*) exit 1 ;; *) exit 0 ;; esac ;;#' "$SHIM_STATE/exec.sh"
+expect 1 "read-identities fails when the admin key file survives in the guest" --msg "admin key file still present" read-identities 913 "$here/../guest-module-identities.py"
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
 printf 'app-postgres-1\napp-convex-backend-1\napp-hatchet-engine-1\n' > "$SHIM_STATE/running"
 expect 1 "read-identities refuses when an unexpected container is running" --msg "not allowed at this step" read-identities 913 "$here/../guest-module-identities.py"

@@ -41,6 +41,7 @@ MEMINFO="${ISOLATED_RESTORE_MEMINFO:-/proc/meminfo}"
 BOOT_ATTEMPTS="${ISOLATED_RESTORE_BOOT_ATTEMPTS:-40}"
 READY_SECONDS="${ISOLATED_RESTORE_READY_SECONDS:-120}"
 SLEEP="${ISOLATED_RESTORE_SLEEP:-3}"
+PROBE_SECONDS="${ISOLATED_RESTORE_PROBE_SECONDS:-20}"
 MIN_CEPH_AVAIL_KIB=$((150 * 1024 * 1024))   # 150 GiB for a 32+64 GiB restore
 MIN_FREE_MEM_KIB=$((12 * 1024 * 1024))      # 12 GiB headroom for an 8 GiB guest
 
@@ -87,6 +88,9 @@ ctid_absent_clusterwide() {
 }
 
 config_value() { pct config "$1" | awk -v k="$2" -F': ' '$1==k{print $2}'; }
+
+# Every guest probe gets a host-side deadline so a hung guest cannot stall a loop.
+guest_exec() { timeout "$PROBE_SECONDS" pct exec "$@"; }
 
 volid_of() { echo "${1%%,*}"; }   # "ceph-vm:vm-913-disk-0,size=32G" -> "ceph-vm:vm-913-disk-0"
 
@@ -296,12 +300,12 @@ cmd_wait_boot() {
   require_ctid "$ctid"
   assert_record_matches "$ctid"
   for ((i = 1; i <= BOOT_ATTEMPTS; i++)); do
-    state=$(pct exec "$ctid" -- systemctl is-system-running 2>/dev/null || true)
+    state=$(guest_exec "$ctid" -- systemctl is-system-running 2>/dev/null || true)
     case "$state" in running|degraded) echo "boot ok ctid=$ctid systemd=$state"; return 0;; esac
     sleep "$SLEEP"
   done
-  echo "failed units:" >&2; pct exec "$ctid" -- systemctl --failed --no-legend >&2 || true
-  die "guest did not reach running|degraded within $((BOOT_ATTEMPTS * SLEEP)) s (last state '$state')"
+  echo "failed units:" >&2; guest_exec "$ctid" -- systemctl --failed --no-legend >&2 || true
+  die "guest did not reach running|degraded within $((BOOT_ATTEMPTS * (SLEEP + PROBE_SECONDS))) s (last state '$state')"
 }
 
 # Live isolation gate: host config, prepare marker, guest interfaces, masked
@@ -311,22 +315,22 @@ assert_guest_isolated() {
   assert_record_matches "$ctid"
   [ "$(pct status "$ctid")" = "status: running" ] || die "guest not running"
   assert_isolated_config "$ctid"
-  pct exec "$ctid" -- test -f "/etc/isolated-restore-$ctid" || die "prepare marker missing"
+  guest_exec "$ctid" -- test -f "/etc/isolated-restore-$ctid" || die "prepare marker missing"
   # Only lo, bridges (dockerd creates docker0 and compose bridges at daemon
   # start) and bridge-enslaved ports are acceptable. A pct-provided interface
   # has no master and is not a bridge.
   local bad
-  bad=$(pct exec "$ctid" -- sh -c 'for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] && continue; [ -d "$i/bridge" ] && continue; [ -e "$i/master" ] && continue; echo "$n"; done')
+  bad=$(guest_exec "$ctid" -- sh -c 'for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] && continue; [ -d "$i/bridge" ] && continue; [ -e "$i/master" ] && continue; echo "$n"; done')
   [ -z "$bad" ] || die "unexpected interfaces in guest: $bad"
   local state
-  state=$(pct exec "$ctid" -- systemctl is-system-running 2>/dev/null || true)
+  state=$(guest_exec "$ctid" -- systemctl is-system-running 2>/dev/null || true)
   case "$state" in running|degraded) ;; *) die "guest systemd state '$state'";; esac
   for unit in "${UNITS_TO_MASK[@]}"; do
-    [ "$(pct exec "$ctid" -- systemctl is-enabled "$unit" 2>/dev/null || true)" = "masked" ] \
+    [ "$(guest_exec "$ctid" -- systemctl is-enabled "$unit" 2>/dev/null || true)" = "masked" ] \
       || die "$unit not masked"
   done
   local running name
-  running=$(pct exec "$ctid" -- docker ps --format '{{.Names}}' | sort | tr '\n' ' ')
+  running=$(guest_exec "$ctid" -- docker ps --format '{{.Names}}' | sort | tr '\n' ' ')
   for name in $running; do
     case " $allowed_running " in *" $name "*) ;; *) die "container '$name' is running but not allowed at this step";; esac
   done
@@ -375,13 +379,17 @@ cmd_read_identities() {
   local ctid=$1 extractor=$2 out
   require_ctid "$ctid"; assert_guest_isolated "$ctid" "app-postgres-1 app-convex-backend-1"
   [ -f "$extractor" ] || die "extractor script not found: $extractor"
-  out="$RUN_DIR/$ctid-module-identities.json"
+  local stamp
+  stamp=$(record_value "$ctid" created_at | tr -d ':-')
+  out="$RUN_DIR/$ctid-$stamp-module-identities.json"
   [ ! -e "$out" ] || die "$out already exists; refusing to overwrite evidence"
   pct push "$ctid" "$extractor" /root/guest-module-identities.py --perms 0700 || die "push failed"
   # The key is derived inside the guest from the archived instance secret, so it
-  # is a live production credential; it exists only briefly in a 0600 file.
-  pct exec "$ctid" -- sh -c 'umask 077; rm -f /root/restore-module-identities.json; docker exec app-convex-backend-1 ./generate_admin_key.sh | tail -1 > /root/.restore-admin-key; python3 /root/guest-module-identities.py; r=$?; rm -f /root/.restore-admin-key; exit $r' \
+  # is a live production credential; it exists only briefly in a 0600 file and
+  # the guest-side trap removes it on any exit, signal or interruption.
+  pct exec "$ctid" -- sh -c 'trap "rm -f /root/.restore-admin-key" EXIT HUP INT TERM; umask 077; rm -f /root/restore-module-identities.json; docker exec app-convex-backend-1 ./generate_admin_key.sh | tail -1 > /root/.restore-admin-key; python3 /root/guest-module-identities.py' \
     || die "identity read failed inside guest (see classification above)"
+  pct exec "$ctid" -- sh -c '[ ! -e /root/.restore-admin-key ]' || die "admin key file still present in guest"
   umask 077
   pct pull "$ctid" /root/restore-module-identities.json "$out" || die "pull failed"
   pct exec "$ctid" -- rm -f /root/restore-module-identities.json /root/guest-module-identities.py
