@@ -117,11 +117,13 @@ grep -q 'restore 913' "$SHIM_STATE/calls.log" && grep -q 'set 913 --delete net0'
 grep -q '^rootfs=ceph-vm:vm-913-disk-0$' "$work/runs/913.record" && grep -q '^mp0=ceph-vm:vm-913-disk-1$' "$work/runs/913.record" || { echo "FAIL record lacks volids"; failn=$((failn+1)); }
 expect 1 "second restore refused while record exists" restore 913 "$A" prox4
 reset_state; touch "$SHIM_STATE/refuse_net_delete"
-expect 1 "restore fails closed when net0 cannot be removed" --msg "network entries remain" restore 913 "$A" prox4
+expect 1 "restore fails closed when net0 cannot be removed" --msg "guest 913 purged" restore 913 "$A" prox4
 [ ! -f "$work/runs/913.record" ] || { echo "FAIL record written despite isolation failure"; failn=$((failn+1)); }
+grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL guest not purged after isolation failure"; failn=$((failn+1)); }
 # Ownership and storage assertions run before the record exists, on the restored config.
 reset_state; sed -i.bak 's#^rootfs: ceph-vm:vm-913-disk-0#rootfs: local-lvm:vm-913-disk-0#' "$SHIM_STATE/restored.config"
 expect 1 "restore rejects rootfs on another storage" --msg "rootfs 'local-lvm:vm-913-disk-0,size=32G' is not this guest's ceph-vm volume" restore 913 "$A" prox4
+grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL guest not purged after storage failure"; failn=$((failn+1)); }
 [ ! -f "$work/runs/913.record" ] || { echo "FAIL record written despite rootfs storage failure"; failn=$((failn+1)); }
 reset_state; sed -i.bak 's#^mp0: ceph-vm:vm-913-disk-1#mp0: ceph-vm:vm-113-disk-1#' "$SHIM_STATE/restored.config"
 expect 1 "restore rejects mp0 belonging to another guest" --msg "mp0 'ceph-vm:vm-113-disk-1,mp=/srv/app-data,backup=1,size=64G' is not this guest's ceph-vm volume" restore 913 "$A" prox4

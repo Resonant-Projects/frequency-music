@@ -189,8 +189,13 @@ cmd_restore() {
     --onboot 0 --protection 0 --memory 8192 --cores 4 --swap 1024 --tags "$TAG" \
     --start 0
   # The archive's own net0 (production MAC and IP) survives pct restore; strip
-  # it before anything else can start the guest.
-  strip_networking "$ctid"
+  # it before anything else can start the guest. If isolation cannot be
+  # established, purge the guest this run just created rather than leaving a
+  # stopped copy with production credentials and network settings behind.
+  if ! ( strip_networking "$ctid" ); then
+    pct destroy "$ctid" --purge || true
+    die "isolation could not be established after restore; guest $ctid purged"
+  fi
   write_record "$ctid" "$archive" "$node"
   echo "restored ctid=$ctid (stopped, no network) record=$(record_path "$ctid")"
   cat "$(record_path "$ctid")"

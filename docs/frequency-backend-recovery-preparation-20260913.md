@@ -109,8 +109,10 @@ Target: CT 913 on prox4 (about 42 GiB free RAM, 24 cores, mounts `ceph-vm` and `
 ```sh
 set -e   # any failed step stops the sequence
 H=prox4; C=913; A='nas-docker:backup/vzdump-lxc-113-2026_09_07-10_31_51.tar.zst'
-scp scripts/recovery/isolated-restore-guest.sh scripts/recovery/guest-module-identities.py "$H":/root/
 R="bash /root/isolated-restore-guest.sh"
+# On any failure after restore, purge the guest so no copy of production credentials or volumes outlives the run.
+trap 'echo "rehearsal step failed; purging CT $C"; ssh "$H" "$R destroy $C" || echo "destroy refused or failed; CT $C may still exist, inspect before retrying"' ERR
+scp scripts/recovery/isolated-restore-guest.sh scripts/recovery/guest-module-identities.py "$H":/root/
 ssh "$H" "$R preflight $C $A $H"                       # read-only
 # ---- first mutation begins here ----
 ssh "$H" "$R restore $C $A $H"                         # stopped guest, net0 stripped, run record written
@@ -128,7 +130,7 @@ vpx tsx scripts/convex-identity-delta.ts \
 ssh "$H" "$R destroy $C && rm -f /root/isolated-restore-guest.sh /root/guest-module-identities.py"
 ```
 
-Every command above returns non-zero on failure and the block runs under `set -e`, so a failed step stops the sequence. `start-db`, `start-backend` and `read-identities` each re-run the live isolation gate (host config with no `net`, `mp1+`, `unused`, device or `hookscript` keys; prepare marker; guest interfaces; masked units; only the containers expected at that step running), so skipping `verify` or attaching anything afterwards fails closed. `destroy` re-asserts the full config immediately before purge. If `wait-boot` fails, record its failed-unit output and run `destroy`; do not start containers. If `prepare` is interrupted between mount and unmount, run `pct unmount $C` and rerun `prepare`.
+Every command above returns non-zero on failure and the block runs under `set -e` with an `ERR` trap that runs `destroy`, so a failed step stops the sequence and purges the guest. `restore` itself purges a guest it just created if isolation cannot be established, so no stopped copy with production network settings or credentials is left behind by a partial run. `destroy` refuses a guest without a matching run record, in which case the operator inspects before retrying. `start-db`, `start-backend` and `read-identities` each re-run the live isolation gate (host config with no `net`, `mp1+`, `unused`, device or `hookscript` keys; prepare marker; guest interfaces; masked units; only the containers expected at that step running), so skipping `verify` or attaching anything afterwards fails closed. `destroy` re-asserts the full config immediately before purge. If `wait-boot` fails, its failed-unit output is already printed and the trap runs `destroy`; do not start containers. If `prepare` is interrupted between mount and unmount, run `pct unmount $C` and rerun `prepare`.
 
 Interpretation of the identity delta: `identical: true` establishes **root module artifact equality only** between the archive and the 2026-09-12 observation. It does not establish equality of component definitions, function validators, applied schemas, authentication configuration, cron schedules or scheduled work, and it says nothing about data currency: restoring the archive still discards every change after 2026-09-07T14:31:51Z. Any difference means the archive differs in at least the listed module paths. Neither outcome attests provenance, and neither closes the full semantic delta or recovery-point gates, which remain open as listed below.
 
