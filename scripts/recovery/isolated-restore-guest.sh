@@ -109,6 +109,18 @@ assert_isolated_config() {
 
 record_path() { echo "$RUN_DIR/$1.record"; }
 
+# Every path prepare touches must resolve inside the mounted rootfs. An
+# archived absolute or ".." symlink (for example /etc/systemd/system ->
+# /etc/systemd/system) would otherwise redirect writes onto the Proxmox host.
+assert_within_root() {
+  local root=$1 path=$2
+  python3 -c 'import os,sys
+root=os.path.realpath(sys.argv[1]); p=os.path.realpath(sys.argv[2])
+sys.exit(0 if p==root or p.startswith(root+os.sep) else 1)' "$root" "$path" \
+    || die "path escapes the mounted rootfs: ${path#"$root"}"
+  [ ! -L "$path" ] || die "refusing symlinked path inside rootfs: ${path#"$root"}"
+}
+
 write_record() {
   local ctid=$1 archive=$2 node=$3
   mkdir -p "$RUN_DIR"; chmod 700 "$RUN_DIR"
@@ -202,6 +214,11 @@ cmd_prepare() {
   pct mount "$ctid" >/dev/null
   trap 'pct unmount "$ctid" >/dev/null 2>&1 || true' EXIT
   [ -d "$root/etc/systemd/system" ] || die "rootfs did not mount"
+  local guarded
+  for guarded in etc etc/systemd etc/systemd/system usr/lib/systemd/system lib/systemd/system etc/op etc/docker root root/.docker var/lib/docker; do
+    [ -e "$root/$guarded" ] || [ -L "$root/$guarded" ] || continue
+    assert_within_root "$root" "$root/$guarded"
+  done
 
   for unit in "${UNITS_TO_MASK[@]}"; do
     rm -f "$root/etc/systemd/system/$unit"
@@ -228,19 +245,29 @@ cmd_prepare() {
   find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' \) | sed "s#^$root#  #" | sort
 
   for file in "${CREDENTIAL_FILES_TO_REMOVE[@]}"; do
-    rm -f "$root/$file"
+    if [ -e "$root/$file" ] || [ -L "$root/$file" ]; then
+      assert_within_root "$root" "$(dirname "$root/$file")"
+      rm -f "$root/$file"
+    fi
   done
 
   python3 - "$root" <<'PY'
 import glob, json, os, sys
-root = sys.argv[1]
+root = os.path.realpath(sys.argv[1])
 data_root = "/var/lib/docker"
 daemon_json = os.path.join(root, "etc/docker/daemon.json")
 if os.path.exists(daemon_json):
     with open(daemon_json, encoding="utf-8") as handle:
         data_root = json.load(handle).get("data-root", data_root)
+if not isinstance(data_root, str) or not data_root.startswith("/"):
+    print("invalid data-root in archived daemon.json", file=sys.stderr); sys.exit(1)
+containers = os.path.realpath(os.path.join(root, data_root.lstrip("/"), "containers"))
+if not containers.startswith(root + os.sep):
+    print("data-root escapes the mounted rootfs", file=sys.stderr); sys.exit(1)
 changed = 0
-for path in glob.glob(f"{root}{data_root}/containers/*/hostconfig.json"):
+for path in glob.glob(os.path.join(containers, "*", "hostconfig.json")):
+    if not os.path.realpath(path).startswith(root + os.sep):
+        print("container config escapes the mounted rootfs", file=sys.stderr); sys.exit(1)
     with open(path, "r+", encoding="utf-8") as handle:
         config = json.load(handle)
         config["RestartPolicy"] = {"Name": "no", "MaximumRetryCount": 0}

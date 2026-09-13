@@ -180,6 +180,22 @@ reset_state; seed_record; make_rootfs
 printf '#!/bin/sh\nexit 0\n' > "$work/lxc/913/rootfs/etc/rc.local"; chmod +x "$work/lxc/913/rootfs/etc/rc.local"
 expect 0 "prepare removes an executable rc.local" prepare 913
 [ ! -e "$work/lxc/913/rootfs/etc/rc.local" ] || { echo "FAIL rc.local remains"; failn=$((failn+1)); }
+# Host-escape vectors: symlinked systemd directory and data-root pointing outside the rootfs.
+reset_state; seed_record; make_rootfs
+outside="$work/host-etc-systemd"; mkdir -p "$outside"; touch "$outside/host-unit.service"
+rm -rf "$work/lxc/913/rootfs/etc/systemd/system"; ln -s "$outside" "$work/lxc/913/rootfs/etc/systemd/system"
+expect 1 "prepare refuses a symlinked systemd directory" --msg "escapes the mounted rootfs" prepare 913
+[ -f "$outside/host-unit.service" ] && [ ! -e "$outside/app-compose.service" ] || { echo "FAIL prepare touched the host-side directory"; failn=$((failn+1)); }
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/etc/docker" "$work/host-docker/containers/zzz"
+echo '{"RestartPolicy":{"Name":"unless-stopped"}}' > "$work/host-docker/containers/zzz/hostconfig.json"
+echo "{\"data-root\": \"/../../../../$(basename "$work")/host-docker\"}" > "$work/lxc/913/rootfs/etc/docker/daemon.json"
+expect 1 "prepare refuses a data-root that escapes the rootfs" prepare 913
+grep -q 'unless-stopped' "$work/host-docker/containers/zzz/hostconfig.json" || { echo "FAIL prepare rewrote a host-side container config"; failn=$((failn+1)); }
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/etc/docker"; ln -s "$work/host-docker" "$work/lxc/913/rootfs/var/lib/docker-link"
+echo '{"data-root": "/var/lib/docker-link"}' > "$work/lxc/913/rootfs/etc/docker/daemon.json"
+expect 1 "prepare refuses a data-root symlinked outside the rootfs" prepare 913
 
 # --- wait-boot ---
 reset_state; seed_record
