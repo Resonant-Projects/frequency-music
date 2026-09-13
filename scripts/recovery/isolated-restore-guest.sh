@@ -10,9 +10,9 @@
 #   wait-boot  <ctid>                         bounded wait for systemd running|degraded
 #   verify     <ctid>                         post-boot isolation assertions, before
 #                                             any container is started
-#   start-db   <ctid>                         start PostgreSQL, bounded readiness,
+#   start-db   <ctid>                         live isolation gate, start PostgreSQL, bounded readiness,
 #                                             print sizes and counts
-#   start-backend <ctid>                      start Convex, bounded readiness,
+#   start-backend <ctid>                      live isolation gate, start Convex, bounded readiness,
 #                                             print /version
 #   read-identities <ctid> <extractor.py>     bounded localhost identity read; the
 #                                             sanitized file lands in the run dir
@@ -95,7 +95,7 @@ volid_of() { echo "${1%%,*}"; }   # "ceph-vm:vm-913-disk-0,size=32G" -> "ceph-vm
 assert_isolated_config() {
   local ctid=$1 rootfs mp0
   pct config "$ctid" | grep -q '^net' && die "network entries remain on $ctid"
-  pct config "$ctid" | grep -E '^(mp[1-9]|unused[0-9]|dev[0-9]|lxc\.)' && die "unexpected mounts, unused volumes or raw lxc keys on $ctid"
+  pct config "$ctid" | grep -E '^(mp[1-9]|unused[0-9]|dev[0-9]|lxc\.|hookscript)' && die "unexpected mounts, unused volumes, hookscript or raw lxc keys on $ctid"
   [ "$(config_value "$ctid" onboot)" = "0" ] || die "onboot is not 0 on $ctid"
   [ "$(config_value "$ctid" unprivileged)" = "1" ] || die "guest $ctid is not unprivileged"
   [ "$(config_value "$ctid" hostname)" = "convex-hatchet-restore-$ctid" ] || die "hostname mismatch on $ctid"
@@ -272,9 +272,10 @@ cmd_wait_boot() {
   die "guest did not reach running|degraded within $((BOOT_ATTEMPTS * SLEEP)) s (last state '$state')"
 }
 
-cmd_verify() {
-  local ctid=$1
-  require_ctid "$ctid"
+# Live isolation gate: host config, prepare marker, guest interfaces, masked
+# units, and the exact set of containers allowed to be running at this step.
+assert_guest_isolated() {
+  local ctid=$1 allowed_running=$2   # space-separated container names, may be empty
   assert_record_matches "$ctid"
   [ "$(pct status "$ctid")" = "status: running" ] || die "guest not running"
   assert_isolated_config "$ctid"
@@ -292,18 +293,28 @@ cmd_verify() {
     [ "$(pct exec "$ctid" -- systemctl is-enabled "$unit" 2>/dev/null || true)" = "masked" ] \
       || die "$unit not masked"
   done
-  local running
-  running=$(pct exec "$ctid" -- docker ps -q | wc -l | tr -d ' ')
-  [ "$running" -eq 0 ] || die "$running container(s) already running; autostart suppression failed"
+  local running name
+  running=$(pct exec "$ctid" -- docker ps --format '{{.Names}}' | sort | tr '\n' ' ')
+  for name in $running; do
+    case " $allowed_running " in *" $name "*) ;; *) die "container '$name' is running but not allowed at this step";; esac
+  done
+  GUEST_SYSTEMD_STATE=$state
+  GUEST_RUNNING="${running% }"
+}
+
+cmd_verify() {
+  local ctid=$1
+  require_ctid "$ctid"
+  assert_guest_isolated "$ctid" ""
   pct exec "$ctid" -- sh -c 'command -v curl >/dev/null && command -v timeout >/dev/null && command -v python3 >/dev/null' \
     || die "guest lacks curl, timeout or python3"
-  echo "verify ok ctid=$ctid systemd=$state running_containers=0"
+  echo "verify ok ctid=$ctid systemd=$GUEST_SYSTEMD_STATE running_containers=0"
   echo "failed units (evidence):"; pct exec "$ctid" -- systemctl --failed --no-legend || true
 }
 
 cmd_start_db() {
   local ctid=$1
-  require_ctid "$ctid"; assert_record_matches "$ctid"
+  require_ctid "$ctid"; assert_guest_isolated "$ctid" ""
   pct exec "$ctid" -- docker start app-postgres-1 >/dev/null || die "docker start app-postgres-1 failed"
   pct exec "$ctid" -- timeout "$READY_SECONDS" sh -c 'until docker exec app-postgres-1 pg_isready -q; do sleep 2; done' \
     || die "PostgreSQL not ready within $READY_SECONDS s"
@@ -319,7 +330,7 @@ cmd_start_db() {
 
 cmd_start_backend() {
   local ctid=$1
-  require_ctid "$ctid"; assert_record_matches "$ctid"
+  require_ctid "$ctid"; assert_guest_isolated "$ctid" "app-postgres-1"
   pct exec "$ctid" -- docker start app-convex-backend-1 >/dev/null || die "docker start app-convex-backend-1 failed"
   pct exec "$ctid" -- timeout "$READY_SECONDS" sh -c 'until curl -fsS -m 5 http://127.0.0.1:3210/version >/dev/null; do sleep 2; done' \
     || die "Convex backend not ready within $READY_SECONDS s"
@@ -330,7 +341,7 @@ cmd_start_backend() {
 
 cmd_read_identities() {
   local ctid=$1 extractor=$2 out
-  require_ctid "$ctid"; assert_record_matches "$ctid"
+  require_ctid "$ctid"; assert_guest_isolated "$ctid" "app-postgres-1 app-convex-backend-1"
   [ -f "$extractor" ] || die "extractor script not found: $extractor"
   out="$RUN_DIR/$ctid-module-identities.json"
   [ ! -e "$out" ] || die "$out already exists; refusing to overwrite evidence"
@@ -354,8 +365,9 @@ cmd_destroy() {
   require_ctid "$ctid"
   [ -e "$PVE_LXC_DIR/$ctid.conf" ] || die "no local guest $ctid"
   assert_record_matches "$ctid"
-  pct config "$ctid" | grep -q '^net' && die "guest has network; not ours"
-  pct config "$ctid" | grep -q "^tags: .*$TAG" || die "tag mismatch; refusing"
+  # Re-assert the full config immediately before purge so that anything
+  # attached after the record was written (mp1, devices, hookscript) fails closed.
+  assert_isolated_config "$ctid"
   rootfs=$(record_value "$ctid" rootfs); mp0=$(record_value "$ctid" mp0)
   if [ "$(pct status "$ctid")" = "status: running" ]; then pct stop "$ctid"; fi
   pct destroy "$ctid" --purge

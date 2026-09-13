@@ -70,6 +70,10 @@ bounded_mode() {
   [ ! -e "$work/out-$mode.json" ] || { echo "FAIL $mode: output file exists"; exit 1; }
   echo "ok $mode -> deadline_exceeded within ${limit}s, no output file"
 }
+out=$(RESTORE_BACKEND_ORIGIN="http://example.invalid:3210" RESTORE_IDENTITIES_OUT="$work/out3.json" python3 "$script" || true)
+grep -q '"origin_not_loopback"' <<<"$out" || { echo "FAIL non-loopback origin: $out"; exit 1; }
+[ ! -e "$work/out3.json" ] || { echo "FAIL output written for rejected origin"; exit 1; }
+echo "ok non-loopback origin -> origin_not_loopback, no request, no output file"
 bounded_mode drip    # socket blocks inside one read
 bounded_mode stall   # no headers ever
 bounded_mode slow    # bytes keep arriving under the per-socket timeout; only the wall clock can stop it

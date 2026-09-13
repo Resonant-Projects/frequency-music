@@ -26,9 +26,11 @@ import sys
 import threading
 from typing import NoReturn
 import urllib.error
+import urllib.parse
 import urllib.request
 
 ORIGIN = os.environ.get("RESTORE_BACKEND_ORIGIN", "http://127.0.0.1:3210")
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
 KEY_FILE = os.environ.get("RESTORE_ADMIN_KEY_FILE", "/root/.restore-admin-key")
 OUT_FILE = os.environ.get("RESTORE_IDENTITIES_OUT", "/root/restore-module-identities.json")
 DEADLINE_SECONDS = float(os.environ.get("RESTORE_DEADLINE_SECONDS", "30"))
@@ -96,13 +98,29 @@ def exchange(request: urllib.request.Request, result: dict, done: threading.Even
         done.set()
 
 
+def require_loopback_origin(origin: str) -> None:
+    """The admin key is a live production credential; it may only travel to loopback."""
+    parts = urllib.parse.urlsplit(origin)
+    if (
+        parts.scheme != "http"
+        or parts.hostname not in LOOPBACK_HOSTS
+        or parts.username
+        or parts.password
+        or parts.path not in ("", "/")
+        or parts.query
+        or parts.fragment
+    ):
+        fail("origin_not_loopback")
+
+
 def main() -> None:
+    require_loopback_origin(ORIGIN)
     if os.path.exists(OUT_FILE):
         fail("output_exists")
     key = read_key()
     body = json.dumps({"version": "1.34.1", "adminKey": key}).encode("utf-8")
     request = urllib.request.Request(
-        ORIGIN + "/api/get_config_hashes",
+        ORIGIN.rstrip("/") + "/api/get_config_hashes",
         data=body,
         method="POST",
         headers={
@@ -159,8 +177,15 @@ def main() -> None:
         fd = os.open(OUT_FILE, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError:
         fail("output_exists")
-    with os.fdopen(fd, "wb") as handle:
-        handle.write(payload)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(payload)
+    except OSError:
+        try:
+            os.unlink(OUT_FILE)
+        except OSError:
+            pass
+        fail("output_write_failed")
     print(
         json.dumps(
             {

@@ -129,9 +129,11 @@ expect 1 "restore rejects mp0 belonging to another guest" --msg "mp0 'ceph-vm:vm
 reset_state; sed -i.bak 's#mp=/srv/app-data#mp=/mnt/other#' "$SHIM_STATE/restored.config"
 expect 1 "restore rejects mp0 at another mount point" --msg "mp0 mount point is not /srv/app-data" restore 913 "$A" prox4
 reset_state; echo 'unused0: ceph-vm:vm-913-disk-5' >> "$SHIM_STATE/restored.config"
-expect 1 "restore rejects an unused volume entry" --msg "unexpected mounts, unused volumes or raw lxc keys" restore 913 "$A" prox4
+expect 1 "restore rejects an unused volume entry" --msg "unexpected mounts, unused volumes, hookscript or raw lxc keys" restore 913 "$A" prox4
 reset_state; sed -i.bak 's#^unprivileged: 1#unprivileged: 0#' "$SHIM_STATE/restored.config"
 expect 1 "restore rejects a privileged guest" --msg "is not unprivileged" restore 913 "$A" prox4
+reset_state; echo 'hookscript: local:snippets/evil.sh' >> "$SHIM_STATE/restored.config"
+expect 1 "restore rejects an archived hookscript" --msg "hookscript" restore 913 "$A" prox4
 
 # --- isolation config assertions (via prepare, which needs a record) ---
 make_rootfs() {
@@ -217,7 +219,7 @@ case "$1" in
 esac
 exit 0
 EOF
-expect 1 "verify fails when a container is already running" --msg "already running" verify 913
+expect 1 "verify fails when a container is already running" --msg "is running but not allowed at this step" verify 913
 cat > "$SHIM_STATE/exec.sh" <<'EOF'
 case "$1" in
   test) exit 0 ;;
@@ -229,24 +231,57 @@ exit 0
 EOF
 expect 1 "verify fails when a unit is not masked" --msg "cron.service not masked" verify 913
 
-# --- readiness commands return non-zero ---
-reset_state; seed_record
-printf '[ "$1" = timeout ] && exit 124; exit 0\n' > "$SHIM_STATE/exec.sh"
-expect 1 "start-db fails when PostgreSQL never becomes ready" start-db 913
-expect 1 "start-backend fails when Convex never becomes ready" start-backend 913
-printf '[ "$1" = docker ] && [ "$2" = start ] && exit 1; exit 0\n' > "$SHIM_STATE/exec.sh"
-expect 1 "start-db fails when docker start fails" start-db 913
+# --- readiness commands return non-zero, behind the live isolation gate ---
+# exec shim that satisfies the isolation gate; RUNNING lists container names,
+# TIMEOUT_RC / START_RC / DB_QUERY_RC inject failures.
+isolated_exec_shim() {
+  cat > "$SHIM_STATE/exec.sh" <<'EOS'
+case "$1" in
+  test) exit 0 ;;
+  sh) exit 0 ;;
+  systemctl) case "$2" in is-system-running) echo degraded; exit 1 ;; is-enabled) echo masked; exit 0 ;; --failed) exit 0 ;; esac ;;
+  docker) case "$2" in
+      ps) cat "$SHIM_STATE/running" 2>/dev/null; exit 0 ;;
+      start) exit "${START_RC:-0}" ;;
+      exec) exit "${DB_QUERY_RC:-0}" ;;
+    esac ;;
+  timeout) exit "${TIMEOUT_RC:-0}" ;;
+  curl) echo unknown; exit 0 ;;
+  rm) exit 0 ;;
+esac
+exit 0
+EOS
+}
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
+TIMEOUT_RC=124 expect 1 "start-db fails when PostgreSQL never becomes ready" --msg "PostgreSQL not ready" start-db 913
+START_RC=1 expect 1 "start-db fails when docker start fails" --msg "docker start app-postgres-1 failed" start-db 913
+expect 0 "start-db passes the isolation gate and readiness" start-db 913
+printf 'app-hatchet-engine-1\n' > "$SHIM_STATE/running"
+expect 1 "start-db refuses when an unexpected container is already running" --msg "not allowed at this step" start-db 913
+printf 'app-postgres-1\n' > "$SHIM_STATE/running"
+TIMEOUT_RC=124 expect 1 "start-backend fails when Convex never becomes ready" --msg "Convex backend not ready" start-backend 913
+expect 0 "start-backend passes with only PostgreSQL running" start-backend 913
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
+echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
+expect 1 "start-db refuses when networking was re-attached after verify" --msg "network entries remain" start-db 913
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
+isolated_exec_shim; sed -i.bak 's#is-enabled) echo masked; exit 0 ;;#is-enabled) echo enabled; exit 0 ;;#' "$SHIM_STATE/exec.sh"
+expect 1 "start-db refuses when prepare's masks are not in effect" --msg "not masked" start-db 913
 
 # --- read-identities ---
-reset_state; seed_record
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
+printf 'app-postgres-1\napp-convex-backend-1\n' > "$SHIM_STATE/running"
 echo '{"moduleHashes":[{"path":"a.js","environment":"isolate","hash":"'"$(printf 'a%.0s' $(seq 1 64))"'"}]}' > "$SHIM_STATE/guest-identities.json"
-printf 'exit 0\n' > "$SHIM_STATE/exec.sh"
 expect 0 "read-identities pulls and shape-checks the sanitized file" read-identities 913 "$here/../guest-module-identities.py"
 [ -f "$work/runs/913-module-identities.json" ] || { echo "FAIL identities file missing"; failn=$((failn+1)); }
-expect 1 "read-identities refuses to overwrite existing evidence" read-identities 913 "$here/../guest-module-identities.py"
-reset_state; seed_record
-printf '[ "$1" = sh ] && exit 1; exit 0\n' > "$SHIM_STATE/exec.sh"
-expect 1 "read-identities fails when the guest read fails" read-identities 913 "$here/../guest-module-identities.py"
+expect 1 "read-identities refuses to overwrite existing evidence" --msg "refusing to overwrite evidence" read-identities 913 "$here/../guest-module-identities.py"
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
+printf 'app-postgres-1\napp-convex-backend-1\n' > "$SHIM_STATE/running"
+sed -i.bak 's#^  sh) exit 0 ;;#  sh) case "$3" in *generate_admin_key*) exit 1 ;; *) exit 0 ;; esac ;;#' "$SHIM_STATE/exec.sh"
+expect 1 "read-identities fails when the guest read fails" --msg "identity read failed inside guest" read-identities 913 "$here/../guest-module-identities.py"
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
+printf 'app-postgres-1\napp-convex-backend-1\napp-hatchet-engine-1\n' > "$SHIM_STATE/running"
+expect 1 "read-identities refuses when an unexpected container is running" --msg "not allowed at this step" read-identities 913 "$here/../guest-module-identities.py"
 
 # --- destroy ---
 reset_state; touch "$work/pve/913.conf"
@@ -255,6 +290,9 @@ reset_state; seed_record
 sed -i.bak 's#^mp0=ceph-vm:vm-913-disk-1#mp0=ceph-vm:vm-913-disk-9#' "$work/runs/913.record"
 expect 1 "destroy refuses when record volumes differ from live config" --msg "mp0 volume differs from run record" destroy 913
 [ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy ran despite record mismatch"; failn=$((failn+1)); }
+reset_state; seed_record; echo 'mp1: ceph-vm:vm-113-disk-1,mp=/mnt/prod' >> "$SHIM_STATE/config"
+expect 1 "destroy refuses when a volume was attached after the record" --msg "unexpected mounts" destroy 913
+[ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy ran with an extra attachment"; failn=$((failn+1)); }
 reset_state; seed_record
 printf 'ceph-vm:vm-913-disk-1 raw rootdir 1 913\n' > "$SHIM_STATE/leave_volume"
 expect 1 "destroy fails when a run-owned volume remains" --msg "run-owned volumes remain" destroy 913

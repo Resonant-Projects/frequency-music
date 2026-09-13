@@ -11,8 +11,9 @@ try {
   const [left, right, ...extra] = process.argv.slice(2);
   if (!left || !right || extra.length) throw new Error("Two files required");
   for (const path of [left, right]) {
-    if (statSync(path).size > 4 * 1024 * 1024)
-      throw new Error("Input exceeds 4 MiB");
+    const stat = statSync(path);
+    if (!stat.isFile() || stat.size > 4 * 1024 * 1024)
+      throw new Error("Input must be a regular file no larger than 4 MiB");
   }
   const leftBytes = readFileSync(left);
   const rightBytes = readFileSync(right);
