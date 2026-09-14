@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, test } from "vite-plus/test";
 
+// Deliberately omit application credentials required by the ambient runtime env type.
+const testEnvironment = { APP_ENV: "test" } as unknown as NodeJS.ProcessEnv;
 const supervisor = pathToFileURL(
   resolve("scripts/frequency-semantic-capture.mjs"),
 ).href;
@@ -14,7 +16,7 @@ console.log(JSON.stringify(result));`;
   const result = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", code],
-    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 5000 },
+    { env: testEnvironment, encoding: "utf8", timeout: 5000 },
   );
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(0);
@@ -71,7 +73,7 @@ test("CLI refuses absent credentials before launching inspector", () => {
   const result = spawnSync(
     process.execPath,
     ["scripts/frequency-semantic-capture.mjs"],
-    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 5000 },
+    { env: testEnvironment, encoding: "utf8", timeout: 5000 },
   );
   expect(result.status).toBe(1);
   expect(result.stdout).toBe("");
@@ -88,7 +90,7 @@ console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval((
   const result = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", code],
-    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 4000 },
+    { env: testEnvironment, encoding: "utf8", timeout: 4000 },
   );
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(0);
@@ -105,7 +107,7 @@ console.log(JSON.stringify({signals,result}));`;
   const result = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", code],
-    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 4000 },
+    { env: testEnvironment, encoding: "utf8", timeout: 4000 },
   );
   expect(result.status).toBe(0);
   expect(JSON.parse(result.stdout).signals).toBe(0);
