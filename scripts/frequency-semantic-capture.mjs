@@ -39,6 +39,7 @@ export function supervise(command, args, options = {}) {
       clearTimeout(timer);
       process.off("SIGTERM", interrupted);
       process.off("SIGINT", interrupted);
+      process.off("SIGHUP", interrupted);
       stop();
       child?.stdout?.destroy();
       child?.stderr?.destroy();
@@ -48,6 +49,7 @@ export function supervise(command, args, options = {}) {
     const interrupted = () => finish({ error: failure("capture_interrupted") });
     process.on("SIGTERM", interrupted);
     process.on("SIGINT", interrupted);
+    process.on("SIGHUP", interrupted);
     const timer = setTimeout(
       () => finish({ error: failure("capture_deadline") }),
       deadlineMs,
@@ -89,7 +91,18 @@ export function supervise(command, args, options = {}) {
         const result = JSON.parse(text);
         if (
           result?.format !== "frequency-deployment-inspection-v1" ||
-          result.deploymentAuthorized !== false
+          result.deploymentAuthorized !== false ||
+          !Number.isFinite(Date.parse(result.startedAt)) ||
+          !Number.isFinite(Date.parse(result.finishedAt)) ||
+          result.consistency !== "separate-query-snapshots-not-atomic" ||
+          result.functionValidatorsIncluded !== false ||
+          result.cronSpecsIncluded !== false ||
+          result.cronSchedulesAndTargetsIncluded !== true ||
+          result.componentArgumentsIncluded !== false ||
+          result.schemaStructuralDeltaIncluded !== false ||
+          !Array.isArray(result.components) ||
+          !Array.isArray(result.modules) ||
+          !Array.isArray(result.schemas)
         )
           throw new Error("Invalid inspection envelope");
         finish(

@@ -8,6 +8,21 @@ const testEnvironment = { APP_ENV: "test" } as unknown as NodeJS.ProcessEnv;
 const supervisor = pathToFileURL(
   resolve("scripts/frequency-semantic-capture.mjs"),
 ).href;
+const value = {
+  format: "frequency-deployment-inspection-v1",
+  startedAt: "2026-09-14T00:00:00.000Z",
+  finishedAt: "2026-09-14T00:00:01.000Z",
+  consistency: "separate-query-snapshots-not-atomic",
+  deploymentAuthorized: false,
+  functionValidatorsIncluded: false,
+  cronSpecsIncluded: false,
+  cronSchedulesAndTargetsIncluded: true,
+  componentArgumentsIncluded: false,
+  schemaStructuralDeltaIncluded: false,
+  components: [],
+  modules: [],
+  schemas: [],
+};
 function run(childCode: string, deadlineMs = 300, maxBytes = 4096) {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
 const result = await supervise(process.execPath, ['-e', ${JSON.stringify(childCode)}], {deadlineMs:${deadlineMs},maxBytes:${maxBytes},env:{APP_ENV:"test"}});
@@ -60,13 +75,21 @@ test("rejects child failure and malformed success, releasing only valid complete
   expect(run("console.log('PRIVATE')")).toEqual({
     error: { complete: false, code: "capture_invalid_output" },
   });
-  const value = {
-    format: "frequency-deployment-inspection-v1",
-    deploymentAuthorized: false,
-  };
   expect(run(`console.log(${JSON.stringify(JSON.stringify(value))})`)).toEqual({
     output: `${JSON.stringify(value)}\n`,
   });
+});
+
+test("rejects envelopes missing any required inventory or coverage field", () => {
+  for (const field of Object.keys(value)) {
+    const incomplete = { ...value };
+    delete incomplete[field as keyof typeof incomplete];
+    expect(
+      run(`console.log(${JSON.stringify(JSON.stringify(incomplete))})`),
+    ).toEqual({
+      error: { complete: false, code: "capture_invalid_output" },
+    });
+  }
 });
 
 test("CLI refuses absent credentials before launching inspector", () => {
@@ -83,9 +106,13 @@ test("CLI refuses absent credentials before launching inspector", () => {
   });
 });
 
-test("interruption terminates the capture subprocess without releasing partial evidence", () => {
+test.each([
+  "SIGTERM",
+  "SIGINT",
+  "SIGHUP",
+])("%s terminates the capture subprocess without releasing partial evidence", (signal) => {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
-setTimeout(()=>process.kill(process.pid,'SIGTERM'),200);
+setTimeout(()=>process.kill(process.pid,${JSON.stringify(signal)}),200);
 console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval(()=>{},1000)'],{deadlineMs:2000,env:{APP_ENV:"test"}})));`;
   const result = spawnSync(
     process.execPath,
@@ -102,7 +129,7 @@ console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval((
 test("successful exit does not signal a reaped child PID or process group", () => {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
 let signals=0;process.kill=()=>{signals++;return true};
-const result=await supervise(process.execPath,['-e','console.log(JSON.stringify({format:"frequency-deployment-inspection-v1",deploymentAuthorized:false}))'],{deadlineMs:2000,env:{APP_ENV:"test"}});
+const result=await supervise(process.execPath,['-e',${JSON.stringify(`console.log(${JSON.stringify(JSON.stringify(value))})`)}],{deadlineMs:2000,env:{APP_ENV:"test"}});
 console.log(JSON.stringify({signals,result}));`;
   const result = spawnSync(
     process.execPath,
