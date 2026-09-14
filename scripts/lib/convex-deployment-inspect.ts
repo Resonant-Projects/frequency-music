@@ -10,7 +10,8 @@ const componentsSchema = z
       name: label.nullable().optional(),
       path: label,
       state: label,
-      httpPrefix: label.nullable(),
+      // Older backends omit this field; absence is not evidence of no mount.
+      httpPrefix: label.nullable().optional(),
       args: z.record(z.string(), z.unknown()),
     }),
   )
