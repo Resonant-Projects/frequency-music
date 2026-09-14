@@ -72,6 +72,7 @@ cat > "$work/bin/ssh" <<'EOF'
 remote=${*: -1}
 step=$(sed -E 's/.*isolated-restore-guest\.sh ([a-z-]+).*/\1/' <<<"$remote")
 echo "ssh $step" >> "$LOG"
+[ "$step" = read-identities ] && echo 'identities file: /root/isolated-restore-runs/913-20260913T000000Z-module-identities.json sha256=fake'
 [ -n "${FAIL_STEP:-}" ] && [ "$step" = "$FAIL_STEP" ] && exit 3
 [ -n "${HANG_STEP:-}" ] && [ "$step" = "$HANG_STEP" ] && sleep 3600
 exit 0
@@ -87,7 +88,8 @@ run_block() {  # CEILING rewrites every step ceiling so a stall case finishes qu
   ( cd "$work" && PATH="$work/bin:$PATH" LOG="$work/log" bash "$src" ) > "$work/out" 2>&1
 }
 
-# A: every step succeeds.
+# A: every step succeeds even when older evidence exists.
+: > "$work/docs/evidence/913-20260912T000000Z-module-identities.json"
 : > "$work/log"; rc=0; run_block || rc=$?
 [ "$rc" -eq 0 ] && ok "block completes when every connection succeeds" || { bad "clean run exited $rc"; sed 's/^/     /' "$work/out"; }
 grep -q '^ssh preflight$' "$work/log" && grep -q '^ssh restore$' "$work/log" \
@@ -95,6 +97,9 @@ grep -q '^ssh preflight$' "$work/log" && grep -q '^ssh restore$' "$work/log" \
   && ok "clean run reaches destroy" || bad "clean run did not reach destroy"
 grep -q 'rehearsal step failed' "$work/out" && bad "clean run ran the failure trap" || ok "clean run did not run the failure trap"
 grep -q '^vpx tsx scripts/convex-identity-delta.ts' "$work/log" && ok "clean run compares the pulled identities offline" || bad "identity delta not invoked"
+
+grep -q 'prox4:/root/isolated-restore-runs/913-20260913T000000Z-module-identities.json docs/evidence/' "$work/log" && ok "pull selects the exact current run" || bad "pull did not select the current run"
+grep -q 'docs/evidence/913-20260912T000000Z-module-identities.json' "$work/log" && bad "comparison included older evidence" || ok "comparison excludes older evidence"
 
 # B: the evidence pull produces nothing.
 rm -f "$work/docs/evidence"/*module-identities.json
