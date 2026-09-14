@@ -33,11 +33,13 @@ run_mode() {
   kill "$pid"; wait "$pid" 2>/dev/null || true; pid=""
   grep -q "\"classification\": \"$expect\"" <<<"$out" || { echo "FAIL $mode: $out"; exit 1; }
   grep -q -i "leak" <<<"$out" && { echo "FAIL $mode leaked into stdout"; exit 1; }
+  if [ "$expect" != success_envelope ] && [ -e "$work/out.json" ]; then echo "FAIL $mode: output file exists"; exit 1; fi
   echo "ok $mode -> $expect"
 }
 
 run_mode ok success_envelope
-[ "$(stat -f '%Lp' "$work/out.json" 2>/dev/null || stat -c '%a' "$work/out.json")" = "600" ] || { echo "FAIL output mode"; exit 1; }
+# python, not stat: GNU stat -f reports the filesystem, BSD stat lacks -c.
+[ "$(python3 -c 'import os,stat,sys; print(oct(stat.S_IMODE(os.stat(sys.argv[1]).st_mode))[2:])' "$work/out.json")" = "600" ] || { echo "FAIL output mode"; exit 1; }
 grep -q LEAK "$work/out.json" && { echo "FAIL config leaked into output file"; exit 1; }
 python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert [m["path"] for m in d["moduleHashes"]]==["a.js","b.js"]' "$work/out.json"
 echo "ok output file sanitized, sorted, 0600"
@@ -50,7 +52,9 @@ run_mode bad malformed_response
 run_mode redirect http_error
 chmod 644 "$work/key"
 out=$(RESTORE_IDENTITIES_OUT="$work/out2.json" python3 "$script" || true)
-grep -q '"key_file_permissions"' <<<"$out" || { echo "FAIL perms: $out"; exit 1; }; echo "ok loose key file -> key_file_permissions"
+grep -q '"key_file_permissions"' <<<"$out" || { echo "FAIL perms: $out"; exit 1; }
+[ ! -e "$work/out2.json" ] || { echo "FAIL output written after key permission failure"; exit 1; }
+echo "ok loose key file -> key_file_permissions, no output file"
 chmod 600 "$work/key"
 # Hard wall-clock deadline: the fake never completes the exchange. The process
 # must finish within deadline + 3 s, report deadline_exceeded, and leave no file.

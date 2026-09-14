@@ -125,6 +125,10 @@ reset_state; touch "$SHIM_STATE/refuse_net_delete"
 expect 1 "restore fails closed when net0 cannot be removed" --msg "guest 913 purged" restore 913 "$A" prox4
 [ ! -f "$work/runs/913.record" ] || { echo "FAIL record written despite isolation failure"; failn=$((failn+1)); }
 grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL guest not purged after isolation failure"; failn=$((failn+1)); }
+reset_state; : > "$work/runs-blocked"   # a regular file where the run dir must be created
+ISOLATED_RESTORE_RUN_DIR="$work/runs-blocked" expect 1 "restore purges the guest when the run record cannot be written" --msg "guest 913 purged" restore 913 "$A" prox4
+[ ! -e "$work/runs-blocked/913.record" ] && [ ! -f "$work/runs/913.record" ] || { echo "FAIL partial record left behind"; failn=$((failn+1)); }
+grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL guest not purged after record failure"; failn=$((failn+1)); }
 # Ownership and storage assertions run before the record exists, on the restored config.
 reset_state; sed -i.bak 's#^rootfs: ceph-vm:vm-913-disk-0#rootfs: local-lvm:vm-913-disk-0#' "$SHIM_STATE/restored.config"
 expect 1 "restore rejects rootfs on another storage" --msg "rootfs 'local-lvm:vm-913-disk-0,size=32G' is not this guest's ceph-vm volume" restore 913 "$A" prox4
@@ -187,6 +191,14 @@ reset_state; seed_record; make_rootfs
 printf '#!/bin/sh\nexit 0\n' > "$work/lxc/913/rootfs/etc/rc.local"; chmod +x "$work/lxc/913/rootfs/etc/rc.local"
 expect 0 "prepare removes an executable rc.local" prepare 913
 [ ! -e "$work/lxc/913/rootfs/etc/rc.local" ] || { echo "FAIL rc.local remains"; failn=$((failn+1)); }
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/etc/rc3.d"; ln -s ../init.d/legacy-producer "$work/lxc/913/rootfs/etc/rc3.d/S99legacy-producer"
+expect 1 "prepare rejects an enabled SysV runlevel link" --msg "outside the allow-list" prepare 913
+grep -q 'unexpected enabled unit: /etc/rc3.d/S99legacy-producer' "$work/last.out" || { echo "FAIL SysV link not named"; failn=$((failn+1)); }
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/etc/rc3.d"; ln -s ../init.d/docker "$work/lxc/913/rootfs/etc/rc3.d/S20docker"
+touch "$work/lxc/913/rootfs/etc/systemd/system/docker.service"
+expect 0 "prepare accepts a SysV link shadowed by a native unit" prepare 913
 # Host-escape vectors: symlinked systemd directory and data-root pointing outside the rootfs.
 reset_state; seed_record; make_rootfs
 outside="$work/host-etc-systemd"; mkdir -p "$outside"; touch "$outside/host-unit.service"
@@ -203,6 +215,25 @@ reset_state; seed_record; make_rootfs
 mkdir -p "$work/lxc/913/rootfs/etc/docker"; ln -s "$work/host-docker" "$work/lxc/913/rootfs/var/lib/docker-link"
 echo '{"data-root": "/var/lib/docker-link"}' > "$work/lxc/913/rootfs/etc/docker/daemon.json"
 expect 1 "prepare refuses a data-root symlinked outside the rootfs" prepare 913
+
+# --- start: gated on the current stopped config ---
+reset_state; seed_record
+printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo running; exit 0; }; exit 0\n' > "$SHIM_STATE/exec.sh"
+expect 0 "start re-asserts the stopped config, starts and waits for boot" start 913
+grep -q '^pct start 913$' "$SHIM_STATE/calls.log" || { echo "FAIL start did not call pct start"; failn=$((failn+1)); }
+reset_state; seed_record; echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
+expect 1 "start refuses when a network entry was attached after prepare" --msg "network entries remain" start 913
+grep -q '^pct start' "$SHIM_STATE/calls.log" && { echo "FAIL start booted a guest with networking"; failn=$((failn+1)); }
+reset_state; seed_record; echo 'hookscript: local:snippets/evil.sh' >> "$SHIM_STATE/config"
+expect 1 "start refuses when a hookscript was attached after prepare" --msg "hookscript" start 913
+grep -q '^pct start' "$SHIM_STATE/calls.log" && { echo "FAIL start booted a guest with a hookscript"; failn=$((failn+1)); }
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
+expect 1 "start refuses a guest that is not stopped" --msg "is not stopped" start 913
+reset_state
+expect 1 "start refuses without a run record" --msg "no run record" start 913
+reset_state; seed_record
+printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo starting; exit 1; }; exit 0\n' > "$SHIM_STATE/exec.sh"
+expect 1 "start exits non-zero when systemd never settles after pct start" --msg "did not reach running|degraded" start 913
 
 # --- wait-boot ---
 reset_state; seed_record
@@ -279,12 +310,17 @@ EOS
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
 TIMEOUT_RC=124 expect 1 "start-db fails when PostgreSQL never becomes ready" --msg "PostgreSQL not ready" start-db 913
 START_RC=1 expect 1 "start-db fails when docker start fails" --msg "docker start app-postgres-1 failed" start-db 913
+: > "$SHIM_STATE/calls.log"
 expect 0 "start-db passes the isolation gate and readiness" start-db 913
+[ "$(grep -c '^pct exec' "$SHIM_STATE/calls.log")" -eq "$(grep -c '^timeout' "$SHIM_STATE/calls.log")" ] || { echo "FAIL start-db has a guest call without a host-side deadline"; failn=$((failn+1)); }
+grep -q '^timeout 22$' "$SHIM_STATE/calls.log" || { echo "FAIL start-db readiness not wrapped in READY+PROBE host deadline"; failn=$((failn+1)); }
 printf 'app-hatchet-engine-1\n' > "$SHIM_STATE/running"
 expect 1 "start-db refuses when an unexpected container is already running" --msg "not allowed at this step" start-db 913
 printf 'app-postgres-1\n' > "$SHIM_STATE/running"
 TIMEOUT_RC=124 expect 1 "start-backend fails when Convex never becomes ready" --msg "Convex backend not ready" start-backend 913
+: > "$SHIM_STATE/calls.log"
 expect 0 "start-backend passes with only PostgreSQL running" start-backend 913
+[ "$(grep -c '^pct exec' "$SHIM_STATE/calls.log")" -eq "$(grep -c '^timeout' "$SHIM_STATE/calls.log")" ] || { echo "FAIL start-backend has a guest call without a host-side deadline"; failn=$((failn+1)); }
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
 echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
 expect 1 "start-db refuses when networking was re-attached after verify" --msg "network entries remain" start-db 913
@@ -296,7 +332,9 @@ expect 1 "start-db refuses when prepare's masks are not in effect" --msg "not ma
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"; isolated_exec_shim
 printf 'app-postgres-1\napp-convex-backend-1\n' > "$SHIM_STATE/running"
 echo '{"moduleHashes":[{"path":"a.js","environment":"isolate","hash":"'"$(printf 'a%.0s' $(seq 1 64))"'"}]}' > "$SHIM_STATE/guest-identities.json"
+: > "$SHIM_STATE/calls.log"
 expect 0 "read-identities pulls and shape-checks the sanitized file" read-identities 913 "$here/../guest-module-identities.py"
+[ "$(grep -cE '^pct (exec|push|pull)' "$SHIM_STATE/calls.log")" -eq "$(grep -c '^timeout' "$SHIM_STATE/calls.log")" ] || { echo "FAIL read-identities has a guest call without a host-side deadline"; failn=$((failn+1)); }
 ls "$work/runs"/913-*-module-identities.json >/dev/null 2>&1 || { echo "FAIL per-run identities file missing"; failn=$((failn+1)); }
 grep -q 'trap "rm -f /root/.restore-admin-key" EXIT HUP INT TERM' "$SHIM_STATE/calls.log" || { echo "FAIL guest-side key trap not installed"; failn=$((failn+1)); }
 expect 1 "read-identities refuses to overwrite existing evidence" --msg "refusing to overwrite evidence" read-identities 913 "$here/../guest-module-identities.py"
@@ -322,12 +360,26 @@ expect 1 "destroy refuses when record volumes differ from live config" --msg "mp
 reset_state; seed_record; echo 'mp1: ceph-vm:vm-113-disk-1,mp=/mnt/prod' >> "$SHIM_STATE/config"
 expect 1 "destroy refuses when a volume was attached after the record" --msg "unexpected mounts" destroy 913
 [ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy ran with an extra attachment"; failn=$((failn+1)); }
+# A running guest that fails the config gate is stopped first, then left unpurged.
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
+echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
+printf '#!/usr/bin/env bash\necho "pct $*" >> "$SHIM_STATE/calls.log"\n[ "$1" = stop ] && echo "status: stopped" > "$SHIM_STATE/status"\nexec bash "$SHIM_STATE/../bin/pct.real" "$@"\n' > "$work/bin/pct.stopper"
+cp "$work/bin/pct" "$work/bin/pct.real"; cp "$work/bin/pct.stopper" "$work/bin/pct"; chmod +x "$work/bin/pct"
+expect 1 "destroy stops a running guest before refusing an unsafe config" --msg "network entries remain" destroy 913
+grep -q '^pct stop 913' "$SHIM_STATE/calls.log" || { echo "FAIL destroy did not stop the unsafe running guest"; failn=$((failn+1)); }
+[ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy purged a guest with an unsafe config"; failn=$((failn+1)); }
+cp "$work/bin/pct.real" "$work/bin/pct"
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
+expect 1 "destroy fails when the guest does not stop" --msg "did not stop" destroy 913
+[ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy purged a guest that never stopped"; failn=$((failn+1)); }
 reset_state; seed_record
 printf 'ceph-vm:vm-913-disk-1 raw rootdir 1 913\n' > "$SHIM_STATE/leave_volume"
 expect 1 "destroy fails when a run-owned volume remains" --msg "run-owned volumes remain" destroy 913
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
 printf 'ceph-vm:vm-913-disk-0 raw rootdir 1 913\nceph-vm:vm-913-disk-1 raw rootdir 1 913\nceph-vm:vm-113-disk-0 raw rootdir 1 113\n' > "$SHIM_STATE/volumes"
-expect 0 "destroy succeeds for the recorded guest and archives the record" destroy 913
+cp "$work/bin/pct.stopper" "$work/bin/pct"; chmod +x "$work/bin/pct"
+expect 0 "destroy stops, purges the recorded guest and archives the record" destroy 913
+cp "$work/bin/pct.real" "$work/bin/pct"
 grep -q 'stop 913' "$SHIM_STATE/calls.log" && grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL destroy sequence"; failn=$((failn+1)); }
 [ ! -f "$work/runs/913.record" ] && ls "$work/runs"/913.record.destroyed-* >/dev/null 2>&1 || { echo "FAIL record not archived"; failn=$((failn+1)); }
 expect 1 "destroy refuses a second time (record archived, guest gone)" destroy 913

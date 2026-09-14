@@ -7,7 +7,9 @@
 #   restore    <ctid> <archive-volid> <node>  preflight again, pct restore (stopped),
 #                                             strip networking, write the run record
 #   prepare    <ctid>                         offline pre-first-boot suppression
-#   wait-boot  <ctid>                         bounded wait for systemd running|degraded
+#   start      <ctid>                         re-assert the stopped config, pct start,
+#                                             bounded wait for systemd running|degraded
+#   wait-boot  <ctid>                         bounded wait only (guest already started)
 #   verify     <ctid>                         post-boot isolation assertions, before
 #                                             any container is started
 #   start-db   <ctid>                         live isolation gate, start PostgreSQL, bounded readiness,
@@ -16,13 +18,14 @@
 #                                             print /version
 #   read-identities <ctid> <extractor.py>     bounded localhost identity read; the
 #                                             sanitized file lands in the run dir
-#   destroy    <ctid>                         destroy only the guest and the exact
-#                                             volumes named in this run's record
+#   destroy    <ctid>                         stop the guest, then destroy only the guest
+#                                             and the exact volumes named in this run's record
 #
 # Only CTIDs 911-913 are accepted (documented disposable range). The guest never
 # keeps a network interface. On the offline rootfs, every enabled unit link is
 # enumerated (wants and requires links under /etc, /usr/lib and /lib systemd
-# directories) and must be on an explicit allow-list; compose reconciliation,
+# directories, plus SysV runlevel links that systemd-sysv-generator would turn
+# into boot dependencies) and must be on an explicit allow-list; compose reconciliation,
 # cron, apt automation, postfix and all lab-* units are masked; every Docker
 # container restart policy is rewritten to "no"; the 1Password service-account
 # env and registry auth are removed. Docker stays enabled so the operator can
@@ -89,8 +92,13 @@ ctid_absent_clusterwide() {
 
 config_value() { pct config "$1" | awk -v k="$2" -F': ' '$1==k{print $2}'; }
 
-# Every guest probe gets a host-side deadline so a hung guest cannot stall a loop.
+# Every guest interaction gets a host-side deadline so a hung guest cannot stall
+# the helper or keep the caller's cleanup trap from running. Readiness loops
+# already carry a guest-side timeout; the host-side one is slightly longer so
+# the guest-side exit status is the one reported when it fires.
 guest_exec() { timeout "$PROBE_SECONDS" pct exec "$@"; }
+guest_exec_ready() { timeout "$((READY_SECONDS + PROBE_SECONDS))" pct exec "$@"; }
+guest_pct() { timeout "$PROBE_SECONDS" pct "$@"; }   # push, pull, start
 
 volid_of() { echo "${1%%,*}"; }   # "ceph-vm:vm-913-disk-0,size=32G" -> "ceph-vm:vm-913-disk-0"
 
@@ -196,11 +204,11 @@ cmd_restore() {
   # it before anything else can start the guest. If isolation cannot be
   # established, purge the guest this run just created rather than leaving a
   # stopped copy with production credentials and network settings behind.
-  if ! ( strip_networking "$ctid" ); then
-    pct destroy "$ctid" --purge || true
-    die "isolation could not be established after restore; guest $ctid purged"
+  if ! ( strip_networking "$ctid" && write_record "$ctid" "$archive" "$node" ); then
+    rm -f "$(record_path "$ctid")" 2>/dev/null || true   # a partial record must not block the purge
+    pct destroy "$ctid" --purge || die "isolation or run record failed after restore AND purge failed; guest $ctid still exists, inspect before retrying"
+    die "isolation or run record could not be established after restore; guest $ctid purged"
   fi
-  write_record "$ctid" "$archive" "$node"
   echo "restored ctid=$ctid (stopped, no network) record=$(record_path "$ctid")"
   cat "$(record_path "$ctid")"
 }
@@ -246,6 +254,22 @@ cmd_prepare() {
     unit=${link##*/}
     allowed_enabled "$unit" || unexpected+=("${link#"$root"}")
   done < <(find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' \) | sort)
+  # SysV runlevel links become boot dependencies through systemd-sysv-generator
+  # unless a native unit of the same name shadows the script. Anything that is
+  # not shadowed and not on the allow-list is an unexpected enabled unit.
+  local sysv_dir name shadowed udir
+  for sysv_dir in etc/rcS.d etc/rc2.d etc/rc3.d etc/rc4.d etc/rc5.d; do
+    [ -d "$root/$sysv_dir" ] || continue
+    assert_within_root "$root" "$root/$sysv_dir"
+    while IFS= read -r link; do
+      name=${link##*/}; name=${name#S[0-9][0-9]}
+      shadowed=0
+      for udir in etc/systemd/system usr/lib/systemd/system lib/systemd/system; do
+        [ -e "$root/$udir/$name.service" ] && shadowed=1
+      done
+      ((shadowed)) || allowed_enabled "$name.service" || unexpected+=("${link#"$root"}")
+    done < <(find "$root/$sysv_dir" -mindepth 1 -maxdepth 1 -name 'S[0-9][0-9]*' | sort)
+  done
   if ((${#unexpected[@]})); then
     printf 'unexpected enabled unit: %s\n' "${unexpected[@]}" >&2
     die "offline rootfs has enabled units outside the allow-list"
@@ -295,10 +319,8 @@ PY
   echo "prepared ctid=$ctid: no net, autostart suppressed, credentials removed"
 }
 
-cmd_wait_boot() {
+wait_for_boot() {
   local ctid=$1 state="" i
-  require_ctid "$ctid"
-  assert_record_matches "$ctid"
   for ((i = 1; i <= BOOT_ATTEMPTS; i++)); do
     state=$(guest_exec "$ctid" -- systemctl is-system-running 2>/dev/null || true)
     case "$state" in running|degraded) echo "boot ok ctid=$ctid systemd=$state"; return 0;; esac
@@ -306,6 +328,26 @@ cmd_wait_boot() {
   done
   echo "failed units:" >&2; guest_exec "$ctid" -- systemctl --failed --no-legend >&2 || true
   die "guest did not reach running|degraded within $((BOOT_ATTEMPTS * (SLEEP + PROBE_SECONDS))) s (last state '$state')"
+}
+
+# First boot is gated on the current stopped config, not on an earlier verify:
+# a net entry, mount, device or hookscript attached after prepare fails here
+# before pct start runs.
+cmd_start() {
+  local ctid=$1
+  require_ctid "$ctid"
+  assert_record_matches "$ctid"
+  [ "$(pct status "$ctid")" = "status: stopped" ] || die "guest $ctid is not stopped; refusing to start"
+  assert_isolated_config "$ctid"
+  guest_pct start "$ctid" || die "pct start $ctid failed"
+  wait_for_boot "$ctid"
+}
+
+cmd_wait_boot() {
+  local ctid=$1
+  require_ctid "$ctid"
+  assert_record_matches "$ctid"
+  wait_for_boot "$ctid"
 }
 
 # Live isolation gate: host config, prepare marker, guest interfaces, masked
@@ -342,24 +384,24 @@ cmd_verify() {
   local ctid=$1
   require_ctid "$ctid"
   assert_guest_isolated "$ctid" ""
-  pct exec "$ctid" -- sh -c 'command -v curl >/dev/null && command -v timeout >/dev/null && command -v python3 >/dev/null' \
+  guest_exec "$ctid" -- sh -c 'command -v curl >/dev/null && command -v timeout >/dev/null && command -v python3 >/dev/null' \
     || die "guest lacks curl, timeout or python3"
   echo "verify ok ctid=$ctid systemd=$GUEST_SYSTEMD_STATE running_containers=0"
-  echo "failed units (evidence):"; pct exec "$ctid" -- systemctl --failed --no-legend || true
+  echo "failed units (evidence):"; guest_exec "$ctid" -- systemctl --failed --no-legend || true
 }
 
 cmd_start_db() {
   local ctid=$1
   require_ctid "$ctid"; assert_guest_isolated "$ctid" ""
-  pct exec "$ctid" -- docker start app-postgres-1 >/dev/null || die "docker start app-postgres-1 failed"
-  pct exec "$ctid" -- timeout "$READY_SECONDS" sh -c 'until docker exec app-postgres-1 pg_isready -q; do sleep 2; done' \
+  guest_exec "$ctid" -- docker start app-postgres-1 >/dev/null || die "docker start app-postgres-1 failed"
+  guest_exec_ready "$ctid" -- timeout "$READY_SECONDS" sh -c 'until docker exec app-postgres-1 pg_isready -q; do sleep 2; done' \
     || die "PostgreSQL not ready within $READY_SECONDS s"
   echo "databases (name|bytes):"
-  pct exec "$ctid" -- docker exec app-postgres-1 psql -U postgres -At -c \
+  guest_exec "$ctid" -- docker exec app-postgres-1 psql -U postgres -At -c \
     "select datname, pg_database_size(datname) from pg_database where not datistemplate order by 1" \
     || die "database size query failed"
   echo "self_hosted_convex counts (documents|indexes|leases|persistence_globals):"
-  pct exec "$ctid" -- docker exec app-postgres-1 psql -U postgres -d self_hosted_convex -At -c \
+  guest_exec "$ctid" -- docker exec app-postgres-1 psql -U postgres -d self_hosted_convex -At -c \
     "select (select count(*) from documents), (select count(*) from indexes), (select count(*) from leases), (select count(*) from persistence_globals)" \
     || die "count query failed"
 }
@@ -367,11 +409,11 @@ cmd_start_db() {
 cmd_start_backend() {
   local ctid=$1
   require_ctid "$ctid"; assert_guest_isolated "$ctid" "app-postgres-1"
-  pct exec "$ctid" -- docker start app-convex-backend-1 >/dev/null || die "docker start app-convex-backend-1 failed"
-  pct exec "$ctid" -- timeout "$READY_SECONDS" sh -c 'until curl -fsS -m 5 http://127.0.0.1:3210/version >/dev/null; do sleep 2; done' \
+  guest_exec "$ctid" -- docker start app-convex-backend-1 >/dev/null || die "docker start app-convex-backend-1 failed"
+  guest_exec_ready "$ctid" -- timeout "$READY_SECONDS" sh -c 'until curl -fsS -m 5 http://127.0.0.1:3210/version >/dev/null; do sleep 2; done' \
     || die "Convex backend not ready within $READY_SECONDS s"
   local version
-  version=$(pct exec "$ctid" -- curl -fsS -m 5 http://127.0.0.1:3210/version) || die "version read failed"
+  version=$(guest_exec "$ctid" -- curl -fsS -m 5 http://127.0.0.1:3210/version) || die "version read failed"
   echo "version: $version"
 }
 
@@ -383,16 +425,16 @@ cmd_read_identities() {
   stamp=$(record_value "$ctid" created_at | tr -d ':-')
   out="$RUN_DIR/$ctid-$stamp-module-identities.json"
   [ ! -e "$out" ] || die "$out already exists; refusing to overwrite evidence"
-  pct push "$ctid" "$extractor" /root/guest-module-identities.py --perms 0700 || die "push failed"
+  guest_pct push "$ctid" "$extractor" /root/guest-module-identities.py --perms 0700 || die "push failed"
   # The key is derived inside the guest from the archived instance secret, so it
   # is a live production credential; it exists only briefly in a 0600 file and
   # the guest-side trap removes it on any exit, signal or interruption.
-  pct exec "$ctid" -- sh -c 'trap "rm -f /root/.restore-admin-key" EXIT HUP INT TERM; umask 077; rm -f /root/restore-module-identities.json; docker exec app-convex-backend-1 ./generate_admin_key.sh | tail -1 > /root/.restore-admin-key; python3 /root/guest-module-identities.py' \
+  guest_exec_ready "$ctid" -- sh -c 'trap "rm -f /root/.restore-admin-key" EXIT HUP INT TERM; umask 077; rm -f /root/restore-module-identities.json; docker exec app-convex-backend-1 ./generate_admin_key.sh | tail -1 > /root/.restore-admin-key; python3 /root/guest-module-identities.py' \
     || die "identity read failed inside guest (see classification above)"
-  pct exec "$ctid" -- sh -c '[ ! -e /root/.restore-admin-key ]' || die "admin key file still present in guest"
+  guest_exec "$ctid" -- sh -c '[ ! -e /root/.restore-admin-key ]' || die "admin key file still present in guest"
   umask 077
-  pct pull "$ctid" /root/restore-module-identities.json "$out" || die "pull failed"
-  pct exec "$ctid" -- rm -f /root/restore-module-identities.json /root/guest-module-identities.py
+  guest_pct pull "$ctid" /root/restore-module-identities.json "$out" || die "pull failed"
+  guest_exec "$ctid" -- rm -f /root/restore-module-identities.json /root/guest-module-identities.py
   python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); m=d["moduleHashes"]; assert isinstance(m,list) and m and all(set(x)=={"path","environment","hash"} for x in m); print("identities:", len(m))' "$out" \
     || die "pulled identity file failed shape check"
   local digest
@@ -405,11 +447,17 @@ cmd_destroy() {
   require_ctid "$ctid"
   [ -e "$PVE_LXC_DIR/$ctid.conf" ] || die "no local guest $ctid"
   assert_record_matches "$ctid"
-  # Re-assert the full config immediately before purge so that anything
-  # attached after the record was written (mp1, devices, hookscript) fails closed.
+  # The record owns this CTID, so a running guest is stopped first: a failed
+  # live gate must never leave a production-derived guest running. Only then is
+  # the full config re-asserted, so anything attached after the record was
+  # written (net, mp1, devices, hookscript) makes the purge fail closed with
+  # the guest stopped and left for inspection.
+  if [ "$(pct status "$ctid")" = "status: running" ]; then
+    timeout "$READY_SECONDS" pct stop "$ctid" || die "pct stop $ctid failed; guest may still be running, inspect before retrying"
+  fi
+  [ "$(pct status "$ctid")" = "status: stopped" ] || die "guest $ctid did not stop; refusing to purge"
   assert_isolated_config "$ctid"
   rootfs=$(record_value "$ctid" rootfs); mp0=$(record_value "$ctid" mp0)
-  if [ "$(pct status "$ctid")" = "status: running" ]; then pct stop "$ctid"; fi
   pct destroy "$ctid" --purge
   local remaining
   remaining=$(pvesm list "$STORAGE" | awk -v a="$rootfs" -v b="$mp0" '$1==a||$1==b{print $1}')
@@ -422,11 +470,12 @@ case "${1:-}" in
   preflight)       require_ctid "${2:-}"; run_preflight "${2:-}" "${3:-}" "${4:-}" ;;
   restore)         require_ctid "${2:-}"; cmd_restore "${2:-}" "${3:-}" "${4:-}" ;;
   prepare)         cmd_prepare "${2:-}" ;;
+  start)           cmd_start "${2:-}" ;;
   wait-boot)       cmd_wait_boot "${2:-}" ;;
   verify)          cmd_verify "${2:-}" ;;
   start-db)        cmd_start_db "${2:-}" ;;
   start-backend)   cmd_start_backend "${2:-}" ;;
   read-identities) cmd_read_identities "${2:-}" "${3:-}" ;;
   destroy)         cmd_destroy "${2:-}" ;;
-  *) die "usage: $0 preflight|restore|prepare|wait-boot|verify|start-db|start-backend|read-identities|destroy ..." ;;
+  *) die "usage: $0 preflight|restore|prepare|start|wait-boot|verify|start-db|start-backend|read-identities|destroy ..." ;;
 esac
