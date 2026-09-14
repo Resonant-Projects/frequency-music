@@ -98,6 +98,73 @@ describe("privileged deployment metadata inspection", () => {
     );
     expect(result.schemas[0]?.activeHash).toMatch(/^[a-f0-9]{64}$/);
   });
+  test.each([
+    {},
+    { httpPrefix: null },
+    { httpPrefix: "/component/" },
+  ])("accepts old and current component response shapes without inventing a prefix: %j", async (prefix) => {
+    const component = {
+      id: "child",
+      name: "workflow",
+      path: "workflow",
+      state: "active",
+      args: { token: "PRIVATE_COMPONENT_SECRET" },
+      ...prefix,
+    };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(success([component]))
+      .mockResolvedValueOnce(
+        success([
+          [null, []],
+          ["child", []],
+        ]),
+      )
+      .mockResolvedValueOnce(success({}))
+      .mockResolvedValueOnce(success({}));
+    const result = await inspectDeployment(origin, "inert", fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(result.components).toEqual([
+      {
+        id: "child",
+        name: "workflow",
+        path: "workflow",
+        state: "active",
+        argsCount: 1,
+        argsOmitted: true,
+        ...prefix,
+      },
+    ]);
+    expect(Object.hasOwn(result.components[0] ?? {}, "httpPrefix")).toBe(
+      Object.hasOwn(prefix, "httpPrefix"),
+    );
+    expect(result.schemas.map((schema) => schema.componentId)).toEqual([
+      null,
+      "child",
+    ]);
+    expect(JSON.stringify(result)).not.toContain("PRIVATE_");
+  });
+  test.each([
+    false,
+    7,
+    {},
+    [],
+    "x".repeat(1025),
+  ])("rejects malformed present HTTP prefixes at the first query: %j", async (httpPrefix) => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      success([
+        {
+          id: "child",
+          path: "workflow",
+          state: "active",
+          args: {},
+          httpPrefix,
+        },
+      ]),
+    );
+    await expect(inspectDeployment(origin, "inert", fetcher)).rejects.toThrow();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   test("rejects unauthenticated and unapproved requests before transport", async () => {
     const fetcher = fixture();
     await expect(inspectDeployment(origin, "", fetcher)).rejects.toThrow();

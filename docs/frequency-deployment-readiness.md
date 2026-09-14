@@ -106,3 +106,11 @@ execution boundary. Backend cron/workflow and already scheduled execution also
 remain outside worker claim pause. The Mac return still needs verified controls
 for those surfaces, supported by actual deployed code/runtime evidence; this
 source correction neither installs a bootstrap control nor closes that gate.
+
+## September 14 single-capture compatibility receipt
+
+Mac acceptance owner `4b75ff0f-07c3-4258-a531-258452e7e4a6` reported one capture at script revision `89d1c319191119847fef1efdd7b05be43534d04c`, starting `2026-09-14T13:31:58Z` and ending `2026-09-14T13:32:01Z`, exit 1. Stdout was empty (SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`). Fixed stderr was `{"complete":false,"code":"capture_child_failed"}` (retained-byte SHA-256 `706fcdce8eb39ad499849b1c12ac3137cb1ae497c4c84392134ecc566b3e208e`). Files remain private on Mac with mode 0600. No full semantic capture was obtained and no retry occurred.
+
+The owner reported that the older backend's component response omits `httpPrefix`; its comparison with upstream source placed this field's addition after the backend image date. This is an attributed compatibility finding, not verified deployed backend source provenance. DevBox independently reproduced rejection of the omitted field using synthetic injected transport. The inspector now accepts omission, explicit null, or a bounded string while retaining the distinction between missing and null in output; missing does not prove there is no HTTP mount. Invalid present types and oversized strings still fail at the first query. Other envelope and inventory validation remains unchanged.
+
+After this compatibility correction is reviewed and merged, the coordinator may supply its exact merge revision for one corrected capture using the bounded invocation above. Do not rerun from the failed revision, repeat the missing-function diagnostic, or infer backend deployment readiness from this parser correction. Protected semantics and recovery acceptance remain open.
