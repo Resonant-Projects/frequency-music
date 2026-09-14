@@ -91,6 +91,7 @@ ctid_absent_clusterwide() {
 }
 
 config_value() { pct config "$1" | awk -v k="$2" -F': ' '$1==k{print $2}'; }
+cfg_value() { awk -v k="$2" -F': ' '$1==k{print $2}' <<<"$1"; }   # same, over an already-read config
 
 # Every guest interaction gets a host-side deadline so a hung guest cannot stall
 # the helper or keep the caller's cleanup trap from running. Readiness loops
@@ -105,15 +106,21 @@ volid_of() { echo "${1%%,*}"; }   # "ceph-vm:vm-913-disk-0,size=32G" -> "ceph-vm
 # Storage targets must be this guest's own volumes on the expected storage.
 # This runs before any offline mutation and again before destruction.
 assert_isolated_config() {
-  local ctid=$1 rootfs mp0 config
-  config=$(pct config "$ctid") || die "cannot read config for $ctid"
-  grep -q '^net' <<<"$config" && die "network entries remain on $ctid"
-  pct config "$ctid" | grep -E '^(mp[1-9]|unused[0-9]|dev[0-9]|lxc\.|hookscript)' && die "unexpected mounts, unused volumes, hookscript or raw lxc keys on $ctid"
-  [ "$(config_value "$ctid" onboot)" = "0" ] || die "onboot is not 0 on $ctid"
-  [ "$(config_value "$ctid" unprivileged)" = "1" ] || die "guest $ctid is not unprivileged"
-  [ "$(config_value "$ctid" hostname)" = "convex-hatchet-restore-$ctid" ] || die "hostname mismatch on $ctid"
-  grep -q "^tags: .*$TAG" <<<"$config" || die "guest $ctid lacks tag $TAG"
-  rootfs=$(config_value "$ctid" rootfs); mp0=$(config_value "$ctid" mp0)
+  local ctid=$1 cfg rootfs mp0
+  # Read the config once into a variable. Piping `pct config` into `grep -q`
+  # lets grep exit on the first match, which can leave pct with SIGPIPE (141);
+  # under `set -o pipefail` the pipeline then returns 141 and the `&& die`
+  # never runs, silently skipping the gate. One read also removes the window
+  # between what used to be seven separate `pct config` calls.
+  cfg=$(pct config "$ctid") || die "pct config $ctid failed"
+  grep -q '^net' <<<"$cfg" && die "network entries remain on $ctid"
+  grep -E '^(mp[1-9]|unused[0-9]|dev[0-9]|lxc\.|hookscript)' <<<"$cfg" && die "unexpected mounts, unused volumes, hookscript or raw lxc keys on $ctid"
+  [ "$(cfg_value "$cfg" onboot)" = "0" ] || die "onboot is not 0 on $ctid"
+  [ "$(cfg_value "$cfg" unprivileged)" = "1" ] || die "guest $ctid is not unprivileged"
+  [ "$(cfg_value "$cfg" hostname)" = "convex-hatchet-restore-$ctid" ] || die "hostname mismatch on $ctid"
+  # Anchored: a substring such as "not-disposable-restore-x" must not pass.
+  grep -qE "^tags:[[:space:]]*(.*;)?${TAG}(;|[[:space:]]*$)" <<<"$cfg" || die "guest $ctid lacks tag $TAG"
+  rootfs=$(cfg_value "$cfg" rootfs); mp0=$(cfg_value "$cfg" mp0)
   [[ "$(volid_of "$rootfs")" =~ ^${STORAGE}:vm-${ctid}-disk-[0-9]+$ ]] || die "rootfs '$rootfs' is not this guest's $STORAGE volume"
   [[ "$(volid_of "$mp0")" =~ ^${STORAGE}:vm-${ctid}-disk-[0-9]+$ ]] || die "mp0 '$mp0' is not this guest's $STORAGE volume"
   [[ "$mp0" == *",mp=/srv/app-data,"* || "$mp0" == *",mp=/srv/app-data" ]] || die "mp0 mount point is not /srv/app-data"
@@ -134,9 +141,11 @@ sys.exit(0 if p==root or p.startswith(root+os.sep) else 1)' "$root" "$path" \
   [ ! -L "$path" ] || die "refusing symlinked path inside rootfs: ${path#"$root"}"
 }
 
+# Also called inside the errexit-disabled purge guard; checks its own commands.
 write_record() {
   local ctid=$1 archive=$2 node=$3
-  mkdir -p "$RUN_DIR"; chmod 700 "$RUN_DIR"
+  mkdir -p "$RUN_DIR" || die "could not create run directory $RUN_DIR"
+  chmod 700 "$RUN_DIR" || die "could not restrict run directory $RUN_DIR"
   umask 077
   {
     echo "ctid=$ctid"
@@ -162,11 +171,13 @@ assert_record_matches() {
   [ "$(record_value "$ctid" mp0)" = "$(volid_of "$(config_value "$ctid" mp0)")" ] || die "mp0 volume differs from run record"
 }
 
+# Called both directly and inside `if ! ( ... )`, where bash disables errexit.
+# Every command is therefore checked explicitly rather than relying on `set -e`.
 strip_networking() {
   local ctid=$1
   [ "$(pct status "$ctid")" = "status: stopped" ] || die "guest must be stopped"
   pct set "$ctid" --delete net0 2>/dev/null || true
-  pct set "$ctid" --onboot 0
+  pct set "$ctid" --onboot 0 || die "could not set onboot 0 on $ctid"
   assert_isolated_config "$ctid"
 }
 
@@ -208,6 +219,14 @@ cmd_restore() {
   if ! ( strip_networking "$ctid" && write_record "$ctid" "$archive" "$node" ); then
     rm -f "$(record_path "$ctid")" 2>/dev/null || true   # a partial record must not block the purge
     pct destroy "$ctid" --purge || die "isolation or run record failed after restore AND purge failed; guest $ctid still exists, inspect before retrying"
+    # A purge that exits 0 without removing anything is a real storage failure
+    # mode; do not tell the operator the guest is gone without checking.
+    [ ! -e "$PVE_LXC_DIR/$ctid.conf" ] \
+      || die "isolation or run record failed after restore AND purge left the config behind; guest $ctid still exists, inspect before retrying"
+    local left
+    left=$(pvesm list "$STORAGE" | awk -v p="^${STORAGE}:vm-${ctid}-" '$1 ~ p {print $1}')
+    [ -z "$left" ] \
+      || die "isolation or run record failed after restore AND purge left volumes behind ($left); guest $ctid still exists, inspect before retrying"
     die "isolation or run record could not be established after restore; guest $ctid purged"
   fi
   echo "restored ctid=$ctid (stopped, no network) record=$(record_path "$ctid")"
@@ -251,6 +270,17 @@ cmd_prepare() {
   for dir in etc/systemd/system usr/lib/systemd/system lib/systemd/system; do
     [ -d "$root/$dir" ] && enablement_dirs+=("$root/$dir")
   done
+  # `find` does not descend into a .wants/.requires entry that is itself a
+  # symlink to a directory, but systemd does follow it, so every unit enabled
+  # inside one would be invisible to the allow-list below. Refuse outright.
+  local symlinked_dirs=()
+  while IFS= read -r link; do
+    symlinked_dirs+=("${link#"$root"}")
+  done < <(find "${enablement_dirs[@]}" -maxdepth 1 -type l \( -name '*.wants' -o -name '*.requires' \) | sort)
+  if ((${#symlinked_dirs[@]})); then
+    printf 'symlinked enablement directory: %s\n' "${symlinked_dirs[@]}" >&2
+    die "offline rootfs has symlinked enablement directories; units inside them cannot be enumerated"
+  fi
   while IFS= read -r link; do
     unit=${link##*/}
     allowed_enabled "$unit" || unexpected+=("${link#"$root"}")
@@ -313,6 +343,11 @@ if changed == 0:
 print(f"restart policies set to no: {changed}")
 PY
 
+  # `>` follows a symlink, so an archived symlink at this fixed path would let
+  # the redirect truncate a file on the Proxmox host as root. Remove first
+  # (rm does not follow symlinks), then confirm the target stays in the rootfs.
+  rm -f "$root/etc/isolated-restore-$ctid"
+  assert_within_root "$root" "$root/etc"
   date -u +%Y-%m-%dT%H:%M:%SZ > "$root/etc/isolated-restore-$ctid"
   chown 100000:100000 "$root/etc/isolated-restore-$ctid" 2>/dev/null || true
   pct unmount "$ctid" >/dev/null
@@ -447,16 +482,18 @@ cmd_destroy() {
   local ctid=$1 rootfs mp0
   require_ctid "$ctid"
   [ -e "$PVE_LXC_DIR/$ctid.conf" ] || die "no local guest $ctid"
-  assert_record_matches "$ctid"
-  # The record owns this CTID, so a running guest is stopped first: a failed
-  # live gate must never leave a production-derived guest running. Only then is
-  # the full config re-asserted, so anything attached after the record was
-  # written (net, mp1, devices, hookscript) makes the purge fail closed with
-  # the guest stopped and left for inspection.
+  # Stop first, before any gate can refuse. require_ctid and the local config
+  # check above already scope this to a disposable 911-913 guest on this node,
+  # and no gate failure -- including a drifted run record -- may leave a
+  # production-derived guest running.
   if [ "$(pct status "$ctid")" = "status: running" ]; then
     timeout "$READY_SECONDS" pct stop "$ctid" || die "pct stop $ctid failed; guest may still be running, inspect before retrying"
   fi
   [ "$(pct status "$ctid")" = "status: stopped" ] || die "guest $ctid did not stop; refusing to purge"
+  # Only now decide whether this guest may be purged. Anything attached after
+  # the record was written (net, mp1, devices, hookscript) fails closed here,
+  # leaving the guest stopped and unpurged for inspection.
+  assert_record_matches "$ctid"
   assert_isolated_config "$ctid"
   rootfs=$(record_value "$ctid" rootfs); mp0=$(record_value "$ctid" mp0)
   pct destroy "$ctid" --purge

@@ -59,12 +59,21 @@ case "$cmd" in
   mount|unmount|stop|push|start) ;;
   pull) cp "$SHIM_STATE/guest-identities.json" "$2" ;;
   restore) cp "$SHIM_STATE/restored.config" "$SHIM_STATE/config"; echo "status: stopped" > "$SHIM_STATE/status"; touch "$SHIM_STATE/../pve/$ctid.conf" ;;
-  destroy) : > "$SHIM_STATE/volumes"; [ -f "$SHIM_STATE/leave_volume" ] && cp "$SHIM_STATE/leave_volume" "$SHIM_STATE/volumes"; rm -f "$SHIM_STATE/../pve/$ctid.conf"; touch "$SHIM_STATE/destroyed" ;;
+  destroy)
+    touch "$SHIM_STATE/destroyed"
+    [ -f "$SHIM_STATE/purge_fails" ] && exit 9         # purge itself reports failure
+    [ -f "$SHIM_STATE/purge_noop" ] && exit 0          # exits 0, removes nothing
+    : > "$SHIM_STATE/volumes"; [ -f "$SHIM_STATE/leave_volume" ] && cp "$SHIM_STATE/leave_volume" "$SHIM_STATE/volumes"
+    rm -f "$SHIM_STATE/../pve/$ctid.conf" ;;
   exec) shift; [ "$1" = "--" ] && shift; bash "$SHIM_STATE/exec.sh" "$@" ;;
   *) echo "pct shim: unsupported $cmd" >&2; exit 2 ;;
 esac
 EOF
 chmod +x "$work/bin/"*
+# A pct wrapper whose `stop` actually flips the reported status, for cases that
+# need a running guest to become stopped.
+printf '#!/usr/bin/env bash\necho "pct $*" >> "$SHIM_STATE/calls.log"\n[ "$1" = stop ] && echo "status: stopped" > "$SHIM_STATE/status"\nexec bash "$SHIM_STATE/../bin/pct.real" "$@"\n' > "$work/bin/pct.stopper"
+chmod +x "$work/bin/pct.stopper"
 
 good_config() {
   cat > "$SHIM_STATE/config" <<EOF
@@ -90,6 +99,7 @@ reset_state() {
   echo 'net0: name=veth0,bridge=vmbr0,hwaddr=BC:24:11:2B:10:EB,ip=172.16.10.24/27' >> "$SHIM_STATE/restored.config"
   printf 'exit 0\n' > "$SHIM_STATE/exec.sh"
 }
+seed_record() { bash "$helper" restore 913 "$A" prox4 >/dev/null; }
 pass=0; failn=0
 expect() {  # expect <0|1> <label> [--msg <text>] <helper args...>; want=1 means exactly rc=1 from die()
   local want=$1 label=$2; shift 2
@@ -134,6 +144,14 @@ reset_state; : > "$work/runs-blocked"   # a regular file where the run dir must 
 ISOLATED_RESTORE_RUN_DIR="$work/runs-blocked" expect 1 "restore purges the guest when the run record cannot be written" --msg "guest 913 purged" restore 913 "$A" prox4
 [ ! -e "$work/runs-blocked/913.record" ] && [ ! -f "$work/runs/913.record" ] || { echo "FAIL partial record left behind"; failn=$((failn+1)); }
 grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL guest not purged after record failure"; failn=$((failn+1)); }
+reset_state; touch "$SHIM_STATE/refuse_net_delete" "$SHIM_STATE/purge_fails"
+expect 1 "restore reports a purge that failed outright" --msg "AND purge failed" restore 913 "$A" prox4
+reset_state; touch "$SHIM_STATE/refuse_net_delete" "$SHIM_STATE/purge_noop"
+expect 1 "restore reports the guest still exists when the purge removes nothing" --msg "still exists, inspect before retrying" restore 913 "$A" prox4
+grep -q "guest 913 purged" "$work/last.out" && { echo "FAIL restore claimed a purge that did not happen"; failn=$((failn+1)); }
+reset_state; touch "$SHIM_STATE/refuse_net_delete"
+printf 'ceph-vm:vm-913-disk-0 raw rootdir 1 913\n' > "$SHIM_STATE/leave_volume"
+expect 1 "restore reports the guest still exists when the purge leaves volumes" --msg "left volumes behind" restore 913 "$A" prox4
 # Ownership and storage assertions run before the record exists, on the restored config.
 reset_state; sed -i.bak 's#^rootfs: ceph-vm:vm-913-disk-0#rootfs: local-lvm:vm-913-disk-0#' "$SHIM_STATE/restored.config"
 expect 1 "restore rejects rootfs on another storage" --msg "rootfs 'local-lvm:vm-913-disk-0,size=32G' is not this guest's ceph-vm volume" restore 913 "$A" prox4
@@ -150,6 +168,24 @@ reset_state; sed -i.bak 's#^unprivileged: 1#unprivileged: 0#' "$SHIM_STATE/resto
 expect 1 "restore rejects a privileged guest" --msg "is not unprivileged" restore 913 "$A" prox4
 reset_state; echo 'hookscript: local:snippets/evil.sh' >> "$SHIM_STATE/restored.config"
 expect 1 "restore rejects an archived hookscript" --msg "hookscript" restore 913 "$A" prox4
+# A config larger than a pipe buffer must not let the net gate be skipped: piping
+# into `grep -q` lets grep exit on the first match and can leave the writer with
+# SIGPIPE, which pipefail turns into 141 and the `&& die` never runs. Exercised
+# through destroy, which asserts the config without stripping networking first.
+reset_state; seed_record
+{ echo 'net0: name=veth0,bridge=vmbr0,hwaddr=BC:24:11:2B:10:EB,ip=172.16.10.24/27'
+  awk 'BEGIN{for(i=0;i<9000;i++) printf "description: pad-%d-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", i}'
+  cat "$SHIM_STATE/config"; } > "$SHIM_STATE/config.padded"
+mv "$SHIM_STATE/config.padded" "$SHIM_STATE/config"
+[ "$(wc -c < "$SHIM_STATE/config")" -gt 65536 ] || { echo "FAIL padded config is not larger than a pipe buffer"; failn=$((failn+1)); }
+expect 1 "the net gate holds on a config larger than a pipe buffer" --msg "network entries remain" destroy 913
+[ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy purged a guest whose net gate was skipped"; failn=$((failn+1)); }
+for decoy in 'production;not-disposable-restore-x' 'xdisposable-restoreX' 'disposable-restore-DECOY'; do
+  reset_state; sed -i.bak "s#^tags: disposable-restore#tags: $decoy#" "$SHIM_STATE/restored.config"
+  expect 1 "restore rejects tag decoy '$decoy'" --msg "lacks tag disposable-restore" restore 913 "$A" prox4
+done
+reset_state; sed -i.bak 's#^tags: disposable-restore#tags: production;disposable-restore;lab#' "$SHIM_STATE/restored.config"
+expect 0 "restore accepts the tag alongside others" restore 913 "$A" prox4
 
 # --- isolation config assertions (via prepare, which needs a record) ---
 make_rootfs() {
@@ -160,7 +196,6 @@ make_rootfs() {
   echo token > "$r/etc/op/service-account.env"
   echo '{"RestartPolicy":{"Name":"unless-stopped","MaximumRetryCount":0},"Binds":[]}' > "$r/var/lib/docker/containers/abc/hostconfig.json"
 }
-seed_record() { bash "$helper" restore 913 "$A" prox4 >/dev/null; }
 reset_state; seed_record; make_rootfs
 expect 0 "prepare passes with allow-listed units" prepare 913
 [ -L "$work/lxc/913/rootfs/etc/systemd/system/app-compose.service" ] || { echo "FAIL app-compose not masked"; failn=$((failn+1)); }
@@ -196,10 +231,35 @@ reset_state; seed_record; make_rootfs
 printf '#!/bin/sh\nexit 0\n' > "$work/lxc/913/rootfs/etc/rc.local"; chmod +x "$work/lxc/913/rootfs/etc/rc.local"
 expect 0 "prepare removes an executable rc.local" prepare 913
 [ ! -e "$work/lxc/913/rootfs/etc/rc.local" ] || { echo "FAIL rc.local remains"; failn=$((failn+1)); }
+# find(1) does not descend into a symlinked .wants directory but systemd follows
+# it, so units enabled inside one would never reach the allow-list.
+for d in multi-user.target.wants multi-user.target.requires; do
+  reset_state; seed_record; make_rootfs
+  r="$work/lxc/913/rootfs"; mkdir -p "$r/opt/hidden-wants"
+  ln -s /etc/systemd/system/evil-producer.service "$r/opt/hidden-wants/evil-producer.service"
+  rm -rf "$r/etc/systemd/system/$d"; ln -s ../../../opt/hidden-wants "$r/etc/systemd/system/$d"
+  expect 1 "prepare rejects a symlinked $d directory" --msg "symlinked enablement directories" prepare 913
+  grep -q "symlinked enablement directory: /etc/systemd/system/$d" "$work/last.out" || { echo "FAIL symlinked dir not named"; failn=$((failn+1)); }
+done
+# The marker write uses `>`, which follows a symlink out of the rootfs.
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/hostside"; echo "ORIGINAL HOST FILE CONTENT" > "$work/hostside/victim"
+ln -s "$work/hostside/victim" "$work/lxc/913/rootfs/etc/isolated-restore-913"
+expect 0 "prepare replaces a symlinked marker path instead of following it" prepare 913
+grep -q 'ORIGINAL HOST FILE CONTENT' "$work/hostside/victim" || { echo "FAIL prepare truncated a host-side file through the marker symlink"; failn=$((failn+1)); }
+[ -f "$work/lxc/913/rootfs/etc/isolated-restore-913" ] && [ ! -L "$work/lxc/913/rootfs/etc/isolated-restore-913" ] || { echo "FAIL marker is not a regular file inside the rootfs"; failn=$((failn+1)); }
 reset_state; seed_record; make_rootfs
 mkdir -p "$work/lxc/913/rootfs/etc/rc3.d"; ln -s ../init.d/legacy-producer "$work/lxc/913/rootfs/etc/rc3.d/S99legacy-producer"
 expect 1 "prepare rejects an enabled SysV runlevel link" --msg "outside the allow-list" prepare 913
 grep -q 'unexpected enabled unit: /etc/rc3.d/S99legacy-producer' "$work/last.out" || { echo "FAIL SysV link not named"; failn=$((failn+1)); }
+for rc in rcS.d rc2.d rc4.d rc5.d; do
+  reset_state; seed_record; make_rootfs
+  mkdir -p "$work/lxc/913/rootfs/etc/$rc"; ln -s "../init.d/legacy-$rc" "$work/lxc/913/rootfs/etc/$rc/S99legacy-$rc"
+  expect 1 "prepare rejects an enabled SysV link under $rc" --msg "outside the allow-list" prepare 913
+done
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/etc/rc3.d"; ln -s ../init.d/killer "$work/lxc/913/rootfs/etc/rc3.d/K01killer"
+expect 0 "prepare ignores SysV stop links" prepare 913
 reset_state; seed_record; make_rootfs
 mkdir -p "$work/lxc/913/rootfs/etc/rc3.d"; ln -s ../init.d/docker "$work/lxc/913/rootfs/etc/rc3.d/S20docker"
 touch "$work/lxc/913/rootfs/etc/systemd/system/docker.service"
@@ -226,13 +286,13 @@ reset_state; seed_record
 printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo running; exit 0; }; exit 0\n' > "$SHIM_STATE/exec.sh"
 expect 0 "start re-asserts the stopped config, starts and waits for boot" start 913
 grep -q '^pct start 913$' "$SHIM_STATE/calls.log" || { echo "FAIL start did not call pct start"; failn=$((failn+1)); }
+[ "$(grep -cE '^pct (exec|start)' "$SHIM_STATE/calls.log")" -eq "$(grep -c '^timeout' "$SHIM_STATE/calls.log")" ] || { echo "FAIL start has a guest call without a host-side deadline"; failn=$((failn+1)); }
 reset_state; seed_record; touch "$SHIM_STATE/large_config"
 printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo running; exit 0; }; exit 0\n' > "$SHIM_STATE/exec.sh"
 expect 0 "start accepts a tagged config from a multi-write producer" start 913
 reset_state; seed_record; touch "$SHIM_STATE/large_config"
 echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
 expect 1 "start rejects networking from a multi-write producer" --msg "network entries remain" start 913
-
 reset_state; seed_record; echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
 expect 1 "start refuses when a network entry was attached after prepare" --msg "network entries remain" start 913
 grep -q '^pct start' "$SHIM_STATE/calls.log" && { echo "FAIL start booted a guest with networking"; failn=$((failn+1)); }
@@ -369,13 +429,21 @@ reset_state; seed_record
 sed -i.bak 's#^mp0=ceph-vm:vm-913-disk-1#mp0=ceph-vm:vm-913-disk-9#' "$work/runs/913.record"
 expect 1 "destroy refuses when record volumes differ from live config" --msg "mp0 volume differs from run record" destroy 913
 [ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy ran despite record mismatch"; failn=$((failn+1)); }
+# A gate that refuses must never leave a production-derived guest running, and
+# the record gate is a gate: it has to come after the stop, not before it.
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
+sed -i.bak 's#^mp0=ceph-vm:vm-913-disk-1#mp0=ceph-vm:vm-913-disk-9#' "$work/runs/913.record"
+cp "$work/bin/pct" "$work/bin/pct.real"; cp "$work/bin/pct.stopper" "$work/bin/pct"; chmod +x "$work/bin/pct"
+expect 1 "destroy stops a running guest before refusing a drifted record" --msg "mp0 volume differs from run record" destroy 913
+grep -q '^pct stop 913' "$SHIM_STATE/calls.log" || { echo "FAIL destroy left a running guest running on a record mismatch"; failn=$((failn+1)); }
+[ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy purged despite record mismatch"; failn=$((failn+1)); }
+cp "$work/bin/pct.real" "$work/bin/pct"
 reset_state; seed_record; echo 'mp1: ceph-vm:vm-113-disk-1,mp=/mnt/prod' >> "$SHIM_STATE/config"
 expect 1 "destroy refuses when a volume was attached after the record" --msg "unexpected mounts" destroy 913
 [ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy ran with an extra attachment"; failn=$((failn+1)); }
 # A running guest that fails the config gate is stopped first, then left unpurged.
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
 echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
-printf '#!/usr/bin/env bash\necho "pct $*" >> "$SHIM_STATE/calls.log"\n[ "$1" = stop ] && echo "status: stopped" > "$SHIM_STATE/status"\nexec bash "$SHIM_STATE/../bin/pct.real" "$@"\n' > "$work/bin/pct.stopper"
 cp "$work/bin/pct" "$work/bin/pct.real"; cp "$work/bin/pct.stopper" "$work/bin/pct"; chmod +x "$work/bin/pct"
 expect 1 "destroy stops a running guest before refusing an unsafe config" --msg "network entries remain" destroy 913
 grep -q '^pct stop 913' "$SHIM_STATE/calls.log" || { echo "FAIL destroy did not stop the unsafe running guest"; failn=$((failn+1)); }
