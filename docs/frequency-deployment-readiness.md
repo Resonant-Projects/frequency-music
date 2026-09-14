@@ -2,6 +2,41 @@
 
 This preparation does not deploy the backend, change its configuration, stop CT107 or activate workers. Mac owns protected recovery inventory and isolated restore preparation. DevBox owns source analysis, tooling and this acceptance record. Requests route through coordinator `f9d19c38-31f3-44c7-8e26-e5319dee81cb` to Mac owner `4b75ff0f-07c3-4258-a531-258452e7e4a6`.
 
+## Current release and metadata acceptance (September 14)
+
+PR65 merged as `7b9001887ee475130702f04820ce2102b1fd83ef`; the corrected bounded
+capture succeeded once at 16:13:28Z. Its 98,999 retained bytes were verified on
+DevBox against SHA-256 `9141180aa53989b147c7c42496fc395cc9806488299034550c23cf64870a87f6`.
+The bounded metadata-capture gate is satisfied; complete semantic comparison and
+recovery acceptance are not. See [the actual comparison](frequency-metadata-comparison-20260914.md)
+for observed callable, component, cron and schema-fingerprint coverage and the
+precise remaining protected inputs. No repeat live capture is requested.
+
+PR64 merged as `075ac1df8827092dabc78e0dd7c49ec4daaf51dc`. This is the new proposed
+source candidate containing atomic direct-run creation. Its root manifest was
+published in [run 34867695957](https://github.com/Resonant-Projects/frequency-music/actions/runs/34867695957),
+artifact `10356984849`, named `convex-root-modules-075ac1df8827092dabc78e0dd7c49ec4daaf51dc`.
+Manifest SHA-256 is `1024b80bca78ed6134c98b249f132296b2af9185d044775ba29f7d942f0c7740`.
+Strict attestation verification enforced repository, exact source, main ref,
+signer workflow and GitHub-hosted runner; the downloaded manifest is byte-identical
+to an offline rebuild. The [release receipt](evidence/frequency-20260914-release/receipt.json)
+and [root delta](evidence/frequency-20260914-release/root-delta.json) record
+98 unchanged identities, 10 added chunks, 10 removed chunks and 21 changed named
+modules against the September 12 retained runtime identities. This historical
+hash observation and the September 14 metadata capture are not an atomic snapshot.
+The complete local candidate inventory is retained separately and is not attested.
+Its component and external Node dependency sections match the previous candidate.
+
+The source merge also published worker image
+`ghcr.io/resonant-projects/frequency-music-agent@sha256:92f92213066424e22279da2ebba5826ed2df9f17984dab2a92391d2d6d97e0a8`
+in run `34867680249`; exact source/workflow/main/GitHub-hosted image attestation
+verification passed. This image is not promoted. Prior drain acceptance belongs
+to the prior tested digest and does not automatically accept a rebuilt image.
+CT107 remains unchanged.
+
+The historical candidate below is retained to explain prior evidence. Do not use
+its attestation to authenticate the new source or assume either candidate is deployed.
+
 ## Candidate and resolved diagnosis
 
 The candidate is source `0d07b44b90be54bceeb88019554ccc1bf76feb53`, published in [run 34707417051](https://github.com/Resonant-Projects/frequency-music/actions/runs/34707417051), artifact ID `10302416648`, name `convex-root-modules-0d07b44b90be54bceeb88019554ccc1bf76feb53`. Manifest SHA-256 is `591034fa159d8a4b099abf9796c7238bddd36b09e53a5212c6931b747c3c1130`. Strict attestation verification passed for exact source, workflow, main ref and GitHub-hosted runner. The manifest contains 129 root identities; it does not attest deployed component instances or active schema state.
@@ -16,7 +51,7 @@ From the reviewed source checkout with pinned dependencies installed, run:
 vpx tsx scripts/convex-provenance-build.ts /tmp/frequency-root.json /tmp/frequency-candidate-inventory.json
 ```
 
-The optional second output inventories the complete root and component bundle sets, schema/definition identities, dependency graph and external Node dependencies. It uses the same guarded offline build, never executes the generated modules and contains no source or source maps. Root output must remain byte-identical to the attested manifest above while deployable candidate source is unchanged. The component inventory is local review evidence, not a newly signed full-deployment artifact. Definition paths refer to packages, not deployed component instance paths. The mapping and full candidate semantics are reviewed in [candidate semantic review](frequency-candidate-semantic-review.md).
+The optional second output inventories the complete root and component bundle sets, schema/definition identities, dependency graph and external Node dependencies. It uses the same guarded offline build, never executes the generated modules and contains no source or source maps. Root output must remain byte-identical to the selected exact release manifest while deployable candidate source is unchanged. The component inventory is local review evidence, not a newly signed full-deployment artifact. Definition paths refer to packages, not deployed component instance paths. The mapping and full candidate semantics are reviewed in [candidate semantic review](frequency-candidate-semantic-review.md).
 
 Do not feed an internal push request to a deployment endpoint. The supported command and its approval prerequisites are in [deployment and rollback](frequency-supported-deployment-rollback.md).
 

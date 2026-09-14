@@ -1,0 +1,343 @@
+{
+  "scope": "lexical direct callable declarations versus captured analyzed metadata; not complete semantic delta",
+  "sourceCommit": "075ac1df8827092dabc78e0dd7c49ec4daaf51dc",
+  "captureSha256": "9141180aa53989b147c7c42496fc395cc9806488299034550c23cf64870a87f6",
+  "consistency": "separate-query-snapshots-not-atomic",
+  "deploymentAuthorized": false,
+  "namespaces": [
+    {
+      "path": "",
+      "capturedAnalyzedModules": 74,
+      "capturedFunctions": 359,
+      "candidateDirectDeclarations": 291,
+      "matchingDirectDeclarations": 288,
+      "candidateDirectAbsentFromCaptured": [
+        {
+          "function": "vocabulary.js:rekeyLegacyParameterKinds",
+          "udfType": "Mutation",
+          "visibility": "public"
+        },
+        {
+          "function": "agentRuns.js:createRunning",
+          "udfType": "Mutation",
+          "visibility": "internal"
+        },
+        {
+          "function": "agentRuns.js:opsStatusCountsPage",
+          "udfType": "Query",
+          "visibility": "internal"
+        }
+      ],
+      "typeOrVisibilityDifferences": [],
+      "capturedOutsideDirectDeclarationScope": [],
+      "capturedCrons": [
+        {
+          "module": "crons.js",
+          "identifier": "batch-extract",
+          "udfPath": "workflows.js:startBatchExtractionInternal",
+          "schedule": {
+            "type": "interval",
+            "seconds": 28800
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "classify-stale-concepts",
+          "udfPath": "conceptClassifier.js:sweepUnreviewedConcepts",
+          "schedule": {
+            "type": "interval",
+            "seconds": 3600
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "embed-missing-sweep",
+          "udfPath": "embeddings.js:sweepMissingEmbeddings",
+          "schedule": {
+            "type": "weekly",
+            "dayOfWeek": 0,
+            "hourUTC": 15,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "enqueue-correspondence-miner",
+          "udfPath": "agentRuns.js:enqueue",
+          "schedule": {
+            "type": "daily",
+            "hourUTC": 5,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "enqueue-evidence-hunter",
+          "udfPath": "agentRuns.js:enqueue",
+          "schedule": {
+            "type": "daily",
+            "hourUTC": 6,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "enqueue-hypothesis-drafter",
+          "udfPath": "agentRuns.js:enqueue",
+          "schedule": {
+            "type": "weekly",
+            "dayOfWeek": 4,
+            "hourUTC": 16,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "enqueue-source-scout",
+          "udfPath": "agentRuns.js:enqueue",
+          "schedule": {
+            "type": "weekly",
+            "dayOfWeek": 3,
+            "hourUTC": 16,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "generate-hypotheses",
+          "udfPath": "workflows.js:startBatchHypothesisInternal",
+          "schedule": {
+            "type": "weekly",
+            "dayOfWeek": 1,
+            "hourUTC": 16,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "generate-weekly-turn",
+          "udfPath": "weeklyBriefs.js:generateInternal",
+          "schedule": {
+            "type": "weekly",
+            "dayOfWeek": 5,
+            "hourUTC": 16,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "poll-feeds",
+          "udfPath": "ingest.js:pollAllFeedsInternal",
+          "schedule": {
+            "type": "interval",
+            "seconds": 21600
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "recompute-stats",
+          "udfPath": "dashboard.js:recomputeStats",
+          "schedule": {
+            "type": "interval",
+            "seconds": 1800
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "reconcile-reviewed-agent-runs",
+          "udfPath": "agentRuns.js:reconcileReviewedRuns",
+          "schedule": {
+            "type": "interval",
+            "seconds": 900
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "retire-stale-correspondences",
+          "udfPath": "correspondences.js:autoRetireStale",
+          "schedule": {
+            "type": "weekly",
+            "dayOfWeek": 0,
+            "hourUTC": 16,
+            "minuteUTC": 0
+          },
+          "argsOmitted": true
+        },
+        {
+          "module": "crons.js",
+          "identifier": "sweep-stale-agent-runs",
+          "udfPath": "agentRuns.js:sweepStaleRuns",
+          "schedule": {
+            "type": "interval",
+            "seconds": 900
+          },
+          "argsOmitted": true
+        }
+      ],
+      "schema": {
+        "activeHash": "f839bef571271875addce42a63f3cd37455090e68ab7532f38c066bb247ac396",
+        "inProgressHash": null
+      },
+      "explicitFactoryAndHttpComparison": {
+        "candidateDeclarations": 71,
+        "matching": 71,
+        "absent": [],
+        "typeOrVisibilityDifferences": [],
+        "method": "Literal manifest/route registrations and factory export declarations; factory Action/internal Mutation classification verified by reading implementation, never evaluated"
+      },
+      "totalCandidateCallableSurface": 362,
+      "totalMatchingCallableSurface": 359,
+      "cronScheduleTargetComparison": {
+        "candidate": 14,
+        "captured": 14,
+        "matching": 14,
+        "argumentsCompared": false
+      }
+    },
+    {
+      "path": "workflow",
+      "capturedAnalyzedModules": 9,
+      "capturedFunctions": 18,
+      "candidateDirectDeclarations": 18,
+      "matchingDirectDeclarations": 18,
+      "candidateDirectAbsentFromCaptured": [],
+      "typeOrVisibilityDifferences": [],
+      "capturedOutsideDirectDeclarationScope": [],
+      "capturedCrons": [],
+      "schema": {
+        "activeHash": "5da7c53b032331078a57b1d52180ed697e124d6ecea1a6a0e3e65e4d453cdc5c",
+        "inProgressHash": null
+      },
+      "cronScheduleTargetComparison": {
+        "candidate": 0,
+        "captured": 0,
+        "matching": 0,
+        "argumentsCompared": false
+      }
+    },
+    {
+      "path": "workflow/workpool",
+      "capturedAnalyzedModules": 14,
+      "capturedFunctions": 19,
+      "candidateDirectDeclarations": 19,
+      "matchingDirectDeclarations": 19,
+      "candidateDirectAbsentFromCaptured": [],
+      "typeOrVisibilityDifferences": [],
+      "capturedOutsideDirectDeclarationScope": [],
+      "capturedCrons": [
+        {
+          "module": "crons.js",
+          "identifier": "recover",
+          "udfPath": "crons.js:recover",
+          "schedule": {
+            "type": "interval",
+            "seconds": 1800
+          },
+          "argsOmitted": true
+        }
+      ],
+      "schema": {
+        "activeHash": "e7ed03a267fd2484492f3371c9360ba1b9cf4c2d4a5085aa963625c4ad9512ee",
+        "inProgressHash": null
+      },
+      "cronScheduleTargetComparison": {
+        "candidate": 1,
+        "captured": 1,
+        "matching": 1,
+        "argumentsCompared": false
+      }
+    },
+    {
+      "path": "aggregate",
+      "capturedAnalyzedModules": 6,
+      "capturedFunctions": 25,
+      "candidateDirectDeclarations": 25,
+      "matchingDirectDeclarations": 25,
+      "candidateDirectAbsentFromCaptured": [],
+      "typeOrVisibilityDifferences": [],
+      "capturedOutsideDirectDeclarationScope": [],
+      "capturedCrons": [],
+      "schema": {
+        "activeHash": "34bd80834e857ea0f0f164853069130d2c65645786c458e5e8544f44504481b7",
+        "inProgressHash": null
+      },
+      "cronScheduleTargetComparison": {
+        "candidate": 0,
+        "captured": 0,
+        "matching": 0,
+        "argumentsCompared": false
+      }
+    },
+    {
+      "path": "actionCache",
+      "capturedAnalyzedModules": 5,
+      "capturedFunctions": 5,
+      "candidateDirectDeclarations": 5,
+      "matchingDirectDeclarations": 5,
+      "candidateDirectAbsentFromCaptured": [],
+      "typeOrVisibilityDifferences": [],
+      "capturedOutsideDirectDeclarationScope": [],
+      "capturedCrons": [
+        {
+          "module": "crons.js",
+          "identifier": "expire",
+          "udfPath": "crons.js:purge",
+          "schedule": {
+            "type": "interval",
+            "seconds": 86400
+          },
+          "argsOmitted": true
+        }
+      ],
+      "schema": {
+        "activeHash": "70892a25c2e66bd0b3893ae441d59bb84be04edcdd4d9876e801448305eec513",
+        "inProgressHash": null
+      },
+      "cronScheduleTargetComparison": {
+        "candidate": 1,
+        "captured": 1,
+        "matching": 1,
+        "argumentsCompared": false
+      }
+    }
+  ],
+  "componentPathComparison": {
+    "candidate": [
+      "",
+      "actionCache",
+      "aggregate",
+      "workflow",
+      "workflow/workpool"
+    ],
+    "captured": [
+      "",
+      "actionCache",
+      "aggregate",
+      "workflow",
+      "workflow/workpool"
+    ],
+    "matching": true,
+    "httpPrefixOmittedForAll": true,
+    "argumentsCompared": false,
+    "capturedStatesAllActive": true
+  },
+  "schemaComparison": {
+    "capturedNamespaces": 5,
+    "activeFingerprintsPresent": true,
+    "inProgressAbsentAtEachQuery": true,
+    "candidateComparableCanonicalSchemaArtifactAvailable": false,
+    "bundleHashesAreNotComparable": true
+  }
+}
