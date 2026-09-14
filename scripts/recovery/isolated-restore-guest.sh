@@ -97,9 +97,9 @@ cfg_value() { awk -v k="$2" -F': ' '$1==k{print $2}' <<<"$1"; }   # same, over a
 # the helper or keep the caller's cleanup trap from running. Readiness loops
 # already carry a guest-side timeout; the host-side one is slightly longer so
 # the guest-side exit status is the one reported when it fires.
-guest_exec() { timeout "$PROBE_SECONDS" pct exec "$@"; }
-guest_exec_ready() { timeout "$((READY_SECONDS + PROBE_SECONDS))" pct exec "$@"; }
-guest_pct() { timeout "$PROBE_SECONDS" pct "$@"; }   # push, pull, start
+guest_exec() { timeout --kill-after=5 "$PROBE_SECONDS" pct exec "$@"; }
+guest_exec_ready() { timeout --kill-after=5 "$((READY_SECONDS + PROBE_SECONDS))" pct exec "$@"; }
+guest_pct() { timeout --kill-after=5 "$PROBE_SECONDS" pct "$@"; }   # push, pull, start
 
 volid_of() { echo "${1%%,*}"; }   # "ceph-vm:vm-913-disk-0,size=32G" -> "ceph-vm:vm-913-disk-0"
 
@@ -161,11 +161,16 @@ write_record() {
 record_value() { awk -v k="$2" -F'=' '$1==k{print substr($0, length(k)+2)}' "$(record_path "$1")"; }
 
 # The live config must match the record written when this run created the guest.
-assert_record_matches() {
+assert_record_owner() {
   local ctid=$1
   [ -f "$(record_path "$ctid")" ] || die "no run record for $ctid in $RUN_DIR; refusing"
   [ "$(record_value "$ctid" ctid)" = "$ctid" ] || die "run record ctid mismatch"
   [ "$(record_value "$ctid" node)" = "$(hostname)" ] || die "run record node mismatch"
+}
+
+assert_record_matches() {
+  local ctid=$1
+  assert_record_owner "$ctid"
   [ "$(record_value "$ctid" hostname)" = "$(config_value "$ctid" hostname)" ] || die "hostname differs from run record"
   [ "$(record_value "$ctid" rootfs)" = "$(volid_of "$(config_value "$ctid" rootfs)")" ] || die "rootfs volume differs from run record"
   [ "$(record_value "$ctid" mp0)" = "$(volid_of "$(config_value "$ctid" mp0)")" ] || die "mp0 volume differs from run record"
@@ -430,7 +435,7 @@ cmd_start_db() {
   local ctid=$1
   require_ctid "$ctid"; assert_guest_isolated "$ctid" ""
   guest_exec "$ctid" -- docker start app-postgres-1 >/dev/null || die "docker start app-postgres-1 failed"
-  guest_exec_ready "$ctid" -- timeout "$READY_SECONDS" sh -c 'until docker exec app-postgres-1 pg_isready -q; do sleep 2; done' \
+  guest_exec_ready "$ctid" -- timeout --kill-after=5 "$READY_SECONDS" sh -c 'until docker exec app-postgres-1 pg_isready -q; do sleep 2; done' \
     || die "PostgreSQL not ready within $READY_SECONDS s"
   echo "databases (name|bytes):"
   guest_exec "$ctid" -- docker exec app-postgres-1 psql -U postgres -At -c \
@@ -446,7 +451,7 @@ cmd_start_backend() {
   local ctid=$1
   require_ctid "$ctid"; assert_guest_isolated "$ctid" "app-postgres-1"
   guest_exec "$ctid" -- docker start app-convex-backend-1 >/dev/null || die "docker start app-convex-backend-1 failed"
-  guest_exec_ready "$ctid" -- timeout "$READY_SECONDS" sh -c 'until curl -fsS -m 5 http://127.0.0.1:3210/version >/dev/null; do sleep 2; done' \
+  guest_exec_ready "$ctid" -- timeout --kill-after=5 "$READY_SECONDS" sh -c 'until curl -fsS -m 5 http://127.0.0.1:3210/version >/dev/null; do sleep 2; done' \
     || die "Convex backend not ready within $READY_SECONDS s"
   local version
   version=$(guest_exec "$ctid" -- curl -fsS -m 5 http://127.0.0.1:3210/version) || die "version read failed"
@@ -465,7 +470,7 @@ cmd_read_identities() {
   # The key is derived inside the guest from the archived instance secret, so it
   # is a live production credential; it exists only briefly in a 0600 file and
   # the guest-side trap removes it on any exit, signal or interruption.
-  guest_exec_ready "$ctid" -- sh -c 'trap "rm -f /root/.restore-admin-key" EXIT HUP INT TERM; umask 077; rm -f /root/restore-module-identities.json; docker exec app-convex-backend-1 ./generate_admin_key.sh | tail -1 > /root/.restore-admin-key; python3 /root/guest-module-identities.py' \
+  guest_exec_ready "$ctid" -- sh -c 'trap "rm -f /root/.restore-admin-key" EXIT HUP INT TERM; umask 077; rm -f /root/.restore-admin-key /root/restore-module-identities.json || exit 1; set -C; docker exec app-convex-backend-1 ./generate_admin_key.sh | tail -1 > /root/.restore-admin-key || exit 1; set +C; python3 /root/guest-module-identities.py' \
     || die "identity read failed inside guest (see classification above)"
   guest_exec "$ctid" -- sh -c '[ ! -e /root/.restore-admin-key ]' || die "admin key file still present in guest"
   umask 077
@@ -482,12 +487,13 @@ cmd_destroy() {
   local ctid=$1 rootfs mp0
   require_ctid "$ctid"
   [ -e "$PVE_LXC_DIR/$ctid.conf" ] || die "no local guest $ctid"
-  # Stop first, before any gate can refuse. require_ctid and the local config
-  # check above already scope this to a disposable 911-913 guest on this node,
+  assert_record_owner "$ctid"
+  # Stop after establishing record ownership, before checking live drift. require_ctid and the local config
+  # check and ownership record scope this to a disposable guest on this node,
   # and no gate failure -- including a drifted run record -- may leave a
   # production-derived guest running.
   if [ "$(pct status "$ctid")" = "status: running" ]; then
-    timeout "$READY_SECONDS" pct stop "$ctid" || die "pct stop $ctid failed; guest may still be running, inspect before retrying"
+    timeout --kill-after=5 "$READY_SECONDS" pct stop "$ctid" || die "pct stop $ctid failed; guest may still be running, inspect before retrying"
   fi
   [ "$(pct status "$ctid")" = "status: stopped" ] || die "guest $ctid did not stop; refusing to purge"
   # Only now decide whether this guest may be purged. Anything attached after

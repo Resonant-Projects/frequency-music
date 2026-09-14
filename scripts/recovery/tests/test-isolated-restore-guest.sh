@@ -20,6 +20,7 @@ export PATH="$work/bin:$PATH"
 cat > "$work/bin/timeout" <<'EOF'
 #!/usr/bin/env bash
 # shim: record the deadline, then run the command (never hangs in tests)
+[ "$1" = --kill-after=5 ] || exit 99; shift
 echo "timeout $1" >> "$SHIM_STATE/calls.log"; shift; exec "$@"
 EOF
 cat > "$work/bin/hostname" <<'EOF'
@@ -436,6 +437,14 @@ reset_state; seed_record
 sed -i.bak 's#^mp0=ceph-vm:vm-913-disk-1#mp0=ceph-vm:vm-913-disk-9#' "$work/runs/913.record"
 expect 1 "destroy refuses when record volumes differ from live config" --msg "mp0 volume differs from run record" destroy 913
 [ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL destroy ran despite record mismatch"; failn=$((failn+1)); }
+reset_state; echo "status: running" > "$SHIM_STATE/status"; touch "$work/pve/913.conf"
+expect 1 "destroy does not stop an unrecorded running guest" --msg "no run record" destroy 913
+if grep -q '^pct stop' "$SHIM_STATE/calls.log"; then echo "FAIL stopped unowned guest"; failn=$((failn+1)); fi
+reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
+sed -i.bak 's/^node=prox4/node=another-node/' "$work/runs/913.record"
+expect 1 "destroy does not stop a guest recorded on another node" --msg "node mismatch" destroy 913
+if grep -q '^pct stop' "$SHIM_STATE/calls.log"; then echo "FAIL stopped wrong-node guest"; failn=$((failn+1)); fi
+
 # A gate that refuses must never leave a production-derived guest running, and
 # the record gate is a gate: it has to come after the stop, not before it.
 reset_state; seed_record; echo "status: running" > "$SHIM_STATE/status"
@@ -470,6 +479,27 @@ cp "$work/bin/pct.real" "$work/bin/pct"
 grep -q 'stop 913' "$SHIM_STATE/calls.log" && grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL destroy sequence"; failn=$((failn+1)); }
 [ ! -f "$work/runs/913.record" ] && ls "$work/runs"/913.record.destroyed-* >/dev/null 2>&1 || { echo "FAIL record not archived"; failn=$((failn+1)); }
 expect 1 "destroy refuses a second time (record archived, guest gone)" destroy 913
+
+# Execute the actual guest shell against linked key files, using inert commands.
+python3 - "$helper" "$work" <<'PYKEY'
+import pathlib, re, subprocess, sys
+helper, work = map(pathlib.Path, sys.argv[1:])
+source = helper.read_text()
+command = next(line.split("-- sh -c '", 1)[1].rsplit("'", 1)[0] for line in source.splitlines() if "trap \"rm -f /root/.restore-admin-key" in line)
+root = work / "key-regression"
+root.mkdir()
+command = command.replace("/root/", str(root) + "/").replace("docker exec app-convex-backend-1 ./generate_admin_key.sh", "printf synthetic-key").replace("python3 " + str(root) + "/guest-module-identities.py", "true")
+target = root / "target"
+key = root / ".restore-admin-key"
+for kind in ("symlink", "hardlink"):
+    target.write_text("unchanged")
+    if kind == "symlink": key.symlink_to(target)
+    else: key.hardlink_to(target)
+    subprocess.run(["sh", "-c", command], check=True)
+    assert target.read_text() == "unchanged", kind
+    assert not key.exists(), kind
+PYKEY
+if [ "$?" -eq 0 ]; then echo "ok   admin key creation preserves symlink and hardlink targets"; pass=$((pass+1)); else failn=$((failn+1)); fi
 
 echo "passed=$pass failed=$failn"
 [ "$failn" -eq 0 ]
