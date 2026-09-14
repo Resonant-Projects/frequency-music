@@ -283,6 +283,39 @@ cmd_prepare() {
   for dir in etc/systemd/system usr/lib/systemd/system usr/local/lib/systemd/system lib/systemd/system; do
     [ -d "$root/$dir" ] && enablement_dirs+=("$root/$dir")
   done
+  # Lingering user managers bypass the system-unit enablement audit.
+  if [ -e "$root/var/lib/systemd/linger" ] || [ -L "$root/var/lib/systemd/linger" ]; then
+    assert_within_root "$root" "$root/var/lib/systemd/linger"
+    [ -z "$(find "$root/var/lib/systemd/linger" -mindepth 1 -print -quit)" ] \
+      || die "lingering user accounts are not approved for rehearsal"
+  fi
+  # Permit only the standard multi-user boot target, without target overrides.
+  local target dep deps
+  for dir in "${enablement_dirs[@]}"; do
+    if [ -e "$dir/default.target" ] || [ -L "$dir/default.target" ]; then
+      [ -L "$dir/default.target" ] || die "custom default.target is not approved"
+      target=$(readlink "$dir/default.target")
+      case "$target" in multi-user.target|/lib/systemd/system/multi-user.target|/usr/lib/systemd/system/multi-user.target) ;; *) die "custom default.target is not approved";; esac
+    fi
+    for target in default.target multi-user.target; do
+      [ ! -e "$dir/$target.d" ] || die "boot target drop-ins require explicit review"
+    done
+    if [ -e "$dir/multi-user.target" ]; then
+      assert_within_root "$root" "$dir/multi-user.target"
+      deps=$(python3 - "$dir/multi-user.target" <<'PYTARGET'
+import sys
+text = open(sys.argv[1]).read().replace("\\\n", " ")
+for line in text.splitlines():
+    key, sep, value = line.partition("=")
+    if sep and key.strip() in ("Wants", "Requires", "Upholds", "BindsTo", "Requisite"):
+        print("\n".join(value.split()))
+PYTARGET
+) || die "cannot inspect boot target dependencies"
+      for dep in $deps; do
+        [ "$dep" = basic.target ] || allowed_enabled "$dep" || die "unapproved boot target dependency"
+      done
+    fi
+  done
   # `find` does not descend into a .wants/.requires entry that is itself a
   # symlink to a directory, but systemd does follow it, so every unit enabled
   # inside one would be invisible to the allow-list below. Refuse outright.

@@ -261,6 +261,16 @@ mkdir -p "$work/lxc/913/rootfs/usr/local/lib/systemd/system/multi-user.target.wa
 ln -s /etc/systemd/system/evil.service "$work/lxc/913/rootfs/usr/local/lib/systemd/system/multi-user.target.wants/evil.service"
 expect 1 "prepare audits local vendor wants" --msg "outside the allow-list" prepare 913
 
+reset_state; seed_record; make_rootfs
+ln -s custom.target "$work/lxc/913/rootfs/etc/systemd/system/default.target"
+expect 1 "prepare rejects a custom default target" --msg "custom default.target" prepare 913
+reset_state; seed_record; make_rootfs
+printf '[Unit]\nRequires=evil.service\n' > "$work/lxc/913/rootfs/etc/systemd/system/multi-user.target"
+expect 1 "prepare rejects unapproved boot target dependency" --msg "unapproved boot target dependency" prepare 913
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/var/lib/systemd/linger"; touch "$work/lxc/913/rootfs/var/lib/systemd/linger/root"
+expect 1 "prepare rejects lingering user accounts" --msg "lingering user accounts" prepare 913
+
 # The marker write uses `>`, which follows a symlink out of the rootfs.
 reset_state; seed_record; make_rootfs
 mkdir -p "$work/hostside"; echo "ORIGINAL HOST FILE CONTENT" > "$work/hostside/victim"
