@@ -106,31 +106,35 @@ Assumptions still to be confirmed at execution time, all of which fail closed: `
 
 Target: CT 913 on prox4 (about 42 GiB free RAM, 24 cores, mounts `ceph-vm` and `nas-docker`; hosts neither CT113 nor the worker CT107). Fallback host prox6. Budget: 8 GiB RAM, 4 cores, 96 GiB thin allocation on `ceph-vm`, about 45 minutes wall time. `restore` repeats the preflight immediately before the mutation: cluster-wide absence of the CTID, no local config or run record, archive listing, at least 150 GiB available on `ceph-vm` and at least 12 GiB `MemAvailable` on the node.
 
-```sh
+```bash
 set -e   # any failed step stops the sequence
 H=prox4; C=913; A='nas-docker:backup/vzdump-lxc-113-2026_09_07-10_31_51.tar.zst'
 R="bash /root/isolated-restore-guest.sh"
+# Bound connection establishment and detect a dead transport, including during cleanup.
+SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=15 -o ServerAliveCountMax=3)
 # On any failure after restore, purge the guest so no copy of production credentials or volumes outlives the run.
-trap 'echo "rehearsal step failed; purging CT $C"; ssh "$H" "$R destroy $C" || echo "destroy refused or failed; CT $C may still exist, inspect before retrying"' ERR
-scp scripts/recovery/isolated-restore-guest.sh scripts/recovery/guest-module-identities.py "$H":/root/
-ssh "$H" "$R preflight $C $A $H"                       # read-only
+trap 'echo "rehearsal step failed; purging CT $C"; ssh "${SSH_OPTS[@]}" "$H" "$R destroy $C" || echo "destroy refused or failed; CT $C may still exist, inspect before retrying"' ERR
+scp "${SSH_OPTS[@]}" scripts/recovery/isolated-restore-guest.sh scripts/recovery/guest-module-identities.py "$H":/root/
+ssh "${SSH_OPTS[@]}" "$H" "$R preflight $C $A $H"                       # read-only
 # ---- first mutation begins here ----
-ssh "$H" "$R restore $C $A $H"                         # stopped guest, net0 stripped, run record written
-ssh "$H" "$R prepare $C"                               # offline suppression on the mounted rootfs
-ssh "$H" "$R start $C"                                 # re-asserts the stopped config, pct start, non-zero if systemd never settles
-ssh "$H" "$R verify $C"                                # must pass before any docker start
-ssh "$H" "$R start-db $C"                              # sizes and counts before the backend runs
-ssh "$H" "$R start-backend $C"                         # prints /version
-ssh "$H" "$R read-identities $C /root/guest-module-identities.py"   # key generated, used and removed inside the guest
-scp "$H":/root/isolated-restore-runs/$C-*-module-identities.json docs/evidence/   # per-run file named by the record timestamp
+ssh "${SSH_OPTS[@]}" "$H" "$R restore $C $A $H"                         # stopped guest, net0 stripped, run record written
+ssh "${SSH_OPTS[@]}" "$H" "$R prepare $C"                               # offline suppression on the mounted rootfs
+ssh "${SSH_OPTS[@]}" "$H" "$R start $C"                                 # re-asserts the stopped config, pct start, non-zero if systemd never settles
+ssh "${SSH_OPTS[@]}" "$H" "$R verify $C"                                # must pass before any docker start
+ssh "${SSH_OPTS[@]}" "$H" "$R start-db $C"                              # sizes and counts before the backend runs
+ssh "${SSH_OPTS[@]}" "$H" "$R start-backend $C"                         # prints /version
+ssh "${SSH_OPTS[@]}" "$H" "$R read-identities $C /root/guest-module-identities.py"   # key generated, used and removed inside the guest
+scp "${SSH_OPTS[@]}" "$H":/root/isolated-restore-runs/$C-*-module-identities.json docs/evidence/   # per-run file named by the record timestamp
 vpx tsx scripts/convex-identity-delta.ts \
   docs/evidence/frequency-20260912T165507Z/frequency-deployed-module-identities.json \
   docs/evidence/$C-<stamp>-module-identities.json
 # ---- evidence recorded, then cleanup constrained to the recorded guest and its volumes ----
-ssh "$H" "$R destroy $C && rm -f /root/isolated-restore-guest.sh /root/guest-module-identities.py"
+ssh "${SSH_OPTS[@]}" "$H" "$R destroy $C && rm -f /root/isolated-restore-guest.sh /root/guest-module-identities.py"
 ```
 
-Every command above returns non-zero on failure and the block runs under `set -e` with an `ERR` trap that runs `destroy`, so a failed step stops the sequence and purges the guest. `restore` itself purges a guest it just created if isolation cannot be established or the run record cannot be written, so no stopped copy with production network settings or credentials is left behind by a partial run; if that purge itself fails, `restore` says so and exits non-zero. `destroy` refuses a guest without a matching run record, in which case the operator inspects before retrying. `start` re-asserts the full stopped config immediately before `pct start`, so nothing attached between `prepare` and the first boot can run with connectivity. `start-db`, `start-backend` and `read-identities` each re-run the live isolation gate (host config with no `net`, `mp1+`, `unused`, device or `hookscript` keys; prepare marker; guest interfaces; masked units; only the containers expected at that step running), so skipping `verify` or attaching anything afterwards fails closed. `destroy` first stops a running guest (the record owns the CTID), then re-asserts the full config immediately before purge; an unsafe config leaves the guest stopped and unpurged for inspection rather than running. If `start` fails, its failed-unit output is already printed and the trap runs `destroy`; do not start containers. If `prepare` is interrupted between mount and unmount, run `pct unmount $C` and rerun `prepare`.
+Run the block in Bash. Every SSH and SCP invocation, including the cleanup trap, uses a 15-second connection timeout, a single connection attempt, batch mode (no interactive authentication prompts), and server-alive probes that disconnect an unresponsive transport after approximately 45 seconds. These settings detect connection loss; they do not impose a total deadline on a responsive remote command. Guest operations retain the helper's host-side deadlines. If the host is unreachable, cleanup cannot be guaranteed: the trap reports failure and the operator must inspect and remove the recorded guest when access is restored.
+
+Every command above returns non-zero on failure and the block runs under `set -e` with an `ERR` trap that runs `destroy`, so a failed step stops the sequence and attempts to purge the guest. `restore` itself purges a guest it just created if isolation cannot be established or the run record cannot be written, so no stopped copy with production network settings or credentials is left behind by a partial run; if that purge itself fails, `restore` says so and exits non-zero. `destroy` refuses a guest without a matching run record, in which case the operator inspects before retrying. `start` re-asserts the full stopped config immediately before `pct start`, so nothing attached between `prepare` and the first boot can run with connectivity. `start-db`, `start-backend` and `read-identities` each re-run the live isolation gate (host config with no `net`, `mp1+`, `unused`, device or `hookscript` keys; prepare marker; guest interfaces; masked units; only the containers expected at that step running), so skipping `verify` or attaching anything afterwards fails closed. `destroy` first stops a running guest (the record owns the CTID), then re-asserts the full config immediately before purge; an unsafe config leaves the guest stopped and unpurged for inspection rather than running. If `start` fails, its failed-unit output is already printed and the trap runs `destroy`; do not start containers. If `prepare` is interrupted between mount and unmount, run `pct unmount $C` and rerun `prepare`.
 
 Interpretation of the identity delta: `identical: true` establishes **root module artifact equality only** between the archive and the 2026-09-12 observation. It does not establish equality of component definitions, function validators, applied schemas, authentication configuration, cron schedules or scheduled work, and it says nothing about data currency: restoring the archive still discards every change after 2026-09-07T14:31:51Z. Any difference means the archive differs in at least the listed module paths. Neither outcome attests provenance, and neither closes the full semantic delta or recovery-point gates, which remain open as listed below.
 
