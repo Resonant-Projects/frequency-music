@@ -24,12 +24,13 @@ export function supervise(command, args, options = {}) {
     const chunks = [];
     let child;
     const stop = () => {
-      if (!child?.pid) return;
+      if (!child?.pid || child.exitCode !== null || child.signalCode !== null)
+        return;
       try {
         // Detached POSIX group also contains the tsx loader's descendants.
         process.kill(-child.pid, "SIGKILL");
       } catch {
-        child.kill("SIGKILL");
+        // Never fall back to a numeric PID that may already have exited.
       }
     };
     const finish = (result) => {

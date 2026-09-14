@@ -33,10 +33,10 @@ test.each([
   });
 });
 
-test("terminates descendants retaining output pipes", () => {
+test("terminates a live capture group including descendants", () => {
   expect(
     run(
-      "require('node:child_process').spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'inherit'});process.exit(0)",
+      "require('node:child_process').spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'inherit'});setInterval(()=>{},1000)",
     ),
   ).toEqual({ error: { complete: false, code: "capture_deadline" } });
 });
@@ -95,4 +95,21 @@ console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval((
   expect(JSON.parse(result.stdout)).toEqual({
     error: { complete: false, code: "capture_interrupted" },
   });
+});
+
+test("successful exit does not signal a reaped child PID or process group", () => {
+  const code = `import { supervise } from ${JSON.stringify(supervisor)};
+let signals=0;process.kill=()=>{signals++;return true};
+const result=await supervise(process.execPath,['-e','console.log(JSON.stringify({format:"frequency-deployment-inspection-v1",deploymentAuthorized:false}))'],{deadlineMs:2000,env:{APP_ENV:"test"}});
+console.log(JSON.stringify({signals,result}));`;
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=module", "-e", code],
+    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 4000 },
+  );
+  expect(result.status).toBe(0);
+  expect(JSON.parse(result.stdout).signals).toBe(0);
+  expect(JSON.parse(result.stdout).result.output).toContain(
+    "frequency-deployment-inspection-v1",
+  );
 });
