@@ -52,7 +52,7 @@ grep -q '<stamp>' <<<"$block" && bad "block contains a <stamp> placeholder, whic
 # --- fakes ---
 cat > "$work/bin/vpx" <<'EOF'
 #!/usr/bin/env bash
-echo "vpx $*" >> "$LOG"; exit 0
+echo "vpx $*" >> "$LOG"; [ -n "${SIGNAL_AT_DELTA:-}" ] && kill -TERM "$PPID"; exit 0
 EOF
 # scp materialises the pulled evidence file, so the block's own "did the pull
 # produce anything" guard is exercised rather than tripped by the harness.
@@ -74,6 +74,7 @@ step=$(sed -E 's/.*isolated-restore-guest\.sh ([a-z-]+).*/\1/' <<<"$remote")
 echo "ssh $step" >> "$LOG"
 echo "remote $remote" >> "$LOG"
 [ "$step" = read-identities ] && echo 'identities file: /root/isolated-restore-runs/913-20260913T000000Z-module-identities.json sha256=fake'
+[ -n "${SIGNAL_STEP:-}" ] && [ "$step" = "$SIGNAL_STEP" ] && kill -TERM "$PPID"
 [ -n "${FAIL_STEP:-}" ] && [ "$step" = "$FAIL_STEP" ] && exit 3
 [ -n "${HANG_STEP:-}" ] && [ "$step" = "$HANG_STEP" ] && sleep 3600
 exit 0
@@ -128,6 +129,11 @@ elapsed=$((SECONDS - start)); unset CEILING HANG_STEP
 grep -q 'rehearsal step failed' "$work/out" && ok "ERR trap ran on a stalled step" || bad "ERR trap did not run on a stalled step"
 grep -q '^ssh destroy$' "$work/log" && ok "stalled step triggers destroy" || bad "stalled step did not trigger destroy"
 grep -q '^ssh restore$' "$work/log" && bad "block continued past a stalled step" || ok "block stopped at the stalled step"
+
+rm -f "$work/docs/evidence"/*module-identities.json
+: > "$work/log"; rc=0; SIGNAL_AT_DELTA=1 run_block || rc=$?; unset SIGNAL_AT_DELTA
+[ "$rc" -eq 143 ] && ok "TERM preserves signal failure status" || bad "TERM status was $rc"
+grep -q '^ssh destroy$' "$work/log" && ok "TERM triggers cleanup" || bad "TERM skipped cleanup"
 
 echo "passed=$pass failed=$failn"
 [ "$failn" -eq 0 ]

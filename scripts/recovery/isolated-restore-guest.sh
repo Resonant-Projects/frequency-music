@@ -143,7 +143,13 @@ sys.exit(0 if p==root or p.startswith(root+os.sep) else 1)' "$root" "$path" \
 
 # Also called inside the errexit-disabled purge guard; checks its own commands.
 write_record() {
-  local ctid=$1 archive=$2 node=$3
+  local ctid=$1 archive=$2 node=$3 cfg rootfs mp0 stamp
+  cfg=$(pct config "$ctid") || die "cannot read config for run record"
+  rootfs=$(awk -F': ' '$1=="rootfs" {print $2}' <<<"$cfg")
+  mp0=$(awk -F': ' '$1=="mp0" {print $2}' <<<"$cfg")
+  rootfs=$(volid_of "$rootfs"); mp0=$(volid_of "$mp0")
+  [[ "$rootfs" =~ ^${STORAGE}:vm-${ctid}-disk-[0-9]+$ && "$mp0" =~ ^${STORAGE}:vm-${ctid}-disk-[0-9]+$ ]] || die "invalid volumes for run record"
+  stamp=$(date -u +%Y-%m-%dT%H:%M:%SZ) || die "cannot timestamp run record"
   mkdir -p "$RUN_DIR" || die "could not create run directory $RUN_DIR"
   chmod 700 "$RUN_DIR" || die "could not restrict run directory $RUN_DIR"
   umask 077
@@ -151,10 +157,10 @@ write_record() {
     echo "ctid=$ctid"
     echo "node=$node"
     echo "archive=$archive"
-    echo "created_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "created_at=$stamp"
     echo "hostname=convex-hatchet-restore-$ctid"
-    echo "rootfs=$(volid_of "$(config_value "$ctid" rootfs)")"
-    echo "mp0=$(volid_of "$(config_value "$ctid" mp0)")"
+    echo "rootfs=$rootfs"
+    echo "mp0=$mp0"
   } > "$(record_path "$ctid")"
 }
 
@@ -212,6 +218,9 @@ run_preflight() {
 
 cmd_restore() {
   local ctid=$1 archive=$2 node=$3
+  mkdir -p "${RUN_DIR}.locks" || die "cannot create restore lock directory"
+  exec 9>"${RUN_DIR}.locks/$ctid.lock" || die "cannot open restore lock"
+  flock -n 9 || die "another restore owns this CTID lock"
   run_preflight "$ctid" "$archive" "$node"
   if ! pct restore "$ctid" "$archive" \
     --storage "$STORAGE" --unprivileged 1 --hostname "convex-hatchet-restore-$ctid" \
@@ -351,6 +360,70 @@ PYTARGET
     printf 'unexpected enabled unit: %s\n' "${unexpected[@]}" >&2
     die "offline rootfs has enabled units outside the allow-list"
   fi
+  # Follow dependencies declared in unit files and drop-ins, not just links.
+  python3 - "$root" "${ALLOWED_ENABLED[@]}" <<'PYDEPS' || die "boot dependency audit failed"
+import fnmatch, pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+patterns = sys.argv[2:] + [
+    "basic.target", "sysinit.target", "sockets.target", "timers.target", "paths.target",
+    "local-fs.target", "local-fs-pre.target", "remote-fs-pre.target", "swap.target",
+    "multi-user.target", "network.target", "network-pre.target", "network-online.target",
+    "systemd-journald.service", "systemd-journald.socket", "systemd-journald-dev-log.socket",
+    "systemd-tmpfiles-setup.service", "systemd-tmpfiles-setup-dev.service",
+    "systemd-sysctl.service", "systemd-modules-load.service", "systemd-udevd.service",
+    "systemd-udevd-control.socket", "systemd-udevd-kernel.socket", "systemd-udev-trigger.service",
+]
+dirs = [root / p for p in ("etc/systemd/system", "usr/local/lib/systemd/system", "usr/lib/systemd/system", "lib/systemd/system")]
+keys = {"Wants", "Requires", "Requisite", "BindsTo", "Upholds", "OnSuccess", "OnFailure"}
+def approved(name):
+    return any(fnmatch.fnmatchcase(name, pattern) for pattern in patterns)
+def read(path):
+    # Resolve absolute guest links inside the guest root, never on the host.
+    for _ in range(32):
+        if not path.is_symlink(): break
+        target = path.readlink()
+        if str(target) == "/dev/null": return ""
+        path = root / str(target).lstrip("/") if target.is_absolute() else path.parent / target
+    else: raise ValueError("unit symlink cycle")
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root.resolve()): raise ValueError("unit path escapes rootfs")
+    return path.read_text() if path.exists() else ""
+queue = {"multi-user.target", "basic.target", "sysinit.target"}
+for directory in dirs:
+    if not directory.exists(): continue
+    for link in directory.rglob("*"):
+        if link.is_symlink() and link.parent.name.endswith((".wants", ".requires", ".upholds")):
+            queue.add(link.name)
+seen = set()
+while queue:
+    unit = queue.pop()
+    if unit in seen: continue
+    if not approved(unit): raise ValueError("unapproved unit dependency: " + unit)
+    seen.add(unit)
+    texts = []
+    for directory in dirs:
+        path = directory / unit
+        if path.exists() or path.is_symlink():
+            texts.append(read(path)); break
+    # Check all applicable drop-ins conservatively, including templates and type-wide overrides.
+    names = {unit, unit.rsplit(".", 1)[-1]}
+    if "@" in unit: names.add(unit.split("@", 1)[0] + "@." + unit.rsplit(".", 1)[-1])
+    for directory in dirs:
+        for name in names:
+            for dropin in (directory / (name + ".d")).glob("*.conf"):
+                texts.append(read(dropin))
+    for text in texts:
+        text = text.replace("\\\n", " ")
+        for line in text.splitlines():
+            key, sep, value = line.partition("=")
+            if sep and key.strip() in keys:
+                queue.update(value.split())
+    for directory in dirs:
+        for suffix in ("wants", "requires", "upholds"):
+            links = directory / (unit + "." + suffix)
+            if links.is_dir(): queue.update(p.name for p in links.iterdir())
+print("boot dependency closure audited:", len(seen))
+PYDEPS
   echo "enabled units surviving on offline rootfs:"
   find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' -o -path '*.upholds/*' \) | sed "s#^$root#  #" | sort
 
@@ -421,6 +494,13 @@ cmd_start() {
   assert_record_matches "$ctid"
   [ "$(pct status "$ctid")" = "status: stopped" ] || die "guest $ctid is not stopped; refusing to start"
   assert_isolated_config "$ctid"
+  local cfg available
+  cfg=$(pct config "$ctid") || die "cannot read resource settings"
+  [ "$(awk -F': ' '$1=="memory" {print $2}' <<<"$cfg")" = 8192 ] &&
+    [ "$(awk -F': ' '$1=="cores" {print $2}' <<<"$cfg")" = 4 ] &&
+    [ "$(awk -F': ' '$1=="swap" {print $2}' <<<"$cfg")" = 1024 ] || die "guest resource budget drifted"
+  available=$(awk '/MemAvailable/{print $2}' "$MEMINFO") || die "cannot read host headroom"
+  [[ "$available" =~ ^[0-9]+$ ]] && [ "$available" -ge "$MIN_FREE_MEM_KIB" ] || die "insufficient host headroom before start"
   guest_pct start "$ctid" || die "pct start $ctid failed"
   wait_for_boot "$ctid"
 }

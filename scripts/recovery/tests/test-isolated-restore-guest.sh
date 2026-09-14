@@ -81,6 +81,8 @@ good_config() {
 arch: amd64
 hostname: convex-hatchet-restore-913
 memory: 8192
+cores: 4
+swap: 1024
 mp0: ceph-vm:vm-913-disk-1,mp=/srv/app-data,backup=1,size=64G
 onboot: 0
 rootfs: ceph-vm:vm-913-disk-0,size=32G
@@ -271,6 +273,15 @@ reset_state; seed_record; make_rootfs
 mkdir -p "$work/lxc/913/rootfs/var/lib/systemd/linger"; touch "$work/lxc/913/rootfs/var/lib/systemd/linger/root"
 expect 1 "prepare rejects lingering user accounts" --msg "lingering user accounts" prepare 913
 
+for location in unit dropin; do
+  reset_state; seed_record; make_rootfs
+  base="$work/lxc/913/rootfs/etc/systemd/system"
+  ln -sf ../docker.service "$base/multi-user.target.wants/docker.service"
+  if [ "$location" = unit ]; then dest="$base/docker.service"; else mkdir -p "$base/docker.service.d"; dest="$base/docker.service.d/override.conf"; fi
+  printf '[Unit]\nWants=unapproved-producer.service\n' > "$dest"
+  expect 1 "prepare rejects hidden dependency in $location" --msg "boot dependency audit failed" prepare 913
+done
+
 # The marker write uses `>`, which follows a symlink out of the rootfs.
 reset_state; seed_record; make_rootfs
 mkdir -p "$work/hostside"; echo "ORIGINAL HOST FILE CONTENT" > "$work/hostside/victim"
@@ -317,6 +328,24 @@ expect 1 "start rejects raw config without leaking its value" --msg "unexpected 
 if grep -q 'do-not-log-this-fixture' "$work/last.out"; then
   echo "FAIL rejected config leaked its value"; failn=$((failn+1))
 fi
+
+reset_state; seed_record
+echo "MemAvailable: 1000 kB" > "$work/meminfo"
+expect 1 "start rechecks host headroom" --msg "insufficient host headroom" start 913
+reset_state; seed_record
+sed -i.bak 's/memory: 8192/memory: 16384/' "$SHIM_STATE/config"
+expect 1 "start rejects resource drift" --msg "resource budget drifted" start 913
+reset_state; mkdir -p "$work/runs.locks"
+( flock -x 9; touch "$work/locked"; sleep 5 ) 9>"$work/runs.locks/913.lock" & lock_pid=$!
+while [ ! -e "$work/locked" ]; do sleep 0.01; done
+expect 1 "restore refuses a concurrent owner" --msg "CTID lock" restore 913 "$A" prox4
+kill "$lock_pid"; wait "$lock_pid" 2>/dev/null || true
+
+reset_state
+sed '/^case "${1:-}"/,$d' "$helper" > "$work/functions.sh"
+rc=0
+bash -c 'source "$1"; pct() { return 1; }; write_record 913 "$2" prox4' _ "$work/functions.sh" "$A" > "$work/last.out" 2>&1 || rc=$?
+if [ "$rc" -eq 1 ] && [ ! -f "$work/runs/913.record" ]; then echo "ok   failed config read cannot commit a record"; pass=$((pass+1)); else echo "FAIL config failure wrote record"; failn=$((failn+1)); fi
 
 # --- start: gated on the current stopped config ---
 reset_state; seed_record
