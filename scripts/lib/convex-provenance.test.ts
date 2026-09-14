@@ -6,6 +6,7 @@ import {
   compareDeployedModules,
   deployedModuleDelta,
   manifestFromPushRequest,
+  moduleIdentityDelta,
   readDeployedModuleHashes,
   verifyManifestSnapshot,
 } from "./convex-provenance";
@@ -54,6 +55,49 @@ test("offline delta rejects malformed or duplicate identities", () => {
     deployedModuleDelta(manifest, {
       moduleHashes: [{ ...manifest.modules[0], hash: "not-a-hash" }],
     }),
+  ).toThrow();
+});
+
+test("identity delta compares two sanitized observations symmetrically and never claims provenance", () => {
+  const a = { path: "a.js", environment: "isolate", hash: "a".repeat(64) };
+  const b = { path: "b.js", environment: "node", hash: "b".repeat(64) };
+  const same = moduleIdentityDelta(
+    { moduleHashes: [b, a], secret: "left-private" },
+    { moduleHashes: [a, b], secret: "right-private" },
+  );
+  expect(same).toMatchObject({
+    identical: true,
+    provenanceEstablished: false,
+    leftCount: 2,
+    rightCount: 2,
+    unchangedCount: 2,
+  });
+  expect(JSON.stringify(same)).not.toContain("private");
+  const differing = moduleIdentityDelta(
+    { moduleHashes: [a, b] },
+    {
+      moduleHashes: [
+        { ...a, hash: "c".repeat(64) },
+        { path: "z.js", environment: "isolate", hash: "d".repeat(64) },
+      ],
+    },
+  );
+  expect(differing).toMatchObject({
+    identical: false,
+    unchangedCount: 0,
+  });
+  expect(differing.onlyLeft.map((m) => m.path)).toEqual(["b.js"]);
+  expect(differing.onlyRight.map((m) => m.path)).toEqual(["z.js"]);
+  expect(differing.changed[0]).toMatchObject({
+    path: "a.js",
+    left: a,
+    right: { hash: "c".repeat(64) },
+  });
+  expect(() =>
+    moduleIdentityDelta({ moduleHashes: [a, a] }, { moduleHashes: [a] }),
+  ).toThrow("Duplicate");
+  expect(() =>
+    moduleIdentityDelta({ moduleHashes: [] }, { moduleHashes: [a] }),
   ).toThrow();
 });
 
