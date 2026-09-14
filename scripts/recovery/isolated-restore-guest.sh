@@ -265,7 +265,7 @@ cmd_prepare() {
   trap 'pct unmount "$ctid" >/dev/null 2>&1 || true' EXIT
   [ -d "$root/etc/systemd/system" ] || die "rootfs did not mount"
   local guarded
-  for guarded in etc etc/systemd etc/systemd/system usr/lib/systemd/system lib/systemd/system etc/op etc/docker root root/.docker var/lib/docker; do
+  for guarded in etc etc/systemd etc/systemd/system usr/lib/systemd/system usr/local/lib/systemd/system lib/systemd/system etc/op etc/docker root root/.docker var/lib/docker; do
     [ -e "$root/$guarded" ] || [ -L "$root/$guarded" ] || continue
     assert_within_root "$root" "$root/$guarded"
   done
@@ -274,13 +274,13 @@ cmd_prepare() {
     rm -f "$root/etc/systemd/system/$unit"
     ln -s /dev/null "$root/etc/systemd/system/$unit"
     chown -h 100000:100000 "$root/etc/systemd/system/$unit" 2>/dev/null || true
-    find "$root/etc/systemd/system" "$root/usr/lib/systemd/system" "$root/lib/systemd/system" -type l -name "$unit" \( -path '*.wants/*' -o -path '*.requires/*' \) -delete 2>/dev/null || true
+    find "$root/etc/systemd/system" "$root/usr/lib/systemd/system" "$root/usr/local/lib/systemd/system" "$root/lib/systemd/system" -type l -name "$unit" \( -path '*.wants/*' -o -path '*.requires/*' -o -path '*.upholds/*' \) -delete 2>/dev/null || true
   done
 
   # rc-local.service is generator-activated when /etc/rc.local is executable.
   rm -f "$root/etc/rc.local"
   local link unit unexpected=() enablement_dirs=()
-  for dir in etc/systemd/system usr/lib/systemd/system lib/systemd/system; do
+  for dir in etc/systemd/system usr/lib/systemd/system usr/local/lib/systemd/system lib/systemd/system; do
     [ -d "$root/$dir" ] && enablement_dirs+=("$root/$dir")
   done
   # `find` does not descend into a .wants/.requires entry that is itself a
@@ -289,7 +289,7 @@ cmd_prepare() {
   local symlinked_dirs=()
   while IFS= read -r link; do
     symlinked_dirs+=("${link#"$root"}")
-  done < <(find "${enablement_dirs[@]}" -maxdepth 1 -type l \( -name '*.wants' -o -name '*.requires' \) | sort)
+  done < <(find "${enablement_dirs[@]}" -maxdepth 1 -type l \( -name '*.wants' -o -name '*.requires' -o -name '*.upholds' \) | sort)
   if ((${#symlinked_dirs[@]})); then
     printf 'symlinked enablement directory: %s\n' "${symlinked_dirs[@]}" >&2
     die "offline rootfs has symlinked enablement directories; units inside them cannot be enumerated"
@@ -297,7 +297,7 @@ cmd_prepare() {
   while IFS= read -r link; do
     unit=${link##*/}
     allowed_enabled "$unit" || unexpected+=("${link#"$root"}")
-  done < <(find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' \) | sort)
+  done < <(find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' -o -path '*.upholds/*' \) | sort)
   # SysV runlevel links become boot dependencies through systemd-sysv-generator
   # unless a native unit of the same name shadows the script. Anything that is
   # not shadowed and not on the allow-list is an unexpected enabled unit.
@@ -308,7 +308,7 @@ cmd_prepare() {
     while IFS= read -r link; do
       name=${link##*/}; name=${name#S[0-9][0-9]}
       shadowed=0
-      for udir in etc/systemd/system usr/lib/systemd/system lib/systemd/system; do
+      for udir in etc/systemd/system usr/lib/systemd/system usr/local/lib/systemd/system lib/systemd/system; do
         [ -e "$root/$udir/$name.service" ] && shadowed=1
       done
       ((shadowed)) || allowed_enabled "$name.service" || unexpected+=("${link#"$root"}")
@@ -319,7 +319,7 @@ cmd_prepare() {
     die "offline rootfs has enabled units outside the allow-list"
   fi
   echo "enabled units surviving on offline rootfs:"
-  find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' \) | sed "s#^$root#  #" | sort
+  find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' -o -path '*.upholds/*' \) | sed "s#^$root#  #" | sort
 
   for file in "${CREDENTIAL_FILES_TO_REMOVE[@]}"; do
     if [ -e "$root/$file" ] || [ -L "$root/$file" ]; then

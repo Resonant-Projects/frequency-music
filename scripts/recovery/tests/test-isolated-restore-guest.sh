@@ -242,7 +242,7 @@ expect 0 "prepare removes an executable rc.local" prepare 913
 [ ! -e "$work/lxc/913/rootfs/etc/rc.local" ] || { echo "FAIL rc.local remains"; failn=$((failn+1)); }
 # find(1) does not descend into a symlinked .wants directory but systemd follows
 # it, so units enabled inside one would never reach the allow-list.
-for d in multi-user.target.wants multi-user.target.requires; do
+for d in multi-user.target.wants multi-user.target.requires multi-user.target.upholds; do
   reset_state; seed_record; make_rootfs
   r="$work/lxc/913/rootfs"; mkdir -p "$r/opt/hidden-wants"
   ln -s /etc/systemd/system/evil-producer.service "$r/opt/hidden-wants/evil-producer.service"
@@ -250,6 +250,17 @@ for d in multi-user.target.wants multi-user.target.requires; do
   expect 1 "prepare rejects a symlinked $d directory" --msg "symlinked enablement directories" prepare 913
   grep -q "symlinked enablement directory: /etc/systemd/system/$d" "$work/last.out" || { echo "FAIL symlinked dir not named"; failn=$((failn+1)); }
 done
+for base in etc/systemd/system usr/local/lib/systemd/system; do
+  reset_state; seed_record; make_rootfs
+  mkdir -p "$work/lxc/913/rootfs/$base/multi-user.target.upholds"
+  ln -s /etc/systemd/system/evil.service "$work/lxc/913/rootfs/$base/multi-user.target.upholds/evil.service"
+  expect 1 "prepare rejects unapproved upholds under $base" --msg "outside the allow-list" prepare 913
+done
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/usr/local/lib/systemd/system/multi-user.target.wants"
+ln -s /etc/systemd/system/evil.service "$work/lxc/913/rootfs/usr/local/lib/systemd/system/multi-user.target.wants/evil.service"
+expect 1 "prepare audits local vendor wants" --msg "outside the allow-list" prepare 913
+
 # The marker write uses `>`, which follows a symlink out of the rootfs.
 reset_state; seed_record; make_rootfs
 mkdir -p "$work/hostside"; echo "ORIGINAL HOST FILE CONTENT" > "$work/hostside/victim"
