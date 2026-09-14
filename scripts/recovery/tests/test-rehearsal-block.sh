@@ -72,6 +72,7 @@ cat > "$work/bin/ssh" <<'EOF'
 remote=${*: -1}
 step=$(sed -E 's/.*isolated-restore-guest\.sh ([a-z-]+).*/\1/' <<<"$remote")
 echo "ssh $step" >> "$LOG"
+echo "remote $remote" >> "$LOG"
 [ "$step" = read-identities ] && echo 'identities file: /root/isolated-restore-runs/913-20260913T000000Z-module-identities.json sha256=fake'
 [ -n "${FAIL_STEP:-}" ] && [ "$step" = "$FAIL_STEP" ] && exit 3
 [ -n "${HANG_STEP:-}" ] && [ "$step" = "$HANG_STEP" ] && sleep 3600
@@ -100,6 +101,9 @@ grep -q '^vpx tsx scripts/convex-identity-delta.ts' "$work/log" && ok "clean run
 
 grep -q 'prox4:/root/isolated-restore-runs/913-20260913T000000Z-module-identities.json docs/evidence/' "$work/log" && ok "pull selects the exact current run" || bad "pull did not select the current run"
 grep -q 'docs/evidence/913-20260912T000000Z-module-identities.json' "$work/log" && bad "comparison included older evidence" || ok "comparison excludes older evidence"
+
+grep -q 'remote systemd-run .*RuntimeMaxSec=2400.*TimeoutStopSec=30.*KillMode=control-group' "$work/log" && ok "restore runs under a remote control-group deadline" || bad "remote restore deadline missing"
+grep -q 'remote systemctl stop .* && bash .* destroy 913' "$work/log" && ok "cleanup stops the remote service before destroy" || bad "cleanup did not stop the remote service"
 
 # B: the evidence pull produces nothing.
 rm -f "$work/docs/evidence"/*module-identities.json
