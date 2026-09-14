@@ -44,7 +44,12 @@ cat > "$work/bin/pct" <<'EOF'
 echo "pct $*" >> "$SHIM_STATE/calls.log"
 cmd=$1; ctid=$2; shift 2 || true
 case "$cmd" in
-  config) cat "$SHIM_STATE/config" ;;
+  config)
+    cat "$SHIM_STATE/config"
+    # Multiple writes reproduce grep -q closing the pipe before pct finishes.
+    if [ -f "$SHIM_STATE/large_config" ]; then
+      for ((i=0; i<10000; i++)); do printf '# padding for config pipe regression\n' || exit 1; done
+    fi ;;
   status) cat "$SHIM_STATE/status" ;;
   set)
     if [ "$1" = "--delete" ] && [ "$2" = "net0" ]; then
@@ -221,6 +226,13 @@ reset_state; seed_record
 printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo running; exit 0; }; exit 0\n' > "$SHIM_STATE/exec.sh"
 expect 0 "start re-asserts the stopped config, starts and waits for boot" start 913
 grep -q '^pct start 913$' "$SHIM_STATE/calls.log" || { echo "FAIL start did not call pct start"; failn=$((failn+1)); }
+reset_state; seed_record; touch "$SHIM_STATE/large_config"
+printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo running; exit 0; }; exit 0\n' > "$SHIM_STATE/exec.sh"
+expect 0 "start accepts a tagged config from a multi-write producer" start 913
+reset_state; seed_record; touch "$SHIM_STATE/large_config"
+echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
+expect 1 "start rejects networking from a multi-write producer" --msg "network entries remain" start 913
+
 reset_state; seed_record; echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
 expect 1 "start refuses when a network entry was attached after prepare" --msg "network entries remain" start 913
 grep -q '^pct start' "$SHIM_STATE/calls.log" && { echo "FAIL start booted a guest with networking"; failn=$((failn+1)); }

@@ -105,13 +105,14 @@ volid_of() { echo "${1%%,*}"; }   # "ceph-vm:vm-913-disk-0,size=32G" -> "ceph-vm
 # Storage targets must be this guest's own volumes on the expected storage.
 # This runs before any offline mutation and again before destruction.
 assert_isolated_config() {
-  local ctid=$1 rootfs mp0
-  pct config "$ctid" | grep -q '^net' && die "network entries remain on $ctid"
+  local ctid=$1 rootfs mp0 config
+  config=$(pct config "$ctid") || die "cannot read config for $ctid"
+  grep -q '^net' <<<"$config" && die "network entries remain on $ctid"
   pct config "$ctid" | grep -E '^(mp[1-9]|unused[0-9]|dev[0-9]|lxc\.|hookscript)' && die "unexpected mounts, unused volumes, hookscript or raw lxc keys on $ctid"
   [ "$(config_value "$ctid" onboot)" = "0" ] || die "onboot is not 0 on $ctid"
   [ "$(config_value "$ctid" unprivileged)" = "1" ] || die "guest $ctid is not unprivileged"
   [ "$(config_value "$ctid" hostname)" = "convex-hatchet-restore-$ctid" ] || die "hostname mismatch on $ctid"
-  pct config "$ctid" | grep -q "^tags: .*$TAG" || die "guest $ctid lacks tag $TAG"
+  grep -q "^tags: .*$TAG" <<<"$config" || die "guest $ctid lacks tag $TAG"
   rootfs=$(config_value "$ctid" rootfs); mp0=$(config_value "$ctid" mp0)
   [[ "$(volid_of "$rootfs")" =~ ^${STORAGE}:vm-${ctid}-disk-[0-9]+$ ]] || die "rootfs '$rootfs' is not this guest's $STORAGE volume"
   [[ "$(volid_of "$mp0")" =~ ^${STORAGE}:vm-${ctid}-disk-[0-9]+$ ]] || die "mp0 '$mp0' is not this guest's $STORAGE volume"
