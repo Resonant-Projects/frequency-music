@@ -213,10 +213,18 @@ run_preflight() {
 cmd_restore() {
   local ctid=$1 archive=$2 node=$3
   run_preflight "$ctid" "$archive" "$node"
-  pct restore "$ctid" "$archive" \
+  if ! pct restore "$ctid" "$archive" \
     --storage "$STORAGE" --unprivileged 1 --hostname "convex-hatchet-restore-$ctid" \
     --onboot 0 --protection 0 --memory 8192 --cores 4 --swap 1024 --tags "$TAG" \
-    --start 0
+    --start 0; then
+    # Preflight proved absence, but partial state still needs a recognizable
+    # identity and safe attachments before this attempt may purge it.
+    [ -e "$PVE_LXC_DIR/$ctid.conf" ] || die "restore failed without a config; inspect partial volumes before retrying"
+    ( strip_networking "$ctid" && write_record "$ctid" "$archive" "$node" ) \
+      || die "restore failed with unverifiable partial state; inspect before retrying"
+    cmd_destroy "$ctid" || die "restore failed and partial cleanup failed; inspect before retrying"
+    die "restore failed; verified partial guest purged"
+  fi
   # The archive's own net0 (production MAC and IP) survives pct restore; strip
   # it before anything else can start the guest. If isolation cannot be
   # established, purge the guest this run just created rather than leaving a

@@ -59,7 +59,7 @@ case "$cmd" in
     fi ;;
   mount|unmount|stop|push|start) ;;
   pull) cp "$SHIM_STATE/guest-identities.json" "$2" ;;
-  restore) cp "$SHIM_STATE/restored.config" "$SHIM_STATE/config"; echo "status: stopped" > "$SHIM_STATE/status"; touch "$SHIM_STATE/../pve/$ctid.conf" ;;
+  restore) cp "$SHIM_STATE/restored.config" "$SHIM_STATE/config"; echo "status: stopped" > "$SHIM_STATE/status"; touch "$SHIM_STATE/../pve/$ctid.conf"; [ ! -f "$SHIM_STATE/fail_restore" ] ;;
   destroy)
     touch "$SHIM_STATE/destroyed"
     [ -f "$SHIM_STATE/purge_fails" ] && exit 9         # purge itself reports failure
@@ -137,6 +137,14 @@ expect 0 "restore strips net0 and writes record" restore 913 "$A" prox4
 grep -q 'restore 913' "$SHIM_STATE/calls.log" && grep -q 'set 913 --delete net0' "$SHIM_STATE/calls.log" || { echo "FAIL restore did not delete net0"; failn=$((failn+1)); }
 grep -q '^rootfs=ceph-vm:vm-913-disk-0$' "$work/runs/913.record" && grep -q '^mp0=ceph-vm:vm-913-disk-1$' "$work/runs/913.record" || { echo "FAIL record lacks volids"; failn=$((failn+1)); }
 expect 1 "second restore refused while record exists" restore 913 "$A" prox4
+reset_state; touch "$SHIM_STATE/fail_restore"
+expect 1 "failed restore purges verified partial guest" --msg "verified partial guest purged" restore 913 "$A" prox4
+[ -f "$SHIM_STATE/destroyed" ] || { echo "FAIL partial guest was not purged"; failn=$((failn+1)); }
+reset_state; touch "$SHIM_STATE/fail_restore"
+sed -i.bak 's/hostname: convex-hatchet-restore-913/hostname: unrelated/' "$SHIM_STATE/restored.config"
+expect 1 "failed restore refuses unverifiable partial guest" --msg "unverifiable partial state" restore 913 "$A" prox4
+[ ! -f "$SHIM_STATE/destroyed" ] || { echo "FAIL unverified partial guest purged"; failn=$((failn+1)); }
+
 reset_state; touch "$SHIM_STATE/refuse_net_delete"
 expect 1 "restore fails closed when net0 cannot be removed" --msg "guest 913 purged" restore 913 "$A" prox4
 [ ! -f "$work/runs/913.record" ] || { echo "FAIL record written despite isolation failure"; failn=$((failn+1)); }
