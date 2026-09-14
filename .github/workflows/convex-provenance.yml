@@ -28,7 +28,7 @@ jobs:
         with:
           bun-version: '1.3.14'
           no-cache: true
-      - uses: voidzero-dev/setup-vp@313600b80b104eadebb9111787d37a2e83e014ca # v1.17.0
+      - uses: voidzero-dev/setup-vp@49c3e4e92c52e7f8392712a9267bbe71c5ab30e5 # v1.19.0
         with:
           node-version: '24'
           run-install: false
@@ -53,7 +53,7 @@ jobs:
         with:
           bun-version: '1.3.14'
           no-cache: true
-      - uses: voidzero-dev/setup-vp@313600b80b104eadebb9111787d37a2e83e014ca # v1.17.0
+      - uses: voidzero-dev/setup-vp@49c3e4e92c52e7f8392712a9267bbe71c5ab30e5 # v1.19.0
         with:
           node-version: '24'
           run-install: false
@@ -61,7 +61,7 @@ jobs:
       - name: Build root module hash manifest without backend access
         run: vpx tsx scripts/convex-provenance-build.ts convex-root-modules.json
       - name: Attest exact manifest and checked-out source
-        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: convex-root-modules.json
       - name: Upload sanitized manifest
