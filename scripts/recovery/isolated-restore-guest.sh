@@ -114,7 +114,7 @@ assert_isolated_config() {
   # between what used to be seven separate `pct config` calls.
   cfg=$(pct config "$ctid") || die "pct config $ctid failed"
   grep -q '^net' <<<"$cfg" && die "network entries remain on $ctid"
-  grep -E '^(mp[1-9]|unused[0-9]|dev[0-9]|lxc\.|hookscript)' <<<"$cfg" && die "unexpected mounts, unused volumes, hookscript or raw lxc keys on $ctid"
+  grep -qE '^(mp[1-9]|unused[0-9]|dev[0-9]|lxc\.|hookscript)' <<<"$cfg" && die "unexpected mounts, unused volumes, hookscript or raw lxc keys on $ctid"
   [ "$(cfg_value "$cfg" onboot)" = "0" ] || die "onboot is not 0 on $ctid"
   [ "$(cfg_value "$cfg" unprivileged)" = "1" ] || die "guest $ctid is not unprivileged"
   [ "$(cfg_value "$cfg" hostname)" = "convex-hatchet-restore-$ctid" ] || die "hostname mismatch on $ctid"

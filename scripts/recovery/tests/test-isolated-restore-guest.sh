@@ -281,6 +281,13 @@ mkdir -p "$work/lxc/913/rootfs/etc/docker"; ln -s "$work/host-docker" "$work/lxc
 echo '{"data-root": "/var/lib/docker-link"}' > "$work/lxc/913/rootfs/etc/docker/daemon.json"
 expect 1 "prepare refuses a data-root symlinked outside the rootfs" prepare 913
 
+reset_state; seed_record
+echo 'lxc.environment: SYNTHETIC_SECRET=do-not-log-this-fixture' >> "$SHIM_STATE/config"
+expect 1 "start rejects raw config without leaking its value" --msg "unexpected mounts" start 913
+if grep -q 'do-not-log-this-fixture' "$work/last.out"; then
+  echo "FAIL rejected config leaked its value"; failn=$((failn+1))
+fi
+
 # --- start: gated on the current stopped config ---
 reset_state; seed_record
 printf '[ "$1" = systemctl ] && [ "$2" = is-system-running ] && { echo running; exit 0; }; exit 0\n' > "$SHIM_STATE/exec.sh"
