@@ -2,7 +2,7 @@
 
 Capture: `semantic-capture.json`, 98,999 bytes, SHA-256 `9141180aa53989b147c7c42496fc395cc9806488299034550c23cf64870a87f6`. Mac reports one successful capture at script revision `7b9001887ee475130702f04820ce2102b1fd83ef`, 2026-09-14T16:13:28.148Z–16:13:28.590Z, exit 0 and empty stderr. Local bytes were independently hashed and parsed offline.
 
-Candidate tracked source is merge `075ac1df8827092dabc78e0dd7c49ec4daaf51dc`. Source diff from reviewed `b91bde7` for convex, agent and package inputs is empty. Installed pinned component source was read as text. No source/bundle evaluation, credential access or backend calls occurred.
+Candidate tracked source is merge `075ac1df8827092dabc78e0dd7c49ec4daaf51dc`. Installed pinned component source was read as text. No source/bundle evaluation, credential access or backend calls occurred.
 
 | Namespace | Captured analyzed modules | Captured callable metadata | Candidate callable declarations | Exact name/type/visibility matches |
 | --- | ---: | ---: | ---: | ---: |
