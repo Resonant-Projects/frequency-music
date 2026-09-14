@@ -1,0 +1,1008 @@
+{
+  "format": "frequency-convex-candidate-bundles-v1",
+  "scope": "offline-bundle-identities; not runtime analysis, deployment provenance or recovery artifact",
+  "deploymentAuthorized": false,
+  "root": {
+    "format": "frequency-convex-root-modules-v1",
+    "convexVersion": "1.34.1",
+    "scope": "root-modules-only",
+    "modules": [
+      {
+        "path": "_deps/2TUQA3QS.js",
+        "environment": "isolate",
+        "hash": "e6773a289b8b0a2ad723fe84955d2e1c57d49a4df9b92bf59f438a3d84ace912"
+      },
+      {
+        "path": "_deps/3QPQNBPY.js",
+        "environment": "isolate",
+        "hash": "569abcc6ff7bac1a61bfa5c153a6a7792cbd2a4559c1dfdc036ebed9e784b2a6"
+      },
+      {
+        "path": "_deps/5UGBXGCR.js",
+        "environment": "isolate",
+        "hash": "941e68efba6c5c489ce915d9dc4cf4700afb2fc929be54d47c39fb051afaf105"
+      },
+      {
+        "path": "_deps/6MEBCHDL.js",
+        "environment": "isolate",
+        "hash": "36e8c5fe5df682c040348e8b2d858356ca48aadd63a1d3051faf4aa1b451ea8a"
+      },
+      {
+        "path": "_deps/6N3KEMEY.js",
+        "environment": "isolate",
+        "hash": "a346c583a65d3ef5dd6600f331e30bd49147b4ecf8e3ea98d25a0696c5037da8"
+      },
+      {
+        "path": "_deps/7GFOWDC4.js",
+        "environment": "isolate",
+        "hash": "4d82a5f1d2d5d296805426bedb6551154299faabac81155917aea0e1b315dd51"
+      },
+      {
+        "path": "_deps/CDHW6WAE.js",
+        "environment": "isolate",
+        "hash": "f99ad046f29285facab939240635a50d0ce8b384f7b806b5e6d96f72e2cddcee"
+      },
+      {
+        "path": "_deps/COMW7NO6.js",
+        "environment": "isolate",
+        "hash": "539088b2f4616ca682181318dd042fb1d07778e35d7e2d57353389ea8c4aa488"
+      },
+      {
+        "path": "_deps/ELYQI4HE.js",
+        "environment": "isolate",
+        "hash": "6cd667e4ccfa37d557a73b2f860850a9d8cf2eb6dddaab2cd6a572334c6bd46b"
+      },
+      {
+        "path": "_deps/EWJTILR6.js",
+        "environment": "isolate",
+        "hash": "64dfa7658eb879c66e964faa5d80acb7b669945374211f9c60a89fb7e1f45eaa"
+      },
+      {
+        "path": "_deps/F55NYDY7.js",
+        "environment": "isolate",
+        "hash": "4fb6a99c785c0d0b738e70de36d40fd04889a16a9ee5b9046460abf5c7f64509"
+      },
+      {
+        "path": "_deps/FEJB4Y74.js",
+        "environment": "isolate",
+        "hash": "c6fbe60c870e6931daa930182e446952d7f74906bdca4ac197ed6393db168df1"
+      },
+      {
+        "path": "_deps/FHOAQ7BV.js",
+        "environment": "isolate",
+        "hash": "70fc0c0530ad018e4f8d028a276916002d9381710e63e85e2630d18ea80976d5"
+      },
+      {
+        "path": "_deps/FZCTIQQK.js",
+        "environment": "isolate",
+        "hash": "6aca68040c2b7da80cd16ca042cabe6cb065fae59915160bfd4883157d06ed93"
+      },
+      {
+        "path": "_deps/G3ZTDGXN.js",
+        "environment": "isolate",
+        "hash": "cfb47789424d3f736fae50e2762f79362ad16668c4abfc73b21567654ccd5fbc"
+      },
+      {
+        "path": "_deps/GHRH3QOU.js",
+        "environment": "isolate",
+        "hash": "e0a613d1938330b438eb514af2ac6bcdb6b0045d1c447f7d07d18cd508bd4494"
+      },
+      {
+        "path": "_deps/H4KVCNW5.js",
+        "environment": "isolate",
+        "hash": "3ac6edb5d0164a8755f15ee02ef6497bedb2cd1b8c1af776317c570a704c988d"
+      },
+      {
+        "path": "_deps/HWQZ4KVP.js",
+        "environment": "isolate",
+        "hash": "f5fa115b2e50b92697ea4428caefdcf07ef6a6ecf8e3317c56547b984bbc206d"
+      },
+      {
+        "path": "_deps/IQOSNI4I.js",
+        "environment": "isolate",
+        "hash": "7078949e4f74c5cdc8db91d546b5873772d5e6d10477daf5e3be53377dfbee9e"
+      },
+      {
+        "path": "_deps/IRMXBCU4.js",
+        "environment": "isolate",
+        "hash": "380b729bb10c217b7fb8f7de138aa8c9cb2ceeee5d086250e0feda6a3d7eb777"
+      },
+      {
+        "path": "_deps/KOKBZSLD.js",
+        "environment": "isolate",
+        "hash": "11044791dcbee6e0f240bc7338bcc5d1a0f785206f7b16482e0c5d409da8ffaf"
+      },
+      {
+        "path": "_deps/KPMWSCRQ.js",
+        "environment": "isolate",
+        "hash": "251779986e8ec62915879129f9a7d6edecbb72c2fe692476181f0e054de8550d"
+      },
+      {
+        "path": "_deps/LJKLZGOK.js",
+        "environment": "isolate",
+        "hash": "e799345ac18909271c94ad9e110396999d14c78930055a4be17d367bef13c415"
+      },
+      {
+        "path": "_deps/MZ6VWF4S.js",
+        "environment": "isolate",
+        "hash": "3e7ea51f38e5e7a48be243d894416fb60f9594ed411cc1d411083cc9687780c0"
+      },
+      {
+        "path": "_deps/NALJDWC7.js",
+        "environment": "isolate",
+        "hash": "6460b460b7b727d42bdcf687cc56fd702502f201cb9b766c9f727a6287edbd2f"
+      },
+      {
+        "path": "_deps/NCOP3V6I.js",
+        "environment": "isolate",
+        "hash": "7bb6243e1fd4f216dc9a9e996b935bbf590d2c7b4b366088ce429e2b692d1446"
+      },
+      {
+        "path": "_deps/NYCOHGDQ.js",
+        "environment": "isolate",
+        "hash": "90dd01331254eef149c27f66a89620295bb877be5242d9daff8717f225356acf"
+      },
+      {
+        "path": "_deps/OBFFGNWL.js",
+        "environment": "isolate",
+        "hash": "ac05663508ed077807b59565fe11b9e61dc3332f7431749e92bfa3a19438e29b"
+      },
+      {
+        "path": "_deps/OWYE2LE3.js",
+        "environment": "isolate",
+        "hash": "3cd845e9eb954fd8768cc6ab5c09d3f2e0da5449beabe8e12d08ccd41f4d9148"
+      },
+      {
+        "path": "_deps/OZQB7D32.js",
+        "environment": "isolate",
+        "hash": "ed9762c936d9a5a004a044deee48c91a21b0133035a60a75e36effd01cd57239"
+      },
+      {
+        "path": "_deps/P3P5GGW2.js",
+        "environment": "isolate",
+        "hash": "17e8669c072581eb3cf514b743b55d5c4fac98bda64e1dfe168ec29fcb31bf60"
+      },
+      {
+        "path": "_deps/QRMJV73X.js",
+        "environment": "isolate",
+        "hash": "91b68e4082fb1bb5106f9aefdfe9bfb8d07538de19e952e6aca8d70afee376d5"
+      },
+      {
+        "path": "_deps/RNF623UV.js",
+        "environment": "isolate",
+        "hash": "29768019453dd9be62aadfb09d84f578114fc0bc2432ece7a10e6f6a2d88005f"
+      },
+      {
+        "path": "_deps/RZR7P3AP.js",
+        "environment": "isolate",
+        "hash": "6fb0d550b4746244771401cf4d3ce58f564b6f9308dbeff09aafb50908d6a25e"
+      },
+      {
+        "path": "_deps/SGCXLW4M.js",
+        "environment": "isolate",
+        "hash": "8023b15e982a87868a24371f0364476ac21d6feae13d426de46fe9141feae2e7"
+      },
+      {
+        "path": "_deps/U6GH6ZJX.js",
+        "environment": "isolate",
+        "hash": "941e7717ddc2cbdefc4e6bbcc367abe148d4c63e4f1e13b7862022902e8bd2da"
+      },
+      {
+        "path": "_deps/UWL6USL3.js",
+        "environment": "isolate",
+        "hash": "d65b06601e0ef1f9447b7bbc4abcd7c22a9e98801c5cc5fb40bf65b51c97e62b"
+      },
+      {
+        "path": "_deps/V4AUUJVC.js",
+        "environment": "isolate",
+        "hash": "b7806e09c045b858a1d2bbc9bf2524f01b8f520050343125a14df581954bff26"
+      },
+      {
+        "path": "_deps/VWZL5UNK.js",
+        "environment": "isolate",
+        "hash": "e7838b2f7f5d116c912752b47835e88df66e22328dddf1a0c866d5c0bfca8bcd"
+      },
+      {
+        "path": "_deps/XA2ARNL6.js",
+        "environment": "isolate",
+        "hash": "4951d701c2aa4987a1598ac3669ee118f5bc92146dfc4bce83c786fbcc60a7e6"
+      },
+      {
+        "path": "_deps/XERPP5I2.js",
+        "environment": "isolate",
+        "hash": "ebb9347219550431015d1fba2a457589375903a8173392d7d379e7ffb02e197e"
+      },
+      {
+        "path": "_deps/XJP3RNVL.js",
+        "environment": "isolate",
+        "hash": "2eafd71d16b9ee2b8e76487a1600daa1763daa35f71e56d10c9d620cb45e3307"
+      },
+      {
+        "path": "_deps/YLBT7J7S.js",
+        "environment": "isolate",
+        "hash": "2f6013bc814ccd9013ea66edaa765e13f274c4b627f20f127386eeb709a03b80"
+      },
+      {
+        "path": "_deps/node/3ZIHFINZ.js",
+        "environment": "node",
+        "hash": "1954febebb4211735d861fb0b517a57007a836aa428a90cc95ecea716acafa1d"
+      },
+      {
+        "path": "_deps/node/5RWSIUQF.js",
+        "environment": "node",
+        "hash": "dab7b1b8fbf43c068c3f681f01e239b3ec873d6fd72e2c524e468e2e65aa7927"
+      },
+      {
+        "path": "_deps/node/6XVX2WKA.js",
+        "environment": "node",
+        "hash": "be12202b14255afecdecf6bad4f1bb47b101ed674ffe573a75f60b19351b5da8"
+      },
+      {
+        "path": "_deps/node/CD2K5K7H.js",
+        "environment": "node",
+        "hash": "e570db5febb6cf6eb75b9ecb015887159b1d8493628da723e148084c9bcfd93a"
+      },
+      {
+        "path": "_deps/node/K65QTJ26.js",
+        "environment": "node",
+        "hash": "9dbd06c07654b585f35893e474bddacb83259d4b6eda4bac9c0831dd4d485598"
+      },
+      {
+        "path": "_deps/node/MBDXFTYP.js",
+        "environment": "node",
+        "hash": "be421111d8845fe07ad3693edc33e6812905666634dcd0322c36bfb2740975cf"
+      },
+      {
+        "path": "_deps/node/MNA6XR3T.js",
+        "environment": "node",
+        "hash": "7edcba8f5c4f469d8234e8767913af219a6a2d80974d94ebacee207f5ec661ba"
+      },
+      {
+        "path": "_deps/node/TWPTYOM7.js",
+        "environment": "node",
+        "hash": "fa8ae8f0b61dcc15aa3607f87b7695e8c30fc0a0cb57ca8aa0fe282d00a4bf70"
+      },
+      {
+        "path": "_deps/node/VBFIZJAS.js",
+        "environment": "node",
+        "hash": "342843fa9020ddf084001f03166fbc48e62c1b6c32ac67458ebe2fbcd755d337"
+      },
+      {
+        "path": "_deps/node/WOO27I3P.js",
+        "environment": "node",
+        "hash": "f1727e4a80dd4a428018fbe8fd3f513a15a39c0094bce05acd9b44d57d8fb608"
+      },
+      {
+        "path": "_deps/node/X3OLXGVJ.js",
+        "environment": "node",
+        "hash": "7096a942e565f2037923bcaf850687bb86fa03c00528936ec9a47f61b50141fe"
+      },
+      {
+        "path": "_deps/node/XWEGI3CI.js",
+        "environment": "node",
+        "hash": "0a6c24fa2c35e94cf4f3b1e9db0a892c5fac92629f176837be21466ace99de9d"
+      },
+      {
+        "path": "admin.js",
+        "environment": "isolate",
+        "hash": "09da70f5287327bcf5d20926fffba7bea5b65cfdaf60fb1b46caf88b692fc353"
+      },
+      {
+        "path": "agentDraftPromotion.js",
+        "environment": "isolate",
+        "hash": "721206a28e88e69c5c90da7e3c0df00c48c8d3ac7ee4dabcf97192d5a0f12a0c"
+      },
+      {
+        "path": "agentDrafts.js",
+        "environment": "isolate",
+        "hash": "f6e19b75381e9e818172d0d1fe2fed234e316777c77ed872da3b8e7fce9e21ec"
+      },
+      {
+        "path": "agentRuns.js",
+        "environment": "isolate",
+        "hash": "0335570708a87d405ab533f8db3c3de7ff137f23d2d4147ed1d72f3a90f2209c"
+      },
+      {
+        "path": "agentToolRegistry.js",
+        "environment": "isolate",
+        "hash": "2c4c13d8f2f1d5b28d3ffa3ad6205b515a512d82d891017bc94a5ca7bf9dce72"
+      },
+      {
+        "path": "agentTools.js",
+        "environment": "isolate",
+        "hash": "87bc97bfff17322de33ba7bd8bd0423ff1aba8867ddf184222c2b67f36d159e4"
+      },
+      {
+        "path": "agentToolsHttp.js",
+        "environment": "isolate",
+        "hash": "8539c97f97e97703874dac42704ef56fcea3ad6cf84857bdce755f35c7b53161"
+      },
+      {
+        "path": "aggregates.js",
+        "environment": "isolate",
+        "hash": "9ad87a878dbbd118575c04855aaf10c2e2f41d6b561dab72168a6db2d0c3bb4e"
+      },
+      {
+        "path": "auth.config.js",
+        "environment": "isolate",
+        "hash": "23927172fd9b6253eca852ebb04d70e80b5921816a4b2d85f69f380aedbb628f"
+      },
+      {
+        "path": "auth.js",
+        "environment": "isolate",
+        "hash": "8fc5afcc36807339ab1e6a14d8ac04ff88c0807a980c2abaeaf207bfe472a503"
+      },
+      {
+        "path": "campaigns.js",
+        "environment": "isolate",
+        "hash": "a825e2ad9cb015d55fa65e6ebfe7209f312e844c1f81a42a2b664b93b7d3452b"
+      },
+      {
+        "path": "claims.js",
+        "environment": "isolate",
+        "hash": "100dd256846e5708b601c53f4ac1fc01c7e1771efde157f8a67409e5e7c759f8"
+      },
+      {
+        "path": "components.js",
+        "environment": "isolate",
+        "hash": "d052406a35a52d900f16fe0028334841b86fcba94c225f405cd524ec9c97c982"
+      },
+      {
+        "path": "compositions.js",
+        "environment": "isolate",
+        "hash": "99b7c9d06624f84c8decc363d0fd286572be0dda34d6b508f6da943381ce2216"
+      },
+      {
+        "path": "conceptClassification.js",
+        "environment": "isolate",
+        "hash": "3c721cf7e534149d6709a489944e2a252adefca6c4c11cbfc4c8d3051f121aed"
+      },
+      {
+        "path": "conceptClassifier.js",
+        "environment": "isolate",
+        "hash": "130fbbd7d1db24964d34afccc93662f8124d999a6f3d8e724f0158ace00387f9"
+      },
+      {
+        "path": "conceptClassifierInternal.js",
+        "environment": "node",
+        "hash": "f0abda80a639da861cb6841d4987cc416fcc6bda53ca4353866287ebd33e16e7"
+      },
+      {
+        "path": "conceptDomainNormalization.js",
+        "environment": "isolate",
+        "hash": "38dbb71cb0d8fdb7983870d576225361e8f8fab7d98ed9fc7acc9a00de4ff1f6"
+      },
+      {
+        "path": "convex.config.js",
+        "environment": "isolate",
+        "hash": "496012d978aa2e1a54d6710cbf78b6b72d56220380ba7dff8382be44ad615f94"
+      },
+      {
+        "path": "correspondenceCandidates.js",
+        "environment": "isolate",
+        "hash": "31c3f7defe12370f8dd32fd461bcbbafb1663586c682a43cd3fac42156285146"
+      },
+      {
+        "path": "correspondences.js",
+        "environment": "isolate",
+        "hash": "61569152722396765f2f01478a15a41bfa1dd3c90f1e50b289f33ac7eaee3566"
+      },
+      {
+        "path": "crons.js",
+        "environment": "isolate",
+        "hash": "7f32adb055a155aaa5e6a50020d66cc4adf44b4945bea92f1e9aa4fee9267f74"
+      },
+      {
+        "path": "dashboard.js",
+        "environment": "isolate",
+        "hash": "68fe05493b5eb602ed89485b5b5bb857d881ea7fa76fe1bb6f6810c5bd441595"
+      },
+      {
+        "path": "domainMappings.js",
+        "environment": "isolate",
+        "hash": "1ec16f868e2b59e7655ddac66b56ab61c0babe5668dbea64b03187f96051c830"
+      },
+      {
+        "path": "editCaptures.js",
+        "environment": "isolate",
+        "hash": "ba3d3038304728866ac78b4a161f7a885e124353cedd604ed6860f55fe86c8bb"
+      },
+      {
+        "path": "editorialArtifacts.js",
+        "environment": "isolate",
+        "hash": "3f1b8b47c6bb9d62ab2e44571fb09da7144daa38ed8cc6b023a980866eceb3a4"
+      },
+      {
+        "path": "editorialExports.js",
+        "environment": "node",
+        "hash": "d745cc16d6ab59aa21070748fa17fe35b726282656bad949a42edc4d6e659fe1"
+      },
+      {
+        "path": "embeddings.js",
+        "environment": "node",
+        "hash": "6b5287de575ed22525b32583a8b77f0b7f997002d8e18c165bd626d200254dba"
+      },
+      {
+        "path": "embeddingsStore.js",
+        "environment": "isolate",
+        "hash": "b82767c508580c3a782894725e785fa03a1408637de78b9b009a0614b0877d47"
+      },
+      {
+        "path": "extract.js",
+        "environment": "node",
+        "hash": "c1e438f3429fe7c7211dd7311844c16d41a2e7bd58f7f714c2b00fab4b081392"
+      },
+      {
+        "path": "extractInternal.js",
+        "environment": "isolate",
+        "hash": "8eaadb1a2b19e45cbbd29fe3d2f9b99a323fd93b76fa209d1bd6c80c105bff9b"
+      },
+      {
+        "path": "extractions.js",
+        "environment": "isolate",
+        "hash": "be5ef6caac0497b808a0230fc67428a31808ab23c69c7f8440413c167df28e09"
+      },
+      {
+        "path": "fabric.js",
+        "environment": "isolate",
+        "hash": "554bc08f398c3e844809407189b693134edbf1c6a2692e31768c8d1802671afb"
+      },
+      {
+        "path": "failures.js",
+        "environment": "isolate",
+        "hash": "dde9f79f12a894c3523f2b1f15808c4f60f4658ccdc087454998da1202bab72b"
+      },
+      {
+        "path": "feeds.js",
+        "environment": "isolate",
+        "hash": "758538ca480eb26d3e8b0439650526caa669599ea9f878552f35fb71de852d38"
+      },
+      {
+        "path": "graph.js",
+        "environment": "isolate",
+        "hash": "d453df4da79c0067d9e3b2f80f084c101776332bbdb0f9795f03ca39a47a5639"
+      },
+      {
+        "path": "http.js",
+        "environment": "isolate",
+        "hash": "4f6f1be1b058dda331b5ba6e77f9cead157c2be64dca4e80fc7ac461504a97f0"
+      },
+      {
+        "path": "hypotheses.js",
+        "environment": "isolate",
+        "hash": "3139eaa23e719509c568237dab9837f6d139fa939e4b83325931ba9f4bda4f3b"
+      },
+      {
+        "path": "hypothesesInternal.js",
+        "environment": "node",
+        "hash": "8366f3d70b4f128a5c9122c0b94f931a55e372697d35e293853dafe5cf587ecc"
+      },
+      {
+        "path": "inbox.js",
+        "environment": "isolate",
+        "hash": "fbfabf9ca1e9c596293f49df25a073ae7b739dffa3b76370f12de2d787d2557b"
+      },
+      {
+        "path": "ingest.js",
+        "environment": "isolate",
+        "hash": "d30fc6cadb16525cdb9db048ff82e08662424b098f3c41651ad9e75a675e0223"
+      },
+      {
+        "path": "listening.js",
+        "environment": "isolate",
+        "hash": "6898dd8bf4fd0531d9191bf04583320d9dd0807faf576276921d632c9949bf8c"
+      },
+      {
+        "path": "llm.js",
+        "environment": "isolate",
+        "hash": "4b71f55d696944b86159d68cbbd00bfa51cd87fc0e58704a7fc59844337b9b02"
+      },
+      {
+        "path": "llmNode.js",
+        "environment": "node",
+        "hash": "d389d355f8360d83c426de572f2b847dc0e65b8658a7dea8306a980a2c45b49c"
+      },
+      {
+        "path": "maintenance.js",
+        "environment": "isolate",
+        "hash": "ea9b1fcc1074a70dc0dbc9be50797b8d9ca8c2bf9bf4ef372b37e1b1a35e3f60"
+      },
+      {
+        "path": "phase2.js",
+        "environment": "isolate",
+        "hash": "1a0b52fbc684ded6b5ac4e018b37df82b123aecd579600c6ba548e9e11eb901d"
+      },
+      {
+        "path": "recipes.js",
+        "environment": "isolate",
+        "hash": "98e315dba95d924cd0ee07723774f95f62f09fc330af801a3ed9b603f233363a"
+      },
+      {
+        "path": "recipesInternal.js",
+        "environment": "node",
+        "hash": "96cd8c8e1ad1f0cd5f55ac8f229e620c62ea62a132d9ade9ab43a28b5c629dca"
+      },
+      {
+        "path": "schema.js",
+        "environment": "isolate",
+        "hash": "452ea4dfc2735e5f893d5ff5504f4b1c212123f19235e52c39b0953c84bef452"
+      },
+      {
+        "path": "shared/agentContract.js",
+        "environment": "isolate",
+        "hash": "db4c448daab76fd1bb7cac95dbb0773b62df87362c198186c614022cd8c678f1"
+      },
+      {
+        "path": "shared/agentRunClaim.js",
+        "environment": "isolate",
+        "hash": "8cfeb672a55f666641dd998bd7c85d0c2c46e6910c69e70a032260a62c5b8d70"
+      },
+      {
+        "path": "shared/agentToolArgs.js",
+        "environment": "isolate",
+        "hash": "bf0143124147235501a5b2a029a6911e797b01091d0317321c423173972e9d4c"
+      },
+      {
+        "path": "shared/agentToolManifest.js",
+        "environment": "isolate",
+        "hash": "7138c1ca31f094111642341df7372d8411ef08ba83259d50536739d9f475073a"
+      },
+      {
+        "path": "shared/claims.js",
+        "environment": "isolate",
+        "hash": "ae10af6b286b2d84f5472f9c7353413bf7b89b638e08fdc07514a1ed0df05d13"
+      },
+      {
+        "path": "shared/conceptProjection.js",
+        "environment": "isolate",
+        "hash": "c42a5020b18dcb24199a67686a617f1f7329e347a09fad91d7edd1729da50a68"
+      },
+      {
+        "path": "shared/correspondenceCandidates.js",
+        "environment": "isolate",
+        "hash": "6d71659a4dba16de26c04dcf295b9e7b1ba070613d334f2581f4d7e43802207c"
+      },
+      {
+        "path": "shared/correspondenceKey.js",
+        "environment": "isolate",
+        "hash": "1a669fc492af829649fcfca45784866a47325d1f68f26dad5a7d802936e69aef"
+      },
+      {
+        "path": "shared/correspondences.js",
+        "environment": "isolate",
+        "hash": "c5c23e88ef098a1d0dbbdd92e72b3754b9b536cab7fa65891d777200def46a28"
+      },
+      {
+        "path": "shared/draftPayloads.js",
+        "environment": "isolate",
+        "hash": "c9759b6b375ab351cac3a6feb6cc8a4d2959077553d6ba32041f4b1e55e4ce38"
+      },
+      {
+        "path": "shared/embeddingText.js",
+        "environment": "isolate",
+        "hash": "262396819b534adcf15ed181b9ab991682ca37b96fae76399164824800b77b4b"
+      },
+      {
+        "path": "shared/feedProposals.js",
+        "environment": "isolate",
+        "hash": "a3d453bbae58310d27e046517493566027bb2fe1f59446b9cbbbbc99e0287994"
+      },
+      {
+        "path": "shared/statuses.js",
+        "environment": "isolate",
+        "hash": "cbc7d505da723264bcc136e6033641f6b8db19e13d9399eb3d963206de59de55"
+      },
+      {
+        "path": "shared/vocabularyTriage.js",
+        "environment": "isolate",
+        "hash": "74f581db314c70fa26f0d0edb349fcf57473cc5686babe4fe6318327a6899a88"
+      },
+      {
+        "path": "sourceUtils.js",
+        "environment": "isolate",
+        "hash": "502b8f5494ba3615bb257c13ba7bc4dc980cf97afade3adf2c03356c0c24c546"
+      },
+      {
+        "path": "sources.js",
+        "environment": "isolate",
+        "hash": "28cd7790179b735676d7c3161bc09e525fa0bb5dc6dd97196f86ffcf8a0f8e60"
+      },
+      {
+        "path": "testHelpers.js",
+        "environment": "isolate",
+        "hash": "c633512f57c8cf774f0fd5dd14b8cf4a2b06e4ad9628cab39adb7dfaebe02771"
+      },
+      {
+        "path": "testing.js",
+        "environment": "isolate",
+        "hash": "72245ff856d2e7c4e176852a1fb97219b2d3a66007d34ea348ccb9fb9a328df9"
+      },
+      {
+        "path": "theses.js",
+        "environment": "isolate",
+        "hash": "8bd7bc91b881d4ce70c7af79c59c948d30b2b084d141cc7bfb0f0f78ea25ada4"
+      },
+      {
+        "path": "tracing.js",
+        "environment": "node",
+        "hash": "368903e7e10b04ce6c951c79c8d2e1a0ee0c176cbd9868a492fb37cef399fc2e"
+      },
+      {
+        "path": "validators.js",
+        "environment": "isolate",
+        "hash": "1a335de05cc7e991fb17b7de9f6a173132bb06d22c4f3530a70e71a8fc1c473c"
+      },
+      {
+        "path": "vocabulary.js",
+        "environment": "isolate",
+        "hash": "bba5956d3ec0d4b70fb2c395fd6015ae1d2798fa2b332909034807ef964cd353"
+      },
+      {
+        "path": "weeklyBriefs.js",
+        "environment": "isolate",
+        "hash": "af43565192e7d020fdde6a70ac86bb623ddcf91b8b93e7246d154d585e70b4af"
+      },
+      {
+        "path": "weeklyBriefsInternal.js",
+        "environment": "node",
+        "hash": "f5b862a45dc5d8f0dccbc61cf31d01f7fa79c85378385bb008d98ab979022810"
+      },
+      {
+        "path": "workflows.js",
+        "environment": "isolate",
+        "hash": "bd2e19e586575a7fae2c88a87fc465ff744a0d8c3b4448f1a05144f1412ccb3c"
+      }
+    ],
+    "dependencies": [
+      "../node_modules/@convex-dev/action-cache/dist/component",
+      "../node_modules/@convex-dev/aggregate/dist/component",
+      "../node_modules/@convex-dev/workflow/dist/component"
+    ],
+    "schema": {
+      "path": "schema.js",
+      "environment": "isolate",
+      "hash": "452ea4dfc2735e5f893d5ff5504f4b1c212123f19235e52c39b0953c84bef452"
+    },
+    "definition": {
+      "path": "convex.config.js",
+      "environment": "isolate",
+      "hash": "496012d978aa2e1a54d6710cbf78b6b72d56220380ba7dff8382be44ad615f94"
+    }
+  },
+  "components": [
+    {
+      "definitionPath": "../node_modules/@convex-dev/action-cache/dist/component",
+      "dependencies": [],
+      "udfServerVersion": "1.34.1",
+      "modules": [
+        {
+          "path": "_deps/6KSHZV2I.js",
+          "environment": "isolate",
+          "hash": "904f9317a0e395fc5c149f19dcdf3a783d4ec9ba96a402e4c4643b9c3597841f"
+        },
+        {
+          "path": "_deps/EVCRMLF3.js",
+          "environment": "isolate",
+          "hash": "64b2c145b1486fbe5c7b2cc28a6798c87d0cb2c8b17275a9be3f42fd212a1182"
+        },
+        {
+          "path": "_deps/G773ITXV.js",
+          "environment": "isolate",
+          "hash": "cca7ce70f1a886dc9770c544b189bdde7ca9fe3e8abef7bf450d66043d3848ca"
+        },
+        {
+          "path": "cache.js",
+          "environment": "isolate",
+          "hash": "e4f985653b5a7dcf20abcb5c1f0448054e2fd83f511231931fad85f2b681a2d9"
+        },
+        {
+          "path": "convex.config.js",
+          "environment": "isolate",
+          "hash": "879eff639eb653092c3ddcd1489ea41cc082c35411bd586e5dc86f3b006e9dc2"
+        },
+        {
+          "path": "crons.js",
+          "environment": "isolate",
+          "hash": "312cbdeedd04d7f263825dc2b97f298b22e08b9589f6d1ee00d5051557957539"
+        },
+        {
+          "path": "lib.js",
+          "environment": "isolate",
+          "hash": "28bb5b2118cddac879dbade27b2084b71cf7303a6dd8459a7bf53dab28a86c00"
+        },
+        {
+          "path": "schema.js",
+          "environment": "isolate",
+          "hash": "79bb3a582d380ffa3ac0340a66999b62b5e0e217b27b45172d4369795d5680ee"
+        }
+      ],
+      "schema": {
+        "path": "schema.js",
+        "environment": "isolate",
+        "hash": "79bb3a582d380ffa3ac0340a66999b62b5e0e217b27b45172d4369795d5680ee"
+      },
+      "definition": {
+        "path": "convex.config.js",
+        "environment": "isolate",
+        "hash": "879eff639eb653092c3ddcd1489ea41cc082c35411bd586e5dc86f3b006e9dc2"
+      }
+    },
+    {
+      "definitionPath": "../node_modules/@convex-dev/aggregate/dist/component",
+      "dependencies": [],
+      "udfServerVersion": "1.34.1",
+      "modules": [
+        {
+          "path": "_deps/5WTH4GZX.js",
+          "environment": "isolate",
+          "hash": "a8bb571f792b1a1f223c8a8c4403f2c7feb71317f8825425d496bdb9223c9255"
+        },
+        {
+          "path": "_deps/6IJZLI7Y.js",
+          "environment": "isolate",
+          "hash": "9d3745f540a2094a3c024631efd793a8b6c18228a0ea88f51c2e5d2bc9f898bc"
+        },
+        {
+          "path": "btree.js",
+          "environment": "isolate",
+          "hash": "54a5d115e616e8a29054292627723018385002a1863f632e22f9a899df88440c"
+        },
+        {
+          "path": "compare.js",
+          "environment": "isolate",
+          "hash": "83dac3baa1ff1a888458aa2bf30f7ee251cdd8182691d6f93b060c8d04faf365"
+        },
+        {
+          "path": "convex.config.js",
+          "environment": "isolate",
+          "hash": "60bae806688422910635e1bed59a3e862f82222e473c96949b2db51324e3fb0e"
+        },
+        {
+          "path": "inspect.js",
+          "environment": "isolate",
+          "hash": "2ecf389771df81b17eb8a0827a056d65d443760b7f28ac8a4f4eb2f71744444f"
+        },
+        {
+          "path": "public.js",
+          "environment": "isolate",
+          "hash": "fcbfb54507cd34e2f97ac2c8f3ef9e5fbaaa55da26eab25bff9a5d747395b835"
+        },
+        {
+          "path": "schema.js",
+          "environment": "isolate",
+          "hash": "fd192b32f3156c708f04b02ca47ecbfad2c732ffe441fe17b14e84f40399c085"
+        }
+      ],
+      "schema": {
+        "path": "schema.js",
+        "environment": "isolate",
+        "hash": "fd192b32f3156c708f04b02ca47ecbfad2c732ffe441fe17b14e84f40399c085"
+      },
+      "definition": {
+        "path": "convex.config.js",
+        "environment": "isolate",
+        "hash": "60bae806688422910635e1bed59a3e862f82222e473c96949b2db51324e3fb0e"
+      }
+    },
+    {
+      "definitionPath": "../node_modules/@convex-dev/workflow/dist/component",
+      "dependencies": ["../node_modules/@convex-dev/workpool/dist/component"],
+      "udfServerVersion": "1.34.1",
+      "modules": [
+        {
+          "path": "_deps/7SNMNVF5.js",
+          "environment": "isolate",
+          "hash": "dd312604c1b335595d72ff7032fdccb35b546533e36c3ada63edc1de39d27457"
+        },
+        {
+          "path": "_deps/EVCRMLF3.js",
+          "environment": "isolate",
+          "hash": "64b2c145b1486fbe5c7b2cc28a6798c87d0cb2c8b17275a9be3f42fd212a1182"
+        },
+        {
+          "path": "_deps/FWAQAUVY.js",
+          "environment": "isolate",
+          "hash": "a796a84e5763d0bc3ffee8bc34fae00f769d45539a25cbbe09d3bd8ad22b4d42"
+        },
+        {
+          "path": "_deps/SXT6UTG4.js",
+          "environment": "isolate",
+          "hash": "514816802eb93ac21f04c965357779ae1884da0c6ef50f0c20ba37b845b884a5"
+        },
+        {
+          "path": "_deps/TUGIGGKH.js",
+          "environment": "isolate",
+          "hash": "0d281b892815379041ed90bea54144d87d8ff55c65ab6762705e22001ca1fdd1"
+        },
+        {
+          "path": "_deps/YZGWHNVF.js",
+          "environment": "isolate",
+          "hash": "58b7a9843ad5e7536cd22d980cd5138495f1137c00c7fc9e4badecc21992be1d"
+        },
+        {
+          "path": "convex.config.js",
+          "environment": "isolate",
+          "hash": "07dadd338aab2dc753b5852edf9570671478cc654631b517955888c55c868826"
+        },
+        {
+          "path": "event.js",
+          "environment": "isolate",
+          "hash": "5dc8cbd6c4cbd1f126a5203d0869420b9f7666fb95abd1bf73f82d3e2ad976d1"
+        },
+        {
+          "path": "journal.js",
+          "environment": "isolate",
+          "hash": "08f1c3e976c80c8276a753756374a524964a6ffed7c3a0cddb784114124c5843"
+        },
+        {
+          "path": "logging.js",
+          "environment": "isolate",
+          "hash": "d1506a47a6a039c0aac06f02b73a339a794198543ea74cd65ba0fbc0df20c60b"
+        },
+        {
+          "path": "model.js",
+          "environment": "isolate",
+          "hash": "e9f6732db6e46257bc936d0d285a27e7421a4eb66d3ba9c33b0dd0a5ba63dd63"
+        },
+        {
+          "path": "pool.js",
+          "environment": "isolate",
+          "hash": "3d8f21bc703e99637cebd4433e52bf07b0e47c70a4ff94ea0252a87c36723b40"
+        },
+        {
+          "path": "schema.js",
+          "environment": "isolate",
+          "hash": "f64041d1d15bf97399f21b49dc0ba82f4313ce7a39c281817e330675a5e1daba"
+        },
+        {
+          "path": "utils.js",
+          "environment": "isolate",
+          "hash": "6a7e8f388ddb591fc7cd7392a4a09359e42f2b19e7c8e234fedd3e0d6d7fc6e7"
+        },
+        {
+          "path": "workflow.js",
+          "environment": "isolate",
+          "hash": "c736e35890e89de196dbb53f751e81853153b1ca4b427a50d4ed1e66c5135318"
+        }
+      ],
+      "schema": {
+        "path": "schema.js",
+        "environment": "isolate",
+        "hash": "f64041d1d15bf97399f21b49dc0ba82f4313ce7a39c281817e330675a5e1daba"
+      },
+      "definition": {
+        "path": "convex.config.js",
+        "environment": "isolate",
+        "hash": "07dadd338aab2dc753b5852edf9570671478cc654631b517955888c55c868826"
+      }
+    },
+    {
+      "definitionPath": "../node_modules/@convex-dev/workpool/dist/component",
+      "dependencies": [],
+      "udfServerVersion": "1.34.1",
+      "modules": [
+        {
+          "path": "_deps/ACXY22V3.js",
+          "environment": "isolate",
+          "hash": "9ac1cbe220f75e7d385983ac47b093fcddf2cda441e86b09ec227fa85801c00f"
+        },
+        {
+          "path": "_deps/B4R2JY3N.js",
+          "environment": "isolate",
+          "hash": "83f78443c826bdfa653680c8bad6987197e385ab3faf333cb0b642f656a0bbd3"
+        },
+        {
+          "path": "_deps/B666OCHS.js",
+          "environment": "isolate",
+          "hash": "f991a159ca3192961256a9f45106bcf865b56ad3926393aeac06a33251e64397"
+        },
+        {
+          "path": "_deps/C5MPVPSG.js",
+          "environment": "isolate",
+          "hash": "1f4a4c27059f02d1712cec62f128738522c5a9b753cb5a977ade4f4eb60c3365"
+        },
+        {
+          "path": "_deps/DN2ABFPW.js",
+          "environment": "isolate",
+          "hash": "616cd699d02b70e3f7f2ea9b6452367a0a37b1e4a2598415f8b0f5d161a54a10"
+        },
+        {
+          "path": "_deps/FHHUN43S.js",
+          "environment": "isolate",
+          "hash": "66b1b5ded150111534d18991a6235241687f82162954226e3b4cea4039c86fe0"
+        },
+        {
+          "path": "_deps/GJBLNMKN.js",
+          "environment": "isolate",
+          "hash": "bb2d40673250df9a39446a4021542c5b251c584629525d3e0e5e3508fd5cfd24"
+        },
+        {
+          "path": "_deps/TA2W36RV.js",
+          "environment": "isolate",
+          "hash": "cb2d6e3a3fd641cff270bd045545015250a458f7d6163a0db34b5322d3c66610"
+        },
+        {
+          "path": "complete.js",
+          "environment": "isolate",
+          "hash": "47f2c0bf44c822267ffea16ff6d5b5196431f7da2930e1cbcace7c661be76e7e"
+        },
+        {
+          "path": "config.js",
+          "environment": "isolate",
+          "hash": "d9ec9d8ebbd01d33712c7d271c0edb08e739975a649de59784022e2bf2f84e02"
+        },
+        {
+          "path": "convex.config.js",
+          "environment": "isolate",
+          "hash": "3647ed75c31f7e59e122ea4ee0c4f1cce4d37315ef1692f119a7c7a0776aa0d9"
+        },
+        {
+          "path": "crons.js",
+          "environment": "isolate",
+          "hash": "655594103df62b7e9e2dd7ea07ba6d7fe7ba58b2ea3fef1e3024373466af477f"
+        },
+        {
+          "path": "danger.js",
+          "environment": "isolate",
+          "hash": "50fb26555414e97a58b7ad3f11365ff48f5e2a32a361af860a777e99d0b921b9"
+        },
+        {
+          "path": "kick.js",
+          "environment": "isolate",
+          "hash": "04b2b55205784955dca92a41c1791ef44349a9696033dc5ce0c959def56915e8"
+        },
+        {
+          "path": "lib.js",
+          "environment": "isolate",
+          "hash": "62b626c36cbfd684452677642498e66b6dbfa4d6e9a4c0ed0b8fb9e60f9f5327"
+        },
+        {
+          "path": "logging.js",
+          "environment": "isolate",
+          "hash": "f215f506b8e6336fb04781fb561b12df6f0fac3f36b3cecc4342d50a64ac596b"
+        },
+        {
+          "path": "loop.js",
+          "environment": "isolate",
+          "hash": "dea51dd2815a9735fb56728df0a87d59cde4133e434a48674d0912887d050533"
+        },
+        {
+          "path": "recovery.js",
+          "environment": "isolate",
+          "hash": "bc1f803f538bc548facd70483558b962cf937c41d5bee1deac78398377058fbe"
+        },
+        {
+          "path": "schema.js",
+          "environment": "isolate",
+          "hash": "cab2ba0d8cdf4914dd90b9a78cbfa587af86363097ea8a660717bf44be9769a1"
+        },
+        {
+          "path": "shared.js",
+          "environment": "isolate",
+          "hash": "ea1d1bb63b0d43a08546ff4cbbaebeb05f05bf38f2553303fc78c411930b82da"
+        },
+        {
+          "path": "stats.js",
+          "environment": "isolate",
+          "hash": "cc66305019cfe55fa7c0ba14bf45157df05ccdee9a8010f0b8d4beec4df50130"
+        },
+        {
+          "path": "worker.js",
+          "environment": "isolate",
+          "hash": "29170c0b77fbe05b1a5207da78b19d6f49dc8a6ef7559dfd186c44b938f69a17"
+        }
+      ],
+      "schema": {
+        "path": "schema.js",
+        "environment": "isolate",
+        "hash": "cab2ba0d8cdf4914dd90b9a78cbfa587af86363097ea8a660717bf44be9769a1"
+      },
+      "definition": {
+        "path": "convex.config.js",
+        "environment": "isolate",
+        "hash": "3647ed75c31f7e59e122ea4ee0c4f1cce4d37315ef1692f119a7c7a0776aa0d9"
+      }
+    }
+  ],
+  "nodeDependencies": []
+}

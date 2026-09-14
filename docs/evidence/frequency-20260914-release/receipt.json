@@ -1,0 +1,41 @@
+{
+  "source": "075ac1df8827092dabc78e0dd7c49ec4daaf51dc",
+  "sourcePr": 64,
+  "captureFixMerge": "7b9001887ee475130702f04820ce2102b1fd83ef",
+  "rootManifest": {
+    "runId": 34867695957,
+    "artifactId": 10356984849,
+    "artifactName": "convex-root-modules-075ac1df8827092dabc78e0dd7c49ec4daaf51dc",
+    "sha256": "1024b80bca78ed6134c98b249f132296b2af9185d044775ba29f7d942f0c7740",
+    "offlineRebuildByteIdentical": true
+  },
+  "verification": {
+    "tool": "gh 2.100.0 attestation verify",
+    "repository": "Resonant-Projects/frequency-music",
+    "sourceDigestEnforced": true,
+    "sourceRef": "refs/heads/main",
+    "denySelfHostedRunners": true,
+    "rootSignerWorkflow": ".github/workflows/convex-provenance.yml",
+    "imageSignerWorkflow": ".github/workflows/publish-agent-image.yml",
+    "rootAttestationVerified": true,
+    "imageAttestationVerified": true
+  },
+  "image": {
+    "runId": 34867680249,
+    "artifactId": 10358000597,
+    "repository": "Resonant-Projects/frequency-music",
+    "source_sha": "075ac1df8827092dabc78e0dd7c49ec4daaf51dc",
+    "image": "ghcr.io/resonant-projects/frequency-music-agent",
+    "tag": "ghcr.io/resonant-projects/frequency-music-agent:sha-075ac1df8827092dabc78e0dd7c49ec4daaf51dc",
+    "digest": "sha256:92f92213066424e22279da2ebba5826ed2df9f17984dab2a92391d2d6d97e0a8",
+    "deploy": "ghcr.io/resonant-projects/frequency-music-agent@sha256:92f92213066424e22279da2ebba5826ed2df9f17984dab2a92391d2d6d97e0a8"
+  },
+  "candidateInventory": {
+    "attested": false,
+    "offlineBuildSha256": "0fd9c4ecdd34615e9224e5c8a16785326f93cb08a23c26c88825598fb847bacf",
+    "retainedFormattedSha256": "99cca93f1796b1fc75b70aea13e761c8646d7e1b1b5b56115fc7e93ef0408861",
+    "formattingOnly": true
+  },
+  "productionDeploymentAuthorized": false,
+  "workerImagePromoted": false
+}
