@@ -14,7 +14,7 @@ console.log(JSON.stringify(result));`;
   const result = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", code],
-    { encoding: "utf8", timeout: 5000 },
+    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 5000 },
   );
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(0);
@@ -88,7 +88,7 @@ console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval((
   const result = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", code],
-    { encoding: "utf8", timeout: 4000 },
+    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 4000 },
   );
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(0);
