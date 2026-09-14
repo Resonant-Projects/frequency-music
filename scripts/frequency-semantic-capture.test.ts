@@ -8,7 +8,7 @@ const supervisor = pathToFileURL(
 ).href;
 function run(childCode: string, deadlineMs = 300, maxBytes = 4096) {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
-const result = await supervise(process.execPath, ['-e', ${JSON.stringify(childCode)}], {deadlineMs:${deadlineMs},maxBytes:${maxBytes},env:{}});
+const result = await supervise(process.execPath, ['-e', ${JSON.stringify(childCode)}], {deadlineMs:${deadlineMs},maxBytes:${maxBytes},env:{APP_ENV:"test"}});
 console.log(JSON.stringify(result));`;
   const start = Date.now();
   const result = spawnSync(
@@ -71,7 +71,7 @@ test("CLI refuses absent credentials before launching inspector", () => {
   const result = spawnSync(
     process.execPath,
     ["scripts/frequency-semantic-capture.mjs"],
-    { env: {}, encoding: "utf8", timeout: 5000 },
+    { env: { APP_ENV: "test" }, encoding: "utf8", timeout: 5000 },
   );
   expect(result.status).toBe(1);
   expect(result.stdout).toBe("");
@@ -84,7 +84,7 @@ test("CLI refuses absent credentials before launching inspector", () => {
 test("interruption terminates the capture subprocess without releasing partial evidence", () => {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
 setTimeout(()=>process.kill(process.pid,'SIGTERM'),200);
-console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval(()=>{},1000)'],{deadlineMs:2000,env:{}})));`;
+console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval(()=>{},1000)'],{deadlineMs:2000,env:{APP_ENV:"test"}})));`;
   const result = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", code],
