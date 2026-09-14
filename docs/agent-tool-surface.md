@@ -57,7 +57,7 @@ These tools write only to agent audit/review records and must not substitute for
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
-| `createAgentRun` | `/agent-tools/createAgentRun` | `agentRuns:create + agentRuns:markRunning` | Create an audit-only Convex agent run record and mark it running. Does not mutate research data. | Returns safe metadata: run id, status, and timestamps. |
+| `createAgentRun` | `/agent-tools/createAgentRun` | `agentRuns:createRunning` | Atomically create a running audit-only Convex agent run record. Does not mutate research data. | Returns safe metadata: run id, status, and timestamps. |
 | `appendAgentRunEvent` | `/agent-tools/appendAgentRunEvent` | `agentRuns:appendEvent` | Append an audit-only lifecycle event to a Convex agent run. Does not mutate research data. | Payloads should be sanitized; never include secrets or raw env data. |
 | `markAgentRunCompleted` | `/agent-tools/markAgentRunCompleted` | `agentRuns:markCompleted` | Mark an audit-only Convex agent run completed. Does not mutate research data. | Optional summary and trace URL only. |
 | `markAgentRunNeedsReview` | `/agent-tools/markAgentRunNeedsReview` | `agentRuns:markNeedsReview` | Mark an audit-only Convex agent run as needs_review after producing a human-review draft. Does not mutate research data. | Draft is sanitized server-side. |

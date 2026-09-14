@@ -438,32 +438,47 @@ export const sweepStaleRuns = internalMutation({
   },
 });
 
+async function markRunRunning(ctx: MutationCtx, runId: Id<"agentRuns">) {
+  const now = Date.now();
+  await ctx.db.patch(runId, {
+    status: "running",
+    startedAt: now,
+    updatedAt: now,
+  });
+  await appendRunEvent(
+    ctx,
+    {
+      runId,
+      kind: "status",
+      message: "Agent run started",
+    },
+    now,
+  );
+  return {
+    runId,
+    status: "running" as const,
+    startedAt: now,
+    updatedAt: now,
+  };
+}
+
 export const markRunning = internalMutation({
+  args: { runId: v.id("agentRuns") },
+  handler: (ctx, args) => markRunRunning(ctx, args.runId),
+});
+
+// Direct execution owns this record immediately. Keep creation and transition
+// in one transaction so polling workers never observe a claimable queued row.
+export const createRunning = internalMutation({
   args: {
-    runId: v.id("agentRuns"),
+    graphName: v.string(),
+    input: v.optional(v.any()),
+    traceUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
-    await ctx.db.patch(args.runId, {
-      status: "running",
-      startedAt: now,
-      updatedAt: now,
-    });
-    await appendRunEvent(
-      ctx,
-      {
-        runId: args.runId,
-        kind: "status",
-        message: "Agent run started",
-      },
-      now,
-    );
-    return {
-      runId: args.runId,
-      status: "running" as const,
-      startedAt: now,
-      updatedAt: now,
-    };
+    const created = await insertQueuedRun(ctx, args);
+    const running = await markRunRunning(ctx, created.runId);
+    return { ...running, createdAt: created.createdAt };
   },
 });
 

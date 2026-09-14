@@ -161,27 +161,15 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
         agentRunId: args.agentRunId,
       }),
     ),
-  createAgentRun: async (ctx, args) => {
-    const created = (await ctx.runMutation(
-      mutationRef("agentRuns:create"),
+  createAgentRun: (ctx, args) =>
+    ctx.runMutation(
+      mutationRef("agentRuns:createRunning"),
       omitUndefined({
         graphName: args.graphName,
         input: args.input,
         traceUrl: args.traceUrl,
       }),
-    )) as { runId: string; createdAt: number };
-    const running = (await ctx.runMutation(
-      mutationRef("agentRuns:markRunning"),
-      { runId: created.runId },
-    )) as { status: string; startedAt: number; updatedAt: number };
-    return {
-      runId: created.runId,
-      status: running.status,
-      createdAt: created.createdAt,
-      startedAt: running.startedAt,
-      updatedAt: running.updatedAt,
-    };
-  },
+    ),
   appendAgentRunEvent: (ctx, args) =>
     ctx.runMutation(
       mutationRef("agentRuns:appendEvent"),
