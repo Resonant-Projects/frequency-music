@@ -197,8 +197,8 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
   entry(
     "createAgentRun",
     "audit_write",
-    "agentRuns:create + agentRuns:markRunning",
-    "Create an audit-only Convex agent run record and mark it running. Does not mutate research data.",
+    "agentRuns:createRunning",
+    "Atomically create a running audit-only Convex agent run record. Does not mutate research data.",
     "Returns safe metadata: run id, status, and timestamps.",
   ),
   entry(

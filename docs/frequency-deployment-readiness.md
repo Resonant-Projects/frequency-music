@@ -77,6 +77,35 @@ PR62 at `c7abbfc611db7eec957181d6b100ff94971dc92d` is an open Mac-owned recovery
 
 The coordinator should return the Mac owner's current reviewed revision and any already-completed sanitized semantic output. Otherwise, after this supervisor's review and merge, use it once for missing metadata coverage and return output or fixed failure, exact script revision, exit status, capture timestamps and SHA-256. Prefer retained protected artifacts for the remaining source/auth/schema/validator/component/cron argument comparison described above. Do not duplicate recovery inventory or rerun the resolved missing-function diagnostic. No restore, backup, backend deployment or CT107 operation is approved by this checkpoint.
 
+## Direct execution admission correction
+
+The source-side producer audit found a duplicate-execution window in
+`createAgentRun`: it formerly committed a queued record and then called
+`markRunning` in a second mutation. A polling worker could claim that record
+between commits while the direct graph caller proceeded with the same run.
+The direct tool now calls `agentRuns:createRunning`, which creates the record
+and transitions it to running in one serializable mutation. Its response and
+two lifecycle events are preserved; workers cannot observe the intermediate
+queued state. Ordinary `create`/`enqueue` queue semantics remain unchanged.
+A synthetic test polls after every direct-tool mutation boundary, fails on the
+former implementation, and verifies both exclusion of the direct run and
+continued claimability of a separately enqueued run.
+
+This correction changes deployable source. The `0d07b44` artifact above remains
+the historical comparison baseline, not an attestation of this correction.
+Before selecting a new deployment candidate, publish/verify its exact release
+attestation, rebuild root and component inventories, and refresh the protected
+semantic delta. Do not deploy the previous candidate expecting this fix.
+
+This is not a maintenance barrier. `createRunning` does not consult worker
+claim pause, existing `markRunning` callers retain their behavior, and the
+research-pipeline direct caller can continue after audit initialization fails.
+Consequently, denying this audit endpoint alone cannot freeze execution.
+Manual/direct graph processes must be controlled at their actual launch or
+execution boundary. Backend cron/workflow and already scheduled execution also
+remain outside worker claim pause. The Mac return still needs verified controls
+for those surfaces, supported by actual deployed code/runtime evidence; this
+source correction neither installs a bootstrap control nor closes that gate.
 
 ## September 14 single-capture compatibility receipt
 
