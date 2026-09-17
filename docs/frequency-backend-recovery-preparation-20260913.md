@@ -189,3 +189,29 @@ A failed `pct restore` attempts cleanup only when its partial guest passes the s
 The offline audit rejects lingering user accounts, custom default targets, boot-target drop-ins and unapproved dependencies declared by multi-user.target. These configurations require explicit review before rehearsal.
 
 The operator block uses EXIT cleanup for failures and HUP/INT/TERM, disarmed only after successful final destruction. Restores hold a per-CTID lock across preflight and mutation. Run-record volume reads are checked before writing, and first boot rechecks the exact memory/CPU/swap budget and host memory headroom. The offline audit follows unit-file and drop-in dependencies recursively; any unapproved dependency requires review before boot.
+
+## September 17 first live rehearsal and vendor boot target
+
+The September 13 CT113 archive passed checksum, zstd integrity and decompressed
+size checks, and the CT913/prox4 preflight passed. The first live rehearsal
+restored a stopped guest, removed its network attachment, then refused before
+first boot because the archived vendor `default.target` points to
+`graphical.target`. The archive has no `/etc/systemd/system/default.target`
+override. Guarded cleanup removed CT913 and both recorded Ceph volumes.
+No restored database or backend started, and no production service changed.
+
+The helper now recognizes only that standard relative vendor symlink under
+`/usr/lib/systemd/system` or `/lib/systemd/system` and writes an explicit
+`/etc/systemd/system/default.target` override to `multi-user.target` inside the
+disposable guest. It still refuses custom/local defaults and boot-target
+drop-ins, and audits the multi-user dependency chain and enabled units before
+boot. The override does not authorize graphical services. The early-exit
+unmount trap now captures the validated CTID while it is in scope.
+
+The archive SHA-256 is
+`2a70fb3a6bbeedbb53cfdad8332fc36a41ac458bcf396ae9fe8f132f55d71aa8`.
+Its compressed size is 18,261,050,784 bytes; decompressed size is
+27,199,365,120 bytes, matching the successful backup task log, which includes
+rootfs and `/srv/app-data`. These are archive-integrity facts, not a passed
+application restore or acceptance of its September 13 recovery point for a
+current production rollback.

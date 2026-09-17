@@ -17,6 +17,12 @@ export ISOLATED_RESTORE_SLEEP=0
 export ISOLATED_RESTORE_READY_SECONDS=2
 export PATH="$work/bin:$PATH"
 
+cat > "$work/bin/chown" <<'EOF'
+#!/usr/bin/env bash
+# Ownership is exercised as root on Proxmox. Offline tests run unprivileged.
+[ "$1" = -h ] && [ "$2" = 100000:100000 ] && [ -L "$3" ] || exit 99
+echo "chown $*" >> "$SHIM_STATE/calls.log"
+EOF
 cat > "$work/bin/timeout" <<'EOF'
 #!/usr/bin/env bash
 # shim: record the deadline, then run the command (never hangs in tests)
@@ -263,6 +269,19 @@ mkdir -p "$work/lxc/913/rootfs/usr/local/lib/systemd/system/multi-user.target.wa
 ln -s /etc/systemd/system/evil.service "$work/lxc/913/rootfs/usr/local/lib/systemd/system/multi-user.target.wants/evil.service"
 expect 1 "prepare audits local vendor wants" --msg "outside the allow-list" prepare 913
 
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/usr/lib/systemd/system"
+ln -s graphical.target "$work/lxc/913/rootfs/usr/lib/systemd/system/default.target"
+expect 0 "prepare overrides vendor graphical default in the isolated guest" prepare 913
+[ "$(readlink "$work/lxc/913/rootfs/etc/systemd/system/default.target")" = /usr/lib/systemd/system/multi-user.target ] || { echo "FAIL isolated default override missing"; failn=$((failn+1)); }
+reset_state; seed_record; make_rootfs
+ln -s graphical.target "$work/lxc/913/rootfs/etc/systemd/system/default.target"
+expect 1 "prepare rejects local graphical default" --msg "custom default.target" prepare 913
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/usr/lib/systemd/system"
+ln -s graphical.target "$work/lxc/913/rootfs/usr/lib/systemd/system/default.target"
+printf '[Unit]\nRequires=evil.service\n' > "$work/lxc/913/rootfs/etc/systemd/system/multi-user.target"
+expect 1 "vendor override still rejects unsafe multi-user dependency" --msg "unapproved boot target dependency" prepare 913
 reset_state; seed_record; make_rootfs
 ln -s custom.target "$work/lxc/913/rootfs/etc/systemd/system/default.target"
 expect 1 "prepare rejects a custom default target" --msg "custom default.target" prepare 913

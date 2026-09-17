@@ -271,7 +271,7 @@ cmd_prepare() {
   strip_networking "$ctid"
   local root="$LXC_BASE/$ctid/rootfs"
   pct mount "$ctid" >/dev/null
-  trap 'pct unmount "$ctid" >/dev/null 2>&1 || true' EXIT
+  trap "pct unmount $ctid >/dev/null 2>&1 || true" EXIT
   [ -d "$root/etc/systemd/system" ] || die "rootfs did not mount"
   local guarded
   for guarded in etc etc/systemd etc/systemd/system usr/lib/systemd/system usr/local/lib/systemd/system lib/systemd/system etc/op etc/docker root root/.docker var/lib/docker; do
@@ -299,12 +299,21 @@ cmd_prepare() {
       || die "lingering user accounts are not approved for rehearsal"
   fi
   # Permit only the standard multi-user boot target, without target overrides.
-  local target dep deps
+  local target dep deps vendor_graphical=0
   for dir in "${enablement_dirs[@]}"; do
     if [ -e "$dir/default.target" ] || [ -L "$dir/default.target" ]; then
       [ -L "$dir/default.target" ] || die "custom default.target is not approved"
       target=$(readlink "$dir/default.target")
-      case "$target" in multi-user.target|/lib/systemd/system/multi-user.target|/usr/lib/systemd/system/multi-user.target) ;; *) die "custom default.target is not approved";; esac
+      case "$target" in
+        multi-user.target|/lib/systemd/system/multi-user.target|/usr/lib/systemd/system/multi-user.target) ;;
+        graphical.target)
+          # Debian's vendor default is graphical even on a headless LXC.
+          # Override it only in the disposable rootfs; graphical dependencies
+          # must never become part of this recovery boot.
+          case "$dir" in "$root/usr/lib/systemd/system"|"$root/lib/systemd/system") vendor_graphical=1;; *) die "custom default.target is not approved";; esac
+          ;;
+        *) die "custom default.target is not approved";;
+      esac
     fi
     for target in default.target multi-user.target; do
       [ ! -e "$dir/$target.d" ] || die "boot target drop-ins require explicit review"
@@ -325,6 +334,13 @@ PYTARGET
       done
     fi
   done
+  if ((vendor_graphical)); then
+    # All existing defaults/drop-ins were checked above. Unlink rather than
+    # follow an archived symlink, and give the explicit override guest ownership.
+    rm -f "$root/etc/systemd/system/default.target"
+    ln -s /usr/lib/systemd/system/multi-user.target "$root/etc/systemd/system/default.target"
+    chown -h 100000:100000 "$root/etc/systemd/system/default.target"
+  fi
   # `find` does not descend into a .wants/.requires entry that is itself a
   # symlink to a directory, but systemd does follow it, so every unit enabled
   # inside one would be invisible to the allow-list below. Refuse outright.
