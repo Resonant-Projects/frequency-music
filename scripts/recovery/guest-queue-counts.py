@@ -78,7 +78,7 @@ def count_pages(query):
 
 def collect(origin, key_file):
     parsed = urllib.parse.urlsplit(origin)
-    if (parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "localhost", "::1")
+    if (parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "::1")
             or parsed.username or parsed.password or parsed.path not in ("", "/")
             or parsed.query or parsed.fragment):
         raise Rejected("origin_not_loopback")

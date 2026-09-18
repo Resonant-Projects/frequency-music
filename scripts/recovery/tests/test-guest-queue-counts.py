@@ -81,6 +81,10 @@ class Counts(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout), {"complete": False, "code": "deadline_exceeded"})
         self.assertEqual(result.stderr, "")
 
+    def test_hostname_loopback_is_rejected_without_resolution(self):
+        with self.assertRaisesRegex(m.Rejected, "origin_not_loopback"):
+            m.collect("http://localhost:3210", "/absent/key")
+
     def test_nonlocal_origin_rejected_before_key_read(self):
         with self.assertRaisesRegex(m.Rejected, "origin_not_loopback"):
             m.collect("http://production.invalid", "/absent/key")

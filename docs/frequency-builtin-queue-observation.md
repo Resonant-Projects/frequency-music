@@ -19,7 +19,7 @@ migration. No isolated-backend compatibility result is claimed.
 
 ## Exact read and limits
 
-The script accepts only HTTP loopback origins, default `http://127.0.0.1:3210`.
+The script accepts only HTTP numeric loopback origins, default `http://127.0.0.1:3210`.
 It sends POST `/api/query` with the existing admin authentication header. The
 only function is `_system/cli/tableData`, table `agentRuns`, ascending order,
 100 rows per page. It neither calls mutations nor claims, retries, requeues,
