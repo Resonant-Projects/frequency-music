@@ -31,6 +31,7 @@ jobs:
       # so CI coverage tracks package.json instead of drifting from it.
       - run: vp run test
       - run: vp run test:harness
+      - run: python3 scripts/recovery/tests/test-native-pause-controller.py
 
   web:
     runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
