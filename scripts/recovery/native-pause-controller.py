@@ -65,6 +65,10 @@ def backend_state():
     if not isinstance(envelope, dict) or envelope.get('status') != 'success':
         raise Refused('state_query_failed')
     value = envelope.get('value')
+    # The deployed backend answers {"state": "running"}; older builds answered
+    # the bare string. Accept exactly those two shapes and nothing else.
+    if isinstance(value, dict) and set(value) == {'state'}:
+        value = value['state']
     if value not in ('running', 'paused', 'disabled', 'suspended'):
         raise Refused('invalid_state')
     return value
