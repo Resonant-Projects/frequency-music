@@ -185,4 +185,25 @@ m.main()
         self.assertEqual(argv[-1], 'watchdog')
         self.assertNotIn('private-key', ' '.join(argv))
 
+
+class BackendStateShape(unittest.TestCase):
+    """Exercise the real parser: the deployed backend wraps the state in an object."""
+    def query(self, value):
+        with patch.object(m, 'request', lambda path, body: json.dumps({'status': 'success', 'value': value}).encode()), \
+             patch.object(m, 'BASE', pathlib.Path(tempfile.mkdtemp())):
+            return m.backend_state()
+    def test_object_state_shape_from_deployed_backend(self):
+        self.assertEqual(self.query({'state': 'running'}), 'running')
+        self.assertEqual(self.query({'state': 'paused'}), 'paused')
+    def test_bare_string_shape_still_accepted(self):
+        self.assertEqual(self.query('running'), 'running')
+    def test_unknown_shapes_refused(self):
+        for value in ({'state': 'running', 'extra': 1}, {'phase': 'running'}, 'stopped', 7, None, {'state': 'active'}):
+            with self.assertRaises(m.Refused):
+                self.query(value)
+    def test_non_success_envelope_refused(self):
+        with patch.object(m, 'request', lambda path, body: b'{"status":"error","value":{"state":"running"}}'):
+            with self.assertRaises(m.Refused):
+                m.backend_state()
+
 if __name__ == '__main__': unittest.main()
