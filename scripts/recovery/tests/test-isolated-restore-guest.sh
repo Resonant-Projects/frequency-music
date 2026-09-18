@@ -272,8 +272,19 @@ expect 1 "prepare audits local vendor wants" --msg "outside the allow-list" prep
 reset_state; seed_record; make_rootfs
 mkdir -p "$work/lxc/913/rootfs/usr/lib/systemd/system"
 ln -s graphical.target "$work/lxc/913/rootfs/usr/lib/systemd/system/default.target"
+printf '[Unit]\nRequires=basic.target\n' > "$work/lxc/913/rootfs/usr/lib/systemd/system/multi-user.target"
 expect 0 "prepare overrides vendor graphical default in the isolated guest" prepare 913
 [ "$(readlink "$work/lxc/913/rootfs/etc/systemd/system/default.target")" = /usr/lib/systemd/system/multi-user.target ] || { echo "FAIL isolated default override missing"; failn=$((failn+1)); }
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/lib/systemd/system"
+ln -s graphical.target "$work/lxc/913/rootfs/lib/systemd/system/default.target"
+printf '[Unit]\nRequires=basic.target\n' > "$work/lxc/913/rootfs/lib/systemd/system/multi-user.target"
+expect 0 "prepare supports non-usrmerged vendor target" prepare 913
+[ "$(readlink "$work/lxc/913/rootfs/etc/systemd/system/default.target")" = /lib/systemd/system/multi-user.target ] || { echo "FAIL non-usrmerged override is dangling"; failn=$((failn+1)); }
+reset_state; seed_record; make_rootfs
+mkdir -p "$work/lxc/913/rootfs/usr/lib/systemd/system"
+ln -s graphical.target "$work/lxc/913/rootfs/usr/lib/systemd/system/default.target"
+expect 1 "prepare rejects missing multi-user target" --msg "audited multi-user.target is missing" prepare 913
 reset_state; seed_record; make_rootfs
 ln -s graphical.target "$work/lxc/913/rootfs/etc/systemd/system/default.target"
 expect 1 "prepare rejects local graphical default" --msg "custom default.target" prepare 913

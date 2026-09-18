@@ -337,8 +337,17 @@ PYTARGET
   if ((vendor_graphical)); then
     # All existing defaults/drop-ins were checked above. Unlink rather than
     # follow an archived symlink, and give the explicit override guest ownership.
+    local boot_unit=""
+    for dir in "$root/etc/systemd/system" "$root/usr/local/lib/systemd/system" "$root/usr/lib/systemd/system" "$root/lib/systemd/system"; do
+      if [ -f "$dir/multi-user.target" ]; then
+        assert_within_root "$root" "$dir/multi-user.target"
+        boot_unit="${dir#"$root"}/multi-user.target"
+        break
+      fi
+    done
+    [ -n "$boot_unit" ] || die "audited multi-user.target is missing"
     rm -f "$root/etc/systemd/system/default.target"
-    ln -s /usr/lib/systemd/system/multi-user.target "$root/etc/systemd/system/default.target"
+    ln -s "$boot_unit" "$root/etc/systemd/system/default.target"
     chown -h 100000:100000 "$root/etc/systemd/system/default.target"
   fi
   # `find` does not descend into a .wants/.requires entry that is itself a
