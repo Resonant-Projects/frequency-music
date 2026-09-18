@@ -11,8 +11,11 @@ The query and argument contract were checked against Convex backend revision
   returns standard pagination for `{table, order, paginationOpts}`.
 - `npm-packages/convex/src/cli/lib/data.ts` uses that function for `convex data`.
 
-A revision label is not source attestation. Validate the collector against the
-isolated restored backend before using it for a bounded production observation.
+A revision label is not source attestation. The first bounded production
+observation was authorized after independent collector review and synthetic
+HTTP validation. The unrelated backend restore remained blocked before boot
+by its vendor-unit allowlist, and was explicitly separated from this worker-only
+migration. No isolated-backend compatibility result is claimed.
 
 ## Exact read and limits
 
@@ -62,3 +65,17 @@ rows, split and cyclic pagination, local-only origins, real HTTP request shape,
 credential-file permissions and process-level deadline termination. Live
 isolated acceptance and any subsequent production observation must retain their
 own sanitized receipts. Unit tests do not establish deployed compatibility.
+
+## September 18 bounded production observation
+
+The reviewed collector completed one observation through CT113's existing
+loopback backend route. It read 142 rows in two pages and reported queued 0,
+running 0, needs_review 3, completed 138, failed 1, cancelled 0. The observation
+started at Unix time 1789690471.3763103 and finished at 1789690471.4509447.
+Raw records were neither retained nor shared. Temporary admin-key material was
+derived through the existing local backend utility and removed on exit.
+
+This establishes deployed built-in query compatibility and the reported
+sequential counts. It does not establish the absence of an outstanding claim,
+an idle process, or permission to terminate the old worker. No mutation,
+application deployment, backend stop, or worker action occurred.
