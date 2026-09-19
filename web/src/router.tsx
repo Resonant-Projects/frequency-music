@@ -119,9 +119,12 @@ const Zodiac3D = lazyRoute(() =>
 );
 
 // `/` is the 3D home, so warm its chunk immediately rather than waterfalling
-// the download behind the first navigation.
+// the download behind the first navigation. This is only an optimization: a
+// failed prefetch must stay silent, or every route logs an unhandled rejection
+// when the network blips. Navigating to `/` retries the import and surfaces
+// any real failure there.
 if (typeof window !== "undefined") {
-  void Zodiac3D.preload();
+  void Zodiac3D.preload().catch(() => undefined);
 }
 
 const appLinks = [
