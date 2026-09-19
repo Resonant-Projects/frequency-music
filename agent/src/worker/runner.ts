@@ -38,6 +38,10 @@ import {
 } from "./graphInput.js";
 
 import { runWorkerLoop } from "./lifecycle.js";
+import {
+  createLivenessReporter,
+  type LivenessReporter,
+} from "./liveness.js";
 
 type StreamableGraph = {
   stream: (
@@ -67,6 +71,14 @@ function log(message: string, ...rest: unknown[]): void {
   console.log(`[worker] ${message}`, ...rest);
 }
 
+// Set once in main(). Every call site that proves the loop is executing routes
+// through markWorkerAlive so an unconfigured worker stays a no-op.
+let liveness: LivenessReporter | null = null;
+
+function markWorkerAlive(): void {
+  liveness?.markAlive();
+}
+
 function hasLiveConfig(): boolean {
   return Boolean(process.env.CONVEX_SITE_URL && process.env.AGENT_TOOL_SECRET);
 }
@@ -83,6 +95,7 @@ async function appendNodeEvent(
       message: `Worker executed graph node '${node}'`,
       payload: summarizeNodeUpdate(node, update),
     });
+    markWorkerAlive();
   } catch (error) {
     log(`failed to append node event for '${node}':`, redactError(error));
   }
@@ -109,6 +122,7 @@ async function appendWorkerHeartbeat(runId: string): Promise<void> {
       },
       controller.signal,
     );
+    markWorkerAlive();
   } catch (error) {
     log(`failed to append heartbeat for run ${runId}:`, redactError(error));
   } finally {
@@ -289,18 +303,38 @@ export async function main(): Promise<void> {
     process.env.WORKER_ID ?? `worker-${hostname()}-${process.pid}`;
   const graphFilter = process.env.WORKER_GRAPH_NAME;
 
+  // Opt-in: with no push URL the worker behaves exactly as before, so local
+  // runs and tests need no monitoring endpoint.
+  const livenessPushUrl = process.env.WORKER_LIVENESS_PUSH_URL?.trim();
+  if (livenessPushUrl) {
+    liveness = createLivenessReporter({
+      pushUrl: livenessPushUrl,
+      log,
+      redact: redactError,
+    });
+    log("liveness pushes enabled");
+  }
+
   log(
     `started workerId=${workerId} pollIntervalMs=${POLL_INTERVAL_MS}` +
       (graphFilter ? ` graphFilter=${graphFilter}` : ""),
   );
 
-  await runWorkerLoop({
-    poll: () => pollOnce(workerId, graphFilter),
-    pollIntervalMs: POLL_INTERVAL_MS,
-    signals: process,
-    log,
-    onPollError: (error) => log("poll iteration failed:", redactError(error)),
-  });
+  try {
+    await runWorkerLoop({
+      poll: () => pollOnce(workerId, graphFilter),
+      pollIntervalMs: POLL_INTERVAL_MS,
+      signals: process,
+      log,
+      onPollError: (error) => log("poll iteration failed:", redactError(error)),
+      onPollSettled: markWorkerAlive,
+    });
+  } finally {
+    // A drained worker stops asserting liveness; the deadline then reports the
+    // intended shutdown exactly like any other absence of pushes.
+    await liveness?.stop();
+    liveness = null;
+  }
 
   log("worker loop exited");
 }
