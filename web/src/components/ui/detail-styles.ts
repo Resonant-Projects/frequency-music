@@ -3,7 +3,9 @@ import { css } from "../../../styled-system/css";
 /** Gold horizontal rule used as a section divider on detail pages. */
 export const goldDivider = css({
   border: "none",
-  borderTop: "1px solid rgba(200, 168, 75, 0.22)",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "zodiac.gold/22",
   my: "6",
 });
 
@@ -18,7 +20,7 @@ export const backLink = css({
   letterSpacing: "0.14em",
   textDecoration: "none",
   textTransform: "uppercase",
-  opacity: 0.7,
+  opacity: 0.85,
   _hover: { opacity: 1 },
 });
 
@@ -44,7 +46,8 @@ export const sectionLabel = css({
 
 /** Faded mono metadata footer line. */
 export const metaLine = css({
-  color: "rgba(245, 240, 232, 0.55)",
+  color: "zodiac.cream/55",
   fontFamily: "mono",
   fontSize: "xs",
+  overflowWrap: "anywhere",
 });

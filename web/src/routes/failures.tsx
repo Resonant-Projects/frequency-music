@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/solid-router";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
@@ -7,13 +8,14 @@ import {
   sectionTitleClass,
   UIBadge,
   UICard,
+  UINotice,
   UISelect,
 } from "../components/ui";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
 const rowClass = css({
-  borderColor: "rgba(200, 168, 75, 0.18)",
+  borderColor: "zodiac.gold/18",
   borderRadius: "l2",
   borderWidth: "1px",
   p: "4",
@@ -46,9 +48,7 @@ export function FailuresPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Failure Archive</h1>
-        <p
-          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
-        >
+        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
           Contradictions and low-yield paths stay visible here so the system can
           learn honestly instead of silently discarding reversals.
         </p>
@@ -66,7 +66,7 @@ export function FailuresPage() {
           <div>
             <label
               class={css({
-                color: "rgba(245, 240, 232, 0.7)",
+                color: "zodiac.cream/70",
                 display: "block",
                 mb: "2",
               })}
@@ -88,7 +88,7 @@ export function FailuresPage() {
           <div>
             <label
               class={css({
-                color: "rgba(245, 240, 232, 0.7)",
+                color: "zodiac.cream/70",
                 display: "block",
                 mb: "2",
               })}
@@ -114,20 +114,30 @@ export function FailuresPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Archive</h2>
-        <Show
-          when={!archive.isLoading() && (archive.data() ?? []).length > 0}
-          fallback={
-            <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
-              {archive.isLoading()
-                ? "Loading..."
-                : "No archived failures match the current filters."}
-            </p>
+        <UINotice
+          status={
+            archive.isLoading()
+              ? "Loading..."
+              : !archive.isError() && (archive.data() ?? []).length === 0
+                ? "No archived failures match the current filters."
+                : null
           }
-        >
+          error={
+            archive.isError()
+              ? `Unable to load the failure archive: ${archive.error()?.message ?? "unknown error"}`
+              : null
+          }
+        />
+        <Show when={!archive.isLoading() && (archive.data() ?? []).length > 0}>
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={archive.data() ?? []}>
               {(entry) => (
-                <div id={entry.key} data-testid="failure-row" class={rowClass}>
+                <div
+                  id={entry.key}
+                  tabIndex={-1}
+                  data-testid="failure-row"
+                  class={rowClass}
+                >
                   <div
                     class={css({
                       display: "flex",
@@ -152,7 +162,7 @@ export function FailuresPage() {
                   </h3>
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.75)",
+                      color: "zodiac.cream/75",
                       lineHeight: "1.7",
                       mb: "2",
                     })}
@@ -161,7 +171,7 @@ export function FailuresPage() {
                   </p>
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.58)",
+                      color: "zodiac.cream/58",
                       lineHeight: "1.7",
                       mb: "2",
                     })}
@@ -177,36 +187,52 @@ export function FailuresPage() {
                     })}
                   >
                     <Show when={entry.hypothesisId}>
-                      <a
-                        href={`/hypotheses/${entry.hypothesisId}`}
-                        class={css({ color: "zodiac.violet" })}
-                      >
-                        Hypothesis
-                      </a>
+                      {(hypothesisId) => (
+                        <Link
+                          to="/hypotheses/$hypothesisId"
+                          params={{ hypothesisId: String(hypothesisId()) }}
+                          aria-label={`Hypothesis for ${entry.title}`}
+                          class={css({ color: "zodiac.violet" })}
+                        >
+                          Hypothesis
+                        </Link>
+                      )}
                     </Show>
                     <Show when={entry.recipeId}>
-                      <a
-                        href={`/recipes/${entry.recipeId}`}
-                        class={css({ color: "zodiac.violet" })}
-                      >
-                        Recipe
-                      </a>
+                      {(recipeId) => (
+                        <Link
+                          to="/recipes/$recipeId"
+                          params={{ recipeId: String(recipeId()) }}
+                          aria-label={`Recipe for ${entry.title}`}
+                          class={css({ color: "zodiac.violet" })}
+                        >
+                          Recipe
+                        </Link>
+                      )}
                     </Show>
                     <Show when={entry.compositionId}>
-                      <a
-                        href={`/compositions/${entry.compositionId}`}
-                        class={css({ color: "zodiac.violet" })}
-                      >
-                        Composition
-                      </a>
+                      {(compositionId) => (
+                        <Link
+                          to="/compositions/$compositionId"
+                          params={{ compositionId: String(compositionId()) }}
+                          aria-label={`Composition for ${entry.title}`}
+                          class={css({ color: "zodiac.violet" })}
+                        >
+                          Composition
+                        </Link>
+                      )}
                     </Show>
                     <Show when={entry.thesisId}>
-                      <a
-                        href={`/theses/${entry.thesisId}`}
-                        class={css({ color: "zodiac.violet" })}
-                      >
-                        Thesis
-                      </a>
+                      {(thesisId) => (
+                        <Link
+                          to="/theses/$thesisId"
+                          params={{ thesisId: String(thesisId()) }}
+                          aria-label={`Thesis for ${entry.title}`}
+                          class={css({ color: "zodiac.violet" })}
+                        >
+                          Thesis
+                        </Link>
+                      )}
                     </Show>
                   </div>
                 </div>

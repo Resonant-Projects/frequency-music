@@ -18,7 +18,8 @@ import { css } from "../../styled-system/css";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import type { ConstellationEdge } from "../lib/zodiac-constellations";
-import { SECTORS } from "../lib/zodiac-data";
+import { prefersReducedMotion, watchReducedMotion } from "../lib/zodiac-camera";
+import { COLORS, SECTORS } from "../lib/zodiac-data";
 import { initZodiacScene, type ZodiacHandle } from "../lib/zodiac-scene";
 import type {
   ConceptDetailData,
@@ -39,8 +40,9 @@ import type {
 const focusRing = {
   _focusVisible: {
     borderColor: "zodiac.gold",
-    boxShadow: "0 0 0 1px rgba(200, 168, 75, 0.4)",
-    outline: "none",
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "1px",
   },
 } as const;
 
@@ -84,8 +86,12 @@ const sidebarContainer = css({
   width: { base: "100%", lg: "355px" },
   display: "flex",
   flexDirection: "column",
-  borderLeft: { base: "none", lg: "1px solid rgba(200, 168, 75, 0.12)" },
-  borderTop: { base: "1px solid rgba(200, 168, 75, 0.12)", lg: "none" },
+  borderLeftWidth: { base: "0", lg: "1px" },
+  borderLeftStyle: "solid",
+  borderLeftColor: "zodiac.gold/12",
+  borderTopWidth: { base: "1px", lg: "0" },
+  borderTopStyle: "solid",
+  borderTopColor: "zodiac.gold/12",
   overflowY: "auto",
   flexShrink: 0,
 });
@@ -94,12 +100,16 @@ const sidebarContainer = css({
 
 const sidebarSection = css({
   padding: "36px 26px 20px",
-  borderBottom: "1px solid rgba(200, 168, 75, 0.1)",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "zodiac.gold/10",
 });
 
 const sidebarSectionCompact = css({
   padding: "20px 26px",
-  borderBottom: "1px solid rgba(200, 168, 75, 0.1)",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "zodiac.gold/10",
 });
 
 const sidebarSectionScrollable = css({
@@ -111,7 +121,9 @@ const sidebarSectionScrollable = css({
 const sidebarSectionDomain = css({
   padding: "22px 26px",
   flex: "1",
-  borderBottom: "1px solid rgba(200, 168, 75, 0.1)",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "zodiac.gold/10",
 });
 
 const sidebarSectionDomains = css({
@@ -122,62 +134,66 @@ const sidebarSectionDomains = css({
 const sidebarSectionWorkflow = css({
   padding: "0 26px 16px",
   flexShrink: 0,
-  borderTop: "1px solid rgba(200, 168, 75, 0.1)",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "zodiac.gold/10",
 });
 
 const sidebarSectionPipeline = css({
   padding: "14px 26px 24px",
-  borderTop: "1px solid rgba(200, 168, 75, 0.1)",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "zodiac.gold/10",
 });
 
 // -- Typography --
 
 const sidebarEyebrow = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.4em",
-  color: "rgba(200, 168, 75, 0.58)",
+  color: "zodiac.gold/78",
   marginBottom: "14px",
 });
 
 const sidebarEyebrowSmall = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.35em",
-  opacity: 0.75,
+  opacity: 1,
   marginBottom: "10px",
 });
 
 const sidebarEyebrowViolet = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.35em",
-  color: "rgba(139, 92, 246, 0.6)",
+  color: "zodiac.violetText",
   marginBottom: "8px",
 });
 
 const sidebarEyebrowGold = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.35em",
-  color: "rgba(200, 168, 75, 0.6)",
+  color: "zodiac.gold/78",
   marginBottom: "8px",
 });
 
 const sidebarEyebrowSection = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.3em",
-  color: "rgba(200, 168, 75, 0.55)",
+  color: "zodiac.gold/78",
   marginBottom: "10px",
 });
 
 const sidebarEyebrowSectionTop = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.3em",
-  color: "rgba(200, 168, 75, 0.55)",
+  color: "zodiac.gold/78",
   margin: "12px 0 10px",
 });
 
 const sidebarEyebrowConceptsLabel = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.3em",
-  color: "rgba(200, 168, 75, 0.55)",
+  color: "zodiac.gold/78",
   margin: "16px 0 8px",
 });
 
@@ -210,48 +226,48 @@ const sidebarTitleItem = css({
 });
 
 const sidebarBody = css({
-  fontSize: "13px",
-  fontWeight: "300",
+  fontSize: "14px",
+  fontWeight: "400",
   lineHeight: "1.65",
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/66",
   margin: "0",
 });
 
 const sidebarBodySm = css({
-  fontSize: "12.5px",
+  fontSize: "14px",
   lineHeight: "1.65",
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/66",
   margin: "0 0 18px",
 });
 
 const sidebarBodyDetail = css({
-  fontSize: "12.5px",
+  fontSize: "14px",
   lineHeight: "1.65",
-  color: "rgba(245, 240, 232, 0.55)",
+  color: "zodiac.cream/66",
   margin: "0 0 16px",
 });
 
 const sidebarMeta = css({
-  fontSize: "11px",
-  color: "rgba(245, 240, 232, 0.58)",
+  fontSize: "12px",
+  color: "zodiac.cream/66",
   marginBottom: "12px",
 });
 
 const sidebarAliases = css({
-  fontSize: "10px",
-  color: "rgba(245, 240, 232, 0.55)",
+  fontSize: "12px",
+  color: "zodiac.cream/66",
   marginBottom: "16px",
 });
 
 const sidebarLoading = css({
   padding: "26px",
-  color: "rgba(245, 240, 232, 0.55)",
-  fontSize: "12px",
+  color: "zodiac.cream/66",
+  fontSize: "14px",
 });
 
 const sidebarEmpty = css({
-  color: "rgba(245, 240, 232, 0.55)",
-  fontSize: "12px",
+  color: "zodiac.cream/66",
+  fontSize: "14px",
 });
 
 // -- Stats --
@@ -265,14 +281,18 @@ const statRow = css({
 const statCellGold = css({
   flex: "1",
   padding: "10px",
-  border: "1px solid rgba(200, 168, 75, 0.18)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/18",
   textAlign: "center",
 });
 
 const statCellViolet = css({
   flex: "1",
   padding: "10px",
-  border: "1px solid rgba(139, 92, 246, 0.18)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.violet/18",
   textAlign: "center",
 });
 
@@ -281,9 +301,9 @@ const statValue = css({
 });
 
 const statLabel = css({
-  fontSize: "8px",
+  fontSize: "10px",
   letterSpacing: "0.25em",
-  color: "rgba(245, 240, 232, 0.55)",
+  color: "zodiac.cream/66",
   marginTop: "2px",
 });
 
@@ -298,17 +318,24 @@ const conceptTagRow = css({
 
 const conceptTag = css({
   cursor: "pointer",
-  background: "rgba(139, 92, 246, 0.1)",
-  border: "1px solid rgba(139, 92, 246, 0.25)",
+  background: "zodiac.violet/10",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.violet/25",
   color: "zodiac.gold",
-  padding: "3px 8px",
+  padding: "5px 10px",
+  minHeight: "28px",
   fontSize: "10px",
   letterSpacing: "0.08em",
+  _coarsePointer: {
+    minHeight: "44px",
+    padding: "10px 14px",
+  },
   ...focusRing,
 });
 
 const conceptTagCount = css({
-  opacity: 0.58,
+  opacity: 0.78,
   marginLeft: "4px",
 });
 
@@ -317,13 +344,19 @@ const conceptTagCount = css({
 const openDomainBtn = css({
   width: "100%",
   cursor: "pointer",
-  border: "1px solid rgba(200, 168, 75, 0.45)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/45",
   background: "zodiac.gold",
   color: "zodiac.void",
   padding: "8px 10px",
+  minHeight: "40px",
   letterSpacing: "0.18em",
   fontSize: "10px",
   textTransform: "uppercase",
+  _coarsePointer: {
+    minHeight: "48px",
+  },
   ...focusRing,
 });
 
@@ -332,22 +365,26 @@ const sectorButton = css({
   alignItems: "center",
   justifyContent: "space-between",
   padding: "7px 9px",
+  minHeight: "36px",
   marginBottom: "3px",
   cursor: "pointer",
   border: "1px solid",
   transition: "all 0.2s",
   width: "100%",
   textAlign: "left",
+  _coarsePointer: {
+    minHeight: "44px",
+  },
   ...focusRing,
 });
 
 const sectorButtonLabel = css({
-  fontSize: "12.5px",
+  fontSize: "14px",
 });
 
 const sectorButtonMeta = css({
-  fontSize: "10px",
-  color: "rgba(245, 240, 232, 0.55)",
+  fontSize: "12px",
+  color: "zodiac.cream/66",
 });
 
 const workspaceGrid = css({
@@ -358,27 +395,59 @@ const workspaceGrid = css({
 
 const workspaceButton = css({
   cursor: "pointer",
-  border: "1px solid rgba(200, 168, 75, 0.2)",
-  background: "rgba(26, 15, 53, 0.55)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/20",
+  background: "zodiac.glow-inner/55",
   color: "zodiac.cream",
   padding: "7px 8px",
-  fontSize: "9px",
+  minHeight: "32px",
+  fontSize: "10px",
   letterSpacing: "0.16em",
   textTransform: "uppercase",
   textAlign: "center",
+  _coarsePointer: {
+    minHeight: "44px",
+  },
+  ...focusRing,
+});
+
+// Mirrors backButton; gives the auto-rotating orrery a pause/resume control.
+const motionToggleButton = css({
+  cursor: "pointer",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/25",
+  background: "transparent",
+  color: "zodiac.gold",
+  padding: "5px 12px",
+  minHeight: "32px",
+  fontSize: "10px",
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+  marginTop: "12px",
+  _coarsePointer: {
+    minHeight: "44px",
+  },
   ...focusRing,
 });
 
 const backButton = css({
   cursor: "pointer",
-  border: "1px solid rgba(200, 168, 75, 0.25)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/25",
   background: "transparent",
   color: "zodiac.gold",
   padding: "5px 12px",
+  minHeight: "32px",
   fontSize: "10px",
   letterSpacing: "0.15em",
   textTransform: "uppercase",
   marginBottom: "14px",
+  _coarsePointer: {
+    minHeight: "44px",
+  },
   ...focusRing,
 });
 
@@ -402,14 +471,14 @@ const pipelineCellValue = css({
 });
 
 const pipelineCellLabel = css({
-  fontSize: "7.5px",
+  fontSize: "10px",
   letterSpacing: "0.2em",
-  color: "rgba(245, 240, 232, 0.55)",
+  color: "zodiac.cream/66",
 });
 
 const pipelineArrow = css({
-  fontSize: "9px",
-  color: "rgba(200, 168, 75, 0.55)",
+  fontSize: "10px",
+  color: "zodiac.gold/55",
   marginBottom: "8px",
 });
 
@@ -418,9 +487,9 @@ const pipelineSectionContainer = css({
 });
 
 const pipelineSectionEyebrow = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.3em",
-  color: "rgba(200, 168, 75, 0.55)",
+  color: "zodiac.gold/78",
   marginBottom: "8px",
 });
 
@@ -430,18 +499,24 @@ const pipelineItemButton = css({
   textAlign: "left",
   cursor: "pointer",
   padding: "6px 8px",
+  minHeight: "36px",
   marginBottom: "3px",
-  border: "1px solid rgba(200, 168, 75, 0.12)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/12",
   background: "transparent",
   color: "zodiac.cream",
-  fontSize: "11.5px",
+  fontSize: "14px",
   lineHeight: "1.4",
+  _coarsePointer: {
+    minHeight: "44px",
+  },
   ...focusRing,
 });
 
 const pipelineItemStatus = css({
-  fontSize: "9px",
-  color: "rgba(245, 240, 232, 0.55)",
+  fontSize: "10px",
+  color: "zodiac.cream/66",
   marginTop: "2px",
 });
 
@@ -453,17 +528,23 @@ const listButton = css({
   textAlign: "left",
   cursor: "pointer",
   padding: "6px 8px",
+  minHeight: "36px",
   marginBottom: "3px",
-  border: "1px solid rgba(200, 168, 75, 0.12)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/12",
   background: "transparent",
   color: "zodiac.cream",
-  fontSize: "12px",
+  fontSize: "14px",
+  _coarsePointer: {
+    minHeight: "44px",
+  },
   ...focusRing,
 });
 
 const listButtonMentions = css({
   float: "right",
-  color: "rgba(200, 168, 75, 0.58)",
+  color: "zodiac.gold/78",
   fontSize: "10px",
 });
 
@@ -473,24 +554,31 @@ const relationButton = css({
   textAlign: "left",
   cursor: "pointer",
   padding: "8px",
+  minHeight: "36px",
   marginBottom: "4px",
-  border: "1px solid rgba(200, 168, 75, 0.12)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/12",
   background: "transparent",
   color: "zodiac.cream",
-  fontSize: "12px",
+  fontSize: "14px",
   lineHeight: "1.4",
+  _coarsePointer: {
+    minHeight: "44px",
+  },
   ...focusRing,
 });
 
 const relationTypeLabel = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.15em",
-  color: "rgba(139, 92, 246, 0.55)",
+  color: "zodiac.violetText",
   marginBottom: "2px",
 });
 
 const relationTitle = css({
-  color: "rgba(245, 240, 232, 0.7)",
+  color: "zodiac.cream/70",
+  fontSize: "14px",
 });
 
 // ---------------------------------------------------------------------------
@@ -512,10 +600,12 @@ const fallbackGrid = css({
 });
 
 const fallbackCard = css({
-  border: "1px solid rgba(200, 168, 75, 0.2)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/20",
   padding: "18px",
   borderRadius: "8px",
-  background: "rgba(13, 6, 32, 0.5)",
+  background: "zodiac.void/50",
 });
 
 const fallbackEyebrow = css({
@@ -549,7 +639,8 @@ const fallbackTitle = css({
 
 const fallbackBody = css({
   margin: "0",
-  color: "rgba(245, 240, 232, 0.66)",
+  fontSize: "14px",
+  color: "zodiac.cream/66",
   lineHeight: "1.6",
 });
 
@@ -561,9 +652,12 @@ const fallbackLinkGrid = css({
 
 const fallbackLinkButton = css({
   cursor: "pointer",
-  background: "#130a31",
-  border: "1px solid rgba(200, 168, 75, 0.55)",
+  background: "zodiac.glow-inner",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/55",
   padding: "11px 12px",
+  minHeight: "44px",
   color: "zodiac.cream",
   textAlign: "left",
   fontFamily: "mono",
@@ -583,7 +677,9 @@ const fallbackPipelineRow = css({
 const fallbackPipelineCell = css({
   minWidth: "72px",
   padding: "8px",
-  border: "1px solid rgba(200, 168, 75, 0.2)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/20",
   textAlign: "center",
 });
 
@@ -593,13 +689,13 @@ const fallbackPipelineValue = css({
 });
 
 const fallbackPipelineLabel = css({
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.18em",
-  color: "rgba(245, 240, 232, 0.55)",
+  color: "zodiac.cream/66",
 });
 
 const fallbackPipelineArrow = css({
-  color: "rgba(200, 168, 75, 0.58)",
+  color: "zodiac.gold/58",
 });
 
 // ---------------------------------------------------------------------------
@@ -805,6 +901,13 @@ export function Zodiac3D() {
   // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
   let cssContainerRef!: HTMLDivElement;
   let sceneHandle: ZodiacHandle | null = null;
+  const [autoRotate, setAutoRotate] = createSignal(!prefersReducedMotion());
+
+  function toggleAutoRotate() {
+    const next = !autoRotate();
+    sceneHandle?.setAutoRotate(next);
+    setAutoRotate(next);
+  }
 
   onMount(() => {
     try {
@@ -829,13 +932,19 @@ export function Zodiac3D() {
           setSidebarMode({ kind: "sub-topic", label, conceptNames: names });
         },
       );
+      setAutoRotate(sceneHandle.isAutoRotating());
     } catch (error) {
       console.error("Zodiac scene initialization failed:", error);
       setWebglUnavailable(true);
     }
   });
 
+  const stopReducedMotionWatch = watchReducedMotion((reduced) => {
+    setAutoRotate(!reduced);
+  });
+
   onCleanup(() => {
+    stopReducedMotionWatch();
     sceneHandle?.cleanup();
   });
 
@@ -936,6 +1045,13 @@ export function Zodiac3D() {
             Drag to orbit. Click a sector to focus. Click stars for concept
             details. Click orbiting bodies for pipeline items.
           </p>
+          <button
+            type="button"
+            onClick={toggleAutoRotate}
+            class={motionToggleButton}
+          >
+            {autoRotate() ? "Pause rotation" : "Resume rotation"}
+          </button>
         </div>
 
         <div class={sidebarSectionDomain}>
@@ -951,13 +1067,13 @@ export function Zodiac3D() {
           <p class={sidebarBodySm}>{activeSector().summary}</p>
           <div class={statRow}>
             <div class={statCellGold}>
-              <div class={statValue} style={{ color: "#c8a84b" }}>
+              <div class={statValue} style={{ color: COLORS.gold }}>
                 {activeSector().sources}
               </div>
               <div class={statLabel}>SOURCES</div>
             </div>
             <div class={statCellViolet}>
-              <div class={statValue} style={{ color: "#8b5cf6" }}>
+              <div class={statValue} style={{ color: COLORS.violet }}>
                 {activeSector().claims}
               </div>
               <div class={statLabel}>CLAIMS</div>
@@ -1010,10 +1126,10 @@ export function Zodiac3D() {
                   "border-color":
                     selSector() === sector.id
                       ? `${sector.color}55`
-                      : "rgba(200,168,75,0.1)",
+                      : `${COLORS.gold}1a`,
                   background:
                     selSector() === sector.id
-                      ? "rgba(200,168,75,0.05)"
+                      ? `${COLORS.gold}0d`
                       : "transparent",
                 }}
                 onClick={() => handleSectorSelect(sector.id)}
@@ -1023,8 +1139,13 @@ export function Zodiac3D() {
                 <div
                   class={sectorButtonLabel}
                   style={{
-                    color: sector.color,
-                    opacity: selSector() === sector.id ? 1 : 0.58,
+                    // Inactive labels drop the sector hue: at any alpha that
+                    // stays legible the violet sectors still fail on the void,
+                    // so the rest state is cream and only the active sector
+                    // carries colour.
+                    color:
+                      selSector() === sector.id ? sector.color : COLORS.cream,
+                    opacity: selSector() === sector.id ? 1 : 0.72,
                   }}
                 >
                   {sector.label}
@@ -1056,9 +1177,9 @@ export function Zodiac3D() {
         <div class={sidebarSectionPipeline}>
           <div
             class={css({
-              fontSize: "9px",
+              fontSize: "10px",
               letterSpacing: "0.3em",
-              color: "rgba(200, 168, 75, 0.55)",
+              color: "zodiac.gold/78",
               marginBottom: "8px",
             })}
           >
@@ -1073,7 +1194,9 @@ export function Zodiac3D() {
                     <div class={pipelineCellLabel}>{item.label}</div>
                   </div>
                   <Show when={index() < pipelineSummary().length - 1}>
-                    <div class={pipelineArrow}>→</div>
+                    <div class={pipelineArrow} aria-hidden="true">
+                      →
+                    </div>
                   </Show>
                 </>
               )}
@@ -1166,7 +1289,7 @@ export function Zodiac3D() {
         <div class={sidebarSectionCompact}>
           <BackButton />
           <div class={sidebarEyebrowGold}>SUB-TOPIC</div>
-          <div class={sidebarTitleMd} style={{ color: "#c8a84b" }}>
+          <div class={sidebarTitleMd} style={{ color: COLORS.gold }}>
             {mode().label}
           </div>
           <div class={sidebarMeta}>{mode().conceptNames.length} concepts</div>
@@ -1343,7 +1466,9 @@ export function Zodiac3D() {
                       <div class={fallbackPipelineLabel}>{item.label}</div>
                     </div>
                     <Show when={index() < pipelineSummary().length - 1}>
-                      <div class={fallbackPipelineArrow}>→</div>
+                      <div class={fallbackPipelineArrow} aria-hidden="true">
+                        →
+                      </div>
                     </Show>
                   </>
                 )}
@@ -1360,7 +1485,12 @@ export function Zodiac3D() {
       <div class={dotOverlay} />
 
       <div ref={cssContainerRef} class={canvasWrapper}>
-        <canvas ref={canvasRef} class={canvasEl} />
+        <canvas
+          ref={canvasRef}
+          class={canvasEl}
+          role="img"
+          aria-label="Interactive knowledge orrery. Use the sidebar for keyboard access."
+        />
       </div>
 
       <div class={`${sidebarContainer} zodiac-scroll`}>

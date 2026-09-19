@@ -8,6 +8,7 @@ import {
   UIBadge,
   UIButton,
   UICard,
+  UINotice,
 } from "../components/ui";
 import {
   createAction,
@@ -24,6 +25,20 @@ const statGridClass = css({
     base: "repeat(2, minmax(0, 1fr))",
     md: "repeat(4, minmax(0, 1fr))",
   },
+});
+
+/** dt must precede dd in the DOM; the tile still reads value-over-label. */
+const statTileClass = css({
+  display: "flex",
+  flexDirection: "column-reverse",
+});
+
+const statLabelClass = css({
+  color: "zodiac.cream/58",
+  fontFamily: "mono",
+  fontSize: "xs",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
 });
 
 function statusTone(status: string): "gold" | "violet" | "cream" {
@@ -76,136 +91,123 @@ export function DisplayPage() {
   const setVisibility = createMutation(api.sources.setVisibility);
 
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  // Which row currently has a mutation in flight — its actions stay disabled
+  // so a second click cannot submit the same source twice.
+  const [pendingRowIds, setPendingRowIds] = createSignal<
+    ReadonlySet<Id<"sources">>
+  >(new Set());
+  const isRowPending = (sourceId: Id<"sources">) =>
+    pendingRowIds().has(sourceId);
+
+  async function withRowPending(
+    sourceId: Id<"sources">,
+    run: () => Promise<void>,
+  ) {
+    if (isRowPending(sourceId)) return;
+    setPendingRowIds((prev) => new Set(prev).add(sourceId));
+    setNotice(null);
+    setNoticeError(null);
+    try {
+      await run();
+    } finally {
+      setPendingRowIds((prev) => {
+        const next = new Set(prev);
+        next.delete(sourceId);
+        return next;
+      });
+    }
+  }
 
   async function runRowExtraction(sourceId: Id<"sources">) {
-    try {
-      await runExtraction({ sourceId });
-      setNotice("Extraction started.");
-    } catch (error) {
-      setNotice(`Extraction failed: ${String(error)}`);
-    }
+    await withRowPending(sourceId, async () => {
+      try {
+        await runExtraction({ sourceId });
+        setNotice("Extraction started.");
+      } catch (error) {
+        setNoticeError(`Extraction failed: ${String(error)}`);
+      }
+    });
   }
 
   async function markTriaged(sourceId: Id<"sources">) {
-    try {
-      await updateStatus({
-        id: sourceId,
-        status: "triaged" as const,
-      });
-      setNotice("Source marked as triaged.");
-    } catch (error) {
-      setNotice(`Status update failed: ${String(error)}`);
-    }
+    await withRowPending(sourceId, async () => {
+      try {
+        await updateStatus({
+          id: sourceId,
+          status: "triaged" as const,
+        });
+        setNotice("Source marked as triaged.");
+      } catch (error) {
+        setNoticeError(`Status update failed: ${String(error)}`);
+      }
+    });
   }
 
   async function promoteFollowers(sourceId: Id<"sources">) {
-    try {
-      await setVisibility({
-        id: sourceId,
-        visibility: "followers",
-      });
-      setNotice("Visibility promoted to followers.");
-    } catch (error) {
-      setNotice(`Promotion failed: ${String(error)}`);
-    }
+    await withRowPending(sourceId, async () => {
+      try {
+        await setVisibility({
+          id: sourceId,
+          visibility: "followers",
+        });
+        setNotice("Visibility promoted to followers.");
+      } catch (error) {
+        setNoticeError(`Promotion failed: ${String(error)}`);
+      }
+    });
   }
 
   return (
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Display & Triage</h1>
-        <p
-          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
-        >
+        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
           This queue prioritizes blocked and oldest private sources so weekly
           review stays aligned with ingest throughput.
         </p>
-        <div aria-live="polite">
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-                {message()}
-              </p>
-            )}
-          </Show>
-        </div>
+        <UINotice
+          class={css({ marginTop: "3" })}
+          status={notice()}
+          error={noticeError()}
+        />
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Inbox Totals</h2>
-        <div class={statGridClass}>
-          <div>
-            <div class={css({ color: "zodiac.gold", fontSize: "3xl" })}>
+        <dl class={statGridClass}>
+          <div class={statTileClass}>
+            <dt class={statLabelClass}>Ingested</dt>
+            <dd class={css({ color: "zodiac.gold", fontSize: "3xl" })}>
               {counts()?.ingested ?? 0}
-            </div>
-            <div
-              class={css({
-                color: "rgba(245, 240, 232, 0.58)",
-                fontFamily: "mono",
-                fontSize: "xs",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-              })}
-            >
-              Ingested
-            </div>
+            </dd>
           </div>
-          <div>
-            <div class={css({ color: "zodiac.violet", fontSize: "3xl" })}>
+          <div class={statTileClass}>
+            <dt class={statLabelClass}>Text Ready</dt>
+            <dd class={css({ color: "zodiac.violet", fontSize: "3xl" })}>
               {counts()?.textReady ?? 0}
-            </div>
-            <div
-              class={css({
-                color: "rgba(245, 240, 232, 0.58)",
-                fontFamily: "mono",
-                fontSize: "xs",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-              })}
-            >
-              Text Ready
-            </div>
+            </dd>
           </div>
-          <div>
-            <div class={css({ color: "zodiac.cream", fontSize: "3xl" })}>
+          <div class={statTileClass}>
+            <dt class={statLabelClass}>Review Needed</dt>
+            <dd class={css({ color: "zodiac.cream", fontSize: "3xl" })}>
               {counts()?.reviewNeeded ?? 0}
-            </div>
-            <div
-              class={css({
-                color: "rgba(245, 240, 232, 0.58)",
-                fontFamily: "mono",
-                fontSize: "xs",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-              })}
-            >
-              Review Needed
-            </div>
+            </dd>
           </div>
-          <div>
-            <div class={css({ color: "zodiac.error", fontSize: "3xl" })}>
+          <div class={statTileClass}>
+            <dt class={statLabelClass}>Blocked</dt>
+            <dd class={css({ color: "zodiac.error", fontSize: "3xl" })}>
               {counts()?.blocked ?? 0}
-            </div>
-            <div
-              class={css({
-                color: "rgba(245, 240, 232, 0.58)",
-                fontFamily: "mono",
-                fontSize: "xs",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-              })}
-            >
-              Blocked
-            </div>
+            </dd>
           </div>
-        </div>
+        </dl>
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Editorial Signals</h2>
         <p
           class={css({
-            color: "rgba(245, 240, 232, 0.58)",
+            color: "zodiac.cream/58",
             lineHeight: "1.6",
             mb: "3",
           })}
@@ -221,13 +223,13 @@ export function DisplayPage() {
           })}
         >
           <div>
-            <div class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
+            <h3 class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
               High-yield areas
-            </div>
+            </h3>
             <Show
               when={(editorialSignals()?.highYieldClusters ?? []).length > 0}
               fallback={
-                <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
+                <p class={css({ color: "zodiac.cream/58" })}>
                   No high-yield clusters yet.
                 </p>
               }
@@ -240,7 +242,7 @@ export function DisplayPage() {
                     </div>
                     <div
                       class={css({
-                        color: "rgba(245, 240, 232, 0.58)",
+                        color: "zodiac.cream/58",
                         fontSize: "sm",
                       })}
                     >
@@ -252,13 +254,13 @@ export function DisplayPage() {
             </Show>
           </div>
           <div>
-            <div class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
+            <h3 class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
               Low-yield areas
-            </div>
+            </h3>
             <Show
               when={(editorialSignals()?.lowYieldClusters ?? []).length > 0}
               fallback={
-                <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
+                <p class={css({ color: "zodiac.cream/58" })}>
                   No low-yield clusters yet.
                 </p>
               }
@@ -271,7 +273,7 @@ export function DisplayPage() {
                     </div>
                     <div
                       class={css({
-                        color: "rgba(245, 240, 232, 0.58)",
+                        color: "zodiac.cream/58",
                         fontSize: "sm",
                       })}
                     >
@@ -288,14 +290,22 @@ export function DisplayPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Action Queue</h2>
 
-        <Show when={!inboxRows.isLoading()} fallback={<p>Loading inbox…</p>}>
+        <UINotice
+          status={inboxRows.isLoading() ? "Loading inbox…" : null}
+          error={
+            inboxRows.error()
+              ? `Unable to load the inbox: ${inboxRows.error()?.message}`
+              : null
+          }
+        />
+        <Show when={!inboxRows.isLoading()}>
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={inboxRows.data() ?? []}>
               {(row: InboxRow) => (
                 <div
                   data-testid="display-row"
                   class={css({
-                    borderColor: "rgba(200, 168, 75, 0.24)",
+                    borderColor: "zodiac.gold/24",
                     borderRadius: "l2",
                     borderWidth: "1px",
                     p: "4",
@@ -305,6 +315,7 @@ export function DisplayPage() {
                     class={css({
                       alignItems: "center",
                       display: "flex",
+                      flexWrap: "wrap",
                       gap: "2",
                       marginBottom: "2",
                     })}
@@ -325,7 +336,7 @@ export function DisplayPage() {
                   </h3>
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.66)",
+                      color: "zodiac.cream/66",
                       fontSize: "sm",
                       marginBottom: "2",
                     })}
@@ -338,7 +349,7 @@ export function DisplayPage() {
                       <div class={css({ marginBottom: "2" })}>
                         <p
                           class={css({
-                            color: "rgba(245, 240, 232, 0.56)",
+                            color: "zodiac.cream/56",
                             fontSize: "sm",
                             marginBottom: "2",
                           })}
@@ -351,8 +362,8 @@ export function DisplayPage() {
                               {(claim) => (
                                 <div
                                   class={css({
-                                    bg: "rgba(245, 240, 232, 0.02)",
-                                    borderColor: "rgba(200, 168, 75, 0.16)",
+                                    bg: "zodiac.cream/2",
+                                    borderColor: "zodiac.gold/16",
                                     borderRadius: "l2",
                                     borderWidth: "1px",
                                     p: "2.5",
@@ -360,7 +371,7 @@ export function DisplayPage() {
                                 >
                                   <p
                                     class={css({
-                                      color: "rgba(245, 240, 232, 0.68)",
+                                      color: "zodiac.cream/68",
                                       fontSize: "sm",
                                       marginBottom: "2",
                                     })}
@@ -403,19 +414,26 @@ export function DisplayPage() {
                   >
                     <UIButton
                       variant="outline"
-                      disabled={row.status !== "text_ready"}
+                      disabled={
+                        row.status !== "text_ready" || isRowPending(row._id)
+                      }
+                      aria-label={`Run extraction for ${row.title ?? "Untitled source"}`}
                       onClick={() => runRowExtraction(row._id)}
                     >
                       Run Extraction
                     </UIButton>
                     <UIButton
                       variant="outline"
+                      disabled={isRowPending(row._id)}
+                      aria-label={`Mark ${row.title ?? "Untitled source"} as triaged`}
                       onClick={() => markTriaged(row._id)}
                     >
                       Mark Triaged
                     </UIButton>
                     <UIButton
                       variant="ghost"
+                      disabled={isRowPending(row._id)}
+                      aria-label={`Promote ${row.title ?? "Untitled source"} to followers`}
                       onClick={() => promoteFollowers(row._id)}
                     >
                       Promote Followers

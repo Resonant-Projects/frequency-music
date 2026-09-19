@@ -3,14 +3,16 @@ import { createEffect, For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
-  Markdown,
-  UIBadge,
-  UICard,
   backLink,
+  collapsedNoticeClass,
   detailTitleClass,
   goldDivider,
+  Markdown,
   pageClass,
   sectionLabel,
+  UIBadge,
+  UICard,
+  UINotice,
 } from "../components/ui";
 import { createQuery } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
@@ -22,7 +24,7 @@ const paramGrid = css({
 });
 
 const paramCell = css({
-  borderColor: "rgba(200, 168, 75, 0.18)",
+  borderColor: "zodiac.gold/18",
   borderRadius: "l2",
   borderWidth: "1px",
   p: "3",
@@ -31,7 +33,7 @@ const paramCell = css({
 const paramType = css({
   color: "zodiac.gold",
   fontFamily: "mono",
-  fontSize: "2xs",
+  fontSize: "xs",
   letterSpacing: "0.14em",
   mb: "1",
   textTransform: "uppercase",
@@ -41,29 +43,31 @@ const paramValue = css({
   color: "zodiac.cream",
   fontFamily: "mono",
   fontSize: "sm",
+  overflowWrap: "anywhere",
+});
+
+const checklistList = css({
+  listStylePosition: "outside",
+  listStyleType: "decimal",
+  margin: 0,
+  pl: "6",
 });
 
 const checklistItem = css({
-  alignItems: "baseline",
-  color: "rgba(245, 240, 232, 0.82)",
-  display: "flex",
+  color: "zodiac.cream/82",
+  display: "list-item",
   fontFamily: "mono",
   fontSize: "sm",
-  gap: "3",
   py: "1.5",
-});
-
-const checklistNumber = css({
-  color: "zodiac.gold",
-  fontFamily: "mono",
-  fontSize: "xs",
-  minW: "5",
-  textAlign: "right",
+  "&::marker": {
+    color: "zodiac.gold",
+    fontSize: "xs",
+  },
 });
 
 const protocolPanel = css({
-  bg: "rgba(200, 168, 75, 0.04)",
-  borderColor: "rgba(200, 168, 75, 0.18)",
+  bg: "zodiac.gold/4",
+  borderColor: "zodiac.gold/18",
   borderRadius: "l2",
   borderWidth: "1px",
   p: "5",
@@ -86,14 +90,20 @@ const protocolColumns = css({
 const protocolColumnTitle = css({
   color: "zodiac.gold",
   fontFamily: "mono",
-  fontSize: "2xs",
+  fontSize: "xs",
   letterSpacing: "0.14em",
   mb: "2",
   textTransform: "uppercase",
 });
 
+const protocolList = css({
+  listStyleType: "none",
+  margin: 0,
+  padding: 0,
+});
+
 const protocolListItem = css({
-  color: "rgba(245, 240, 232, 0.78)",
+  color: "zodiac.cream/78",
   fontFamily: "mono",
   fontSize: "sm",
   py: "0.5",
@@ -129,14 +139,12 @@ export function RecipeDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={recipe()}
-        fallback={
-          <UICard>
-            <p class={css({ color: "zodiac.cream" })}>Loading recipe...</p>
-          </UICard>
-        }
-      >
+      <UINotice
+        class={recipe() ? collapsedNoticeClass : undefined}
+        status={recipe() ? null : "Loading recipe..."}
+      />
+
+      <Show when={recipe()}>
         {(r) => (
           <>
             {/* Header */}
@@ -154,9 +162,9 @@ export function RecipeDetailPage() {
                 <UIBadge tone="cream">{r().visibility}</UIBadge>
                 <span
                   class={css({
-                    color: "rgba(245, 240, 232, 0.55)",
+                    color: "zodiac.cream/66",
                     fontFamily: "mono",
-                    fontSize: "2xs",
+                    fontSize: "xs",
                     ml: "auto",
                   })}
                 >
@@ -174,7 +182,7 @@ export function RecipeDetailPage() {
                 {(hyp) => (
                   <p
                     class={css({
-                      color: "rgba(139, 92, 246, 0.8)",
+                      color: "zodiac.violetText",
                       fontFamily: "mono",
                       fontSize: "xs",
                       mt: "2",
@@ -189,10 +197,10 @@ export function RecipeDetailPage() {
                 {(value) => (
                   <>
                     <hr class={goldDivider} />
-                    <div class={sectionLabel}>Why This Matters</div>
+                    <h2 class={sectionLabel}>Why This Matters</h2>
                     <p
                       class={css({
-                        color: "rgba(245, 240, 232, 0.74)",
+                        color: "zodiac.cream/74",
                         fontFamily: "display",
                         fontSize: "md",
                         lineHeight: "1.7",
@@ -206,13 +214,13 @@ export function RecipeDetailPage() {
 
               {/* Body */}
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Body</div>
+              <h2 class={sectionLabel}>Body</h2>
               <Markdown content={r().bodyMd} />
 
               {/* Parameters */}
               <Show when={r().parameters.length > 0}>
                 <hr class={goldDivider} />
-                <div class={sectionLabel}>Parameters</div>
+                <h2 class={sectionLabel}>Parameters</h2>
                 <div class={paramGrid}>
                   <For each={r().parameters}>
                     {(param) => (
@@ -230,17 +238,12 @@ export function RecipeDetailPage() {
               {/* DAW Checklist */}
               <Show when={r().dawChecklist.length > 0}>
                 <hr class={goldDivider} />
-                <div class={sectionLabel}>DAW Checklist</div>
-                <div>
+                <h2 class={sectionLabel}>DAW Checklist</h2>
+                <ol class={checklistList}>
                   <For each={r().dawChecklist}>
-                    {(step, i) => (
-                      <div class={checklistItem}>
-                        <span class={checklistNumber}>{i() + 1}.</span>
-                        <span>{step}</span>
-                      </div>
-                    )}
+                    {(step) => <li class={checklistItem}>{step}</li>}
                   </For>
-                </div>
+                </ol>
               </Show>
 
               {/* Protocol */}
@@ -248,7 +251,7 @@ export function RecipeDetailPage() {
                 {(proto) => (
                   <>
                     <hr class={goldDivider} />
-                    <div class={sectionLabel}>Protocol</div>
+                    <h2 class={sectionLabel}>Protocol</h2>
                     <div class={protocolPanel}>
                       <div class={protocolMeta}>
                         <UIBadge tone="gold">{proto().studyType}</UIBadge>
@@ -266,32 +269,38 @@ export function RecipeDetailPage() {
                       </div>
 
                       <Show when={proto().panelPlanned.length > 0}>
-                        <div class={protocolColumnTitle}>Panel Planned</div>
-                        <For each={proto().panelPlanned}>
-                          {(member) => (
-                            <div class={protocolListItem}>{member}</div>
-                          )}
-                        </For>
+                        <h3 class={protocolColumnTitle}>Panel Planned</h3>
+                        <ul class={protocolList}>
+                          <For each={proto().panelPlanned}>
+                            {(member) => (
+                              <li class={protocolListItem}>{member}</li>
+                            )}
+                          </For>
+                        </ul>
                       </Show>
 
                       <div class={protocolColumns}>
                         <div>
-                          <div class={protocolColumnTitle}>What Varies</div>
-                          <For each={proto().whatVaries}>
-                            {(item) => (
-                              <div class={protocolListItem}>{item}</div>
-                            )}
-                          </For>
+                          <h3 class={protocolColumnTitle}>What Varies</h3>
+                          <ul class={protocolList}>
+                            <For each={proto().whatVaries}>
+                              {(item) => (
+                                <li class={protocolListItem}>{item}</li>
+                              )}
+                            </For>
+                          </ul>
                         </div>
                         <div>
-                          <div class={protocolColumnTitle}>
+                          <h3 class={protocolColumnTitle}>
                             What Stays Constant
-                          </div>
-                          <For each={proto().whatStaysConstant}>
-                            {(item) => (
-                              <div class={protocolListItem}>{item}</div>
-                            )}
-                          </For>
+                          </h3>
+                          <ul class={protocolList}>
+                            <For each={proto().whatStaysConstant}>
+                              {(item) => (
+                                <li class={protocolListItem}>{item}</li>
+                              )}
+                            </For>
+                          </ul>
                         </div>
                       </div>
                     </div>

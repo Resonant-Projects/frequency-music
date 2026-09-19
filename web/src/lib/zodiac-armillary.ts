@@ -2,7 +2,7 @@
 // Each sub-topic cluster = a thin torus, items = instanced spheres along the torus.
 
 import * as THREE from "three";
-import { R, type SectorDef } from "./zodiac-data";
+import { COLORS, R, type SectorDef } from "./zodiac-data";
 import type { ZodiacSubTopic } from "./zodiac-types";
 
 export interface ArmillaryRingGroup {
@@ -15,7 +15,12 @@ export interface ArmillaryRingGroup {
   dispose: () => void;
 }
 
-const RING_COLORS = ["#8b5cf6", "#c8a84b", "#f5f0e8", "#6366f1"];
+const RING_COLORS = [
+  COLORS.violet,
+  COLORS.gold,
+  COLORS.cream,
+  COLORS.violetText,
+];
 const TILT_ANGLES = [15, 30, 45, 60]; // degrees
 
 export function buildArmillaryRings(

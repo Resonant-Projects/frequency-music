@@ -10,32 +10,35 @@ import {
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
+  backLink,
+  collapsedNoticeClass,
+  detailTitleClass,
+  fieldLabelClass,
+  goldDivider,
   Markdown,
+  metaLine,
+  pageClass,
+  sectionLabel,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
   UITextarea,
-  backLink,
-  detailTitleClass,
-  fieldLabelClass,
-  goldDivider,
-  metaLine,
-  pageClass,
-  sectionLabel,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import { useClerkAuthSnapshot } from "../integrations/clerk";
 
 const lineItem = css({
-  borderColor: "rgba(200, 168, 75, 0.18)",
+  borderColor: "zodiac.gold/18",
   borderRadius: "l2",
   borderWidth: "1px",
   p: "3",
 });
 
+/** Wrapper for an always-mounted notice that currently carries no text. */
 function parseLines(value: string) {
   return value
     .split("\n")
@@ -69,12 +72,14 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
   const [editMode, setEditMode] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [summary, setSummary] = createSignal("");
   const [claimsJson, setClaimsJson] = createSignal("");
   const [parametersJson, setParametersJson] = createSignal("");
   const [topicsText, setTopicsText] = createSignal("");
   const [questionsText, setQuestionsText] = createSignal("");
   const [confidenceText, setConfidenceText] = createSignal("");
+  let summaryField: HTMLTextAreaElement | undefined;
 
   const originalClaimsJson = () =>
     JSON.stringify(props.extraction.claims, null, 2);
@@ -123,7 +128,10 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     setQuestionsText(props.extraction.openQuestions.join("\n"));
     setConfidenceText(String(props.extraction.confidence));
     setNotice(null);
+    setNoticeError(null);
     setEditMode(true);
+    // The trigger disables itself, so move focus into the panel it opened.
+    queueMicrotask(() => summaryField?.focus());
   }
 
   async function saveCorrection() {
@@ -131,6 +139,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     if (fields.length === 0) return;
     setSaving(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       const confidenceValue = confidenceText().trim();
       const confidence =
@@ -172,7 +181,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
       setEditMode(false);
       setNotice("Extraction correction saved with edit provenance.");
     } catch (error) {
-      setNotice(
+      setNoticeError(
         error instanceof Error ? error.message : "Could not save extraction.",
       );
     } finally {
@@ -204,8 +213,8 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
       <Show when={editMode()}>
         <div
           class={css({
-            bg: "rgba(139, 92, 246, 0.07)",
-            borderColor: "rgba(139, 92, 246, 0.3)",
+            bg: "zodiac.violet/7",
+            borderColor: "zodiac.violet/30",
             borderRadius: "l2",
             borderWidth: "1px",
             display: "grid",
@@ -219,7 +228,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
               {(field) => <UIBadge tone="violet">changed: {field}</UIBadge>}
             </For>
           </div>
-          <p class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
+          <p class={css({ color: "zodiac.cream/68" })}>
             Saving preserves the generated and edited field sets as eval
             provenance. Claims and parameters use their stored JSON shape.
           </p>
@@ -230,6 +239,9 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             Summary
           </label>
           <UITextarea
+            ref={(element) => {
+              summaryField = element;
+            }}
             id={`extraction-summary-${props.extraction._id}`}
             value={summary()}
             onInput={(event) => setSummary(event.currentTarget.value)}
@@ -312,13 +324,13 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
         </div>
       </Show>
 
-      <Show when={notice()}>
-        {(message) => (
-          <p aria-live="polite" class={css({ color: "zodiac.cream", mt: "2" })}>
-            {message()}
-          </p>
-        )}
-      </Show>
+      <UINotice
+        class={
+          notice() || noticeError() ? css({ mt: "2" }) : collapsedNoticeClass
+        }
+        status={notice()}
+        error={noticeError()}
+      />
     </>
   );
 }
@@ -335,6 +347,7 @@ function ListeningVisibilityControl(props: {
   );
   const [saving, setSaving] = createSignal(false);
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
   // Keep the select synced to the source of truth when the query refreshes
   // the session (e.g. after a successful mutation).
   createEffect(
@@ -356,6 +369,7 @@ function ListeningVisibilityControl(props: {
     if (visibility() === props.session.visibility) return;
     setSaving(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       await updateVisibility({
         id: props.session._id,
@@ -363,7 +377,7 @@ function ListeningVisibilityControl(props: {
       });
       setNotice(`Visibility set to ${visibility()}.`);
     } catch (error) {
-      setNotice(
+      setNoticeError(
         error instanceof Error ? error.message : "Could not update visibility.",
       );
     } finally {
@@ -416,13 +430,11 @@ function ListeningVisibilityControl(props: {
           to the session creator.
         </p>
       </Show>
-      <Show when={notice()}>
-        {(message) => (
-          <p aria-live="polite" class={css({ color: "zodiac.cream" })}>
-            {message()}
-          </p>
-        )}
-      </Show>
+      <UINotice
+        class={notice() || noticeError() ? undefined : collapsedNoticeClass}
+        status={notice()}
+        error={noticeError()}
+      />
     </div>
   );
 }
@@ -456,6 +468,12 @@ export function CompositionDetailPage() {
     ),
   );
   let deleteConfirmButton: HTMLButtonElement | undefined;
+  let deleteTrigger: HTMLButtonElement | undefined;
+
+  function closeDeleteConfirm() {
+    setDeleteConfirmOpen(false);
+    queueMicrotask(() => deleteTrigger?.focus());
+  }
 
   async function handleDeleteComposition() {
     const row = lineage()?.composition;
@@ -476,6 +494,17 @@ export function CompositionDetailPage() {
     }
   }
 
+  const lineageErrorText = () =>
+    lineageQuery.error()
+      ? `Unable to load composition: ${lineageQuery.error()?.message}`
+      : null;
+  const lineageStatus = () => {
+    if (lineageQuery.error() || lineage()) return null;
+    return lineageQuery.isLoading()
+      ? "Loading composition..."
+      : "Composition not found.";
+  };
+
   createEffect(() => {
     const row = lineage()?.composition;
     if (row) document.title = `${row.title} — Frequency Music`;
@@ -495,24 +524,11 @@ export function CompositionDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={lineage()}
-        fallback={
-          <UICard>
-            <p
-              class={css({
-                color: lineageQuery.isError() ? "zodiac.error" : "zodiac.cream",
-              })}
-            >
-              {lineageQuery.isLoading()
-                ? "Loading composition..."
-                : lineageQuery.error()
-                  ? `Unable to load composition: ${lineageQuery.error()?.message}`
-                  : "Composition not found."}
-            </p>
-          </UICard>
-        }
-      >
+      <UICard class={lineage() ? collapsedNoticeClass : undefined}>
+        <UINotice status={lineageStatus()} error={lineageErrorText()} />
+      </UICard>
+
+      <Show when={lineage()}>
         {(row) => (
           <UICard>
             <div
@@ -540,6 +556,9 @@ export function CompositionDetailPage() {
 
             <div class={css({ display: "flex", gap: "2", mt: "3" })}>
               <UIButton
+                ref={(element) => {
+                  deleteTrigger = element;
+                }}
                 variant="outline"
                 disabled={deleting()}
                 onClick={() => {
@@ -556,9 +575,14 @@ export function CompositionDetailPage() {
                 role="alertdialog"
                 aria-modal="false"
                 aria-label="Confirm composition deletion"
+                onKeyDown={(event) => {
+                  if (event.key !== "Escape" || deleting()) return;
+                  event.preventDefault();
+                  closeDeleteConfirm();
+                }}
                 class={css({
-                  bg: "rgba(139, 92, 246, 0.07)",
-                  borderColor: "rgba(139, 92, 246, 0.3)",
+                  bg: "zodiac.violet/7",
+                  borderColor: "zodiac.violet/30",
                   borderRadius: "l2",
                   borderWidth: "1px",
                   display: "grid",
@@ -567,7 +591,7 @@ export function CompositionDetailPage() {
                   p: "3",
                 })}
               >
-                <p class={css({ color: "rgba(245, 240, 232, 0.74)" })}>
+                <p class={css({ color: "zodiac.cream/74" })}>
                   Delete “{row().composition.title}”? This uses the existing
                   composition deletion path and cannot be undone from this
                   screen.
@@ -588,27 +612,21 @@ export function CompositionDetailPage() {
                   <UIButton
                     variant="ghost"
                     disabled={deleting()}
-                    onClick={() => setDeleteConfirmOpen(false)}
+                    onClick={closeDeleteConfirm}
                   >
                     Cancel
                   </UIButton>
                 </div>
-                <Show when={deleteError()}>
-                  {(message) => (
-                    <p
-                      aria-live="polite"
-                      class={css({ color: "zodiac.error" })}
-                    >
-                      {message()}
-                    </p>
-                  )}
-                </Show>
+                <UINotice
+                  class={deleteError() ? undefined : collapsedNoticeClass}
+                  error={deleteError()}
+                />
               </div>
             </Show>
 
             <p
               class={css({
-                color: "rgba(245, 240, 232, 0.62)",
+                color: "zodiac.cream/62",
                 fontSize: "sm",
                 lineHeight: "1.7",
               })}
@@ -629,12 +647,12 @@ export function CompositionDetailPage() {
               }
             >
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Archive Signal</div>
+              <h2 class={sectionLabel}>Archive Signal</h2>
               <Show when={row().summary.localFailureStatus}>
                 {(status) => (
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.76)",
+                      color: "zodiac.cream/76",
                       lineHeight: "1.7",
                       mb: "2",
                     })}
@@ -648,7 +666,7 @@ export function CompositionDetailPage() {
                 {(status) => (
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.76)",
+                      color: "zodiac.cream/76",
                       lineHeight: "1.7",
                     })}
                   >
@@ -660,7 +678,7 @@ export function CompositionDetailPage() {
             </Show>
 
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Lineage</div>
+            <h2 class={sectionLabel}>Lineage</h2>
             <div class={css({ display: "grid", gap: "2" })}>
               <For each={row().ancestry}>
                 {(ancestor) => (
@@ -677,7 +695,7 @@ export function CompositionDetailPage() {
                     </Link>
                     <p
                       class={css({
-                        color: "rgba(245, 240, 232, 0.55)",
+                        color: "zodiac.cream/55",
                         fontSize: "sm",
                         mt: "1",
                       })}
@@ -696,7 +714,7 @@ export function CompositionDetailPage() {
                 </div>
                 <p
                   class={css({
-                    color: "rgba(245, 240, 232, 0.55)",
+                    color: "zodiac.cream/55",
                     fontSize: "sm",
                     mt: "1",
                   })}
@@ -708,7 +726,7 @@ export function CompositionDetailPage() {
 
             <Show when={row().children.length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Direct Revisions</div>
+              <h2 class={sectionLabel}>Direct Revisions</h2>
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={row().children}>
                   {(child) => (
@@ -725,7 +743,7 @@ export function CompositionDetailPage() {
                       </Link>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.55)",
+                          color: "zodiac.cream/55",
                           fontSize: "sm",
                           mt: "1",
                         })}
@@ -742,12 +760,12 @@ export function CompositionDetailPage() {
             </Show>
 
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Provenance</div>
+            <h2 class={sectionLabel}>Provenance</h2>
             <div class={css({ display: "grid", gap: "3" })}>
               <Show when={row().recipe}>
                 {(recipe) => (
                   <div class={lineItem}>
-                    <div
+                    <h3
                       class={css({
                         color: "zodiac.gold",
                         fontSize: "sm",
@@ -755,7 +773,7 @@ export function CompositionDetailPage() {
                       })}
                     >
                       Recipe
-                    </div>
+                    </h3>
                     <Link
                       to="/recipes/$recipeId"
                       params={{ recipeId: String(recipe()._id) }}
@@ -772,7 +790,7 @@ export function CompositionDetailPage() {
               <Show when={row().hypothesis}>
                 {(hypothesis) => (
                   <div class={lineItem}>
-                    <div
+                    <h3
                       class={css({
                         color: "zodiac.gold",
                         fontSize: "sm",
@@ -780,7 +798,7 @@ export function CompositionDetailPage() {
                       })}
                     >
                       Hypothesis
-                    </div>
+                    </h3>
                     <Link
                       to="/hypotheses/$hypothesisId"
                       params={{ hypothesisId: String(hypothesis()._id) }}
@@ -797,7 +815,7 @@ export function CompositionDetailPage() {
               <Show when={row().thesis}>
                 {(thesis) => (
                   <div class={lineItem}>
-                    <div
+                    <h3
                       class={css({
                         color: "zodiac.gold",
                         fontSize: "sm",
@@ -805,7 +823,7 @@ export function CompositionDetailPage() {
                       })}
                     >
                       Thesis
-                    </div>
+                    </h3>
                     <Link
                       to="/theses/$thesisId"
                       params={{ thesisId: String(thesis()._id) }}
@@ -823,7 +841,7 @@ export function CompositionDetailPage() {
 
             <Show when={row().sources.length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Linked Sources</div>
+              <h2 class={sectionLabel}>Linked Sources</h2>
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={row().sources}>
                   {(source) => (
@@ -833,7 +851,7 @@ export function CompositionDetailPage() {
                       </div>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.55)",
+                          color: "zodiac.cream/55",
                           fontSize: "sm",
                           mt: "1",
                         })}
@@ -848,7 +866,7 @@ export function CompositionDetailPage() {
 
             <Show when={row().extractions.length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Extractions</div>
+              <h2 class={sectionLabel}>Extractions</h2>
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={row().extractions}>
                   {(extraction) => (
@@ -858,7 +876,7 @@ export function CompositionDetailPage() {
                       </div>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.55)",
+                          color: "zodiac.cream/55",
                           fontSize: "sm",
                         })}
                       >
@@ -873,11 +891,11 @@ export function CompositionDetailPage() {
             </Show>
 
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Listening History</div>
+            <h2 class={sectionLabel}>Listening History</h2>
             <Show
               when={row().listeningSessions.length > 0}
               fallback={
-                <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
+                <p class={css({ color: "zodiac.cream/58" })}>
                   No listening sessions logged for this composition yet.
                 </p>
               }
@@ -911,7 +929,7 @@ export function CompositionDetailPage() {
                       </div>
                       <div
                         class={css({
-                          color: "rgba(245, 240, 232, 0.7)",
+                          color: "zodiac.cream/70",
                           lineHeight: "1.7",
                           marginBottom:
                             (session.feltQualities?.length ?? 0) > 0 ||
@@ -933,7 +951,7 @@ export function CompositionDetailPage() {
                       >
                         <div
                           class={css({
-                            color: "rgba(245, 240, 232, 0.62)",
+                            color: "zodiac.cream/62",
                             fontSize: "sm",
                             lineHeight: "1.7",
                             marginBottom:
@@ -956,7 +974,7 @@ export function CompositionDetailPage() {
                       <Show when={(session.standoutMoments?.length ?? 0) > 0}>
                         <div
                           class={css({
-                            color: "rgba(245, 240, 232, 0.58)",
+                            color: "zodiac.cream/58",
                             fontSize: "sm",
                             lineHeight: "1.7",
                           })}

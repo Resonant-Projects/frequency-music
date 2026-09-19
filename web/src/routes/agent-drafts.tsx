@@ -2,6 +2,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  createUniqueId,
   For,
   on,
   onCleanup,
@@ -21,35 +22,37 @@ import {
   draftLabel,
 } from "../components/agent-draft";
 import {
+  collapsedNoticeClass,
   fieldLabelClass,
   pageClass,
   pageTitleClass,
   UIBadge,
   UIButton,
   UICard,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 
 const helperClass = css({
-  color: "rgba(245, 240, 232, 0.66)",
+  color: "zodiac.cream/66",
   fontFamily: "display",
   fontSize: "lg",
   lineHeight: "1.6",
 });
 
 const eyebrowClass = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/66",
   fontFamily: "mono",
-  fontSize: "2xs",
+  fontSize: "xs",
   letterSpacing: "0.18em",
   textTransform: "uppercase",
 });
 
 const queueButtonClass = css({
-  bg: "rgba(13, 6, 32, 0.48)",
-  borderColor: "rgba(245, 240, 232, 0.12)",
+  bg: "zodiac.void/48",
+  borderColor: "zodiac.cream/12",
   borderRadius: "l2",
   borderWidth: "1px",
   color: "zodiac.cream",
@@ -62,24 +65,29 @@ const queueButtonClass = css({
   transitionProperty: "background-color, border-color",
   width: "full",
   _hover: {
-    bg: "rgba(139, 92, 246, 0.08)",
-    borderColor: "rgba(139, 92, 246, 0.36)",
+    bg: "zodiac.violet/8",
+    borderColor: "zodiac.violet/36",
   },
   _focusVisible: {
     borderColor: "zodiac.violet",
-    outline: "none",
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
   },
 });
 
+/**
+ * Applied to an always-mounted notice wrapper while it carries no text, so the
+ * live regions stay in the DOM without occupying a layout box.
+ */
 const activeQueueButtonClass = css({
-  bg: "rgba(139, 92, 246, 0.12)",
-  borderColor: "rgba(139, 92, 246, 0.52)",
+  bg: "zodiac.violet/12",
+  borderColor: "zodiac.violet/52",
 });
 
 const decideBarClass = css({
-  backdropFilter: "blur(14px)",
-  bg: "rgba(13, 6, 32, 0.94)",
-  borderColor: "rgba(200, 168, 75, 0.5)",
+  bg: "zodiac.void/94",
+  borderColor: "zodiac.gold/50",
   borderRadius: "l3",
   borderWidth: "1px",
   bottom: "4",
@@ -94,11 +102,13 @@ const decideBarClass = css({
 type Promotion = { kind: PersistedReviewDraft["kind"]; promotedId: string };
 type Decision = "approve" | "reject" | "supersede";
 
+const ageFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
 function formatAge(value: number) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+  return ageFormatter.format(new Date(value));
 }
 
 function queueStatement(draft: PersistedReviewDraft) {
@@ -128,6 +138,11 @@ function DecideBar(props: {
   payload?: AgentDraftPayload;
   editMode: boolean;
   editedFields: string[];
+  /**
+   * The review panel root. Single-key shortcuts are bound here rather than on
+   * `window` so they only fire while focus is inside the draft (WCAG 2.1.4).
+   */
+  shortcutScope: () => HTMLElement | undefined;
   onEnterEdit: () => void;
   onCancelEdit: () => void;
   onApproved: (promotion: Promotion) => void;
@@ -143,6 +158,9 @@ function DecideBar(props: {
   const [error, setError] = createSignal<string | null>(null);
   let noteInput: HTMLTextAreaElement | undefined;
   let overflowTrigger: HTMLButtonElement | undefined;
+  let decisionTrigger: HTMLButtonElement | undefined;
+  let confirmButton: HTMLButtonElement | undefined;
+  const overflowId = createUniqueId();
 
   const draft = () => props.context.draft;
 
@@ -170,19 +188,26 @@ function DecideBar(props: {
     return false;
   });
 
-  function chooseDecision(next: Decision) {
+  function chooseDecision(next: Decision, trigger?: HTMLButtonElement) {
+    decisionTrigger = trigger;
     setDecision(next);
     setOverflowOpen(false);
     setError(null);
-    if (next === "approve" || next === "reject") {
-      queueMicrotask(() => noteInput?.focus());
-    }
+    // Approve/reject land in the note, which the on-screen hint promises.
+    // Supersede has no note focus, so move into the dialog itself.
+    queueMicrotask(() => {
+      if (next === "approve" || next === "reject") noteInput?.focus();
+      else confirmButton?.focus();
+    });
   }
 
   function cancelDecision() {
     setDecision(null);
     setError(null);
     setSupersedingDraftId("");
+    const trigger = decisionTrigger;
+    decisionTrigger = undefined;
+    queueMicrotask(() => trigger?.focus());
   }
 
   function enterEditMode() {
@@ -274,8 +299,12 @@ function DecideBar(props: {
     }
   }
 
-  onMount(() => window.addEventListener("keydown", handleShortcut));
-  onCleanup(() => window.removeEventListener("keydown", handleShortcut));
+  createEffect(() => {
+    const scope = props.shortcutScope();
+    if (!scope) return;
+    scope.addEventListener("keydown", handleShortcut);
+    onCleanup(() => scope.removeEventListener("keydown", handleShortcut));
+  });
 
   return (
     <div class={decideBarClass}>
@@ -293,7 +322,12 @@ function DecideBar(props: {
             variant="solid"
             disabled={busy() || !props.payload}
             aria-keyshortcuts="A"
-            onClick={() => chooseDecision("approve")}
+            onClick={(event) =>
+              chooseDecision(
+                "approve",
+                event.currentTarget as HTMLButtonElement,
+              )
+            }
           >
             {props.editedFields.length > 0 ? "Approve with edits" : "Approve"}
             {" · A"}
@@ -302,7 +336,9 @@ function DecideBar(props: {
             variant="solid"
             disabled={busy()}
             aria-keyshortcuts="R"
-            onClick={() => chooseDecision("reject")}
+            onClick={(event) =>
+              chooseDecision("reject", event.currentTarget as HTMLButtonElement)
+            }
           >
             Reject · R
           </UIButton>
@@ -314,18 +350,19 @@ function DecideBar(props: {
               variant="outline"
               disabled={busy() || alternatives().length === 0}
               aria-expanded={overflowOpen()}
-              aria-haspopup="menu"
+              aria-controls={overflowOpen() ? overflowId : undefined}
               onClick={() => setOverflowOpen((open) => !open)}
             >
               More decisions ···
             </UIButton>
             <Show when={overflowOpen()}>
               <div
-                role="menu"
+                id={overflowId}
+                role="group"
                 aria-label="Additional draft decisions"
                 class={css({
-                  bg: "rgba(13, 6, 32, 0.98)",
-                  borderColor: "rgba(139, 92, 246, 0.42)",
+                  bg: "zodiac.void/98",
+                  borderColor: "zodiac.violet/42",
                   borderRadius: "l2",
                   borderWidth: "1px",
                   display: "grid",
@@ -340,8 +377,7 @@ function DecideBar(props: {
               >
                 <UIButton
                   variant="ghost"
-                  role="menuitem"
-                  onClick={() => chooseDecision("supersede")}
+                  onClick={() => chooseDecision("supersede", overflowTrigger)}
                 >
                   Supersede with draft…
                 </UIButton>
@@ -415,8 +451,8 @@ function DecideBar(props: {
             aria-modal="false"
             aria-label={`Confirm ${selected()}`}
             class={css({
-              bg: "rgba(200, 168, 75, 0.08)",
-              borderColor: "rgba(200, 168, 75, 0.28)",
+              bg: "zodiac.gold/8",
+              borderColor: "zodiac.gold/28",
               borderRadius: "l2",
               borderWidth: "1px",
               display: "grid",
@@ -447,6 +483,9 @@ function DecideBar(props: {
             </Show>
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
               <UIButton
+                ref={(element) => {
+                  confirmButton = element;
+                }}
                 variant="solid"
                 disabled={busy() || !canConfirm()}
                 onClick={confirmDecision}
@@ -475,13 +514,10 @@ function DecideBar(props: {
           supersede it; approval is unavailable.
         </p>
       </Show>
-      <Show when={error()}>
-        {(message) => (
-          <p aria-live="polite" class={css({ color: "zodiac.error" })}>
-            {message()}
-          </p>
-        )}
-      </Show>
+      <UINotice
+        class={error() ? undefined : collapsedNoticeClass}
+        error={error()}
+      />
     </div>
   );
 }
@@ -545,6 +581,7 @@ function ReviewWorkspace(props: {
   onApproved: (promotion: Promotion) => void;
 }) {
   const [editMode, setEditMode] = createSignal(false);
+  const [shortcutScope, setShortcutScope] = createSignal<HTMLElement>();
   const [workingPayload, setWorkingPayload] = createSignal<
     AgentDraftPayload | undefined
   >(props.context.draft.payload);
@@ -573,24 +610,29 @@ function ReviewWorkspace(props: {
   }
 
   return (
-    <DraftReviewStory
-      context={props.context}
-      payload={workingPayload()}
-      editMode={editMode()}
-      onPayloadChange={setWorkingPayload}
-      decide={
-        <DecideBar
-          context={props.context}
-          pendingDrafts={props.pendingDrafts}
-          payload={workingPayload()}
-          editMode={editMode()}
-          editedFields={editedFields()}
-          onEnterEdit={() => setEditMode(true)}
-          onCancelEdit={cancelEdits}
-          onApproved={props.onApproved}
-        />
-      }
-    />
+    // Shortcut scope: the single-key a/r/e bindings live on this container, so
+    // they only fire while focus is inside the draft under review.
+    <div ref={setShortcutScope} tabIndex={-1}>
+      <DraftReviewStory
+        context={props.context}
+        payload={workingPayload()}
+        editMode={editMode()}
+        onPayloadChange={setWorkingPayload}
+        decide={
+          <DecideBar
+            context={props.context}
+            pendingDrafts={props.pendingDrafts}
+            payload={workingPayload()}
+            editMode={editMode()}
+            editedFields={editedFields()}
+            shortcutScope={shortcutScope}
+            onEnterEdit={() => setEditMode(true)}
+            onCancelEdit={cancelEdits}
+            onApproved={props.onApproved}
+          />
+        }
+      />
+    </div>
   );
 }
 
@@ -636,6 +678,24 @@ export function AgentDraftsPage() {
       setActiveDraftId(pendingRows[0]?._id ?? null);
     }
   });
+
+  const queueError = () =>
+    pending.error()
+      ? `Unable to load pending drafts: ${pending.error()?.message}`
+      : null;
+  const queueStatus = () => {
+    if (pending.isLoading()) return "Loading pending drafts…";
+    if (pending.error() || rows().length > 0) return null;
+    return "No drafts are awaiting review. The queue is clear.";
+  };
+  const contextError = () =>
+    context.error()
+      ? `Unable to load review context: ${context.error()?.message}`
+      : null;
+  const contextStatus = () =>
+    !context.error() && (context.isLoading() || !context.data())
+      ? "Loading the correspondence story…"
+      : null;
 
   return (
     <section class={pageClass}>
@@ -685,20 +745,18 @@ export function AgentDraftsPage() {
         )}
       </Show>
 
-      <Show
-        when={!pending.isLoading() && rows().length > 0}
-        fallback={
-          <UICard style={{ "border-color": "rgba(245, 240, 232, 0.12)" }}>
-            <p class={helperClass}>
-              {pending.isLoading()
-                ? "Loading pending drafts…"
-                : pending.error()
-                  ? `Unable to load pending drafts: ${pending.error()?.message}`
-                  : "No drafts are awaiting review. The queue is clear."}
-            </p>
-          </UICard>
-        }
+      <UICard
+        class={queueStatus() || queueError() ? undefined : collapsedNoticeClass}
+        style={{ "border-color": "rgba(245, 240, 232, 0.12)" }}
       >
+        <UINotice
+          class={helperClass}
+          status={queueStatus()}
+          error={queueError()}
+        />
+      </UICard>
+
+      <Show when={!pending.isLoading() && rows().length > 0}>
         <div
           class={css({
             alignItems: "start",
@@ -761,16 +819,12 @@ export function AgentDraftsPage() {
           </aside>
 
           <UICard glass style={{ "border-color": "rgba(245, 240, 232, 0.12)" }}>
-            <Show
-              when={!context.isLoading() && context.data()}
-              fallback={
-                <p class={helperClass}>
-                  {context.error()
-                    ? `Unable to load review context: ${context.error()?.message}`
-                    : "Loading the correspondence story…"}
-                </p>
-              }
-            >
+            <UINotice
+              class={helperClass}
+              status={contextStatus()}
+              error={contextError()}
+            />
+            <Show when={!context.isLoading() && context.data()}>
               {(reviewContext) => (
                 <ReviewWorkspace
                   context={reviewContext()}

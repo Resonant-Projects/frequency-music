@@ -12,6 +12,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
@@ -71,6 +72,8 @@ export function RecipesPage() {
   const [parameters, setParameters] = createSignal("");
   const [checklist, setChecklist] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  const [autoGenerating, setAutoGenerating] = createSignal(false);
 
   async function submitRecipe(event: SubmitEvent) {
     event.preventDefault();
@@ -81,12 +84,16 @@ export function RecipesPage() {
       !whyThisMatters().trim() ||
       !bodyMd().trim()
     ) {
-      setNotice("Hypothesis, title, why this matters, and body are required.");
+      setNotice(null);
+      setNoticeError(
+        "Hypothesis, title, why this matters, and body are required.",
+      );
       return;
     }
 
     try {
       setNotice(null);
+      setNoticeError(null);
       await createRecipe({
         hypothesisId: hypothesisId() as Id<"hypotheses">,
         title: title().trim(),
@@ -103,23 +110,30 @@ export function RecipesPage() {
       setChecklist("");
       setNotice("Recipe created.");
     } catch (error) {
-      setNotice(`Failed to create recipe: ${String(error)}`);
+      setNoticeError(`Failed to create recipe: ${String(error)}`);
     }
   }
 
   async function runAutoGenerate() {
     if (!hypothesisId()) {
-      setNotice("Select a hypothesis first.");
+      setNotice(null);
+      setNoticeError("Select a hypothesis first.");
       return;
     }
 
+    if (autoGenerating()) return;
+    setAutoGenerating(true);
+    setNotice(null);
+    setNoticeError(null);
     try {
       await generateFromHypothesis({
         hypothesisId: hypothesisId() as Id<"hypotheses">,
       });
       setNotice("Auto recipe generation started.");
     } catch (error) {
-      setNotice(`Auto generation failed: ${String(error)}`);
+      setNoticeError(`Auto generation failed: ${String(error)}`);
+    } finally {
+      setAutoGenerating(false);
     }
   }
 
@@ -213,21 +227,22 @@ export function RecipesPage() {
           class={css({
             alignItems: "center",
             display: "flex",
+            flexWrap: "wrap",
             gap: "2",
             justifyContent: "space-between",
             marginTop: "4",
           })}
         >
-          <div aria-live="polite">
-            <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
-            </Show>
-          </div>
+          <UINotice status={notice()} error={noticeError()} />
           <div class={css({ display: "flex", gap: "2" })}>
-            <UIButton type="button" variant="outline" onClick={runAutoGenerate}>
-              Auto Generate
+            <UIButton
+              type="button"
+              variant="outline"
+              aria-busy={autoGenerating()}
+              disabled={autoGenerating()}
+              onClick={runAutoGenerate}
+            >
+              {autoGenerating() ? "Generating…" : "Auto Generate"}
             </UIButton>
             <UIButton type="submit" variant="solid">
               Create Recipe
@@ -238,24 +253,23 @@ export function RecipesPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Recipe Library</h2>
-        <Show when={!recipes.isLoading()} fallback={<p>Loading recipes…</p>}>
-          <Show
-            when={(recipes.data() ?? []).length > 0}
-            fallback={
-              <p
-                class={css({
-                  color: "rgba(245, 240, 232, 0.55)",
-                  fontFamily: "display",
-                  fontSize: "md",
-                  lineHeight: "1.6",
-                  textAlign: "center",
-                  py: "8",
-                })}
-              >
-                No recipes yet. Generate one from a hypothesis to get started.
-              </p>
-            }
-          >
+        <UINotice
+          class={css({ textAlign: "center" })}
+          status={
+            recipes.isLoading()
+              ? "Loading recipes…"
+              : !recipes.isError() && (recipes.data() ?? []).length === 0
+                ? "No recipes yet. Generate one from a hypothesis to get started."
+                : null
+          }
+          error={
+            recipes.isError()
+              ? `Unable to load recipes: ${recipes.error()?.message ?? "unknown error"}`
+              : null
+          }
+        />
+        <Show when={!recipes.isLoading()}>
+          <Show when={(recipes.data() ?? []).length > 0}>
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={recipes.data() ?? []}>
                 {(recipe: RecipeRow) => (
@@ -264,7 +278,7 @@ export function RecipesPage() {
                     params={{ recipeId: recipe._id }}
                     data-testid="entity-row"
                     class={css({
-                      borderColor: "rgba(200, 168, 75, 0.25)",
+                      borderColor: "zodiac.gold/25",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       cursor: "pointer",
@@ -273,7 +287,7 @@ export function RecipesPage() {
                       textDecoration: "none",
                       transition: "border-color 0.15s, box-shadow 0.15s",
                       _hover: {
-                        borderColor: "rgba(200, 168, 75, 0.5)",
+                        borderColor: "zodiac.gold/50",
                         boxShadow: "0 0 12px rgba(200, 168, 75, 0.08)",
                       },
                     })}
@@ -295,7 +309,7 @@ export function RecipesPage() {
                     </h3>
                     <p
                       class={css({
-                        color: "rgba(245, 240, 232, 0.62)",
+                        color: "zodiac.cream/62",
                         lineClamp: 3,
                         marginBottom: recipe.whyThisMatters ? "2" : "0",
                         fontSize: "sm",
@@ -308,7 +322,7 @@ export function RecipesPage() {
                       {(value) => (
                         <p
                           class={css({
-                            color: "rgba(245, 240, 232, 0.48)",
+                            color: "zodiac.cream/66",
                             fontSize: "sm",
                           })}
                         >

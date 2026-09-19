@@ -7,11 +7,19 @@ import type {
   SourceStatus,
 } from "../../../convex/shared/statuses";
 
+// Three.js needs plain hex strings, so these mirror the `zodiac.*` semantic
+// tokens in `web/panda.config.ts`. Panda is the source of truth: if a value
+// changes there it must be changed here in the same commit, and vice versa.
 export const COLORS = {
   void: "#0d0620",
   gold: "#c8a84b",
+  goldBright: "#dcc06a",
   violet: "#8b5cf6",
+  violetText: "#a78bfa",
   cream: "#f5f0e8",
+  success: "#51c475",
+  warning: "#e8b04a",
+  error: "#f87171",
   glowInner: "#1a0f35",
 } as const;
 
@@ -198,21 +206,25 @@ export function conceptDomainToSector(domain: string): string {
 type PipelineStatus = SourceStatus | HypothesisStatus | RecipeStatus;
 
 // Compile-checked against the contract: an unknown key here is now a type error.
+// Pipeline status -> orbit dot colour, drawn only from COLORS so the 3D scene
+// speaks the same palette as the 2D shell: cream for resting/dim states,
+// violet-text for queued work, gold for work in flight, success for confirmed,
+// warning for needs-review, violet for evaluated/triaged.
 const STATUS_COLOR_MAP = {
-  ingested: "#4a5568",
-  text_ready: "#2b6cb0",
-  extracting: "#c8a84b",
-  extracted: "#38a169",
-  review_needed: "#d69e2e",
-  triaged: "#805ad5",
-  promoted_followers: "#b7791f",
-  promoted_public: "#c8a84b",
-  draft: "#718096",
-  queued: "#2b6cb0",
-  active: "#38a169",
-  evaluated: "#805ad5",
-  in_use: "#38a169",
-  archived: "#4a5568",
+  ingested: COLORS.cream,
+  text_ready: COLORS.violetText,
+  extracting: COLORS.gold,
+  extracted: COLORS.success,
+  review_needed: COLORS.warning,
+  triaged: COLORS.violet,
+  promoted_followers: COLORS.goldBright,
+  promoted_public: COLORS.gold,
+  draft: COLORS.cream,
+  queued: COLORS.violetText,
+  active: COLORS.success,
+  evaluated: COLORS.violet,
+  in_use: COLORS.success,
+  archived: COLORS.cream,
 } satisfies Partial<Record<PipelineStatus, string>>;
 
 // Loose lookup surface for callers indexing with runtime strings.

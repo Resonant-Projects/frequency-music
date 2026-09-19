@@ -7,6 +7,35 @@ import type { SectorDef } from "./zodiac-data";
 let activeFocusAnimId: number | null = null;
 let originalAutoRotate: boolean | null = null;
 
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function reducedMotionQuery(): MediaQueryList | null {
+  if (typeof window === "undefined") return null;
+  if (typeof window.matchMedia !== "function") return null;
+  return window.matchMedia(REDUCED_MOTION_QUERY);
+}
+
+// True when the OS/browser asks for reduced motion. Safe without matchMedia.
+export function prefersReducedMotion(): boolean {
+  return reducedMotionQuery()?.matches ?? false;
+}
+
+// Subscribe to runtime changes of the reduced-motion preference.
+// Returns an unsubscribe function (a no-op when matchMedia is unavailable).
+export function watchReducedMotion(
+  onChange: (reduced: boolean) => void,
+): () => void {
+  const query = reducedMotionQuery();
+  if (!query) return () => {};
+  const handler = (event: MediaQueryListEvent) => {
+    onChange(event.matches);
+  };
+  query.addEventListener("change", handler);
+  return () => {
+    query.removeEventListener("change", handler);
+  };
+}
+
 export function createCamera(aspect: number): THREE.PerspectiveCamera {
   const camera = new THREE.PerspectiveCamera(45, aspect, 1, 3000);
   // Slightly below and in front: shows disc at a cinematic tilt
@@ -22,7 +51,7 @@ export function createOrbitControls(
   const controls = new OrbitControls(camera, domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.autoRotate = true;
+  controls.autoRotate = !prefersReducedMotion();
   controls.autoRotateSpeed = 0.15;
   controls.minDistance = 200;
   controls.maxDistance = 1200;
@@ -57,6 +86,20 @@ export function focusSector(
   if (activeFocusAnimId === null) originalAutoRotate = controls.autoRotate;
   if (activeFocusAnimId !== null) cancelAnimationFrame(activeFocusAnimId);
   controls.autoRotate = false;
+
+  // Reduced motion: jump straight to the framing, no 800ms lerp. The
+  // autoRotate restore below mirrors the end of the animated path.
+  if (prefersReducedMotion()) {
+    activeFocusAnimId = null;
+    camera.position.copy(targetPos);
+    controls.target.copy(lookAt);
+    controls.update();
+    if (originalAutoRotate !== null) {
+      controls.autoRotate = originalAutoRotate;
+      originalAutoRotate = null;
+    }
+    return;
+  }
 
   // Simple lerp animation over ~800ms
   const startPos = camera.position.clone();

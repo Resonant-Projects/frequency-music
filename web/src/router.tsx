@@ -7,34 +7,20 @@ import {
   RouterProvider,
 } from "@tanstack/solid-router";
 import { type Component, createEffect, createSignal, lazy } from "solid-js";
-import { UIBadge, UIButton, UICard } from "./components/ui";
+import { UIBadge, UICard } from "./components/ui";
 import {
   buildHostedSignInUrl,
   useClerkAuthSnapshot,
 } from "./integrations/clerk";
-import { AdminPage } from "./routes/admin";
-import { AgentDraftsPage } from "./routes/agent-drafts";
-import { AgentRunDetailPage } from "./routes/agent-run-detail";
-import { AgentRunsPage } from "./routes/agent-runs";
-import { CompositionDetailPage } from "./routes/composition-detail";
 import { CompositionsPage } from "./routes/compositions";
-import { CorrespondenceDetailPage } from "./routes/correspondence-detail";
 import { CorrespondencesPage } from "./routes/correspondences";
 import { DisplayPage } from "./routes/display";
-import { EditorialDetailPage } from "./routes/editorial-detail";
 import { EditorialPage } from "./routes/editorial";
-import { EssaysPage } from "./routes/essays";
 import { FailuresPage } from "./routes/failures";
-import { FeedbackPage } from "./routes/feedback";
 import { HypothesisDetailPage } from "./routes/hypothesis-detail";
 import { HypothesesPage } from "./routes/hypotheses";
-import { IngestPage } from "./routes/ingest";
-import { RecipeDetailPage } from "./routes/recipe-detail";
 import { RecipesPage } from "./routes/recipes";
-import { ThesisDetailPage } from "./routes/thesis-detail";
 import { ThesesPage } from "./routes/theses";
-import { WeeklyTurnsPage } from "./routes/weekly-turns";
-import { VocabularyTriagePage } from "./routes/vocabulary-triage";
 
 function lazyRoute<T extends Component>(
   loader: () => Promise<{ default: T }>,
@@ -46,8 +32,80 @@ function lazyRoute<T extends Component>(
   return component;
 }
 
+const AdminPage = lazyRoute(() =>
+  import("./routes/admin").then((m) => ({ default: m.AdminPage })),
+);
+
+const AgentDraftsPage = lazyRoute(() =>
+  import("./routes/agent-drafts").then((m) => ({ default: m.AgentDraftsPage })),
+);
+
+const AgentRunDetailPage = lazyRoute(() =>
+  import("./routes/agent-run-detail").then((m) => ({
+    default: m.AgentRunDetailPage,
+  })),
+);
+
+const AgentRunsPage = lazyRoute(() =>
+  import("./routes/agent-runs").then((m) => ({ default: m.AgentRunsPage })),
+);
+
+const CompositionDetailPage = lazyRoute(() =>
+  import("./routes/composition-detail").then((m) => ({
+    default: m.CompositionDetailPage,
+  })),
+);
+
+const CorrespondenceDetailPage = lazyRoute(() =>
+  import("./routes/correspondence-detail").then((m) => ({
+    default: m.CorrespondenceDetailPage,
+  })),
+);
+
+const EditorialDetailPage = lazyRoute(() =>
+  import("./routes/editorial-detail").then((m) => ({
+    default: m.EditorialDetailPage,
+  })),
+);
+
+const EssaysPage = lazyRoute(() =>
+  import("./routes/essays").then((m) => ({ default: m.EssaysPage })),
+);
+
 const EssayDetailPage = lazyRoute(() =>
   import("./routes/essay-detail").then((m) => ({ default: m.EssayDetailPage })),
+);
+
+const FeedbackPage = lazyRoute(() =>
+  import("./routes/feedback").then((m) => ({ default: m.FeedbackPage })),
+);
+
+const IngestPage = lazyRoute(() =>
+  import("./routes/ingest").then((m) => ({ default: m.IngestPage })),
+);
+
+const RecipeDetailPage = lazyRoute(() =>
+  import("./routes/recipe-detail").then((m) => ({
+    default: m.RecipeDetailPage,
+  })),
+);
+
+const ThesisDetailPage = lazyRoute(() =>
+  import("./routes/thesis-detail").then((m) => ({
+    default: m.ThesisDetailPage,
+  })),
+);
+
+const VocabularyTriagePage = lazyRoute(() =>
+  import("./routes/vocabulary-triage").then((m) => ({
+    default: m.VocabularyTriagePage,
+  })),
+);
+
+const WeeklyTurnsPage = lazyRoute(() =>
+  import("./routes/weekly-turns").then((m) => ({
+    default: m.WeeklyTurnsPage,
+  })),
 );
 
 const WeeklyBriefDetailPage = lazyRoute(() =>
@@ -59,6 +117,12 @@ const WeeklyBriefDetailPage = lazyRoute(() =>
 const Zodiac3D = lazyRoute(() =>
   import("./routes/zodiac-3d").then((m) => ({ default: m.Zodiac3D })),
 );
+
+// `/` is the 3D home, so warm its chunk immediately rather than waterfalling
+// the download behind the first navigation.
+if (typeof window !== "undefined") {
+  void Zodiac3D.preload();
+}
 
 const appLinks = [
   { to: "/", label: "Home" },
@@ -88,9 +152,6 @@ const AppShell: Component = () => {
       <header class="app-header">
         <div class="app-title">
           <span class="app-title-mark">∴</span> Frequency Music
-          <UIBadge tone="gold" class="app-mode-badge">
-            PARK UI
-          </UIBadge>
         </div>
         <button
           type="button"
@@ -156,25 +217,6 @@ const RootLayout: Component = () => {
   }
 
   return <AppShell />;
-};
-
-const _PlaceholderPage = (props: {
-  title: string;
-  body: string;
-}): Component => {
-  const Page: Component = () => (
-    <div class="route-placeholder">
-      <UICard class="route-placeholder-card">
-        <UIBadge tone="violet">Checkpoint</UIBadge>
-        <h1>{props.title}</h1>
-        <p>{props.body}</p>
-        <UIButton variant="outline" disabled>
-          Coming Next
-        </UIButton>
-      </UICard>
-    </div>
-  );
-  return Page;
 };
 
 const rootRoute = createRootRoute({

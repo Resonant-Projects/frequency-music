@@ -28,7 +28,7 @@ export const sectionTitleClass = css({
 });
 
 export const fieldLabelClass = css({
-  color: "rgba(245, 240, 232, 0.75)",
+  color: "zodiac.cream/75",
   display: "block",
   fontFamily: "mono",
   fontSize: "xs",

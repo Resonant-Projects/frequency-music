@@ -1,4 +1,5 @@
 import type { JSX } from "solid-js";
+import { splitProps } from "solid-js";
 import { css, cx } from "../../../styled-system/css";
 
 type ButtonVariant = "solid" | "outline" | "ghost";
@@ -14,15 +15,25 @@ const base = css({
   gap: "2",
   justifyContent: "center",
   letterSpacing: "0.18em",
+  minHeight: "9",
   px: "3",
   py: "2",
   textTransform: "uppercase",
   transitionDuration: "normal",
   transitionProperty: "background-color, color, border-color",
   transitionTimingFunction: "default",
+  _coarsePointer: {
+    minHeight: "11",
+    px: "4",
+  },
   _disabled: {
     cursor: "not-allowed",
     opacity: "0.5",
+  },
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
   },
 });
 
@@ -32,26 +43,26 @@ const variantStyles: Record<ButtonVariant, string> = {
     borderColor: "zodiac.gold",
     color: "zodiac.void",
     _hover: {
-      bg: "accent.10",
-      borderColor: "accent.10",
+      bg: "zodiac.goldBright",
+      borderColor: "zodiac.goldBright",
     },
   }),
   outline: css({
     bg: "transparent",
-    borderColor: "colorPalette.7",
+    borderColor: "zodiac.gold/45",
     color: "zodiac.cream",
     _hover: {
-      borderColor: "colorPalette.9",
-      color: "white",
+      borderColor: "zodiac.gold/75",
+      color: "zodiac.cream",
     },
   }),
   ghost: css({
     bg: "transparent",
     borderColor: "transparent",
-    color: "fg.muted",
+    color: "zodiac.cream/72",
     _hover: {
-      bg: "bg.subtle",
-      color: "fg.default",
+      bg: "zodiac.gold/8",
+      color: "zodiac.cream",
     },
   }),
 };
@@ -61,12 +72,10 @@ type UIButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export function UIButton(props: UIButtonProps) {
-  const variant = () => props.variant ?? "outline";
+  const [local, rest] = splitProps(props, ["variant", "class"]);
+  const variant = () => local.variant ?? "outline";
 
   return (
-    <button
-      {...props}
-      class={cx(base, variantStyles[variant()], props.class)}
-    />
+    <button {...rest} class={cx(base, variantStyles[variant()], local.class)} />
   );
 }

@@ -1,4 +1,5 @@
 import type { JSX } from "solid-js";
+import { splitProps } from "solid-js";
 import { css, cx } from "../../../styled-system/css";
 
 const base = css({
@@ -6,8 +7,9 @@ const base = css({
   borderWidth: "1px",
   display: "inline-flex",
   fontFamily: "mono",
-  fontSize: "2xs",
+  fontSize: "10px",
   letterSpacing: "0.2em",
+  overflowWrap: "anywhere",
   px: "2.5",
   py: "1",
   textTransform: "uppercase",
@@ -15,15 +17,15 @@ const base = css({
 
 const toneStyles = {
   gold: css({
-    borderColor: "rgba(200, 168, 75, 0.45)",
+    borderColor: "zodiac.gold/45",
     color: "zodiac.gold",
   }),
   violet: css({
-    borderColor: "rgba(139, 92, 246, 0.45)",
+    borderColor: "zodiac.violet/45",
     color: "zodiac.violet",
   }),
   cream: css({
-    borderColor: "rgba(245, 240, 232, 0.38)",
+    borderColor: "zodiac.cream/38",
     color: "zodiac.cream",
   }),
 } as const;
@@ -33,6 +35,7 @@ type UIBadgeProps = JSX.HTMLAttributes<HTMLSpanElement> & {
 };
 
 export function UIBadge(props: UIBadgeProps) {
-  const tone = () => props.tone ?? "gold";
-  return <span {...props} class={cx(base, toneStyles[tone()], props.class)} />;
+  const [local, rest] = splitProps(props, ["tone", "class"]);
+  const tone = () => local.tone ?? "gold";
+  return <span {...rest} class={cx(base, toneStyles[tone()], local.class)} />;
 }

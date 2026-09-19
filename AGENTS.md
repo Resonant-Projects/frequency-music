@@ -27,6 +27,6 @@
 - Agent API, runtime, and tracing: `docs/agent-tool-surface.md`, `agent/README.md`, `docs/langsmith-runbook.md`
 - Backend recovery inventory and isolated restore rehearsal tooling: `docs/frequency-backend-recovery-preparation-20260913.md`, `scripts/recovery/`
 - Product doctrine: `docs/vision-and-meaning.md`
-- Web UI design system (palette, type, opacity, components): `web/docs/zodiac-style-guide.md`
+- Web UI design system: `DESIGN.md` (tokens, opacity tiers, named rules) and `web/docs/zodiac-style-guide.md` (3D geometry)
 
 Run targeted checks while iterating, then `vp run verify` before handoff. If it cannot run, report the exact blocker and whether it predates the change.

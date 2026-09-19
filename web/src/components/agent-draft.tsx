@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/solid-router";
 import type { FunctionReturnType } from "convex/server";
-import { For, type JSX, Show } from "solid-js";
+import { createUniqueId, For, type JSX, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type {
@@ -66,15 +66,28 @@ export function statusTone(
 }
 
 const helperClass = css({
-  color: "rgba(245, 240, 232, 0.62)",
+  color: "zodiac.cream/62",
   lineHeight: "1.6",
 });
 
 const monoValueClass = css({
-  color: "rgba(245, 240, 232, 0.72)",
+  color: "zodiac.cream/72",
   fontFamily: "mono",
   fontSize: "xs",
   lineHeight: "1.5",
+  overflowWrap: "anywhere",
+});
+
+/** Visually hidden but exposed to assistive tech — keeps the heading outline intact. */
+const srOnlyClass = css({
+  border: "0",
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: "1px",
+  overflow: "hidden",
+  position: "absolute",
+  whiteSpace: "nowrap",
+  width: "1px",
 });
 
 const bodyValueClass = css({
@@ -195,11 +208,16 @@ function RecipePreview(props: { payload: RecipeDraftPayload }) {
         {(protocol) => (
           <PayloadField label="Protocol">
             <pre
+              role="group"
+              aria-label="Recipe protocol JSON"
+              tabIndex={0}
               class={css({
-                color: "rgba(245, 240, 232, 0.72)",
+                color: "zodiac.cream/72",
                 fontFamily: "mono",
                 fontSize: "xs",
                 lineHeight: "1.5",
+                overflow: "auto",
+                overflowWrap: "anywhere",
                 whiteSpace: "pre-wrap",
               })}
             >
@@ -242,7 +260,7 @@ export function DraftPayloadPreview(props: {
 }
 
 const reviewSectionClass = css({
-  borderTopColor: "rgba(245, 240, 232, 0.12)",
+  borderTopColor: "zodiac.cream/12",
   borderTopWidth: "1px",
   display: "grid",
   gap: "3",
@@ -250,9 +268,9 @@ const reviewSectionClass = css({
 });
 
 const reviewEyebrowClass = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/66",
   fontFamily: "mono",
-  fontSize: "2xs",
+  fontSize: "xs",
   letterSpacing: "0.18em",
   textTransform: "uppercase",
 });
@@ -266,7 +284,7 @@ const reviewHeadingClass = css({
 });
 
 const reviewBodyClass = css({
-  color: "rgba(245, 240, 232, 0.82)",
+  color: "zodiac.cream/82",
   fontFamily: "display",
   fontSize: "lg",
   lineHeight: "1.65",
@@ -278,11 +296,12 @@ function ReviewSection(props: {
   label: string;
   children: JSX.Element;
 }) {
+  const headingId = createUniqueId();
   return (
-    <section class={reviewSectionClass}>
-      <p class={reviewEyebrowClass}>
+    <section class={reviewSectionClass} aria-labelledby={headingId}>
+      <h2 class={reviewEyebrowClass} id={headingId}>
         {String(props.index).padStart(2, "0")} · {props.label}
-      </p>
+      </h2>
       {props.children}
     </section>
   );
@@ -294,8 +313,8 @@ function ConceptPanel(props: {
   return (
     <div
       class={css({
-        bg: "rgba(26, 15, 53, 0.34)",
-        borderColor: "rgba(139, 92, 246, 0.2)",
+        bg: "zodiac.glow-inner/34",
+        borderColor: "zodiac.violet/20",
         borderRadius: "l2",
         borderWidth: "1px",
         display: "grid",
@@ -435,12 +454,18 @@ export function DraftReviewStory(props: {
               <details>
                 <summary
                   class={css({
-                    color: "rgba(245, 240, 232, 0.72)",
+                    color: "zodiac.cream/72",
                     cursor: "pointer",
                     fontFamily: "mono",
                     fontSize: "xs",
                     letterSpacing: "0.12em",
+                    minHeight: "7",
+                    py: "2",
                     textTransform: "uppercase",
+                    _coarsePointer: {
+                      minHeight: "11",
+                      py: "3",
+                    },
                   })}
                 >
                   Correspondence rationale
@@ -470,12 +495,10 @@ export function DraftReviewStory(props: {
                 return (
                   <div
                     class={css({
-                      bg: contradicts
-                        ? "rgba(139, 92, 246, 0.14)"
-                        : "rgba(245, 240, 232, 0.035)",
+                      bg: contradicts ? "zodiac.violet/14" : "zodiac.cream/3.5",
                       borderColor: contradicts
-                        ? "rgba(139, 92, 246, 0.56)"
-                        : "rgba(245, 240, 232, 0.12)",
+                        ? "zodiac.violet/56"
+                        : "zodiac.cream/12",
                       borderLeftWidth: "3px",
                       borderRadius: "l2",
                       display: "grid",
@@ -495,10 +518,10 @@ export function DraftReviewStory(props: {
                         aria-hidden="true"
                         class={css({
                           color: contradicts
-                            ? "zodiac.violet"
+                            ? "zodiac.error"
                             : supports
-                              ? "#51c475"
-                              : "rgba(245, 240, 232, 0.58)",
+                              ? "zodiac.success"
+                              : "zodiac.cream/60",
                         })}
                       >
                         {contradicts ? "⊘" : supports ? "✓" : "—"}
@@ -533,7 +556,8 @@ export function DraftReviewStory(props: {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          {evidence.sourceTitle} ↗
+                          {evidence.sourceTitle}{" "}
+                          <span aria-hidden="true">↗</span>
                         </a>
                       )}
                     </Show>
@@ -576,8 +600,8 @@ export function DraftReviewStory(props: {
               >
                 <div
                   class={css({
-                    bg: "rgba(139, 92, 246, 0.08)",
-                    borderColor: "rgba(139, 92, 246, 0.32)",
+                    bg: "zodiac.violet/8",
+                    borderColor: "zodiac.violet/32",
                     borderRadius: "l2",
                     borderWidth: "1px",
                     display: "grid",
@@ -585,6 +609,7 @@ export function DraftReviewStory(props: {
                     p: "3",
                   })}
                 >
+                  <h2 class={srOnlyClass}>{draftPayload().title}</h2>
                   <UIBadge tone="violet">Edit mode</UIBadge>
                   <EditableTextField
                     id={`edit-title-${props.context.draft._id}`}
@@ -629,12 +654,18 @@ export function DraftReviewStory(props: {
               <details>
                 <summary
                   class={css({
-                    color: "rgba(245, 240, 232, 0.72)",
+                    color: "zodiac.cream/72",
                     cursor: "pointer",
                     fontFamily: "mono",
                     fontSize: "xs",
                     letterSpacing: "0.12em",
+                    minHeight: "7",
+                    py: "2",
                     textTransform: "uppercase",
+                    _coarsePointer: {
+                      minHeight: "11",
+                      py: "3",
+                    },
                   })}
                 >
                   Draft rationale
@@ -672,8 +703,8 @@ export function DraftReviewStory(props: {
               >
                 <div
                   class={css({
-                    bg: "rgba(139, 92, 246, 0.08)",
-                    borderColor: "rgba(139, 92, 246, 0.32)",
+                    bg: "zodiac.violet/8",
+                    borderColor: "zodiac.violet/32",
                     borderRadius: "l2",
                     borderWidth: "1px",
                     display: "grid",
@@ -681,6 +712,7 @@ export function DraftReviewStory(props: {
                     p: "3",
                   })}
                 >
+                  <h2 class={srOnlyClass}>{draftPayload().title}</h2>
                   <UIBadge tone="violet">Edit mode</UIBadge>
                   <EditableTextField
                     id={`edit-title-${props.context.draft._id}`}
@@ -755,7 +787,7 @@ export function DraftReviewStory(props: {
               fontSize: "xs",
             })}
           >
-            Open run ↗
+            Open run <span aria-hidden="true">↗</span>
           </Link>
           <Show when={props.context.runTrace.traceUrl}>
             {(traceUrl) => (
@@ -769,7 +801,7 @@ export function DraftReviewStory(props: {
                 target="_blank"
                 rel="noreferrer"
               >
-                Open trace ↗
+                Open trace <span aria-hidden="true">↗</span>
               </a>
             )}
           </Show>
@@ -777,12 +809,18 @@ export function DraftReviewStory(props: {
         <details>
           <summary
             class={css({
-              color: "rgba(245, 240, 232, 0.72)",
+              color: "zodiac.cream/72",
               cursor: "pointer",
               fontFamily: "mono",
               fontSize: "xs",
               letterSpacing: "0.12em",
+              minHeight: "7",
+              py: "2",
               textTransform: "uppercase",
+              _coarsePointer: {
+                minHeight: "11",
+                py: "3",
+              },
             })}
           >
             Agent run summary
@@ -811,7 +849,7 @@ export function DraftReviewStory(props: {
                 {(hypothesis) => (
                   <div
                     class={css({
-                      borderColor: "rgba(245, 240, 232, 0.12)",
+                      borderColor: "zodiac.cream/12",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       display: "grid",
@@ -836,8 +874,8 @@ export function DraftReviewStory(props: {
                 {(failure) => (
                   <div
                     class={css({
-                      bg: "rgba(139, 92, 246, 0.1)",
-                      borderColor: "rgba(139, 92, 246, 0.32)",
+                      bg: "zodiac.violet/10",
+                      borderColor: "zodiac.violet/32",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       display: "grid",
@@ -884,7 +922,7 @@ export function PromotedLink(props: {
                 fontSize: "sm",
               })}
             >
-              View Promoted Recipe ↗
+              View Promoted Recipe <span aria-hidden="true">↗</span>
             </Link>
           }
         >
@@ -897,7 +935,7 @@ export function PromotedLink(props: {
               fontSize: "sm",
             })}
           >
-            View Promoted Hypothesis ↗
+            View Promoted Hypothesis <span aria-hidden="true">↗</span>
           </Link>
         </Show>
       )}
@@ -911,7 +949,7 @@ export function DecisionState(props: { draft: PersistedReviewDraft }) {
     <Show when={props.draft.status !== "pending_review"}>
       <div
         class={css({
-          borderColor: "rgba(245, 240, 232, 0.12)",
+          borderColor: "zodiac.cream/12",
           borderRadius: "l2",
           borderWidth: "1px",
           display: "grid",

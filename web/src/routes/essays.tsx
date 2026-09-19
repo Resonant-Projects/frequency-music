@@ -1,13 +1,16 @@
 import { Link } from "@tanstack/solid-router";
-import { For, onMount } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import { css } from "../../styled-system/css";
 import {
   UIBadge,
+  UIButton,
   UICard,
   pageClass,
   sectionTitleClass,
 } from "../components/ui";
 import { essayLibrary } from "../lib/essays";
+
+const ARCHIVE_PAGE_SIZE = 24;
 
 const heroCard = css({
   position: "relative",
@@ -45,8 +48,12 @@ const heroLead = css({
 
 const heroFeaturedZone = css({
   p: { base: "5", md: "6" },
-  borderTop: { base: "1px solid rgba(200, 168, 75, 0.10)", lg: "none" },
-  borderLeft: { base: "none", lg: "1px solid rgba(200, 168, 75, 0.10)" },
+  borderTopWidth: { base: "1px", lg: "0" },
+  borderTopStyle: "solid",
+  borderTopColor: "zodiac.gold/10",
+  borderLeftWidth: { base: "0", lg: "1px" },
+  borderLeftStyle: "solid",
+  borderLeftColor: "zodiac.gold/10",
   display: "grid",
   alignContent: "start",
   gap: "0",
@@ -54,9 +61,9 @@ const heroFeaturedZone = css({
 });
 
 const eyebrow = css({
-  color: "rgba(200, 168, 75, 0.58)",
+  color: "zodiac.gold/78",
   fontFamily: "mono",
-  fontSize: "9px",
+  fontSize: "10px",
   letterSpacing: "0.4em",
   textTransform: "uppercase",
   mb: "12px",
@@ -74,7 +81,7 @@ const heroTitle = css({
 });
 
 const heroBody = css({
-  color: "rgba(245, 240, 232, 0.66)",
+  color: "zodiac.cream/66",
   fontFamily: "display",
   fontSize: { base: "16px", md: "18px" },
   fontWeight: "300",
@@ -95,16 +102,17 @@ const featuredLink = css({
   display: "grid",
   gap: "12px",
   textDecoration: "none",
-  borderColor: "rgba(245, 240, 232, 0.14)",
+  borderColor: "zodiac.cream/14",
   borderWidth: "1px",
   borderRadius: "l3",
   p: { base: "18px", md: "22px 26px" },
-  bg: "rgba(13, 6, 32, 0.45)",
+  bg: "zodiac.void/45",
   transition: "transform 0.2s ease, border-color 0.2s ease",
   alignSelf: "start",
   _hover: {
     transform: "translateY(-2px)",
-    borderColor: "rgba(200, 168, 75, 0.45)",
+    borderColor: "zodiac.gold/45",
+    _motionReduce: { transform: "none" },
   },
 });
 
@@ -119,9 +127,9 @@ const featuredTitle = css({
 });
 
 const featuredExcerpt = css({
-  color: "rgba(245, 240, 232, 0.62)",
-  fontSize: "13px",
-  fontWeight: "300",
+  color: "zodiac.cream/62",
+  fontSize: "14px",
+  fontWeight: "400",
   lineHeight: "1.65",
   m: "0",
 });
@@ -144,19 +152,19 @@ const essayCard = css({
   gap: "8px",
   textDecoration: "none",
   minHeight: { base: "auto", md: "13.5rem" },
-  bg: "rgba(13, 6, 32, 0.92)",
+  bg: "zodiac.void/92",
   transition:
     "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
-  backdropFilter: "blur(8px)",
-  borderColor: "rgba(200, 168, 75, 0.22)",
+  borderColor: "zodiac.gold/22",
   borderRadius: "l3",
   borderWidth: "1px",
   color: "zodiac.cream",
   p: "16px 18px",
   _hover: {
     transform: "translateY(-3px)",
-    borderColor: "rgba(200, 168, 75, 0.48)",
+    borderColor: "zodiac.gold/48",
     boxShadow: "0 22px 48px rgba(0, 0, 0, 0.24)",
+    _motionReduce: { transform: "none" },
   },
 });
 
@@ -178,20 +186,26 @@ const essayTitle = css({
 });
 
 const essayExcerpt = css({
-  color: "rgba(245, 240, 232, 0.68)",
-  fontSize: "13px",
-  fontWeight: "300",
+  color: "zodiac.cream/68",
+  fontSize: "14px",
+  fontWeight: "400",
   lineHeight: "1.65",
   m: "0",
 });
 
 const essayFooter = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/66",
   fontFamily: "mono",
-  fontSize: "9px",
+  fontSize: "11px",
   letterSpacing: "0.26em",
   textTransform: "uppercase",
   mt: "12px",
+});
+
+const showMoreRow = css({
+  display: "flex",
+  justifyContent: "center",
+  mt: "5",
 });
 
 export function EssaysPage() {
@@ -200,6 +214,9 @@ export function EssaysPage() {
   });
 
   const [featured, ...archive] = essayLibrary;
+  const archiveList = archive.length > 0 ? archive : featured ? [featured] : [];
+  const [visibleCount, setVisibleCount] = createSignal(ARCHIVE_PAGE_SIZE);
+  const visibleArchive = () => archiveList.slice(0, visibleCount());
 
   return (
     <section class={pageClass}>
@@ -254,7 +271,7 @@ export function EssaysPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Archive</h2>
         <div class={archiveGrid}>
-          <For each={archive.length > 0 ? archive : featured ? [featured] : []}>
+          <For each={visibleArchive()}>
             {(essay) => (
               <Link
                 to="/essays/$essaySlug"
@@ -267,13 +284,25 @@ export function EssaysPage() {
                   </UIBadge>
                   <UIBadge tone="cream">{essay.readTimeMinutes} min</UIBadge>
                 </div>
-                <h2 class={essayTitle}>{essay.title}</h2>
+                <h3 class={essayTitle}>{essay.title}</h3>
                 <p class={essayExcerpt}>{essay.excerpt}</p>
                 <div class={essayFooter}>Read essay</div>
               </Link>
             )}
           </For>
         </div>
+        <Show when={visibleCount() < archiveList.length}>
+          <div class={showMoreRow}>
+            <UIButton
+              variant="outline"
+              onClick={() =>
+                setVisibleCount((count) => count + ARCHIVE_PAGE_SIZE)
+              }
+            >
+              Show more
+            </UIButton>
+          </div>
+        </Show>
       </UICard>
     </section>
   );

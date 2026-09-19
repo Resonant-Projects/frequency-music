@@ -44,7 +44,7 @@ const components = {
   h4: (props: JSX.HTMLAttributes<HTMLHeadingElement>) => (
     <h4
       class={css({
-        color: "rgba(245, 240, 232, 0.92)",
+        color: "zodiac.cream/92",
         fontFamily: "display",
         fontSize: "md",
         mt: "4",
@@ -56,7 +56,7 @@ const components = {
   p: (props: JSX.HTMLAttributes<HTMLParagraphElement>) => (
     <p
       class={css({
-        color: "rgba(245, 240, 232, 0.82)",
+        color: "zodiac.cream/82",
         fontFamily: "display",
         fontSize: "md",
         lineHeight: "1.75",
@@ -68,8 +68,10 @@ const components = {
   blockquote: (props: JSX.BlockquoteHTMLAttributes<HTMLQuoteElement>) => (
     <blockquote
       class={css({
-        borderLeft: "2px solid rgba(200, 168, 75, 0.4)",
-        color: "rgba(245, 240, 232, 0.74)",
+        borderLeftWidth: "2px",
+        borderLeftStyle: "solid",
+        borderLeftColor: "zodiac.gold/40",
+        color: "zodiac.cream/74",
         fontFamily: "display",
         fontStyle: "italic",
         lineHeight: "1.75",
@@ -108,7 +110,7 @@ const components = {
   li: (props: JSX.HTMLAttributes<HTMLLIElement>) => (
     <li
       class={css({
-        color: "rgba(245, 240, 232, 0.82)",
+        color: "zodiac.cream/82",
         fontFamily: "display",
         fontSize: "md",
         lineHeight: "1.75",
@@ -120,7 +122,9 @@ const components = {
     <hr
       class={css({
         border: "none",
-        borderTop: "1px solid rgba(200, 168, 75, 0.22)",
+        borderTopWidth: "1px",
+        borderTopStyle: "solid",
+        borderTopColor: "zodiac.gold/22",
         my: "6",
       })}
       {...props}
@@ -128,7 +132,7 @@ const components = {
   ),
   strong: (props: JSX.HTMLAttributes<HTMLElement>) => (
     <strong
-      class={css({ color: "rgba(245, 240, 232, 0.95)", fontWeight: "bold" })}
+      class={css({ color: "zodiac.cream/95", fontWeight: "bold" })}
       {...props}
     />
   ),
@@ -138,7 +142,7 @@ const components = {
   pre: (props: JSX.HTMLAttributes<HTMLPreElement>) => (
     <pre
       class={css({
-        bg: "rgba(13, 6, 32, 0.5)",
+        bg: "zodiac.void/50",
         borderRadius: "l1",
         fontFamily: "mono",
         fontSize: "sm",
@@ -155,7 +159,7 @@ const components = {
       class={css({
         fontFamily: "mono",
         fontSize: "sm",
-        bg: "rgba(200, 168, 75, 0.08)",
+        bg: "zodiac.gold/8",
         borderRadius: "sm",
         px: "1",
         py: "0.5",
@@ -176,5 +180,11 @@ const components = {
 };
 
 export function Markdown(props: { content: string }) {
-  return <SolidMarkdown children={props.content} components={components} />;
+  // Prose measure cap: the serif body face needs a short line. Consumers that
+  // already cap narrower keep their own width; this is the floor for the rest.
+  return (
+    <div class={css({ maxW: "72ch" })}>
+      <SolidMarkdown children={props.content} components={components} />
+    </div>
+  );
 }

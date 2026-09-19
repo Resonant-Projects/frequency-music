@@ -1,10 +1,11 @@
 import type { JSX } from "solid-js";
+import { splitProps } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { css, cx } from "../../../styled-system/css";
 
 const cardClass = css({
-  bg: "rgba(13, 6, 32, 0.72)",
-  borderColor: "rgba(200, 168, 75, 0.22)",
+  bg: "zodiac.void/72",
+  borderColor: "zodiac.gold/22",
   borderRadius: "l3",
   borderWidth: "1px",
   color: "zodiac.cream",
@@ -21,12 +22,12 @@ type UICardProps = JSX.HTMLAttributes<HTMLElement> & {
 };
 
 export function UICard(props: UICardProps) {
-  const { as = "section", class: className, glass, ...rest } = props;
+  const [local, rest] = splitProps(props, ["as", "class", "glass"]);
   return (
     <Dynamic
-      component={as}
+      component={local.as ?? "section"}
       {...rest}
-      class={cx(cardClass, glass && glassClass, className)}
+      class={cx(cardClass, local.glass && glassClass, local.class)}
     />
   );
 }

@@ -4,6 +4,7 @@ import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   backLink,
+  collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
   goldDivider,
@@ -13,6 +14,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
@@ -91,6 +93,7 @@ export function EditorialDetailPage() {
   const [draft, setDraft] = createSignal<ArtifactDraft | null>(null);
   const [loadedVersion, setLoadedVersion] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
   const [submitting, setSubmitting] = createSignal(false);
   const [approving, setApproving] = createSignal(false);
@@ -204,6 +207,7 @@ export function EditorialDetailPage() {
     if (!current || !row || isBusy()) return false;
     setSaving(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       await updateArtifact({
         id: row.artifact._id,
@@ -229,7 +233,7 @@ export function EditorialDetailPage() {
       setNotice("Editorial artifact saved.");
       return true;
     } catch (error) {
-      setNotice(`Save failed: ${String(error)}`);
+      setNoticeError(`Save failed: ${String(error)}`);
       return false;
     } finally {
       setSaving(false);
@@ -241,12 +245,16 @@ export function EditorialDetailPage() {
     if (!row || isBusy()) return;
     setSubmitting(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       if (!(await handleSave())) return;
       await submitForReview({ id: row.artifact._id });
       setNotice("Artifact moved to in review.");
     } catch (error) {
-      setNotice(`Submit for review failed: ${String(error)}`);
+      // handleSave may already have reported success; drop it so the two live
+      // regions never contradict each other for one action.
+      setNotice(null);
+      setNoticeError(`Submit for review failed: ${String(error)}`);
     } finally {
       setSubmitting(false);
     }
@@ -257,12 +265,16 @@ export function EditorialDetailPage() {
     if (!row || isBusy()) return;
     setApproving(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       if (!(await handleSave())) return;
       await approveArtifact({ id: row.artifact._id });
       setNotice("Artifact approved.");
     } catch (error) {
-      setNotice(`Approve failed: ${String(error)}`);
+      // handleSave may already have reported success; drop it so the two live
+      // regions never contradict each other for one action.
+      setNotice(null);
+      setNoticeError(`Approve failed: ${String(error)}`);
     } finally {
       setApproving(false);
     }
@@ -273,12 +285,16 @@ export function EditorialDetailPage() {
     if (!row || isBusy()) return;
     setPublishing(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       if (!(await handleSave())) return;
       await publishArtifact({ id: row.artifact._id });
       setNotice("Artifact published and ready for export.");
     } catch (error) {
-      setNotice(`Publish failed: ${String(error)}`);
+      // handleSave may already have reported success; drop it so the two live
+      // regions never contradict each other for one action.
+      setNotice(null);
+      setNoticeError(`Publish failed: ${String(error)}`);
     } finally {
       setPublishing(false);
     }
@@ -292,31 +308,23 @@ export function EditorialDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={detail()}
-        fallback={
-          <UICard>
-            <p class={css({ color: "zodiac.cream" })}>
-              Loading editorial artifact...
-            </p>
-          </UICard>
+      <UINotice
+        class={detail() && draft() ? collapsedNoticeClass : undefined}
+        status={
+          !detail()
+            ? "Loading editorial artifact..."
+            : !draft()
+              ? "Loading editorial draft..."
+              : null
         }
-        keyed
-      >
+      />
+
+      <Show when={detail()} keyed>
         {(detailRow) => {
           const current = () => draft();
-          if (!current()) {
-            return (
-              <UICard>
-                <p class={css({ color: "zodiac.cream" })}>
-                  Loading editorial draft...
-                </p>
-              </UICard>
-            );
-          }
           const d = () => current()!;
           return (
-            <>
+            <Show when={current()}>
               <UICard>
                 <div
                   class={css({
@@ -339,11 +347,11 @@ export function EditorialDetailPage() {
                 </div>
 
                 <h1 class={detailTitleClass}>{detailRow.artifact.title}</h1>
-                <p class={css({ color: "rgba(245, 240, 232, 0.64)" })}>
+                <p class={css({ color: "zodiac.cream/64" })}>
                   Primary ref: {detailRow.artifact.primaryRef.type}{" "}
                   {detailRow.artifact.primaryRef.id.slice(-6)}
                 </p>
-                <p class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}>
+                <p class={css({ color: "zodiac.cream/58", mt: "1" })}>
                   linked: {detailRow.artifact.linkedIds.thesisIds.length} theses
                   · {detailRow.artifact.linkedIds.hypothesisIds.length}{" "}
                   hypotheses · {detailRow.artifact.linkedIds.recipeIds.length}{" "}
@@ -391,17 +399,15 @@ export function EditorialDetailPage() {
                   </UIButton>
                 </div>
 
-                <Show when={notice()}>
-                  {(message) => (
-                    <p class={css({ color: "zodiac.cream", mt: "3" })}>
-                      {message()}
-                    </p>
-                  )}
-                </Show>
+                <UINotice
+                  class={css({ mt: "3" })}
+                  status={notice()}
+                  error={noticeError()}
+                />
               </UICard>
 
               <UICard>
-                <div class={sectionLabel}>Editorial Fields</div>
+                <h2 class={sectionLabel}>Editorial Fields</h2>
 
                 <label class={fieldLabelClass} for="artifact-kind">
                   Kind
@@ -569,7 +575,7 @@ export function EditorialDetailPage() {
                     alignItems: "center",
                   })}
                 >
-                  <div class={sectionLabel}>Evidence Card Review</div>
+                  <h2 class={sectionLabel}>Evidence Card Review</h2>
                   <UIButton variant="outline" onClick={addEvidenceCard}>
                     Add evidence card
                   </UIButton>
@@ -580,7 +586,7 @@ export function EditorialDetailPage() {
                     {(card, index) => (
                       <div
                         class={css({
-                          borderColor: "rgba(200, 168, 75, 0.18)",
+                          borderColor: "zodiac.gold/18",
                           borderRadius: "l2",
                           borderWidth: "1px",
                           p: "3",
@@ -599,6 +605,7 @@ export function EditorialDetailPage() {
                           <UIBadge tone="gold">Card {index() + 1}</UIBadge>
                           <UIButton
                             variant="outline"
+                            aria-label={`Remove card ${index() + 1}`}
                             onClick={() => removeEvidenceCard(index())}
                           >
                             Remove
@@ -756,15 +763,15 @@ export function EditorialDetailPage() {
               </UICard>
 
               <UICard>
-                <div class={sectionLabel}>Pre-publish Checklist</div>
+                <h2 class={sectionLabel}>Pre-publish Checklist</h2>
                 <div class={css({ display: "grid", gap: "2", mt: "3" })}>
                   <For each={validation().checks}>
                     {(check) => (
                       <div
                         class={css({
                           borderColor: check.ok
-                            ? "rgba(81, 196, 117, 0.28)"
-                            : "rgba(220, 98, 98, 0.28)",
+                            ? "zodiac.success/28"
+                            : "zodiac.error/28",
                           borderRadius: "l2",
                           borderWidth: "1px",
                           p: "3",
@@ -773,9 +780,7 @@ export function EditorialDetailPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {check.ok ? "Pass" : "Block"}
                         </div>
-                        <div
-                          class={css({ color: "rgba(245, 240, 232, 0.64)" })}
-                        >
+                        <div class={css({ color: "zodiac.cream/64" })}>
                           {check.message}
                         </div>
                       </div>
@@ -785,22 +790,26 @@ export function EditorialDetailPage() {
               </UICard>
 
               <UICard>
-                <div class={sectionLabel}>Export Preview</div>
+                <h2 class={sectionLabel}>Export Preview</h2>
                 <hr class={goldDivider} />
                 <pre
+                  role="group"
+                  tabIndex={0}
+                  aria-label="Export preview JSON"
                   class={css({
-                    color: "rgba(245, 240, 232, 0.7)",
+                    color: "zodiac.cream/70",
                     fontFamily: "mono",
                     fontSize: "sm",
                     lineHeight: "1.6",
                     overflowX: "auto",
+                    overflowWrap: "anywhere",
                     whiteSpace: "pre-wrap",
                   })}
                 >
                   {exportPreview()}
                 </pre>
               </UICard>
-            </>
+            </Show>
           );
         }}
       </Show>

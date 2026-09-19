@@ -9,6 +9,7 @@ import {
   UIBadge,
   UIButton,
   UICard,
+  UINotice,
 } from "../components/ui";
 import {
   createAction,
@@ -47,6 +48,7 @@ export function EditorialPage() {
   const exportForAstro = createAction(api.editorialArtifacts.exportForAstro);
 
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [exporting, setExporting] = createSignal(false);
 
   const rows = createMemo<Doc<"editorialArtifacts">[]>(
@@ -62,13 +64,14 @@ export function EditorialPage() {
   async function handleExport() {
     setExporting(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       const result = await exportForAstro();
       setNotice(
         `Exported ${result.exportedCount} public artifact(s) to ${result.manifestPath}.`,
       );
     } catch (error) {
-      setNotice(`Export failed: ${String(error)}`);
+      setNoticeError(`Export failed: ${String(error)}`);
     } finally {
       setExporting(false);
     }
@@ -90,7 +93,7 @@ export function EditorialPage() {
             <h1 class={pageTitleClass}>Editorial</h1>
             <p
               class={css({
-                color: "rgba(245, 240, 232, 0.64)",
+                color: "zodiac.cream/64",
                 lineHeight: "1.6",
                 maxWidth: "48rem",
               })}
@@ -120,17 +123,17 @@ export function EditorialPage() {
             {exporting() ? "Exporting..." : "Export public snapshot"}
           </UIButton>
         </div>
-        <Show when={notice()}>
-          {(message) => (
-            <p class={css({ color: "zodiac.cream", mt: "3" })}>{message()}</p>
-          )}
-        </Show>
+        <UINotice
+          class={css({ mt: "3" })}
+          status={notice()}
+          error={noticeError()}
+        />
       </UICard>
 
       <Show when={(missingWhyThisMatters() ?? []).length > 0}>
         <UICard>
           <h2 class={sectionTitleClass}>Phase 1 Audit</h2>
-          <p class={css({ color: "rgba(245, 240, 232, 0.64)", mb: "3" })}>
+          <p class={css({ color: "zodiac.cream/64", mb: "3" })}>
             These hypotheses still have no <em>why this matters</em> copy and
             should be cleaned up before they feed public artifacts.
           </p>
@@ -141,7 +144,7 @@ export function EditorialPage() {
                   to="/hypotheses/$hypothesisId"
                   params={{ hypothesisId: String(hypothesis._id) }}
                   class={css({
-                    borderColor: "rgba(200, 168, 75, 0.18)",
+                    borderColor: "zodiac.gold/18",
                     borderRadius: "l2",
                     borderWidth: "1px",
                     color: "inherit",
@@ -153,9 +156,7 @@ export function EditorialPage() {
                   <div class={css({ color: "zodiac.cream" })}>
                     {hypothesis.title}
                   </div>
-                  <div
-                    class={css({ color: "rgba(245, 240, 232, 0.58)", mt: "1" })}
-                  >
+                  <div class={css({ color: "zodiac.cream/58", mt: "1" })}>
                     {hypothesis.question}
                   </div>
                 </Link>
@@ -167,19 +168,22 @@ export function EditorialPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Artifacts</h2>
-        <Show
-          when={!artifacts.isLoading()}
-          fallback={<p>Loading artifacts...</p>}
-        >
-          <Show
-            when={rows().length > 0}
-            fallback={
-              <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
-                No editorial artifacts yet. Create a recap from a weekly brief,
-                thesis, or campaign.
-              </p>
-            }
-          >
+        <UINotice
+          status={
+            artifacts.isLoading()
+              ? "Loading artifacts..."
+              : !artifacts.isError() && rows().length === 0
+                ? "No editorial artifacts yet. Create a recap from a weekly brief, thesis, or campaign."
+                : null
+          }
+          error={
+            artifacts.isError()
+              ? `Unable to load editorial artifacts: ${artifacts.error()?.message ?? "unknown error"}`
+              : null
+          }
+        />
+        <Show when={!artifacts.isLoading()}>
+          <Show when={rows().length > 0}>
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={rows()}>
                 {(artifact) => (
@@ -187,7 +191,7 @@ export function EditorialPage() {
                     to="/editorial/$artifactId"
                     params={{ artifactId: String(artifact._id) }}
                     class={css({
-                      borderColor: "rgba(200, 168, 75, 0.22)",
+                      borderColor: "zodiac.gold/22",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       color: "inherit",
@@ -223,7 +227,7 @@ export function EditorialPage() {
                     >
                       {artifact.title}
                     </h3>
-                    <p class={css({ color: "rgba(245, 240, 232, 0.64)" })}>
+                    <p class={css({ color: "zodiac.cream/64" })}>
                       {artifact.dek}
                     </p>
                   </Link>

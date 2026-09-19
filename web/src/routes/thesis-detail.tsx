@@ -3,15 +3,17 @@ import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
-  UIBadge,
-  UIButton,
-  UICard,
-  UISelect,
   backLink,
+  collapsedNoticeClass,
   detailTitleClass,
   goldDivider,
   pageClass,
   sectionLabel,
+  UIBadge,
+  UIButton,
+  UICard,
+  UINotice,
+  UISelect,
 } from "../components/ui";
 import { createMutation, createQuery } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
@@ -26,11 +28,25 @@ const statGrid = css({
 });
 
 const statCard = css({
-  bg: "rgba(245, 240, 232, 0.03)",
-  borderColor: "rgba(200, 168, 75, 0.18)",
+  bg: "zodiac.cream/3",
+  borderColor: "zodiac.gold/18",
   borderRadius: "l2",
   borderWidth: "1px",
+  // Value reads above its label while the <dt> still precedes the <dd>.
+  display: "flex",
+  flexDirection: "column-reverse",
   p: "3",
+});
+
+const statValue = css({
+  color: "zodiac.gold",
+  fontSize: "2xl",
+  margin: 0,
+});
+
+const statLabel = css({
+  color: "zodiac.cream/58",
+  fontSize: "sm",
 });
 
 const linkList = css({
@@ -52,6 +68,8 @@ export function ThesisDetailPage() {
   );
   const [selectedCampaignId, setSelectedCampaignId] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  const [campaignError, setCampaignError] = createSignal<string | null>(null);
   const [creatingSummary, setCreatingSummary] = createSignal(false);
   const [creatingChangedMind, setCreatingChangedMind] = createSignal(false);
   const contradictedHypotheses = createMemo(
@@ -61,17 +79,36 @@ export function ThesisDetailPage() {
           hypothesis.resolution === "contradicted",
       ) ?? [],
   );
+  const attachableCampaigns = createMemo(() => {
+    const linkedIds = new Set(
+      (detail()?.campaigns ?? []).map((linked: Doc<"campaigns">) => linked._id),
+    );
+    return ((campaigns() ?? []) as Doc<"campaigns">[]).filter(
+      (campaign) => !linkedIds.has(campaign._id),
+    );
+  });
 
   createEffect(() => {
     const thesis = detail()?.thesis;
     if (thesis) document.title = `${thesis.title} — Frequency Music`;
   });
 
+  function focusCampaignSelect() {
+    const element = document.getElementById("thesis-campaign-select");
+    if (element instanceof HTMLSelectElement) element.focus();
+  }
+
   async function handleAttach() {
     if (!selectedCampaignId()) {
-      setNotice("Select a campaign first.");
+      setNotice(null);
+      setNoticeError(null);
+      setCampaignError("Select a campaign first.");
+      focusCampaignSelect();
       return;
     }
+    setNotice(null);
+    setNoticeError(null);
+    setCampaignError(null);
     try {
       await attachThesis({
         campaignId: selectedCampaignId() as Id<"campaigns">,
@@ -80,11 +117,13 @@ export function ThesisDetailPage() {
       setNotice("Thesis attached to campaign.");
       setSelectedCampaignId("");
     } catch (error) {
-      setNotice(`Attach failed: ${String(error)}`);
+      setNoticeError(`Attach failed: ${String(error)}`);
     }
   }
 
   async function handleDetach(campaignId: Id<"campaigns">) {
+    setNotice(null);
+    setNoticeError(null);
     try {
       await detachThesis({
         campaignId,
@@ -92,13 +131,14 @@ export function ThesisDetailPage() {
       });
       setNotice("Thesis detached from campaign.");
     } catch (error) {
-      setNotice(`Detach failed: ${String(error)}`);
+      setNoticeError(`Detach failed: ${String(error)}`);
     }
   }
 
   async function handleCreateSummary() {
     setCreatingSummary(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       const artifactId = await createDraftFromThesis({
         thesisId: params().thesisId as Id<"theses">,
@@ -109,7 +149,7 @@ export function ThesisDetailPage() {
         params: { artifactId: String(artifactId) },
       });
     } catch (error) {
-      setNotice(`Summary draft failed: ${String(error)}`);
+      setNoticeError(`Summary draft failed: ${String(error)}`);
     } finally {
       setCreatingSummary(false);
     }
@@ -118,6 +158,7 @@ export function ThesisDetailPage() {
   async function handleCreateChangedMind(hypothesisId: Id<"hypotheses">) {
     setCreatingChangedMind(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       const artifactId = await createDraftFromThesis({
         thesisId: params().thesisId as Id<"theses">,
@@ -129,7 +170,7 @@ export function ThesisDetailPage() {
         params: { artifactId: String(artifactId) },
       });
     } catch (error) {
-      setNotice(`Changed-mind draft failed: ${String(error)}`);
+      setNoticeError(`Changed-mind draft failed: ${String(error)}`);
     } finally {
       setCreatingChangedMind(false);
     }
@@ -143,14 +184,12 @@ export function ThesisDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={detail()}
-        fallback={
-          <UICard>
-            <p class={css({ color: "zodiac.cream" })}>Loading thesis...</p>
-          </UICard>
-        }
-      >
+      <UINotice
+        class={detail() ? collapsedNoticeClass : undefined}
+        status={detail() ? null : "Loading thesis..."}
+      />
+
+      <Show when={detail()}>
         {(row) => (
           <>
             <UICard>
@@ -176,7 +215,7 @@ export function ThesisDetailPage() {
               <h1 class={detailTitleClass}>{row().thesis.title}</h1>
               <p
                 class={css({
-                  color: "rgba(245, 240, 232, 0.78)",
+                  color: "zodiac.cream/78",
                   fontSize: "lg",
                   lineHeight: "1.7",
                 })}
@@ -220,10 +259,10 @@ export function ThesisDetailPage() {
                 {(description) => (
                   <>
                     <hr class={goldDivider} />
-                    <div class={sectionLabel}>Description</div>
+                    <h2 class={sectionLabel}>Description</h2>
                     <p
                       class={css({
-                        color: "rgba(245, 240, 232, 0.7)",
+                        color: "zodiac.cream/70",
                         lineHeight: "1.7",
                         whiteSpace: "pre-wrap",
                       })}
@@ -235,69 +274,33 @@ export function ThesisDetailPage() {
               </Show>
 
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Thesis Signals</div>
-              <div class={statGrid}>
+              <h2 class={sectionLabel}>Thesis Signals</h2>
+              <dl class={statGrid}>
                 <div class={statCard}>
-                  <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
-                    {row().stats.contradictionCount}
-                  </div>
-                  <div
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.58)",
-                      fontSize: "sm",
-                    })}
-                  >
-                    contradictions
-                  </div>
+                  <dt class={statLabel}>contradictions</dt>
+                  <dd class={statValue}>{row().stats.contradictionCount}</dd>
                 </div>
                 <div class={statCard}>
-                  <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
-                    {row().stats.activeCount}
-                  </div>
-                  <div
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.58)",
-                      fontSize: "sm",
-                    })}
-                  >
-                    active
-                  </div>
+                  <dt class={statLabel}>active</dt>
+                  <dd class={statValue}>{row().stats.activeCount}</dd>
                 </div>
                 <div class={statCard}>
-                  <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
-                    {row().stats.evaluatedCount}
-                  </div>
-                  <div
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.58)",
-                      fontSize: "sm",
-                    })}
-                  >
-                    evaluated
-                  </div>
+                  <dt class={statLabel}>evaluated</dt>
+                  <dd class={statValue}>{row().stats.evaluatedCount}</dd>
                 </div>
                 <div class={statCard}>
-                  <div class={css({ color: "zodiac.gold", fontSize: "2xl" })}>
-                    {row().stats.retiredCount}
-                  </div>
-                  <div
-                    class={css({
-                      color: "rgba(245, 240, 232, 0.58)",
-                      fontSize: "sm",
-                    })}
-                  >
-                    retired
-                  </div>
+                  <dt class={statLabel}>retired</dt>
+                  <dd class={statValue}>{row().stats.retiredCount}</dd>
                 </div>
-              </div>
+              </dl>
 
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Campaign Membership</div>
+              <h2 class={sectionLabel}>Campaign Membership</h2>
               <div class={css({ display: "grid", gap: "3" })}>
                 <Show
                   when={row().campaigns.length > 0}
                   fallback={
-                    <p class={css({ color: "rgba(245, 240, 232, 0.62)" })}>
+                    <p class={css({ color: "zodiac.cream/62" })}>
                       This thesis is not attached to a campaign yet.
                     </p>
                   }
@@ -307,7 +310,7 @@ export function ThesisDetailPage() {
                       <div
                         class={css({
                           alignItems: "center",
-                          borderColor: "rgba(200, 168, 75, 0.18)",
+                          borderColor: "zodiac.gold/18",
                           borderRadius: "l2",
                           borderWidth: "1px",
                           display: "flex",
@@ -323,7 +326,7 @@ export function ThesisDetailPage() {
                           </div>
                           <div
                             class={css({
-                              color: "rgba(245, 240, 232, 0.62)",
+                              color: "zodiac.cream/62",
                               fontSize: "sm",
                             })}
                           >
@@ -340,6 +343,7 @@ export function ThesisDetailPage() {
                           <UIBadge tone="gold">{campaign.status}</UIBadge>
                           <UIButton
                             variant="outline"
+                            aria-label={`Detach ${campaign.title}`}
                             onClick={() => handleDetach(campaign._id)}
                           >
                             Detach
@@ -354,7 +358,7 @@ export function ThesisDetailPage() {
                   <label
                     for="thesis-campaign-select"
                     class={css({
-                      color: "rgba(245, 240, 232, 0.68)",
+                      color: "zodiac.cream/68",
                       display: "block",
                       mb: "2",
                     })}
@@ -367,24 +371,18 @@ export function ThesisDetailPage() {
                     <UISelect
                       id="thesis-campaign-select"
                       data-testid="thesis-campaign-select"
-                      value={selectedCampaignId()}
-                      onChange={(event) =>
-                        setSelectedCampaignId(event.currentTarget.value)
+                      aria-invalid={campaignError() ? true : undefined}
+                      aria-describedby={
+                        campaignError() ? "thesis-campaign-error" : undefined
                       }
+                      value={selectedCampaignId()}
+                      onChange={(event) => {
+                        setCampaignError(null);
+                        setSelectedCampaignId(event.currentTarget.value);
+                      }}
                     >
                       <option value="">Select campaign</option>
-                      <For
-                        each={(
-                          (campaigns() ?? []) as Doc<"campaigns">[]
-                        ).filter(
-                          (campaign: Doc<"campaigns">) =>
-                            !row()
-                              .campaigns.map(
-                                (linked: Doc<"campaigns">) => linked._id,
-                              )
-                              .includes(campaign._id),
-                        )}
-                      >
+                      <For each={attachableCampaigns()}>
                         {(campaign) => (
                           <option value={String(campaign._id)}>
                             {campaign.title}
@@ -396,17 +394,28 @@ export function ThesisDetailPage() {
                       Attach
                     </UIButton>
                   </div>
+                  <Show when={campaignError()}>
+                    {(message) => (
+                      <p
+                        id="thesis-campaign-error"
+                        class={css({
+                          color: "zodiac.error",
+                          fontFamily: "display",
+                          fontSize: "sm",
+                          mt: "2",
+                        })}
+                      >
+                        {message()}
+                      </p>
+                    )}
+                  </Show>
                 </div>
 
-                <Show when={notice()}>
-                  {(message) => (
-                    <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-                  )}
-                </Show>
+                <UINotice status={notice()} error={noticeError()} />
               </div>
 
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Hypotheses</div>
+              <h2 class={sectionLabel}>Hypotheses</h2>
               <div class={linkList}>
                 <For each={row().hypotheses}>
                   {(hypothesis) => (
@@ -414,7 +423,7 @@ export function ThesisDetailPage() {
                       to="/hypotheses/$hypothesisId"
                       params={{ hypothesisId: String(hypothesis._id) }}
                       class={css({
-                        color: "rgba(245, 240, 232, 0.78)",
+                        color: "zodiac.cream/78",
                         textDecoration: "none",
                       })}
                     >
@@ -426,7 +435,7 @@ export function ThesisDetailPage() {
 
               <Show when={row().recipes.length > 0}>
                 <hr class={goldDivider} />
-                <div class={sectionLabel}>Recipes</div>
+                <h2 class={sectionLabel}>Recipes</h2>
                 <div class={linkList}>
                   <For each={row().recipes}>
                     {(recipe) => (
@@ -434,7 +443,7 @@ export function ThesisDetailPage() {
                         to="/recipes/$recipeId"
                         params={{ recipeId: String(recipe._id) }}
                         class={css({
-                          color: "rgba(245, 240, 232, 0.78)",
+                          color: "zodiac.cream/78",
                           textDecoration: "none",
                         })}
                       >
@@ -447,7 +456,7 @@ export function ThesisDetailPage() {
 
               <Show when={row().compositions.length > 0}>
                 <hr class={goldDivider} />
-                <div class={sectionLabel}>Compositions</div>
+                <h2 class={sectionLabel}>Compositions</h2>
                 <div class={linkList}>
                   <For each={row().compositions}>
                     {(composition) => (
@@ -455,7 +464,7 @@ export function ThesisDetailPage() {
                         to="/compositions/$compositionId"
                         params={{ compositionId: String(composition._id) }}
                         class={css({
-                          color: "rgba(245, 240, 232, 0.78)",
+                          color: "zodiac.cream/78",
                           textDecoration: "none",
                         })}
                       >
@@ -468,7 +477,7 @@ export function ThesisDetailPage() {
 
               <Show when={row().recentWeeklyBriefIds.length > 0}>
                 <hr class={goldDivider} />
-                <div class={sectionLabel}>Recent Weekly Briefs</div>
+                <h2 class={sectionLabel}>Recent Weekly Briefs</h2>
                 <div class={linkList}>
                   <For each={row().recentWeeklyBriefIds}>
                     {(briefId) => (
@@ -476,7 +485,7 @@ export function ThesisDetailPage() {
                         to="/weekly-turns/$briefId"
                         params={{ briefId: String(briefId) }}
                         class={css({
-                          color: "rgba(245, 240, 232, 0.78)",
+                          color: "zodiac.cream/78",
                           textDecoration: "none",
                         })}
                       >
