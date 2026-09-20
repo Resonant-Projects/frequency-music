@@ -159,7 +159,7 @@ function DecideBar(props: {
   let noteInput: HTMLTextAreaElement | undefined;
   let overflowTrigger: HTMLButtonElement | undefined;
   let decisionTrigger: HTMLButtonElement | undefined;
-  let confirmButton: HTMLButtonElement | undefined;
+  let supersedeSelect: HTMLSelectElement | undefined;
   const overflowId = createUniqueId();
 
   const draft = () => props.context.draft;
@@ -194,10 +194,11 @@ function DecideBar(props: {
     setOverflowOpen(false);
     setError(null);
     // Approve/reject land in the note, which the on-screen hint promises.
-    // Supersede has no note focus, so move into the dialog itself.
+    // Supersede lands on its select: the confirm button stays disabled until a
+    // replacement is chosen, and a disabled control cannot take focus at all.
     queueMicrotask(() => {
       if (next === "approve" || next === "reject") noteInput?.focus();
-      else confirmButton?.focus();
+      else supersedeSelect?.focus();
     });
   }
 
@@ -430,6 +431,9 @@ function DecideBar(props: {
             Replacement draft
           </label>
           <UISelect
+            ref={(element: HTMLSelectElement) => {
+              supersedeSelect = element;
+            }}
             id={`supersede-${draft()._id}`}
             value={supersedingDraftId()}
             onChange={(event) =>
@@ -483,9 +487,6 @@ function DecideBar(props: {
             </Show>
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
               <UIButton
-                ref={(element) => {
-                  confirmButton = element;
-                }}
                 variant="solid"
                 disabled={busy() || !canConfirm()}
                 onClick={confirmDecision}
@@ -692,10 +693,14 @@ export function AgentDraftsPage() {
     context.error()
       ? `Unable to load review context: ${context.error()?.message}`
       : null;
-  const contextStatus = () =>
-    !context.error() && (context.isLoading() || !context.data())
-      ? "Loading the correspondence story…"
-      : null;
+  const contextStatus = () => {
+    if (context.error()) return null;
+    if (context.isLoading()) return "Loading the correspondence story…";
+    // A finished query with nothing in it is a removed or missing draft, not a
+    // load still in progress.
+    if (!context.data()) return "No review context for this draft.";
+    return null;
+  };
 
   return (
     <section class={pageClass}>

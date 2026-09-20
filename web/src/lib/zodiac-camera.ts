@@ -107,9 +107,9 @@ export function focusSector(
   if (activeFocusAnimId !== null) cancelAnimationFrame(activeFocusAnimId);
   controls.autoRotate = false;
 
-  // Reduced motion: jump straight to the framing, no 800ms lerp. The
-  // autoRotate restore below mirrors the end of the animated path.
-  if (prefersReducedMotion()) {
+  // Land on the framing with no lerp left to run, restoring whatever rotation
+  // state the animated path would have restored.
+  function settle() {
     activeFocusAnimId = null;
     camera.position.copy(targetPos);
     controls.target.copy(lookAt);
@@ -118,6 +118,11 @@ export function focusSector(
       controls.autoRotate = originalAutoRotate;
       originalAutoRotate = null;
     }
+  }
+
+  // Reduced motion: jump straight to the framing, no 800ms lerp.
+  if (prefersReducedMotion()) {
+    settle();
     return;
   }
 
@@ -128,6 +133,12 @@ export function focusSector(
   const startTime = performance.now();
 
   function step() {
+    // The preference can flip mid-lerp; land immediately rather than finish an
+    // animation the user has just asked not to see.
+    if (prefersReducedMotion()) {
+      settle();
+      return;
+    }
     const t = Math.min((performance.now() - startTime) / duration, 1);
     const ease = 1 - (1 - t) ** 3; // ease-out cubic
 

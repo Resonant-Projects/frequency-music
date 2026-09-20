@@ -20,11 +20,13 @@ type EssaySummary = Omit<Essay, "body">;
 const monthPattern =
   /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}\b|\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/;
 
+// Images are stripped before links: the link pattern matches the `[alt](url)`
+// tail of an image, so the other order leaves a stray `!` in the text.
 function stripMarkdown(input: string) {
   return input
     .replaceAll(/`([^`]+)`/g, "$1")
-    .replaceAll(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replaceAll(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replaceAll(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replaceAll(/^>\s?/gm, "")
     .replaceAll(/^#{1,6}\s+/gm, "")
     .replaceAll(/^\s*[-*+]\s+/gm, "")

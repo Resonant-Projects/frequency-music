@@ -146,6 +146,10 @@ function CampaignCard(props: {
       });
       setDirty(false);
       return true;
+    } catch {
+      // The page has already shown the error; keep `dirty` so the edit
+      // survives and `handleCreateRecap` stops here.
+      return false;
     } finally {
       setSaving(false);
     }
@@ -156,6 +160,8 @@ function CampaignCard(props: {
     try {
       await props.onActivate(props.campaign._id);
       setDirty(false);
+    } catch {
+      // Reported by the page; leave any unsaved edit marked as such.
     } finally {
       setActivating(false);
     }
@@ -420,6 +426,9 @@ export function WeeklyTurnsPage() {
       setNotice("Active campaign updated.");
     } catch (error) {
       setNoticeError(`Campaign activation failed: ${String(error)}`);
+      // Reported above, but the caller has to see the failure: resolving here
+      // would let the card clear its unsaved-edit state.
+      throw error;
     }
   }
 
@@ -437,6 +446,9 @@ export function WeeklyTurnsPage() {
       setNotice("Campaign updated.");
     } catch (error) {
       setNoticeError(`Campaign update failed: ${String(error)}`);
+      // Reported above, but the caller has to see the failure: resolving here
+      // would clear `dirty` and let a recap be built from the pre-save state.
+      throw error;
     }
   }
 

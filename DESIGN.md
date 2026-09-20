@@ -261,7 +261,7 @@ The component character is refined and restrained: thin gold outlines, wide-trac
 
 - **Style:** Fully rounded pill, transparent fill, 1px border, mono uppercase tracked 0.20em, 0.25rem/0.625rem padding. Long values wrap anywhere rather than overflowing.
 - **Tones:** Gold (confirmed, pipeline state) at 45% border; violet (speculative, draft) at 45% border; cream (neutral metadata) at 38% border. Text takes the tone's full-strength colour.
-- _The badge face is currently 8px and is the one outstanding exception to the Ten Pixel Floor Rule; it should rise to 10px. Do not copy 8px into anything new._
+- The badge face is 10px, in line with the Ten Pixel Floor Rule. It was 8px until this pass; do not reintroduce 8px anywhere.
 
 ### Cards / Containers
 

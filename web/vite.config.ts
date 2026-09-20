@@ -52,7 +52,11 @@ function essayIndexPlugin() {
     handleHotUpdate({ file, server }) {
       if (!file.startsWith(essaysDir)) return;
       const mod = server.moduleGraph.getModuleById(RESOLVED_ESSAY_INDEX_ID);
-      if (mod) server.moduleGraph.invalidateModule(mod);
+      if (!mod) return;
+      server.moduleGraph.invalidateModule(mod);
+      // docs/essays sits outside the module graph, so the changed file resolves
+      // to no modules; hand back the virtual one or the archive stays stale.
+      return [mod];
     },
   } satisfies Plugin;
 }

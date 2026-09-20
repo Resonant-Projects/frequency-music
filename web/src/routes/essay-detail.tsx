@@ -1,11 +1,5 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import {
-  createEffect,
-  createResource,
-  createSignal,
-  For,
-  Show,
-} from "solid-js";
+import { createEffect, createResource, For, Show } from "solid-js";
 import { css } from "../../styled-system/css";
 import {
   backLink,
@@ -123,20 +117,21 @@ const relatedExcerpt = css({
 
 export function EssayDetailPage() {
   const params = useParams({ from: "/essays/$essaySlug" });
-  const [loadFailed, setLoadFailed] = createSignal(false);
-  const [essay] = createResource(
+  const [essayResult] = createResource(
     () => params().essaySlug,
     async (slug) => {
-      setLoadFailed(false);
       try {
-        return await getEssayBySlug(slug);
+        return { entry: await getEssayBySlug(slug), failed: false };
       } catch (error) {
         console.error("Essay body failed to load:", error);
-        setLoadFailed(true);
-        return null;
+        return { entry: null, failed: true };
       }
     },
   );
+  // Per-request rather than a shared signal: a request that fails after
+  // navigation started the next one can no longer paint its error over it.
+  const essay = () => essayResult()?.entry ?? null;
+  const loadFailed = () => essayResult()?.failed ?? false;
 
   createEffect(() => {
     const e = essay();
@@ -156,10 +151,12 @@ export function EssayDetailPage() {
       </div>
 
       <UINotice
-        class={essay.loading || !essay() ? undefined : collapsedNoticeClass}
-        status={essay.loading ? "Loading essay..." : null}
+        class={
+          essayResult.loading || !essay() ? undefined : collapsedNoticeClass
+        }
+        status={essayResult.loading ? "Loading essay..." : null}
         error={
-          essay.loading || essay()
+          essayResult.loading || essay()
             ? null
             : loadFailed()
               ? "Could not load this essay. Check your connection and try again."
@@ -167,7 +164,7 @@ export function EssayDetailPage() {
         }
       />
 
-      <Show when={!essay.loading}>
+      <Show when={!essayResult.loading}>
         <Show when={essay()}>
           {(entry) => (
             <>
