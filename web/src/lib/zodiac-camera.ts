@@ -59,6 +59,26 @@ export function createOrbitControls(
   return controls;
 }
 
+/**
+ * Set `autoRotate` so the change survives an in-flight `focusSector` lerp.
+ * That animation holds rotation off and restores the value captured when it
+ * began, so while one is pending the pending value is what has to change —
+ * writing the live flag instead would both resume rotation mid-transition and
+ * be undone when the camera lands.
+ */
+export function setAutoRotate(controls: OrbitControls, enabled: boolean): void {
+  if (originalAutoRotate !== null) {
+    originalAutoRotate = enabled;
+    return;
+  }
+  controls.autoRotate = enabled;
+}
+
+/** The rotation state the user ends up with once any focus lerp has landed. */
+export function isAutoRotating(controls: OrbitControls): boolean {
+  return originalAutoRotate ?? controls.autoRotate;
+}
+
 // Lerp camera toward a sector's midpoint for cinematic focus
 export function focusSector(
   sector: SectorDef,

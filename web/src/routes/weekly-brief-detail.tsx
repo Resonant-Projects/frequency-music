@@ -1071,7 +1071,11 @@ export function WeeklyBriefDetailPage() {
                               <UIButton
                                 type="button"
                                 variant={enabled() ? "ghost" : "solid"}
-                                aria-label={`Enable feed ${feed.name}`}
+                                aria-label={
+                                  enabled()
+                                    ? `${feed.name} enabled`
+                                    : `Enable feed ${feed.name}`
+                                }
                                 disabled={
                                   enabled() || enablingFeedId() === feed.feedId
                                 }

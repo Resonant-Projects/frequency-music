@@ -13,7 +13,9 @@ import {
   createCamera,
   createOrbitControls,
   focusSector,
+  isAutoRotating as isControlsAutoRotating,
   prefersReducedMotion,
+  setAutoRotate as setControlsAutoRotate,
   watchReducedMotion,
 } from "./zodiac-camera";
 import { COLORS, SECTORS } from "./zodiac-data";
@@ -478,7 +480,10 @@ export function initZodiacScene(
 
   const stopReducedMotionWatch = watchReducedMotion((reduced) => {
     reducedMotion = reduced;
-    controls.autoRotate = reduced ? false : (autoRotateChoice ?? true);
+    setControlsAutoRotate(
+      controls,
+      reduced ? false : (autoRotateChoice ?? true),
+    );
     if (reduced) {
       // Settle anything mid-pulse at a fixed, readable value.
       sourceNodes.forEach(({ mesh }) => {
@@ -497,15 +502,23 @@ export function initZodiacScene(
     typeof document === "undefined" ? true : !document.hidden;
   let canvasOnScreen = true;
 
+  // Ambient motion reads an accumulated clock rather than the raw one. Orbits
+  // and armillary rings derive their phase from its absolute value, so scaling
+  // the raw clock teleports every body the moment the scale changes; scaling
+  // the per-frame delta bends the rate and leaves the phase continuous.
+  let ambientT = 0;
+  let lastFrameT: number | null = null;
+
   function animate(time = 0) {
     if (!running) return;
     animId = requestAnimationFrame(animate);
     controls.update();
 
+    // State-explaining transitions below keep the real clock.
     const t = time * 0.001;
-    // Ambient (never-ending) motion uses the scaled clock; state-explaining
-    // transitions below keep the real one.
-    const ambientT = reducedMotion ? t * REDUCED_MOTION_TIME_SCALE : t;
+    const frameDelta = lastFrameT === null ? 0 : Math.max(0, t - lastFrameT);
+    lastFrameT = t;
+    ambientT += frameDelta * (reducedMotion ? REDUCED_MOTION_TIME_SCALE : 1);
 
     // Pulse source node emissive intensity (skipped under reduced motion)
     if (!reducedMotion) {
@@ -565,6 +578,8 @@ export function initZodiacScene(
     const shouldRun = documentVisible && canvasOnScreen;
     if (shouldRun && !running) {
       running = true;
+      // No ambient delta across the gap the loop was parked for.
+      lastFrameT = null;
       animId = requestAnimationFrame(animate);
     } else if (!shouldRun && running) {
       running = false;
@@ -710,11 +725,11 @@ export function initZodiacScene(
     // WCAG 2.2.2 — user control over the auto-rotating orrery
     setAutoRotate(enabled: boolean) {
       autoRotateChoice = enabled;
-      controls.autoRotate = enabled;
+      setControlsAutoRotate(controls, enabled);
     },
 
     isAutoRotating() {
-      return controls.autoRotate;
+      return isControlsAutoRotating(controls);
     },
   };
 }
