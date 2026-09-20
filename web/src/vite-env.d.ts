@@ -13,3 +13,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare module "virtual:essay-index" {
+  import type { EssaySummary } from "./lib/essay-parse";
+
+  const essayIndex: EssaySummary[];
+  export default essayIndex;
+}

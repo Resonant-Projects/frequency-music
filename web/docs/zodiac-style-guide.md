@@ -78,6 +78,9 @@ Opacity communicates state, not style. These are the semantic vocabulary:
 
 ## 3. Typography
 
+> **Superseded sizes and alphas.** Any size below 10px and any label alpha below 0.78 in the table below is superseded by the root `DESIGN.md` (the Ten Pixel Floor Rule and its AA contrast floors).
+> The 3D geometry sections of this document — ring radii, sector geometry, node taxonomy, animation, and glow filters — remain authoritative.
+
 **Primary typeface:** `'Cormorant Garamond', Georgia, serif`
 _Used for all labels, panel text, arc labels, and micro-typography._
 

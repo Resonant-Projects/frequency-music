@@ -1,18 +1,20 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, on, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
-  UIBadge,
-  UIButton,
-  UICard,
   backLink,
+  collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
   goldDivider,
   metaLine,
   pageClass,
   sectionLabel,
+  UIBadge,
+  UIButton,
+  UICard,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
@@ -20,7 +22,7 @@ import { createMutation, createQuery } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
 const bodyClass = css({
-  color: "rgba(245, 240, 232, 0.7)",
+  color: "zodiac.cream/70",
   fontFamily: "display",
   fontSize: "md",
   lineHeight: "1.75",
@@ -28,7 +30,7 @@ const bodyClass = css({
 });
 
 const questionClass = css({
-  color: "rgba(245, 240, 232, 0.85)",
+  color: "zodiac.cream/85",
   fontFamily: "display",
   fontSize: "lg",
   lineHeight: "1.75",
@@ -41,7 +43,7 @@ const sourceGrid = css({
 });
 
 const sourceCell = css({
-  borderColor: "rgba(200, 168, 75, 0.25)",
+  borderColor: "zodiac.gold/25",
   borderRadius: "l2",
   borderWidth: "1px",
   p: "3",
@@ -78,16 +80,32 @@ export function HypothesisDetailPage() {
 
   const updateHypothesis = createMutation(api.hypotheses.update);
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
   const [whyThisMattersDraft, setWhyThisMattersDraft] = createSignal("");
   const [thesisIdDraft, setThesisIdDraft] = createSignal("");
+  // Set by the meaning-metadata inputs, cleared on a successful save. Keeps a
+  // background Convex push from clobbering an in-flight edit.
+  const [dirty, setDirty] = createSignal(false);
+  let seededHypothesisId: string | null = null;
 
-  createEffect(() => {
-    const row = hypothesis();
-    if (!row) return;
-    setWhyThisMattersDraft(row.whyThisMatters ?? "");
-    setThesisIdDraft(row.thesis?._id ? String(row.thesis._id) : "");
-  });
+  createEffect(
+    on(
+      hypothesis,
+      (row) => {
+        if (!row) return;
+        const rowId = String(row._id);
+        const isNewRecord = rowId !== seededHypothesisId;
+        // Only (re)seed when the record changed or the drafts are untouched.
+        if (!isNewRecord && dirty()) return;
+        seededHypothesisId = rowId;
+        setWhyThisMattersDraft(row.whyThisMatters ?? "");
+        setThesisIdDraft(row.thesis?._id ? String(row.thesis._id) : "");
+        setDirty(false);
+      },
+      { defer: false },
+    ),
+  );
 
   async function setStatus(status: Status) {
     await updateHypothesis({
@@ -106,10 +124,11 @@ export function HypothesisDetailPage() {
   async function handleStatusClick(status: Status) {
     setSaving(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       await setStatus(status);
     } catch (error) {
-      setNotice(
+      setNoticeError(
         error instanceof Error
           ? error.message
           : "Failed to update hypothesis status.",
@@ -122,10 +141,11 @@ export function HypothesisDetailPage() {
   async function handleResolutionClick(resolution: Resolution) {
     setSaving(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       await setResolution(resolution);
     } catch (error) {
-      setNotice(
+      setNoticeError(
         error instanceof Error
           ? error.message
           : "Failed to update hypothesis resolution.",
@@ -138,15 +158,27 @@ export function HypothesisDetailPage() {
   async function saveMeaningMetadata() {
     setSaving(true);
     setNotice(null);
+    setNoticeError(null);
+    // The drafts this mutation carries. An edit made while it is in flight has
+    // to leave `dirty` set, or the Convex push that follows the write would
+    // reseed both drafts over the newer text.
+    const sentWhyThisMatters = whyThisMattersDraft();
+    const sentThesisId = thesisIdDraft();
     try {
       await updateHypothesis({
         id: params().hypothesisId as Id<"hypotheses">,
-        whyThisMatters: whyThisMattersDraft().trim() || undefined,
-        thesisId: thesisIdDraft() ? (thesisIdDraft() as Id<"theses">) : null,
+        whyThisMatters: sentWhyThisMatters.trim() || undefined,
+        thesisId: sentThesisId ? (sentThesisId as Id<"theses">) : null,
       });
+      if (
+        whyThisMattersDraft() === sentWhyThisMatters &&
+        thesisIdDraft() === sentThesisId
+      ) {
+        setDirty(false);
+      }
       setNotice("Meaning metadata updated.");
     } catch (error) {
-      setNotice(
+      setNoticeError(
         error instanceof Error
           ? error.message
           : "Failed to update meaning metadata.",
@@ -164,14 +196,12 @@ export function HypothesisDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={hypothesis()}
-        fallback={
-          <UICard>
-            <p class={css({ color: "zodiac.cream" })}>Loading hypothesis...</p>
-          </UICard>
-        }
-      >
+      <UINotice
+        class={hypothesis() ? collapsedNoticeClass : undefined}
+        status={hypothesis() ? null : "Loading hypothesis..."}
+      />
+
+      <Show when={hypothesis()}>
         {(h) => (
           <UICard>
             {/* Badges */}
@@ -193,29 +223,27 @@ export function HypothesisDetailPage() {
 
             {/* Title */}
             <h1 class={detailTitleClass}>{h().title}</h1>
-            <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream", mt: "2" })}>
-                  {message()}
-                </p>
-              )}
-            </Show>
+            <UINotice
+              class={css({ mt: "2" })}
+              status={notice()}
+              error={noticeError()}
+            />
 
             {/* Question */}
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Question</div>
+            <h2 class={sectionLabel}>Question</h2>
             <p class={questionClass}>{h().question}</p>
 
             {/* Hypothesis */}
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Hypothesis</div>
+            <h2 class={sectionLabel}>Hypothesis</h2>
             <p class={bodyClass}>{h().hypothesis}</p>
 
             <Show when={h().whyThisMatters}>
               {(value) => (
                 <>
                   <hr class={goldDivider} />
-                  <div class={sectionLabel}>Why This Matters</div>
+                  <h2 class={sectionLabel}>Why This Matters</h2>
                   <p class={bodyClass}>{value()}</p>
                 </>
               )}
@@ -225,7 +253,7 @@ export function HypothesisDetailPage() {
               {(thesis) => (
                 <>
                   <hr class={goldDivider} />
-                  <div class={sectionLabel}>Linked Thesis</div>
+                  <h2 class={sectionLabel}>Linked Thesis</h2>
                   <p class={questionClass}>{thesis().title}</p>
                   <p class={bodyClass}>{thesis().statement}</p>
                 </>
@@ -234,13 +262,13 @@ export function HypothesisDetailPage() {
 
             {/* Rationale */}
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Rationale</div>
+            <h2 class={sectionLabel}>Rationale</h2>
             <div class={bodyClass}>{h().rationaleMd}</div>
 
             {/* Concepts */}
             <Show when={(h().concepts ?? []).length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Concepts</div>
+              <h2 class={sectionLabel}>Concepts</h2>
               <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
                 <For each={h().concepts}>
                   {(concept) => <UIBadge tone="violet">{concept}</UIBadge>}
@@ -251,10 +279,10 @@ export function HypothesisDetailPage() {
             {/* Open Questions */}
             <Show when={(h().openQuestions ?? []).length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Open Questions</div>
+              <h2 class={sectionLabel}>Open Questions</h2>
               <ul
                 class={css({
-                  color: "rgba(245, 240, 232, 0.7)",
+                  color: "zodiac.cream/70",
                   fontFamily: "display",
                   listStyleType: "disc",
                   pl: "5",
@@ -269,7 +297,7 @@ export function HypothesisDetailPage() {
             {/* Linked Sources */}
             <Show when={h().sources.length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Linked Sources</div>
+              <h2 class={sectionLabel}>Linked Sources</h2>
               <div class={sourceGrid}>
                 <For each={h().sources}>
                   {(source: HypothesisSource) => (
@@ -299,10 +327,10 @@ export function HypothesisDetailPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             class={css({
-                              color: "rgba(139, 92, 246, 0.8)",
+                              color: "zodiac.violetText",
                               display: "block",
                               fontFamily: "mono",
-                              fontSize: "2xs",
+                              fontSize: "xs",
                               mt: "1",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -322,7 +350,7 @@ export function HypothesisDetailPage() {
 
             {/* Status Controls */}
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Meaning Metadata</div>
+            <h2 class={sectionLabel}>Meaning Metadata</h2>
             <div class={css({ display: "grid", gap: "3", mb: "4" })}>
               <div>
                 <label class={fieldLabelClass} for="hyp-detail-thesis">
@@ -331,9 +359,10 @@ export function HypothesisDetailPage() {
                 <UISelect
                   id="hyp-detail-thesis"
                   value={thesisIdDraft()}
-                  onChange={(event) =>
-                    setThesisIdDraft(event.currentTarget.value)
-                  }
+                  onChange={(event) => {
+                    setDirty(true);
+                    setThesisIdDraft(event.currentTarget.value);
+                  }}
                 >
                   <option value="">No thesis yet</option>
                   <For each={theses() ?? []}>
@@ -352,9 +381,10 @@ export function HypothesisDetailPage() {
                 <UITextarea
                   id="hyp-detail-why"
                   value={whyThisMattersDraft()}
-                  onInput={(event) =>
-                    setWhyThisMattersDraft(event.currentTarget.value)
-                  }
+                  onInput={(event) => {
+                    setDirty(true);
+                    setWhyThisMattersDraft(event.currentTarget.value);
+                  }}
                 />
               </div>
               <div class={css({ display: "flex", justifyContent: "flex-end" })}>
@@ -369,7 +399,7 @@ export function HypothesisDetailPage() {
             </div>
 
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Status</div>
+            <h2 class={sectionLabel}>Status</h2>
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
               <For each={STATUSES}>
                 {(status) => (
@@ -395,7 +425,7 @@ export function HypothesisDetailPage() {
                   mt: "3",
                 })}
               >
-                <span class={sectionLabel}>Resolution</span>
+                <h2 class={sectionLabel}>Resolution</h2>
                 <For each={RESOLUTIONS}>
                   {(res) => (
                     <UIButton

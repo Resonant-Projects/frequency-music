@@ -13,6 +13,10 @@ import {
   createCamera,
   createOrbitControls,
   focusSector,
+  isAutoRotating as isControlsAutoRotating,
+  prefersReducedMotion,
+  setAutoRotate as setControlsAutoRotate,
+  watchReducedMotion,
 } from "./zodiac-camera";
 import { COLORS, SECTORS } from "./zodiac-data";
 import {
@@ -80,7 +84,13 @@ export interface ZodiacHandle {
   ) => void;
   showPullLines: (itemId: string, relations: ItemRelation[]) => void;
   clearPullLines: () => void;
+  setAutoRotate: (enabled: boolean) => void;
+  isAutoRotating: () => boolean;
 }
+
+// Ambient rotations run at a quarter speed under reduced motion: spatial
+// relations stay legible without continuous fast movement.
+const REDUCED_MOTION_TIME_SCALE = 0.25;
 
 export function initZodiacScene(
   canvas: HTMLCanvasElement,
@@ -187,10 +197,13 @@ export function initZodiacScene(
   getLabelPositions().forEach(({ sector, x, y, z, rotZ }) => {
     const el = document.createElement("div");
     el.style.fontFamily = "'Cormorant Garamond', Georgia, serif";
-    el.style.fontSize = "10.5px";
+    el.style.fontSize = "12px";
     el.style.letterSpacing = "0.2em";
-    el.style.color = sector.color;
-    el.style.opacity = "0.58";
+    // The violet sectors only reach 4.66:1 on the void at full alpha, so the
+    // labels substitute the lighter text-safe violet; gold and cream are fine.
+    el.style.color =
+      sector.color === COLORS.violet ? COLORS.violetText : sector.color;
+    el.style.opacity = "0.85";
     el.style.transition = "opacity 0.25s ease";
     el.style.userSelect = "none";
     el.textContent = sector.label.toUpperCase();
@@ -281,7 +294,7 @@ export function initZodiacScene(
       cssRenderer.domElement
         .querySelectorAll<HTMLElement>("[data-sector-id]")
         .forEach((el) => {
-          if (el.dataset.sectorId === activeSectorId) el.style.opacity = "0.58";
+          if (el.dataset.sectorId === activeSectorId) el.style.opacity = "0.85";
         });
 
       // Clear overlays from previous sector
@@ -382,7 +395,7 @@ export function initZodiacScene(
   // --- Hover tooltip (CSS3D) ------------------------------------------------
   const tooltipEl = document.createElement("div");
   tooltipEl.style.cssText =
-    "font-family:'IBM Plex Mono',monospace;font-size:10px;color:#c8a84b;background:rgba(13,6,32,0.88);border:1px solid rgba(200,168,75,0.35);padding:4px 8px;pointer-events:none;white-space:nowrap;display:none;position:absolute;z-index:100";
+    "font-family:'JetBrains Mono',monospace;font-size:12px;color:#c8a84b;background:rgba(13,6,32,0.88);border:1px solid rgba(200,168,75,0.35);padding:4px 8px;pointer-events:none;white-space:nowrap;display:none;position:absolute;z-index:100";
   cssContainer.appendChild(tooltipEl);
 
   // Selection halo
@@ -458,30 +471,75 @@ export function initZodiacScene(
 
   window.addEventListener("resize", onResize);
 
+  // --- Motion preference -----------------------------------------------------
+  let reducedMotion = prefersReducedMotion();
+  // The user's explicit pause/resume choice, once they have made one. A later
+  // change to the OS preference may still stop the rotation, but it must never
+  // start it on the user's behalf (WCAG 2.2.2).
+  let autoRotateChoice: boolean | null = null;
+
+  const stopReducedMotionWatch = watchReducedMotion((reduced) => {
+    reducedMotion = reduced;
+    setControlsAutoRotate(
+      controls,
+      reduced ? false : (autoRotateChoice ?? true),
+    );
+    if (reduced) {
+      // Settle anything mid-pulse at a fixed, readable value.
+      sourceNodes.forEach(({ mesh }) => {
+        (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.4;
+      });
+      if (selectionHalo) {
+        (selectionHalo.material as THREE.MeshBasicMaterial).opacity = 0.7;
+      }
+    }
+  });
+
   // --- Animation loop --------------------------------------------------------
   let animId = 0;
-  let running = true;
+  let running = false;
+  let documentVisible =
+    typeof document === "undefined" ? true : !document.hidden;
+  let canvasOnScreen = true;
+
+  // Ambient motion reads an accumulated clock rather than the raw one. Orbits
+  // and armillary rings derive their phase from its absolute value, so scaling
+  // the raw clock teleports every body the moment the scale changes; scaling
+  // the per-frame delta bends the rate and leaves the phase continuous.
+  let ambientT = 0;
+  let lastFrameT: number | null = null;
 
   function animate(time = 0) {
     if (!running) return;
     animId = requestAnimationFrame(animate);
     controls.update();
 
+    // State-explaining transitions below keep the real clock.
     const t = time * 0.001;
+    const frameDelta = lastFrameT === null ? 0 : Math.max(0, t - lastFrameT);
+    lastFrameT = t;
+    ambientT += frameDelta * (reducedMotion ? REDUCED_MOTION_TIME_SCALE : 1);
 
-    // Pulse source node emissive intensity
-    sourceNodes.forEach(({ mesh }, i) => {
-      const mat = mesh.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity =
-        0.4 + Math.sin(t * (0.5 + i * 0.05) + i * 0.7) * 0.25;
-    });
+    // Pulse source node emissive intensity (skipped under reduced motion)
+    if (!reducedMotion) {
+      sourceNodes.forEach(({ mesh }, i) => {
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        mat.emissiveIntensity =
+          0.4 + Math.sin(t * (0.5 + i * 0.05) + i * 0.7) * 0.25;
+      });
+    }
 
     // Slow hub rotation (the hub dot)
-    hubDot.rotation.y += 0.002;
+    hubDot.rotation.y += reducedMotion
+      ? 0.002 * REDUCED_MOTION_TIME_SCALE
+      : 0.002;
 
     // Phase 1: Constellation twinkle + fade-in
     if (activeConstellation) {
-      updateConstellationTime(activeConstellation, t);
+      // Twinkle is decorative; the fade-in explains that a sector loaded.
+      if (!reducedMotion) {
+        updateConstellationTime(activeConstellation, t);
+      }
       if (constellationFadeStart !== null) {
         const fadeProgress = (time - constellationFadeStart) / 600;
         animateConstellationFadeIn(activeConstellation, fadeProgress);
@@ -491,7 +549,7 @@ export function initZodiacScene(
 
     // Phase 2: Armillary ring rotation + spring
     if (activeArmillary) {
-      updateArmillaryRotation(activeArmillary, t);
+      updateArmillaryRotation(activeArmillary, ambientT);
       if (armillarySpringStart !== null) {
         const elapsed = time - armillarySpringStart;
         const done = animateArmillarySpring(activeArmillary, elapsed);
@@ -501,13 +559,13 @@ export function initZodiacScene(
 
     // Phase 3: Orbital body animation
     if (orbitalSystem) {
-      updateOrbits(orbitalSystem, t);
+      updateOrbits(orbitalSystem, ambientT);
     }
 
-    // Selection halo pulse
+    // Selection halo pulse (held at a fixed opacity under reduced motion)
     if (selectionHalo) {
-      const pulse = 0.5 + 0.3 * Math.sin(t * 3);
-      (selectionHalo.material as THREE.MeshBasicMaterial).opacity = pulse;
+      const material = selectionHalo.material as THREE.MeshBasicMaterial;
+      material.opacity = reducedMotion ? 0.7 : 0.5 + 0.3 * Math.sin(t * 3);
       selectionHalo.lookAt(camera.position);
     }
 
@@ -515,13 +573,51 @@ export function initZodiacScene(
     cssRenderer.render(cssScene, camera);
   }
 
-  animate();
+  // Only render while the canvas is on screen and the tab is visible.
+  function syncLoop() {
+    const shouldRun = documentVisible && canvasOnScreen;
+    if (shouldRun && !running) {
+      running = true;
+      // No ambient delta across the gap the loop was parked for.
+      lastFrameT = null;
+      animId = requestAnimationFrame(animate);
+    } else if (!shouldRun && running) {
+      running = false;
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  const visibilityObserver =
+    typeof IntersectionObserver === "undefined"
+      ? null
+      : new IntersectionObserver(
+          (entries) => {
+            const entry = entries[entries.length - 1];
+            if (!entry) return;
+            canvasOnScreen = entry.isIntersecting;
+            syncLoop();
+          },
+          { threshold: 0 },
+        );
+  visibilityObserver?.observe(canvas);
+
+  function onVisibilityChange() {
+    documentVisible = !document.hidden;
+    syncLoop();
+  }
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  syncLoop();
 
   // --- Cleanup ----------------------------------------------------------------
   return {
     cleanup() {
       running = false;
       cancelAnimationFrame(animId);
+      stopReducedMotionWatch();
+      visibilityObserver?.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("resize", onResize);
       canvas.removeEventListener("click", onCanvasClick);
       canvas.removeEventListener("mousemove", onCanvasMouseMove);
@@ -625,5 +721,15 @@ export function initZodiacScene(
     },
 
     clearPullLines,
+
+    // WCAG 2.2.2 — user control over the auto-rotating orrery
+    setAutoRotate(enabled: boolean) {
+      autoRotateChoice = enabled;
+      setControlsAutoRotate(controls, enabled);
+    },
+
+    isAutoRotating() {
+      return isControlsAutoRotating(controls);
+    },
   };
 }

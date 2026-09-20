@@ -4,12 +4,14 @@ import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
+  collapsedNoticeClass,
   fieldLabelClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UICard,
+  UINotice,
   UISelect,
 } from "../components/ui";
 import { createQueryWithStatus } from "../integrations/convex";
@@ -38,7 +40,7 @@ const GRAPHS = [
 ] as const;
 
 const helperClass = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/58",
   fontSize: "sm",
   lineHeight: "1.6",
 });
@@ -54,11 +56,10 @@ const metricGridClass = css({
 });
 
 const runRowClass = css({
-  bg: "rgba(245, 240, 232, 0.025)",
-  borderColor: "rgba(200, 168, 75, 0.18)",
+  bg: "zodiac.cream/2.5",
+  borderColor: "zodiac.gold/18",
   borderRadius: "l2",
   borderWidth: "1px",
-  cursor: "pointer",
   display: "grid",
   gap: "3",
   p: "4",
@@ -66,18 +67,41 @@ const runRowClass = css({
   transition: "border-color 160ms ease, background 160ms ease",
   width: "100%",
   _hover: {
-    bg: "rgba(200, 168, 75, 0.06)",
-    borderColor: "rgba(200, 168, 75, 0.42)",
+    bg: "zodiac.gold/6",
+    borderColor: "zodiac.gold/42",
   },
 });
 
+/**
+ * The select/expand control inside a run row. It is a sibling of the row's
+ * detail Link — a link must never be a descendant of a button.
+ */
+const runRowTriggerClass = css({
+  bg: "transparent",
+  color: "inherit",
+  cursor: "pointer",
+  display: "grid",
+  gap: "3",
+  p: "0",
+  textAlign: "left",
+  width: "100%",
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
+});
+
+/** Wrapper for an always-mounted notice that currently carries no text. */
+const DETAILS_CARD_ID = "agent-run-details";
+
 const selectedRunRowClass = css({
-  bg: "rgba(139, 92, 246, 0.08)",
-  borderColor: "rgba(139, 92, 246, 0.58)",
+  bg: "zodiac.violet/8",
+  borderColor: "zodiac.violet/58",
 });
 
 const metaClass = css({
-  color: "rgba(245, 240, 232, 0.6)",
+  color: "zodiac.cream/60",
   fontFamily: "mono",
   fontSize: "xs",
   letterSpacing: "0.08em",
@@ -85,7 +109,7 @@ const metaClass = css({
 });
 
 const eventClass = css({
-  borderColor: "rgba(245, 240, 232, 0.12)",
+  borderColor: "zodiac.cream/12",
   borderLeftWidth: "1px",
   display: "grid",
   gap: "2",
@@ -115,12 +139,14 @@ function eventTone(kind: AgentRunEventKind): "gold" | "violet" | "cream" {
   return "cream";
 }
 
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "medium",
+});
+
 function formatTime(value?: number) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "medium",
-  }).format(new Date(value));
+  return timeFormatter.format(new Date(value));
 }
 
 function formatDuration(run: AgentRun) {
@@ -186,6 +212,29 @@ export function AgentRunsPage() {
     (runs.data() ?? []).find((run: AgentRun) => run._id === selectedRunId()),
   );
   const listError = createMemo(() => runs.error() ?? counts.error());
+  // The Runs card already announces `runs.error()` with more specific copy;
+  // repeating it here fired two role="alert" regions for one failure.
+  const listErrorMessage = () => {
+    if (runs.error()) return null;
+    const error = counts.error();
+    return error
+      ? error.message || "The agent-run queries failed before returning data."
+      : null;
+  };
+  const runsStatus = () => {
+    if (runs.isLoading()) return "Loading agent runs...";
+    if (runs.error() || (runs.data() ?? []).length > 0) return null;
+    return "No agent runs match the current filters.";
+  };
+  const runsError = () =>
+    runs.error() ? `Unable to load agent runs: ${runs.error()?.message}` : null;
+  const eventsStatus = () => {
+    if (events.isLoading()) return "Loading events...";
+    if (events.error() || (events.data() ?? []).length > 0) return null;
+    return "No events recorded for this run.";
+  };
+  const eventsError = () =>
+    events.error() ? `Unable to load events: ${events.error()?.message}` : null;
 
   function selectRun(run: AgentRun) {
     setSelectedRunId((current) =>
@@ -198,9 +247,7 @@ export function AgentRunsPage() {
       <UICard>
         <UIBadge tone="gold">LangGraph Control Plane</UIBadge>
         <h1 class={pageTitleClass}>Agent Runs</h1>
-        <p
-          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
-        >
+        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
           Observe dry-runs and production agent lifecycle records written
           through the Convex audit surface. Details load only when a run is
           selected.
@@ -234,25 +281,20 @@ export function AgentRunsPage() {
         </Link>
       </UICard>
 
-      <Show when={listError()}>
-        {(error) => (
-          <UICard>
-            <UIBadge tone="violet">Convex Query Error</UIBadge>
-            <h2 class={sectionTitleClass}>
-              Agent run data is not available yet
-            </h2>
-            <p class={helperClass}>
-              {error().message ||
-                "The agent-run queries failed before returning data."}
-            </p>
-            <p class={helperClass}>
-              This usually means the browser is not fully authenticated with
-              Convex, the app was built against the wrong Convex deployment, or
-              the Clerk JWT template named "convex" is missing.
-            </p>
-          </UICard>
-        )}
-      </Show>
+      <UICard class={listError() ? undefined : collapsedNoticeClass}>
+        <Show when={listError()}>
+          <UIBadge tone="violet">Convex Query Error</UIBadge>
+          <h2 class={sectionTitleClass}>Agent run data is not available yet</h2>
+        </Show>
+        <UINotice error={listErrorMessage()} />
+        <Show when={listError()}>
+          <p class={helperClass}>
+            This usually means the browser is not fully authenticated with
+            Convex, the app was built against the wrong Convex deployment, or
+            the Clerk JWT template named "convex" is missing.
+          </p>
+        </Show>
+      </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Recent Activity</h2>
@@ -337,68 +379,63 @@ export function AgentRunsPage() {
       >
         <UICard>
           <h2 class={sectionTitleClass}>Runs</h2>
-          <Show
-            when={!runs.isLoading() && (runs.data() ?? []).length > 0}
-            fallback={
-              <p class={helperClass}>
-                {runs.isLoading()
-                  ? "Loading agent runs..."
-                  : runs.error()
-                    ? `Unable to load agent runs: ${runs.error()?.message}`
-                    : "No agent runs match the current filters."}
-              </p>
-            }
-          >
+          <UINotice status={runsStatus()} error={runsError()} />
+          <Show when={!runs.isLoading() && (runs.data() ?? []).length > 0}>
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={runs.data() ?? []}>
                 {(run: AgentRun) => (
-                  <button
-                    type="button"
-                    data-testid="agent-run-row"
+                  <div
                     class={
                       run._id === selectedRunId()
                         ? `${runRowClass} ${selectedRunRowClass}`
                         : runRowClass
                     }
-                    onClick={() => selectRun(run)}
-                    aria-expanded={run._id === selectedRunId()}
                   >
-                    <div
-                      class={css({
-                        alignItems: "center",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2",
-                        justifyContent: "space-between",
-                      })}
+                    <button
+                      type="button"
+                      data-testid="agent-run-row"
+                      class={runRowTriggerClass}
+                      onClick={() => selectRun(run)}
+                      aria-expanded={run._id === selectedRunId()}
+                      aria-controls={DETAILS_CARD_ID}
                     >
                       <div
                         class={css({
+                          alignItems: "center",
                           display: "flex",
                           flexWrap: "wrap",
                           gap: "2",
+                          justifyContent: "space-between",
                         })}
                       >
-                        <UIBadge tone={statusTone(run.status)}>
-                          {run.status}
-                        </UIBadge>
-                        <UIBadge tone="violet">{run.graphName}</UIBadge>
-                        <Show when={isSmokeRun(run)}>
-                          <UIBadge tone="cream">Smoke</UIBadge>
-                        </Show>
+                        <div
+                          class={css({
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "2",
+                          })}
+                        >
+                          <UIBadge tone={statusTone(run.status)}>
+                            {run.status}
+                          </UIBadge>
+                          <UIBadge tone="violet">{run.graphName}</UIBadge>
+                          <Show when={isSmokeRun(run)}>
+                            <UIBadge tone="cream">Smoke</UIBadge>
+                          </Show>
+                        </div>
+                        <span class={metaClass}>{formatDuration(run)}</span>
                       </div>
-                      <span class={metaClass}>{formatDuration(run)}</span>
-                    </div>
-                    <p
-                      class={css({
-                        color: "zodiac.cream",
-                        fontFamily: "display",
-                        fontSize: "lg",
-                        lineHeight: "1.35",
-                      })}
-                    >
-                      {run.summary ?? "No summary yet"}
-                    </p>
+                      <p
+                        class={css({
+                          color: "zodiac.cream",
+                          fontFamily: "display",
+                          fontSize: "lg",
+                          lineHeight: "1.35",
+                        })}
+                      >
+                        {run.summary ?? "No summary yet"}
+                      </p>
+                    </button>
                     <div
                       class={css({
                         display: "flex",
@@ -423,19 +460,18 @@ export function AgentRunsPage() {
                           letterSpacing: "0.08em",
                           textTransform: "uppercase",
                         })}
-                        onClick={(event) => event.stopPropagation()}
                       >
-                        Open Detail ↗
+                        Open Detail <span aria-hidden="true">↗</span>
                       </Link>
                     </div>
-                  </button>
+                  </div>
                 )}
               </For>
             </div>
           </Show>
         </UICard>
 
-        <UICard>
+        <UICard id={DETAILS_CARD_ID}>
           <h2 class={sectionTitleClass}>Details On Demand</h2>
           <Show
             when={selectedRun()}
@@ -513,18 +549,10 @@ export function AgentRunsPage() {
                   >
                     Event Timeline
                   </h3>
+                  <UINotice status={eventsStatus()} error={eventsError()} />
                   <Show
                     when={
                       !events.isLoading() && (events.data() ?? []).length > 0
-                    }
-                    fallback={
-                      <p class={helperClass}>
-                        {events.isLoading()
-                          ? "Loading events..."
-                          : events.error()
-                            ? `Unable to load events: ${events.error()?.message}`
-                            : "No events recorded for this run."}
-                      </p>
                     }
                   >
                     <div class={css({ display: "grid", gap: "4" })}>
@@ -562,12 +590,15 @@ export function AgentRunsPage() {
                               <Show when={payload()}>
                                 {(text) => (
                                   <pre
+                                    role="group"
+                                    tabIndex={0}
+                                    aria-label={`Payload for ${event.kind} event`}
                                     class={css({
                                       bg: "rgba(0, 0, 0, 0.22)",
-                                      borderColor: "rgba(245, 240, 232, 0.12)",
+                                      borderColor: "zodiac.cream/12",
                                       borderRadius: "l2",
                                       borderWidth: "1px",
-                                      color: "rgba(245, 240, 232, 0.72)",
+                                      color: "zodiac.cream/72",
                                       fontFamily: "mono",
                                       fontSize: "xs",
                                       maxH: "18rem",

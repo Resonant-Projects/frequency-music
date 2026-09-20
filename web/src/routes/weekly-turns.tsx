@@ -18,6 +18,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
@@ -86,7 +87,7 @@ function CampaignCard(props: {
     descriptionMd?: string;
     status: "active" | "paused" | "completed";
   }) => Promise<void>;
-  onNotice?: (message: string) => void;
+  onValidationError?: (message: string) => void;
 }) {
   const [draft, setDraft] = createSignal<CampaignDraft>(
     buildDraft(props.campaign),
@@ -131,7 +132,7 @@ function CampaignCard(props: {
     const title = currentDraft.title.trim();
     const question = currentDraft.question.trim();
     if (!title || !question) {
-      props.onNotice?.("Campaign title and question are required.");
+      props.onValidationError?.("Campaign title and question are required.");
       return false;
     }
     setSaving(true);
@@ -145,6 +146,10 @@ function CampaignCard(props: {
       });
       setDirty(false);
       return true;
+    } catch {
+      // The page has already shown the error; keep `dirty` so the edit
+      // survives and `handleCreateRecap` stops here.
+      return false;
     } finally {
       setSaving(false);
     }
@@ -155,6 +160,8 @@ function CampaignCard(props: {
     try {
       await props.onActivate(props.campaign._id);
       setDirty(false);
+    } catch {
+      // Reported by the page; leave any unsaved edit marked as such.
     } finally {
       setActivating(false);
     }
@@ -174,7 +181,7 @@ function CampaignCard(props: {
     <div
       data-testid="campaign-card"
       class={css({
-        borderColor: "rgba(200, 168, 75, 0.22)",
+        borderColor: "zodiac.gold/22",
         borderRadius: "l2",
         borderWidth: "1px",
         p: "4",
@@ -215,6 +222,19 @@ function CampaignCard(props: {
           {creatingRecap() ? "Creating summary..." : "Create summary"}
         </UIButton>
       </div>
+
+      <h3
+        class={css({
+          color: "zodiac.cream",
+          fontFamily: "display",
+          fontSize: "xl",
+          fontWeight: "normal",
+          lineHeight: "1.35",
+          mb: "2",
+        })}
+      >
+        {draft().title || "Untitled campaign"}
+      </h3>
 
       <label
         for={`campaign-${props.campaign._id}-title`}
@@ -295,6 +315,7 @@ function CampaignCard(props: {
         class={css({ display: "flex", justifyContent: "flex-end", mt: "4" })}
       >
         <UIButton
+          type="button"
           variant="solid"
           onClick={saveCampaign}
           disabled={saving() || activating()}
@@ -352,24 +373,34 @@ export function WeeklyTurnsPage() {
     "paused",
   );
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  const [generating, setGenerating] = createSignal(false);
 
   async function runGenerate() {
+    if (generating()) return;
+    setGenerating(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       const result = await generateBrief({ daysBack: 7 });
       setNotice(`Weekly turn generated for ${result.weekOf}.`);
     } catch (error) {
-      setNotice(`Generation failed: ${String(error)}`);
+      setNoticeError(`Generation failed: ${String(error)}`);
+    } finally {
+      setGenerating(false);
     }
   }
 
   async function handleCreateCampaign(event: SubmitEvent) {
     event.preventDefault();
     if (!title().trim() || !question().trim()) {
-      setNotice("Campaign title and question are required.");
+      setNotice(null);
+      setNoticeError("Campaign title and question are required.");
       return;
     }
 
+    setNotice(null);
+    setNoticeError(null);
     try {
       await createCampaign({
         title: title().trim(),
@@ -383,16 +414,21 @@ export function WeeklyTurnsPage() {
       setStatus("paused");
       setNotice("Campaign created.");
     } catch (error) {
-      setNotice(`Campaign create failed: ${String(error)}`);
+      setNoticeError(`Campaign create failed: ${String(error)}`);
     }
   }
 
   async function handleActivateCampaign(id: Id<"campaigns">) {
+    setNotice(null);
+    setNoticeError(null);
     try {
       await setActiveCampaign({ id });
       setNotice("Active campaign updated.");
     } catch (error) {
-      setNotice(`Campaign activation failed: ${String(error)}`);
+      setNoticeError(`Campaign activation failed: ${String(error)}`);
+      // Reported above, but the caller has to see the failure: resolving here
+      // would let the card clear its unsaved-edit state.
+      throw error;
     }
   }
 
@@ -403,15 +439,22 @@ export function WeeklyTurnsPage() {
     descriptionMd?: string;
     status: "active" | "paused" | "completed";
   }) {
+    setNotice(null);
+    setNoticeError(null);
     try {
       await updateCampaign(args);
       setNotice("Campaign updated.");
     } catch (error) {
-      setNotice(`Campaign update failed: ${String(error)}`);
+      setNoticeError(`Campaign update failed: ${String(error)}`);
+      // Reported above, but the caller has to see the failure: resolving here
+      // would clear `dirty` and let a recap be built from the pre-save state.
+      throw error;
     }
   }
 
   async function handleCreateCampaignRecap(id: Id<"campaigns">) {
+    setNotice(null);
+    setNoticeError(null);
     try {
       const artifactId = await createCampaignDraft({ campaignId: id });
       void navigate({
@@ -419,7 +462,7 @@ export function WeeklyTurnsPage() {
         params: { artifactId: String(artifactId) },
       });
     } catch (error) {
-      setNotice(`Campaign summary draft failed: ${String(error)}`);
+      setNoticeError(`Campaign summary draft failed: ${String(error)}`);
     }
   }
 
@@ -444,7 +487,7 @@ export function WeeklyTurnsPage() {
             <h1 class={pageTitleClass}>Weekly Turns</h1>
             <p
               class={css({
-                color: "rgba(245, 240, 232, 0.62)",
+                color: "zodiac.cream/62",
                 lineHeight: "1.6",
               })}
             >
@@ -453,14 +496,20 @@ export function WeeklyTurnsPage() {
               outcomes.
             </p>
           </div>
-          <UIButton variant="solid" type="button" onClick={runGenerate}>
-            Generate Now
+          <UIButton
+            variant="solid"
+            type="button"
+            aria-busy={generating()}
+            disabled={generating()}
+            onClick={runGenerate}
+          >
+            {generating() ? "Generating..." : "Generate Now"}
           </UIButton>
         </div>
 
         <hr
           class={css({
-            borderColor: "rgba(200, 168, 75, 0.18)",
+            borderColor: "zodiac.gold/18",
             marginY: "4",
           })}
         />
@@ -522,13 +571,7 @@ export function WeeklyTurnsPage() {
             flexWrap: "wrap",
           })}
         >
-          <div aria-live="polite">
-            <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
-            </Show>
-          </div>
+          <UINotice status={notice()} error={noticeError()} />
           <UIButton type="submit" variant="outline">
             Create Campaign
           </UIButton>
@@ -554,7 +597,7 @@ export function WeeklyTurnsPage() {
               <Show
                 when={preview().actions.length > 0}
                 fallback={
-                  <p class={css({ color: "rgba(245, 240, 232, 0.58)" })}>
+                  <p class={css({ color: "zodiac.cream/58" })}>
                     No recommendation candidates yet. Create or attach a thesis
                     to a campaign, then generate more hypotheses and recipes.
                   </p>
@@ -563,7 +606,7 @@ export function WeeklyTurnsPage() {
                 <For each={preview().actions}>
                   {(action) => {
                     const linkClass = css({
-                      borderColor: "rgba(200, 168, 75, 0.2)",
+                      borderColor: "zodiac.gold/20",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       color: "inherit",
@@ -587,7 +630,7 @@ export function WeeklyTurnsPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {action.targetType} {action.targetId.slice(-6)}
                         </div>
-                        <p class={css({ color: "rgba(245, 240, 232, 0.62)" })}>
+                        <p class={css({ color: "zodiac.cream/62" })}>
                           {action.reason}
                         </p>
                       </>
@@ -627,37 +670,23 @@ export function WeeklyTurnsPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Campaigns</h2>
-        <Show
-          when={!campaigns.isLoading()}
-          fallback={<p>Loading campaigns...</p>}
-        >
-          <Show
-            when={!campaigns.isError()}
-            fallback={
-              <p
-                class={css({
-                  color: "rgba(220, 100, 100, 0.85)",
-                  lineHeight: "1.6",
-                })}
-              >
-                Failed to load campaigns. {campaigns.error()?.message}
-              </p>
-            }
-          >
-            <Show
-              when={campaignRows().length > 0}
-              fallback={
-                <p
-                  class={css({
-                    color: "rgba(245, 240, 232, 0.55)",
-                    lineHeight: "1.6",
-                  })}
-                >
-                  No campaigns yet. Create one above to start organizing weekly
-                  work into longer arcs.
-                </p>
-              }
-            >
+        <UINotice
+          status={
+            campaigns.isLoading()
+              ? "Loading campaigns..."
+              : !campaigns.isError() && campaignRows().length === 0
+                ? "No campaigns yet. Create one above to start organizing weekly work into longer arcs."
+                : null
+          }
+          error={
+            campaigns.isError()
+              ? `Failed to load campaigns. ${campaigns.error()?.message}`
+              : null
+          }
+        />
+        <Show when={!campaigns.isLoading()}>
+          <Show when={!campaigns.isError()}>
+            <Show when={campaignRows().length > 0}>
               <div class={css({ display: "grid", gap: "3" })}>
                 <For each={campaignRows()}>
                   {(campaign) => (
@@ -667,7 +696,10 @@ export function WeeklyTurnsPage() {
                       onActivate={handleActivateCampaign}
                       onCreateRecap={handleCreateCampaignRecap}
                       onSave={handleSaveCampaign}
-                      onNotice={setNotice}
+                      onValidationError={(message) => {
+                        setNotice(null);
+                        setNoticeError(message);
+                      }}
                     />
                   )}
                 </For>
@@ -680,29 +712,22 @@ export function WeeklyTurnsPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Generated Briefs</h2>
 
-        <Show
-          when={!briefs.isLoading()}
-          fallback={<p>Loading weekly turns...</p>}
-        >
-          <Show
-            when={!briefs.isError()}
-            fallback={
-              <p
-                class={css({
-                  color: "rgba(220, 100, 100, 0.85)",
-                  lineHeight: "1.6",
-                })}
-              >
-                Failed to load briefs. {briefs.error()?.message}
-              </p>
-            }
-          >
+        <UINotice
+          status={briefs.isLoading() ? "Loading weekly turns..." : null}
+          error={
+            briefs.isError()
+              ? `Failed to load briefs. ${briefs.error()?.message}`
+              : null
+          }
+        />
+        <Show when={!briefs.isLoading()}>
+          <Show when={!briefs.isError()}>
             <Show
               when={briefRows().length > 0}
               fallback={
                 <p
                   class={css({
-                    color: "rgba(245, 240, 232, 0.55)",
+                    color: "zodiac.cream/55",
                     fontFamily: "display",
                     fontSize: "md",
                     lineHeight: "1.6",
@@ -722,7 +747,7 @@ export function WeeklyTurnsPage() {
                       to="/weekly-turns/$briefId"
                       params={{ briefId: String(brief._id) }}
                       class={css({
-                        borderColor: "rgba(200, 168, 75, 0.25)",
+                        borderColor: "zodiac.gold/25",
                         borderRadius: "l2",
                         borderWidth: "1px",
                         cursor: "pointer",
@@ -731,7 +756,7 @@ export function WeeklyTurnsPage() {
                         textDecoration: "none",
                         transition: "border-color 0.15s",
                         _hover: {
-                          borderColor: "rgba(200, 168, 75, 0.5)",
+                          borderColor: "zodiac.gold/50",
                         },
                       })}
                     >
@@ -797,7 +822,7 @@ export function WeeklyTurnsPage() {
 
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.55)",
+                          color: "zodiac.cream/55",
                           fontFamily: "body",
                           fontSize: "sm",
                           lineHeight: "1.6",
@@ -809,7 +834,7 @@ export function WeeklyTurnsPage() {
 
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.55)",
+                          color: "zodiac.cream/55",
                           fontFamily: "mono",
                           fontSize: "xs",
                         })}

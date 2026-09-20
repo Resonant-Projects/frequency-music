@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/solid-router";
-import { For, Show } from "solid-js";
+import { createUniqueId, For, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { css } from "../../styled-system/css";
 import {
   UIBadge,
   UICard,
+  UINotice,
   metaLine,
   pageClass,
   pageTitleClass,
@@ -37,7 +38,7 @@ const STATUS_SECTIONS = [
 ] as const;
 
 const rowLinkClass = css({
-  borderColor: "rgba(139, 92, 246, 0.22)",
+  borderColor: "zodiac.violet/22",
   borderRadius: "l2",
   borderWidth: "1px",
   color: "inherit",
@@ -48,8 +49,8 @@ const rowLinkClass = css({
   transitionDuration: "normal",
   transitionProperty: "background-color, border-color",
   _hover: {
-    bg: "rgba(139, 92, 246, 0.08)",
-    borderColor: "rgba(139, 92, 246, 0.48)",
+    bg: "zodiac.violet/8",
+    borderColor: "zodiac.violet/48",
   },
   _focusVisible: {
     outline: "2px solid",
@@ -58,11 +59,13 @@ const rowLinkClass = css({
   },
 });
 
+const updatedAtFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
 function formatUpdatedAt(value: number) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+  return updatedAtFormatter.format(new Date(value));
 }
 
 export function CorrespondencesPage() {
@@ -79,7 +82,7 @@ export function CorrespondencesPage() {
       <UICard>
         <UIBadge tone="violet">Adjudication</UIBadge>
         <h1 class={pageTitleClass}>Correspondences</h1>
-        <p class={css({ color: "rgba(245, 240, 232, 0.7)", maxW: "72ch" })}>
+        <p class={css({ color: "zodiac.cream/70", maxW: "72ch" })}>
           Review the current lifecycle state and evidence for cross-domain
           correspondences. This surface decides existing work; it does not
           author conjectures or evidence.
@@ -87,82 +90,84 @@ export function CorrespondencesPage() {
       </UICard>
 
       <For each={sections}>
-        {(section) => (
-          <UICard>
-            <div
-              class={css({
-                alignItems: "baseline",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "2",
-                justifyContent: "space-between",
-                mb: "2",
-              })}
-            >
-              <div class={sectionLabel}>{section.status}</div>
-              <Show when={section.query.data()}>
-                {(rows) => (
-                  <UIBadge tone="violet">{rows().length} shown</UIBadge>
-                )}
-              </Show>
-            </div>
-            <p class={css({ color: "rgba(245, 240, 232, 0.62)", mb: "3" })}>
-              {section.description}
-            </p>
+        {(section) => {
+          const headingId = createUniqueId();
+          const sectionStatus = () => {
+            if (section.query.isLoading()) {
+              return `Loading ${section.status} correspondences…`;
+            }
+            if (section.query.isError()) return null;
+            if ((section.query.data() ?? []).length > 0) return null;
+            return `No ${section.status} correspondences in the latest bounded window.`;
+          };
+          const sectionError = () =>
+            section.query.isError()
+              ? `Unable to load ${section.status} correspondences: ${section.query.error()?.message ?? "Unknown error"}`
+              : null;
 
-            <Show
-              when={!section.query.isLoading()}
-              fallback={<p>Loading {section.status} correspondences…</p>}
-            >
+          return (
+            <UICard aria-labelledby={headingId}>
+              <div
+                class={css({
+                  alignItems: "baseline",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "2",
+                  justifyContent: "space-between",
+                  mb: "2",
+                })}
+              >
+                <h2 class={sectionLabel} id={headingId}>
+                  {section.status}
+                </h2>
+                <Show when={section.query.data()}>
+                  {(rows) => (
+                    <UIBadge tone="violet">{rows().length} shown</UIBadge>
+                  )}
+                </Show>
+              </div>
+              <p class={css({ color: "zodiac.cream/62", mb: "3" })}>
+                {section.description}
+              </p>
+
+              <UINotice status={sectionStatus()} error={sectionError()} />
               <Show
-                when={!section.query.isError()}
-                fallback={
-                  <p class={css({ color: "zodiac.error" })}>
-                    Unable to load {section.status} correspondences:{" "}
-                    {section.query.error()?.message ?? "Unknown error"}
-                  </p>
+                when={
+                  !section.query.isLoading() &&
+                  !section.query.isError() &&
+                  (section.query.data() ?? []).length > 0
                 }
               >
-                <Show
-                  when={(section.query.data() ?? []).length > 0}
-                  fallback={
-                    <p class={css({ color: "rgba(245, 240, 232, 0.56)" })}>
-                      No {section.status} correspondences in the latest bounded
-                      window.
-                    </p>
-                  }
-                >
-                  <div class={css({ display: "grid", gap: "2" })}>
-                    <For each={section.query.data() ?? []}>
-                      {(row) => (
-                        <Link
-                          to="/correspondences/$correspondenceId"
-                          params={{ correspondenceId: String(row._id) }}
-                          class={rowLinkClass}
+                <div class={css({ display: "grid", gap: "2" })}>
+                  <For each={section.query.data() ?? []}>
+                    {(row) => (
+                      <Link
+                        to="/correspondences/$correspondenceId"
+                        params={{ correspondenceId: String(row._id) }}
+                        class={rowLinkClass}
+                      >
+                        <span
+                          class={css({
+                            color: "zodiac.cream",
+                            fontFamily: "display",
+                            fontSize: "lg",
+                            lineHeight: "1.35",
+                          })}
                         >
-                          <span
-                            class={css({
-                              color: "zodiac.cream",
-                              fontFamily: "display",
-                              fontSize: "lg",
-                              lineHeight: "1.35",
-                            })}
-                          >
-                            {row.statement}
-                          </span>
-                          <span class={metaLine}>
-                            {row.evidence.length} evidence · updated{" "}
-                            {formatUpdatedAt(row.updatedAt)}
-                          </span>
-                        </Link>
-                      )}
-                    </For>
-                  </div>
-                </Show>
+                          {row.statement}
+                        </span>
+                        <span class={metaLine}>
+                          {row.evidence.length} evidence · updated{" "}
+                          {formatUpdatedAt(row.updatedAt)}
+                        </span>
+                      </Link>
+                    )}
+                  </For>
+                </div>
               </Show>
-            </Show>
-          </UICard>
-        )}
+            </UICard>
+          );
+        }}
       </For>
     </section>
   );

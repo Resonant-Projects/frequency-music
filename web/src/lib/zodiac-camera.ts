@@ -7,6 +7,35 @@ import type { SectorDef } from "./zodiac-data";
 let activeFocusAnimId: number | null = null;
 let originalAutoRotate: boolean | null = null;
 
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function reducedMotionQuery(): MediaQueryList | null {
+  if (typeof window === "undefined") return null;
+  if (typeof window.matchMedia !== "function") return null;
+  return window.matchMedia(REDUCED_MOTION_QUERY);
+}
+
+// True when the OS/browser asks for reduced motion. Safe without matchMedia.
+export function prefersReducedMotion(): boolean {
+  return reducedMotionQuery()?.matches ?? false;
+}
+
+// Subscribe to runtime changes of the reduced-motion preference.
+// Returns an unsubscribe function (a no-op when matchMedia is unavailable).
+export function watchReducedMotion(
+  onChange: (reduced: boolean) => void,
+): () => void {
+  const query = reducedMotionQuery();
+  if (!query) return () => {};
+  const handler = (event: MediaQueryListEvent) => {
+    onChange(event.matches);
+  };
+  query.addEventListener("change", handler);
+  return () => {
+    query.removeEventListener("change", handler);
+  };
+}
+
 export function createCamera(aspect: number): THREE.PerspectiveCamera {
   const camera = new THREE.PerspectiveCamera(45, aspect, 1, 3000);
   // Slightly below and in front: shows disc at a cinematic tilt
@@ -22,12 +51,32 @@ export function createOrbitControls(
   const controls = new OrbitControls(camera, domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.autoRotate = true;
+  controls.autoRotate = !prefersReducedMotion();
   controls.autoRotateSpeed = 0.15;
   controls.minDistance = 200;
   controls.maxDistance = 1200;
   controls.maxPolarAngle = Math.PI * 0.72;
   return controls;
+}
+
+/**
+ * Set `autoRotate` so the change survives an in-flight `focusSector` lerp.
+ * That animation holds rotation off and restores the value captured when it
+ * began, so while one is pending the pending value is what has to change —
+ * writing the live flag instead would both resume rotation mid-transition and
+ * be undone when the camera lands.
+ */
+export function setAutoRotate(controls: OrbitControls, enabled: boolean): void {
+  if (originalAutoRotate !== null) {
+    originalAutoRotate = enabled;
+    return;
+  }
+  controls.autoRotate = enabled;
+}
+
+/** The rotation state the user ends up with once any focus lerp has landed. */
+export function isAutoRotating(controls: OrbitControls): boolean {
+  return originalAutoRotate ?? controls.autoRotate;
 }
 
 // Lerp camera toward a sector's midpoint for cinematic focus
@@ -58,6 +107,25 @@ export function focusSector(
   if (activeFocusAnimId !== null) cancelAnimationFrame(activeFocusAnimId);
   controls.autoRotate = false;
 
+  // Land on the framing with no lerp left to run, restoring whatever rotation
+  // state the animated path would have restored.
+  function settle() {
+    activeFocusAnimId = null;
+    camera.position.copy(targetPos);
+    controls.target.copy(lookAt);
+    controls.update();
+    if (originalAutoRotate !== null) {
+      controls.autoRotate = originalAutoRotate;
+      originalAutoRotate = null;
+    }
+  }
+
+  // Reduced motion: jump straight to the framing, no 800ms lerp.
+  if (prefersReducedMotion()) {
+    settle();
+    return;
+  }
+
   // Simple lerp animation over ~800ms
   const startPos = camera.position.clone();
   const startTarget = controls.target.clone();
@@ -65,6 +133,12 @@ export function focusSector(
   const startTime = performance.now();
 
   function step() {
+    // The preference can flip mid-lerp; land immediately rather than finish an
+    // animation the user has just asked not to see.
+    if (prefersReducedMotion()) {
+      settle();
+      return;
+    }
     const t = Math.min((performance.now() - startTime) / duration, 1);
     const ease = 1 - (1 - t) ** 3; // ease-out cubic
 

@@ -1,0 +1,400 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-19T19:50:47.484Z",
+  "title": "Design System: Frequency",
+  "extensions": {
+    "colorMeta": {
+      "void": {
+        "role": "neutral",
+        "displayName": "Deep Indigo Void",
+        "canonical": "oklch(15.3% 0.054 292.0)",
+        "tonalRamp": [
+          "#0c061f",
+          "#251f3c",
+          "#403a5a",
+          "#5e587a",
+          "#7d789b",
+          "#9f99be",
+          "#c4bee5",
+          "#efe9ff"
+        ]
+      },
+      "gold": {
+        "role": "primary",
+        "displayName": "Antique Gold",
+        "canonical": "oklch(74.2% 0.118 90.2)",
+        "tonalRamp": [
+          "#1d0200",
+          "#391d00",
+          "#573a00",
+          "#775900",
+          "#98790c",
+          "#bb9b3d",
+          "#e1c165",
+          "#ffec8f"
+        ]
+      },
+      "gold-bright": {
+        "role": "primary",
+        "displayName": "Bright Gold",
+        "canonical": "oklch(81.4% 0.111 91.8)",
+        "tonalRamp": [
+          "#110b00",
+          "#2f2400",
+          "#504000",
+          "#755e00",
+          "#997e22",
+          "#bca14a",
+          "#e0c46e",
+          "#ffeaac"
+        ]
+      },
+      "violet": {
+        "role": "secondary",
+        "displayName": "Speculative Violet",
+        "canonical": "oklch(60.6% 0.219 292.7)",
+        "tonalRamp": [
+          "#20005d",
+          "#340081",
+          "#4c00a5",
+          "#6830ca",
+          "#8757f1",
+          "#a77bff",
+          "#cca3ff",
+          "#f5ceff"
+        ]
+      },
+      "violet-text": {
+        "role": "secondary",
+        "displayName": "Lifted Violet",
+        "canonical": "oklch(70.9% 0.159 293.5)",
+        "tonalRamp": [
+          "#180046",
+          "#2d0067",
+          "#482289",
+          "#6545ad",
+          "#8466d1",
+          "#a488f7",
+          "#caaeff",
+          "#f4d9ff"
+        ]
+      },
+      "cream": {
+        "role": "neutral",
+        "displayName": "Parchment Cream",
+        "canonical": "oklch(95.7% 0.012 79.8)",
+        "tonalRamp": [
+          "#0e0b06",
+          "#27231e",
+          "#433f39",
+          "#615d56",
+          "#817d75",
+          "#a29e96",
+          "#c8c3bc",
+          "#f3eee6"
+        ]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Signal Red",
+        "canonical": "oklch(71.1% 0.166 22.2)",
+        "tonalRamp": [
+          "#380000",
+          "#5c0000",
+          "#820010",
+          "#a7242f",
+          "#cd4a4e",
+          "#f46e6e",
+          "#ff9492",
+          "#ffbfbb"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Signal Green",
+        "canonical": "oklch(73.5% 0.155 151.0)",
+        "tonalRamp": [
+          "#001003",
+          "#002e11",
+          "#005023",
+          "#007436",
+          "#189a4d",
+          "#4abe6f",
+          "#71e392",
+          "#baffc9"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Signal Amber",
+        "canonical": "oklch(79.1% 0.134 79.5)",
+        "tonalRamp": [
+          "#130a00",
+          "#332100",
+          "#573c00",
+          "#7f5800",
+          "#a87700",
+          "#cf982d",
+          "#f4bc57",
+          "#ffe8c3"
+        ]
+      },
+      "info": {
+        "role": "tertiary",
+        "displayName": "Signal Info",
+        "canonical": "oklch(70.9% 0.159 293.5)",
+        "tonalRamp": [
+          "#10002b",
+          "#2d0063",
+          "#49258c",
+          "#6748b0",
+          "#876ad6",
+          "#a98dfc",
+          "#c9bbff",
+          "#ece8ff"
+        ]
+      },
+      "glow-inner": {
+        "role": "neutral",
+        "displayName": "Inner Glow Indigo",
+        "canonical": "oklch(20.9% 0.071 292.5)",
+        "tonalRamp": [
+          "#0e0326",
+          "#261c43",
+          "#413862",
+          "#5f5682",
+          "#7e76a4",
+          "#9f97c7",
+          "#c5bcef",
+          "#efe7ff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page and detail-page titles in light-weight Cormorant; steps 1.5rem to 1.875rem at the md breakpoint."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Gold mono uppercase section headings inside cards and detail pages \u2014 an instrument legend, not a serif heading."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Markdown prose at 1rem/1.75 in cream at 82%; dense panel copy drops to 14px/1.65 at 66%."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, back links, metadata and button faces \u2014 mono uppercase tracked 0.14-0.20em."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "10px wide-tracked uppercase eyebrows and stat labels in gold at 78%. The smallest type the system permits."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-hover-lift",
+        "value": "0 22px 48px rgba(0, 0, 0, 0.24)",
+        "purpose": "Essay and essay-detail cards on hover, paired with translateY(-3px)."
+      },
+      {
+        "name": "detached-bar",
+        "value": "0 -12px 40px rgba(13, 6, 32, 0.6)",
+        "purpose": "The sticky review decide-bar, casting upward against the queue scrolling beneath it."
+      },
+      {
+        "name": "gold-discovery-glow",
+        "value": "0 0 12px rgba(200, 168, 75, 0.08)",
+        "purpose": "Faint bloom on recipe cards on hover \u2014 the 2D echo of the orrery's bloom filter."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transition-standard",
+        "value": "0.2s ease",
+        "purpose": "The only transition in the 2D UI. Applied to color, border-color and background-color; never to layout."
+      },
+      {
+        "name": "duration-normal",
+        "value": "200ms",
+        "purpose": "Panda token backing the standard transition on buttons and queue rows."
+      },
+      {
+        "name": "easing-default",
+        "value": "cubic-bezier(0.2, 0.0, 0, 1.0)",
+        "purpose": "Panda token easing for token-driven transitions."
+      },
+      {
+        "name": "hover-lift",
+        "value": "translateY(-2px) / translateY(-3px)",
+        "purpose": "Card hover lift, paired with the card-hover-lift shadow. Disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "reduced-motion-policy",
+        "value": "@media (prefers-reduced-motion: reduce)",
+        "purpose": "Nav transitions drop to 0s, card hover lifts resolve to none, and the orrery's auto-rotation starts paused with a visible resume toggle."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button (Solid)",
+      "kind": "button",
+      "refersTo": "button-solid",
+      "description": "The single primary action on a surface. Solid gold on the void, brightening to Bright Gold on hover, governed by the One Gold Action Rule.",
+      "html": "<button class=\"ds-btn-solid\">Approve Draft</button>",
+      "css": ".ds-btn-solid { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: #c8a84b; color: #0d0620; border: 1px solid #c8a84b; border-radius: 8px; padding: 0.5rem 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; } .ds-btn-solid:hover { background: #dcc06a; border-color: #dcc06a; } .ds-btn-solid:focus-visible { outline: 2px solid #c8a84b; outline-offset: 2px; } .ds-btn-solid:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The default button variant. Thin gold outline at 45%, cream label, no fill; the outline rises to 75% gold on hover.",
+      "html": "<button class=\"ds-btn-outline\">View Hypothesis</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: transparent; color: #f5f0e8; border: 1px solid rgba(200, 168, 75, 0.45); border-radius: 8px; padding: 0.5rem 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease; } .ds-btn-outline:hover { border-color: rgba(200, 168, 75, 0.75); color: #f5f0e8; } .ds-btn-outline:focus-visible { outline: 2px solid #c8a84b; outline-offset: 2px; } .ds-btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Tertiary action inside a dense row. No border at rest; cream at 72% over a faint gold wash on hover.",
+      "html": "<button class=\"ds-btn-ghost\">Dismiss</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: transparent; color: rgba(245, 240, 232, 0.72); border: 1px solid transparent; border-radius: 8px; padding: 0.5rem 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: color 0.2s ease, background-color 0.2s ease; } .ds-btn-ghost:hover { background: rgba(200, 168, 75, 0.08); color: #f5f0e8; } .ds-btn-ghost:focus-visible { outline: 2px solid #c8a84b; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Single-line field reading as a shallow well in the void. Focus lights both the border and an offset gold outline.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search concepts\" />",
+      "css": ".ds-input { display: block; width: 100%; min-height: 2.5rem; background: rgba(26, 15, 53, 0.45); color: #f5f0e8; border: 1px solid rgba(200, 168, 75, 0.28); border-radius: 8px; padding: 0.5rem 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; transition: border-color 0.2s ease; } .ds-input::placeholder { color: rgba(245, 240, 232, 0.5); } .ds-input:hover { border-color: rgba(200, 168, 75, 0.45); } .ds-input:focus-visible { border-color: #c8a84b; outline: 2px solid #c8a84b; outline-offset: 1px; }"
+    },
+    {
+      "name": "Gold Badge",
+      "kind": "chip",
+      "refersTo": "badge-gold",
+      "description": "Pill token marking a confirmed pipeline state. The violet tone (border rgba(139, 92, 246, 0.45), color #8b5cf6) marks a speculative one; the cream tone (border rgba(245, 240, 232, 0.38)) marks neutral metadata.",
+      "html": "<span class=\"ds-badge-gold\">Recipe</span> <span class=\"ds-badge-violet\">Draft</span>",
+      "css": ".ds-badge-gold, .ds-badge-violet { display: inline-flex; border-radius: 9999px; border-width: 1px; border-style: solid; padding: 0.25rem 0.625rem; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; overflow-wrap: anywhere; } .ds-badge-gold { border-color: rgba(200, 168, 75, 0.45); color: #c8a84b; } .ds-badge-violet { border-color: rgba(139, 92, 246, 0.45); color: #8b5cf6; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The standard document surface: the void over itself at 72%, a gold hairline, 12px corners. No resting shadow; interactive cards lift and cast on hover.",
+      "html": "<article class=\"ds-card\"><p class=\"ds-card-eyebrow\">Hypothesis</p><h3 class=\"ds-card-title\">Harmonic drift across the lunar sectors</h3><p class=\"ds-card-body\">Extraction confidence rises where source density overlaps two adjacent domains.</p></article>",
+      "css": ".ds-card { display: block; background: rgba(13, 6, 32, 0.72); color: #f5f0e8; border: 1px solid rgba(200, 168, 75, 0.22); border-radius: 12px; padding: 1.25rem; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; } .ds-card:hover { transform: translateY(-3px); border-color: rgba(200, 168, 75, 0.48); box-shadow: 0 22px 48px rgba(0, 0, 0, 0.24); } .ds-card:focus-visible { outline: 2px solid #c8a84b; outline-offset: 2px; } .ds-card-eyebrow { margin: 0 0 10px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(200, 168, 75, 0.78); } .ds-card-title { margin: 0 0 8px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.5rem; font-weight: 300; line-height: 1.3; color: #f5f0e8; } .ds-card-body { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 14px; line-height: 1.65; color: rgba(245, 240, 232, 0.66); } @media (prefers-reduced-motion: reduce) { .ds-card:hover { transform: none; } }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Header navigation pill. Bordered and dim at rest, fully inverted to solid gold when active.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link\" href=\"#\">Essays</a><a class=\"ds-nav-link is-active\" href=\"#\">Hypotheses</a><a class=\"ds-nav-link\" href=\"#\">Recipes</a></nav>",
+      "css": ".ds-nav { display: flex; flex-wrap: wrap; gap: 8px; background: rgba(13, 6, 32, 0.7); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(200, 168, 75, 0.2); padding: 8px 16px; } .ds-nav-link { border: 1px solid rgba(200, 168, 75, 0.2); color: rgba(245, 240, 232, 0.7); text-decoration: none; letter-spacing: 0.16em; text-transform: uppercase; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 11px; padding: 4px 8px; transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease; } .ds-nav-link:hover { color: #f5f0e8; border-color: rgba(200, 168, 75, 0.45); } .ds-nav-link.is-active { color: #0d0620; background: #c8a84b; border-color: #c8a84b; } .ds-nav-link:focus-visible { outline: 2px solid #c8a84b; outline-offset: 2px; } @media (prefers-reduced-motion: reduce) { .ds-nav-link { transition-duration: 0s; } }"
+    },
+    {
+      "name": "Section Heading",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "Gold mono uppercase section legend, optionally followed by the gold hairline divider used between detail-page sections.",
+      "html": "<h2 class=\"ds-section-heading\">Provenance</h2><hr class=\"ds-gold-divider\" />",
+      "css": ".ds-section-heading { margin: 0 0 0.75rem; color: #c8a84b; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 400; line-height: 1.4; letter-spacing: 0.14em; text-transform: uppercase; } .ds-gold-divider { border: none; border-top: 1px solid rgba(200, 168, 75, 0.22); margin: 1.5rem 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Illuminated Astrolabe",
+    "overview": "The North Star, its three founding principles, and the colour roles were carried forward from the incumbent `web/docs/zodiac-style-guide.md`; this document records them as the system-wide identity rather than newly choosing one.\n\nFrequency is not a dashboard. It is a medieval precision instrument pointed at a research cosmos: a deep indigo void in which sources, extractions, hypotheses, recipes and compositions are plotted, glow when found, and dim back down when at rest. Every surface in the app \u2014 the 3D orrery home, the archive grids, the review queues \u2014 is built from the same three moves: a void that reads as active negative space rather than empty background, antique gold that marks anything discovered or confirmed, and speculative violet that marks anything still provisional. Nothing decorative sits on the void. Information emerges from it.\n\nThe register is deep, precise and quiet. Density is instrument-like: mono uppercase labels tracked wide, hairline gold rules, numerals that read as measurements. Type is a light-weight Cormorant Garamond serif that gives long-form editorial prose the bearing of an illuminated manuscript, offset by JetBrains Mono for anything that behaves like an instrument reading. Discovery \u2014 and only discovery \u2014 glows: bloom filters in the 3D scene, focus rings and border lifts in the 2D shell.\n\nThe confirmed anti-references are the generic SaaS dashboard, the grid of same-size icon cards, and light mode. There is no light theme and no plan for one; the void is the identity, not a colour-scheme preference. The product truth that constrains all of this is the pipeline itself \u2014 Sources \u2192 Extraction \u2192 Hypothesis \u2192 Recipe \u2192 Composition \u2014 which is why gold reads as \"confirmed\" and violet reads as \"not yet\".",
+    "keyCharacteristics": [
+      "Dark-only. The deep indigo void is the sole canvas; there is no light mode.",
+      "Gold is earned, never ambient \u2014 it marks confirmation, discovery and the single primary action.",
+      "Violet is speculation \u2014 hypotheses, drafts, unreviewed pairs.",
+      "Elevation is a 1px hairline, not a shadow.",
+      "Opacity carries epistemic state, but never below AA contrast.",
+      "Mono uppercase, wide-tracked labels against light serif prose.",
+      "Glow is a response to state, never a resting decoration."
+    ],
+    "rules": [
+      {
+        "name": "The Opacity Is Certainty Rule",
+        "section": "colors",
+        "body": "Opacity communicates epistemic state, not style: resting elements sit at reduced alpha and engaged elements rise. The observed tiers are fixed \u2014 cream text at 1.0 (primary headings and values), 0.82 (prose), 0.66 (secondary and meta, and the floor); gold labels at 0.78 (floor) rising to 1.0 when active; gold borders at 0.12\u20130.22 at rest and 0.45\u20130.50 on hover or when active; violet borders at 0.24 at rest and 0.50 when active; fills at 0.05\u20130.12. Borders and fills may go as low as the system needs. Text may not. 0.66 on cream and 0.78 on gold are AA floors, not starting points."
+      },
+      {
+        "name": "The One Gold Action Rule",
+        "section": "colors",
+        "body": "A solid gold background is the primary action and there is at most one per surface (UIButton variant=\"solid\", plus the active nav pill, which is navigation state rather than an action). Everything else is an outline or a ghost. If two solid gold buttons appear in one view, one of them is wrong."
+      },
+      {
+        "name": "The Lifted Violet Rule",
+        "section": "colors",
+        "body": "Speculative Violet is a surface, border, ring and heading colour \u2014 it only reaches 4.66:1 on the void at full alpha. Any violet text smaller than a heading uses Lifted Violet instead."
+      },
+      {
+        "name": "The Ten Pixel Floor Rule",
+        "section": "typography",
+        "body": "No text renders below 10px, and 10px is reserved for wide-tracked uppercase eyebrows and stat labels. Dense panel body copy starts at 14px; prose starts at 16px. Any size that \"needs\" to be 8 or 9px is a label that should be 10px, or content that should not be there."
+      },
+      {
+        "name": "The Tracked Caps Rule",
+        "section": "typography",
+        "body": "Uppercase in this system is always mono and always tracked to at least 0.14em. Uppercase serif, or untracked uppercase, reads as a mistake rather than an instrument."
+      },
+      {
+        "name": "The Hairline Rule",
+        "section": "elevation",
+        "body": "Elevation at rest is a 1px border, never a shadow. A surface earns a shadow only in response to a state \u2014 hover on essay cards, stickiness on the decide-bar. If a new surface wants a resting shadow, it wants a hairline instead."
+      },
+      {
+        "name": "The Glow Is A Verb Rule",
+        "section": "elevation",
+        "body": "Glow reports that something happened: found, focused, selected, hovered. A permanent glow on a resting element is decoration, and decoration does not sit on the void."
+      }
+    ],
+    "dos": [
+      "Do build depth from hairlines and translucency \u2014 1px gold borders at 12\u201322% over the void at 45\u201394% alpha.",
+      "Do keep exactly one solid gold surface per view: the primary action, or the active nav pill.",
+      "Do use violet for anything unreviewed, drafted or hypothesised, and gold for anything confirmed.",
+      "Do switch to Lifted Violet the moment violet text drops below heading size.",
+      "Do hold cream text at 0.66 alpha or above and gold labels at 0.78 or above, however faint the surrounding chrome is.",
+      "Do set uppercase in JetBrains Mono with at least 0.14em of tracking.",
+      "Do cap prose measure at 44\u201348rem (or 70\u201372ch) and run it at 1rem with 1.75 line height.",
+      "Do give every interactive element the same 2px gold focus outline.",
+      "Do guard hover lifts and the orrery's auto-rotation behind prefers-reduced-motion.",
+      "Do put status and error text in the always-mounted notice regions.",
+      "Do apply .zodiac-scroll to any inner scroll container."
+    ],
+    "donts": [
+      "Don't add a light theme, a light surface, or a white card. The void is the identity.",
+      "Don't give a surface a resting box-shadow; shadows are a response to hover or stickiness only.",
+      "Don't set text below 10px, and don't use 10px for anything but a wide-tracked uppercase eyebrow or stat label.",
+      "Don't use backdrop blur outside the fixed header and the opt-in glass card over the 3D canvas.",
+      "Don't introduce a new accent hue. Gold, violet and the status roles are the whole vocabulary, and the status roles are only for state the system reports \u2014 never for emphasis.",
+      "Don't let a decorative element sit on the void \u2014 every mark should be information emerging from it.",
+      "Don't build a grid of equal-weight icon cards or any other generic dashboard furniture.",
+      "Don't round the orrery sidebar's instrument controls, and don't square the document cards.",
+      "Don't style errors onto the input border; the notice region carries them.",
+      "Don't apply glow to a resting element.",
+      "Don't write a raw `rgba()` colour into a style object. Every colour is a `zodiac.*` token, and alpha is the `token/NN` modifier."
+    ]
+  }
+}

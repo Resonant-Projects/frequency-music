@@ -15,6 +15,7 @@ import {
   UIBadge,
   UIButton,
   UICard,
+  UINotice,
   UITextarea,
   backLink,
   detailTitleClass,
@@ -46,15 +47,17 @@ const loopSubheadingClass = css({
 });
 
 const loopEyebrowClass = css({
-  color: "rgba(245, 240, 232, 0.62)",
+  color: "zodiac.cream/66",
   fontFamily: "mono",
-  fontSize: "2xs",
+  fontSize: "xs",
   letterSpacing: "0.14em",
   textTransform: "uppercase",
 });
 
 const loopLinkClass = css({
-  borderBottom: "1px solid rgba(200, 168, 75, 0.16)",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "zodiac.gold/16",
   color: "inherit",
   display: "grid",
   gap: "1",
@@ -63,8 +66,8 @@ const loopLinkClass = css({
   transitionDuration: "normal",
   transitionProperty: "background-color, border-color",
   _hover: {
-    bg: "rgba(200, 168, 75, 0.05)",
-    borderColor: "rgba(200, 168, 75, 0.42)",
+    bg: "zodiac.gold/5",
+    borderColor: "zodiac.gold/42",
   },
   _focusVisible: {
     outline: "2px solid",
@@ -74,8 +77,8 @@ const loopLinkClass = css({
 });
 
 const reviewQueueBannerClass = css({
-  bg: "rgba(245, 240, 232, 0.04)",
-  borderColor: "rgba(245, 240, 232, 0.14)",
+  bg: "zodiac.cream/4",
+  borderColor: "zodiac.cream/14",
   borderRadius: "l2",
   borderWidth: "1px",
   color: "zodiac.cream",
@@ -87,14 +90,14 @@ const reviewQueueBannerClass = css({
 });
 
 const reviewQueueBlockedClass = css({
-  bg: "rgba(200, 168, 75, 0.14)",
-  borderColor: "rgba(200, 168, 75, 0.62)",
+  bg: "zodiac.gold/14",
+  borderColor: "zodiac.gold/62",
   "& span:last-child": { color: "zodiac.gold" },
 });
 
 const violetAccentContainerClass = css({
-  bg: "rgba(139, 92, 246, 0.07)",
-  borderColor: "rgba(139, 92, 246, 0.3)",
+  bg: "zodiac.violet/7",
+  borderColor: "zodiac.violet/30",
   borderRadius: "l2",
   borderWidth: "1px",
   display: "grid",
@@ -187,6 +190,7 @@ export function WeeklyBriefDetailPage() {
   );
   const setFeedEnabled = createMutation(api.feeds.setEnabled);
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [publishingToNotion, setPublishingToNotion] = createSignal(false);
   const [publishingBrief, setPublishingBrief] = createSignal(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = createSignal(false);
@@ -217,6 +221,7 @@ export function WeeklyBriefDetailPage() {
         setThirtyMinuteMd("");
         setNinetyMinuteMd("");
         setNotice(null);
+        setNoticeError(null);
         setPublishConfirmOpen(false);
         setPublishingBrief(false);
       },
@@ -259,7 +264,32 @@ export function WeeklyBriefDetailPage() {
     setThirtyMinuteMd(row.studioPrompts?.thirtyMinuteMd ?? "");
     setNinetyMinuteMd(row.studioPrompts?.ninetyMinuteMd ?? "");
     setNotice(null);
+    setNoticeError(null);
     setEditMode(true);
+  }
+
+  // Focus handling for the publish confirmation dialog.
+  let publishTrigger: HTMLButtonElement | null = null;
+  // The title outlives every visibility change, so it is the fallback whenever
+  // the trigger will not survive the dialog closing.
+  let briefTitle: HTMLHeadingElement | null = null;
+
+  function openPublishConfirm(trigger: HTMLButtonElement) {
+    publishTrigger = trigger;
+    setPublishConfirmOpen(true);
+  }
+
+  function dismissPublishConfirm(focusTarget: HTMLElement | null) {
+    setPublishConfirmOpen(false);
+    publishTrigger = null;
+    focusTarget?.focus();
+  }
+
+  function closePublishConfirm() {
+    // Cancel and Escape leave the brief private, so the trigger is still there.
+    dismissPublishConfirm(
+      publishTrigger?.isConnected ? publishTrigger : briefTitle,
+    );
   }
 
   async function handleSaveEdit() {
@@ -268,6 +298,7 @@ export function WeeklyBriefDetailPage() {
     if (!row || fields.length === 0) return;
     setSavingEdit(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       await editBrief({
         id: row._id,
@@ -286,7 +317,7 @@ export function WeeklyBriefDetailPage() {
       setEditMode(false);
       setNotice("Weekly brief changes saved with edit provenance.");
     } catch (error) {
-      setNotice(
+      setNoticeError(
         error instanceof Error ? error.message : "Could not save weekly brief.",
       );
     } finally {
@@ -299,12 +330,13 @@ export function WeeklyBriefDetailPage() {
     if (!b) return;
     setPublishingToNotion(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       const result = await publishToNotion({ id: b._id as Id<"weeklyBriefs"> });
       setNotice(`Published to Notion: ${result.notionUrl ?? "success"}`);
     } catch (error) {
       console.error("Weekly brief publish failed", error);
-      setNotice("Publish failed. Please try again or contact support.");
+      setNoticeError("Publish failed. Please try again or contact support.");
     } finally {
       setPublishingToNotion(false);
     }
@@ -315,12 +347,16 @@ export function WeeklyBriefDetailPage() {
     if (!row) return;
     setPublishingBrief(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       await publishBrief({ id: row._id });
-      setPublishConfirmOpen(false);
+      // The trigger sits inside a private-only <Show>. It is still connected
+      // at this point, but the visibility push that follows unmounts it, so
+      // focusing it here would land focus on <body> a moment later.
+      dismissPublishConfirm(briefTitle);
       setNotice("Weekly brief published in the app.");
     } catch (error) {
-      setNotice(
+      setNoticeError(
         error instanceof Error
           ? error.message
           : "Could not publish weekly brief.",
@@ -335,6 +371,7 @@ export function WeeklyBriefDetailPage() {
     if (!b) return;
     setCreatingRecap(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       const artifactId = await createRecapDraft({
         weeklyBriefId: b._id as Id<"weeklyBriefs">,
@@ -345,7 +382,7 @@ export function WeeklyBriefDetailPage() {
       });
     } catch (error) {
       console.error("Editorial draft creation failed", error);
-      setNotice("Could not create an editorial recap draft.");
+      setNoticeError("Could not create an editorial recap draft.");
     } finally {
       setCreatingRecap(false);
     }
@@ -354,13 +391,14 @@ export function WeeklyBriefDetailPage() {
   async function handleEnableFeed(feedId: Id<"feeds">, name: string) {
     setEnablingFeedId(feedId);
     setNotice(null);
+    setNoticeError(null);
     try {
       await setFeedEnabled({ id: feedId, enabled: true });
       setEnabledFeedIds((current) => new Set([...current, feedId]));
       setNotice(`${name} enabled.`);
     } catch (error) {
       console.error("Proposed feed enable failed", error);
-      setNotice(`Could not enable ${name}.`);
+      setNoticeError(`Could not enable ${name}.`);
     } finally {
       setEnablingFeedId(null);
     }
@@ -374,24 +412,22 @@ export function WeeklyBriefDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={brief()}
-        fallback={
-          <UICard>
-            <p
-              class={css({
-                color: briefQuery.isError() ? "zodiac.error" : "zodiac.cream",
-              })}
-            >
-              {briefQuery.isLoading()
-                ? "Loading brief..."
-                : briefQuery.error()
-                  ? `Unable to load brief: ${briefQuery.error()?.message}`
-                  : "Weekly brief not found."}
-            </p>
-          </UICard>
+      <UINotice
+        status={
+          briefQuery.isLoading()
+            ? "Loading brief..."
+            : !brief() && !briefQuery.isError()
+              ? "Weekly brief not found."
+              : null
         }
-      >
+        error={
+          briefQuery.isError()
+            ? `Unable to load brief: ${briefQuery.error()?.message}`
+            : null
+        }
+      />
+
+      <Show when={brief()}>
         {(b) => (
           <UICard>
             {/* Badges */}
@@ -429,7 +465,15 @@ export function WeeklyBriefDetailPage() {
             </div>
 
             {/* Title */}
-            <h1 class={detailTitleClass}>{extractTitle(b().bodyMd)}</h1>
+            <h1
+              ref={(element) => {
+                briefTitle = element;
+              }}
+              tabindex="-1"
+              class={detailTitleClass}
+            >
+              {extractTitle(b().bodyMd)}
+            </h1>
 
             {/* Meta */}
             <p class={metaLine}>
@@ -473,7 +517,7 @@ export function WeeklyBriefDetailPage() {
               <Show when={b().visibility === "private"}>
                 <UIButton
                   variant="solid"
-                  onClick={() => setPublishConfirmOpen(true)}
+                  onClick={(event) => openPublishConfirm(event.currentTarget)}
                   disabled={publishingBrief()}
                 >
                   Publish brief
@@ -495,9 +539,19 @@ export function WeeklyBriefDetailPage() {
                 role="dialog"
                 aria-modal="false"
                 aria-label="Confirm weekly brief publication"
+                ref={(element) => {
+                  queueMicrotask(() =>
+                    element.querySelector("button")?.focus(),
+                  );
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Escape") return;
+                  event.stopPropagation();
+                  closePublishConfirm();
+                }}
                 class={cx(violetAccentContainerClass, css({ gap: "3" }))}
               >
-                <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>
+                <p class={css({ color: "zodiac.cream/72" })}>
                   Publishing makes this weekly brief public in the app and
                   records its publication time.
                 </p>
@@ -514,7 +568,7 @@ export function WeeklyBriefDetailPage() {
                   <UIButton
                     variant="ghost"
                     disabled={publishingBrief()}
-                    onClick={() => setPublishConfirmOpen(false)}
+                    onClick={() => closePublishConfirm()}
                   >
                     Cancel
                   </UIButton>
@@ -533,7 +587,7 @@ export function WeeklyBriefDetailPage() {
                     justifyContent: "space-between",
                   })}
                 >
-                  <span class={sectionLabel}>Edit generated brief</span>
+                  <h2 class={sectionLabel}>Edit generated brief</h2>
                   <div
                     class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
                   >
@@ -544,7 +598,7 @@ export function WeeklyBriefDetailPage() {
                     </For>
                   </div>
                 </div>
-                <p class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
+                <p class={css({ color: "zodiac.cream/68" })}>
                   Saved changes preserve the generated and edited values as eval
                   provenance.
                 </p>
@@ -614,20 +668,20 @@ export function WeeklyBriefDetailPage() {
               </div>
             </Show>
 
-            <Show when={notice()}>
-              {(msg) => (
-                <p class={css({ color: "zodiac.cream", mt: "2" })}>{msg()}</p>
-              )}
-            </Show>
+            <UINotice
+              class={css({ mt: "2" })}
+              status={notice()}
+              error={noticeError()}
+            />
 
             <Show when={campaign()}>
               {(row) => (
                 <>
                   <hr class={goldDivider} />
-                  <div class={sectionLabel}>Campaign Context</div>
+                  <h2 class={sectionLabel}>Campaign Context</h2>
                   <div
                     class={css({
-                      borderColor: "rgba(200, 168, 75, 0.18)",
+                      borderColor: "zodiac.gold/18",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       p: "3",
@@ -644,7 +698,7 @@ export function WeeklyBriefDetailPage() {
                       <UIBadge tone="gold">{row().title}</UIBadge>
                       <UIBadge tone="cream">{row().status}</UIBadge>
                     </div>
-                    <p class={css({ color: "rgba(245, 240, 232, 0.72)" })}>
+                    <p class={css({ color: "zodiac.cream/72" })}>
                       {row().question}
                     </p>
                   </div>
@@ -653,11 +707,11 @@ export function WeeklyBriefDetailPage() {
             </Show>
 
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Studio Prompts</div>
+            <h2 class={sectionLabel}>Studio Prompts</h2>
             <div class={css({ display: "grid", gap: "3" })}>
               <div
                 class={css({
-                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderColor: "zodiac.gold/18",
                   borderRadius: "l2",
                   borderWidth: "1px",
                   p: "3",
@@ -675,7 +729,7 @@ export function WeeklyBriefDetailPage() {
               </div>
               <div
                 class={css({
-                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderColor: "zodiac.gold/18",
                   borderRadius: "l2",
                   borderWidth: "1px",
                   p: "3",
@@ -693,7 +747,7 @@ export function WeeklyBriefDetailPage() {
               </div>
               <div
                 class={css({
-                  borderColor: "rgba(200, 168, 75, 0.18)",
+                  borderColor: "zodiac.gold/18",
                   borderRadius: "l2",
                   borderWidth: "1px",
                   p: "3",
@@ -713,12 +767,12 @@ export function WeeklyBriefDetailPage() {
 
             <Show when={(b().recommendedActions ?? []).length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Recommended Actions</div>
+              <h2 class={sectionLabel}>Recommended Actions</h2>
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={b().recommendedActions ?? []}>
                   {(action) => {
                     const linkClass = css({
-                      borderColor: "rgba(200, 168, 75, 0.18)",
+                      borderColor: "zodiac.gold/18",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       color: "inherit",
@@ -742,9 +796,7 @@ export function WeeklyBriefDetailPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {action.targetType} {action.targetId.slice(-6)}
                         </div>
-                        <div
-                          class={css({ color: "rgba(245, 240, 232, 0.68)" })}
-                        >
+                        <div class={css({ color: "zodiac.cream/68" })}>
                           {action.reason}
                         </div>
                       </>
@@ -783,13 +835,17 @@ export function WeeklyBriefDetailPage() {
               {(loopReport) => (
                 <>
                   <hr class={goldDivider} />
-                  <div class={sectionLabel}>Loop Report</div>
+                  <h2 class={sectionLabel}>Loop Report</h2>
 
-                  <h2 class={loopSubheadingClass}>Correspondence movement</h2>
+                  <h3 class={loopSubheadingClass}>Correspondence movement</h3>
                   <dl
                     class={css({
-                      borderBottom: "1px solid rgba(245, 240, 232, 0.1)",
-                      borderTop: "1px solid rgba(245, 240, 232, 0.1)",
+                      borderBottomWidth: "1px",
+                      borderBottomStyle: "solid",
+                      borderBottomColor: "zodiac.cream/10",
+                      borderTopWidth: "1px",
+                      borderTopStyle: "solid",
+                      borderTopColor: "zodiac.cream/10",
                       display: "grid",
                       gridTemplateColumns: {
                         base: "repeat(2, minmax(0, 1fr))",
@@ -847,10 +903,12 @@ export function WeeklyBriefDetailPage() {
                   <Show
                     when={loopReport().correspondences.topMovers.length > 0}
                   >
-                    <h3 class={loopSubheadingClass}>Top movers</h3>
+                    <h4 class={loopSubheadingClass}>Top movers</h4>
                     <div
                       class={css({
-                        borderTop: "1px solid rgba(200, 168, 75, 0.16)",
+                        borderTopWidth: "1px",
+                        borderTopStyle: "solid",
+                        borderTopColor: "zodiac.gold/16",
                       })}
                     >
                       <For each={loopReport().correspondences.topMovers}>
@@ -882,9 +940,8 @@ export function WeeklyBriefDetailPage() {
                     </div>
                   </Show>
 
-                  <h2 class={loopSubheadingClass}>Review queue</h2>
+                  <h3 class={loopSubheadingClass}>Review queue</h3>
                   <div
-                    role="status"
                     class={`${reviewQueueBannerClass} ${
                       loopReport().reviewQueue.agentBlocked
                         ? reviewQueueBlockedClass
@@ -910,18 +967,20 @@ export function WeeklyBriefDetailPage() {
                     </span>
                   </div>
 
-                  <h2 class={loopSubheadingClass}>Experiment debt</h2>
+                  <h3 class={loopSubheadingClass}>Experiment debt</h3>
                   <Show
                     when={loopReport().experimentDebt.length > 0}
                     fallback={
-                      <p class={css({ color: "rgba(245, 240, 232, 0.68)" })}>
+                      <p class={css({ color: "zodiac.cream/68" })}>
                         No recipes are waiting on composition or listening.
                       </p>
                     }
                   >
                     <div
                       class={css({
-                        borderTop: "1px solid rgba(200, 168, 75, 0.16)",
+                        borderTopWidth: "1px",
+                        borderTopStyle: "solid",
+                        borderTopColor: "zodiac.gold/16",
                       })}
                     >
                       <For each={loopReport().experimentDebt}>
@@ -955,10 +1014,12 @@ export function WeeklyBriefDetailPage() {
                   </Show>
 
                   <Show when={loopReport().proposedFeeds.length > 0}>
-                    <h2 class={loopSubheadingClass}>Proposed feeds</h2>
+                    <h3 class={loopSubheadingClass}>Proposed feeds</h3>
                     <div
                       class={css({
-                        borderTop: "1px solid rgba(200, 168, 75, 0.16)",
+                        borderTopWidth: "1px",
+                        borderTopStyle: "solid",
+                        borderTopColor: "zodiac.gold/16",
                         display: "grid",
                       })}
                     >
@@ -974,8 +1035,9 @@ export function WeeklyBriefDetailPage() {
                             <div
                               class={css({
                                 alignItems: { base: "start", md: "center" },
-                                borderBottom:
-                                  "1px solid rgba(200, 168, 75, 0.16)",
+                                borderBottomWidth: "1px",
+                                borderBottomStyle: "solid",
+                                borderBottomColor: "zodiac.gold/16",
                                 display: "flex",
                                 flexDirection: { base: "column", md: "row" },
                                 gap: "3",
@@ -990,8 +1052,7 @@ export function WeeklyBriefDetailPage() {
                                   rel="noopener noreferrer"
                                   class={css({
                                     color: "zodiac.cream",
-                                    textDecorationColor:
-                                      "rgba(200, 168, 75, 0.45)",
+                                    textDecorationColor: "zodiac.gold/45",
                                     textUnderlineOffset: "3px",
                                   })}
                                 >
@@ -999,7 +1060,7 @@ export function WeeklyBriefDetailPage() {
                                 </a>
                                 <p
                                   class={css({
-                                    color: "rgba(245, 240, 232, 0.68)",
+                                    color: "zodiac.cream/68",
                                     m: "0",
                                     mt: "1",
                                   })}
@@ -1010,6 +1071,11 @@ export function WeeklyBriefDetailPage() {
                               <UIButton
                                 type="button"
                                 variant={enabled() ? "ghost" : "solid"}
+                                aria-label={
+                                  enabled()
+                                    ? `${feed.name} enabled`
+                                    : `Enable feed ${feed.name}`
+                                }
                                 disabled={
                                   enabled() || enablingFeedId() === feed.feedId
                                 }
@@ -1040,10 +1106,10 @@ export function WeeklyBriefDetailPage() {
             {/* Todo Items */}
             <Show when={(b().todo ?? []).length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Action Items</div>
+              <h2 class={sectionLabel}>Action Items</h2>
               <ul
                 class={css({
-                  color: "rgba(245, 240, 232, 0.7)",
+                  color: "zodiac.cream/70",
                   fontFamily: "display",
                   listStyleType: "disc",
                   pl: "5",
@@ -1057,7 +1123,7 @@ export function WeeklyBriefDetailPage() {
 
             <Show when={activeTheses().length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Active Theses</div>
+              <h2 class={sectionLabel}>Active Theses</h2>
               <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
                 <For each={activeTheses()}>
                   {(thesis) => (
@@ -1075,7 +1141,7 @@ export function WeeklyBriefDetailPage() {
 
             <Show when={referencedFailures().length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Referenced Reversals</div>
+              <h2 class={sectionLabel}>Referenced Reversals</h2>
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={referencedFailures()}>
                   {(failure) => (
@@ -1083,10 +1149,10 @@ export function WeeklyBriefDetailPage() {
                       to="/failures"
                       hash={failure.key}
                       class={css({
-                        borderColor: "rgba(200, 168, 75, 0.18)",
+                        borderColor: "zodiac.gold/18",
                         borderRadius: "l2",
                         borderWidth: "1px",
-                        color: "rgba(245, 240, 232, 0.76)",
+                        color: "zodiac.cream/76",
                         display: "block",
                         p: "3",
                         textDecoration: "none",

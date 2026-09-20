@@ -16,5 +16,6 @@ export {
 } from "./form-styles";
 export { UIInput } from "./input";
 export { Markdown } from "./markdown";
+export { collapsedNoticeClass, UINotice } from "./notice";
 export { UISelect } from "./select";
 export { UITextarea } from "./textarea";

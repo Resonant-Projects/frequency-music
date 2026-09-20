@@ -10,6 +10,7 @@ import {
 } from "../components/agent-draft";
 import {
   backLink,
+  collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
   pageClass,
@@ -17,6 +18,7 @@ import {
   UIBadge,
   UIButton,
   UICard,
+  UINotice,
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
@@ -37,20 +39,22 @@ type PublicAgentRun = Omit<Doc<"agentRuns">, "input"> & {
 };
 
 const helperClass = css({
-  color: "rgba(245, 240, 232, 0.62)",
+  color: "zodiac.cream/62",
   lineHeight: "1.6",
 });
 
 const monoClass = css({
-  color: "rgba(245, 240, 232, 0.62)",
+  color: "zodiac.cream/62",
   fontFamily: "mono",
   fontSize: "xs",
   letterSpacing: "0.08em",
+  overflowWrap: "anywhere",
   textTransform: "uppercase",
 });
 
+/** Wrapper for an always-mounted notice that currently carries no text. */
 const eventClass = css({
-  borderColor: "rgba(245, 240, 232, 0.12)",
+  borderColor: "zodiac.cream/12",
   borderLeftWidth: "1px",
   display: "grid",
   gap: "2",
@@ -80,12 +84,14 @@ function eventTone(kind: AgentRunEventKind): "gold" | "violet" | "cream" {
   return "cream";
 }
 
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "medium",
+});
+
 function formatTime(value?: number) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "medium",
-  }).format(new Date(value));
+  return timeFormatter.format(new Date(value));
 }
 
 function formatDuration(
@@ -174,17 +180,15 @@ function PersistedDraftActions(props: { draft: PersistedReviewDraft }) {
             can only be rejected with a note.
           </p>
         </Show>
-        <Show when={error()}>
-          {(message) => (
-            <p class={css({ color: "zodiac.violet", lineHeight: "1.6" })}>
-              {message()}
-            </p>
-          )}
-        </Show>
+        <UINotice
+          class={error() ? undefined : collapsedNoticeClass}
+          error={error()}
+        />
         <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
           <UIButton
             variant="solid"
             disabled={busy() || !canPromote()}
+            aria-label={`Approve draft: ${props.draft.title}`}
             onClick={handleApprove}
           >
             {busy() ? "Working…" : "Approve"}
@@ -192,6 +196,7 @@ function PersistedDraftActions(props: { draft: PersistedReviewDraft }) {
           <UIButton
             variant="outline"
             disabled={busy() || !canReject()}
+            aria-label={`Reject draft: ${props.draft.title}`}
             onClick={handleReject}
           >
             Reject
@@ -225,6 +230,31 @@ export function AgentRunDetailPage() {
     document.title = "Agent Run — Frequency Music";
   });
 
+  const runErrorText = () =>
+    run.error() ? `Unable to load agent run: ${run.error()?.message}` : null;
+  const runStatusText = () => {
+    if (run.error() || run.data()) return null;
+    return run.isLoading() ? "Loading agent run..." : "Agent run not found.";
+  };
+  const persistedDraftsError = () =>
+    persistedDrafts.error()
+      ? `Unable to load persisted drafts: ${persistedDrafts.error()?.message}`
+      : null;
+  const persistedDraftsStatus = () => {
+    if (persistedDrafts.isLoading()) return "Loading persisted drafts...";
+    if (persistedDrafts.error() || (persistedDrafts.data() ?? []).length > 0) {
+      return null;
+    }
+    return "No persisted human-review draft rows are linked to this run yet.";
+  };
+  const eventsError = () =>
+    events.error() ? `Unable to load events: ${events.error()?.message}` : null;
+  const eventsStatus = () => {
+    if (events.isLoading()) return "Loading events...";
+    if (events.error() || (events.data() ?? []).length > 0) return null;
+    return "No events recorded for this run.";
+  };
+
   return (
     <section class={pageClass}>
       <div>
@@ -233,23 +263,11 @@ export function AgentRunDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={run.data() as PublicAgentRun | null | undefined}
-        fallback={
-          <UICard>
-            <Show
-              when={!run.isLoading() && run.error()}
-              fallback={<p class={helperClass}>Loading agent run...</p>}
-            >
-              {(error) => (
-                <p class={helperClass}>
-                  Unable to load agent run: {error().message}
-                </p>
-              )}
-            </Show>
-          </UICard>
-        }
-      >
+      <UICard class={run.data() ? collapsedNoticeClass : undefined}>
+        <UINotice status={runStatusText()} error={runErrorText()} />
+      </UICard>
+
+      <Show when={run.data() as PublicAgentRun | null | undefined}>
         {(row) => (
           <>
             <UICard>
@@ -306,7 +324,7 @@ export function AgentRunDetailPage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Open LangSmith Trace ↗
+                    Open LangSmith Trace <span aria-hidden="true">↗</span>
                   </a>
                 )}
               </Show>
@@ -376,19 +394,14 @@ export function AgentRunDetailPage() {
 
             <UICard>
               <h2 class={sectionTitleClass}>Persisted Draft Records</h2>
+              <UINotice
+                status={persistedDraftsStatus()}
+                error={persistedDraftsError()}
+              />
               <Show
                 when={
                   !persistedDrafts.isLoading() &&
                   (persistedDrafts.data() ?? []).length > 0
-                }
-                fallback={
-                  <p class={helperClass}>
-                    {persistedDrafts.isLoading()
-                      ? "Loading persisted drafts..."
-                      : persistedDrafts.error()
-                        ? `Unable to load persisted drafts: ${persistedDrafts.error()?.message}`
-                        : "No persisted human-review draft rows are linked to this run yet."}
-                  </p>
                 }
               >
                 <div class={css({ display: "grid", gap: "4" })}>
@@ -400,7 +413,7 @@ export function AgentRunDetailPage() {
                     {(draft) => (
                       <article
                         class={css({
-                          borderColor: "rgba(245, 240, 232, 0.12)",
+                          borderColor: "zodiac.cream/12",
                           borderRadius: "l2",
                           borderWidth: "1px",
                           display: "grid",
@@ -486,17 +499,9 @@ export function AgentRunDetailPage() {
 
             <UICard>
               <h2 class={sectionTitleClass}>Event Timeline</h2>
+              <UINotice status={eventsStatus()} error={eventsError()} />
               <Show
                 when={!events.isLoading() && (events.data() ?? []).length > 0}
-                fallback={
-                  <p class={helperClass}>
-                    {events.isLoading()
-                      ? "Loading events..."
-                      : events.error()
-                        ? `Unable to load events: ${events.error()?.message}`
-                        : "No events recorded for this run."}
-                  </p>
-                }
               >
                 <div class={css({ display: "grid", gap: "4" })}>
                   <For each={events.data() ?? []}>
@@ -530,12 +535,15 @@ export function AgentRunDetailPage() {
                           <Show when={payload()}>
                             {(text) => (
                               <pre
+                                role="group"
+                                tabIndex={0}
+                                aria-label={`Payload for ${event.kind} event`}
                                 class={css({
                                   bg: "rgba(0, 0, 0, 0.22)",
-                                  borderColor: "rgba(245, 240, 232, 0.12)",
+                                  borderColor: "zodiac.cream/12",
                                   borderRadius: "l2",
                                   borderWidth: "1px",
-                                  color: "rgba(245, 240, 232, 0.72)",
+                                  color: "zodiac.cream/72",
                                   fontFamily: "mono",
                                   fontSize: "xs",
                                   maxH: "18rem",

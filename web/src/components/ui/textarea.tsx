@@ -2,8 +2,8 @@ import type { JSX } from "solid-js";
 import { css, cx } from "../../../styled-system/css";
 
 const textareaClass = css({
-  bg: "rgba(26, 15, 53, 0.45)",
-  borderColor: "rgba(200, 168, 75, 0.28)",
+  bg: "zodiac.glow-inner/45",
+  borderColor: "zodiac.gold/28",
   borderRadius: "l2",
   borderWidth: "1px",
   color: "zodiac.cream",
@@ -14,13 +14,17 @@ const textareaClass = css({
   py: "2",
   resize: "vertical",
   width: "full",
+  _coarsePointer: {
+    fontSize: "md",
+  },
   _focusVisible: {
     borderColor: "zodiac.gold",
-    boxShadow: "0 0 0 1px rgba(200, 168, 75, 0.4)",
-    outline: "none",
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "1px",
   },
   _placeholder: {
-    color: "rgba(245, 240, 232, 0.5)",
+    color: "zodiac.cream/50",
   },
 });
 

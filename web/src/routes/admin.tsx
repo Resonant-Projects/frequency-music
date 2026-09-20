@@ -12,6 +12,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
 } from "../components/ui";
 import { createMutation, createQuery } from "../integrations/convex";
@@ -20,7 +21,7 @@ import { api } from "../../../convex/_generated/api";
 type SourceStatus = FunctionArgs<typeof api.admin.setSourceStatus>["status"];
 
 const helperClass = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/58",
   fontSize: "sm",
   lineHeight: "1.6",
 });
@@ -42,14 +43,21 @@ export function AdminPage() {
     createSignal<SourceStatus>("review_needed");
   const [batchLimit, setBatchLimit] = createSignal("25");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  const [sourceIdInvalid, setSourceIdInvalid] = createSignal(false);
+  let sourceIdField: HTMLInputElement | undefined;
 
   async function submitSourceStatus(event: SubmitEvent) {
     event.preventDefault();
+    setNotice(null);
+    setNoticeError(null);
 
     if (!sourceId().trim()) {
-      setNotice("Source ID is required.");
+      setSourceIdInvalid(true);
+      sourceIdField?.focus();
       return;
     }
+    setSourceIdInvalid(false);
 
     try {
       await setSourceStatus({
@@ -58,12 +66,14 @@ export function AdminPage() {
       });
       setNotice("Source status updated.");
     } catch (error) {
-      setNotice(`Source status update failed: ${String(error)}`);
+      setNoticeError(`Source status update failed: ${String(error)}`);
     }
   }
 
   async function queueBatchExtraction(event: SubmitEvent) {
     event.preventDefault();
+    setNotice(null);
+    setNoticeError(null);
 
     try {
       const result = await startBatchExtraction({
@@ -71,7 +81,7 @@ export function AdminPage() {
       });
       setNotice(`Batch extraction queued: ${result.workflowId}`);
     } catch (error) {
-      setNotice(`Batch extraction failed: ${String(error)}`);
+      setNoticeError(`Batch extraction failed: ${String(error)}`);
     }
   }
 
@@ -90,7 +100,7 @@ export function AdminPage() {
             <h1 class={pageTitleClass}>Admin</h1>
             <p
               class={css({
-                color: "rgba(245, 240, 232, 0.62)",
+                color: "zodiac.cream/62",
                 lineHeight: "1.6",
               })}
             >
@@ -99,20 +109,16 @@ export function AdminPage() {
           </div>
         </div>
 
-        <div aria-live="polite">
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-                {message()}
-              </p>
-            )}
-          </Show>
-        </div>
+        <UINotice
+          class={css({ marginTop: "3" })}
+          status={notice()}
+          error={noticeError()}
+        />
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Workspace Snapshot</h2>
-        <div
+        <dl
           class={css({
             display: "grid",
             gap: "3",
@@ -123,30 +129,42 @@ export function AdminPage() {
           })}
         >
           <div>
-            <UIBadge tone="gold">Sources</UIBadge>
-            <p>{snapshot()?.sources ?? 0}</p>
+            <dt>
+              <UIBadge tone="gold">Sources</UIBadge>
+            </dt>
+            <dd>{snapshot()?.sources ?? 0}</dd>
           </div>
           <div>
-            <UIBadge tone="violet">Hypotheses</UIBadge>
-            <p>{snapshot()?.hypotheses ?? 0}</p>
+            <dt>
+              <UIBadge tone="violet">Hypotheses</UIBadge>
+            </dt>
+            <dd>{snapshot()?.hypotheses ?? 0}</dd>
           </div>
           <div>
-            <UIBadge tone="cream">Recipes</UIBadge>
-            <p>{snapshot()?.recipes ?? 0}</p>
+            <dt>
+              <UIBadge tone="cream">Recipes</UIBadge>
+            </dt>
+            <dd>{snapshot()?.recipes ?? 0}</dd>
           </div>
           <div>
-            <UIBadge tone="gold">Compositions</UIBadge>
-            <p>{snapshot()?.compositions ?? 0}</p>
+            <dt>
+              <UIBadge tone="gold">Compositions</UIBadge>
+            </dt>
+            <dd>{snapshot()?.compositions ?? 0}</dd>
           </div>
           <div>
-            <UIBadge tone="violet">Weekly Briefs</UIBadge>
-            <p>{snapshot()?.weeklyBriefs ?? 0}</p>
+            <dt>
+              <UIBadge tone="violet">Weekly Briefs</UIBadge>
+            </dt>
+            <dd>{snapshot()?.weeklyBriefs ?? 0}</dd>
           </div>
           <div>
-            <UIBadge tone="cream">Feeds</UIBadge>
-            <p>{snapshot()?.feeds ?? 0}</p>
+            <dt>
+              <UIBadge tone="cream">Feeds</UIBadge>
+            </dt>
+            <dd>{snapshot()?.feeds ?? 0}</dd>
           </div>
-        </div>
+        </dl>
       </UICard>
 
       <UICard as="form" onSubmit={queueBatchExtraction}>
@@ -160,6 +178,7 @@ export function AdminPage() {
         </label>
         <UIInput
           id="admin-batch-limit"
+          inputmode="numeric"
           value={batchLimit()}
           onInput={(event) => setBatchLimit(event.currentTarget.value)}
           placeholder="25"
@@ -256,9 +275,7 @@ export function AdminPage() {
 
       <UICard as="form" onSubmit={submitSourceStatus}>
         <h2 class={sectionTitleClass}>Source Override</h2>
-        <p
-          class={css({ color: "rgba(245, 240, 232, 0.62)", marginBottom: "3" })}
-        >
+        <p class={css({ color: "zodiac.cream/62", marginBottom: "3" })}>
           Emergency/manual override. For normal source workflow, use the Display
           queue.
         </p>
@@ -281,11 +298,29 @@ export function AdminPage() {
           Source ID
         </label>
         <UIInput
+          ref={(element) => {
+            sourceIdField = element;
+          }}
           id="admin-source-id"
           value={sourceId()}
-          onInput={(event) => setSourceId(event.currentTarget.value)}
+          aria-invalid={sourceIdInvalid() ? "true" : undefined}
+          aria-describedby={
+            sourceIdInvalid() ? "admin-source-id-error" : undefined
+          }
+          onInput={(event) => {
+            setSourceId(event.currentTarget.value);
+            if (sourceIdInvalid()) setSourceIdInvalid(false);
+          }}
           placeholder="k57..."
         />
+        <Show when={sourceIdInvalid()}>
+          <p
+            id="admin-source-id-error"
+            class={css({ color: "zodiac.error", fontSize: "sm", mt: "1" })}
+          >
+            Source ID is required.
+          </p>
+        </Show>
 
         <label class={fieldLabelClass} for="admin-source-status">
           Status

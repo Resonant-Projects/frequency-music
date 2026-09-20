@@ -1,5 +1,12 @@
 import type { FunctionArgs, FunctionReturnType } from "convex/server";
-import { createMemo, createSignal, For, onMount, Show } from "solid-js";
+import {
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { DECISION_NOTE_MAX_LENGTH } from "../../../convex/shared/vocabularyTriage";
 import { css } from "../../styled-system/css";
@@ -11,6 +18,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
@@ -49,20 +57,20 @@ const SECTIONS = [
 }>;
 
 const helperClass = css({
-  color: "rgba(245, 240, 232, 0.62)",
+  color: "zodiac.cream/62",
   lineHeight: "1.6",
 });
 
 const eyebrowClass = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/66",
   fontFamily: "mono",
-  fontSize: "2xs",
+  fontSize: "xs",
   letterSpacing: "0.18em",
   textTransform: "uppercase",
 });
 
 const triageRowClass = css({
-  borderColor: "rgba(245, 240, 232, 0.12)",
+  borderColor: "zodiac.cream/12",
   borderRadius: "l2",
   borderWidth: "1px",
   display: "grid",
@@ -75,17 +83,25 @@ function mentionLabel(entry: TriageEntry) {
   return `${entry.mentionCount}${entry.mentionCountCapped ? "+" : ""} mention${entry.mentionCount === 1 ? "" : "s"}`;
 }
 
+const createdAtFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+});
+
 function formatCreatedAt(createdAt: number) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-    new Date(createdAt),
-  );
+  return createdAtFormatter.format(new Date(createdAt));
 }
 
 function TriageRow(props: {
   entry: TriageEntry;
   knownTargets: KnownTarget[];
   list: VocabularyList;
+  /** DOM id of the heading focus should land on once this row unmounts. */
+  nextFocusId: string;
+  onDecided: (term: string) => void;
 }) {
+  const headingId = () => `triage-entry-${props.entry._id}`;
+  const term = () => props.entry.displayLabel ?? props.entry.name;
+
   const promote = createMutation(api.vocabulary.promoteEntry);
   const reject = createMutation(api.vocabulary.rejectEntry);
   const merge = createMutation(api.vocabulary.mergeEntry);
@@ -140,6 +156,9 @@ function TriageRow(props: {
           ...optionalNote,
         });
       }
+      props.onDecided(term());
+      // Hand focus to the next heading while this row is still mounted.
+      document.getElementById(props.nextFocusId)?.focus();
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -168,6 +187,8 @@ function TriageRow(props: {
               when={props.list === "conceptDomain"}
               fallback={
                 <h3
+                  id={headingId()}
+                  tabIndex={-1}
                   class={css({
                     color: "zodiac.cream",
                     fontFamily: "display",
@@ -175,13 +196,13 @@ function TriageRow(props: {
                     fontWeight: "normal",
                   })}
                 >
-                  {props.entry.displayLabel ?? props.entry.name}
+                  {term()}
                 </h3>
               }
             >
-              <UIBadge tone="violet">
-                {props.entry.displayLabel ?? props.entry.name}
-              </UIBadge>
+              <h3 id={headingId()} tabIndex={-1}>
+                <UIBadge tone="violet">{term()}</UIBadge>
+              </h3>
             </Show>
           </div>
           <p class={eyebrowClass}>
@@ -206,7 +227,7 @@ function TriageRow(props: {
             disabled={busy() || props.knownTargets.length === 0}
             onClick={() => chooseDecision("merge")}
           >
-            Merge →
+            Merge <span aria-hidden="true">→</span>
           </UIButton>
           <UIButton
             variant="ghost"
@@ -234,13 +255,13 @@ function TriageRow(props: {
         {(selectedDecision) => (
           <div
             class={css({
-              bg: "rgba(26, 15, 53, 0.32)",
+              bg: "zodiac.glow-inner/32",
               borderRadius: "l2",
               display: "grid",
               gap: "3",
               p: "3",
               "& select, & input": {
-                borderColor: "rgba(139, 92, 246, 0.42)",
+                borderColor: "zodiac.violet/42",
               },
               "& select:focus-visible, & input:focus-visible": {
                 borderColor: "zodiac.violet",
@@ -287,15 +308,7 @@ function TriageRow(props: {
                 placeholder="Record the reasoning for this decision."
               />
             </div>
-            <div aria-live="polite">
-              <Show when={error()}>
-                {(message) => (
-                  <p class={css({ color: "zodiac.violet", lineHeight: "1.5" })}>
-                    {message()}
-                  </p>
-                )}
-              </Show>
-            </div>
+            <UINotice error={error()} />
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
               <UIButton
                 variant="solid"
@@ -325,10 +338,14 @@ function TriageSection(props: {
   title: string;
   list: VocabularyList;
   data: TriageList;
+  onDecided: (term: string) => void;
 }) {
+  const headingId = () => `triage-heading-${props.list}`;
   return (
     <UICard style={{ "border-color": "rgba(139, 92, 246, 0.22)" }}>
       <h2
+        id={headingId()}
+        tabIndex={-1}
         class={css({
           color: "zodiac.cream",
           fontFamily: "display",
@@ -341,16 +358,27 @@ function TriageSection(props: {
         {props.title}
       </h2>
       <div class={css({ display: "grid", gap: "3", mt: "4" })}>
-        <Show
-          when={props.data.provisional.length > 0}
-          fallback={<p class={helperClass}>No provisional entries remain.</p>}
-        >
+        <UINotice
+          class={helperClass}
+          status={
+            props.data.provisional.length === 0
+              ? "No provisional entries remain."
+              : null
+          }
+        />
+        <Show when={props.data.provisional.length > 0}>
           <For each={props.data.provisional}>
-            {(entry) => (
+            {(entry, index) => (
               <TriageRow
                 entry={entry}
                 knownTargets={props.data.knownTargets}
                 list={props.list}
+                nextFocusId={
+                  props.data.provisional[index() + 1]
+                    ? `triage-entry-${props.data.provisional[index() + 1]._id}`
+                    : headingId()
+                }
+                onDecided={props.onDecided}
               />
             )}
           </For>
@@ -366,6 +394,18 @@ export function VocabularyTriagePage() {
   });
 
   const board = createQueryWithStatus(api.vocabulary.triageBoard);
+  const [announcement, setAnnouncement] = createSignal<string | null>(null);
+  let announcementTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Retire the announcement once assistive tech has had time to read it;
+  // leaving it mounted re-announces a stale decision on the next load flip.
+  function announce(message: string) {
+    clearTimeout(announcementTimer);
+    setAnnouncement(message);
+    announcementTimer = setTimeout(() => setAnnouncement(null), 5000);
+  }
+
+  onCleanup(() => clearTimeout(announcementTimer));
 
   return (
     <section class={pageClass}>
@@ -374,7 +414,7 @@ export function VocabularyTriagePage() {
         <h1 class={pageTitleClass}>Curate the vocabulary registry.</h1>
         <p
           class={css({
-            color: "rgba(245, 240, 232, 0.62)",
+            color: "zodiac.cream/62",
             lineHeight: "1.6",
             maxW: "70ch",
           })}
@@ -399,30 +439,15 @@ export function VocabularyTriagePage() {
             )}
           </For>
         </div>
-        <Show when={board.isLoading()}>
-          <p
-            class={css({
-              color: "rgba(245, 240, 232, 0.62)",
-              lineHeight: "1.6",
-              mt: "4",
-            })}
-          >
-            Loading triage debt…
-          </p>
-        </Show>
-        <Show when={board.error()}>
-          {(error) => (
-            <p
-              class={css({
-                color: "zodiac.violet",
-                lineHeight: "1.6",
-                mt: "4",
-              })}
-            >
-              Unable to load vocabulary triage: {error().message}
-            </p>
-          )}
-        </Show>
+        <UINotice
+          class={css({ lineHeight: "1.6", mt: "4" })}
+          status={board.isLoading() ? "Loading triage debt…" : announcement()}
+          error={
+            board.error()
+              ? `Unable to load vocabulary triage: ${board.error()?.message}`
+              : null
+          }
+        />
       </UICard>
 
       <Show when={board.data()}>
@@ -433,6 +458,7 @@ export function VocabularyTriagePage() {
                 title={section.label}
                 list={section.list}
                 data={data()[section.key]}
+                onDecided={(term) => announce(`Decision recorded for ${term}`)}
               />
             )}
           </For>

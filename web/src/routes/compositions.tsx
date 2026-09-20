@@ -11,6 +11,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
 } from "../components/ui";
 import {
@@ -41,16 +42,20 @@ export function CompositionsPage() {
   const [revisionParentId, setRevisionParentId] = createSignal("");
   const [revisionVariable, setRevisionVariable] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
 
   async function submitComposition(event: SubmitEvent) {
     event.preventDefault();
 
+    setNotice(null);
+    setNoticeError(null);
+
     if (!title().trim() || !recipeId()) {
-      setNotice("Title and recipe are required.");
+      setNoticeError("Title and recipe are required.");
       return;
     }
     if (revisionParentId().trim() && !revisionVariable().trim()) {
-      setNotice("Changed Variable is required when this is a revision.");
+      setNoticeError("Changed Variable is required when this is a revision.");
       return;
     }
 
@@ -72,11 +77,13 @@ export function CompositionsPage() {
       setRevisionVariable("");
       setNotice("Composition created.");
     } catch (error) {
-      setNotice(`Failed to create composition: ${String(error)}`);
+      setNoticeError(`Failed to create composition: ${String(error)}`);
     }
   }
 
   async function setStatus(id: string, status: string) {
+    setNotice(null);
+    setNoticeError(null);
     try {
       await updateComposition({
         id: id as Id<"compositions">,
@@ -84,7 +91,7 @@ export function CompositionsPage() {
       });
       setNotice(`Composition set to ${status}.`);
     } catch (error) {
-      setNotice(`Status update failed: ${String(error)}`);
+      setNoticeError(`Status update failed: ${String(error)}`);
     }
   }
 
@@ -193,7 +200,7 @@ export function CompositionsPage() {
               />
               <p
                 class={css({
-                  color: "rgba(245, 240, 232, 0.58)",
+                  color: "zodiac.cream/58",
                   fontSize: "xs",
                   mt: "2",
                 })}
@@ -209,17 +216,13 @@ export function CompositionsPage() {
           class={css({
             alignItems: "center",
             display: "flex",
+            flexWrap: "wrap",
+            gap: "3",
             justifyContent: "space-between",
             marginTop: "4",
           })}
         >
-          <div aria-live="polite">
-            <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
-            </Show>
-          </div>
+          <UINotice status={notice()} error={noticeError()} />
           <UIButton type="submit" variant="solid">
             Create Composition
           </UIButton>
@@ -228,16 +231,16 @@ export function CompositionsPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Artifact Pipeline</h2>
-        <Show
-          when={!compositions.isLoading()}
-          fallback={<p>Loading compositions…</p>}
-        >
+        <UINotice
+          status={compositions.isLoading() ? "Loading compositions…" : null}
+        />
+        <Show when={!compositions.isLoading()}>
           <Show
             when={(compositions.data() ?? []).length > 0}
             fallback={
               <p
                 class={css({
-                  color: "rgba(245, 240, 232, 0.55)",
+                  color: "zodiac.cream/55",
                   fontFamily: "display",
                   fontSize: "md",
                   lineHeight: "1.6",
@@ -270,7 +273,7 @@ export function CompositionsPage() {
                     <div
                       data-testid="entity-row"
                       class={css({
-                        borderColor: "rgba(200, 168, 75, 0.22)",
+                        borderColor: "zodiac.gold/22",
                         borderRadius: "l2",
                         borderWidth: "1px",
                         p: "4",
@@ -311,7 +314,7 @@ export function CompositionsPage() {
                       <Show when={item.revisionParentId}>
                         <p
                           class={css({
-                            color: "rgba(245, 240, 232, 0.62)",
+                            color: "zodiac.cream/62",
                             fontSize: "sm",
                             mb: "2",
                           })}
@@ -330,6 +333,8 @@ export function CompositionsPage() {
                       >
                         <UIButton
                           variant="outline"
+                          aria-pressed={item.status === "in_progress"}
+                          aria-label={`Set ${item.title} to in progress`}
                           onClick={() =>
                             setStatus(String(item._id), "in_progress")
                           }
@@ -338,6 +343,8 @@ export function CompositionsPage() {
                         </UIButton>
                         <UIButton
                           variant="outline"
+                          aria-pressed={item.status === "rendered"}
+                          aria-label={`Set ${item.title} to rendered`}
                           onClick={() =>
                             setStatus(String(item._id), "rendered")
                           }
@@ -346,6 +353,8 @@ export function CompositionsPage() {
                         </UIButton>
                         <UIButton
                           variant="ghost"
+                          aria-pressed={item.status === "published"}
+                          aria-label={`Set ${item.title} to published`}
                           onClick={() =>
                             setStatus(String(item._id), "published")
                           }

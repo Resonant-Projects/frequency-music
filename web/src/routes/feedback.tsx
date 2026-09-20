@@ -10,6 +10,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
@@ -113,12 +114,14 @@ export function FeedbackPage() {
   const [bodyMapNotes, setBodyMapNotes] = createSignal("");
   const [standoutMoments, setStandoutMoments] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
 
   async function submitSession(event: SubmitEvent) {
     event.preventDefault();
 
     if (!compositionId() || !feedbackMd().trim()) {
-      setNotice("Composition and feedback are required.");
+      setNotice(null);
+      setNoticeError("Composition and feedback are required.");
       return;
     }
 
@@ -128,6 +131,7 @@ export function FeedbackPage() {
       const parsedStandoutMoments = parseLineSeparated(standoutMoments());
 
       setNotice(null);
+      setNoticeError(null);
       await createSession({
         compositionId: compositionId() as Id<"compositions">,
         participants: parseParticipants(participants()),
@@ -162,7 +166,7 @@ export function FeedbackPage() {
       setStandoutMoments("");
       setNotice("Listening session logged.");
     } catch (error) {
-      setNotice(`Failed to log session: ${String(error)}`);
+      setNoticeError(`Failed to log session: ${String(error)}`);
     }
   }
 
@@ -223,7 +227,8 @@ export function FeedbackPage() {
             gap: "3",
             gridTemplateColumns: {
               base: "1fr",
-              md: "repeat(5, minmax(0, 1fr))",
+              md: "repeat(3, minmax(0, 1fr))",
+              lg: "repeat(5, minmax(0, 1fr))",
             },
           })}
         >
@@ -330,14 +335,20 @@ export function FeedbackPage() {
                 {(helper) => (
                   <button
                     type="button"
+                    aria-controls="feedback-felt"
                     class={css({
-                      borderColor: "rgba(200, 168, 75, 0.22)",
+                      borderColor: "zodiac.gold/22",
                       borderRadius: "full",
                       borderWidth: "1px",
-                      color: "rgba(245, 240, 232, 0.72)",
+                      color: "zodiac.cream/72",
                       fontSize: "xs",
+                      minHeight: "7",
                       px: "2.5",
                       py: "1",
+                      _coarsePointer: {
+                        minHeight: "11",
+                        py: "2.5",
+                      },
                     })}
                     onClick={() =>
                       setFeltQualities((current) =>
@@ -373,14 +384,20 @@ export function FeedbackPage() {
                 {(helper) => (
                   <button
                     type="button"
+                    aria-controls="feedback-body-tags"
                     class={css({
-                      borderColor: "rgba(200, 168, 75, 0.22)",
+                      borderColor: "zodiac.gold/22",
                       borderRadius: "full",
                       borderWidth: "1px",
-                      color: "rgba(245, 240, 232, 0.72)",
+                      color: "zodiac.cream/72",
                       fontSize: "xs",
+                      minHeight: "7",
                       px: "2.5",
                       py: "1",
+                      _coarsePointer: {
+                        minHeight: "11",
+                        py: "2.5",
+                      },
                     })}
                     onClick={() =>
                       setBodyMapTags((current) =>
@@ -420,17 +437,13 @@ export function FeedbackPage() {
           class={css({
             alignItems: "center",
             display: "flex",
+            flexWrap: "wrap",
+            gap: "3",
             justifyContent: "space-between",
             marginTop: "4",
           })}
         >
-          <div aria-live="polite">
-            <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
-            </Show>
-          </div>
+          <UINotice status={notice()} error={noticeError()} />
           <UIButton type="submit" variant="solid">
             Log Session
           </UIButton>
@@ -439,22 +452,22 @@ export function FeedbackPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Recent Feedback</h2>
-        <Show when={!sessions.isLoading()} fallback={<p>Loading sessions…</p>}>
-          <Show
-            when={!sessions.isError()}
-            fallback={
-              <p class={css({ color: "zodiac.error" })}>
-                Failed to load sessions:{" "}
-                {sessions.error()?.message ?? "Unknown error"}
-              </p>
-            }
-          >
+        <UINotice
+          status={sessions.isLoading() ? "Loading sessions…" : null}
+          error={
+            sessions.isError()
+              ? `Failed to load sessions: ${sessions.error()?.message ?? "Unknown error"}`
+              : null
+          }
+        />
+        <Show when={!sessions.isLoading()}>
+          <Show when={!sessions.isError()}>
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={sessions.data() ?? []}>
                 {(session: Doc<"listeningSessions">) => (
                   <div
                     class={css({
-                      borderColor: "rgba(200, 168, 75, 0.24)",
+                      borderColor: "zodiac.gold/24",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       p: "4",
@@ -481,7 +494,7 @@ export function FeedbackPage() {
                     </div>
                     <p
                       class={css({
-                        color: "rgba(245, 240, 232, 0.75)",
+                        color: "zodiac.cream/75",
                         marginBottom: "2",
                       })}
                     >
@@ -489,7 +502,7 @@ export function FeedbackPage() {
                     </p>
                     <p
                       class={css({
-                        color: "rgba(245, 240, 232, 0.55)",
+                        color: "zodiac.cream/55",
                         fontFamily: "mono",
                         fontSize: "xs",
                         marginBottom:
@@ -509,7 +522,7 @@ export function FeedbackPage() {
                     <Show when={session.ratings?.expandability !== undefined}>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.62)",
+                          color: "zodiac.cream/62",
                           fontFamily: "mono",
                           fontSize: "xs",
                           marginBottom:
@@ -527,7 +540,7 @@ export function FeedbackPage() {
                     <Show when={(session.feltQualities?.length ?? 0) > 0}>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.62)",
+                          color: "zodiac.cream/62",
                           fontSize: "sm",
                           marginBottom:
                             (session.standoutMoments?.length ?? 0) > 0 ||
@@ -543,7 +556,7 @@ export function FeedbackPage() {
                     <Show when={(session.bodyMapTags?.length ?? 0) > 0}>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.62)",
+                          color: "zodiac.cream/62",
                           fontSize: "sm",
                           marginBottom:
                             Boolean(session.bodyMapNotes) ||
@@ -559,7 +572,7 @@ export function FeedbackPage() {
                       {(value) => (
                         <p
                           class={css({
-                            color: "rgba(245, 240, 232, 0.62)",
+                            color: "zodiac.cream/62",
                             fontSize: "sm",
                             whiteSpace: "pre-wrap",
                             marginBottom:
@@ -575,7 +588,7 @@ export function FeedbackPage() {
                     <Show when={(session.standoutMoments?.length ?? 0) > 0}>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.55)",
+                          color: "zodiac.cream/55",
                           fontSize: "sm",
                         })}
                       >

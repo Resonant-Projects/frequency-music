@@ -10,6 +10,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
@@ -28,7 +29,7 @@ const twoColClass = css({
 });
 
 const helperClass = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/58",
   fontSize: "sm",
   lineHeight: "1.6",
 });
@@ -78,6 +79,7 @@ export function IngestPage() {
   const [feedType, setFeedType] = createSignal("rss");
 
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
   const createFromUrlInput = createAction(api.sources.createFromUrlAndQueue);
@@ -97,12 +99,14 @@ export function IngestPage() {
     event.preventDefault();
 
     if (!urlValue().trim()) {
-      setNotice("URL is required.");
+      setNotice(null);
+      setNoticeError("URL is required.");
       return;
     }
 
     setIsSubmitting(true);
     setNotice(null);
+    setNoticeError(null);
 
     try {
       const result = await createFromUrlInput({
@@ -129,7 +133,7 @@ export function IngestPage() {
       setUrlRawText("");
       setUrlTags("");
     } catch (error) {
-      setNotice(`URL ingest failed: ${String(error)}`);
+      setNoticeError(`URL ingest failed: ${String(error)}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -139,12 +143,14 @@ export function IngestPage() {
     event.preventDefault();
 
     if (!ytValue().trim()) {
-      setNotice("YouTube URL is required.");
+      setNotice(null);
+      setNoticeError("YouTube URL is required.");
       return;
     }
 
     setIsSubmitting(true);
     setNotice(null);
+    setNoticeError(null);
 
     try {
       const result = await createFromYouTubeInput({
@@ -171,7 +177,7 @@ export function IngestPage() {
       setYtTranscript("");
       setYtTags("");
     } catch (error) {
-      setNotice(`YouTube ingest failed: ${String(error)}`);
+      setNoticeError(`YouTube ingest failed: ${String(error)}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -181,11 +187,14 @@ export function IngestPage() {
     event.preventDefault();
 
     if (!feedName().trim() || !feedUrl().trim()) {
-      setNotice("Feed name and URL are required.");
+      setNotice(null);
+      setNoticeError("Feed name and URL are required.");
       return;
     }
 
     setIsSubmitting(true);
+    setNotice(null);
+    setNoticeError(null);
 
     try {
       await createFeed({
@@ -197,27 +206,31 @@ export function IngestPage() {
       setFeedUrl("");
       setNotice("Feed created.");
     } catch (error) {
-      setNotice(`Feed creation failed: ${String(error)}`);
+      setNoticeError(`Feed creation failed: ${String(error)}`);
     } finally {
       setIsSubmitting(false);
     }
   }
 
   async function toggleFeed(id: string, enabled: boolean) {
+    setNotice(null);
+    setNoticeError(null);
     try {
       await setFeedEnabled({ id: id as Id<"feeds">, enabled: !enabled });
       setNotice("Feed state updated.");
     } catch (error) {
-      setNotice(`Failed to toggle feed: ${String(error)}`);
+      setNoticeError(`Failed to toggle feed: ${String(error)}`);
     }
   }
 
   async function runPoll() {
+    setNotice(null);
+    setNoticeError(null);
     try {
       await pollFeedsNow({});
       setNotice("Feed poll started.");
     } catch (error) {
-      setNotice(`Feed poll failed: ${String(error)}`);
+      setNoticeError(`Feed poll failed: ${String(error)}`);
     }
   }
 
@@ -229,15 +242,11 @@ export function IngestPage() {
           Add research inputs directly into Convex. URL and YouTube entries are
           dedupe-safe and land in the private inbox pipeline.
         </p>
-        <div aria-live="polite">
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream", marginTop: "3" })}>
-                {message()}
-              </p>
-            )}
-          </Show>
-        </div>
+        <UINotice
+          class={css({ marginTop: "3" })}
+          status={notice()}
+          error={noticeError()}
+        />
       </UICard>
 
       <UICard>
@@ -245,6 +254,8 @@ export function IngestPage() {
           class={css({
             alignItems: "center",
             display: "flex",
+            flexWrap: "wrap",
+            gap: "2",
             justifyContent: "space-between",
             marginBottom: "3",
           })}
@@ -268,7 +279,7 @@ export function IngestPage() {
             as="form"
             data-testid="ingest-feed-form"
             onSubmit={submitFeed as any}
-            class={css({ bg: "rgba(13, 6, 32, 0.38)" })}
+            class={css({ bg: "zodiac.void/38" })}
           >
             <h3 class={sectionTitleClass}>Add Feed</h3>
 
@@ -318,11 +329,13 @@ export function IngestPage() {
             </div>
           </UICard>
 
-          <UICard class={css({ bg: "rgba(13, 6, 32, 0.38)" })}>
+          <UICard class={css({ bg: "zodiac.void/38" })}>
             <div
               class={css({
                 alignItems: "center",
                 display: "flex",
+                flexWrap: "wrap",
+                gap: "2",
                 justifyContent: "space-between",
                 marginBottom: "2",
               })}
@@ -330,22 +343,27 @@ export function IngestPage() {
               <h3 class={sectionTitleClass}>Feed List</h3>
               <UIBadge tone="violet">{(feeds() ?? []).length} feeds</UIBadge>
             </div>
-            <div
+            <ul
+              tabIndex={0}
+              aria-label="Feed list"
               class={`${css({
                 display: "grid",
                 gap: "2",
+                listStyleType: "none",
+                margin: 0,
                 maxH: "96",
                 overflowY: "auto",
                 overflowX: "hidden",
+                padding: 0,
               })} zodiac-scroll`}
             >
               <For each={feeds() ?? []}>
                 {(feed: FeedRow) => (
-                  <div
+                  <li
                     data-testid="ingest-feed-row"
                     class={css({
                       alignItems: "center",
-                      borderColor: "rgba(200, 168, 75, 0.24)",
+                      borderColor: "zodiac.gold/24",
                       borderRadius: "l2",
                       borderWidth: "1px",
                       display: "flex",
@@ -358,7 +376,7 @@ export function IngestPage() {
                       <p class={css({ margin: 0 })}>{feed.name}</p>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.58)",
+                          color: "zodiac.cream/58",
                           fontFamily: "mono",
                           fontSize: "xs",
                           margin: 0,
@@ -372,16 +390,17 @@ export function IngestPage() {
                     </div>
                     <UIButton
                       variant="outline"
+                      aria-label={`${feed.enabled ? "Disable" : "Enable"} feed ${feed.name}`}
                       onClick={() =>
                         toggleFeed(String(feed._id), Boolean(feed.enabled))
                       }
                     >
                       {feed.enabled ? "Disable" : "Enable"}
                     </UIButton>
-                  </div>
+                  </li>
                 )}
               </For>
-            </div>
+            </ul>
           </UICard>
         </div>
       </UICard>
@@ -505,6 +524,8 @@ export function IngestPage() {
           class={css({
             alignItems: "center",
             display: "flex",
+            flexWrap: "wrap",
+            gap: "2",
             justifyContent: "space-between",
             marginBottom: "3",
           })}
@@ -513,14 +534,20 @@ export function IngestPage() {
           <UIBadge tone="violet">Convex Live</UIBadge>
         </div>
 
-        <Show
-          when={!recentSources.isLoading()}
-          fallback={<p class={helperClass}>Loading sources…</p>}
-        >
+        <UINotice
+          class={helperClass}
+          status={recentSources.isLoading() ? "Loading sources…" : null}
+          error={
+            recentSources.isError()
+              ? `Unable to load recent sources: ${recentSources.error()?.message ?? "unknown error"}`
+              : null
+          }
+        />
+        <Show when={!recentSources.isLoading()}>
           <div class={sourceListClass}>
             <For each={recentSources.data() ?? []}>
               {(source: RecentSourceRow) => (
-                <UICard class={css({ bg: "rgba(13, 6, 32, 0.38)", p: "4" })}>
+                <UICard class={css({ bg: "zodiac.void/38", p: "4" })}>
                   <div
                     class={css({
                       display: "flex",
@@ -537,7 +564,7 @@ export function IngestPage() {
                   </h3>
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.58)",
+                      color: "zodiac.cream/58",
                       fontFamily: "mono",
                       fontSize: "xs",
                     })}

@@ -11,13 +11,14 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
 const thesisCard = css({
-  borderColor: "rgba(200, 168, 75, 0.22)",
+  borderColor: "zodiac.gold/22",
   borderRadius: "l2",
   borderWidth: "1px",
   display: "block",
@@ -25,7 +26,7 @@ const thesisCard = css({
   textDecoration: "none",
   transition: "border-color 0.15s",
   _hover: {
-    borderColor: "rgba(200, 168, 75, 0.45)",
+    borderColor: "zodiac.gold/45",
   },
 });
 
@@ -45,6 +46,7 @@ export function ThesesPage() {
   const [statement, setStatement] = createSignal("");
   const [descriptionMd, setDescriptionMd] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
 
   const active = createMemo(() =>
     thesisRows().filter((thesis) => thesis.status === "active"),
@@ -57,10 +59,13 @@ export function ThesesPage() {
   );
 
   function renderGroup(label: string, rows: Doc<"theses">[]) {
+    const headingId = `theses-group-${label.toLowerCase()}`;
     return (
       <Show when={rows.length > 0}>
-        <section>
-          <h2 class={sectionTitleClass}>{label}</h2>
+        <section aria-labelledby={headingId}>
+          <h2 id={headingId} class={sectionTitleClass}>
+            {label}
+          </h2>
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={rows}>
               {(thesis) => (
@@ -84,7 +89,7 @@ export function ThesesPage() {
                   </h3>
                   <p
                     class={css({
-                      color: "rgba(245, 240, 232, 0.66)",
+                      color: "zodiac.cream/66",
                       lineHeight: "1.7",
                     })}
                   >
@@ -102,9 +107,12 @@ export function ThesesPage() {
   async function handleCreate(event: SubmitEvent) {
     event.preventDefault();
     if (!title().trim() || !statement().trim()) {
-      setNotice("Title and statement are required.");
+      setNotice(null);
+      setNoticeError("Title and statement are required.");
       return;
     }
+    setNotice(null);
+    setNoticeError(null);
     try {
       await createThesis({
         title: title().trim(),
@@ -117,7 +125,7 @@ export function ThesesPage() {
       setNotice("Thesis created.");
     } catch (error) {
       console.error("Failed to create thesis:", error);
-      setNotice("Failed to create thesis. Please try again.");
+      setNoticeError("Failed to create thesis. Please try again.");
     }
   }
 
@@ -125,9 +133,7 @@ export function ThesesPage() {
     <section class={pageClass}>
       <UICard as="form" onSubmit={handleCreate as any}>
         <h1 class={pageTitleClass}>Theses</h1>
-        <p
-          class={css({ color: "rgba(245, 240, 232, 0.62)", lineHeight: "1.6" })}
-        >
+        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
           Theses are the lightweight organizing questions that accumulate
           hypotheses, recipes, compositions, and reversals over time.
         </p>
@@ -172,27 +178,29 @@ export function ThesesPage() {
             flexWrap: "wrap",
           })}
         >
-          <Show when={notice()}>
-            {(message) => (
-              <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-            )}
-          </Show>
+          <UINotice status={notice()} error={noticeError()} />
           <UIButton type="submit" variant="outline">
             Create Thesis
           </UIButton>
         </div>
       </UICard>
 
-      <Show
-        when={!theses.isLoading() && thesisRows().length > 0}
-        fallback={
-          <UICard>
-            <p class={css({ color: "zodiac.cream" })}>
-              {theses.isLoading() ? "Loading theses..." : "No theses yet."}
-            </p>
-          </UICard>
+      <UINotice
+        status={
+          theses.isLoading()
+            ? "Loading theses..."
+            : !theses.isError() && thesisRows().length === 0
+              ? "No theses yet."
+              : null
         }
-      >
+        error={
+          theses.isError()
+            ? `Unable to load theses: ${theses.error()?.message ?? "unknown error"}`
+            : null
+        }
+      />
+
+      <Show when={!theses.isLoading() && thesisRows().length > 0}>
         {renderGroup("Active", active())}
         {renderGroup("Paused", paused())}
         {renderGroup("Retired", retired())}

@@ -4,21 +4,25 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
-  UIBadge,
-  UIButton,
-  UICard,
-  UISelect,
-  UITextarea,
   backLink,
+  collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
   goldDivider,
+  Markdown,
   metaLine,
   pageClass,
   sectionLabel,
+  UIBadge,
+  UIButton,
+  UICard,
+  UINotice,
+  UISelect,
+  UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 
+/** Wrapper for an always-mounted notice that currently carries no text. */
 type CorrespondenceStatus =
   | "conjectured"
   | "evidenced"
@@ -37,6 +41,8 @@ export function CorrespondenceDetailPage() {
   const [statusReason, setStatusReason] = createSignal("");
   const [saving, setSaving] = createSignal(false);
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  let reasonField: HTMLTextAreaElement | undefined;
 
   createEffect(
     on(
@@ -47,6 +53,7 @@ export function CorrespondenceDetailPage() {
         setStatusReason("");
         setSaving(false);
         setNotice(null);
+        setNoticeError(null);
       },
     ),
   );
@@ -55,7 +62,9 @@ export function CorrespondenceDetailPage() {
     setNextStatus(current === "conjectured" ? "evidenced" : current);
     setStatusReason("");
     setNotice(null);
+    setNoticeError(null);
     setReviewOpen(true);
+    queueMicrotask(() => reasonField?.focus());
   }
 
   async function confirmStatus() {
@@ -68,6 +77,7 @@ export function CorrespondenceDetailPage() {
       params().correspondenceId === String(submittedCorrespondenceId);
     setSaving(true);
     setNotice(null);
+    setNoticeError(null);
     try {
       await setStatus({
         correspondenceId: submittedCorrespondenceId,
@@ -81,7 +91,7 @@ export function CorrespondenceDetailPage() {
       }
     } catch (error) {
       if (isCurrentCorrespondence()) {
-        setNotice(
+        setNoticeError(
           error instanceof Error ? error.message : "Unable to update status.",
         );
       }
@@ -90,6 +100,17 @@ export function CorrespondenceDetailPage() {
     }
   }
 
+  const loadError = () =>
+    correspondence.error()
+      ? `Unable to load correspondence: ${correspondence.error()?.message}`
+      : null;
+  const loadStatus = () => {
+    if (correspondence.error() || correspondence.data()) return null;
+    return correspondence.isLoading()
+      ? "Loading correspondence…"
+      : "Correspondence not found.";
+  };
+
   return (
     <section class={pageClass}>
       <div>
@@ -97,20 +118,10 @@ export function CorrespondenceDetailPage() {
           <span aria-hidden="true">&larr;</span> Correspondences
         </Link>
       </div>
-      <Show
-        when={correspondence.data()}
-        fallback={
-          <UICard>
-            <p class={css({ color: "zodiac.cream" })}>
-              {correspondence.isLoading()
-                ? "Loading correspondence…"
-                : correspondence.error()
-                  ? `Unable to load correspondence: ${correspondence.error()?.message}`
-                  : "Correspondence not found."}
-            </p>
-          </UICard>
-        }
-      >
+      <UICard class={correspondence.data() ? collapsedNoticeClass : undefined}>
+        <UINotice status={loadStatus()} error={loadError()} />
+      </UICard>
+      <Show when={correspondence.data()}>
         {(row) => (
           <UICard>
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
@@ -140,8 +151,8 @@ export function CorrespondenceDetailPage() {
                 aria-modal="false"
                 aria-label="Review correspondence lifecycle"
                 class={css({
-                  bg: "rgba(139, 92, 246, 0.07)",
-                  borderColor: "rgba(139, 92, 246, 0.3)",
+                  bg: "zodiac.violet/7",
+                  borderColor: "zodiac.violet/30",
                   borderRadius: "l2",
                   borderWidth: "1px",
                   display: "grid",
@@ -150,7 +161,7 @@ export function CorrespondenceDetailPage() {
                   p: "3",
                 })}
               >
-                <p class={css({ color: "rgba(245, 240, 232, 0.7)" })}>
+                <p class={css({ color: "zodiac.cream/70" })}>
                   Confirm evidence, record contradiction, retire this
                   correspondence, or explicitly override it back to conjectured.
                 </p>
@@ -178,7 +189,11 @@ export function CorrespondenceDetailPage() {
                   Decision note (required)
                 </label>
                 <UITextarea
+                  ref={(element) => {
+                    reasonField = element;
+                  }}
                   id="correspondence-status-reason"
+                  aria-required="true"
                   value={statusReason()}
                   onInput={(event) =>
                     setStatusReason(event.currentTarget.value)
@@ -206,51 +221,46 @@ export function CorrespondenceDetailPage() {
               </div>
             </Show>
 
-            <Show when={notice()}>
-              {(message) => (
-                <p
-                  aria-live="polite"
-                  class={css({ color: "zodiac.cream", mt: "2" })}
-                >
-                  {message()}
-                </p>
-              )}
-            </Show>
+            <UINotice
+              class={css({ mt: "2" })}
+              status={notice()}
+              error={noticeError()}
+            />
 
             <hr class={goldDivider} />
-            <div class={sectionLabel}>Rationale</div>
-            <p
+            <h2 class={sectionLabel}>Rationale</h2>
+            <div
               class={css({
-                color: "rgba(245, 240, 232, 0.76)",
+                color: "zodiac.cream/76",
                 fontSize: "lg",
                 lineHeight: "1.65",
                 maxWidth: "72ch",
               })}
             >
-              {row().rationaleMd}
-            </p>
+              <Markdown content={row().rationaleMd} />
+            </div>
 
             <Show when={row().statusReason}>
               {(reason) => (
                 <>
                   <hr class={goldDivider} />
-                  <div class={sectionLabel}>Status reason</div>
-                  <p class={css({ color: "rgba(245, 240, 232, 0.76)" })}>
-                    {reason()}
-                  </p>
+                  <h2 class={sectionLabel}>Status reason</h2>
+                  <p class={css({ color: "zodiac.cream/76" })}>{reason()}</p>
                 </>
               )}
             </Show>
 
             <Show when={row().evidence.length > 0}>
               <hr class={goldDivider} />
-              <div class={sectionLabel}>Evidence</div>
+              <h2 class={sectionLabel}>Evidence</h2>
               <div class={css({ display: "grid", gap: "2" })}>
                 <For each={row().evidence}>
                   {(citation) => (
                     <div
                       class={css({
-                        borderBottom: "1px solid rgba(200, 168, 75, 0.16)",
+                        borderBottomWidth: "1px",
+                        borderBottomStyle: "solid",
+                        borderBottomColor: "zodiac.gold/16",
                         display: "flex",
                         flexWrap: "wrap",
                         gap: "2",
@@ -258,7 +268,9 @@ export function CorrespondenceDetailPage() {
                         py: "2",
                       })}
                     >
-                      <span>{citation.note ?? String(citation.claimId)}</span>
+                      <span class={css({ overflowWrap: "anywhere" })}>
+                        {citation.note ?? String(citation.claimId)}
+                      </span>
                       <span class={metaLine}>
                         {citation.stance} · {citation.addedBy}
                       </span>

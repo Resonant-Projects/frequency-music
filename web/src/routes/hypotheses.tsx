@@ -11,6 +11,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
@@ -62,6 +63,7 @@ export function HypothesesPage() {
     [],
   );
   const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
 
   function toggleSource(sourceId: Id<"sources">) {
     setSelectedSources((prev) =>
@@ -80,13 +82,15 @@ export function HypothesesPage() {
       !statement().trim() ||
       !whyThisMatters().trim()
     ) {
-      setNotice(
+      setNotice(null);
+      setNoticeError(
         "Title, question, hypothesis statement, and why this matters are required.",
       );
       return;
     }
 
     setNotice(null);
+    setNoticeError(null);
 
     try {
       await createHypothesis({
@@ -111,7 +115,7 @@ export function HypothesesPage() {
       setSelectedSources([]);
       setNotice("Hypothesis created.");
     } catch (error) {
-      setNotice(`Failed to create hypothesis: ${String(error)}`);
+      setNoticeError(`Failed to create hypothesis: ${String(error)}`);
     }
   }
 
@@ -186,8 +190,16 @@ export function HypothesesPage() {
           </For>
         </UISelect>
 
-        <div class={css({ marginTop: "3" })}>
-          <p class={fieldLabelClass}>Source Citations</p>
+        <fieldset
+          class={css({
+            border: "none",
+            margin: "0",
+            marginTop: "3",
+            minWidth: "0",
+            padding: "0",
+          })}
+        >
+          <legend class={fieldLabelClass}>Source Citations</legend>
           <div
             class={css({
               display: "grid",
@@ -203,7 +215,7 @@ export function HypothesesPage() {
                 <label
                   class={css({
                     alignItems: "center",
-                    borderColor: "rgba(200, 168, 75, 0.2)",
+                    borderColor: "zodiac.gold/20",
                     borderRadius: "l2",
                     borderWidth: "1px",
                     display: "flex",
@@ -223,22 +235,18 @@ export function HypothesesPage() {
               )}
             </For>
           </div>
-        </div>
+        </fieldset>
 
         <div
           class={css({
             display: "flex",
+            flexWrap: "wrap",
+            gap: "3",
             justifyContent: "space-between",
             marginTop: "4",
           })}
         >
-          <div aria-live="polite">
-            <Show when={notice()}>
-              {(message) => (
-                <p class={css({ color: "zodiac.cream" })}>{message()}</p>
-              )}
-            </Show>
-          </div>
+          <UINotice status={notice()} error={noticeError()} />
           <UIButton type="submit" variant="solid">
             Create Hypothesis
           </UIButton>
@@ -247,28 +255,23 @@ export function HypothesesPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Current Queue</h2>
-        <Show
-          when={!hypotheses.isLoading()}
-          fallback={<p>Loading hypotheses…</p>}
-        >
-          <Show
-            when={hypothesisRows().length > 0}
-            fallback={
-              <p
-                class={css({
-                  color: "rgba(245, 240, 232, 0.55)",
-                  fontFamily: "display",
-                  fontSize: "md",
-                  lineHeight: "1.6",
-                  textAlign: "center",
-                  py: "8",
-                })}
-              >
-                No hypotheses yet. Generate one from an extraction or create one
-                above.
-              </p>
-            }
-          >
+        <UINotice
+          class={css({ textAlign: "center" })}
+          status={
+            hypotheses.isLoading()
+              ? "Loading hypotheses…"
+              : !hypotheses.error() && hypothesisRows().length === 0
+                ? "No hypotheses yet. Generate one from an extraction or create one above."
+                : null
+          }
+          error={
+            hypotheses.error()
+              ? `Unable to load hypotheses: ${hypotheses.error()?.message}`
+              : null
+          }
+        />
+        <Show when={!hypotheses.isLoading()}>
+          <Show when={hypothesisRows().length > 0}>
             <div class={css({ display: "grid", gap: "3" })}>
               <For each={hypothesisRows()}>
                 {(item) => (
@@ -279,14 +282,14 @@ export function HypothesesPage() {
                     <div
                       data-testid="entity-row"
                       class={css({
-                        borderColor: "rgba(200, 168, 75, 0.25)",
+                        borderColor: "zodiac.gold/25",
                         borderRadius: "l2",
                         borderWidth: "1px",
                         cursor: "pointer",
                         p: "4",
                         transition: "border-color 0.2s",
                         _hover: {
-                          borderColor: "rgba(200, 168, 75, 0.45)",
+                          borderColor: "zodiac.gold/45",
                         },
                       })}
                     >
@@ -311,7 +314,7 @@ export function HypothesesPage() {
                       </h3>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.7)",
+                          color: "zodiac.cream/70",
                           marginBottom: "1",
                         })}
                       >
@@ -319,7 +322,7 @@ export function HypothesesPage() {
                       </p>
                       <p
                         class={css({
-                          color: "rgba(245, 240, 232, 0.55)",
+                          color: "zodiac.cream/55",
                           fontSize: "sm",
                         })}
                       >
@@ -329,7 +332,7 @@ export function HypothesesPage() {
                         {(value) => (
                           <p
                             class={css({
-                              color: "rgba(245, 240, 232, 0.48)",
+                              color: "zodiac.cream/66",
                               fontSize: "sm",
                               marginTop: "2",
                             })}

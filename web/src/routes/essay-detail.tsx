@@ -1,13 +1,15 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, For, Show } from "solid-js";
+import { createEffect, createResource, For, Show } from "solid-js";
 import { css } from "../../styled-system/css";
 import {
-  Markdown,
-  UIBadge,
-  UICard,
   backLink,
+  collapsedNoticeClass,
+  Markdown,
   pageClass,
   sectionTitleClass,
+  UIBadge,
+  UICard,
+  UINotice,
 } from "../components/ui";
 import { essayLibrary, getEssayBySlug } from "../lib/essays";
 
@@ -40,7 +42,7 @@ const titleClass = css({
 });
 
 const dekClass = css({
-  color: "rgba(245, 240, 232, 0.74)",
+  color: "zodiac.cream/74",
   fontFamily: "display",
   fontSize: { base: "md", md: "lg" },
   lineHeight: "1.8",
@@ -65,7 +67,7 @@ const articleHeader = css({
 });
 
 const articleLabel = css({
-  color: "rgba(245, 240, 232, 0.58)",
+  color: "zodiac.cream/58",
   fontFamily: "mono",
   fontSize: "xs",
   letterSpacing: "0.2em",
@@ -84,9 +86,8 @@ const relatedLink = css({
   gap: "8px",
   textDecoration: "none",
   minHeight: "12rem",
-  bg: "rgba(13, 6, 32, 0.92)",
-  backdropFilter: "blur(8px)",
-  borderColor: "rgba(200, 168, 75, 0.22)",
+  bg: "zodiac.void/92",
+  borderColor: "zodiac.gold/22",
   borderRadius: "l3",
   borderWidth: "1px",
   color: "zodiac.cream",
@@ -95,8 +96,9 @@ const relatedLink = css({
     "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
   _hover: {
     transform: "translateY(-3px)",
-    borderColor: "rgba(200, 168, 75, 0.48)",
+    borderColor: "zodiac.gold/48",
     boxShadow: "0 22px 48px rgba(0, 0, 0, 0.24)",
+    _motionReduce: { transform: "none" },
   },
 });
 
@@ -109,13 +111,27 @@ const relatedTitle = css({
 });
 
 const relatedExcerpt = css({
-  color: "rgba(245, 240, 232, 0.62)",
+  color: "zodiac.cream/62",
   lineHeight: "1.65",
 });
 
 export function EssayDetailPage() {
   const params = useParams({ from: "/essays/$essaySlug" });
-  const essay = () => getEssayBySlug(params().essaySlug);
+  const [essayResult] = createResource(
+    () => params().essaySlug,
+    async (slug) => {
+      try {
+        return { entry: await getEssayBySlug(slug), failed: false };
+      } catch (error) {
+        console.error("Essay body failed to load:", error);
+        return { entry: null, failed: true };
+      }
+    },
+  );
+  // Per-request rather than a shared signal: a request that fails after
+  // navigation started the next one can no longer paint its error over it.
+  const essay = () => essayResult()?.entry ?? null;
+  const loadFailed = () => essayResult()?.failed ?? false;
 
   createEffect(() => {
     const e = essay();
@@ -134,76 +150,87 @@ export function EssayDetailPage() {
         </Link>
       </div>
 
-      <Show
-        when={essay()}
-        fallback={
-          <UICard>
-            <p class={css({ color: "zodiac.cream" })}>Essay not found.</p>
-          </UICard>
+      <UINotice
+        class={
+          essayResult.loading || !essay() ? undefined : collapsedNoticeClass
         }
-      >
-        {(entry) => (
-          <>
-            <UICard glass class={heroCard}>
-              <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
-                <UIBadge tone="gold">
-                  {entry().dateLabel ?? "Research essay"}
-                </UIBadge>
-                <UIBadge tone="cream">
-                  {entry().readTimeMinutes} min read
-                </UIBadge>
-                <UIBadge tone="violet">
-                  {entry().wordCount.toLocaleString()} words
-                </UIBadge>
-              </div>
-              <h1 class={titleClass}>{entry().title}</h1>
-              <p class={dekClass}>{entry().excerpt}</p>
-            </UICard>
+        status={essayResult.loading ? "Loading essay..." : null}
+        error={
+          essayResult.loading || essay()
+            ? null
+            : loadFailed()
+              ? "Could not load this essay. Check your connection and try again."
+              : "Essay not found."
+        }
+      />
 
-            <UICard class={articleCard}>
-              <div class={articleBody}>
-                <div class={articleHeader}>
-                  <div class={articleLabel}>Essay text</div>
+      <Show when={!essayResult.loading}>
+        <Show when={essay()}>
+          {(entry) => (
+            <>
+              <UICard glass class={heroCard}>
+                <div
+                  class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}
+                >
+                  <UIBadge tone="gold">
+                    {entry().dateLabel ?? "Research essay"}
+                  </UIBadge>
+                  <UIBadge tone="cream">
+                    {entry().readTimeMinutes} min read
+                  </UIBadge>
+                  <UIBadge tone="violet">
+                    {entry().wordCount.toLocaleString()} words
+                  </UIBadge>
                 </div>
-                <Markdown content={entry().body} />
-              </div>
-            </UICard>
+                <h1 class={titleClass}>{entry().title}</h1>
+                <p class={dekClass}>{entry().excerpt}</p>
+              </UICard>
 
-            <Show when={related().length > 0}>
-              <UICard>
-                <h2 class={sectionTitleClass}>Continue Reading</h2>
-                <div class={relatedGrid}>
-                  <For each={related()}>
-                    {(nextEssay) => (
-                      <Link
-                        to="/essays/$essaySlug"
-                        params={{ essaySlug: nextEssay.slug }}
-                        class={relatedLink}
-                      >
-                        <div
-                          class={css({
-                            display: "flex",
-                            gap: "2",
-                            flexWrap: "wrap",
-                          })}
-                        >
-                          <UIBadge tone="gold">
-                            {nextEssay.dateLabel ?? "Research essay"}
-                          </UIBadge>
-                          <UIBadge tone="cream">
-                            {nextEssay.readTimeMinutes} min
-                          </UIBadge>
-                        </div>
-                        <h2 class={relatedTitle}>{nextEssay.title}</h2>
-                        <p class={relatedExcerpt}>{nextEssay.excerpt}</p>
-                      </Link>
-                    )}
-                  </For>
+              <UICard class={articleCard}>
+                <div class={articleBody}>
+                  <div class={articleHeader}>
+                    <div class={articleLabel}>Essay text</div>
+                  </div>
+                  <Markdown content={entry().body} />
                 </div>
               </UICard>
-            </Show>
-          </>
-        )}
+
+              <Show when={related().length > 0}>
+                <UICard>
+                  <h2 class={sectionTitleClass}>Continue Reading</h2>
+                  <div class={relatedGrid}>
+                    <For each={related()}>
+                      {(nextEssay) => (
+                        <Link
+                          to="/essays/$essaySlug"
+                          params={{ essaySlug: nextEssay.slug }}
+                          class={relatedLink}
+                        >
+                          <div
+                            class={css({
+                              display: "flex",
+                              gap: "2",
+                              flexWrap: "wrap",
+                            })}
+                          >
+                            <UIBadge tone="gold">
+                              {nextEssay.dateLabel ?? "Research essay"}
+                            </UIBadge>
+                            <UIBadge tone="cream">
+                              {nextEssay.readTimeMinutes} min
+                            </UIBadge>
+                          </div>
+                          <h3 class={relatedTitle}>{nextEssay.title}</h3>
+                          <p class={relatedExcerpt}>{nextEssay.excerpt}</p>
+                        </Link>
+                      )}
+                    </For>
+                  </div>
+                </UICard>
+              </Show>
+            </>
+          )}
+        </Show>
       </Show>
     </section>
   );
