@@ -41,6 +41,7 @@ import { runWorkerLoop } from "./lifecycle.js";
 import {
   createLivenessReporter,
   type LivenessReporter,
+  parseLivenessPushUrl,
 } from "./liveness.js";
 
 type StreamableGraph = {
@@ -307,12 +308,21 @@ export async function main(): Promise<void> {
   // runs and tests need no monitoring endpoint.
   const livenessPushUrl = process.env.WORKER_LIVENESS_PUSH_URL?.trim();
   if (livenessPushUrl) {
-    liveness = createLivenessReporter({
-      pushUrl: livenessPushUrl,
-      log,
-      redact: redactError,
-    });
-    log("liveness pushes enabled");
+    // The value is never logged, only the verdict on it: it carries the
+    // monitor's token.
+    const pushUrl = parseLivenessPushUrl(livenessPushUrl);
+    if (pushUrl) {
+      liveness = createLivenessReporter({
+        pushUrl,
+        log,
+        redact: redactError,
+      });
+      log("liveness pushes enabled");
+    } else {
+      log(
+        "WORKER_LIVENESS_PUSH_URL is not a valid https: URL; liveness pushes disabled",
+      );
+    }
   }
 
   log(

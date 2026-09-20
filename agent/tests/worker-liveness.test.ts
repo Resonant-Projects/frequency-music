@@ -5,6 +5,7 @@ import {
   createLivenessReporter,
   LIVENESS_PUSH_INTERVAL_MS,
   LIVENESS_STALE_AFTER_MS,
+  parseLivenessPushUrl,
 } from "../src/worker/liveness";
 import { runWorkerLoop } from "../src/worker/lifecycle";
 import { HEARTBEAT_INTERVAL_MS } from "../../convex/shared/agentContract";
@@ -21,7 +22,7 @@ function reporter(overrides: Record<string, unknown> = {}) {
   const fetchImpl = vi.fn(async () => ({ ok: true, status: 200 }) as Response);
   const log = vi.fn();
   const instance = createLivenessReporter({
-    pushUrl: PUSH_URL,
+    pushUrl: new URL(PUSH_URL),
     log,
     redact: (error) => String(error),
     now: () => clock,
@@ -47,7 +48,7 @@ describe("liveness reporter", () => {
 
     await r.advance(LIVENESS_PUSH_INTERVAL_MS);
     expect(r.fetchImpl).toHaveBeenCalledTimes(1);
-    expect(r.fetchImpl.mock.calls[0]?.[0]).toBe(PUSH_URL);
+    expect(String(r.fetchImpl.mock.calls[0]?.[0])).toBe(PUSH_URL);
 
     r.instance.markAlive();
     await r.advance(LIVENESS_PUSH_INTERVAL_MS);
@@ -141,6 +142,26 @@ describe("liveness reporter", () => {
     await r.instance.stop();
     await r.advance(LIVENESS_PUSH_INTERVAL_MS * 3);
     expect(r.fetchImpl.mock.calls.length).toBe(before);
+  });
+});
+
+// The push URL's path is the monitor's token, so a cleartext scheme would put
+// that token on the wire.
+describe("parseLivenessPushUrl", () => {
+  test("accepts an https URL", () => {
+    expect(parseLivenessPushUrl(PUSH_URL)?.href).toBe(PUSH_URL);
+  });
+
+  test("rejects http, so the token is never sent in cleartext", () => {
+    expect(
+      parseLivenessPushUrl("http://uptime.example/api/push/tok"),
+    ).toBeNull();
+  });
+
+  test("rejects other schemes and unparseable values", () => {
+    expect(parseLivenessPushUrl("ftp://uptime.example/push/tok")).toBeNull();
+    expect(parseLivenessPushUrl("uptime.example/api/push/tok")).toBeNull();
+    expect(parseLivenessPushUrl("")).toBeNull();
   });
 });
 

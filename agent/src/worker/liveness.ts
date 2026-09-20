@@ -35,8 +35,23 @@ export type LivenessReporter = {
   stop: () => Promise<void>;
 };
 
+/** The push URL carries the monitor's token in its path, so an `http:` endpoint
+ * would put that token on the wire in cleartext. Parsing is the only way into
+ * the reporter, which keeps that rule structural rather than a check a later
+ * caller can forget. A rejected URL leaves the worker running and silent, and
+ * silence is already the wedge signal the freshness deadline reports. */
+export function parseLivenessPushUrl(value: string): URL | null {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  return url.protocol === "https:" ? url : null;
+}
+
 export function createLivenessReporter(options: {
-  pushUrl: string;
+  pushUrl: URL;
   log: (message: string, ...rest: unknown[]) => void;
   redact: (error: unknown) => string;
   now?: () => number;
