@@ -14,6 +14,9 @@ export async function runWorkerLoop(options: {
   signals: SignalSource;
   log: (message: string) => void;
   onPollError: (error: unknown) => void;
+  /** Fires after every poll attempt, successful or not. A poll that returns or
+   * throws proves the loop is still executing; a wedged poll never settles. */
+  onPollSettled?: () => void;
 }): Promise<void> {
   const idleAbort = new AbortController();
   let draining = false;
@@ -37,6 +40,7 @@ export async function runWorkerLoop(options: {
       } catch (error) {
         options.onPollError(error);
       }
+      options.onPollSettled?.();
       if (draining) break;
       if (!claimed) {
         try {
