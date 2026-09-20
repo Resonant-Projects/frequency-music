@@ -159,13 +159,23 @@ export function HypothesisDetailPage() {
     setSaving(true);
     setNotice(null);
     setNoticeError(null);
+    // The drafts this mutation carries. An edit made while it is in flight has
+    // to leave `dirty` set, or the Convex push that follows the write would
+    // reseed both drafts over the newer text.
+    const sentWhyThisMatters = whyThisMattersDraft();
+    const sentThesisId = thesisIdDraft();
     try {
       await updateHypothesis({
         id: params().hypothesisId as Id<"hypotheses">,
-        whyThisMatters: whyThisMattersDraft().trim() || undefined,
-        thesisId: thesisIdDraft() ? (thesisIdDraft() as Id<"theses">) : null,
+        whyThisMatters: sentWhyThisMatters.trim() || undefined,
+        thesisId: sentThesisId ? (sentThesisId as Id<"theses">) : null,
       });
-      setDirty(false);
+      if (
+        whyThisMattersDraft() === sentWhyThisMatters &&
+        thesisIdDraft() === sentThesisId
+      ) {
+        setDirty(false);
+      }
       setNotice("Meaning metadata updated.");
     } catch (error) {
       setNoticeError(

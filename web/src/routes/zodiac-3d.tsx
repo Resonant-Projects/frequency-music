@@ -902,6 +902,7 @@ export function Zodiac3D() {
   let cssContainerRef!: HTMLDivElement;
   let sceneHandle: ZodiacHandle | null = null;
   const [autoRotate, setAutoRotate] = createSignal(!prefersReducedMotion());
+  let stopReducedMotionWatch: (() => void) | null = null;
 
   function toggleAutoRotate() {
     const next = !autoRotate();
@@ -937,14 +938,16 @@ export function Zodiac3D() {
       console.error("Zodiac scene initialization failed:", error);
       setWebglUnavailable(true);
     }
-  });
-
-  const stopReducedMotionWatch = watchReducedMotion((reduced) => {
-    setAutoRotate(!reduced);
+    // Registered after the scene's own reduced-motion watcher so that it runs
+    // second and mirrors whatever the scene settled on, rather than
+    // recomputing the state and overriding an explicit pause.
+    stopReducedMotionWatch = watchReducedMotion(() => {
+      if (sceneHandle) setAutoRotate(sceneHandle.isAutoRotating());
+    });
   });
 
   onCleanup(() => {
-    stopReducedMotionWatch();
+    stopReducedMotionWatch?.();
     sceneHandle?.cleanup();
   });
 

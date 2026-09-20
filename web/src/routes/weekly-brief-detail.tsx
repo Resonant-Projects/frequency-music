@@ -270,18 +270,26 @@ export function WeeklyBriefDetailPage() {
 
   // Focus handling for the publish confirmation dialog.
   let publishTrigger: HTMLButtonElement | null = null;
+  // The title outlives every visibility change, so it is the fallback whenever
+  // the trigger will not survive the dialog closing.
+  let briefTitle: HTMLHeadingElement | null = null;
 
   function openPublishConfirm(trigger: HTMLButtonElement) {
     publishTrigger = trigger;
     setPublishConfirmOpen(true);
   }
 
-  function closePublishConfirm() {
+  function dismissPublishConfirm(focusTarget: HTMLElement | null) {
     setPublishConfirmOpen(false);
-    // A successful publish flips the brief to public, which unmounts the
-    // trigger; only restore focus while it is still in the document.
-    if (publishTrigger?.isConnected) publishTrigger.focus();
     publishTrigger = null;
+    focusTarget?.focus();
+  }
+
+  function closePublishConfirm() {
+    // Cancel and Escape leave the brief private, so the trigger is still there.
+    dismissPublishConfirm(
+      publishTrigger?.isConnected ? publishTrigger : briefTitle,
+    );
   }
 
   async function handleSaveEdit() {
@@ -342,7 +350,10 @@ export function WeeklyBriefDetailPage() {
     setNoticeError(null);
     try {
       await publishBrief({ id: row._id });
-      closePublishConfirm();
+      // The trigger sits inside a private-only <Show>. It is still connected
+      // at this point, but the visibility push that follows unmounts it, so
+      // focusing it here would land focus on <body> a moment later.
+      dismissPublishConfirm(briefTitle);
       setNotice("Weekly brief published in the app.");
     } catch (error) {
       setNoticeError(
@@ -454,7 +465,15 @@ export function WeeklyBriefDetailPage() {
             </div>
 
             {/* Title */}
-            <h1 class={detailTitleClass}>{extractTitle(b().bodyMd)}</h1>
+            <h1
+              ref={(element) => {
+                briefTitle = element;
+              }}
+              tabindex="-1"
+              class={detailTitleClass}
+            >
+              {extractTitle(b().bodyMd)}
+            </h1>
 
             {/* Meta */}
             <p class={metaLine}>
@@ -549,7 +568,7 @@ export function WeeklyBriefDetailPage() {
                   <UIButton
                     variant="ghost"
                     disabled={publishingBrief()}
-                    onClick={closePublishConfirm}
+                    onClick={() => closePublishConfirm()}
                   >
                     Cancel
                   </UIButton>

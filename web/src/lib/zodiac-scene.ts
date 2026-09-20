@@ -471,10 +471,14 @@ export function initZodiacScene(
 
   // --- Motion preference -----------------------------------------------------
   let reducedMotion = prefersReducedMotion();
+  // The user's explicit pause/resume choice, once they have made one. A later
+  // change to the OS preference may still stop the rotation, but it must never
+  // start it on the user's behalf (WCAG 2.2.2).
+  let autoRotateChoice: boolean | null = null;
 
   const stopReducedMotionWatch = watchReducedMotion((reduced) => {
     reducedMotion = reduced;
-    controls.autoRotate = !reduced;
+    controls.autoRotate = reduced ? false : (autoRotateChoice ?? true);
     if (reduced) {
       // Settle anything mid-pulse at a fixed, readable value.
       sourceNodes.forEach(({ mesh }) => {
@@ -705,6 +709,7 @@ export function initZodiacScene(
 
     // WCAG 2.2.2 — user control over the auto-rotating orrery
     setAutoRotate(enabled: boolean) {
+      autoRotateChoice = enabled;
       controls.autoRotate = enabled;
     },
 
