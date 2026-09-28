@@ -50,6 +50,7 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./mediaSweeper.ts": () => import("../convex/mediaSweeper"),
   "./mediaToolsInternal.ts": () => import("../convex/mediaToolsInternal"),
   "./phase2.ts": () => import("../convex/phase2"),
+  "./podcast.ts": () => import("../convex/podcast"),
   "./recipes.ts": () => import("../convex/recipes"),
   "./recipesInternal.ts": () => import("../convex/recipesInternal"),
   "./schema.ts": () => import("../convex/schema"),

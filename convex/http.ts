@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { agentToolHttpHandlers } from "./agentToolsHttp";
 import { constantTimeEqual } from "./auth";
+import { buildFeedXml, feedTokenMatches } from "./podcast";
 import { AGENT_TOOL_NAMES } from "./shared/agentToolManifest";
 import { generateDedupeKey } from "./sourceUtils";
 
@@ -41,6 +42,37 @@ http.route({
   path: "/health",
   method: "GET",
   handler: httpAction(() => json({ ok: true }) as unknown as Promise<Response>),
+});
+
+// Private podcast feed: /podcast/<token>/feed.xml. Wrong token → 404.
+http.route({
+  pathPrefix: "/podcast/",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const path = new URL(request.url).pathname;
+    const match = path.match(/^\/podcast\/([^/]+)\/feed\.xml$/);
+    if (
+      !match ||
+      !feedTokenMatches(match[1] ?? "", process.env.PODCAST_FEED_TOKEN)
+    ) {
+      return new Response("Not found", { status: 404 });
+    }
+    const publicBaseUrl =
+      process.env.PODCAST_PUBLIC_BASE_URL ?? "https://listen.rproj.art";
+    const episodes = await ctx.runQuery(internal.podcast.listFeedEpisodes, {});
+    const xml = buildFeedXml({
+      title: "Frequency Music, private",
+      publicBaseUrl,
+      episodes,
+    });
+    return new Response(xml, {
+      status: 200,
+      headers: {
+        "content-type": "application/rss+xml; charset=utf-8",
+        "cache-control": "no-store",
+      },
+    });
+  }),
 });
 
 for (const name of AGENT_TOOL_NAMES) {

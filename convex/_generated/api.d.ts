@@ -58,6 +58,7 @@ import type * as mediaJobs from "../mediaJobs.js";
 import type * as mediaSweeper from "../mediaSweeper.js";
 import type * as mediaToolsInternal from "../mediaToolsInternal.js";
 import type * as phase2 from "../phase2.js";
+import type * as podcast from "../podcast.js";
 import type * as recipes from "../recipes.js";
 import type * as recipesInternal from "../recipesInternal.js";
 import type * as shared_agentContract from "../shared/agentContract.js";
@@ -143,6 +144,7 @@ declare const fullApi: ApiFromModules<{
   mediaSweeper: typeof mediaSweeper;
   mediaToolsInternal: typeof mediaToolsInternal;
   phase2: typeof phase2;
+  podcast: typeof podcast;
   recipes: typeof recipes;
   recipesInternal: typeof recipesInternal;
   "shared/agentContract": typeof shared_agentContract;
