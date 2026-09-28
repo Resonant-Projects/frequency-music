@@ -52,6 +52,8 @@ import type * as listening from "../listening.js";
 import type * as llm from "../llm.js";
 import type * as llmNode from "../llmNode.js";
 import type * as maintenance from "../maintenance.js";
+import type * as mediaJobEffects from "../mediaJobEffects.js";
+import type * as mediaJobs from "../mediaJobs.js";
 import type * as phase2 from "../phase2.js";
 import type * as recipes from "../recipes.js";
 import type * as recipesInternal from "../recipesInternal.js";
@@ -132,6 +134,8 @@ declare const fullApi: ApiFromModules<{
   llm: typeof llm;
   llmNode: typeof llmNode;
   maintenance: typeof maintenance;
+  mediaJobEffects: typeof mediaJobEffects;
+  mediaJobs: typeof mediaJobs;
   phase2: typeof phase2;
   recipes: typeof recipes;
   recipesInternal: typeof recipesInternal;
