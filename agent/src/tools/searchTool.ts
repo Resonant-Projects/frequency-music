@@ -194,7 +194,7 @@ function canonicalKey(url: string): string {
     const parsed = new URL(canonicalUrl(url));
     if (parsed.hostname.toLowerCase() === "doi.org")
       return `doi:${parsed.pathname.replace(/^\//, "")}`;
-    return `url:${parsed.hostname.toLowerCase()}${parsed.pathname.replace(/\/$/, "")}${parsed.search}`;
+    return `url:${parsed.host.toLowerCase()}${parsed.pathname.replace(/\/$/, "")}${parsed.search}`;
   } catch {
     return `url:${url}`;
   }

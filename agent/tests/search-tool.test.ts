@@ -179,6 +179,36 @@ describe("federated source-scout search", () => {
     );
   });
 
+  test("keeps distinct port-specific sources", async () => {
+    const fetchImpl = vi.fn(async (input: string | URL | Request) =>
+      urlOf(input).includes("firecrawl.dev")
+        ? json({
+            data: {
+              web: [
+                {
+                  title: "Default",
+                  url: "https://example.org/paper",
+                  description: "A",
+                },
+                {
+                  title: "Alternate",
+                  url: "https://example.org:8443/paper",
+                  description: "B",
+                },
+              ],
+            },
+          })
+        : json({ results: [], resultList: { result: [] } }),
+    );
+    const results = await createWebSearch({ apiKey: "fixture-key", fetchImpl })(
+      { query: "paper" },
+    );
+    expect(results.map((result) => result.url)).toEqual([
+      "https://example.org/paper",
+      "https://example.org:8443/paper",
+    ]);
+  });
+
   test("deduplicates DOI variants and caps the combined results", async () => {
     const fetchImpl = vi.fn(async (input: string | URL | Request) => {
       const url = urlOf(input);
