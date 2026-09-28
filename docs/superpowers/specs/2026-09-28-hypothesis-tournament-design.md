@@ -79,14 +79,18 @@ check_capacity → gather_seeds → generate_candidates → gather_evidence
   upserted with `draftId` and `outcome: "submitted"`.
 - `summarize`: as today.
 
-Budget, enforced by the graph state: at most 8 generation calls, 8 grounding
-calls, 24 scoring calls, 3 duplicate-classification calls per candidate, 3
-finalist calls, 2 self-check calls, with retries counted against the same
-caps; 300 000 total tokens summed from provider usage; 20 minutes wall
-clock; a reserve of 2 calls for persistence. When any limit is reached
-before `finalists`, the run summarizes without a draft. `TOKEN_BUDGETS` in
-`convex/llm.ts` gains per-call caps for the new prompts; it remains a
-per-call cap table, and the run budget lives in the graph.
+Budget, enforced by the graph state as separate counters: 8 generation
+calls, 8 grounding calls, 24 scoring calls, 3 duplicate-classification
+calls per candidate, 3 finalist calls, 2 self-check calls, 1 revision
+generation call (the rewrite after a failed first self-check), and 1
+duplicate re-check, with retries counted against the same counter; 300 000
+total tokens summed from provider usage; 20 minutes wall clock; persistence
+calls are not counted. Exhaustion behaviour: before `finalists`, the run
+summarizes without a draft; after a finalist is chosen, the winner is
+archived as `finalist` and the run summarizes without a draft, because an
+unchecked draft is never submitted. `TOKEN_BUDGETS` in `convex/llm.ts`
+gains per-call caps for the new prompts; it remains a per-call cap table,
+and the run budget lives in the graph.
 
 ## 3. Seed families
 
@@ -107,21 +111,32 @@ Families are sampled equally, two seeds each, in this release.
 hypothesisCandidates
   agentRunId, batchIndex
   seedFamily, seedRefs: string[]
-  payload                        // hypothesisDraftPayloadZ shape
+  payload                        // hypothesisDraftPayloadZ shape as generated and grounded
+  finalPayload?                  // winner only: the payload after self-check revision
+  selfCheck?: { pass, testable, oneVariable, evidenceGrounded, feedback }
   statementEmbedding?: number[]  // vector index, same model as claims
   duplicateOf?: string, duplicateKind?: "duplicate" | "inversion" | "refinement"
   scores: { stake, novelty, falsifiability }[]   // one per successful judgment
-  outcome: "dropped_evidence" | "dropped_duplicate" | "ineligible" | "lost" | "submitted"
+  outcome: "dropped_evidence" | "dropped_duplicate" | "ineligible" | "lost"
+         | "finalist" | "failed_self_check" | "submitted"
   draftId?
   createdAt
 ```
+
+Embedding freshness: `hypotheses` also gains `statementEmbeddingHash`
+(sha256 of the statement). The duplicate check re-embeds any hypothesis
+whose hash does not match its current statement, and the existing
+`embed-missing-sweep` cron refreshes mismatches. Candidate rows are
+immutable after creation, so they need no freshness rule.
 
 Written incrementally through the audit-only tool
 `recordHypothesisCandidates` keyed by `(agentRunId, batchIndex)` so retries
 upsert: after `duplicate_check` (candidates, evidence, duplicate status),
 after `finalists` (scores, `lost` and `ineligible` outcomes, the winner as
-`finalist`), and after `write_draft` (winner set to `submitted` with
-`draftId`). A run that dies between draft creation and the last write
+`finalist`), after `self_check` (the winner's `selfCheck` result and
+`finalPayload`, or outcome `failed_self_check` when the revision still
+fails, in which case no draft is written), and after `write_draft` (winner
+set to `submitted` with `draftId`). A run that dies between draft creation and the last write
 leaves a `finalist` row and a draft carrying `tournament:<runId>`; the
 existing `reconcile-reviewed-agent-runs` cron gains a step that repairs that
 linkage. Rows are never promoted directly. Unsubmitted rows older than 180

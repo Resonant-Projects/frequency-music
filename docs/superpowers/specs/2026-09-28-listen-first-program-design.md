@@ -122,10 +122,11 @@ audioArtifacts
   voice?: { catalogId, promptVersion }
   analysis?: { version, roughnessMedian, roughnessP90, lufs, truePeakDbtp, spectralCentroidHz }
   refs: { weeklyBriefId?, agentReviewDraftId?, recipeId?, compositionId?,
-          docketCardId?, mediaJobId? }
+          listeningSessionId?, docketCardId?, mediaJobId? }
   blindGroupId?: Id<"blindGroups">
   contentHash: string      // sha256(kind, scriptMd|renderPlan, engine, voice, encoding)
-  createdBy: "system" | "agent" | "human"
+  createdBy: "system" | "agent" | Id<"users">    // voice notes and studio uploads carry the user
+  uploadIssuedAt?: number  // set by generateAudioUploadUrl; cleared when storageId attaches
   createdAt, updatedAt
 indexes: by_kind_createdAt, by_status_createdAt, by_access_kind_createdAt,
          by_blindGroupId, by_refs_compositionId, by_contentHash
@@ -195,7 +196,8 @@ Tools added to `/agent-tools/*`, registered in
 | --- | --- |
 | `claimNextMediaJob` | Claim the oldest queued job whose kind is in the caller's list; issues a lease token with a 10-minute expiry. |
 | `renewMediaJobLease` | Extend the lease; fails if the token no longer matches. |
-| `generateAudioUploadUrl` | Storage upload URL for one pending artifact. |
+| `generateAudioUploadUrl` | Creates the pending artifact row with `uploadIssuedAt` and returns a storage upload URL for it. |
+| `attachAudioStorage` | Called immediately after the upload returns its storage id; records `storageId` on the pending artifact and clears `uploadIssuedAt`. |
 | `completeMediaJob` | Fenced by lease token. Validates the kind-specific result with its zod schema and applies the domain effects in one mutation: marks artifacts ready, links masters and deliveries, creates blind groups, and in wave 3 creates compositions with every required field. The media service never writes research data directly. |
 | `failMediaJob` | Fenced. Stores the error, re-queues with `attempts + 1`, parks at 3. |
 
@@ -204,8 +206,12 @@ token differs or `leaseExpiresAt` has passed; a stale worker finishing late
 is rejected rather than overwriting. A repeat completion with the same lease
 returns the stored result before any precondition check. The cron
 `sweep-stale-media-jobs` re-queues claimed jobs whose lease expired,
-incrementing `attempts`, and deletes orphaned uploads: `pending` artifacts
-older than 24 hours that have a `storageId` but no completed job.
+incrementing `attempts`, and cleans orphans in two passes: `pending`
+artifacts older than 24 hours are deleted along with their `storageId` blob
+when they have one; then every `_storage` row (read through
+`ctx.db.system.query("_storage")`) older than 24 hours that no artifact
+references is deleted, which covers a blob uploaded by a worker that crashed
+before `attachAudioStorage`.
 
 The media service authenticates with `AGENT_TOOL_SECRET`, the same standing
 service identity as the worker.
@@ -234,9 +240,10 @@ every wave):
 | Music renders | −18 LUFS | ±0.5 LU, else fails | ≤ −1 dBTP | stereo |
 
 True peak is measured on the decoded delivery file as well as the master.
-Every render keeps a pre-normalization master (`role: "master"`,
-`normalization: "skipped"`) and a normalized master; deliveries encode the
-normalized master. When a recipe's variable is loudness or dynamics, the
+Every render keeps a pre-normalization master (`role: "masterRaw"`,
+`normalization: "skipped"`) and a normalized master (`role:
+"masterNormalized"`, linked to the raw one by `masterArtifactId`);
+deliveries encode the normalized master and link to it. When a recipe's variable is loudness or dynamics, the
 render plan sets `normalize: false`, all family members skip normalization,
 and the artifacts carry `normalization: "skipped"`.
 

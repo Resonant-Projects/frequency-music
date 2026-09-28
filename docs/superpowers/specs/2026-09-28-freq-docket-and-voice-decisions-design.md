@@ -77,26 +77,32 @@ Two small Convex-owned bots, distinct from OpenClaw's:
 The card shows the proposed action, the target title, the note, and the
 payload digest's short form. Its only buttons are **Confirm <action>** and
 **Cancel**; the action was chosen by voice and cannot be changed on the card.
-A different action means a new proposal.
+A different action means a new proposal. Button ids are
+`<intentId>:confirm:<digest8>` and `<intentId>:cancel`, so a confirm event
+carries the digest of the exact payload that was displayed. Intents have no
+update mutation; action and payload are immutable from creation.
 
 - **Discord "Frequency Signer"** application. A Convex action posts the card
   to `#frequency` with the bot token and stores the returned message id on
   the intent. Discord sends interactions to `POST /discord/interactions` on
   the Convex site; the handler verifies the Ed25519 signature over the raw
   body with the application's public key, rejects
-  `X-Signature-Timestamp` older than 5 minutes, requires `message.id` to
-  equal the stored card id and the button `custom_id` to equal
-  `<intentId>:<action>`, checks `member.user.id` against `DECISION_SIGNERS`,
-  and applies (§4.4). Replies with an ephemeral acknowledgement.
+  `X-Signature-Timestamp` older than 5 minutes, and passes the event to
+  §4.4 as `{ platform: "discord", chatId: channel_id, messageId:
+  message.id, signerId: member.user.id, verb, digest8, eventId: interaction
+  id }`. Replies with an ephemeral acknowledgement.
 - **Telegram "Frequency Signer"** bot. Convex posts the card with an inline
   keyboard and stores the message id. Telegram delivers updates over HTTPS to
   `POST /telegram/webhook/<pathSecret>` on `listen.rproj.art`, guarded by the
-  webhook `secret_token` header as well. Callback queries must reference the
-  stored message id and carry `<intentId>:<action>`; a typed reply
-  "confirm D-17" or "cancel D-17" to the signer bot is accepted too, for
-  hands-free use with the keyboard's dictation. `from.id` is checked against
-  `DECISION_SIGNERS`. Telegram `update_id`s are recorded in `webhookEvents`
-  and duplicates return the stored result.
+  webhook `secret_token` header as well. A callback query yields the event
+  `{ platform: "telegram", chatId: message.chat.id, messageId:
+  message.message_id, signerId: from.id, verb, digest8, eventId: update_id }`.
+  A typed message "confirm D-17" or "cancel D-17" is accepted for hands-free
+  use with the keyboard's dictation; it is bound through the code, not its
+  own message id: the handler resolves `D-17` to the intent and passes
+  `messageId: intent.signerCard.messageId`, `chatId: message.chat.id`, and
+  for confirm the stored digest, so a typed confirm from another chat or for
+  an intent whose card was never posted fails the card check in §4.4.
 - **Web fallback**: `/agent-drafts?intent=<id>` shows the intent with one
   Confirm button behind Clerk.
 
@@ -116,7 +122,7 @@ decisionIntents
   target: { kind: "agentReviewDraft" | "composition" | "feedProposal", id }
         // decisions target a draft or feed; listening intents target the
         // composition the session will be created for
-  targetVersion?: { status, updatedAt }  // drafts and feeds only, read at proposal
+  targetRevision?: number               // drafts and feeds only, read at proposal (§4.4)
   action: "approve" | "reject" | "supersede" | "defer" | "createListeningSession" | "enableFeed"
         // immutable after creation
   payload: <action-specific zod in convex/shared/decisionIntents.ts>
@@ -143,17 +149,32 @@ note, amendedPayload, actor })` is extracted from today's `approve`,
 invariants (pending status, payload present, `whyThisMatters`, recipe
 `hypothesisId`, rejection note required) stay inside it.
 
-`decisionIntents.apply` runs in one mutation, in this order: if a signature
-with the same `(platform, eventId)` is already stored, return the stored
-result; otherwise require status `proposed` and not expired; require the
-event's action to equal the intent's action and the event's message id to
-equal `signerCard.messageId`; for drafts and feeds require the target's
-current `status` and `updatedAt` to equal `targetVersion` (a web decision in
-between rejects the intent with the current status; Convex mutations are
-serializable, so a concurrent write cannot slip between the check and the
-apply); call `applyDraftDecision` (which keeps `supersede`'s `byDraftId`
-validation and the run reconciliation side effects); store the signature and
-result; set `applied`. Cancel follows the same path and sets `cancelled`.
+Revision identity: `agentReviewDrafts` and `feeds` gain `revision: number`
+(backfilled to 0), incremented by every mutation that writes the row.
+Timestamps are not used for identity.
+
+`decisionIntents.apply(event)` runs in one mutation, in this order:
+
+1. If `webhookEvents` has `(event.platform, event.eventId)`, return the
+   stored result.
+2. Require status `proposed` and not expired.
+3. Card binding: require `event.platform === signerCard.platform`,
+   `event.chatId === signerCard.chatId`, and
+   `event.messageId === signerCard.messageId`. An intent without a
+   `signerCard` cannot be applied from any platform (web fallback only).
+4. Signer binding: `event.signerId` must map through `DECISION_SIGNERS`.
+5. If `event.verb === "cancel"`: set `cancelled`, record the event, return.
+   Cancel needs no digest and no action match.
+6. If `event.verb === "confirm"`: require `event.digest8` to equal the
+   stored `payloadDigest` prefix, so the payload that was displayed is the
+   payload applied.
+7. For drafts and feeds require the target's current `revision` to equal
+   `targetRevision` (a web decision in between rejects the intent with the
+   current status; Convex mutations are serializable, so nothing slips
+   between the check and the apply).
+8. Call `applyDraftDecision` (which keeps `supersede`'s `byDraftId`
+   validation and the run reconciliation side effects), store the signature
+   and result, record the event, set `applied`.
 
 For `createListeningSession` the target is the composition, there is no
 version check, and uniqueness comes from the intent itself: one session per
