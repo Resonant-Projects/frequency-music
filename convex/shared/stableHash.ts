@@ -5,6 +5,7 @@ export function stableStringify(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
   const entries = Object.entries(value)
     .filter(([, child]) => child !== undefined)
+    // oxlint-disable-next-line unicorn/no-array-sort -- fresh array from filter(); .sort keeps es2022 consumers (agent/, media/) typechecking
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([key, child]) => `${JSON.stringify(key)}:${stableStringify(child)}`);
   return `{${entries.join(",")}}`;
