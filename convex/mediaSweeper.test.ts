@@ -128,4 +128,39 @@ describe("mediaSweeper", () => {
       referenced.toSorted(),
     );
   });
+
+  test("tolerates a stale pending artifact whose storageId points at a blob that is already gone", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+    const goneBlob = await t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob(["gone"]));
+      await ctx.storage.delete(storageId);
+      return storageId;
+    });
+    const liveBlob = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["live"])),
+    );
+    await t.run(async (ctx) => {
+      for (const storageId of [goneBlob, liveBlob]) {
+        await ctx.db.insert("audioArtifacts", {
+          ...base,
+          status: "pending",
+          storageId,
+          createdAt: now - 2 * DAY,
+          updatedAt: now - 2 * DAY,
+        });
+      }
+    });
+
+    const result = await t.mutation(internal.mediaSweeper.sweep, {
+      now: Date.now() + 1,
+    });
+    expect(result.artifactsDeleted).toBe(2);
+    expect(result.blobsDeleted).toBe(1);
+    expect(await t.run((ctx) => ctx.db.system.get(liveBlob))).toBeNull();
+    const artifacts = await t.run((ctx) =>
+      ctx.db.query("audioArtifacts").collect(),
+    );
+    expect(artifacts).toHaveLength(0);
+  });
 });

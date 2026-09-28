@@ -78,7 +78,9 @@ export const sweep = internalMutation({
       )
       .take(SCAN_LIMIT);
     for (const row of stalePending) {
-      if (row.storageId) {
+      // storage.delete throws on a missing blob, and the sweep is one
+      // mutation: an unguarded delete would roll back lease recovery too.
+      if (row.storageId && (await ctx.db.system.get(row.storageId))) {
         await ctx.storage.delete(row.storageId);
         blobsDeleted++;
       }
