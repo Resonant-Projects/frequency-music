@@ -78,7 +78,8 @@ export const audioArtifactFieldsZ = z.object({
     .object({
       name: z.string(),
       version: z.string(),
-      params: z.record(z.string(), z.unknown()),
+      // z.any(), not z.unknown(): zodToConvex must yield a Convex Value type for defineTable
+      params: z.record(z.string(), z.any()),
     })
     .optional(),
   voice: z
