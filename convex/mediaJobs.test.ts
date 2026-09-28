@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
 import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { LEASE_MS } from "./shared/mediaJobs";
 
@@ -12,27 +13,32 @@ const probe = {
   rendererVersion: "0.1.0",
 };
 
+type Role = "masterNormalized" | "delivery";
+
+// A pending artifact with a blob attached, as the worker leaves it before
+// completing the job. The delivery carries its master's id.
 async function pendingArtifact(
   t: ReturnType<typeof convexTest>,
   jobId: string,
+  role: Role,
+  masterArtifactId?: Id<"audioArtifacts">,
 ) {
   const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
     fields: {
       kind: "probe",
-      role: "delivery",
+      role,
+      masterArtifactId,
       metadataStripped: false,
       status: "pending",
-      encoding: {
-        codec: "mp3",
-        bitrateKbps: 128,
-        sampleRate: 48000,
-        channels: 2,
-      },
+      encoding:
+        role === "masterNormalized"
+          ? { codec: "wav", sampleRate: 48000, channels: 1 }
+          : { codec: "mp3", bitrateKbps: 128, sampleRate: 48000, channels: 2 },
       normalization: "applied",
       access: "private",
       title: "probe",
       refs: { mediaJobId: jobId as never },
-      contentHash: "c1",
+      contentHash: `c-${role}`,
       createdBy: "system",
     },
   });
@@ -42,6 +48,22 @@ async function pendingArtifact(
     storageId,
   });
   return artifactId;
+}
+
+const measured = { durationSecs: 1, loudnessLufs: -16, truePeakDbtp: -1.5 };
+
+// The pair a probe job produces, ready to be submitted as its result.
+async function probePair(t: ReturnType<typeof convexTest>, jobId: string) {
+  const masterId = await pendingArtifact(t, jobId, "masterNormalized");
+  const deliveryId = await pendingArtifact(t, jobId, "delivery", masterId);
+  const result = {
+    kind: "probe" as const,
+    artifacts: [
+      { ...measured, artifactId: masterId, mimeType: "audio/wav" },
+      { ...measured, artifactId: deliveryId, mimeType: "audio/mpeg" },
+    ],
+  };
+  return { masterId, deliveryId, result };
 }
 
 describe("mediaJobs lifecycle", () => {
@@ -89,19 +111,7 @@ describe("mediaJobs lifecycle", () => {
       workerId: "w1",
       kinds: ["probe"],
     });
-    const artifactId = await pendingArtifact(t, jobId);
-    const result = {
-      kind: "probe" as const,
-      artifacts: [
-        {
-          artifactId,
-          durationSecs: 1,
-          loudnessLufs: -16,
-          truePeakDbtp: -1.5,
-          mimeType: "audio/mpeg",
-        },
-      ],
-    };
+    const { masterId, deliveryId, result } = await probePair(t, jobId);
     await expect(
       t.mutation(internal.mediaJobs.complete, {
         jobId,
@@ -115,16 +125,71 @@ describe("mediaJobs lifecycle", () => {
       result,
     });
     expect(done.status).toBe("done");
-    expect(done.resultArtifactIds).toEqual([artifactId]);
-    const artifact = await t.run((ctx) => ctx.db.get(artifactId));
-    expect(artifact?.status).toBe("ready");
+    expect(done.resultArtifactIds).toEqual([masterId, deliveryId]);
+    const master = await t.run((ctx) => ctx.db.get(masterId));
+    expect(master?.status).toBe("ready");
+    const delivery = await t.run((ctx) => ctx.db.get(deliveryId));
+    expect(delivery?.status).toBe("ready");
     // Repeat completion with the same lease returns the stored result.
     const again = await t.mutation(internal.mediaJobs.complete, {
       jobId,
       leaseToken: claim!.leaseToken,
       result,
     });
-    expect(again.resultArtifactIds).toEqual([artifactId]);
+    expect(again.resultArtifactIds).toEqual([masterId, deliveryId]);
+  });
+
+  test("complete refuses a probe result without a master and its delivery", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId } = await t.mutation(internal.mediaJobs.enqueue, {
+      input: probe,
+    });
+    const claim = await t.mutation(internal.mediaJobs.claimNext, {
+      workerId: "w1",
+      kinds: ["probe"],
+    });
+    const leaseToken = claim!.leaseToken;
+    const masterId = await pendingArtifact(t, jobId, "masterNormalized");
+    // Two masters: the roles are wrong even though the count is right.
+    const secondMasterId = await pendingArtifact(t, jobId, "masterNormalized");
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "probe",
+          artifacts: [
+            { ...measured, artifactId: masterId, mimeType: "audio/wav" },
+            { ...measured, artifactId: secondMasterId, mimeType: "audio/wav" },
+          ],
+        },
+      }),
+    ).rejects.toThrow(/one masterNormalized and one delivery/);
+    // A delivery that does not point at the submitted master.
+    const strayDeliveryId = await pendingArtifact(t, jobId, "delivery");
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "probe",
+          artifacts: [
+            { ...measured, artifactId: masterId, mimeType: "audio/wav" },
+            {
+              ...measured,
+              artifactId: strayDeliveryId,
+              mimeType: "audio/mpeg",
+            },
+          ],
+        },
+      }),
+    ).rejects.toThrow(/reference its master/);
+    for (const id of [masterId, secondMasterId, strayDeliveryId]) {
+      const row = await t.run((ctx) => ctx.db.get(id));
+      expect(row?.status).toBe("pending");
+    }
+    const job = await t.run((ctx) => ctx.db.get(jobId));
+    expect(job?.status).toBe("claimed");
   });
 
   test("a stale worker cannot complete after its lease expired and the job was re-claimed", async () => {
@@ -146,19 +211,7 @@ describe("mediaJobs lifecycle", () => {
       kinds: ["probe"],
     });
     expect(fresh?.attempts).toBe(1);
-    const artifactId = await pendingArtifact(t, jobId);
-    const result = {
-      kind: "probe" as const,
-      artifacts: [
-        {
-          artifactId,
-          durationSecs: 1,
-          loudnessLufs: -16,
-          truePeakDbtp: -1.5,
-          mimeType: "audio/mpeg",
-        },
-      ],
-    };
+    const { result } = await probePair(t, jobId);
     await expect(
       t.mutation(internal.mediaJobs.complete, {
         jobId,

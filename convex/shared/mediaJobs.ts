@@ -49,7 +49,8 @@ export type ArtifactResult = z.infer<typeof artifactResultZ>;
 
 export const probeJobResultZ = z.object({
   kind: z.literal("probe"),
-  artifacts: z.array(artifactResultZ).min(1),
+  // Exactly the master and its delivery; mediaJobEffects checks the roles.
+  artifacts: z.array(artifactResultZ).length(2),
 });
 
 export const mediaJobResultZ = z.discriminatedUnion("kind", [probeJobResultZ]);

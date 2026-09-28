@@ -41,20 +41,26 @@ describe("media job contracts", () => {
     ).toBe(false);
   });
 
-  test("probe result requires ready artifacts with measurements", () => {
+  test("probe result requires exactly two ready artifacts with measurements", () => {
+    const measured = {
+      durationSecs: 2,
+      loudnessLufs: -16.1,
+      truePeakDbtp: -1.4,
+    };
     const ok = mediaJobResultZ.safeParse({
       kind: "probe",
       artifacts: [
-        {
-          artifactId: "k123",
-          durationSecs: 2,
-          loudnessLufs: -16.1,
-          truePeakDbtp: -1.4,
-          mimeType: "audio/mpeg",
-        },
+        { ...measured, artifactId: "k123", mimeType: "audio/wav" },
+        { ...measured, artifactId: "k456", mimeType: "audio/mpeg" },
       ],
     });
     expect(ok.success).toBe(true);
+    expect(
+      mediaJobResultZ.safeParse({
+        kind: "probe",
+        artifacts: [{ ...measured, artifactId: "k123", mimeType: "audio/wav" }],
+      }).success,
+    ).toBe(false);
     expect(
       mediaJobResultZ.safeParse({ kind: "probe", artifacts: [] }).success,
     ).toBe(false);
