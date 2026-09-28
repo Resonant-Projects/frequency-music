@@ -19,6 +19,14 @@ export const generateAudioUploadUrl = internalMutation({
     args,
   ): Promise<{ artifactId: Id<"audioArtifacts">; uploadUrl: string }> => {
     requireLease(await ctx.db.get(args.jobId), args.leaseToken, Date.now());
+    // storageId is lifecycle-owned: a caller-supplied id would leave a pending
+    // row pointing at a blob it never uploaded, which the sweeper then deletes.
+    if (args.artifact?.storageId !== undefined) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "storageId is assigned by attachAudioStorage",
+      });
+    }
     // createPending stamps createdAt/updatedAt/uploadIssuedAt itself.
     const fields = audioArtifactInputZ.parse({
       ...args.artifact,
