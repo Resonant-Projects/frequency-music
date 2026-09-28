@@ -571,7 +571,7 @@ In `convex/mediaJobEffects.ts` add cases (keep `readyArtifacts` from wave 0; the
     }
 ```
 
-with `const ORDINALS = ["one", "two", "three", "four", "five", "six"];` at module top. Note: the episode artifact gets `blindGroupId` so `podcast.listFeedEpisodes` still lists it (feed access is independent of blindness; only the takes are hidden from ordinary playback), and `blindGroups.create` must skip its "already belongs to a group" check for the episode because the episode is not a member. It is not passed as a member, so no change is needed.
+with `const ORDINALS = ["one", "two", "three", "four", "five", "six"];` at module top. Note: the episode artifact is NOT tagged with `blindGroupId` (wave 0's `podcast.listFeedEpisodes` hides any row that carries one, and `blindGroups.create` rejects non-private members); only the takes are members. The episode's link to its group is the shared `refs.mediaJobId` of the shootout job, which the `/listen` page uses to pair them.
 
 - [ ] **Step 6: Run tests, commit**
 
