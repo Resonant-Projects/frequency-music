@@ -23,6 +23,10 @@ async function uploadArtifact(
   artifact: NewArtifact,
   mimeType: string,
 ): Promise<ArtifactResult> {
+  // Policy first: only a file that passed creates server state (pending row,
+  // blob), so a failed attempt leaves nothing for the sweeper.
+  const measured = await measure(path);
+  assertWithinPolicy(measured, LOUDNESS_TARGETS.spoken);
   const { artifactId, uploadUrl } = await ctx.tools.generateAudioUploadUrl({
     jobId: ctx.job.jobId,
     leaseToken: ctx.job.leaseToken,
@@ -35,8 +39,6 @@ async function uploadArtifact(
     artifactId,
     storageId,
   });
-  const measured = await measure(path);
-  assertWithinPolicy(measured, LOUDNESS_TARGETS.spoken);
   return {
     artifactId: artifactId as ArtifactResult["artifactId"],
     durationSecs: measured.durationSecs,

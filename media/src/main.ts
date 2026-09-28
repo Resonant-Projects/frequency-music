@@ -28,7 +28,9 @@ async function main(): Promise<void> {
     } catch (error) {
       log(`poll iteration failed: ${redactError(error)}`);
     }
-    if (outcome === "idle") {
+    // Back off after a failure too: requeue has no server-side delay, so an
+    // immediate re-claim would burn MAX_ATTEMPTS on a transient outage.
+    if (outcome !== "done") {
       await new Promise((resolve) =>
         setTimeout(resolve, config.pollIntervalMs),
       );

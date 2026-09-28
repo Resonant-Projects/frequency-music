@@ -1,5 +1,20 @@
-import { describe, expect, test, vi } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { runOnce } from "../src/runner";
+
+// The runner logs claim/failure lines; keep test output quiet.
+beforeEach(() => {
+  vi.spyOn(console, "log").mockImplementation(() => {});
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("runOnce", () => {
   test("idle when nothing is claimed", async () => {
