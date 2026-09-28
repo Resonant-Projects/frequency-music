@@ -31,6 +31,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# The base image bundles npm, whose vendored tar/brace-expansion carry open
+# CVEs the scan rejects; the worker runs under tsx and never needs npm.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 # Non-root worker; /work is the scratch directory for renders and encodes.
 RUN useradd --uid 1001 --create-home --shell /usr/sbin/nologin media \
     && mkdir -p /work && chown media:media /work
