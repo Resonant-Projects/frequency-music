@@ -98,7 +98,8 @@ jobs:
           version: v0.70.0
           format: table
           exit-code: '1'
-          ignore-unfixed: false
+          # Debian's ffmpeg dependency tree carries open, unfixed CVEs; fail only on fixable HIGH/CRITICAL.
+          ignore-unfixed: true
           severity: HIGH,CRITICAL
 
   publish:
@@ -201,7 +202,8 @@ jobs:
           version: v0.70.0
           format: table
           exit-code: '1'
-          ignore-unfixed: false
+          # Debian's ffmpeg dependency tree carries open, unfixed CVEs; fail only on fixable HIGH/CRITICAL.
+          ignore-unfixed: true
           severity: HIGH,CRITICAL
 
       - name: Attest published digest

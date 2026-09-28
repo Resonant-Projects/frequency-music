@@ -10,6 +10,13 @@ import { runOnce } from "./runner";
 
 async function main(): Promise<void> {
   const config = loadConfig();
+  // A kind with no handler would burn every job's attempts and park it;
+  // refuse to start rather than poison the queue.
+  const unknown = config.kinds.filter((kind) => !(kind in handlers));
+  if (unknown.length > 0) {
+    log(`no handler for job kinds: ${unknown.join(", ")}`);
+    process.exit(1);
+  }
   await mkdir(config.workDir, { recursive: true });
   log(
     `media worker ${config.workerId} polling every ${config.pollIntervalMs} ms for ${config.kinds.join(", ")}`,
