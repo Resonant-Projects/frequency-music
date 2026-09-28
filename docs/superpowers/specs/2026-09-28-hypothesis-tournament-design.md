@@ -85,10 +85,13 @@ calls per candidate, 3 finalist calls, 2 self-check calls, 1 revision
 generation call (the rewrite after a failed first self-check), and 1
 duplicate re-check, with retries counted against the same counter; 300 000
 total tokens summed from provider usage; 20 minutes wall clock; persistence
-calls are not counted. Exhaustion behaviour: before `finalists`, the run
-summarizes without a draft; after a finalist is chosen, the winner is
-archived as `finalist` and the run summarizes without a draft, because an
-unchecked draft is never submitted. `TOKEN_BUDGETS` in `convex/llm.ts`
+calls are not counted. Exhaustion behaviour, all without a draft: before
+`finalists`, every eligible candidate is archived as `lost` and the run
+summarizes; during the pairwise comparisons, before a winner exists, the
+three finalists are archived as `finalist` with whatever pairwise results
+were recorded and the run summarizes with reason `budget_exhausted`; after
+a winner is chosen, the winner stays `finalist` and the run summarizes,
+because an unchecked draft is never submitted. `TOKEN_BUDGETS` in `convex/llm.ts`
 gains per-call caps for the new prompts; it remains a per-call cap table,
 and the run budget lives in the graph.
 
