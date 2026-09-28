@@ -10,12 +10,12 @@ export type AgentToolManifestEntry = {
   backing: string;
   args: z.ZodObject;
   langchain: boolean;
-  kind: "read" | "research_write" | "audit_write";
+  kind: "read" | "research_write" | "audit_write" | "media_write";
 };
 
 function entry(
   name: AgentToolName,
-  kind: "read" | "research_write" | "audit_write",
+  kind: "read" | "research_write" | "audit_write" | "media_write",
   backing: string,
   description: string,
   context: string,
@@ -250,6 +250,54 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "agentRuns:getForWorker",
     "Fetch the full Convex agent run document including raw input by id for status polling. Audit-only read.",
     "Worker status polling; public getters strip input.",
+  ),
+  entry(
+    "claimNextMediaJob",
+    "media_write",
+    "internal.mediaJobs:claimNext",
+    "Claim the oldest queued media job whose kind is in the caller's list and issue a 10-minute lease.",
+    "Media service only. A lifecycle write; never research data.",
+    { langchain: false },
+  ),
+  entry(
+    "renewMediaJobLease",
+    "media_write",
+    "internal.mediaJobs:renewLease",
+    "Extend a claimed media job's lease; fails when the token no longer matches.",
+    "Call every few minutes while rendering.",
+    { langchain: false },
+  ),
+  entry(
+    "generateAudioUploadUrl",
+    "media_write",
+    "internal.mediaToolsInternal:generateAudioUploadUrl",
+    "Create a pending audio artifact for a leased job and return a storage upload URL.",
+    "Upload, then call attachAudioStorage with the returned storageId immediately.",
+    { langchain: false },
+  ),
+  entry(
+    "attachAudioStorage",
+    "media_write",
+    "internal.mediaToolsInternal:attachAudioStorage",
+    "Record the uploaded storage id on a pending artifact.",
+    "Fenced by the job lease. Blobs never attached are reclaimed by the sweeper.",
+    { langchain: false },
+  ),
+  entry(
+    "completeMediaJob",
+    "media_write",
+    "internal.mediaJobs:complete",
+    "Complete a leased job with a kind-specific result; Convex validates it and applies domain effects atomically.",
+    "Fenced by lease token and expiry. Repeating with the same lease returns the stored result.",
+    { langchain: false },
+  ),
+  entry(
+    "failMediaJob",
+    "media_write",
+    "internal.mediaJobs:fail",
+    "Fail a leased job; it re-queues with attempts+1 and parks after three.",
+    "Error text is truncated server-side; never include secrets.",
+    { langchain: false },
   ),
 ];
 

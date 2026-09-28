@@ -159,6 +159,35 @@ const FROZEN_ARGS: Record<string, string> = {
     graphName: field(string, true),
   }),
   getAgentRun: frozenArgs({ runId }),
+  claimNextMediaJob: frozenArgs({
+    workerId: field(string),
+    kinds: field(array(string)),
+  }),
+  renewMediaJobLease: frozenArgs({
+    jobId: field(id("mediaJobs")),
+    leaseToken: field(string),
+  }),
+  generateAudioUploadUrl: frozenArgs({
+    jobId: field(id("mediaJobs")),
+    leaseToken: field(string),
+    artifact: field(any),
+  }),
+  attachAudioStorage: frozenArgs({
+    jobId: field(id("mediaJobs")),
+    leaseToken: field(string),
+    artifactId: field(id("audioArtifacts")),
+    storageId: field(id("_storage")),
+  }),
+  completeMediaJob: frozenArgs({
+    jobId: field(id("mediaJobs")),
+    leaseToken: field(string),
+    result: field(any),
+  }),
+  failMediaJob: frozenArgs({
+    jobId: field(id("mediaJobs")),
+    leaseToken: field(string),
+    error: field(string),
+  }),
 };
 
 describe("agent tool registry", () => {
@@ -191,6 +220,9 @@ describe("agent tool registry", () => {
   });
 
   test("action args match the frozen hand-written validators", () => {
+    expect(Object.keys(FROZEN_ARGS).toSorted()).toEqual(
+      AGENT_TOOL_REGISTRY.map((tool) => tool.name).toSorted(),
+    );
     for (const definition of AGENT_TOOL_REGISTRY) {
       const registered = agentTools[
         definition.name as keyof typeof agentTools

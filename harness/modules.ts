@@ -48,6 +48,7 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./mediaJobEffects.ts": () => import("../convex/mediaJobEffects"),
   "./mediaJobs.ts": () => import("../convex/mediaJobs"),
   "./mediaSweeper.ts": () => import("../convex/mediaSweeper"),
+  "./mediaToolsInternal.ts": () => import("../convex/mediaToolsInternal"),
   "./phase2.ts": () => import("../convex/phase2"),
   "./recipes.ts": () => import("../convex/recipes"),
   "./recipesInternal.ts": () => import("../convex/recipesInternal"),

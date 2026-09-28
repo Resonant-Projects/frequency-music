@@ -56,6 +56,7 @@ import type * as maintenance from "../maintenance.js";
 import type * as mediaJobEffects from "../mediaJobEffects.js";
 import type * as mediaJobs from "../mediaJobs.js";
 import type * as mediaSweeper from "../mediaSweeper.js";
+import type * as mediaToolsInternal from "../mediaToolsInternal.js";
 import type * as phase2 from "../phase2.js";
 import type * as recipes from "../recipes.js";
 import type * as recipesInternal from "../recipesInternal.js";
@@ -140,6 +141,7 @@ declare const fullApi: ApiFromModules<{
   mediaJobEffects: typeof mediaJobEffects;
   mediaJobs: typeof mediaJobs;
   mediaSweeper: typeof mediaSweeper;
+  mediaToolsInternal: typeof mediaToolsInternal;
   phase2: typeof phase2;
   recipes: typeof recipes;
   recipesInternal: typeof recipesInternal;
