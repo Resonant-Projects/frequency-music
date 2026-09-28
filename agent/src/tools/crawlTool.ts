@@ -52,10 +52,20 @@ function isPublicPage(rawUrl: string): boolean {
 }
 
 export function createCrawlPage(
-  deps: { apiToken?: string; baseUrl?: string; fetchImpl?: FetchLike } = {},
+  deps: {
+    apiToken?: string;
+    baseUrl?: string;
+    fetchImpl?: FetchLike;
+    egressGuarded?: boolean;
+  } = {},
 ) {
   const fetchImpl = deps.fetchImpl ?? fetch;
   return async (url: string): Promise<CrawledPage | null> => {
+    // The crawler resolves DNS and follows page redirects in its own network.
+    // Hostname checks here cannot provide an SSRF boundary. Fail closed until
+    // its deployment blocks private/reserved destinations on every hop.
+    if (!(deps.egressGuarded ?? process.env.CRAWL4AI_EGRESS_GUARDED === "true"))
+      return null;
     if (!isPublicPage(url)) return null;
     const token = deps.apiToken ?? process.env.CRAWL4AI_API_TOKEN;
     if (!token) return null;
@@ -82,21 +92,40 @@ export function createCrawlPage(
       });
       if (!response.ok)
         throw new Error(`Crawl4AI returned HTTP ${response.status}`);
-      const payload = (await response.json()) as {
-        results?: unknown;
-        success?: unknown;
-      };
-      const result = Array.isArray(payload.results) ? payload.results[0] : null;
-      if (!result || result.success !== true || result.status_code >= 400)
+      const payload: unknown = await response.json();
+      const rawResults =
+        payload && typeof payload === "object" && "results" in payload
+          ? payload.results
+          : undefined;
+      const result: unknown = Array.isArray(rawResults) ? rawResults[0] : null;
+      if (
+        !result ||
+        typeof result !== "object" ||
+        !("success" in result) ||
+        result.success !== true
+      )
         return null;
-      const markdown = result.markdown;
+      if (
+        "status_code" in result &&
+        typeof result.status_code === "number" &&
+        result.status_code >= 400
+      )
+        return null;
+      const markdown = "markdown" in result ? result.markdown : undefined;
       const text =
         typeof markdown === "string"
           ? markdown
-          : markdown && typeof markdown === "object"
-            ? markdown.fit_markdown || markdown.raw_markdown
-            : "";
-      if (typeof text !== "string") return null;
+          : markdown &&
+              typeof markdown === "object" &&
+              "fit_markdown" in markdown &&
+              typeof markdown.fit_markdown === "string"
+            ? markdown.fit_markdown
+            : markdown &&
+                typeof markdown === "object" &&
+                "raw_markdown" in markdown &&
+                typeof markdown.raw_markdown === "string"
+              ? markdown.raw_markdown
+              : "";
       const clean = text.trim();
       if (
         clean.length < 100 ||

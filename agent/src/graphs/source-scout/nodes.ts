@@ -305,12 +305,15 @@ export function createIngestSourcesNode(
         return true;
       })
       .slice(0, MAX_INGESTS_PER_RUN);
-    for (const judgment of candidates) {
+    const pages = await Promise.all(
+      candidates.map((candidate) => crawl(candidate.searchHit.result.url)),
+    );
+    for (const [index, judgment] of candidates.entries()) {
       const rationale = rationaleFor(judgment);
       const publishedAt = parsedPublishedAt(
         judgment.searchHit.result.publishedAt,
       );
-      const page = await crawl(judgment.searchHit.result.url);
+      const page = pages[index] ?? null;
       const result = (await callTool("ingestScoutedSource", {
         url: judgment.searchHit.result.url,
         title: judgment.searchHit.result.title,

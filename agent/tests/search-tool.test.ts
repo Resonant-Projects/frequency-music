@@ -70,7 +70,7 @@ describe("federated source-scout search", () => {
     ).resolves.toEqual([
       {
         title: "Plate modes",
-        url: "https://doi.org/10.1234/PLATE",
+        url: "https://doi.org/10.1234/plate",
         snippet: "Plate modes resonate",
         publishedAt: "2024-01-01",
       },
@@ -102,7 +102,7 @@ describe("federated source-scout search", () => {
           returned: 2,
           status: "ok",
           resultProviders: [
-            { url: "https://doi.org/10.1234/PLATE", provider: "openalex" },
+            { url: "https://doi.org/10.1234/plate", provider: "openalex" },
             { url: "https://doi.org/10.2345/audio", provider: "europePmc" },
           ],
           providers: expect.objectContaining({
@@ -208,12 +208,12 @@ describe("federated source-scout search", () => {
     await expect(search({ query: "plate", maxResults: 2 })).resolves.toEqual([
       {
         title: "Web paper",
-        url: "https://doi.org/10.1234/PLATE",
+        url: "https://doi.org/10.1234/plate",
         snippet: "Web summary",
       },
       {
         title: "Another web source",
-        url: "https://example.org/other?utm_source=search",
+        url: "https://example.org/other",
         snippet: "Summary",
       },
     ]);
@@ -346,7 +346,7 @@ describe("federated source-scout search", () => {
     ).resolves.toEqual([
       {
         title: "Landing",
-        url: "https://example.org/paper/?utm_source=feed#abstract",
+        url: "https://example.org/paper",
         snippet: "Source",
       },
     ]);

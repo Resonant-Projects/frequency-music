@@ -22,7 +22,11 @@ describe("self-hosted Crawl4AI source text", () => {
           { status: 200 },
         ),
     );
-    const crawl = createCrawlPage({ apiToken: "fixture-token", fetchImpl });
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl,
+    });
     const result = await crawl("https://example.org/paper");
     expect(result).toEqual({
       text: expect.stringMatching(/^# Measured modes/),
@@ -50,9 +54,26 @@ describe("self-hosted Crawl4AI source text", () => {
     });
   });
 
+  test("does not submit untrusted URLs unless crawler egress is explicitly certified", async () => {
+    const fetchImpl = vi.fn(async () => new Response());
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: false,
+      fetchImpl,
+    });
+    await expect(
+      crawl("https://public.example/redirect-to-metadata"),
+    ).resolves.toBeNull();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   test("refuses private targets before any request", async () => {
     const fetchImpl = vi.fn(async () => new Response());
-    const crawl = createCrawlPage({ apiToken: "fixture-token", fetchImpl });
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl,
+    });
     await expect(crawl("http://127.0.0.1/admin")).resolves.toBeNull();
     await expect(crawl("http://localhost./internal")).resolves.toBeNull();
     await expect(crawl("file:///etc/passwd")).resolves.toBeNull();
@@ -72,7 +93,11 @@ describe("self-hosted Crawl4AI source text", () => {
           { status: 200 },
         ),
     );
-    const crawl = createCrawlPage({ apiToken: "fixture-token", fetchImpl });
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl,
+    });
     await expect(crawl("https://example.org/paper")).resolves.toBeNull();
   });
 
@@ -92,7 +117,11 @@ describe("self-hosted Crawl4AI source text", () => {
           { status: 200 },
         ),
     );
-    const crawl = createCrawlPage({ apiToken: "fixture-token", fetchImpl });
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl,
+    });
     await expect(crawl("https://example.org/paper")).resolves.toBeNull();
   });
 

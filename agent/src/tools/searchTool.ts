@@ -164,18 +164,36 @@ function mapEuropePmc(payload: unknown, limit: number): WebSearchResult[] {
     .slice(0, limit);
 }
 
-function canonicalKey(url: string): string {
+function canonicalUrl(url: string): string {
   try {
     const parsed = new URL(url);
     if (
       parsed.hostname.toLowerCase() === "doi.org" ||
       parsed.hostname.toLowerCase() === "dx.doi.org"
-    )
-      return `doi:${decodeURIComponent(parsed.pathname).replace(/^\//, "").toLowerCase()}`;
+    ) {
+      return (
+        doiUrl(decodeURIComponent(parsed.pathname.slice(1)))?.toLowerCase() ??
+        url
+      );
+    }
     parsed.hash = "";
     for (const key of Array.from(parsed.searchParams.keys())) {
       if (/^(utm_|fbclid$|gclid$)/i.test(key)) parsed.searchParams.delete(key);
     }
+    parsed.searchParams.sort();
+    if (parsed.pathname !== "/")
+      parsed.pathname = parsed.pathname.replace(/\/$/, "");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function canonicalKey(url: string): string {
+  try {
+    const parsed = new URL(canonicalUrl(url));
+    if (parsed.hostname.toLowerCase() === "doi.org")
+      return `doi:${parsed.pathname.replace(/^\//, "")}`;
     return `url:${parsed.hostname.toLowerCase()}${parsed.pathname.replace(/\/$/, "")}${parsed.search}`;
   } catch {
     return `url:${url}`;
@@ -356,11 +374,9 @@ export function createWebSearch(
         const key = canonicalKey(result.url);
         if (seen.has(key)) continue;
         seen.add(key);
-        results.push(result);
-        resultProviders.push({
-          url: result.url,
-          provider: names[providerIndex]!,
-        });
+        const url = canonicalUrl(result.url);
+        results.push({ ...result, url });
+        resultProviders.push({ url, provider: names[providerIndex]! });
         if (results.length === maxResults) break;
       }
     }

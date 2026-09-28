@@ -77,6 +77,12 @@ describe("source scout canonical writes", () => {
         contentProvider: "crawl4ai",
       }),
     ).rejects.toThrow("at least 100");
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        contentProvider: "crawl4ai",
+      }),
+    ).rejects.toThrow("requires captured text");
     expect(await t.run((ctx) => ctx.db.query("sources").collect())).toEqual([]);
   });
 

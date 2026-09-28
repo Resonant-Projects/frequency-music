@@ -411,6 +411,9 @@ export const createScoutedSource = internalMutation({
         "Scouted source text requires content provider provenance",
       );
     }
+    if (args.contentProvider && !args.rawText) {
+      throw new Error("Scouted content provider requires captured text");
+    }
     if (args.rawText && args.rawText.length < 100) {
       throw new Error(
         "Scouted source text must be at least 100 characters for Extraction",
