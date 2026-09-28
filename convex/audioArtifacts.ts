@@ -121,6 +121,21 @@ export const markFailed = internalMutation({
   args: { artifactId: v.id("audioArtifacts"), error: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.artifactId);
+    if (!row)
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Artifact not found",
+      });
+    // Lifecycle is pending -> ready | failed: a late failure must never
+    // unpublish a ready artifact. Repeating a failure is a no-op.
+    if (row.status === "failed") return null;
+    if (row.status !== "pending") {
+      throw new ConvexError({
+        code: "INVALID_STATE",
+        message: `Artifact is ${row.status}`,
+      });
+    }
     await ctx.db.patch(args.artifactId, {
       status: "failed",
       error: args.error.slice(0, 2000),

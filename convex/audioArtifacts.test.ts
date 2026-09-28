@@ -126,6 +126,46 @@ describe("audioArtifacts", () => {
     expect(row?.loudnessLufs).toBe(-16);
   });
 
+  test("markFailed only moves pending artifacts and is idempotent once failed", async () => {
+    const t = convexTest(schema, modules);
+    const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
+      fields: pendingFields,
+    });
+    await t.mutation(internal.audioArtifacts.markFailed, {
+      artifactId,
+      error: "boom",
+    });
+    await t.mutation(internal.audioArtifacts.markFailed, {
+      artifactId,
+      error: "again",
+    });
+    const failed = await t.run((ctx) => ctx.db.get(artifactId));
+    expect(failed?.status).toBe("failed");
+    expect(failed?.error).toBe("boom");
+
+    const readyId = await t.mutation(internal.audioArtifacts.createPending, {
+      fields: pendingFields,
+    });
+    const storageId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    await t.mutation(internal.audioArtifacts.attachStorage, {
+      artifactId: readyId,
+      storageId,
+    });
+    await t.mutation(internal.audioArtifacts.markReady, {
+      artifactId: readyId,
+      durationSecs: 2,
+      loudnessLufs: -16,
+      truePeakDbtp: -1.2,
+      mimeType: "audio/mpeg",
+    });
+    await expect(
+      t.mutation(internal.audioArtifacts.markFailed, {
+        artifactId: readyId,
+        error: "late",
+      }),
+    ).rejects.toThrow(/ready/);
+  });
+
   test("playback refuses members of an unrevealed blind group", async () => {
     const t = convexTest(schema, modules);
     const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
