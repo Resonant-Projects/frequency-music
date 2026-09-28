@@ -247,4 +247,27 @@ describe("mediaToolsInternal", () => {
     expect(row?.storageId).toBe(storageId);
     expect(row?.uploadIssuedAt).toBeUndefined();
   });
+
+  test("attachAudioStorage is idempotent for the same artifact and blob", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await leasedAndOtherJob(t);
+    const { artifactId } = await t.mutation(
+      internal.mediaToolsInternal.generateAudioUploadUrl,
+      { jobId, leaseToken, artifact },
+    );
+    const storageId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    const attach = () =>
+      t.mutation(internal.mediaToolsInternal.attachAudioStorage, {
+        jobId,
+        leaseToken,
+        artifactId,
+        storageId,
+      });
+    await attach();
+    // A worker retry after a lost response must not trip the "held by
+    // another artifact" guard when the holder is the target itself.
+    await expect(attach()).resolves.toBeNull();
+    const row = await t.run((ctx) => ctx.db.get(artifactId));
+    expect(row?.storageId).toBe(storageId);
+  });
 });

@@ -96,7 +96,9 @@ export const attachAudioStorage = internalMutation({
       .query("audioArtifacts")
       .withIndex("by_storageId", (q) => q.eq("storageId", args.storageId))
       .first();
-    if (holder) {
+    // The target itself holding the blob is a retried attach, which
+    // attachStorage treats as a no-op for the same pair.
+    if (holder && holder._id !== args.artifactId) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
         message: "storageId is already attached to another artifact",
