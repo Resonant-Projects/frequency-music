@@ -33,21 +33,31 @@ check_capacity → gather_seeds → generate_candidates → gather_evidence
 - `check_capacity`: as today.
 - `gather_seeds`: up to two seeds per family (§3), eight total, provenance
   tagged. Fewer than three seeds ends the run at `summarize`.
-- `generate_candidates`: one call per seed, temperature 0.9, producing the
-  existing `hypothesisDraftPayloadZ` fields (`title`, `question`,
-  `statement`, `rationale`, `whyThisMatters`, `concepts`) with empty
-  evidence arrays and a `seedFamily`.
+- `generate_candidates`: one call per seed, temperature 0.9, producing a
+  `TournamentCandidate` (typed in `agent/src/graphs/hypothesis-tournament/
+  types.ts`): `{ payload: HypothesisDraftPayload fields title, question,
+  statement, rationale, whyThisMatters, concepts; seedFamily; seedRefs;
+  evidenceClaimIds: [] }`. Seed metadata never enters the draft payload,
+  which keeps `hypothesisDraftPayloadZ` unchanged.
 - `gather_evidence`: for each candidate, `searchClaimsSemantic` on the
-  statement; keep candidates with at least two claims; fill `sourceIds` and
-  `extractionIds` from those claims only, and `correspondenceId` when the
-  seed was a correspondence. The research-pipeline hallucinated-id gate
-  applies unchanged: ids not read in the run are rejected.
+  statement, then a new read tool `hydrateClaims` (claim ids → claim text,
+  source id, extraction id; the search tool returns no extraction ids). Keep
+  candidates with at least two claims; fill `sourceIds` and `extractionIds`
+  from hydrated claims only, and `correspondenceId` when the seed was a
+  correspondence. Then a `ground` call rewrites the rationale to cite the
+  claim ids literally. The research-pipeline's id ledger is extracted into
+  `agent/src/graphs/shared/idLedger.ts` and used here: any source,
+  extraction, correspondence, or claim id not read in this run rejects the
+  candidate.
 - `duplicate_check`: embed each statement (same model as claims, per ADR
   0001) and retrieve neighbours above 0.86 similarity from hypotheses,
-  pending drafts, and the candidate archive. A judge call classifies each
-  neighbour pair as `duplicate`, `inversion`, or `refinement`. Only
-  duplicates are dropped; inversions and refinements are kept and named in
-  the draft summary.
+  pending drafts (embedded at query time), the candidate archive, and the
+  current batch's siblings. A judge call classifies each pair as
+  `duplicate`, `inversion`, or `refinement`. Only duplicates are dropped
+  (for sibling duplicates, the later batch index); inversions and
+  refinements are kept and named in the draft summary. Hypotheses whose
+  embedding is missing are compared by re-embedding their statement text at
+  query time, so a partial backfill cannot hide a duplicate.
 - `score`: three independent judge calls per candidate with the rubric
   (stake: changes what Keith would do in the studio; novelty: against the
   seed's own context; falsifiability: a listening test could refute it).
@@ -55,20 +65,28 @@ check_capacity → gather_seeds → generate_candidates → gather_evidence
   failed judge call is a missing judgment, never a draw.
 - `finalists`: the top three by mean score go through three pairwise
   comparisons; the winner proceeds. Ties go to the higher falsifiability.
-- `self_check`: the existing prompt with a seed-aware variant that still
-  requires literal evidence claim ids; one revision as today.
+- `self_check`: the existing prompt's three checks unchanged (30 to 90
+  second testability, exactly one variable, rationale cites supplied claim
+  ids without overstating), with the seed context substituted for the
+  correspondence block when the seed is not a correspondence. One revision
+  as today; if the revision changes the statement, `duplicate_check` runs
+  once more on the revised statement.
 - `write_draft`: `createAgentReviewDraft` with the finalist summary and the
   losing candidates' titles. Per-run idempotency: a draft dedupe key
   `tournament:<runId>` on the draft so a retried run returns the existing
   draft (today's dedupe covers only correspondence-keyed drafts).
+  Immediately after the draft id returns, the winner's archive row is
+  upserted with `draftId` and `outcome: "submitted"`.
 - `summarize`: as today.
 
-Budget, enforced by the graph state: at most 8 generation calls, 24 scoring
-calls, 3 duplicate-classification calls per candidate, 3 finalist calls, 2
-self-check calls; 20 minutes wall clock; a reserve for persistence. When the
-budget runs out before `finalists`, the run summarizes without a draft.
-`TOKEN_BUDGETS` in `convex/llm.ts` gains per-call caps for the new prompts;
-it remains a per-call cap table, not a run budget.
+Budget, enforced by the graph state: at most 8 generation calls, 8 grounding
+calls, 24 scoring calls, 3 duplicate-classification calls per candidate, 3
+finalist calls, 2 self-check calls, with retries counted against the same
+caps; 300 000 total tokens summed from provider usage; 20 minutes wall
+clock; a reserve of 2 calls for persistence. When any limit is reached
+before `finalists`, the run summarizes without a draft. `TOKEN_BUDGETS` in
+`convex/llm.ts` gains per-call caps for the new prompts; it remains a
+per-call cap table, and the run budget lives in the graph.
 
 ## 3. Seed families
 
@@ -98,11 +116,16 @@ hypothesisCandidates
   createdAt
 ```
 
-Written incrementally: once after `duplicate_check` (all candidates with
-their evidence and duplicate status) and once after `finalists` (scores and
-outcomes), each through the audit-only tool `recordHypothesisCandidates`
-keyed by `(agentRunId, batchIndex)` so retries upsert. Rows are never
-promoted directly. Unsubmitted rows older than 180 days are pruned weekly.
+Written incrementally through the audit-only tool
+`recordHypothesisCandidates` keyed by `(agentRunId, batchIndex)` so retries
+upsert: after `duplicate_check` (candidates, evidence, duplicate status),
+after `finalists` (scores, `lost` and `ineligible` outcomes, the winner as
+`finalist`), and after `write_draft` (winner set to `submitted` with
+`draftId`). A run that dies between draft creation and the last write
+leaves a `finalist` row and a draft carrying `tournament:<runId>`; the
+existing `reconcile-reviewed-agent-runs` cron gains a step that repairs that
+linkage. Rows are never promoted directly. Unsubmitted rows older than 180
+days are pruned weekly.
 
 Migration: `hypotheses` gains `statementEmbedding?` with a vector index and a
 backfill script `scripts/embed-hypotheses.ts` using the existing embedding

@@ -104,8 +104,9 @@ One row per stored file. Validators in `convex/shared/audioArtifacts.ts`.
 audioArtifacts
   kind: "narration" | "shootoutTake" | "episode" | "litmusRender"
       | "voiceNote" | "blurb"                       // wave 3 adds render kinds
-  role: "master" | "delivery"                       // WAV master vs encoded delivery
-  masterArtifactId?: Id<"audioArtifacts">           // delivery → its master
+  role: "masterRaw" | "masterNormalized" | "delivery"
+  masterArtifactId?: Id<"audioArtifacts">           // delivery → normalized master → raw master
+  metadataStripped: boolean                         // true for every blind delivery (no ID3, no RIFF INFO)
   status: "pending" | "ready" | "failed"
   storageId?: Id<"_storage">
   mimeType?: string
@@ -133,6 +134,11 @@ indexes: by_kind_createdAt, by_status_createdAt, by_access_kind_createdAt,
 Analysis lives only here. Nothing in this program writes machine values
 into `listeningSessions`.
 
+Voice notes are owned before a session exists: a `voiceNote` artifact carries
+`createdBy` (the user) and `refs.compositionId`; submitting the session sets
+`refs.listeningSessionId`. Voice notes older than 7 days with no session are
+pruned by the sweeper.
+
 ### 3.2 `blindGroups`
 
 ```
@@ -149,10 +155,13 @@ blindGroups
 Blindness is enforced by projection, not by omission: the only query that
 serves a blind group to the web or to freq before reveal returns
 `{ memberId, label, durationSecs, playbackUrl }` and nothing else. Playback
-URLs are storage URLs whose ids carry no meaning. Artifact and composition
-detail queries hide artifacts that belong to an unrevealed group. Reveal
-happens inside the same mutation that records the last required rating; a
-duplicate submission returns the prior result.
+URLs are storage URLs whose ids carry no meaning. Every blind member,
+including an X duplicate, has its own delivery artifact with its own storage
+id (the X copy is re-encoded from the same normalized master), so URL
+equality never reveals identity. Blind deliveries are `metadataStripped`.
+Artifact and composition detail queries hide artifacts that belong to an
+unrevealed group. Reveal happens inside the same mutation that records the
+last required rating; a duplicate submission returns the prior result.
 
 ### 3.3 `mediaJobs` and the media lifecycle tools
 
@@ -162,12 +171,16 @@ The media service pulls; Convex never calls it.
 mediaJobs
   kind: "narrate" | "shootout" | "assembleEpisode"     // wave 3 adds render kinds
   input: <kind-specific, zod in convex/shared/mediaJobs.ts>
-  dedupeKey: string           // sha256(kind, input); enqueue returns the existing
-                              // queued|claimed|done job instead of inserting
+        // a self-contained SNAPSHOT: the script text or render plan copied at
+        // enqueue time, the source row's id and updatedAt, and the
+        // rendererVersion / catalog version the job must use
+  dedupeKey: string           // sha256(kind, input snapshot); enqueue returns the
+                              // existing queued|claimed|done job instead of inserting,
+                              // so editing the source produces a new snapshot and a new job
   status: "queued" | "claimed" | "done" | "failed" | "parked"
   priority: number
   leaseToken?: string, leaseExpiresAt?: number, workerId?: string
-  attempts: number            // parked after 3
+  attempts: number            // failures AND expired leases count; parked after 3
   resultArtifactIds?: Id<"audioArtifacts">[]
   error?: string
   createdAt, claimedAt?, finishedAt?
@@ -186,9 +199,13 @@ Tools added to `/agent-tools/*`, registered in
 | `completeMediaJob` | Fenced by lease token. Validates the kind-specific result with its zod schema and applies the domain effects in one mutation: marks artifacts ready, links masters and deliveries, creates blind groups, and in wave 3 creates compositions with every required field. The media service never writes research data directly. |
 | `failMediaJob` | Fenced. Stores the error, re-queues with `attempts + 1`, parks at 3. |
 
-A cron `sweep-stale-media-jobs` re-queues claimed jobs whose lease expired.
-Because completion is fenced and idempotent by `dedupeKey`, a stale worker
-finishing late is rejected rather than overwriting.
+Fencing rules: `completeMediaJob` and `failMediaJob` reject when the lease
+token differs or `leaseExpiresAt` has passed; a stale worker finishing late
+is rejected rather than overwriting. A repeat completion with the same lease
+returns the stored result before any precondition check. The cron
+`sweep-stale-media-jobs` re-queues claimed jobs whose lease expired,
+incrementing `attempts`, and deletes orphaned uploads: `pending` artifacts
+older than 24 hours that have a `storageId` but no completed job.
 
 The media service authenticates with `AGENT_TOOL_SECRET`, the same standing
 service identity as the worker.
@@ -249,7 +266,10 @@ and the artifacts carry `normalization: "skipped"`.
   Agents propose; a human signs through Clerk or through a platform-verified
   signer interaction (wave 2 §4). The Clerk mutations in `agentDrafts.ts` and
   the signer path share one internal decision function so invariants cannot
-  drift.
+  drift. `docs/agent-tool-surface.md` §"Human-only decision mutations" is
+  updated in wave 2 to say decisions are Clerk-authenticated or
+  platform-signed through the Convex-owned signer bots, and to list the
+  proposal-only tools.
 - **Human listening predicate.** Debt closure, recommendations, verdict
   selection, failure analysis, and fitness use one shared predicate
   `isHumanListeningSession` (participant role not `machine`, created by a
@@ -284,8 +304,10 @@ After that:
 - **Wave 2** text docket and proposal tools proceed independently. Spoken
   cards wait for the house voice. Signed decisions need the signer bots,
   which are wave 2 work, not wave 0.
-- **Wave 3** builds the renderer and the plan 11 spike first; the listen page
-  and study families follow the go decision. Episodes need wave 1.
+- **Wave 3** builds the renderer, the blind panel, and the minimal listen
+  page first, because the plan 11 gate is itself a blind human-versus-machine
+  comparison on that panel. Study families and debt closure follow the go
+  decision. Episodes need wave 1.
 - **Wave 4** builds and unit-tests the graph independently; live comparison
   needs queue capacity (the cap is full today, so wave 2 clears it first).
   Listening fitness stays deferred until human sessions on validated renders

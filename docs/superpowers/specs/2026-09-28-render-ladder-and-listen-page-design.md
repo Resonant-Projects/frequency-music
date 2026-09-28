@@ -34,6 +34,13 @@ excluded from evidence, debt closure, docket `compositionNoListening`, and
 tournament fitness. Go flips a setting `renderValidation = "go"` and later
 renders are stamped `validated`.
 
+Step 3 needs the blind panel, so the build order inside this wave is:
+renderer, blind projection and panel with the minimal `/listen` page, the
+spike, the go/no-go, and only then study families and debt closure. Keith's
+studio renders are uploaded as `litmusRender` artifacts with
+`engine.name: "human-studio"` so they join a blind group like any other
+member.
+
 ## 3. The ladder, first release
 
 | Tier | Artifact | Engine | Status |
@@ -61,33 +68,52 @@ master, then the umbrella loudness policy for music.
 
 ```
 renderPlan?: {
+  version: 1
   engine: "sc-litmus"
-  tuning: TuningSpec                 // from parameters via the shared lib
-  referenceHz: number
+  tuning: TuningSpec                 // baseline, from parameters via the shared lib
+  referenceHz: number                // frequency of degree 0 in octave 0
   normalize: boolean                 // false when level or dynamics is the variable
-  variable?: {
-    kind: "temperament" | "referenceHz"
-    baseline: TuningSpec | number
-    variants: (TuningSpec | number)[]   // max 3
-  }
+  variable?:
+    | { kind: "temperament", variants: TuningSpec[] }   // max 3; each must have the
+                                                        // same degree count as the baseline
+    | { kind: "referenceHz", variants: number[] }       // max 3; 20 to 2000 Hz
   seed: { degree: number, octave: number, startBeat: number, beats: number, velocity: number }[]
+        // degree in [0, degreeCount); octave is the tuning's formal period
+        // relative to the reference; every resulting Hz must be in 20 to 20000
   tempoBpm: number
   durationSecs: number               // from protocol.durationSecs
 }
 ```
 
-The seed event list is generated once from the baseline (the existing seed
-generator, output converted to degree and octave indices) and frozen; variants
-change only the degree-to-Hz mapping. The renderer loops or truncates the
-event list to `durationSecs`. Any recipe whose variable is not `temperament`
-or `referenceHz` is rejected by `render.request` with "needs a typed render
-plan", and the recipe editor on the web gets a small form to set one. The LLM
-recipe prompt is unchanged in this release.
+Pitch: `hz(degree, octave) = referenceHz × period^octave × 2^(cents[degree]/1200)`,
+where `period` is the tuning's formal octave ratio (2 for octave-repeating
+tunings) and `cents` comes from `tuningIntervalsInCents`. A new
+`degreeToHz` in `convex/shared/tuning/` implements this; the KBM writer's
+MIDI-69 anchoring is not used by the renderer.
+
+Seed events are generated degree-native by a new `generateSeedEvents` in the
+shared lib, before any conversion to MIDI: the existing `generateSeedMidi`
+rounds cents to semitones and merges pitch classes (19-EDO degrees 1 and 2
+both become one semitone), so degrees cannot be recovered from `seed.mid`.
+`seed.mid` for the starter kit is derived from the degree events afterwards
+so both stay consistent. The event list is generated once from the baseline
+and frozen; variants change only the degree-to-Hz mapping. A temperament
+variant with a different degree count is rejected at plan validation. The
+renderer loops or truncates the event list to `durationSecs`.
+
+Any recipe whose variable is not `temperament` or `referenceHz` is rejected
+by `render.request` with "needs a typed render plan", and the recipe editor
+on the web gets a small form to set one. The LLM recipe prompt is unchanged
+in this release.
 
 ### 3.3 Study families
 
-Job `studyFamily`, input `{ recipeId }`, requires `renderPlan.variable`.
-Renders baseline plus variants with the litmus timbre. `completeMediaJob`
+Job `studyFamily`, input `{ recipeId, recipeUpdatedAt, renderPlan,
+rendererVersion }` (a snapshot, per umbrella §3.3, so an edited plan yields a
+new job and a stale job can never render a different revision than the one
+requested), requires `renderPlan.variable`. Renders baseline plus variants
+with the litmus timbre; the X member, when present, is a separate re-encoded
+delivery with its own storage id and stripped metadata. `completeMediaJob`
 creates, in one mutation, one `compositions` row per render with every
 required field (`title`, `recipeId`, `artifactType: "microStudy"`,
 `version: "m0.1"`, `status: "rendered"`, `visibility: "private"`,
