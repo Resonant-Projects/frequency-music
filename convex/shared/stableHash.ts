@@ -5,7 +5,7 @@ export function stableStringify(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
   const entries = Object.entries(value)
     .filter(([, child]) => child !== undefined)
-    .toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([key, child]) => `${JSON.stringify(key)}:${stableStringify(child)}`);
   return `{${entries.join(",")}}`;
 }
