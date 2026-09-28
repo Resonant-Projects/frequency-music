@@ -11,6 +11,7 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./agentTools.ts": () => import("../convex/agentTools"),
   "./agentToolsHttp.ts": () => import("../convex/agentToolsHttp"),
   "./aggregates.ts": () => import("../convex/aggregates"),
+  "./audioArtifacts.ts": () => import("../convex/audioArtifacts"),
   "./auth.ts": () => import("../convex/auth"),
   "./campaigns.ts": () => import("../convex/campaigns"),
   "./claims.ts": () => import("../convex/claims"),
