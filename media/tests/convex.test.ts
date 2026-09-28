@@ -12,6 +12,7 @@ describe("callTool", () => {
     vi.stubEnv("AGENT_TOOL_SECRET", "s3cret");
     const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
       expect(url).toBe("http://convex.test:3211/agent-tools/claimNextMediaJob");
+      expect(init.redirect).toBe("error");
       expect(JSON.parse(String(init.body))).toEqual({
         secret: "s3cret",
         workerId: "w",

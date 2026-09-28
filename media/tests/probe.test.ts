@@ -64,6 +64,7 @@ describe("probe job", () => {
       workDir: mkdtempSync(join(tmpdir(), "probe-")),
       tools,
       rendererVersion: "0.1.0",
+      signal: new AbortController().signal,
     });
     expect(result.kind).toBe("probe");
     expect(uploads).toEqual(["masterNormalized", "delivery"]);
@@ -88,6 +89,7 @@ describe("probe job", () => {
         workDir: mkdtempSync(join(tmpdir(), "probe-hot-")),
         tools,
         rendererVersion: "0.1.0",
+        signal: new AbortController().signal,
       }),
     ).rejects.toThrow(/dBTP/);
     // The master passed policy and was uploaded; the delivery never reached Convex.

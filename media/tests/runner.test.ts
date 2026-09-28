@@ -106,13 +106,14 @@ describe("runOnce", () => {
     expect(String(fail?.[1].error)).toMatch(/renderer version/);
   });
 
-  test("a handler that never settles is failed at the deadline", async () => {
+  test("a handler that never settles is aborted and failed at the deadline", async () => {
     const calls: [string, Record<string, unknown>][] = [];
     const tool = vi.fn(async (name: string, body: Record<string, unknown>) => {
       calls.push([name, body]);
       if (name === "claimNextMediaJob") return claimedJob({});
       return { status: "queued", attempts: 1 };
     });
+    let observedAbort = false;
     const outcome = await runOnce(
       {
         workerId: "w",
@@ -122,12 +123,45 @@ describe("runOnce", () => {
         deadlineMs: 50,
       },
       tool as never,
-      { probe: () => new Promise(() => {}) },
+      {
+        // Settles only when the runner's signal fires, as a killed ffmpeg would.
+        probe: (ctx) =>
+          new Promise((_, reject) => {
+            ctx.signal.addEventListener("abort", () => {
+              observedAbort = ctx.signal.aborted;
+              reject(new Error("aborted"));
+            });
+          }),
+      },
     );
     expect(outcome).toBe("failed");
+    expect(observedAbort).toBe(true);
     const fail = calls.find(([name]) => name === "failMediaJob");
     expect(fail?.[1]).toMatchObject({ jobId: "j1", leaseToken: "L" });
     expect(String(fail?.[1].error)).toMatch(/deadline/);
+  });
+
+  test("a handler that ignores the abort signal is failed after the grace window", async () => {
+    const calls: string[] = [];
+    const tool = vi.fn(async (name: string) => {
+      calls.push(name);
+      if (name === "claimNextMediaJob") return claimedJob({});
+      return { status: "queued", attempts: 1 };
+    });
+    const outcome = await runOnce(
+      {
+        workerId: "w",
+        kinds: ["probe"],
+        workDir: "/tmp",
+        rendererVersion: "0.1.0",
+        deadlineMs: 20,
+        deadlineGraceMs: 20,
+      },
+      tool as never,
+      { probe: () => new Promise(() => {}) },
+    );
+    expect(outcome).toBe("failed");
+    expect(calls).toContain("failMediaJob");
   });
 });
 

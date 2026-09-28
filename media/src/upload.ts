@@ -8,13 +8,18 @@ export async function uploadBytes(
   uploadUrl: string,
   path: string,
   mimeType: string,
+  signal?: AbortSignal,
 ): Promise<{ storageId: string }> {
   const bytes = await readFile(path);
+  const timeout = AbortSignal.timeout(10 * 60 * 1000);
   const response = await fetch(uploadUrl, {
     method: "POST",
     headers: { "content-type": mimeType },
     body: bytes,
-    signal: AbortSignal.timeout(10 * 60 * 1000),
+    // The upload URL is single-use and same-origin by construction; never
+    // follow a redirect that could carry the bytes elsewhere.
+    redirect: "error",
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   });
   if (!response.ok) throw new Error(`upload failed: ${response.status}`);
   return (await response.json()) as { storageId: string };

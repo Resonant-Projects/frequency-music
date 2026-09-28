@@ -25,14 +25,19 @@ async function uploadArtifact(
 ): Promise<ArtifactResult> {
   // Policy first: only a file that passed creates server state (pending row,
   // blob), so a failed attempt leaves nothing for the sweeper.
-  const measured = await measure(path);
+  const measured = await measure(path, ctx.signal);
   assertWithinPolicy(measured, LOUDNESS_TARGETS.spoken);
   const { artifactId, uploadUrl } = await ctx.tools.generateAudioUploadUrl({
     jobId: ctx.job.jobId,
     leaseToken: ctx.job.leaseToken,
     artifact,
   });
-  const { storageId } = await ctx.tools.uploadBytes(uploadUrl, path, mimeType);
+  const { storageId } = await ctx.tools.uploadBytes(
+    uploadUrl,
+    path,
+    mimeType,
+    ctx.signal,
+  );
   await ctx.tools.attachAudioStorage({
     jobId: ctx.job.jobId,
     leaseToken: ctx.job.leaseToken,
@@ -56,11 +61,21 @@ export const probeHandler: JobHandler = async (ctx) => {
   const raw = join(ctx.workDir, "probe-raw.wav");
   const master = join(ctx.workDir, "probe-master.wav");
   const delivery = join(ctx.workDir, "probe.mp3");
-  await synthTone(raw, { hz: toneHz, seconds, gainDb: -20 });
-  await normalize(raw, master, { targetLufs: LOUDNESS_TARGETS.spoken });
+  await synthTone(raw, { hz: toneHz, seconds, gainDb: -20 }, ctx.signal);
+  await normalize(
+    raw,
+    master,
+    { targetLufs: LOUDNESS_TARGETS.spoken },
+    ctx.signal,
+  );
   // Dual-mono delivery: ffmpeg's loudness-preserving upmix keeps integrated
   // LUFS and reads ~3 dB lower in true peak, which stays within the ceiling.
-  await encodeMp3(master, delivery, { bitrateKbps: 128, channels: 2 });
+  await encodeMp3(
+    master,
+    delivery,
+    { bitrateKbps: 128, channels: 2 },
+    ctx.signal,
+  );
 
   const engine = {
     name: "probe",

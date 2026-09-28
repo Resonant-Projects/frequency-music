@@ -15,6 +15,9 @@ export async function callTool<T>(
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ secret, ...body }),
+      // The secret is in the body; never let a redirect carry it to another
+      // host or scheme.
+      redirect: "error",
       signal: signal ?? AbortSignal.timeout(60_000),
     },
   );

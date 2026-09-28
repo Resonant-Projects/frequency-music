@@ -30,6 +30,7 @@ export type ToolClient = {
     uploadUrl: string,
     path: string,
     mimeType: string,
+    signal?: AbortSignal,
   ) => Promise<{ storageId: string }>;
 };
 
@@ -38,6 +39,9 @@ export type JobContext = {
   workDir: string;
   tools: ToolClient;
   rendererVersion: string;
+  // Fires when the runner's job deadline passes; handlers forward it to every
+  // subprocess and upload so nothing outlives the job's lease.
+  signal: AbortSignal;
 };
 
 export type JobHandler = (ctx: JobContext) => Promise<MediaJobResult>;

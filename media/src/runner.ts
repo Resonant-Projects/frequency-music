@@ -15,6 +15,7 @@ export type RunnerConfig = {
   workDir: string;
   rendererVersion: string;
   deadlineMs?: number; // defaults to JOB_DEADLINE_MS; tests shorten it
+  deadlineGraceMs?: number; // defaults to DEADLINE_GRACE_MS; tests shorten it
 };
 type Tool = typeof callTool;
 
@@ -22,6 +23,10 @@ const RENEW_EVERY_MS = Math.floor(LEASE_MS / 3);
 // Longest a single handler may run; longer than any render we schedule, short
 // enough that a hung ffmpeg does not hold a lease all night.
 export const JOB_DEADLINE_MS = 30 * 60 * 1000;
+// After the deadline aborts a handler, how long to wait for it to settle (a
+// killed ffmpeg, an aborted upload) before failing the job and removing the
+// work dir. Bounded so a handler that ignores the signal cannot hold the slot.
+export const DEADLINE_GRACE_MS = 30 * 1000;
 
 export async function runOnce(
   config: RunnerConfig,
@@ -58,25 +63,47 @@ export async function runOnce(
     }
     workDir = await mkdtemp(join(config.workDir, `${job.kind}-`));
     const deadlineMs = config.deadlineMs ?? JOB_DEADLINE_MS;
+    const deadlineGraceMs = config.deadlineGraceMs ?? DEADLINE_GRACE_MS;
+    const abort = new AbortController();
     let deadline: NodeJS.Timeout | undefined;
     const expired = new Promise<never>((_, reject) => {
       deadline = setTimeout(() => {
-        // Stop renewing so the lease can lapse if the handler is truly hung.
+        // Stop renewing so the lease can lapse if the handler is truly hung,
+        // and abort so a running ffmpeg or upload is killed rather than left
+        // to race the next attempt over the deleted work dir.
         clearInterval(renew);
-        reject(new Error(`job deadline exceeded after ${deadlineMs} ms`));
+        const error = new Error(`job deadline exceeded after ${deadlineMs} ms`);
+        // Reject first: abort listeners run synchronously and could otherwise
+        // settle the race with the handler's own error instead of the deadline.
+        reject(error);
+        abort.abort(error);
       }, deadlineMs);
     });
     let result: Awaited<ReturnType<JobHandler>>;
+    let running: ReturnType<JobHandler> | undefined;
     try {
-      result = await Promise.race([
-        handler({
-          job,
-          workDir,
-          tools,
-          rendererVersion: config.rendererVersion,
-        }),
-        expired,
-      ]);
+      running = handler({
+        job,
+        workDir,
+        tools,
+        rendererVersion: config.rendererVersion,
+        signal: abort.signal,
+      });
+      result = await Promise.race([running, expired]);
+    } catch (error) {
+      if (abort.signal.aborted && running) {
+        // Give the aborted handler a bounded window to settle before the
+        // failure is recorded and the work dir is removed.
+        let grace: NodeJS.Timeout | undefined;
+        await Promise.race([
+          running.catch(() => undefined),
+          new Promise<void>((resolve) => {
+            grace = setTimeout(resolve, deadlineGraceMs);
+          }),
+        ]);
+        clearTimeout(grace);
+      }
+      throw error;
     } finally {
       clearTimeout(deadline);
     }

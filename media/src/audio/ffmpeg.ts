@@ -9,14 +9,17 @@ const EXEC_TIMEOUT = {
   killSignal: "SIGKILL",
 } as const;
 
+export type ExecOptions = { signal?: AbortSignal };
+
 export async function runFfmpeg(
   args: string[],
+  options: ExecOptions = {},
 ): Promise<{ stdout: string; stderr: string }> {
   try {
     const { stdout, stderr } = await execFileAsync(
       "ffmpeg",
       ["-hide_banner", "-nostdin", "-y", ...args],
-      { maxBuffer: 64 * 1024 * 1024, ...EXEC_TIMEOUT },
+      { maxBuffer: 64 * 1024 * 1024, ...EXEC_TIMEOUT, signal: options.signal },
     );
     return { stdout, stderr };
   } catch (error) {
@@ -28,12 +31,15 @@ export async function runFfmpeg(
   }
 }
 
-export async function runFfprobe(args: string[]): Promise<string> {
+export async function runFfprobe(
+  args: string[],
+  options: ExecOptions = {},
+): Promise<string> {
   try {
     const { stdout } = await execFileAsync(
       "ffprobe",
       ["-v", "error", ...args],
-      EXEC_TIMEOUT,
+      { ...EXEC_TIMEOUT, signal: options.signal },
     );
     return stdout;
   } catch (error) {

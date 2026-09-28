@@ -1,6 +1,6 @@
 // One loudness policy for every wave (spec §3.4). Measurements use ffmpeg's
 // ebur128 filter; normalization is two-pass loudnorm with a true-peak ceiling.
-import { runFfmpeg } from "./ffmpeg";
+import { runFfmpeg, runFfprobe } from "./ffmpeg";
 
 export const LOUDNESS_TARGETS = { spoken: -16, music: -18 } as const;
 export const TRUE_PEAK_CEILING = -1;
@@ -18,27 +18,41 @@ function lastMatch(text: string, pattern: RegExp): RegExpMatchArray {
   return last;
 }
 
+// Duration comes from ffprobe's container/format entry. ffmpeg's `time=`
+// progress line is coarse and version-dependent (a 3 s tone reads 2.9 on some
+// builds), so it is not a measurement.
+async function probeDuration(
+  path: string,
+  signal?: AbortSignal,
+): Promise<number> {
+  const text = await runFfprobe(
+    ["-show_entries", "format=duration", "-of", "json", path],
+    { signal },
+  );
+  const parsed = JSON.parse(text) as { format?: { duration?: string } };
+  const durationSecs = Number(parsed.format?.duration);
+  if (parsed.format?.duration === undefined || !Number.isFinite(durationSecs)) {
+    throw new Error(`ffprobe reported no duration for ${path}`);
+  }
+  return durationSecs;
+}
+
 // ebur128 prints a summary block at the end of stderr:
 //   Integrated loudness:
 //     I:         -16.0 LUFS
 //   True peak:
 //     Peak:       -1.3 dBFS
-// and ffmpeg's progress line carries time=HH:MM:SS.ss.
-export async function measure(path: string): Promise<Measurement> {
-  const { stderr } = await runFfmpeg([
-    "-i",
-    path,
-    "-af",
-    "ebur128=peak=true",
-    "-f",
-    "null",
-    "-",
-  ]);
+export async function measure(
+  path: string,
+  signal?: AbortSignal,
+): Promise<Measurement> {
+  const { stderr } = await runFfmpeg(
+    ["-i", path, "-af", "ebur128=peak=true", "-f", "null", "-"],
+    { signal },
+  );
   const integratedLufs = Number(lastMatch(stderr, /I:\s+(-?[\d.]+) LUFS/g)[1]);
   const truePeakDbtp = Number(lastMatch(stderr, /Peak:\s+(-?[\d.]+) dBFS/g)[1]);
-  const time = lastMatch(stderr, /time=(\d+):(\d+):([\d.]+)/g);
-  const durationSecs =
-    Number(time[1]) * 3600 + Number(time[2]) * 60 + Number(time[3]);
+  const durationSecs = await probeDuration(path, signal);
   return { integratedLufs, truePeakDbtp, durationSecs };
 }
 
@@ -46,17 +60,21 @@ export async function normalize(
   input: string,
   output: string,
   options: { targetLufs: number; truePeakCeilingDbtp?: number },
+  signal?: AbortSignal,
 ): Promise<Measurement> {
   const ceiling = options.truePeakCeilingDbtp ?? TRUE_PEAK_CEILING;
-  const first = await runFfmpeg([
-    "-i",
-    input,
-    "-af",
-    `loudnorm=I=${options.targetLufs}:TP=${ceiling}:LRA=11:print_format=json`,
-    "-f",
-    "null",
-    "-",
-  ]);
+  const first = await runFfmpeg(
+    [
+      "-i",
+      input,
+      "-af",
+      `loudnorm=I=${options.targetLufs}:TP=${ceiling}:LRA=11:print_format=json`,
+      "-f",
+      "null",
+      "-",
+    ],
+    { signal },
+  );
   // The JSON block is not the tail of stderr: ffmpeg 8 prints an output summary
   // and a final progress line after the closing brace, so slice both ends.
   const jsonText = first.stderr.slice(
@@ -64,18 +82,21 @@ export async function normalize(
     first.stderr.lastIndexOf("}") + 1,
   );
   const stats = JSON.parse(jsonText) as Record<string, string>;
-  await runFfmpeg([
-    "-i",
-    input,
-    "-af",
-    `loudnorm=I=${options.targetLufs}:TP=${ceiling}:LRA=11:measured_I=${stats.input_i}:measured_TP=${stats.input_tp}:measured_LRA=${stats.input_lra}:measured_thresh=${stats.input_thresh}:offset=${stats.target_offset}:linear=true:print_format=summary`,
-    "-ar",
-    "48000",
-    "-c:a",
-    "pcm_s24le",
-    output,
-  ]);
-  return await measure(output);
+  await runFfmpeg(
+    [
+      "-i",
+      input,
+      "-af",
+      `loudnorm=I=${options.targetLufs}:TP=${ceiling}:LRA=11:measured_I=${stats.input_i}:measured_TP=${stats.input_tp}:measured_LRA=${stats.input_lra}:measured_thresh=${stats.input_thresh}:offset=${stats.target_offset}:linear=true:print_format=summary`,
+      "-ar",
+      "48000",
+      "-c:a",
+      "pcm_s24le",
+      output,
+    ],
+    { signal },
+  );
+  return await measure(output, signal);
 }
 
 export function assertWithinPolicy(
