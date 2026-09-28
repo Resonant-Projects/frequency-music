@@ -38,6 +38,12 @@ import {
   SOURCE_BLOCKED_REASONS,
   SOURCE_STATUSES,
 } from "./shared/statuses";
+import { audioArtifactFieldsValidator } from "./shared/audioArtifacts";
+import {
+  mediaJobInputValidator,
+  mediaJobResultValidator,
+  mediaJobStatusValidator,
+} from "./shared/mediaJobs";
 
 // ============================================================================
 // RESONANT PROJECTS - CONVEX SCHEMA v1
@@ -731,6 +737,68 @@ export default defineSchema({
     createdBy: v.union(v.id("users"), v.literal("system")),
     createdAt: v.number(),
   }).index("by_compositionId_createdAt", ["compositionId", "createdAt"]),
+
+  // ==========================================================================
+  // AUDIO SUBSTRATE - artifacts, blind groups, media jobs, settings
+  // ==========================================================================
+  // Audio bytes live in Convex file storage; rows here carry provenance,
+  // measurements, and blind-group membership. Machine analysis lives ONLY on
+  // artifacts, never on listeningSessions.
+  audioArtifacts: defineTable(audioArtifactFieldsValidator)
+    .index("by_kind_createdAt", ["kind", "createdAt"])
+    .index("by_status_createdAt", ["status", "createdAt"])
+    .index("by_access_kind_createdAt", ["access", "kind", "createdAt"])
+    .index("by_blindGroupId", ["blindGroupId"])
+    .index("by_refs_compositionId", ["refs.compositionId"])
+    .index("by_contentHash", ["contentHash"])
+    .index("by_storageId", ["storageId"]),
+
+  blindGroups: defineTable({
+    purpose: v.union(v.literal("voiceShootout"), v.literal("studyFamily")),
+    // Immutable after creation. memberId is an opaque random handle.
+    members: v.array(
+      v.object({
+        memberId: v.string(),
+        artifactId: v.id("audioArtifacts"),
+        label: v.string(),
+      }),
+    ),
+    xMember: v.optional(
+      v.object({ memberId: v.string(), duplicates: v.string() }),
+    ),
+    requiredRatings: v.array(v.string()),
+    revealedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_revealedAt", ["revealedAt"]),
+
+  mediaJobs: defineTable({
+    kind: v.string(),
+    input: mediaJobInputValidator,
+    dedupeKey: v.string(),
+    status: mediaJobStatusValidator,
+    priority: v.number(),
+    leaseToken: v.optional(v.string()),
+    leaseExpiresAt: v.optional(v.number()),
+    workerId: v.optional(v.string()),
+    attempts: v.number(),
+    result: v.optional(mediaJobResultValidator),
+    resultArtifactIds: v.optional(v.array(v.id("audioArtifacts"))),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+  })
+    .index("by_status_priority_createdAt", ["status", "priority", "createdAt"])
+    .index("by_dedupeKey", ["dedupeKey"])
+    .index("by_status_leaseExpiresAt", ["status", "leaseExpiresAt"]),
+
+  // String settings keyed by name (houseVoiceId, renderValidation). The
+  // `stats` table holds numbers only and is not reused for this.
+  settings: defineTable({
+    key: v.string(),
+    value: v.string(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 
   // ==========================================================================
   // WEEKLY BRIEFS - Synthesized output
