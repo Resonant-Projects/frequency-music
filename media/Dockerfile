@@ -24,7 +24,10 @@ RUN bun install --frozen-lockfile --production --omit=peer
 FROM ${NODE_IMAGE} AS runtime
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# Upgrade the pinned base first: trivy fails the publish workflow on fixable
+# HIGH/CRITICAL CVEs in Debian packages (util-linux, gzip, pcre2, sqlite …).
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
