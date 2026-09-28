@@ -122,4 +122,13 @@ crons.weekly(
   { graphName: "source-scout", input: {} },
 );
 
+// Reclaim expired media leases and orphaned audio uploads. Leases are 10
+// minutes; a 10-minute sweep bounds a crashed worker's hold on a job.
+crons.interval(
+  "sweep-stale-media-jobs",
+  { minutes: 10 },
+  internal.mediaSweeper.sweep,
+  {},
+);
+
 export default crons;
