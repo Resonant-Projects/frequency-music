@@ -1,169 +1,204 @@
 # Render Ladder and Listen Page Design (wave 3)
 
-Make recipes audible without a DAW: a ladder of renders from a browser
-pattern to a study family, a machine listener for computed consonance, and a
-listen page with blind A/B/X and inline ratings.
+Make recipes audible without a DAW: one validated plain renderer, study
+families compared blind, ratings that land in listening sessions, and a
+machine analysis that stays on the artifact.
 
 Parent: [Listen-first program](./2026-09-28-listen-first-program-design.md).
-Requires wave 0. Study-family episodes use wave 1's feed. Plan 11 (self-render
-spike) is absorbed here; its engine order and validation rule carry over.
+Requires wave 0. Absorbs plan 11 and keeps its gate. Episodes need wave 1.
 
 ## 1. Outcome
 
-- Every recipe with a starter kit can be rendered as a plain litmus study by a
-  media job, and the result sits on the recipe page and on `/listen`.
-- A comparison recipe becomes a study family: baseline plus variants that
-  change only `protocol.whatVaries`, delivered as a blind A/B/X on `/listen`
-  and as a podcast episode.
-- Ratings from `/listen` and from voice land in `listeningSessions` and close
-  the `composed_no_listening` debt.
-- Computed roughness fills `ratings.consonanceComputed` for every render.
+- A recipe with a typed render plan renders as a litmus study by a media job.
+- After the plan 11 gate passes, litmus renders count as evidence, close
+  listening debt, and appear on the docket.
+- A comparison recipe becomes a blind study family on `/listen`, rated with
+  the six subjective scales, and optionally as a podcast episode.
+- Every render carries raw machine analysis on its artifact.
 
-## 2. The ladder
+## 2. Validation gate first (plan 11, preserved)
 
-| Tier | Artifact | Engine | Honors tuning | When |
-| --- | --- | --- | --- | --- |
-| 0 | `tuning.scl`, `tuning.kbm`, `seed.mid`, `card.md` | existing starter kit | yes | already exists |
-| 1 | Strudel pattern text | LLM writes; `@strudel/web` plays in the browser | yes, via raw Hz from the tuning lib | on every recipe page |
-| 2 | Litmus render, WAV + MP3 | SuperCollider NRT, fixed plain timbre | yes | on request, and automatically for recipes with kits |
-| 2b | Quality render | Surge XT CLI with `.scl` and `.kbm` | yes, native | when timbre must not distract; opt-in per recipe |
-| 3 | Study family | tier 2 or 2b, N variants + baseline | yes | comparison recipes |
-| 4 | Expansion | ACE-Step 1.5 in ComfyUI on ai-5090-02 | no | only after a listening session says expand |
-| 5 | Analysis | Sethares roughness, LUFS, spectral centroid | n/a | every tier 2–4 artifact |
+Before any render is trusted:
 
-Tier 4 never feeds a litmus test, because a generative model contaminates the
-variable under test.
+1. **Bounded spike**: render three existing kits with the litmus engine.
+2. **Pitch check**: per-note frequency error under 0.5 cents against the
+   tuning table. Necessary, not sufficient.
+3. **Human versus machine listening**: Keith renders the same kits in the
+   studio; both versions are rated blind on `/listen`.
+4. **Contamination assessment**: do ratings track the hypothesis or the
+   synthesis? Written up in `docs/plans/` as the plan 11 outcome with a
+   go/no-go.
 
-### 2.1 Litmus timbre
+Until go, every render artifact has `validation: "unvalidated"` and is
+excluded from evidence, debt closure, docket `compositionNoListening`, and
+tournament fitness. Go flips a setting `renderValidation = "go"` and later
+renders are stamped `validated`.
 
-One fixed instrument for all litmus renders, defined once in
-`media/src/engines/supercollider/litmus.scd`: four-partial additive tone with
-partial amplitudes 1, 0.5, 0.25, 0.125 at exact integer multiples, 20 ms
-attack, 300 ms release, no vibrato, no reverb, no stereo widening. Notes come
-from `seed.mid`; pitches come from the `.scl` and `.kbm` via the shared
-tuning lib, never from MIDI note numbers alone. Render at 48 kHz, 24-bit,
-then normalize to −18 LUFS (music target) and encode MP3 256 kbps alongside
-the WAV.
+## 3. The ladder, first release
 
-Validation rule from plan 11: the first three litmus renders are compared
-against a human render of the same kit in Keith's studio; per-note frequency
-error must be under 0.5 cents before tier 2 is trusted.
+| Tier | Artifact | Engine | Status |
+| --- | --- | --- | --- |
+| 0 | `tuning.scl`, `tuning.kbm`, `seed.mid`, `card.md` | existing starter kit | exists |
+| 2 | Litmus render | SuperCollider NRT, fixed plain timbre | this wave |
+| 3 | Study family | tier 2, baseline plus variants | this wave, after go |
+| 5 | Analysis | roughness, loudness, centroid | this wave |
 
-### 2.2 Study families
+Deferred to a later release (§9): Strudel patterns, quality renders with
+physical-modelling instruments, ACE-Step expansion, waveform region tools.
 
-Input: a comparison recipe (`protocol.studyType = "comparison"`). The media
-job `studyFamily` reads `protocol.whatVaries` and `parameters`, builds a
-baseline kit plus up to three variants by changing only that parameter (for
-example, temperament, reference pitch, or chord voicing) through the shared
-tuning lib, renders each with the litmus timbre, creates one `compositions`
-row per render (`artifactType: "microStudy"`, `status: "rendered"`,
-`createdBy: "system"`, `revisionParentId` chaining to the baseline,
-`revisionVariable` set to the variable) with the new optional field
-`audioArtifactId`, and creates a `blindGroups` row with labels A, B, and,
-for a two-member family, X (a duplicate of A or B chosen at random).
+### 3.1 Litmus timbre
 
-Recipes gain `renderPlan?: { tier: "litmus" | "quality", variants: string[] }`,
-set by the recipe editor or by the LLM recipe prompt, which gets one new JSON
-field with a schema example.
+One instrument, defined once in `media/src/engines/sc/litmus.scd`: four
+partials at exact integer multiples with amplitudes 1, 0.5, 0.25, 0.125,
+20 ms attack, 300 ms release, no vibrato, reverb, or widening. Pitch is
+given to SuperCollider in Hz per event, computed by the shared tuning lib,
+never by MIDI note number and never by parsing `.scl` files. 48 kHz, 24-bit
+master, then the umbrella loudness policy for music.
 
-### 2.3 Expansion
+### 3.2 Typed render contract
 
-`expansion` job input `{ compositionId }`. Allowed only when the newest
-listening session on that composition has `expandVerdict: "yes"` or
-`"maybe"`; the mutation that enqueues it checks. The job posts a ComfyUI
-workflow to ai-5090-02 with a prompt built from the recipe card and the
-listening session's felt qualities, waits, downloads the result, registers an
-`expansion` artifact, and creates an `expandedStudy` composition linked to
-the parent. It is labelled "not microtonal-precise" on every surface.
+`whatVaries` is free text and cannot drive a renderer. Recipes gain:
 
-### 2.4 Analysis
+```
+renderPlan?: {
+  engine: "sc-litmus"
+  tuning: TuningSpec                 // from parameters via the shared lib
+  referenceHz: number
+  normalize: boolean                 // false when level or dynamics is the variable
+  variable?: {
+    kind: "temperament" | "referenceHz"
+    baseline: TuningSpec | number
+    variants: (TuningSpec | number)[]   // max 3
+  }
+  seed: { degree: number, octave: number, startBeat: number, beats: number, velocity: number }[]
+  tempoBpm: number
+  durationSecs: number               // from protocol.durationSecs
+}
+```
 
-`analyze` job: loads the WAV, computes Sethares roughness over 100 ms frames
-with the `dissonant` package, integrated LUFS, and spectral centroid; writes
-`audioArtifacts.analysis` and, for compositions, upserts a `listeningSessions`
-row with `participants: [{ role: "machine" }]`, only
-`ratings.consonanceComputed` set (roughness mapped to 0–5 by the curve in
-`docs/metrics-and-dissonance.md`), and `feedbackMd` "machine listener". These
-rows are excluded from human averages by the `role`.
+The seed event list is generated once from the baseline (the existing seed
+generator, output converted to degree and octave indices) and frozen; variants
+change only the degree-to-Hz mapping. The renderer loops or truncates the
+event list to `durationSecs`. Any recipe whose variable is not `temperament`
+or `referenceHz` is rejected by `render.request` with "needs a typed render
+plan", and the recipe editor on the web gets a small form to set one. The LLM
+recipe prompt is unchanged in this release.
 
-## 3. Strudel patterns
+### 3.3 Study families
 
-`recipes.strudelPattern?: string`. Generated by a Convex action with
-`DEFAULT_MODEL` from the recipe parameters and the tuning lib's frequency
-table, using Strudel's `freq()` for pitch so tunings survive. The recipe page
-embeds `@strudel/web` with the pattern in an editable box and a play button.
-A pattern that fails to evaluate shows the error and the raw text; the
-recipe is not blocked.
+Job `studyFamily`, input `{ recipeId }`, requires `renderPlan.variable`.
+Renders baseline plus variants with the litmus timbre. `completeMediaJob`
+creates, in one mutation, one `compositions` row per render with every
+required field (`title`, `recipeId`, `artifactType: "microStudy"`,
+`version: "m0.1"`, `status: "rendered"`, `visibility: "private"`,
+`createdBy: "system"`, `revisionParentId` to the baseline,
+`revisionVariable`), sets `audioArtifactId`, and creates the `blindGroups`
+row. Two-member families get labels A and B and one optional X member
+duplicating A or B at random; families of three or four get A, B, C, D and no
+X. Group membership is immutable.
+
+### 3.4 Analysis
+
+Job `analyze` on every master: Sethares pairwise roughness (`dissonant`
+package, version pinned) over 100 ms frames, top 20 spectral peaks per
+frame, amplitudes normalized per frame, frames below −60 dBFS skipped,
+median and 90th percentile across frames stored raw; integrated LUFS; true
+peak; spectral centroid. Stored under `audioArtifacts.analysis` with
+`version`. No 0 to 5 mapping ships until at least ten human sessions on
+validated renders exist to calibrate one; the metrics document's 0 to 1
+`computedConsonanceAudio` is then derived and shown beside ear ratings, never
+written into a session.
 
 ## 4. Listen page
 
-Route `/listen` in `web/src/router.tsx`, file `web/src/routes/listen.tsx`,
-Clerk-authenticated like every route.
+Route `/listen` (wave 1 ships its shootout section; this wave completes it),
+Clerk-gated.
 
-Sections:
+1. **Queue**: ready artifacts with no human rating. Blind members show only
+   label and duration; everything else shows kind, source, engine.
+2. **Player**: `wavesurfer.js` with play, scrub, loop, and keys: space play,
+   `[` `]` for A and B, `x` for X, 1 to 5 for ratings. Audio URLs come from
+   the blind projection query or the Clerk-gated artifact query.
+3. **Blind panel**: labels only; switching keeps the playhead. For an X trial
+   the listener records "X is A" or "X is B", stored as `xGuess` and
+   `xCorrect` on the group, never as a rating. Then each label gets the six
+   subjective ratings plus conditions (`listeningMethod`, `timeOfDay`).
+   Submit creates one `listeningSessions` row per member with `blindLabel`,
+   sets `revealedAt`, and returns the mapping, all in one mutation. This is a
+   preference workflow; the single X trial is a sanity check, not evidence.
+4. **Voice note**: record (MediaRecorder, Opus), upload as a `voiceNote`
+   artifact attached to the in-progress session, enqueue `transcribe`
+   (faster-whisper in the media container); the transcript prefills ratings
+   with the same extraction prompt freq uses and appends to `feedbackMd`.
+   Submission waits for the attachment, not for the transcript.
+5. **Episodes**: podcast episodes with chapters.
 
-1. **Queue**: ready artifacts not yet rated by a human, newest first, with
-   kind, source record, engine, duration. Filter chips by kind.
-2. **Player**: `wavesurfer.js` waveform with play, scrub, loop region, and a
-   keyboard map (space play, `[` and `]` for A and B, `x` for X, 1–5 rating
-   keys matching `/agent-drafts` conventions). Audio comes from a
-   Clerk-gated Convex query that returns a short-lived storage URL, not from
-   the podcast route.
-3. **Blind panel**: for a `blindGroups` row, shows only the labels; switching
-   between A, B, X keeps the playhead position. The listener picks "X is A"
-   or "X is B" and then rates each label with the seven-rating form reused
-   from `/feedback`. Submitting creates one `listeningSessions` row per
-   member with `contextMd` recording the blind label and the X guess, then
-   sets `revealedAt`, then shows the mapping.
-4. **Voice note**: a record button (browser MediaRecorder, Opus) uploads to
-   storage as a `voiceNote` artifact and enqueues a `transcribe` media job
-   (faster-whisper in the media container); the transcript is appended to
-   `feedbackMd` and, when the session has not been submitted yet, prefills
-   ratings by the same extraction prompt that freq uses.
-5. **Episodes**: the podcast episodes with chapter marks and the shootout
-   panel from wave 1.
-
-Recipe and composition detail pages embed the player and link to `/listen`
-with the artifact preselected.
+Recipe and composition pages embed the player for non-blind artifacts.
 
 ## 5. Data changes
 
-- `compositions.audioArtifactId?: Id<"audioArtifacts">`.
-- `recipes.strudelPattern?`, `recipes.renderPlan?`.
-- `listeningSessions.blindLabel?: string`, `listeningSessions.xGuess?: "A" | "B"`.
-- `loopReport.experimentDebt` gains state `rendered_no_listening` so the
-  docket and brief can tell "no composition" from "rendered, waiting for
-  ears".
+- `compositions.audioArtifactId?`.
+- `recipes.renderPlan?`.
+- `listeningSessions.blindLabel?`, `listeningSessions.conditions?:
+  { listeningMethod, timeOfDay }`.
+- `blindGroups.xMember`, `xGuess`, `xCorrect`.
+- `settings.renderValidation`.
+- `loopReport.experimentDebt` keeps `composed_no_listening` but uses
+  `isHumanListeningSession` and skips unvalidated renders.
 
 ## 6. Error handling
 
-- SuperCollider NRT non-zero exit: job fails with the last 20 lines of
-  `sclang` output; the kit is left on disk in the media volume for inspection.
-- Missing starter kit: `litmusRender` builds one first through the shared
-  tuning lib; if the recipe lacks `tuning` parameters the job fails with a
-  clear message and the docket shows "needs tuning parameters".
-- ComfyUI unreachable or queue timeout of 10 minutes: expansion job fails and
-  is retried once.
-- Transcription failure: the voice note stays attached as audio; ratings
-  are entered by hand.
+- SuperCollider non-zero exit: job fails with the last 20 lines of output;
+  the kit stays on the media volume.
+- Missing render plan: `render.request` rejects; the docket shows "needs a
+  render plan".
+- Loudness out of tolerance: job fails (umbrella policy), unless
+  `normalize: false`.
+- Transcription failure: the note stays attached; ratings are entered by hand.
 
 ## 7. Testing
 
-- `convex/shared/tuning/*.test.ts`: moved tests keep passing; frequency table
-  for the geometric temperament at 432 Hz matches known values.
-- `media/src/engines/supercollider/litmus.test.ts`: generated `.scd` from a
-  fixture kit contains the right frequencies; a smoke test renders a
-  two-second file in CI with SuperCollider installed in the media image.
-- `media/src/studyFamily.test.ts`: only `whatVaries` differs between variant
-  kits; label assignment is random but stable per group seed.
+- `convex/shared/tuning/*.test.ts`: moved tests pass; degree-to-Hz for the
+  geometric temperament at 432 Hz matches known values to 0.01 cents.
+- `media/src/engines/sc/litmus.test.ts`: generated score from a fixture plan
+  carries the right Hz values; a two-second smoke render runs in the media
+  image.
+- `media/src/studyFamily.test.ts`: only the mapping differs between variants;
+  event lists are byte-identical; labels shuffle with a seed.
 - `media/src/analysis.test.ts`: a pure fifth scores lower roughness than a
-  minor second on synthetic input.
-- `web`: listen route renders, blind panel never exposes labels before
-  reveal, rating submission calls the mutation with per-member rows.
-- Manual acceptance: the plan 11 validation against a human render.
+  minor second on synthetic input; silence frames are skipped.
+- `convex/blindGroups.test.ts`: projection, immutability, atomic reveal,
+  X recorded separately.
+- `web`: listen route renders; blind panel never receives labels before
+  reveal; conditions required.
+- Manual: the plan 11 gate (§2).
 
-## 8. Out of scope
+## 8. Instrument requirements for later quality tiers
 
-- Pianoteq (not owned).
-- Multi-user listening panels; `participants` stays as today.
-- DAW connector (Phase D of the next wave) remains separate.
+A quality-render instrument must: run headless on Linux (native CLI, or
+loadable in a scriptable host such as Spotify's `pedalboard` or Carla without
+a display); accept exact per-note pitch (Hz input, `.scl`/`.kbm`, MTS-ESP, or
+per-channel pitch bend with a wide range so any MPE-capable synth works);
+render deterministically offline (no free-running modulation or unseeded
+unison drift); have a licence that permits unattended use on a server (no
+dongle, no per-launch online activation); and ship with no effects engaged
+by default so timbre stays honest.
+
+Candidates that meet this on Linux: Pianoteq (commercial, native CLI,
+`.scl` support, physical-modelled pianos and keyboards); Surge XT CLI
+(free, `.scl`/`.kbm`, includes waveguide string and modal oscillators);
+Cardinal and VCV Rack headless with the Rings and Elements modal-resonator
+ports (open source); the Faust physical-modelling library compiled to
+SuperCollider or standalone (open source); STK models exposed through
+Csound opcodes or C++ (open source); u-he Diva and Zebra (commercial,
+Linux builds, MTS-ESP, host via pedalboard). Windows-only or macOS-only
+physical models such as SWAM and Chromaphone are out.
+
+## 9. Deferred
+
+- Strudel pattern generation (needs an isolated execution boundary for
+  generated code).
+- Quality renders with §8 instruments.
+- ACE-Step expansion (only after human `expandVerdict`, labelled not
+  microtonal-precise).
+- Loop-region tools and multi-listener panels.

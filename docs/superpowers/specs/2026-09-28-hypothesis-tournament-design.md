@@ -1,150 +1,161 @@
 # Hypothesis Tournament Design (wave 4)
 
-Replace one-draft-one-check with a search: many candidates from diverse
-seeds, a novelty gate, a pairwise tournament, one evolution round, and then
-the same single human door with the same cap of three.
+Replace one-draft-one-check with a bounded search: candidates from several
+seed families, evidence gathered per candidate, a duplicate check, a scored
+shortlist, a small finalist comparison, and then the same single human door
+with the cap of three.
 
 Parent: [Listen-first program](./2026-09-28-listen-first-program-design.md).
-Independent of waves 1–3 except that listening fitness (§6) needs wave 3
-data.
+Independent of waves 1 to 3, except that listening fitness (§7, deferred)
+needs human sessions on validated renders.
 
 ## 1. Outcome
 
-- Each weekly drafter run considers eight or more candidates and submits at
-  most one draft, as today, but the survivor has beaten its siblings on
-  stake, novelty, and falsifiability.
-- Candidates and their scores are archived, so the next run can avoid what
-  lost and the eval loop can learn from what Keith approved.
-- Seeds come from five families, not one.
-- Freq can request a run with a seed hint; the worker does the drafting, so
-  provenance is unchanged.
+- Each run considers up to eight candidates and submits at most one draft
+  that beat its siblings on stake, novelty, and falsifiability.
+- Every candidate, its evidence, its scores, and its outcome is archived.
+- Seeds come from correspondences, claims, listening responses, failure
+  inversions, and doctrine passages.
+- Freq can request a run with a seed hint; the worker drafts, so provenance
+  is unchanged.
 
 ## 2. Graph
 
-New graph `hypothesis-tournament` in `agent/src/graphs/hypothesis-tournament/`,
-registered in `agent/src/worker/runner.ts`. The existing `hypothesis-drafter`
-stays for comparison runs and is what the Thursday cron calls until the
-tournament's first three drafts have been reviewed; then the cron switches.
+`agent/src/graphs/hypothesis-tournament/`, registered in
+`convex/shared/agentContract.ts` (`KNOWN_GRAPH_NAMES` and terminal ownership),
+`agent/src/worker/graphInput.ts`, and `agent/src/worker/runner.ts`.
 
 ```
-check_capacity → gather_seeds → generate_candidates → novelty_gate
-  → tournament → evolve → self_check → write_draft → summarize
+check_capacity → gather_seeds → generate_candidates → gather_evidence
+  → duplicate_check → score → finalists → self_check → write_draft → summarize
 ```
 
-- `check_capacity`: as today (`countPendingDrafts`, exit when the cap is full).
-- `gather_seeds`: pulls up to three seeds from each family (§3), bounded and
-  provenance-tagged. Total seed count is capped at twelve.
-- `generate_candidates`: one LLM call per seed producing a candidate in the
-  existing hypothesis payload shape (`whyThisMatters`, statement, rationale,
-  falsification condition, proposed recipe sketch). Temperature 0.9 for
-  breadth. Candidates carry `seedFamily` and `seedRefs`.
-- `novelty_gate`: embeds each candidate statement and searches hypotheses,
-  pending drafts, the candidate archive, and the failure archive through a
-  new read tool `searchHypothesesSemantic`. A cosine similarity above 0.86
-  to any existing item drops the candidate with the matched id recorded.
-- `tournament`: pairwise judging with `agent/src/graphs/shared/judge.ts`,
-  extended with a rubric of stake (does the answer change what Keith would
-  do in the studio), novelty (against the seeds' own context), and
-  falsifiability (is there a listening test that could refute it). Round
-  robin for up to eight survivors, Swiss pairing beyond that. Scores are
-  Elo-style so archive rows are comparable across runs.
-- `evolve`: the top three each get one mutation prompt ("sharpen the
-  falsification", "cross with candidate N", "invert the losing sibling's
-  assumption"); mutants re-enter a final mini-tournament with their parents.
-- `self_check`: the existing self-check prompt, unchanged.
-- `write_draft`: one draft, `createAgentReviewDraft`, with the tournament
-  bracket summary in the draft `summary` and the losing candidates' titles
-  listed so the reviewer sees the alternatives.
-- `summarize`: as today, plus `recordHypothesisCandidates` (§4).
+- `check_capacity`: as today.
+- `gather_seeds`: up to two seeds per family (§3), eight total, provenance
+  tagged. Fewer than three seeds ends the run at `summarize`.
+- `generate_candidates`: one call per seed, temperature 0.9, producing the
+  existing `hypothesisDraftPayloadZ` fields (`title`, `question`,
+  `statement`, `rationale`, `whyThisMatters`, `concepts`) with empty
+  evidence arrays and a `seedFamily`.
+- `gather_evidence`: for each candidate, `searchClaimsSemantic` on the
+  statement; keep candidates with at least two claims; fill `sourceIds` and
+  `extractionIds` from those claims only, and `correspondenceId` when the
+  seed was a correspondence. The research-pipeline hallucinated-id gate
+  applies unchanged: ids not read in the run are rejected.
+- `duplicate_check`: embed each statement (same model as claims, per ADR
+  0001) and retrieve neighbours above 0.86 similarity from hypotheses,
+  pending drafts, and the candidate archive. A judge call classifies each
+  neighbour pair as `duplicate`, `inversion`, or `refinement`. Only
+  duplicates are dropped; inversions and refinements are kept and named in
+  the draft summary.
+- `score`: three independent judge calls per candidate with the rubric
+  (stake: changes what Keith would do in the studio; novelty: against the
+  seed's own context; falsifiability: a listening test could refute it).
+  A candidate needs at least two successful judgments to be eligible; a
+  failed judge call is a missing judgment, never a draw.
+- `finalists`: the top three by mean score go through three pairwise
+  comparisons; the winner proceeds. Ties go to the higher falsifiability.
+- `self_check`: the existing prompt with a seed-aware variant that still
+  requires literal evidence claim ids; one revision as today.
+- `write_draft`: `createAgentReviewDraft` with the finalist summary and the
+  losing candidates' titles. Per-run idempotency: a draft dedupe key
+  `tournament:<runId>` on the draft so a retried run returns the existing
+  draft (today's dedupe covers only correspondence-keyed drafts).
+- `summarize`: as today.
 
-The run is bounded: at most 14 candidate generations, 40 judge calls, 6
-mutations, all under the existing `TOKEN_BUDGETS` policy with a new
-`hypothesisTournament` budget line in `convex/llm.ts`.
+Budget, enforced by the graph state: at most 8 generation calls, 24 scoring
+calls, 3 duplicate-classification calls per candidate, 3 finalist calls, 2
+self-check calls; 20 minutes wall clock; a reserve for persistence. When the
+budget runs out before `finalists`, the run summarizes without a draft.
+`TOKEN_BUDGETS` in `convex/llm.ts` gains per-call caps for the new prompts;
+it remains a per-call cap table, not a run budget.
 
 ## 3. Seed families
 
 | Family | Source | Tool |
 | --- | --- | --- |
-| correspondence | as today: evidenced or conjectured cross-domain pairs | `listDraftableCorrespondences` |
-| claim | a strong active claim with no hypothesis referencing its concepts | new `listUnhypothesizedClaims` |
-| inversion | a contradicted or retired path from the failure archive, seeded as "what if the opposite holds" | `listFailureArchive` (empty today; family is skipped when empty) |
-| listening | a listening session with `bodilyPleasantness` or `goosebumps` ≥ 4 whose composition's recipe has no follow-up hypothesis, seeded as "what explains this response" | new `listStandoutListeningSessions` |
-| sweep | a recipe parameter kind with fewer than two hypotheses touching it, seeded as "vary this" | new `listUnderexploredParameterKinds` |
-| doctrine | a passage from `docs/essays` (418 essays) chosen by embedding similarity to the week's brief themes | new `searchEssayPassages`, backed by an `essayPassages` table built by `scripts/index-essays.ts` (paragraph chunks, existing embedding pipeline) |
+| correspondence | as today | `listDraftableCorrespondences` |
+| claim | strong active claims whose concepts no hypothesis references | new read tool `listUnhypothesizedClaims` |
+| listening | human sessions with `bodilyPleasantness` or `goosebumps` ≥ 4 on validated renders whose recipe has no follow-up hypothesis | new read tool `listStandoutListeningSessions`; skipped while empty |
+| inversion | contradicted or retired paths | `listFailureArchive`; skipped while empty |
+| doctrine | passages from `docs/essays` retrieved by similarity to the week's brief themes, through the passage program of plan 15 and ADR 0001 (essays are ingested as sources into the passage index; no separate table) | passage search tool from plan 15; skipped until plan 15 lands |
+| hint | a seed supplied by freq (§6) | run input |
 
-Family weights default to equal. Each candidate's `seedFamily` is stored so
-the archive can show which families produce approved drafts.
+Families are sampled equally, two seeds each, in this release.
 
 ## 4. Candidate archive
 
-New table `hypothesisCandidates`:
-
 ```
 hypothesisCandidates
-  agentRunId
+  agentRunId, batchIndex
   seedFamily, seedRefs: string[]
-  payload                         // hypothesis payload shape
-  statementEmbedding?: number[]   // vector index for the novelty gate
-  noveltyDroppedBy?: string       // id of the near-duplicate
-  elo: number, wins, losses
-  mutatedFrom?: Id<"hypothesisCandidates">
-  outcome: "dropped_novelty" | "lost" | "evolved" | "submitted"
-  draftId?: Id<"agentReviewDrafts">
+  payload                        // hypothesisDraftPayloadZ shape
+  statementEmbedding?: number[]  // vector index, same model as claims
+  duplicateOf?: string, duplicateKind?: "duplicate" | "inversion" | "refinement"
+  scores: { stake, novelty, falsifiability }[]   // one per successful judgment
+  outcome: "dropped_evidence" | "dropped_duplicate" | "ineligible" | "lost" | "submitted"
+  draftId?
   createdAt
 ```
 
-Written through one audit-only tool `recordHypothesisCandidates` at the end
-of the run. Candidate rows are never promoted directly; only the submitted
-draft passes through the human door. Rows older than 180 days that were not
-submitted are pruned by a weekly cron.
+Written incrementally: once after `duplicate_check` (all candidates with
+their evidence and duplicate status) and once after `finalists` (scores and
+outcomes), each through the audit-only tool `recordHypothesisCandidates`
+keyed by `(agentRunId, batchIndex)` so retries upsert. Rows are never
+promoted directly. Unsubmitted rows older than 180 days are pruned weekly.
 
-## 5. Freq's night shift
+Migration: `hypotheses` gains `statementEmbedding?` with a vector index and a
+backfill script `scripts/embed-hypotheses.ts` using the existing embedding
+pipeline; the duplicate check reads hypotheses, pending drafts (embedded at
+query time), and the archive.
 
-Freq's HEARTBEAT may call `tournament.request` (wave 2 MCP) with a seed hint
-such as "listening session L-42" or "the geometric temperament essays". The
-MCP server enqueues an `agentRuns` row for `hypothesis-tournament` with
-`input.seedHint`. `gather_seeds` treats the hint as a sixth seed with family
-`hint` and provenance `requestedBy: "freq"`. The run still checks capacity
-and still submits at most one draft. Freq is told the run id and nothing
-else until the draft appears on the docket.
+## 5. Rollout
 
-## 6. Listening fitness
+The Thursday cron keeps calling `hypothesis-drafter`. Tournament runs are
+enqueued manually and by freq until ten runs have been exported to LangSmith
+by `scripts/export-eval-datasets.ts` and plan 008's baseline sweep has
+compared approval rates. Switching the cron is a decision recorded in the
+decision log, not a side effect of this wave.
 
-After wave 3, `seedFamilyFitness` (a Convex query) computes, per family, the
-mean human `bodilyPleasantness` and `expandVerdict` rate of compositions whose
-recipe traces back to an approved hypothesis from that family, over the last
-90 days. `gather_seeds` allocates its twelve seeds proportionally to fitness
-with a floor of one per family, so a family that produced nothing good
-still gets a hearing. Until there are five rated compositions, weights stay
-equal.
+## 6. Freq's requests
 
-## 7. Error handling
+`tournament.request` (wave 2 MCP) enqueues an `agentRuns` row for
+`hypothesis-tournament` with `input.seedHint` and `requestedBy: "freq"`. The
+hint becomes the `hint` family's seed. Freq is told the run id and nothing
+else until a draft appears on the docket.
 
-- Any family's tool failure skips that family and logs an event; the run
-  proceeds if at least three seeds exist, otherwise it summarizes and exits.
-- Novelty gate embedding failure fails open for that candidate with an event,
-  so a transient embedding outage does not silently block a good idea; the
-  reviewer sees the flag.
-- Judge call failures count as a draw.
-- Budget exhaustion mid-tournament takes the current Elo leader to
-  `self_check` rather than failing the run.
+## 7. Deferred
 
-## 8. Testing
+- Evolution and mutation rounds.
+- Swiss pairing and cross-run Elo.
+- Listening fitness and adaptive family weights. When revisited, it needs a
+  per-family minimum of five human sessions on validated renders, a stated
+  aggregation for repeated sessions, and a defined treatment of `maybe`.
+- A `sweep` family over under-explored parameter kinds.
 
-- `agent/src/graphs/hypothesis-tournament/*.test.ts`: routing, seed bounding,
-  novelty threshold, round-robin pairing, Elo update math, mutation prompts
-  applied to the right candidates, single draft written, candidate archive
-  payload shape.
-- `convex/hypothesisCandidates.test.ts`: write tool validation, prune cron.
-- `convex/essayPassages.test.ts`: chunking is stable; index script is
-  idempotent on unchanged essays.
-- LangSmith dataset: the first ten tournament runs are exported by
-  `scripts/export-eval-datasets.ts` so plan 008's baseline sweep can compare
-  drafter versus tournament approval rates.
+## 8. Error handling
 
-## 9. Out of scope
+- A family tool failure skips the family with an event.
+- Embedding failure in `duplicate_check` fails open for that candidate with a
+  flag in the draft summary.
+- Judge failures are missing judgments; a candidate below two judgments is
+  ineligible; no eligible candidate ends the run without a draft.
+- Draft cap reached between `check_capacity` and `write_draft`: the mutation
+  rejects, the run records `ineligible` outcomes, and summarizes.
 
-- Multi-draft submission per run. The cap stays at three pending and one per
-  run.
+## 9. Testing
+
+- Graph tests: routing, seed bounding, evidence minimum, duplicate
+  classification handling, eligibility rule, finalist selection, single
+  draft, incremental archive writes, budget exhaustion path.
+- `convex/hypothesisCandidates.test.ts`: upsert by batch key, prune cron.
+- `convex/agentDrafts.test.ts`: tournament dedupe key returns the existing
+  draft on retry.
+- `scripts/embed-hypotheses.test.ts`: idempotent backfill.
+- LangSmith: first ten runs exported for the plan 008 comparison.
+
+## 10. Out of scope
+
+- More than one draft per run; the cap of three stays.
 - Automatic promotion of any candidate.
-- Recipe tournaments; recipes remain one draft per approved hypothesis.
+- Recipe tournaments.

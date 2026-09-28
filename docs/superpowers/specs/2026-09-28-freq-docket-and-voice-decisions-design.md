@@ -1,220 +1,234 @@
 # Freq Docket and Voice Decisions Design (wave 2)
 
-Let the `freq` OpenClaw agent read the backlog aloud, deliver cards with
-blurbs and pages to Discord and Telegram, and relay Keith's voice decisions
-into Convex with identity and transcript attached.
+Let the `freq` OpenClaw agent read the backlog aloud and deliver cards to
+Discord and Telegram, and let Keith sign decisions from his phone with a
+signature the model cannot forge.
 
 Parent: [Listen-first program](./2026-09-28-listen-first-program-design.md).
-Requires wave 0. Uses wave 1 for spoken blurbs; works text-only before wave 1
-lands.
+Requires wave 0. Spoken cards need wave 1's house voice; text cards do not.
 
 ## 1. Outcome
 
 - A new Discord channel `#frequency` and the existing freq Telegram bot both
   route to the `freq` agent.
-- Every Thursday, freq posts the docket: up to three cards, each with a
-  written blurb, a 45-second spoken blurb, a link to its page, and the
-  decisions available.
-- Keith replies by voice or text. Freq echoes the decision it heard; Keith
-  confirms; Convex records the decision with channel identity and transcript.
-- "Freq, what's on the docket" works any time.
-- Keith can listen to a rendered study through freq and give a listening
-  session by voice.
+- Every Thursday freq posts up to three cards: blurb, spoken blurb, page
+  link, and the decisions available.
+- Keith talks to freq about a card. Freq proposes a decision. A Convex-owned
+  signer bot posts a decision card with buttons; Keith taps, or replies
+  "confirm D-17" to the signer bot. Convex verifies the platform signature and
+  the sender id, then applies the decision through the same code path as the
+  web.
+- "Freq, what's on the docket" and "play the render for card three" work any
+  time.
 
 ## 2. Channels
 
-OpenClaw config on moltbot (`~/.openclaw/openclaw.json`):
+OpenClaw config on moltbot:
 
 - `channels.discord.guilds.<guild>.channels.<frequencyChannelId>`:
   `{ enabled: true, requireMention: false }`.
-- `bindings`: prepend
-  `{ agentId: "freq", match: { channel: "discord", accountId: "default", peer: { kind: "channel", id: "<frequencyChannelId>" } } }`
-  so the exact-peer rule wins over the existing `main` catch-all.
-- `agents.entries.freq.tts`: provider and voice from the wave 1 winner, so
-  `/tts` replies and spoken blurbs use the house voice. Until wave 1 picks,
-  freq stays text-only.
-- `mcp.servers.frequency`: streamable HTTP, URL of the MCP server (§3), header
-  `x-mcp-secret` from an env reference. Only the `freq` agent gets this server.
-- Inbound voice notes already transcribe. Outbound audio uses the channel's
-  native audio message on Telegram and a file attachment on Discord.
+- `bindings`: prepend `{ agentId: "freq", match: { channel: "discord",
+  accountId: "default", peer: { kind: "channel", id: "<frequencyChannelId>" } } }`
+  so the exact-peer rule beats the `main` catch-all.
+- `agents.entries.freq.tts`: the house voice via its `openclawProvider`
+  mapping from the catalog. Text-only until wave 1 picks.
+- `mcp.servers.frequency`: streamable HTTP, header `x-mcp-secret` from an env
+  reference, allowed for `freq` only.
 
-Channel creation: the OpenClaw bot lacks Manage Channels, so the plan's first
-step asks Keith to create `#frequency` and paste the channel id, or grants the
-permission for one call. Either way the id lands in the config, never in this
-repo.
+Keith creates `#frequency` (the OpenClaw bot lacks Manage Channels) and pastes
+the id; the plan's first step records it in the OpenClaw config, never in
+this repo.
 
 ## 3. MCP server
 
-`agent/src/mcp/server.ts`, shipped in the existing agent image and run as a
-second Deployment `frequency-mcp` in namespace `frequency-worker`, with a
-Service and a Traefik IngressRoute at `mcp.frequency.rproj.art`. Its egress
-policy mirrors the worker's: Convex only. Auth: `x-mcp-secret` header equal to
-`MCP_SHARED_SECRET`, delivered by ExternalSecret like the worker's secrets.
+`agent/src/mcp/server.ts`, shipped in the agent image, run as Deployment
+`frequency-mcp` in namespace `frequency-worker` with a Service, a Traefik
+IngressRoute at `mcp.frequency.rproj.art`, and the worker's Convex-only
+egress policy. Auth: `x-mcp-secret` equals `MCP_SHARED_SECRET` from an
+ExternalSecret. Stateless; talks to Convex through `/agent-tools/*`.
 
-The server calls Convex through `/agent-tools/*` with `AGENT_TOOL_SECRET`
-plus a small set of new tools. It holds no state.
+Tools exposed to freq (all read-only or proposal-only; none applies a
+decision or records a session):
 
-Tools exposed to freq:
+| Tool | Effect |
+| --- | --- |
+| `docket.list` | Current cards with ids, titles, blurbs, page URLs, audio URLs, allowed actions. |
+| `docket.card` | One card in full (review context for drafts, protocol for recipes, audio for compositions). |
+| `decision.propose` | Create a `decisionIntents` row (§4) and trigger the signer card. Returns the intent code. |
+| `listening.propose` | Create a listening intent from a voice note transcript: parsed subjective ratings, conditions, verdict. Same signing path. |
+| `render.request` | Enqueue a `litmusRender` or `studyFamily` media job (wave 3 fulfils). |
+| `tournament.request` | Enqueue a `hypothesis-tournament` run with a seed hint (wave 4 fulfils). |
+| `delivery.record` | Record that a card was posted to a channel (§6 receipts). |
 
-| Tool | Reads or writes | Purpose |
-| --- | --- | --- |
-| `docket.list` | read | Current cards: pending drafts, recipes with no composition, compositions never listened to, ready renders and episodes never rated, disabled feed proposals. Returns ids, titles, blurbs, page URLs, audio URLs, allowed decisions. |
-| `docket.card` | read | One card in full: the draft review context (`agentDrafts.getReviewContext` shape), or the recipe protocol, or the composition and its audio. |
-| `decision.propose` | write, audit only | Record a decision intent: target id, decision, note, channel, sender id, verbatim transcript, message reference. Returns the intent id and the exact confirmation phrase. |
-| `decision.confirm` | write, gated | Apply a confirmed intent (§4). |
-| `listening.propose` | write, audit only | Record a listening-session intent from a voice note: composition id, parsed ratings, transcript. |
-| `listening.confirm` | write, gated | Apply a confirmed listening intent. |
-| `render.request` | write, lifecycle | Enqueue a `litmusRender` or `studyFamily` media job for a recipe (wave 3 fulfils it). |
-| `tournament.request` | write, lifecycle | Enqueue a `hypothesis-tournament` agent run with a seed hint (wave 4 fulfils it). |
+## 4. Signed decisions
 
-Nothing here approves, rejects, supersedes, or publishes. The Clerk-only
-mutations in `agentDrafts.ts` stay off both surfaces.
+### 4.1 Why the model cannot sign
 
-## 4. Voice decisions with a human signature
+An agent-callable "confirm" would let the caller replay or fabricate a
+sender id and transcript, which erodes the doctrine that agents never decide.
+So the confirmation never passes through freq or the MCP server. It arrives
+at Convex from the platform itself, with a signature or secret the model does
+not hold, carrying a user id the platform attributes.
 
-New table `decisionIntents`:
+### 4.2 Signer bots
+
+Two small Convex-owned bots, distinct from OpenClaw's:
+
+- **Discord "Frequency Signer"** application. A Convex action posts the
+  decision card to `#frequency` with message components (buttons: Approve,
+  Reject, Defer, Cancel) using the bot token. Discord sends interactions to
+  `POST /discord/interactions` on the Convex site; the handler verifies the
+  Ed25519 signature with the application's public key, checks
+  `member.user.id` against `DECISION_SIGNERS`, and applies (§4.4). Replies
+  with an ephemeral acknowledgement.
+- **Telegram "Frequency Signer"** bot. Convex posts the decision card with an
+  inline keyboard; Telegram delivers callback queries to
+  `POST /telegram/webhook` guarded by the webhook `secret_token`. The handler
+  checks `from.id` against `DECISION_SIGNERS`. A typed reply "confirm D-17"
+  or "cancel D-17" to the signer bot is accepted too, for hands-free use with
+  the keyboard's dictation.
+- **Web fallback**: `/agent-drafts?intent=<id>` shows the intent with one
+  Confirm button behind Clerk.
+
+`DECISION_SIGNERS` holds Keith's Discord and Telegram user ids in the Convex
+env. Anyone else gets a logged rejection and a "signers only" reply.
+
+### 4.3 `decisionIntents`
 
 ```
 decisionIntents
+  code: string                          // "D-17", generated by Convex
   target: { kind: "agentReviewDraft" | "listeningSession" | "feedProposal", id }
+  targetVersion: number                 // target updatedAt at proposal time
   action: "approve" | "reject" | "supersede" | "defer" | "createListeningSession" | "enableFeed"
-  payload: Record<string, unknown>       // note, ratings, feedbackMd, supersededBy
-  channel: "discord" | "telegram"
-  senderId: string                        // platform user id as seen by OpenClaw
-  transcript: string                      // verbatim message or voice-note transcript
-  messageRef: string                      // platform message id
-  confirmationPhrase: string              // e.g. "confirm reject D-17"
-  status: "proposed" | "confirmed" | "applied" | "expired" | "cancelled"
-  appliedRecordId?: string
-  createdAt, confirmedAt?, appliedAt?, expiresAt
+  payload: <action-specific zod in convex/shared/decisionIntents.ts>
+  proposal: { channel, conversationId, messageRef, transcript }      // from freq
+  signature?: { source: "discord" | "telegram" | "web", signerId, messageRef, receivedAt }
+  status: "proposed" | "applied" | "cancelled" | "expired" | "rejected"
+  result?: { appliedRecordId?, error? }
+  createdAt, expiresAt (30 min), decidedAt?
+indexes: by_code, by_status_createdAt, by_target
 ```
 
-Protocol:
+### 4.4 Apply
 
-1. Keith says "reject the second one, the stake is too weak." Freq calls
-   `decision.propose` with the transcript. Convex checks `senderId` against
-   `DECISION_SIGNERS` (Keith's Telegram user id and Discord user id, set in
-   the Convex env) and rejects anyone else with a logged event. The intent
-   expires in 30 minutes.
-2. Freq replies with the echo: draft title, action, note, and the phrase to
-   say. The phrase includes a short code (`D-17`) that freq cannot invent,
-   because Convex generated it.
-3. Keith says the phrase, or "confirm". Freq calls `decision.confirm` with
-   the intent id and the second transcript. Convex checks the sender again,
-   checks that the transcript contains "confirm" and the code, and then calls
-   the same internal promotion path that `agentDrafts.approve` uses, with
-   `decidedBy: "human"`, `decisionNote`, and new optional fields
-   `decisionChannel`, `decisionTranscript`, `decisionIntentId` on
-   `agentReviewDrafts`.
-4. The web `/agent-drafts` page shows "decided by voice via Discord" on such
-   rows with the transcript in a disclosure.
+One internal function `agentDrafts.applyDraftDecision({ draftId, action,
+note, amendedPayload, actor })` is extracted from today's `approve`,
+`reject`, and `supersede` handlers. The Clerk mutations call it with
+`actor: { kind: "clerk", userId }`; the signer handlers call it with
+`actor: { kind: "signer", source, signerId, intentId }`. All promotion
+invariants (pending status, payload present, `whyThisMatters`, recipe
+`hypothesisId`, rejection note required) stay inside it.
 
-A reject still requires a note; if the transcript has none, freq asks for one
-before proposing. `defer` moves a card to the bottom of the docket for two
-weeks and is the only action that applies without confirmation.
+`decisionIntents.apply` runs in one mutation: load the intent, require status
+`proposed` and not expired, require the target's `updatedAt` to equal
+`targetVersion` (a web decision in between fails the intent with the current
+status), call `applyDraftDecision`, store the signature and result, and set
+`applied`. A second signature for the same intent returns the stored result.
+Rejects need a note; if the proposal transcript has none, freq asks before
+proposing. `defer` (two weeks, docket only) is the only action that applies
+straight from `decision.propose`, because it changes no research data.
 
-Why this keeps the doctrine: the agent relays but never decides. Identity is
-checked server-side against platform ids that OpenClaw supplies from the
-channel, not from the model. The two-message protocol defeats a hallucinated
-decision, and the transcript is stored for eval.
+`agentReviewDrafts` gains optional `decisionSource: "web" | "discord" |
+"telegram"`, `decisionTranscript`, `decisionIntentId`; `decidedBy` stays
+`"human"`. The `/agent-drafts` page shows "decided via Discord" with the
+transcript in a disclosure.
 
-## 5. Docket cards
+## 5. Docket
 
-New table `docketCards`, rebuilt by a Convex action `docket.rebuild`
-(Thursday 15:00 UTC, before the drafter and narration crons, and on demand
-from `docket.list` when older than an hour):
+A dedicated query `docket.currentState` (not the loop report, whose census
+collapses debt by recipe and applies a 14-day age filter):
+
+| Card kind | Eligibility |
+| --- | --- |
+| `pendingDraft` | `agentReviewDrafts.status = pending_review` |
+| `recipeNoComposition` | recipe status `draft` or `in_use` with no composition |
+| `compositionNoListening` | composition status `rendered` with no session passing `isHumanListeningSession` |
+| `unratedAudio` | `audioArtifacts` kind `episode` or `litmusRender`, ready, with no human rating, excluding unrevealed blind members |
+| `feedProposal` | `feeds.enabled = false` with proposal provenance |
+
+One card per `targetId`; deferrals keep `deferredUntil`. Ranking: pending
+drafts first, then oldest debt. Thursday post takes three; `docket.list`
+returns up to ten.
 
 ```
 docketCards
-  kind: "pendingDraft" | "recipeNoComposition" | "compositionNoListening"
-      | "unratedAudio" | "feedProposal"
-  targetId: string
-  title: string
-  blurbMd: string                 // 60–90 words, written by DEFAULT_MODEL
-  spokenBlurb: string             // 45 seconds when read, no markdown
-  blurbArtifactId?: Id<"audioArtifacts">
-  pageUrl: string                 // web route for the target
-  audioUrl?: string               // podcast audio route when a render exists
-  decisions: string[]             // allowed actions for this kind
-  contentHash: string             // regenerate blurb only when the target changed
-  rank: number
-  deferredUntil?: number
+  kind, targetId, title, blurbMd, spokenBlurb, blurbArtifactId?, pageUrl,
+  audioUrl?, decisions: string[], contentHash, rank, deferredUntil?,
   createdAt, updatedAt
+docketDeliveries
+  cardId, channel, messageRef, postedAt
 ```
 
-Card sources map to the loop report's existing census:
-`reviewQueue.pendingDrafts`, `experimentDebt` with `in_use_no_composition`
-and `composed_no_listening`, `proposedFeeds`. Ranking: pending drafts first
-(they block the cap), then oldest debt. The Thursday post takes the top three;
-`docket.list` returns up to ten.
+Blurbs (60 to 90 words: stake, proposal, what a decision unlocks) are written
+by `DEFAULT_MODEL` and regenerated only when `contentHash` changes. The
+spoken version drops ids and links. Spoken blurbs render as `narrate` jobs
+once the house voice exists.
 
-Blurb prompt: one paragraph that states the stake in the first sentence, what
-the record proposes in the second, what a decision unlocks in the third. The
-spoken version drops ids and links and ends with the available actions in a
-sentence.
-
-Spoken blurbs are rendered by a `narrate` media job in the house voice once
-wave 1 has picked it; before that the card carries text only.
+Rebuild triggers: `createFromAgentRun` and `completeMediaJob` mark the docket
+stale; `docket.list` rebuilds when stale or older than an hour; cron
+`rebuild-docket` at Thursday 16:30 UTC (after the 16:00 drafter) reconciles.
 
 ## 6. Delivery
 
-- Thursday post: freq's HEARTBEAT gains a Thursday task: call `docket.list`,
-  post the top three cards to `#frequency` and to the Telegram chat, each card
-  as a message with the blurb, the page link, the spoken blurb as audio, and
-  the decision words. Discord gets a thread per card so replies stay attached.
-- Friday: freq posts the podcast episode link and the three studio prompts.
-- On demand: "what's on the docket", "read me card two", "play the render for
-  card three".
-- Silence rule: freq posts nothing when the docket is empty and nothing has
-  changed since the last post.
+- Thursday 17:30 UTC (after docket narration): freq's HEARTBEAT calls
+  `docket.list`, posts the top three cards to `#frequency` (a thread per
+  card) and to the Telegram chat, and records each post with
+  `delivery.record`. Cards with a delivery receipt in the last 7 days are not
+  reposted; changed cards post with "updated".
+- Friday: freq posts the episode link and the three studio prompts, or the
+  "no brief this week" note when generation was skipped.
+- On demand: docket questions, card reads, render playback.
+- Silence: nothing is posted when nothing changed.
 
-Freq's workspace `AGENTS.md` gets a section describing the docket tools, the
-confirmation protocol, and the rule that it never states a decision was
-applied until `decision.confirm` returns `applied`.
+Freq's workspace `AGENTS.md` gains a section on the tools, the rule that it
+never states a decision was applied (the signer bot reports that), and that
+signing happens only on the signer card.
 
 ## 7. Voice listening sessions
 
-"Play the render for card three" sends the WAV or MP3. Keith answers with a
-voice note. Freq extracts the seven ratings, felt qualities, standout moments,
-and the expand verdict with a structured prompt into a `listening.propose`
-intent, echoes them as a sentence ("bodily four, goosebumps two, consonance
-four, musicality three, composability three, expandability two, expand:
-maybe"), and Keith confirms. `listening.confirm` calls
-`listening.create` internals with `participants: [{ role: "self", userId }]`,
-`feedbackMd` set to the transcript, and `contextMd` naming the channel.
+Keith listens to a render through freq and answers with a voice note. Freq
+extracts the six subjective ratings (`bodilyPleasantness`, `goosebumps`,
+`perceivedConsonance`, `musicality`, `easeOfComposability`, `expandability`),
+felt qualities, standout moments, the expand verdict, and the required
+conditions (`listeningMethod`: headphones, monitors, car, phone speaker;
+`timeOfDay`), asking for anything missing, then calls `listening.propose`.
+The signer card echoes the values; the signature applies
+`listening.createInternal`, which range-checks every rating (today only
+`expandability` is checked), stores `feedbackMd` as the transcript, and
+`conditions` on the session. `consonanceComputed` is never set here.
 
 ## 8. Pages
 
-Existing detail routes serve as the pages: `/agent-drafts` (with a `?draft=`
-deep link added), `/recipes/$recipeId`, `/compositions/$compositionId`. Each
-gains a "Listen" section when an audio artifact exists (wave 3 supplies the
-player component; wave 2 uses a plain audio element). The web app is
-Clerk-authenticated, so links open only for Keith; that is intended.
+Existing routes serve as pages, with `?draft=` deep links on `/agent-drafts`
+and a Listen section on recipe and composition pages once audio exists. The
+web is Clerk-gated; links open only for Keith.
 
 ## 9. Error handling
 
-- Unknown sender on any propose or confirm: rejected, logged as an
-  `agentRunEvents`-style audit row on the intent, and freq is told to reply
-  "I can only take decisions from Keith."
-- Expired intent on confirm: freq asks Keith to restate the decision.
-- Draft already decided on the web between propose and confirm: confirm fails
-  with the current status and freq reports it.
-- MCP server unreachable: freq says so and offers the page link.
+- Unknown signer: rejected, logged, replied "signers only".
+- Expired or already-applied intent: signer card updates to show the state.
+- Target changed since proposal: intent rejected with the current status;
+  freq offers to re-propose.
+- Signer webhook signature failure: 401, nothing logged beyond a counter.
+- MCP unreachable: freq says so and gives the page link.
 
 ## 10. Testing
 
-- `convex/decisionIntents.test.ts`: signer check, expiry, phrase generation,
-  double-apply rejection, approve path produces the same row shape as the
-  Clerk mutation.
-- `convex/docket.test.ts`: card sources match loop-report fixtures, ranking,
-  hash-based blurb reuse.
-- `agent/src/mcp/server.test.ts`: tool schemas, secret header enforcement,
-  propose→confirm round trip against a mocked Convex.
-- Manual acceptance: a full reject by voice from Telegram and from Discord,
-  visible on `/agent-drafts` with the transcript.
+- `convex/decisionIntents.test.ts`: signer check, expiry, version binding,
+  idempotent apply, transcript stored, approve through the intent equals
+  approve through Clerk row for row.
+- `convex/discordInteractions.test.ts`, `convex/telegramWebhook.test.ts`:
+  signature and secret verification, sender check, button and text parsing.
+- `convex/docket.test.ts`: eligibility per kind, dedupe, deferral, receipts.
+- `convex/listening.test.ts`: all six ratings range-checked; conditions
+  required through the intent path.
+- `agent/src/mcp/server.test.ts`: schemas, secret enforcement, propose path.
+- Manual: a reject signed from Discord and one from Telegram, both visible on
+  `/agent-drafts` with transcripts.
 
 ## 11. Out of scope
 
-- Multiple signers. Only Keith's ids are accepted.
-- Discord slash commands; natural language only.
-- Rendering (wave 3) and tournament (wave 4); this wave only enqueues them.
+- Multiple signers.
+- Slash commands.
+- Rendering and tournament execution (waves 3 and 4).

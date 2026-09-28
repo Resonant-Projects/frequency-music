@@ -1,46 +1,55 @@
 # Listen-First Program Design (umbrella)
 
 Turn Frequency Music from a reading loop into a listening loop: the system
-speaks, renders, and takes decisions by voice, while the existing human-only
-decision doctrine stays intact.
+speaks, renders, and takes decisions by voice, while the human-only decision
+doctrine stays intact.
 
-This umbrella spec fixes the shared substrate and the wave boundaries. Each
-wave has its own spec and its own implementation plan; waves can be built in
-parallel once the substrate lands.
+This umbrella spec fixes the shared substrate, the engineering rules, and the
+wave boundaries. Each wave has its own spec and its own implementation plan.
 
-| Wave | Spec | Depends on |
+Revision 2 (2026-09-28) incorporates the GPT 6.0 Astra review: agent tools
+are proposal-only, audio is served from storage rather than through HTTP
+actions, media jobs are leased and completed atomically with typed domain
+effects, machine analysis never creates listening sessions, blind groups are
+projected server-side, and wave 0 is cut to what wave 1 needs.
+
+| Wave | Spec | Hard dependencies |
 | --- | --- | --- |
-| 0 | Shared substrate (this document, §3) | nothing |
-| 1 | [Voice and podcast feed](./2026-09-28-voice-and-podcast-feed-design.md) | substrate |
-| 2 | [Freq docket and voice decisions](./2026-09-28-freq-docket-and-voice-decisions-design.md) | substrate; wave 1 for spoken blurbs |
-| 3 | [Render ladder and listen page](./2026-09-28-render-ladder-and-listen-page-design.md) | substrate; wave 1 for episodes |
-| 4 | [Hypothesis tournament](./2026-09-28-hypothesis-tournament-design.md) | none for the tournament; wave 3 for listening fitness |
+| 0 | Shared substrate (this document, §3) | none |
+| 1 | [Voice and podcast feed](./2026-09-28-voice-and-podcast-feed-design.md) | wave 0 |
+| 2 | [Freq docket and voice decisions](./2026-09-28-freq-docket-and-voice-decisions-design.md) | wave 0; wave 1's house voice for spoken cards |
+| 3 | [Render ladder and listen page](./2026-09-28-render-ladder-and-listen-page-design.md) | wave 0; the plan 11 listening gate before renders count as evidence; wave 1 for episodes |
+| 4 | [Hypothesis tournament](./2026-09-28-hypothesis-tournament-design.md) | wave 0 only for the freq request path; wave 3 human sessions before listening fitness |
 
 ## 1. Intent and success criteria
 
 Keith (audio engineer, listens in Pocket Casts in the car and on walks, does
-voice transcription while walking and in the studio) said:
+voice transcription while walking and in the studio) asked for:
 
-- "start having something that doesn't require reading but allows me to listen"
-- "I want a high voice quality bar. I can't stand to listen to crap-generated stuff"
-- explore "what can be generated; how we can create more innovative hypotheses
-  and experiments; how we can help to clear the backlog of existing things by
-  providing pages and blurbs, either delivered through OpenClaw or via Discord;
-  how we can provide a page for listening to the generated music or audio"
+- "something that doesn't require reading but allows me to listen"
+- "a high voice quality bar. I can't stand to listen to crap-generated stuff"
+- "what can be generated; how we can create more innovative hypotheses and
+  experiments; how we can help to clear the backlog of existing things by
+  providing pages and blurbs, either delivered through OpenClaw or via
+  Discord; how we can provide a page for listening to the generated music or
+  audio"
 - Discord preferred, Telegram kept because it already works; a new Discord
-  channel for this work.
+  channel for this work; all waves pursued, in parallel where possible.
 
-Success looks like:
+Success:
 
 1. The Friday brief and Thursday docket arrive as podcast episodes in Pocket
    Casts, in a voice Keith chose by blind listening.
-2. Keith can clear the draft docket by voice from a walk, and every decision is
-   attributable to him, with the transcript stored.
-3. A recipe becomes audible without opening a DAW: a plain machine render for
-   the litmus test, a study family for A/B/X, and a listen page that records
-   ratings.
-4. Hypothesis drafting searches instead of filtering: many candidates, a
-   novelty gate, a tournament, and still one human door with the WIP cap of 3.
+2. Keith clears the draft docket from a walk: freq explains by voice, Keith
+   signs each decision with a tap or a typed reply that the platform, not the
+   model, attributes to him. Every decision stores its transcript.
+3. A recipe becomes audible without a DAW through a validated plain render,
+   study families are compared blind, and ratings land in listening sessions.
+4. Hypothesis drafting searches instead of filtering, with one human door and
+   the cap of three unchanged.
+
+**First acceptance boundary** is wave 1: a chosen house voice and a working
+private feed. Waves 2 to 4 are developed in parallel but accepted separately.
 
 ## 2. Findings that shape the design
 
@@ -56,204 +65,247 @@ Live state read on 2026-09-28 through the read-only agent tools:
 | Draftable correspondences waiting | 20 |
 | Failure archive entries | 0 |
 
-The human door has not been opened in 90 days, so the docket is the
-bottleneck. Compositions and listening sessions are not exposed on the agent
-surface, so their counts are read in wave 2.
+The human door has not opened in 90 days; the docket is the bottleneck.
 
 Infrastructure facts:
 
 - The worker runs on the Talos cluster in namespace `frequency-worker`,
   ArgoCD-managed from `homelab-infra/kubernetes/infra/frequency-worker`. Its
   Cilium egress allows only Convex (172.16.10.24:3211), OpenRouter, Firecrawl,
-  and LangSmith. It cannot call a LAN media service, and nothing on the
-  cluster has a GPU.
-- ai-5090-02 (RTX 5090, ~31 GB VRAM free, Docker) is the only place for local
-  TTS and rendering. ComfyUI with ACE-Step 1.5 already runs there on 8188.
-- Convex is self-hosted at `http://convex.rproj.art:3211` (site URL). File
-  storage is unused today. The HTTP router serves `/health`, `/ingest/*`, and
-  `/agent-tools/*`.
+  and LangSmith. Nothing on the cluster has a GPU.
+- ai-5090-02 (RTX 5090, ~31 GB VRAM free, Docker) hosts local TTS and
+  rendering. ComfyUI with ACE-Step 1.5 already runs there on 8188.
+- Convex is self-hosted; site URL `http://convex.rproj.art:3211`. File
+  storage is unused today. HTTP actions have a 20 MiB response limit, so
+  audio is never proxied through them.
 - OpenClaw on moltbot (CT200 on prox9) has agent `freq` bound to its own
-  Telegram bot, one Discord guild (`1512943651368734944`) with an allowlist
-  of two channels, no TTS configured, no MCP servers configured, and a Google
-  provider entry.
-- 1Password CLI has no staged unattended profile on this machine, so
-  `devBypassSecret` mutations cannot run from here until Keith stages one
-  with `op-access`.
+  Telegram bot, one Discord guild (`1512943651368734944`), no TTS and no MCP
+  configured, and a Google provider entry.
+- 1Password CLI has no staged unattended profile here; `devBypassSecret`
+  mutations cannot run from this machine until Keith stages one with
+  `op-access`.
+
+Existing plan gates this program keeps: plan 008 (eval baseline) and plan 13
+(recipe loop closure, blocked on 008) are untouched. Plan 11 (self-render
+spike) is absorbed into wave 3 with its gate preserved (§3.6 and wave 3 §2).
 
 ## 3. Shared substrate (wave 0)
 
-Everything below is used by two or more waves and is built first.
+Wave 0 is only what wave 1 needs: the artifact table, the job lifecycle, the
+media package with TTS and loudness, storage-backed delivery, the feed, and
+the blind-group projection. Render engines, analysis, and transcription join
+in wave 3.
 
-### 3.1 `audioArtifacts` table
+### 3.1 `audioArtifacts`
 
-One row per rendered or uploaded audio file. Lives in `convex/schema.ts`;
-validators in `convex/shared/audioArtifacts.ts`.
+One row per stored file. Validators in `convex/shared/audioArtifacts.ts`.
 
 ```
 audioArtifacts
   kind: "narration" | "shootoutTake" | "episode" | "litmusRender"
-      | "qualityRender" | "expansion" | "voiceNote" | "blurb"
-  status: "queued" | "rendering" | "ready" | "failed"
-  storageId?: Id<"_storage">          // set when ready
-  mimeType?: string                    // audio/mpeg, audio/wav, audio/ogg
-  durationSecs?: number
-  sampleRate?: number
-  loudnessLufs?: number
+      | "voiceNote" | "blurb"                       // wave 3 adds render kinds
+  role: "master" | "delivery"                       // WAV master vs encoded delivery
+  masterArtifactId?: Id<"audioArtifacts">           // delivery → its master
+  status: "pending" | "ready" | "failed"
+  storageId?: Id<"_storage">
+  mimeType?: string
+  encoding: { codec: "wav" | "mp3" | "opus", bitrateKbps?, sampleRate, channels }
+  durationSecs?, loudnessLufs?, truePeakDbtp?
+  normalization: "applied" | "skipped"              // skipped when level is the variable
+  access: "feed" | "private"                        // feed rows are the only public ones
+  validation?: "unvalidated" | "validated"          // renders only; see §3.6
   title: string
-  scriptMd?: string                    // spoken text for narration/blurb
-  engine?: { name, version, params: Record<string, unknown> }
-  voice?: { provider, voiceId, promptVersion }
-  analysis?: { roughness?, spectralCentroid?, lufs? }
+  scriptMd?: string
+  chapters?: { title: string, startSecs: number }[]
+  engine?: { name, version, params }
+  voice?: { catalogId, promptVersion }
+  analysis?: { version, roughnessMedian, roughnessP90, lufs, truePeakDbtp, spectralCentroidHz }
   refs: { weeklyBriefId?, agentReviewDraftId?, recipeId?, compositionId?,
-          hypothesisId?, listeningSessionId?, docketCardId? }
+          docketCardId?, mediaJobId? }
   blindGroupId?: Id<"blindGroups">
-  blindLabel?: string                  // "A" | "B" | "X" | "take 3"
-  contentHash: string                  // sha256 of (kind, scriptMd|kit, engine, voice)
-  error?: string
+  contentHash: string      // sha256(kind, scriptMd|renderPlan, engine, voice, encoding)
   createdBy: "system" | "agent" | "human"
-  agentRunId?: Id<"agentRuns">
   createdAt, updatedAt
-indexes: by_kind_createdAt, by_status_createdAt, by_blindGroupId,
-         by_refs_compositionId, by_contentHash
+indexes: by_kind_createdAt, by_status_createdAt, by_access_kind_createdAt,
+         by_blindGroupId, by_refs_compositionId, by_contentHash
 ```
 
-`contentHash` makes rendering idempotent: a job whose hash already has a
-`ready` row is a no-op.
+Analysis lives only here. Nothing in this program writes machine values
+into `listeningSessions`.
 
-### 3.2 `blindGroups` table
+### 3.2 `blindGroups`
 
 ```
 blindGroups
   purpose: "voiceShootout" | "studyFamily"
-  memberArtifactIds: Id<"audioArtifacts">[]
-  labels: Record<label, artifactId>    // never sent to the listen page before reveal
+  members: { memberId: string, artifactId: Id<"audioArtifacts">, label: string }[]
+      // immutable after creation; memberId is an opaque random handle
+  xMember?: { memberId: string, duplicates: string }    // optional single X trial
+  requiredRatings: string[]                              // memberIds that must be rated
   revealedAt?: number
   createdAt
 ```
 
-A query returns labels only after `revealedAt` is set, and `revealedAt` is set
-by the mutation that records the last required rating.
+Blindness is enforced by projection, not by omission: the only query that
+serves a blind group to the web or to freq before reveal returns
+`{ memberId, label, durationSecs, playbackUrl }` and nothing else. Playback
+URLs are storage URLs whose ids carry no meaning. Artifact and composition
+detail queries hide artifacts that belong to an unrevealed group. Reveal
+happens inside the same mutation that records the last required rating; a
+duplicate submission returns the prior result.
 
-### 3.3 `mediaJobs` table and media tools
+### 3.3 `mediaJobs` and the media lifecycle tools
 
-The media service pulls work; Convex never calls it (worker egress rule, and
-the service sits on a LAN box).
+The media service pulls; Convex never calls it.
 
 ```
 mediaJobs
-  kind: "narrate" | "shootout" | "assembleEpisode" | "litmusRender"
-      | "qualityRender" | "studyFamily" | "expansion" | "transcribe" | "analyze"
-  input: Record<string, unknown>        // kind-specific, validated in convex/shared/mediaJobs.ts
-  status: "queued" | "claimed" | "done" | "failed"
+  kind: "narrate" | "shootout" | "assembleEpisode"     // wave 3 adds render kinds
+  input: <kind-specific, zod in convex/shared/mediaJobs.ts>
+  dedupeKey: string           // sha256(kind, input); enqueue returns the existing
+                              // queued|claimed|done job instead of inserting
+  status: "queued" | "claimed" | "done" | "failed" | "parked"
   priority: number
-  workerId?: string
-  claimedAt?, finishedAt?
+  leaseToken?: string, leaseExpiresAt?: number, workerId?: string
+  attempts: number            // parked after 3
   resultArtifactIds?: Id<"audioArtifacts">[]
   error?: string
-  attempts: number
-  createdAt
-indexes: by_status_priority_createdAt, by_kind_status
+  createdAt, claimedAt?, finishedAt?
+indexes: by_status_priority_createdAt, by_dedupeKey, by_leaseExpiresAt
 ```
 
-New `/agent-tools/*` entries, registered in `convex/shared/agentToolManifest.ts`
-and documented in `docs/agent-tool-surface.md` under a new "Media lifecycle
-tools" table. They are lifecycle and artifact writes, never research-data
-writes:
+Tools added to `/agent-tools/*`, registered in
+`convex/shared/agentToolManifest.ts`, documented in
+`docs/agent-tool-surface.md` under "Media lifecycle tools":
 
-| Tool | Purpose |
+| Tool | Effect |
 | --- | --- |
-| `claimNextMediaJob` | Atomically claim the oldest queued job in the caller's `kinds` list. |
-| `generateAudioUploadUrl` | Return a Convex storage upload URL for one artifact. |
-| `registerAudioArtifact` | Attach a storage id, duration, loudness, analysis to a queued artifact and mark it ready. |
-| `completeMediaJob` / `failMediaJob` | Close a job; failures keep the error and bump attempts, and three attempts park the job. |
+| `claimNextMediaJob` | Claim the oldest queued job whose kind is in the caller's list; issues a lease token with a 10-minute expiry. |
+| `renewMediaJobLease` | Extend the lease; fails if the token no longer matches. |
+| `generateAudioUploadUrl` | Storage upload URL for one pending artifact. |
+| `completeMediaJob` | Fenced by lease token. Validates the kind-specific result with its zod schema and applies the domain effects in one mutation: marks artifacts ready, links masters and deliveries, creates blind groups, and in wave 3 creates compositions with every required field. The media service never writes research data directly. |
+| `failMediaJob` | Fenced. Stores the error, re-queues with `attempts + 1`, parks at 3. |
 
-The media service authenticates with `AGENT_TOOL_SECRET`, as the worker does.
-It is a second standing service identity. Stale claimed jobs are swept by the
-existing `sweep-stale-agent-runs` pattern (a sibling cron `sweep-stale-media-jobs`).
+A cron `sweep-stale-media-jobs` re-queues claimed jobs whose lease expired.
+Because completion is fenced and idempotent by `dedupeKey`, a stale worker
+finishing late is rejected rather than overwriting.
 
-### 3.4 Media service on ai-5090-02
+The media service authenticates with `AGENT_TOOL_SECRET`, the same standing
+service identity as the worker.
 
-A new workspace package `media/` in this repo (own `package.json`,
-`tsconfig.json`, `.env.schema`, tests), built into an image
-`ghcr.io/resonant-projects/frequency-media`, run by Docker Compose on
-ai-5090-02 with the GPU. Its definition lives in homelab-infra under
-`services/frequency-media/` following the existing `service.json` pattern.
+### 3.4 Media package on ai-5090-02
 
-Containers:
+New workspace package `media/` (own `package.json`, `tsconfig.json`,
+`.env.schema`, tests; joins the root `typecheck`, `test`, and `verify`
+chains). Image `ghcr.io/resonant-projects/frequency-media`; compose
+definition in homelab-infra `services/frequency-media/` following the
+worker's `service.json` and `op://` pattern.
+
+Wave 0 containers:
 
 | Container | Role |
 | --- | --- |
-| `media` | The TypeScript poller: claims jobs, runs engines, normalizes loudness, encodes, uploads, registers artifacts. |
-| `tts-local` | Breeze TTS 2 server exposing an OpenAI-compatible `/v1/audio/speech`. Only started if the shootout picks a local voice, or for bulk narration. |
-| `render` | SuperCollider (`sclang`, `scsynth` NRT), Surge XT CLI, ffmpeg, Python with `dissonant`. Invoked by `media` over a local Unix socket, or merged into `media` if image size allows. |
+| `media` | Poller: claims jobs, calls hosted TTS, runs loudness and encoding, uploads, completes. |
+| `tts-local` | Breeze TTS 2 behind an OpenAI-compatible `/v1/audio/speech`. Runs for the shootout; stays only if a local voice wins. |
 
-Hosted voices (Gemini 3.1 Flash TTS, Inworld, ElevenLabs) are called by the
-`media` container directly with keys from the compose env, resolved through
-1Password `op://` references at deploy time, the same way the worker's
-`service.json` does.
+Loudness policy (one implementation in `media/src/loudness.ts`, used by
+every wave):
 
-Audio pipeline for everything spoken: TTS output → resample 48 kHz →
-loudness normalize to −16 LUFS integrated, −1 dBTP → encode MP3 128 kbps
-(spoken) or 256 kbps (music) → upload. WAV masters for renders are kept as a
-second artifact so A/B tests never compare codec artifacts.
+| Content | Integrated target | Tolerance | True peak | Layout |
+| --- | --- | --- | --- | --- |
+| Spoken | −16 LUFS | ±0.5 LU, else the take fails | ≤ −1 dBTP | mono source, delivered dual-mono |
+| Music renders | −18 LUFS | ±0.5 LU, else fails | ≤ −1 dBTP | stereo |
 
-### 3.5 Public audio and feed routes
+True peak is measured on the decoded delivery file as well as the master.
+Every render keeps a pre-normalization master (`role: "master"`,
+`normalization: "skipped"`) and a normalized master; deliveries encode the
+normalized master. When a recipe's variable is loudness or dynamics, the
+render plan sets `normalize: false`, all family members skip normalization,
+and the artifacts carry `normalization: "skipped"`.
 
-Two HTTP routes in `convex/http.ts`:
+### 3.5 Audio delivery and the feed
 
-- `GET /podcast/:token/feed.xml` — RSS 2.0 with iTunes tags, built from
-  `audioArtifacts` where `kind = "episode"` and `status = "ready"`.
-- `GET /podcast/:token/audio/:artifactId.mp3` — streams the stored blob with
-  `content-type`, `content-length`, and `accept-ranges: none`.
+- Audio bytes are always served from Convex storage URLs
+  (`/api/storage/<uuid>`), never through an HTTP action. Storage ids are
+  unguessable and permanent; that is the access model. `access: "feed"`
+  artifacts are the only ones ever listed in the feed; `private` artifacts
+  are reachable only through Clerk-gated queries that return their URLs.
+- `GET /podcast/:token/feed.xml` is the one HTTP action: small RSS 2.0 with
+  iTunes tags, enclosure URLs pointing at storage through the public host.
+  `:token` must equal `PODCAST_FEED_TOKEN`; mismatch returns 404. Rotating the
+  token means re-subscribing in Pocket Casts; enclosure URLs do not contain it.
+- Public exposure: the existing Nginx Proxy Manager gets host
+  `listen.rproj.art` forwarding `/podcast/*` and `/api/storage/*` to the
+  Convex site. Nothing else is forwarded.
+- Plan step 1 verifies that convex-backend's storage GET honors `Range` and
+  `HEAD` (Pocket Casts scrubbing). If it does not, the media service also
+  mirrors `feed` artifacts to a static directory served by the same NPM host,
+  and enclosure URLs point there.
 
-`:token` must equal `PODCAST_FEED_TOKEN` (32+ random bytes, set in the Convex
-deployment env); mismatches return 404, not 401, so the route is invisible to
-scanners. Pocket Casts requires the URL to be publicly reachable, so the
-Convex site is exposed through the existing Nginx Proxy Manager as
-`listen.rproj.art`, forwarding only `/podcast/*` and `/health`. Keith submits
-the feed at pocketcasts.com/submit marked Private.
+### 3.6 Engineering rules for every wave
 
-Risk: Convex HTTP actions return whole responses, so range requests are not
-honored. Pocket Casts downloads episodes whole, so this is acceptable for
-20–40 minute episodes; if scrubbing in-app fails, the fallback is a static
-export of `/podcast/*` to the NPM host by a media-service job.
+- **Decisions stay human.** No `/agent-tools/*` or MCP tool applies a draft
+  decision, publishes a hypothesis or recipe, or records a listening session.
+  Agents propose; a human signs through Clerk or through a platform-verified
+  signer interaction (wave 2 §4). The Clerk mutations in `agentDrafts.ts` and
+  the signer path share one internal decision function so invariants cannot
+  drift.
+- **Human listening predicate.** Debt closure, recommendations, verdict
+  selection, failure analysis, and fitness use one shared predicate
+  `isHumanListeningSession` (participant role not `machine`, created by a
+  user). Machine analysis never creates sessions, so today the predicate is
+  trivially true; it exists so wave 3 cannot regress it.
+- **Render validation gate (from plan 11).** Renders are `unvalidated` until
+  the bounded spike passes: human render versus machine render of the same
+  kit, a contamination assessment (do ratings track the hypothesis or the
+  synthesis), and a written go/no-go. Unvalidated renders never count as
+  evidence, never close listening debt, and never feed tournament fitness.
+- New LLM models go into `MODELS` in `convex/llm.ts`. TTS voices get their
+  own catalog in `convex/shared/voices.ts`.
+- Cross-seam contracts live in `convex/shared/`. `scripts/lib/tuning.ts` and
+  `scripts/lib/seedMidi.ts` move to `convex/shared/tuning/` with re-export
+  shims, because the media package needs them.
+- Every new table gets validators in `convex/shared/`, tests beside the
+  module, and a vocabulary line in `CONTEXT.md`.
+- Secrets (`AGENT_TOOL_SECRET`, `PODCAST_FEED_TOKEN`, `MCP_SHARED_SECRET`,
+  signer bot tokens, TTS keys) resolve through 1Password references in
+  deployment configs; none printed, pasted, or committed.
+- Convex `deploy` for schema changes contacts production; each plan names the
+  deploy step and it runs with Keith's go-ahead.
+- `vp run verify` must pass at each handoff.
 
-### 3.6 Engineering rules that apply to every wave
+### 3.7 Sequencing and critical path
 
-- Decisions stay human. Nothing on `/agent-tools/*` or the MCP surface can
-  approve, reject, or supersede a draft, or publish a hypothesis or recipe.
-  Voice decisions are relayed with identity and transcript and confirmed in a
-  second message (wave 2 §4).
-- New models go into `MODELS` in `convex/llm.ts`. TTS voices are not LLMs and
-  get their own catalog in `convex/shared/voices.ts`.
-- Contracts crossing seams (web, agent, media, Convex) live in `convex/shared/`.
-  `scripts/lib/tuning.ts` and `scripts/lib/seedMidi.ts` move to
-  `convex/shared/tuning/` with re-export shims left in `scripts/lib/`, because
-  the media service needs them.
-- Every new table gets validators in `convex/shared/`, unit tests beside the
-  Convex module, and a one-line entry in `CONTEXT.md` vocabulary.
-- `vp run verify` must pass at each handoff. The `media/` package joins the
-  `typecheck` and `test` chains.
-- Secrets: `AGENT_TOOL_SECRET`, `PODCAST_FEED_TOKEN`, `MCP_SHARED_SECRET`,
-  TTS keys. All resolved through 1Password references in deployment configs;
-  none printed, pasted, or committed.
-- Convex `deploy` for schema changes contacts production. Each plan states the
-  deploy step explicitly and it is run by Keith or with his go-ahead.
+Wave 0 must be frozen before parallel work starts; it is small on purpose.
+After that:
+
+- **Wave 1** is the critical path to the first acceptance. It carries its own
+  minimal rating and reveal panel and does not wait for wave 3's page.
+- **Wave 2** text docket and proposal tools proceed independently. Spoken
+  cards wait for the house voice. Signed decisions need the signer bots,
+  which are wave 2 work, not wave 0.
+- **Wave 3** builds the renderer and the plan 11 spike first; the listen page
+  and study families follow the go decision. Episodes need wave 1.
+- **Wave 4** builds and unit-tests the graph independently; live comparison
+  needs queue capacity (the cap is full today, so wave 2 clears it first).
+  Listening fitness stays deferred until human sessions on validated renders
+  exist.
 
 ## 4. Non-goals
 
-- No generative music model in the litmus path. ACE-Step is expansion only.
-- No new Discord bot; the existing OpenClaw Discord account gets a new channel.
-- No essay narration in wave 1. It is a wave-1 follow-on once the house voice
-  is chosen and bulk local TTS is running.
-- No Pianoteq. Surge XT CLI is the quality-render engine.
+- No generative music model in the litmus path. ACE-Step is expansion only,
+  and expansion is deferred out of wave 3's first release.
+- No new OpenClaw bot. The signer bots are Convex-owned and post only
+  decision cards.
+- No essay narration in wave 1.
 
 ## 5. Open items carried into the plans
 
 | Item | Owner | Blocks |
 | --- | --- | --- |
-| Stage an `op-access` profile so `devBypassSecret` mutations can run unattended from this machine | Keith | any CLI mutation |
-| Gemini API key on moltbot and in the media compose env | Keith | Gemini take in the shootout |
-| Confirm `listen.rproj.art` can be exposed publicly via NPM | Keith | Pocket Casts subscription |
-| Create `#frequency` in the Discord guild (bot needs Manage Channels, or Keith creates it and pastes the id) | plan step | wave 2 delivery |
-| homelab-infra local checkout is behind `origin/main`; pull before editing service definitions | plan step | media compose, MCP ingress |
+| Stage an `op-access` profile on this machine | Keith | CLI mutations from here |
+| Gemini API key for the media compose env | Keith | Gemini take in the shootout |
+| Confirm `listen.rproj.art` can be exposed via NPM, and whether storage GET honors Range | plan step 1 | Pocket Casts |
+| Create `#frequency` in Discord and paste the channel id; create the two signer bot applications | Keith, guided by the plan | wave 2 delivery and signing |
+| Pianoteq purchase decision | Keith | wave 3 quality tier only; litmus does not need it |
+| homelab-infra local checkout is behind `origin/main`; pull before editing | plan step | media compose, MCP ingress |
