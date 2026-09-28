@@ -2,7 +2,7 @@
 
 ## Sources of truth
 
-- Root, `web/`, and `agent/` are separate packages and TypeScript projects. Each owns its own `package.json` scripts, `vite.config.ts`, `tsconfig.json`, and `.env.schema`; an edit to one config rarely belongs in the others.
+- Root, `web/`, `agent/`, and `media/` are separate packages and TypeScript projects. Each owns its own `package.json` scripts, `vite.config.ts`, `tsconfig.json`, and `.env.schema`; an edit to one config rarely belongs in the others.
 - `biome.json` owns formatting; the `lint` block in `vite.config.ts` owns oxlint rules. Keep each rule in one config, never both.
 - `convex/schema.ts`, `convex/shared/`, and `convex/llm.ts` own data models, cross-seam contracts, and model configuration.
 
@@ -13,6 +13,7 @@
 - `AUTH_BYPASS_ENABLED=true` is an intentional standing non-human service identity, not a development misconfiguration.
 - CLI mutations require `devBypassSecret`. Resolve it through Varlock and 1Password; never print, paste, or commit the value.
 - `/agent-tools/*` uses `AGENT_TOOL_SECRET`. Irreversible hypothesis and recipe publication remains human-approved; agents may prepare drafts and reversible provenance-bearing data only within the documented tool contract.
+- `media/` (the media service on ai-5090-02) is a second standing service identity using `AGENT_TOOL_SECRET`; its tools are lifecycle writes only and are listed under 'Media lifecycle tools' in `docs/agent-tool-surface.md`.
 - Run TypeScript with `vpx tsx` and install with `vp install`. Node scripts read `.env.local` only through `import "varlock/auto-load"` at the top of the file; the runtime loads nothing on its own.
 - Operator evidence exception: `scripts/frequency-queue-evidence.ts`, `scripts/convex-provenance-verify.ts`, `scripts/convex-module-identities.ts`, `scripts/convex-deployment-inspect.ts`, and its `scripts/frequency-semantic-capture.mjs` supervisor use inherited `CONVEX_SELF_HOSTED_ADMIN_KEY` only, without `.env` or Varlock loading. See `docs/frequency-worker-handoff.md` for their read-only scope and deployment prerequisites.
 - In-process unit tests mock `varlock/auto-load`. Tests that spawn a CLI subprocess set `APP_ENV=test`; keep `.env.test` synchronized with `.env.schema` using inert placeholders.
