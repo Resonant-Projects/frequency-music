@@ -32,7 +32,9 @@ export async function runOnce(
   config: RunnerConfig,
   tool: Tool,
   handlers: Record<string, JobHandler>,
-  tools: ToolClient = liveTools(),
+  // Tests inject fakes; production builds the live client on the job's
+  // abort signal once the controller exists.
+  tools?: ToolClient,
 ): Promise<"idle" | "done" | "failed"> {
   const job = await tool<ClaimedMediaJob | null>("claimNextMediaJob", {
     workerId: config.workerId,
@@ -85,7 +87,7 @@ export async function runOnce(
       running = handler({
         job,
         workDir,
-        tools,
+        tools: tools ?? liveTools(abort.signal),
         rendererVersion: config.rendererVersion,
         signal: abort.signal,
       });

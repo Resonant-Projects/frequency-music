@@ -18,7 +18,11 @@ export async function callTool<T>(
       // The secret is in the body; never let a redirect carry it to another
       // host or scheme.
       redirect: "error",
-      signal: signal ?? AbortSignal.timeout(60_000),
+      // A caller's signal (the job deadline) still rides alongside the
+      // per-call timeout so neither can outlive the other.
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(60_000)])
+        : AbortSignal.timeout(60_000),
     },
   );
   if (!response.ok) {

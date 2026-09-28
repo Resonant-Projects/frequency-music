@@ -25,11 +25,22 @@ export async function uploadBytes(
   return (await response.json()) as { storageId: string };
 }
 
-// Only returns closures; no I/O happens until a method is called.
-export function liveTools(): ToolClient {
+// Only returns closures; no I/O happens until a method is called. The signal
+// is the job's deadline: every tool call and upload made for the job is
+// abandoned with it.
+export function liveTools(signal?: AbortSignal): ToolClient {
   return {
-    generateAudioUploadUrl: (args) => callTool("generateAudioUploadUrl", args),
-    attachAudioStorage: (args) => callTool("attachAudioStorage", args),
-    uploadBytes,
+    generateAudioUploadUrl: (args) =>
+      callTool("generateAudioUploadUrl", args, signal),
+    attachAudioStorage: (args) => callTool("attachAudioStorage", args, signal),
+    uploadBytes: (uploadUrl, path, mimeType, callSignal) =>
+      uploadBytes(
+        uploadUrl,
+        path,
+        mimeType,
+        callSignal && signal
+          ? AbortSignal.any([callSignal, signal])
+          : (callSignal ?? signal),
+      ),
   };
 }
