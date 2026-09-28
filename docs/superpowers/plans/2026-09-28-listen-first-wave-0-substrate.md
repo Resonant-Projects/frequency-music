@@ -3109,7 +3109,7 @@ with a typed result. It never writes research data directly.
 ```yaml
 services:
   media:
-    image: ghcr.io/resonant-projects/frequency-media:${MEDIA_IMAGE_TAG:-latest}
+    image: ghcr.io/resonant-projects/frequency-music-media:${MEDIA_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       APP_ENV: prod
@@ -3260,7 +3260,7 @@ vpx convex deploy
 
 - [ ] **Step 3: Set deployment env** (affects production): `PODCAST_FEED_TOKEN` and `PODCAST_PUBLIC_BASE_URL` in the self-hosted deployment's environment through the Convex dashboard or `vpx convex env set PODCAST_PUBLIC_BASE_URL https://listen.rproj.art`; the token is set by Keith from 1Password, never typed into this session.
 
-- [ ] **Step 4: Build and push the media image**: the repo's CI builds `ghcr.io/resonant-projects/frequency-media` on merge; until then build on ai-5090-02 directly: `ssh ai-5090-02 'cd /srv/frequency-music && git pull && docker build -f media/Dockerfile -t ghcr.io/resonant-projects/frequency-media:local .'` (create the checkout if absent) and set `MEDIA_IMAGE_TAG=local` in the compose env.
+- [ ] **Step 4: Build and push the media image**: the repo's CI builds `ghcr.io/resonant-projects/frequency-music-media` on merge; until then build on ai-5090-02 directly: `ssh ai-5090-02 'cd /srv/frequency-music && git pull && docker build -f media/Dockerfile -t ghcr.io/resonant-projects/frequency-music-media:local .'` (create the checkout if absent) and set `MEDIA_IMAGE_TAG=local` in the compose env.
 
 - [ ] **Step 5: Start the service**: on ai-5090-02, `op-access run homelab -- ./deploy.sh` from the compose directory (Keith stages the `homelab` profile first; see the op-access walkthrough in the handoff message). Expected log line: `[media] media worker ai-5090-02 polling every 15000 ms for probe`.
 

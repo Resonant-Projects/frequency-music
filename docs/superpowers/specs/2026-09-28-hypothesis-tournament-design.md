@@ -85,7 +85,9 @@ calls per candidate, 3 finalist calls, 2 self-check calls, 1 revision
 generation call (the rewrite after a failed first self-check), and 1
 duplicate re-check, with retries counted against the same counter; 300 000
 total tokens summed from provider usage; 20 minutes wall clock; persistence
-calls are not counted. Exhaustion behaviour, all without a draft: before
+calls are not counted. Duplicate classification is bounded per candidate: at
+most the 3 nearest neighbours above 0.86 are classified (the source of the
+3-per-candidate budget) and further neighbours are ignored. Exhaustion behaviour, all without a draft: before
 `finalists`, every eligible candidate is archived as `lost` and the run
 summarizes; during the pairwise comparisons, before a winner exists, the
 three finalists are archived as `finalist` with whatever pairwise results
@@ -106,7 +108,10 @@ and the run budget lives in the graph.
 | doctrine | passages from `docs/essays` retrieved by similarity to the week's brief themes, through the passage program of plan 15 and ADR 0001 (essays are ingested as sources into the passage index; no separate table) | passage search tool from plan 15; skipped until plan 15 lands |
 | hint | a seed supplied by freq (§6) | run input |
 
-Families are sampled equally, two seeds each, in this release.
+With six families and an eight-seed cap, families are sampled in a fixed
+rotation order (correspondence, claim, listening, inversion, doctrine, hint),
+one seed per family per round, until eight seeds are drawn or every family is
+exhausted; a skipped family drops out of the rotation.
 
 ## 4. Candidate archive
 
@@ -120,8 +125,8 @@ hypothesisCandidates
   statementEmbedding?: number[]  // vector index, same model as claims
   duplicateOf?: string, duplicateKind?: "duplicate" | "inversion" | "refinement"
   scores: { stake, novelty, falsifiability }[]   // one per successful judgment
-  outcome: "dropped_evidence" | "dropped_duplicate" | "ineligible" | "lost"
-         | "finalist" | "failed_self_check" | "submitted"
+  outcome: "candidate" | "dropped_evidence" | "dropped_duplicate" | "ineligible"
+         | "lost" | "finalist" | "failed_self_check" | "submitted"
   draftId?
   createdAt
 ```
@@ -129,8 +134,12 @@ hypothesisCandidates
 Embedding freshness: `hypotheses` also gains `statementEmbeddingHash`
 (sha256 of the statement). The duplicate check re-embeds any hypothesis
 whose hash does not match its current statement, and the existing
-`embed-missing-sweep` cron refreshes mismatches. Candidate rows are
-immutable after creation, so they need no freshness rule.
+`embed-missing-sweep` cron refreshes mismatches. `"candidate"` is the
+in-progress outcome written after `duplicate_check`; it transitions to `lost`,
+`ineligible`, or `finalist` at `finalists`. The archive indexes
+`finalPayload.statement` when present, else `payload.statement`, and
+`statementEmbedding` is recomputed when `finalPayload` is written after
+self-check revision; candidates need no other freshness rule.
 
 Written incrementally through the audit-only tool
 `recordHypothesisCandidates` keyed by `(agentRunId, batchIndex)` so retries

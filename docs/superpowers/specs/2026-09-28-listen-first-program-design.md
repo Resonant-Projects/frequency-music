@@ -254,6 +254,12 @@ and the artifacts carry `normalization: "skipped"`.
   unguessable and permanent; that is the access model. `access: "feed"`
   artifacts are the only ones ever listed in the feed; `private` artifacts
   are reachable only through Clerk-gated queries that return their URLs.
+- Enclosure and storage URLs are bearer links: anyone holding one can fetch
+  that file, and rotating `PODCAST_FEED_TOKEN` does not revoke URLs already
+  disclosed. That is the accepted privacy boundary for `access: "feed"` audio
+  (private artifacts are reachable only through the Clerk-gated playback
+  query); revocable or expiring URLs are a follow-up if that boundary ever
+  tightens.
 - `GET /podcast/:token/feed.xml` is the one HTTP action: small RSS 2.0 with
   iTunes tags, enclosure URLs pointing at storage through the public host.
   `:token` must equal `PODCAST_FEED_TOKEN`; mismatch returns 404. Rotating the

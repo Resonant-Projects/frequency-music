@@ -45,7 +45,10 @@ this repo.
 `frequency-mcp` in namespace `frequency-worker` with a Service, a Traefik
 IngressRoute at `mcp.frequency.rproj.art`, and the worker's Convex-only
 egress policy. Auth: `x-mcp-secret` equals `MCP_SHARED_SECRET` from an
-ExternalSecret. Stateless; talks to Convex through `/agent-tools/*`.
+ExternalSecret. Stateless; talks to Convex through `/agent-tools/*`,
+authenticating to Convex by sending `AGENT_TOOL_SECRET` in the JSON body's
+`secret` field (the existing `/agent-tools/*` contract), a separate secret
+from the inbound `MCP_SHARED_SECRET`.
 
 Tools exposed to freq (all read-only or proposal-only; none applies a
 decision or records a session):
@@ -172,17 +175,20 @@ Timestamps are not used for identity.
    `targetRevision` (a web decision in between rejects the intent with the
    current status; Convex mutations are serializable, so nothing slips
    between the check and the apply).
-8. Call `applyDraftDecision` (which keeps `supersede`'s `byDraftId`
-   validation and the run reconciliation side effects), store the signature
-   and result, record the event, set `applied`.
+8. For draft decisions call `applyDraftDecision` (which keeps `supersede`'s
+   `byDraftId` validation and the run reconciliation side effects);
+   `enableFeed` intents route to a feed-specific mutation on the target
+   `feedProposal` after the revision check. Store the signature and result,
+   record the event, set `applied`.
 
 For `createListeningSession` the target is the composition, there is no
 version check, and uniqueness comes from the intent itself: one session per
 applied intent, `createdBy` set to the mapped user id.
 
 Rejects need a note; if the proposal transcript has none, freq asks before
-proposing. `defer` (two weeks, docket only) is the only action that applies
-straight from `decision.propose`, because it changes no research data.
+proposing. `defer` (two weeks, docket only) requires signer confirmation like
+every other decision: it changes no research data, but a two-week delay of
+human review is itself a decision.
 
 `agentReviewDrafts` gains optional `decisionSource: "web" | "discord" |
 "telegram"`, `decisionTranscript`, `decisionIntentId`; `decidedBy` stays
@@ -212,8 +218,14 @@ docketCards
   audioUrl?, decisions: string[], contentHash, rank, deferredUntil?,
   createdAt, updatedAt
 docketDeliveries
-  cardId, channel, messageRef, postedAt
+  cardId, channel, phase: "posting" | "posted", postingAt,
+  messageRef?, postedAt?
 ```
+
+A delivery row is written as `posting` before the channel post is attempted
+and becomes `posted` with `messageRef` and `postedAt` once the post succeeds,
+so a crash between the two leaves a visible half-delivery instead of a
+duplicate post.
 
 Blurbs (60 to 90 words: stake, proposal, what a decision unlocks) are written
 by `DEFAULT_MODEL` and regenerated only when `contentHash` changes. The
