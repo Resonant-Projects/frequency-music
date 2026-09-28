@@ -24,4 +24,20 @@ describe("loadConfig", () => {
       }).convexSiteUrl,
     ).toBe("http://convex.lan:3211");
   });
+
+  test("scheme check is case-insensitive and rejects non-http schemes", () => {
+    expect(() =>
+      loadConfig({ ...base, CONVEX_SITE_URL: "HTTP://convex.lan:3211" }),
+    ).toThrow(/https/);
+    expect(() =>
+      loadConfig({
+        ...base,
+        CONVEX_SITE_URL: "ftp://x",
+        MEDIA_ALLOW_INSECURE_CONVEX: "true",
+      }),
+    ).toThrow(/https/);
+    expect(() => loadConfig({ ...base, CONVEX_SITE_URL: "not a url" })).toThrow(
+      /valid URL/,
+    );
+  });
 });

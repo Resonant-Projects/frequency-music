@@ -14,10 +14,14 @@ export type RunnerConfig = {
   kinds: string[];
   workDir: string;
   rendererVersion: string;
+  deadlineMs?: number; // defaults to JOB_DEADLINE_MS; tests shorten it
 };
 type Tool = typeof callTool;
 
 const RENEW_EVERY_MS = Math.floor(LEASE_MS / 3);
+// Longest a single handler may run; longer than any render we schedule, short
+// enough that a hung ffmpeg does not hold a lease all night.
+export const JOB_DEADLINE_MS = 30 * 60 * 1000;
 
 export async function runOnce(
   config: RunnerConfig,
@@ -45,13 +49,37 @@ export async function runOnce(
   try {
     const handler = handlers[job.kind];
     if (!handler) throw new Error(`no handler for kind ${job.kind}`);
+    // The dedupe key and the result's provenance both name the renderer
+    // version, so a job addressed to another version is failed, not rendered.
+    if (job.input.rendererVersion !== config.rendererVersion) {
+      throw new Error(
+        `renderer version mismatch: job requested ${job.input.rendererVersion}, worker is ${config.rendererVersion}`,
+      );
+    }
     workDir = await mkdtemp(join(config.workDir, `${job.kind}-`));
-    const result = await handler({
-      job,
-      workDir,
-      tools,
-      rendererVersion: config.rendererVersion,
+    const deadlineMs = config.deadlineMs ?? JOB_DEADLINE_MS;
+    let deadline: NodeJS.Timeout | undefined;
+    const expired = new Promise<never>((_, reject) => {
+      deadline = setTimeout(() => {
+        // Stop renewing so the lease can lapse if the handler is truly hung.
+        clearInterval(renew);
+        reject(new Error(`job deadline exceeded after ${deadlineMs} ms`));
+      }, deadlineMs);
     });
+    let result: Awaited<ReturnType<JobHandler>>;
+    try {
+      result = await Promise.race([
+        handler({
+          job,
+          workDir,
+          tools,
+          rendererVersion: config.rendererVersion,
+        }),
+        expired,
+      ]);
+    } finally {
+      clearTimeout(deadline);
+    }
     await tool("completeMediaJob", {
       jobId: job.jobId,
       leaseToken: job.leaseToken,

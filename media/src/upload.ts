@@ -14,6 +14,7 @@ export async function uploadBytes(
     method: "POST",
     headers: { "content-type": mimeType },
     body: bytes,
+    signal: AbortSignal.timeout(10 * 60 * 1000),
   });
   if (!response.ok) throw new Error(`upload failed: ${response.status}`);
   return (await response.json()) as { storageId: string };

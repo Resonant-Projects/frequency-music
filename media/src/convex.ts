@@ -15,7 +15,7 @@ export async function callTool<T>(
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ secret, ...body }),
-      ...(signal ? { signal } : {}),
+      signal: signal ?? AbortSignal.timeout(60_000),
     },
   );
   if (!response.ok) {
