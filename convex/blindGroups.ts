@@ -10,6 +10,10 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 
+// Total members including X. Eight is the most a listener can hold in one
+// blind comparison without losing track of the earlier takes.
+export const MAX_BLIND_GROUP_MEMBERS = 8;
+
 const memberInput = v.object({
   artifactId: v.id("audioArtifacts"),
   label: v.string(),
@@ -46,14 +50,37 @@ export const create = internalMutation({
     memberIds: v.array(v.string()),
   }),
   handler: async (ctx, args) => {
+    if (args.members.length === 0) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "Blind group needs at least one rated member",
+      });
+    }
     const all = [
       ...args.members,
       ...(args.xMember
         ? [{ artifactId: args.xMember.artifactId, label: "X" }]
         : []),
     ];
+    if (all.length > MAX_BLIND_GROUP_MEMBERS) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: `Blind groups hold at most ${MAX_BLIND_GROUP_MEMBERS} members`,
+      });
+    }
+    if (
+      args.xMember &&
+      !args.members.some(
+        (member) => member.label === args.xMember?.duplicatesLabel,
+      )
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "xMember.duplicatesLabel must match a member label",
+      });
+    }
     const distinct = new Set(all.map((member) => member.artifactId));
-    if (distinct.size !== all.length || all.length === 0) {
+    if (distinct.size !== all.length) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
         message: "Blind group members must be distinct artifacts",

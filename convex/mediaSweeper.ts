@@ -113,9 +113,22 @@ export const sweep = internalMutation({
       // Inclusive resume returns the last examined blob once more, so fetch
       // one extra row to keep the window at scanLimit new blobs.
       .take((args.scanLimit ?? SCAN_LIMIT) + (cursor.blobId ? 1 : 0));
+    // Inclusive resume, tie-safe within the boundary timestamp: every blob at
+    // the cursor's creation time is skipped until the cursor blob itself has
+    // been seen (it is skipped too); later timestamps are always examined. If
+    // the cursor blob is gone (deleted as an orphan), nothing at its timestamp
+    // is skipped and those blobs are merely re-examined. Residual limit: more
+    // than scanLimit blobs sharing one float64 creation time would stall the
+    // window at that timestamp; Convex assigns strictly increasing creation
+    // times, so this is theoretical.
+    let cursorSeen =
+      cursor.blobId === undefined ||
+      !blobs.some((blob) => blob._id === cursor.blobId);
     for (const blob of blobs) {
-      // Inclusive resume: the last examined blob comes back once; skip it.
-      if (blob._id === cursor.blobId) continue;
+      if (!cursorSeen && blob._creationTime === cursor.creationTime) {
+        if (blob._id === cursor.blobId) cursorSeen = true;
+        continue;
+      }
       const referenced = await ctx.db
         .query("audioArtifacts")
         .withIndex("by_storageId", (q) => q.eq("storageId", blob._id))

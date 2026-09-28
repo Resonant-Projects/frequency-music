@@ -43,6 +43,58 @@ describe("audioArtifacts", () => {
     expect(after?.uploadIssuedAt).toBeUndefined();
   });
 
+  test("attachStorage is idempotent for the same blob and refuses a different one", async () => {
+    const t = convexTest(schema, modules);
+    const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
+      fields: pendingFields,
+    });
+    const storageId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    await t.mutation(internal.audioArtifacts.attachStorage, {
+      artifactId,
+      storageId,
+    });
+    await t.mutation(internal.audioArtifacts.attachStorage, {
+      artifactId,
+      storageId,
+    });
+    const other = await t.run((ctx) => ctx.storage.store(new Blob(["y"])));
+    await expect(
+      t.mutation(internal.audioArtifacts.attachStorage, {
+        artifactId,
+        storageId: other,
+      }),
+    ).rejects.toThrow(/already has storage attached/);
+    const row = await t.run((ctx) => ctx.db.get(artifactId));
+    expect(row?.storageId).toBe(storageId);
+  });
+
+  test("markReady refuses an artifact that is not pending", async () => {
+    const t = convexTest(schema, modules);
+    const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
+      fields: pendingFields,
+    });
+    const storageId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    await t.mutation(internal.audioArtifacts.attachStorage, {
+      artifactId,
+      storageId,
+    });
+    await t.mutation(internal.audioArtifacts.markFailed, {
+      artifactId,
+      error: "encode failed",
+    });
+    await expect(
+      t.mutation(internal.audioArtifacts.markReady, {
+        artifactId,
+        durationSecs: 2,
+        loudnessLufs: -16,
+        truePeakDbtp: -1.2,
+        mimeType: "audio/mpeg",
+      }),
+    ).rejects.toThrow(/Artifact is failed/);
+    const row = await t.run((ctx) => ctx.db.get(artifactId));
+    expect(row?.status).toBe("failed");
+  });
+
   test("markReady requires storage and records measurements", async () => {
     const t = convexTest(schema, modules);
     const artifactId = await t.mutation(internal.audioArtifacts.createPending, {

@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
 import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
+import { MAX_BLIND_GROUP_MEMBERS } from "./blindGroups";
 import schema from "./schema";
 
 async function readyArtifact(
@@ -138,6 +139,59 @@ describe("blindGroups", () => {
     ).rejects.toThrow(/metadata/);
     const row = await t.run((ctx) => ctx.db.get(tagged));
     expect(row?.blindGroupId).toBeUndefined();
+  });
+
+  test("create rejects more than the member cap, counting X", async () => {
+    const t = convexTest(schema, modules);
+    const members = [];
+    for (let i = 0; i < MAX_BLIND_GROUP_MEMBERS; i++) {
+      members.push({
+        artifactId: await readyArtifact(t, `m-${String(i)}`),
+        label: `take ${String(i)}`,
+      });
+    }
+    const x = await readyArtifact(t, "x");
+    await expect(
+      t.mutation(internal.blindGroups.create, {
+        purpose: "voiceShootout",
+        members,
+        xMember: { artifactId: x, duplicatesLabel: "take 0" },
+      }),
+    ).rejects.toThrow(/at most 8 members/);
+    // Exactly the cap, X included, is accepted.
+    const { memberIds } = await t.mutation(internal.blindGroups.create, {
+      purpose: "voiceShootout",
+      members: members.slice(0, MAX_BLIND_GROUP_MEMBERS - 1),
+      xMember: { artifactId: x, duplicatesLabel: "take 0" },
+    });
+    expect(memberIds).toHaveLength(MAX_BLIND_GROUP_MEMBERS);
+  });
+
+  test("create rejects an X-only group", async () => {
+    const t = convexTest(schema, modules);
+    const x = await readyArtifact(t, "x");
+    await expect(
+      t.mutation(internal.blindGroups.create, {
+        purpose: "voiceShootout",
+        members: [],
+        xMember: { artifactId: x, duplicatesLabel: "take one" },
+      }),
+    ).rejects.toThrow(/at least one rated member/);
+    const row = await t.run((ctx) => ctx.db.get(x));
+    expect(row?.blindGroupId).toBeUndefined();
+  });
+
+  test("create rejects an X whose duplicatesLabel names no member", async () => {
+    const t = convexTest(schema, modules);
+    const a = await readyArtifact(t, "a");
+    const x = await readyArtifact(t, "x");
+    await expect(
+      t.mutation(internal.blindGroups.create, {
+        purpose: "voiceShootout",
+        members: [{ artifactId: a, label: "take one" }],
+        xMember: { artifactId: x, duplicatesLabel: "take two" },
+      }),
+    ).rejects.toThrow(/duplicatesLabel must match a member label/);
   });
 
   test("stored member order is random, so the X member is not always last", async () => {

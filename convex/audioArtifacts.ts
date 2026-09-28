@@ -52,6 +52,15 @@ export const attachStorage = internalMutation({
         message: "Artifact not found",
       });
     }
+    if (row.storageId !== undefined) {
+      // A retried attach of the same blob is a no-op; a different blob would
+      // orphan the first one and is refused.
+      if (row.storageId === args.storageId) return null;
+      throw new ConvexError({
+        code: "INVALID_STATE",
+        message: "Artifact already has storage attached",
+      });
+    }
     if (row.status !== "pending") {
       throw new ConvexError({
         code: "INVALID_STATE",
@@ -82,6 +91,12 @@ export const markReady = internalMutation({
       throw new ConvexError({
         code: "NOT_FOUND",
         message: "Artifact not found",
+      });
+    }
+    if (row.status !== "pending") {
+      throw new ConvexError({
+        code: "INVALID_STATE",
+        message: `Artifact is ${row.status}`,
       });
     }
     if (!row.storageId) {
