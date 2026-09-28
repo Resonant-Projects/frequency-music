@@ -2,10 +2,41 @@
 // artifact references (a worker that crashed between upload and attach).
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, type MutationCtx } from "./_generated/server";
 
 const DEFAULT_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
 const SCAN_LIMIT = 200;
+// settings row holding the _creationTime of the last _storage blob examined,
+// as a decimal string. Absent means 0: the next sweep starts from the oldest.
+export const STORAGE_SCAN_CURSOR_KEY = "mediaSweeper.storageScanCursor";
+
+async function readStorageScanCursor(ctx: MutationCtx): Promise<number> {
+  const row = await ctx.db
+    .query("settings")
+    .withIndex("by_key", (q) => q.eq("key", STORAGE_SCAN_CURSOR_KEY))
+    .unique();
+  const parsed = row ? Number(row.value) : 0;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function writeStorageScanCursor(
+  ctx: MutationCtx,
+  cursor: number,
+  now: number,
+): Promise<void> {
+  const row = await ctx.db
+    .query("settings")
+    .withIndex("by_key", (q) => q.eq("key", STORAGE_SCAN_CURSOR_KEY))
+    .unique();
+  const value = String(cursor);
+  if (row) await ctx.db.patch(row._id, { value, updatedAt: now });
+  else
+    await ctx.db.insert("settings", {
+      key: STORAGE_SCAN_CURSOR_KEY,
+      value,
+      updatedAt: now,
+    });
+}
 
 type LeaseSweep = { requeued: number; parked: number };
 type SweepResult = LeaseSweep & {
@@ -18,6 +49,7 @@ export const sweep = internalMutation({
     now: v.optional(v.number()),
     orphanAgeMs: v.optional(v.number()), // pending artifacts older than this
     blobAgeMs: v.optional(v.number()), // unreferenced blobs older than this
+    scanLimit: v.optional(v.number()), // _storage blobs examined per sweep
   },
   returns: v.object({
     requeued: v.number(),
@@ -54,9 +86,19 @@ export const sweep = internalMutation({
       artifactsDeleted++;
     }
 
-    const blobs = await ctx.db.system.query("_storage").take(SCAN_LIMIT);
+    // Walk _storage once, oldest first, from a persisted cursor: a blob is only
+    // ever attached shortly after upload, so an old unreferenced blob is an
+    // orphan forever and one visit suffices. Without the cursor, old referenced
+    // blobs would fill every scan window and shadow newer orphans permanently.
+    const cursor = await readStorageScanCursor(ctx);
+    const blobs = await ctx.db.system
+      .query("_storage")
+      .withIndex("by_creation_time", (q) =>
+        q.gt("_creationTime", cursor).lt("_creationTime", blobCutoff),
+      )
+      .order("asc")
+      .take(args.scanLimit ?? SCAN_LIMIT);
     for (const blob of blobs) {
-      if (blob._creationTime > blobCutoff) continue;
       const referenced = await ctx.db
         .query("audioArtifacts")
         .withIndex("by_storageId", (q) => q.eq("storageId", blob._id))
@@ -65,6 +107,8 @@ export const sweep = internalMutation({
       await ctx.storage.delete(blob._id);
       blobsDeleted++;
     }
+    const last = blobs.at(-1);
+    if (last) await writeStorageScanCursor(ctx, last._creationTime, now);
 
     return { ...leases, artifactsDeleted, blobsDeleted };
   },

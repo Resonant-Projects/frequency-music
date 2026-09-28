@@ -2,9 +2,29 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
 import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import { STORAGE_SCAN_CURSOR_KEY } from "./mediaSweeper";
 import schema from "./schema";
 
 const DAY = 24 * 60 * 60 * 1000;
+
+const base = {
+  kind: "probe" as const,
+  role: "delivery" as const,
+  metadataStripped: false,
+  encoding: {
+    codec: "mp3" as const,
+    bitrateKbps: 128,
+    sampleRate: 48000,
+    channels: 2,
+  },
+  normalization: "applied" as const,
+  access: "private" as const,
+  title: "p",
+  refs: {},
+  contentHash: "c",
+  createdBy: "system" as const,
+};
 
 describe("mediaSweeper", () => {
   test("deletes stale pending artifacts with their blobs and unreferenced blobs, keeps fresh and referenced ones", async () => {
@@ -20,23 +40,6 @@ describe("mediaSweeper", () => {
       ctx.storage.store(new Blob(["kept"])),
     );
     await t.run(async (ctx) => {
-      const base = {
-        kind: "probe" as const,
-        role: "delivery" as const,
-        metadataStripped: false,
-        encoding: {
-          codec: "mp3" as const,
-          bitrateKbps: 128,
-          sampleRate: 48000,
-          channels: 2,
-        },
-        normalization: "applied" as const,
-        access: "private" as const,
-        title: "p",
-        refs: {},
-        contentHash: "c",
-        createdBy: "system" as const,
-      };
       await ctx.db.insert("audioArtifacts", {
         ...base,
         status: "pending",
@@ -78,5 +81,51 @@ describe("mediaSweeper", () => {
       ctx.db.query("audioArtifacts").collect(),
     );
     expect(artifacts).toHaveLength(2);
+  });
+
+  test("scans _storage from a persisted cursor so old referenced blobs cannot shadow newer orphans", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+    const referenced: Id<"_storage">[] = [];
+    for (const label of ["a", "b", "c"]) {
+      const storageId = await t.run((ctx) =>
+        ctx.storage.store(new Blob([label])),
+      );
+      referenced.push(storageId);
+      await t.run((ctx) =>
+        ctx.db.insert("audioArtifacts", {
+          ...base,
+          status: "ready",
+          storageId,
+          createdAt: now - DAY,
+          updatedAt: now,
+        }),
+      );
+    }
+    const orphanBlob = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["orphan"])),
+    );
+    const args = { now: Date.now() + 1, blobAgeMs: 0, scanLimit: 2 };
+
+    const first = await t.mutation(internal.mediaSweeper.sweep, args);
+    expect(first.blobsDeleted).toBe(0);
+    const cursor = await t.run((ctx) =>
+      ctx.db
+        .query("settings")
+        .withIndex("by_key", (q) => q.eq("key", STORAGE_SCAN_CURSOR_KEY))
+        .unique(),
+    );
+    expect(cursor).not.toBeNull();
+    expect(Number(cursor?.value)).toBeGreaterThan(0);
+
+    const second = await t.mutation(internal.mediaSweeper.sweep, args);
+    expect(second.blobsDeleted).toBe(1);
+    expect(await t.run((ctx) => ctx.db.system.get(orphanBlob))).toBeNull();
+    const remaining = await t.run((ctx) =>
+      ctx.db.system.query("_storage").collect(),
+    );
+    expect(remaining.map((row) => row._id).toSorted()).toEqual(
+      referenced.toSorted(),
+    );
   });
 });
