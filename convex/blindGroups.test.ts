@@ -83,7 +83,21 @@ describe("blindGroups", () => {
       groupId,
     });
     expect(revealed.revealed).toBe(true);
-    expect(revealed.labels).toEqual({ [memberIds[0]!]: a, [memberIds[1]!]: b });
+    // Stored order is random (ruling 12), so compare against the row's own
+    // memberId -> artifactId mapping rather than input order.
+    const row = await t.run((ctx) => ctx.db.get(groupId));
+    expect(revealed.labels).toEqual(
+      Object.fromEntries(
+        row?.members.map((member) => [member.memberId, member.artifactId]) ??
+          [],
+      ),
+    );
+    expect(Object.keys(revealed.labels ?? {}).toSorted()).toEqual(
+      memberIds.toSorted(),
+    );
+    expect(Object.values(revealed.labels ?? {}).toSorted()).toEqual(
+      [a, b].toSorted(),
+    );
   });
 
   test("create rejects duplicate artifacts and non-ready members; reveal is idempotent", async () => {
@@ -107,5 +121,36 @@ describe("blindGroups", () => {
     await t.mutation(internal.blindGroups.reveal, { groupId });
     const second = await t.run((ctx) => ctx.db.get(groupId));
     expect(second?.revealedAt).toBe(first?.revealedAt);
+  });
+
+  test("stored member order is random, so the X member is not always last", async () => {
+    const t = convexTest(schema, modules);
+    let xLastCount = 0;
+    const rounds = 40;
+    for (let i = 0; i < rounds; i++) {
+      const a = await readyArtifact(t, `a-${String(i)}`);
+      const b = await readyArtifact(t, `b-${String(i)}`);
+      const x = await readyArtifact(t, `x-${String(i)}`);
+      const { groupId, memberIds } = await t.mutation(
+        internal.blindGroups.create,
+        {
+          purpose: "voiceShootout",
+          members: [
+            { artifactId: a, label: "take one" },
+            { artifactId: b, label: "take two" },
+          ],
+          xMember: { artifactId: x, duplicatesLabel: "take one" },
+        },
+      );
+      const row = await t.run((ctx) => ctx.db.get(groupId));
+      const stored = row?.members.map((member) => member.memberId) ?? [];
+      // Returned ids and requiredRatings follow the stored order.
+      expect(memberIds).toEqual(stored);
+      expect(row?.requiredRatings).toEqual(
+        stored.filter((memberId) => memberId !== row?.xMember?.memberId),
+      );
+      if (stored[stored.length - 1] === row?.xMember?.memberId) xLastCount++;
+    }
+    expect(xLastCount).toBeLessThan(rounds);
   });
 });

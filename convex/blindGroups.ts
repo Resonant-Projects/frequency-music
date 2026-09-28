@@ -74,11 +74,16 @@ export const create = internalMutation({
         });
       }
     }
-    const members = all.map((member) => ({
+    const assigned = all.map((member) => ({
       ...member,
       memberId: crypto.randomUUID(),
     }));
-    const xEntry = args.xMember ? members[members.length - 1]! : undefined;
+    const xEntry = args.xMember ? assigned[assigned.length - 1]! : undefined;
+    // Store members ordered by their random memberId: presentation order is
+    // then uniformly random and independent of input order and of which is X.
+    const members = assigned.toSorted((a, b) =>
+      a.memberId < b.memberId ? -1 : a.memberId > b.memberId ? 1 : 0,
+    );
     const ratedMembers = xEntry
       ? members.filter((member) => member.memberId !== xEntry.memberId)
       : members;
