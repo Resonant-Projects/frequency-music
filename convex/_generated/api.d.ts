@@ -18,6 +18,7 @@ import type * as agentToolsHttp from "../agentToolsHttp.js";
 import type * as aggregates from "../aggregates.js";
 import type * as audioArtifacts from "../audioArtifacts.js";
 import type * as auth from "../auth.js";
+import type * as blindGroups from "../blindGroups.js";
 import type * as campaigns from "../campaigns.js";
 import type * as claims from "../claims.js";
 import type * as components_ from "../components.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   aggregates: typeof aggregates;
   audioArtifacts: typeof audioArtifacts;
   auth: typeof auth;
+  blindGroups: typeof blindGroups;
   campaigns: typeof campaigns;
   claims: typeof claims;
   components: typeof components_;
