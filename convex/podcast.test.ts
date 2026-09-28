@@ -181,6 +181,25 @@ describe("podcast.listFeedEpisodes", () => {
     expect(episode?.mimeType).toBe("audio/mpeg");
     expect(episode?.durationSecs).toBe(12.4);
     expect(episode?.storageUrl.startsWith("http")).toBe(true);
+
+    // A blind-group member is never served, even with feed access.
+    const blindId = await insertReady({
+      kind: "episode",
+      access: "feed",
+      title: "Blind member",
+      contentHash: "h-blind-member",
+    });
+    await t.run(async (ctx) => {
+      const groupId = await ctx.db.insert("blindGroups", {
+        purpose: "voiceShootout",
+        members: [{ memberId: "m1", artifactId: blindId, label: "take one" }],
+        requiredRatings: ["m1"],
+        createdAt: Date.now(),
+      });
+      await ctx.db.patch(blindId, { blindGroupId: groupId });
+    });
+    const withBlind = await t.query(internal.podcast.listFeedEpisodes, {});
+    expect(withBlind.map((row) => row.id)).toEqual([feedEpisodeId]);
   });
 });
 

@@ -68,15 +68,22 @@ export const create = internalMutation({
         message: `Blind groups hold at most ${MAX_BLIND_GROUP_MEMBERS} members`,
       });
     }
+    const labels = new Set(args.members.map((member) => member.label));
+    if (labels.size !== args.members.length) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "Blind group member labels must be unique",
+      });
+    }
     if (
       args.xMember &&
-      !args.members.some(
+      args.members.filter(
         (member) => member.label === args.xMember?.duplicatesLabel,
-      )
+      ).length !== 1
     ) {
       throw new ConvexError({
         code: "INVALID_ARGUMENT",
-        message: "xMember.duplicatesLabel must match a member label",
+        message: "xMember.duplicatesLabel must match exactly one member label",
       });
     }
     const distinct = new Set(all.map((member) => member.artifactId));
@@ -86,6 +93,9 @@ export const create = internalMutation({
         message: "Blind group members must be distinct artifacts",
       });
     }
+    // Contract: members are minted by media jobs and grouped in the same
+    // completion that marks them ready, so no playback URL is ever issued for
+    // a member before it is grouped; nothing pre-issued survives grouping.
     for (const member of all) {
       const row = await ctx.db.get(member.artifactId);
       if (!row || row.status !== "ready") {
@@ -106,6 +116,14 @@ export const create = internalMutation({
         throw new ConvexError({
           code: "INVALID_STATE",
           message: `Artifact ${member.artifactId} already belongs to a blind group`,
+        });
+      }
+      // A feed-access artifact is enclosed in the podcast RSS under its own
+      // title; blind members never belong there.
+      if (row.access !== "private") {
+        throw new ConvexError({
+          code: "INVALID_STATE",
+          message: "Blind group members must be private artifacts",
         });
       }
     }

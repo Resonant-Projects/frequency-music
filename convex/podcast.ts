@@ -113,7 +113,9 @@ export const listFeedEpisodes = internalQuery({
       .take(args.limit ?? FEED_LIMIT);
     const episodes: FeedEpisode[] = [];
     for (const row of rows) {
-      if (!row.storageId) continue;
+      // Defense in depth: a blind-group member is never served in the feed,
+      // whatever its access value says.
+      if (!row.storageId || row.blindGroupId) continue;
       const storageUrl = await ctx.storage.getUrl(row.storageId);
       const meta = await ctx.db.system.get(row.storageId);
       if (!storageUrl || !meta) continue;

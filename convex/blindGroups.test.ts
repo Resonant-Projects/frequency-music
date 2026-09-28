@@ -9,6 +9,7 @@ async function readyArtifact(
   t: ReturnType<typeof convexTest>,
   title: string,
   metadataStripped = true,
+  access: "private" | "feed" = "private",
 ) {
   const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
     fields: {
@@ -23,7 +24,7 @@ async function readyArtifact(
         channels: 2,
       },
       normalization: "applied",
-      access: "private",
+      access,
       title,
       refs: {},
       contentHash: title,
@@ -181,6 +182,50 @@ describe("blindGroups", () => {
     expect(row?.blindGroupId).toBeUndefined();
   });
 
+  test("create rejects duplicate member labels", async () => {
+    const t = convexTest(schema, modules);
+    const a = await readyArtifact(t, "a");
+    const b = await readyArtifact(t, "b");
+    await expect(
+      t.mutation(internal.blindGroups.create, {
+        purpose: "voiceShootout",
+        members: [
+          { artifactId: a, label: "take one" },
+          { artifactId: b, label: "take one" },
+        ],
+      }),
+    ).rejects.toThrow(/labels must be unique/);
+    const row = await t.run((ctx) => ctx.db.get(a));
+    expect(row?.blindGroupId).toBeUndefined();
+  });
+
+  test("create rejects a feed-access member", async () => {
+    const t = convexTest(schema, modules);
+    const a = await readyArtifact(t, "a");
+    const feed = await readyArtifact(t, "feed", true, "feed");
+    await expect(
+      t.mutation(internal.blindGroups.create, {
+        purpose: "voiceShootout",
+        members: [
+          { artifactId: a, label: "take one" },
+          { artifactId: feed, label: "take two" },
+        ],
+      }),
+    ).rejects.toThrow(/must be private/);
+    // X is checked too.
+    await expect(
+      t.mutation(internal.blindGroups.create, {
+        purpose: "voiceShootout",
+        members: [{ artifactId: a, label: "take one" }],
+        xMember: { artifactId: feed, duplicatesLabel: "take one" },
+      }),
+    ).rejects.toThrow(/must be private/);
+    for (const id of [a, feed]) {
+      const row = await t.run((ctx) => ctx.db.get(id));
+      expect(row?.blindGroupId).toBeUndefined();
+    }
+  });
+
   test("create rejects an X whose duplicatesLabel names no member", async () => {
     const t = convexTest(schema, modules);
     const a = await readyArtifact(t, "a");
@@ -191,7 +236,7 @@ describe("blindGroups", () => {
         members: [{ artifactId: a, label: "take one" }],
         xMember: { artifactId: x, duplicatesLabel: "take two" },
       }),
-    ).rejects.toThrow(/duplicatesLabel must match a member label/);
+    ).rejects.toThrow(/duplicatesLabel must match exactly one member label/);
   });
 
   test("stored member order is random, so the X member is not always last", async () => {
