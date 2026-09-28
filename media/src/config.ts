@@ -14,6 +14,17 @@ export type MediaConfig = z.infer<typeof configZ>;
 export const RENDERER_VERSION = "0.1.0";
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): MediaConfig {
+  // AGENT_TOOL_SECRET travels in every request body, so the transport must be
+  // TLS. Plain http is allowed only by explicit opt-in for a private LAN.
+  const siteUrl = env.CONVEX_SITE_URL ?? "";
+  if (
+    siteUrl.startsWith("http://") &&
+    env.MEDIA_ALLOW_INSECURE_CONVEX !== "true"
+  ) {
+    throw new Error(
+      "CONVEX_SITE_URL must use https (set MEDIA_ALLOW_INSECURE_CONVEX=true only for a private network)",
+    );
+  }
   return configZ.parse({
     convexSiteUrl: env.CONVEX_SITE_URL,
     agentToolSecret: env.AGENT_TOOL_SECRET,

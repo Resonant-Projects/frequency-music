@@ -53,7 +53,7 @@ http.route({
     const match = path.match(/^\/podcast\/([^/]+)\/feed\.xml$/);
     if (
       !match ||
-      !feedTokenMatches(match[1] ?? "", process.env.PODCAST_FEED_TOKEN)
+      !(await feedTokenMatches(match[1] ?? "", process.env.PODCAST_FEED_TOKEN))
     ) {
       return new Response("Not found", { status: 404 });
     }

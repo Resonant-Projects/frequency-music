@@ -45,6 +45,35 @@ async function leasedAndOtherJob(t: ReturnType<typeof convexTest>) {
 }
 
 describe("mediaToolsInternal", () => {
+  test("a probe lease cannot mint a feed episode or a non-probe kind", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await leasedAndOtherJob(t);
+    await expect(
+      t.mutation(internal.mediaToolsInternal.generateAudioUploadUrl, {
+        jobId,
+        leaseToken,
+        artifact: { ...artifact, kind: "episode", access: "feed" },
+      }),
+    ).rejects.toThrow(/cannot mint/);
+    await expect(
+      t.mutation(internal.mediaToolsInternal.generateAudioUploadUrl, {
+        jobId,
+        leaseToken,
+        artifact: { ...artifact, access: "feed" },
+      }),
+    ).rejects.toThrow(/access/);
+    // createdBy is server-owned.
+    const { artifactId } = await t.mutation(
+      internal.mediaToolsInternal.generateAudioUploadUrl,
+      { jobId, leaseToken, artifact: { ...artifact, createdBy: "agent" } },
+    );
+    const row = await t.run((ctx) => ctx.db.get(artifactId));
+    expect(row?.createdBy).toBe("system");
+    expect(row?.access).toBe("private");
+    const rows = await t.run((ctx) => ctx.db.query("audioArtifacts").collect());
+    expect(rows).toHaveLength(1);
+  });
+
   test("generateAudioUploadUrl forces refs.mediaJobId to the leased job", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken, otherJobId } = await leasedAndOtherJob(t);

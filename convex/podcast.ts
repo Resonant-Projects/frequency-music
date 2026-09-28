@@ -16,22 +16,23 @@ export type FeedEpisode = {
 
 const FEED_LIMIT = 100;
 
-export function feedTokenMatches(
+export async function feedTokenMatches(
   pathToken: string,
   expected: string | undefined,
-): boolean {
+): Promise<boolean> {
   if (!expected || !pathToken) return false;
-  // No early return on a length mismatch: walk max(len) characters, wrapping
-  // the shorter string, and fold the length difference into the same
-  // accumulator so a prefix guess costs the same as a full-length one.
-  let diff = pathToken.length ^ expected.length;
-  const steps = Math.max(pathToken.length, expected.length);
-  for (let i = 0; i < steps; i++) {
-    diff |=
-      pathToken.charCodeAt(i % pathToken.length) ^
-      expected.charCodeAt(i % expected.length);
-  }
+  // Compare fixed-size SHA-256 digests: the work done depends only on the
+  // caller's own input plus a constant, so neither the comparison nor its
+  // timing reveals the expected token's length or content.
+  const [a, b] = await Promise.all([digest(pathToken), digest(expected)]);
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
   return diff === 0;
+}
+
+async function digest(text: string): Promise<Uint8Array> {
+  const bytes = new TextEncoder().encode(text);
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 }
 
 export function publicStorageUrl(

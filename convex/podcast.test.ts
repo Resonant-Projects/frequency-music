@@ -7,12 +7,13 @@ import schema from "./schema";
 import type { AudioArtifactInput } from "./shared/audioArtifacts";
 
 describe("podcast feed", () => {
-  test("token match is exact regardless of length", () => {
-    expect(feedTokenMatches("abc", "abc")).toBe(true);
-    expect(feedTokenMatches("ab", "abc")).toBe(false);
-    expect(feedTokenMatches("abcd", "abc")).toBe(false);
-    expect(feedTokenMatches("abc%20", "abc")).toBe(false);
-    expect(feedTokenMatches("", "")).toBe(false);
+  test("token match is exact regardless of length", async () => {
+    expect(await feedTokenMatches("abc", "abc")).toBe(true);
+    expect(await feedTokenMatches("ab", "abc")).toBe(false);
+    expect(await feedTokenMatches("abcd", "abc")).toBe(false);
+    expect(await feedTokenMatches("abc%20", "abc")).toBe(false);
+    expect(await feedTokenMatches("", "")).toBe(false);
+    expect(await feedTokenMatches("abc", undefined)).toBe(false);
   });
 
   test("storage urls are rewritten onto the public host", () => {

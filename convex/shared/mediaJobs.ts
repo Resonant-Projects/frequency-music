@@ -10,6 +10,16 @@ export const MAX_ATTEMPTS = 3;
 export const MEDIA_JOB_KINDS = ["probe"] as const; // wave 1 adds narrate, shootout, assembleEpisode
 export type MediaJobKind = (typeof MEDIA_JOB_KINDS)[number];
 export const mediaJobKindZ = z.enum(MEDIA_JOB_KINDS);
+
+// What a leased job of each kind may mint. Everything else about an artifact
+// is caller-described, so this table is the only thing standing between a
+// holder of the tool secret and, say, an `episode` with `access: "feed"`.
+export const ARTIFACT_POLICY_BY_JOB_KIND: Record<
+  MediaJobKind,
+  { artifactKinds: readonly string[]; access: readonly string[] }
+> = {
+  probe: { artifactKinds: ["probe"], access: ["private"] },
+};
 export const mediaJobStatusZ = z.enum([
   "queued",
   "claimed",
