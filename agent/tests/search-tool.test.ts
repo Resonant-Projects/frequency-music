@@ -114,6 +114,24 @@ describe("federated source-scout search", () => {
     );
   });
 
+  test("starts research providers while Firecrawl is still pending", async () => {
+    let resolveWeb!: (response: Response) => void;
+    const pendingWeb = new Promise<Response>((resolve) => {
+      resolveWeb = resolve;
+    });
+    const fetchImpl = vi.fn(async (input: string | URL | Request) =>
+      urlOf(input).includes("firecrawl.dev")
+        ? pendingWeb
+        : json({ results: [], resultList: { result: [] } }),
+    );
+    const search = createWebSearch({ apiKey: "fixture-key", fetchImpl })({
+      query: "plate",
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    resolveWeb(json({ data: { web: [] } }));
+    await expect(search).resolves.toEqual([]);
+  });
+
   test("keeps scholarly candidates when Firecrawl fills its entire result quota", async () => {
     const fetchImpl = vi.fn(async (input: string | URL | Request) => {
       const url = urlOf(input);
@@ -434,7 +452,9 @@ describe("Firecrawl web_search", () => {
         },
       }),
     );
-    const body = fetchImpl.mock.calls[0]?.[1]?.body;
+    const body = fetchImpl.mock.calls.find(
+      ([input]) => urlOf(input) === "https://api.firecrawl.dev/v2/search",
+    )?.[1]?.body;
     expect(typeof body).toBe("string");
     const request = JSON.parse(typeof body === "string" ? body : "{}");
     expect(request).toEqual({

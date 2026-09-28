@@ -265,6 +265,37 @@ export function createWebSearch(
     const args = webSearchInputSchema.parse(input);
     const maxResults = args.maxResults ?? DEFAULT_MAX_RESULTS;
     const providers: Record<string, ProviderOutcome> = {};
+    // Start independent scholarly lookups before awaiting the optional web channel.
+    const openAlexUrl = new URL("https://api.openalex.org/works");
+    openAlexUrl.searchParams.set("search", args.query);
+    openAlexUrl.searchParams.set("per_page", String(maxResults));
+    openAlexUrl.searchParams.set(
+      "select",
+      "id,title,doi,publication_year,abstract_inverted_index,primary_location",
+    );
+    const europePmcUrl = new URL(
+      "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+    );
+    europePmcUrl.searchParams.set("query", args.query);
+    europePmcUrl.searchParams.set("format", "json");
+    europePmcUrl.searchParams.set("pageSize", String(maxResults));
+    europePmcUrl.searchParams.set("resultType", "core");
+    const research = Promise.all([
+      fetchResearch(
+        fetchImpl,
+        "OpenAlex",
+        openAlexUrl.toString(),
+        mapOpenAlex,
+        maxResults,
+      ),
+      fetchResearch(
+        fetchImpl,
+        "Europe PMC",
+        europePmcUrl.toString(),
+        mapEuropePmc,
+        maxResults,
+      ),
+    ]);
     let firecrawlResults: WebSearchResult[] = [];
     try {
       const apiKey = configuredApiKey ?? process.env.FIRECRAWL_API_KEY;
@@ -320,36 +351,7 @@ export function createWebSearch(
       providers.firecrawl = { status: "failed", returned: 0, error: message };
     }
 
-    const openAlexUrl = new URL("https://api.openalex.org/works");
-    openAlexUrl.searchParams.set("search", args.query);
-    openAlexUrl.searchParams.set("per_page", String(maxResults));
-    openAlexUrl.searchParams.set(
-      "select",
-      "id,title,doi,publication_year,abstract_inverted_index,primary_location",
-    );
-    const europePmcUrl = new URL(
-      "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
-    );
-    europePmcUrl.searchParams.set("query", args.query);
-    europePmcUrl.searchParams.set("format", "json");
-    europePmcUrl.searchParams.set("pageSize", String(maxResults));
-    europePmcUrl.searchParams.set("resultType", "core");
-    const [openalex, europePmc] = await Promise.all([
-      fetchResearch(
-        fetchImpl,
-        "OpenAlex",
-        openAlexUrl.toString(),
-        mapOpenAlex,
-        maxResults,
-      ),
-      fetchResearch(
-        fetchImpl,
-        "Europe PMC",
-        europePmcUrl.toString(),
-        mapEuropePmc,
-        maxResults,
-      ),
-    ]);
+    const [openalex, europePmc] = await research;
     providers.openalex = openalex.outcome;
     providers.europePmc = europePmc.outcome;
     const results: WebSearchResult[] = [];
