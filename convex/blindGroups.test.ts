@@ -4,12 +4,16 @@ import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
 import schema from "./schema";
 
-async function readyArtifact(t: ReturnType<typeof convexTest>, title: string) {
+async function readyArtifact(
+  t: ReturnType<typeof convexTest>,
+  title: string,
+  metadataStripped = true,
+) {
   const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
     fields: {
       kind: "shootoutTake",
       role: "delivery",
-      metadataStripped: true,
+      metadataStripped,
       status: "pending",
       encoding: {
         codec: "mp3",
@@ -121,6 +125,19 @@ describe("blindGroups", () => {
     await t.mutation(internal.blindGroups.reveal, { groupId });
     const second = await t.run((ctx) => ctx.db.get(groupId));
     expect(second?.revealedAt).toBe(first?.revealedAt);
+  });
+
+  test("create rejects a member whose metadata was not stripped", async () => {
+    const t = convexTest(schema, modules);
+    const tagged = await readyArtifact(t, "tagged", false);
+    await expect(
+      t.mutation(internal.blindGroups.create, {
+        purpose: "voiceShootout",
+        members: [{ artifactId: tagged, label: "x" }],
+      }),
+    ).rejects.toThrow(/metadata/);
+    const row = await t.run((ctx) => ctx.db.get(tagged));
+    expect(row?.blindGroupId).toBeUndefined();
   });
 
   test("stored member order is random, so the X member is not always last", async () => {

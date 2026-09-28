@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
 import { buildFeedXml, feedTokenMatches, publicStorageUrl } from "./podcast";
@@ -7,7 +7,7 @@ import schema from "./schema";
 import type { AudioArtifactInput } from "./shared/audioArtifacts";
 
 describe("podcast feed", () => {
-  test("token match is exact and constant-time-safe for prefixes and supersets", () => {
+  test("token match is exact regardless of length", () => {
     expect(feedTokenMatches("abc", "abc")).toBe(true);
     expect(feedTokenMatches("ab", "abc")).toBe(false);
     expect(feedTokenMatches("abcd", "abc")).toBe(false);
@@ -148,5 +148,82 @@ describe("podcast.listFeedEpisodes", () => {
     expect(episode?.mimeType).toBe("audio/mpeg");
     expect(episode?.durationSecs).toBe(12.4);
     expect(episode?.storageUrl.startsWith("http")).toBe(true);
+  });
+});
+
+function stubFeedEnv() {
+  vi.stubEnv("PODCAST_FEED_TOKEN", "test-token");
+  vi.stubEnv("PODCAST_PUBLIC_BASE_URL", "https://listen.test");
+}
+
+describe("podcast feed route", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  test("wrong token is a 404", async () => {
+    stubFeedEnv();
+    const t = convexTest(schema, modules);
+    const response = await t.fetch("/podcast/wrong/feed.xml", {
+      method: "GET",
+    });
+    expect(response.status).toBe(404);
+  });
+
+  test("right token serves an uncached rss channel", async () => {
+    stubFeedEnv();
+    const t = convexTest(schema, modules);
+    const response = await t.fetch("/podcast/test-token/feed.xml", {
+      method: "GET",
+    });
+    expect(response.status).toBe(200);
+    expect(
+      response.headers.get("content-type")?.startsWith("application/rss+xml"),
+    ).toBe(true);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.text()).toContain("<channel>");
+  });
+
+  test("only feed.xml exists under the token", async () => {
+    stubFeedEnv();
+    const t = convexTest(schema, modules);
+    const response = await t.fetch("/podcast/test-token/other", {
+      method: "GET",
+    });
+    expect(response.status).toBe(404);
+  });
+
+  test("a ready feed episode is enclosed on the public host", async () => {
+    stubFeedEnv();
+    const t = convexTest(schema, modules);
+    const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
+      fields: {
+        ...baseFields,
+        kind: "episode",
+        access: "feed",
+        title: "Feed episode",
+        contentHash: "h-route-episode",
+      },
+    });
+    const storageId = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["0123456789abcdef"])),
+    );
+    await t.mutation(internal.audioArtifacts.attachStorage, {
+      artifactId,
+      storageId,
+    });
+    await t.mutation(internal.audioArtifacts.markReady, {
+      artifactId,
+      durationSecs: 12.4,
+      loudnessLufs: -16,
+      truePeakDbtp: -1,
+      mimeType: "audio/mpeg",
+    });
+    const response = await t.fetch("/podcast/test-token/feed.xml", {
+      method: "GET",
+    });
+    expect(response.status).toBe(200);
+    const xml = await response.text();
+    expect(xml).toContain("<title>Feed episode</title>");
+    expect(xml).toMatch(/<enclosure url="https:\/\/listen\.test\//);
+    expect(xml).toContain(`<guid isPermaLink="false">${artifactId}</guid>`);
   });
 });

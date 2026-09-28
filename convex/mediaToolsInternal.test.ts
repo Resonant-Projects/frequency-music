@@ -127,6 +127,78 @@ describe("mediaToolsInternal", () => {
     expect(row?.storageId).toBeUndefined();
   });
 
+  test("attachAudioStorage rejects a storageId with no blob behind it", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await leasedAndOtherJob(t);
+    const { artifactId } = await t.mutation(
+      internal.mediaToolsInternal.generateAudioUploadUrl,
+      { jobId, leaseToken, artifact },
+    );
+    const storageId = await t.run(async (ctx) => {
+      const id = await ctx.storage.store(new Blob(["x"]));
+      await ctx.storage.delete(id);
+      return id;
+    });
+    await expect(
+      t.mutation(internal.mediaToolsInternal.attachAudioStorage, {
+        jobId,
+        leaseToken,
+        artifactId,
+        storageId,
+      }),
+    ).rejects.toThrow(/exist/);
+    const row = await t.run((ctx) => ctx.db.get(artifactId));
+    expect(row?.storageId).toBeUndefined();
+  });
+
+  test("attachAudioStorage rejects a blob already attached to another artifact", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken, otherJobId } = await leasedAndOtherJob(t);
+    // A ready artifact of the other job already owns the blob.
+    const ownerId = await t.mutation(internal.audioArtifacts.createPending, {
+      fields: {
+        ...artifact,
+        kind: "probe",
+        role: "delivery",
+        status: "pending",
+        encoding: { ...artifact.encoding, codec: "mp3" },
+        normalization: "applied",
+        access: "private",
+        createdBy: "system",
+        contentHash: "c-owner",
+        refs: { mediaJobId: otherJobId },
+      },
+    });
+    const storageId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    await t.mutation(internal.audioArtifacts.attachStorage, {
+      artifactId: ownerId,
+      storageId,
+    });
+    await t.mutation(internal.audioArtifacts.markReady, {
+      artifactId: ownerId,
+      durationSecs: 1,
+      loudnessLufs: -16,
+      truePeakDbtp: -1,
+      mimeType: "audio/mpeg",
+    });
+    const { artifactId } = await t.mutation(
+      internal.mediaToolsInternal.generateAudioUploadUrl,
+      { jobId, leaseToken, artifact },
+    );
+    await expect(
+      t.mutation(internal.mediaToolsInternal.attachAudioStorage, {
+        jobId,
+        leaseToken,
+        artifactId,
+        storageId,
+      }),
+    ).rejects.toThrow(/already/);
+    const row = await t.run((ctx) => ctx.db.get(artifactId));
+    expect(row?.storageId).toBeUndefined();
+    const owner = await t.run((ctx) => ctx.db.get(ownerId));
+    expect(owner?.storageId).toBe(storageId);
+  });
+
   test("generate then attach records the storageId on the pending row", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken } = await leasedAndOtherJob(t);

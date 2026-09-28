@@ -67,6 +67,14 @@ export const create = internalMutation({
           message: `Artifact ${member.artifactId} is not ready`,
         });
       }
+      // Embedded tags (title, artist, encoder) would leak identity through
+      // the player even though the projection hides it.
+      if (!row.metadataStripped) {
+        throw new ConvexError({
+          code: "INVALID_STATE",
+          message: `Artifact ${member.artifactId} is not metadata-stripped`,
+        });
+      }
       if (row.blindGroupId) {
         throw new ConvexError({
           code: "INVALID_STATE",

@@ -3,7 +3,6 @@
 // 404 so the route is invisible to scanners.
 import { v } from "convex/values";
 import { internalQuery } from "./_generated/server";
-import { constantTimeEqual } from "./auth";
 
 export type FeedEpisode = {
   id: string;
@@ -22,7 +21,17 @@ export function feedTokenMatches(
   expected: string | undefined,
 ): boolean {
   if (!expected || !pathToken) return false;
-  return constantTimeEqual(pathToken, expected);
+  // No early return on a length mismatch: walk max(len) characters, wrapping
+  // the shorter string, and fold the length difference into the same
+  // accumulator so a prefix guess costs the same as a full-length one.
+  let diff = pathToken.length ^ expected.length;
+  const steps = Math.max(pathToken.length, expected.length);
+  for (let i = 0; i < steps; i++) {
+    diff |=
+      pathToken.charCodeAt(i % pathToken.length) ^
+      expected.charCodeAt(i % expected.length);
+  }
+  return diff === 0;
 }
 
 export function publicStorageUrl(

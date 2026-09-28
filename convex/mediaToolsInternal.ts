@@ -59,6 +59,26 @@ export const attachAudioStorage = internalMutation({
         message: "Artifact does not belong to this job",
       });
     }
+    // The sweeper deletes any blob no artifact references, and every artifact
+    // is assumed to own its blob outright: a storageId that does not exist or
+    // that another artifact already holds would either dangle or be shared,
+    // and deleting one artifact would then take the other's audio with it.
+    if ((await ctx.db.system.get(args.storageId)) === null) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "storageId does not exist",
+      });
+    }
+    const holder = await ctx.db
+      .query("audioArtifacts")
+      .withIndex("by_storageId", (q) => q.eq("storageId", args.storageId))
+      .first();
+    if (holder) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "storageId is already attached to another artifact",
+      });
+    }
     await ctx.runMutation(internal.audioArtifacts.attachStorage, {
       artifactId: args.artifactId,
       storageId: args.storageId,
