@@ -390,12 +390,32 @@ export const createScoutedSource = internalMutation({
     url: v.string(),
     title: v.optional(v.string()),
     publishedAt: v.optional(v.number()),
+    rawText: v.optional(v.string()),
+    contentProvider: v.optional(v.literal("crawl4ai")),
     query: v.string(),
     rationale: v.string(),
     agentRunId: v.id("agentRuns"),
   },
   returns: v.object({ id: v.id("sources"), created: v.boolean() }),
   handler: async (ctx, args) => {
+    if (
+      args.rawText &&
+      (args.rawText.length > 30_000 || !args.rawText.trim())
+    ) {
+      throw new Error(
+        "Scouted source text must be nonempty and at most 30000 characters",
+      );
+    }
+    if (args.rawText && args.contentProvider !== "crawl4ai") {
+      throw new Error(
+        "Scouted source text requires content provider provenance",
+      );
+    }
+    if (args.rawText && args.rawText.length < 100) {
+      throw new Error(
+        "Scouted source text must be at least 100 characters for Extraction",
+      );
+    }
     if (!(await ctx.db.get("agentRuns", args.agentRunId))) {
       throw new Error("Agent run not found");
     }
@@ -414,12 +434,16 @@ export const createScoutedSource = internalMutation({
       canonicalUrl: args.url,
       title: args.title,
       publishedAt: args.publishedAt,
+      rawText: args.rawText,
       createdBy: "system",
       metadata: {
         scoutedBy: {
           agentRunId: args.agentRunId,
           query: args.query,
           rationale: args.rationale,
+          ...(args.contentProvider
+            ? { contentProvider: args.contentProvider }
+            : {}),
         },
       },
     });

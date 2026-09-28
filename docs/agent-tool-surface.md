@@ -46,7 +46,7 @@ These provenance-stamped research writes are limited to reversible graph enrichm
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
-| `ingestScoutedSource` | `/agent-tools/ingestScoutedSource` | `internal.sources:createScoutedSource` | Ingest one judged source through canonical URL intake with source-scout provenance. | Canonical dedupe rejects are no-ops; the graph logs the decision and never retries. |
+| `ingestScoutedSource` | `/agent-tools/ingestScoutedSource` | `internal.sources:createScoutedSource` | Ingest one judged source through canonical URL intake with source-scout provenance and optional bounded Crawl4AI text. | Canonical duplicates are no-ops; fetched text enters text_ready for batch Extraction, while URL-only intake stays ingested. |
 | `proposeFeed` | `/agent-tools/proposeFeed` | `internal.feeds:proposeFeed` | Create a disabled recurring-feed proposal with source-scout rationale and sample items. | The mutation always inserts enabled false; duplicate URLs are no-ops and only humans enable feeds. |
 | `upsertCorrespondence` | `/agent-tools/upsertCorrespondence` | `internal.correspondences:upsertConjectureFromAgent` | Create or strengthen one cross-domain conjecture without duplicating its concept pair. | Requires agent-run provenance; rejects same-domain, off-mission, and unclassified concepts. |
 | `addCorrespondenceEvidence` | `/agent-tools/addCorrespondenceEvidence` | `internal.correspondences:addEvidenceFromAgent` | Attach a supporting or contradicting claim citation to a correspondence. | Requires agent-run provenance; duplicate claim-and-stance citations are ignored and status recomputes by evidence counts. |

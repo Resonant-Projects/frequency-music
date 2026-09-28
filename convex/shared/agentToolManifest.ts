@@ -149,8 +149,8 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "ingestScoutedSource",
     "research_write",
     "internal.sources:createScoutedSource",
-    "Ingest one judged source through canonical URL intake with source-scout provenance.",
-    "Canonical dedupe rejects are no-ops; the graph logs the decision and never retries.",
+    "Ingest one judged source through canonical URL intake with source-scout provenance and optional bounded Crawl4AI text.",
+    "Canonical duplicates are no-ops; fetched text enters text_ready for batch Extraction, while URL-only intake stays ingested.",
   ),
   entry(
     "proposeFeed",

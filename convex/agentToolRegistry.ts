@@ -99,6 +99,8 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
         url: args.url as string,
         title: args.title as string | undefined,
         publishedAt: args.publishedAt as number | undefined,
+        rawText: args.rawText as string | undefined,
+        contentProvider: args.contentProvider as "crawl4ai" | undefined,
         query: args.query as string,
         rationale: args.rationale as string,
         agentRunId: args.agentRunId as Id<"agentRuns">,

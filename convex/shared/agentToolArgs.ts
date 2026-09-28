@@ -47,6 +47,8 @@ export const agentToolArgs = {
     url: z.string().url(),
     title: z.string().trim().min(1).optional(),
     publishedAt: z.number().optional(),
+    rawText: z.string().trim().min(100).max(30_000).optional(),
+    contentProvider: z.literal("crawl4ai").optional(),
     query: z.string().trim().min(1),
     rationale: z.string().trim().min(1),
     agentRunId: zid("agentRuns"),

@@ -13,6 +13,7 @@ import {
   type WebSearchInput,
   type WebSearchResult,
 } from "../../tools/searchTool.js";
+import { createCrawlPage, type CrawledPage } from "../../tools/crawlTool.js";
 import { callConvex } from "../../tools/convexTools.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
 import {
@@ -279,7 +280,10 @@ function parsedPublishedAt(value: string | undefined): number | undefined {
   return Number.isFinite(timestamp) ? timestamp : undefined;
 }
 
-export function createIngestSourcesNode(callTool: ToolCaller = callConvex) {
+export function createIngestSourcesNode(
+  callTool: ToolCaller = callConvex,
+  crawl: (url: string) => Promise<CrawledPage | null> = createCrawlPage(),
+) {
   return async (state: {
     agentRunId?: string;
     judgments: ScoutJudgment[];
@@ -306,10 +310,12 @@ export function createIngestSourcesNode(callTool: ToolCaller = callConvex) {
       const publishedAt = parsedPublishedAt(
         judgment.searchHit.result.publishedAt,
       );
+      const page = await crawl(judgment.searchHit.result.url);
       const result = (await callTool("ingestScoutedSource", {
         url: judgment.searchHit.result.url,
         title: judgment.searchHit.result.title,
         ...(publishedAt === undefined ? {} : { publishedAt }),
+        ...(page ? { rawText: page.text, contentProvider: page.provider } : {}),
         query: judgment.searchHit.query.query,
         rationale,
         agentRunId: state.agentRunId,

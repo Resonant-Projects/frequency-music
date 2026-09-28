@@ -18,6 +18,68 @@ async function seedAgentRun(t: ReturnType<typeof convexTest>) {
 }
 
 describe("source scout canonical writes", () => {
+  test("stores crawler text as text_ready and preserves it on duplicate scout intake", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const input = {
+      url: "https://example.org/resonance",
+      title: "Resonance experiment",
+      query: "measured resonance",
+      rationale: "Thin domain",
+      agentRunId,
+      rawText:
+        "# Experimental setup\n" + "The measured resonant modes. ".repeat(5),
+      contentProvider: "crawl4ai" as const,
+    };
+    const first = await t.mutation(internal.sources.createScoutedSource, input);
+    const duplicate = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      rawText: "Must not overwrite. ".repeat(7),
+      title: "Must not overwrite",
+    });
+    expect(duplicate).toEqual({ id: first.id, created: false });
+    const source = await t.run((ctx) => ctx.db.get(first.id));
+    expect(source).toMatchObject({
+      status: "text_ready",
+      rawText: input.rawText,
+      title: input.title,
+      rawTextSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      metadata: { scoutedBy: { contentProvider: "crawl4ai", agentRunId } },
+    });
+  });
+
+  test("rejects oversized or unprovenanced scout text before writing", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const input = {
+      url: "https://example.org/paper",
+      query: "modal study",
+      rationale: "Thin domain",
+      agentRunId,
+    };
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        rawText: "a".repeat(30_001),
+        contentProvider: "crawl4ai",
+      }),
+    ).rejects.toThrow("at most 30000");
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        rawText: "Unattributed content",
+      }),
+    ).rejects.toThrow("requires content provider");
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        rawText: "Short text",
+        contentProvider: "crawl4ai",
+      }),
+    ).rejects.toThrow("at least 100");
+    expect(await t.run((ctx) => ctx.db.query("sources").collect())).toEqual([]);
+  });
+
   test("creates a provenance-stamped source and treats a canonical duplicate as a no-op", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);

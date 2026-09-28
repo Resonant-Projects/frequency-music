@@ -179,6 +179,33 @@ describe("source scout execution caps and resilience", () => {
 });
 
 describe("source scout canonical write nodes", () => {
+  test("persists fetched source text with provider provenance through the guarded ingest tool", async () => {
+    const callTool = vi.fn(async (name: string) =>
+      name === "ingestScoutedSource"
+        ? { id: "source-1", created: true }
+        : { ok: true },
+    );
+    const crawl = vi.fn(async () => ({
+      text: "# Measured modes\n" + "A reproducible experiment. ".repeat(5),
+      provider: "crawl4ai" as const,
+    }));
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({
+      agentRunId: "run-scout",
+      judgments: [judgment(0, "source")],
+    });
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+    expect(callTool).toHaveBeenCalledWith(
+      "ingestScoutedSource",
+      expect.objectContaining({
+        rawText: "# Measured modes\n" + "A reproducible experiment. ".repeat(5),
+        contentProvider: "crawl4ai",
+      }),
+    );
+  });
+
   test("ingests at most five judged sources with provenance and logs dedupe as a decision", async () => {
     let writes = 0;
     const callTool = vi.fn(async (name: string) => {
