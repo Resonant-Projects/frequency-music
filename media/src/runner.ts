@@ -31,7 +31,9 @@ export async function runOnce(
   });
   if (!job) return "idle";
   log(`claimed ${job.kind} job ${job.jobId} (attempt ${job.attempts + 1})`);
-  const workDir = await mkdtemp(join(config.workDir, `${job.kind}-`));
+  // Scratch-dir creation sits inside the failure path: if it throws, the job
+  // is failed promptly instead of waiting out its lease.
+  let workDir: string | undefined;
   const renew = setInterval(() => {
     tool("renewMediaJobLease", {
       jobId: job.jobId,
@@ -43,6 +45,7 @@ export async function runOnce(
   try {
     const handler = handlers[job.kind];
     if (!handler) throw new Error(`no handler for kind ${job.kind}`);
+    workDir = await mkdtemp(join(config.workDir, `${job.kind}-`));
     const result = await handler({
       job,
       workDir,
@@ -73,6 +76,6 @@ export async function runOnce(
     return "failed";
   } finally {
     clearInterval(renew);
-    await rm(workDir, { recursive: true, force: true });
+    if (workDir) await rm(workDir, { recursive: true, force: true });
   }
 }

@@ -139,6 +139,22 @@ describe("podcast.listFeedEpisodes", () => {
       contentHash: "h-feed-probe",
     });
 
+    // A newer pending feed episode must not crowd the ready one out of the
+    // window: the limit applies to ready rows only.
+    await t.mutation(internal.audioArtifacts.createPending, {
+      fields: {
+        ...baseFields,
+        kind: "episode",
+        access: "feed",
+        title: "Pending episode",
+        contentHash: "h-pending-episode",
+      },
+    });
+    const limited = await t.query(internal.podcast.listFeedEpisodes, {
+      limit: 1,
+    });
+    expect(limited.map((row) => row.id)).toEqual([feedEpisodeId]);
+
     const episodes = await t.query(internal.podcast.listFeedEpisodes, {});
     expect(episodes).toHaveLength(1);
     const [episode] = episodes;

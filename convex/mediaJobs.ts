@@ -94,16 +94,16 @@ export const claimNext = internalMutation({
   handler: async (ctx, args): Promise<ClaimedMediaJob | null> => {
     const kinds = args.kinds.map((kind) => mediaJobKindZ.parse(kind));
     const now = Date.now();
-    const candidates = await ctx.db
+    // Filter by kind before the limit: queued jobs of kinds this worker does
+    // not serve must never shadow a claimable one.
+    const job = await ctx.db
       .query("mediaJobs")
       .withIndex("by_status_priority_createdAt", (q) =>
         q.eq("status", "queued"),
       )
       .order("asc")
-      .take(50);
-    const job = candidates.find((row) =>
-      kinds.includes(row.kind as (typeof kinds)[number]),
-    );
+      .filter((q) => q.or(...kinds.map((kind) => q.eq(q.field("kind"), kind))))
+      .first();
     if (!job) return null;
     const leaseToken = crypto.randomUUID();
     const leaseExpiresAt = now + LEASE_MS;

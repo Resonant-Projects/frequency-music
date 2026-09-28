@@ -102,10 +102,13 @@ export const listFeedEpisodes = internalQuery({
         q.eq("access", "feed").eq("kind", "episode"),
       )
       .order("desc")
+      // Only ready rows count toward the limit; pending or failed episodes
+      // newer than the ready ones must not push them out of the window.
+      .filter((q) => q.eq(q.field("status"), "ready"))
       .take(args.limit ?? FEED_LIMIT);
     const episodes: FeedEpisode[] = [];
     for (const row of rows) {
-      if (row.status !== "ready" || !row.storageId) continue;
+      if (!row.storageId) continue;
       const storageUrl = await ctx.storage.getUrl(row.storageId);
       const meta = await ctx.db.system.get(row.storageId);
       if (!storageUrl || !meta) continue;

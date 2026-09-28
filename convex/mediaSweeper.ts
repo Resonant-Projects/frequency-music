@@ -6,29 +6,38 @@ import { internalMutation, type MutationCtx } from "./_generated/server";
 
 const DEFAULT_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
 const SCAN_LIMIT = 200;
-// settings row holding the _creationTime of the last _storage blob examined,
-// as a decimal string. Absent means 0: the next sweep starts from the oldest.
+// settings row holding the last _storage blob examined as
+// "<_creationTime>:<_id>". The next sweep resumes inclusively at that
+// creation time (skipping only that blob), so blobs sharing the boundary
+// timestamp are never lost. Absent means 0: start from the oldest blob.
 export const STORAGE_SCAN_CURSOR_KEY = "mediaSweeper.storageScanCursor";
 
-async function readStorageScanCursor(ctx: MutationCtx): Promise<number> {
+type StorageScanCursor = { creationTime: number; blobId?: string };
+
+async function readStorageScanCursor(
+  ctx: MutationCtx,
+): Promise<StorageScanCursor> {
   const row = await ctx.db
     .query("settings")
     .withIndex("by_key", (q) => q.eq("key", STORAGE_SCAN_CURSOR_KEY))
     .unique();
-  const parsed = row ? Number(row.value) : 0;
-  return Number.isFinite(parsed) ? parsed : 0;
+  if (!row) return { creationTime: 0 };
+  const [timeText, blobId] = row.value.split(":");
+  const creationTime = Number(timeText);
+  if (!Number.isFinite(creationTime)) return { creationTime: 0 };
+  return blobId ? { creationTime, blobId } : { creationTime };
 }
 
 async function writeStorageScanCursor(
   ctx: MutationCtx,
-  cursor: number,
+  cursor: StorageScanCursor,
   now: number,
 ): Promise<void> {
   const row = await ctx.db
     .query("settings")
     .withIndex("by_key", (q) => q.eq("key", STORAGE_SCAN_CURSOR_KEY))
     .unique();
-  const value = String(cursor);
+  const value = `${cursor.creationTime}:${cursor.blobId ?? ""}`;
   if (row) await ctx.db.patch(row._id, { value, updatedAt: now });
   else
     await ctx.db.insert("settings", {
@@ -96,11 +105,17 @@ export const sweep = internalMutation({
     const blobs = await ctx.db.system
       .query("_storage")
       .withIndex("by_creation_time", (q) =>
-        q.gt("_creationTime", cursor).lt("_creationTime", blobCutoff),
+        q
+          .gte("_creationTime", cursor.creationTime)
+          .lt("_creationTime", blobCutoff),
       )
       .order("asc")
-      .take(args.scanLimit ?? SCAN_LIMIT);
+      // Inclusive resume returns the last examined blob once more, so fetch
+      // one extra row to keep the window at scanLimit new blobs.
+      .take((args.scanLimit ?? SCAN_LIMIT) + (cursor.blobId ? 1 : 0));
     for (const blob of blobs) {
+      // Inclusive resume: the last examined blob comes back once; skip it.
+      if (blob._id === cursor.blobId) continue;
       const referenced = await ctx.db
         .query("audioArtifacts")
         .withIndex("by_storageId", (q) => q.eq("storageId", blob._id))
@@ -110,7 +125,12 @@ export const sweep = internalMutation({
       blobsDeleted++;
     }
     const last = blobs.at(-1);
-    if (last) await writeStorageScanCursor(ctx, last._creationTime, now);
+    if (last && last._id !== cursor.blobId)
+      await writeStorageScanCursor(
+        ctx,
+        { creationTime: last._creationTime, blobId: last._id },
+        now,
+      );
 
     return { ...leases, artifactsDeleted, blobsDeleted };
   },

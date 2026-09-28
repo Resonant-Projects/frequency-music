@@ -116,7 +116,8 @@ describe("mediaSweeper", () => {
         .unique(),
     );
     expect(cursor).not.toBeNull();
-    expect(Number(cursor?.value)).toBeGreaterThan(0);
+    // Cursor is "<_creationTime>:<_id>"; the time part must have advanced.
+    expect(Number(cursor?.value.split(":")[0])).toBeGreaterThan(0);
 
     const second = await t.mutation(internal.mediaSweeper.sweep, args);
     expect(second.blobsDeleted).toBe(1);
