@@ -333,8 +333,8 @@ After that:
 | Item | Owner | Blocks |
 | --- | --- | --- |
 | Stage an `op-access` profile on this machine | Keith | CLI mutations from here |
-| Gemini API key for the media compose env | Keith | Gemini take in the shootout |
+| Gemini API key: exists for freq in OpenClaw; reference the same 1Password item from the media compose env | plan step | Gemini take in the shootout |
 | Confirm `listen.rproj.art` can be exposed via NPM, and whether storage GET honors Range | plan step 1 | Pocket Casts |
-| Create `#frequency` in Discord and paste the channel id; create the two signer bot applications | Keith, guided by the plan | wave 2 delivery and signing |
-| Pianoteq purchase decision | Keith | wave 3 quality tier only; litmus does not need it |
+| `#frequency` exists (id held in the OpenClaw config and the initiative record, not in this repo); create the two signer bot applications | Keith, guided by the plan | wave 2 signing |
+| Pianoteq deferred; u-he Diva, Zebra, Repro owned | decided 2026-09-28 | wave 3 quality tier only |
 | homelab-infra local checkout is behind `origin/main`; pull before editing | plan step | media compose, MCP ingress |

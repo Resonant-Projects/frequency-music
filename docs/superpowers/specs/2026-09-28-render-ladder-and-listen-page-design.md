@@ -210,15 +210,18 @@ unison drift); have a licence that permits unattended use on a server (no
 dongle, no per-launch online activation); and ship with no effects engaged
 by default so timbre stays honest.
 
-Candidates that meet this on Linux: Pianoteq (commercial, native CLI,
-`.scl` support, physical-modelled pianos and keyboards); Surge XT CLI
+Candidates that meet this on Linux: u-he Diva, Zebra, and Repro (Keith
+owns all three; Linux builds, MTS-ESP, hosted headless through pedalboard;
+the first quality tier to try because no purchase is needed); Surge XT CLI
 (free, `.scl`/`.kbm`, includes waveguide string and modal oscillators);
 Cardinal and VCV Rack headless with the Rings and Elements modal-resonator
 ports (open source); the Faust physical-modelling library compiled to
 SuperCollider or standalone (open source); STK models exposed through
-Csound opcodes or C++ (open source); u-he Diva and Zebra (commercial,
-Linux builds, MTS-ESP, host via pedalboard). Windows-only or macOS-only
-physical models such as SWAM and Chromaphone are out.
+Csound opcodes or C++ (open source); Pianoteq (commercial, native CLI,
+`.scl` support; purchase deferred). Other owned instruments are checked
+against the requirements above one by one when the quality tier is planned.
+Windows-only or macOS-only physical models such as SWAM and Chromaphone are
+out.
 
 ## 9. Deferred
 
