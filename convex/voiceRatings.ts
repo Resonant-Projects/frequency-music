@@ -61,6 +61,14 @@ async function submitCore(
       message: "Blind group not found",
     });
   }
+  // Voice ratings and their reveal belong to voice shootouts only; a study
+  // comparison is revealed through its own workflow.
+  if (group.purpose !== "voiceShootout") {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "Voice ratings apply only to voice shootout groups",
+    });
+  }
   const member = group.members.find((row) => row.memberId === args.memberId);
   if (!member || !group.requiredRatings.includes(args.memberId)) {
     throw new ConvexError({

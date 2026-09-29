@@ -4,7 +4,10 @@ import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
 import schema from "./schema";
 
-async function group(t: ReturnType<typeof convexTest>) {
+async function group(
+  t: ReturnType<typeof convexTest>,
+  purpose: "voiceShootout" | "studyFamily" = "voiceShootout",
+) {
   const make = async (title: string) => {
     const id = await t.mutation(internal.audioArtifacts.createPending, {
       fields: {
@@ -46,7 +49,7 @@ async function group(t: ReturnType<typeof convexTest>) {
   const a = await make("inworld-max");
   const b = await make("breeze-2");
   return await t.mutation(internal.blindGroups.create, {
-    purpose: "voiceShootout",
+    purpose,
     members: [
       { artifactId: a, label: "take one" },
       { artifactId: b, label: "take two" },
@@ -132,5 +135,20 @@ describe("voiceRatings", () => {
       groupId,
     });
     expect(rows[0]?.voiceId).toBeUndefined();
+  });
+
+  test("refuses ratings on a group that is not a voice shootout", async () => {
+    const t = convexTest(schema, modules);
+    const { groupId, memberIds } = await group(t, "studyFamily");
+    await expect(
+      t.mutation(internal.voiceRatings.submitInternal, {
+        groupId,
+        memberId: memberIds[0]!,
+        ratings,
+        createdBy: "user_1",
+      }),
+    ).rejects.toThrow(/only to voice shootout groups/);
+    const stored = await t.run((ctx) => ctx.db.get(groupId));
+    expect(stored?.revealedAt).toBeUndefined();
   });
 });
