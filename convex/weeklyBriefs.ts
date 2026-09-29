@@ -171,6 +171,13 @@ export const getLatest = query({
   },
 });
 
+// Raw row for Node actions (narration.buildScriptForBrief); no auth because
+// internal callers own their own gate.
+export const getInternal = internalQuery({
+  args: { briefId: v.id("weeklyBriefs") },
+  handler: (ctx, args) => ctx.db.get(args.briefId),
+});
+
 // ============================================================================
 // MUTATIONS
 // ============================================================================

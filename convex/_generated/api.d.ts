@@ -57,6 +57,8 @@ import type * as mediaJobEffects from "../mediaJobEffects.js";
 import type * as mediaJobs from "../mediaJobs.js";
 import type * as mediaSweeper from "../mediaSweeper.js";
 import type * as mediaToolsInternal from "../mediaToolsInternal.js";
+import type * as narration from "../narration.js";
+import type * as narrationPrompt from "../narrationPrompt.js";
 import type * as phase2 from "../phase2.js";
 import type * as podcast from "../podcast.js";
 import type * as recipes from "../recipes.js";
@@ -150,6 +152,8 @@ declare const fullApi: ApiFromModules<{
   mediaJobs: typeof mediaJobs;
   mediaSweeper: typeof mediaSweeper;
   mediaToolsInternal: typeof mediaToolsInternal;
+  narration: typeof narration;
+  narrationPrompt: typeof narrationPrompt;
   phase2: typeof phase2;
   podcast: typeof podcast;
   recipes: typeof recipes;
