@@ -6,6 +6,9 @@ import { redactError } from "../shared/redactError.js";
 
 const DEFAULT_CRAWL4AI_URL = "https://crawl4ai.rproj.art";
 const CRAWL_TIMEOUT_MS = 40_000;
+// A crawl result also carries page HTML and link lists; images are excluded at
+// the crawler. Refuse anything larger before it is buffered and parsed.
+const MAX_CRAWL_RESPONSE_BYTES = 16 * 1024 * 1024;
 
 type FetchLike = (
   input: string | URL | Request,
@@ -67,6 +70,33 @@ function markdownText(markdown: unknown): string {
   return "";
 }
 
+async function readCappedJson(response: Response): Promise<unknown> {
+  const tooLarge = () =>
+    new Error(`Crawl4AI response exceeded ${MAX_CRAWL_RESPONSE_BYTES} bytes`);
+  if (
+    Number(response.headers.get("content-length") ?? 0) >
+    MAX_CRAWL_RESPONSE_BYTES
+  ) {
+    await response.body?.cancel().catch(() => undefined);
+    throw tooLarge();
+  }
+  if (!response.body) return JSON.parse(await response.text());
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_CRAWL_RESPONSE_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      throw tooLarge();
+    }
+    chunks.push(value);
+  }
+  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
 // Never end on a lone high surrogate: Convex rejects ill-formed strings.
 function truncate(text: string, max: number): string {
   const cut = text.slice(0, max);
@@ -107,7 +137,7 @@ export function createCrawlPage(
           urls: [url],
           crawler_config: {
             type: "CrawlerRunConfig",
-            params: { cache_mode: "bypass" },
+            params: { cache_mode: "bypass", exclude_all_images: true },
           },
         }),
         signal: controller.signal,
@@ -116,7 +146,7 @@ export function createCrawlPage(
         await response.body?.cancel().catch(() => undefined);
         throw new Error(`Crawl4AI returned HTTP ${response.status}`);
       }
-      const payload: unknown = await response.json();
+      const payload = await readCappedJson(response);
       const rawResults =
         payload && typeof payload === "object" && "results" in payload
           ? payload.results

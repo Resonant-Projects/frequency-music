@@ -51,9 +51,30 @@ describe("self-hosted Crawl4AI source text", () => {
       urls: ["https://example.org/paper"],
       crawler_config: {
         type: "CrawlerRunConfig",
-        params: { cache_mode: "bypass" },
+        params: { cache_mode: "bypass", exclude_all_images: true },
       },
     });
+  });
+
+  test("refuses crawler responses beyond the byte cap before parsing", async () => {
+    const chunk = new TextEncoder().encode("x".repeat(1024 * 1024));
+    let sent = 0;
+    const cancel = vi.fn();
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        sent += 1;
+        controller.enqueue(chunk);
+      },
+      cancel,
+    });
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl: async () => new Response(body, { status: 200 }),
+    });
+    await expect(crawl("https://example.org/huge")).resolves.toBeNull();
+    expect(cancel).toHaveBeenCalled();
+    expect(sent).toBeLessThanOrEqual(18);
   });
 
   test("does not submit untrusted URLs unless crawler egress is explicitly certified", async () => {
