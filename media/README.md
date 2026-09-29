@@ -25,6 +25,9 @@ with a typed result. It never writes research data directly.
   the hosted voices; each is optional, and a missing key skips that voice in
   a shootout. `BREEZE_TTS_BASE_URL` configures the local voice
   (`BREEZE_TTS_API_KEY` is only sent as a bearer token to a fronting proxy).
+  It has no schema default: the compose file sets it, and clearing it
+  retires the local voice (a shootout then skips Breeze rather than waiting
+  5 minutes for a stopped `tts-local` and failing).
 - Breeze TTS 2 server (`python -m breeze_infer.api`, the `tts-local`
   container): `POST /v1/audio/speech` takes a multipart form (`text`,
   `instruction` for `design:` voices, `cfg_scale`, `seed`) and streams raw

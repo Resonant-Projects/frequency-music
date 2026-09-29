@@ -19,4 +19,16 @@ describe("chunkForLimit", () => {
     expect(chunks.join(" ")).toBe(long);
     for (const chunk of chunks) expect(chunk.length).toBeLessThanOrEqual(5000);
   });
+  test("a whitespace-free token over the limit is hard-split, losing no characters", () => {
+    const url = `https://example.test/${"abcdefghij".repeat(30)}`;
+    const paragraph = `See ${url} for the full table and ${url} again.`;
+    const chunks = chunkForLimit(paragraph, 100);
+    for (const chunk of chunks) expect(chunk.length).toBeLessThanOrEqual(100);
+    // Joining with nothing between the cut pieces reproduces every character
+    // (the cuts are inside tokens, so a joiner would add one).
+    expect(chunks.join("").replaceAll(" ", "")).toBe(
+      paragraph.replaceAll(" ", ""),
+    );
+    expect(chunks.some((chunk) => chunk.startsWith("https://"))).toBe(true);
+  });
 });
