@@ -800,6 +800,25 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_key", ["key"]),
 
+  // One row per rated blind-group member. Every rating is 0 to 5; `clean` is
+  // 5 when the take is artifact-free. The last required rating reveals the
+  // group in the same mutation (voiceRatings.submit).
+  voiceRatings: defineTable({
+    groupId: v.id("blindGroups"),
+    memberId: v.string(),
+    artifactId: v.id("audioArtifacts"),
+    ratings: v.object({
+      naturalness: v.number(),
+      prosody: v.number(),
+      clean: v.number(),
+      clarity: v.number(),
+      overall: v.number(),
+    }),
+    notes: v.optional(v.string()),
+    createdBy: v.union(v.id("users"), v.string()),
+    createdAt: v.number(),
+  }).index("by_groupId_memberId", ["groupId", "memberId"]),
+
   // ==========================================================================
   // WEEKLY BRIEFS - Synthesized output
   // ==========================================================================

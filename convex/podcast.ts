@@ -107,15 +107,26 @@ export const listFeedEpisodes = internalQuery({
         q.eq("access", "feed").eq("kind", "episode"),
       )
       .order("desc")
-      // Only ready rows count toward the limit; pending or failed episodes
-      // newer than the ready ones must not push them out of the window.
-      .filter((q) => q.eq(q.field("status"), "ready"))
+      // Only ready deliveries count toward the limit: pending or failed
+      // episodes newer than the ready ones must not push them out of the
+      // window, and neither may the feed-access WAV master every episode
+      // job also writes (with `limit: 1` a newer master would hide the
+      // delivery it belongs to).
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "ready"),
+          q.eq(q.field("role"), "delivery"),
+        ),
+      )
       .take(args.limit ?? FEED_LIMIT);
     const episodes: FeedEpisode[] = [];
     for (const row of rows) {
       // Defense in depth: a blind-group member is never served in the feed,
-      // whatever its access value says.
-      if (!row.storageId || row.blindGroupId) continue;
+      // whatever its access value says, and neither is a WAV master (only the
+      // delivery encode is an episode).
+      if (!row.storageId || row.blindGroupId || row.role !== "delivery") {
+        continue;
+      }
       const storageUrl = await ctx.storage.getUrl(row.storageId);
       const meta = await ctx.db.system.get(row.storageId);
       if (!storageUrl || !meta) continue;

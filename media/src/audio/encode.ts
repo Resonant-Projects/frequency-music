@@ -34,10 +34,13 @@ export async function encodeMp3(
   );
 }
 
+// 24-bit is the wave 0 default (the probe's master). Wave 1 masters are
+// 16-bit: Cloudflare caps one request body at 100 MB, and a 14-minute mono
+// master is ~121 MB at 24-bit against ~81 MB at 16-bit.
 export async function encodeWav(
   input: string,
   output: string,
-  channels: 1 | 2,
+  options: { channels: 1 | 2; bitDepth?: 16 | 24 },
   signal?: AbortSignal,
 ): Promise<void> {
   await runFfmpeg(
@@ -51,9 +54,9 @@ export async function encodeWav(
       "-ar",
       "48000",
       "-ac",
-      String(channels),
+      String(options.channels),
       "-c:a",
-      "pcm_s24le",
+      options.bitDepth === 16 ? "pcm_s16le" : "pcm_s24le",
       output,
     ],
     { signal },

@@ -201,6 +201,58 @@ describe("podcast.listFeedEpisodes", () => {
     const withBlind = await t.query(internal.podcast.listFeedEpisodes, {});
     expect(withBlind.map((row) => row.id)).toEqual([feedEpisodeId]);
   });
+
+  test("a feed episode's WAV master is never an episode; only its delivery is served", async () => {
+    const t = convexTest(schema, modules);
+    const insertReady = async (
+      fields: Pick<AudioArtifactInput, "role" | "title" | "contentHash"> & {
+        masterArtifactId?: AudioArtifactInput["masterArtifactId"];
+      },
+    ) => {
+      const artifactId = await t.mutation(
+        internal.audioArtifacts.createPending,
+        {
+          fields: { ...baseFields, kind: "episode", access: "feed", ...fields },
+        },
+      );
+      const storageId = await t.run((ctx) =>
+        ctx.storage.store(new Blob([fields.contentHash])),
+      );
+      await t.mutation(internal.audioArtifacts.attachStorage, {
+        artifactId,
+        storageId,
+      });
+      await t.mutation(internal.audioArtifacts.markReady, {
+        artifactId,
+        durationSecs: 12.4,
+        loudnessLufs: -16,
+        truePeakDbtp: -1,
+        mimeType: fields.role === "delivery" ? "audio/mpeg" : "audio/wav",
+      });
+      return artifactId;
+    };
+    // The master is newer than the delivery, so a role-blind feed would
+    // list it first.
+    const deliveryId = await insertReady({
+      role: "delivery",
+      title: "Episode",
+      contentHash: "h-episode-delivery",
+    });
+    await insertReady({
+      role: "masterNormalized",
+      title: "Episode",
+      contentHash: "h-episode-master",
+    });
+    const episodes = await t.query(internal.podcast.listFeedEpisodes, {});
+    expect(episodes.map((row) => row.id)).toEqual([deliveryId]);
+    expect(episodes[0]?.mimeType).toBe("audio/mpeg");
+    // The master must not consume the window either: with room for one row
+    // the delivery is still the row served.
+    const limited = await t.query(internal.podcast.listFeedEpisodes, {
+      limit: 1,
+    });
+    expect(limited.map((row) => row.id)).toEqual([deliveryId]);
+  });
 });
 
 function stubFeedEnv() {

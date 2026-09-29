@@ -26,7 +26,11 @@ TTS reaches the same voice in wave 2), `verifiedOn`.
 | `gemini-flash-tts` | Google, Gemini 3.1 Flash TTS | hosted | `google` |
 | `inworld-max` | Inworld TTS-1.5 Max | hosted | `inworld` |
 | `elevenlabs-v3` | ElevenLabs v3 | hosted | `elevenlabs` |
-| `breeze-2` | Breeze TTS 2 (3B), local, research licence | local on ai-5090-02 | OpenAI-compatible `baseUrl` |
+| `breeze-2` | Breeze TTS 2 (3B), local, research licence; spoken through Breeze's own server API (`BREEZE_TTS_BASE_URL`, multipart form, raw PCM back) | local on ai-5090-02 | `openai-compatible` (OpenClaw's side, wave 2) |
+
+`ANNOUNCER_VOICES` (`announcer-breeze`, `announcer-gemini`) are dedicated
+non-candidate voices for the shootout intro and labels (§4); they are never
+in `VOICE_IDS`, never rated, never the house voice.
 
 Exact model ids, voice ids, and pricing were researched on 2026-09-28; the
 plan's first task re-verifies each against the provider's current API and
@@ -59,20 +63,29 @@ stored in `chapters` with seconds.
 
 ## 4. Shootout
 
-Job `shootout`, input `{ passageArtifactId, voiceIds }`:
+Job `shootout`, input `{ passage, voiceIds, title }`:
 
 1. Render the passage with every listed voice. A hosted voice without a key
-   is skipped and logged. `tts-local` must be up before the job is enqueued;
-   the plan includes a smoke test of the local endpoint.
+   is skipped and logged. `tts-local` (Breeze's own server: `POST
+   /v1/audio/speech` multipart form, raw 24 kHz PCM back, 409 while busy,
+   503 while loading) should be up before the job is enqueued; the media
+   provider waits up to 5 minutes for `GET /health` to answer 200 (R27).
 2. Apply the umbrella loudness policy (−16 LUFS ±0.5, ≤ −1 dBTP on the
    decoded MP3). Trim leading and trailing silence to 300 ms.
 3. Complete with a `blindGroups` row: `purpose: "voiceShootout"`, members with
    opaque ids and labels "take one" through "take four" in shuffled order,
    `requiredRatings` = all members, no X member.
-4. Assemble the episode: an intro rendered once by the first hosted voice
-   with a key, spoken as "this intro voice is not a candidate"; then per take
-   a 0.5 s 1 kHz tone at −20 dBFS, a spoken "take N", 1 s silence, the take,
-   2 s silence. Episode chapters mark each take.
+4. Assemble the episode: an intro and the take labels rendered once by the
+   announcer voice; then per take a 0.5 s 1 kHz tone at −20 dBFS, a spoken
+   "take N", 1 s silence, the take, 2 s silence. Episode chapters mark each
+   take. The announcer is a dedicated non-candidate voice (R26/R28): a
+   configured catalog voice outside the job's candidates when one exists
+   (hosted preferred), otherwise the first configured `ANNOUNCER_VOICES`
+   entry, and the intro says "This intro voice is not a candidate." Only
+   when neither is configured does a candidate announce, and then the intro
+   is the truthful "You will hear N takes of the same passage. Rate each one
+   before the reveal." with no claim about the voice. The episode records
+   the announcer in `engine.params.announcerVoiceId`.
 
 Rating panel: a `/listen` route ships in this wave with only the shootout
 section: blind projection query, player, and a `voiceRatings` form per take
@@ -96,17 +109,24 @@ Event-driven, with crons only for reconciliation:
   `assembleOnDone: true` enqueues `assembleEpisode` in the same mutation, so
   readiness is guaranteed by the data, not by a timer.
 - Cron `reconcile-episodes` (Saturday 02:00 UTC) enqueues narration for any
-  brief in the last 14 days without a ready episode; `dedupeKey` makes this
-  safe.
+  brief in the last 14 days without a ready episode. `dedupeKey` does not
+  protect this (every script build hashes differently), so a brief with any
+  live narrate job (queued, claimed, done, parked) is skipped outright; only
+  a failed job or none proceeds (R19). A brief whose narration is done but
+  whose `assembleEpisode` is parked needs a manual re-enqueue.
 - Titles: `Weekly turn, week of <Monday date>` and `Thursday docket, <date>`.
 
 ## 6. Feed
 
 Umbrella §3.5 route. Feed metadata: title "Frequency Music, private", author
-"Freq", category "Music", `itunes:block yes`, `itunes:explicit false`,
-artwork at `web/public/podcast-cover.png` copied into storage once and
-referenced by URL. Episode GUIDs are artifact ids, newest first, capped at
-100. Only `access: "feed"` episode artifacts appear.
+"Freq", category "Music", `itunes:block yes`, `itunes:explicit false`.
+Artwork: wave 1 ships only the placeholder `web/public/podcast-cover.png`;
+the storage copy and `itunes:image` are deferred until Keith supplies
+artwork (R13), so Pocket Casts shows a default icon. Episode GUIDs are
+artifact ids, newest first, capped at 100. Only artifacts with `access:
+"feed"`, `kind: "episode"`, and `role: "delivery"` appear (R18): a WAV
+master is uploaded private and is never an episode, and the feed filters on
+role as defense in depth.
 
 ## 7. Error handling
 

@@ -16,6 +16,7 @@ describe("llm constants", () => {
     expect(TOKEN_BUDGETS.hypothesis_v1).toBe(6000);
     expect(TOKEN_BUDGETS.recipe_v1).toBe(16000);
     expect(TOKEN_BUDGETS.brief_v2).toBe(8000);
+    expect(TOKEN_BUDGETS.narration_v1).toBe(6000);
   });
 
   test("isGroqModel routes on the groq/ prefix", () => {
