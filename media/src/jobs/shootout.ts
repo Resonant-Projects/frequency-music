@@ -4,7 +4,11 @@
 // skipped and reported; fewer than two takes is not a shootout.
 import { join } from "node:path";
 import { fnv1a64Hex } from "../../../convex/shared/stableHash";
-import { type VoiceEntry, voiceById } from "../../../convex/shared/voices";
+import {
+  VOICE_CATALOG,
+  type VoiceEntry,
+  voiceById,
+} from "../../../convex/shared/voices";
 import { concatWithGaps, trimEdges } from "../audio/concat";
 import { encodeMp3 } from "../audio/encode";
 import {
@@ -53,6 +57,33 @@ export function shuffleWithSeed<T>(items: readonly T[], seed: string): T[] {
     [out[i], out[j]] = [out[j]!, out[i]!];
   }
   return out;
+}
+
+// R26: the intro and labels come from a configured catalog voice that is not
+// competing, so hearing it reveals nothing about a take. Hosted voices are
+// preferred as the announcer. Only when every configured voice is a
+// candidate does a candidate announce, and then the intro must not claim
+// otherwise.
+export function chooseIntroVoice(
+  candidates: readonly VoiceEntry[],
+  configuredCatalog: readonly VoiceEntry[],
+): { voice: VoiceEntry; isCandidate: boolean } {
+  const candidateIds = new Set(candidates.map((voice) => voice.id));
+  const bystanders = configuredCatalog.filter(
+    (voice) => !candidateIds.has(voice.id),
+  );
+  const preferHosted = (voices: readonly VoiceEntry[]) =>
+    voices.find((voice) => voice.runsOn === "hosted") ?? voices[0];
+  const bystander = preferHosted(bystanders);
+  if (bystander) return { voice: bystander, isCandidate: false };
+  const candidate = preferHosted(candidates);
+  if (!candidate) throw new Error("chooseIntroVoice needs a candidate");
+  return { voice: candidate, isCandidate: true };
+}
+
+export function introText(takeCount: number, isCandidate: boolean): string {
+  const body = `You will hear ${takeCount} takes of the same passage. Rate each one before the reveal.`;
+  return isCandidate ? body : `This intro voice is not a candidate. ${body}`;
 }
 
 const TONE_SECS = 0.5;
@@ -142,18 +173,28 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
     configured.map((voice) => voice.id),
     ctx.job.jobId,
   );
-  // The intro voice is never a candidate's reveal: a hosted voice where one
-  // is configured, since local voices are the ones most likely on trial.
-  const introVoice =
-    configured.find((voice) => voice.runsOn === "hosted") ?? configured[0]!;
-  const introSynth = synthFor(introVoice);
-  const intro = join(ctx.workDir, "intro.wav");
-  await introSynth.synthesize(
-    `This intro voice is not a candidate. You will hear ${order.length} takes of the same passage. Rate each one before the reveal.`,
-    introVoice,
-    intro,
-    ctx.signal,
+  const { voice: introVoice, isCandidate } = chooseIntroVoice(
+    configured,
+    VOICE_CATALOG.filter(isConfigured),
   );
+  const introSynth = synthFor(introVoice);
+  // The announcer's raw level is whatever its provider emits, so the intro
+  // and every label are normalized to the spoken target like the takes.
+  // Otherwise quiet announcements sit near the episode's relative gate and
+  // its final loudness becomes unpredictable.
+  const speak = async (text: string, tag: string): Promise<string> => {
+    const raw = join(ctx.workDir, `${tag}-raw.wav`);
+    await introSynth.synthesize(text, introVoice, raw, ctx.signal);
+    const out = join(ctx.workDir, `${tag}.wav`);
+    await normalize(
+      raw,
+      out,
+      { targetLufs: LOUDNESS_TARGETS.spoken },
+      ctx.signal,
+    );
+    return out;
+  };
+  const intro = await speak(introText(order.length, isCandidate), "intro");
   const tone = join(ctx.workDir, "tone.wav");
   await synthTone(
     tone,
@@ -166,13 +207,7 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
   // reports -inf for pure silence, which measure() cannot read.
   const slots: string[] = [];
   for (const [index, voiceId] of order.entries()) {
-    const label = join(ctx.workDir, `label-${index}.wav`);
-    await introSynth.synthesize(
-      `${spokenLabel(index)}.`,
-      introVoice,
-      label,
-      ctx.signal,
-    );
+    const label = await speak(`${spokenLabel(index)}.`, `label-${index}`);
     const announce = join(ctx.workDir, `announce-${index}.wav`);
     await concatWithGaps([tone, label], announce, 0, {}, ctx.signal);
     const slot = join(ctx.workDir, `slot-${index}.wav`);

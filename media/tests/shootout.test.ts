@@ -9,8 +9,11 @@ import {
   test,
   vi,
 } from "vite-plus/test";
+import { VOICE_CATALOG, voiceById } from "../../convex/shared/voices";
 import { synthTone } from "../src/audio/synth";
 import {
+  chooseIntroVoice,
+  introText,
   shootoutHandler,
   shuffleWithSeed,
   spokenLabel,
@@ -48,6 +51,122 @@ describe("shootout job", () => {
     expect(spokenLabel(3)).toBe("take four");
     // Matches the effect's ORDINALS table (one..eight) exactly.
     expect(spokenLabel(7)).toBe("take eight");
+  });
+
+  test("R26: the intro voice is a configured non-candidate when one exists, hosted first", () => {
+    const [gemini, inworld, elevenlabs, breeze] = VOICE_CATALOG;
+    // Two candidates, two configured bystanders: the hosted bystander wins
+    // even when the local one is listed first.
+    const chosen = chooseIntroVoice(
+      [inworld!, elevenlabs!],
+      [breeze!, inworld!, gemini!, elevenlabs!],
+    );
+    expect(chosen).toEqual({ voice: gemini, isCandidate: false });
+    expect(introText(2, chosen.isCandidate)).toBe(
+      "This intro voice is not a candidate. You will hear 2 takes of the same passage. Rate each one before the reveal.",
+    );
+    // Only a local bystander: still preferred over any candidate.
+    expect(
+      chooseIntroVoice(
+        [inworld!, elevenlabs!],
+        [inworld!, elevenlabs!, breeze!],
+      ).voice.id,
+    ).toBe("breeze-2");
+    // The whole configured catalog competes: a candidate announces (first
+    // hosted one) and the intro must not claim it is a bystander.
+    const fallback = chooseIntroVoice(
+      [breeze!, inworld!, elevenlabs!],
+      [breeze!, inworld!, elevenlabs!],
+    );
+    expect(fallback).toEqual({ voice: inworld, isCandidate: true });
+    expect(introText(3, fallback.isCandidate)).toBe(
+      "You will hear 3 takes of the same passage. Rate each one before the reveal.",
+    );
+    // No hosted voice anywhere: the first candidate announces.
+    expect(chooseIntroVoice([breeze!], [breeze!])).toEqual({
+      voice: breeze,
+      isCandidate: true,
+    });
+  });
+
+  test("R26: a configured catalog voice outside voiceIds renders the intro and labels", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "k");
+    vi.stubEnv("INWORLD_API_KEY", "k");
+    vi.stubEnv("ELEVENLABS_API_KEY", "k");
+    const synth = vi.fn(
+      async (
+        text: string,
+        _voice: { id: string },
+        out: string,
+        signal?: AbortSignal,
+      ) => {
+        await synthTone(
+          out,
+          { hz: 440, seconds: Math.max(1, Math.min(3, text.length / 40)) },
+          signal,
+        );
+      },
+    );
+    let mintedCount = 0;
+    const tools: ToolClient = {
+      generateAudioUploadUrl: vi.fn(async () => {
+        mintedCount += 1;
+        return { artifactId: `a${mintedCount}`, uploadUrl: "http://u" };
+      }),
+      attachAudioStorage: vi.fn(async () => null),
+      uploadBytes: vi.fn(async () => ({ storageId: "s" })),
+    };
+    const result = await shootoutHandler(
+      {
+        job: {
+          jobId: "job-8",
+          kind: "shootout",
+          leaseToken: "L",
+          leaseExpiresAt: Date.now() + 60_000,
+          attempts: 0,
+          input: {
+            kind: "shootout",
+            passage: ["One paragraph."],
+            voiceIds: ["inworld-max", "elevenlabs-v3"],
+            title: "Voice shootout",
+            rendererVersion: "0.2.0",
+          },
+        },
+        workDir: workDir("shoot-intro-"),
+        tools,
+        rendererVersion: "0.2.0",
+        signal: new AbortController().signal,
+      },
+      { synthesize: synth },
+    );
+    expect(result.skippedVoiceIds).toEqual([]);
+    expect(result.takes.map((take) => take.voiceId).toSorted()).toEqual([
+      "elevenlabs-v3",
+      "inworld-max",
+    ]);
+    const calls = synth.mock.calls.map(([text, voice]) => ({
+      text,
+      voiceId: voice.id,
+    }));
+    const intro = calls.find((call) => call.text.includes("You will hear"));
+    expect(intro).toEqual({
+      text: "This intro voice is not a candidate. You will hear 2 takes of the same passage. Rate each one before the reveal.",
+      voiceId: "gemini-flash-tts",
+    });
+    expect(
+      calls.filter((call) => /^take (one|two)\.$/.test(call.text)),
+    ).toEqual([
+      { text: "take one.", voiceId: "gemini-flash-tts" },
+      { text: "take two.", voiceId: "gemini-flash-tts" },
+    ]);
+    // The bystander never renders the passage.
+    expect(
+      calls
+        .filter((call) => call.text === "One paragraph.")
+        .map((c) => c.voiceId)
+        .toSorted(),
+    ).toEqual(["elevenlabs-v3", "inworld-max"]);
+    expect(voiceById(intro!.voiceId).runsOn).toBe("hosted");
   });
 
   test("skips unconfigured voices, renders the rest, assembles an episode, returns member order", async () => {
@@ -130,6 +249,23 @@ describe("shootout job", () => {
       { synthesize: synth },
     );
     expect(result.kind).toBe("shootout");
+    // R26 fallback: every configured catalog voice is a candidate here, so
+    // the first configured hosted candidate announces and the intro does
+    // not claim to be a bystander.
+    const calls = synth.mock.calls.map(([text, voice]) => ({
+      text,
+      voiceId: voice.id,
+    }));
+    expect(calls.find((call) => call.text.includes("You will hear"))).toEqual({
+      text: "You will hear 2 takes of the same passage. Rate each one before the reveal.",
+      voiceId: "inworld-max",
+    });
+    expect(
+      calls.filter((call) => /^take (one|two)\.$/.test(call.text)),
+    ).toEqual([
+      { text: "take one.", voiceId: "inworld-max" },
+      { text: "take two.", voiceId: "inworld-max" },
+    ]);
     expect(result.skippedVoiceIds.toSorted()).toEqual([
       "breeze-2",
       "gemini-flash-tts",
