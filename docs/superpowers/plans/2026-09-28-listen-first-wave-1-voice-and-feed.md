@@ -2429,6 +2429,7 @@ Tasks 1–11a landed on `t3code/listen-first-wave-1` (base `1040e38`); Task 11 h
 - R24: Tasks 9 and 10 ran concurrently on disjoint paths with explicit-path staging (one file rename was swept into a neighbouring commit as the cost).
 - R25: the plan's hand-written server adapter is dropped; `tts-local` runs Breeze's upstream API and the media provider speaks it (multipart form, raw PCM, 409 backoff); the catalog provider is `breeze`, configured by `BREEZE_TTS_BASE_URL` alone.
 - R26: the intro voice is the first configured catalog voice not in `input.voiceIds` (hosted preferred); when none exists a candidate announces and the intro drops the "not a candidate" claim.
-- R27: Breeze treats 503 (model loading) like 409 (busy backoff), and the first synthesis in a process polls `GET /health` every 10 s for up to 5 minutes; no compose `depends_on` on media, because `tts-local` is stopped deliberately when a hosted voice wins.
+- R27: Breeze treats 503 (model loading) like 409 (busy backoff), and every synthesis first polls `GET /health` every 10 s for up to 5 minutes (R30); no compose `depends_on` on media, because `tts-local` is stopped deliberately when a hosted voice wins.
 - R28: `ANNOUNCER_VOICES` (`announcer-breeze`, `announcer-gemini`) are dedicated non-candidate announcer voices, chosen after a catalog bystander and before the R26 candidate fallback; the episode records `engine.params.announcerVoiceId`.
 - R29: `assembleEpisodeJobInputZ` gains optional `refs`; the narrate effect forwards the narration's refs so an episode carries its `weeklyBriefId`.
+- R30: the Breeze health gate runs before every synthesis rather than once per process, so a `tts-local` restarted cold while the worker runs is waited for.
