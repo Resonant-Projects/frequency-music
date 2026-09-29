@@ -244,6 +244,14 @@ export async function applyMediaJobResult(
           });
         }
       }
+      // Mirrors the handler's own rule: one take is not a comparison, and a
+      // one-member blind group would reveal after a single rating.
+      if (result.takes.length < 2) {
+        throw new ConvexError({
+          code: "INVALID_ARGUMENT",
+          message: `a shootout needs at least two takes, got ${result.takes.length}`,
+        });
+      }
       // Masters first: they are provenance, never members or feed rows.
       await readyArtifacts(ctx, [
         ...result.takes.map((take) => take.master),

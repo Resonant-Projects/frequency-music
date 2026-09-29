@@ -331,6 +331,23 @@ describe("episodes", () => {
     expect(job.input.rendererVersion).toBe("0.2.0");
   });
 
+  test("enqueueShootout with rerun queues a fresh shootout after a done one", async () => {
+    const t = convexTest(schema, modules);
+    const first = await t.action(internal.episodes.enqueueShootout, {});
+    await t.run((ctx) => ctx.db.patch(first.jobId, { status: "done" }));
+    // Without rerun the identical input is a dedupe hit on the done job.
+    const repeat = await t.action(internal.episodes.enqueueShootout, {});
+    expect(repeat).toEqual({ jobId: first.jobId, created: false });
+    const rerun = await t.action(internal.episodes.enqueueShootout, {
+      rerun: true,
+    });
+    expect(rerun.created).toBe(true);
+    expect(rerun.jobId).not.toBe(first.jobId);
+    const job = await t.run((ctx) => ctx.db.get(rerun.jobId));
+    if (job?.input.kind !== "shootout") throw new Error("unreachable");
+    expect(job.input.runId).toBeTruthy();
+  });
+
   test("a queued shootout is claimed after a narrate job enqueued later", async () => {
     const t = convexTest(schema, modules);
     const shootout = await t.action(internal.episodes.enqueueShootout, {});

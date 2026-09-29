@@ -103,6 +103,9 @@ export const shootoutJobInputZ = z.object({
   voiceIds: z.array(z.string().min(1)).min(1),
   title: z.string().min(1),
   rendererVersion: z.string().min(1),
+  // Set only by an explicit rerun: a done shootout with identical input is a
+  // dedupe hit, so a fresh runId is what lets the same comparison run again.
+  runId: z.string().min(1).optional(),
 });
 
 export const assembleEpisodeJobInputZ = z.object({

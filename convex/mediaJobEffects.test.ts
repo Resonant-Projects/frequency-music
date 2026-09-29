@@ -667,6 +667,44 @@ describe("media job effects", () => {
     await expectUntouched(t, jobId);
   });
 
+  test("shootout refuses a single take even when the other voices were skipped", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await claimed(t, shootoutInput);
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
+      t,
+      jobId,
+      "episode",
+      "Shootout",
+    );
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes: [
+            {
+              voiceId: "inworld-max",
+              artifact: measured(a),
+              master: measured(aMaster),
+            },
+          ],
+          skippedVoiceIds: ["breeze-2", "gemini-flash-tts"],
+          episode: measured(episode),
+          episodeMaster: measured(episodeMaster),
+          memberOrder: ["inworld-max"],
+        },
+      }),
+    ).rejects.toThrow(/at least two takes, got 1/);
+    await expectUntouched(t, jobId);
+  });
+
   test("shootout refuses a take pair of the wrong artifact kind", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken } = await claimed(t, shootoutInput);

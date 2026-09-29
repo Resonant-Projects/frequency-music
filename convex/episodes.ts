@@ -180,9 +180,11 @@ export const reconcile = internalAction({
 // catalog so takes stay comparable; SHOOTOUT_PRIORITY keeps it behind
 // episodes.
 export const enqueueShootout = internalAction({
-  args: {},
+  // `rerun: true` renders again after a done shootout (for example once a
+  // missing provider key is configured); without it a repeat is a dedupe hit.
+  args: { rerun: v.optional(v.boolean()) },
   returns: v.object({ jobId: v.id("mediaJobs"), created: v.boolean() }),
-  handler: async (ctx): Promise<EnqueueOutcome> => {
+  handler: async (ctx, args): Promise<EnqueueOutcome> => {
     const passage = await ctx.runQuery(
       internal.narrationPrompt.calibrationPassage,
       {},
@@ -194,6 +196,7 @@ export const enqueueShootout = internalAction({
         voiceIds: [...VOICE_IDS],
         title: "Voice shootout",
         rendererVersion: RENDERER_VERSION_FOR_JOBS,
+        ...(args.rerun ? { runId: new Date().toISOString() } : {}),
       },
       priority: SHOOTOUT_PRIORITY,
     });
