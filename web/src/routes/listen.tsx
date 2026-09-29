@@ -33,16 +33,20 @@ const RATING_LABELS: Record<RatingKey, string> = {
 };
 
 type MemberForm = Record<RatingKey, string> & { notes: string };
+// Ratings start empty so every score is a deliberate choice; a blank field
+// is refused rather than read as 0 (Number("") is 0).
 const EMPTY_FORM: MemberForm = {
-  naturalness: "3",
-  prosody: "3",
-  clean: "3",
-  clarity: "3",
-  overall: "3",
+  naturalness: "",
+  prosody: "",
+  clean: "",
+  clarity: "",
+  overall: "",
   notes: "",
 };
+const RATING_REQUIRED = "Every rating needs a whole number from 0 to 5.";
 
 function parseRating(raw: string): number | null {
+  if (raw.trim() === "") return null;
   const value = Number(raw);
   return Number.isInteger(value) && value >= 0 && value <= 5 ? value : null;
 }
@@ -180,10 +184,7 @@ function ShootoutGroup(props: {
     for (const key of RATING_KEYS) {
       const value = parseRating(values[key]);
       if (value === null) {
-        props.onNotice(
-          `${RATING_LABELS[key]} must be a whole number from 0 to 5.`,
-          true,
-        );
+        props.onNotice(`${RATING_REQUIRED} (${RATING_LABELS[key]})`, true);
         return;
       }
       parsed[key] = value;
@@ -250,6 +251,8 @@ function ShootoutGroup(props: {
                           min="0"
                           max="5"
                           step="1"
+                          required
+                          placeholder="0-5"
                           inputmode="numeric"
                           value={formFor(member.memberId)[key]}
                           onInput={(event) =>
