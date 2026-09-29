@@ -164,6 +164,23 @@ export async function applyMediaJobResult(
         }
         byVoice.set(take.voiceId, take.artifact.artifactId);
       }
+      // Takes and skips together must be exactly the requested voices, so a
+      // completion can never publish an unrequested voice or silently drop one.
+      const requested = new Set(job.input.voiceIds);
+      const covered = [
+        ...result.takes.map((take) => take.voiceId),
+        ...result.skippedVoiceIds,
+      ];
+      if (
+        covered.length !== requested.size ||
+        new Set(covered).size !== covered.length ||
+        covered.some((voiceId) => !requested.has(voiceId))
+      ) {
+        throw new ConvexError({
+          code: "INVALID_ARGUMENT",
+          message: `shootout takes and skips must cover the requested voices exactly once: requested ${[...requested].join(", ")}; got ${covered.join(", ")}`,
+        });
+      }
       const seen = new Set<string>();
       const members = result.memberOrder.map((voiceId, index) => {
         const artifactId = byVoice.get(voiceId);
@@ -200,14 +217,26 @@ export async function applyMediaJobResult(
         ...result.takes.map((take) => ({
           master: take.master,
           delivery: take.artifact,
+          kind: "shootoutTake" as const,
         })),
-        { master: result.episodeMaster, delivery: result.episode },
+        {
+          master: result.episodeMaster,
+          delivery: result.episode,
+          kind: "episode" as const,
+        },
       ];
       for (const pair of pairs) {
-        const { delivery } = requireMasterDeliveryPair(
-          await ownedArtifacts(ctx, job, [pair.master, pair.delivery]),
-          result.kind,
-        );
+        const rows = await ownedArtifacts(ctx, job, [
+          pair.master,
+          pair.delivery,
+        ]);
+        if (rows.some((row) => row.kind !== pair.kind)) {
+          throw new ConvexError({
+            code: "INVALID_ARGUMENT",
+            message: `shootout ${pair.kind} pair holds an artifact of another kind`,
+          });
+        }
+        const { delivery } = requireMasterDeliveryPair(rows, result.kind);
         if (delivery._id !== pair.delivery.artifactId) {
           throw new ConvexError({
             code: "INVALID_ARGUMENT",

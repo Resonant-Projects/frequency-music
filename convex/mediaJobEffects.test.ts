@@ -626,6 +626,87 @@ describe("media job effects", () => {
     await expectUntouched(t, jobId);
   });
 
+  test("shootout refuses takes and skips that do not cover the requested voices", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await claimed(t, shootoutInput);
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
+      t,
+      jobId,
+      "episode",
+      "Shootout",
+    );
+    const complete = (voiceId: string, skippedVoiceIds: string[]) =>
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes: [
+            { voiceId, artifact: measured(a), master: measured(aMaster) },
+          ],
+          skippedVoiceIds,
+          episode: measured(episode),
+          episodeMaster: measured(episodeMaster),
+          memberOrder: [voiceId],
+        },
+      });
+    // A requested voice silently dropped.
+    await expect(complete("inworld-max", ["breeze-2"])).rejects.toThrow(
+      /cover the requested voices exactly once/,
+    );
+    // A voice nobody requested.
+    await expect(
+      complete("elevenlabs-v3", ["breeze-2", "gemini-flash-tts"]),
+    ).rejects.toThrow(/cover the requested voices exactly once/);
+    await expectUntouched(t, jobId);
+  });
+
+  test("shootout refuses a take pair of the wrong artifact kind", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await claimed(t, shootoutInput);
+    // The take is rendered as an episode pair: roles and pairing are valid,
+    // the kind is not.
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "episode",
+      "inworld",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
+      t,
+      jobId,
+      "episode",
+      "Shootout",
+    );
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes: [
+            {
+              voiceId: "inworld-max",
+              artifact: measured(a),
+              master: measured(aMaster),
+            },
+          ],
+          skippedVoiceIds: ["breeze-2", "gemini-flash-tts"],
+          episode: measured(episode),
+          episodeMaster: measured(episodeMaster),
+          memberOrder: ["inworld-max"],
+        },
+      }),
+    ).rejects.toThrow(/shootoutTake pair holds an artifact of another kind/);
+    await expectUntouched(t, jobId);
+  });
+
   test("assembleEpisode marks the episode ready on the feed with the job's title and chapters", async () => {
     const t = convexTest(schema, modules);
     // The narration this job assembles, as the narrate effect left it.
