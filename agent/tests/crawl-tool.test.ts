@@ -15,6 +15,8 @@ describe("self-hosted Crawl4AI source text", () => {
                 status_code: 200,
                 markdown: {
                   raw_markdown: "# Measured modes\n" + "e".repeat(35_000),
+                  // Crawl4AI's default generator returns "" without a filter.
+                  fit_markdown: "",
                 },
               },
             ],

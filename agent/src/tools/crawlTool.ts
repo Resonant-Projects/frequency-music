@@ -1,7 +1,10 @@
+import {
+  SCOUTED_TEXT_MAX_CHARS,
+  SCOUTED_TEXT_MIN_CHARS,
+} from "../../../convex/shared/agentContract.js";
 import { redactError } from "../shared/redactError.js";
 
 const DEFAULT_CRAWL4AI_URL = "https://crawl4ai.rproj.art";
-const MAX_SCOUT_TEXT_CHARS = 30_000;
 const CRAWL_TIMEOUT_MS = 40_000;
 
 type FetchLike = (
@@ -51,6 +54,25 @@ function isPublicPage(rawUrl: string): boolean {
   }
 }
 
+// Crawl4AI returns fit_markdown as "" unless a content filter ran, so an empty
+// filtered view must fall through to the full page markdown.
+function markdownText(markdown: unknown): string {
+  if (typeof markdown === "string") return markdown.trim();
+  if (!markdown || typeof markdown !== "object") return "";
+  for (const key of ["fit_markdown", "raw_markdown"] as const) {
+    const value =
+      key in markdown ? (markdown as Record<string, unknown>)[key] : "";
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+// Never end on a lone high surrogate: Convex rejects ill-formed strings.
+function truncate(text: string, max: number): string {
+  const cut = text.slice(0, max);
+  return /[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut;
+}
+
 export function createCrawlPage(
   deps: {
     apiToken?: string;
@@ -90,8 +112,10 @@ export function createCrawlPage(
         }),
         signal: controller.signal,
       });
-      if (!response.ok)
+      if (!response.ok) {
+        await response.body?.cancel().catch(() => undefined);
         throw new Error(`Crawl4AI returned HTTP ${response.status}`);
+      }
       const payload: unknown = await response.json();
       const rawResults =
         payload && typeof payload === "object" && "results" in payload
@@ -111,31 +135,16 @@ export function createCrawlPage(
         result.status_code >= 400
       )
         return null;
-      const markdown = "markdown" in result ? result.markdown : undefined;
-      const text =
-        typeof markdown === "string"
-          ? markdown
-          : markdown &&
-              typeof markdown === "object" &&
-              "fit_markdown" in markdown &&
-              typeof markdown.fit_markdown === "string"
-            ? markdown.fit_markdown
-            : markdown &&
-                typeof markdown === "object" &&
-                "raw_markdown" in markdown &&
-                typeof markdown.raw_markdown === "string"
-              ? markdown.raw_markdown
-              : "";
-      const clean = text.trim();
+      const clean = markdownText("markdown" in result ? result.markdown : "");
       if (
-        clean.length < 100 ||
+        clean.length < SCOUTED_TEXT_MIN_CHARS ||
         /^(?:just a moment|attention required|access denied|captcha)\b/i.test(
           clean.replace(/^#+\s*/, ""),
         )
       )
         return null;
       return {
-        text: clean.slice(0, MAX_SCOUT_TEXT_CHARS),
+        text: truncate(clean, SCOUTED_TEXT_MAX_CHARS),
         provider: "crawl4ai",
       };
     } catch (error) {
