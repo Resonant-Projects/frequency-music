@@ -329,6 +329,7 @@ describe("federated source-scout search", () => {
                 title: "Paper without abstract",
                 doi: "https://doi.org/10.3333/noabstract",
                 publication_year: 2022,
+                publication_date: "2022-02-30",
               },
             ],
           })

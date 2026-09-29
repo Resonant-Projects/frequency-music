@@ -98,9 +98,11 @@ function doiUrl(value: unknown): string | undefined {
 // would become a fabricated January 1 timestamp on the Source.
 function calendarDate(value: unknown): string | undefined {
   const date = text(value);
-  return date &&
-    /^\d{4}-\d{2}-\d{2}$/.test(date) &&
-    Number.isFinite(Date.parse(date))
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
+  // Date.parse rolls impossible days over (2014-02-30 -> March 2); reject them.
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === date
     ? date
     : undefined;
 }
