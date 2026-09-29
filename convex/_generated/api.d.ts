@@ -50,6 +50,7 @@ import type * as hypotheses from "../hypotheses.js";
 import type * as hypothesesInternal from "../hypothesesInternal.js";
 import type * as inbox from "../inbox.js";
 import type * as ingest from "../ingest.js";
+import type * as listen from "../listen.js";
 import type * as listening from "../listening.js";
 import type * as llm from "../llm.js";
 import type * as llmNode from "../llmNode.js";
@@ -146,6 +147,7 @@ declare const fullApi: ApiFromModules<{
   hypothesesInternal: typeof hypothesesInternal;
   inbox: typeof inbox;
   ingest: typeof ingest;
+  listen: typeof listen;
   listening: typeof listening;
   llm: typeof llm;
   llmNode: typeof llmNode;
