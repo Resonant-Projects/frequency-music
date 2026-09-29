@@ -20,13 +20,13 @@ export const VOICE_CATALOG: readonly VoiceEntry[] = [
   {
     id: "gemini-flash-tts",
     provider: "google",
-    model: "gemini-3.1-flash-tts",
+    model: "gemini-3.1-flash-tts-preview",
     voiceId: "Charon",
     runsOn: "hosted",
     licence: "Google Gemini API terms",
     openclawProvider: "google",
     keyEnvVar: "GEMINI_API_KEY",
-    verifiedOn: "2026-09-28",
+    verifiedOn: "2026-09-29",
   },
   {
     id: "inworld-max",
@@ -37,7 +37,7 @@ export const VOICE_CATALOG: readonly VoiceEntry[] = [
     licence: "Inworld API terms",
     openclawProvider: "inworld",
     keyEnvVar: "INWORLD_API_KEY",
-    verifiedOn: "2026-09-28",
+    verifiedOn: "2026-09-29",
   },
   {
     id: "elevenlabs-v3",
@@ -48,7 +48,7 @@ export const VOICE_CATALOG: readonly VoiceEntry[] = [
     licence: "ElevenLabs API terms",
     openclawProvider: "elevenlabs",
     keyEnvVar: "ELEVENLABS_API_KEY",
-    verifiedOn: "2026-09-28",
+    verifiedOn: "2026-09-29",
   },
   // The local voice speaks Breeze TTS 2's own server API (media/src/tts/
   // breeze.ts). openclawProvider names OpenClaw's side for wave 2 and is not
@@ -95,13 +95,13 @@ export const ANNOUNCER_VOICES: readonly VoiceEntry[] = [
   {
     id: "announcer-gemini",
     provider: "google",
-    model: "gemini-3.1-flash-tts",
+    model: "gemini-3.1-flash-tts-preview",
     voiceId: "Kore",
     runsOn: "hosted",
     licence: "Google Gemini API terms",
     openclawProvider: "google",
     keyEnvVar: "GEMINI_API_KEY",
-    verifiedOn: "2026-09-28",
+    verifiedOn: "2026-09-29",
   },
 ];
 
