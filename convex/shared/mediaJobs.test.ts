@@ -7,6 +7,7 @@ import {
   mediaJobDedupeKey,
   mediaJobInputZ,
   mediaJobResultZ,
+  narrationScriptZ,
   spokenLabel,
 } from "./mediaJobs";
 
@@ -116,6 +117,20 @@ describe("media job contracts", () => {
       mediaJobInputZ.safeParse({
         ...assemble,
         refs: { weeklyBriefId: "wb1" },
+      }).success,
+    ).toBe(true);
+  });
+
+  test("narration script chapters must start inside the script", () => {
+    const script = {
+      paragraphs: ["One.", "Two."],
+      chapters: [{ title: "Late", startParagraph: 2 }],
+    };
+    expect(narrationScriptZ.safeParse(script).success).toBe(false);
+    expect(
+      narrationScriptZ.safeParse({
+        ...script,
+        chapters: [{ title: "Last", startParagraph: 1 }],
       }).success,
     ).toBe(true);
   });

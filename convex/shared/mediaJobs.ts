@@ -75,10 +75,24 @@ export const scriptChapterZ = z.object({
   title: z.string().min(1),
   startParagraph: z.number().int().min(0),
 });
-export const narrationScriptZ = z.object({
-  paragraphs: z.array(z.string().min(1)).min(1),
-  chapters: z.array(scriptChapterZ),
-});
+// A chapter must start at a paragraph the script has; the renderer would
+// otherwise have no offset for it.
+export const narrationScriptZ = z
+  .object({
+    paragraphs: z.array(z.string().min(1)).min(1),
+    chapters: z.array(scriptChapterZ),
+  })
+  .superRefine((script, ctx) => {
+    script.chapters.forEach((chapter, index) => {
+      if (chapter.startParagraph >= script.paragraphs.length) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["chapters", index, "startParagraph"],
+          message: `chapter "${chapter.title}" starts at paragraph ${chapter.startParagraph}; the script has ${script.paragraphs.length}`,
+        });
+      }
+    });
+  });
 export type NarrationScript = z.infer<typeof narrationScriptZ>;
 
 export const narrateJobInputZ = z.object({
