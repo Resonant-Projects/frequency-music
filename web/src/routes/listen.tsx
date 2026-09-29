@@ -14,7 +14,11 @@ import {
   UIInput,
   UINotice,
 } from "../components/ui";
-import { createMutation, createQuery } from "../integrations/convex";
+import {
+  createMutation,
+  createQuery,
+  createQueryWithStatus,
+} from "../integrations/convex";
 
 const RATING_KEYS = [
   "naturalness",
@@ -86,12 +90,32 @@ export function ListenPage() {
   onMount(() => {
     document.title = "Listen — Frequency Music";
   });
-  const shootouts = createQuery(api.listen.shootouts, () => ({}));
-  const houseVoice = createQuery(api.settings.houseVoice, () => ({}));
+  // Status-bearing queries: a failed query must read as a failure, not as
+  // "no shootouts yet" or "not chosen".
+  const shootouts = createQueryWithStatus(api.listen.shootouts, () => ({}));
+  const houseVoice = createQueryWithStatus(api.settings.houseVoice, () => ({}));
   const [groupId, setGroupId] = createSignal<Id<"blindGroups"> | null>(null);
   const selected = createMemo(
-    () => groupId() ?? shootouts()?.[0]?.groupId ?? null,
+    () => groupId() ?? shootouts.data()?.[0]?.groupId ?? null,
   );
+  const shootoutsStatus = () => {
+    if (shootouts.isLoading()) return "Loading shootouts...";
+    if (shootouts.error() || (shootouts.data() ?? []).length > 0) return null;
+    return "No shootouts yet.";
+  };
+  const shootoutsError = () =>
+    shootouts.error()
+      ? `Unable to load shootouts: ${shootouts.error()?.message}`
+      : null;
+  const houseVoiceLabel = () => {
+    if (houseVoice.isLoading()) return "loading...";
+    if (houseVoice.error()) return "unavailable";
+    return houseVoice.data()?.voiceId ?? "not chosen";
+  };
+  const houseVoiceError = () =>
+    houseVoice.error()
+      ? `Unable to load the house voice: ${houseVoice.error()?.message}`
+      : null;
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const report = (text: string, isError = false) => {
@@ -108,19 +132,16 @@ export function ListenPage() {
           after the last rating. Choosing the house voice is a separate,
           explicit step.
         </p>
-        <p class={bannerClass}>
-          House voice: {houseVoice()?.voiceId ?? "not chosen"}
-        </p>
+        <p class={bannerClass}>House voice: {houseVoiceLabel()}</p>
+        <UINotice error={houseVoiceError()} />
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Shootouts</h2>
-        <Show
-          when={(shootouts()?.length ?? 0) > 0}
-          fallback={<p class={proseClass}>No shootouts yet.</p>}
-        >
+        <UINotice status={shootoutsStatus()} error={shootoutsError()} />
+        <Show when={(shootouts.data()?.length ?? 0) > 0}>
           <div class={listClass}>
-            <For each={shootouts() ?? []}>
+            <For each={shootouts.data() ?? []}>
               {(row) => (
                 <button
                   type="button"
