@@ -8,12 +8,15 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalAction, internalQuery } from "./_generated/server";
+import { NARRATE_PRIORITY } from "./mediaJobs";
 import { NARRATION_PROMPT_VERSION } from "./narrationPrompt";
 import { HOUSE_VOICE_KEY } from "./settings";
 import { RENDERER_VERSION_FOR_JOBS } from "./shared/mediaJobs";
 import { VOICE_IDS } from "./shared/voices";
 
-const READY_EPISODE_SCAN = 200;
+// claimNext takes the lowest priority first, so a shootout sits above the
+// narrate default (NARRATE_PRIORITY, 0) to stay behind episode work.
+export const SHOOTOUT_PRIORITY = 1;
 
 type EnqueueOutcome = { jobId: Id<"mediaJobs">; created: boolean };
 
@@ -36,18 +39,24 @@ export function pickBriefsNeedingNarration(args: {
 }
 
 // Only a ready delivery counts as an episode: the WAV master is uploaded
-// private and is never what the feed serves.
+// private and is never what the feed serves. An episode for a brief is
+// always created after the brief, so the index range starts at the brief's
+// creation time and no fixed window can miss it.
 export const hasReadyEpisodeForBrief = internalQuery({
   args: { briefId: v.id("weeklyBriefs") },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    const brief = await ctx.db.get(args.briefId);
+    if (!brief) return false;
     const episodes = await ctx.db
       .query("audioArtifacts")
       .withIndex("by_access_kind_createdAt", (q) =>
-        q.eq("access", "feed").eq("kind", "episode"),
+        q
+          .eq("access", "feed")
+          .eq("kind", "episode")
+          .gte("createdAt", brief._creationTime),
       )
-      .order("desc")
-      .take(READY_EPISODE_SCAN);
+      .collect();
     return episodes.some(
       (row) =>
         row.role === "delivery" &&
@@ -91,6 +100,8 @@ export const narrateBrief = internalAction({
         episodeTitle: title,
         rendererVersion: RENDERER_VERSION_FOR_JOBS,
       },
+      // Explicit so narrateJobStateForBrief's index range finds this job.
+      priority: NARRATE_PRIORITY,
     });
   },
 });
@@ -98,18 +109,23 @@ export const narrateBrief = internalAction({
 // Repeat runs are safe because a brief with any live narrate job (queued,
 // claimed, done, parked) is skipped; only a failed job or none proceeds. Each
 // narrateBrief call pays for a fresh script, so this gate is the only thing
-// preventing a second episode for one brief.
+// preventing a second episode for one brief. Briefs are isolated: one whose
+// narration throws is logged and counted, and the rest still run.
 export const reconcile = internalAction({
   args: { daysBack: v.optional(v.number()) },
-  returns: v.object({ enqueued: v.number(), skipped: v.number() }),
+  returns: v.object({
+    enqueued: v.number(),
+    skipped: v.number(),
+    failed: v.number(),
+  }),
   handler: async (
     ctx,
     args,
-  ): Promise<{ enqueued: number; skipped: number }> => {
+  ): Promise<{ enqueued: number; skipped: number; failed: number }> => {
     const voiceId = await ctx.runQuery(internal.settings.get, {
       key: HOUSE_VOICE_KEY,
     });
-    if (!voiceId) return { enqueued: 0, skipped: 0 };
+    if (!voiceId) return { enqueued: 0, skipped: 0, failed: 0 };
     const since = Date.now() - (args.daysBack ?? 14) * 24 * 60 * 60 * 1000;
     const briefs = await ctx.runQuery(internal.weeklyBriefs.listSinceInternal, {
       since,
@@ -138,19 +154,31 @@ export const reconcile = internalAction({
     });
     let enqueued = 0;
     let skipped = briefs.length - needing.length;
+    let failed = 0;
     for (const brief of needing) {
-      const { created } = await ctx.runAction(internal.episodes.narrateBrief, {
-        briefId: brief._id,
-      });
-      if (created) enqueued++;
-      else skipped++;
+      try {
+        const { created } = await ctx.runAction(
+          internal.episodes.narrateBrief,
+          { briefId: brief._id },
+        );
+        if (created) enqueued++;
+        else skipped++;
+      } catch (error) {
+        console.error(
+          `reconcile: narration failed for brief ${brief._id}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+        failed++;
+      }
     }
-    return { enqueued, skipped };
+    return { enqueued, skipped, failed };
   },
 });
 
 // Every shootout renders the same calibration passage across the whole
-// catalog so takes stay comparable; low priority keeps it behind episodes.
+// catalog so takes stay comparable; SHOOTOUT_PRIORITY keeps it behind
+// episodes.
 export const enqueueShootout = internalAction({
   args: {},
   returns: v.object({ jobId: v.id("mediaJobs"), created: v.boolean() }),
@@ -167,7 +195,7 @@ export const enqueueShootout = internalAction({
         title: "Voice shootout",
         rendererVersion: RENDERER_VERSION_FOR_JOBS,
       },
-      priority: -1,
+      priority: SHOOTOUT_PRIORITY,
     });
   },
 });

@@ -21,7 +21,10 @@ import {
 } from "./shared/mediaJobs";
 
 const SWEEP_LIMIT = 100;
-const NARRATE_SCAN_LIMIT = 200;
+
+// Narrate jobs are enqueued at this priority (episodes.narrateBrief passes it
+// explicitly) so narrateJobStateForBrief can range the index on it.
+export const NARRATE_PRIORITY = 0;
 
 const claimedReturn = v.union(
   v.null(),
@@ -106,19 +109,25 @@ const BLOCKING_NARRATE_STATUSES = [
 ] as const;
 
 // First blocking status of a narrate job referencing the brief, or null when
-// the brief has no live narrate job. Ruling R19.
+// the brief has no live narrate job. Ruling R19. A narrate job for a brief is
+// always created after the brief, so each status is ranged from the brief's
+// creation time at NARRATE_PRIORITY and no fixed window can miss it.
 export const narrateJobStateForBrief = internalQuery({
   args: { briefId: v.id("weeklyBriefs") },
   returns: v.union(mediaJobStatusValidator, v.null()),
   handler: async (ctx, args) => {
+    const brief = await ctx.db.get(args.briefId);
+    if (!brief) return null;
     for (const status of BLOCKING_NARRATE_STATUSES) {
       const jobs = await ctx.db
         .query("mediaJobs")
         .withIndex("by_status_priority_createdAt", (q) =>
-          q.eq("status", status),
+          q
+            .eq("status", status)
+            .eq("priority", NARRATE_PRIORITY)
+            .gte("createdAt", brief._creationTime),
         )
-        .order("desc")
-        .take(NARRATE_SCAN_LIMIT);
+        .collect();
       const hit = jobs.some(
         (job) =>
           job.input.kind === "narrate" &&

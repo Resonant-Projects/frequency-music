@@ -97,7 +97,7 @@ describe("listen.shootouts", () => {
       );
       // Decoys: the same job's WAV master, a pending episode, and an episode
       // from an unrelated job. None may be paired with group A.
-      await ctx.db.insert(
+      const masterA = await ctx.db.insert(
         "audioArtifacts",
         artifactFields({
           title: "master a",
@@ -107,7 +107,7 @@ describe("listen.shootouts", () => {
           refs: { mediaJobId: jobA },
         }),
       );
-      await ctx.db.insert(
+      const pendingA = await ctx.db.insert(
         "audioArtifacts",
         artifactFields({
           title: "pending a",
@@ -135,6 +135,12 @@ describe("listen.shootouts", () => {
           refs: { mediaJobId: jobA },
         }),
       );
+      // As mediaJobs.complete leaves a job: its result names every artifact
+      // it minted, including the decoys.
+      await ctx.db.patch(jobA, {
+        resultArtifactIds: [memberA, masterA, pendingA, episodeA],
+      });
+      await ctx.db.patch(jobB, { resultArtifactIds: [memberB, episodeB] });
       const group = async (artifactId: Id<"audioArtifacts">) =>
         await ctx.db.insert("blindGroups", {
           purpose: "voiceShootout",
@@ -153,5 +159,84 @@ describe("listen.shootouts", () => {
     expect(byGroup.get(ids.groupB)?.episodeArtifactId).toBe(ids.episodeB);
     expect(byGroup.get(ids.groupNoJob)?.episodeArtifactId).toBeNull();
     expect(byGroup.get(ids.groupA)?.memberCount).toBe(1);
+  });
+
+  test("a shootout is still listed behind 55 newer studyFamily groups", async () => {
+    const t = convexTest(schema, modules);
+    const shootoutId = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("blindGroups", {
+        purpose: "voiceShootout",
+        members: [],
+        requiredRatings: [],
+        createdAt: 1,
+      });
+      for (let i = 0; i < 55; i++) {
+        await ctx.db.insert("blindGroups", {
+          purpose: "studyFamily",
+          members: [],
+          requiredRatings: [],
+          createdAt: 2 + i,
+        });
+      }
+      return id;
+    });
+    const rows = await t.query(internal.listen.shootoutsInternal, {});
+    expect(rows.map((row) => row.groupId)).toEqual([shootoutId]);
+  });
+
+  test("the episode is still paired behind 60 newer unrelated ready feed episodes", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await t.run(async (ctx) => {
+      const jobId = await ctx.db.insert("mediaJobs", {
+        kind: "shootout",
+        input: {
+          kind: "shootout",
+          passage: ["p"],
+          voiceIds: ["breeze-2"],
+          title: "Voice shootout",
+          rendererVersion: "0.2.0",
+        },
+        dedupeKey: "job-shootout",
+        status: "done",
+        priority: 1,
+        attempts: 1,
+        createdAt: 1,
+      });
+      const member = await ctx.db.insert(
+        "audioArtifacts",
+        artifactFields({ title: "take", refs: { mediaJobId: jobId } }),
+      );
+      const episode = await ctx.db.insert(
+        "audioArtifacts",
+        artifactFields({
+          title: "episode",
+          kind: "episode",
+          access: "feed",
+          refs: { mediaJobId: jobId },
+        }),
+      );
+      await ctx.db.patch(jobId, { resultArtifactIds: [member, episode] });
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert(
+          "audioArtifacts",
+          artifactFields({
+            title: `unrelated ${i}`,
+            kind: "episode",
+            access: "feed",
+            createdAt: 10 + i,
+          }),
+        );
+      }
+      const groupId = await ctx.db.insert("blindGroups", {
+        purpose: "voiceShootout",
+        members: [{ memberId: "m", artifactId: member, label: "one" }],
+        requiredRatings: ["m"],
+        createdAt: 1,
+      });
+      return { episode, groupId };
+    });
+    const rows = await t.query(internal.listen.shootoutsInternal, {});
+    expect(rows.map((row) => row.groupId)).toEqual([ids.groupId]);
+    expect(rows[0]?.episodeArtifactId).toBe(ids.episode);
   });
 });

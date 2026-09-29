@@ -246,6 +246,12 @@ describe("podcast.listFeedEpisodes", () => {
     const episodes = await t.query(internal.podcast.listFeedEpisodes, {});
     expect(episodes.map((row) => row.id)).toEqual([deliveryId]);
     expect(episodes[0]?.mimeType).toBe("audio/mpeg");
+    // The master must not consume the window either: with room for one row
+    // the delivery is still the row served.
+    const limited = await t.query(internal.podcast.listFeedEpisodes, {
+      limit: 1,
+    });
+    expect(limited.map((row) => row.id)).toEqual([deliveryId]);
   });
 });
 

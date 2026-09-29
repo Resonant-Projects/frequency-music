@@ -107,9 +107,17 @@ export const listFeedEpisodes = internalQuery({
         q.eq("access", "feed").eq("kind", "episode"),
       )
       .order("desc")
-      // Only ready rows count toward the limit; pending or failed episodes
-      // newer than the ready ones must not push them out of the window.
-      .filter((q) => q.eq(q.field("status"), "ready"))
+      // Only ready deliveries count toward the limit: pending or failed
+      // episodes newer than the ready ones must not push them out of the
+      // window, and neither may the feed-access WAV master every episode
+      // job also writes (with `limit: 1` a newer master would hide the
+      // delivery it belongs to).
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "ready"),
+          q.eq(q.field("role"), "delivery"),
+        ),
+      )
       .take(args.limit ?? FEED_LIMIT);
     const episodes: FeedEpisode[] = [];
     for (const row of rows) {

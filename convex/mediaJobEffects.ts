@@ -51,17 +51,6 @@ async function readyArtifacts(
   return ids;
 }
 
-// Every array in a result goes through the fence before anything in it is
-// marked ready; an artifact that fails ownership is never published.
-async function ownAndReady(
-  ctx: MutationCtx,
-  job: Doc<"mediaJobs">,
-  artifacts: ArtifactResult[],
-): Promise<Id<"audioArtifacts">[]> {
-  await ownedArtifacts(ctx, job, artifacts);
-  return await readyArtifacts(ctx, artifacts);
-}
-
 // A render yields a normalized master and one delivery encode of it; a result
 // missing either half would leave a listener without playable bytes or the
 // pipeline without its provenance chain. Returns the pair so callers can
@@ -203,14 +192,36 @@ export async function applyMediaJobResult(
           message: `memberOrder must name every take: ${members.length} entries for ${result.takes.length} takes`,
         });
       }
+      // Every take and the episode is a master/delivery pair whose delivery
+      // is the row the result names as such; a swapped pair would publish a
+      // WAV master as a blind member or feed episode. Checked after the
+      // ownership fence and before any markReady sub-mutation.
+      const pairs = [
+        ...result.takes.map((take) => ({
+          master: take.master,
+          delivery: take.artifact,
+        })),
+        { master: result.episodeMaster, delivery: result.episode },
+      ];
+      for (const pair of pairs) {
+        const { delivery } = requireMasterDeliveryPair(
+          await ownedArtifacts(ctx, job, [pair.master, pair.delivery]),
+          result.kind,
+        );
+        if (delivery._id !== pair.delivery.artifactId) {
+          throw new ConvexError({
+            code: "INVALID_ARGUMENT",
+            message: `shootout names master ${pair.delivery.artifactId} as a delivery`,
+          });
+        }
+      }
       // Masters first: they are provenance, never members or feed rows.
-      await ownAndReady(ctx, job, [
+      await readyArtifacts(ctx, [
         ...result.takes.map((take) => take.master),
         result.episodeMaster,
       ]);
-      const takeIds = await ownAndReady(
+      const takeIds = await readyArtifacts(
         ctx,
-        job,
         result.takes.map((take) => take.artifact),
       );
       for (const take of result.takes) {
@@ -219,16 +230,13 @@ export async function applyMediaJobResult(
           updatedAt: now,
         });
       }
-      const [episodeRow] = await ownedArtifacts(ctx, job, [result.episode]);
       const [episodeId] = await readyArtifacts(ctx, [result.episode]);
       // The episode is the feed-published concatenation of the takes. It is
       // deliberately not a blind member and carries no blindGroupId (the feed
       // hides any row that does); it pairs with its group through the shared
-      // refs.mediaJobId of this job. Only a delivery is published; a master
-      // keeps the access it was uploaded with.
-      if (episodeRow!.role === "delivery") {
-        await ctx.db.patch(episodeId!, { access: "feed", updatedAt: now });
-      }
+      // refs.mediaJobId of this job. It is a delivery by the check above; the
+      // master keeps the access it was uploaded with.
+      await ctx.db.patch(episodeId!, { access: "feed", updatedAt: now });
       await ctx.runMutation(internal.blindGroups.create, {
         purpose: "voiceShootout",
         members,

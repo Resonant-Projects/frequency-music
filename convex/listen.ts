@@ -6,7 +6,6 @@ import { internalQuery, type QueryCtx, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 
 const SHOOTOUT_LIMIT = 50;
-const EPISODE_SCAN_LIMIT = 50;
 
 const shootoutReturn = v.array(
   v.object({
@@ -18,51 +17,50 @@ const shootoutReturn = v.array(
   }),
 );
 
-// Ready feed episodes, newest first, from the same index the podcast feed
-// reads. A shootout's takes and its episode are minted by one media job, so
-// `refs.mediaJobId` is the pairing key.
-async function recentFeedEpisodes(ctx: QueryCtx) {
-  const rows = await ctx.db
-    .query("audioArtifacts")
-    .withIndex("by_access_kind_createdAt", (q) =>
-      q.eq("access", "feed").eq("kind", "episode"),
-    )
-    .order("desc")
-    .take(EPISODE_SCAN_LIMIT);
-  return rows.filter(
-    (row) => row.status === "ready" && row.role === "delivery",
-  );
-}
-
+// A shootout's takes and its episode are minted by one media job, so the
+// pairing is exact: first member → its `refs.mediaJobId` → that job's
+// `resultArtifactIds` → the ready feed delivery among them. No window of
+// recent episodes is scanned, so unrelated newer episodes cannot hide it.
 async function episodeFor(
   ctx: QueryCtx,
   group: Doc<"blindGroups">,
-  episodes: Doc<"audioArtifacts">[],
 ): Promise<Id<"audioArtifacts"> | null> {
   const first = group.members[0];
   if (!first) return null;
   const member = await ctx.db.get(first.artifactId);
   const mediaJobId = member?.refs.mediaJobId;
   if (!mediaJobId) return null;
-  const episode = episodes.find((row) => row.refs.mediaJobId === mediaJobId);
-  return episode?._id ?? null;
+  const job = await ctx.db.get(mediaJobId);
+  for (const artifactId of job?.resultArtifactIds ?? []) {
+    const row = await ctx.db.get(artifactId);
+    if (
+      row?.kind === "episode" &&
+      row.role === "delivery" &&
+      row.status === "ready" &&
+      row.access === "feed"
+    ) {
+      return row._id;
+    }
+  }
+  return null;
 }
 
 async function listShootouts(ctx: QueryCtx) {
+  // Filter by purpose before the limit: newer studyFamily groups must never
+  // push a shootout out of the window.
   const groups = await ctx.db
     .query("blindGroups")
     .order("desc")
+    .filter((q) => q.eq(q.field("purpose"), "voiceShootout"))
     .take(SHOOTOUT_LIMIT);
-  const shootouts = groups.filter((group) => group.purpose === "voiceShootout");
-  const episodes = shootouts.length === 0 ? [] : await recentFeedEpisodes(ctx);
   const result = [];
-  for (const group of shootouts) {
+  for (const group of groups) {
     result.push({
       groupId: group._id,
       createdAt: group.createdAt,
       revealed: group.revealedAt !== undefined,
       memberCount: group.members.length,
-      episodeArtifactId: await episodeFor(ctx, group, episodes),
+      episodeArtifactId: await episodeFor(ctx, group),
     });
   }
   return result;

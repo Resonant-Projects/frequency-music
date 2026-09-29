@@ -1,10 +1,19 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { episodeTitleForWeek, pickBriefsNeedingNarration } from "./episodes";
+import {
+  episodeTitleForWeek,
+  pickBriefsNeedingNarration,
+  SHOOTOUT_PRIORITY,
+} from "./episodes";
+import { NARRATE_PRIORITY } from "./mediaJobs";
 import schema from "./schema";
+
+// narration.buildScriptForBrief is the one LLM call behind narrateBrief;
+// the reconcile isolation test scripts its outcomes per brief.
+vi.mock("./llmNode", () => ({ generateLlmText: vi.fn() }));
 
 async function insertBrief(t: ReturnType<typeof convexTest>, createdAt = 1) {
   return await t.run((ctx) =>
@@ -23,12 +32,22 @@ async function insertBrief(t: ReturnType<typeof convexTest>, createdAt = 1) {
   );
 }
 
+// Episodes and narrate jobs for a brief are created after it; the queries
+// range their indexes from the brief's creation time, so rows land just past
+// it (convex-test bumps `_creationTime` by a fraction of a millisecond when
+// two inserts share one, so Date.now() alone could fall before it).
 async function insertEpisode(
   t: ReturnType<typeof convexTest>,
   briefId: Id<"weeklyBriefs">,
   role: "delivery" | "masterNormalized",
+  options: {
+    refs?: { weeklyBriefId?: Id<"weeklyBriefs"> };
+    offset?: number;
+  } = {},
 ) {
   await t.run(async (ctx) => {
+    const brief = await ctx.db.get(briefId);
+    const createdAt = (brief?._creationTime ?? 0) + 1 + (options.offset ?? 0);
     const storageId = await ctx.storage.store(new Blob(["e"]));
     await ctx.db.insert("audioArtifacts", {
       kind: "episode",
@@ -43,11 +62,11 @@ async function insertEpisode(
       normalization: "applied",
       access: role === "delivery" ? "feed" : "private",
       title: "t",
-      refs: { weeklyBriefId: briefId },
+      refs: options.refs ?? { weeklyBriefId: briefId },
       contentHash: "c",
       createdBy: "system",
-      createdAt: 2,
-      updatedAt: 2,
+      createdAt,
+      updatedAt: createdAt,
     });
   });
 }
@@ -58,9 +77,15 @@ async function insertNarrateJob(
   t: ReturnType<typeof convexTest>,
   briefId: Id<"weeklyBriefs">,
   status: JobStatus,
+  options: {
+    refs?: { weeklyBriefId?: Id<"weeklyBriefs"> };
+    offset?: number;
+  } = {},
 ) {
-  return await t.run((ctx) =>
-    ctx.db.insert("mediaJobs", {
+  return await t.run(async (ctx) => {
+    const brief = await ctx.db.get(briefId);
+    const createdAt = (brief?._creationTime ?? 0) + 1 + (options.offset ?? 0);
+    return await ctx.db.insert("mediaJobs", {
       kind: "narrate",
       input: {
         kind: "narrate",
@@ -70,18 +95,33 @@ async function insertNarrateJob(
         target: "spoken",
         title: "t",
         access: "feed",
-        refs: { weeklyBriefId: briefId },
+        refs: options.refs ?? { weeklyBriefId: briefId },
         assembleOnDone: true,
         rendererVersion: "0.2.0",
       },
-      dedupeKey: `k-${status}-${briefId}`,
+      dedupeKey: `k-${status}-${briefId}-${createdAt}`,
       status,
-      priority: 0,
+      priority: NARRATE_PRIORITY,
       attempts: status === "parked" ? 3 : 0,
-      createdAt: 1,
-    }),
-  );
+      createdAt,
+    });
+  });
 }
+
+// A script the LLM mock can return: three paragraphs, 1350 words, in the
+// [pause] / CHAPTERS format parseNarrationScript reads.
+const VALID_SCRIPT_TEXT = [
+  "listen ".repeat(450).trim(),
+  "[pause]",
+  "again ".repeat(450).trim(),
+  "[pause]",
+  "closing ".repeat(450).trim(),
+  "",
+  "CHAPTERS",
+  "0: Open",
+  "1: Middle",
+  "2: Close",
+].join("\n");
 
 describe("episodes", () => {
   test("episode title uses the Monday date", () => {
@@ -120,6 +160,18 @@ describe("episodes", () => {
     ).toBe(false);
   });
 
+  test("hasReadyEpisodeForBrief still finds the episode behind 250 newer unrelated ones", async () => {
+    const t = convexTest(schema, modules);
+    const briefId = await insertBrief(t);
+    await insertEpisode(t, briefId, "delivery");
+    for (let i = 0; i < 250; i++) {
+      await insertEpisode(t, briefId, "delivery", { refs: {}, offset: 1 + i });
+    }
+    expect(
+      await t.query(internal.episodes.hasReadyEpisodeForBrief, { briefId }),
+    ).toBe(true);
+  });
+
   test("narrateJobStateForBrief reports any non-failed narrate job for that brief", async () => {
     const t = convexTest(schema, modules);
     const briefId = await insertBrief(t);
@@ -145,6 +197,18 @@ describe("episodes", () => {
     }
   });
 
+  test("narrateJobStateForBrief still finds the job behind 250 newer unrelated ones", async () => {
+    const t = convexTest(schema, modules);
+    const briefId = await insertBrief(t);
+    await insertNarrateJob(t, briefId, "queued");
+    for (let i = 0; i < 250; i++) {
+      await insertNarrateJob(t, briefId, "queued", { refs: {}, offset: 1 + i });
+    }
+    expect(
+      await t.query(internal.mediaJobs.narrateJobStateForBrief, { briefId }),
+    ).toBe("queued");
+  });
+
   test("listSinceInternal returns briefs created at or after the cutoff", async () => {
     const t = convexTest(schema, modules);
     await insertBrief(t, 100);
@@ -168,7 +232,7 @@ describe("episodes", () => {
     await insertBrief(t, Date.now());
     expect(
       await t.action(internal.episodes.reconcile, { daysBack: 14 }),
-    ).toEqual({ enqueued: 0, skipped: 0 });
+    ).toEqual({ enqueued: 0, skipped: 0, failed: 0 });
     expect(await t.run((ctx) => ctx.db.query("mediaJobs").collect())).toEqual(
       [],
     );
@@ -185,9 +249,45 @@ describe("episodes", () => {
     const before = await t.run((ctx) => ctx.db.query("mediaJobs").collect());
     expect(
       await t.action(internal.episodes.reconcile, { daysBack: 14 }),
-    ).toEqual({ enqueued: 0, skipped: 1 });
+    ).toEqual({ enqueued: 0, skipped: 1, failed: 0 });
     const after = await t.run((ctx) => ctx.db.query("mediaJobs").collect());
     expect(after).toEqual(before);
+  });
+
+  test("reconcile isolates a brief whose narration throws and still enqueues the rest", async () => {
+    const { generateLlmText } = await import("./llmNode");
+    vi.mocked(generateLlmText)
+      .mockRejectedValueOnce(new Error("llm down"))
+      .mockResolvedValue({ text: VALID_SCRIPT_TEXT });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    try {
+      const t = convexTest(schema, modules);
+      await t.mutation(internal.settings.set, {
+        key: "houseVoiceId",
+        value: "breeze-2",
+      });
+      const olderId = await insertBrief(t, Date.now() - 1000);
+      const newerId = await insertBrief(t, Date.now());
+      // Newest first: the newer brief's narration throws, the older one runs.
+      expect(
+        await t.action(internal.episodes.reconcile, { daysBack: 14 }),
+      ).toEqual({ enqueued: 1, skipped: 0, failed: 1 });
+      const jobs = await t.run((ctx) => ctx.db.query("mediaJobs").collect());
+      expect(jobs).toHaveLength(1);
+      const job = jobs[0];
+      expect(job?.input.kind).toBe("narrate");
+      if (job?.input.kind !== "narrate") throw new Error("unreachable");
+      expect(job.input.refs.weeklyBriefId).toBe(olderId);
+      expect(job.priority).toBe(NARRATE_PRIORITY);
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining(`brief ${newerId}: llm down`),
+      );
+    } finally {
+      consoleError.mockRestore();
+      vi.mocked(generateLlmText).mockReset();
+    }
   });
 
   test("a brief whose only narrate job failed is selected for narration", async () => {
@@ -218,7 +318,7 @@ describe("episodes", () => {
     const again = await t.action(internal.episodes.enqueueShootout, {});
     expect(again).toEqual({ jobId: first.jobId, created: false });
     const job = await t.run((ctx) => ctx.db.get(first.jobId));
-    expect(job?.priority).toBe(-1);
+    expect(job?.priority).toBe(SHOOTOUT_PRIORITY);
     expect(job?.input.kind).toBe("shootout");
     if (job?.input.kind !== "shootout") throw new Error("unreachable");
     expect(job.input.voiceIds).toEqual([
@@ -229,5 +329,22 @@ describe("episodes", () => {
     ]);
     expect(job.input.passage).toHaveLength(3);
     expect(job.input.rendererVersion).toBe("0.2.0");
+  });
+
+  test("a queued shootout is claimed after a narrate job enqueued later", async () => {
+    const t = convexTest(schema, modules);
+    const shootout = await t.action(internal.episodes.enqueueShootout, {});
+    const briefId = await insertBrief(t);
+    const narrateId = await insertNarrateJob(t, briefId, "queued");
+    const first = await t.mutation(internal.mediaJobs.claimNext, {
+      workerId: "w",
+      kinds: ["shootout", "narrate"],
+    });
+    expect(first?.jobId).toBe(narrateId);
+    const second = await t.mutation(internal.mediaJobs.claimNext, {
+      workerId: "w",
+      kinds: ["shootout", "narrate"],
+    });
+    expect(second?.jobId).toBe(shootout.jobId);
   });
 });

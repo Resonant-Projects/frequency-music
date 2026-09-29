@@ -128,6 +128,24 @@ async function claimed(
   return { jobId, leaseToken: claim.leaseToken };
 }
 
+// Nothing may be marked ready, grouped, or published after a refused
+// shootout result.
+async function expectUntouched(
+  t: ReturnType<typeof convexTest>,
+  jobId: Id<"mediaJobs">,
+) {
+  const rows = await t.run((ctx) => ctx.db.query("audioArtifacts").collect());
+  for (const row of rows) {
+    expect(row.status).toBe("pending");
+    expect(row.blindGroupId).toBeUndefined();
+    expect(row.access).toBe("private");
+  }
+  const groups = await t.run((ctx) => ctx.db.query("blindGroups").collect());
+  expect(groups).toHaveLength(0);
+  const job = await t.run((ctx) => ctx.db.get(jobId));
+  expect(job?.status).toBe("claimed");
+}
+
 describe("media job effects", () => {
   test("narrate with assembleOnDone stores chapters and enqueues assembleEpisode atomically", async () => {
     const t = convexTest(schema, modules);
@@ -273,16 +291,23 @@ describe("media job effects", () => {
   test("shootout creates a blind group over the takes in member order and publishes the episode to the feed", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken } = await claimed(t, shootoutInput);
-    const a = await attached(t, jobId, "shootoutTake", "inworld");
-    const aMaster = await attached(t, jobId, "shootoutTake", "inworld-master");
-    const b = await attached(t, jobId, "shootoutTake", "breeze");
-    const bMaster = await attached(t, jobId, "shootoutTake", "breeze-master");
-    const episode = await attached(t, jobId, "episode", "Shootout");
-    const episodeMaster = await attached(
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld",
+    );
+    const { master: bMaster, delivery: b } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "breeze",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
       t,
       jobId,
       "episode",
-      "Shootout-master",
+      "Shootout",
     );
     const done = await t.mutation(internal.mediaJobs.complete, {
       jobId,
@@ -344,14 +369,17 @@ describe("media job effects", () => {
   test("shootout refuses a memberOrder that names an unrendered voice", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken } = await claimed(t, shootoutInput);
-    const a = await attached(t, jobId, "shootoutTake", "inworld");
-    const aMaster = await attached(t, jobId, "shootoutTake", "inworld-master");
-    const episode = await attached(t, jobId, "episode", "Shootout");
-    const episodeMaster = await attached(
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
       t,
       jobId,
       "episode",
-      "Shootout-master",
+      "Shootout",
     );
     await expect(
       t.mutation(internal.mediaJobs.complete, {
@@ -385,20 +413,18 @@ describe("media job effects", () => {
     const { jobId, leaseToken } = await claimed(t, shootoutInput);
     const takes = [];
     for (const voiceId of ["inworld-max", "breeze-2", "gemini-flash-tts"]) {
+      const pair = await attachedPair(t, jobId, "shootoutTake", voiceId);
       takes.push({
         voiceId,
-        artifact: measured(await attached(t, jobId, "shootoutTake", voiceId)),
-        master: measured(
-          await attached(t, jobId, "shootoutTake", `${voiceId}-master`),
-        ),
+        artifact: measured(pair.delivery),
+        master: measured(pair.master),
       });
     }
-    const episode = await attached(t, jobId, "episode", "Shootout");
-    const episodeMaster = await attached(
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
       t,
       jobId,
       "episode",
-      "Shootout-master",
+      "Shootout",
     );
     await expect(
       t.mutation(internal.mediaJobs.complete, {
@@ -446,16 +472,23 @@ describe("media job effects", () => {
   test("shootout refuses two takes for the same voice", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken } = await claimed(t, shootoutInput);
-    const a = await attached(t, jobId, "shootoutTake", "inworld");
-    const aMaster = await attached(t, jobId, "shootoutTake", "inworld-master");
-    const b = await attached(t, jobId, "shootoutTake", "inworld-again");
-    const bMaster = await attached(t, jobId, "shootoutTake", "again-master");
-    const episode = await attached(t, jobId, "episode", "Shootout");
-    const episodeMaster = await attached(
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld",
+    );
+    const { master: bMaster, delivery: b } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld-again",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
       t,
       jobId,
       "episode",
-      "Shootout-master",
+      "Shootout",
     );
     await expect(
       t.mutation(internal.mediaJobs.complete, {
@@ -484,6 +517,113 @@ describe("media job effects", () => {
     ).rejects.toThrow(/rendered voice inworld-max twice/);
     const groups = await t.run((ctx) => ctx.db.query("blindGroups").collect());
     expect(groups).toHaveLength(0);
+  });
+
+  test("shootout refuses a take whose master and artifact are swapped", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await claimed(t, shootoutInput);
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
+      t,
+      jobId,
+      "episode",
+      "Shootout",
+    );
+    // The rows form a valid pair, but the WAV master is named as the blind
+    // member and the MP3 delivery as its master.
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes: [
+            {
+              voiceId: "inworld-max",
+              artifact: measured(aMaster),
+              master: measured(a),
+            },
+          ],
+          skippedVoiceIds: ["breeze-2", "gemini-flash-tts"],
+          episode: measured(episode),
+          episodeMaster: measured(episodeMaster),
+          memberOrder: ["inworld-max"],
+        },
+      }),
+    ).rejects.toThrow(/INVALID_ARGUMENT.*names master .* as a delivery/);
+    await expectUntouched(t, jobId);
+  });
+
+  test("shootout refuses an episode that names the master", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await claimed(t, shootoutInput);
+    const { master: aMaster, delivery: a } = await attachedPair(
+      t,
+      jobId,
+      "shootoutTake",
+      "inworld",
+    );
+    const { master: episodeMaster, delivery: episode } = await attachedPair(
+      t,
+      jobId,
+      "episode",
+      "Shootout",
+    );
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes: [
+            {
+              voiceId: "inworld-max",
+              artifact: measured(a),
+              master: measured(aMaster),
+            },
+          ],
+          skippedVoiceIds: ["breeze-2", "gemini-flash-tts"],
+          episode: measured(episodeMaster),
+          episodeMaster: measured(episode),
+          memberOrder: ["inworld-max"],
+        },
+      }),
+    ).rejects.toThrow(/INVALID_ARGUMENT.*names master .* as a delivery/);
+    await expectUntouched(t, jobId);
+    // A lone master with no delivery at all is refused the same way.
+    const stray = await attached(
+      t,
+      jobId,
+      "episode",
+      "Stray-master",
+      "masterNormalized",
+    );
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes: [
+            {
+              voiceId: "inworld-max",
+              artifact: measured(a),
+              master: measured(aMaster),
+            },
+          ],
+          skippedVoiceIds: ["breeze-2", "gemini-flash-tts"],
+          episode: measured(stray),
+          episodeMaster: measured(episodeMaster),
+          memberOrder: ["inworld-max"],
+        },
+      }),
+    ).rejects.toThrow(/one masterNormalized and one delivery/);
+    await expectUntouched(t, jobId);
   });
 
   test("assembleEpisode marks the episode ready on the feed with the job's title and chapters", async () => {
