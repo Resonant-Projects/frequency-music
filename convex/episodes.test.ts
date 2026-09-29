@@ -52,6 +52,37 @@ async function insertEpisode(
   });
 }
 
+type JobStatus = "queued" | "claimed" | "done" | "failed" | "parked";
+
+async function insertNarrateJob(
+  t: ReturnType<typeof convexTest>,
+  briefId: Id<"weeklyBriefs">,
+  status: JobStatus,
+) {
+  return await t.run((ctx) =>
+    ctx.db.insert("mediaJobs", {
+      kind: "narrate",
+      input: {
+        kind: "narrate",
+        script: { paragraphs: ["p"], chapters: [] },
+        voiceId: "breeze-2",
+        promptVersion: "narration.v1",
+        target: "spoken",
+        title: "t",
+        access: "feed",
+        refs: { weeklyBriefId: briefId },
+        assembleOnDone: true,
+        rendererVersion: "0.2.0",
+      },
+      dedupeKey: `k-${status}-${briefId}`,
+      status,
+      priority: 0,
+      attempts: status === "parked" ? 3 : 0,
+      createdAt: 1,
+    }),
+  );
+}
+
 describe("episodes", () => {
   test("episode title uses the Monday date", () => {
     expect(episodeTitleForWeek("2026-09-21")).toBe(
@@ -63,7 +94,7 @@ describe("episodes", () => {
     const picked = pickBriefsNeedingNarration({
       briefs: [{ _id: "b1" }, { _id: "b2" }, { _id: "b3" }] as never,
       readyEpisodeBriefIds: new Set(["b1"]),
-      parkedBriefIds: new Set(["b3"]),
+      blockedBriefIds: new Set(["b3"]),
     });
     expect(picked.map((brief) => brief._id)).toEqual(["b2"]);
   });
@@ -89,59 +120,29 @@ describe("episodes", () => {
     ).toBe(false);
   });
 
-  test("isParkedForBrief matches only parked narrate jobs for that brief", async () => {
+  test("narrateJobStateForBrief reports any non-failed narrate job for that brief", async () => {
     const t = convexTest(schema, modules);
     const briefId = await insertBrief(t);
     const otherBriefId = await insertBrief(t);
-    const input = {
-      kind: "narrate" as const,
-      script: { paragraphs: ["p"], chapters: [] },
-      voiceId: "breeze-2",
-      promptVersion: "narration.v1",
-      target: "spoken" as const,
-      title: "t",
-      access: "feed" as const,
-      refs: { weeklyBriefId: briefId },
-      assembleOnDone: true,
-      rendererVersion: "0.2.0",
-    };
-    expect(
-      await t.query(internal.mediaJobs.isParkedForBrief, { briefId }),
-    ).toBe(false);
-    await t.run(async (ctx) => {
-      await ctx.db.insert("mediaJobs", {
-        kind: "narrate",
-        input,
-        dedupeKey: "k",
-        status: "queued",
-        priority: 0,
-        attempts: 0,
-        createdAt: 1,
-      });
-    });
-    expect(
-      await t.query(internal.mediaJobs.isParkedForBrief, { briefId }),
-    ).toBe(false);
-    await t.run(async (ctx) => {
-      await ctx.db.insert("mediaJobs", {
-        kind: "narrate",
-        input,
-        dedupeKey: "k2",
-        status: "parked",
-        priority: 0,
-        attempts: 3,
-        createdAt: 2,
-        finishedAt: 3,
-      });
-    });
-    expect(
-      await t.query(internal.mediaJobs.isParkedForBrief, { briefId }),
-    ).toBe(true);
-    expect(
-      await t.query(internal.mediaJobs.isParkedForBrief, {
-        briefId: otherBriefId,
-      }),
-    ).toBe(false);
+    const state = () =>
+      t.query(internal.mediaJobs.narrateJobStateForBrief, { briefId });
+    expect(await state()).toBeNull();
+    // A failed job is the one status that lets reconciliation proceed.
+    await insertNarrateJob(t, briefId, "failed");
+    expect(await state()).toBeNull();
+    // A job for a different brief never blocks this one.
+    await insertNarrateJob(t, otherBriefId, "queued");
+    expect(await state()).toBeNull();
+    for (const status of ["queued", "claimed", "done", "parked"] as const) {
+      const fresh = convexTest(schema, modules);
+      const id = await insertBrief(fresh);
+      await insertNarrateJob(fresh, id, status);
+      expect(
+        await fresh.query(internal.mediaJobs.narrateJobStateForBrief, {
+          briefId: id,
+        }),
+      ).toBe(status);
+    }
   });
 
   test("listSinceInternal returns briefs created at or after the cutoff", async () => {
@@ -171,6 +172,43 @@ describe("episodes", () => {
     expect(await t.run((ctx) => ctx.db.query("mediaJobs").collect())).toEqual(
       [],
     );
+  });
+
+  test("reconcile skips a brief whose narrate job is still live (R19)", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.settings.set, {
+      key: "houseVoiceId",
+      value: "breeze-2",
+    });
+    const briefId = await insertBrief(t, Date.now());
+    await insertNarrateJob(t, briefId, "queued");
+    const before = await t.run((ctx) => ctx.db.query("mediaJobs").collect());
+    expect(
+      await t.action(internal.episodes.reconcile, { daysBack: 14 }),
+    ).toEqual({ enqueued: 0, skipped: 1 });
+    const after = await t.run((ctx) => ctx.db.query("mediaJobs").collect());
+    expect(after).toEqual(before);
+  });
+
+  test("a brief whose only narrate job failed is selected for narration", async () => {
+    // reconcile would call narrateBrief here, which runs the Node LLM action;
+    // that is not exercisable under convex-test, so assert the gate instead.
+    const t = convexTest(schema, modules);
+    const briefId = await insertBrief(t, Date.now());
+    await insertNarrateJob(t, briefId, "failed");
+    const state = await t.query(internal.mediaJobs.narrateJobStateForBrief, {
+      briefId,
+    });
+    expect(state).toBeNull();
+    const briefs = await t.query(internal.weeklyBriefs.listSinceInternal, {
+      since: 0,
+    });
+    const picked = pickBriefsNeedingNarration({
+      briefs,
+      readyEpisodeBriefIds: new Set(),
+      blockedBriefIds: new Set(state === null ? [] : [briefId]),
+    });
+    expect(picked.map((brief) => brief._id)).toEqual([briefId]);
   });
 
   test("enqueueShootout queues the calibration passage across every voice at low priority", async () => {

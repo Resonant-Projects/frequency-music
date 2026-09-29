@@ -17,10 +17,11 @@ import {
   mediaJobKindZ,
   mediaJobResultValidator,
   mediaJobResultZ,
+  mediaJobStatusValidator,
 } from "./shared/mediaJobs";
 
 const SWEEP_LIMIT = 100;
-const PARKED_SCAN_LIMIT = 200;
+const NARRATE_SCAN_LIMIT = 200;
 
 const claimedReturn = v.union(
   v.null(),
@@ -93,24 +94,39 @@ export const enqueue = internalMutation({
   },
 });
 
-// A parked narrate job for a brief means a human has to look; reconciliation
-// must not paper over it with a fresh job.
-export const isParkedForBrief = internalQuery({
+// Statuses that block reconciliation from enqueueing another narrate job for
+// a brief. Dedupe cannot do this: the LLM regenerates the script on every
+// build, so each attempt hashes to a fresh dedupeKey. Only a `failed` job, or
+// no job at all, lets a brief through.
+const BLOCKING_NARRATE_STATUSES = [
+  "queued",
+  "claimed",
+  "done",
+  "parked",
+] as const;
+
+// First blocking status of a narrate job referencing the brief, or null when
+// the brief has no live narrate job. Ruling R19.
+export const narrateJobStateForBrief = internalQuery({
   args: { briefId: v.id("weeklyBriefs") },
-  returns: v.boolean(),
+  returns: v.union(mediaJobStatusValidator, v.null()),
   handler: async (ctx, args) => {
-    const parked = await ctx.db
-      .query("mediaJobs")
-      .withIndex("by_status_priority_createdAt", (q) =>
-        q.eq("status", "parked"),
-      )
-      .order("desc")
-      .take(PARKED_SCAN_LIMIT);
-    return parked.some(
-      (job) =>
-        job.input.kind === "narrate" &&
-        job.input.refs.weeklyBriefId === args.briefId,
-    );
+    for (const status of BLOCKING_NARRATE_STATUSES) {
+      const jobs = await ctx.db
+        .query("mediaJobs")
+        .withIndex("by_status_priority_createdAt", (q) =>
+          q.eq("status", status),
+        )
+        .order("desc")
+        .take(NARRATE_SCAN_LIMIT);
+      const hit = jobs.some(
+        (job) =>
+          job.input.kind === "narrate" &&
+          job.input.refs.weeklyBriefId === args.briefId,
+      );
+      if (hit) return status;
+    }
+    return null;
   },
 });
 

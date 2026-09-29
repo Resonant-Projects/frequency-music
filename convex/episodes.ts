@@ -1,5 +1,7 @@
 // Weekly-turn episodes: narration is enqueued by brief generation itself;
-// `reconcile` only catches briefs that missed it. No "use node": the actions
+// `reconcile` only catches briefs that missed it. Dedupe does not protect
+// reconciliation (every script build hashes differently), so a brief with any
+// live narrate job is skipped outright (ruling R19). No "use node": the actions
 // here only call ctx.run*, and the file also exports a query, which a node
 // file cannot.
 import { v } from "convex/values";
@@ -22,12 +24,14 @@ export function episodeTitleForWeek(weekOf: string): string {
 export function pickBriefsNeedingNarration(args: {
   briefs: Doc<"weeklyBriefs">[];
   readyEpisodeBriefIds: Set<string>;
-  parkedBriefIds: Set<string>;
+  // Briefs with a narrate job in any non-failed status (queued, claimed,
+  // done, parked): in flight, awaiting assembly, or a human's problem.
+  blockedBriefIds: Set<string>;
 }): Doc<"weeklyBriefs">[] {
   return args.briefs.filter(
     (brief) =>
       !args.readyEpisodeBriefIds.has(brief._id) &&
-      !args.parkedBriefIds.has(brief._id),
+      !args.blockedBriefIds.has(brief._id),
   );
 }
 
@@ -91,8 +95,10 @@ export const narrateBrief = internalAction({
   },
 });
 
-// Enqueue is deduped on the input snapshot, so re-running this is safe; a
-// parked narrate job is a human's problem and is never re-enqueued here.
+// Repeat runs are safe because a brief with any live narrate job (queued,
+// claimed, done, parked) is skipped; only a failed job or none proceeds. Each
+// narrateBrief call pays for a fresh script, so this gate is the only thing
+// preventing a second episode for one brief.
 export const reconcile = internalAction({
   args: { daysBack: v.optional(v.number()) },
   returns: v.object({ enqueued: v.number(), skipped: v.number() }),
@@ -109,7 +115,7 @@ export const reconcile = internalAction({
       since,
     });
     const readyEpisodeBriefIds = new Set<string>();
-    const parkedBriefIds = new Set<string>();
+    const blockedBriefIds = new Set<string>();
     for (const brief of briefs) {
       const briefId = brief._id;
       if (
@@ -119,16 +125,16 @@ export const reconcile = internalAction({
       ) {
         readyEpisodeBriefIds.add(briefId);
       }
-      if (
-        await ctx.runQuery(internal.mediaJobs.isParkedForBrief, { briefId })
-      ) {
-        parkedBriefIds.add(briefId);
-      }
+      const jobState = await ctx.runQuery(
+        internal.mediaJobs.narrateJobStateForBrief,
+        { briefId },
+      );
+      if (jobState !== null) blockedBriefIds.add(briefId);
     }
     const needing = pickBriefsNeedingNarration({
       briefs,
       readyEpisodeBriefIds,
-      parkedBriefIds,
+      blockedBriefIds,
     });
     let enqueued = 0;
     let skipped = briefs.length - needing.length;

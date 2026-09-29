@@ -132,8 +132,8 @@ crons.interval(
 );
 
 // Narration is enqueued by brief generation itself; this only reconciles
-// briefs that missed it (worker down, house voice chosen later). Enqueue is
-// deduped on the job input, so repeat runs are safe.
+// briefs that missed it (worker down, house voice chosen later). A brief with
+// any live narrate job is skipped, so repeat runs never mint a second episode.
 crons.weekly(
   "reconcile-episodes",
   { dayOfWeek: "saturday", hourUTC: 2, minuteUTC: 0 },
