@@ -47,6 +47,7 @@ const FROZEN_HYPOTHESIS = object({
   concepts: field(array(string), true),
   sourceIds: field(array(id("sources"))),
   extractionIds: field(array(id("extractions"))),
+  correspondenceId: field(id("correspondences"), true),
   thesisId: field(id("theses"), true),
   confidence: field(number, true),
 });

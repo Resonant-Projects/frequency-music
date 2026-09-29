@@ -66,6 +66,19 @@ These tools write only to agent audit/review records and must not substitute for
 | `claimNextPendingRun` | `/agent-tools/claimNextPendingRun` | `agentRuns:claimNextPending` | Atomically claim the oldest queued Convex agent run for a worker, flipping it to running. Production worker only. | Production worker only. A lifecycle write, not a research-data write. |
 | `getAgentRun` | `/agent-tools/getAgentRun` | `agentRuns:getForWorker` | Fetch the full Convex agent run document including raw input by id for status polling. Audit-only read. | Worker status polling; public getters strip input. |
 
+### Media lifecycle tools
+
+Used only by the media service on ai-5090-02 (a standing service identity). They claim, lease, upload for, complete, and fail media jobs. Completion validates a kind-specific result and applies domain effects inside Convex; the media service never writes research data and nothing here can create a listening session or decide a draft.
+
+| Tool | HTTP path | Backing function | Purpose | Context notes |
+| --- | --- | --- | --- | --- |
+| `claimNextMediaJob` | `/agent-tools/claimNextMediaJob` | `internal.mediaJobs:claimNext` | Claim the oldest queued media job whose kind is in the caller's list and issue a 10-minute lease. | Media service only. A lifecycle write; never research data. |
+| `renewMediaJobLease` | `/agent-tools/renewMediaJobLease` | `internal.mediaJobs:renewLease` | Extend a claimed media job's lease; fails when the token no longer matches. | Call every few minutes while rendering. |
+| `generateAudioUploadUrl` | `/agent-tools/generateAudioUploadUrl` | `internal.mediaToolsInternal:generateAudioUploadUrl` | Create a pending audio artifact for a leased job and return a storage upload URL. | Upload, then call attachAudioStorage with the returned storageId immediately. |
+| `attachAudioStorage` | `/agent-tools/attachAudioStorage` | `internal.mediaToolsInternal:attachAudioStorage` | Record the uploaded storage id on a pending artifact. | Fenced by the job lease. Blobs never attached are reclaimed by the sweeper. |
+| `completeMediaJob` | `/agent-tools/completeMediaJob` | `internal.mediaJobs:complete` | Complete a leased job with a kind-specific result; Convex validates it and applies domain effects atomically. | Fenced by lease token and expiry. Repeating with the same lease returns the stored result. |
+| `failMediaJob` | `/agent-tools/failMediaJob` | `internal.mediaJobs:fail` | Fail a leased job; it re-queues with attempts+1 and parks after three. | Error text is truncated server-side; never include secrets. |
+
 <!-- AGENT_TOOLS:END -->
 
 ### Human-only decision mutations (NOT on the agent surface)

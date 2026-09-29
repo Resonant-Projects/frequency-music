@@ -223,6 +223,41 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ),
   getAgentRun: (ctx, args) =>
     ctx.runQuery(queryRef("agentRuns:getForWorker"), { runId: args.runId }),
+  claimNextMediaJob: (ctx, args) =>
+    ctx.runMutation(internal.mediaJobs.claimNext, {
+      workerId: args.workerId as string,
+      kinds: args.kinds as string[],
+    }),
+  renewMediaJobLease: (ctx, args) =>
+    ctx.runMutation(internal.mediaJobs.renewLease, {
+      jobId: args.jobId as Id<"mediaJobs">,
+      leaseToken: args.leaseToken as string,
+    }),
+  generateAudioUploadUrl: (ctx, args) =>
+    ctx.runMutation(internal.mediaToolsInternal.generateAudioUploadUrl, {
+      jobId: args.jobId as Id<"mediaJobs">,
+      leaseToken: args.leaseToken as string,
+      artifact: args.artifact,
+    }),
+  attachAudioStorage: (ctx, args) =>
+    ctx.runMutation(internal.mediaToolsInternal.attachAudioStorage, {
+      jobId: args.jobId as Id<"mediaJobs">,
+      leaseToken: args.leaseToken as string,
+      artifactId: args.artifactId as Id<"audioArtifacts">,
+      storageId: args.storageId as Id<"_storage">,
+    }),
+  completeMediaJob: (ctx, args) =>
+    ctx.runMutation(internal.mediaJobs.complete, {
+      jobId: args.jobId as Id<"mediaJobs">,
+      leaseToken: args.leaseToken as string,
+      result: args.result as never,
+    }),
+  failMediaJob: (ctx, args) =>
+    ctx.runMutation(internal.mediaJobs.fail, {
+      jobId: args.jobId as Id<"mediaJobs">,
+      leaseToken: args.leaseToken as string,
+      error: args.error as string,
+    }),
 };
 
 export const AGENT_TOOL_REGISTRY: readonly AgentToolDef[] =

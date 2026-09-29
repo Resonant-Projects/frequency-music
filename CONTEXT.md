@@ -103,3 +103,20 @@ The secret-guarded HTTP interface through which external agents read project sta
 
 **Cross-Seam Contract**:
 A shape (draft payload, event kind, status enum, timing constant) that both the Convex backend and the agent workspace must agree on. Defined once under `convex/shared/`; zod-first for payloads.
+
+### Audio substrate
+
+**Audio Artifact**:
+One stored audio file with provenance, measurements, and role (raw master, normalized master, or delivery). Bytes live in Convex file storage; the row is the record. Machine analysis lives only here, never on a Listening Session.
+_Avoid_: recording, clip, track (a Composition may have many artifacts)
+
+**Media Job**:
+A self-contained, leased unit of audio work the media service pulls from Convex. Its input is a snapshot, its identity is the hash of that snapshot, and its completion is a typed result Convex validates and applies atomically.
+_Avoid_: render task, queue item
+
+**Blind Group**:
+An immutable set of audio artifacts served to a listener only through a projection that hides everything but opaque handles and labels until the last required rating reveals them.
+_Avoid_: A/B test (that is one use of a blind group)
+
+**House Voice**:
+The TTS voice Keith chose by blind listening; stored in settings and used by every narration job until changed.
