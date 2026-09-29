@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vite-plus/test";
-import { VOICE_CATALOG, VOICE_IDS, voiceById } from "./voices";
+import {
+  ANNOUNCER_VOICES,
+  VOICE_CATALOG,
+  VOICE_IDS,
+  voiceById,
+} from "./voices";
 
 describe("voice catalog", () => {
   test("has exactly the four shootout voices with unique ids", () => {
@@ -22,5 +27,27 @@ describe("voice catalog", () => {
     expect(voiceById("breeze-2").runsOn).toBe("local");
     expect(voiceById("breeze-2").baseUrlEnvVar).toBe("BREEZE_TTS_BASE_URL");
     expect(() => voiceById("kokoro")).toThrow(/unknown voice/);
+  });
+  test("R28: announcer voices are never candidates and reuse a catalog provider", () => {
+    expect(ANNOUNCER_VOICES.map((voice) => voice.id)).toEqual([
+      "announcer-breeze",
+      "announcer-gemini",
+    ]);
+    for (const announcer of ANNOUNCER_VOICES) {
+      expect(VOICE_IDS).not.toContain(announcer.id);
+      expect(() => voiceById(announcer.id)).toThrow(/unknown voice/);
+      // Same provider, model, and configuration as a catalog voice, so an
+      // announcer is configured exactly when that catalog voice is.
+      const twin = VOICE_CATALOG.find(
+        (voice) =>
+          voice.provider === announcer.provider &&
+          voice.model === announcer.model &&
+          voice.keyEnvVar === announcer.keyEnvVar &&
+          voice.baseUrlEnvVar === announcer.baseUrlEnvVar &&
+          voice.runsOn === announcer.runsOn,
+      );
+      expect(twin, announcer.id).toBeDefined();
+      expect(twin?.voiceId).not.toBe(announcer.voiceId);
+    }
   });
 });

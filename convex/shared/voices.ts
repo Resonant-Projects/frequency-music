@@ -73,6 +73,38 @@ export const VOICE_IDS = VOICE_CATALOG.map(
   (voice) => voice.id,
 ) as readonly string[];
 
+// R28: dedicated announcer voices for the shootout intro and take labels.
+// They are never candidates (never in VOICE_IDS, never rated, never the house
+// voice), so hearing one reveals nothing about a take even when the whole
+// catalog competes. Each reuses a catalog entry's provider, model, and
+// configuration so no extra key or server is needed; only the voice differs.
+export const ANNOUNCER_VOICES: readonly VoiceEntry[] = [
+  {
+    id: "announcer-breeze",
+    provider: "breeze",
+    model: "breeze-tts-2",
+    voiceId:
+      "design:A brisk, neutral radio announcer with clear diction and a slightly higher register.",
+    runsOn: "local",
+    licence: "Breeze TTS 2 research licence, personal use only",
+    openclawProvider: "openai-compatible",
+    keyEnvVar: "BREEZE_TTS_API_KEY",
+    baseUrlEnvVar: "BREEZE_TTS_BASE_URL",
+    verifiedOn: "2026-09-28",
+  },
+  {
+    id: "announcer-gemini",
+    provider: "google",
+    model: "gemini-3.1-flash-tts",
+    voiceId: "Kore",
+    runsOn: "hosted",
+    licence: "Google Gemini API terms",
+    openclawProvider: "google",
+    keyEnvVar: "GEMINI_API_KEY",
+    verifiedOn: "2026-09-28",
+  },
+];
+
 export function voiceById(id: string): VoiceEntry {
   const voice = VOICE_CATALOG.find((entry) => entry.id === id);
   if (!voice) throw new Error(`unknown voice ${id}`);

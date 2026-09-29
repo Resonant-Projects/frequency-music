@@ -71,6 +71,25 @@ const measured = (artifactId: Id<"audioArtifacts">) => ({
   mimeType: "audio/mpeg",
 });
 
+// The brief a narration belongs to; R29 threads its id through to the
+// episode the narrate effect enqueues.
+async function insertBrief(t: ReturnType<typeof convexTest>) {
+  return await t.run((ctx) =>
+    ctx.db.insert("weeklyBriefs", {
+      weekOf: "2026-09-21",
+      model: "m",
+      promptVersion: "v",
+      bodyMd: "x",
+      sourceIds: [],
+      recommendedHypothesisIds: [],
+      recommendedRecipeIds: [],
+      visibility: "private",
+      createdBy: "system",
+      createdAt: 1,
+    }),
+  );
+}
+
 const narrateInput = {
   kind: "narrate" as const,
   script: {
@@ -112,7 +131,11 @@ async function claimed(
 describe("media job effects", () => {
   test("narrate with assembleOnDone stores chapters and enqueues assembleEpisode atomically", async () => {
     const t = convexTest(schema, modules);
-    const { jobId, leaseToken } = await claimed(t, narrateInput);
+    const briefId = await insertBrief(t);
+    const { jobId, leaseToken } = await claimed(t, {
+      ...narrateInput,
+      refs: { weeklyBriefId: briefId },
+    });
     const { master, delivery } = await attachedPair(
       t,
       jobId,
@@ -161,6 +184,8 @@ describe("media job effects", () => {
       chapters: [{ title: "Open", startSecs: 0 }],
       rendererVersion: "0.2.0",
       narrationStorageUrl: masterUrl,
+      // R29: the episode job carries the narration's brief.
+      refs: { weeklyBriefId: briefId },
     });
   });
 
@@ -269,13 +294,11 @@ describe("media job effects", () => {
             voiceId: "inworld-max",
             artifact: measured(a),
             master: measured(aMaster),
-            label: "take two",
           },
           {
             voiceId: "breeze-2",
             artifact: measured(b),
             master: measured(bMaster),
-            label: "take one",
           },
         ],
         skippedVoiceIds: ["gemini-flash-tts"],
@@ -341,7 +364,6 @@ describe("media job effects", () => {
               voiceId: "inworld-max",
               artifact: measured(a),
               master: measured(aMaster),
-              label: "take one",
             },
           ],
           skippedVoiceIds: ["breeze-2", "gemini-flash-tts"],
@@ -369,7 +391,6 @@ describe("media job effects", () => {
         master: measured(
           await attached(t, jobId, "shootoutTake", `${voiceId}-master`),
         ),
-        label: voiceId,
       });
     }
     const episode = await attached(t, jobId, "episode", "Shootout");
@@ -447,13 +468,11 @@ describe("media job effects", () => {
               voiceId: "inworld-max",
               artifact: measured(a),
               master: measured(aMaster),
-              label: "take one",
             },
             {
               voiceId: "inworld-max",
               artifact: measured(b),
               master: measured(bMaster),
-              label: "take two",
             },
           ],
           skippedVoiceIds: [],
@@ -528,5 +547,52 @@ describe("media job effects", () => {
     expect(masterRow?.chapters).toBeUndefined();
     const feed = await t.query(internal.podcast.listFeedEpisodes, {});
     expect(feed.map((e) => e.id)).toEqual([delivery]);
+  });
+
+  test("assembleEpisode refuses a master-only result and rolls back", async () => {
+    const t = convexTest(schema, modules);
+    const narrate = await claimed(t, {
+      ...narrateInput,
+      assembleOnDone: false,
+    });
+    const narration = await attached(t, narrate.jobId, "narration", "Brief");
+    const input = {
+      kind: "assembleEpisode" as const,
+      narrationArtifactId: narration,
+      narrationStorageUrl: "https://convex.test/api/storage/x",
+      title: "Weekly turn, week of 2026-09-21",
+      chapters: [],
+      rendererVersion: "0.2.0",
+    };
+    const { jobId } = await t.mutation(internal.mediaJobs.enqueue, { input });
+    const claim = await t.mutation(internal.mediaJobs.claimNext, {
+      workerId: "w",
+      kinds: ["assembleEpisode"],
+    });
+    const master = await attached(
+      t,
+      jobId,
+      "episode",
+      "ep-master",
+      "masterNormalized",
+    );
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken: claim!.leaseToken,
+        result: {
+          kind: "assembleEpisode",
+          artifacts: [measured(master)],
+          chapters: [],
+        },
+      }),
+    ).rejects.toThrow(/one masterNormalized and one delivery/);
+    const row = await t.run((ctx) => ctx.db.get(master));
+    expect(row?.status).toBe("pending");
+    expect(row?.access).toBe("private");
+    const job = await t.run((ctx) => ctx.db.get(jobId));
+    expect(job?.status).toBe("claimed");
+    const feed = await t.query(internal.podcast.listFeedEpisodes, {});
+    expect(feed).toEqual([]);
   });
 });

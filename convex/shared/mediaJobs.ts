@@ -12,6 +12,24 @@ export const MAX_ATTEMPTS = 3;
 // The media package's RENDERER_VERSION must match this string.
 export const RENDERER_VERSION_FOR_JOBS = "0.2.0";
 
+// Blind labels in presentation order: the label the listener hears in the
+// shootout episode is the label the blind group stores, so both the media
+// handler and the completion effect derive it here. blindGroups.create caps
+// a group at eight members, so a shootout can never need more than this.
+const ORDINALS = [
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+];
+export function spokenLabel(index: number): string {
+  return `take ${ORDINALS[index] ?? String(index + 1)}`;
+}
+
 export const MEDIA_JOB_KINDS = [
   "probe",
   "narrate",
@@ -95,6 +113,11 @@ export const assembleEpisodeJobInputZ = z.object({
   narrationStorageUrl: z.string().url(),
   title: z.string().min(1),
   chapters: z.array(audioChapterZ),
+  // R29: the narration's refs (its weeklyBriefId above all), copied onto the
+  // episode artifacts so an episode links back to its brief. Optional so
+  // jobs enqueued before this field existed still validate; code treats a
+  // missing value as {}.
+  refs: audioRefsZ.optional(),
   rendererVersion: z.string().min(1),
 });
 
@@ -128,12 +151,14 @@ export const narrateJobResultZ = z.object({
   chapters: z.array(audioChapterZ),
 });
 
+// A take's label is not part of the result: the effect derives it from the
+// take's position in memberOrder with spokenLabel, the same function the
+// handler spoke it with.
 export const shootoutTakeResultZ = z.object({
   voiceId: z.string(),
   // artifact is the delivery (the blind member); master is its normalized WAV.
   artifact: artifactResultZ,
   master: artifactResultZ,
-  label: z.string(),
 });
 
 export const shootoutJobResultZ = z.object({

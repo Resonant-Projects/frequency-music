@@ -5,20 +5,11 @@ import { ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import type { ArtifactResult, MediaJobResult } from "./shared/mediaJobs";
-
-// Blind labels in presentation order. blindGroups.create caps a group at
-// eight members, so a shootout can never need more than this.
-const ORDINALS = [
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-];
+import {
+  type ArtifactResult,
+  type MediaJobResult,
+  spokenLabel,
+} from "./shared/mediaJobs";
 
 // Ownership fence: a result may only name artifacts minted under this job's
 // lease (generateAudioUploadUrl pins refs.mediaJobId), so a worker cannot
@@ -148,9 +139,12 @@ export async function applyMediaJobResult(
         if (!narrationStorageUrl) {
           throw new ConvexError({
             code: "INVALID_STATE",
-            message: "narration delivery has no storage url",
+            message:
+              "narration master and delivery have no storage url; nothing for assembleEpisode to download",
           });
         }
+        // R29: the episode inherits the narration's refs (its weeklyBriefId)
+        // so a feed episode links back to the brief it narrates.
         await ctx.runMutation(internal.mediaJobs.enqueue, {
           input: {
             kind: "assembleEpisode",
@@ -158,6 +152,7 @@ export async function applyMediaJobResult(
             narrationStorageUrl,
             title: input.episodeTitle ?? input.title,
             chapters: result.chapters,
+            refs: input.refs,
             rendererVersion: input.rendererVersion,
           },
         });
@@ -196,10 +191,9 @@ export async function applyMediaJobResult(
           });
         }
         seen.add(voiceId);
-        return {
-          artifactId,
-          label: `take ${ORDINALS[index] ?? String(index + 1)}`,
-        };
+        // The handler spoke this same label for this position, so the group
+        // stores exactly what the listener heard.
+        return { artifactId, label: spokenLabel(index) };
       });
       // Entries are distinct and each names a take, so a short list can only
       // mean a rendered take was left out of the group.
@@ -245,21 +239,23 @@ export async function applyMediaJobResult(
       if (job.input.kind !== "assembleEpisode")
         throw inputKindMismatch(job, "assembleEpisode");
       const input = job.input;
-      const rows = await ownedArtifacts(ctx, job, result.artifacts);
+      // A result without its delivery would complete the job with no feed
+      // episode and nothing left to retry; refuse it before marking anything.
+      const { delivery } = requireMasterDeliveryPair(
+        await ownedArtifacts(ctx, job, result.artifacts),
+        result.kind,
+      );
       const ids = await readyArtifacts(ctx, result.artifacts);
       // Only the delivery becomes the feed episode; the WAV master is
       // provenance and keeps the access, title, and chapters it was
       // uploaded with. Chapters come from the result: the assembler shifts
       // them by its lead-in, so the input's narration chapters are stale.
-      for (const row of rows) {
-        if (row.role !== "delivery") continue;
-        await ctx.db.patch(row._id, {
-          access: "feed",
-          chapters: result.chapters,
-          title: input.title,
-          updatedAt: now,
-        });
-      }
+      await ctx.db.patch(delivery._id, {
+        access: "feed",
+        chapters: result.chapters,
+        title: input.title,
+        updatedAt: now,
+      });
       return ids;
     }
     default: {

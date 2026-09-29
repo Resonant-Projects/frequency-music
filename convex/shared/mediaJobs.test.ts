@@ -7,6 +7,7 @@ import {
   mediaJobDedupeKey,
   mediaJobInputZ,
   mediaJobResultZ,
+  spokenLabel,
 } from "./mediaJobs";
 
 describe("media job contracts", () => {
@@ -101,16 +102,29 @@ describe("media job contracts", () => {
         rendererVersion: "x",
       }).success,
     ).toBe(false);
+    // R29: refs are optional (older queued jobs) and carry the brief id.
+    const assemble = {
+      kind: "assembleEpisode",
+      narrationArtifactId: "k1",
+      narrationStorageUrl: "http://convex.test/api/storage/x",
+      title: "t",
+      chapters: [],
+      rendererVersion: "x",
+    };
+    expect(mediaJobInputZ.safeParse(assemble).success).toBe(true);
     expect(
       mediaJobInputZ.safeParse({
-        kind: "assembleEpisode",
-        narrationArtifactId: "k1",
-        narrationStorageUrl: "http://convex.test/api/storage/x",
-        title: "t",
-        chapters: [],
-        rendererVersion: "x",
+        ...assemble,
+        refs: { weeklyBriefId: "wb1" },
       }).success,
     ).toBe(true);
+  });
+
+  test("spokenLabel is the single source of the heard and stored take label", () => {
+    expect(spokenLabel(0)).toBe("take one");
+    expect(spokenLabel(7)).toBe("take eight");
+    // Beyond the ordinal table (never reached: groups cap at eight).
+    expect(spokenLabel(8)).toBe("take 9");
   });
 
   test("every job kind has an artifact policy with at least one kind and access", () => {
