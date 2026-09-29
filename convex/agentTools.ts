@@ -83,6 +83,14 @@ export const createAgentReviewDraft = makeAgentToolAction(
 export const markAgentRunFailed = makeAgentToolAction("markAgentRunFailed");
 export const claimNextPendingRun = makeAgentToolAction("claimNextPendingRun");
 export const getAgentRun = makeAgentToolAction("getAgentRun");
+export const claimNextMediaJob = makeAgentToolAction("claimNextMediaJob");
+export const renewMediaJobLease = makeAgentToolAction("renewMediaJobLease");
+export const generateAudioUploadUrl = makeAgentToolAction(
+  "generateAudioUploadUrl",
+);
+export const attachAudioStorage = makeAgentToolAction("attachAudioStorage");
+export const completeMediaJob = makeAgentToolAction("completeMediaJob");
+export const failMediaJob = makeAgentToolAction("failMediaJob");
 
 // ============================================================================
 // SELF-IMPROVEMENT STATS - weekly brief "what the system learned" section

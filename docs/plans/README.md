@@ -68,6 +68,21 @@ record: [ADR 0001](../adr/0001-split-embedding-spaces-for-passages.md)
 | — | Recipe context (inherits hypothesis pattern) | Follow-on, last |
 | — | Migrate claims/concepts to 3-large | Roadmap follow-on (ADR 0001) |
 
+## 1c. Listen-first program (2026-09-28)
+
+Umbrella spec: [listen-first program design](../superpowers/specs/2026-09-28-listen-first-program-design.md).
+Wave specs: [voice and podcast feed](../superpowers/specs/2026-09-28-voice-and-podcast-feed-design.md),
+[Freq docket and voice decisions](../superpowers/specs/2026-09-28-freq-docket-and-voice-decisions-design.md),
+[render ladder and listen page](../superpowers/specs/2026-09-28-render-ladder-and-listen-page-design.md),
+[hypothesis tournament](../superpowers/specs/2026-09-28-hypothesis-tournament-design.md).
+Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** under `CONTEXT.md` § Audio substrate.
+
+| # | Plan | Status |
+|---|------|--------|
+| W0 | [Wave 0 — substrate](../superpowers/plans/2026-09-28-listen-first-wave-0-substrate.md) (artifacts, media jobs, blind groups, media service, podcast feed) | ✅ Merged (#75) and deployed 2026-09-29; media worker live on ai-5090-02, probe and feed verified |
+| W1 | [Wave 1 — voice and feed](../superpowers/plans/2026-09-28-listen-first-wave-1-voice-and-feed.md) | 🔨 Tasks 1–11a implemented on `t3code/listen-first-wave-1` (rulings R1–R29 in the plan's implementation notes; the shootout announcer is a dedicated non-candidate voice per R28); Task 12 (**PRODUCTION** shootout, rating, house voice, first episode) pending Keith's hosted TTS keys and go-ahead |
+| W2–W3 | Docket and voice decisions; render ladder, listen page, tournament | Specced, not yet planned |
+
 ## 2. Operator/live acceptance items
 
 Small; several are gate-specific, and item 1 must finish before plan 13 starts.

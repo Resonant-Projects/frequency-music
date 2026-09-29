@@ -122,4 +122,23 @@ crons.weekly(
   { graphName: "source-scout", input: {} },
 );
 
+// Reclaim expired media leases and orphaned audio uploads. Leases are 10
+// minutes; a 10-minute sweep bounds a crashed worker's hold on a job.
+crons.interval(
+  "sweep-stale-media-jobs",
+  { minutes: 10 },
+  internal.mediaSweeper.sweep,
+  {},
+);
+
+// Narration is enqueued by brief generation itself; this only reconciles
+// briefs that missed it (worker down, house voice chosen later). A brief with
+// any live narrate job is skipped, so repeat runs never mint a second episode.
+crons.weekly(
+  "reconcile-episodes",
+  { dayOfWeek: "saturday", hourUTC: 2, minuteUTC: 0 },
+  internal.episodes.reconcile,
+  { daysBack: 14 },
+);
+
 export default crons;

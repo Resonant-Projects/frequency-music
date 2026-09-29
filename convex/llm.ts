@@ -53,6 +53,7 @@ export const TOKEN_BUDGETS = {
   recipe_v1: 16000,
   brief_v2: 8000,
   concept_classifier_v1: 5000,
+  narration_v1: 6000,
 } as const;
 
 export type LlmTask = keyof typeof TOKEN_BUDGETS;

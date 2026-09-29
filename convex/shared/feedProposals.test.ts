@@ -7,12 +7,24 @@ describe("feedProposalZ", () => {
       feedProposalZ.parse({
         agentRunId: "run-1",
         rationale: "Closes a cymatics coverage gap",
-        sampleItems: ["https://example.com/one"],
+        sampleItems: [
+          {
+            title: "One",
+            url: "https://example.com/one",
+            snippet: "A cymatics field note",
+          },
+        ],
       }),
     ).toEqual({
       agentRunId: "run-1",
       rationale: "Closes a cymatics coverage gap",
-      sampleItems: ["https://example.com/one"],
+      sampleItems: [
+        {
+          title: "One",
+          url: "https://example.com/one",
+          snippet: "A cymatics field note",
+        },
+      ],
     });
   });
 

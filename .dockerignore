@@ -4,6 +4,13 @@
 !convex
 !convex/shared
 !convex/shared/**
+!media
+!media/**
 agent/node_modules
 agent/.env
 agent/.env.*
+media/node_modules
+media/.env
+media/.env.*
+# varlock/auto-load execs `varlock load`, which needs the schema in cwd.
+!media/.env.schema

@@ -1,0 +1,309 @@
+// shootout: the same passage through every configured candidate voice, each
+// take a private blind member, plus one feed episode that plays them back in
+// a seeded order behind a non-candidate announcer voice. Unconfigured voices
+// are skipped and reported; fewer than two takes is not a shootout.
+import { join } from "node:path";
+import { spokenLabel } from "../../../convex/shared/mediaJobs";
+import { fnv1a64Hex } from "../../../convex/shared/stableHash";
+import {
+  ANNOUNCER_VOICES,
+  VOICE_CATALOG,
+  type VoiceEntry,
+  voiceById,
+} from "../../../convex/shared/voices";
+import { concatWithGaps, trimEdges } from "../audio/concat";
+import { encodeMp3 } from "../audio/encode";
+import {
+  assertWithinPolicy,
+  LOUDNESS_TARGETS,
+  measure,
+  normalize,
+} from "../audio/loudness";
+import { synthTone } from "../audio/synth";
+import { isConfigured, providerFor } from "../tts";
+import {
+  PARAGRAPH_GAP_MS,
+  renderParagraph,
+  type Synth,
+  uploadMasterAndDelivery,
+} from "./narrate";
+import type { ArtifactResult, JobContext } from "./types";
+
+// Fisher-Yates on a linear congruential generator seeded from the job id, so
+// a retried job presents the same order as its first attempt.
+export function shuffleWithSeed<T>(items: readonly T[], seed: string): T[] {
+  let state = Number.parseInt(fnv1a64Hex(seed).slice(0, 8), 16) || 1;
+  const random = () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 2 ** 32;
+  };
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
+// R26/R28: the intro and labels come from a voice that is not competing, so
+// hearing it reveals nothing about a take. In order: a configured catalog
+// voice outside this job's candidates (hosted first), then a configured
+// dedicated announcer (ANNOUNCER_VOICES, never a candidate anywhere). Only
+// when neither exists does a candidate announce, and then the intro must not
+// claim otherwise.
+export function chooseIntroVoice(
+  candidates: readonly VoiceEntry[],
+  configuredCatalog: readonly VoiceEntry[],
+  configuredAnnouncers: readonly VoiceEntry[] = [],
+): { voice: VoiceEntry; isCandidate: boolean } {
+  const candidateIds = new Set(candidates.map((voice) => voice.id));
+  const bystanders = configuredCatalog.filter(
+    (voice) => !candidateIds.has(voice.id),
+  );
+  const preferHosted = (voices: readonly VoiceEntry[]) =>
+    voices.find((voice) => voice.runsOn === "hosted") ?? voices[0];
+  const bystander = preferHosted(bystanders);
+  if (bystander) return { voice: bystander, isCandidate: false };
+  const announcer = configuredAnnouncers[0];
+  if (announcer) return { voice: announcer, isCandidate: false };
+  const candidate = preferHosted(candidates);
+  if (!candidate) throw new Error("chooseIntroVoice needs a candidate");
+  return { voice: candidate, isCandidate: true };
+}
+
+export function introText(takeCount: number, isCandidate: boolean): string {
+  const body = `You will hear ${takeCount} takes of the same passage. Rate each one before the reveal.`;
+  return isCandidate ? body : `This intro voice is not a candidate. ${body}`;
+}
+
+const TONE_SECS = 0.5;
+const TONE_HZ = 1000;
+const TONE_GAIN_DB = -20;
+const PRE_TAKE_SILENCE_MS = 1000;
+const POST_TAKE_SILENCE_MS = 2000;
+const EDGE_KEEP_MS = 300;
+
+// One voice's passage: paragraphs joined with the narration gap, edges
+// trimmed, normalized, then policy-checked on a decoded MP3 probe so a hot
+// encode fails the take here rather than at upload.
+async function renderTake(
+  ctx: JobContext,
+  synth: Synth,
+  voice: VoiceEntry,
+  paragraphs: string[],
+  tag: string,
+): Promise<string> {
+  const files: string[] = [];
+  for (const [index, paragraph] of paragraphs.entries()) {
+    files.push(await renderParagraph(ctx, synth, voice, paragraph, index));
+  }
+  const joined = join(ctx.workDir, `${tag}-joined.wav`);
+  await concatWithGaps(files, joined, PARAGRAPH_GAP_MS, {}, ctx.signal);
+  const trimmed = join(ctx.workDir, `${tag}-trimmed.wav`);
+  await trimEdges(joined, trimmed, EDGE_KEEP_MS, ctx.signal);
+  const normalized = join(ctx.workDir, `${tag}.wav`);
+  await normalize(
+    trimmed,
+    normalized,
+    { targetLufs: LOUDNESS_TARGETS.spoken },
+    ctx.signal,
+  );
+  const probeMp3 = join(ctx.workDir, `${tag}-probe.mp3`);
+  await encodeMp3(
+    normalized,
+    probeMp3,
+    { bitrateKbps: 128, channels: 2 },
+    ctx.signal,
+  );
+  assertWithinPolicy(
+    await measure(probeMp3, ctx.signal),
+    LOUDNESS_TARGETS.spoken,
+  );
+  return normalized;
+}
+
+export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
+  const input = ctx.job.input;
+  if (input.kind !== "shootout") {
+    throw new Error("shootout handler received another kind");
+  }
+  const voices = input.voiceIds.map(voiceById);
+  const configured = voices.filter(isConfigured);
+  const skippedVoiceIds = voices
+    .filter((voice) => !isConfigured(voice))
+    .map((voice) => voice.id);
+  for (const voiceId of skippedVoiceIds) {
+    console.warn(
+      `shootout ${ctx.job.jobId}: skipping unconfigured voice ${voiceId}`,
+    );
+  }
+  if (configured.length < 2) {
+    throw new Error(
+      `shootout needs at least two configured voices; configured: ${configured.map((voice) => voice.id).join(", ") || "none"}`,
+    );
+  }
+  const synthFor = (voice: VoiceEntry): Synth =>
+    synthOverride ?? providerFor(voice);
+
+  // A take that fails (provider error, policy breach) fails the job naming
+  // its voice, so the operator knows which one to look at.
+  const takeFiles = new Map<string, string>();
+  for (const voice of configured) {
+    try {
+      takeFiles.set(
+        voice.id,
+        await renderTake(
+          ctx,
+          synthFor(voice),
+          voice,
+          input.passage,
+          `take-${voice.id}`,
+        ),
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`take ${voice.id}: ${message}`, { cause: error });
+    }
+  }
+
+  const order = shuffleWithSeed(
+    configured.map((voice) => voice.id),
+    ctx.job.jobId,
+  );
+  const { voice: introVoice, isCandidate } = chooseIntroVoice(
+    configured,
+    VOICE_CATALOG.filter(isConfigured),
+    ANNOUNCER_VOICES.filter(isConfigured),
+  );
+  const introSynth = synthFor(introVoice);
+  // The announcer's raw level is whatever its provider emits, so the intro
+  // and every label are normalized to the spoken target like the takes.
+  // Otherwise quiet announcements sit near the episode's relative gate and
+  // its final loudness becomes unpredictable.
+  const speak = async (text: string, tag: string): Promise<string> => {
+    const raw = join(ctx.workDir, `${tag}-raw.wav`);
+    await introSynth.synthesize(text, introVoice, raw, ctx.signal);
+    const out = join(ctx.workDir, `${tag}.wav`);
+    await normalize(
+      raw,
+      out,
+      { targetLufs: LOUDNESS_TARGETS.spoken },
+      ctx.signal,
+    );
+    return out;
+  };
+  const intro = await speak(introText(order.length, isCandidate), "intro");
+  const tone = join(ctx.workDir, "tone.wav");
+  await synthTone(
+    tone,
+    { hz: TONE_HZ, seconds: TONE_SECS, gainDb: TONE_GAIN_DB },
+    ctx.signal,
+  );
+
+  // One slot per take: tone, spoken label, 1 s of silence, the take, 2 s of
+  // silence. The silences are concat padding rather than files: ebur128
+  // reports -inf for pure silence, which measure() cannot read.
+  const slots: string[] = [];
+  for (const [index, voiceId] of order.entries()) {
+    const label = await speak(`${spokenLabel(index)}.`, `label-${index}`);
+    const announce = join(ctx.workDir, `announce-${index}.wav`);
+    await concatWithGaps([tone, label], announce, 0, {}, ctx.signal);
+    const slot = join(ctx.workDir, `slot-${index}.wav`);
+    await concatWithGaps(
+      [announce, takeFiles.get(voiceId)!],
+      slot,
+      PRE_TAKE_SILENCE_MS,
+      { tailMs: POST_TAKE_SILENCE_MS },
+      ctx.signal,
+    );
+    slots.push(slot);
+  }
+  const episodeJoined = join(ctx.workDir, "episode-joined.wav");
+  const { starts } = await concatWithGaps(
+    [intro, ...slots],
+    episodeJoined,
+    0,
+    {},
+    ctx.signal,
+  );
+  const episodeWav = join(ctx.workDir, "episode.wav");
+  await normalize(
+    episodeJoined,
+    episodeWav,
+    { targetLufs: LOUDNESS_TARGETS.spoken },
+    ctx.signal,
+  );
+  // Each chapter starts at the tone that announces its take: entry 0 is the
+  // intro, then one slot per take.
+  const chapters = order.map((_, index) => ({
+    title: spokenLabel(index),
+    startSecs: Number((starts[1 + index] ?? 0).toFixed(3)),
+  }));
+
+  const engine = {
+    name: "shootout",
+    version: ctx.rendererVersion,
+    params: { voices: order.length },
+  };
+  // The episode records who announced it: the one voice heard that is not
+  // a take, and the thing a listener could recognise (provenance for R26's
+  // documented limitation when a candidate has to announce).
+  const episodeEngine = {
+    ...engine,
+    params: { ...engine.params, announcerVoiceId: introVoice.id },
+  };
+  const takes: {
+    voiceId: string;
+    artifact: ArtifactResult;
+    master: ArtifactResult;
+  }[] = [];
+  for (const [index, voiceId] of order.entries()) {
+    const [master, delivery] = await uploadMasterAndDelivery(
+      ctx,
+      takeFiles.get(voiceId)!,
+      {
+        kind: "shootoutTake",
+        metadataStripped: true,
+        normalization: "applied",
+        access: "private",
+        title: `Shootout take ${index + 1}`,
+        engine,
+        refs: {},
+        createdBy: "system",
+      },
+      { kind: "shootoutTake", voiceId, passage: input.passage, engine },
+      LOUDNESS_TARGETS.spoken,
+    );
+    takes.push({ voiceId, artifact: delivery!, master: master! });
+  }
+  const [episodeMaster, episode] = await uploadMasterAndDelivery(
+    ctx,
+    episodeWav,
+    {
+      kind: "episode",
+      metadataStripped: true,
+      normalization: "applied",
+      access: "feed",
+      title: input.title,
+      chapters,
+      engine: episodeEngine,
+      refs: {},
+      createdBy: "system",
+    },
+    {
+      kind: "shootoutEpisode",
+      order,
+      passage: input.passage,
+      engine: episodeEngine,
+    },
+    LOUDNESS_TARGETS.spoken,
+  );
+  return {
+    kind: "shootout" as const,
+    takes,
+    skippedVoiceIds,
+    episode: episode!,
+    episodeMaster: episodeMaster!,
+    memberOrder: order,
+  };
+}

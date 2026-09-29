@@ -124,6 +124,37 @@ export const agentToolArgs = {
     graphName: z.string().min(1).optional(),
   }),
   getAgentRun: z.object({ runId: zid("agentRuns") }),
+  // Media lifecycle (wave 0). Artifact fields and results are validated by
+  // their zod contracts inside the backing mutations; the transport passes any.
+  claimNextMediaJob: z.object({
+    workerId: z.string().min(1),
+    kinds: z.array(z.string().min(1)).min(1),
+  }),
+  renewMediaJobLease: z.object({
+    jobId: zid("mediaJobs"),
+    leaseToken: z.string().min(1),
+  }),
+  generateAudioUploadUrl: z.object({
+    jobId: zid("mediaJobs"),
+    leaseToken: z.string().min(1),
+    artifact: z.any(),
+  }),
+  attachAudioStorage: z.object({
+    jobId: zid("mediaJobs"),
+    leaseToken: z.string().min(1),
+    artifactId: zid("audioArtifacts"),
+    storageId: zid("_storage"),
+  }),
+  completeMediaJob: z.object({
+    jobId: zid("mediaJobs"),
+    leaseToken: z.string().min(1),
+    result: z.any(),
+  }),
+  failMediaJob: z.object({
+    jobId: zid("mediaJobs"),
+    leaseToken: z.string().min(1),
+    error: z.string().min(1),
+  }),
 } as const;
 
 export type AgentToolName = keyof typeof agentToolArgs;

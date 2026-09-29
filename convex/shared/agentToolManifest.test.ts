@@ -5,9 +5,9 @@ import { agentToolArgs } from "./agentToolArgs";
 import { AGENT_TOOL_MANIFEST, AGENT_TOOL_NAMES } from "./agentToolManifest";
 
 describe("agent tool manifest", () => {
-  test("covers all 31 current tools with unique names and schemas", () => {
-    expect(AGENT_TOOL_MANIFEST).toHaveLength(31);
-    expect(new Set(AGENT_TOOL_NAMES).size).toBe(31);
+  test("covers all 37 current tools with unique names and schemas", () => {
+    expect(AGENT_TOOL_MANIFEST).toHaveLength(37);
+    expect(new Set(AGENT_TOOL_NAMES).size).toBe(37);
     for (const entry of AGENT_TOOL_MANIFEST) {
       expect(entry.description.length).toBeGreaterThan(10);
       expect(entry.context.length).toBeGreaterThan(10);
@@ -23,12 +23,38 @@ describe("agent tool manifest", () => {
     }
   });
 
-  test("only the production queue claim is hidden from LangChain", () => {
+  test("only worker lifecycle tools are hidden from LangChain", () => {
     expect(
       AGENT_TOOL_MANIFEST.filter((tool) => !tool.langchain).map(
         (tool) => tool.name,
       ),
-    ).toEqual(["claimNextPendingRun"]);
+    ).toEqual([
+      "claimNextPendingRun",
+      "claimNextMediaJob",
+      "renewMediaJobLease",
+      "generateAudioUploadUrl",
+      "attachAudioStorage",
+      "completeMediaJob",
+      "failMediaJob",
+    ]);
+  });
+
+  test("media lifecycle tools are media_write and never research writes", () => {
+    const media = AGENT_TOOL_MANIFEST.filter(
+      (tool) => tool.kind === "media_write",
+    );
+    expect(media.map((tool) => tool.name)).toEqual([
+      "claimNextMediaJob",
+      "renewMediaJobLease",
+      "generateAudioUploadUrl",
+      "attachAudioStorage",
+      "completeMediaJob",
+      "failMediaJob",
+    ]);
+    for (const tool of media) {
+      expect(tool.langchain).toBe(false);
+      expect(tool.backing.startsWith("internal.media")).toBe(true);
+    }
   });
 
   test("human decision mutations never enter the surface", () => {

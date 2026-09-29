@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     include: [
       "convex/*.test.ts",
+      "convex/shared/*.test.ts",
       "harness/**/*.test.ts",
       "scripts/**/*.test.ts",
     ],

@@ -103,3 +103,40 @@ The secret-guarded HTTP interface through which external agents read project sta
 
 **Cross-Seam Contract**:
 A shape (draft payload, event kind, status enum, timing constant) that both the Convex backend and the agent workspace must agree on. Defined once under `convex/shared/`; zod-first for payloads.
+
+### Audio substrate
+
+**Audio Artifact**:
+One stored audio file with provenance, measurements, and role (raw master, normalized master, or delivery). Bytes live in Convex file storage; the row is the record. Machine analysis lives only here, never on a Listening Session.
+_Avoid_: recording, clip, track (a Composition may have many artifacts)
+
+**Media Job**:
+A self-contained, leased unit of audio work the media service pulls from Convex. Its input is a snapshot, its identity is the hash of that snapshot, and its completion is a typed result Convex validates and applies atomically.
+_Avoid_: render task, queue item
+
+**Blind Group**:
+An immutable set of audio artifacts served to a listener only through a projection that hides everything but opaque handles and labels until the last required rating reveals them.
+_Avoid_: A/B test (that is one use of a blind group)
+
+**House Voice**:
+The TTS voice Keith chose by blind listening; stored in settings and used by every narration job until changed.
+
+**Voice Shootout**:
+One `shootout` media job: the Calibration Passage rendered by every configured candidate voice, each take a private Blind Group member, plus one feed Episode that plays the takes in a seeded order behind the Announcer Voice. Unconfigured voices are skipped and named in the result; fewer than two takes is not a shootout.
+_Avoid_: bake-off, A/B test
+
+**Voice Rating**:
+One listener's scores for one shootout take (`voiceRatings`): five 0–5 fields (`naturalness`, `prosody`, `clean` where 5 is artifact-free, `clarity`, `overall`) plus notes. The last required rating and the reveal happen in one mutation (atomic reveal); a repeat submission returns the earlier result. Choosing the House Voice is a separate, explicit step.
+
+**Narration Script**:
+The spoken form of a source (`narration.v1` prompt): plain prose paragraphs separated by `[pause]`, followed by a `CHAPTERS` block of `{ title, startParagraph }`. Stored on the narration artifact's `scriptMd`; the media service turns paragraph render timings into chapter seconds.
+_Avoid_: transcript (that is what a listener hears, not what was written to be spoken)
+
+**Calibration Passage**:
+The fixed ~90-second script every shootout renders, so takes across voices and dates stay comparable.
+
+**Episode**:
+An Audio Artifact the podcast feed lists: only rows with `access: "feed"`, `role: "delivery"`, and `kind: "episode"` appear; its WAV master and shootout takes never do. Weekly-brief episodes are titled `Weekly turn, week of <Monday>` and carry `refs.weeklyBriefId`; a shootout episode pairs with its Blind Group through `refs.mediaJobId`.
+
+**Announcer Voice**:
+The voice that speaks a shootout episode's intro and take labels. Never a candidate: a configured catalog voice outside the job's candidates when one exists, otherwise a dedicated `ANNOUNCER_VOICES` entry; only when neither is configured does a candidate announce, and then the intro says nothing about being a non-candidate. Recorded on the episode's `engine.params.announcerVoiceId`.

@@ -84,6 +84,10 @@ const IngestPage = lazyRoute(() =>
   import("./routes/ingest").then((m) => ({ default: m.IngestPage })),
 );
 
+const ListenPage = lazyRoute(() =>
+  import("./routes/listen").then((m) => ({ default: m.ListenPage })),
+);
+
 const RecipeDetailPage = lazyRoute(() =>
   import("./routes/recipe-detail").then((m) => ({
     default: m.RecipeDetailPage,
@@ -141,6 +145,7 @@ const appLinks = [
   { to: "/editorial", label: "Editorial" },
   { to: "/failures", label: "Failures" },
   { to: "/feedback", label: "Feedback" },
+  { to: "/listen", label: "Listen" },
   { to: "/agent-runs", label: "Agent Runs" },
   { to: "/agent-drafts", label: "Review Queue" },
   { to: "/vocabulary-triage", label: "Triage" },
@@ -352,6 +357,12 @@ const feedbackRoute = createRoute({
   component: FeedbackPage,
 });
 
+const listenRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/listen",
+  component: ListenPage,
+});
+
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
@@ -404,6 +415,7 @@ const routeTree = rootRoute.addChildren([
   compositionDetailRoute,
   failuresRoute,
   feedbackRoute,
+  listenRoute,
   agentRunsRoute,
   agentRunDetailRoute,
   agentDraftsRoute,
