@@ -131,4 +131,14 @@ crons.interval(
   {},
 );
 
+// Narration is enqueued by brief generation itself; this only reconciles
+// briefs that missed it (worker down, house voice chosen later). Enqueue is
+// deduped on the job input, so repeat runs are safe.
+crons.weekly(
+  "reconcile-episodes",
+  { dayOfWeek: "saturday", hourUTC: 2, minuteUTC: 0 },
+  internal.episodes.reconcile,
+  { daysBack: 14 },
+);
+
 export default crons;

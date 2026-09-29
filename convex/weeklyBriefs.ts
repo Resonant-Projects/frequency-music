@@ -178,6 +178,20 @@ export const getInternal = internalQuery({
   handler: (ctx, args) => ctx.db.get(args.briefId),
 });
 
+// Briefs created at or after `since`, newest first, for episode
+// reconciliation. There is no createdAt index; the table gains one row a
+// week, so a filtered scan bounded by the take is cheaper than an index.
+export const listSinceInternal = internalQuery({
+  args: { since: v.number() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("weeklyBriefs")
+      .order("desc")
+      .filter((q) => q.gte(q.field("createdAt"), args.since))
+      .take(50);
+  },
+});
+
 // ============================================================================
 // MUTATIONS
 // ============================================================================
@@ -947,6 +961,19 @@ Theses: ${
     loopReport,
     todo: parsed.todo.length > 0 ? parsed.todo : undefined,
   });
+
+  // Narration is event-driven from here; the weekly reconcile-episodes cron
+  // picks up any brief this failed to schedule. The brief itself must land.
+  try {
+    await ctx.scheduler.runAfter(0, internal.episodes.narrateBrief, {
+      briefId,
+    });
+  } catch (error) {
+    console.warn(
+      "narration scheduling failed",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 
   return {
     briefId,

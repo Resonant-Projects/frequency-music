@@ -7,6 +7,10 @@ import { fnv1a64Hex, stableStringify } from "./stableHash";
 
 export const LEASE_MS = 10 * 60 * 1000;
 export const MAX_ATTEMPTS = 3;
+// Renderer a freshly enqueued job expects; a job snapshot records it so a
+// worker on an older build refuses the job instead of rendering it wrong.
+// The media package's RENDERER_VERSION must match this string.
+export const RENDERER_VERSION_FOR_JOBS = "0.2.0";
 
 export const MEDIA_JOB_KINDS = [
   "probe",

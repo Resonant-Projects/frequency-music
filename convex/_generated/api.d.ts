@@ -37,6 +37,7 @@ import type * as editorialArtifacts from "../editorialArtifacts.js";
 import type * as editorialExports from "../editorialExports.js";
 import type * as embeddings from "../embeddings.js";
 import type * as embeddingsStore from "../embeddingsStore.js";
+import type * as episodes from "../episodes.js";
 import type * as extract from "../extract.js";
 import type * as extractInternal from "../extractInternal.js";
 import type * as extractions from "../extractions.js";
@@ -132,6 +133,7 @@ declare const fullApi: ApiFromModules<{
   editorialExports: typeof editorialExports;
   embeddings: typeof embeddings;
   embeddingsStore: typeof embeddingsStore;
+  episodes: typeof episodes;
   extract: typeof extract;
   extractInternal: typeof extractInternal;
   extractions: typeof extractions;

@@ -1,7 +1,11 @@
 // Pull-based, leased job lifecycle. Convex never calls the media service.
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { internalMutation, type MutationCtx } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+} from "./_generated/server";
 import { applyMediaJobResult } from "./mediaJobEffects";
 import {
   type ClaimedMediaJob,
@@ -16,6 +20,7 @@ import {
 } from "./shared/mediaJobs";
 
 const SWEEP_LIMIT = 100;
+const PARKED_SCAN_LIMIT = 200;
 
 const claimedReturn = v.union(
   v.null(),
@@ -85,6 +90,27 @@ export const enqueue = internalMutation({
       createdAt: Date.now(),
     });
     return { jobId, created: true };
+  },
+});
+
+// A parked narrate job for a brief means a human has to look; reconciliation
+// must not paper over it with a fresh job.
+export const isParkedForBrief = internalQuery({
+  args: { briefId: v.id("weeklyBriefs") },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const parked = await ctx.db
+      .query("mediaJobs")
+      .withIndex("by_status_priority_createdAt", (q) =>
+        q.eq("status", "parked"),
+      )
+      .order("desc")
+      .take(PARKED_SCAN_LIMIT);
+    return parked.some(
+      (job) =>
+        job.input.kind === "narrate" &&
+        job.input.refs.weeklyBriefId === args.briefId,
+    );
   },
 });
 

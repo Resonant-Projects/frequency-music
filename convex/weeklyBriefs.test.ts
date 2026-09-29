@@ -148,7 +148,13 @@ Research summary.
     };
     let actionArgs: Record<string, unknown> | undefined;
     let mutationArgs: Record<string, unknown> | undefined;
+    const scheduled: unknown[] = [];
     const ctx = {
+      scheduler: {
+        runAfter: async (delay: number, _ref: unknown, args: unknown) => {
+          scheduled.push([delay, args]);
+        },
+      },
       runQuery: async () => ({
         recommendationContext: {
           campaign: null,
@@ -194,6 +200,76 @@ Research summary.
     );
     expect(actionArgs?.promptVersion).toBe("v2.loop-report");
     expect(mutationArgs?.loopReport).toEqual(loopReport);
+    // Narration is scheduled immediately after the row lands.
+    expect(scheduled).toEqual([[0, { briefId: "brief-1" }]]);
+  });
+
+  test("still returns the brief when narration scheduling fails", async () => {
+    const warnings: unknown[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args);
+    };
+    try {
+      const ctx = {
+        scheduler: {
+          runAfter: async () => {
+            throw new Error("scheduler down");
+          },
+        },
+        runQuery: async () => ({
+          recommendationContext: {
+            campaign: null,
+            theses: [],
+            hypotheses: [
+              {
+                _id: "hypothesis-1",
+                title: "Recent hypothesis",
+                question: "q",
+                hypothesis: "h",
+                whyThisMatters: "w",
+                sourceIds: [],
+                createdAt: Date.now(),
+              } as unknown as Doc<"hypotheses">,
+            ],
+            recipes: [],
+            actions: [],
+            failureArchive: [],
+          },
+          extraActiveTheses: [],
+          editorialSignals: { highYieldClusters: [], lowYieldClusters: [] },
+          loopReport: {
+            correspondences: {
+              newConjectures: 0,
+              gainedEvidence: 0,
+              contradicted: 0,
+              autoRetired: 0,
+              countsCapped: false,
+              topMovers: [],
+            },
+            reviewQueue: {
+              pendingDrafts: 0,
+              cap: 3,
+              agentBlocked: false,
+              oldestPendingDays: 0,
+            },
+            experimentDebt: [],
+            proposedFeeds: [],
+          },
+        }),
+        runAction: async () => ({ text: "# Fixture brief" }),
+        runMutation: async () => "brief-1",
+      } as unknown as Partial<ActionCtx>;
+
+      const result = await generateBriefCore(ctx as unknown as ActionCtx, {});
+
+      expect(result.briefId).toBe("brief-1");
+      expect(warnings).toEqual([
+        ["narration scheduling failed", "scheduler down"],
+      ]);
+    } finally {
+      console.warn = originalWarn;
+    }
   });
 });
 
