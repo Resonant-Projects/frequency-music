@@ -323,6 +323,35 @@ describe("federated source-scout search", () => {
       warn.mockRestore();
     }
   });
+  test("keeps reserved characters inside a DOI suffix as encoded DOI data", async () => {
+    const fetchImpl = vi.fn(async (input: string | URL | Request) =>
+      urlOf(input).includes("openalex.org")
+        ? json({
+            results: [
+              {
+                title: "Reserved suffix",
+                doi: "https://doi.org/10.5555/Plate%3Fmode%231",
+              },
+            ],
+          })
+        : json({
+            resultList: {
+              result: [
+                { title: "Same paper", doi: "10.5555/plate?mode#1" },
+                { title: "Sibling paper", doi: "10.5555/plate" },
+              ],
+            },
+          }),
+    );
+    const results = await createWebSearch({ apiKey: "", fetchImpl })({
+      query: "plate",
+    });
+    expect(results.map((result) => result.url)).toEqual([
+      "https://doi.org/10.5555/plate%3fmode%231",
+      "https://doi.org/10.5555/plate",
+    ]);
+  });
+
   test("retains bibliographic records without abstracts or a full date without inventing either", async () => {
     const fetchImpl = vi.fn(async (input: string | URL | Request) =>
       urlOf(input).includes("openalex.org")

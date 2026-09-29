@@ -90,10 +90,22 @@ function text(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+// A DOI suffix is opaque data: `?`, `#`, and `%` inside it must be encoded in
+// the resolver URL or they become URL syntax and truncate the DOI.
 function doiUrl(value: unknown): string | undefined {
-  const raw = text(value)?.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, "");
-  return raw && /^10\.\d{4,9}\/\S+$/i.test(raw)
-    ? `https://doi.org/${raw}`
+  const raw = text(value);
+  if (!raw) return undefined;
+  const resolver = /^https?:\/\/(?:dx\.)?doi\.org\//i;
+  let name = raw.replace(resolver, "");
+  if (name !== raw) {
+    try {
+      name = decodeURIComponent(name);
+    } catch {
+      return undefined;
+    }
+  }
+  return /^10\.\d{4,9}\/\S+$/i.test(name)
+    ? `https://doi.org/${name.replace(/[%?#]/g, encodeURIComponent)}`
     : undefined;
 }
 
