@@ -349,6 +349,70 @@ describe("media job effects", () => {
     }
   });
 
+  test("shootout refuses a memberOrder that omits a rendered take and rolls everything back", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await claimed(t, shootoutInput);
+    const takes = [];
+    for (const voiceId of ["inworld-max", "breeze-2", "gemini-flash-tts"]) {
+      takes.push({
+        voiceId,
+        artifact: measured(await attached(t, jobId, "shootoutTake", voiceId)),
+        master: measured(
+          await attached(t, jobId, "shootoutTake", `${voiceId}-master`),
+        ),
+        label: voiceId,
+      });
+    }
+    const episode = await attached(t, jobId, "episode", "Shootout");
+    const episodeMaster = await attached(
+      t,
+      jobId,
+      "episode",
+      "Shootout-master",
+    );
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes,
+          skippedVoiceIds: [],
+          episode: measured(episode),
+          episodeMaster: measured(episodeMaster),
+          memberOrder: ["breeze-2", "inworld-max"],
+        },
+      }),
+    ).rejects.toThrow(/memberOrder must name every take/);
+    // A duplicate entry cannot stand in for the missing take either.
+    await expect(
+      t.mutation(internal.mediaJobs.complete, {
+        jobId,
+        leaseToken,
+        result: {
+          kind: "shootout",
+          takes,
+          skippedVoiceIds: [],
+          episode: measured(episode),
+          episodeMaster: measured(episodeMaster),
+          memberOrder: ["breeze-2", "inworld-max", "breeze-2"],
+        },
+      }),
+    ).rejects.toThrow(/memberOrder repeats voice breeze-2/);
+    const rows = await t.run((ctx) => ctx.db.query("audioArtifacts").collect());
+    expect(rows).toHaveLength(8);
+    for (const row of rows) {
+      expect(row.status).toBe("pending");
+      expect(row.voice).toBeUndefined();
+      expect(row.blindGroupId).toBeUndefined();
+      expect(row.access).toBe("private");
+    }
+    const groups = await t.run((ctx) => ctx.db.query("blindGroups").collect());
+    expect(groups).toHaveLength(0);
+    const job = await t.run((ctx) => ctx.db.get(jobId));
+    expect(job?.status).toBe("claimed");
+  });
+
   test("shootout refuses two takes for the same voice", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken } = await claimed(t, shootoutInput);

@@ -164,6 +164,48 @@ export async function applyMediaJobResult(
     case "shootout": {
       if (job.input.kind !== "shootout")
         throw inputKindMismatch(job, "shootout");
+      // Pure checks first, before any markReady sub-mutation: the blind
+      // group must cover every rendered take exactly once, so a take the
+      // handler forgot to list can never end up ready but ungrouped.
+      const byVoice = new Map<string, Id<"audioArtifacts">>();
+      for (const take of result.takes) {
+        if (byVoice.has(take.voiceId)) {
+          throw new ConvexError({
+            code: "INVALID_ARGUMENT",
+            message: `shootout rendered voice ${take.voiceId} twice`,
+          });
+        }
+        byVoice.set(take.voiceId, take.artifact.artifactId);
+      }
+      const seen = new Set<string>();
+      const members = result.memberOrder.map((voiceId, index) => {
+        const artifactId = byVoice.get(voiceId);
+        if (!artifactId) {
+          throw new ConvexError({
+            code: "INVALID_ARGUMENT",
+            message: `memberOrder names unrendered voice ${voiceId}`,
+          });
+        }
+        if (seen.has(voiceId)) {
+          throw new ConvexError({
+            code: "INVALID_ARGUMENT",
+            message: `memberOrder repeats voice ${voiceId}`,
+          });
+        }
+        seen.add(voiceId);
+        return {
+          artifactId,
+          label: `take ${ORDINALS[index] ?? String(index + 1)}`,
+        };
+      });
+      // Entries are distinct and each names a take, so a short list can only
+      // mean a rendered take was left out of the group.
+      if (members.length !== result.takes.length) {
+        throw new ConvexError({
+          code: "INVALID_ARGUMENT",
+          message: `memberOrder must name every take: ${members.length} entries for ${result.takes.length} takes`,
+        });
+      }
       // Masters first: they are provenance, never members or feed rows.
       await ownAndReady(ctx, job, [
         ...result.takes.map((take) => take.master),
@@ -174,18 +216,8 @@ export async function applyMediaJobResult(
         job,
         result.takes.map((take) => take.artifact),
       );
-      const byVoice = new Map<string, Id<"audioArtifacts">>();
-      result.takes.forEach((take, index) => {
-        if (byVoice.has(take.voiceId)) {
-          throw new ConvexError({
-            code: "INVALID_ARGUMENT",
-            message: `shootout rendered voice ${take.voiceId} twice`,
-          });
-        }
-        byVoice.set(take.voiceId, takeIds[index]!);
-      });
       for (const take of result.takes) {
-        await ctx.db.patch(byVoice.get(take.voiceId)!, {
+        await ctx.db.patch(take.artifact.artifactId, {
           voice: { catalogId: take.voiceId, promptVersion: "shootout.v1" },
           updatedAt: now,
         });
@@ -200,19 +232,6 @@ export async function applyMediaJobResult(
       if (episodeRow!.role === "delivery") {
         await ctx.db.patch(episodeId!, { access: "feed", updatedAt: now });
       }
-      const members = result.memberOrder.map((voiceId, index) => {
-        const artifactId = byVoice.get(voiceId);
-        if (!artifactId) {
-          throw new ConvexError({
-            code: "INVALID_ARGUMENT",
-            message: `memberOrder names unrendered voice ${voiceId}`,
-          });
-        }
-        return {
-          artifactId,
-          label: `take ${ORDINALS[index] ?? String(index + 1)}`,
-        };
-      });
       await ctx.runMutation(internal.blindGroups.create, {
         purpose: "voiceShootout",
         members,
