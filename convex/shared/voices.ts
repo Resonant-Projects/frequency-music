@@ -1,11 +1,7 @@
 // TTS voices are not LLMs: they live here, not in convex/llm.ts MODELS.
 // verifiedOn is the date the model/voice ids were checked against the
 // provider's live API; the wave 1 plan's first task re-verifies them.
-export type VoiceProvider =
-  | "google"
-  | "inworld"
-  | "elevenlabs"
-  | "openaiCompatible";
+export type VoiceProvider = "google" | "inworld" | "elevenlabs" | "breeze";
 
 export type VoiceEntry = {
   id: string;
@@ -54,9 +50,13 @@ export const VOICE_CATALOG: readonly VoiceEntry[] = [
     keyEnvVar: "ELEVENLABS_API_KEY",
     verifiedOn: "2026-09-28",
   },
+  // The local voice speaks Breeze TTS 2's own server API (media/src/tts/
+  // breeze.ts). openclawProvider names OpenClaw's side for wave 2 and is not
+  // that API. keyEnvVar is kept for schema stability; the bundled server takes
+  // no key, so a local voice is configured by baseUrlEnvVar alone.
   {
     id: "breeze-2",
-    provider: "openaiCompatible",
+    provider: "breeze",
     model: "breeze-tts-2",
     voiceId:
       "design:A calm, warm, unhurried adult narrator with clear diction and a low-mid register.",

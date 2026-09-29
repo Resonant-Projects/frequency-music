@@ -13,17 +13,33 @@ export type TtsProvider = {
   ) => Promise<void>;
 };
 
-// Hosted TTS failure policy: two retries with backoff, then fail with the
+// TTS failure policy: two retries with backoff, then fail with the
 // provider's status code only. The response body is never read into the
 // error (it may echo the request, including the key), and a network-level
 // failure surfaces without the URL (whose query string may carry a key) or
 // headers. `init.signal` is the caller's deadline; redirects are refused so
-// the key header never follows a redirect to another host.
+// the key header never follows a redirect to another host. `backoffMs` lets a
+// provider wait differently for a particular status (Breeze answers 409 while
+// it renders another request) without changing the attempt count.
+export type RetryOptions = {
+  attempts?: number;
+  // Delay before the next attempt, given the failed status (undefined for a
+  // network error) and the 1-based number of the attempt that just failed.
+  backoffMs?: (status: number | undefined, attempt: number) => number;
+};
+
+export function defaultBackoffMs(attempt: number): number {
+  return 500 * 2 ** (attempt - 1);
+}
+
 export async function fetchAudioWithRetry(
   url: string,
   init: RequestInit,
-  attempts = 3,
+  options: RetryOptions = {},
 ): Promise<ArrayBuffer> {
+  const attempts = options.attempts ?? 3;
+  const backoffMs =
+    options.backoffMs ?? ((_status, attempt) => defaultBackoffMs(attempt));
   let lastStatus: number | undefined;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
@@ -37,7 +53,7 @@ export async function fetchAudioWithRetry(
     }
     if (attempt < attempts) {
       await new Promise((resolve) =>
-        setTimeout(resolve, 500 * 2 ** (attempt - 1)),
+        setTimeout(resolve, backoffMs(lastStatus, attempt)),
       );
     }
   }
