@@ -54,6 +54,7 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./recipes.ts": () => import("../convex/recipes"),
   "./recipesInternal.ts": () => import("../convex/recipesInternal"),
   "./schema.ts": () => import("../convex/schema"),
+  "./settings.ts": () => import("../convex/settings"),
   "./sources.ts": () => import("../convex/sources"),
   "./sourceUtils.ts": () => import("../convex/sourceUtils"),
   "./testing.ts": () => import("../convex/testing"),
