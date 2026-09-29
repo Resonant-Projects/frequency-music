@@ -21,15 +21,33 @@ import {
 } from "../src/jobs/assembleEpisode";
 import { narrateHandler } from "../src/jobs/narrate";
 import type { NewArtifact, ToolClient } from "../src/jobs/types";
+import { assertUnderUploadCap, MAX_UPLOAD_BYTES } from "../src/upload";
 
 type Measure = (path: string, signal?: AbortSignal) => Promise<Measurement>;
-const { measureOverride } = vi.hoisted(() => ({
+type Stat = typeof import("node:fs/promises").stat;
+const { measureOverride, statOverride } = vi.hoisted(() => ({
   measureOverride: {
     fn: undefined as
       | undefined
       | ((path: string, actual: Measure) => Promise<Measurement>),
   },
+  statOverride: {
+    // Reported size for a path, or undefined for the real stat.
+    sizeFor: undefined as undefined | ((path: string) => number | undefined),
+  },
 }));
+
+// Passthrough by default; a test can pretend one file is huge without
+// writing 95 MB to disk.
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  const stat: Stat = (async (path: Parameters<Stat>[0], options?: unknown) => {
+    const real = await (actual.stat as Stat)(path, options as never);
+    const size = statOverride.sizeFor?.(String(path));
+    return size === undefined ? real : { ...real, size };
+  }) as Stat;
+  return { ...actual, stat };
+});
 
 // Passthrough by default; a test can override `measure` for one file without
 // touching normalize()'s internal measurement.
@@ -53,6 +71,7 @@ function workDir(prefix: string): string {
 
 afterEach(() => {
   measureOverride.fn = undefined;
+  statOverride.sizeFor = undefined;
 });
 
 afterAll(() => {
@@ -109,7 +128,7 @@ const narrateJob = {
     target: "spoken" as const,
     title: "T",
     access: "feed" as const,
-    refs: {},
+    refs: { weeklyBriefId: "wb1" as never },
     assembleOnDone: false,
     rendererVersion: "0.2.0",
   },
@@ -173,6 +192,10 @@ describe("narrate job", () => {
       "Short one.\n\nThis is a longer second paragraph here.",
     );
     expect(minted[0]?.contentHash).not.toBe(minted[1]?.contentHash);
+    // Both artifacts carry the job's refs (the brief).
+    for (const artifact of minted) {
+      expect(artifact.refs).toEqual({ weeklyBriefId: "wb1" });
+    }
     // R21: the master is 16-bit mono 48 kHz; the delivery is dual-mono MP3.
     const master = await probeStreams(uploaded[0]!.path);
     expect(master.codec).toBe("pcm_s16le");
@@ -214,6 +237,40 @@ describe("narrate job", () => {
     ]);
     expect(tools.uploadBytes).toHaveBeenCalledTimes(1);
     expect(tools.attachAudioStorage).toHaveBeenCalledTimes(1);
+  });
+
+  test("an artifact over the upload cap is refused before its upload URL is minted", async () => {
+    // Pure guard: the boundary is inclusive and the message names the role,
+    // size, and cap.
+    expect(() =>
+      assertUnderUploadCap("delivery", MAX_UPLOAD_BYTES),
+    ).not.toThrow();
+    expect(() =>
+      assertUnderUploadCap("masterNormalized", MAX_UPLOAD_BYTES + 1),
+    ).toThrow(
+      "masterNormalized is 95.0 MB, over the 95 MB upload cap (Cloudflare); split the script or move masters to FLAC",
+    );
+    // Through the handler: the delivery reports as 121 MB.
+    statOverride.sizeFor = (path) =>
+      path.endsWith(".mp3") ? 121_000_000 : undefined;
+    const { tools, minted } = fakeTools();
+    await expect(
+      narrateHandler(
+        {
+          job: narrateJob,
+          workDir: workDir("narr-big-"),
+          tools,
+          rendererVersion: "0.2.0",
+          signal: new AbortController().signal,
+        },
+        { synthesize: toneSynth },
+      ),
+    ).rejects.toThrow(/delivery is 121\.0 MB, over the 95 MB upload cap/);
+    // The master passed and was uploaded; the delivery never reached Convex.
+    expect(minted.map((artifact) => artifact.role)).toEqual([
+      "masterNormalized",
+    ]);
+    expect(tools.uploadBytes).toHaveBeenCalledTimes(1);
   });
 
   test("chunks a paragraph over the provider cap and joins the chunks", async () => {
@@ -335,6 +392,7 @@ describe("assembleEpisode job", () => {
           narrationStorageUrl: `${base}/narration`,
           title: "Weekly turn",
           chapters,
+          refs: { weeklyBriefId: "wb1" as never },
           rendererVersion: "0.2.0",
         },
       },
@@ -354,6 +412,10 @@ describe("assembleEpisode job", () => {
     ]);
     expect(minted[0]?.access).toBe("private");
     expect(minted[1]?.access).toBe("feed");
+    // R29: the episode links back to the brief through the job's refs.
+    for (const artifact of minted) {
+      expect(artifact.refs).toEqual({ weeklyBriefId: "wb1" });
+    }
     const shifted = [
       { title: "Open", startSecs: EPISODE_LEAD_IN_SECS },
       { title: "Next", startSecs: 1.25 + EPISODE_LEAD_IN_SECS },
@@ -367,6 +429,31 @@ describe("assembleEpisode job", () => {
       expect(artifact.truePeakDbtp).toBeLessThanOrEqual(-1);
     }
     for (const upload of uploaded) expect(upload.signal).toBe(signal);
+
+    // A job enqueued before refs existed still assembles, with empty refs.
+    const legacy = fakeTools();
+    await assembleEpisodeHandler({
+      job: {
+        jobId: "e",
+        kind: "assembleEpisode",
+        leaseToken: "L",
+        leaseExpiresAt: Date.now() + 60_000,
+        attempts: 0,
+        input: {
+          kind: "assembleEpisode",
+          narrationArtifactId: "n1" as never,
+          narrationStorageUrl: `${base}/narration`,
+          title: "Weekly turn",
+          chapters,
+          rendererVersion: "0.2.0",
+        },
+      },
+      workDir: workDir("episode-legacy-"),
+      tools: legacy.tools,
+      rendererVersion: "0.2.0",
+      signal,
+    });
+    expect(legacy.minted.map((artifact) => artifact.refs)).toEqual([{}, {}]);
 
     // Redirects and missing blobs fail before anything is minted, and the
     // error never carries the URL.

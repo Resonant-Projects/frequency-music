@@ -4,27 +4,6 @@
 import { runFfmpeg } from "./ffmpeg";
 import { measure } from "./loudness";
 
-export async function silence(
-  output: string,
-  seconds: number,
-  signal?: AbortSignal,
-): Promise<void> {
-  await runFfmpeg(
-    [
-      "-f",
-      "lavfi",
-      "-i",
-      "anullsrc=r=48000:cl=mono",
-      "-t",
-      String(seconds),
-      "-c:a",
-      "pcm_s24le",
-      output,
-    ],
-    { signal },
-  );
-}
-
 // Places each input at a start offset (leadMs, then gapMs after the previous
 // one ends) and mixes the delayed streams. The inputs never overlap, so
 // amix with normalize=0 is a pure sum: each piece keeps its own level. Returns

@@ -53,7 +53,9 @@ export async function assembleEpisodeHandler(ctx: JobContext) {
       title: input.title,
       chapters,
       engine,
-      refs: {},
+      // R29: the narration's refs (its weeklyBriefId) so the episode links
+      // back to the brief it narrates.
+      refs: input.refs ?? {},
       createdBy: "system",
     },
     { kind: "episode", narration: input.narrationArtifactId, engine },

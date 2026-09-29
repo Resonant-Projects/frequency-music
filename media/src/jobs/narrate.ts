@@ -2,6 +2,7 @@
 // narration. Each paragraph is chunked to the provider's cap, the chunks and
 // then the paragraphs are joined with short gaps, and the paragraph starts
 // become chapter marks.
+import { stat } from "node:fs/promises";
 import { join } from "node:path";
 import { fnv1a64Hex, stableStringify } from "../../../convex/shared/stableHash";
 import { type VoiceEntry, voiceById } from "../../../convex/shared/voices";
@@ -14,6 +15,7 @@ import {
   normalize,
 } from "../audio/loudness";
 import { chunkForLimit, providerFor } from "../tts";
+import { assertUnderUploadCap } from "../upload";
 import type { ArtifactResult, JobContext, NewArtifact } from "./types";
 
 export const PARAGRAPH_GAP_MS = 400;
@@ -52,8 +54,9 @@ export async function renderParagraph(
 // Encodes a normalized WAV as a 16-bit mono master and a dual-mono MP3
 // delivery and uploads both, master first. The master is always private:
 // only the delivery is ever published, and `base.access` is the delivery's.
-// Each file is measured and checked against policy before its upload URL is
-// minted, so a failed file creates no server state.
+// Each file is measured, checked against policy, and checked against the
+// upload size cap before its upload URL is minted, so a failed file creates
+// no server state.
 export async function uploadMasterAndDelivery(
   ctx: JobContext,
   normalizedWav: string,
@@ -84,6 +87,7 @@ export async function uploadMasterAndDelivery(
   ): Promise<ArtifactResult> => {
     const measured = await measure(path, ctx.signal);
     assertWithinPolicy(measured, targetLufs);
+    assertUnderUploadCap(artifact.role, (await stat(path)).size);
     const { artifactId, uploadUrl } = await ctx.tools.generateAudioUploadUrl({
       jobId: ctx.job.jobId,
       leaseToken: ctx.job.leaseToken,

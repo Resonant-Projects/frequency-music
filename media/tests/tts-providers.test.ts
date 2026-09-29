@@ -11,6 +11,8 @@ import {
 } from "vite-plus/test";
 import { voiceById } from "../../convex/shared/voices";
 import { isConfigured, providerFor } from "../src/tts";
+import { resetBreezeReadiness, waitForBreezeReady } from "../src/tts/breeze";
+import { fetchAudioWithRetry } from "../src/tts/types";
 
 // The shape every provider hands to fetch; typing it here keeps the
 // assertions cast-free. Hosted providers send a JSON string; Breeze sends a
@@ -32,11 +34,38 @@ function formBody(init: CapturedInit): FormData {
   return init.body;
 }
 
+// The Breeze server as the provider sees it: GET /health answers 200 once
+// the model is loaded (`healthStatuses` are consumed first), POST
+// /v1/audio/speech is handed to `speech`.
+function breezeServer(
+  speech: (init: CapturedInit, call: number) => Response,
+  healthStatuses: number[] = [],
+) {
+  const health = [...healthStatuses];
+  let speechCalls = 0;
+  const fetchMock = vi.fn((url: string, init: CapturedInit) => {
+    if (url.endsWith("/health")) {
+      const status = health.shift() ?? 200;
+      return Promise.resolve(
+        new Response(
+          status === 200 ? JSON.stringify({ status: "ok" }) : "loading",
+          { status },
+        ),
+      );
+    }
+    speechCalls += 1;
+    return Promise.resolve(speech(init, speechCalls));
+  });
+  const urls = () => fetchMock.mock.calls.map(([url]) => url);
+  return { fetchMock, urls };
+}
+
 const dir = mkdtempSync(join(tmpdir(), "tts-"));
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.useRealTimers();
+  resetBreezeReadiness();
 });
 afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
@@ -84,31 +113,34 @@ describe("tts providers", () => {
     vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881/");
     const voice = voiceById("breeze-2");
     const pcm = new Uint8Array([1, 0, 2, 0, 3, 0]);
-    const fetchMock = vi.fn((url: string, init: CapturedInit) => {
-      expect(url).toBe("http://tts-local:8881/v1/audio/speech");
+    const { fetchMock, urls } = breezeServer((init) => {
       expect(init.redirect).toBe("error");
       // No key is configured, so no Authorization header is sent; the
       // multipart boundary is fetch's job, so no content-type either.
       expect(init.headers?.authorization).toBeUndefined();
       expect(init.headers?.["content-type"]).toBeUndefined();
       const form = formBody(init);
-      expect(form.get("text")).toBe("Hello there.");
+      expect(["Hello there.", "Again."]).toContain(form.get("text"));
       expect(form.get("instruction")).toBe(
         voice.voiceId.slice("design:".length),
       );
       expect(form.get("cfg_scale")).toBe("4");
       expect(form.get("seed")).toBe("42");
       expect(form.has("ref_audio")).toBe(false);
-      return Promise.resolve(
-        new Response(pcm, {
-          status: 200,
-          headers: { "content-type": "audio/pcm" },
-        }),
-      );
+      return new Response(pcm, {
+        status: 200,
+        headers: { "content-type": "audio/pcm" },
+      });
     });
     vi.stubGlobal("fetch", fetchMock);
     const out = join(dir, "breeze.wav");
     await providerFor(voice).synthesize("Hello there.", voice, out);
+    // R27: readiness is checked once before the first synthesis; the
+    // trailing slash on the base url is dropped from both.
+    expect(urls()).toEqual([
+      "http://tts-local:8881/health",
+      "http://tts-local:8881/v1/audio/speech",
+    ]);
     const written = readFileSync(out);
     expect(written.subarray(0, 4).toString()).toBe("RIFF");
     expect(written.length).toBe(44 + pcm.length);
@@ -116,58 +148,191 @@ describe("tts providers", () => {
     expect(written.readUInt32LE(24)).toBe(24000); // sample rate
     expect(written.readUInt32LE(40)).toBe(pcm.length); // data chunk size
     expect([...written.subarray(44)]).toEqual([...pcm]);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // A second synthesis in the same process does not re-check health.
+    await providerFor(voice).synthesize("Again.", voice, out);
+    expect(urls().filter((url) => url.endsWith("/health"))).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   test("breeze provider sends a bearer token only when a key is set and rejects non-design voice ids", async () => {
     vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881");
     vi.stubEnv("BREEZE_TTS_API_KEY", "shh");
-    const fetchMock = vi.fn((_url: string, init: CapturedInit) => {
+    const { fetchMock, urls } = breezeServer((init) => {
       expect(init.headers?.authorization).toBe("Bearer shh");
       expect(formBody(init).has("instruction")).toBe(false);
-      return Promise.resolve(new Response(new Uint8Array(2), { status: 200 }));
+      return new Response(new Uint8Array(2), { status: 200 });
     });
     vi.stubGlobal("fetch", fetchMock);
     const plain = { ...voiceById("breeze-2"), voiceId: "" };
     await providerFor(plain).synthesize("x", plain, join(dir, "plain.wav"));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(urls().filter((url) => url.endsWith("/speech"))).toHaveLength(1);
 
     const referenced = { ...voiceById("breeze-2"), voiceId: "ref:some-clip" };
     await expect(
       providerFor(referenced).synthesize("x", referenced, join(dir, "ref.wav")),
     ).rejects.toThrow(/design:/);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(urls().filter((url) => url.endsWith("/speech"))).toHaveLength(1);
   });
 
-  test("breeze provider waits out a 409 from the single-concurrency server and then succeeds", async () => {
+  for (const busy of [409, 503]) {
+    test(`breeze provider waits out a ${busy} from the server and then succeeds (R27)`, async () => {
+      vi.useFakeTimers();
+      vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881");
+      const voice = voiceById("breeze-2");
+      const pcm = new Uint8Array([9, 0, 8, 0]);
+      const { fetchMock, urls } = breezeServer((_init, call) =>
+        call === 1
+          ? new Response("busy", { status: busy })
+          : new Response(pcm, { status: 200 }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      const out = join(dir, `busy-${busy}.wav`);
+      const attempt = providerFor(voice).synthesize("x", voice, out);
+      const speechCalls = () => urls().filter((u) => u.endsWith("/speech"));
+      // The busy backoff is longer than the ordinary one; nothing fires
+      // before it.
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(speechCalls()).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(5000);
+      await attempt;
+      expect(speechCalls()).toHaveLength(2);
+      const written = readFileSync(out);
+      expect(written.subarray(0, 4).toString()).toBe("RIFF");
+      expect(written.length).toBe(44 + pcm.length);
+    });
+  }
+
+  test("R27: the first Breeze synthesis waits for /health to answer 200", async () => {
     vi.useFakeTimers();
     vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881");
     const voice = voiceById("breeze-2");
-    const pcm = new Uint8Array([9, 0, 8, 0]);
-    let calls = 0;
-    const fetchMock = vi.fn(() => {
-      calls += 1;
-      return Promise.resolve(
-        calls === 1
-          ? new Response("busy", { status: 409 })
-          : new Response(pcm, { status: 200 }),
-      );
-    });
+    const pcm = new Uint8Array([1, 0]);
+    // Loading for two polls, then ready.
+    const { fetchMock, urls } = breezeServer(
+      () => new Response(pcm, { status: 200 }),
+      [503, 503, 200],
+    );
     vi.stubGlobal("fetch", fetchMock);
-    const out = join(dir, "busy.wav");
+    const out = join(dir, "cold.wav");
     const attempt = providerFor(voice).synthesize("x", voice, out);
-    // The busy backoff is longer than the ordinary one; nothing fires before it.
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    await vi.advanceTimersByTimeAsync(5000);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(urls()).toEqual(["http://tts-local:8881/health"]);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(urls()).toHaveLength(2);
+    expect(urls().every((url) => url.endsWith("/health"))).toBe(true);
+    await vi.advanceTimersByTimeAsync(10_000);
     await attempt;
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const written = readFileSync(out);
-    expect(written.subarray(0, 4).toString()).toBe("RIFF");
-    expect(written.length).toBe(44 + pcm.length);
+    expect(urls()).toEqual([
+      "http://tts-local:8881/health",
+      "http://tts-local:8881/health",
+      "http://tts-local:8881/health",
+      "http://tts-local:8881/v1/audio/speech",
+    ]);
+    expect(readFileSync(out).length).toBe(44 + pcm.length);
   });
 
-  test("every provider passes the job signal to fetch", async () => {
+  test("R27: the health gate gives up after its budget and a later job checks again", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_url: string) =>
+      Promise.resolve(new Response("loading", { status: 503 })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const wait = waitForBreezeReady("http://tts-local:8881/", undefined, {
+      timeoutMs: 60_000,
+      intervalMs: 10_000,
+    });
+    const settled = wait.then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    await vi.advanceTimersByTimeAsync(70_000);
+    const error = await settled;
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe(
+      "Breeze TTS did not become ready within 1 min",
+    );
+    // Polls at 0, 10, ..., 60 s (the deadline itself is still tried); none
+    // past it.
+    expect(fetchMock).toHaveBeenCalledTimes(7);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("http://tts-local:8881/health");
+
+    // The provider forgets a failed wait, so a later synthesis polls again
+    // instead of failing from a cached rejection.
+    vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881");
+    const voice = voiceById("breeze-2");
+    const server = breezeServer(
+      () => new Response(new Uint8Array(2), { status: 200 }),
+      [503],
+    );
+    vi.stubGlobal("fetch", server.fetchMock);
+    const first = providerFor(voice)
+      .synthesize("x", voice, join(dir, "retry-gate.wav"))
+      .then(
+        () => "ok",
+        () => "failed",
+      );
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(await first).toBe("ok");
+  });
+
+  test("a hosted attempt that hangs past the per-attempt timeout is retried, then succeeds", async () => {
+    const bytes = new Uint8Array([7, 7]);
+    const signals: AbortSignal[] = [];
+    const fetchMock = vi.fn((_url: string, init: CapturedInit) => {
+      signals.push(init.signal!);
+      if (signals.length === 1) {
+        // Never answers; only the attempt's own timeout ends it.
+        return new Promise<Response>((_resolve, reject) => {
+          init.signal!.addEventListener("abort", () =>
+            reject(init.signal!.reason),
+          );
+        });
+      }
+      return Promise.resolve(new Response(bytes, { status: 200 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await fetchAudioWithRetry(
+      "https://tts.test/speech",
+      { method: "POST" },
+      { attempts: 2, timeoutMs: 20, backoffMs: () => 0 },
+    );
+    expect([...new Uint8Array(result)]).toEqual([...bytes]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(signals[0]?.aborted).toBe(true);
+    expect(signals[1]?.aborted).toBe(false);
+  });
+
+  test("a job abort during the backoff ends the wait at once", async () => {
+    vi.useFakeTimers();
+    vi.stubEnv("INWORLD_API_KEY", "k");
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response("busy", { status: 500 })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    const attempt = providerFor(voiceById("inworld-max"))
+      .synthesize(
+        "x",
+        voiceById("inworld-max"),
+        join(dir, "aborted.wav"),
+        controller.signal,
+      )
+      .then(
+        () => "resolved",
+        (error: unknown) => error,
+      );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Mid-backoff (500 ms) the job is abandoned: no second attempt, no wait.
+    controller.abort(new Error("deadline"));
+    await vi.advanceTimersByTimeAsync(0);
+    const outcome = await attempt;
+    expect(outcome).toBeInstanceOf(Error);
+    expect((outcome as Error).message).toBe("deadline");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("every provider runs each attempt under the job signal plus its own timeout", async () => {
     vi.stubEnv("ELEVENLABS_API_KEY", "k");
     vi.stubEnv("INWORLD_API_KEY", "k");
     vi.stubEnv("GEMINI_API_KEY", "k");
@@ -194,10 +359,15 @@ describe("tts providers", () => {
       "breeze-2": "\0\0\0\0",
     };
     for (const [id, body] of Object.entries(bodies)) {
-      const signal = new AbortController().signal;
-      const fetchMock = vi.fn((_url: string, init: CapturedInit) => {
-        expect(init.signal, id).toBe(signal);
-        return Promise.resolve(new Response(body, { status: 200 }));
+      const controller = new AbortController();
+      const seen: AbortSignal[] = [];
+      const fetchMock = vi.fn((url: string, init: CapturedInit) => {
+        seen.push(init.signal!);
+        return Promise.resolve(
+          url.endsWith("/health")
+            ? new Response("{}", { status: 200 })
+            : new Response(body, { status: 200 }),
+        );
       });
       vi.stubGlobal("fetch", fetchMock);
       const voice = voiceById(id);
@@ -205,9 +375,18 @@ describe("tts providers", () => {
         "x",
         voice,
         join(dir, `${id}.wav`),
-        signal,
+        controller.signal,
       );
-      expect(fetchMock, id).toHaveBeenCalledTimes(1);
+      // Breeze also polls /health first; every request (including that one)
+      // runs under a signal derived from the job's, not the raw job signal,
+      // so the per-attempt timeout applies, and aborting the job aborts it.
+      expect(seen.length, id).toBeGreaterThan(0);
+      for (const signal of seen) {
+        expect(signal, id).not.toBe(controller.signal);
+        expect(signal.aborted, id).toBe(false);
+      }
+      controller.abort();
+      for (const signal of seen) expect(signal.aborted, id).toBe(true);
     }
   });
 

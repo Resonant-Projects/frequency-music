@@ -1,10 +1,12 @@
 // shootout: the same passage through every configured candidate voice, each
 // take a private blind member, plus one feed episode that plays them back in
-// a seeded order behind a non-candidate intro voice. Unconfigured voices are
-// skipped and reported; fewer than two takes is not a shootout.
+// a seeded order behind a non-candidate announcer voice. Unconfigured voices
+// are skipped and reported; fewer than two takes is not a shootout.
 import { join } from "node:path";
+import { spokenLabel } from "../../../convex/shared/mediaJobs";
 import { fnv1a64Hex } from "../../../convex/shared/stableHash";
 import {
+  ANNOUNCER_VOICES,
   VOICE_CATALOG,
   type VoiceEntry,
   voiceById,
@@ -27,22 +29,6 @@ import {
 } from "./narrate";
 import type { ArtifactResult, JobContext } from "./types";
 
-// Must match the effect's ORDINALS table (convex/mediaJobEffects.ts): the
-// label the listener hears is the label the blind group stores.
-const ORDINALS = [
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-];
-export function spokenLabel(index: number): string {
-  return `take ${ORDINALS[index] ?? String(index + 1)}`;
-}
-
 // Fisher-Yates on a linear congruential generator seeded from the job id, so
 // a retried job presents the same order as its first attempt.
 export function shuffleWithSeed<T>(items: readonly T[], seed: string): T[] {
@@ -59,14 +45,16 @@ export function shuffleWithSeed<T>(items: readonly T[], seed: string): T[] {
   return out;
 }
 
-// R26: the intro and labels come from a configured catalog voice that is not
-// competing, so hearing it reveals nothing about a take. Hosted voices are
-// preferred as the announcer. Only when every configured voice is a
-// candidate does a candidate announce, and then the intro must not claim
-// otherwise.
+// R26/R28: the intro and labels come from a voice that is not competing, so
+// hearing it reveals nothing about a take. In order: a configured catalog
+// voice outside this job's candidates (hosted first), then a configured
+// dedicated announcer (ANNOUNCER_VOICES, never a candidate anywhere). Only
+// when neither exists does a candidate announce, and then the intro must not
+// claim otherwise.
 export function chooseIntroVoice(
   candidates: readonly VoiceEntry[],
   configuredCatalog: readonly VoiceEntry[],
+  configuredAnnouncers: readonly VoiceEntry[] = [],
 ): { voice: VoiceEntry; isCandidate: boolean } {
   const candidateIds = new Set(candidates.map((voice) => voice.id));
   const bystanders = configuredCatalog.filter(
@@ -76,6 +64,8 @@ export function chooseIntroVoice(
     voices.find((voice) => voice.runsOn === "hosted") ?? voices[0];
   const bystander = preferHosted(bystanders);
   if (bystander) return { voice: bystander, isCandidate: false };
+  const announcer = configuredAnnouncers[0];
+  if (announcer) return { voice: announcer, isCandidate: false };
   const candidate = preferHosted(candidates);
   if (!candidate) throw new Error("chooseIntroVoice needs a candidate");
   return { voice: candidate, isCandidate: true };
@@ -155,18 +145,25 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
   const synthFor = (voice: VoiceEntry): Synth =>
     synthOverride ?? providerFor(voice);
 
+  // A take that fails (provider error, policy breach) fails the job naming
+  // its voice, so the operator knows which one to look at.
   const takeFiles = new Map<string, string>();
   for (const voice of configured) {
-    takeFiles.set(
-      voice.id,
-      await renderTake(
-        ctx,
-        synthFor(voice),
-        voice,
-        input.passage,
-        `take-${voice.id}`,
-      ),
-    );
+    try {
+      takeFiles.set(
+        voice.id,
+        await renderTake(
+          ctx,
+          synthFor(voice),
+          voice,
+          input.passage,
+          `take-${voice.id}`,
+        ),
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`take ${voice.id}: ${message}`, { cause: error });
+    }
   }
 
   const order = shuffleWithSeed(
@@ -176,6 +173,7 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
   const { voice: introVoice, isCandidate } = chooseIntroVoice(
     configured,
     VOICE_CATALOG.filter(isConfigured),
+    ANNOUNCER_VOICES.filter(isConfigured),
   );
   const introSynth = synthFor(introVoice);
   // The announcer's raw level is whatever its provider emits, so the intro
@@ -247,11 +245,17 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
     version: ctx.rendererVersion,
     params: { voices: order.length },
   };
+  // The episode records who announced it: the one voice heard that is not
+  // a take, and the thing a listener could recognise (provenance for R26's
+  // documented limitation when a candidate has to announce).
+  const episodeEngine = {
+    ...engine,
+    params: { ...engine.params, announcerVoiceId: introVoice.id },
+  };
   const takes: {
     voiceId: string;
     artifact: ArtifactResult;
     master: ArtifactResult;
-    label: string;
   }[] = [];
   for (const [index, voiceId] of order.entries()) {
     const [master, delivery] = await uploadMasterAndDelivery(
@@ -270,12 +274,7 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
       { kind: "shootoutTake", voiceId, passage: input.passage, engine },
       LOUDNESS_TARGETS.spoken,
     );
-    takes.push({
-      voiceId,
-      artifact: delivery!,
-      master: master!,
-      label: spokenLabel(index),
-    });
+    takes.push({ voiceId, artifact: delivery!, master: master! });
   }
   const [episodeMaster, episode] = await uploadMasterAndDelivery(
     ctx,
@@ -287,11 +286,16 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
       access: "feed",
       title: input.title,
       chapters,
-      engine,
+      engine: episodeEngine,
       refs: {},
       createdBy: "system",
     },
-    { kind: "shootoutEpisode", order, passage: input.passage, engine },
+    {
+      kind: "shootoutEpisode",
+      order,
+      passage: input.passage,
+      engine: episodeEngine,
+    },
     LOUDNESS_TARGETS.spoken,
   );
   return {

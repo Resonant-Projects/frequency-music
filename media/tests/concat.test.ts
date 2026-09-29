@@ -2,9 +2,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, test } from "vite-plus/test";
-import { concatWithGaps, silence, trimEdges } from "../src/audio/concat";
+import { concatWithGaps, trimEdges } from "../src/audio/concat";
 import { probeStreams } from "../src/audio/encode";
-import { runFfprobe } from "../src/audio/ffmpeg";
 import { measure } from "../src/audio/loudness";
 import { synthTone } from "../src/audio/synth";
 
@@ -54,23 +53,5 @@ describe("concat", () => {
     const duration = (await measure(trimmed)).durationSecs;
     expect(duration).toBeGreaterThan(1.4);
     expect(duration).toBeLessThan(1.8);
-  });
-
-  test("silence writes mono 48 kHz of the requested length", async () => {
-    const out = join(dir, "silence.wav");
-    await silence(out, 1.5, signal);
-    // ebur128 reports -inf for pure silence, so duration comes from ffprobe.
-    const probed = await runFfprobe([
-      "-show_entries",
-      "format=duration",
-      "-of",
-      "json",
-      out,
-    ]);
-    const { format } = JSON.parse(probed) as { format: { duration: string } };
-    expect(Number(format.duration)).toBeCloseTo(1.5, 1);
-    const info = await probeStreams(out);
-    expect(info.channels).toBe(1);
-    expect(info.sampleRate).toBe(48000);
   });
 });
