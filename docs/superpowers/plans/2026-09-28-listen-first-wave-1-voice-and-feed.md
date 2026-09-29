@@ -2395,7 +2395,7 @@ Each step runs with Keith's go-ahead.
 
 - [ ] **Step 3: Rebuild and restart media** on the box with the new image tag; confirm log shows the four kinds.
 
-- [ ] **Step 4: Enqueue the shootout**: `vpx convex run episodes:enqueueShootout '{}'`. Watch media logs: four takes (or fewer with a skipped voice listed), one episode; job `done`. Feed shows the shootout episode within one Pocket Casts refresh.
+- [ ] **Step 4: Enqueue the shootout**: `vpx convex run episodes:enqueueShootout '{}'` (`'{"rerun": true}'` to run again after a done shootout). Watch media logs: four takes (or fewer with a skipped voice listed), one episode; job `done`. Feed shows the shootout episode within one Pocket Casts refresh.
 
 - [ ] **Step 5: Keith rates on `/listen`** (headphones), then taps "Set as house voice" on the winner. `vpx convex run settings:get '{"key":"houseVoiceId"}'` prints the choice.
 
@@ -2446,4 +2446,6 @@ PR #77 review fixes (2026-09-29), behaviour changes against the plan text above:
 - The shootout effect validates every take and the episode as a master/delivery pair (delivery being the row the result names) before anything is marked ready.
 - `BREEZE_TTS_BASE_URL` has no schema default; the compose file sets it, and clearing it retires the local voice so a shootout skips Breeze instead of waiting 5 minutes for a stopped `tts-local`.
 - `chunkForLimit` hard-splits a single token longer than the provider cap (a bare URL).
-- `/listen` uses `createQueryWithStatus` so failed shootout and house-voice queries render as errors, not as empty states.
+- `/listen` uses `createQueryWithStatus` so failed shootout and house-voice queries (and the selected group's projection and ratings) render as errors, not as empty states.
+- The shootout effect also requires takes plus `skippedVoiceIds` to cover `input.voiceIds` exactly, each pair to carry its own artifact kind, and at least two takes; `/listen` latches the selected shootout so a new one cannot remount the form mid-rating.
+- `enqueueShootout({ rerun: true })` stamps a fresh `runId` so a shootout can run again after a done one (a plain repeat stays a dedupe hit); the Breeze `/health` probe carries the same optional bearer as speech.
