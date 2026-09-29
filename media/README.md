@@ -30,8 +30,9 @@ with a typed result. It never writes research data directly.
   `instruction` for `design:` voices, `cfg_scale`, `seed`) and streams raw
   mono 24 kHz PCM16 (`audio/pcm`), which the provider wraps as WAV. It
   renders one request at a time: 409 while busy, 503 while the model loads.
-  Both wait 5 s before the retry; the first synthesis in a process polls
-  `GET /health` every 10 s for up to 5 minutes (R27).
+  Both wait 5 s before the retry; every synthesis first polls
+  `GET /health` every 10 s for up to 5 minutes (R27), so a `tts-local`
+  started cold while the worker runs is waited for.
 - Every hosted attempt runs under the job deadline plus a 180 s per-attempt
   timeout; two retries with backoff, then the take fails with the status
   code only (never the body).
@@ -40,9 +41,10 @@ with a typed result. It never writes research data directly.
   the first configured `ANNOUNCER_VOICES` entry, else a candidate with an
   intro that does not claim otherwise. The episode records the choice in
   `engine.params.announcerVoiceId`.
-- Uploads: masters are 16-bit PCM and every file is checked against
-  `MAX_UPLOAD_BYTES` (95 MB, the Cloudflare proxied-body cap) before an
-  upload URL is minted.
+- Uploads: masters are 16-bit PCM and every narration, episode, and
+  shootout file is checked against `MAX_UPLOAD_BYTES` (95 MB, the Cloudflare
+  proxied-body cap) before an upload URL is minted. The seconds-long probe
+  tone is not checked.
 
 ## Deploying a renderer bump
 

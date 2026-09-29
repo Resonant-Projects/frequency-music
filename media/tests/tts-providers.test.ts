@@ -11,7 +11,7 @@ import {
 } from "vite-plus/test";
 import { voiceById } from "../../convex/shared/voices";
 import { isConfigured, providerFor } from "../src/tts";
-import { resetBreezeReadiness, waitForBreezeReady } from "../src/tts/breeze";
+import { waitForBreezeReady } from "../src/tts/breeze";
 import { fetchAudioWithRetry } from "../src/tts/types";
 
 // The shape every provider hands to fetch; typing it here keeps the
@@ -65,7 +65,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.useRealTimers();
-  resetBreezeReadiness();
 });
 afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
@@ -135,8 +134,8 @@ describe("tts providers", () => {
     vi.stubGlobal("fetch", fetchMock);
     const out = join(dir, "breeze.wav");
     await providerFor(voice).synthesize("Hello there.", voice, out);
-    // R27: readiness is checked once before the first synthesis; the
-    // trailing slash on the base url is dropped from both.
+    // R27: readiness is checked before the synthesis; the trailing slash on
+    // the base url is dropped from both.
     expect(urls()).toEqual([
       "http://tts-local:8881/health",
       "http://tts-local:8881/v1/audio/speech",
@@ -148,10 +147,11 @@ describe("tts providers", () => {
     expect(written.readUInt32LE(24)).toBe(24000); // sample rate
     expect(written.readUInt32LE(40)).toBe(pcm.length); // data chunk size
     expect([...written.subarray(44)]).toEqual([...pcm]);
-    // A second synthesis in the same process does not re-check health.
+    // A second synthesis in the same process checks health again, so a
+    // tts-local restarted cold between jobs is waited for.
     await providerFor(voice).synthesize("Again.", voice, out);
-    expect(urls().filter((url) => url.endsWith("/health"))).toHaveLength(1);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(urls().filter((url) => url.endsWith("/health"))).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   test("breeze provider sends a bearer token only when a key is set and rejects non-design voice ids", async () => {
@@ -202,7 +202,7 @@ describe("tts providers", () => {
     });
   }
 
-  test("R27: the first Breeze synthesis waits for /health to answer 200", async () => {
+  test("R27: a Breeze synthesis waits for /health to answer 200", async () => {
     vi.useFakeTimers();
     vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881");
     const voice = voiceById("breeze-2");
@@ -256,8 +256,8 @@ describe("tts providers", () => {
     expect(fetchMock).toHaveBeenCalledTimes(7);
     expect(fetchMock.mock.calls[0]?.[0]).toBe("http://tts-local:8881/health");
 
-    // The provider forgets a failed wait, so a later synthesis polls again
-    // instead of failing from a cached rejection.
+    // A later synthesis polls again instead of failing from the earlier
+    // timeout.
     vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881");
     const voice = voiceById("breeze-2");
     const server = breezeServer(

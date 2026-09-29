@@ -59,27 +59,6 @@ export async function waitForBreezeReady(
   }
 }
 
-// Readiness is checked once per process per base URL, before the first
-// synthesis; concurrent first calls share one wait. A failed wait is
-// forgotten so the next job checks again.
-const readiness = new Map<string, Promise<void>>();
-
-function ensureReady(baseUrl: string, signal?: AbortSignal): Promise<void> {
-  let pending = readiness.get(baseUrl);
-  if (!pending) {
-    pending = waitForBreezeReady(baseUrl, signal).catch((error: unknown) => {
-      readiness.delete(baseUrl);
-      throw error;
-    });
-    readiness.set(baseUrl, pending);
-  }
-  return pending;
-}
-
-export function resetBreezeReadiness(): void {
-  readiness.clear();
-}
-
 export const breeze: TtsProvider = {
   id: "breeze",
   maxChars: 3000,
@@ -88,7 +67,10 @@ export const breeze: TtsProvider = {
       voice.baseUrlEnvVar ?? "BREEZE_TTS_BASE_URL",
     ).replace(/\/$/, "");
     const instruction = designInstruction(voice.voiceId);
-    await ensureReady(base, signal);
+    // Checked before every synthesis, not once per process: tts-local is
+    // stopped when a hosted voice wins and may be started cold again while
+    // this worker keeps running. On a loaded server this is one local GET.
+    await waitForBreezeReady(base, signal);
     // fetch derives the multipart content-type (with boundary) from the
     // FormData body; setting it by hand would break the request.
     const form = new FormData();
