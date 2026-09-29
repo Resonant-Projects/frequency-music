@@ -146,6 +146,13 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Source-scout target selection only; results are bounded to five domains and five conjectures.",
   ),
   entry(
+    "findExistingSourceUrls",
+    "read",
+    "internal.sources:existingScoutedUrls",
+    "Return the subset of candidate URLs that already have a canonical Source.",
+    "Uses the same URL dedupe key as ingestScoutedSource so the scout skips page capture for known Sources.",
+  ),
+  entry(
     "ingestScoutedSource",
     "research_write",
     "internal.sources:createScoutedSource",

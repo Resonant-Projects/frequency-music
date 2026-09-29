@@ -92,6 +92,10 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ),
   getScoutTargets: (ctx) =>
     ctx.runQuery(queryRef("correspondences:scoutTargets"), {}),
+  findExistingSourceUrls: (ctx, args) =>
+    ctx.runQuery(internal.sources.existingScoutedUrls, {
+      urls: args.urls as string[],
+    }),
   ingestScoutedSource: (ctx, args) =>
     ctx.runMutation(
       internal.sources.createScoutedSource,

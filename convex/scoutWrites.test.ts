@@ -129,6 +129,26 @@ describe("source scout canonical writes", () => {
     });
   });
 
+  test("reports existing candidates by the same dedupe key intake uses", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/research/?b=2&a=1",
+      query: "cymatics modal geometry",
+      rationale: "Fills the thin cymatics domain.",
+      agentRunId,
+    });
+
+    await expect(
+      t.query(internal.sources.existingScoutedUrls, {
+        urls: [
+          "http://EXAMPLE.ORG/research?b=2&a=1",
+          "https://example.org/new-paper",
+        ],
+      }),
+    ).resolves.toEqual(["http://EXAMPLE.ORG/research?b=2&a=1"]);
+  });
+
   test("proposes feeds disabled with exact proposal metadata and leaves duplicate URLs untouched", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);

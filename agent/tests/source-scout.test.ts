@@ -206,6 +206,58 @@ describe("source scout canonical write nodes", () => {
     );
   });
 
+  test("skips page capture for candidates that already have a canonical source", async () => {
+    let writes = 0;
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls") return ["https://example.org/0"];
+      if (name === "ingestScoutedSource") {
+        writes += 1;
+        return { id: `source-${writes}`, created: writes !== 1 };
+      }
+      return { ok: true };
+    });
+    const crawl = vi.fn(async () => ({
+      text: "# Measured modes\n" + "A reproducible experiment. ".repeat(5),
+      provider: "crawl4ai" as const,
+    }));
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({
+      agentRunId: "run-scout",
+      judgments: [judgment(0, "source"), judgment(1, "source")],
+    });
+
+    expect(callTool).toHaveBeenCalledWith("findExistingSourceUrls", {
+      urls: ["https://example.org/0", "https://example.org/1"],
+    });
+    expect(crawl.mock.calls).toEqual([["https://example.org/1"]]);
+    const ingestArgs = callTool.mock.calls
+      .filter(([name]) => name === "ingestScoutedSource")
+      .map(([, args]) => args as Record<string, unknown>);
+    expect(ingestArgs[0]).not.toHaveProperty("rawText");
+    expect(ingestArgs[1]).toMatchObject({ contentProvider: "crawl4ai" });
+  });
+
+  test("still captures candidates when the existing-source preflight fails", async () => {
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls")
+        throw new Error("Convex tool findExistingSourceUrls failed: 404");
+      return name === "ingestScoutedSource"
+        ? { id: "source-1", created: true }
+        : { ok: true };
+    });
+    const crawl = vi.fn(async () => null);
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({
+      agentRunId: "run-scout",
+      judgments: [judgment(0, "source")],
+    });
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+  });
+
   test("ingests at most five judged sources with provenance and logs dedupe as a decision", async () => {
     let writes = 0;
     const callTool = vi.fn(async (name: string) => {

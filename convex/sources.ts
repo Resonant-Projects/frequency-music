@@ -2,7 +2,13 @@ import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import { action, internalMutation, mutation, query } from "./_generated/server";
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { requireAuth } from "./auth";
 import { sourceBlockedReasonValidator, sourceStatusValidator } from "./schema";
 import {
@@ -378,6 +384,28 @@ export const upsertExternal = internalMutation({
   }),
   handler: async (ctx, args) => {
     return await upsertExternalSource(ctx, args as ExternalUpsertArgs);
+  },
+});
+
+/**
+ * Source-scout preflight: which candidate URLs already own a canonical dedupe
+ * key. Shares createScoutedSource's key so the scout never captures page text
+ * that intake would discard as a duplicate.
+ */
+export const existingScoutedUrls = internalQuery({
+  args: { urls: v.array(v.string()) },
+  returns: v.array(v.string()),
+  handler: async (ctx, args) => {
+    const existing: string[] = [];
+    for (const url of args.urls) {
+      const dedupeKey = generateDedupeKey("url", { canonicalUrl: url });
+      const source = await ctx.db
+        .query("sources")
+        .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
+        .first();
+      if (source) existing.push(url);
+    }
+    return existing;
   },
 });
 

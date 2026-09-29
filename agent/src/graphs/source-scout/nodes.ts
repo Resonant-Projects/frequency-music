@@ -15,6 +15,7 @@ import {
 } from "../../tools/searchTool.js";
 import { createCrawlPage, type CrawledPage } from "../../tools/crawlTool.js";
 import { callConvex } from "../../tools/convexTools.js";
+import { redactError } from "../../shared/redactError.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
 import {
   appendRemoteAuditEvent,
@@ -280,6 +281,28 @@ function parsedPublishedAt(value: string | undefined): number | undefined {
   return Number.isFinite(timestamp) ? timestamp : undefined;
 }
 
+async function existingSourceUrls(
+  callTool: ToolCaller,
+  urls: string[],
+): Promise<Set<string>> {
+  if (urls.length === 0) return new Set();
+  try {
+    const result = await callTool("findExistingSourceUrls", { urls });
+    return new Set(
+      Array.isArray(result)
+        ? result.filter((url): url is string => typeof url === "string")
+        : [],
+    );
+  } catch (error) {
+    // The preflight only saves crawler work; intake still dedupes canonically.
+    console.warn(
+      "[source-scout] Existing-source preflight failed; crawling all candidates:",
+      redactError(error),
+    );
+    return new Set();
+  }
+}
+
 export function createIngestSourcesNode(
   callTool: ToolCaller = callConvex,
   crawl: (url: string) => Promise<CrawledPage | null> = createCrawlPage(),
@@ -305,8 +328,17 @@ export function createIngestSourcesNode(
         return true;
       })
       .slice(0, MAX_INGESTS_PER_RUN);
+    const known = await existingSourceUrls(
+      callTool,
+      candidates.map((candidate) => candidate.searchHit.result.url),
+    );
+    // Duplicate intake never stores new text, so only unknown URLs are crawled.
     const pages = await Promise.all(
-      candidates.map((candidate) => crawl(candidate.searchHit.result.url)),
+      candidates.map((candidate) =>
+        known.has(candidate.searchHit.result.url)
+          ? null
+          : crawl(candidate.searchHit.result.url),
+      ),
     );
     for (const [index, judgment] of candidates.entries()) {
       const rationale = rationaleFor(judgment);
