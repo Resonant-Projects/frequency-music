@@ -94,10 +94,14 @@ function doiUrl(value: unknown): string | undefined {
     : undefined;
 }
 
-function yearDate(value: unknown): string | undefined {
-  const year = typeof value === "number" ? value : Number(value);
-  return Number.isInteger(year) && year >= 1500 && year <= 2100
-    ? `${year}-01-01`
+// Only a provider's full calendar date is a publication date; a bare year
+// would become a fabricated January 1 timestamp on the Source.
+function calendarDate(value: unknown): string | undefined {
+  const date = text(value);
+  return date &&
+    /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+    Number.isFinite(Date.parse(date))
+    ? date
     : undefined;
 }
 
@@ -131,7 +135,7 @@ function mapOpenAlex(payload: unknown, limit: number): WebSearchResult[] {
         text(work.id);
       const snippet = abstractText(work.abstract_inverted_index) ?? title;
       if (!title || !url || !snippet) return [];
-      const publishedAt = yearDate(work.publication_year);
+      const publishedAt = calendarDate(work.publication_date);
       return [{ title, url, snippet, ...(publishedAt ? { publishedAt } : {}) }];
     })
     .slice(0, limit);
@@ -158,7 +162,7 @@ function mapEuropePmc(payload: unknown, limit: number): WebSearchResult[] {
           .trim()
           .slice(0, 1000) || title;
       if (!title || !url || !snippet) return [];
-      const publishedAt = yearDate(work.pubYear);
+      const publishedAt = calendarDate(work.firstPublicationDate);
       return [{ title, url, snippet, ...(publishedAt ? { publishedAt } : {}) }];
     })
     .slice(0, limit);
@@ -271,7 +275,7 @@ export function createWebSearch(
     openAlexUrl.searchParams.set("per_page", String(maxResults));
     openAlexUrl.searchParams.set(
       "select",
-      "id,title,doi,publication_year,abstract_inverted_index,primary_location",
+      "id,title,doi,publication_date,abstract_inverted_index,primary_location",
     );
     const europePmcUrl = new URL(
       "https://www.ebi.ac.uk/europepmc/webservices/rest/search",

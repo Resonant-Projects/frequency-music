@@ -23,6 +23,7 @@ describe("federated source-scout search", () => {
               title: "Plate modes",
               doi: "https://doi.org/10.1234/PLATE",
               publication_year: 2024,
+              publication_date: "2024-03-15",
               abstract_inverted_index: {
                 Plate: [0],
                 modes: [1],
@@ -46,6 +47,7 @@ describe("federated source-scout search", () => {
                 title: "Auditory perception",
                 doi: "10.2345/audio",
                 pubYear: "2023",
+                firstPublicationDate: "2023-11-02",
                 authorString: "A Researcher",
                 abstractText: "Auditory evidence.",
                 id: "456",
@@ -72,13 +74,13 @@ describe("federated source-scout search", () => {
         title: "Plate modes",
         url: "https://doi.org/10.1234/plate",
         snippet: "Plate modes resonate",
-        publishedAt: "2024-01-01",
+        publishedAt: "2024-03-15",
       },
       {
         title: "Auditory perception",
         url: "https://doi.org/10.2345/audio",
         snippet: "Auditory evidence.",
-        publishedAt: "2023-01-01",
+        publishedAt: "2023-11-02",
       },
     ]);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
@@ -318,7 +320,7 @@ describe("federated source-scout search", () => {
       warn.mockRestore();
     }
   });
-  test("retains bibliographic records without abstracts without inventing an abstract", async () => {
+  test("retains bibliographic records without abstracts or a full date without inventing either", async () => {
     const fetchImpl = vi.fn(async (input: string | URL | Request) =>
       urlOf(input).includes("openalex.org")
         ? json({
@@ -349,13 +351,11 @@ describe("federated source-scout search", () => {
         title: "Paper without abstract",
         url: "https://doi.org/10.3333/noabstract",
         snippet: "Paper without abstract",
-        publishedAt: "2022-01-01",
       },
       {
         title: "Another paper",
         url: "https://doi.org/10.4444/noabstract",
         snippet: "Another paper",
-        publishedAt: "2021-01-01",
       },
     ]);
   });
