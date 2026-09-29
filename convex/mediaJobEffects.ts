@@ -249,12 +249,13 @@ export async function applyMediaJobResult(
       const ids = await readyArtifacts(ctx, result.artifacts);
       // Only the delivery becomes the feed episode; the WAV master is
       // provenance and keeps the access, title, and chapters it was
-      // uploaded with.
+      // uploaded with. Chapters come from the result: the assembler shifts
+      // them by its lead-in, so the input's narration chapters are stale.
       for (const row of rows) {
         if (row.role !== "delivery") continue;
         await ctx.db.patch(row._id, {
           access: "feed",
-          chapters: input.chapters,
+          chapters: result.chapters,
           title: input.title,
           updatedAt: now,
         });

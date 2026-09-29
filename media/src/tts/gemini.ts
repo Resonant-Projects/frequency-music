@@ -25,7 +25,7 @@ const geminiResponseZ = z.object({
 export const gemini: TtsProvider = {
   id: "google",
   maxChars: 4000,
-  async synthesize(text, voice, outputPath) {
+  async synthesize(text, voice, outputPath, signal) {
     const key = requireEnv(voice.keyEnvVar);
     const bytes = await fetchAudioWithRetry(
       `https://generativelanguage.googleapis.com/v1beta/models/${voice.model}:generateContent`,
@@ -43,6 +43,7 @@ export const gemini: TtsProvider = {
             },
           },
         }),
+        signal,
       },
     );
     const parsed = geminiResponseZ.parse(

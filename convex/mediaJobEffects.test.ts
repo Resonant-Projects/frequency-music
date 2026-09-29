@@ -484,12 +484,14 @@ describe("media job effects", () => {
       const row = await ctx.db.get(narration.delivery);
       return await ctx.storage.getUrl(row!.storageId!);
     });
+    // The input carries the narration's chapters; the assembler shifts them
+    // by its lead-in and reports the shifted marks in the result.
     const input = {
       kind: "assembleEpisode" as const,
       narrationArtifactId: narration.delivery,
       narrationStorageUrl: narrationStorageUrl!,
       title: "Weekly turn, week of 2026-09-21",
-      chapters: [{ title: "Open", startSecs: 1 }],
+      chapters: [{ title: "Open", startSecs: 0 }],
       rendererVersion: "0.2.0",
     };
     const { jobId } = await t.mutation(internal.mediaJobs.enqueue, { input });
@@ -509,12 +511,14 @@ describe("media job effects", () => {
       result: {
         kind: "assembleEpisode",
         artifacts: [measured(master), measured(delivery)],
+        chapters: [{ title: "Open", startSecs: 1 }],
       },
     });
     const deliveryRow = await t.run((ctx) => ctx.db.get(delivery));
     expect(deliveryRow?.status).toBe("ready");
     expect(deliveryRow?.access).toBe("feed");
     expect(deliveryRow?.title).toBe("Weekly turn, week of 2026-09-21");
+    // The shifted result chapters land, not the input's narration chapters.
     expect(deliveryRow?.chapters).toEqual([{ title: "Open", startSecs: 1 }]);
     // The WAV master is provenance: ready, but never published or retitled.
     const masterRow = await t.run((ctx) => ctx.db.get(master));

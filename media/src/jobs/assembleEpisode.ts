@@ -59,5 +59,5 @@ export async function assembleEpisodeHandler(ctx: JobContext) {
     { kind: "episode", narration: input.narrationArtifactId, engine },
     LOUDNESS_TARGETS.spoken,
   );
-  return { kind: "assembleEpisode" as const, artifacts };
+  return { kind: "assembleEpisode" as const, artifacts, chapters };
 }

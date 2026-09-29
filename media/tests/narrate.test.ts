@@ -354,10 +354,13 @@ describe("assembleEpisode job", () => {
     ]);
     expect(minted[0]?.access).toBe("private");
     expect(minted[1]?.access).toBe("feed");
-    expect(minted[1]?.chapters).toEqual([
+    const shifted = [
       { title: "Open", startSecs: EPISODE_LEAD_IN_SECS },
       { title: "Next", startSecs: 1.25 + EPISODE_LEAD_IN_SECS },
-    ]);
+    ];
+    expect(minted[1]?.chapters).toEqual(shifted);
+    // R22: the result carries the shifted chapters for the effect to store.
+    expect(result.chapters).toEqual(shifted);
     for (const artifact of result.artifacts) {
       expect(artifact.durationSecs).toBeCloseTo(2 + EPISODE_LEAD_IN_SECS, 0);
       expect(Math.abs(artifact.loudnessLufs + 16)).toBeLessThanOrEqual(0.5);

@@ -149,6 +149,9 @@ export const shootoutJobResultZ = z.object({
 export const assembleEpisodeJobResultZ = z.object({
   kind: z.literal("assembleEpisode"),
   artifacts: z.array(artifactResultZ).min(1),
+  // The narration's chapters shifted by the assembler's lead-in; the effect
+  // stores these on the episode delivery, not the job input's.
+  chapters: z.array(audioChapterZ),
 });
 
 export const mediaJobResultZ = z.discriminatedUnion("kind", [

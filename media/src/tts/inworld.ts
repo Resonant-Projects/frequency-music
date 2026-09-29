@@ -10,7 +10,7 @@ const inworldResponseZ = z.object({ audioContent: z.string() });
 export const inworld: TtsProvider = {
   id: "inworld",
   maxChars: 2000,
-  async synthesize(text, voice, outputPath) {
+  async synthesize(text, voice, outputPath, signal) {
     const key = requireEnv(voice.keyEnvVar);
     const bytes = await fetchAudioWithRetry(
       "https://api.inworld.ai/tts/v1/voice",
@@ -26,6 +26,7 @@ export const inworld: TtsProvider = {
           modelId: voice.model,
           audioConfig: { audioEncoding: "LINEAR16", sampleRateHertz: 24000 },
         }),
+        signal,
       },
     );
     const parsed = inworldResponseZ.parse(

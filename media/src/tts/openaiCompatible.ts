@@ -7,7 +7,7 @@ import { fetchAudioWithRetry, requireEnv } from "./types";
 export const openaiCompatible: TtsProvider = {
   id: "openaiCompatible",
   maxChars: 3000,
-  async synthesize(text, voice, outputPath) {
+  async synthesize(text, voice, outputPath, signal) {
     const base = requireEnv(
       voice.baseUrlEnvVar ?? "BREEZE_TTS_BASE_URL",
     ).replace(/\/$/, "");
@@ -28,6 +28,7 @@ export const openaiCompatible: TtsProvider = {
         ...(design ? { instructions: design } : {}),
         response_format: "wav",
       }),
+      signal,
     });
     await writeFile(outputPath, new Uint8Array(bytes));
   },

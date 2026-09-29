@@ -5,7 +5,7 @@ import { fetchAudioWithRetry, requireEnv } from "./types";
 export const elevenlabs: TtsProvider = {
   id: "elevenlabs",
   maxChars: 5000,
-  async synthesize(text, voice, outputPath) {
+  async synthesize(text, voice, outputPath, signal) {
     const key = requireEnv(voice.keyEnvVar);
     const bytes = await fetchAudioWithRetry(
       `https://api.elevenlabs.io/v1/text-to-speech/${voice.voiceId}?output_format=pcm_24000`,
@@ -17,6 +17,7 @@ export const elevenlabs: TtsProvider = {
           accept: "audio/wav",
         },
         body: JSON.stringify({ text, model_id: voice.model }),
+        signal,
       },
     );
     await writeFile(outputPath, wrapPcmAsWav(new Uint8Array(bytes), 24000, 1));

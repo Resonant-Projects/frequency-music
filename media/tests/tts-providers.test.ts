@@ -18,6 +18,7 @@ type CapturedInit = {
   headers: Record<string, string>;
   body: string;
   redirect?: RequestRedirect;
+  signal?: AbortSignal;
 };
 
 const dir = mkdtempSync(join(tmpdir(), "tts-"));
@@ -62,6 +63,51 @@ describe("tts providers", () => {
       out,
     );
     expect(readFileSync(out).subarray(0, 4).toString()).toBe("RIFF");
+  });
+
+  test("every provider passes the job signal to fetch", async () => {
+    vi.stubEnv("ELEVENLABS_API_KEY", "k");
+    vi.stubEnv("INWORLD_API_KEY", "k");
+    vi.stubEnv("GEMINI_API_KEY", "k");
+    vi.stubEnv("BREEZE_TTS_API_KEY", "k");
+    vi.stubEnv("BREEZE_TTS_BASE_URL", "http://breeze.test");
+    const bodies: Record<string, string> = {
+      "elevenlabs-v3": "RIFF",
+      "inworld-max": JSON.stringify({ audioContent: "AAAA" }),
+      "gemini-flash-tts": JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: "AAAA",
+                    mimeType: "audio/L16;rate=24000",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+      "breeze-2": "RIFF",
+    };
+    for (const [id, body] of Object.entries(bodies)) {
+      const signal = new AbortController().signal;
+      const fetchMock = vi.fn((_url: string, init: CapturedInit) => {
+        expect(init.signal, id).toBe(signal);
+        return Promise.resolve(new Response(body, { status: 200 }));
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const voice = voiceById(id);
+      await providerFor(voice).synthesize(
+        "x",
+        voice,
+        join(dir, `${id}.wav`),
+        signal,
+      );
+      expect(fetchMock, id).toHaveBeenCalledTimes(1);
+    }
   });
 
   test("provider failures retry twice then throw with status only", async () => {

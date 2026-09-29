@@ -3,10 +3,13 @@ import type { VoiceEntry, VoiceProvider } from "../../../convex/shared/voices";
 export type TtsProvider = {
   id: VoiceProvider;
   maxChars: number;
+  // `signal` is the job deadline; providers pass it to the request so an
+  // aborted job does not leave a TTS call in flight.
   synthesize: (
     text: string,
     voice: VoiceEntry,
     outputPath: string,
+    signal?: AbortSignal,
   ) => Promise<void>;
 };
 
