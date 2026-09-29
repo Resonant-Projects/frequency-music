@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import {
   action,
@@ -295,6 +295,16 @@ type QueuedSourceResult = ExternalUpsertResult & {
   workflowId?: string;
 };
 
+async function sha256Hex(text: string): Promise<string> {
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(text),
+  );
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 async function upsertExternalSource(
   ctx: MutationCtx,
   args: ExternalUpsertArgs,
@@ -307,17 +317,7 @@ async function upsertExternalSource(
     .first();
 
   const text = args.rawText || args.transcript;
-  let rawTextSha256: string | undefined;
-
-  if (text) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    rawTextSha256 = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
+  const rawTextSha256 = text ? await sha256Hex(text) : undefined;
 
   if (!existing) {
     const id = await ctx.db.insert("sources", {
@@ -391,14 +391,26 @@ export const upsertExternal = internalMutation({
   },
 });
 
+// A scout-created Source whose page capture failed. Only these rows may gain
+// text on a later Scout run; every other duplicate stays a true no-op.
+function awaitsScoutCapture(source: Doc<"sources">): boolean {
+  const metadata = source.metadata as { scoutedBy?: unknown } | undefined;
+  return (
+    source.type === "url" &&
+    source.status === "ingested" &&
+    !source.rawText &&
+    Boolean(metadata?.scoutedBy)
+  );
+}
+
 /**
  * Source-scout preflight: which candidate URLs already own a canonical dedupe
- * key. Shares createScoutedSource's key so the scout never captures page text
- * that intake would discard as a duplicate.
+ * key, and whether that Source still awaits page capture. Shares
+ * createScoutedSource's key so the scout never captures text intake discards.
  */
 export const existingScoutedUrls = internalQuery({
   args: { urls: v.array(v.string()) },
-  returns: v.array(v.string()),
+  returns: v.array(v.object({ url: v.string(), needsText: v.boolean() })),
   handler: async (ctx, args) => {
     const matches = await Promise.all(
       args.urls.map((url) => {
@@ -409,13 +421,17 @@ export const existingScoutedUrls = internalQuery({
           .first();
       }),
     );
-    return args.urls.filter((_url, index) => matches[index] !== null);
+    return args.urls.flatMap((url, index) => {
+      const source = matches[index];
+      return source ? [{ url, needsText: awaitsScoutCapture(source) }] : [];
+    });
   },
 });
 
 /**
  * Canonical URL intake for source-scout discoveries. Existing dedupe keys are
- * a true no-op so scout provenance never overwrites an earlier intake path.
+ * a no-op so scout provenance never overwrites an earlier intake path. The one
+ * exception: a scout-created URL-only Source may gain captured text later.
  */
 export const createScoutedSource = internalMutation({
   args: {
@@ -428,7 +444,11 @@ export const createScoutedSource = internalMutation({
     rationale: v.string(),
     agentRunId: v.id("agentRuns"),
   },
-  returns: v.object({ id: v.id("sources"), created: v.boolean() }),
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+    enriched: v.optional(v.boolean()),
+  }),
   handler: async (ctx, args) => {
     if (Boolean(args.rawText) !== Boolean(args.contentProvider)) {
       throw new Error(
@@ -454,7 +474,27 @@ export const createScoutedSource = internalMutation({
       .query("sources")
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
       .first();
-    if (existing) return { id: existing._id, created: false };
+    if (existing) {
+      if (!args.rawText || !awaitsScoutCapture(existing)) {
+        return { id: existing._id, created: false };
+      }
+      const metadata = existing.metadata as { scoutedBy: object };
+      await ctx.db.patch("sources", existing._id, {
+        rawText: args.rawText,
+        rawTextSha256: await sha256Hex(args.rawText),
+        status: "text_ready",
+        metadata: {
+          ...metadata,
+          scoutedBy: {
+            ...metadata.scoutedBy,
+            contentProvider: args.contentProvider,
+            capturedByAgentRunId: args.agentRunId,
+          },
+        },
+        updatedAt: Date.now(),
+      });
+      return { id: existing._id, created: false, enriched: true };
+    }
 
     const result = await upsertExternalSource(ctx, {
       dedupeKey,

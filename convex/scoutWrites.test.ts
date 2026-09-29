@@ -146,7 +146,75 @@ describe("source scout canonical writes", () => {
           "https://example.org/new-paper",
         ],
       }),
-    ).resolves.toEqual(["http://EXAMPLE.ORG/research?b=2&a=1"]);
+    ).resolves.toEqual([
+      { url: "http://EXAMPLE.ORG/research?b=2&a=1", needsText: true },
+    ]);
+  });
+
+  test("captures text later only for scout-created URL-only sources", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const base = {
+      url: "https://example.org/outage",
+      query: "modal study",
+      rationale: "Thin domain",
+      agentRunId,
+    };
+    const rawText = `# Recovered page\n${"Measured resonant modes. ".repeat(6)}`;
+    const first = await t.mutation(internal.sources.createScoutedSource, base);
+    const retry = await t.mutation(internal.sources.createScoutedSource, {
+      ...base,
+      rawText,
+      contentProvider: "crawl4ai",
+    });
+    expect(retry).toEqual({ id: first.id, created: false, enriched: true });
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...base,
+        rawText: "Must not overwrite. ".repeat(7),
+        contentProvider: "crawl4ai",
+      }),
+    ).resolves.toEqual({ id: first.id, created: false });
+    expect(await t.run((ctx) => ctx.db.get(first.id))).toMatchObject({
+      status: "text_ready",
+      rawText,
+      rawTextSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      metadata: {
+        scoutedBy: {
+          query: "modal study",
+          contentProvider: "crawl4ai",
+          capturedByAgentRunId: agentRunId,
+        },
+      },
+    });
+    await expect(
+      t.query(internal.sources.existingScoutedUrls, { urls: [base.url] }),
+    ).resolves.toEqual([{ url: base.url, needsText: false }]);
+
+    const manualUrl = "https://example.org/manual";
+    const manualId = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        canonicalUrl: manualUrl,
+        dedupeKey: generateDedupeKey("url", { canonicalUrl: manualUrl }),
+        status: "ingested",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...base,
+        url: manualUrl,
+        rawText,
+        contentProvider: "crawl4ai",
+      }),
+    ).resolves.toEqual({ id: manualId, created: false });
+    expect(await t.run((ctx) => ctx.db.get(manualId))).toMatchObject({
+      status: "ingested",
+    });
   });
 
   test("proposes feeds disabled with exact proposal metadata and leaves duplicate URLs untouched", async () => {

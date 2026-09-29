@@ -209,7 +209,8 @@ describe("source scout canonical write nodes", () => {
   test("skips page capture for candidates that already have a canonical source", async () => {
     let writes = 0;
     const callTool = vi.fn(async (name: string) => {
-      if (name === "findExistingSourceUrls") return ["https://example.org/0"];
+      if (name === "findExistingSourceUrls")
+        return [{ url: "https://example.org/0", needsText: false }];
       if (name === "ingestScoutedSource") {
         writes += 1;
         return { id: `source-${writes}`, created: writes !== 1 };
@@ -242,7 +243,9 @@ describe("source scout canonical write nodes", () => {
   test("ingests under the provider's spelling when a Source already keys on it", async () => {
     const callTool = vi.fn(async (name: string) => {
       if (name === "findExistingSourceUrls")
-        return ["https://example.org/0?utm_source=rss"];
+        return [
+          { url: "https://example.org/0?utm_source=rss", needsText: false },
+        ];
       return name === "ingestScoutedSource"
         ? { id: "source-1", created: false }
         : { ok: true };
@@ -263,6 +266,34 @@ describe("source scout canonical write nodes", () => {
     expect(callTool).toHaveBeenCalledWith(
       "ingestScoutedSource",
       expect.objectContaining({ url: "https://example.org/0?utm_source=rss" }),
+    );
+  });
+
+  test("recaptures a known URL-only source and audits the enrichment", async () => {
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls")
+        return [{ url: "https://example.org/0", needsText: true }];
+      return name === "ingestScoutedSource"
+        ? { id: "source-1", created: false, enriched: true }
+        : { ok: true };
+    });
+    const crawl = vi.fn(async () => ({
+      text: `# Measured modes\n${"A reproducible experiment. ".repeat(5)}`,
+      provider: "crawl4ai" as const,
+    }));
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({ agentRunId: "run-scout", judgments: [judgment(0, "source")] });
+
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+    expect(callTool).toHaveBeenCalledWith(
+      "appendAgentRunEvent",
+      expect.objectContaining({
+        kind: "tool_call",
+        message: "Source scout captured text for URL-only source",
+        payload: expect.objectContaining({ enriched: true, created: false }),
+      }),
     );
   });
 
