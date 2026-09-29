@@ -2,7 +2,11 @@
 // agentSecret, so it never appears in these cross-workspace schemas.
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
-import { AGENT_RUN_EVENT_KINDS } from "./agentContract";
+import {
+  AGENT_RUN_EVENT_KINDS,
+  SCOUTED_TEXT_MAX_CHARS,
+  SCOUTED_TEXT_MIN_CHARS,
+} from "./agentContract";
 import {
   addCorrespondenceEvidenceArgsZ,
   getCorrespondenceArgsZ,
@@ -50,7 +54,12 @@ export const agentToolArgs = {
     url: z.string().url(),
     title: z.string().trim().min(1).optional(),
     publishedAt: z.number().optional(),
-    rawText: z.string().trim().min(100).max(30_000).optional(),
+    rawText: z
+      .string()
+      .trim()
+      .min(SCOUTED_TEXT_MIN_CHARS)
+      .max(SCOUTED_TEXT_MAX_CHARS)
+      .optional(),
     contentProvider: z.literal("crawl4ai").optional(),
     query: z.string().trim().min(1),
     rationale: z.string().trim().min(1),

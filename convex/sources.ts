@@ -10,6 +10,10 @@ import {
   query,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import {
+  SCOUTED_TEXT_MAX_CHARS,
+  SCOUTED_TEXT_MIN_CHARS,
+} from "./shared/agentContract";
 import { sourceBlockedReasonValidator, sourceStatusValidator } from "./schema";
 import {
   computeCanonicalDedupeKey,
@@ -396,16 +400,16 @@ export const existingScoutedUrls = internalQuery({
   args: { urls: v.array(v.string()) },
   returns: v.array(v.string()),
   handler: async (ctx, args) => {
-    const existing: string[] = [];
-    for (const url of args.urls) {
-      const dedupeKey = generateDedupeKey("url", { canonicalUrl: url });
-      const source = await ctx.db
-        .query("sources")
-        .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
-        .first();
-      if (source) existing.push(url);
-    }
-    return existing;
+    const matches = await Promise.all(
+      args.urls.map((url) => {
+        const dedupeKey = generateDedupeKey("url", { canonicalUrl: url });
+        return ctx.db
+          .query("sources")
+          .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
+          .first();
+      }),
+    );
+    return args.urls.filter((_url, index) => matches[index] !== null);
   },
 });
 
@@ -426,25 +430,18 @@ export const createScoutedSource = internalMutation({
   },
   returns: v.object({ id: v.id("sources"), created: v.boolean() }),
   handler: async (ctx, args) => {
+    if (Boolean(args.rawText) !== Boolean(args.contentProvider)) {
+      throw new Error(
+        "Scouted source text and content provider provenance must be supplied together",
+      );
+    }
     if (
       args.rawText &&
-      (args.rawText.length > 30_000 || !args.rawText.trim())
+      (args.rawText.trim().length < SCOUTED_TEXT_MIN_CHARS ||
+        args.rawText.length > SCOUTED_TEXT_MAX_CHARS)
     ) {
       throw new Error(
-        "Scouted source text must be nonempty and at most 30000 characters",
-      );
-    }
-    if (args.rawText && args.contentProvider !== "crawl4ai") {
-      throw new Error(
-        "Scouted source text requires content provider provenance",
-      );
-    }
-    if (args.contentProvider && !args.rawText) {
-      throw new Error("Scouted content provider requires captured text");
-    }
-    if (args.rawText && args.rawText.length < 100) {
-      throw new Error(
-        "Scouted source text must be at least 100 characters for Extraction",
+        `Scouted source text must be ${SCOUTED_TEXT_MIN_CHARS}-${SCOUTED_TEXT_MAX_CHARS} characters for Extraction`,
       );
     }
     if (!(await ctx.db.get("agentRuns", args.agentRunId))) {

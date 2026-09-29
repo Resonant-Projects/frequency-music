@@ -223,8 +223,10 @@ async function fetchResearch(
     const payload = await Promise.race([
       (async () => {
         const response = await fetchImpl(url, { signal: controller.signal });
-        if (!response.ok)
+        if (!response.ok) {
+          await response.body?.cancel().catch(() => undefined);
           throw new Error(`${provider} search failed with ${response.status}`);
+        }
         return response.json();
       })(),
       new Promise<never>((_resolve, reject) => {
@@ -335,6 +337,8 @@ export function createWebSearch(
           deadline,
         ]);
         if (!response.ok) {
+          // Release the pooled connection; the status alone is audited.
+          await response.body?.cancel().catch(() => undefined);
           throw new Error(`Firecrawl search failed with ${response.status}`);
         }
         firecrawlResults = mapResults(

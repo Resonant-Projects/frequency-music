@@ -63,26 +63,26 @@ describe("source scout canonical writes", () => {
         rawText: "a".repeat(30_001),
         contentProvider: "crawl4ai",
       }),
-    ).rejects.toThrow("at most 30000");
+    ).rejects.toThrow("100-30000 characters");
     await expect(
       t.mutation(internal.sources.createScoutedSource, {
         ...input,
         rawText: "Unattributed content",
       }),
-    ).rejects.toThrow("requires content provider");
+    ).rejects.toThrow("must be supplied together");
     await expect(
       t.mutation(internal.sources.createScoutedSource, {
         ...input,
         rawText: "Short text",
         contentProvider: "crawl4ai",
       }),
-    ).rejects.toThrow("at least 100");
+    ).rejects.toThrow("100-30000 characters");
     await expect(
       t.mutation(internal.sources.createScoutedSource, {
         ...input,
         contentProvider: "crawl4ai",
       }),
-    ).rejects.toThrow("requires captured text");
+    ).rejects.toThrow("must be supplied together");
     expect(await t.run((ctx) => ctx.db.query("sources").collect())).toEqual([]);
   });
 
