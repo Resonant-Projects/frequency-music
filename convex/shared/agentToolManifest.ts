@@ -10,6 +10,9 @@ export type AgentToolManifestEntry = {
   backing: string;
   args: z.ZodObject;
   langchain: boolean;
+  // Arguments only a deterministic graph node may supply. They stay out of the
+  // model-visible LangChain schema so a model cannot assert their provenance.
+  graphOnlyArgs: readonly string[];
   kind: "read" | "research_write" | "audit_write" | "media_write";
 };
 
@@ -19,7 +22,7 @@ function entry(
   backing: string,
   description: string,
   context: string,
-  options: { langchain?: boolean } = {},
+  options: { langchain?: boolean; graphOnlyArgs?: readonly string[] } = {},
 ): AgentToolManifestEntry {
   return {
     name,
@@ -29,6 +32,7 @@ function entry(
     context,
     args: agentToolArgs[name],
     langchain: options.langchain ?? true,
+    graphOnlyArgs: options.graphOnlyArgs ?? [],
   };
 }
 
@@ -158,6 +162,7 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "internal.sources:createScoutedSource",
     "Ingest one judged source through canonical URL intake with source-scout provenance and optional bounded Crawl4AI text.",
     "Canonical duplicates are no-ops, except that a scout-created URL-only Source may gain captured text; fetched text enters text_ready for batch Extraction.",
+    { graphOnlyArgs: ["rawText", "contentProvider"] },
   ),
   entry(
     "proposeFeed",

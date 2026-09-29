@@ -151,6 +151,30 @@ describe("source scout canonical writes", () => {
     ]);
   });
 
+  test("accepts crawler text only from a source-scout run", async () => {
+    const t = convexTest(schema, modules);
+    const otherRunId = await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "weekly-brief",
+        status: "running",
+        input: null,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        url: "https://example.org/fabricated",
+        query: "modal study",
+        rationale: "Thin domain",
+        agentRunId: otherRunId,
+        rawText: `# Fabricated\n${"Not fetched by the crawler. ".repeat(5)}`,
+        contentProvider: "crawl4ai",
+      }),
+    ).rejects.toThrow("requires a source-scout run");
+    expect(await t.run((ctx) => ctx.db.query("sources").collect())).toEqual([]);
+  });
+
   test("captures text later only for scout-created URL-only sources", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);

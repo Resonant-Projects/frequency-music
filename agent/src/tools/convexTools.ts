@@ -1,4 +1,5 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 import {
   AGENT_TOOL_MANIFEST,
   type AgentToolManifestEntry,
@@ -79,9 +80,19 @@ export function bindAgentRunContext(
 }
 
 export function agentModelSchema(definition: AgentToolManifestEntry) {
-  return definition.kind === "research_write"
-    ? definition.args.omit({ agentRunId: true })
-    : definition.args;
+  const hidden = new Set([
+    ...(definition.kind === "research_write" ? ["agentRunId"] : []),
+    ...definition.graphOnlyArgs,
+  ]);
+  return hidden.size === 0
+    ? definition.args
+    : z.object(
+        Object.fromEntries(
+          Object.entries(definition.args.shape).filter(
+            ([key]) => !hidden.has(key),
+          ),
+        ),
+      );
 }
 
 export const convexTools = AGENT_TOOL_MANIFEST.filter(
