@@ -166,6 +166,12 @@ describe("tts providers", () => {
     const plain = { ...voiceById("breeze-2"), voiceId: "" };
     await providerFor(plain).synthesize("x", plain, join(dir, "plain.wav"));
     expect(urls().filter((url) => url.endsWith("/speech"))).toHaveLength(1);
+    // The readiness probe carries the same bearer: a fronting proxy may
+    // guard /health too.
+    const health = fetchMock.mock.calls.find(([url]) =>
+      url.endsWith("/health"),
+    );
+    expect(health?.[1].headers?.authorization).toBe("Bearer shh");
 
     const referenced = { ...voiceById("breeze-2"), voiceId: "ref:some-clip" };
     await expect(

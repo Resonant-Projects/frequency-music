@@ -33,7 +33,11 @@ export const BREEZE_READY_INTERVAL_MS = 10_000;
 export async function waitForBreezeReady(
   baseUrl: string,
   signal: AbortSignal | undefined,
-  options: { timeoutMs?: number; intervalMs?: number } = {},
+  options: {
+    timeoutMs?: number;
+    intervalMs?: number;
+    headers?: Record<string, string>;
+  } = {},
 ): Promise<void> {
   const timeoutMs = options.timeoutMs ?? BREEZE_READY_TIMEOUT_MS;
   const intervalMs = options.intervalMs ?? BREEZE_READY_INTERVAL_MS;
@@ -43,6 +47,8 @@ export async function waitForBreezeReady(
     try {
       const response = await fetch(url, {
         method: "GET",
+        // A fronting proxy that guards speech may guard /health too.
+        headers: options.headers ?? {},
         redirect: "error",
         signal: attemptSignal(signal, intervalMs),
       });
@@ -70,7 +76,11 @@ export const breeze: TtsProvider = {
     // Checked before every synthesis, not once per process: tts-local is
     // stopped when a hosted voice wins and may be started cold again while
     // this worker keeps running. On a loaded server this is one local GET.
-    await waitForBreezeReady(base, signal);
+    const key = process.env[voice.keyEnvVar];
+    const headers: Record<string, string> = key
+      ? { authorization: `Bearer ${key}` }
+      : {};
+    await waitForBreezeReady(base, signal, { headers });
     // fetch derives the multipart content-type (with boundary) from the
     // FormData body; setting it by hand would break the request.
     const form = new FormData();
@@ -78,12 +88,11 @@ export const breeze: TtsProvider = {
     if (instruction !== undefined) form.set("instruction", instruction);
     form.set("cfg_scale", "4");
     form.set("seed", "42");
-    const key = process.env[voice.keyEnvVar];
     const bytes = await fetchAudioWithRetry(
       `${base}/v1/audio/speech`,
       {
         method: "POST",
-        headers: key ? { authorization: `Bearer ${key}` } : {},
+        headers,
         body: form,
         signal,
       },
