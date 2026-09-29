@@ -89,6 +89,7 @@ import type * as theses from "../theses.js";
 import type * as tracing from "../tracing.js";
 import type * as validators from "../validators.js";
 import type * as vocabulary from "../vocabulary.js";
+import type * as voiceRatings from "../voiceRatings.js";
 import type * as weeklyBriefs from "../weeklyBriefs.js";
 import type * as weeklyBriefsInternal from "../weeklyBriefsInternal.js";
 import type * as workflows from "../workflows.js";
@@ -181,6 +182,7 @@ declare const fullApi: ApiFromModules<{
   tracing: typeof tracing;
   validators: typeof validators;
   vocabulary: typeof vocabulary;
+  voiceRatings: typeof voiceRatings;
   weeklyBriefs: typeof weeklyBriefs;
   weeklyBriefsInternal: typeof weeklyBriefsInternal;
   workflows: typeof workflows;
