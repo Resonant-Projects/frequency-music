@@ -48,7 +48,7 @@ export const agentToolArgs = {
   listCorrespondenceTargets: z.object({ limit }),
   getScoutTargets: z.object({}),
   findExistingSourceUrls: z.object({
-    urls: z.array(z.string().url()).min(1).max(10),
+    urls: z.array(z.string().url()).min(1).max(20),
   }),
   ingestScoutedSource: z.object({
     url: z.string().url(),

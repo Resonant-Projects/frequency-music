@@ -24,6 +24,9 @@ export type WebSearchResult = {
   url: string;
   snippet: string;
   publishedAt?: string;
+  // The provider's spelling when canonicalization rewrote `url`. A Source
+  // ingested elsewhere under that spelling keys on it, so intake checks both.
+  providerUrl?: string;
 };
 
 type SearchContext = {
@@ -387,7 +390,11 @@ export function createWebSearch(
         if (seen.has(key)) continue;
         seen.add(key);
         const url = canonicalUrl(result.url);
-        results.push({ ...result, url });
+        results.push({
+          ...result,
+          url,
+          ...(url === result.url ? {} : { providerUrl: result.url }),
+        });
         resultProviders.push({ url, provider: names[providerIndex]! });
         if (results.length === maxResults) break;
       }

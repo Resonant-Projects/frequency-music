@@ -73,6 +73,7 @@ describe("federated source-scout search", () => {
       {
         title: "Plate modes",
         url: "https://doi.org/10.1234/plate",
+        providerUrl: "https://doi.org/10.1234/PLATE",
         snippet: "Plate modes resonate",
         publishedAt: "2024-03-15",
       },
@@ -259,11 +260,13 @@ describe("federated source-scout search", () => {
       {
         title: "Web paper",
         url: "https://doi.org/10.1234/plate",
+        providerUrl: "https://doi.org/10.1234/PLATE",
         snippet: "Web summary",
       },
       {
         title: "Another web source",
         url: "https://example.org/other",
+        providerUrl: "https://example.org/other?utm_source=search",
         snippet: "Summary",
       },
     ]);
@@ -396,6 +399,7 @@ describe("federated source-scout search", () => {
       {
         title: "Landing",
         url: "https://example.org/paper",
+        providerUrl: "https://example.org/paper/?utm_source=feed#abstract",
         snippet: "Source",
       },
     ]);

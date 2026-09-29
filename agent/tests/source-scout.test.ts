@@ -239,6 +239,33 @@ describe("source scout canonical write nodes", () => {
     expect(ingestArgs[1]).toMatchObject({ contentProvider: "crawl4ai" });
   });
 
+  test("ingests under the provider's spelling when a Source already keys on it", async () => {
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls")
+        return ["https://example.org/0?utm_source=rss"];
+      return name === "ingestScoutedSource"
+        ? { id: "source-1", created: false }
+        : { ok: true };
+    });
+    const crawl = vi.fn(async () => null);
+    const aliased = judgment(0, "source");
+    aliased.searchHit.result.providerUrl =
+      "https://example.org/0?utm_source=rss";
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({ agentRunId: "run-scout", judgments: [aliased] });
+
+    expect(callTool).toHaveBeenCalledWith("findExistingSourceUrls", {
+      urls: ["https://example.org/0", "https://example.org/0?utm_source=rss"],
+    });
+    expect(crawl).not.toHaveBeenCalled();
+    expect(callTool).toHaveBeenCalledWith(
+      "ingestScoutedSource",
+      expect.objectContaining({ url: "https://example.org/0?utm_source=rss" }),
+    );
+  });
+
   test("still captures candidates when the existing-source preflight fails", async () => {
     const callTool = vi.fn(async (name: string) => {
       if (name === "findExistingSourceUrls")

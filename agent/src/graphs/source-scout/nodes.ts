@@ -328,17 +328,25 @@ export function createIngestSourcesNode(
         return true;
       })
       .slice(0, MAX_INGESTS_PER_RUN);
-    const known = await existingSourceUrls(
-      callTool,
-      candidates.map((candidate) => candidate.searchHit.result.url),
+    const known = await existingSourceUrls(callTool, [
+      ...new Set(
+        candidates.flatMap(({ searchHit: { result } }) =>
+          result.providerUrl ? [result.url, result.providerUrl] : [result.url],
+        ),
+      ),
+    ]);
+    // Intake keys the URL verbatim. When a Source already exists under the
+    // provider's original spelling, ingest that spelling so it dedupes.
+    const intakeUrls = candidates.map(({ searchHit: { result } }) =>
+      !known.has(result.url) &&
+      result.providerUrl &&
+      known.has(result.providerUrl)
+        ? result.providerUrl
+        : result.url,
     );
     // Duplicate intake never stores new text, so only unknown URLs are crawled.
     const pages = await Promise.all(
-      candidates.map((candidate) =>
-        known.has(candidate.searchHit.result.url)
-          ? null
-          : crawl(candidate.searchHit.result.url),
-      ),
+      intakeUrls.map((url) => (known.has(url) ? null : crawl(url))),
     );
     for (const [index, judgment] of candidates.entries()) {
       const rationale = rationaleFor(judgment);
@@ -346,8 +354,9 @@ export function createIngestSourcesNode(
         judgment.searchHit.result.publishedAt,
       );
       const page = pages[index] ?? null;
+      const url = intakeUrls[index] ?? judgment.searchHit.result.url;
       const result = (await callTool("ingestScoutedSource", {
-        url: judgment.searchHit.result.url,
+        url,
         title: judgment.searchHit.result.title,
         ...(publishedAt === undefined ? {} : { publishedAt }),
         ...(page ? { rawText: page.text, contentProvider: page.provider } : {}),
@@ -360,7 +369,7 @@ export function createIngestSourcesNode(
       }
       const write = {
         id: result.id,
-        url: judgment.searchHit.result.url,
+        url,
         title: judgment.searchHit.result.title,
         targetGap: judgment.verdict.targetGap,
         rationale,
@@ -430,7 +439,16 @@ export function createProposeFeedsNode(callTool: ToolCaller = callConvex) {
         url,
         type: feedType(url),
         rationale,
-        sampleItems: [judgment.searchHit.result],
+        sampleItems: [
+          {
+            title: judgment.searchHit.result.title,
+            url: judgment.searchHit.result.url,
+            snippet: judgment.searchHit.result.snippet,
+            ...(judgment.searchHit.result.publishedAt
+              ? { publishedAt: judgment.searchHit.result.publishedAt }
+              : {}),
+          },
+        ],
         agentRunId: state.agentRunId,
       })) as { id?: unknown; created?: unknown };
       if (typeof result.id !== "string") {
