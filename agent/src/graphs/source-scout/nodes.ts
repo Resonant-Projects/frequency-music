@@ -382,6 +382,7 @@ export function createIngestSourcesNode(
         targetGap: judgment.verdict.targetGap,
         rationale,
         created: result.created === true,
+        ...(enriched ? { enriched } : {}),
       };
       sourceWrites.push(write);
       auditEvents.push(
@@ -396,7 +397,6 @@ export function createIngestSourcesNode(
               : "Source scout skipped duplicate source",
           {
             ...write,
-            ...(enriched ? { enriched } : {}),
             query: judgment.searchHit.query.query,
           },
         )),
@@ -503,6 +503,9 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
     const sourcesCreated = state.sourceWrites.filter(
       (write) => write.created,
     ).length;
+    const sourcesEnriched = state.sourceWrites.filter(
+      (write) => write.enriched,
+    ).length;
     const feedsCreated = state.feedWrites.filter(
       (write) => write.created,
     ).length;
@@ -510,6 +513,7 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
       state.sourceWrites.length +
       state.feedWrites.length -
       sourcesCreated -
+      sourcesEnriched -
       feedsCreated;
     const rationales = [...state.sourceWrites, ...state.feedWrites]
       .map((write) => `${write.title}: ${write.rationale}`)
@@ -517,7 +521,7 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
     const summary =
       gapCount === 0
         ? "source-scout completed: no research gaps"
-        : `source-scout completed: ${sourcesCreated} sources ingested, ${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors${rationales ? `. Rationale: ${rationales}` : ""}`;
+        : `source-scout completed: ${sourcesCreated} sources ingested, ${sourcesEnriched ? `${sourcesEnriched} URL-only sources captured, ` : ""}${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors${rationales ? `. Rationale: ${rationales}` : ""}`;
     const auditEvents = await finalizeRunCompleted(
       callTool,
       state.agentRunId,

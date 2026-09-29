@@ -4,6 +4,7 @@ import {
   createJudgeResultsNode,
   createProposeFeedsNode,
   createSearchLoopNode,
+  createSummarizeNode,
   queryPlanOutputSchema,
   routeAfterQueries,
   routeAfterTargets,
@@ -17,6 +18,7 @@ import {
 import type {
   ScoutJudgment,
   ScoutSearchHit,
+  SourceScoutState,
 } from "../src/state/sourceScoutState";
 
 const searchHit = (index: number): ScoutSearchHit => ({
@@ -294,6 +296,33 @@ describe("source scout canonical write nodes", () => {
         message: "Source scout captured text for URL-only source",
         payload: expect.objectContaining({ enriched: true, created: false }),
       }),
+    );
+  });
+
+  test("reports captured URL-only sources separately from duplicates", async () => {
+    const write = (created: boolean, enriched?: boolean) => ({
+      id: "source",
+      url: "https://example.org/0",
+      title: "Candidate",
+      targetGap: "thin-domain:cymatics",
+      rationale: "Gap",
+      created,
+      ...(enriched ? { enriched } : {}),
+    });
+    const { summary } = await createSummarizeNode(
+      vi.fn(async () => ({ ok: true })),
+    )({
+      agentRunId: "run-scout",
+      targets: {
+        thinDomains: [{ domain: "cymatics" }],
+        starvedConjectures: [],
+      },
+      sourceWrites: [write(true), write(false, true), write(false)],
+      feedWrites: [],
+      judgeErrorCount: 0,
+    } as unknown as SourceScoutState);
+    expect(summary).toMatch(
+      /^source-scout completed: 1 sources ingested, 1 URL-only sources captured, 0 feeds proposed, 1 duplicates skipped,/,
     );
   });
 
