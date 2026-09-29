@@ -37,5 +37,5 @@ The targetGap must repeat the exact motivating gap shown below. Give a short gro
 Motivating gap: ${hit.query.targetGap}
 Query rationale: ${hit.query.rationale}
 Search result:
-${JSON.stringify(hit.result, null, 2)}`;
+${JSON.stringify({ ...hit.result, providerUrl: undefined }, null, 2)}`;
 }

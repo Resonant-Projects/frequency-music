@@ -9,6 +9,7 @@ import { callConvex } from "./convexTools.js";
 
 const FIRECRAWL_SEARCH_URL = "https://api.firecrawl.dev/v2/search";
 const FIRECRAWL_SEARCH_TIMEOUT_MS = 15_000;
+const RESEARCH_SEARCH_TIMEOUT_MS = 8_000;
 const DEFAULT_MAX_RESULTS = 5;
 const MAX_RESULTS = 10;
 
@@ -23,6 +24,9 @@ export type WebSearchResult = {
   url: string;
   snippet: string;
   publishedAt?: string;
+  // The provider's spelling when canonicalization rewrote `url`. A Source
+  // ingested elsewhere under that spelling keys on it, so intake checks both.
+  providerUrl?: string;
 };
 
 type SearchContext = {
@@ -76,6 +80,196 @@ function mapResults(payload: unknown, maxResults: number): WebSearchResult[] {
     .slice(0, maxResults);
 }
 
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function text(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+// A DOI suffix is opaque data: `?`, `#`, and `%` inside it must be encoded in
+// the resolver URL or they become URL syntax and truncate the DOI.
+function doiUrl(value: unknown): string | undefined {
+  const raw = text(value);
+  if (!raw) return undefined;
+  const resolver = /^https?:\/\/(?:dx\.)?doi\.org\//i;
+  let name = raw.replace(resolver, "");
+  if (name !== raw) {
+    try {
+      name = decodeURIComponent(name);
+    } catch {
+      return undefined;
+    }
+  }
+  return /^10\.\d{4,9}\/\S+$/i.test(name)
+    ? `https://doi.org/${name.replace(/[%?#]/g, encodeURIComponent)}`
+    : undefined;
+}
+
+// Only a provider's full calendar date is a publication date; a bare year
+// would become a fabricated January 1 timestamp on the Source.
+function calendarDate(value: unknown): string | undefined {
+  const date = text(value);
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
+  // Date.parse rolls impossible days over (2014-02-30 -> March 2); reject them.
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === date
+    ? date
+    : undefined;
+}
+
+function abstractText(value: unknown): string | undefined {
+  const positions: Array<[number, string]> = [];
+  for (const [word, offsets] of Object.entries(record(value))) {
+    if (!Array.isArray(offsets)) continue;
+    for (const offset of offsets) {
+      if (Number.isInteger(offset) && offset >= 0 && offset < 5000)
+        positions.push([offset, word]);
+    }
+  }
+  return text(
+    positions
+      .sort((a, b) => a[0] - b[0])
+      .map(([, word]) => word)
+      .join(" "),
+  )?.slice(0, 1000);
+}
+
+function mapOpenAlex(payload: unknown, limit: number): WebSearchResult[] {
+  const works = record(payload).results;
+  if (!Array.isArray(works)) return [];
+  return works
+    .flatMap((entry): WebSearchResult[] => {
+      const work = record(entry);
+      const title = text(work.title);
+      const url =
+        doiUrl(work.doi) ??
+        text(record(work.primary_location).landing_page_url) ??
+        text(work.id);
+      const snippet = abstractText(work.abstract_inverted_index) ?? title;
+      if (!title || !url || !snippet) return [];
+      const publishedAt = calendarDate(work.publication_date);
+      return [{ title, url, snippet, ...(publishedAt ? { publishedAt } : {}) }];
+    })
+    .slice(0, limit);
+}
+
+function mapEuropePmc(payload: unknown, limit: number): WebSearchResult[] {
+  const works = record(record(payload).resultList).result;
+  if (!Array.isArray(works)) return [];
+  return works
+    .flatMap((entry): WebSearchResult[] => {
+      const work = record(entry);
+      const title = text(work.title);
+      const id = text(work.id);
+      const source = text(work.source);
+      const url =
+        doiUrl(work.doi) ??
+        (id && source
+          ? `https://europepmc.org/article/${encodeURIComponent(source)}/${encodeURIComponent(id)}`
+          : undefined);
+      const snippet =
+        text(work.abstractText)
+          ?.replace(/<[^>]*>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 1000) || title;
+      if (!title || !url || !snippet) return [];
+      const publishedAt = calendarDate(work.firstPublicationDate);
+      return [{ title, url, snippet, ...(publishedAt ? { publishedAt } : {}) }];
+    })
+    .slice(0, limit);
+}
+
+function canonicalUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname.toLowerCase() === "doi.org" ||
+      parsed.hostname.toLowerCase() === "dx.doi.org"
+    ) {
+      return (
+        doiUrl(decodeURIComponent(parsed.pathname.slice(1)))?.toLowerCase() ??
+        url
+      );
+    }
+    parsed.hash = "";
+    for (const key of Array.from(parsed.searchParams.keys())) {
+      if (/^(utm_|fbclid$|gclid$)/i.test(key)) parsed.searchParams.delete(key);
+    }
+    parsed.searchParams.sort();
+    if (parsed.pathname !== "/")
+      parsed.pathname = parsed.pathname.replace(/\/$/, "");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function canonicalKey(url: string): string {
+  try {
+    const parsed = new URL(canonicalUrl(url));
+    if (parsed.hostname.toLowerCase() === "doi.org")
+      return `doi:${parsed.pathname.replace(/^\//, "")}`;
+    return `url:${parsed.host.toLowerCase()}${parsed.pathname.replace(/\/$/, "")}${parsed.search}`;
+  } catch {
+    return `url:${url}`;
+  }
+}
+
+type ProviderOutcome = {
+  status: "ok" | "failed";
+  returned: number;
+  error?: string;
+};
+
+async function fetchResearch(
+  fetchImpl: FetchLike,
+  provider: "OpenAlex" | "Europe PMC",
+  url: string,
+  map: (payload: unknown, limit: number) => WebSearchResult[],
+  limit: number,
+): Promise<{ results: WebSearchResult[]; outcome: ProviderOutcome }> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const payload = await Promise.race([
+      (async () => {
+        const response = await fetchImpl(url, { signal: controller.signal });
+        if (!response.ok) {
+          await response.body?.cancel().catch(() => undefined);
+          throw new Error(`${provider} search failed with ${response.status}`);
+        }
+        return response.json();
+      })(),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          const error = new Error(
+            `${provider} search timed out after ${RESEARCH_SEARCH_TIMEOUT_MS}ms`,
+          );
+          controller.abort(error);
+          reject(error);
+        }, RESEARCH_SEARCH_TIMEOUT_MS);
+      }),
+    ]);
+    const results = map(payload, limit);
+    return { results, outcome: { status: "ok", returned: results.length } };
+  } catch (error) {
+    const message = redactError(error);
+    console.warn(`[source-scout] ${provider} search failed:`, message);
+    return {
+      results: [],
+      outcome: { status: "failed", returned: 0, error: message },
+    };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export function createWebSearch(
   dependencies: {
     apiKey?: string;
@@ -93,76 +287,153 @@ export function createWebSearch(
   ): Promise<WebSearchResult[]> => {
     const args = webSearchInputSchema.parse(input);
     const maxResults = args.maxResults ?? DEFAULT_MAX_RESULTS;
-    const auditSearch = async (
-      outcome:
-        | { status: "ok"; returned: number }
-        | { status: "failed"; error: string },
-    ) =>
-      await appendRemoteAuditEvent(
-        callTool,
-        context.agentRunId,
-        "tool_call",
-        outcome.status === "ok"
-          ? "Searched Firecrawl for source-scout candidates"
-          : "Firecrawl search failed; source-scout skipped query",
-        {
-          query: args.query,
-          ...(context.targetGap ? { targetGap: context.targetGap } : {}),
-          requested: maxResults,
-          returned: outcome.status === "ok" ? outcome.returned : 0,
-          status: outcome.status,
-          ...(outcome.status === "failed" ? { error: outcome.error } : {}),
-        },
-      );
+    const providers: Record<string, ProviderOutcome> = {};
+    // Start independent scholarly lookups before awaiting the optional web channel.
+    const openAlexUrl = new URL("https://api.openalex.org/works");
+    openAlexUrl.searchParams.set("search", args.query);
+    openAlexUrl.searchParams.set("per_page", String(maxResults));
+    openAlexUrl.searchParams.set(
+      "select",
+      "id,title,doi,publication_date,abstract_inverted_index,primary_location",
+    );
+    const europePmcUrl = new URL(
+      "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+    );
+    europePmcUrl.searchParams.set("query", args.query);
+    europePmcUrl.searchParams.set("format", "json");
+    europePmcUrl.searchParams.set("pageSize", String(maxResults));
+    europePmcUrl.searchParams.set("resultType", "core");
+    const research = Promise.all([
+      fetchResearch(
+        fetchImpl,
+        "OpenAlex",
+        openAlexUrl.toString(),
+        mapOpenAlex,
+        maxResults,
+      ),
+      fetchResearch(
+        fetchImpl,
+        "Europe PMC",
+        europePmcUrl.toString(),
+        mapEuropePmc,
+        maxResults,
+      ),
+    ]);
+    let firecrawlResults: WebSearchResult[] = [];
     try {
       const apiKey = configuredApiKey ?? process.env.FIRECRAWL_API_KEY;
       if (!apiKey) throw new Error("FIRECRAWL_API_KEY is required");
       const controller = new AbortController();
-      const timeout = setTimeout(
-        () =>
-          controller.abort(
-            new Error(
-              `Firecrawl search timed out after ${FIRECRAWL_SEARCH_TIMEOUT_MS}ms`,
-            ),
-          ),
-        FIRECRAWL_SEARCH_TIMEOUT_MS,
-      );
+      let rejectTimeout!: (reason: Error) => void;
+      const deadline = new Promise<never>((_resolve, reject) => {
+        rejectTimeout = reject;
+      });
+      const timeout = setTimeout(() => {
+        const error = new Error(
+          `Firecrawl search timed out after ${FIRECRAWL_SEARCH_TIMEOUT_MS}ms`,
+        );
+        controller.abort(error);
+        rejectTimeout(error);
+      }, FIRECRAWL_SEARCH_TIMEOUT_MS);
       let response: Response;
       try {
-        response = await fetchImpl(FIRECRAWL_SEARCH_URL, {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${apiKey}`,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            query: args.query,
-            limit: maxResults,
-            sources: ["web"],
+        response = await Promise.race([
+          fetchImpl(FIRECRAWL_SEARCH_URL, {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${apiKey}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              query: args.query,
+              limit: maxResults,
+              sources: ["web"],
+            }),
+            signal: controller.signal,
           }),
-          signal: controller.signal,
-        });
+          deadline,
+        ]);
+        if (!response.ok) {
+          // Release the pooled connection; the status alone is audited.
+          await response.body?.cancel().catch(() => undefined);
+          throw new Error(`Firecrawl search failed with ${response.status}`);
+        }
+        firecrawlResults = mapResults(
+          await Promise.race([response.json(), deadline]),
+          maxResults,
+        );
       } finally {
         clearTimeout(timeout);
       }
-      if (!response.ok) {
-        const detail = (await response.text()).slice(0, 240);
-        throw new Error(
-          `Firecrawl search failed with ${response.status}${detail ? `: ${detail}` : ""}`,
-        );
-      }
-      const results = mapResults(await response.json(), maxResults);
-      await auditSearch({ status: "ok", returned: results.length });
-      return results;
+      providers.firecrawl = { status: "ok", returned: firecrawlResults.length };
     } catch (error) {
       const message = redactError(error);
-      console.warn(
-        "[source-scout] Firecrawl search failed; skipping query:",
-        message,
-      );
-      await auditSearch({ status: "failed", error: message });
-      return [];
+      if (message !== "FIRECRAWL_API_KEY is required")
+        console.warn(
+          "[source-scout] Firecrawl search failed; skipping provider:",
+          message,
+        );
+      providers.firecrawl = { status: "failed", returned: 0, error: message };
     }
+
+    const [openalex, europePmc] = await research;
+    providers.openalex = openalex.outcome;
+    providers.europePmc = europePmc.outcome;
+    const results: WebSearchResult[] = [];
+    const resultProviders: Array<{ url: string; provider: string }> = [];
+    const seen = new Set<string>();
+    // Interleave provider rankings so a full web result page cannot crowd out
+    // paper metadata. Preserve each provider's own ordering and the global cap.
+    const ranked = [firecrawlResults, openalex.results, europePmc.results];
+    const names = ["firecrawl", "openalex", "europePmc"] as const;
+    for (
+      let rank = 0;
+      rank < maxResults && results.length < maxResults;
+      rank++
+    ) {
+      for (
+        let providerIndex = 0;
+        providerIndex < ranked.length;
+        providerIndex++
+      ) {
+        const result = ranked[providerIndex]?.[rank];
+        if (!result) continue;
+        const key = canonicalKey(result.url);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const url = canonicalUrl(result.url);
+        results.push({
+          ...result,
+          url,
+          ...(url === result.url ? {} : { providerUrl: result.url }),
+        });
+        resultProviders.push({ url, provider: names[providerIndex]! });
+        if (results.length === maxResults) break;
+      }
+    }
+    const status = Object.values(providers).some(
+      (provider) => provider.status === "ok",
+    )
+      ? "ok"
+      : "failed";
+    await appendRemoteAuditEvent(
+      callTool,
+      context.agentRunId,
+      "tool_call",
+      status === "ok"
+        ? "Searched federated providers for source-scout candidates"
+        : "Source-scout search providers failed",
+      {
+        query: args.query,
+        ...(context.targetGap ? { targetGap: context.targetGap } : {}),
+        requested: maxResults,
+        returned: results.length,
+        status,
+        providers,
+        resultProviders,
+      },
+    );
+    return results;
   };
 }
 
@@ -183,7 +454,7 @@ export const webSearchTool = tool(
   {
     name: "web_search",
     description:
-      "Search the web with Firecrawl for source-scout candidates. Provider failures return no results.",
+      "Search Firecrawl, OpenAlex, and Europe PMC for source-scout candidates. Research providers work without API keys; individual provider failures do not discard other results.",
     schema: webSearchInputSchema,
   },
 );

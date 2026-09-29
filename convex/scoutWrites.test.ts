@@ -18,6 +18,74 @@ async function seedAgentRun(t: ReturnType<typeof convexTest>) {
 }
 
 describe("source scout canonical writes", () => {
+  test("stores crawler text as text_ready and preserves it on duplicate scout intake", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const input = {
+      url: "https://example.org/resonance",
+      title: "Resonance experiment",
+      query: "measured resonance",
+      rationale: "Thin domain",
+      agentRunId,
+      rawText:
+        "# Experimental setup\n" + "The measured resonant modes. ".repeat(5),
+      contentProvider: "crawl4ai" as const,
+    };
+    const first = await t.mutation(internal.sources.createScoutedSource, input);
+    const duplicate = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      rawText: "Must not overwrite. ".repeat(7),
+      title: "Must not overwrite",
+    });
+    expect(duplicate).toEqual({ id: first.id, created: false });
+    const source = await t.run((ctx) => ctx.db.get(first.id));
+    expect(source).toMatchObject({
+      status: "text_ready",
+      rawText: input.rawText,
+      title: input.title,
+      rawTextSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      metadata: { scoutedBy: { contentProvider: "crawl4ai", agentRunId } },
+    });
+  });
+
+  test("rejects oversized or unprovenanced scout text before writing", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const input = {
+      url: "https://example.org/paper",
+      query: "modal study",
+      rationale: "Thin domain",
+      agentRunId,
+    };
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        rawText: "a".repeat(30_001),
+        contentProvider: "crawl4ai",
+      }),
+    ).rejects.toThrow("100-30000 characters");
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        rawText: "Unattributed content",
+      }),
+    ).rejects.toThrow("must be supplied together");
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        rawText: "Short text",
+        contentProvider: "crawl4ai",
+      }),
+    ).rejects.toThrow("100-30000 characters");
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...input,
+        contentProvider: "crawl4ai",
+      }),
+    ).rejects.toThrow("must be supplied together");
+    expect(await t.run((ctx) => ctx.db.query("sources").collect())).toEqual([]);
+  });
+
   test("creates a provenance-stamped source and treats a canonical duplicate as a no-op", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);
@@ -58,6 +126,94 @@ describe("source scout canonical writes", () => {
           rationale: input.rationale,
         },
       },
+    });
+  });
+
+  test("reports existing candidates by the same dedupe key intake uses", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/research/?b=2&a=1",
+      query: "cymatics modal geometry",
+      rationale: "Fills the thin cymatics domain.",
+      agentRunId,
+    });
+
+    await expect(
+      t.query(internal.sources.existingScoutedUrls, {
+        urls: [
+          "http://EXAMPLE.ORG/research?b=2&a=1",
+          "https://example.org/new-paper",
+        ],
+      }),
+    ).resolves.toEqual([
+      { url: "http://EXAMPLE.ORG/research?b=2&a=1", needsText: true },
+    ]);
+  });
+
+  test("captures text later only for scout-created URL-only sources", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const base = {
+      url: "https://example.org/outage",
+      query: "modal study",
+      rationale: "Thin domain",
+      agentRunId,
+    };
+    const rawText = `# Recovered page\n${"Measured resonant modes. ".repeat(6)}`;
+    const first = await t.mutation(internal.sources.createScoutedSource, base);
+    const retry = await t.mutation(internal.sources.createScoutedSource, {
+      ...base,
+      rawText,
+      contentProvider: "crawl4ai",
+    });
+    expect(retry).toEqual({ id: first.id, created: false, enriched: true });
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...base,
+        rawText: "Must not overwrite. ".repeat(7),
+        contentProvider: "crawl4ai",
+      }),
+    ).resolves.toEqual({ id: first.id, created: false });
+    expect(await t.run((ctx) => ctx.db.get(first.id))).toMatchObject({
+      status: "text_ready",
+      rawText,
+      rawTextSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      metadata: {
+        scoutedBy: {
+          query: "modal study",
+          contentProvider: "crawl4ai",
+          capturedByAgentRunId: agentRunId,
+        },
+      },
+    });
+    await expect(
+      t.query(internal.sources.existingScoutedUrls, { urls: [base.url] }),
+    ).resolves.toEqual([{ url: base.url, needsText: false }]);
+
+    const manualUrl = "https://example.org/manual";
+    const manualId = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        canonicalUrl: manualUrl,
+        dedupeKey: generateDedupeKey("url", { canonicalUrl: manualUrl }),
+        status: "ingested",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await expect(
+      t.mutation(internal.sources.createScoutedSource, {
+        ...base,
+        url: manualUrl,
+        rawText,
+        contentProvider: "crawl4ai",
+      }),
+    ).resolves.toEqual({ id: manualId, created: false });
+    expect(await t.run((ctx) => ctx.db.get(manualId))).toMatchObject({
+      status: "ingested",
     });
   });
 

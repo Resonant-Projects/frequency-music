@@ -146,11 +146,18 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Source-scout target selection only; results are bounded to five domains and five conjectures.",
   ),
   entry(
+    "findExistingSourceUrls",
+    "read",
+    "internal.sources:existingScoutedUrls",
+    "Return which candidate URLs already have a canonical Source and whether each still awaits page capture.",
+    "Uses the same URL dedupe key as ingestScoutedSource; the scout crawls only unknown URLs and scout URL-only Sources.",
+  ),
+  entry(
     "ingestScoutedSource",
     "research_write",
     "internal.sources:createScoutedSource",
-    "Ingest one judged source through canonical URL intake with source-scout provenance.",
-    "Canonical dedupe rejects are no-ops; the graph logs the decision and never retries.",
+    "Ingest one judged source through canonical URL intake with source-scout provenance and optional bounded Crawl4AI text.",
+    "Canonical duplicates are no-ops, except that a scout-created URL-only Source may gain captured text; fetched text enters text_ready for batch Extraction.",
   ),
   entry(
     "proposeFeed",

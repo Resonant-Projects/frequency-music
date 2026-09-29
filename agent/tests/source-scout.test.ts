@@ -179,6 +179,143 @@ describe("source scout execution caps and resilience", () => {
 });
 
 describe("source scout canonical write nodes", () => {
+  test("persists fetched source text with provider provenance through the guarded ingest tool", async () => {
+    const callTool = vi.fn(async (name: string) =>
+      name === "ingestScoutedSource"
+        ? { id: "source-1", created: true }
+        : { ok: true },
+    );
+    const crawl = vi.fn(async () => ({
+      text: "# Measured modes\n" + "A reproducible experiment. ".repeat(5),
+      provider: "crawl4ai" as const,
+    }));
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({
+      agentRunId: "run-scout",
+      judgments: [judgment(0, "source")],
+    });
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+    expect(callTool).toHaveBeenCalledWith(
+      "ingestScoutedSource",
+      expect.objectContaining({
+        rawText: "# Measured modes\n" + "A reproducible experiment. ".repeat(5),
+        contentProvider: "crawl4ai",
+      }),
+    );
+  });
+
+  test("skips page capture for candidates that already have a canonical source", async () => {
+    let writes = 0;
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls")
+        return [{ url: "https://example.org/0", needsText: false }];
+      if (name === "ingestScoutedSource") {
+        writes += 1;
+        return { id: `source-${writes}`, created: writes !== 1 };
+      }
+      return { ok: true };
+    });
+    const crawl = vi.fn(async () => ({
+      text: "# Measured modes\n" + "A reproducible experiment. ".repeat(5),
+      provider: "crawl4ai" as const,
+    }));
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({
+      agentRunId: "run-scout",
+      judgments: [judgment(0, "source"), judgment(1, "source")],
+    });
+
+    expect(callTool).toHaveBeenCalledWith("findExistingSourceUrls", {
+      urls: ["https://example.org/0", "https://example.org/1"],
+    });
+    expect(crawl.mock.calls).toEqual([["https://example.org/1"]]);
+    const ingestArgs = callTool.mock.calls
+      .filter(([name]) => name === "ingestScoutedSource")
+      .map(([, args]) => args as Record<string, unknown>);
+    expect(ingestArgs[0]).not.toHaveProperty("rawText");
+    expect(ingestArgs[1]).toMatchObject({ contentProvider: "crawl4ai" });
+  });
+
+  test("ingests under the provider's spelling when a Source already keys on it", async () => {
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls")
+        return [
+          { url: "https://example.org/0?utm_source=rss", needsText: false },
+        ];
+      return name === "ingestScoutedSource"
+        ? { id: "source-1", created: false }
+        : { ok: true };
+    });
+    const crawl = vi.fn(async () => null);
+    const aliased = judgment(0, "source");
+    aliased.searchHit.result.providerUrl =
+      "https://example.org/0?utm_source=rss";
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({ agentRunId: "run-scout", judgments: [aliased] });
+
+    expect(callTool).toHaveBeenCalledWith("findExistingSourceUrls", {
+      urls: ["https://example.org/0", "https://example.org/0?utm_source=rss"],
+    });
+    expect(crawl).not.toHaveBeenCalled();
+    expect(callTool).toHaveBeenCalledWith(
+      "ingestScoutedSource",
+      expect.objectContaining({ url: "https://example.org/0?utm_source=rss" }),
+    );
+  });
+
+  test("recaptures a known URL-only source and audits the enrichment", async () => {
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls")
+        return [{ url: "https://example.org/0", needsText: true }];
+      return name === "ingestScoutedSource"
+        ? { id: "source-1", created: false, enriched: true }
+        : { ok: true };
+    });
+    const crawl = vi.fn(async () => ({
+      text: `# Measured modes\n${"A reproducible experiment. ".repeat(5)}`,
+      provider: "crawl4ai" as const,
+    }));
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({ agentRunId: "run-scout", judgments: [judgment(0, "source")] });
+
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+    expect(callTool).toHaveBeenCalledWith(
+      "appendAgentRunEvent",
+      expect.objectContaining({
+        kind: "tool_call",
+        message: "Source scout captured text for URL-only source",
+        payload: expect.objectContaining({ enriched: true, created: false }),
+      }),
+    );
+  });
+
+  test("still captures candidates when the existing-source preflight fails", async () => {
+    const callTool = vi.fn(async (name: string) => {
+      if (name === "findExistingSourceUrls")
+        throw new Error("Convex tool findExistingSourceUrls failed: 404");
+      return name === "ingestScoutedSource"
+        ? { id: "source-1", created: true }
+        : { ok: true };
+    });
+    const crawl = vi.fn(async () => null);
+    await createIngestSourcesNode(
+      callTool,
+      crawl,
+    )({
+      agentRunId: "run-scout",
+      judgments: [judgment(0, "source")],
+    });
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+  });
+
   test("ingests at most five judged sources with provenance and logs dedupe as a decision", async () => {
     let writes = 0;
     const callTool = vi.fn(async (name: string) => {

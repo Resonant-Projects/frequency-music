@@ -52,10 +52,13 @@ const FROZEN_ARGS: Record<string, string> = {
   }),
   listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
   getScoutTargets: frozenArgs({}),
+  findExistingSourceUrls: frozenArgs({ urls: field(array(string)) }),
   ingestScoutedSource: frozenArgs({
     url: field(string),
     title: field(string, true),
     publishedAt: field(number, true),
+    rawText: field(string, true),
+    contentProvider: field(literal("crawl4ai"), true),
     query: field(string),
     rationale: field(string),
     agentRunId: field(id("agentRuns")),

@@ -8,6 +8,10 @@ export const PENDING_DRAFT_CAP = 3;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const LISTENING_DEBT_AFTER_MS = 14 * DAY_MS;
 export const MAX_FEED_ENABLE_STATE_IDS = 20;
+// Bounds on Source Scout page text: the agent trims captures to the maximum,
+// and ingestScoutedSource rejects text too thin for Extraction.
+export const SCOUTED_TEXT_MIN_CHARS = 100;
+export const SCOUTED_TEXT_MAX_CHARS = 30_000;
 
 export const AGENT_RUN_EVENT_KINDS = [
   "tool_call",

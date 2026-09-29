@@ -13,7 +13,9 @@ import {
   type WebSearchInput,
   type WebSearchResult,
 } from "../../tools/searchTool.js";
+import { createCrawlPage, type CrawledPage } from "../../tools/crawlTool.js";
 import { callConvex } from "../../tools/convexTools.js";
+import { redactError } from "../../shared/redactError.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
 import {
   appendRemoteAuditEvent,
@@ -279,7 +281,36 @@ function parsedPublishedAt(value: string | undefined): number | undefined {
   return Number.isFinite(timestamp) ? timestamp : undefined;
 }
 
-export function createIngestSourcesNode(callTool: ToolCaller = callConvex) {
+// Maps each already-ingested URL to whether its Source still awaits capture.
+async function existingSourceUrls(
+  callTool: ToolCaller,
+  urls: string[],
+): Promise<Map<string, boolean>> {
+  if (urls.length === 0) return new Map();
+  try {
+    const result = await callTool("findExistingSourceUrls", { urls });
+    return new Map(
+      (Array.isArray(result) ? result : []).flatMap(
+        (entry): Array<[string, boolean]> => {
+          const { url, needsText } = (entry ?? {}) as Record<string, unknown>;
+          return typeof url === "string" ? [[url, needsText === true]] : [];
+        },
+      ),
+    );
+  } catch (error) {
+    // The preflight only saves crawler work; intake still dedupes canonically.
+    console.warn(
+      "[source-scout] Existing-source preflight failed; crawling all candidates:",
+      redactError(error),
+    );
+    return new Map();
+  }
+}
+
+export function createIngestSourcesNode(
+  callTool: ToolCaller = callConvex,
+  crawl: (url: string) => Promise<CrawledPage | null> = createCrawlPage(),
+) {
   return async (state: {
     agentRunId?: string;
     judgments: ScoutJudgment[];
@@ -301,25 +332,52 @@ export function createIngestSourcesNode(callTool: ToolCaller = callConvex) {
         return true;
       })
       .slice(0, MAX_INGESTS_PER_RUN);
-    for (const judgment of candidates) {
+    const known = await existingSourceUrls(callTool, [
+      ...new Set(
+        candidates.flatMap(({ searchHit: { result } }) =>
+          result.providerUrl ? [result.url, result.providerUrl] : [result.url],
+        ),
+      ),
+    ]);
+    // Intake keys the URL verbatim. When a Source already exists under the
+    // provider's original spelling, ingest that spelling so it dedupes.
+    const intakeUrls = candidates.map(({ searchHit: { result } }) =>
+      !known.has(result.url) &&
+      result.providerUrl &&
+      known.has(result.providerUrl)
+        ? result.providerUrl
+        : result.url,
+    );
+    // Duplicate intake stores text only for a scout URL-only Source whose
+    // earlier capture failed, so every other known URL skips the crawl.
+    const pages = await Promise.all(
+      intakeUrls.map((url) =>
+        known.has(url) && !known.get(url) ? null : crawl(url),
+      ),
+    );
+    for (const [index, judgment] of candidates.entries()) {
       const rationale = rationaleFor(judgment);
       const publishedAt = parsedPublishedAt(
         judgment.searchHit.result.publishedAt,
       );
+      const page = pages[index] ?? null;
+      const url = intakeUrls[index] ?? judgment.searchHit.result.url;
       const result = (await callTool("ingestScoutedSource", {
-        url: judgment.searchHit.result.url,
+        url,
         title: judgment.searchHit.result.title,
         ...(publishedAt === undefined ? {} : { publishedAt }),
+        ...(page ? { rawText: page.text, contentProvider: page.provider } : {}),
         query: judgment.searchHit.query.query,
         rationale,
         agentRunId: state.agentRunId,
-      })) as { id?: unknown; created?: unknown };
+      })) as { id?: unknown; created?: unknown; enriched?: unknown };
       if (typeof result.id !== "string") {
         throw new Error("ingestScoutedSource returned no source id");
       }
+      const enriched = result.enriched === true;
       const write = {
         id: result.id,
-        url: judgment.searchHit.result.url,
+        url,
         title: judgment.searchHit.result.title,
         targetGap: judgment.verdict.targetGap,
         rationale,
@@ -330,11 +388,17 @@ export function createIngestSourcesNode(callTool: ToolCaller = callConvex) {
         ...(await appendRemoteAuditEvent(
           callTool,
           state.agentRunId,
-          write.created ? "tool_call" : "decision",
+          write.created || enriched ? "tool_call" : "decision",
           write.created
             ? "Source scout ingested candidate source"
-            : "Source scout skipped duplicate source",
-          { ...write, query: judgment.searchHit.query.query },
+            : enriched
+              ? "Source scout captured text for URL-only source"
+              : "Source scout skipped duplicate source",
+          {
+            ...write,
+            ...(enriched ? { enriched } : {}),
+            query: judgment.searchHit.query.query,
+          },
         )),
       );
     }
@@ -389,7 +453,16 @@ export function createProposeFeedsNode(callTool: ToolCaller = callConvex) {
         url,
         type: feedType(url),
         rationale,
-        sampleItems: [judgment.searchHit.result],
+        sampleItems: [
+          {
+            title: judgment.searchHit.result.title,
+            url: judgment.searchHit.result.url,
+            snippet: judgment.searchHit.result.snippet,
+            ...(judgment.searchHit.result.publishedAt
+              ? { publishedAt: judgment.searchHit.result.publishedAt }
+              : {}),
+          },
+        ],
         agentRunId: state.agentRunId,
       })) as { id?: unknown; created?: unknown };
       if (typeof result.id !== "string") {
