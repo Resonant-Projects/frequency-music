@@ -49,6 +49,32 @@ describe("narration prompt", () => {
     expect(() => parseNarrationScript("plain\n")).toThrow(/CHAPTERS/);
   });
 
+  test("standalone [pause] at the edges is dropped; an inline marker throws", () => {
+    const trailing = parseNarrationScript(
+      "First.\n[pause]\nSecond one.\n[pause]\n\nCHAPTERS\n0: a",
+    );
+    expect(trailing.paragraphs).toEqual(["First.", "Second one."]);
+    const leading = parseNarrationScript("[pause]\nHello\n\nCHAPTERS\n0: a");
+    expect(leading.paragraphs).toEqual(["Hello"]);
+    expect(() =>
+      parseNarrationScript("Hello. [pause] Second.\n\nCHAPTERS\n0: a"),
+    ).toThrow(/stray \[pause\]/);
+    expect(() =>
+      parseNarrationScript("Hello.\n[pause] Second.\n\nCHAPTERS\n0: a"),
+    ).toThrow(/stray \[pause\]/);
+  });
+
+  test("chapter block tolerates CRLF line endings", () => {
+    const script = parseNarrationScript(
+      "One.\r\n[pause]\r\nTwo.\r\n\r\nCHAPTERS\r\n0: First\r\n1: Second\r\n",
+    );
+    expect(script.paragraphs).toEqual(["One.", "Two."]);
+    expect(script.chapters).toEqual([
+      { title: "First", startParagraph: 0 },
+      { title: "Second", startParagraph: 1 },
+    ]);
+  });
+
   test("calibration passage matches the checked-in fixture and parses", () => {
     const fixture = readFileSync(
       "media/fixtures/calibration-passage.md",

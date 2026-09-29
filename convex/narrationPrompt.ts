@@ -30,6 +30,11 @@ export function buildNarrationPrompt(args: {
 
 const MARKDOWN_RESIDUE = /^(#{1,6}\s|[-*]\s|\d+\.\s|>|```)|\*\*|\[[^\]]+\]\(/m;
 const CHAPTERS_MARKER = "\nCHAPTERS";
+const PAUSE_MARKER = "[pause]";
+// Standalone markers at the very start or end of the body carry no break;
+// an LLM plausibly emits a trailing one before CHAPTERS. Drop them.
+const LEADING_PAUSE = /^(?:\[pause\]\s*\n\s*)+/;
+const TRAILING_PAUSE = /(?:\s*\n\s*\[pause\])+$/;
 
 export function parseNarrationScript(text: string): NarrationScript {
   const marker = text.lastIndexOf(CHAPTERS_MARKER);
@@ -38,16 +43,21 @@ export function parseNarrationScript(text: string): NarrationScript {
   const chapterLines = text
     .slice(marker + CHAPTERS_MARKER.length)
     .trim()
-    .split("\n")
+    .split(/\r?\n/)
     .filter(Boolean);
   if (MARKDOWN_RESIDUE.test(body)) {
     throw new Error("script contains markdown residue");
   }
   const paragraphs = body
+    .replace(LEADING_PAUSE, "")
+    .replace(TRAILING_PAUSE, "")
     .split(/\n\s*\[pause\]\s*\n/)
     .map((paragraph) => paragraph.replaceAll(/\s*\n\s*/g, " ").trim())
     .filter(Boolean);
   if (paragraphs.length === 0) throw new Error("script has no paragraphs");
+  if (paragraphs.some((paragraph) => paragraph.includes(PAUSE_MARKER))) {
+    throw new Error("stray [pause] marker inside a paragraph");
+  }
   const chapters = chapterLines.map((line) => {
     const match = line.match(/^(\d+):\s*(.+)$/);
     const title = match?.[2]?.trim();
