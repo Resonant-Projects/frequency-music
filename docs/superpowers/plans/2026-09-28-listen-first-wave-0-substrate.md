@@ -3248,23 +3248,23 @@ git commit -m "feat(shared): human listening predicate; audio substrate vocabula
 
 ### Task 15: **PRODUCTION** deploy and end-to-end probe
 
-Runs only with Keith's go-ahead; each step names its effect.
+Runs only with Keith's go-ahead; each step names its effect. Completed 2026-09-29 (results below).
 
-- [ ] **Step 1: Create the feed token item** (Keith, in 1Password): item `podcast-feed-token` in vault Country Manor Lab, field `credential` = `openssl rand -hex 32` output. Also add the same item to the Homelab Runtime vault if the Convex deployment env is populated from there.
+- [x] **Step 1: Create the feed token item** (Keith, in 1Password): item `podcast-feed-token` in vault Country Manor Lab, field `credential` = `openssl rand -hex 32` output. Also add the same item to the Homelab Runtime vault if the Convex deployment env is populated from there.
 
-- [ ] **Step 2: Deploy Convex schema and functions** (affects production: adds four tables, one cron, seven HTTP-reachable tools, one public route that 404s without the token):
+- [x] **Step 2: Deploy Convex schema and functions** (affects production: adds four tables, one cron, seven HTTP-reachable tools, one public route that 404s without the token):
 
 ```bash
 vpx convex deploy
 ```
 
-- [ ] **Step 3: Set deployment env** (affects production): `PODCAST_FEED_TOKEN` and `PODCAST_PUBLIC_BASE_URL` in the self-hosted deployment's environment through the Convex dashboard or `vpx convex env set PODCAST_PUBLIC_BASE_URL https://listen.rproj.art`; the token is set by Keith from 1Password, never typed into this session.
+- [x] **Step 3: Set deployment env** (affects production): `PODCAST_FEED_TOKEN` and `PODCAST_PUBLIC_BASE_URL` in the self-hosted deployment's environment through the Convex dashboard or `vpx convex env set PODCAST_PUBLIC_BASE_URL https://listen.rproj.art`; the token is set by Keith from 1Password, never typed into this session.
 
-- [ ] **Step 4: Build and push the media image**: the repo's CI builds `ghcr.io/resonant-projects/frequency-music-media` on merge; until then build on ai-5090-02 directly: `ssh ai-5090-02 'cd /srv/frequency-music && git pull && docker build -f media/Dockerfile -t ghcr.io/resonant-projects/frequency-music-media:local .'` (create the checkout if absent) and set `MEDIA_IMAGE_TAG=local` in the compose env.
+- [x] **Step 4: Build and push the media image**: the repo's CI builds `ghcr.io/resonant-projects/frequency-music-media` on merge; until then build on ai-5090-02 directly: `ssh ai-5090-02 'cd /srv/frequency-music && git pull && docker build -f media/Dockerfile -t ghcr.io/resonant-projects/frequency-music-media:local .'` (create the checkout if absent) and set `MEDIA_IMAGE_TAG=local` in the compose env.
 
-- [ ] **Step 5: Start the service**: on ai-5090-02, `op-access run homelab -- ./deploy.sh` from the compose directory (Keith stages the `homelab` profile first; see the op-access walkthrough in the handoff message). Expected log line: `[media] media worker ai-5090-02 polling every 15000 ms for probe`.
+- [x] **Step 5: Start the service**: on ai-5090-02, `op-access run homelab -- ./deploy.sh` from the compose directory (Keith stages the `homelab` profile first; see the op-access walkthrough in the handoff message). Expected log line: `[media] media worker ai-5090-02 polling every 15000 ms for probe`.
 
-- [ ] **Step 6: Enqueue a probe** (affects production: one job row, two artifacts):
+- [x] **Step 6: Enqueue a probe** (affects production: one job row, two artifacts):
 
 ```bash
 vpx convex run mediaJobs:enqueue '{"input":{"kind":"probe","toneHz":440,"seconds":3,"rendererVersion":"0.1.0"}}'
@@ -3272,8 +3272,18 @@ vpx convex run mediaJobs:enqueue '{"input":{"kind":"probe","toneHz":440,"seconds
 
 Expected within 30 seconds: media logs show `claimed probe job` then `completed probe job`; `vpx convex run audioArtifacts:listByStatusOlderThan '{"status":"ready","olderThan":9999999999999}'` lists two ready artifacts with `loudnessLufs` within −16 ±0.5 and `truePeakDbtp` ≤ −1.
 
-- [ ] **Step 7: Feed smoke**: `curl -s -o /dev/null -w '%{http_code}\n' http://convex.rproj.art:3211/podcast/wrong/feed.xml` → `404`. With the real token supplied by Keith in his own shell: `200` and a valid empty feed (no episodes yet).
+- [x] **Step 7: Feed smoke**: `curl -s -o /dev/null -w '%{http_code}\n' http://convex.rproj.art:3211/podcast/wrong/feed.xml` → `404`. With the real token supplied by Keith in his own shell: `200` and a valid empty feed (no episodes yet).
 
-- [ ] **Step 8: NPM host and Range check** (Keith, in Nginx Proxy Manager): host `listen.rproj.art` → `http://172.16.10.24:3211`, forwarding only `/podcast/` and `/api/storage/`. Then `curl -sI -H 'Range: bytes=0-99' https://listen.rproj.art/api/storage/<probe delivery uuid>` and record whether the response is `206` with `content-range`. Write the result into the wave 1 plan's assumptions (spec §3.5 fallback if not `206`).
+- [x] **Step 8: NPM host and Range check** (Keith, in Nginx Proxy Manager): host `listen.rproj.art` → `http://172.16.10.24:3211`, forwarding only `/podcast/` and `/api/storage/`. Then `curl -sI -H 'Range: bytes=0-99' https://listen.rproj.art/api/storage/<probe delivery uuid>` and record whether the response is `206` with `content-range`. Write the result into the wave 1 plan's assumptions (spec §3.5 fallback if not `206`).
 
-- [ ] **Step 9: Commit nothing; report**: summarize the probe measurements and the Range result in the handoff.
+- [x] **Step 9: Commit nothing; report**: summarize the probe measurements and the Range result in the handoff.
+
+**Results (2026-09-29):**
+
+- Deploy: additive only (12 new indexes, no deletions); `_generated/api.d.ts` codegen delta committed afterwards. Env set: `PODCAST_PUBLIC_BASE_URL=https://listen.rproj.art`, `PODCAST_FEED_TOKEN` (64 hex, from 1Password, never typed). One bounded sweep (`scanLimit: 5`) before any upload: `blobsDeleted: 0`.
+- Transport correction: ai-5090-02 is on `192.168.30.0/24` with public DNS only; `convex.rproj.art` does not resolve there and `172.16.10.24:3211` times out. The backend's own `CONVEX_SITE_ORIGIN` is `https://convex-http.resonantprojects.art` (Cloudflare, then Nginx Proxy Manager), which the host reaches, and which is also the origin baked into every upload URL. The worker therefore runs with `CONVEX_SITE_URL=https://convex-http.resonantprojects.art` and no `MEDIA_ALLOW_INSECURE_CONVEX` opt-in (the TLS follow-up is closed).
+- Image: `ghcr.io/resonant-projects/frequency-music-media:sha-8e8d169de902f78ba5475b5838f9616ee642b1c4`, pulled anonymously (package is public) via `op-access run homelab-runtime -- ./deploy.sh` from `/srv/frequency-media` (`deploy.sh` resolves the secret unprivileged and re-execs under sudo because the deploying user is not in the docker group).
+- Probe job `nd7807p5sm2qy29a7mw7n3pcyx8fasb6`: claimed and completed on attempt 1 within 5 s of enqueue. Master (WAV mono 48 kHz): −16.0 LUFS, −12.3 dBTP. Delivery (MP3 128 kbps stereo, 3.024 s, 48 768 bytes): −16.5 LUFS, −15.8 dBTP. The delivery sits at the edge of the ±0.5 LU tolerance, the known 128 kbps encode shift on a pure tone.
+- Feed: `http://convex.rproj.art:3211/podcast/wrong/feed.xml` and `https://listen.rproj.art/podcast/wrong/feed.xml` return 404; the real token returns 200 with a well-formed empty channel (`Cache-Control: no-store`, `application/rss+xml`).
+- Files are served by the Convex API origin (port 3210, `storage.getUrl` returns `https://convex.resonantprojects.art/api/storage/<uuid>`), not by the site (port 3211, which 404s). The `listen.rproj.art` proxy host originally forwarded everything to 3211; it now has a `/api/storage/` location forwarding to `172.16.10.24:3210`, with the server-level guard `if ($uri !~ ^/(podcast|api/storage)/) { return 404; }` unchanged.
+- Range: `curl -sI -H 'Range: bytes=0-99' https://listen.rproj.art/api/storage/<uuid>` returns `206 Partial Content`, `content-range: bytes 0-99/48768`, `accept-ranges: bytes` through Cloudflare. Spec §3.5's no-Range fallback is not needed.

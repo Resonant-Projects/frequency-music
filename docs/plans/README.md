@@ -79,8 +79,8 @@ Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** un
 
 | # | Plan | Status |
 |---|------|--------|
-| W0 | [Wave 0 — substrate](../superpowers/plans/2026-09-28-listen-first-wave-0-substrate.md) (artifacts, media jobs, blind groups, media service, podcast feed) | ✅ Implemented on branch, production deploy pending (Task 15) |
-| W1 | [Wave 1 — voice and feed](../superpowers/plans/2026-09-28-listen-first-wave-1-voice-and-feed.md) | 📝 Planned — after wave 0 deploys |
+| W0 | [Wave 0 — substrate](../superpowers/plans/2026-09-28-listen-first-wave-0-substrate.md) (artifacts, media jobs, blind groups, media service, podcast feed) | ✅ Merged (#75) and deployed 2026-09-29; media worker live on ai-5090-02, probe and feed verified |
+| W1 | [Wave 1 — voice and feed](../superpowers/plans/2026-09-28-listen-first-wave-1-voice-and-feed.md) | 📝 Planned — unblocked |
 | W2–W3 | Docket and voice decisions; render ladder, listen page, tournament | Specced, not yet planned |
 
 ## 2. Operator/live acceptance items

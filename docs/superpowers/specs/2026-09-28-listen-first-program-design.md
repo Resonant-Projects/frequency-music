@@ -75,9 +75,13 @@ Infrastructure facts:
   and LangSmith. Nothing on the cluster has a GPU.
 - ai-5090-02 (RTX 5090, ~31 GB VRAM free, Docker) hosts local TTS and
   rendering. ComfyUI with ACE-Step 1.5 already runs there on 8188.
-- Convex is self-hosted; site URL `http://convex.rproj.art:3211`. File
-  storage is unused today. HTTP actions have a 20 MiB response limit, so
-  audio is never proxied through them.
+- Convex is self-hosted; site URL `http://convex.rproj.art:3211` on the lab
+  VLAN, `https://convex-http.resonantprojects.art` publicly (the backend's
+  `CONVEX_SITE_ORIGIN`, which upload URLs carry). ai-5090-02 has no route to
+  the lab VLAN and uses the public origin. Files are served by the API origin
+  (port 3210) with Range support. File storage is owned by `audioArtifacts`
+  since wave 0. HTTP actions have a 20 MiB response limit, so audio is never
+  proxied through them.
 - OpenClaw on moltbot (CT200 on prox9) has agent `freq` bound to its own
   Telegram bot, one Discord guild (`1512943651368734944`), no TTS and no MCP
   configured, and a Google provider entry.
