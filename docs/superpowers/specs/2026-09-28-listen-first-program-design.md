@@ -233,7 +233,7 @@ Wave 0 containers:
 | Container | Role |
 | --- | --- |
 | `media` | Poller: claims jobs, calls hosted TTS, runs loudness and encoding, uploads, completes. |
-| `tts-local` | Breeze TTS 2 behind an OpenAI-compatible `/v1/audio/speech`. Runs for the shootout; stays only if a local voice wins. |
+| `tts-local` | Breeze TTS 2's own server (`python -m breeze_infer.api`): multipart `POST /v1/audio/speech` streaming raw 24 kHz PCM, `GET /health`. Runs for the shootout; stays only if a local voice wins. |
 
 Loudness policy (one implementation in `media/src/loudness.ts`, used by
 every wave):

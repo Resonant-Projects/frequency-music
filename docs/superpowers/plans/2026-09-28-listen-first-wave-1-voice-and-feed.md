@@ -2401,3 +2401,34 @@ Each step runs with Keith's go-ahead.
 - [ ] **Step 7: Stop what lost**: if the winner is hosted, `docker compose stop tts-local`; if local, remove hosted keys from `deploy.sh`.
 
 - [ ] **Step 8: `vp run verify`** on the final branch; open the PR with the shootout results summarized (which voice, ratings table) and the Range-request finding from wave 0.
+
+---
+
+## Implementation notes (2026-09-29)
+
+Tasks 1–11a landed on `t3code/listen-first-wave-1` (base `1040e38`); Task 11 host work is done in homelab-infra `hosts/frequency-media/`; Task 12 (**PRODUCTION**) is pending Keith's hosted TTS keys and go-ahead. Controller rulings, by number (ledger: `.superpowers/sdd/2026-09-28-listen-first-wave-1-voice-and-feed/progress.md`; numbers not listed were not issued):
+
+- R1: the shootout episode artifact carries no `blindGroupId` (only takes are members); it pairs with its group through `refs.mediaJobId`, because the feed hides any row with a `blindGroupId`.
+- R1b: `listen.shootouts` also returns a nullable `episodeArtifactId`, resolved through feed episodes whose `refs.mediaJobId` matches the members'.
+- R2: every artifact array in a result passes the landed `ownedArtifacts(ctx, job, arr)` fence before `readyArtifacts`.
+- R3: `ARTIFACT_POLICY_BY_JOB_KIND` gains rows for narrate, shootout, and assembleEpisode, with a test that every job kind has one.
+- R6: `episodes.hasReadyEpisodeForBrief` is an internalQuery, not a mutation.
+- R8: handler tests build a `JobContext` with a real `AbortSignal`; handlers forward `ctx.signal` to every ffmpeg, measure, fetch, and upload.
+- R9: `uploadMasterAndDelivery` measures and checks policy before `generateAudioUploadUrl`, so a failed file creates no server state.
+- R10 (revised): `.toSorted()` is allowed in `convex/*.ts` and tests, avoided in `convex/shared/` (consumed by media and web).
+- R11: Task 11 files live in homelab-infra `hosts/frequency-media/`, run by the controller after Tasks 1–10.
+- R12: hosted TTS keys do not exist in 1Password yet; `deploy.sh` reads each with `|| true` so the shootout skips a missing voice.
+- R13: the placeholder cover PNG ships in `web/public/` only; the feed's `itunes:image` stays absent until Keith supplies artwork.
+- R17: every subagent ran on the session model.
+- R18: the feed lists only `role === "delivery"` episodes; effects publish deliveries only, masters keep the private access they were uploaded with.
+- R19: reconcile skips a brief with any narrate job in a non-failed status (queued, claimed, done, parked); `dedupeKey` cannot protect regenerated scripts.
+- R20: the narrate effect fills `narrationStorageUrl` with the narration master's URL (lossless), falling back to the delivery only when the master has no blob.
+- R21: wave 1 masters are 16-bit PCM mono 48 kHz because Cloudflare caps a proxied request body at 100 MB; FLAC is the follow-up if briefs exceed 14 minutes.
+- R22: `assembleEpisodeJobResultZ` carries the handler's lead-in-shifted `chapters`, which the effect stores on the delivery.
+- R23: `TtsProvider.synthesize(text, voice, outputPath, signal?)` forwards the job signal into the provider fetch.
+- R24: Tasks 9 and 10 ran concurrently on disjoint paths with explicit-path staging (one file rename was swept into a neighbouring commit as the cost).
+- R25: the plan's hand-written server adapter is dropped; `tts-local` runs Breeze's upstream API and the media provider speaks it (multipart form, raw PCM, 409 backoff); the catalog provider is `breeze`, configured by `BREEZE_TTS_BASE_URL` alone.
+- R26: the intro voice is the first configured catalog voice not in `input.voiceIds` (hosted preferred); when none exists a candidate announces and the intro drops the "not a candidate" claim.
+- R27: Breeze treats 503 (model loading) like 409 (busy backoff), and the first synthesis in a process polls `GET /health` every 10 s for up to 5 minutes; no compose `depends_on` on media, because `tts-local` is stopped deliberately when a hosted voice wins.
+- R28: `ANNOUNCER_VOICES` (`announcer-breeze`, `announcer-gemini`) are dedicated non-candidate announcer voices, chosen after a catalog bystander and before the R26 candidate fallback; the episode records `engine.params.announcerVoiceId`.
+- R29: `assembleEpisodeJobInputZ` gains optional `refs`; the narrate effect forwards the narration's refs so an episode carries its `weeklyBriefId`.
