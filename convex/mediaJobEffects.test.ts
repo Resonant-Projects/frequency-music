@@ -145,13 +145,22 @@ describe("media job effects", () => {
     );
     expect(queued).toHaveLength(1);
     expect(queued[0]?.kind).toBe("assembleEpisode");
+    // The assembler downloads the lossless master, not the MP3 delivery.
+    const masterUrl = await t.run((ctx) =>
+      ctx.storage.getUrl(masterRow!.storageId!),
+    );
+    const deliveryUrl = await t.run((ctx) =>
+      ctx.storage.getUrl(row!.storageId!),
+    );
+    expect(masterUrl).toMatch(/^https?:\/\//);
+    expect(masterUrl).not.toBe(deliveryUrl);
     expect(queued[0]?.input).toMatchObject({
       kind: "assembleEpisode",
       narrationArtifactId: delivery,
       title: "Weekly turn, week of 2026-09-21",
       chapters: [{ title: "Open", startSecs: 0 }],
       rendererVersion: "0.2.0",
-      narrationStorageUrl: expect.stringMatching(/^https?:\/\//),
+      narrationStorageUrl: masterUrl,
     });
   });
 

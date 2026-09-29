@@ -124,7 +124,7 @@ export async function applyMediaJobResult(
     case "narrate": {
       if (job.input.kind !== "narrate") throw inputKindMismatch(job, "narrate");
       const input = job.input;
-      const { delivery } = requireMasterDeliveryPair(
+      const { master, delivery } = requireMasterDeliveryPair(
         await ownedArtifacts(ctx, job, result.artifacts),
         result.kind,
       );
@@ -138,9 +138,12 @@ export async function applyMediaJobResult(
       if (input.assembleOnDone) {
         // Same mutation as the ready mark: a narration is never left ready
         // without its episode queued, and the episode job is never queued
-        // for a narration that failed to land.
-        const narrationStorageUrl = delivery.storageId
-          ? await ctx.storage.getUrl(delivery.storageId)
+        // for a narration that failed to land. The assembler works from the
+        // lossless master so the episode is not a re-encode of an MP3; the
+        // delivery is a fallback only when the master carries no blob.
+        const sourceStorageId = master.storageId ?? delivery.storageId;
+        const narrationStorageUrl = sourceStorageId
+          ? await ctx.storage.getUrl(sourceStorageId)
           : null;
         if (!narrationStorageUrl) {
           throw new ConvexError({
