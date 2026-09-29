@@ -22,6 +22,7 @@
 - Blind projection returns only `memberId`, `label`, `durationSecs`, `playbackUrl`; reveal happens in the same mutation as the last required rating; choosing the house voice is a separate explicit mutation.
 - Feed metadata: title "Frequency Music, private", author "Freq", `itunes:block yes`, only `access: "feed"` episodes; artwork `web/public/podcast-cover.png`.
 - Episode titles: `Weekly turn, week of <Monday date>`.
+- Wave 0 deploy findings (2026-09-29): Convex file URLs are served by the API origin (port 3210) with Range support; `https://listen.rproj.art/api/storage/<uuid>` returns `206` with `content-range` through Cloudflare, so §3.5's no-Range fallback is not needed. The `listen.rproj.art` proxy host forwards `/podcast/` to the site (3211) and `/api/storage/` to the API (3210) and 404s every other path. Cloudflare caps one proxied request body at 100 MB, which bounds a single episode upload from the media host. The worker on ai-5090-02 reaches Convex only through `https://convex-http.resonantprojects.art` (no route to the lab VLAN).
 
 ## Review Focus
 
