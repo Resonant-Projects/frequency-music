@@ -190,12 +190,16 @@ export async function applyMediaJobResult(
           updatedAt: now,
         });
       }
-      const [episodeId] = await ownAndReady(ctx, job, [result.episode]);
+      const [episodeRow] = await ownedArtifacts(ctx, job, [result.episode]);
+      const [episodeId] = await readyArtifacts(ctx, [result.episode]);
       // The episode is the feed-published concatenation of the takes. It is
       // deliberately not a blind member and carries no blindGroupId (the feed
       // hides any row that does); it pairs with its group through the shared
-      // refs.mediaJobId of this job.
-      await ctx.db.patch(episodeId!, { access: "feed", updatedAt: now });
+      // refs.mediaJobId of this job. Only a delivery is published; a master
+      // keeps the access it was uploaded with.
+      if (episodeRow!.role === "delivery") {
+        await ctx.db.patch(episodeId!, { access: "feed", updatedAt: now });
+      }
       const members = result.memberOrder.map((voiceId, index) => {
         const artifactId = byVoice.get(voiceId);
         if (!artifactId) {
@@ -219,9 +223,14 @@ export async function applyMediaJobResult(
       if (job.input.kind !== "assembleEpisode")
         throw inputKindMismatch(job, "assembleEpisode");
       const input = job.input;
-      const ids = await ownAndReady(ctx, job, result.artifacts);
-      for (const id of ids) {
-        await ctx.db.patch(id, {
+      const rows = await ownedArtifacts(ctx, job, result.artifacts);
+      const ids = await readyArtifacts(ctx, result.artifacts);
+      // Only the delivery becomes the feed episode; the WAV master is
+      // provenance and keeps the access, title, and chapters it was
+      // uploaded with.
+      for (const row of rows) {
+        if (row.role !== "delivery") continue;
+        await ctx.db.patch(row._id, {
           access: "feed",
           chapters: input.chapters,
           title: input.title,

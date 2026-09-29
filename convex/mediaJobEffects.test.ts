@@ -438,12 +438,18 @@ describe("media job effects", () => {
         artifacts: [measured(master), measured(delivery)],
       },
     });
-    for (const id of [master, delivery]) {
-      const row = await t.run((ctx) => ctx.db.get(id));
-      expect(row?.status).toBe("ready");
-      expect(row?.access).toBe("feed");
-      expect(row?.title).toBe("Weekly turn, week of 2026-09-21");
-      expect(row?.chapters).toEqual([{ title: "Open", startSecs: 1 }]);
-    }
+    const deliveryRow = await t.run((ctx) => ctx.db.get(delivery));
+    expect(deliveryRow?.status).toBe("ready");
+    expect(deliveryRow?.access).toBe("feed");
+    expect(deliveryRow?.title).toBe("Weekly turn, week of 2026-09-21");
+    expect(deliveryRow?.chapters).toEqual([{ title: "Open", startSecs: 1 }]);
+    // The WAV master is provenance: ready, but never published or retitled.
+    const masterRow = await t.run((ctx) => ctx.db.get(master));
+    expect(masterRow?.status).toBe("ready");
+    expect(masterRow?.access).toBe("private");
+    expect(masterRow?.title).toBe("draft title-master");
+    expect(masterRow?.chapters).toBeUndefined();
+    const feed = await t.query(internal.podcast.listFeedEpisodes, {});
+    expect(feed.map((e) => e.id)).toEqual([delivery]);
   });
 });

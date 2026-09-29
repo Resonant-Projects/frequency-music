@@ -31,7 +31,8 @@ export const ARTIFACT_POLICY_BY_JOB_KIND: Record<
     artifactKinds: ["shootoutTake", "episode"],
     access: ["private", "feed"],
   },
-  assembleEpisode: { artifactKinds: ["episode"], access: ["feed"] },
+  // The delivery is published; its WAV master is uploaded private.
+  assembleEpisode: { artifactKinds: ["episode"], access: ["feed", "private"] },
 };
 export const mediaJobStatusZ = z.enum([
   "queued",

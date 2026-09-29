@@ -114,8 +114,11 @@ export const listFeedEpisodes = internalQuery({
     const episodes: FeedEpisode[] = [];
     for (const row of rows) {
       // Defense in depth: a blind-group member is never served in the feed,
-      // whatever its access value says.
-      if (!row.storageId || row.blindGroupId) continue;
+      // whatever its access value says, and neither is a WAV master (only the
+      // delivery encode is an episode).
+      if (!row.storageId || row.blindGroupId || row.role !== "delivery") {
+        continue;
+      }
       const storageUrl = await ctx.storage.getUrl(row.storageId);
       const meta = await ctx.db.system.get(row.storageId);
       if (!storageUrl || !meta) continue;
