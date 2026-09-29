@@ -1117,22 +1117,24 @@ export const narrateBrief = internalAction({
 
 export const reconcile = internalAction({
   args: { daysBack: v.optional(v.number()) },
-  returns: v.object({ enqueued: v.number(), skipped: v.number() }),
+  returns: v.object({ enqueued: v.number(), skipped: v.number(), failed: v.number() }),
   handler: async (ctx, args) => {
     const voiceId = await ctx.runQuery(internal.settings.get, { key: HOUSE_VOICE_KEY });
-    if (!voiceId) return { enqueued: 0, skipped: 0 };
+    if (!voiceId) return { enqueued: 0, skipped: 0, failed: 0 };
     const since = Date.now() - (args.daysBack ?? 14) * 24 * 60 * 60 * 1000;
     const briefs = await ctx.runQuery(internal.weeklyBriefs.listSinceInternal, { since });
     let enqueued = 0;
     let skipped = 0;
+    let failed = 0;
     for (const brief of briefs) {
       const has = await ctx.runQuery(internal.episodes.hasReadyEpisodeForBrief, { briefId: brief._id });
       const parked = await ctx.runQuery(internal.mediaJobs.isParkedForBrief, { briefId: brief._id });
       if (has || parked) { skipped++; continue; }
+      // Each brief is isolated: a narration that throws is logged and counted as failed.
       const { created } = await ctx.runAction(internal.episodes.narrateBrief, { briefId: brief._id });
       if (created) enqueued++; else skipped++;
     }
-    return { enqueued, skipped };
+    return { enqueued, skipped, failed };
   },
 });
 
@@ -1143,7 +1145,8 @@ export const enqueueShootout = internalAction({
     const passage = await ctx.runQuery(internal.narrationPrompt.calibrationPassage, {});
     return await ctx.runMutation(internal.mediaJobs.enqueue, {
       input: { kind: "shootout", passage: passage.paragraphs, voiceIds: [...VOICE_IDS], title: "Voice shootout", rendererVersion: RENDERER_VERSION_FOR_JOBS },
-      priority: -1,
+      // claimNext takes the lowest priority first; 1 sits behind narrate (0).
+      priority: SHOOTOUT_PRIORITY,
     });
   },
 });
@@ -1510,7 +1513,7 @@ export function isConfigured(voice: VoiceEntry): boolean {
 }
 ```
 
-Env additions to `media/.env.schema` (all `@sensitive @optional`, resolved from Country Manor Lab / Homelab Runtime items Keith creates): `GEMINI_API_KEY`, `INWORLD_API_KEY`, `ELEVENLABS_API_KEY`, `BREEZE_TTS_API_KEY`; `@public @optional @type=url BREEZE_TTS_BASE_URL=http://tts-local:8881`. Bump `RENDERER_VERSION` in `media/src/config.ts` to `"0.2.0"`.
+Env additions to `media/.env.schema` (all `@sensitive @optional`, resolved from Country Manor Lab / Homelab Runtime items Keith creates): `GEMINI_API_KEY`, `INWORLD_API_KEY`, `ELEVENLABS_API_KEY`, `BREEZE_TTS_API_KEY`; `@public @optional @type=url BREEZE_TTS_BASE_URL=` with no default (the compose file sets it; clearing it retires the local voice, see the PR #77 notes below). Bump `RENDERER_VERSION` in `media/src/config.ts` to `"0.2.0"`.
 
 Provider request shapes above follow each provider's documented API as of 2026-09-28. Task 12 step 1 sends one real request per provider with a ten-word sentence and adjusts field names in the single provider file if a provider changed; tests keep mocking the shape the code sends.
 
@@ -2433,3 +2436,14 @@ Tasks 1–11a landed on `t3code/listen-first-wave-1` (base `1040e38`); Task 11 h
 - R28: `ANNOUNCER_VOICES` (`announcer-breeze`, `announcer-gemini`) are dedicated non-candidate announcer voices, chosen after a catalog bystander and before the R26 candidate fallback; the episode records `engine.params.announcerVoiceId`.
 - R29: `assembleEpisodeJobInputZ` gains optional `refs`; the narrate effect forwards the narration's refs so an episode carries its `weeklyBriefId`.
 - R30: the Breeze health gate runs before every synthesis rather than once per process, so a `tts-local` restarted cold while the worker runs is waited for.
+
+PR #77 review fixes (2026-09-29), behaviour changes against the plan text above:
+
+- `enqueueShootout` uses `SHOOTOUT_PRIORITY` (1), not −1: `claimNext` takes the lowest priority first, so −1 was claimed ahead of episode jobs.
+- `reconcile` returns `{ enqueued, skipped, failed }`; a brief whose narration throws is logged and counted, and the remaining briefs still run.
+- `hasReadyEpisodeForBrief` and `narrateJobStateForBrief` range their indexes from the brief's `_creationTime` (narrate jobs at the exported `NARRATE_PRIORITY`, passed explicitly by `narrateBrief`) instead of a fixed 200-row window.
+- `listen.shootouts` filters `purpose` before its limit and pairs the episode exactly through the first member's media job and its `resultArtifactIds`; `podcast.listFeedEpisodes` filters `role === "delivery"` before its limit.
+- The shootout effect validates every take and the episode as a master/delivery pair (delivery being the row the result names) before anything is marked ready.
+- `BREEZE_TTS_BASE_URL` has no schema default; the compose file sets it, and clearing it retires the local voice so a shootout skips Breeze instead of waiting 5 minutes for a stopped `tts-local`.
+- `chunkForLimit` hard-splits a single token longer than the provider cap (a bare URL).
+- `/listen` uses `createQueryWithStatus` so failed shootout and house-voice queries render as errors, not as empty states.
