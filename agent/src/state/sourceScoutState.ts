@@ -54,6 +54,8 @@ export type ScoutWriteResult = {
   targetGap: string;
   rationale: string;
   created: boolean;
+  // A duplicate scout URL-only Source that gained captured text this run.
+  enriched?: boolean;
 };
 
 function replaceArray<T>(_left: T[], right: T[]): T[] {

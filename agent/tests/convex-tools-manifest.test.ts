@@ -65,6 +65,20 @@ describe("convexTools derive from the manifest", () => {
     });
   });
 
+  test("keeps crawler capture arguments out of the model-visible schema", () => {
+    const definition = AGENT_TOOL_MANIFEST.find(
+      (candidate) => candidate.name === "ingestScoutedSource",
+    );
+    if (!definition) throw new Error("ingestScoutedSource is missing");
+    expect(Object.keys(definition.args.shape)).toEqual(
+      expect.arrayContaining(["rawText", "contentProvider"]),
+    );
+    const modelKeys = Object.keys(agentModelSchema(definition).shape);
+    expect(modelKeys).not.toContain("rawText");
+    expect(modelKeys).not.toContain("contentProvider");
+    expect(modelKeys).toContain("url");
+  });
+
   test("keeps source-scout write provenance out of model-controlled args", () => {
     for (const name of ["ingestScoutedSource", "proposeFeed"] as const) {
       const definition = AGENT_TOOL_MANIFEST.find(

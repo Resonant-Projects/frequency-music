@@ -464,8 +464,14 @@ export const createScoutedSource = internalMutation({
         `Scouted source text must be ${SCOUTED_TEXT_MIN_CHARS}-${SCOUTED_TEXT_MAX_CHARS} characters for Extraction`,
       );
     }
-    if (!(await ctx.db.get("agentRuns", args.agentRunId))) {
+    const agentRun = await ctx.db.get("agentRuns", args.agentRunId);
+    if (!agentRun) {
       throw new Error("Agent run not found");
+    }
+    // Crawler text is captured only by the source-scout ingest node; no other
+    // run (such as a LangChain agent) may assert Crawl4AI provenance.
+    if (args.rawText && agentRun.graphName !== "source-scout") {
+      throw new Error("Scouted source text requires a source-scout run");
     }
     const dedupeKey = generateDedupeKey("url", {
       canonicalUrl: args.url,
