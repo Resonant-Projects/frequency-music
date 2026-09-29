@@ -1,7 +1,11 @@
 import { writeFile } from "node:fs/promises";
+import { z } from "zod";
 import { wrapPcmAsWav } from "./elevenlabs";
 import type { TtsProvider } from "./types";
 import { fetchAudioWithRetry, requireEnv } from "./types";
+
+// Inworld returns JSON with base64 audioContent for LINEAR16.
+const inworldResponseZ = z.object({ audioContent: z.string() });
 
 export const inworld: TtsProvider = {
   id: "inworld",
@@ -24,10 +28,9 @@ export const inworld: TtsProvider = {
         }),
       },
     );
-    // Inworld returns JSON with base64 audioContent for LINEAR16.
-    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as {
-      audioContent: string;
-    };
+    const parsed = inworldResponseZ.parse(
+      JSON.parse(new TextDecoder().decode(bytes)),
+    );
     const pcm = new Uint8Array(Buffer.from(parsed.audioContent, "base64"));
     await writeFile(outputPath, wrapPcmAsWav(pcm, 24000, 1));
   },

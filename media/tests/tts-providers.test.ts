@@ -12,6 +12,14 @@ import {
 import { voiceById } from "../../convex/shared/voices";
 import { isConfigured, providerFor } from "../src/tts";
 
+// The shape every provider hands to fetch; typing it here keeps the
+// assertions cast-free.
+type CapturedInit = {
+  headers: Record<string, string>;
+  body: string;
+  redirect?: RequestRedirect;
+};
+
 const dir = mkdtempSync(join(tmpdir(), "tts-"));
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -34,17 +42,17 @@ describe("tts providers", () => {
 
   test("elevenlabs provider posts text with the model id and writes the audio bytes", async () => {
     vi.stubEnv("ELEVENLABS_API_KEY", "el-key");
-    const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+    const fetchMock = vi.fn((url: string, init: CapturedInit) => {
       expect(url).toContain("/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb");
-      expect((init.headers as Record<string, string>)["xi-api-key"]).toBe(
-        "el-key",
-      );
+      expect(init.headers["xi-api-key"]).toBe("el-key");
       expect(init.redirect).toBe("error");
-      expect(JSON.parse(String(init.body))).toMatchObject({
+      expect(JSON.parse(init.body)).toMatchObject({
         text: "Hello there.",
         model_id: "eleven_v3",
       });
-      return new Response(new Uint8Array([82, 73, 70, 70]), { status: 200 });
+      return Promise.resolve(
+        new Response(new Uint8Array([82, 73, 70, 70]), { status: 200 }),
+      );
     });
     vi.stubGlobal("fetch", fetchMock);
     const out = join(dir, "el.wav");
@@ -58,8 +66,8 @@ describe("tts providers", () => {
 
   test("provider failures retry twice then throw with status only", async () => {
     vi.stubEnv("INWORLD_API_KEY", "k");
-    const fetchMock = vi.fn(
-      async () => new Response("secret body k", { status: 500 }),
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response("secret body k", { status: 500 })),
     );
     vi.stubGlobal("fetch", fetchMock);
     await expect(
@@ -81,9 +89,9 @@ describe("tts providers", () => {
 
   test("network errors retry the same way and surface without the url or headers", async () => {
     vi.stubEnv("GEMINI_API_KEY", "gem-key");
-    const fetchMock = vi.fn(async () => {
-      throw new TypeError("fetch failed");
-    });
+    const fetchMock = vi.fn(() =>
+      Promise.reject(new TypeError("fetch failed")),
+    );
     vi.stubGlobal("fetch", fetchMock);
     const attempt = providerFor(voiceById("gemini-flash-tts")).synthesize(
       "x",
