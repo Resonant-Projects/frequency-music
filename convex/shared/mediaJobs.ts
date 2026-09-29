@@ -2,12 +2,18 @@
 // snapshots; results are validated by kind before Convex applies effects.
 import { zid, zodToConvex } from "convex-helpers/server/zod4";
 import { z } from "zod";
+import { audioChapterZ, audioRefsZ } from "./audioArtifacts";
 import { fnv1a64Hex, stableStringify } from "./stableHash";
 
 export const LEASE_MS = 10 * 60 * 1000;
 export const MAX_ATTEMPTS = 3;
 
-export const MEDIA_JOB_KINDS = ["probe"] as const; // wave 1 adds narrate, shootout, assembleEpisode
+export const MEDIA_JOB_KINDS = [
+  "probe",
+  "narrate",
+  "shootout",
+  "assembleEpisode",
+] as const;
 export type MediaJobKind = (typeof MEDIA_JOB_KINDS)[number];
 export const mediaJobKindZ = z.enum(MEDIA_JOB_KINDS);
 
@@ -19,6 +25,13 @@ export const ARTIFACT_POLICY_BY_JOB_KIND: Record<
   { artifactKinds: readonly string[]; access: readonly string[] }
 > = {
   probe: { artifactKinds: ["probe"], access: ["private"] },
+  narrate: { artifactKinds: ["narration"], access: ["feed", "private"] },
+  // Takes are private blind members; the episode is the feed-published cut.
+  shootout: {
+    artifactKinds: ["shootoutTake", "episode"],
+    access: ["private", "feed"],
+  },
+  assembleEpisode: { artifactKinds: ["episode"], access: ["feed"] },
 };
 export const mediaJobStatusZ = z.enum([
   "queued",
@@ -35,7 +48,57 @@ export const probeJobInputZ = z.object({
   rendererVersion: z.string().min(1),
 });
 
-export const mediaJobInputZ = z.discriminatedUnion("kind", [probeJobInputZ]);
+export const scriptChapterZ = z.object({
+  title: z.string().min(1),
+  startParagraph: z.number().int().min(0),
+});
+export const narrationScriptZ = z.object({
+  paragraphs: z.array(z.string().min(1)).min(1),
+  chapters: z.array(scriptChapterZ),
+});
+export type NarrationScript = z.infer<typeof narrationScriptZ>;
+
+export const narrateJobInputZ = z.object({
+  kind: z.literal("narrate"),
+  script: narrationScriptZ,
+  voiceId: z.string().min(1),
+  promptVersion: z.string().min(1),
+  target: z.literal("spoken"),
+  title: z.string().min(1),
+  access: z.enum(["feed", "private"]),
+  refs: audioRefsZ,
+  // When set, the narrate effect enqueues an assembleEpisode job for the
+  // delivery in the same mutation that marks it ready.
+  assembleOnDone: z.boolean(),
+  episodeTitle: z.string().min(1).optional(),
+  rendererVersion: z.string().min(1),
+});
+
+export const shootoutJobInputZ = z.object({
+  kind: z.literal("shootout"),
+  passage: z.array(z.string().min(1)).min(1),
+  voiceIds: z.array(z.string().min(1)).min(1),
+  title: z.string().min(1),
+  rendererVersion: z.string().min(1),
+});
+
+export const assembleEpisodeJobInputZ = z.object({
+  kind: z.literal("assembleEpisode"),
+  narrationArtifactId: zid("audioArtifacts"),
+  // Filled by the narrate effect from ctx.storage.getUrl: playback URLs are
+  // Clerk-gated, so the worker downloads the narration through this instead.
+  narrationStorageUrl: z.string().url(),
+  title: z.string().min(1),
+  chapters: z.array(audioChapterZ),
+  rendererVersion: z.string().min(1),
+});
+
+export const mediaJobInputZ = z.discriminatedUnion("kind", [
+  probeJobInputZ,
+  narrateJobInputZ,
+  shootoutJobInputZ,
+  assembleEpisodeJobInputZ,
+]);
 export type MediaJobInput = z.infer<typeof mediaJobInputZ>;
 
 export const artifactResultZ = z.object({
@@ -53,7 +116,42 @@ export const probeJobResultZ = z.object({
   artifacts: z.array(artifactResultZ).length(2),
 });
 
-export const mediaJobResultZ = z.discriminatedUnion("kind", [probeJobResultZ]);
+export const narrateJobResultZ = z.object({
+  kind: z.literal("narrate"),
+  // The normalized master and its delivery; mediaJobEffects checks the roles.
+  artifacts: z.array(artifactResultZ).min(1),
+  chapters: z.array(audioChapterZ),
+});
+
+export const shootoutTakeResultZ = z.object({
+  voiceId: z.string(),
+  // artifact is the delivery (the blind member); master is its normalized WAV.
+  artifact: artifactResultZ,
+  master: artifactResultZ,
+  label: z.string(),
+});
+
+export const shootoutJobResultZ = z.object({
+  kind: z.literal("shootout"),
+  takes: z.array(shootoutTakeResultZ).min(1),
+  skippedVoiceIds: z.array(z.string()),
+  episode: artifactResultZ,
+  episodeMaster: artifactResultZ,
+  // Voice ids in blind presentation order; every entry must name a take.
+  memberOrder: z.array(z.string()).min(1),
+});
+
+export const assembleEpisodeJobResultZ = z.object({
+  kind: z.literal("assembleEpisode"),
+  artifacts: z.array(artifactResultZ).min(1),
+});
+
+export const mediaJobResultZ = z.discriminatedUnion("kind", [
+  probeJobResultZ,
+  narrateJobResultZ,
+  shootoutJobResultZ,
+  assembleEpisodeJobResultZ,
+]);
 export type MediaJobResult = z.infer<typeof mediaJobResultZ>;
 
 export function mediaJobDedupeKey(input: MediaJobInput): string {

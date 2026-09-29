@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
+  ARTIFACT_POLICY_BY_JOB_KIND,
   LEASE_MS,
   MAX_ATTEMPTS,
+  MEDIA_JOB_KINDS,
   mediaJobDedupeKey,
   mediaJobInputZ,
   mediaJobResultZ,
@@ -69,5 +71,60 @@ describe("media job contracts", () => {
   test("lease and attempt constants match the spec", () => {
     expect(LEASE_MS).toBe(10 * 60 * 1000);
     expect(MAX_ATTEMPTS).toBe(3);
+  });
+
+  test("narrate, shootout, and assembleEpisode inputs validate", () => {
+    expect(
+      mediaJobInputZ.safeParse({
+        kind: "narrate",
+        script: {
+          paragraphs: ["Hello.", "World."],
+          chapters: [{ title: "Open", startParagraph: 0 }],
+        },
+        voiceId: "inworld-max",
+        promptVersion: "narration.v1",
+        target: "spoken",
+        title: "Weekly turn, week of 2026-09-21",
+        access: "feed",
+        refs: {},
+        assembleOnDone: true,
+        episodeTitle: "Weekly turn, week of 2026-09-21",
+        rendererVersion: "0.2.0",
+      }).success,
+    ).toBe(true);
+    expect(
+      mediaJobInputZ.safeParse({
+        kind: "shootout",
+        passage: ["a"],
+        voiceIds: [],
+        title: "t",
+        rendererVersion: "x",
+      }).success,
+    ).toBe(false);
+    expect(
+      mediaJobInputZ.safeParse({
+        kind: "assembleEpisode",
+        narrationArtifactId: "k1",
+        narrationStorageUrl: "http://convex.test/api/storage/x",
+        title: "t",
+        chapters: [],
+        rendererVersion: "x",
+      }).success,
+    ).toBe(true);
+  });
+
+  test("every job kind has an artifact policy with at least one kind and access", () => {
+    for (const kind of MEDIA_JOB_KINDS) {
+      const policy = ARTIFACT_POLICY_BY_JOB_KIND[kind];
+      expect(policy, kind).toBeDefined();
+      expect(policy.artifactKinds.length, kind).toBeGreaterThan(0);
+      expect(policy.access.length, kind).toBeGreaterThan(0);
+    }
+    expect(MEDIA_JOB_KINDS).toEqual([
+      "probe",
+      "narrate",
+      "shootout",
+      "assembleEpisode",
+    ]);
   });
 });

@@ -66,7 +66,7 @@ describe("probe job", () => {
       rendererVersion: "0.1.0",
       signal: new AbortController().signal,
     });
-    expect(result.kind).toBe("probe");
+    if (result.kind !== "probe") throw new Error(`unexpected ${result.kind}`);
     expect(uploads).toEqual(["masterNormalized", "delivery"]);
     expect(result.artifacts).toHaveLength(2);
     for (const artifact of result.artifacts) {
