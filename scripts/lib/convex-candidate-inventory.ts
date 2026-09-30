@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { manifestFromPushRequest } from "./convex-provenance";
+import {
+  AUDITED_CONVEX_VERSION,
+  manifestFromPushRequest,
+} from "./convex-provenance";
 
 const name = z.string().min(1).max(1024);
 const bundle = z.object({
@@ -16,7 +19,7 @@ const component = z.object({
   schema: bundle.nullable(),
   functions: z.array(bundle).max(10_000),
   dependencies,
-  udfServerVersion: z.literal("1.34.1"),
+  udfServerVersion: z.literal(AUDITED_CONVEX_VERSION),
 });
 
 function unique<T>(items: T[], key: (item: T) => string) {

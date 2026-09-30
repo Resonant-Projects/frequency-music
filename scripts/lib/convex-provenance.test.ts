@@ -3,6 +3,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
+  AUDITED_CONVEX_VERSION,
   compareDeployedModules,
   deployedModuleDelta,
   manifestFromPushRequest,
@@ -124,7 +125,7 @@ const request = {
   adminKey: "frequency-offline-inert",
   dryRun: true,
   appDefinition: {
-    udfServerVersion: "1.34.1",
+    udfServerVersion: "1.46.0",
     unchangedModuleHashes: [],
     definition: null,
     schema: null,
@@ -281,6 +282,45 @@ describe("Convex artifact evidence", () => {
     ).toThrow("does not match");
   });
 
+  test("retained release manifests from an earlier audited CLI still verify", () => {
+    const retained = JSON.parse(
+      readFileSync(
+        "docs/evidence/frequency-20260914-release/convex-root-modules.json",
+        "utf8",
+      ),
+    );
+    expect(retained.convexVersion).toBe("1.34.1");
+    expect(
+      compareDeployedModules(retained, { moduleHashes: retained.modules }),
+    ).toEqual({
+      rootModuleArtifactMatches: true,
+      moduleCount: retained.modules.length,
+    });
+    expect(
+      deployedModuleDelta(retained, { moduleHashes: retained.modules }),
+    ).toMatchObject({ added: [], removed: [], changed: [] });
+  });
+
+  test("rejects manifests from an unaudited CLI and stamps new ones with the audited CLI", () => {
+    const modules = [
+      { path: "a.js", environment: "isolate", hash: "a".repeat(64) },
+    ];
+    expect(() =>
+      compareDeployedModules(
+        {
+          format: "frequency-convex-root-modules-v1",
+          convexVersion: "1.40.0",
+          scope: "root-modules-only",
+          modules,
+        },
+        { moduleHashes: modules },
+      ),
+    ).toThrow();
+    expect(manifestFromPushRequest(request).convexVersion).toBe(
+      AUDITED_CONVEX_VERSION,
+    );
+  });
+
   test("requires complete pinned inert dry-run bundles", () => {
     for (const change of [
       { adminKey: "unexpected" },
@@ -348,7 +388,7 @@ describe("Convex artifact evidence", () => {
       method: "POST",
       redirect: "error",
       headers: { Authorization: "Convex inert" },
-      body: JSON.stringify({ version: "1.34.1", adminKey: "inert" }),
+      body: JSON.stringify({ version: "1.46.0", adminKey: "inert" }),
     });
   });
 

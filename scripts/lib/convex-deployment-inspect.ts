@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { AUDITED_CONVEX_VERSION } from "./convex-provenance";
 import { validateOpsOrigin } from "./frequency-queue-evidence";
 
 const label = z.string().max(1024);
@@ -154,7 +155,7 @@ export async function inspectDeployment(
       headers: {
         Authorization: `Convex ${adminKey}`,
         "Content-Type": "application/json",
-        "Convex-Client": "npm-1.34.1",
+        "Convex-Client": `npm-${AUDITED_CONVEX_VERSION}`,
       },
       body: JSON.stringify({
         path,

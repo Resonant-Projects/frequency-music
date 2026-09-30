@@ -179,7 +179,7 @@ window, not a claimed exact wall-clock conversion of Convex's internal timestamp
 
 ### Verify the deployed code artifact
 
-The existing privileged Convex 1.34.1 CLI interface `POST /api/get_config_hashes`
+The existing privileged Convex CLI interface `POST /api/get_config_hashes`
 returns actual deployed root module hashes. The verification script reads this
 interface without deploying or executing any job. The full config response is
 discarded; only validated module identities are compared in memory.
@@ -188,7 +188,7 @@ The `Convex source artifact provenance` workflow
 (`.github/workflows/convex-provenance.yml`) produces an attested
 `convex-root-modules-<source-sha>` artifact containing `convex-root-modules.json`.
 Publication is manual, from `main`; it needs no backend credentials. Its offline
-builder uses the pinned installed Convex 1.34.1 bundle pipeline, inert explicit
+builder uses the pinned installed Convex 1.46.0 bundle pipeline, inert explicit
 credentials, and a network-denying preload. It hashes the exact generated module
 source plus source map using Convex's own comparison algorithm. **Do not run a
 plain `convex deploy --dry-run` to reproduce this:** that command alone contacts

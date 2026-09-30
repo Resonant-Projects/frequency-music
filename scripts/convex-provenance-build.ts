@@ -3,7 +3,10 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { candidateInventory } from "./lib/convex-candidate-inventory";
-import { manifestFromPushRequest } from "./lib/convex-provenance";
+import {
+  AUDITED_CONVEX_VERSION,
+  manifestFromPushRequest,
+} from "./lib/convex-provenance";
 
 // Deliberately no Varlock/.env import: this build has no runtime credentials.
 const [output, inventoryOutput, ...extra] = process.argv.slice(2);
@@ -15,9 +18,9 @@ if (!output || extra.length) {
 const installed = JSON.parse(
   readFileSync("node_modules/convex/package.json", "utf8"),
 );
-if (installed.version !== "1.34.1") {
+if (installed.version !== AUDITED_CONVEX_VERSION) {
   throw new Error(
-    "Offline artifact preparation requires audited Convex CLI 1.34.1",
+    `Offline artifact preparation requires audited Convex CLI ${AUDITED_CONVEX_VERSION}`,
   );
 }
 const temporary = mkdtempSync(join(tmpdir(), "frequency-convex-provenance-"));

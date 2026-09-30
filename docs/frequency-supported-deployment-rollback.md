@@ -33,8 +33,10 @@ alone does not prove successful query execution or function absence.
 
 ## CLI contract and side effects
 
-The supported deployment command is the installed Convex CLI, pinned to 1.34.1
-by the reviewed dependency lock. Invoke its installed JavaScript entrypoint
+The supported deployment command is the installed Convex CLI, pinned to 1.46.0
+by the reviewed dependency lock (`AUDITED_CONVEX_VERSION` in
+`scripts/lib/convex-provenance.ts`). It matches the in-tree `convex` package of
+the deployed backend release, `precompiled-2026-09-28-5c7cb5b`. Invoke its installed JavaScript entrypoint
 with Node; do not use a global CLI or download a floating version. This is the
 same CLI the offline provenance builder audits.
 
@@ -91,7 +93,7 @@ Run in the clean, immutable approved release checkout with dependencies
 installed from its lock. First perform local assertions, which require no key:
 
 ```sh
-node -e 'const fs=require("node:fs"); if(JSON.parse(fs.readFileSync("node_modules/convex/package.json")).version!=="1.34.1") throw Error("CLI version mismatch"); for(const p of [".env", ".env.local"]) if(fs.existsSync(p)) throw Error("Unexpected environment file");'
+node -e 'const fs=require("node:fs"); if(JSON.parse(fs.readFileSync("node_modules/convex/package.json")).version!=="1.46.0") throw Error("CLI version mismatch"); for(const p of [".env", ".env.local"]) if(fs.existsSync(p)) throw Error("Unexpected environment file");'
 ```
 
 The Mac operator's existing credential broker must launch the following command
