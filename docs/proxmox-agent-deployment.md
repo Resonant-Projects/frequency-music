@@ -100,7 +100,8 @@ Create `agent/.env` on the host (NOT committed) with:
 CONVEX_SITE_URL=<convex http actions url>
 AGENT_TOOL_SECRET=<agent tool secret>
 OPENROUTER_API_KEY=<openrouter key>
-FIRECRAWL_API_KEY=<firecrawl key>
+# Self-hosted Firecrawl (no key); leave empty and set FIRECRAWL_API_KEY for Cloud
+FIRECRAWL_API_URL=http://172.16.10.38:3002
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=<langsmith key>          # op item s37crgkfad35vq6wyoymg3szja
 CODEX_ENABLED=true
