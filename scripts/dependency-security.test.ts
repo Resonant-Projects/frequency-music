@@ -12,10 +12,9 @@ function readJson(path: string) {
   };
 }
 
-function resolvedWsVersions(lockfile: string): string[] {
-  return [...lockfile.matchAll(/\["ws@(\d+\.\d+\.\d+)"/g)].map(
-    (match) => match[1] as string,
-  );
+function resolvedVersions(lockfile: string, name: string): string[] {
+  const pattern = new RegExp(`\\["${name}@(\\d+\\.\\d+\\.\\d+)"`, "g");
+  return [...lockfile.matchAll(pattern)].map((match) => match[1] as string);
 }
 
 function atLeast(version: string, floor: string): boolean {
@@ -27,10 +26,12 @@ function atLeast(version: string, floor: string): boolean {
   return true;
 }
 
+/** Patched lines: 7.5.11+ on 7.x, 8.21.0+ on 8.x, and any later major. */
 function isAffectedWs(version: string): boolean {
-  const [major = 0, minor = 0, patch = 0] = version.split(".").map(Number);
-  if (major === 7) return minor < 5 || (minor === 5 && patch < 11);
-  if (major === 8) return minor < 21;
+  const [major = 0] = version.split(".").map(Number);
+  if (major < 7) return true;
+  if (major === 7) return !atLeast(version, "7.5.11");
+  if (major === 8) return !atLeast(version, "8.21.0");
   return false;
 }
 
@@ -50,7 +51,7 @@ describe("Convex dependency security floor", () => {
   }) => {
     const manifest = readJson(join(directory, "package.json"));
     const lockfile = readFileSync(join(directory, "bun.lock"), "utf8");
-    const wsVersions = resolvedWsVersions(lockfile);
+    const wsVersions = resolvedVersions(lockfile, "ws");
 
     expect(manifest.dependencies?.convex).toBe(convex);
     expect(lockfile).toContain('"convex@1.46.0"');
@@ -58,18 +59,31 @@ describe("Convex dependency security floor", () => {
     expect(wsVersions.filter(isAffectedWs)).toEqual([]);
   });
 
-  test("the runtime workspaces pin Hono at or above its patched security floor", () => {
-    const agentManifest = readJson(join(root, "agent", "package.json"));
-    const webManifest = readJson(join(root, "web", "package.json"));
-    const pins = [
-      agentManifest.dependencies?.hono,
-      agentManifest.overrides?.hono,
-      webManifest.overrides?.hono,
-    ];
-
-    for (const pin of pins) {
-      expect(pin).toMatch(/^\d+\.\d+\.\d+$/);
-      expect(atLeast(pin as string, "4.12.34")).toBe(true);
+  test.each(
+    workspaces,
+  )("$directory resolves Hono only at or above its patched security floor", ({
+    directory,
+  }) => {
+    const lockfile = readFileSync(join(directory, "bun.lock"), "utf8");
+    // A workspace that resolves no Hono at all has nothing to patch.
+    for (const version of resolvedVersions(lockfile, "hono")) {
+      expect(atLeast(version, "4.12.34"), `hono@${version}`).toBe(true);
     }
+  });
+
+  test("the WebSocket floor rejects every unpatched line", () => {
+    for (const version of ["6.2.3", "7.5.10", "8.18.3", "8.20.1"]) {
+      expect(isAffectedWs(version), version).toBe(true);
+    }
+    for (const version of ["7.5.11", "7.5.13", "8.21.0", "8.22.0", "9.0.0"]) {
+      expect(isAffectedWs(version), version).toBe(false);
+    }
+  });
+
+  test("the Hono floor check detects an unpatched resolution", () => {
+    const lockfile =
+      '"hono": ["hono@4.12.1", "", {}],\n"x": ["hono@4.13.5", "", {}]';
+    expect(resolvedVersions(lockfile, "hono")).toEqual(["4.12.1", "4.13.5"]);
+    expect(atLeast("4.12.1", "4.12.34")).toBe(false);
   });
 });

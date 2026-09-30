@@ -46,7 +46,7 @@ same CLI the offline provenance builder audits.
 | Ordinary `deploy --dry-run` | Contacts the backend; can upload/analyze bundles, submit pending schemas, and start validation/index preparation. Final activation is suppressed, but this is a separately approved mutation. |
 | Ordinary `deploy` | Bundles and analyzes code, prepares schema/index changes, waits for readiness, then finishes the push and activates function/component/auth/cron changes. Errors do not guarantee that no preparation occurred. |
 | `--codegen disable` | Prevents deployment-time edits to generated source; does not suppress deployment. |
-| `--typecheck enable` | Enables pre-deployment root TypeScript checking; does not prove live data compatibility. Component source must pass its relevant reviewed checks separately. |
+| `--typecheck disable` | Skips the CLI's own check, which reads only `convex/tsconfig.json`. This repository has none, and under `--typecheck enable` the missing file is fatal in both 1.34.1 and 1.46.0, so that flag cannot deploy. The root `tsconfig.json` covers every `convex/` source file; run it first (below). Neither check proves live data compatibility. Component source must pass its relevant reviewed checks separately. |
 | `--cmd`, preview options, debug/verbose flags | Not part of this procedure. `--cmd` can execute extra commands, and expanded output can expose private metadata. |
 
 Verified installed source: `node_modules/convex/src/cli/deploy.ts`,
@@ -94,7 +94,11 @@ installed from its lock. First perform local assertions, which require no key:
 
 ```sh
 node -e 'const fs=require("node:fs"); if(JSON.parse(fs.readFileSync("node_modules/convex/package.json")).version!=="1.46.0") throw Error("CLI version mismatch"); for(const p of [".env", ".env.local"]) if(fs.existsSync(p)) throw Error("Unexpected environment file");'
+vpx tsc --noEmit -p tsconfig.json
 ```
+
+The second command is the pre-deployment typecheck. It must exit 0 in the same
+checkout before activation.
 
 The Mac operator's existing credential broker must launch the following command
 in a dedicated child environment containing `CONVEX_SELF_HOSTED_URL` set to
@@ -108,7 +112,7 @@ unexpected cloud authentication or target selection occurs. No new grant or
 1Password resolution is part of this document.
 
 ```sh
-node node_modules/convex/bin/main.js deploy --typecheck enable --codegen disable
+node node_modules/convex/bin/main.js deploy --typecheck disable --codegen disable
 ```
 
 This command is the **activation command**, not a read-only acceptance command.
