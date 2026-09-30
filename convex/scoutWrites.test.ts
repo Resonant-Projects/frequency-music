@@ -345,6 +345,18 @@ describe("scout capture providers and repair", () => {
       | undefined;
     expect(keptMetadata?.scoutedBy).toBeDefined();
     expect(keptMetadata?.scoutedBy).not.toHaveProperty("contentProvider");
+
+    // A wall shorter than the minimum text length is still a failed capture.
+    const shortWall = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      url: "https://example.org/walled",
+      rawText: "Please complete the CAPTCHA to continue.",
+      contentProvider: "firecrawl",
+    });
+    expect(shortWall.created).toBe(true);
+    const shortKept = await t.run((ctx) => ctx.db.get(shortWall.id));
+    expect(shortKept).toMatchObject({ status: "ingested" });
+    expect(shortKept?.rawText).toBeUndefined();
   });
 
   test("resets a bad capture so a later Scout run can capture it again", async () => {

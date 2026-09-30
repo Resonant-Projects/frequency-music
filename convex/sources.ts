@@ -519,22 +519,22 @@ export const createScoutedSource = internalMutation({
         "Scouted source text and content provider provenance must be supplied together",
       );
     }
+    // A bot wall is not source text. The worker filters these too; here one,
+    // however short, is treated as a failed capture, so the URL-only Source
+    // is still kept and a later run can capture it.
+    const walled =
+      args.rawText !== undefined && looksLikeBotChallenge(args.rawText);
+    const rawText = walled ? undefined : args.rawText;
+    const contentProvider = walled ? undefined : args.contentProvider;
     if (
-      args.rawText &&
-      (args.rawText.trim().length < SCOUTED_TEXT_MIN_CHARS ||
-        args.rawText.length > SCOUTED_TEXT_MAX_CHARS)
+      rawText &&
+      (rawText.trim().length < SCOUTED_TEXT_MIN_CHARS ||
+        rawText.length > SCOUTED_TEXT_MAX_CHARS)
     ) {
       throw new Error(
         `Scouted source text must be ${SCOUTED_TEXT_MIN_CHARS}-${SCOUTED_TEXT_MAX_CHARS} characters for Extraction`,
       );
     }
-    // A bot wall is not source text. The worker filters these too; here one
-    // is treated as a failed capture, so the URL-only Source is still kept
-    // and a later run can capture it.
-    const walled =
-      args.rawText !== undefined && looksLikeBotChallenge(args.rawText);
-    const rawText = walled ? undefined : args.rawText;
-    const contentProvider = walled ? undefined : args.contentProvider;
     const agentRun = await ctx.db.get("agentRuns", args.agentRunId);
     if (!agentRun) {
       throw new Error("Agent run not found");
