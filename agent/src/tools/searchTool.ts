@@ -7,7 +7,10 @@ import {
 import { redactError } from "../shared/redactError.js";
 import { callConvex } from "./convexTools.js";
 
-const FIRECRAWL_SEARCH_URL = "https://api.firecrawl.dev/v2/search";
+// Firecrawl Cloud needs the paid key. A self-hosted Firecrawl (for example the
+// Lab's, set through FIRECRAWL_API_URL) has no authentication and never
+// receives the key.
+const FIRECRAWL_CLOUD_URL = "https://api.firecrawl.dev";
 const FIRECRAWL_SEARCH_TIMEOUT_MS = 15_000;
 const RESEARCH_SEARCH_TIMEOUT_MS = 8_000;
 const DEFAULT_MAX_RESULTS = 5;
@@ -270,9 +273,18 @@ async function fetchResearch(
   }
 }
 
+function isFirecrawlCloud(baseUrl: string): boolean {
+  try {
+    return new URL(baseUrl).hostname === "api.firecrawl.dev";
+  } catch {
+    return false;
+  }
+}
+
 export function createWebSearch(
   dependencies: {
     apiKey?: string;
+    baseUrl?: string;
     fetchImpl?: FetchLike;
     callTool?: ToolCaller;
   } = {},
@@ -321,8 +333,17 @@ export function createWebSearch(
     ]);
     let firecrawlResults: WebSearchResult[] = [];
     try {
-      const apiKey = configuredApiKey ?? process.env.FIRECRAWL_API_KEY;
-      if (!apiKey) throw new Error("FIRECRAWL_API_KEY is required");
+      // An empty FIRECRAWL_API_URL (as in the env templates) means Cloud.
+      const baseUrl = (
+        dependencies.baseUrl ||
+        process.env.FIRECRAWL_API_URL ||
+        FIRECRAWL_CLOUD_URL
+      ).replace(/\/+$/, "");
+      const cloud = isFirecrawlCloud(baseUrl);
+      const apiKey = cloud
+        ? (configuredApiKey ?? process.env.FIRECRAWL_API_KEY)
+        : undefined;
+      if (cloud && !apiKey) throw new Error("FIRECRAWL_API_KEY is required");
       const controller = new AbortController();
       let rejectTimeout!: (reason: Error) => void;
       const deadline = new Promise<never>((_resolve, reject) => {
@@ -338,12 +359,14 @@ export function createWebSearch(
       let response: Response;
       try {
         response = await Promise.race([
-          fetchImpl(FIRECRAWL_SEARCH_URL, {
+          fetchImpl(`${baseUrl}/v2/search`, {
             method: "POST",
-            headers: {
-              authorization: `Bearer ${apiKey}`,
-              "content-type": "application/json",
-            },
+            headers: apiKey
+              ? {
+                  authorization: `Bearer ${apiKey}`,
+                  "content-type": "application/json",
+                }
+              : { "content-type": "application/json" },
             body: JSON.stringify({
               query: args.query,
               limit: maxResults,
