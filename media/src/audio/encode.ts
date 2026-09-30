@@ -1,5 +1,23 @@
 import { runFfmpeg, runFfprobe } from "./ffmpeg";
 
+// LAME's CBR presets scale the input before encoding (presets.c,
+// abr_switch_map "scale" column): 0.95 up to 160 kbps, 0.97 at 192, 0.98 at
+// 224, none from 256 (a tone measured -0.446, -0.446, -0.265 and 0 dB at 128,
+// 160, 192 and 256 kbps). At 128 kbps every delivery decoded 0.45 LU under
+// its master, most of the ±0.5 LU tolerance. The encode undoes it so a
+// delivery plays at its master's loudness; the loudness test pins this.
+const LAME_PRESET_SCALE: readonly [maxKbps: number, scale: number][] = [
+  [160, 0.95],
+  [192, 0.97],
+  [224, 0.98],
+];
+
+function lameScaleCompensationDb(bitrateKbps: number): number {
+  const scale =
+    LAME_PRESET_SCALE.find(([maxKbps]) => bitrateKbps <= maxKbps)?.[1] ?? 1;
+  return -20 * Math.log10(scale);
+}
+
 export async function encodeMp3(
   input: string,
   output: string,
@@ -16,6 +34,8 @@ export async function encodeMp3(
       "-1",
       "-fflags",
       "+bitexact",
+      "-af",
+      `volume=${lameScaleCompensationDb(options.bitrateKbps).toFixed(4)}dB`,
       "-ar",
       "48000",
       "-ac",

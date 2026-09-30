@@ -3,7 +3,11 @@ import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { agentToolHttpHandlers } from "./agentToolsHttp";
 import { constantTimeEqual } from "./auth";
-import { buildFeedXml, feedTokenMatches } from "./podcast";
+import {
+  buildFeedXml,
+  feedTokenMatches,
+  podcastPublicBaseUrl,
+} from "./podcast";
 import { AGENT_TOOL_NAMES } from "./shared/agentToolManifest";
 import { generateDedupeKey } from "./sourceUtils";
 
@@ -57,8 +61,7 @@ http.route({
     ) {
       return new Response("Not found", { status: 404 });
     }
-    const publicBaseUrl =
-      process.env.PODCAST_PUBLIC_BASE_URL ?? "https://listen.rproj.art";
+    const publicBaseUrl = podcastPublicBaseUrl();
     const episodes = await ctx.runQuery(internal.podcast.listFeedEpisodes, {});
     const xml = buildFeedXml({
       title: "Frequency Music, private",

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import {
   internalMutation,
   internalQuery,
@@ -11,6 +12,10 @@ import { requireAuth } from "./auth";
 import { voiceById } from "./shared/voices";
 
 export const HOUSE_VOICE_KEY = "houseVoiceId";
+// Written once, in the same transaction that schedules the first backfill, so
+// a repeated or changed choice never queues it again.
+export const INITIAL_NARRATION_KEY = "initialNarrationScheduledAt";
+export const INITIAL_NARRATION_DAYS_BACK = 14;
 
 async function readSetting(ctx: QueryCtx, key: string): Promise<string | null> {
   const row = await ctx.db
@@ -68,14 +73,29 @@ export const setHouseVoiceInternal = internalMutation({
   },
 });
 
-// Explicit human choice; the system never auto-selects the house voice.
+// Explicit human choice; the system never auto-selects the house voice. The
+// first choice also starts narrating recent briefs instead of leaving them for
+// the Saturday reconcile cron; reconcile skips briefs that already have a live
+// narration job, so the backfill never duplicates an episode.
 export const setHouseVoice = mutation({
   args: { voiceId: v.string(), devBypassSecret: v.optional(v.string()) },
-  returns: v.null(),
-  handler: async (ctx, args) => {
+  returns: v.object({ initialNarrationScheduled: v.boolean() }),
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ initialNarrationScheduled: boolean }> => {
     await requireAuth(ctx, args);
     voiceById(args.voiceId);
-    await writeSetting(ctx, HOUSE_VOICE_KEY, args.voiceId);
-    return null;
+    if ((await readSetting(ctx, HOUSE_VOICE_KEY)) !== args.voiceId) {
+      await writeSetting(ctx, HOUSE_VOICE_KEY, args.voiceId);
+    }
+    if ((await readSetting(ctx, INITIAL_NARRATION_KEY)) !== null) {
+      return { initialNarrationScheduled: false };
+    }
+    await writeSetting(ctx, INITIAL_NARRATION_KEY, String(Date.now()));
+    await ctx.scheduler.runAfter(0, internal.episodes.reconcile, {
+      daysBack: INITIAL_NARRATION_DAYS_BACK,
+    });
+    return { initialNarrationScheduled: true };
   },
 });
