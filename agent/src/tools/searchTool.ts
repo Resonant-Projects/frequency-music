@@ -275,7 +275,7 @@ async function fetchResearch(
 
 // Only the exact HTTPS Cloud origin gets the key. A plaintext or look-alike
 // URL is treated as self-hosted and receives no credential.
-function isFirecrawlCloud(baseUrl: string): boolean {
+export function isFirecrawlCloud(baseUrl: string): boolean {
   try {
     return new URL(baseUrl).origin === FIRECRAWL_CLOUD_URL;
   } catch {

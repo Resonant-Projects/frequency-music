@@ -75,3 +75,38 @@ describe("schema validators derive from agentContract", () => {
     expect(members).toEqual([...AGENT_RUN_STATUSES]);
   });
 });
+
+describe("Source Scout bot-challenge filter", () => {
+  test("recognizes browser checks crawlers report as pages", async () => {
+    const { looksLikeBotChallenge } = await import("./agentContract");
+    // Captured by both Crawl4AI and Firecrawl from JSTOR on 2026-09-30.
+    const jstor =
+      "A required part of this site couldn’t load. This may be due to a browser extension, network issues, or browser settings. Please check your connection, disable any ad blockers, or try using a different browser. \nis verifying your browser...";
+    for (const text of [
+      jstor,
+      "# Just a moment...\nEnable JavaScript and cookies to continue",
+      "Attention Required! | Cloudflare\nPlease complete the security check to access example.org",
+      "Please enable JS and disable any ad blocker. captcha-delivery.com DataDome",
+      "Access denied. You don't have permission to access this page.",
+      "Are you a robot? Press & hold to confirm you are a human.",
+    ]) {
+      expect(looksLikeBotChallenge(text), text.slice(0, 40)).toBe(true);
+    }
+  });
+
+  test("keeps real text, including long articles about CAPTCHAs", async () => {
+    const { looksLikeBotChallenge } = await import("./agentContract");
+    expect(
+      looksLikeBotChallenge(
+        "# Measured resonant modes\nThe plate was excited at 440 Hz. ".repeat(
+          3,
+        ),
+      ),
+    ).toBe(false);
+    const article =
+      "Why CAPTCHA tests ask you to verify you are human. " +
+      "Researchers studied browser checks and bot walls. ".repeat(80);
+    expect(article.length).toBeGreaterThan(3_000);
+    expect(looksLikeBotChallenge(article)).toBe(false);
+  });
+});

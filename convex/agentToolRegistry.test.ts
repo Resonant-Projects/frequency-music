@@ -58,7 +58,10 @@ const FROZEN_ARGS: Record<string, string> = {
     title: field(string, true),
     publishedAt: field(number, true),
     rawText: field(string, true),
-    contentProvider: field(literal("crawl4ai"), true),
+    contentProvider: field(
+      union(literal("crawl4ai"), literal("firecrawl")),
+      true,
+    ),
     query: field(string),
     rationale: field(string),
     agentRunId: field(id("agentRuns")),
