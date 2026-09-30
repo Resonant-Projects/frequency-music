@@ -2387,23 +2387,23 @@ Smoke on the box after `docker compose up -d --build tts-local`: `curl -s -X POS
 
 ### Task 12: **PRODUCTION** shootout, rating, house voice, first brief episode
 
-Each step runs with Keith's go-ahead.
+Keith authorized implementation and production work on September 30. The [live handoff](../../listen-first-live-handoff-2026-09-30.md) records deployed versions, verification, and remaining human acceptance. The historical September 29 notes below no longer describe the current deployment.
 
-- [ ] **Step 1: Verify provider ids** (network calls with real keys, no writes): for each hosted voice, one ten-word request from the box using the media image (`docker compose run --rm media node -e '...'` importing `providerFor`) writing to `/work/verify-<id>.wav`; listen to each file locally. Fix `model`/`voiceId`/request fields in the single provider file if any provider rejects the request; set `verifiedOn` to today. Commit.
+- [ ] **Step 1: Complete full-catalog provider verification**. Production calls confirmed the configured identifiers, but Gemini exhausted its daily free-tier quota and ElevenLabs exhausted its per-key credit allowance. The current shootout explicitly skips both and uses Inworld plus Breeze. Restore their account capacity before a full-catalog rerun. Human listening remains in Step 5; no provider or voice wins by an automated check.
 
-- [ ] **Step 2: Deploy Convex** (`vpx convex deploy`): new tables `voiceRatings`, new functions, the cron, the brief hook.
+- [x] **Step 2: Deploy Convex** (`vpx convex deploy`): new tables `voiceRatings`, new functions, the cron, the brief hook.
 
-- [ ] **Step 3: Rebuild and restart media** on the box with the new image tag; confirm log shows the four kinds.
+- [x] **Step 3: Rebuild and restart media** on the box with the new image tag; confirm log shows the four kinds.
 
-- [ ] **Step 4: Enqueue the shootout**: `vpx convex run episodes:enqueueShootout '{}'` (`'{"rerun": true}'` to run again after a done shootout). Watch media logs: four takes (or fewer with a skipped voice listed), one episode; job `done`. Feed shows the shootout episode within one Pocket Casts refresh.
+- [x] **Step 4: Enqueue and verify the shootout**. Job `nd7assr5c5mv64jz34q1x84m9s8fdb06` completed on its first attempt with two takes and explicit skips for the two quota-limited providers. The 165.864-second episode appears in valid private RSS. Its public enclosure returns 206 and the correct 100-byte range. Pocket Casts device acceptance remains Keith's check.
 
 - [ ] **Step 5: Keith rates on `/listen`** (headphones), then taps "Set as house voice" on the winner. `vpx convex run settings:get '{"key":"houseVoiceId"}'` prints the choice.
 
-- [ ] **Step 6: First narrated brief**: `vpx convex run episodes:reconcile '{"daysBack":14}'` narrates the newest brief (or wait for Friday's `generate-weekly-turn`). Expect a `narrate` job then an `assembleEpisode` job, and `Weekly turn, week of <Monday>` in Pocket Casts. Record the script word count and episode duration in the handoff.
+- [ ] **Step 6: First narrated brief**: the first explicit house-voice selection now schedules reconciliation of the last 14 days automatically, once. No operator command is needed for the initial narration. Expect `narrate` and `assembleEpisode` jobs, then `Weekly turn, week of <Monday>` in Pocket Casts. Record the script word count and episode duration after Keith selects a voice. Human playback acceptance remains pending.
 
-- [ ] **Step 7: Stop what lost**: if the winner is hosted, `docker compose stop tts-local`; if local, remove hosted keys from `deploy.sh`.
+- [ ] **Step 7: Stop what lost** after Keith chooses and accepts the voice. If a hosted voice wins, stop `tts-local` and clear `BREEZE_TTS_BASE_URL` so future shootouts skip it. If local wins, retire unneeded hosted runtime credentials while preserving their vault records. Never stop a provider while a job needs it.
 
-- [ ] **Step 8: `vp run verify`** on the final branch; open the PR with the shootout results summarized (which voice, ratings table) and the Range-request finding from wave 0.
+- [x] **Step 8: `vp run verify`** passed on the rebased implementation: 940 tests plus formatting, lint, and type checks. PR #81 merged. Record production results and the current Range check in the live handoff; do not invent a winning voice or human ratings table.
 
 ---
 
