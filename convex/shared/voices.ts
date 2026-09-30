@@ -1,7 +1,12 @@
 // TTS voices are not LLMs: they live here, not in convex/llm.ts MODELS.
 // verifiedOn is the date the model/voice ids were checked against the
 // provider's live API; the wave 1 plan's first task re-verifies them.
-export type VoiceProvider = "google" | "inworld" | "elevenlabs" | "breeze";
+export type VoiceProvider =
+  | "google"
+  | "inworld"
+  | "elevenlabs"
+  | "breeze"
+  | "cartesia";
 
 export type VoiceEntry = {
   id: string;
@@ -66,6 +71,34 @@ export const VOICE_CATALOG: readonly VoiceEntry[] = [
     keyEnvVar: "BREEZE_TTS_API_KEY",
     baseUrlEnvVar: "BREEZE_TTS_BASE_URL",
     verifiedOn: "2026-09-28",
+  },
+  // Cartesia Sonic, pinned to a dated snapshot so a take stays reproducible
+  // (the bare "sonic-3.6" alias moves). One feminine and one masculine
+  // English narrator from Cartesia's voice library. openclawProvider is the
+  // mapping name only; wave 2 verifies OpenClaw's side separately.
+  {
+    // Nandi, "Poised Concierge": documentary and informational narration.
+    id: "cartesia-sonic-nandi",
+    provider: "cartesia",
+    model: "sonic-3.6-2026-08-27",
+    voiceId: "33d406dd-ff6f-4be7-a7f5-8b1ba183b3e4",
+    runsOn: "hosted",
+    licence: "Cartesia API terms",
+    openclawProvider: "cartesia",
+    keyEnvVar: "CARTESIA_API_KEY",
+    verifiedOn: "2026-09-30",
+  },
+  {
+    // Quentin, "Refined Narrator": polished, measured narration.
+    id: "cartesia-sonic-quentin",
+    provider: "cartesia",
+    model: "sonic-3.6-2026-08-27",
+    voiceId: "5568a7df-e5ab-4442-9fae-2e9ba1b15ad8",
+    runsOn: "hosted",
+    licence: "Cartesia API terms",
+    openclawProvider: "cartesia",
+    keyEnvVar: "CARTESIA_API_KEY",
+    verifiedOn: "2026-09-30",
   },
 ] as const;
 

@@ -1,5 +1,6 @@
 import type { VoiceEntry } from "../../../convex/shared/voices";
 import { breeze } from "./breeze";
+import { cartesia } from "./cartesia";
 import { elevenlabs } from "./elevenlabs";
 import { gemini } from "./gemini";
 import { inworld } from "./inworld";
@@ -13,6 +14,7 @@ const providers: Record<VoiceEntry["provider"], TtsProvider> = {
   inworld,
   elevenlabs,
   breeze,
+  cartesia,
 };
 
 export function providerFor(voice: VoiceEntry): TtsProvider {
