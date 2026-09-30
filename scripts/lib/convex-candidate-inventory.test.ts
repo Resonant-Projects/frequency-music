@@ -12,7 +12,7 @@ const request = () => ({
   adminKey: "frequency-offline-inert",
   dryRun: true,
   appDefinition: {
-    udfServerVersion: "1.34.1",
+    udfServerVersion: "1.46.0",
     unchangedModuleHashes: [],
     changedModules: [module("run.js")],
     schema: module("schema.js"),
@@ -22,7 +22,7 @@ const request = () => ({
   componentDefinitions: [
     {
       definitionPath: "child",
-      udfServerVersion: "1.34.1",
+      udfServerVersion: "1.46.0",
       functions: [module("job.js")],
       schema: module("schema.js"),
       definition: module("convex.config.js"),

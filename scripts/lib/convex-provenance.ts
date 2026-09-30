@@ -5,6 +5,10 @@ import { join } from "node:path";
 import { z } from "zod";
 import { validateOpsOrigin } from "./frequency-queue-evidence";
 
+/** The one Convex CLI whose internal push-request and config-hash contracts
+ * this tooling has audited. The installed CLI must match it exactly. */
+export const AUDITED_CONVEX_VERSION = "1.46.0";
+
 const moduleIdentity = z.object({
   path: z.string().min(1).max(1024),
   environment: z.enum(["isolate", "node"]),
@@ -19,7 +23,7 @@ const bundledModule = z.object({
 const identities = z.array(moduleIdentity).min(1).max(10_000);
 const manifestSchema = z.object({
   format: z.literal("frequency-convex-root-modules-v1"),
-  convexVersion: z.literal("1.34.1"),
+  convexVersion: z.literal(AUDITED_CONVEX_VERSION),
   scope: z.literal("root-modules-only"),
   modules: identities,
 });
@@ -49,7 +53,7 @@ function sortedUnique(modules: z.infer<typeof identities>) {
   );
 }
 
-/** Convex 1.34.1 hashes source followed by sourceMap. The deployed root set
+/** The audited CLI hashes source followed by sourceMap. The deployed root set
  * includes separately bundled schema/definition as well as changedModules. */
 export function manifestFromPushRequest(
   input: unknown,
@@ -59,9 +63,9 @@ export function manifestFromPushRequest(
       adminKey: z.literal("frequency-offline-inert"),
       dryRun: z.literal(true),
       appDefinition: z.object({
-        udfServerVersion: z.literal("1.34.1"),
+        udfServerVersion: z.literal(AUDITED_CONVEX_VERSION),
         unchangedModuleHashes: z.array(z.unknown()).length(0),
-        // Pinned 1.34.1 AppDefinitionConfig requires both keys, allowing null.
+        // The audited AppDefinitionConfig requires both keys, allowing null.
         definition: bundledModule.nullable(),
         schema: bundledModule.nullable(),
         changedModules: z.array(bundledModule).min(1).max(10_000),
@@ -70,7 +74,7 @@ export function manifestFromPushRequest(
     .parse(input);
   return {
     format: "frequency-convex-root-modules-v1",
-    convexVersion: "1.34.1",
+    convexVersion: AUDITED_CONVEX_VERSION,
     scope: "root-modules-only",
     modules: sortedUnique(
       identities.parse(
@@ -203,9 +207,9 @@ export async function readDeployedModuleHashes(
     headers: {
       Authorization: `Convex ${adminKey}`,
       "Content-Type": "application/json",
-      "Convex-Client": "npm-cli-1.34.1",
+      "Convex-Client": `npm-cli-${AUDITED_CONVEX_VERSION}`,
     },
-    body: JSON.stringify({ version: "1.34.1", adminKey }),
+    body: JSON.stringify({ version: AUDITED_CONVEX_VERSION, adminKey }),
   });
   if (!response.ok || !response.body) {
     throw new Error(

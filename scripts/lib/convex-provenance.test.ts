@@ -124,7 +124,7 @@ const request = {
   adminKey: "frequency-offline-inert",
   dryRun: true,
   appDefinition: {
-    udfServerVersion: "1.34.1",
+    udfServerVersion: "1.46.0",
     unchangedModuleHashes: [],
     definition: null,
     schema: null,
@@ -264,7 +264,7 @@ describe("Convex artifact evidence", () => {
     }));
     const legacyManifest = {
       format: "frequency-convex-root-modules-v1",
-      convexVersion: "1.34.1",
+      convexVersion: "1.46.0",
       scope: "root-modules-only",
       modules,
     };
@@ -348,7 +348,7 @@ describe("Convex artifact evidence", () => {
       method: "POST",
       redirect: "error",
       headers: { Authorization: "Convex inert" },
-      body: JSON.stringify({ version: "1.34.1", adminKey: "inert" }),
+      body: JSON.stringify({ version: "1.46.0", adminKey: "inert" }),
     });
   });
 
