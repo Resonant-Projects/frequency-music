@@ -78,7 +78,8 @@ Optional model/provider variables:
 - `CODEX_SANDBOX_MODE` (`read-only` | `workspace-write`)
 - `CODEX_WORKDIR` (scratch working directory for Codex threads)
 - `OPENROUTER_API_KEY`
-- `FIRECRAWL_API_KEY` (Source Scout web discovery; failed searches warn and skip)
+- `FIRECRAWL_API_URL` (self-hosted Firecrawl base URL for Source Scout web discovery, for example the Lab's `http://172.16.10.38:3002`; empty means Firecrawl Cloud)
+- `FIRECRAWL_API_KEY` (Firecrawl Cloud only; sent only to `https://api.firecrawl.dev`, never to a self-hosted URL; failed searches warn and skip)
 - `WEEKLY_BRIEF_AGENT_MODEL`
 
 Optional tracing variables:

@@ -1,6 +1,22 @@
-import { describe, expect, test, vi } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import fixture from "./fixtures/firecrawl-search.json";
 import { createWebSearch } from "../src/tools/searchTool";
+
+// Cloud-path tests must not follow a self-hosted FIRECRAWL_API_URL from the
+// developer's or worker's environment.
+beforeEach(() => {
+  vi.stubEnv("FIRECRAWL_API_URL", "");
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 const json = (value: unknown) =>
   new Response(JSON.stringify(value), { status: 200 });
@@ -553,6 +569,113 @@ describe("Firecrawl web_search", () => {
         ],
       },
     });
+  });
+
+  test("sends a self-hosted Firecrawl no key, even when a Cloud key exists", async () => {
+    const fetchImpl = vi.fn(async (input: string | URL | Request) =>
+      urlOf(input).startsWith("http://172.16.10.38:3002/")
+        ? json(fixture)
+        : json({}),
+    );
+    const search = createWebSearch({
+      apiKey: "cloud-key",
+      baseUrl: "http://172.16.10.38:3002/",
+      fetchImpl,
+      callTool: vi.fn(async () => ({ ok: true })),
+    });
+
+    await expect(
+      search({ query: fixture.query, maxResults: 2 }),
+    ).resolves.toHaveLength(2);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "http://172.16.10.38:3002/v2/search",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    expect(
+      fetchImpl.mock.calls.some(([input]) =>
+        urlOf(input).includes("firecrawl.dev"),
+      ),
+    ).toBe(false);
+  });
+
+  test("reads the self-hosted URL from FIRECRAWL_API_URL without a key", async () => {
+    vi.stubEnv("FIRECRAWL_API_URL", "http://172.16.10.38:3002");
+    vi.stubEnv("FIRECRAWL_API_KEY", "");
+    {
+      const fetchImpl = vi.fn(async (input: string | URL | Request) =>
+        urlOf(input) === "http://172.16.10.38:3002/v2/search"
+          ? json(fixture)
+          : json({}),
+      );
+      const callTool = vi.fn(async () => ({ ok: true }));
+      const search = createWebSearch({ fetchImpl, callTool });
+
+      await expect(
+        search(
+          { query: fixture.query, maxResults: 2 },
+          { agentRunId: "run-lab" },
+        ),
+      ).resolves.toHaveLength(2);
+      expect(callTool).toHaveBeenCalledWith(
+        "appendAgentRunEvent",
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            providers: expect.objectContaining({
+              firecrawl: { status: "ok", returned: 2 },
+            }),
+          }),
+        }),
+      );
+    }
+  });
+
+  test("treats an empty FIRECRAWL_API_URL as Cloud, which still requires the key", async () => {
+    vi.stubEnv("FIRECRAWL_API_KEY", "");
+    {
+      const fetchImpl = vi.fn(async () => json({}));
+      const callTool = vi.fn(async () => ({ ok: true }));
+      const search = createWebSearch({ fetchImpl, callTool });
+
+      await search({ query: "cymatics" }, { agentRunId: "run-cloud" });
+      expect(
+        fetchImpl.mock.calls.some(([input]) =>
+          urlOf(input).includes("firecrawl.dev"),
+        ),
+      ).toBe(false);
+      expect(callTool).toHaveBeenCalledWith(
+        "appendAgentRunEvent",
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            providers: expect.objectContaining({
+              firecrawl: {
+                status: "failed",
+                returned: 0,
+                error: "FIRECRAWL_API_KEY is required",
+              },
+            }),
+          }),
+        }),
+      );
+    }
+  });
+
+  test("never sends the key over plaintext, even to the Cloud host", async () => {
+    const fetchImpl = vi.fn(async () => json({}));
+    const search = createWebSearch({
+      apiKey: "cloud-key",
+      baseUrl: "http://api.firecrawl.dev",
+      fetchImpl,
+      callTool: vi.fn(async () => ({ ok: true })),
+    });
+
+    await search({ query: "cymatics" });
+    const call = fetchImpl.mock.calls.find(
+      ([input]) => urlOf(input) === "http://api.firecrawl.dev/v2/search",
+    );
+    expect(call?.[1]?.headers).toEqual({ "content-type": "application/json" });
   });
 
   test("warns, audits, and skips a failed provider call", async () => {
