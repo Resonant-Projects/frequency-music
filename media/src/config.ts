@@ -11,7 +11,7 @@ const configZ = z.object({
 });
 export type MediaConfig = z.infer<typeof configZ>;
 
-export const RENDERER_VERSION = "0.2.1";
+export const RENDERER_VERSION = "0.2.2";
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): MediaConfig {
   // AGENT_TOOL_SECRET travels in every request body, so the transport must be

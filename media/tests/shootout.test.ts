@@ -221,7 +221,11 @@ describe("shootout job", () => {
       shootoutContext(ALL_VOICE_IDS, tools, "shoot-announcer-"),
       { synthesize: synth },
     );
-    expect(result.skippedVoiceIds).toEqual(["gemini-flash-tts"]);
+    expect(result.skippedVoiceIds).toEqual([
+      "gemini-flash-tts",
+      "cartesia-sonic-nandi",
+      "cartesia-sonic-quentin",
+    ]);
     expect(result.takes.map((take) => take.voiceId).toSorted()).toEqual([
       "breeze-2",
       "elevenlabs-v3",
@@ -269,7 +273,11 @@ describe("shootout job", () => {
       shootoutContext(ALL_VOICE_IDS, tools, "shoot-announcer-gemini-"),
       { synthesize: synth },
     );
-    expect(result.skippedVoiceIds).toEqual(["breeze-2"]);
+    expect(result.skippedVoiceIds).toEqual([
+      "breeze-2",
+      "cartesia-sonic-nandi",
+      "cartesia-sonic-quentin",
+    ]);
     expect(result.takes).toHaveLength(3);
     const calls = spoken(synth);
     expect(calls.find((call) => call.text.includes("You will hear"))).toEqual({
@@ -287,6 +295,47 @@ describe("shootout job", () => {
       (artifact) => artifact.kind === "episode" && artifact.role === "delivery",
     );
     expect(episode?.engine?.params.announcerVoiceId).toBe("announcer-gemini");
+  });
+
+  test("all six catalog voices configured: six blind takes, labels one to six, a dedicated announcer", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "k");
+    vi.stubEnv("INWORLD_API_KEY", "k");
+    vi.stubEnv("ELEVENLABS_API_KEY", "k");
+    vi.stubEnv("CARTESIA_API_KEY", "k");
+    vi.stubEnv("BREEZE_TTS_BASE_URL", "http://tts-local:8881");
+    const synth = toneSynth();
+    const { tools, minted } = fakeTools();
+    const result = await shootoutHandler(
+      shootoutContext(ALL_VOICE_IDS, tools, "shoot-six-"),
+      { synthesize: synth },
+    );
+    expect(ALL_VOICE_IDS).toHaveLength(6);
+    expect(result.skippedVoiceIds).toEqual([]);
+    expect(result.memberOrder.toSorted()).toEqual(ALL_VOICE_IDS.toSorted());
+    expect(result.takes.map((take) => take.voiceId)).toEqual(
+      result.memberOrder,
+    );
+    const calls = spoken(synth);
+    expect(calls.find((call) => call.text.includes("You will hear"))).toEqual({
+      text: "This intro voice is not a candidate. You will hear 6 takes of the same passage. Rate each one before the reveal.",
+      voiceId: "announcer-breeze",
+    });
+    expect(
+      calls.filter((call) => /^take \w+\.$/.test(call.text)).map((c) => c.text),
+    ).toEqual([
+      "take one.",
+      "take two.",
+      "take three.",
+      "take four.",
+      "take five.",
+      "take six.",
+    ]);
+    expect(
+      minted.filter(
+        (artifact) =>
+          artifact.kind === "shootoutTake" && artifact.role === "delivery",
+      ),
+    ).toHaveLength(6);
   });
 
   test("a take that breaks policy fails the job naming its voice, before any upload", async () => {

@@ -60,6 +60,31 @@ function breezeServer(
   return { fetchMock, urls };
 }
 
+// A minimal 48 kHz mono PCM16 WAV, as Cartesia's wav container returns it.
+function cartesiaWav(samples: number[]): Uint8Array<ArrayBuffer> {
+  const out = new Uint8Array(44 + samples.length * 2);
+  const view = new DataView(out.buffer);
+  const tag = (offset: number, text: string) =>
+    out.set(new TextEncoder().encode(text), offset);
+  tag(0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  tag(8, "WAVE");
+  tag(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 48000, true);
+  view.setUint32(28, 96000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  tag(36, "data");
+  view.setUint32(40, samples.length * 2, true);
+  for (const [index, sample] of samples.entries()) {
+    view.setInt16(44 + index * 2, sample, true);
+  }
+  return out;
+}
+
 const dir = mkdtempSync(join(tmpdir(), "tts-"));
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -82,6 +107,109 @@ describe("tts providers", () => {
     vi.unstubAllEnvs();
     vi.stubEnv("BREEZE_TTS_BASE_URL", "http://ai-5090-02:8881");
     expect(isConfigured(voiceById("breeze-2"))).toBe(true);
+    // Cartesia is hosted: its key configures both voices, nothing else does.
+    for (const id of ["cartesia-sonic-nandi", "cartesia-sonic-quentin"]) {
+      expect(isConfigured(voiceById(id)), id).toBe(false);
+    }
+    vi.stubEnv("CARTESIA_API_KEY", "ck");
+    for (const id of ["cartesia-sonic-nandi", "cartesia-sonic-quentin"]) {
+      expect(isConfigured(voiceById(id)), id).toBe(true);
+    }
+  });
+
+  for (const [id, voiceId] of [
+    ["cartesia-sonic-nandi", "33d406dd-ff6f-4be7-a7f5-8b1ba183b3e4"],
+    ["cartesia-sonic-quentin", "5568a7df-e5ab-4442-9fae-2e9ba1b15ad8"],
+  ] as const) {
+    test(`cartesia provider posts the pinned model and ${id} voice and writes the returned WAV as is`, async () => {
+      vi.stubEnv("CARTESIA_API_KEY", "cart-key");
+      const wav = cartesiaWav([1, -1, 2, -2]);
+      const fetchMock = vi.fn((_url: string, _init: CapturedInit) =>
+        Promise.resolve(
+          new Response(wav, {
+            status: 200,
+            headers: { "content-type": "audio/wav" },
+          }),
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      const voice = voiceById(id);
+      const out = join(dir, `${id}.wav`);
+      await providerFor(voice).synthesize("Hello there.", voice, out);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0]!;
+      expect(url).toBe("https://api.cartesia.ai/tts/bytes");
+      expect(init.redirect).toBe("error");
+      expect(init.headers).toEqual({
+        authorization: "Bearer cart-key",
+        "cartesia-version": "2026-08-14",
+        "content-type": "application/json",
+      });
+      expect(jsonBody(init)).toEqual({
+        model_id: "sonic-3.6-2026-08-27",
+        transcript: "Hello there.",
+        voice: voiceId,
+        output_format: {
+          container: "wav",
+          encoding: "pcm_s16le",
+          sample_rate: 48000,
+        },
+        language: "en",
+      });
+      // The container already carries its header: the file is the response,
+      // byte for byte, not re-wrapped.
+      expect([...readFileSync(out)]).toEqual([...wav]);
+    });
+  }
+
+  test("cartesia provider fails before any request without its key", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const voice = voiceById("cartesia-sonic-nandi");
+    await expect(
+      providerFor(voice).synthesize("x", voice, join(dir, "nokey.wav")),
+    ).rejects.toThrow("CARTESIA_API_KEY is not set");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("cartesia failures retry twice then name the status only, and a non-WAV 200 is refused without its body", async () => {
+    vi.stubEnv("CARTESIA_API_KEY", "cart-key");
+    const voice = voiceById("cartesia-sonic-quentin");
+    const failing = vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({ error_code: "quota_exceeded", key: "cart-key" }),
+          { status: 402 },
+        ),
+      ),
+    );
+    vi.stubGlobal("fetch", failing);
+    const attempt = providerFor(voice).synthesize(
+      "x",
+      voice,
+      join(dir, "cart-fail.wav"),
+    );
+    await expect(attempt).rejects.toThrow("TTS request failed with status 402");
+    await expect(attempt).rejects.not.toThrow(/cart-key|quota_exceeded/);
+    expect(failing).toHaveBeenCalledTimes(3);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ message: "cart-key echoed" }), {
+            status: 200,
+          }),
+        ),
+      ),
+    );
+    const notWav = providerFor(voice).synthesize(
+      "x",
+      voice,
+      join(dir, "cart-json.wav"),
+    );
+    await expect(notWav).rejects.toThrow("Cartesia returned no WAV audio");
+    await expect(notWav).rejects.not.toThrow(/cart-key/);
   });
 
   test("elevenlabs provider posts text with the model id and writes the audio bytes", async () => {
@@ -342,8 +470,10 @@ describe("tts providers", () => {
     vi.stubEnv("ELEVENLABS_API_KEY", "k");
     vi.stubEnv("INWORLD_API_KEY", "k");
     vi.stubEnv("GEMINI_API_KEY", "k");
+    vi.stubEnv("CARTESIA_API_KEY", "k");
     vi.stubEnv("BREEZE_TTS_BASE_URL", "http://breeze.test");
     const bodies: Record<string, string> = {
+      "cartesia-sonic-nandi": "RIFF\0\0\0\0WAVE\0\0\0\0",
       "elevenlabs-v3": "RIFF",
       "inworld-max": JSON.stringify({ audioContent: "AAAA" }),
       "gemini-flash-tts": JSON.stringify({
