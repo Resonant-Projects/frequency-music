@@ -33,7 +33,8 @@ The image is published to GHCR and, for `main` builds, also to the Lab's
 internal Harbor at `registry.rproj.art/frequency-music/frequency-music-agent`.
 Harbor is reachable only from the Lab LAN, so the workflow's `harbor` job runs on
 a self-hosted GARM runner after `publish` succeeds. It copies the GHCR digest
-under the immutable tag `sha-<full-commit>` and signs it keylessly with cosign
+under the immutable tag `sha-<full-commit>-<first 12 hex of the digest>`, so a
+rebuild of the same commit never collides, and signs it keylessly with cosign
 under this workflow's identity,
 `https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml@refs/heads/main`
 (issuer `https://token.actions.githubusercontent.com`). It then verifies the

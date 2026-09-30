@@ -294,8 +294,13 @@ jobs:
           if status not in ("ahead", "identical"):
               raise SystemExit(f"{env['SOURCE_SHA']} is not on main ({status})")
           PY
+          # A rebuild of the same commit gets a new index digest (BuildKit
+          # provenance), so the immutable tag names the digest too; retries of
+          # one build reuse it and a rebuild gets its own.
+          target_tag_name="sha-${SOURCE_SHA}-${IMAGE_DIGEST:7:12}"
           {
-            printf 'TARGET_TAG=%s/%s:sha-%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$SOURCE_SHA"
+            printf 'TARGET_TAG_NAME=%s\n' "$target_tag_name"
+            printf 'TARGET_TAG=%s/%s:%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$target_tag_name"
             printf 'TARGET_REF=%s/%s@%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$IMAGE_DIGEST"
           } >> "$GITHUB_ENV"
 
@@ -426,7 +431,7 @@ jobs:
           set -euo pipefail
           # Harbor tags are immutable: a re-run keeps an identical tag and never
           # repoints one. The public GHCR package needs no login.
-          existing="$(harbor-artifact digest "sha-${SOURCE_SHA}")"
+          existing="$(harbor-artifact digest "$TARGET_TAG_NAME")"
           if [[ -z "$existing" ]]; then
             crane copy "${SOURCE_IMAGE}@${IMAGE_DIGEST}" "$TARGET_TAG"
           elif [[ "$existing" != "$IMAGE_DIGEST" ]]; then
@@ -449,8 +454,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if harbor-artifact signed "$IMAGE_DIGEST" && harbor-artifact signed "$AMD64_DIGEST"; then
-            echo 'Harbor already lists cosign signatures for this digest; the next step verifies them'
+          # Skip only when this workflow's own signature already verifies on both
+          # manifests; any other signature still gets ours added. Recursive
+          # signing right after the copy is the same path homelab-infra's
+          # harbor-mirror.yml uses against this Harbor.
+          verified=true
+          for ref in "$TARGET_REF" "$AMD64_REF"; do
+            if ! cosign verify \
+              --certificate-identity "$SIGNER_IDENTITY" \
+              --certificate-oidc-issuer "$SIGNER_ISSUER" \
+              "$ref" > /dev/null 2>&1; then
+              verified=false
+            fi
+          done
+          if [[ "$verified" == true ]]; then
+            echo 'This workflow already signed both manifests; skipping signing'
           else
             cosign sign --yes --recursive "$TARGET_REF"
           fi
