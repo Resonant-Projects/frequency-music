@@ -10,7 +10,7 @@ export const MAX_ATTEMPTS = 3;
 // Renderer a freshly enqueued job expects; a job snapshot records it so a
 // worker on an older build refuses the job instead of rendering it wrong.
 // The media package's RENDERER_VERSION must match this string.
-export const RENDERER_VERSION_FOR_JOBS = "0.2.1";
+export const RENDERER_VERSION_FOR_JOBS = "0.2.2";
 
 // Blind labels in presentation order: the label the listener hears in the
 // shootout episode is the label the blind group stores, so both the media

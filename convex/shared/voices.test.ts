@@ -7,14 +7,53 @@ import {
 } from "./voices";
 
 describe("voice catalog", () => {
-  test("has exactly the four shootout voices with unique ids", () => {
+  test("has exactly the six shootout voices with unique ids", () => {
     expect([...VOICE_IDS]).toEqual([
       "gemini-flash-tts",
       "inworld-max",
       "elevenlabs-v3",
       "breeze-2",
+      "cartesia-sonic-nandi",
+      "cartesia-sonic-quentin",
     ]);
-    expect(new Set(VOICE_CATALOG.map((voice) => voice.id)).size).toBe(4);
+    expect(new Set(VOICE_CATALOG.map((voice) => voice.id)).size).toBe(6);
+  });
+  test("earlier voices keep their provider, model, and voice for provenance", () => {
+    expect(
+      VOICE_CATALOG.slice(0, 4).map(({ id, provider, model, voiceId }) => [
+        id,
+        provider,
+        model,
+        voiceId,
+      ]),
+    ).toEqual([
+      ["gemini-flash-tts", "google", "gemini-3.1-flash-tts-preview", "Charon"],
+      ["inworld-max", "inworld", "inworld-tts-1.5-max", "Dennis"],
+      ["elevenlabs-v3", "elevenlabs", "eleven_v3", "JBFqnCBsd6RMkjVDRZzb"],
+      [
+        "breeze-2",
+        "breeze",
+        "breeze-tts-2",
+        "design:A calm, warm, unhurried adult narrator with clear diction and a low-mid register.",
+      ],
+    ]);
+  });
+  test("Cartesia voices are hosted, keyed, and pinned to a dated Sonic snapshot", () => {
+    const nandi = voiceById("cartesia-sonic-nandi");
+    const quentin = voiceById("cartesia-sonic-quentin");
+    expect(nandi.voiceId).toBe("33d406dd-ff6f-4be7-a7f5-8b1ba183b3e4");
+    expect(quentin.voiceId).toBe("5568a7df-e5ab-4442-9fae-2e9ba1b15ad8");
+    for (const voice of [nandi, quentin]) {
+      expect(voice).toMatchObject({
+        provider: "cartesia",
+        model: "sonic-3.6-2026-08-27",
+        runsOn: "hosted",
+        licence: "Cartesia API terms",
+        keyEnvVar: "CARTESIA_API_KEY",
+        verifiedOn: "2026-09-30",
+      });
+      expect(voice.baseUrlEnvVar).toBeUndefined();
+    }
   });
   test("every entry names a provider, licence, OpenClaw mapping, key env var, and verification date", () => {
     for (const voice of VOICE_CATALOG) {

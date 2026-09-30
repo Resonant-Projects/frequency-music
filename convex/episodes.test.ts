@@ -327,6 +327,8 @@ describe("episodes", () => {
       "inworld-max",
       "elevenlabs-v3",
       "breeze-2",
+      "cartesia-sonic-nandi",
+      "cartesia-sonic-quentin",
     ]);
     expect(job.input.passage).toHaveLength(3);
     expect(job.input.rendererVersion).toBe(RENDERER_VERSION_FOR_JOBS);

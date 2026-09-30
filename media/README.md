@@ -21,9 +21,9 @@ with a typed result. It never writes research data directly.
 
 - Catalog: `convex/shared/voices.ts` (`VOICE_CATALOG`, candidates) and
   `ANNOUNCER_VOICES` (never candidates). Providers in `src/tts/`.
-- Env: `GEMINI_API_KEY`, `INWORLD_API_KEY`, `ELEVENLABS_API_KEY` configure
-  the hosted voices; each is optional, and a missing key skips that voice in
-  a shootout. `BREEZE_TTS_BASE_URL` configures the local voice
+- Env: `GEMINI_API_KEY`, `INWORLD_API_KEY`, `ELEVENLABS_API_KEY`,
+  `CARTESIA_API_KEY` configure the hosted voices; each is optional, and a
+  missing key skips that voice in a shootout. `BREEZE_TTS_BASE_URL` configures the local voice
   (`BREEZE_TTS_API_KEY` is only sent as a bearer token to a fronting proxy).
   It has no schema default: the compose file sets it, and clearing it
   retires the local voice (a shootout then skips Breeze rather than waiting
@@ -36,6 +36,15 @@ with a typed result. It never writes research data directly.
   Both wait 5 s before the retry; every synthesis first polls
   `GET /health` every 10 s for up to 5 minutes (R27), so a `tts-local`
   started cold while the worker runs is waited for.
+- Cartesia (`cartesia-sonic-nandi`, `cartesia-sonic-quentin`, renderer
+  0.2.2 or later): `POST https://api.cartesia.ai/tts/bytes` with
+  `Authorization: Bearer`, `Cartesia-Version: 2026-08-14`, and a JSON body
+  of `model_id` (the dated snapshot `sonic-3.6-2026-08-27`, never the moving
+  `sonic-3.6` alias), `transcript`, `voice` (the voice id string),
+  `output_format` `{container: "wav", encoding: "pcm_s16le", sample_rate:
+  48000}`, and `language: "en"`. The response is a complete WAV file, written
+  as returned; a 200 that is not WAV fails the take. Scripts chunk at 2 000
+  characters.
 - Every hosted attempt runs under the job deadline plus a 180 s per-attempt
   timeout; two retries with backoff, then the take fails with the status
   code only (never the body).
