@@ -1,5 +1,9 @@
 import { describe, expect, test, vi } from "vite-plus/test";
-import { createCrawlPage } from "../src/tools/crawlTool";
+import {
+  createCrawl4aiPage,
+  createCrawlPage,
+  createFirecrawlPage,
+} from "../src/tools/crawlTool";
 
 describe("self-hosted Crawl4AI source text", () => {
   test("returns bounded markdown from a successful public HTML crawl", async () => {
@@ -153,5 +157,159 @@ describe("self-hosted Crawl4AI source text", () => {
     const crawl = createCrawlPage({ apiToken: "", fetchImpl });
     await expect(crawl("https://example.org/paper")).resolves.toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+const jstorChallenge =
+  "A required part of this site couldn’t load. This may be due to a browser extension, network issues, or browser settings. Please check your connection, disable any ad blockers, or try using a different browser. \nis verifying your browser...";
+const article =
+  "# Measured modes\n" + "The plate resonated at 440 Hz. ".repeat(20);
+
+function crawl4aiReturning(markdown: string) {
+  return vi.fn(
+    async () =>
+      new Response(
+        JSON.stringify({
+          results: [{ success: true, status_code: 200, markdown }],
+        }),
+        { status: 200 },
+      ),
+  );
+}
+
+function firecrawlReturning(body: unknown, status = 200) {
+  return vi.fn(async () => new Response(JSON.stringify(body), { status }));
+}
+
+describe("bot challenges and the Lab Firecrawl fallback", () => {
+  test("drops a browser-check page that Crawl4AI reports as a success", async () => {
+    const crawl = createCrawl4aiPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl: crawl4aiReturning(jstorChallenge),
+    });
+    await expect(
+      crawl("https://www.jstor.org/stable/1513178"),
+    ).resolves.toBeNull();
+  });
+
+  test("falls back to Firecrawl when Crawl4AI has no usable text", async () => {
+    const fallback = vi.fn(async () => ({
+      text: article,
+      provider: "firecrawl" as const,
+    }));
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl: crawl4aiReturning(jstorChallenge),
+      fallback,
+    });
+    await expect(crawl("https://example.org/paper")).resolves.toEqual({
+      text: article,
+      provider: "firecrawl",
+    });
+    expect(fallback).toHaveBeenCalledWith("https://example.org/paper");
+  });
+
+  test("keeps Crawl4AI text without calling the fallback", async () => {
+    const fallback = vi.fn();
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl: crawl4aiReturning(article),
+      fallback,
+    });
+    await expect(crawl("https://example.org/paper")).resolves.toMatchObject({
+      provider: "crawl4ai",
+    });
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  test("sends PDFs straight to the fallback and private URLs nowhere", async () => {
+    const fetchImpl = vi.fn(async () => new Response());
+    const fallback = vi.fn(async () => null);
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl,
+      fallback,
+    });
+    await crawl("https://mtosmt.org/issues/mto.20.26.3/mto.20.26.3.miller.pdf");
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(fallback).toHaveBeenCalledTimes(1);
+    await expect(crawl("http://127.0.0.1/paper.pdf")).resolves.toBeNull();
+    await expect(crawl("http://169.254.169.254/latest")).resolves.toBeNull();
+    expect(fallback).toHaveBeenCalledTimes(1);
+  });
+
+  test("scrapes the Lab Firecrawl without credentials and returns bounded markdown", async () => {
+    const fetchImpl = firecrawlReturning({
+      success: true,
+      data: {
+        markdown: "# Jazz models\n" + "Algorithmic creativity. ".repeat(2_000),
+        metadata: { statusCode: 200 },
+      },
+    });
+    const scrape = createFirecrawlPage({
+      baseUrl: "http://172.16.10.38:3002/",
+      egressGuarded: true,
+      fetchImpl,
+    });
+    const page = await scrape("https://mtosmt.org/paper.pdf");
+    expect(page?.provider).toBe("firecrawl");
+    expect(page?.text.length).toBe(30_000);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "http://172.16.10.38:3002/v2/scrape",
+      expect.objectContaining({ method: "POST", redirect: "error" }),
+    );
+    const init = fetchImpl.mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(init.headers).has("authorization")).toBe(false);
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      url: "https://mtosmt.org/paper.pdf",
+      formats: ["markdown"],
+      onlyMainContent: true,
+      skipTlsVerification: false,
+    });
+  });
+
+  test("never scrapes through Firecrawl Cloud or without certified egress", async () => {
+    const fetchImpl = vi.fn(async () => new Response());
+    for (const deps of [
+      { baseUrl: "https://api.firecrawl.dev", egressGuarded: true },
+      { baseUrl: "", egressGuarded: true },
+      { baseUrl: "http://172.16.10.38:3002", egressGuarded: false },
+    ]) {
+      const scrape = createFirecrawlPage({ ...deps, fetchImpl });
+      await expect(scrape("https://example.org/paper")).resolves.toBeNull();
+    }
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  test("rejects failed, error-status, and challenge Firecrawl results", async () => {
+    for (const [body, status] of [
+      [{ success: false, error: "All scraping engines failed" }, 500],
+      [
+        {
+          success: true,
+          data: { markdown: article, metadata: { statusCode: 403 } },
+        },
+        200,
+      ],
+      [
+        {
+          success: true,
+          data: { markdown: jstorChallenge, metadata: { statusCode: 200 } },
+        },
+        200,
+      ],
+      [{ success: true, data: { markdown: "Too short" } }, 200],
+    ] as const) {
+      const scrape = createFirecrawlPage({
+        baseUrl: "http://172.16.10.38:3002",
+        egressGuarded: true,
+        fetchImpl: firecrawlReturning(body, status),
+      });
+      await expect(scrape("https://example.org/paper")).resolves.toBeNull();
+    }
   });
 });

@@ -1,6 +1,6 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { generateDedupeKey } from "./sourceUtils";
 import { modules } from "../harness/modules";
@@ -302,5 +302,166 @@ describe("source scout canonical writes", () => {
       enabled: true,
       metadata: { owner: "human" },
     });
+  });
+});
+
+describe("scout capture providers and repair", () => {
+  const article =
+    "# Experimental setup\n" + "The measured resonant modes. ".repeat(5);
+
+  test("accepts Firecrawl provenance and rejects bot challenge text", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const input = {
+      url: "https://example.org/paper.pdf",
+      query: "modal study",
+      rationale: "Thin domain",
+      agentRunId,
+    };
+    const created = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      rawText: article,
+      contentProvider: "firecrawl",
+    });
+    const source = await t.run((ctx) => ctx.db.get(created.id));
+    expect(source).toMatchObject({
+      status: "text_ready",
+      metadata: { scoutedBy: { contentProvider: "firecrawl" } },
+    });
+    const walled = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      url: "https://www.jstor.org/stable/1513178",
+      rawText:
+        "A required part of this site couldn’t load. Please check your connection, disable any ad blockers, or try using a different browser. \nis verifying your browser...",
+      contentProvider: "crawl4ai",
+    });
+    // The wall is dropped, but the URL-only Source is kept for a later run.
+    expect(walled.created).toBe(true);
+    const kept = await t.run((ctx) => ctx.db.get(walled.id));
+    expect(kept).toMatchObject({ status: "ingested" });
+    expect(kept?.rawText).toBeUndefined();
+    const keptMetadata = kept?.metadata as
+      | { scoutedBy?: Record<string, unknown> }
+      | undefined;
+    expect(keptMetadata?.scoutedBy).toBeDefined();
+    expect(keptMetadata?.scoutedBy).not.toHaveProperty("contentProvider");
+
+    // A wall shorter than the minimum text length is still a failed capture.
+    const shortWall = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      url: "https://example.org/walled",
+      rawText: "Please complete the CAPTCHA to continue.",
+      contentProvider: "firecrawl",
+    });
+    expect(shortWall.created).toBe(true);
+    const shortKept = await t.run((ctx) => ctx.db.get(shortWall.id));
+    expect(shortKept).toMatchObject({ status: "ingested" });
+    expect(shortKept?.rawText).toBeUndefined();
+  });
+
+  test("resets a bad capture so a later Scout run can capture it again", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const asOperator = t.withIdentity({
+      subject: "operator",
+      name: "Operator",
+    });
+    const input = {
+      url: "https://example.org/resonance",
+      query: "measured resonance",
+      rationale: "Thin domain",
+      agentRunId,
+    };
+    const { id } = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      rawText: article,
+      contentProvider: "crawl4ai",
+    });
+
+    await asOperator.mutation(api.sources.resetScoutCapture, {
+      id,
+      reason: "Captured a bot wall",
+    });
+    const reset = await t.run((ctx) => ctx.db.get(id));
+    expect(reset).toMatchObject({
+      status: "ingested",
+      blockedReason: "no_text",
+      blockedDetails: "Captured a bot wall",
+      metadata: { scoutedBy: { agentRunId } },
+    });
+    expect(reset?.rawText).toBeUndefined();
+    expect(reset?.rawTextSha256).toBeUndefined();
+    const resetMetadata = reset?.metadata as
+      | { scoutedBy?: Record<string, unknown> }
+      | undefined;
+    expect(resetMetadata?.scoutedBy).toBeDefined();
+    expect(resetMetadata?.scoutedBy).not.toHaveProperty("contentProvider");
+
+    const recaptured = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      rawText: article + " Captured again.",
+      contentProvider: "firecrawl",
+    });
+    expect(recaptured).toEqual({ id, created: false, enriched: true });
+    const enriched = await t.run((ctx) => ctx.db.get(id));
+    expect(enriched).toMatchObject({
+      status: "text_ready",
+      metadata: { scoutedBy: { contentProvider: "firecrawl" } },
+    });
+    expect(enriched?.blockedReason).toBeUndefined();
+    expect(enriched?.blockedDetails).toBeUndefined();
+  });
+
+  test("refuses to reset unauthenticated, non-scout, or extracted Sources", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const asOperator = t.withIdentity({
+      subject: "operator",
+      name: "Operator",
+    });
+    const { id } = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/extracted",
+      query: "q",
+      rationale: "r",
+      agentRunId,
+      rawText: article,
+      contentProvider: "crawl4ai",
+    });
+    await expect(
+      t.mutation(api.sources.resetScoutCapture, { id, reason: "x" }),
+    ).rejects.toThrow();
+
+    const urlOnly = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/url-only",
+      query: "q",
+      rationale: "r",
+      agentRunId,
+    });
+    await expect(
+      asOperator.mutation(api.sources.resetScoutCapture, {
+        id: urlOnly.id,
+        reason: "x",
+      }),
+    ).rejects.toThrow("Only an unextracted Source Scout capture");
+
+    await t.run((ctx) =>
+      ctx.db.insert("extractions", {
+        sourceId: id,
+        model: "test-model",
+        promptVersion: "test",
+        inputHash: "test-input",
+        summary: "Summary",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      }),
+    );
+    await expect(
+      asOperator.mutation(api.sources.resetScoutCapture, { id, reason: "x" }),
+    ).rejects.toThrow("already has an Extraction");
   });
 });

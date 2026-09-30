@@ -4,6 +4,7 @@ import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
 import {
   AGENT_RUN_EVENT_KINDS,
+  SCOUTED_CONTENT_PROVIDERS,
   SCOUTED_TEXT_MAX_CHARS,
   SCOUTED_TEXT_MIN_CHARS,
 } from "./agentContract";
@@ -60,7 +61,7 @@ export const agentToolArgs = {
       .min(SCOUTED_TEXT_MIN_CHARS)
       .max(SCOUTED_TEXT_MAX_CHARS)
       .optional(),
-    contentProvider: z.literal("crawl4ai").optional(),
+    contentProvider: z.enum(SCOUTED_CONTENT_PROVIDERS).optional(),
     query: z.string().trim().min(1),
     rationale: z.string().trim().min(1),
     agentRunId: zid("agentRuns"),

@@ -4,6 +4,7 @@ import { makeFunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
+import type { ScoutedContentProvider } from "./shared/agentContract";
 import type { AgentToolName } from "./shared/agentToolArgs";
 import {
   AGENT_TOOL_MANIFEST,
@@ -104,7 +105,9 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
         title: args.title as string | undefined,
         publishedAt: args.publishedAt as number | undefined,
         rawText: args.rawText as string | undefined,
-        contentProvider: args.contentProvider as "crawl4ai" | undefined,
+        contentProvider: args.contentProvider as
+          | ScoutedContentProvider
+          | undefined,
         query: args.query as string,
         rationale: args.rationale as string,
         agentRunId: args.agentRunId as Id<"agentRuns">,
