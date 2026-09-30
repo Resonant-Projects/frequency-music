@@ -27,6 +27,24 @@ declaration. A later release automation step may open that infrastructure pull
 request, but it must use a narrowly installed GitHub App rather than a personal
 access token or the source repository's `GITHUB_TOKEN`.
 
+## Lab Harbor copy
+
+The image is published to GHCR and, for `main` builds, also to the Lab's
+internal Harbor at `registry.rproj.art/frequency-music/frequency-music-agent`.
+Harbor is reachable only from the Lab LAN, so the workflow's `harbor` job runs on
+a self-hosted GARM runner after `publish` succeeds. It copies the GHCR digest
+under the immutable tag `sha-<full-commit>` and signs it keylessly with cosign
+under this workflow's identity,
+`https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml@refs/heads/main`
+(issuer `https://token.actions.githubusercontent.com`). It then verifies the
+signature, records Harbor's vulnerability scan in the run summary, proves an
+anonymous pull, and uploads `harbor-deployment.json` with the Harbor `deploy`
+reference. The Kubernetes worker is promoted to that Harbor reference in
+`keithce/homelab-infra`. A manual dispatch reaches Harbor only when it runs from
+`main` with a `source_ref` already on `main`. The `harbor-publish` environment,
+limited to `main`, holds `HARBOR_PUBLISH_ROBOT_SECRET` for Harbor robot
+`robot$frequency-music-publisher`.
+
 For the first migration from an in-guest Git build, dispatch the workflow with the
 commit already declared by infrastructure. This proves the artifact path without
 also changing application behavior. Subsequent application changes publish from
