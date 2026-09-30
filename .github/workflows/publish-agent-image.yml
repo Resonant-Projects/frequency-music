@@ -350,7 +350,10 @@ jobs:
                   f"{base}/{urllib.parse.quote(ref, safe=':')}{suffix}",
                   data=b"" if method == "POST" else None,
                   method=method,
-                  headers={"Accept": "application/json", "Authorization": f"Basic {auth}"},
+                  # Ask for the generic report the scan wait parses. Harbor
+                  # already returns it by default; this pins it.
+                  headers={"Accept": "application/json", "Authorization": f"Basic {auth}",
+                           "X-Accept-Vulnerabilities": REPORT},
               )
               try:
                   with urllib.request.urlopen(request, timeout=60) as response:
