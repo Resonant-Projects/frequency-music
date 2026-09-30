@@ -52,7 +52,8 @@ export type PodcastSubscription =
     };
 
 // The route compares the raw path segment, so a token needing percent-encoding
-// could never match; such a token is reported rather than handed out.
+// could never match. Exact dot segments are also invalid because URL parsing
+// normalizes them out of the route.
 const URL_SAFE_TOKEN = /^[A-Za-z0-9._~-]+$/;
 
 export function podcastSubscription(
@@ -60,7 +61,7 @@ export function podcastSubscription(
   publicBaseUrl: string,
 ): PodcastSubscription {
   if (!token) return { configured: false, reason: "missing_token" };
-  if (!URL_SAFE_TOKEN.test(token)) {
+  if (!URL_SAFE_TOKEN.test(token) || token === "." || token === "..") {
     return { configured: false, reason: "invalid_token" };
   }
   let base: URL;

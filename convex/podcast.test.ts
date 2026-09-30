@@ -356,10 +356,12 @@ describe("podcast subscription url", () => {
       reason: "missing_token",
     });
     // A token the route could never match is not handed out.
-    expect(podcastSubscription("a b/c", "https://listen.test")).toEqual({
-      configured: false,
-      reason: "invalid_token",
-    });
+    for (const token of ["a b/c", ".", ".."]) {
+      expect(podcastSubscription(token, "https://listen.test")).toEqual({
+        configured: false,
+        reason: "invalid_token",
+      });
+    }
     expect(podcastSubscription("tok-1", "not a url")).toEqual({
       configured: false,
       reason: "invalid_base_url",
