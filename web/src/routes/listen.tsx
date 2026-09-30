@@ -88,6 +88,39 @@ const actionsClass = css({
   alignItems: "center",
   mt: "3",
 });
+const stepsClass = css({
+  color: "zodiac.cream/82",
+  display: "flex",
+  flexDirection: "column",
+  gap: "1",
+  listStyle: "decimal",
+  mt: "3",
+  pl: "5",
+});
+const copyRowClass = css({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+  alignItems: "center",
+  "& > input": { flex: "1 1 16rem", minW: "0" },
+});
+
+// The house voice's first choice schedules a reconcile over this window.
+const NARRATION_BACKFILL_DAYS = 14;
+
+type FeedNotConfiguredReason =
+  | "missing_token"
+  | "invalid_token"
+  | "invalid_base_url";
+// Plain copy for the listener; the operator-facing detail for each reason
+// lives with the feed configuration, not in this flow.
+const FEED_NOT_CONFIGURED: Record<FeedNotConfiguredReason, string> = {
+  missing_token: "The private feed isn't set up yet. Check back later.",
+  invalid_token:
+    "The private feed is set up incorrectly, so there is no address to share yet.",
+  invalid_base_url:
+    "The private feed is set up incorrectly, so there is no address to share yet.",
+};
 
 export function ListenPage() {
   onMount(() => {
@@ -137,11 +170,15 @@ export function ListenPage() {
         <p class={proseClass}>
           Blind voice shootout. Rate every take; the mapping is revealed only
           after the last rating. Choosing the house voice is a separate,
-          explicit step.
+          explicit step: the first choice starts narrating briefs from the last{" "}
+          {NARRATION_BACKFILL_DAYS} days right away, and every new brief is
+          narrated in the voice you choose.
         </p>
         <p class={bannerClass}>House voice: {houseVoiceLabel()}</p>
         <UINotice error={houseVoiceError()} />
       </UICard>
+
+      <PodcastFeedCard />
 
       <UICard>
         <h2 class={sectionTitleClass}>Shootouts</h2>
@@ -176,15 +213,114 @@ export function ListenPage() {
       <UINotice status={notice()} error={noticeError()} />
 
       <Show when={selected()} keyed>
-        {(id) => <ShootoutGroup groupId={id} onNotice={report} />}
+        {(id) => (
+          <ShootoutGroup
+            groupId={id}
+            houseVoiceId={houseVoice.data()?.voiceId ?? null}
+            onNotice={report}
+          />
+        )}
       </Show>
     </section>
+  );
+}
+
+// The feed address is a bearer credential. It is fetched only through the
+// authenticated query and lives nowhere but this card.
+function PodcastFeedCard() {
+  const subscription = createQueryWithStatus(
+    api.podcast.subscription,
+    () => ({}),
+  );
+  const [copyStatus, setCopyStatus] = createSignal<string | null>(null);
+  const [copyError, setCopyError] = createSignal<string | null>(null);
+  let urlInput: HTMLInputElement | undefined;
+
+  const feedUrl = () => {
+    const data = subscription.data();
+    return data?.configured ? data.feedUrl : null;
+  };
+  const status = () => {
+    if (copyStatus()) return copyStatus();
+    if (subscription.isLoading()) return "Loading the feed address...";
+    const data = subscription.data();
+    return data && !data.configured ? FEED_NOT_CONFIGURED[data.reason] : null;
+  };
+  const error = () => {
+    if (copyError()) return copyError();
+    const failure = subscription.error();
+    return failure
+      ? `Unable to load the feed address: ${failure.message}`
+      : null;
+  };
+
+  async function copy(url: string) {
+    try {
+      if (!navigator.clipboard) throw new Error("clipboard unavailable");
+      await navigator.clipboard.writeText(url);
+      setCopyError(null);
+      setCopyStatus("Feed address copied.");
+    } catch {
+      // Clipboard access can be denied or absent; leave the address
+      // selected so a manual copy is one keystroke away.
+      urlInput?.focus();
+      urlInput?.select();
+      setCopyStatus(null);
+      setCopyError(
+        "Could not copy automatically. The address is selected above; copy it manually.",
+      );
+    }
+  }
+
+  return (
+    <UICard>
+      <h2 class={sectionTitleClass}>Podcast feed</h2>
+      <p class={proseClass}>
+        Episodes arrive as a private podcast. Anyone with this address can
+        listen, so keep it to yourself.
+      </p>
+      <Show when={feedUrl()}>
+        {(url) => (
+          <>
+            <ol class={stepsClass}>
+              <li>Copy the feed address below.</li>
+              <li>
+                In Pocket Casts, open Discover and paste the full address into
+                search.
+              </li>
+              <li>Open the result and tap Subscribe.</li>
+            </ol>
+            <label class={fieldLabelClass} for="podcast-feed-url">
+              Private feed address
+            </label>
+            <div class={copyRowClass}>
+              <UIInput
+                id="podcast-feed-url"
+                ref={(el) => {
+                  urlInput = el;
+                }}
+                readOnly
+                spellcheck={false}
+                autocomplete="off"
+                value={url()}
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <UIButton type="button" onClick={() => copy(url())}>
+                Copy address
+              </UIButton>
+            </div>
+          </>
+        )}
+      </Show>
+      <UINotice status={status()} error={error()} />
+    </UICard>
   );
 }
 
 // Mounted only with a concrete group id, so every query has real args.
 function ShootoutGroup(props: {
   groupId: Id<"blindGroups">;
+  houseVoiceId: string | null;
   onNotice: (text: string, isError?: boolean) => void;
 }) {
   const projectionQuery = createQueryWithStatus(
@@ -245,15 +381,26 @@ function ShootoutGroup(props: {
     }
   }
 
+  // One choice in flight at a time; the server also schedules the initial
+  // narration only once, however often this is clicked.
+  const [choosing, setChoosing] = createSignal(false);
   async function chooseHouseVoice(voiceId: string) {
+    if (choosing()) return;
+    setChoosing(true);
     try {
-      await setHouseVoice({ voiceId });
-      props.onNotice(`House voice set to ${voiceId}`);
+      const { initialNarrationScheduled } = await setHouseVoice({ voiceId });
+      props.onNotice(
+        initialNarrationScheduled
+          ? `House voice set to ${voiceId}. Narration of briefs from the last ${NARRATION_BACKFILL_DAYS} days is starting; episodes appear in the feed as they finish.`
+          : `House voice set to ${voiceId}. New briefs will be narrated in this voice.`,
+      );
     } catch (error) {
       props.onNotice(
         error instanceof Error ? error.message : "Could not set house voice",
         true,
       );
+    } finally {
+      setChoosing(false);
     }
   }
 
@@ -340,13 +487,21 @@ function ShootoutGroup(props: {
                     </UIBadge>
                     <Show when={ratingFor(member.memberId)?.voiceId}>
                       {(voiceId) => (
-                        <UIButton
-                          type="button"
-                          variant="solid"
-                          onClick={() => chooseHouseVoice(voiceId())}
-                        >
-                          Set as house voice
-                        </UIButton>
+                        <>
+                          {/* The current voice stays selectable: a voice
+                              seeded internally still needs the first human
+                              choice to start the initial narration. */}
+                          <Show when={voiceId() === props.houseVoiceId}>
+                            <UIBadge>house voice</UIBadge>
+                          </Show>
+                          <UIButton
+                            type="button"
+                            disabled={choosing()}
+                            onClick={() => chooseHouseVoice(voiceId())}
+                          >
+                            Set as house voice
+                          </UIButton>
+                        </>
                       )}
                     </Show>
                   </div>

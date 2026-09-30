@@ -1,8 +1,13 @@
 import { convexTest } from "convex-test";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { modules } from "../harness/modules";
-import { internal } from "./_generated/api";
-import { buildFeedXml, feedTokenMatches, publicStorageUrl } from "./podcast";
+import { api, internal } from "./_generated/api";
+import {
+  buildFeedXml,
+  feedTokenMatches,
+  podcastSubscription,
+  publicStorageUrl,
+} from "./podcast";
 import schema from "./schema";
 import type { AudioArtifactInput } from "./shared/audioArtifacts";
 
@@ -329,5 +334,90 @@ describe("podcast feed route", () => {
     expect(xml).toContain("<title>Feed episode</title>");
     expect(xml).toMatch(/<enclosure url="https:\/\/listen\.test\//);
     expect(xml).toContain(`<guid isPermaLink="false">${artifactId}</guid>`);
+  });
+});
+
+describe("podcast subscription url", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  const identity = { subject: "user_1", tokenIdentifier: "clerk|user_1" };
+
+  test("builds the feed route url and reports each misconfiguration", () => {
+    expect(podcastSubscription("tok-1", "https://listen.test/")).toEqual({
+      configured: true,
+      feedUrl: "https://listen.test/podcast/tok-1/feed.xml",
+    });
+    expect(podcastSubscription(undefined, "https://listen.test")).toEqual({
+      configured: false,
+      reason: "missing_token",
+    });
+    expect(podcastSubscription("", "https://listen.test")).toEqual({
+      configured: false,
+      reason: "missing_token",
+    });
+    // A token the route could never match is not handed out.
+    for (const token of ["a b/c", ".", ".."]) {
+      expect(podcastSubscription(token, "https://listen.test")).toEqual({
+        configured: false,
+        reason: "invalid_token",
+      });
+    }
+    expect(podcastSubscription("tok-1", "not a url")).toEqual({
+      configured: false,
+      reason: "invalid_base_url",
+    });
+    expect(podcastSubscription("tok-1", "ftp://listen.test")).toEqual({
+      configured: false,
+      reason: "invalid_base_url",
+    });
+  });
+
+  test("an authenticated caller gets the url the feed route serves", async () => {
+    stubFeedEnv();
+    const t = convexTest(schema, modules);
+    const result = await t
+      .withIdentity(identity)
+      .query(api.podcast.subscription, {});
+    expect(result).toEqual({
+      configured: true,
+      feedUrl: "https://listen.test/podcast/test-token/feed.xml",
+    });
+    if (!result.configured) throw new Error("expected a configured feed");
+    const response = await t.fetch(new URL(result.feedUrl).pathname, {
+      method: "GET",
+    });
+    expect(response.status).toBe(200);
+  });
+
+  test("a missing token is an explicit not-configured state", async () => {
+    vi.stubEnv("PODCAST_FEED_TOKEN", "");
+    vi.stubEnv("PODCAST_PUBLIC_BASE_URL", "https://listen.test");
+    const t = convexTest(schema, modules);
+    expect(
+      await t.withIdentity(identity).query(api.podcast.subscription, {}),
+    ).toEqual({ configured: false, reason: "missing_token" });
+  });
+
+  test("anonymous callers are refused without the token in the error", async () => {
+    stubFeedEnv();
+    vi.stubEnv("AUTH_BYPASS_ENABLED", "false");
+    const t = convexTest(schema, modules);
+    const error = await t.query(api.podcast.subscription, {}).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect(error).toBeInstanceOf(Error);
+    expect(String(error)).toMatch(/Authentication required/);
+    expect(String(error)).not.toContain("test-token");
+  });
+
+  test("a wrong bypass secret is refused like an anonymous caller", async () => {
+    stubFeedEnv();
+    vi.stubEnv("AUTH_BYPASS_ENABLED", "true");
+    vi.stubEnv("AUTH_BYPASS_SECRET", "right-secret");
+    const t = convexTest(schema, modules);
+    await expect(
+      t.query(api.podcast.subscription, { devBypassSecret: "wrong-secret" }),
+    ).rejects.toThrow(/Authentication required/);
   });
 });

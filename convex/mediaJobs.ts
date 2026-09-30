@@ -5,6 +5,7 @@ import {
   internalMutation,
   internalQuery,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { applyMediaJobResult } from "./mediaJobEffects";
 import {
@@ -71,6 +72,16 @@ export const enqueue = internalMutation({
   returns: v.object({ jobId: v.id("mediaJobs"), created: v.boolean() }),
   handler: async (ctx, args) => {
     const input = mediaJobInputZ.parse(args.input);
+    const brief =
+      input.kind === "narrate" && input.refs.weeklyBriefId
+        ? await ctx.db.get(input.refs.weeklyBriefId)
+        : null;
+    if (brief) {
+      // Admission and insertion share a transaction, so competing scripts
+      // for the same brief cannot both create a narration job.
+      const blocking = await blockingNarrateJobForBrief(ctx, brief);
+      if (blocking) return { jobId: blocking._id, created: false };
+    }
     const dedupeKey = mediaJobDedupeKey(input);
     const existing = await ctx.db
       .query("mediaJobs")
@@ -89,16 +100,19 @@ export const enqueue = internalMutation({
       input,
       dedupeKey,
       status: "queued",
-      priority: args.priority ?? 0,
+      priority:
+        input.kind === "narrate" && input.refs.weeklyBriefId
+          ? NARRATE_PRIORITY
+          : (args.priority ?? 0),
       attempts: 0,
-      createdAt: Date.now(),
+      createdAt: Math.max(Date.now(), brief?._creationTime ?? 0),
     });
     return { jobId, created: true };
   },
 });
 
-// Statuses that block reconciliation from enqueueing another narrate job for
-// a brief. Dedupe cannot do this: the LLM regenerates the script on every
+// Statuses that block both reconciliation and admission of another narrate
+// job for a brief. Dedupe cannot do this: the LLM regenerates the script on every
 // build, so each attempt hashes to a fresh dedupeKey. Only a `failed` job, or
 // no job at all, lets a brief through.
 const BLOCKING_NARRATE_STATUSES = [
@@ -107,6 +121,31 @@ const BLOCKING_NARRATE_STATUSES = [
   "done",
   "parked",
 ] as const;
+
+async function blockingNarrateJobForBrief(
+  ctx: QueryCtx,
+  brief: Doc<"weeklyBriefs">,
+): Promise<Doc<"mediaJobs"> | null> {
+  for (const status of BLOCKING_NARRATE_STATUSES) {
+    const job = await ctx.db
+      .query("mediaJobs")
+      .withIndex("by_status_priority_createdAt", (q) =>
+        q
+          .eq("status", status)
+          .eq("priority", NARRATE_PRIORITY)
+          .gte("createdAt", brief._creationTime),
+      )
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("input.kind"), "narrate"),
+          q.eq(q.field("input.refs.weeklyBriefId"), brief._id),
+        ),
+      )
+      .first();
+    if (job) return job;
+  }
+  return null;
+}
 
 // First blocking status of a narrate job referencing the brief, or null when
 // the brief has no live narrate job. Ruling R19. A narrate job for a brief is
@@ -118,24 +157,8 @@ export const narrateJobStateForBrief = internalQuery({
   handler: async (ctx, args) => {
     const brief = await ctx.db.get(args.briefId);
     if (!brief) return null;
-    for (const status of BLOCKING_NARRATE_STATUSES) {
-      const jobs = await ctx.db
-        .query("mediaJobs")
-        .withIndex("by_status_priority_createdAt", (q) =>
-          q
-            .eq("status", status)
-            .eq("priority", NARRATE_PRIORITY)
-            .gte("createdAt", brief._creationTime),
-        )
-        .collect();
-      const hit = jobs.some(
-        (job) =>
-          job.input.kind === "narrate" &&
-          job.input.refs.weeklyBriefId === args.briefId,
-      );
-      if (hit) return status;
-    }
-    return null;
+    const job = await blockingNarrateJobForBrief(ctx, brief);
+    return job?.status ?? null;
   },
 });
 

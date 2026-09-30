@@ -1,9 +1,9 @@
 // Weekly-turn episodes: narration is enqueued by brief generation itself;
-// `reconcile` only catches briefs that missed it. Dedupe does not protect
-// reconciliation (every script build hashes differently), so a brief with any
-// live narrate job is skipped outright (ruling R19). No "use node": the actions
-// here only call ctx.run*, and the file also exports a query, which a node
-// file cannot.
+// `reconcile` only catches briefs that missed it. It skips briefs with live
+// narration jobs before paying for scripts; atomic per-brief admission in
+// mediaJobs.enqueue prevents duplicates if callers overlap (ruling R19).
+// No "use node": these actions only call ctx.run*, and this file also exports
+// a query, which a node file cannot.
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -108,8 +108,9 @@ export const narrateBrief = internalAction({
 
 // Repeat runs are safe because a brief with any live narrate job (queued,
 // claimed, done, parked) is skipped; only a failed job or none proceeds. Each
-// narrateBrief call pays for a fresh script, so this gate is the only thing
-// preventing a second episode for one brief. Briefs are isolated: one whose
+// narrateBrief call pays for a fresh script, so this check avoids unnecessary
+// generation. Overlapping callers can still generate two scripts, but atomic
+// per-brief admission creates only one job. Briefs are isolated: one whose
 // narration throws is logged and counted, and the rest still run.
 export const reconcile = internalAction({
   args: { daysBack: v.optional(v.number()) },

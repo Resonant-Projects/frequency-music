@@ -2,7 +2,8 @@
 // come from storage URLs rewritten onto the public host. A wrong token is a
 // 404 so the route is invisible to scanners.
 import { v } from "convex/values";
-import { internalQuery } from "./_generated/server";
+import { internalQuery, query } from "./_generated/server";
+import { requireAuth } from "./auth";
 
 export type FeedEpisode = {
   id: string;
@@ -34,6 +35,71 @@ async function digest(text: string): Promise<Uint8Array> {
   const bytes = new TextEncoder().encode(text);
   return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 }
+
+const DEFAULT_PUBLIC_BASE_URL = "https://listen.rproj.art";
+
+// Shared with the feed route so the subscription URL and the enclosure URLs
+// always name the same host.
+export function podcastPublicBaseUrl(): string {
+  return process.env.PODCAST_PUBLIC_BASE_URL || DEFAULT_PUBLIC_BASE_URL;
+}
+
+export type PodcastSubscription =
+  | { configured: true; feedUrl: string }
+  | {
+      configured: false;
+      reason: "missing_token" | "invalid_token" | "invalid_base_url";
+    };
+
+// The route compares the raw path segment, so a token needing percent-encoding
+// could never match. Exact dot segments are also invalid because URL parsing
+// normalizes them out of the route.
+const URL_SAFE_TOKEN = /^[A-Za-z0-9._~-]+$/;
+
+export function podcastSubscription(
+  token: string | undefined,
+  publicBaseUrl: string,
+): PodcastSubscription {
+  if (!token) return { configured: false, reason: "missing_token" };
+  if (!URL_SAFE_TOKEN.test(token) || token === "." || token === "..") {
+    return { configured: false, reason: "invalid_token" };
+  }
+  let base: URL;
+  try {
+    base = new URL(publicBaseUrl);
+  } catch {
+    return { configured: false, reason: "invalid_base_url" };
+  }
+  if (base.protocol !== "https:" && base.protocol !== "http:") {
+    return { configured: false, reason: "invalid_base_url" };
+  }
+  const root = `${base.origin}${base.pathname.replace(/\/$/, "")}`;
+  return { configured: true, feedUrl: `${root}/podcast/${token}/feed.xml` };
+}
+
+// The feed URL is a bearer credential: only an authenticated caller gets it,
+// and nothing here logs it or puts it in an error.
+export const subscription = query({
+  args: { devBypassSecret: v.optional(v.string()) },
+  returns: v.union(
+    v.object({ configured: v.literal(true), feedUrl: v.string() }),
+    v.object({
+      configured: v.literal(false),
+      reason: v.union(
+        v.literal("missing_token"),
+        v.literal("invalid_token"),
+        v.literal("invalid_base_url"),
+      ),
+    }),
+  ),
+  handler: async (ctx, args): Promise<PodcastSubscription> => {
+    await requireAuth(ctx, args);
+    return podcastSubscription(
+      process.env.PODCAST_FEED_TOKEN,
+      podcastPublicBaseUrl(),
+    );
+  },
+});
 
 export function publicStorageUrl(
   storageUrl: string,

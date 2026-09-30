@@ -10,6 +10,7 @@ import {
 } from "./episodes";
 import { NARRATE_PRIORITY } from "./mediaJobs";
 import schema from "./schema";
+import { RENDERER_VERSION_FOR_JOBS } from "./shared/mediaJobs";
 
 // narration.buildScriptForBrief is the one LLM call behind narrateBrief;
 // the reconcile isolation test scripts its outcomes per brief.
@@ -328,7 +329,7 @@ describe("episodes", () => {
       "breeze-2",
     ]);
     expect(job.input.passage).toHaveLength(3);
-    expect(job.input.rendererVersion).toBe("0.2.0");
+    expect(job.input.rendererVersion).toBe(RENDERER_VERSION_FOR_JOBS);
   });
 
   test("enqueueShootout with rerun queues a fresh shootout after a done one", async () => {
