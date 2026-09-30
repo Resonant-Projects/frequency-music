@@ -1,49 +1,61 @@
 # Listen-first live handoff
 
-Date: September 30, 2026. Wave 1 implementation is merged and deployed. The two-voice production shootout and private feed are ready. Human listening acceptance remains separate from deployment.
+Updated September 30, 2026. Wave 1 implementation is deployed. The expanded production shootout contains five blind takes in a 6-minute-58-second episode, including male and female voices. Human listening acceptance remains separate from deployment. The private feed and public audio downloads, including seeking, are verified.
 
 ## Keith's steps
 
 1. Open [Listen](https://app.resonantprojects.art/listen) and sign in with your usual Frequency account.
 2. In **Podcast feed**, select **Copy address**. The full private URL is also selectable if clipboard access is unavailable.
-3. In Pocket Casts, open **Discover**, paste that entire address into search, open the result, and select **Subscribe**. The feed is named **Frequency Music, private**.
-4. Play **Voice shootout**. You can also play the individual blind takes on the website. Rate every take from 0 to 5 for naturalness, prosody, clean audio, clarity, and overall quality; notes are optional. For clean audio, 5 means no artifacts.
-5. After every take is rated, the website reveals the voices. Select **Set as house voice** on your preferred voice. The choice is yours; the system does not infer it from scores.
-6. Your first explicit choice starts narration of recent briefs. Refresh Pocket Casts after processing finishes to find **Weekly turn, week of ...**. New briefs use your selected voice automatically; the Saturday reconciliation catches missed briefs.
+3. In Pocket Casts, open **Discover**, paste that entire address into search, open the result, and select **Subscribe**. The feed is named **Frequency Music, private**. If already subscribed, refresh it; the address has not changed.
+4. Play the newest **Voice shootout**, lasting about 6:58. The earlier 2:46 comparison remains in the feed. Individual blind takes are also available on the website.
+5. Rate every new take from 0 to 5 for naturalness, prosody, clean audio, clarity, and overall quality. Notes are optional. For clean audio, 5 means no artifacts.
+6. After every take is rated, the website reveals the voices. Select **Set as house voice** on your preferred voice. The system does not infer that choice from scores.
+7. Your first explicit choice starts narration of recent briefs. Refresh Pocket Casts after processing finishes to find **Weekly turn, week of ...**. New briefs use your selected voice automatically; Saturday reconciliation catches missed briefs.
 
-The subscription address includes a private feed token. Retrieve it from the signed-in page rather than a committed document. The feed contains the shootout before a house voice is selected, so subscribing does not depend on choosing a winner first.
+The subscription address includes a private feed token. Retrieve it from the signed-in page rather than a committed document. The feed contains the shootout before a house voice is selected.
+
+## Available voices and account actions
+
+The expanded comparison contains Gemini, Inworld, Breeze, and two Cartesia candidates: Nandi and Quentin. The Cartesia pair provides female and male voices. Candidate names are not mapped to blind take labels here. The existing Cartesia credential is connected; both candidates rendered successfully through the production pipeline.
+
+Gemini's daily free quota became available again, and its take completed. For ongoing use, enable billing on the same Google AI Studio project as the saved key. ElevenLabs remains explicitly omitted because the Frequency API key has a custom 1,000-credit cap, with 101 credits remaining while one calibration paragraph requires 417. Raise that key cap first. If account credits are also exhausted, use ElevenLabs Pay As You Go top-up. The account's subscription tier could not be read with the saved key.
+
+[Voice provider setup](voice-provider-setup.md) contains the exact Gemini and ElevenLabs billing steps, current minimum top-ups, provider links, and deployment instructions. No billing plan, payment, or key quota was changed by this work.
 
 ## Acceptance still requiring Keith
 
-- Listen to the actual shootout, submit your ratings, and choose the house voice.
+- Listen to the expanded comparison, submit ratings, and choose the house voice.
 - Confirm Pocket Casts subscription, playback, and seeking on your device.
 - Listen to the first weekly episode after selecting the voice and assess its quality.
 
-Keep the local TTS service available until the voice choice is known. If a hosted voice wins, the operator can stop `tts-local` and clear `BREEZE_TTS_BASE_URL` during the subsequent host cleanup. Do not stop it before the shootout or while a job needs it.
+The previous group and its ratings remain intact. The new group is unrevealed and the house voice is unset as of this verification. Agents did not submit ratings or select a voice.
+
+Keep local TTS available until the voice choice is known. If a hosted voice wins, the operator can stop `tts-local` and clear `BREEZE_TTS_BASE_URL` during subsequent host cleanup. Do not stop it while a job needs it.
 
 ## Wave 2
 
-The next implementation is [the docket and signed decisions plan](superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md). Text cards can proceed independently of the voice choice. Spoken cards require the chosen voice. Platform decisions require separate signer bots and verified mappings to your account; agents only propose decisions.
+[The docket and signed decisions plan](superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) is ready for implementation. Start with the text docket and shared decision contracts. Spoken cards depend on the chosen house voice. Verify that voice's actual OpenClaw provider support, including Cartesia if selected; a catalog mapping is not proof that the external integration exists.
 
-The plan lists concrete code tasks, tests, external prerequisites, staged deployment, and human acceptance. Wave 2 is prepared for implementation; it is not deployed by this handoff.
+Platform decisions require separate signer bots and verified mappings to your account. The plan lists code tasks, tests, external prerequisites, staged deployment, and human acceptance. Wave 2 is not deployed by this handoff.
 
 ## Operator evidence
 
-- Implementation PR [#81](https://github.com/Resonant-Projects/frequency-music/pull/81) merged as `797339c6d25473f50f0bfa5213bf4a867332d91a`. Claude Opus 5.5 implemented the handoff and audio fix; GPT-6.1 Sol workers reviewed code and checked deployment and Wave 2 prerequisites.
-- Convex deployment succeeded against the existing self-hosted backend. Root TypeScript checks passed; deployment used `--typecheck disable --codegen disable` because this repository checks Convex through its root project and has no `convex/tsconfig.json`.
-- Media renderer `0.2.1` started on `ai-5090-02` at 01:35:07 UTC from the same source SHA. Image digest: `sha256:83203ae172d6879909196af0d09d67e4bbccce0d649b4fd95cb2d3dbdab7ea38`. All four job kinds are enabled. All hosted keys initially resolved, but Google and ElevenLabs were subsequently omitted from the worker runtime because of the account limits below. Breeze returned health 200 and was not restarted.
-- Vercel production deployment `dpl_14aBa8w5E6TDRYXWLWFQ2fzru8d1` is READY and serves `app.resonantprojects.art`; GitHub deployment `6749318523` ties it to the merged SHA. The live Listen bundle contains the subscription controls and first-narration message. An unauthenticated browser visit reaches Clerk sign-in. Authenticated rendering and clipboard use remain part of Keith's acceptance.
-- `vp run verify` passed all 940 tests: root 616, harness 91, agent 176, media 57, plus formatting, lint, and type checks. `vp run build` from `web/` succeeded. Root `vp run build:web` has a pre-existing Vite Plus task-resolution failure, `Task "build" not found`; the direct package build is the verified alternative.
-- A real production speech recording exposed an old loudness failure. The fixed 16-bit master measured −16.1 LUFS / −1.4 dBTP; its MP3 measured −16.1 LUFS / −3.9 dBTP. The spoken policy remains −16 ±0.5 LUFS and peak ≤−1 dBTP. The old parked shootout is retained as failure provenance.
+Claude Opus 5.5 implemented the application and infrastructure changes. GPT-6.1 Sol workers checked operations and reviewed each substantive candidate through the required isolated review workflow.
 
-The full-catalog attempts exposed two account limits. Gemini returned `GenerateRequestsPerDayPerProjectPerModel-FreeTier`, capped at 10 requests per day. ElevenLabs returned `quota_exceeded`: the Frequency API key has a 1,000-credit cap and only 101 credits remained, while one paragraph required 417. Its short probe succeeded, which confirmed the credential itself works. These providers are explicitly skipped for this shootout. Their credentials remain in 1Password; the omission is in the current worker environment only. An ordinary secret-resolving deployment restores them, so resolve the limits or preserve the omission before another shootout. Inworld and local Breeze remain available for rating and weekly narration.
+- Application [PR #87](https://github.com/Resonant-Projects/frequency-music/pull/87) merged as `bc4332900a61d442133af79ef1e313d59ed158c1`. `vp run verify` passed all 956 tests, formatting, lint, and typechecks. Independent review completed with no findings. GitHub CI and image scans passed.
+- Both Convex and the media worker use renderer `0.2.2`. The full queue was idle before stopping the old worker and after deploying the backend. Deployment targeted the existing self-hosted backend at `http://172.16.10.24:3210`, with no schema or index removal. Root checks cover Convex; deployment used `--typecheck disable --codegen disable` because there is no separate `convex/tsconfig.json`.
+- Media started on `ai-5090-02` at 14:46:32 UTC from the same application SHA. Image digest is `sha256:c704e13dc92157d82ee6861d20f12870986d4aee91713267d0c3c6a0f672eb5c`. Gemini, Inworld, and Cartesia keys are present; ElevenLabs is explicitly empty. Breeze retained its existing container and start time, and returned HTTP 200 from inside the media container.
+- Credential deployment [homelab-infra #599](https://github.com/keithce/homelab-infra/pull/599) merged as `858ff6f2b7fe5d051a8490e7a946d82571e84203`. Reviewed compose and deployment files were installed exactly. Only `MEDIA_IMAGE_TAG` changed in the host's existing `.env`; all other bytes were preserved. The media-only update preserved local TTS.
+- GitHub production deployment `6762165438` succeeded for the merged application SHA. The live site requires the usual Clerk sign-in. Authenticated rendering, clipboard behavior, and Pocket Casts playback remain human acceptance checks.
+- New shootout job `nd77e8r8d4ghnk3e7pw1nxd7898fdb23` completed on its first attempt. Group `n977jy0k06mncwecfd1d95r8zx8fdbj9` has five members and is unrevealed. All 12 artifacts are ready, measure −16.0 LUFS, and have a highest true peak of −1.3 dBTP.
+- Episode `n575dqk0hsh78xtthtm2spyh998fcqjv` is a 417.552-second, 6,681,216-byte MP3. The previous two-voice episode remains available. Earlier failed jobs remain as provenance.
 
-The successful shootout job is `nd7assr5c5mv64jz34q1x84m9s8fdb06`, completed on its first attempt. Blind group `n97e2tsja1a8dsmt8cjavwbj9n8fcakq` has two members and remains unrevealed. All six artifacts are ready; their measured loudness is −16.0 LUFS and the highest true peak is −1.7 dBTP. No voice-to-take mapping is recorded here.
+## Durable podcast routing correction
 
-The feed contains **Voice shootout**, artifact `n57b235ycbtxegj072ckwdnw5d8fd51q`, lasting 165.864 seconds and containing 2,654,208 bytes. The downloaded delivery is MP3, 48 kHz, two channels, 128 kbps. RSS returns 200 with valid XML and one item; a wrong feed token returns 404. The authenticated subscription query returns the configured private address. The actual public enclosure returns 206 for `Range: bytes=0-99`, with `Content-Range: bytes 0-99/2654208` and exactly 100 bytes. This verifies the server support podcast clients need for seeking; actual Pocket Casts playback remains Keith's check.
+The earlier handoff incorrectly described the Listen Nginx Proxy Manager host as unmanaged. Current infrastructure source declares it in `services/convex-hatchet/service.json`. An automatic deployment at 02:06 UTC removed the earlier API-only custom location, making public audio downloads return 404 again.
 
-The public download check caught a missing Nginx Proxy Manager custom location. Host 74 already forwarded podcast requests to the Convex site on port 3211 but was also forwarding storage requests there. The correction adds only `/api/storage/` to `http://172.16.10.24:3210`. The existing URI allowlist, root/podcast route, TLS, certificate, access and cache settings were preserved. NPM reports `nginx_online: true`. The configuration is persisted in NPM; no managed `listen.rproj.art` route was found in the inspected infrastructure source. A second location-only correction works around Convex's invalid suffix-range response: suffix-only requests receive HTTP 200 with the full file. Prefix, midfile and open-ended ranges retain HTTP 206 with correct bytes. Full downloads, all these range forms, and rejection of an invalid feed token were verified. Remove the suffix workaround only after the backend behavior is fixed and checked.
+[homelab-infra #601](https://github.com/keithce/homelab-infra/pull/601), merged as `777c0570a4d868eb24cb326930bb97068bbc97cf`, moves the fix into the managed route's `advanced_config`. Storage paths use port 3210; podcast paths remain on port 3211. The URI allowlist, TLS, certificate, access, and cache settings remain unchanged. The location suppresses suffix-only Range requests upstream because Convex otherwise returns an invalid underflowed range; full-file HTTP 200 is the valid fallback. Other ranges retain normal HTTP 206 behavior.
 
-The deployment script fix is tracked in [homelab-infra #580](https://github.com/keithce/homelab-infra/pull/580). It resolves each service's image separately, skips local-image pulls, and supports a media-only update. Until quota capacity is restored, explicitly export empty `GEMINI_API_KEY` and `ELEVENLABS_API_KEY` when using the updated script; omitted variables are resolved from the vault. Do not restart local TTS as part of a worker-only update.
+Fourteen focused static tests and 12 real nginx tests passed, as did the isolated review and infrastructure CI. [Managed deployment run 36732636609](https://github.com/keithce/homelab-infra/actions/runs/36732636609) succeeded for the merged source. The private RSS returned HTTP 200 with valid XML and two items; a wrong token returned 404. The new public enclosure returned the full 6,681,216-byte MP3 with HTTP 200. Prefix, midfile, and open-ended Range requests returned HTTP 206 with the exact expected bytes and Content-Range values. A suffix-only request returned HTTP 200 with the identical full body and no Content-Range. The downloaded file is MP3, 48 kHz, two channels, 128 kbps. These checks establish server delivery; actual Pocket Casts playback remains Keith's check.
 
-No human ratings or house-voice choice are implied by these checks. The house voice remains unset, and the first weekly narration waits for Keith's explicit selection.
+For future media deployments, preserve an explicitly empty `ELEVENLABS_API_KEY` until its allowance is usable. Omitted optional variables resolve from 1Password, so an ordinary deployment would restore that blocked provider. Gemini and Cartesia should remain enabled.
