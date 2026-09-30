@@ -328,15 +328,23 @@ describe("scout capture providers and repair", () => {
       status: "text_ready",
       metadata: { scoutedBy: { contentProvider: "firecrawl" } },
     });
-    await expect(
-      t.mutation(internal.sources.createScoutedSource, {
-        ...input,
-        url: "https://www.jstor.org/stable/1513178",
-        rawText:
-          "A required part of this site couldn’t load. Please check your connection, disable any ad blockers, or try using a different browser. \nis verifying your browser...",
-        contentProvider: "crawl4ai",
-      }),
-    ).rejects.toThrow("bot challenge");
+    const walled = await t.mutation(internal.sources.createScoutedSource, {
+      ...input,
+      url: "https://www.jstor.org/stable/1513178",
+      rawText:
+        "A required part of this site couldn’t load. Please check your connection, disable any ad blockers, or try using a different browser. \nis verifying your browser...",
+      contentProvider: "crawl4ai",
+    });
+    // The wall is dropped, but the URL-only Source is kept for a later run.
+    expect(walled.created).toBe(true);
+    const kept = await t.run((ctx) => ctx.db.get(walled.id));
+    expect(kept).toMatchObject({ status: "ingested" });
+    expect(kept?.rawText).toBeUndefined();
+    const keptMetadata = kept?.metadata as
+      | { scoutedBy?: Record<string, unknown> }
+      | undefined;
+    expect(keptMetadata?.scoutedBy).toBeDefined();
+    expect(keptMetadata?.scoutedBy).not.toHaveProperty("contentProvider");
   });
 
   test("resets a bad capture so a later Scout run can capture it again", async () => {

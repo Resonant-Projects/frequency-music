@@ -528,20 +528,20 @@ export const createScoutedSource = internalMutation({
         `Scouted source text must be ${SCOUTED_TEXT_MIN_CHARS}-${SCOUTED_TEXT_MAX_CHARS} characters for Extraction`,
       );
     }
-    // A bot wall is not source text. The worker filters these too; this
-    // keeps one from reaching Extraction if a crawler reports it as a page.
-    if (args.rawText && looksLikeBotChallenge(args.rawText)) {
-      throw new Error(
-        "Scouted source text is a bot challenge page, not content",
-      );
-    }
+    // A bot wall is not source text. The worker filters these too; here one
+    // is treated as a failed capture, so the URL-only Source is still kept
+    // and a later run can capture it.
+    const walled =
+      args.rawText !== undefined && looksLikeBotChallenge(args.rawText);
+    const rawText = walled ? undefined : args.rawText;
+    const contentProvider = walled ? undefined : args.contentProvider;
     const agentRun = await ctx.db.get("agentRuns", args.agentRunId);
     if (!agentRun) {
       throw new Error("Agent run not found");
     }
     // Crawler text is captured only by the source-scout ingest node; no other
     // run (such as a LangChain agent) may assert Crawl4AI provenance.
-    if (args.rawText && agentRun.graphName !== "source-scout") {
+    if (rawText && agentRun.graphName !== "source-scout") {
       throw new Error("Scouted source text requires a source-scout run");
     }
     const dedupeKey = generateDedupeKey("url", {
@@ -552,13 +552,13 @@ export const createScoutedSource = internalMutation({
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
       .first();
     if (existing) {
-      if (!args.rawText || !awaitsScoutCapture(existing)) {
+      if (!rawText || !awaitsScoutCapture(existing)) {
         return { id: existing._id, created: false };
       }
       const metadata = existing.metadata as { scoutedBy: object };
       await ctx.db.patch("sources", existing._id, {
-        rawText: args.rawText,
-        rawTextSha256: await sha256Hex(args.rawText),
+        rawText,
+        rawTextSha256: await sha256Hex(rawText),
         status: "text_ready",
         // A reset capture was marked no_text; real text clears that block.
         blockedReason: undefined,
@@ -567,7 +567,7 @@ export const createScoutedSource = internalMutation({
           ...metadata,
           scoutedBy: {
             ...metadata.scoutedBy,
-            contentProvider: args.contentProvider,
+            contentProvider,
             capturedByAgentRunId: args.agentRunId,
           },
         },
@@ -582,16 +582,14 @@ export const createScoutedSource = internalMutation({
       canonicalUrl: args.url,
       title: args.title,
       publishedAt: args.publishedAt,
-      rawText: args.rawText,
+      rawText,
       createdBy: "system",
       metadata: {
         scoutedBy: {
           agentRunId: args.agentRunId,
           query: args.query,
           rationale: args.rationale,
-          ...(args.contentProvider
-            ? { contentProvider: args.contentProvider }
-            : {}),
+          ...(contentProvider ? { contentProvider } : {}),
         },
       },
     });

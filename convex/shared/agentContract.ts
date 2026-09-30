@@ -34,7 +34,9 @@ const BOT_CHALLENGE_MARKERS = [
   /\b(?:are you a robot|verify you are (?:a )?human|prove you(?:'re| are) human)\b/i,
   /\b(?:captcha-delivery|datadome|perimeterx|px-captcha|incapsula incident)\b/i,
   /\b(?:complete the security check|press (?:&|and) hold)\b/i,
-  /^\W*(?:access denied|captcha)\b/i,
+  // Generic words need wall phrasing: a paper titled "CAPTCHA: ..." is not one.
+  /\b(?:complete|solve|enter) the captcha\b/i,
+  /\baccess denied\b.*\b(?:you don[’']t have permission|reference #|request id)\b/is,
 ];
 
 /** True for short crawler text that is a bot wall or browser check. */
