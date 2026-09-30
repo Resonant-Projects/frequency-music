@@ -113,6 +113,10 @@ jobs:
       contents: read
       id-token: write # Mint the OIDC identity used to sign the attestation.
       packages: write # Push the immutable image and its attestations to GHCR.
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+      image_name: ${{ steps.metadata.outputs.image_name }}
+      source_sha: ${{ steps.metadata.outputs.source_sha }}
     steps:
       - name: Check out selected source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -240,3 +244,308 @@ jobs:
           path: deployment.json
           if-no-files-found: error
           retention-days: 30
+
+  harbor:
+    name: Copy, sign, and scan in Lab Harbor
+    needs: publish
+    # Only main-sourced builds reach Harbor: pushes to main, or a dispatch from
+    # main whose source_ref is already on main.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # registry.rproj.art is reachable only from the Lab LAN.
+    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
+    timeout-minutes: 30
+    environment: harbor-publish # Protected, main only; holds the robot secret.
+    permissions:
+      contents: read
+      id-token: write # Mint the OIDC identity used for keyless cosign signing.
+    env:
+      HARBOR_REGISTRY: registry.rproj.art
+      HARBOR_REPOSITORY: frequency-music/frequency-music-agent
+      HARBOR_USERNAME: robot$frequency-music-publisher
+      SIGNER_IDENTITY: https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml@refs/heads/main
+      SIGNER_ISSUER: https://token.actions.githubusercontent.com
+      CRANE_VERSION: v0.22.1
+      CRANE_SHA256: 0ab7a1d6932a213aed964ce97666c3077fe691c8606413674a8b3e0b9ec4cda0
+      COSIGN_VERSION: v3.1.3
+      COSIGN_SHA256: 4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71
+      IMAGE_DIGEST: ${{ needs.publish.outputs.digest }}
+      SOURCE_IMAGE: ${{ needs.publish.outputs.image_name }}
+      SOURCE_SHA: ${{ needs.publish.outputs.source_sha }}
+    steps:
+      - name: Confirm the published source is on main
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ || ! "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'publish job returned no immutable image coordinates' >&2
+            exit 1
+          fi
+          # A dispatch may name any commit; only one already on main may be
+          # signed with this workflow's main identity.
+          python3 - <<'PY'
+          import json, os, urllib.request
+          env = os.environ
+          url = f"{env['GITHUB_API_URL']}/repos/{env['GITHUB_REPOSITORY']}/compare/{env['SOURCE_SHA']}...{env['GITHUB_SHA']}?per_page=1"
+          request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "Authorization": f"Bearer {env['GITHUB_TOKEN']}"})
+          with urllib.request.urlopen(request, timeout=60) as response:
+              status = json.load(response)["status"]
+          if status not in ("ahead", "identical"):
+              raise SystemExit(f"{env['SOURCE_SHA']} is not on main ({status})")
+          PY
+          # A rebuild of the same commit gets a new index digest (BuildKit
+          # provenance), so the immutable tag names the digest too; retries of
+          # one build reuse it and a rebuild gets its own.
+          target_tag_name="sha-${SOURCE_SHA}-${IMAGE_DIGEST:7:12}"
+          {
+            printf 'TARGET_TAG_NAME=%s\n' "$target_tag_name"
+            printf 'TARGET_TAG=%s/%s:%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$target_tag_name"
+            printf 'TARGET_REF=%s/%s@%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$IMAGE_DIGEST"
+          } >> "$GITHUB_ENV"
+
+      - name: Install pinned crane and cosign
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin="$RUNNER_TEMP/bin"
+          mkdir -p "$bin"
+          curl -fsSL -o "$RUNNER_TEMP/crane.tgz" \
+            "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz"
+          echo "${CRANE_SHA256}  $RUNNER_TEMP/crane.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/crane.tgz" -C "$bin" crane
+          curl -fsSL -o "$bin/cosign" \
+            "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+          echo "${COSIGN_SHA256}  $bin/cosign" | sha256sum -c -
+          chmod 0755 "$bin/crane" "$bin/cosign"
+          echo "$bin" >> "$GITHUB_PATH"
+
+      - name: Install Harbor API helper
+        # Harbor refuses registry reads of unsigned manifests in cosign-enforced
+        # projects, so existence, signature, and scan checks use its v2 API.
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/bin/harbor-artifact" <<'PY'
+          #!/usr/bin/env python3
+          """Query the agent repository's Harbor artifacts with the robot credentials.
+
+          digest REF        print REF's digest, or nothing when REF is absent
+          amd64 REF         print the linux/amd64 image digest of index REF
+          signed REF        exit 0 when REF has a cosign signature accessory
+          scan REF SECONDS  wait for REF's vulnerability scan; print its summary
+          """
+          import base64, json, os, sys, time, urllib.error, urllib.parse, urllib.request
+
+          REPORT = "application/vnd.security.vulnerability.report; version=1.1"
+          env = os.environ
+          project, _, repository = env["HARBOR_REPOSITORY"].partition("/")
+          repository = urllib.parse.quote(urllib.parse.quote(repository, safe=""), safe="")
+          base = f"https://{env['HARBOR_REGISTRY']}/api/v2.0/projects/{project}/repositories/{repository}/artifacts"
+          auth = base64.b64encode(f"{env['HARBOR_USERNAME']}:{env['HARBOR_PASSWORD']}".encode()).decode()
+
+
+          def api(ref, suffix="", method="GET"):
+              request = urllib.request.Request(
+                  f"{base}/{urllib.parse.quote(ref, safe=':')}{suffix}",
+                  data=b"" if method == "POST" else None,
+                  method=method,
+                  # Ask for the generic report the scan wait parses. Harbor
+                  # already returns it by default; this pins it.
+                  headers={"Accept": "application/json", "Authorization": f"Basic {auth}",
+                           "X-Accept-Vulnerabilities": REPORT},
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=60) as response:
+                      return json.loads(response.read() or b"null")
+              except urllib.error.HTTPError as err:
+                  if err.code == 404 and method == "GET":
+                      return None
+                  sys.exit(f"{method} {ref}{suffix}: HTTP {err.code}")
+
+
+          command, ref = sys.argv[1], sys.argv[2]
+          if command == "digest":
+              print((api(ref) or {}).get("digest", ""))
+          elif command == "amd64":
+              artifact = api(ref)
+              if artifact is None:
+                  sys.exit(f"{ref} is not in Harbor")
+              children = artifact.get("references") or []
+              amd64 = [
+                  child["child_digest"]
+                  for child in children
+                  if (child.get("platform") or {}).get("os") == "linux"
+                  and (child.get("platform") or {}).get("architecture") == "amd64"
+              ]
+              if children and not amd64:
+                  sys.exit(f"{ref} has no linux/amd64 image")
+              print(amd64[0] if amd64 else artifact["digest"])
+          elif command == "signed":
+              accessories = (api(ref, "?with_accessory=true") or {}).get("accessories") or []
+              sys.exit(0 if any(a.get("type") == "signature.cosign" for a in accessories) else 1)
+          elif command == "scan":
+              started = time.monotonic()
+              requested = False
+              while True:
+                  artifact = api(ref, "?with_scan_overview=true&with_accessory=true") or {}
+                  overview = (artifact.get("scan_overview") or {}).get(REPORT) or {}
+                  status = overview.get("scan_status")
+                  if status == "Success":
+                      summary = overview.get("summary") or {}
+                      print(json.dumps({
+                          "digest": ref,
+                          "scanner": overview.get("scanner"),
+                          "severity": overview.get("severity"),
+                          "total": summary.get("total"),
+                          "fixable": summary.get("fixable"),
+                          "counts": summary.get("summary"),
+                      }, indent=2))
+                      break
+                  if status in ("Error", "Stopped"):
+                      sys.exit(f"{ref} scan status {status}")
+                  # The project scans on push; request one only if none has started.
+                  if not status and not requested and time.monotonic() - started > 60:
+                      api(ref, "/scan", "POST")
+                      requested = True
+                  if time.monotonic() - started > int(sys.argv[3]):
+                      sys.exit(f"{ref} scan did not finish within {sys.argv[3]}s")
+                  time.sleep(15)
+          else:
+              sys.exit(__doc__)
+          PY
+          chmod 0755 "$RUNNER_TEMP/bin/harbor-artifact"
+
+      - name: Log in to Harbor
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$HARBOR_PASSWORD"
+          printf '%s' "$HARBOR_PASSWORD" \
+            | crane auth login "$HARBOR_REGISTRY" --username "$HARBOR_USERNAME" --password-stdin
+
+      - name: Copy published digest to Harbor
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Harbor tags are immutable: a re-run keeps an identical tag and never
+          # repoints one. The public GHCR package needs no login.
+          existing="$(harbor-artifact digest "$TARGET_TAG_NAME")"
+          if [[ -z "$existing" ]]; then
+            crane copy "${SOURCE_IMAGE}@${IMAGE_DIGEST}" "$TARGET_TAG"
+          elif [[ "$existing" != "$IMAGE_DIGEST" ]]; then
+            echo "$TARGET_TAG already points at $existing" >&2
+            exit 1
+          else
+            echo "$TARGET_TAG already holds $IMAGE_DIGEST; skipping copy"
+          fi
+          test "$(harbor-artifact digest "$IMAGE_DIGEST")" = "$IMAGE_DIGEST"
+          # The index also holds BuildKit's attestation manifest; nodes run and
+          # Harbor scans the linux/amd64 image.
+          amd64_digest="$(harbor-artifact amd64 "$IMAGE_DIGEST")"
+          [[ "$amd64_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf 'AMD64_REF=%s/%s@%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$amd64_digest" >> "$GITHUB_ENV"
+          printf 'AMD64_DIGEST=%s\n' "$amd64_digest" >> "$GITHUB_ENV"
+
+      - name: Sign Harbor digest
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Skip only when this workflow's own signature already verifies on both
+          # manifests; any other signature still gets ours added. Recursive
+          # signing right after the copy is the same path homelab-infra's
+          # harbor-mirror.yml uses against this Harbor.
+          verified=true
+          for ref in "$TARGET_REF" "$AMD64_REF"; do
+            if ! cosign verify \
+              --certificate-identity "$SIGNER_IDENTITY" \
+              --certificate-oidc-issuer "$SIGNER_ISSUER" \
+              "$ref" > /dev/null 2>&1; then
+              verified=false
+            fi
+          done
+          if [[ "$verified" == true ]]; then
+            echo 'This workflow already signed both manifests; skipping signing'
+          else
+            cosign sign --yes --recursive "$TARGET_REF"
+          fi
+
+      - name: Verify signature and registry digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          for ref in "$TARGET_REF" "$AMD64_REF"; do
+            cosign verify \
+              --certificate-identity "$SIGNER_IDENTITY" \
+              --certificate-oidc-issuer "$SIGNER_ISSUER" \
+              "$ref" > /dev/null
+          done
+          test "$(crane digest "$TARGET_REF")" = "$IMAGE_DIGEST"
+
+      - name: Wait for Harbor vulnerability scan
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Record findings only; the publish job's Trivy gate already blocks
+          # high and critical vulnerabilities.
+          scan="$(harbor-artifact scan "$AMD64_DIGEST" 600)"
+          {
+            echo '## Harbor vulnerability scan'
+            echo
+            echo '```json'
+            printf '%s\n' "$scan"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prove anonymous pull
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Succeeds only if the project is public and cosign enforcement admits
+          # the signed index and image.
+          mkdir -p "$RUNNER_TEMP/anon"
+          for ref in "$TARGET_REF" "$AMD64_REF"; do
+            env -u DOCKER_CONFIG HOME="$RUNNER_TEMP/anon" crane manifest "$ref" > /dev/null
+          done
+
+      - name: Write Harbor deployment manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - > "$RUNNER_TEMP/harbor-deployment.json" <<'PY'
+          import json, os
+          env = os.environ
+          print(json.dumps({
+              "source_sha": env["SOURCE_SHA"],
+              "digest": env["IMAGE_DIGEST"],
+              "deploy": env["TARGET_REF"],
+          }, indent=2))
+          PY
+          {
+            echo '## Harbor deployment manifest'
+            echo
+            echo '```json'
+            cat "$RUNNER_TEMP/harbor-deployment.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Harbor deployment manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agent-image-harbor-${{ needs.publish.outputs.source_sha }}
+          path: ${{ runner.temp }}/harbor-deployment.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove registry credentials
+        if: always()
+        shell: bash
+        run: rm -f "$HOME/.docker/config.json"
