@@ -115,6 +115,15 @@ describe("Source Scout bot-challenge filter", () => {
       "Researchers studied browser checks and bot walls. ".repeat(80);
     expect(article.length).toBeGreaterThan(3_000);
     expect(looksLikeBotChallenge(article)).toBe(false);
+    // A short article about the Anubis tool itself is real text.
+    expect(
+      looksLikeBotChallenge(
+        "Anubis is an open-source web firewall that asks browsers to solve a proof-of-work challenge before serving pages. " +
+          "Archives such as HAL adopted Anubis in 2025 to limit aggressive AI scraping. ".repeat(
+            2,
+          ),
+      ),
+    ).toBe(false);
     // A short page that merely quotes a block-page phrase is real text.
     expect(
       looksLikeBotChallenge(
