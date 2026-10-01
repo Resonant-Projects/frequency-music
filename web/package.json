@@ -36,7 +36,7 @@
     "vite-plus": "latest"
   },
   "overrides": {
-    "hono": "4.13.5",
+    "hono": "4.13.12",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vitest": "npm:@voidzero-dev/vite-plus-test@latest",
     "ws": "^8.21.0"

@@ -26,9 +26,20 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Upgrade the pinned base first: trivy fails the publish workflow on fixable
 # HIGH/CRITICAL CVEs in Debian packages (util-linux, gzip, pcre2, sqlite …).
-RUN apt-get update \
+# Bump DEBIAN_SECURITY_REFRESH to rebuild this layer when a fix lands after
+# the build cache was populated; the floor check fails a stale mirror rather
+# than publishing an unpatched OpenSSL (CVE-2026-75804, CVE-2026-84782).
+ARG DEBIAN_SECURITY_REFRESH=2026-10-01
+ARG OPENSSL_FLOOR=3.5.7-1~deb13u3
+RUN echo "security refresh ${DEBIAN_SECURITY_REFRESH}" \
+    && apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
+    && for pkg in libssl3t64 openssl; do \
+         installed="$(dpkg-query -W -f='${Version}' "$pkg")"; \
+         dpkg --compare-versions "$installed" ge "$OPENSSL_FLOOR" \
+           || { echo "$pkg $installed is below $OPENSSL_FLOOR" >&2; exit 1; }; \
+       done \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # The base image bundles npm, whose vendored tar/brace-expansion carry open
