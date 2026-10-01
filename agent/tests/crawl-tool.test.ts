@@ -3,6 +3,10 @@ import {
   createCrawl4aiPage,
   createCrawlPage,
   createFirecrawlPage,
+  createOpenAlexAbstract,
+  doiForUrl,
+  normalizedTitle,
+  titleSearchTerms,
 } from "../src/tools/crawlTool";
 
 describe("self-hosted Crawl4AI source text", () => {
@@ -208,7 +212,10 @@ describe("bot challenges and the Lab Firecrawl fallback", () => {
       text: article,
       provider: "firecrawl",
     });
-    expect(fallback).toHaveBeenCalledWith("https://example.org/paper");
+    expect(fallback).toHaveBeenCalledWith(
+      "https://example.org/paper",
+      undefined,
+    );
   });
 
   test("keeps Crawl4AI text without calling the fallback", async () => {
@@ -311,5 +318,267 @@ describe("bot challenges and the Lab Firecrawl fallback", () => {
       });
       await expect(scrape("https://example.org/paper")).resolves.toBeNull();
     }
+  });
+});
+
+const lSystemsAbstract =
+  "Among musical symmetries and self-similarities are those that can be produced using Lindenmayer-system curves to generate melodies.";
+function invertedIndex(text: string): Record<string, number[]> {
+  const index: Record<string, number[]> = {};
+  text.split(" ").forEach((word, offset) => {
+    (index[word] ??= []).push(offset);
+  });
+  return index;
+}
+const lSystemsWork = {
+  id: "https://openalex.org/W2328530878",
+  doi: "https://doi.org/10.2307/1513178",
+  title: "L-Systems, Melodies and Musical Structure",
+  publication_year: 1994,
+  abstract_inverted_index: invertedIndex(lSystemsAbstract),
+};
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status });
+}
+
+describe("OpenAlex abstract fallback", () => {
+  test("finds the DOI a candidate URL names", () => {
+    expect(doiForUrl("https://www.jstor.org/stable/1513178")).toBe(
+      "10.2307/1513178",
+    );
+    expect(doiForUrl("https://www.jstor.org/stable/pdf/1513178.pdf")).toBe(
+      "10.2307/1513178",
+    );
+    expect(doiForUrl("https://doi.org/10.1353/pnm.2010.0009")).toBe(
+      "10.1353/pnm.2010.0009",
+    );
+    expect(
+      doiForUrl(
+        "https://www.tandfonline.com/doi/full/10.1080/09298215.2015.1123747",
+      ),
+    ).toBe("10.1080/09298215.2015.1123747");
+    expect(
+      doiForUrl(
+        "https://onlinelibrary.wiley.com/doi/full/10.1002/1097-0266(200010/11)21:10/11%3C1105::AID-SMJ133%3E3.0.CO;2-E",
+      ),
+    ).toBe("10.1002/1097-0266(200010/11)21:10/11<1105::AID-SMJ133>3.0.CO;2-E");
+    expect(doiForUrl("https://example.org/paper")).toBeNull();
+    expect(doiForUrl("not a url")).toBeNull();
+  });
+
+  test("returns a labelled abstract found by DOI without following redirects", async () => {
+    const fetchImpl = vi.fn(async () => json(lSystemsWork));
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    const page = await lookup("https://www.jstor.org/stable/1513178");
+    expect(page?.provider).toBe("openalex");
+    expect(page?.text).toMatch(
+      /^Abstract from OpenAlex \(W2328530878; DOI 10\.2307\/1513178\)\. The full text was not captured\.\n\n# L-Systems, Melodies and Musical Structure \(1994\)\n\nAmong musical symmetries/,
+    );
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(url).toMatch(
+      /^https:\/\/api\.openalex\.org\/works\/doi:10\.2307\/1513178\?select=/,
+    );
+    expect(init).toMatchObject({ method: "GET", redirect: "error" });
+  });
+
+  test("normalizes accented titles without splitting words", async () => {
+    expect(normalizedTitle("Étude pour piano")).toBe("etude pour piano");
+    expect(normalizedTitle("Klänge, Töne und Resonanz: eine Studie")).toBe(
+      "klange tone und resonanz eine studie",
+    );
+    expect(normalizedTitle("Гармония и резонанс в музыке")).toBe(
+      "гармония и резонанс в музыке",
+    );
+    // OpenAlex does not fold accents, so the query keeps them.
+    expect(titleSearchTerms("Klänge, Töne und Resonanz: eine Studie")).toBe(
+      "klänge töne und resonanz eine studie",
+    );
+    // A three-word accented title stays below the four-word safeguard.
+    const fetchImpl = vi.fn(async () =>
+      json({ meta: { count: 1 }, results: [] }),
+    );
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    await expect(
+      lookup("https://example.org/a", { title: "Étude pour piano" }),
+    ).resolves.toBeNull();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  test("encodes DOI characters that would otherwise end the request path", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 404 }));
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    await lookup("https://doi.org/10.1000/old%23doi%3Fpart");
+    expect(fetchImpl.mock.calls[0]?.[0]).toMatch(
+      /^https:\/\/api\.openalex\.org\/works\/doi:10\.1000\/old%23doi%3Fpart\?select=/,
+    );
+  });
+
+  test("falls back to an exact title match when the DOI is unknown", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("{}", { status: 404 }))
+      .mockResolvedValueOnce(
+        json({
+          meta: { count: 1 },
+          results: [
+            {
+              ...lSystemsWork,
+              title: "L-systems: melodies and musical structure",
+            },
+          ],
+        }),
+      );
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    const page = await lookup("https://www.jstor.org/stable/1513178", {
+      title: "L-Systems, Melodies and Musical Structure",
+    });
+    expect(page?.provider).toBe("openalex");
+    const searchUrl = new URL(fetchImpl.mock.calls[1]?.[0] as string);
+    expect(searchUrl.searchParams.get("filter")).toBe(
+      "title.search:l systems melodies and musical structure",
+    );
+  });
+
+  test("refuses near, ambiguous, or too-short title matches", async () => {
+    const near = createOpenAlexAbstract({
+      fetchImpl: async () =>
+        json({
+          meta: { count: 1 },
+          results: [
+            { ...lSystemsWork, title: "L-Systems and Musical Structure" },
+          ],
+        }),
+    });
+    await expect(
+      near("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
+    const ambiguous = createOpenAlexAbstract({
+      fetchImpl: async () =>
+        json({
+          meta: { count: 2 },
+          results: [
+            lSystemsWork,
+            {
+              ...lSystemsWork,
+              id: "https://openalex.org/W2",
+              doi: "https://doi.org/10.1/other",
+            },
+          ],
+        }),
+    });
+    await expect(
+      ambiguous("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
+    // Results without a DOI or id are distinct works, so still ambiguous.
+    const unidentified = createOpenAlexAbstract({
+      fetchImpl: async () =>
+        json({
+          meta: { count: 2 },
+          results: [
+            { ...lSystemsWork, id: undefined, doi: undefined },
+            { ...lSystemsWork, id: undefined, doi: undefined },
+          ],
+        }),
+    });
+    await expect(
+      unidentified("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
+    // A response without a match count cannot prove uniqueness.
+    const uncounted = createOpenAlexAbstract({
+      fetchImpl: async () => json({ results: [lSystemsWork] }),
+    });
+    await expect(
+      uncounted("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
+    // One exact match on this page, but more matches exist on later pages.
+    const paged = createOpenAlexAbstract({
+      fetchImpl: async () =>
+        json({ meta: { count: 40 }, results: [lSystemsWork] }),
+    });
+    await expect(
+      paged("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
+    const fetchImpl = vi.fn(async () =>
+      json({ meta: { count: 1 }, results: [lSystemsWork] }),
+    );
+    const short = createOpenAlexAbstract({ fetchImpl });
+    await expect(
+      short("https://example.org/a", { title: "Musical Structure" }),
+    ).resolves.toBeNull();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  test("returns nothing for thin abstracts, errors, or private URLs", async () => {
+    const thin = createOpenAlexAbstract({
+      fetchImpl: async () =>
+        json({
+          ...lSystemsWork,
+          abstract_inverted_index: invertedIndex("Too short."),
+        }),
+    });
+    await expect(
+      thin("https://www.jstor.org/stable/1513178"),
+    ).resolves.toBeNull();
+    const failing = createOpenAlexAbstract({
+      fetchImpl: async () => new Response("", { status: 503 }),
+    });
+    await expect(
+      failing("https://www.jstor.org/stable/1513178"),
+    ).resolves.toBeNull();
+    const fetchImpl = vi.fn(async () => json(lSystemsWork));
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    await expect(lookup("http://127.0.0.1/stable/1513178")).resolves.toBeNull();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  test("is tried only after both crawlers fail, with the Scout's title", async () => {
+    const fallback = vi.fn(async () => null);
+    const abstractFallback = vi.fn(async () => ({
+      text: article,
+      provider: "openalex" as const,
+    }));
+    const crawl = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl: crawl4aiReturning(jstorChallenge),
+      fallback,
+      abstractFallback,
+    });
+    const hint = { title: "L-Systems, Melodies and Musical Structure" };
+    await expect(
+      crawl("https://www.jstor.org/stable/1513178", hint),
+    ).resolves.toMatchObject({
+      provider: "openalex",
+    });
+    expect(fallback).toHaveBeenCalledWith(
+      "https://www.jstor.org/stable/1513178",
+      hint,
+    );
+    expect(abstractFallback).toHaveBeenCalledWith(
+      "https://www.jstor.org/stable/1513178",
+      hint,
+    );
+    const crawled = createCrawlPage({
+      apiToken: "fixture-token",
+      egressGuarded: true,
+      fetchImpl: crawl4aiReturning(article),
+      fallback,
+      abstractFallback,
+    });
+    await crawled("https://example.org/paper", hint);
+    expect(abstractFallback).toHaveBeenCalledTimes(1);
   });
 });

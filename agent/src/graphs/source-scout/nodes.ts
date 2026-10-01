@@ -13,7 +13,11 @@ import {
   type WebSearchInput,
   type WebSearchResult,
 } from "../../tools/searchTool.js";
-import { createCrawlPage, type CrawledPage } from "../../tools/crawlTool.js";
+import {
+  createCrawlPage,
+  type CrawledPage,
+  type PageHint,
+} from "../../tools/crawlTool.js";
 import { callConvex } from "../../tools/convexTools.js";
 import { redactError } from "../../shared/redactError.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
@@ -309,7 +313,10 @@ async function existingSourceUrls(
 
 export function createIngestSourcesNode(
   callTool: ToolCaller = callConvex,
-  crawl: (url: string) => Promise<CrawledPage | null> = createCrawlPage(),
+  crawl: (
+    url: string,
+    hint?: PageHint,
+  ) => Promise<CrawledPage | null> = createCrawlPage(),
 ) {
   return async (state: {
     agentRunId?: string;
@@ -351,8 +358,10 @@ export function createIngestSourcesNode(
     // Duplicate intake stores text only for a scout URL-only Source whose
     // earlier capture failed, so every other known URL skips the crawl.
     const pages = await Promise.all(
-      intakeUrls.map((url) =>
-        known.has(url) && !known.get(url) ? null : crawl(url),
+      intakeUrls.map((url, index) =>
+        known.has(url) && !known.get(url)
+          ? null
+          : crawl(url, { title: candidates[index]?.searchHit.result.title }),
       ),
     );
     for (const [index, judgment] of candidates.entries()) {

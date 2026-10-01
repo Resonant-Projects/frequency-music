@@ -59,7 +59,7 @@ const FROZEN_ARGS: Record<string, string> = {
     publishedAt: field(number, true),
     rawText: field(string, true),
     contentProvider: field(
-      union(literal("crawl4ai"), literal("firecrawl")),
+      union(literal("crawl4ai"), literal("firecrawl"), literal("openalex")),
       true,
     ),
     query: field(string),
