@@ -125,7 +125,8 @@ function calendarDate(value: unknown): string | undefined {
     : undefined;
 }
 
-function abstractText(value: unknown): string | undefined {
+/** Rebuilds an OpenAlex abstract_inverted_index into its text, untrimmed. */
+export function reconstructAbstract(value: unknown): string | undefined {
   const positions: Array<[number, string]> = [];
   for (const [word, offsets] of Object.entries(record(value))) {
     if (!Array.isArray(offsets)) continue;
@@ -139,7 +140,11 @@ function abstractText(value: unknown): string | undefined {
       .sort((a, b) => a[0] - b[0])
       .map(([, word]) => word)
       .join(" "),
-  )?.slice(0, 1000);
+  );
+}
+
+function abstractText(value: unknown): string | undefined {
+  return reconstructAbstract(value)?.slice(0, 1000);
 }
 
 function mapOpenAlex(payload: unknown, limit: number): WebSearchResult[] {

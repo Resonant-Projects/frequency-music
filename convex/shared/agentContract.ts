@@ -12,9 +12,14 @@ export const MAX_FEED_ENABLE_STATE_IDS = 20;
 // and ingestScoutedSource rejects text too thin for Extraction.
 export const SCOUTED_TEXT_MIN_CHARS = 100;
 export const SCOUTED_TEXT_MAX_CHARS = 30_000;
-// Self-hosted services that may supply Source Scout page text. Crawl4AI is
-// tried first; the Lab's Firecrawl scrapes PDFs and pages Crawl4AI could not.
-export const SCOUTED_CONTENT_PROVIDERS = ["crawl4ai", "firecrawl"] as const;
+// Services that may supply Source Scout text. Crawl4AI is tried first; the
+// Lab's Firecrawl scrapes PDFs and pages Crawl4AI could not; OpenAlex supplies
+// a scholarly work's abstract when neither crawler can pass a bot wall.
+export const SCOUTED_CONTENT_PROVIDERS = [
+  "crawl4ai",
+  "firecrawl",
+  "openalex",
+] as const;
 export type ScoutedContentProvider = (typeof SCOUTED_CONTENT_PROVIDERS)[number];
 
 // Bot walls and browser checks that crawlers report as successful pages. Both

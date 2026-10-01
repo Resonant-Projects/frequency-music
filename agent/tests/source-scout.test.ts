@@ -198,7 +198,9 @@ describe("source scout canonical write nodes", () => {
       agentRunId: "run-scout",
       judgments: [judgment(0, "source")],
     });
-    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0", {
+      title: "Candidate 0",
+    });
     expect(callTool).toHaveBeenCalledWith(
       "ingestScoutedSource",
       expect.objectContaining({
@@ -234,7 +236,9 @@ describe("source scout canonical write nodes", () => {
     expect(callTool).toHaveBeenCalledWith("findExistingSourceUrls", {
       urls: ["https://example.org/0", "https://example.org/1"],
     });
-    expect(crawl.mock.calls).toEqual([["https://example.org/1"]]);
+    expect(crawl.mock.calls).toEqual([
+      ["https://example.org/1", { title: "Candidate 1" }],
+    ]);
     const ingestArgs = callTool.mock.calls
       .filter(([name]) => name === "ingestScoutedSource")
       .map(([, args]) => args as Record<string, unknown>);
@@ -288,7 +292,9 @@ describe("source scout canonical write nodes", () => {
       crawl,
     )({ agentRunId: "run-scout", judgments: [judgment(0, "source")] });
 
-    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0", {
+      title: "Candidate 0",
+    });
     expect(callTool).toHaveBeenCalledWith(
       "appendAgentRunEvent",
       expect.objectContaining({
@@ -342,7 +348,9 @@ describe("source scout canonical write nodes", () => {
       agentRunId: "run-scout",
       judgments: [judgment(0, "source")],
     });
-    expect(crawl).toHaveBeenCalledWith("https://example.org/0");
+    expect(crawl).toHaveBeenCalledWith("https://example.org/0", {
+      title: "Candidate 0",
+    });
   });
 
   test("ingests at most five judged sources with provenance and logs dedupe as a decision", async () => {

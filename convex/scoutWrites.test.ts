@@ -309,6 +309,27 @@ describe("scout capture providers and repair", () => {
   const article =
     "# Experimental setup\n" + "The measured resonant modes. ".repeat(5);
 
+  test("accepts OpenAlex abstract provenance", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const created = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://www.jstor.org/stable/1513178",
+      query: "l-systems melody",
+      rationale: "Thin domain",
+      agentRunId,
+      rawText:
+        "Abstract from OpenAlex (W2328530878; DOI 10.2307/1513178). The full text was not captured.\n\n# L-Systems, Melodies and Musical Structure (1994)\n\n" +
+        "Among musical symmetries and self-similarities are those produced by L-system curves. ".repeat(
+          2,
+        ),
+      contentProvider: "openalex",
+    });
+    expect(await t.run((ctx) => ctx.db.get(created.id))).toMatchObject({
+      status: "text_ready",
+      metadata: { scoutedBy: { contentProvider: "openalex" } },
+    });
+  });
+
   test("accepts Firecrawl provenance and rejects bot challenge text", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);
