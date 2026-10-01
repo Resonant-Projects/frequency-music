@@ -30,12 +30,18 @@ export function createOpenRouterAnthropicModel(options: ChatModelOptions = {}) {
     process.env.ANTHROPIC_API_URL ??
     (useOpenRouter ? OPENROUTER_ANTHROPIC_API_URL : undefined);
   const configuredModel = options.model ?? process.env.WEEKLY_BRIEF_AGENT_MODEL;
+  const model = useOpenRouter
+    ? normalizeOpenRouterModel(configuredModel ?? DEFAULT_OPENROUTER_MODEL)
+    : (configuredModel ?? DEFAULT_ANTHROPIC_MODEL);
+  // Sonnet 5.5 rejects non-default sampling parameters; the installed
+  // ChatAnthropic version does not yet omit them for this model.
+  const supportsTemperature = !/(?:^|\/)claude-sonnet-5[.-]5(?:$|-)/.test(
+    model,
+  );
 
   return new ChatAnthropic({
-    model: useOpenRouter
-      ? normalizeOpenRouterModel(configuredModel ?? DEFAULT_OPENROUTER_MODEL)
-      : (configuredModel ?? DEFAULT_ANTHROPIC_MODEL),
-    temperature: options.temperature ?? 0.2,
+    model,
+    ...(supportsTemperature ? { temperature: options.temperature ?? 0.2 } : {}),
     apiKey,
     anthropicApiUrl,
   });
