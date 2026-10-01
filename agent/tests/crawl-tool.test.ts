@@ -5,6 +5,8 @@ import {
   createFirecrawlPage,
   createOpenAlexAbstract,
   doiForUrl,
+  normalizedTitle,
+  titleSearchTerms,
 } from "../src/tools/crawlTool";
 
 describe("self-hosted Crawl4AI source text", () => {
@@ -380,6 +382,29 @@ describe("OpenAlex abstract fallback", () => {
       /^https:\/\/api\.openalex\.org\/works\/doi:10\.2307\/1513178\?select=/,
     );
     expect(init).toMatchObject({ method: "GET", redirect: "error" });
+  });
+
+  test("normalizes accented titles without splitting words", async () => {
+    expect(normalizedTitle("Étude pour piano")).toBe("etude pour piano");
+    expect(normalizedTitle("Klänge, Töne und Resonanz: eine Studie")).toBe(
+      "klange tone und resonanz eine studie",
+    );
+    expect(normalizedTitle("Гармония и резонанс в музыке")).toBe(
+      "гармония и резонанс в музыке",
+    );
+    // OpenAlex does not fold accents, so the query keeps them.
+    expect(titleSearchTerms("Klänge, Töne und Resonanz: eine Studie")).toBe(
+      "klänge töne und resonanz eine studie",
+    );
+    // A three-word accented title stays below the four-word safeguard.
+    const fetchImpl = vi.fn(async () =>
+      json({ meta: { count: 1 }, results: [] }),
+    );
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    await expect(
+      lookup("https://example.org/a", { title: "Étude pour piano" }),
+    ).resolves.toBeNull();
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   test("encodes DOI characters that would otherwise end the request path", async () => {

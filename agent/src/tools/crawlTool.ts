@@ -334,11 +334,25 @@ export function createCrawlPage(
   };
 }
 
-function normalizedTitle(value: string): string {
+// OpenAlex title search does not fold accents ("klänge" and "klange" match
+// different works), so the query keeps them and drops only punctuation, which
+// also keeps commas out of the filter syntax.
+export function titleSearchTerms(value: string): string {
+  return value
+    .normalize("NFC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, " ")
+    .trim();
+}
+
+// For comparing titles: drop accents before splitting on punctuation, so
+// "Étude" stays one word, and keep letters of every script.
+export function normalizedTitle(value: string): string {
   return value
     .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 }
 
@@ -435,8 +449,7 @@ export function createOpenAlexAbstract(
     const wanted = normalizedTitle(title);
     if (wanted.split(" ").length < MIN_TITLE_MATCH_WORDS) return null;
     const url = new URL(OPENALEX_WORKS_URL);
-    // Commas separate OpenAlex filters, so search the normalized title.
-    url.searchParams.set("filter", `title.search:${wanted}`);
+    url.searchParams.set("filter", `title.search:${titleSearchTerms(title)}`);
     url.searchParams.set("per_page", String(TITLE_SEARCH_PAGE_SIZE));
     url.searchParams.set("select", select);
     const payload = await getJson(url);
