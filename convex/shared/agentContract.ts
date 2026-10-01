@@ -32,7 +32,7 @@ const BOT_CHALLENGE_MARKERS = [
   /\bverify(?:ing)? your browser\b/i,
   /\bchecking (?:if the site connection is secure|your browser)\b/i,
   /a required part of this site couldn[’']t load/i,
-  /^\W*just a moment\b/i,
+  /^\W*(?:title:\s*)?just a moment\b/i,
   /\battention required\b.*cloudflare/is,
   /\benable javascript and cookies to continue\b/i,
   /\bplease (?:enable|turn on) (?:javascript|cookies)\b/i,
@@ -50,6 +50,10 @@ const BOT_CHALLENGE_MARKERS = [
   // Anubis proof-of-work gate (HAL and other archives), seen 2026-10-01; its
   // heading, not mentions of Anubis or proof-of-work, identifies the gate.
   /\bmaking sure you[’']re not a bot\b/i,
+  // Cloudflare's current challenge and its failure page; found in legacy
+  // ResearchGate, Medium and bepress captures on 2026-10-01.
+  /\bperforming security verification\b.*\b(?:verifies you are not a bot|protect against malicious bots)\b/is,
+  /\bmax challenge attempts exceeded\b.*\brefresh the page\b/is,
   /\baccess denied\b.*\b(?:you don[’']t have permission|reference #|request id)\b/is,
 ];
 
