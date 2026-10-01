@@ -7,6 +7,7 @@ import {
   doiForUrl,
   normalizedTitle,
   titleSearchTerms,
+  undecoratedTitle,
 } from "../src/tools/crawlTool";
 
 describe("self-hosted Crawl4AI source text", () => {
@@ -405,6 +406,34 @@ describe("OpenAlex abstract fallback", () => {
       lookup("https://example.org/a", { title: "Étude pour piano" }),
     ).resolves.toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  test("removes hosting-site decorations from search-hit titles", async () => {
+    expect(
+      undecoratedTitle("The Geometry of Musical Chords - ResearchGate"),
+    ).toBe("The Geometry of Musical Chords");
+    expect(undecoratedTitle("(PDF) Spectral Music | Request PDF")).toBe(
+      "Spectral Music",
+    );
+    expect(undecoratedTitle("Formalized Music – Academia.edu")).toBe(
+      "Formalized Music",
+    );
+    // A real title that merely contains a dash is left alone.
+    expect(undecoratedTitle("Xenakis - Formalized Music")).toBe(
+      "Xenakis - Formalized Music",
+    );
+    const fetchImpl = vi.fn(async () =>
+      json({ meta: { count: 1 }, results: [lSystemsWork] }),
+    );
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    const page = await lookup("https://www.researchgate.net/publication/1_x", {
+      title: "L-Systems, Melodies and Musical Structure - ResearchGate",
+    });
+    expect(page?.provider).toBe("openalex");
+    const searchUrl = new URL(fetchImpl.mock.calls[0]?.[0] as string);
+    expect(searchUrl.searchParams.get("filter")).toBe(
+      "title.search:l systems melodies and musical structure",
+    );
   });
 
   test("encodes DOI characters that would otherwise end the request path", async () => {
