@@ -334,6 +334,20 @@ export function createCrawlPage(
   };
 }
 
+// Search results often decorate scholarly titles with the hosting site
+// ("The Geometry of Musical Chords - ResearchGate", "(PDF) ..."), which
+// defeats an exact title match; remove those decorations first.
+const SITE_TITLE_SUFFIX =
+  /\s*[|\-–—]\s*(?:ResearchGate|Request PDF|Academia\.edu|JSTOR|Semantic Scholar|ScienceDirect|SpringerLink|PubMed|PhilPapers|Google Scholar)\s*$/i;
+
+export function undecoratedTitle(value: string): string {
+  let title = value.trim().replace(/^\((?:PDF|DOC|PPT)\)\s*/i, "");
+  while (SITE_TITLE_SUFFIX.test(title)) {
+    title = title.replace(SITE_TITLE_SUFFIX, "");
+  }
+  return title.trim();
+}
+
 // OpenAlex title search does not fold accents ("klänge" and "klange" match
 // different works), so the query keeps them and drops only punctuation, which
 // also keeps commas out of the filter syntax.
@@ -445,7 +459,8 @@ export function createOpenAlexAbstract(
     return work && typeof work === "object" ? (work as OpenAlexWork) : null;
   }
 
-  async function byTitle(title: string): Promise<OpenAlexWork | null> {
+  async function byTitle(rawTitle: string): Promise<OpenAlexWork | null> {
+    const title = undecoratedTitle(rawTitle);
     const wanted = normalizedTitle(title);
     if (wanted.split(" ").length < MIN_TITLE_MATCH_WORDS) return null;
     const url = new URL(OPENALEX_WORKS_URL);

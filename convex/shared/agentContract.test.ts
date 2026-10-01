@@ -90,6 +90,10 @@ describe("Source Scout bot-challenge filter", () => {
       "Access denied. You don't have permission to access this page. Reference #18.4f2",
       "Please complete the CAPTCHA to continue.",
       "Are you a robot? Press & hold to confirm you are a human.",
+      // Elsevier ScienceDirect block page captured by Crawl4AI on 2026-10-01.
+      "[ScienceDirect](https://www.sciencedirect.com/)\n  * Help\n\n# There was a problem providing the content you requested\nPlease [contact our support team](https://service.elsevier.com/) for more information and provide the details below.\n  * **Reference number:** a1b2c3",
+      "Access to this page has been denied because we believe you are using automation tools to browse the website.",
+      "The requested URL was rejected. Please consult with your administrator. Your support ID is: 1234567890",
     ]) {
       expect(looksLikeBotChallenge(text), text.slice(0, 40)).toBe(true);
     }
@@ -109,6 +113,15 @@ describe("Source Scout bot-challenge filter", () => {
       "Researchers studied browser checks and bot walls. ".repeat(80);
     expect(article.length).toBeGreaterThan(3_000);
     expect(looksLikeBotChallenge(article)).toBe(false);
+    // A short page that merely quotes a block-page phrase is real text.
+    expect(
+      looksLikeBotChallenge(
+        "Troubleshooting web firewalls: when a WAF responds that the requested URL was rejected, check the policy's signature set and the request path. " +
+          "Access to this page has been denied is another message operators see. ".repeat(
+            2,
+          ),
+      ),
+    ).toBe(false);
     // A short abstract page about CAPTCHAs or access control is real text.
     expect(
       looksLikeBotChallenge(

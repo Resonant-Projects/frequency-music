@@ -41,6 +41,12 @@ const BOT_CHALLENGE_MARKERS = [
   /\b(?:complete the security check|press (?:&|and) hold)\b/i,
   // Generic words need wall phrasing: a paper titled "CAPTCHA: ..." is not one.
   /\b(?:complete|solve|enter) the captcha\b/i,
+  // Publisher and CDN block pages (Elsevier ScienceDirect, PerimeterX, F5),
+  // seen as Source Scout captures on 2026-10-01.
+  /\bthere was a problem providing the content you requested\b/i,
+  // Generic block phrasing counts only with the page's own corroboration.
+  /\baccess to this page has been denied\b.*\bautomation tools\b/is,
+  /\bthe requested url was rejected\b.*\bsupport id\b/is,
   /\baccess denied\b.*\b(?:you don[’']t have permission|reference #|request id)\b/is,
 ];
 
