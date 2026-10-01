@@ -61,13 +61,13 @@ describe("Convex dependency security floor", () => {
 
   test.each(
     workspaces,
-  )("$directory resolves Hono only at or above its patched security floor", ({
+  )("$directory resolves Hono only at or above its patched security floor (4.13.7)", ({
     directory,
   }) => {
     const lockfile = readFileSync(join(directory, "bun.lock"), "utf8");
     // A workspace that resolves no Hono at all has nothing to patch.
     for (const version of resolvedVersions(lockfile, "hono")) {
-      expect(atLeast(version, "4.12.34"), `hono@${version}`).toBe(true);
+      expect(atLeast(version, "4.13.7"), `hono@${version}`).toBe(true);
     }
   });
 
@@ -84,6 +84,8 @@ describe("Convex dependency security floor", () => {
     const lockfile =
       '"hono": ["hono@4.12.1", "", {}],\n"x": ["hono@4.13.5", "", {}]';
     expect(resolvedVersions(lockfile, "hono")).toEqual(["4.12.1", "4.13.5"]);
-    expect(atLeast("4.12.1", "4.12.34")).toBe(false);
+    expect(atLeast("4.12.1", "4.13.7")).toBe(false);
+    // CVE-2026-93981 (hono/jsx Suspense escaping) is fixed in 4.13.7.
+    expect(atLeast("4.13.5", "4.13.7")).toBe(false);
   });
 });
