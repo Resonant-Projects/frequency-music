@@ -113,6 +113,15 @@ describe("Source Scout bot-challenge filter", () => {
       "Researchers studied browser checks and bot walls. ".repeat(80);
     expect(article.length).toBeGreaterThan(3_000);
     expect(looksLikeBotChallenge(article)).toBe(false);
+    // A short page that merely quotes a block-page phrase is real text.
+    expect(
+      looksLikeBotChallenge(
+        "Troubleshooting web firewalls: when a WAF responds that the requested URL was rejected, check the policy's signature set and the request path. " +
+          "Access to this page has been denied is another message operators see. ".repeat(
+            2,
+          ),
+      ),
+    ).toBe(false);
     // A short abstract page about CAPTCHAs or access control is real text.
     expect(
       looksLikeBotChallenge(

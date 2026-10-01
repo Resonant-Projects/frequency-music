@@ -44,8 +44,9 @@ const BOT_CHALLENGE_MARKERS = [
   // Publisher and CDN block pages (Elsevier ScienceDirect, PerimeterX, F5),
   // seen as Source Scout captures on 2026-10-01.
   /\bthere was a problem providing the content you requested\b/i,
-  /\baccess to this page has been denied\b/i,
-  /\bthe requested url was rejected\b/i,
+  // Generic block phrasing counts only with the page's own corroboration.
+  /\baccess to this page has been denied\b.*\bautomation tools\b/is,
+  /\bthe requested url was rejected\b.*\bsupport id\b/is,
   /\baccess denied\b.*\b(?:you don[’']t have permission|reference #|request id)\b/is,
 ];
 
