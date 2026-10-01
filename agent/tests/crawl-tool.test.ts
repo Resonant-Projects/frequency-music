@@ -355,6 +355,11 @@ describe("OpenAlex abstract fallback", () => {
         "https://www.tandfonline.com/doi/full/10.1080/09298215.2015.1123747",
       ),
     ).toBe("10.1080/09298215.2015.1123747");
+    expect(
+      doiForUrl(
+        "https://onlinelibrary.wiley.com/doi/full/10.1002/1097-0266(200010/11)21:10/11%3C1105::AID-SMJ133%3E3.0.CO;2-E",
+      ),
+    ).toBe("10.1002/1097-0266(200010/11)21:10/11<1105::AID-SMJ133>3.0.CO;2-E");
     expect(doiForUrl("https://example.org/paper")).toBeNull();
     expect(doiForUrl("not a url")).toBeNull();
   });
@@ -375,6 +380,15 @@ describe("OpenAlex abstract fallback", () => {
       /^https:\/\/api\.openalex\.org\/works\/doi:10\.2307\/1513178\?select=/,
     );
     expect(init).toMatchObject({ method: "GET", redirect: "error" });
+  });
+
+  test("encodes DOI characters that would otherwise end the request path", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 404 }));
+    const lookup = createOpenAlexAbstract({ fetchImpl });
+    await lookup("https://doi.org/10.1000/old%23doi%3Fpart");
+    expect(fetchImpl.mock.calls[0]?.[0]).toMatch(
+      /^https:\/\/api\.openalex\.org\/works\/doi:10\.1000\/old%23doi%3Fpart\?select=/,
+    );
   });
 
   test("falls back to an exact title match when the DOI is unknown", async () => {

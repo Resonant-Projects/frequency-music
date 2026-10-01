@@ -372,7 +372,7 @@ export function doiForUrl(rawUrl: string): string | null {
     return named?.[1] ?? null;
   }
   const publisher =
-    /\/doi\/(?:(?:abs|full|pdf|epdf|epub|book|reader)\/)?(10\.\d{4,9}\/[^/]+(?:\/[^/]+)?)\/?$/.exec(
+    /\/doi\/(?:(?:abs|full|pdf|epdf|epub|book|reader)\/)?(10\.\d{4,9}\/.+?)\/?$/.exec(
       path,
     );
   const name = publisher?.[1]?.replace(/\.pdf$/i, "");
@@ -423,7 +423,9 @@ export function createOpenAlexAbstract(
   }
 
   async function byDoi(doi: string): Promise<OpenAlexWork | null> {
-    const url = new URL(`${OPENALEX_WORKS_URL}/doi:${doi}`);
+    // The DOI is path data: encode characters that would end the path.
+    const path = doi.replace(/[%?#\s]/g, encodeURIComponent);
+    const url = new URL(`${OPENALEX_WORKS_URL}/doi:${path}`);
     url.searchParams.set("select", select);
     const work = await getJson(url);
     return work && typeof work === "object" ? (work as OpenAlexWork) : null;
