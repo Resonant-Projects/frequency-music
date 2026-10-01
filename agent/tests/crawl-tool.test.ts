@@ -476,6 +476,22 @@ describe("OpenAlex abstract fallback", () => {
         title: "L-Systems, Melodies and Musical Structure",
       }),
     ).resolves.toBeNull();
+    // Results without a DOI or id are distinct works, so still ambiguous.
+    const unidentified = createOpenAlexAbstract({
+      fetchImpl: async () =>
+        json({
+          meta: { count: 2 },
+          results: [
+            { ...lSystemsWork, id: undefined, doi: undefined },
+            { ...lSystemsWork, id: undefined, doi: undefined },
+          ],
+        }),
+    });
+    await expect(
+      unidentified("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
     // A response without a match count cannot prove uniqueness.
     const uncounted = createOpenAlexAbstract({
       fetchImpl: async () => json({ results: [lSystemsWork] }),

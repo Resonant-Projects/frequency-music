@@ -471,9 +471,16 @@ export function createOpenAlexAbstract(
         typeof work.title === "string" &&
         normalizedTitle(work.title) === wanted,
     );
-    // Two distinct works with the same title are ambiguous; take neither.
+    // Two distinct works with the same title are ambiguous; take neither. A
+    // result without a DOI or id counts as its own work, never a duplicate.
     const identities = new Set(
-      exact.map((work) => String(work.doi ?? work.id)),
+      exact.map((work, index) =>
+        typeof work.doi === "string"
+          ? work.doi
+          : typeof work.id === "string"
+            ? work.id
+            : `unidentified-${index}`,
+      ),
     );
     return identities.size === 1 ? (exact[0] ?? null) : null;
   }
