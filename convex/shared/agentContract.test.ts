@@ -96,6 +96,11 @@ describe("Source Scout bot-challenge filter", () => {
       "The requested URL was rejected. Please consult with your administrator. Your support ID is: 1234567890",
       // HAL's Anubis gate captured by Crawl4AI on 2026-10-01.
       "sciences sciences\n# Making sure you're not a bot!\nLoading...\nYou are seeing this because the administrator of this website has set up Anubis to protect the server against the scourge of AI companies aggressively scraping websites. Anubis uses a Proof-of-Work scheme in the vein of Hashcash.",
+      // Cloudflare challenge in a Medium capture, through a Markdown reader.
+      "Title: Just a moment...\n\nURL Source: https://ai.gopubby.com/example\n\nMarkdown Content:\nai.gopubby.com\n--------------\n\nPerforming security verification\n--------------------------------\n\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.",
+      "Performing security verification\nThis website uses a security service to protect against malicious bots.",
+      // Cloudflare's failure page in a bepress repository capture.
+      "Max challenge attempts exceeded. Please refresh the page to try again!\nWe use cookies that are necessary to make our site work.",
     ]) {
       expect(looksLikeBotChallenge(text), text.slice(0, 40)).toBe(true);
     }
@@ -120,6 +125,15 @@ describe("Source Scout bot-challenge filter", () => {
       looksLikeBotChallenge(
         "Anubis is an open-source web firewall that asks browsers to solve a proof-of-work challenge before serving pages. " +
           "Archives such as HAL adopted Anubis in 2025 to limit aggressive AI scraping. ".repeat(
+            2,
+          ),
+      ),
+    ).toBe(false);
+    // A short page naming Cloudflare's challenge heading is real text.
+    expect(
+      looksLikeBotChallenge(
+        "Cloudflare's interstitial, headed 'Performing security verification', drew complaints from screen-reader users. " +
+          "Some readers saw max challenge attempts exceeded errors on slow links. ".repeat(
             2,
           ),
       ),
