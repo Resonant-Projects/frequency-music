@@ -3,7 +3,7 @@
 // from V8 modules (hypotheses.ts, recipes.ts, weeklyBriefs.ts).
 // The node-side generation half lives in llmNode.ts.
 
-export const DEFAULT_MODEL = "openai/gpt-5.6-terra";
+export const DEFAULT_MODEL = "openai/gpt-6.1-sol";
 
 /**
  * Per-model OpenRouter reasoning effort. Only models listed here get a
@@ -12,7 +12,7 @@ export const DEFAULT_MODEL = "openai/gpt-5.6-terra";
  */
 export const MODEL_REASONING_EFFORT: Record<string, "low" | "medium" | "high"> =
   {
-    "openai/gpt-5.6-terra": "medium",
+    "openai/gpt-6.1-sol": "medium",
   };
 
 // Available models for different use cases (moved verbatim from extract.ts).
@@ -23,14 +23,14 @@ export const MODELS = {
   fast: "groq/openai/gpt-oss-120b",
 
   // === OpenRouter (model variety) ===
-  // Default switched from Sonnet 4.6 per Keith 2026-07-10: GPT-5.6 Terra at
+  // Default switched from GPT-5.6 Terra per Keith 2026-10-01: GPT-6.1 Sol at
   // medium reasoning effort (see MODEL_REASONING_EFFORT).
-  default: "openai/gpt-5.6-terra",
-  quality: "openai/gpt-5.6-terra",
+  default: DEFAULT_MODEL,
+  quality: DEFAULT_MODEL,
   // Catalog-canonical ids — scripts/check-model-catalog.ts verifies these
   // against the live provider catalogs (OpenRouter lists dot-form Anthropic
   // slugs; claude-3-5-haiku and grok-3-mini-beta were delisted 2026-07-10).
-  sonnet: "anthropic/claude-sonnet-4.6",
+  sonnet: "anthropic/claude-sonnet-5.5",
   haiku: "anthropic/claude-haiku-4.5",
   // Essay metadata generation (scripts/generate-essay-metadata.ts) per Keith
   // 2026-08-01. Listed here rather than as a script-local literal so

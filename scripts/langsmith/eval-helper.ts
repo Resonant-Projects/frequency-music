@@ -3,6 +3,7 @@ import "varlock/auto-load";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { evaluate, type EvaluatorT } from "langsmith/evaluation";
+import { MODELS } from "../../convex/llm";
 
 export interface EvalPrompt {
   system: string;
@@ -87,7 +88,7 @@ export async function runEval({
   await evaluate(
     async (input) => {
       const { text } = await generateText({
-        model: openrouter("anthropic/claude-sonnet-4.6"),
+        model: openrouter(MODELS.sonnet),
         system: prompt.system,
         prompt: prompt.user(input as Record<string, unknown>),
         maxOutputTokens,
