@@ -94,6 +94,8 @@ describe("Source Scout bot-challenge filter", () => {
       "[ScienceDirect](https://www.sciencedirect.com/)\n  * Help\n\n# There was a problem providing the content you requested\nPlease [contact our support team](https://service.elsevier.com/) for more information and provide the details below.\n  * **Reference number:** a1b2c3",
       "Access to this page has been denied because we believe you are using automation tools to browse the website.",
       "The requested URL was rejected. Please consult with your administrator. Your support ID is: 1234567890",
+      // HAL's Anubis gate captured by Crawl4AI on 2026-10-01.
+      "sciences sciences\n# Making sure you're not a bot!\nLoading...\nYou are seeing this because the administrator of this website has set up Anubis to protect the server against the scourge of AI companies aggressively scraping websites. Anubis uses a Proof-of-Work scheme in the vein of Hashcash.",
     ]) {
       expect(looksLikeBotChallenge(text), text.slice(0, 40)).toBe(true);
     }

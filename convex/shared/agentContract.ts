@@ -47,6 +47,9 @@ const BOT_CHALLENGE_MARKERS = [
   // Generic block phrasing counts only with the page's own corroboration.
   /\baccess to this page has been denied\b.*\bautomation tools\b/is,
   /\bthe requested url was rejected\b.*\bsupport id\b/is,
+  // Anubis proof-of-work gate (HAL and other archives), seen 2026-10-01.
+  /\bmaking sure you[’']re not a bot\b/i,
+  /\banubis\b.*\bproof[- ]of[- ]work\b/is,
   /\baccess denied\b.*\b(?:you don[’']t have permission|reference #|request id)\b/is,
 ];
 
