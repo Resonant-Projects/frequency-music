@@ -5,7 +5,11 @@ import {
   type ScoutedContentProvider,
 } from "../../../convex/shared/agentContract.js";
 import { redactError } from "../shared/redactError.js";
-import { isFirecrawlCloud, reconstructAbstract } from "./searchTool.js";
+import {
+  isFirecrawlCloud,
+  openAlexHeaders,
+  reconstructAbstract,
+} from "./searchTool.js";
 
 const DEFAULT_CRAWL4AI_URL = "https://crawl4ai.rproj.art";
 const CRAWL_TIMEOUT_MS = 40_000;
@@ -421,9 +425,13 @@ type OpenAlexWork = {
  * title match. The text says it is an abstract, not the full text.
  */
 export function createOpenAlexAbstract(
-  deps: { fetchImpl?: FetchLike } = {},
+  deps: { fetchImpl?: FetchLike; apiKey?: string } = {},
 ): PageFetcher {
   const fetchImpl = deps.fetchImpl ?? fetch;
+  const headers = {
+    accept: "application/json",
+    ...openAlexHeaders(deps.apiKey),
+  };
   const select = "id,doi,title,publication_year,abstract_inverted_index";
 
   async function getJson(url: URL): Promise<unknown> {
@@ -433,7 +441,7 @@ export function createOpenAlexAbstract(
       const response = await fetchImpl(url.toString(), {
         method: "GET",
         redirect: "error",
-        headers: { accept: "application/json" },
+        headers,
         signal: controller.signal,
       });
       if (response.status === 404) {

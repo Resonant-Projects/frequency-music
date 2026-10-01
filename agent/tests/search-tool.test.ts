@@ -13,6 +13,7 @@ import { createWebSearch } from "../src/tools/searchTool";
 // developer's or worker's environment.
 beforeEach(() => {
   vi.stubEnv("FIRECRAWL_API_URL", "");
+  vi.stubEnv("OPENALEX_API_KEY", "");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -28,6 +29,49 @@ const urlOf = (input: string | URL | Request): string =>
       : input.url;
 
 describe("federated source-scout search", () => {
+  test("sends an OpenAlex key as a header only to OpenAlex, never in a URL", async () => {
+    const fetchImpl = vi.fn(async (input: string | URL | Request) =>
+      urlOf(input).includes("openalex.org")
+        ? json({ results: [] })
+        : json({ resultList: { result: [] } }),
+    );
+    const search = createWebSearch({
+      apiKey: "",
+      fetchImpl,
+      callTool: vi.fn(async () => ({ ok: true })),
+      openAlexApiKey: "test-openalex-key",
+    });
+    await search({ query: "plate modes", maxResults: 2 });
+    const calls = fetchImpl.mock.calls as unknown as Array<
+      [string, RequestInit]
+    >;
+    const openAlex = calls.find(([url]) => url.includes("openalex.org"));
+    const europePmc = calls.find(([url]) => url.includes("ebi.ac.uk"));
+    expect(openAlex?.[1].headers).toEqual({
+      authorization: "Bearer test-openalex-key",
+    });
+    expect(europePmc?.[1].headers).toEqual({});
+    for (const [url] of calls) expect(url).not.toContain("test-openalex-key");
+  });
+
+  test("sends no OpenAlex authorization without a key", async () => {
+    const fetchImpl = vi.fn(async (input: string | URL | Request) =>
+      urlOf(input).includes("openalex.org")
+        ? json({ results: [] })
+        : json({ resultList: { result: [] } }),
+    );
+    const search = createWebSearch({
+      apiKey: "",
+      fetchImpl,
+      callTool: vi.fn(async () => ({ ok: true })),
+    });
+    await search({ query: "plate modes", maxResults: 2 });
+    for (const [, init] of fetchImpl.mock.calls as unknown as Array<
+      [string, RequestInit]
+    >)
+      expect(init.headers).toEqual({});
+  });
+
   test("discovers papers without a Firecrawl key and audits provider provenance", async () => {
     const fetchImpl = vi.fn(async (input: string | URL | Request) => {
       const url = urlOf(input);

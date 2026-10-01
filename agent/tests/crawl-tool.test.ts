@@ -385,6 +385,33 @@ describe("OpenAlex abstract fallback", () => {
     expect(init).toMatchObject({ method: "GET", redirect: "error" });
   });
 
+  test("sends a configured OpenAlex key as a header, never in the URL", async () => {
+    const fetchImpl = vi.fn(async () => json(lSystemsWork));
+    const lookup = createOpenAlexAbstract({
+      fetchImpl,
+      apiKey: "test-openalex-key",
+    });
+    await lookup("https://www.jstor.org/stable/1513178");
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(url).not.toContain("test-openalex-key");
+    expect(init.headers).toEqual({
+      accept: "application/json",
+      authorization: "Bearer test-openalex-key",
+    });
+    const keyless = vi.fn(async () => json(lSystemsWork));
+    await createOpenAlexAbstract({ fetchImpl: keyless, apiKey: " " })(
+      "https://www.jstor.org/stable/1513178",
+    );
+    const [, keylessInit] = keyless.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(keylessInit.headers).toEqual({ accept: "application/json" });
+  });
+
   test("normalizes accented titles without splitting words", async () => {
     expect(normalizedTitle("Étude pour piano")).toBe("etude pour piano");
     expect(normalizedTitle("Klänge, Töne und Resonanz: eine Studie")).toBe(

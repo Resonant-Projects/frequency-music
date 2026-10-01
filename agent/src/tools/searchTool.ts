@@ -235,19 +235,34 @@ type ProviderOutcome = {
   error?: string;
 };
 
+/**
+ * OpenAlex request headers. Keyless calls share one small daily budget per
+ * egress IP; a key, sent as a header so it never appears in a URL, has its own.
+ */
+export function openAlexHeaders(
+  apiKey = process.env.OPENALEX_API_KEY,
+): Record<string, string> {
+  const key = apiKey?.trim();
+  return key ? { authorization: `Bearer ${key}` } : {};
+}
+
 async function fetchResearch(
   fetchImpl: FetchLike,
   provider: "OpenAlex" | "Europe PMC",
   url: string,
   map: (payload: unknown, limit: number) => WebSearchResult[],
   limit: number,
+  headers: Record<string, string> = {},
 ): Promise<{ results: WebSearchResult[]; outcome: ProviderOutcome }> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const payload = await Promise.race([
       (async () => {
-        const response = await fetchImpl(url, { signal: controller.signal });
+        const response = await fetchImpl(url, {
+          headers,
+          signal: controller.signal,
+        });
         if (!response.ok) {
           await response.body?.cancel().catch(() => undefined);
           throw new Error(`${provider} search failed with ${response.status}`);
@@ -294,6 +309,7 @@ export function createWebSearch(
     baseUrl?: string;
     fetchImpl?: FetchLike;
     callTool?: ToolCaller;
+    openAlexApiKey?: string;
   } = {},
 ) {
   const configuredApiKey = dependencies.apiKey;
@@ -329,6 +345,7 @@ export function createWebSearch(
         openAlexUrl.toString(),
         mapOpenAlex,
         maxResults,
+        openAlexHeaders(dependencies.openAlexApiKey),
       ),
       fetchResearch(
         fetchImpl,
