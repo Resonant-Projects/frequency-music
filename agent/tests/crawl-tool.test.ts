@@ -383,6 +383,7 @@ describe("OpenAlex abstract fallback", () => {
       .mockResolvedValueOnce(new Response("{}", { status: 404 }))
       .mockResolvedValueOnce(
         json({
+          meta: { count: 1 },
           results: [
             {
               ...lSystemsWork,
@@ -406,6 +407,7 @@ describe("OpenAlex abstract fallback", () => {
     const near = createOpenAlexAbstract({
       fetchImpl: async () =>
         json({
+          meta: { count: 1 },
           results: [
             { ...lSystemsWork, title: "L-Systems and Musical Structure" },
           ],
@@ -419,6 +421,7 @@ describe("OpenAlex abstract fallback", () => {
     const ambiguous = createOpenAlexAbstract({
       fetchImpl: async () =>
         json({
+          meta: { count: 2 },
           results: [
             lSystemsWork,
             {
@@ -434,7 +437,28 @@ describe("OpenAlex abstract fallback", () => {
         title: "L-Systems, Melodies and Musical Structure",
       }),
     ).resolves.toBeNull();
-    const fetchImpl = vi.fn(async () => json({ results: [lSystemsWork] }));
+    // A response without a match count cannot prove uniqueness.
+    const uncounted = createOpenAlexAbstract({
+      fetchImpl: async () => json({ results: [lSystemsWork] }),
+    });
+    await expect(
+      uncounted("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
+    // One exact match on this page, but more matches exist on later pages.
+    const paged = createOpenAlexAbstract({
+      fetchImpl: async () =>
+        json({ meta: { count: 40 }, results: [lSystemsWork] }),
+    });
+    await expect(
+      paged("https://example.org/a", {
+        title: "L-Systems, Melodies and Musical Structure",
+      }),
+    ).resolves.toBeNull();
+    const fetchImpl = vi.fn(async () =>
+      json({ meta: { count: 1 }, results: [lSystemsWork] }),
+    );
     const short = createOpenAlexAbstract({ fetchImpl });
     await expect(
       short("https://example.org/a", { title: "Musical Structure" }),

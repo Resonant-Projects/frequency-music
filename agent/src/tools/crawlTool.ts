@@ -14,6 +14,8 @@ const OPENALEX_TIMEOUT_MS = 10_000;
 const OPENALEX_WORKS_URL = "https://api.openalex.org/works";
 // Below this many words a title can coincide with an unrelated work.
 const MIN_TITLE_MATCH_WORDS = 4;
+// A title search with more matches than one page cannot prove uniqueness.
+const TITLE_SEARCH_PAGE_SIZE = 25;
 // A crawl result also carries page HTML and link lists; images are excluded at
 // the crawler. Refuse anything larger before it is buffered and parsed.
 const MAX_CRAWL_RESPONSE_BYTES = 16 * 1024 * 1024;
@@ -433,14 +435,22 @@ export function createOpenAlexAbstract(
     const url = new URL(OPENALEX_WORKS_URL);
     // Commas separate OpenAlex filters, so search the normalized title.
     url.searchParams.set("filter", `title.search:${wanted}`);
-    url.searchParams.set("per_page", "5");
+    url.searchParams.set("per_page", String(TITLE_SEARCH_PAGE_SIZE));
     url.searchParams.set("select", select);
     const payload = await getJson(url);
-    const results =
-      payload && typeof payload === "object" && "results" in payload
-        ? payload.results
-        : undefined;
-    if (!Array.isArray(results)) return null;
+    if (!payload || typeof payload !== "object") return null;
+    const results = "results" in payload ? payload.results : undefined;
+    const meta = "meta" in payload ? payload.meta : undefined;
+    const count =
+      meta && typeof meta === "object" && "count" in meta ? meta.count : NaN;
+    // Uniqueness needs every match: OpenAlex ranks by similarity and
+    // citations, so a second exact title could sit on a later page.
+    if (
+      !Array.isArray(results) ||
+      !Number.isInteger(count) ||
+      (count as number) > results.length
+    )
+      return null;
     const exact = (results as OpenAlexWork[]).filter(
       (work) =>
         typeof work.title === "string" &&
