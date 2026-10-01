@@ -56,6 +56,25 @@ describe.each([
     expect(params).not.toHaveProperty("temperature");
   });
 
+  test("enables adaptive thinking, which Sonnet 5.5 requires", () => {
+    const params = createOpenRouterAnthropicModel({ model }).invocationParams(
+      {},
+    );
+    // The installed ChatAnthropic otherwise sends thinking: disabled, which
+    // Sonnet 5.5 rejects ("Reasoning is mandatory ... cannot be disabled").
+    expect(params.thinking).toEqual({ type: "adaptive" });
+    expect(
+      createOpenRouterAnthropicModel().invocationParams({}).thinking,
+    ).toEqual({ type: "adaptive" });
+  });
+
+  test("keeps the library's thinking default for older models", () => {
+    const params = createOpenRouterAnthropicModel({
+      model: "claude-sonnet-4-6",
+    }).invocationParams({});
+    expect(params.thinking).toEqual({ type: "disabled" });
+  });
+
   test("preserves the default temperature for older models", () => {
     const params = createOpenRouterAnthropicModel({
       model: "claude-sonnet-4-6",
