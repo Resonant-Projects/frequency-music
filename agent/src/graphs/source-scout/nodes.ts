@@ -527,10 +527,19 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
     const rationales = [...state.sourceWrites, ...state.feedWrites]
       .map((write) => `${write.title}: ${write.rationale}`)
       .join(" | ");
+    // Like the other graphs, a model outage completes with a summary that
+    // names it, rather than an apparently empty success.
+    const plannerFailed = (state.plannerErrorCount ?? 0) > 0;
+    const judged = state.judgments?.length ?? 0;
+    const allJudgesFailed = judged > 0 && state.judgeErrorCount === judged;
     const summary =
       gapCount === 0
         ? "source-scout completed: no research gaps"
-        : `source-scout completed: ${sourcesCreated} sources ingested, ${sourcesEnriched ? `${sourcesEnriched} URL-only sources captured, ` : ""}${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors${rationales ? `. Rationale: ${rationales}` : ""}`;
+        : plannerFailed
+          ? `source-scout completed: query planning failed for ${gapCount} research gaps; no searches run (planner error)`
+          : allJudgesFailed
+            ? `source-scout completed: zero judgments; ${state.judgeErrorCount} judge errors discarded`
+            : `source-scout completed: ${sourcesCreated} sources ingested, ${sourcesEnriched ? `${sourcesEnriched} URL-only sources captured, ` : ""}${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors${rationales ? `. Rationale: ${rationales}` : ""}`;
     const auditEvents = await finalizeRunCompleted(
       callTool,
       state.agentRunId,

@@ -18,12 +18,15 @@ export type StructuredJudge<Verdict> = {
 export function createStructuredJudge<Schema extends z.ZodType>(
   schema: Schema,
 ): StructuredJudge<z.infer<Schema>> {
+  // Native JSON-schema output, not a forced tool call: Sonnet 5.5 rejects
+  // forced tool_choice and refuses to disable reasoning, which is what the
+  // default tool-calling method sends.
   return getResearchModel({
     requiresToolBinding: true,
     temperature: 0,
-  }).withStructuredOutput(schema) as unknown as StructuredJudge<
-    z.infer<Schema>
-  >;
+  }).withStructuredOutput(schema, {
+    method: "jsonSchema",
+  }) as unknown as StructuredJudge<z.infer<Schema>>;
 }
 
 type JudgeError = { reason: "judge_error"; message: string };

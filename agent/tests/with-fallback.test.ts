@@ -30,10 +30,12 @@ class ScriptedModel extends BaseChatModel<BaseChatModelCallOptions> {
 
 class StructuredFallbackModel extends ScriptedModel {
   structuredCalls = 0;
+  structuredConfig: unknown;
 
   override withStructuredOutput<
     RunOutput extends Record<string, any> = Record<string, any>,
-  >(_outputSchema: unknown, _config?: unknown): Runnable<any, RunOutput> {
+  >(_outputSchema: unknown, config?: unknown): Runnable<any, RunOutput> {
+    this.structuredConfig = config;
     return RunnableLambda.from(async (_messages: BaseMessage[]) => {
       this.structuredCalls += 1;
       return { answer: "structured fallback" };
@@ -127,5 +129,7 @@ describe("withFallback", () => {
     expect(result).toEqual({ answer: "structured fallback" });
     expect(fallback.calls).toBe(0);
     expect(fallback.structuredCalls).toBe(1);
+    // Forced tool calling is rejected by Sonnet 5.5; use native JSON output.
+    expect(fallback.structuredConfig).toEqual({ method: "jsonSchema" });
   });
 });

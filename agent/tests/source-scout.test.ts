@@ -332,6 +332,51 @@ describe("source scout canonical write nodes", () => {
     );
   });
 
+  test("names planner and total judge failures in the summary", async () => {
+    const callTool = vi.fn(async () => ({ ok: true }));
+    const base = {
+      agentRunId: "run-scout",
+      targets: {
+        thinDomains: [{ domain: "cymatics" }],
+        starvedConjectures: [],
+      },
+      sourceWrites: [],
+      feedWrites: [],
+    };
+    const errored = (index: number): ScoutJudgment => ({
+      searchHit: searchHit(index),
+      discardReason: { reason: "judge_error", message: "model rejected" },
+    });
+    const planner = await createSummarizeNode(callTool)({
+      ...base,
+      judgments: [],
+      plannerErrorCount: 1,
+      judgeErrorCount: 0,
+    } as unknown as SourceScoutState);
+    expect(planner.summary).toBe(
+      "source-scout completed: query planning failed for 1 research gaps; no searches run (planner error)",
+    );
+    const judges = await createSummarizeNode(callTool)({
+      ...base,
+      judgments: [errored(0), errored(1)],
+      plannerErrorCount: 0,
+      judgeErrorCount: 2,
+    } as unknown as SourceScoutState);
+    expect(judges.summary).toBe(
+      "source-scout completed: zero judgments; 2 judge errors discarded",
+    );
+    const partial = await createSummarizeNode(callTool)({
+      ...base,
+      judgments: [
+        errored(0),
+        { searchHit: searchHit(1), verdict: { kind: "skip" } },
+      ],
+      plannerErrorCount: 0,
+      judgeErrorCount: 1,
+    } as unknown as SourceScoutState);
+    expect(partial.summary).toMatch(/1 judge errors/);
+  });
+
   test("still captures candidates when the existing-source preflight fails", async () => {
     const callTool = vi.fn(async (name: string) => {
       if (name === "findExistingSourceUrls")

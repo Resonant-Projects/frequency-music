@@ -71,8 +71,10 @@ export class FallbackChatModel extends BaseChatModel<CodexSdkCallOptions> {
     };
 
     if (outputSchema !== undefined && outputSchema !== null) {
+      // jsonSchema, not a forced tool call, which Sonnet 5.5 rejects.
       const structuredFallback = this.fallback.withStructuredOutput(
         outputSchema as Record<string, unknown>,
+        { method: "jsonSchema" },
       );
       const parsed = await structuredFallback.invoke(messages, fallbackOptions);
       const text = JSON.stringify(parsed);
