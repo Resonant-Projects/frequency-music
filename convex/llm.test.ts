@@ -7,9 +7,9 @@ import {
 } from "./llm";
 
 describe("llm constants", () => {
-  test("default model and budgets match the values the four generators used", () => {
-    // Default switched to GPT-5.6 Terra (medium reasoning) per Keith 2026-07-10.
-    expect(DEFAULT_MODEL).toBe("openai/gpt-5.6-terra");
+  test("default model and budgets match the shared generator configuration", () => {
+    // Default switched to GPT-6.1 Sol (medium reasoning) per Keith 2026-10-01.
+    expect(DEFAULT_MODEL).toBe("openai/gpt-6.1-sol");
     // Raised 2026-07-10 for reasoning models (Terra): reasoning tokens count
     // against maxOutputTokens; recipe JSON truncated live at 3000 and 6000.
     expect(TOKEN_BUDGETS.extract_v2).toBe(8000);

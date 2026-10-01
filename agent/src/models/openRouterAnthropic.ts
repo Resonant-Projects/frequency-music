@@ -6,16 +6,18 @@ export interface ChatModelOptions {
 }
 
 export const OPENROUTER_ANTHROPIC_API_URL = "https://openrouter.ai/api";
-export const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-4.6";
-export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6";
+export const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-5.5";
+export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5-5";
 
 export function normalizeOpenRouterModel(model: string) {
   const rawModel = model.trim();
   const unprefixed = rawModel.startsWith("anthropic/")
     ? rawModel.slice("anthropic/".length)
     : rawModel;
-  const normalized =
-    unprefixed === "claude-sonnet-4-6" ? "claude-sonnet-4.6" : unprefixed;
+  const normalized = unprefixed.replace(
+    /^claude-sonnet-(\d+)-(\d+)$/,
+    "claude-sonnet-$1.$2",
+  );
   return `anthropic/${normalized}`;
 }
 

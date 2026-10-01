@@ -58,7 +58,7 @@ recording means.
   `promote.ts` (+ `promote.test.ts`), `export-outcomes.ts`,
   `export-edit-captures.ts`. `promote.ts:86` — `BASELINES_DOC = "docs/eval-baselines.md"`.
 - Caveat already documented in the baselines doc: runners score the *runner's*
-  simplified prompt version via `anthropic/claude-sonnet-4.6`, not the deployed
+  simplified prompt version via `anthropic/claude-sonnet-5.5`, not the deployed
   Convex prompt — numbers are relative prompt-version comparisons. Preserve
   this caveat; do not delete it.
 - `bun test scripts/langsmith/` runs the tooling's own unit tests

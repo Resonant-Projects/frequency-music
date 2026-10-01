@@ -19,14 +19,14 @@ is a **shared contract**:
 **How to record a baseline** (per target): run its `eval-*.ts` runner 3× against
 the current prompt version, then fill the mean per evaluator below along with the
 metadata line. Note: the runners score the *runner's* simplified prompt version
-via `anthropic/claude-sonnet-4.6`, not the deployed Convex prompt — interpret the
+via `anthropic/claude-sonnet-5.5`, not the deployed Convex prompt — interpret the
 numbers as relative prompt-version comparisons.
 
 ---
 
 ## Extraction baseline
 
-- Prompt version: `extract_v2` · Model/provider: `anthropic/claude-sonnet-4.6` (OpenRouter) · Date: — · Experiments: —
+- Prompt version: `extract_v2` · Model/provider: `anthropic/claude-sonnet-5.5` (OpenRouter) · Date: — · Experiments: —
 
 | Evaluator | Mean |
 | --- | --- |
@@ -35,7 +35,7 @@ numbers as relative prompt-version comparisons.
 
 ## Hypothesis baseline
 
-- Prompt version: `v1` · Model/provider: `anthropic/claude-sonnet-4.6` (OpenRouter) · Date: — · Experiments: —
+- Prompt version: `v1` · Model/provider: `anthropic/claude-sonnet-5.5` (OpenRouter) · Date: — · Experiments: —
 
 | Evaluator | Mean |
 | --- | --- |
@@ -53,7 +53,7 @@ Added once plan 01's Codex provider is exercised by `eval-hypothesis` (same data
 
 ## Recipe baseline
 
-- Prompt version: `v1` · Model/provider: `anthropic/claude-sonnet-4.6` (OpenRouter) · Date: — · Experiments: —
+- Prompt version: `v1` · Model/provider: `anthropic/claude-sonnet-5.5` (OpenRouter) · Date: — · Experiments: —
 
 | Evaluator | Mean |
 | --- | --- |
@@ -62,7 +62,7 @@ Added once plan 01's Codex provider is exercised by `eval-hypothesis` (same data
 
 ## Weekly Brief baseline
 
-- Prompt version: `v1` · Model/provider: `anthropic/claude-sonnet-4.6` (OpenRouter) · Date: — · Experiments: —
+- Prompt version: `v1` · Model/provider: `anthropic/claude-sonnet-5.5` (OpenRouter) · Date: — · Experiments: —
 
 | Evaluator | Mean |
 | --- | --- |

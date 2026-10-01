@@ -105,7 +105,7 @@ while (!isDone && selected < limit) {
 
 const sonnetEstimate =
   model === MODELS.sonnet
-    ? (totals.inputTokens * 3 + totals.outputTokens * 15) / 1_000_000
+    ? (totals.inputTokens * 2 + totals.outputTokens * 10) / 1_000_000
     : undefined;
 console.log("\n");
 console.log(apply ? "APPLIED" : "DRY RUN (use --apply to execute)");
