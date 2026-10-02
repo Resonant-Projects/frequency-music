@@ -16,8 +16,15 @@ export function normalizeUrl(url: string): string {
 export function arxivIdForUrl(value: string): string | null {
   const id =
     "((?:\\d{4}\\.\\d{4,5})|(?:[a-z-]+(?:\\.[A-Z]{2})?\\/\\d{7}))(?:v\\d+)?";
+  // Legacy ids are lowercase archives with uppercase subject classes.
+  const canonical = (raw: string | undefined) =>
+    raw?.replace(
+      /^([a-z-]+)(?:\.([a-z]{2}))?\//i,
+      (_m, archive: string, subject?: string) =>
+        `${archive.toLowerCase()}${subject ? `.${subject.toUpperCase()}` : ""}/`,
+    ) ?? null;
   const oai = new RegExp(`^oai:arXiv\\.org:${id}$`, "i").exec(value.trim());
-  if (oai) return oai[1] ?? null;
+  if (oai) return canonical(oai[1]);
   let url: URL;
   try {
     url = new URL(value);
@@ -31,7 +38,7 @@ export function arxivIdForUrl(value: string): string | null {
     `^\\/(?:abs|pdf|html)\\/${id}(?:\\.pdf)?\\/?$`,
     "i",
   ).exec(url.pathname);
-  return path?.[1] ?? null;
+  return canonical(path?.[1]);
 }
 
 export function generateDedupeKey(

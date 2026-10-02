@@ -1,7 +1,8 @@
 "use node";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { action } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { type ActionCtx, action } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { DEFAULT_MODEL, MODELS } from "./llm";
 import { generateJson } from "./llmNode";
@@ -106,6 +107,22 @@ export function parseConfidenceBand(
 /**
  * Extract structured data from a source using AI SDK + OpenRouter
  */
+async function archiveAsDuplicate(
+  ctx: ActionCtx,
+  args: { sourceId: Id<"sources">; devBypassSecret?: string },
+  holderSourceId: Id<"sources">,
+  extractionId: Id<"extractions">,
+) {
+  // Another Source holds the Extraction (and its claims) for this text.
+  await ctx.runMutation(api.sources.updateStatus, {
+    id: args.sourceId,
+    status: "archived",
+    blockedReason: "duplicate",
+    blockedDetails: `Same text as source ${holderSourceId} (extraction ${extractionId})`,
+    devBypassSecret: args.devBypassSecret,
+  });
+}
+
 export const extractSource = action({
   args: {
     sourceId: v.id("sources"),
@@ -175,12 +192,11 @@ export const extractSource = action({
     const inputHash = hashArray
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-    const existingExtractions = await ctx.runQuery(
-      api.extractions.getByInputHash,
-      { inputHash },
-    );
-    if (existingExtractions && !args.force) {
-      if (existingExtractions.sourceId === args.sourceId) {
+    if (!args.force) {
+      const own = await ctx.runQuery(api.extractions.getBySourceId, {
+        sourceId: args.sourceId,
+      });
+      if (own.some((extraction) => extraction.inputHash === inputHash)) {
         // This Source's own Extraction already covers this text.
         await ctx.runMutation(api.sources.updateStatus, {
           id: args.sourceId,
@@ -189,15 +205,13 @@ export const extractSource = action({
         });
         return { skipped: true as const, reason: "already extracted" };
       }
-      // Another Source holds the Extraction (and its claims) for this text.
-      await ctx.runMutation(api.sources.updateStatus, {
-        id: args.sourceId,
-        status: "archived",
-        blockedReason: "duplicate",
-        blockedDetails: `Same text as source ${existingExtractions.sourceId} (extraction ${existingExtractions._id})`,
-        devBypassSecret: args.devBypassSecret,
+      const existing = await ctx.runQuery(api.extractions.getByInputHash, {
+        inputHash,
       });
-      return { skipped: true as const, reason: "duplicate extraction" };
+      if (existing) {
+        await archiveAsDuplicate(ctx, args, existing.sourceId, existing._id);
+        return { skipped: true as const, reason: "duplicate extraction" };
+      }
     }
 
     // Mark as extracting
@@ -252,24 +266,38 @@ export const extractSource = action({
       );
 
       // Store the extraction
-      await ctx.runMutation(internal.extractInternal.storeExtraction, {
-        sourceId: args.sourceId,
-        model: modelId,
-        promptVersion: "extract_v2",
-        inputHash,
-        summary: extraction.summary,
-        claims: extraction.claims.map((c) => ({
-          text: c.text,
-          evidenceLevel: c.evidenceLevel as any,
-          truthConfidence: parseConfidenceBand(c.truthConfidence),
-          interestLevel: parseConfidenceBand(c.interestLevel),
-          citations: c.citations || [],
-        })),
-        compositionParameters: filteredParameters,
-        topics: extraction.topics || [],
-        openQuestions: extraction.openQuestions || [],
-        confidence: 0.8,
-      });
+      const stored = await ctx.runMutation(
+        internal.extractInternal.storeExtraction,
+        {
+          sourceId: args.sourceId,
+          model: modelId,
+          promptVersion: "extract_v2",
+          inputHash,
+          summary: extraction.summary,
+          claims: extraction.claims.map((c) => ({
+            text: c.text,
+            evidenceLevel: c.evidenceLevel as any,
+            truthConfidence: parseConfidenceBand(c.truthConfidence),
+            interestLevel: parseConfidenceBand(c.interestLevel),
+            citations: c.citations || [],
+          })),
+          compositionParameters: filteredParameters,
+          topics: extraction.topics || [],
+          openQuestions: extraction.openQuestions || [],
+          confidence: 0.8,
+          allowDuplicateInput: args.force === true,
+        },
+      );
+      if (stored.duplicateOfSource) {
+        // A concurrent Extraction of the same text was stored first.
+        await archiveAsDuplicate(
+          ctx,
+          args,
+          stored.duplicateOfSource,
+          stored.extractionId,
+        );
+        return { skipped: true as const, reason: "duplicate extraction" };
+      }
 
       // Update source status
       await ctx.runMutation(api.sources.updateStatus, {

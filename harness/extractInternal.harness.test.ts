@@ -21,7 +21,7 @@ describe("extractInternal.storeExtraction", () => {
       }),
     );
 
-    const extractionId = await t.mutation(
+    const { extractionId } = await t.mutation(
       internal.extractInternal.storeExtraction,
       {
         sourceId,
@@ -86,25 +86,27 @@ describe("extractInternal.storeExtraction", () => {
       }),
     );
 
-    const store = (inputHash: string, texts: string[]) =>
-      t.mutation(internal.extractInternal.storeExtraction, {
-        sourceId,
-        model: "test-model",
-        promptVersion: "extract_v2",
-        inputHash,
-        summary: `Extraction ${inputHash}`,
-        claims: texts.map((text) => ({
-          text,
-          evidenceLevel: "peer_reviewed" as const,
-          truthConfidence: "high" as const,
-          interestLevel: "medium" as const,
-          citations: [{ url: `https://example.com/${inputHash}` }],
-        })),
-        compositionParameters: [],
-        topics: ["cymatics"],
-        openQuestions: [],
-        confidence: 0.9,
-      });
+    const store = async (inputHash: string, texts: string[]) =>
+      (
+        await t.mutation(internal.extractInternal.storeExtraction, {
+          sourceId,
+          model: "test-model",
+          promptVersion: "extract_v2",
+          inputHash,
+          summary: `Extraction ${inputHash}`,
+          claims: texts.map((text) => ({
+            text,
+            evidenceLevel: "peer_reviewed" as const,
+            truthConfidence: "high" as const,
+            interestLevel: "medium" as const,
+            citations: [{ url: `https://example.com/${inputHash}` }],
+          })),
+          compositionParameters: [],
+          topics: ["cymatics"],
+          openQuestions: [],
+          confidence: 0.9,
+        })
+      ).extractionId;
 
     const firstExtractionId = await store("first", [
       "First claim",
@@ -169,5 +171,55 @@ describe("extractInternal.storeExtraction", () => {
     expect(active.map(({ ordinal, status }) => ({ ordinal, status }))).toEqual([
       { ordinal: 0, status: "active" },
     ]);
+  });
+
+  test("refuses a second Source's Extraction of the same text", async () => {
+    const t = convexTest(schema, modules);
+    const [first, second] = await t.run(async (ctx) => {
+      const row = (key: string) =>
+        ctx.db.insert("sources", {
+          type: "url",
+          canonicalUrl: `https://example.org/${key}`,
+          rawText: "Shared text",
+          status: "text_ready",
+          dedupeKey: `url:example.org/${key}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1000,
+          updatedAt: 1000,
+        });
+      return [await row("a"), await row("b")];
+    });
+    const args = {
+      model: "test-model",
+      promptVersion: "extract_v2",
+      inputHash: "shared-input",
+      summary: "Summary",
+      claims: [],
+      compositionParameters: [],
+      topics: [],
+      openQuestions: [],
+      confidence: 0.8,
+    };
+    const stored = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: first,
+    });
+    expect(stored.duplicateOfSource).toBeUndefined();
+    const refused = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: second,
+    });
+    expect(refused).toEqual({
+      extractionId: stored.extractionId,
+      duplicateOfSource: first,
+    });
+    const forced = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: second,
+      allowDuplicateInput: true,
+    });
+    expect(forced.duplicateOfSource).toBeUndefined();
+    expect(forced.extractionId).not.toBe(stored.extractionId);
   });
 });

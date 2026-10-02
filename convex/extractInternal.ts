@@ -17,9 +17,34 @@ export const storeExtraction = internalMutation({
     topics: v.array(v.string()),
     openQuestions: v.array(v.string()),
     confidence: v.number(),
+    // A forced re-extraction may repeat text another Source already holds.
+    allowDuplicateInput: v.optional(v.boolean()),
   },
-  returns: v.id("extractions"),
-  handler: async (ctx, args): Promise<Id<"extractions">> => {
+  returns: v.object({
+    extractionId: v.id("extractions"),
+    duplicateOfSource: v.optional(v.id("sources")),
+  }),
+  handler: async (
+    ctx,
+    { allowDuplicateInput, ...args },
+  ): Promise<{
+    extractionId: Id<"extractions">;
+    duplicateOfSource?: Id<"sources">;
+  }> => {
+    // Checked inside this transaction, so two concurrent Extractions of the
+    // same text cannot both store claims.
+    if (!allowDuplicateInput) {
+      const existing = await ctx.db
+        .query("extractions")
+        .withIndex("by_inputHash", (q) => q.eq("inputHash", args.inputHash))
+        .first();
+      if (existing && existing.sourceId !== args.sourceId) {
+        return {
+          extractionId: existing._id,
+          duplicateOfSource: existing.sourceId,
+        };
+      }
+    }
     const compositionParameters: Doc<"extractions">["compositionParameters"] =
       await Promise.all(
         args.compositionParameters.map(
@@ -103,6 +128,6 @@ export const storeExtraction = internalMutation({
       });
     }
 
-    return extractionId;
+    return { extractionId };
   },
 });

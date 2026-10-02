@@ -841,33 +841,62 @@ export const archive = mutation({
   },
 });
 
-// Pipeline progress of a Source, so a dedupe collision keeps the row whose
-// Extraction and claims already exist instead of the merely older one.
+// Pipeline progress of a Source's status, the last tie-break before age.
 const DEDUPE_PROGRESS: Record<string, number> = {
   promoted_public: 7,
   promoted_followers: 6,
   triaged: 5,
   extracted: 4,
   extracting: 3,
-  review_needed: 2,
+  review_needed: 1,
   text_ready: 1,
   ingested: 0,
 };
 
-/** Whether `holder` keeps the canonical key over a colliding `other` row. */
+export type DedupeStanding = Pick<
+  Doc<"sources">,
+  "status" | "blockedReason" | "createdAt"
+> & { hasExtraction: boolean; hasText: boolean };
+
+/**
+ * Whether `holder` keeps the canonical key over a colliding `other` row:
+ * extraction work first, then usable text, then status, then age. Status
+ * alone misleads (a promoted Source may lack an Extraction; ai_error is a
+ * failed one).
+ */
 export function keepsDedupeKey(
-  holder: Pick<Doc<"sources">, "status" | "blockedReason" | "createdAt">,
-  other: Pick<Doc<"sources">, "status" | "blockedReason" | "createdAt">,
+  holder: DedupeStanding,
+  other: DedupeStanding,
 ): boolean {
-  // A source parked for lack of text is behind one with text.
-  const rank = (s: typeof holder) =>
+  const rank = (s: DedupeStanding) => [
+    s.hasExtraction ? 1 : 0,
+    s.hasText ? 1 : 0,
     s.status === "review_needed" && s.blockedReason === "no_text"
-      ? 0.5
-      : (DEDUPE_PROGRESS[s.status] ?? 0);
-  const difference = rank(holder) - rank(other);
-  return difference !== 0
-    ? difference > 0
-    : holder.createdAt <= other.createdAt;
+      ? 0
+      : (DEDUPE_PROGRESS[s.status] ?? 0),
+  ];
+  const [a, b] = [rank(holder), rank(other)];
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return (a[i] ?? 0) > (b[i] ?? 0);
+  }
+  return holder.createdAt <= other.createdAt;
+}
+
+async function dedupeStanding(
+  ctx: MutationCtx,
+  source: Doc<"sources">,
+): Promise<DedupeStanding> {
+  const extraction = await ctx.db
+    .query("extractions")
+    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
+    .first();
+  return {
+    status: source.status,
+    blockedReason: source.blockedReason,
+    createdAt: source.createdAt,
+    hasExtraction: extraction !== null,
+    hasText: Boolean(source.rawText || source.transcript),
+  };
 }
 
 /**
@@ -949,7 +978,13 @@ export const recomputeDedupeKeys = mutation({
           updatedAt: now,
         });
         changed++;
-      } else if (holder && keepsDedupeKey(holder, source)) {
+      } else if (
+        holder &&
+        keepsDedupeKey(
+          await dedupeStanding(ctx, holder),
+          await dedupeStanding(ctx, source),
+        )
+      ) {
         // The holder is further along (or as far along and older): archive this row.
         await ctx.db.patch("sources", source._id, {
           status: "archived",

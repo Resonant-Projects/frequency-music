@@ -25,11 +25,19 @@ const arxivRow = (overrides: {
 });
 
 describe("dedupe key migration", () => {
-  test("keeps the row that is further along, then the older one", () => {
-    const row = (status: string, createdAt: number, blockedReason?: string) =>
-      ({ status, createdAt, blockedReason }) as Parameters<
-        typeof keepsDedupeKey
-      >[0];
+  test("keeps extraction work, then text, then status, then age", () => {
+    const row = (
+      status: string,
+      createdAt: number,
+      extra: Partial<Parameters<typeof keepsDedupeKey>[0]> = {},
+    ) =>
+      ({
+        status,
+        createdAt,
+        hasExtraction: status === "extracted",
+        hasText: status !== "ingested",
+        ...extra,
+      }) as Parameters<typeof keepsDedupeKey>[0];
     expect(keepsDedupeKey(row("extracted", 2), row("text_ready", 1))).toBe(
       true,
     );
@@ -42,8 +50,25 @@ describe("dedupe key migration", () => {
     expect(keepsDedupeKey(row("text_ready", 2), row("text_ready", 1))).toBe(
       false,
     );
+    // A promoted Source without an Extraction loses to one with an Extraction.
     expect(
-      keepsDedupeKey(row("review_needed", 1, "no_text"), row("text_ready", 2)),
+      keepsDedupeKey(
+        row("promoted_public", 1, { hasExtraction: false }),
+        row("extracted", 2),
+      ),
+    ).toBe(false);
+    // A failed Extraction does not outrank queued text.
+    expect(
+      keepsDedupeKey(
+        row("review_needed", 1, { blockedReason: "ai_error" }),
+        row("text_ready", 2),
+      ),
+    ).toBe(true);
+    expect(
+      keepsDedupeKey(
+        row("review_needed", 1, { blockedReason: "no_text", hasText: false }),
+        row("text_ready", 2),
+      ),
     ).toBe(false);
   });
 
@@ -76,6 +101,22 @@ describe("dedupe key migration", () => {
         }),
       ),
     }));
+    await t.run((ctx) =>
+      ctx.db.insert("extractions", {
+        sourceId: newer,
+        model: "test-model",
+        promptVersion: "extract_v2",
+        inputHash: "newer-input",
+        summary: "Summary",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 2,
+      }),
+    );
 
     const dry = await asOperator.mutation(api.sources.recomputeDedupeKeys, {
       cursor: null,
