@@ -277,4 +277,50 @@ describe("extractInternal.storeExtraction", () => {
     });
     expect(stored.existing).toBeUndefined();
   });
+
+  test("finds a live holder behind many archived ones", async () => {
+    const t = convexTest(schema, modules);
+    const insertSource = (key: string, status: "archived" | "text_ready") =>
+      t.run((ctx) =>
+        ctx.db.insert("sources", {
+          type: "url",
+          canonicalUrl: `https://example.org/${key}`,
+          rawText: "Shared text",
+          status,
+          dedupeKey: `url:example.org/${key}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1000,
+          updatedAt: 1000,
+        }),
+      );
+    const extraction = (sourceId: Awaited<ReturnType<typeof insertSource>>) =>
+      t.run((ctx) =>
+        ctx.db.insert("extractions", {
+          sourceId,
+          model: "test-model",
+          promptVersion: "extract_v2",
+          inputHash: "shared-input",
+          summary: "Summary",
+          claims: [],
+          compositionParameters: [],
+          topics: [],
+          openQuestions: [],
+          confidence: 0.8,
+          createdBy: "system",
+          createdAt: 1000,
+        }),
+      );
+    for (let i = 0; i < 30; i++)
+      await extraction(await insertSource(`old-${i}`, "archived"));
+    const holder = await insertSource("holder", "text_ready");
+    await extraction(holder);
+    const copy = await insertSource("copy", "text_ready");
+    expect(
+      await t.query(internal.extractInternal.findExtractionForInput, {
+        inputHash: "shared-input",
+        sourceId: copy,
+      }),
+    ).toMatchObject({ sourceId: holder, sameSource: false });
+  });
 });

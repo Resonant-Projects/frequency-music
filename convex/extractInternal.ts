@@ -19,13 +19,16 @@ async function extractionForInput(
   inputHash: string,
   sourceId: Id<"sources">,
 ): Promise<{ extraction: Doc<"extractions">; sameSource: boolean } | null> {
-  const matches = await db
+  const own = await db
     .query("extractions")
-    .withIndex("by_inputHash", (q) => q.eq("inputHash", inputHash))
-    .take(25);
-  const own = matches.find((match) => match.sourceId === sourceId);
+    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", sourceId))
+    .filter((q) => q.eq(q.field("inputHash"), inputHash))
+    .first();
   if (own) return { extraction: own, sameSource: true };
-  for (const match of matches) {
+  // Streams every match, stopping at the first live holder.
+  for await (const match of db
+    .query("extractions")
+    .withIndex("by_inputHash", (q) => q.eq("inputHash", inputHash))) {
     const holder = await db.get("sources", match.sourceId);
     if (holder && holder.status !== "archived") {
       return { extraction: match, sameSource: false };
