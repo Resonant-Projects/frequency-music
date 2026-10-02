@@ -8,7 +8,7 @@ ARG NODE_IMAGE=node:24.18.1-trixie-slim@sha256:ac39e4b5fcb2b1b34b20364fd58b2e898
 FROM ${NODE_IMAGE} AS dependencies
 WORKDIR /app/media
 
-ARG BUN_VERSION=1.3.14
+ARG BUN_VERSION=1.4.2
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ENV BUN_INSTALL=/usr/local

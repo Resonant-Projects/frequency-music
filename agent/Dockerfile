@@ -8,7 +8,7 @@ ARG RUNTIME_NODE_IMAGE=node:24.18.1-alpine3.23@sha256:c2cc26d8f991c2db236ad51a61
 FROM ${BUILD_NODE_IMAGE} AS dependencies
 WORKDIR /app/agent
 
-ARG BUN_VERSION=1.3.14
+ARG BUN_VERSION=1.4.2
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ENV BUN_INSTALL=/usr/local
