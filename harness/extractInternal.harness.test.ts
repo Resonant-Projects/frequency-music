@@ -21,7 +21,7 @@ describe("extractInternal.storeExtraction", () => {
       }),
     );
 
-    const extractionId = await t.mutation(
+    const { extractionId } = await t.mutation(
       internal.extractInternal.storeExtraction,
       {
         sourceId,
@@ -86,25 +86,27 @@ describe("extractInternal.storeExtraction", () => {
       }),
     );
 
-    const store = (inputHash: string, texts: string[]) =>
-      t.mutation(internal.extractInternal.storeExtraction, {
-        sourceId,
-        model: "test-model",
-        promptVersion: "extract_v2",
-        inputHash,
-        summary: `Extraction ${inputHash}`,
-        claims: texts.map((text) => ({
-          text,
-          evidenceLevel: "peer_reviewed" as const,
-          truthConfidence: "high" as const,
-          interestLevel: "medium" as const,
-          citations: [{ url: `https://example.com/${inputHash}` }],
-        })),
-        compositionParameters: [],
-        topics: ["cymatics"],
-        openQuestions: [],
-        confidence: 0.9,
-      });
+    const store = async (inputHash: string, texts: string[]) =>
+      (
+        await t.mutation(internal.extractInternal.storeExtraction, {
+          sourceId,
+          model: "test-model",
+          promptVersion: "extract_v2",
+          inputHash,
+          summary: `Extraction ${inputHash}`,
+          claims: texts.map((text) => ({
+            text,
+            evidenceLevel: "peer_reviewed" as const,
+            truthConfidence: "high" as const,
+            interestLevel: "medium" as const,
+            citations: [{ url: `https://example.com/${inputHash}` }],
+          })),
+          compositionParameters: [],
+          topics: ["cymatics"],
+          openQuestions: [],
+          confidence: 0.9,
+        })
+      ).extractionId;
 
     const firstExtractionId = await store("first", [
       "First claim",
@@ -169,5 +171,196 @@ describe("extractInternal.storeExtraction", () => {
     expect(active.map(({ ordinal, status }) => ({ ordinal, status }))).toEqual([
       { ordinal: 0, status: "active" },
     ]);
+  });
+
+  test("refuses a second Source's Extraction of the same text", async () => {
+    const t = convexTest(schema, modules);
+    const [first, second] = await t.run(async (ctx) => {
+      const row = (key: string) =>
+        ctx.db.insert("sources", {
+          type: "url",
+          canonicalUrl: `https://example.org/${key}`,
+          rawText: "Shared text",
+          status: "text_ready",
+          dedupeKey: `url:example.org/${key}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1000,
+          updatedAt: 1000,
+        });
+      return [await row("a"), await row("b")];
+    });
+    const args = {
+      model: "test-model",
+      promptVersion: "extract_v2",
+      inputHash: "shared-input",
+      summary: "Summary",
+      claims: [],
+      compositionParameters: [],
+      topics: [],
+      openQuestions: [],
+      confidence: 0.8,
+    };
+    const stored = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: first,
+    });
+    expect(stored.duplicateOfSource).toBeUndefined();
+    const refused = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: second,
+    });
+    expect(refused).toEqual({
+      extractionId: stored.extractionId,
+      existing: true,
+      duplicateOfSource: first,
+    });
+    // A second, concurrent call for the same Source stores nothing either.
+    const again = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: first,
+    });
+    expect(again).toEqual({
+      extractionId: stored.extractionId,
+      existing: true,
+    });
+    const forced = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: second,
+      allowDuplicateInput: true,
+    });
+    expect(forced.duplicateOfSource).toBeUndefined();
+    expect(forced.extractionId).not.toBe(stored.extractionId);
+  });
+
+  test("an archived Source's Extraction does not make a live copy a duplicate", async () => {
+    const t = convexTest(schema, modules);
+    const [archived, live] = await t.run(async (ctx) => {
+      const row = (key: string, status: "archived" | "text_ready") =>
+        ctx.db.insert("sources", {
+          type: "url",
+          canonicalUrl: `https://example.org/${key}`,
+          rawText: "Shared text",
+          status,
+          dedupeKey: `url:example.org/${key}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1000,
+          updatedAt: 1000,
+        });
+      return [await row("a", "archived"), await row("b", "text_ready")];
+    });
+    const args = {
+      model: "test-model",
+      promptVersion: "extract_v2",
+      inputHash: "shared-input",
+      summary: "Summary",
+      claims: [],
+      compositionParameters: [],
+      topics: [],
+      openQuestions: [],
+      confidence: 0.8,
+    };
+    await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: archived,
+    });
+    expect(
+      await t.query(internal.extractInternal.findExtractionForInput, {
+        inputHash: "shared-input",
+        sourceId: live,
+      }),
+    ).toBeNull();
+    const stored = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: live,
+    });
+    expect(stored.existing).toBeUndefined();
+  });
+
+  test("finds a live holder behind many archived ones", async () => {
+    const t = convexTest(schema, modules);
+    const insertSource = (key: string, status: "archived" | "text_ready") =>
+      t.run((ctx) =>
+        ctx.db.insert("sources", {
+          type: "url",
+          canonicalUrl: `https://example.org/${key}`,
+          rawText: "Shared text",
+          status,
+          dedupeKey: `url:example.org/${key}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1000,
+          updatedAt: 1000,
+        }),
+      );
+    const extraction = (sourceId: Awaited<ReturnType<typeof insertSource>>) =>
+      t.run((ctx) =>
+        ctx.db.insert("extractions", {
+          sourceId,
+          model: "test-model",
+          promptVersion: "extract_v2",
+          inputHash: "shared-input",
+          summary: "Summary",
+          claims: [],
+          compositionParameters: [],
+          topics: [],
+          openQuestions: [],
+          confidence: 0.8,
+          createdBy: "system",
+          createdAt: 1000,
+        }),
+      );
+    for (let i = 0; i < 30; i++)
+      await extraction(await insertSource(`old-${i}`, "archived"));
+    const holder = await insertSource("holder", "text_ready");
+    await extraction(holder);
+    const copy = await insertSource("copy", "text_ready");
+    expect(
+      await t.query(internal.extractInternal.findExtractionForInput, {
+        inputHash: "shared-input",
+        sourceId: copy,
+      }),
+    ).toMatchObject({ sourceId: holder, sameSource: false });
+  });
+
+  test("a superseded Extraction is not reused", async () => {
+    const t = convexTest(schema, modules);
+    const sourceId = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        canonicalUrl: "https://example.org/revised",
+        rawText: "Revised text",
+        status: "text_ready",
+        dedupeKey: "url:example.org/revised",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      }),
+    );
+    const store = (inputHash: string) =>
+      t.mutation(internal.extractInternal.storeExtraction, {
+        sourceId,
+        model: "test-model",
+        promptVersion: "extract_v2",
+        inputHash,
+        summary: inputHash,
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 0.8,
+      });
+    await store("h1");
+    await store("h2");
+    // Text H1 again: its Extraction was superseded by H2, so it is stored anew.
+    expect(
+      await t.query(internal.extractInternal.findExtractionForInput, {
+        inputHash: "h1",
+        sourceId,
+      }),
+    ).toBeNull();
+    expect((await store("h1")).existing).toBeUndefined();
   });
 });

@@ -2,8 +2,77 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation } from "./_generated/server";
+import {
+  type DatabaseReader,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { claimValidator, compositionParameterValidator } from "./schema";
+
+/**
+ * The current Extraction that already covers this text for this Source, or
+ * for another live Source. An archived Source's Extraction, or one a later
+ * Extraction superseded, does not count.
+ */
+async function extractionForInput(
+  db: DatabaseReader,
+  inputHash: string,
+  sourceId: Id<"sources">,
+): Promise<{ extraction: Doc<"extractions">; sameSource: boolean } | null> {
+  // Only a Source's latest Extraction is current; storing a new one
+  // supersedes the claims of the earlier ones.
+  const latest = (id: Id<"sources">) =>
+    db
+      .query("extractions")
+      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", id))
+      .order("desc")
+      .first();
+  const own = await latest(sourceId);
+  if (own?.inputHash === inputHash)
+    return { extraction: own, sameSource: true };
+  // Streams every match, stopping at the first live holder whose current
+  // Extraction it is.
+  for await (const match of db
+    .query("extractions")
+    .withIndex("by_inputHash", (q) => q.eq("inputHash", inputHash))) {
+    if (match.sourceId === sourceId) continue;
+    const holder = await db.get("sources", match.sourceId);
+    if (
+      holder &&
+      holder.status !== "archived" &&
+      (await latest(holder._id))?._id === match._id
+    ) {
+      return { extraction: match, sameSource: false };
+    }
+  }
+  return null;
+}
+
+export const findExtractionForInput = internalQuery({
+  args: { inputHash: v.string(), sourceId: v.id("sources") },
+  returns: v.union(
+    v.null(),
+    v.object({
+      extractionId: v.id("extractions"),
+      sourceId: v.id("sources"),
+      sameSource: v.boolean(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const found = await extractionForInput(
+      ctx.db,
+      args.inputHash,
+      args.sourceId,
+    );
+    return found
+      ? {
+          extractionId: found.extraction._id,
+          sourceId: found.extraction.sourceId,
+          sameSource: found.sameSource,
+        }
+      : null;
+  },
+});
 
 export const storeExtraction = internalMutation({
   args: {
@@ -17,9 +86,42 @@ export const storeExtraction = internalMutation({
     topics: v.array(v.string()),
     openQuestions: v.array(v.string()),
     confidence: v.number(),
+    // A forced re-extraction may repeat text another Source already holds.
+    allowDuplicateInput: v.optional(v.boolean()),
   },
-  returns: v.id("extractions"),
-  handler: async (ctx, args): Promise<Id<"extractions">> => {
+  returns: v.object({
+    extractionId: v.id("extractions"),
+    // Set when an Extraction of this text already existed and none was stored.
+    existing: v.optional(v.boolean()),
+    duplicateOfSource: v.optional(v.id("sources")),
+  }),
+  handler: async (
+    ctx,
+    { allowDuplicateInput, ...args },
+  ): Promise<{
+    extractionId: Id<"extractions">;
+    existing?: boolean;
+    duplicateOfSource?: Id<"sources">;
+  }> => {
+    // Checked inside this transaction, so two concurrent Extractions of the
+    // same text cannot both store claims.
+    if (!allowDuplicateInput) {
+      const found = await extractionForInput(
+        ctx.db,
+        args.inputHash,
+        args.sourceId,
+      );
+      // A concurrent call for this Source or another live one stored it first.
+      if (found) {
+        return {
+          extractionId: found.extraction._id,
+          existing: true,
+          ...(found.sameSource
+            ? {}
+            : { duplicateOfSource: found.extraction.sourceId }),
+        };
+      }
+    }
     const compositionParameters: Doc<"extractions">["compositionParameters"] =
       await Promise.all(
         args.compositionParameters.map(
@@ -103,6 +205,6 @@ export const storeExtraction = internalMutation({
       });
     }
 
-    return extractionId;
+    return { extractionId };
   },
 });
