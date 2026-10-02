@@ -2,7 +2,7 @@
   "name": "resonant-projects-agent",
   "private": true,
   "type": "module",
-  "packageManager": "bun@1.3.14",
+  "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "langgraphjs dev",
     "build": "langgraphjs build -t resonant-projects-agent:local",

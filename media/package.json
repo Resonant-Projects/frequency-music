@@ -2,7 +2,7 @@
   "name": "resonant-projects-media",
   "private": true,
   "type": "module",
-  "packageManager": "bun@1.3.14",
+  "packageManager": "bun@1.4.2",
   "scripts": {
     "start": "vpx tsx src/main.ts",
     "test": "vp test",
