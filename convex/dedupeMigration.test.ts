@@ -148,6 +148,63 @@ describe("dedupe key migration", () => {
   });
 });
 
+describe("dedupe key migration with archived rows", () => {
+  test("never archives a live row in favour of an archived one", async () => {
+    const t = convexTest(schema, modules);
+    const asOperator = t.withIdentity({
+      subject: "operator",
+      name: "Operator",
+    });
+    const { live, archived } = await t.run(async (ctx) => {
+      const archived = await ctx.db.insert(
+        "sources",
+        arxivRow({
+          dedupeKey: "arxiv:2603.27528",
+          rssGuid: "oai:arXiv.org:2603.27528v1",
+          status: "archived",
+          createdAt: 1,
+        }),
+      );
+      await ctx.db.insert("extractions", {
+        sourceId: archived,
+        model: "test-model",
+        promptVersion: "extract_v2",
+        inputHash: "archived-input",
+        summary: "Summary",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      });
+      const live = await ctx.db.insert(
+        "sources",
+        arxivRow({
+          dedupeKey:
+            "rss:https://arxiv.org/rss/cs.SD:oai:arXiv.org:2603.27528v2",
+          rssGuid: "oai:arXiv.org:2603.27528v2",
+          status: "text_ready",
+          createdAt: 2,
+        }),
+      );
+      return { live, archived };
+    });
+    await asOperator.mutation(api.sources.recomputeDedupeKeys, {
+      cursor: null,
+      apply: true,
+    });
+    expect(await t.run((ctx) => ctx.db.get(live))).toMatchObject({
+      status: "text_ready",
+      dedupeKey: "arxiv:2603.27528",
+    });
+    expect(await t.run((ctx) => ctx.db.get(archived))).toMatchObject({
+      status: "archived",
+    });
+  });
+});
+
 describe("duplicate Extraction text", () => {
   const sha256 = async (text: string) =>
     Array.from(

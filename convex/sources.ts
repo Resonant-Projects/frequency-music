@@ -957,9 +957,11 @@ export const recomputeDedupeKeys = mutation({
         continue;
       }
 
+      // Archived rows keep their keys; only a live row can hold one.
       const holder = await ctx.db
         .query("sources")
         .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", canonical))
+        .filter((q) => q.neq(q.field("status"), "archived"))
         .first();
       const collidesWith =
         holder && holder._id !== source._id ? holder._id : null;
