@@ -150,6 +150,22 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Source-scout target selection only; results are bounded to five domains and five conjectures.",
   ),
   entry(
+    "listTranscriptBacklog",
+    "read",
+    "internal.transcriptCapture:listTranscriptBacklog",
+    "Page through YouTube Sources awaiting a transcript, least recently tried first.",
+    "Transcript-capture runs only; each call reads at most 100 ingested YouTube Sources.",
+    { langchain: false },
+  ),
+  entry(
+    "recordTranscriptCapture",
+    "research_write",
+    "internal.transcriptCapture:recordTranscriptCapture",
+    "Record a transcript-capture outcome for a YouTube Source: a Groq Whisper transcript of its yt-dlp audio, unavailable audio, or a failed attempt.",
+    "Transcript-capture runs only; a captured transcript enters text_ready with model provenance, and only Sources still awaiting a transcript change.",
+    { langchain: false },
+  ),
+  entry(
     "listScoutCaptureBacklog",
     "read",
     "internal.sources:listScoutCaptureBacklog",

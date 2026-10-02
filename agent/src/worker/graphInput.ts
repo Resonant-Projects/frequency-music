@@ -86,13 +86,19 @@ export type SourceScoutGraphInput = {
   mode?: "recapture";
 };
 
+export type TranscriptCaptureGraphInput = {
+  agentRunId: string;
+  traceUrl?: string;
+};
+
 export type GraphInvocation =
   | { graphName: "research-pipeline"; input: ResearchPipelineGraphInput }
   | { graphName: "weekly-brief"; input: WeeklyBriefGraphInput }
   | { graphName: "correspondence-miner"; input: CorrespondenceMinerGraphInput }
   | { graphName: "evidence-hunter"; input: EvidenceHunterGraphInput }
   | { graphName: "hypothesis-drafter"; input: HypothesisDrafterGraphInput }
-  | { graphName: "source-scout"; input: SourceScoutGraphInput };
+  | { graphName: "source-scout"; input: SourceScoutGraphInput }
+  | { graphName: "transcript-capture"; input: TranscriptCaptureGraphInput };
 
 function traceUrlFrom(input: unknown): string | undefined {
   if (!input || typeof input !== "object") return undefined;
@@ -175,6 +181,16 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
         "recapture"
           ? { mode: "recapture" as const }
           : {}),
+      },
+    };
+  }
+  if (claim.graphName === "transcript-capture") {
+    const traceUrl = claimedTraceUrl(claim);
+    return {
+      graphName: "transcript-capture",
+      input: {
+        agentRunId: claim.runId,
+        ...(traceUrl ? { traceUrl } : {}),
       },
     };
   }

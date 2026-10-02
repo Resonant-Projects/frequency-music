@@ -260,6 +260,17 @@ describe("worker graph-input mapping", () => {
     expect(other.input).toEqual({ agentRunId: "run_scout" });
   });
 
+  test("transcript-capture receives claimed-run provenance", () => {
+    const invocation = buildGraphInvocation(
+      claimedRun({ runId: "run_transcripts", graphName: "transcript-capture" }),
+    );
+    expect(invocation).toEqual({
+      graphName: "transcript-capture",
+      input: { agentRunId: "run_transcripts" },
+    });
+    expect(TERMINAL_STATUS_OWNER["transcript-capture"]).toBe("graph");
+  });
+
   test("terminal-status ownership is split correctly", () => {
     expect(TERMINAL_STATUS_OWNER["research-pipeline"]).toBe("graph");
     expect(TERMINAL_STATUS_OWNER["weekly-brief"]).toBe("runner");

@@ -21,6 +21,7 @@ import { graph as correspondenceMinerGraph } from "../graphs/correspondence-mine
 import { graph as evidenceHunterGraph } from "../graphs/evidence-hunter/index.js";
 import { graph as hypothesisDrafterGraph } from "../graphs/hypothesis-drafter/index.js";
 import { graph as sourceScoutGraph } from "../graphs/source-scout/index.js";
+import { graph as transcriptCaptureGraph } from "../graphs/transcript-capture/index.js";
 import { agent as weeklyBriefAgent } from "../agents/weekly-brief/index.js";
 import { loadRootEnvLocalForResearchSmoke } from "../../scripts/smoke-research-pipeline.js";
 import {
@@ -62,6 +63,7 @@ const GRAPHS: Record<KnownGraphName, StreamableGraph> = {
   "evidence-hunter": evidenceHunterGraph as unknown as StreamableGraph,
   "hypothesis-drafter": hypothesisDrafterGraph as unknown as StreamableGraph,
   "source-scout": sourceScoutGraph as unknown as StreamableGraph,
+  "transcript-capture": transcriptCaptureGraph as unknown as StreamableGraph,
 };
 
 const POLL_INTERVAL_MS = resolveWorkerPollIntervalMs(

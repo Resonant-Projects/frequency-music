@@ -12,6 +12,10 @@ export const MAX_FEED_ENABLE_STATE_IDS = 20;
 // and ingestScoutedSource rejects text too thin for Extraction.
 export const SCOUTED_TEXT_MIN_CHARS = 100;
 export const SCOUTED_TEXT_MAX_CHARS = 30_000;
+// Bounds on a captured YouTube transcript. Extraction reads the first 30,000
+// characters; longer transcripts are kept whole for later use.
+export const TRANSCRIPT_MIN_CHARS = 100;
+export const TRANSCRIPT_MAX_CHARS = 400_000;
 // Services that may supply Source Scout text. Crawl4AI is tried first; the
 // Lab's Firecrawl scrapes PDFs and pages Crawl4AI could not; OpenAlex supplies
 // a scholarly work's abstract when neither crawler can pass a bot wall.
@@ -99,6 +103,7 @@ export const KNOWN_GRAPH_NAMES = [
   "evidence-hunter",
   "hypothesis-drafter",
   "source-scout",
+  "transcript-capture",
 ] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
 
@@ -127,4 +132,5 @@ export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
     "evidence-hunter": "graph",
     "hypothesis-drafter": "graph",
     "source-scout": "graph",
+    "transcript-capture": "graph",
   };

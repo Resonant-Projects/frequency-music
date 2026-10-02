@@ -93,6 +93,24 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ),
   getScoutTargets: (ctx) =>
     ctx.runQuery(queryRef("correspondences:scoutTargets"), {}),
+  listTranscriptBacklog: (ctx, args) =>
+    ctx.runQuery(
+      internal.transcriptCapture.listTranscriptBacklog,
+      omitUndefined({ cursor: args.cursor as string | null | undefined }),
+    ),
+  recordTranscriptCapture: (ctx, args) =>
+    ctx.runMutation(
+      internal.transcriptCapture.recordTranscriptCapture,
+      omitUndefined({
+        sourceId: args.sourceId as Id<"sources">,
+        agentRunId: args.agentRunId as Id<"agentRuns">,
+        outcome: args.outcome as "captured" | "unavailable" | "attempted",
+        transcript: args.transcript as string | undefined,
+        language: args.language as string | undefined,
+        model: args.model as string | undefined,
+        detail: args.detail as string | undefined,
+      }),
+    ),
   listScoutCaptureBacklog: (ctx, args) =>
     ctx.runQuery(
       internal.sources.listScoutCaptureBacklog,

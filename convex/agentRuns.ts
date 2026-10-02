@@ -269,7 +269,7 @@ export async function completeReviewedRunIfReady(
   return true;
 }
 
-async function insertQueuedRun(
+export async function insertQueuedRun(
   ctx: MutationCtx,
   args: { graphName: string; input?: unknown; traceUrl?: string },
 ) {

@@ -64,6 +64,7 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./testing.ts": () => import("../convex/testing"),
   "./theses.ts": () => import("../convex/theses"),
   "./tracing.ts": () => import("../convex/tracing"),
+  "./transcriptCapture.ts": () => import("../convex/transcriptCapture"),
   "./validators.ts": () => import("../convex/validators"),
   "./vocabulary.ts": () => import("../convex/vocabulary"),
   "./voiceRatings.ts": () => import("../convex/voiceRatings"),

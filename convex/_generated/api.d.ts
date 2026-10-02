@@ -91,6 +91,7 @@ import type * as testHelpers from "../testHelpers.js";
 import type * as testing from "../testing.js";
 import type * as theses from "../theses.js";
 import type * as tracing from "../tracing.js";
+import type * as transcriptCapture from "../transcriptCapture.js";
 import type * as validators from "../validators.js";
 import type * as vocabulary from "../vocabulary.js";
 import type * as voiceRatings from "../voiceRatings.js";
@@ -188,6 +189,7 @@ declare const fullApi: ApiFromModules<{
   testing: typeof testing;
   theses: typeof theses;
   tracing: typeof tracing;
+  transcriptCapture: typeof transcriptCapture;
   validators: typeof validators;
   vocabulary: typeof vocabulary;
   voiceRatings: typeof voiceRatings;

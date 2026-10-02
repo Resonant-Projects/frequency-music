@@ -21,6 +21,20 @@ RUN apt-get update \
 COPY agent/package.json agent/bun.lock ./
 RUN bun install --frozen-lockfile --production --omit=peer
 
+# YouTube audio for transcript capture (src/tools/youtubeTranscript.ts): a
+# pinned, checksum-verified musl yt-dlp and the bgutil PO-token plugin. The
+# bgutil token server itself runs as a sidecar in the worker pod.
+ARG YTDLP_VERSION=2026.08.19
+ARG YTDLP_SHA256=f3dec9cfeaf304cec98290fe41c6ad465d4b747d302473559643e7af24929722
+ARG BGUTIL_PLUGIN_VERSION=2.0.1
+ARG BGUTIL_PLUGIN_SHA256=6fc9d757578949ba3cad2f561f57dfbc16142dbf8d485fe1bf9f0733f23bf9e3
+RUN curl -fsSLo /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_musllinux" \
+    && echo "${YTDLP_SHA256}  /tmp/yt-dlp" | sha256sum -c - \
+    && chmod 0755 /tmp/yt-dlp \
+    && mkdir -p /tmp/yt-dlp-plugins \
+    && curl -fsSLo /tmp/yt-dlp-plugins/bgutil-ytdlp-pot-provider.zip "https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/download/${BGUTIL_PLUGIN_VERSION}/bgutil-ytdlp-pot-provider.zip" \
+    && echo "${BGUTIL_PLUGIN_SHA256}  /tmp/yt-dlp-plugins/bgutil-ytdlp-pot-provider.zip" | sha256sum -c -
+
 FROM ${RUNTIME_NODE_IMAGE} AS runtime
 WORKDIR /app/agent
 
@@ -38,6 +52,12 @@ RUN npm install -g "@openai/codex@${CODEX_CLI_VERSION}" \
     && npm cache clean --force \
     && rm -rf /root/.npm /usr/local/lib/node_modules/npm \
     && rm -f /usr/local/bin/npm /usr/local/bin/npx
+COPY --from=dependencies /tmp/yt-dlp /usr/local/bin/yt-dlp
+COPY --from=dependencies /tmp/yt-dlp-plugins /opt/yt-dlp/plugins
+RUN yt-dlp --version
+ENV YTDLP_PATH=/usr/local/bin/yt-dlp
+ENV YTDLP_PLUGIN_DIRS=/opt/yt-dlp/plugins
+
 RUN adduser -D -h /home/agent -s /bin/sh agent \
     && mkdir -p /data/codex-home /data/codex-scratch \
     && chown -R agent:agent /data
