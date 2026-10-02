@@ -5,6 +5,7 @@ import { action } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { DEFAULT_MODEL, MODELS } from "./llm";
 import { generateJson } from "./llmNode";
+import { unextractableTextReason } from "./shared/sourceText";
 
 export { MODELS };
 
@@ -149,6 +150,20 @@ export const extractSource = action({
         devBypassSecret: args.devBypassSecret,
       });
       return { skipped: true as const, reason: "no content" };
+    }
+
+    // Feed excerpts, bot walls and near-empty captures wait for real text
+    // instead of spending a model call.
+    const unextractable = unextractableTextReason(content);
+    if (unextractable) {
+      await ctx.runMutation(api.sources.updateStatus, {
+        id: args.sourceId,
+        status: "review_needed",
+        blockedReason: "no_text",
+        blockedDetails: unextractable,
+        devBypassSecret: args.devBypassSecret,
+      });
+      return { skipped: true as const, reason: unextractable };
     }
 
     // Mark as extracting

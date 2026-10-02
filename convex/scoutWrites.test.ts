@@ -433,6 +433,47 @@ describe("scout capture providers and repair", () => {
     expect(enriched?.blockedDetails).toBeUndefined();
   });
 
+  test("resets a capture the extraction gate parked as no_text", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const asOperator = t.withIdentity({
+      subject: "operator",
+      name: "Operator",
+    });
+    const { id } = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/excerpt",
+      query: "q",
+      rationale: "r",
+      agentRunId,
+      rawText: article,
+      contentProvider: "crawl4ai",
+    });
+    await t.run((ctx) =>
+      ctx.db.patch(id, {
+        status: "review_needed",
+        blockedReason: "no_text",
+        blockedDetails: "Captured text is a 40-word feed excerpt",
+      }),
+    );
+    await asOperator.mutation(api.sources.resetScoutCapture, {
+      id,
+      reason: "Recapture the full text",
+    });
+    expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+      status: "ingested",
+      blockedReason: "no_text",
+      blockedDetails: "Recapture the full text",
+    });
+
+    // Extraction errors are not capture problems and stay refused.
+    await t.run((ctx) =>
+      ctx.db.patch(id, { status: "review_needed", blockedReason: "ai_error" }),
+    );
+    await expect(
+      asOperator.mutation(api.sources.resetScoutCapture, { id, reason: "x" }),
+    ).rejects.toThrow("Only an unextracted Source Scout capture");
+  });
+
   test("refuses to reset unauthenticated, non-scout, or extracted Sources", async () => {
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);

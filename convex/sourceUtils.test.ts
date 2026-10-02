@@ -29,6 +29,33 @@ describe("source utilities", () => {
     ).toBe("rss:https://feed.test/rss.xml:entry-42");
   });
 
+  test("keys a DOI-bearing URL by its DOI so publisher and doi.org links match", () => {
+    const doiOrg = generateDedupeKey("url", {
+      canonicalUrl: "https://doi.org/10.1080/17459737.2025.2465976",
+    });
+    const publisher = generateDedupeKey("url", {
+      canonicalUrl:
+        "https://www.tandfonline.com/doi/full/10.1080/17459737.2025.2465976",
+    });
+    expect(doiOrg).toBe("doi:10.1080/17459737.2025.2465976");
+    expect(publisher).toBe(doiOrg);
+    expect(
+      generateDedupeKey("url", {
+        canonicalUrl: "https://DOI.org/10.1080/ABC.1",
+      }),
+    ).toBe("doi:10.1080/abc.1");
+    expect(
+      generateDedupeKey("url", { canonicalUrl: "https://example.org/paper" }),
+    ).toBe("url:example.org/paper");
+    // A /doi/ path on an unknown host cannot claim a real work's identity.
+    expect(
+      generateDedupeKey("url", {
+        canonicalUrl:
+          "https://attacker.example/doi/10.1080/17459737.2025.2465976",
+      }),
+    ).toBe("url:attacker.example/doi/10.1080/17459737.2025.2465976");
+  });
+
   test("extracts video ids from standard and shorts URLs", () => {
     expect(
       extractYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),

@@ -85,6 +85,7 @@ describe("Source Scout bot-challenge filter", () => {
     for (const text of [
       jstor,
       "# Just a moment...\nEnable JavaScript and cookies to continue",
+      "Please wait while we verify your browser before accessing the site.",
       "Attention Required! | Cloudflare\nPlease complete the security check to access example.org",
       "Please enable JS and disable any ad blocker. captcha-delivery.com DataDome",
       "Access denied. You don't have permission to access this page. Reference #18.4f2",
@@ -120,6 +121,12 @@ describe("Source Scout bot-challenge filter", () => {
       "Researchers studied browser checks and bot walls. ".repeat(80);
     expect(article.length).toBeGreaterThan(3_000);
     expect(looksLikeBotChallenge(article)).toBe(false);
+    // Prose that mentions browser verification is real text.
+    expect(
+      looksLikeBotChallenge(
+        "Some archives verify your browser with a proof-of-work puzzle; the study measured how often verifying your browser settings fixed playback errors in web audio players.",
+      ),
+    ).toBe(false);
     // A short article about the Anubis tool itself is real text.
     expect(
       looksLikeBotChallenge(
