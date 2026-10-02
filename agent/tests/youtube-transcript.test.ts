@@ -234,6 +234,39 @@ describe("transcript-capture graph", () => {
     expect(update.tally).toMatchObject({ captured: [], failed: 1 });
   });
 
+  test("an unexpected transcriber error is recorded and the batch continues", async () => {
+    const callTool = vi.fn(async (name: string) =>
+      name === "listTranscriptBacklog"
+        ? backlog(["AAAAAAAAAAA", "BBBBBBBBBBB"])
+        : name === "recordTranscriptCapture"
+          ? { updated: true }
+          : { ok: true },
+    );
+    const transcribe = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("ENOSPC: no space left on device"))
+      .mockResolvedValueOnce({
+        kind: "captured",
+        text: speech.repeat(2),
+        model: "whisper-large-v3-turbo",
+      });
+    const update = await createCaptureTranscriptsNode(
+      callTool,
+      { configured: true, transcribe },
+      async () => undefined,
+    )({ agentRunId: "run-t" });
+    expect(callTool).toHaveBeenCalledWith("recordTranscriptCapture", {
+      sourceId: "source-AAAAAAAAAAA",
+      agentRunId: "run-t",
+      outcome: "attempted",
+      detail: "ENOSPC: no space left on device",
+    });
+    expect(update.tally).toMatchObject({
+      captured: ["T BBBBBBBBBBB"],
+      failed: 1,
+    });
+  });
+
   test("stops at the first rate limit and records the attempt", async () => {
     const callTool = vi.fn(async (name: string) =>
       name === "listTranscriptBacklog"

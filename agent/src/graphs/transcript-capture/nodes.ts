@@ -125,7 +125,13 @@ export function createCaptureTranscriptsNode(
     for (const [index, row] of backlog.entries()) {
       if (index > 0) await sleep(YOUTUBE_PACE_MS);
       tally.attempted++;
-      const outcome = await transcriber.transcribe(row.videoId);
+      // One video's unexpected error must not end the batch.
+      const outcome: TranscriptOutcome = await transcriber
+        .transcribe(row.videoId)
+        .catch((error: unknown) => ({
+          kind: "failed" as const,
+          detail: error instanceof Error ? error.message : String(error),
+        }));
       if (outcome.kind === "captured") {
         const stored = await record(row, {
           outcome: "captured",

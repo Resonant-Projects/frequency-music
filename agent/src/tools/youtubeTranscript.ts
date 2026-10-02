@@ -151,7 +151,15 @@ export function createYouTubeTranscriber(
       return { kind: "unavailable", detail: "Not a YouTube video id" };
     }
     if (!apiKey) return { kind: "failed", detail: "GROQ_API_KEY is not set" };
-    const dir = await mkdtemp(join(tmpdir(), "yt-audio-"));
+    let dir: string;
+    try {
+      dir = await mkdtemp(join(tmpdir(), "yt-audio-"));
+    } catch (error) {
+      return {
+        kind: "failed",
+        detail: `Temp directory: ${redactError(error)}`,
+      };
+    }
     try {
       const { code, output } = await ytDlp(
         ytDlpAudioArgs(videoId, dir, { pluginDirs, potBaseUrl }),
