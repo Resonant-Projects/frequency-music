@@ -27,7 +27,8 @@ export function unextractableTextReason(text: string): string | null {
   }
   // Markers and word counts read the prose: link text without its URL.
   const prose = trimmed
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    // A link destination may hold balanced parentheses and a quoted title.
+    .replace(/!?\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g, "$1")
     .replace(/https?:\/\/\S+/g, " ")
     .trim();
   const words = prose.split(/\s+/).filter(Boolean).length;

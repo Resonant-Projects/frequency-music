@@ -26,6 +26,11 @@ describe("extractable source text", () => {
     );
     expect(
       unextractableTextReason(
+        `${teaser} [Read more](https://example.org/paper_(music) "Full article")`,
+      ),
+    ).toMatch(/feed excerpt/);
+    expect(
+      unextractableTextReason(
         `${teaser} The post Bucket Brigade Delays appeared first on example.com.`,
       ),
     ).toMatch(/feed excerpt/);
