@@ -39,6 +39,12 @@ describe("extractable source text", () => {
         "Title: Just a moment...\n\nPerforming security verification\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.",
       ),
     ).toMatch(/bot wall/);
+    // Navigation markup with many tags is not prose.
+    expect(
+      unextractableTextReason(
+        '<ul class="nav"><li><a href="/toc/tmam20/20/2" title="Volume 20 Issue 2">Volume 20, Issue 2</a></li><li><a href="/toc/tmam20/20/1" title="Volume 20 Issue 1">Volume 20, Issue 1</a></li><li><a href="/action/showAxaArticles?journalCode=tmam20" title="Latest articles">Latest articles</a></li></ul>',
+      ),
+    ).toMatch(/only \d+ words/);
     expect(
       unextractableTextReason(
         "It's all coming back to me [Read](https://nautil.us/x) now",

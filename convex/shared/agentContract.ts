@@ -29,7 +29,9 @@ export type ScoutedContentProvider = (typeof SCOUTED_CONTENT_PROVIDERS)[number];
 const BOT_CHALLENGE_MAX_CHARS = 3_000;
 const BOT_CHALLENGE_MARKERS = [
   /\bverifying (?:that )?(?:you are|you're) (?:a )?human\b/i,
-  /\bverify(?:ing)? your browser\b/i,
+  // The challenge page's own wording, not prose that mentions browser checks.
+  /\bverifying your browser\s*(?:\.\.\.|…|$|before\b|to continue\b)/im,
+  /\bverify your browser\b.*\b(?:before (?:continuing|accessing|proceeding)|to (?:continue|proceed|access))\b/is,
   /\bchecking (?:if the site connection is secure|your browser)\b/i,
   /a required part of this site couldn[’']t load/i,
   /^\W*(?:title:\s*)?just a moment\b/i,

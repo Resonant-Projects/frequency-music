@@ -27,6 +27,8 @@ export function unextractableTextReason(text: string): string | null {
   }
   // Markers and word counts read the prose: link text without its URL.
   const prose = trimmed
+    // HTML tags are markup, not prose (feed descriptions can be bare HTML).
+    .replace(/<[^>]*>/g, " ")
     // A link destination may hold balanced parentheses and a quoted title.
     .replace(/!?\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g, "$1")
     .replace(/https?:\/\/\S+/g, " ")

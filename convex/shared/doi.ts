@@ -37,3 +37,45 @@ export function doiForUrl(rawUrl: string): string | null {
   const name = publisher?.[1]?.replace(/\.pdf$/i, "");
   return name && doi.test(name) ? name : null;
 }
+
+// Publisher hosts whose /doi/<DOI> pages name their own works. A /doi/ path
+// on any other host is not evidence of the work's identity.
+const DOI_PUBLISHER_HOSTS = [
+  "tandfonline.com",
+  "onlinelibrary.wiley.com",
+  "journals.sagepub.com",
+  "dl.acm.org",
+  "pubs.aip.org",
+  "pubs.acs.org",
+  "science.org",
+  "pnas.org",
+  "journals.uchicago.edu",
+  "royalsocietypublishing.org",
+  "annualreviews.org",
+  "liebertpub.com",
+  "pubsonline.informs.org",
+  "journals.physiology.org",
+  "ahajournals.org",
+  "nejm.org",
+];
+
+/**
+ * The DOI a URL names when its host is authoritative for it: doi.org, JSTOR,
+ * or a known publisher. Used for identity (dedupe), unlike doiForUrl.
+ */
+export function trustedDoiForUrl(rawUrl: string): string | null {
+  let host: string;
+  try {
+    host = new URL(rawUrl).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+  const trusted =
+    host === "doi.org" ||
+    host === "dx.doi.org" ||
+    host === "jstor.org" ||
+    DOI_PUBLISHER_HOSTS.some(
+      (publisher) => host === publisher || host.endsWith(`.${publisher}`),
+    );
+  return trusted ? doiForUrl(rawUrl) : null;
+}

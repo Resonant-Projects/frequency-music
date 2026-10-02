@@ -1,4 +1,4 @@
-import { doiForUrl } from "./shared/doi";
+import { trustedDoiForUrl } from "./shared/doi";
 
 export function normalizeUrl(url: string): string {
   try {
@@ -27,7 +27,7 @@ export function generateDedupeKey(
       return `rss:${identifiers.feedUrl}:${identifiers.rssGuid || identifiers.canonicalUrl}`;
     case "url": {
       // One work reached through doi.org and its publisher page is one source.
-      const doi = doiForUrl(identifiers.canonicalUrl || "");
+      const doi = trustedDoiForUrl(identifiers.canonicalUrl || "");
       return doi
         ? // DOI names are case-insensitive for ASCII letters only.
           `doi:${doi.replace(/[A-Z]/g, (letter) => letter.toLowerCase())}`

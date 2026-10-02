@@ -47,6 +47,13 @@ describe("source utilities", () => {
     expect(
       generateDedupeKey("url", { canonicalUrl: "https://example.org/paper" }),
     ).toBe("url:example.org/paper");
+    // A /doi/ path on an unknown host cannot claim a real work's identity.
+    expect(
+      generateDedupeKey("url", {
+        canonicalUrl:
+          "https://attacker.example/doi/10.1080/17459737.2025.2465976",
+      }),
+    ).toBe("url:attacker.example/doi/10.1080/17459737.2025.2465976");
   });
 
   test("extracts video ids from standard and shorts URLs", () => {
