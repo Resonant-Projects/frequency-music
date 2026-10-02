@@ -75,6 +75,9 @@ describe("source utilities", () => {
       "cs/0601001",
     );
     expect(arxivIdForUrl("oai:arXiv.org:cs.SD/0601001v2")).toBe("cs/0601001");
+    expect(arxivIdForUrl("https://arxiv.org/abs/math.CA/0611800v2")).toBe(
+      "math/0611800",
+    );
     expect(arxivIdForUrl("https://arxiv.org/list/cs.SD/new")).toBeNull();
     expect(arxivIdForUrl("https://example.org/abs/2603.27528")).toBeNull();
     expect(arxivIdForUrl("https://notarxiv.org/abs/2603.27528")).toBeNull();
