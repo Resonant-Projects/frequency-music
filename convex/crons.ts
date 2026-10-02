@@ -122,6 +122,16 @@ crons.weekly(
   { graphName: "source-scout", input: {} },
 );
 
+// Transcribe YouTube Sources that arrive without text. Each run captures a
+// bounded, paced batch and stops at YouTube rate limits, so runs are frequent
+// and small. Skipped when nothing awaits or a run is already queued/running.
+crons.interval(
+  "enqueue-transcript-capture",
+  { hours: 3 },
+  internal.transcriptCapture.enqueueIfNeeded,
+  {},
+);
+
 // Reclaim expired media leases and orphaned audio uploads. Leases are 10
 // minutes; a 10-minute sweep bounds a crashed worker's hold on a job.
 crons.interval(

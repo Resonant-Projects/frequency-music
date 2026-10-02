@@ -7,6 +7,8 @@ import {
   SCOUTED_CONTENT_PROVIDERS,
   SCOUTED_TEXT_MAX_CHARS,
   SCOUTED_TEXT_MIN_CHARS,
+  TRANSCRIPT_MAX_CHARS,
+  TRANSCRIPT_MIN_CHARS,
 } from "./agentContract";
 import {
   addCorrespondenceEvidenceArgsZ,
@@ -48,6 +50,23 @@ export const agentToolArgs = {
   }),
   listCorrespondenceTargets: z.object({ limit }),
   getScoutTargets: z.object({}),
+  listTranscriptBacklog: z.object({
+    cursor: z.string().nullable().optional(),
+  }),
+  recordTranscriptCapture: z.object({
+    sourceId: zid("sources"),
+    agentRunId: zid("agentRuns"),
+    outcome: z.enum(["captured", "unavailable", "attempted"]),
+    transcript: z
+      .string()
+      .trim()
+      .min(TRANSCRIPT_MIN_CHARS)
+      .max(TRANSCRIPT_MAX_CHARS)
+      .optional(),
+    language: z.string().trim().min(1).max(40).optional(),
+    model: z.string().trim().min(1).max(100).optional(),
+    detail: z.string().trim().min(1).max(500).optional(),
+  }),
   listScoutCaptureBacklog: z.object({
     cursor: z.string().nullable().optional(),
   }),

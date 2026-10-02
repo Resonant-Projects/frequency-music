@@ -53,6 +53,20 @@ const FROZEN_ARGS: Record<string, string> = {
   }),
   listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
   getScoutTargets: frozenArgs({}),
+  listTranscriptBacklog: frozenArgs({
+    cursor: field(union(string, nullValue), true),
+  }),
+  recordTranscriptCapture: frozenArgs({
+    sourceId: field(id("sources")),
+    agentRunId: runId,
+    outcome: field(
+      union(literal("captured"), literal("unavailable"), literal("attempted")),
+    ),
+    transcript: field(string, true),
+    language: field(string, true),
+    model: field(string, true),
+    detail: field(string, true),
+  }),
   listScoutCaptureBacklog: frozenArgs({
     cursor: field(union(string, nullValue), true),
   }),

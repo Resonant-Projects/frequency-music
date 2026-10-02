@@ -55,6 +55,12 @@ export const listCorrespondenceTargets = makeAgentToolAction(
   "listCorrespondenceTargets",
 );
 export const getScoutTargets = makeAgentToolAction("getScoutTargets");
+export const listTranscriptBacklog = makeAgentToolAction(
+  "listTranscriptBacklog",
+);
+export const recordTranscriptCapture = makeAgentToolAction(
+  "recordTranscriptCapture",
+);
 export const listScoutCaptureBacklog = makeAgentToolAction(
   "listScoutCaptureBacklog",
 );
