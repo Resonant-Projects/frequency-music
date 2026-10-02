@@ -2,8 +2,63 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation } from "./_generated/server";
+import {
+  type DatabaseReader,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { claimValidator, compositionParameterValidator } from "./schema";
+
+/**
+ * The Extraction that already covers this text for this Source, or for
+ * another live Source. An archived Source's Extraction does not count, so a
+ * live copy is never archived in favour of it.
+ */
+async function extractionForInput(
+  db: DatabaseReader,
+  inputHash: string,
+  sourceId: Id<"sources">,
+): Promise<{ extraction: Doc<"extractions">; sameSource: boolean } | null> {
+  const matches = await db
+    .query("extractions")
+    .withIndex("by_inputHash", (q) => q.eq("inputHash", inputHash))
+    .take(25);
+  const own = matches.find((match) => match.sourceId === sourceId);
+  if (own) return { extraction: own, sameSource: true };
+  for (const match of matches) {
+    const holder = await db.get("sources", match.sourceId);
+    if (holder && holder.status !== "archived") {
+      return { extraction: match, sameSource: false };
+    }
+  }
+  return null;
+}
+
+export const findExtractionForInput = internalQuery({
+  args: { inputHash: v.string(), sourceId: v.id("sources") },
+  returns: v.union(
+    v.null(),
+    v.object({
+      extractionId: v.id("extractions"),
+      sourceId: v.id("sources"),
+      sameSource: v.boolean(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const found = await extractionForInput(
+      ctx.db,
+      args.inputHash,
+      args.sourceId,
+    );
+    return found
+      ? {
+          extractionId: found.extraction._id,
+          sourceId: found.extraction.sourceId,
+          sameSource: found.sameSource,
+        }
+      : null;
+  },
+});
 
 export const storeExtraction = internalMutation({
   args: {
@@ -37,18 +92,19 @@ export const storeExtraction = internalMutation({
     // Checked inside this transaction, so two concurrent Extractions of the
     // same text cannot both store claims.
     if (!allowDuplicateInput) {
-      const existing = await ctx.db
-        .query("extractions")
-        .withIndex("by_inputHash", (q) => q.eq("inputHash", args.inputHash))
-        .first();
-      // A concurrent call for this Source or another stored it first.
-      if (existing) {
+      const found = await extractionForInput(
+        ctx.db,
+        args.inputHash,
+        args.sourceId,
+      );
+      // A concurrent call for this Source or another live one stored it first.
+      if (found) {
         return {
-          extractionId: existing._id,
+          extractionId: found.extraction._id,
           existing: true,
-          ...(existing.sourceId === args.sourceId
+          ...(found.sameSource
             ? {}
-            : { duplicateOfSource: existing.sourceId }),
+            : { duplicateOfSource: found.extraction.sourceId }),
         };
       }
     }

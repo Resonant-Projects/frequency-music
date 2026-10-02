@@ -232,4 +232,49 @@ describe("extractInternal.storeExtraction", () => {
     expect(forced.duplicateOfSource).toBeUndefined();
     expect(forced.extractionId).not.toBe(stored.extractionId);
   });
+
+  test("an archived Source's Extraction does not make a live copy a duplicate", async () => {
+    const t = convexTest(schema, modules);
+    const [archived, live] = await t.run(async (ctx) => {
+      const row = (key: string, status: "archived" | "text_ready") =>
+        ctx.db.insert("sources", {
+          type: "url",
+          canonicalUrl: `https://example.org/${key}`,
+          rawText: "Shared text",
+          status,
+          dedupeKey: `url:example.org/${key}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1000,
+          updatedAt: 1000,
+        });
+      return [await row("a", "archived"), await row("b", "text_ready")];
+    });
+    const args = {
+      model: "test-model",
+      promptVersion: "extract_v2",
+      inputHash: "shared-input",
+      summary: "Summary",
+      claims: [],
+      compositionParameters: [],
+      topics: [],
+      openQuestions: [],
+      confidence: 0.8,
+    };
+    await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: archived,
+    });
+    expect(
+      await t.query(internal.extractInternal.findExtractionForInput, {
+        inputHash: "shared-input",
+        sourceId: live,
+      }),
+    ).toBeNull();
+    const stored = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: live,
+    });
+    expect(stored.existing).toBeUndefined();
+  });
 });

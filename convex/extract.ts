@@ -193,10 +193,11 @@ export const extractSource = action({
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
     if (!args.force) {
-      const own = await ctx.runQuery(api.extractions.getBySourceId, {
-        sourceId: args.sourceId,
-      });
-      if (own.some((extraction) => extraction.inputHash === inputHash)) {
+      const found = await ctx.runQuery(
+        internal.extractInternal.findExtractionForInput,
+        { inputHash, sourceId: args.sourceId },
+      );
+      if (found?.sameSource) {
         // This Source's own Extraction already covers this text.
         await ctx.runMutation(api.sources.updateStatus, {
           id: args.sourceId,
@@ -205,11 +206,8 @@ export const extractSource = action({
         });
         return { skipped: true as const, reason: "already extracted" };
       }
-      const existing = await ctx.runQuery(api.extractions.getByInputHash, {
-        inputHash,
-      });
-      if (existing) {
-        await archiveAsDuplicate(ctx, args, existing.sourceId, existing._id);
+      if (found) {
+        await archiveAsDuplicate(ctx, args, found.sourceId, found.extractionId);
         return { skipped: true as const, reason: "duplicate extraction" };
       }
     }
