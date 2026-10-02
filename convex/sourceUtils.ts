@@ -1,3 +1,5 @@
+import { doiForUrl } from "./shared/doi";
+
 export function normalizeUrl(url: string): string {
   try {
     const parsed = new URL(url);
@@ -23,8 +25,13 @@ export function generateDedupeKey(
       return `notion:${identifiers.notionPageId}`;
     case "rss":
       return `rss:${identifiers.feedUrl}:${identifiers.rssGuid || identifiers.canonicalUrl}`;
-    case "url":
-      return `url:${normalizeUrl(identifiers.canonicalUrl || "")}`;
+    case "url": {
+      // One work reached through doi.org and its publisher page is one source.
+      const doi = doiForUrl(identifiers.canonicalUrl || "");
+      return doi
+        ? `doi:${doi.toLowerCase()}`
+        : `url:${normalizeUrl(identifiers.canonicalUrl || "")}`;
+    }
     case "youtube":
       return `yt:${identifiers.youtubeVideoId}`;
     case "pdf":
