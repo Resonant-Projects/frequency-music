@@ -180,9 +180,21 @@ export const extractSource = action({
       { inputHash },
     );
     if (existingExtractions && !args.force) {
+      if (existingExtractions.sourceId === args.sourceId) {
+        // This Source's own Extraction already covers this text.
+        await ctx.runMutation(api.sources.updateStatus, {
+          id: args.sourceId,
+          status: "extracted",
+          devBypassSecret: args.devBypassSecret,
+        });
+        return { skipped: true as const, reason: "already extracted" };
+      }
+      // Another Source holds the Extraction (and its claims) for this text.
       await ctx.runMutation(api.sources.updateStatus, {
         id: args.sourceId,
-        status: "extracted",
+        status: "archived",
+        blockedReason: "duplicate",
+        blockedDetails: `Same text as source ${existingExtractions.sourceId} (extraction ${existingExtractions._id})`,
         devBypassSecret: args.devBypassSecret,
       });
       return { skipped: true as const, reason: "duplicate extraction" };

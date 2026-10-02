@@ -106,3 +106,70 @@ describe("dedupe key migration", () => {
     });
   });
 });
+
+describe("duplicate Extraction text", () => {
+  const sha256 = async (text: string) =>
+    Array.from(
+      new Uint8Array(
+        await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)),
+      ),
+    )
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+  test("archives a Source whose text another Source already extracted", async () => {
+    const t = convexTest(schema, modules);
+    const asOperator = t.withIdentity({
+      subject: "operator",
+      name: "Operator",
+    });
+    const text =
+      "Abstract: This paper presents the results of the 2025 Automatic Music Transcription Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted systems, and the best ones improved note-level F1 on unseen recordings by a wide margin.";
+    const inputHash = await sha256(`${text}extract_v2`);
+    const { copy, holder, extraction } = await t.run(async (ctx) => {
+      const holder = await ctx.db.insert(
+        "sources",
+        arxivRow({
+          dedupeKey: "arxiv:2603.27528",
+          rssGuid: "oai:arXiv.org:2603.27528v1",
+          status: "extracted",
+          createdAt: 1,
+        }),
+      );
+      const copy = await ctx.db.insert("sources", {
+        ...arxivRow({
+          dedupeKey: "rss:https://arxiv.org/rss/eess.AS:x",
+          rssGuid: "x",
+          status: "text_ready",
+          createdAt: 2,
+        }),
+        rawText: text,
+      });
+      const extraction = await ctx.db.insert("extractions", {
+        sourceId: holder,
+        model: "test-model",
+        promptVersion: "extract_v2",
+        inputHash,
+        summary: "Summary",
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 1,
+        createdBy: "system",
+        createdAt: 1,
+      });
+      return { copy, holder, extraction };
+    });
+
+    // No model is configured in tests: reaching it would throw.
+    await expect(
+      asOperator.action(api.extract.extractSource, { sourceId: copy }),
+    ).resolves.toEqual({ skipped: true, reason: "duplicate extraction" });
+    expect(await t.run((ctx) => ctx.db.get(copy))).toMatchObject({
+      status: "archived",
+      blockedReason: "duplicate",
+      blockedDetails: `Same text as source ${holder} (extraction ${extraction})`,
+    });
+  });
+});
