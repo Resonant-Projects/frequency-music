@@ -722,3 +722,25 @@ test("pages the recapture backlog until a run's worth or its end", async () => {
   ]);
   expect(update.recaptureAttempted).toBe(2);
 });
+
+test("a recapture run stops at its page budget and says so", async () => {
+  const callTool = vi.fn(async (name: string, args?: unknown) => {
+    if (name === "listScoutCaptureBacklog")
+      return {
+        isDone: false,
+        continueCursor: `after-${(args as { cursor: string | null }).cursor ?? "start"}`,
+        rows: [],
+      };
+    return { ok: true };
+  });
+  const update = await createRecaptureSourcesNode(
+    callTool,
+    async () => null,
+  )({
+    agentRunId: "run-recapture",
+  });
+  expect(
+    callTool.mock.calls.filter(([name]) => name === "listScoutCaptureBacklog"),
+  ).toHaveLength(25);
+  expect(update.recaptureBacklogIncomplete).toBe(true);
+});

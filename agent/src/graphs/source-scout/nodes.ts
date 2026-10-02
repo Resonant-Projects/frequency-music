@@ -35,6 +35,7 @@ import {
 import {
   MAX_FEED_PROPOSALS_PER_RUN,
   MAX_INGESTS_PER_RUN,
+  MAX_BACKLOG_PAGES,
   MAX_RECAPTURES_PER_RUN,
   MAX_RESULTS_PER_SEARCH,
   MAX_SEARCH_CALLS,
@@ -471,10 +472,16 @@ export function createRecaptureSourcesNode(
       throw new Error("source-scout requires agentRunId provenance");
     // Page through the backlog (least recently tried first) until a run's
     // worth of candidates, or its end.
-    // Each call reads one bounded page, so the whole range is reachable.
+    // Each call reads one bounded page of ingested URL Sources; a run reads
+    // at most MAX_BACKLOG_PAGES and says so when it stopped short.
     const backlog: CaptureBacklogRow[] = [];
     let cursor: string | null = null;
-    for (;;) {
+    let backlogIncomplete = false;
+    for (let page = 0; ; page++) {
+      if (page >= MAX_BACKLOG_PAGES) {
+        backlogIncomplete = true;
+        break;
+      }
       const result = (await callTool("listScoutCaptureBacklog", {
         cursor,
       })) as { continueCursor?: unknown; isDone?: unknown } | null;
@@ -598,7 +605,12 @@ export function createRecaptureSourcesNode(
         )),
       );
     }
-    return { sourceWrites, auditEvents, recaptureAttempted: backlog.length };
+    return {
+      sourceWrites,
+      auditEvents,
+      recaptureAttempted: backlog.length,
+      recaptureBacklogIncomplete: backlogIncomplete,
+    };
   };
 }
 
@@ -696,7 +708,7 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
     if (state.mode === "recapture") {
       const captured = state.sourceWrites.filter((write) => write.enriched);
       // finalizeRunCompleted identifies the graph by this prefix.
-      const summary = `source-scout completed: recapture captured ${captured.length} of ${state.recaptureAttempted} URL-only sources${captured.length ? `: ${captured.map((write) => write.title).join(" | ")}` : ""}`;
+      const summary = `source-scout completed: recapture captured ${captured.length} of ${state.recaptureAttempted} URL-only sources${state.recaptureBacklogIncomplete ? " (backlog scan stopped at its page budget)" : ""}${captured.length ? `: ${captured.map((write) => write.title).join(" | ")}` : ""}`;
       const auditEvents = await finalizeRunCompleted(
         callTool,
         state.agentRunId,

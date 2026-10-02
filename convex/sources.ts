@@ -472,8 +472,8 @@ function awaitsScoutCapture(source: Doc<"sources">): boolean {
   );
 }
 
-// Rows of the ingested range read per call; the caller pages until it has
-// enough candidates, so no single query reads an unbounded range.
+// Ingested URL Sources read per call; nearly all are Scout URL-only rows, so
+// a recapture run's page budget reaches its candidates.
 const BACKLOG_PAGE_SIZE = 200;
 
 /**
@@ -501,7 +501,9 @@ export const listScoutCaptureBacklog = internalQuery({
   handler: async (ctx, args) => {
     const page = await ctx.db
       .query("sources")
-      .withIndex("by_status_updatedAt", (q) => q.eq("status", "ingested"))
+      .withIndex("by_status_type_updatedAt", (q) =>
+        q.eq("status", "ingested").eq("type", "url"),
+      )
       .order("asc")
       .paginate({ cursor: args.cursor ?? null, numItems: BACKLOG_PAGE_SIZE });
     const rows = page.page.flatMap((source) => {

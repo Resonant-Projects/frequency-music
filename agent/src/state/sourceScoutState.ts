@@ -71,6 +71,10 @@ export const SourceScoutAnnotation = Annotation.Root({
     value: (_left, right) => right,
     default: () => 0,
   }),
+  recaptureBacklogIncomplete: Annotation<boolean>({
+    value: (_left, right) => right,
+    default: () => false,
+  }),
   traceUrl: Annotation<string | undefined>,
   targets: Annotation<ScoutTargets | undefined>,
   plannedQueries: Annotation<ScoutQuery[]>({
