@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { generateDedupeKey } from "./sourceUtils";
@@ -525,5 +525,71 @@ describe("scout capture providers and repair", () => {
     await expect(
       asOperator.mutation(api.sources.resetScoutCapture, { id, reason: "x" }),
     ).rejects.toThrow("already has an Extraction");
+  });
+});
+
+describe("Source Scout capture backlog", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("pages Scout URL-only Sources awaiting capture, least recently tried first", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(1_000);
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const older = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/walled-older",
+      title: "Older",
+      query: "measured resonance",
+      rationale: "Thin domain",
+      agentRunId,
+    });
+    await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/captured",
+      query: "q",
+      rationale: "r",
+      agentRunId,
+      rawText:
+        "Measured resonance of a free plate excited at 440 Hz, with nodal lines traced by sand. ".repeat(
+          3,
+        ),
+      contentProvider: "crawl4ai",
+    });
+    const newer = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/walled-newer",
+      query: "q2",
+      rationale: "r2",
+      agentRunId,
+    });
+    const first = await t.query(internal.sources.listScoutCaptureBacklog, {});
+    expect(first.isDone).toBe(true);
+    expect(first.rows).toEqual([
+      {
+        id: older.id,
+        url: "https://example.org/walled-older",
+        title: "Older",
+        query: "measured resonance",
+        rationale: "Thin domain",
+      },
+      expect.objectContaining({ id: newer.id }),
+    ]);
+
+    // A failed capture attempt by a Scout run moves the Source to the back.
+    vi.setSystemTime(5_000);
+    await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/walled-older",
+      query: "measured resonance",
+      rationale: "Thin domain",
+      agentRunId,
+    });
+    const after = await t.query(internal.sources.listScoutCaptureBacklog, {});
+    expect(after.rows.map((row) => row.id)).toEqual([newer.id, older.id]);
+    expect(await t.run((ctx) => ctx.db.get(older.id))).toMatchObject({
+      status: "ingested",
+      metadata: {
+        scoutedBy: { lastCaptureAttemptRunId: agentRunId },
+      },
+    });
   });
 });

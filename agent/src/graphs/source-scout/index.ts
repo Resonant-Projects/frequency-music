@@ -6,8 +6,10 @@ import {
   judgeResultsNode,
   planQueriesNode,
   proposeFeedsNode,
+  recaptureSourcesNode,
   routeAfterQueries,
   routeAfterTargets,
+  routeAtStart,
   searchLoopNode,
   summarizeNode,
 } from "./nodes.js";
@@ -20,7 +22,12 @@ export const graph = new StateGraph(SourceScoutAnnotation)
   .addNode("ingest_sources", ingestSourcesNode)
   .addNode("propose_feeds", proposeFeedsNode)
   .addNode("summarize", summarizeNode)
-  .addEdge(START, "fetch_targets")
+  .addNode("recapture_sources", recaptureSourcesNode)
+  .addConditionalEdges(START, routeAtStart, {
+    fetch_targets: "fetch_targets",
+    recapture_sources: "recapture_sources",
+  })
+  .addEdge("recapture_sources", "summarize")
   .addConditionalEdges("fetch_targets", routeAfterTargets, {
     plan_queries: "plan_queries",
     summarize: "summarize",

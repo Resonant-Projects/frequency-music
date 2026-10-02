@@ -3,11 +3,13 @@ import {
   createIngestSourcesNode,
   createJudgeResultsNode,
   createProposeFeedsNode,
+  createRecaptureSourcesNode,
   createSearchLoopNode,
   createSummarizeNode,
   queryPlanOutputSchema,
   routeAfterQueries,
   routeAfterTargets,
+  routeAtStart,
   scoutVerdictSchema,
 } from "../src/graphs/source-scout/nodes";
 import {
@@ -535,4 +537,210 @@ describe("source scout canonical write nodes", () => {
       ),
     );
   });
+});
+
+describe("source-scout recapture mode", () => {
+  test("routes recapture runs past discovery", () => {
+    expect(routeAtStart({ mode: "recapture" })).toBe("recapture_sources");
+    expect(routeAtStart({ mode: undefined })).toBe("fetch_targets");
+  });
+
+  test("recaptures URL-only Sources through ingestScoutedSource", async () => {
+    const text = "# Measured modes\n" + "A reproducible experiment. ".repeat(5);
+    const callTool = vi.fn(async (name: string, args?: unknown) => {
+      if (name === "listScoutCaptureBacklog")
+        return {
+          isDone: true,
+          continueCursor: "end",
+          rows: [
+            {
+              id: "source-a",
+              url: "https://example.org/a",
+              title: "Plate modes",
+              query: "measured resonance",
+              rationale: "Thin domain",
+            },
+            {
+              id: "source-b",
+              url: "https://example.org/b",
+              query: "q",
+              rationale: "r",
+            },
+            { id: "malformed" },
+          ],
+        };
+      if (name === "ingestScoutedSource")
+        return { id: "source-a", created: false, enriched: true, args };
+      return { ok: true };
+    });
+    const crawl = vi.fn(async (url: string) =>
+      url.endsWith("/a") ? { text, provider: "firecrawl" as const } : null,
+    );
+
+    const update = await createRecaptureSourcesNode(
+      callTool,
+      crawl,
+    )({ agentRunId: "run-recapture" });
+
+    expect(callTool).toHaveBeenCalledWith("listScoutCaptureBacklog", {
+      cursor: null,
+    });
+    expect(crawl.mock.calls).toEqual([
+      ["https://example.org/a", { title: "Plate modes" }],
+      ["https://example.org/b", undefined],
+    ]);
+    const ingests = callTool.mock.calls.filter(
+      ([name]) => name === "ingestScoutedSource",
+    );
+    expect(ingests).toEqual([
+      [
+        "ingestScoutedSource",
+        {
+          url: "https://example.org/a",
+          title: "Plate modes",
+          rawText: text,
+          contentProvider: "firecrawl",
+          query: "measured resonance",
+          rationale: "Thin domain",
+          agentRunId: "run-recapture",
+        },
+      ],
+      [
+        "ingestScoutedSource",
+        {
+          url: "https://example.org/b",
+          query: "q",
+          rationale: "r",
+          agentRunId: "run-recapture",
+        },
+      ],
+    ]);
+    expect(update.recaptureAttempted).toBe(2);
+    expect(update.sourceWrites).toEqual([
+      expect.objectContaining({ id: "source-a", enriched: true }),
+    ]);
+  });
+
+  test("summarizes a recapture run", async () => {
+    const callTool = vi.fn(async () => ({ ok: true }));
+    const update = await createSummarizeNode(callTool)({
+      mode: "recapture",
+      recaptureAttempted: 2,
+      sourceWrites: [
+        {
+          id: "source-a",
+          url: "https://example.org/a",
+          title: "Plate modes",
+          targetGap: "recapture",
+          rationale: "Thin domain",
+          created: false,
+          enriched: true,
+        },
+      ],
+      feedWrites: [],
+      judgments: [],
+      plannedQueries: [],
+      searchHits: [],
+      auditEvents: [],
+      plannerErrorCount: 0,
+      judgeErrorCount: 0,
+      agentRunId: "run-recapture",
+    } as unknown as SourceScoutState);
+    expect(update.summary).toBe(
+      "source-scout completed: recapture captured 1 of 2 URL-only sources: Plate modes",
+    );
+  });
+});
+
+test("a refused recapture write does not stop the run", async () => {
+  const text = "# Measured modes\n" + "A reproducible experiment. ".repeat(5);
+  let ingests = 0;
+  const callTool = vi.fn(async (name: string) => {
+    if (name === "listScoutCaptureBacklog")
+      return {
+        isDone: true,
+        continueCursor: "end",
+        rows: [
+          { id: "a", url: "https://example.org/a", query: "q", rationale: "r" },
+          { id: "b", url: "https://example.org/b", query: "q", rationale: "r" },
+        ],
+      };
+    if (name === "ingestScoutedSource") {
+      ingests += 1;
+      if (ingests === 1)
+        throw new Error("Convex tool ingestScoutedSource failed: 500");
+      return { id: "b", created: false, enriched: true };
+    }
+    return { ok: true };
+  });
+  const update = await createRecaptureSourcesNode(callTool, async () => ({
+    text,
+    provider: "crawl4ai" as const,
+  }))({ agentRunId: "run-recapture" });
+  expect(update.sourceWrites).toEqual([
+    expect.objectContaining({ id: "b", enriched: true }),
+  ]);
+  expect(callTool).toHaveBeenCalledWith(
+    "appendAgentRunEvent",
+    expect.objectContaining({ kind: "error" }),
+  );
+});
+
+test("pages the recapture backlog until a run's worth or its end", async () => {
+  const pages: Record<string, unknown> = {
+    start: {
+      isDone: false,
+      continueCursor: "page-2",
+      rows: [
+        { id: "a", url: "https://example.org/a", query: "q", rationale: "r" },
+      ],
+    },
+    "page-2": {
+      isDone: true,
+      continueCursor: "end",
+      rows: [
+        { id: "b", url: "https://example.org/b", query: "q", rationale: "r" },
+      ],
+    },
+  };
+  const callTool = vi.fn(async (name: string, args?: unknown) => {
+    if (name === "listScoutCaptureBacklog")
+      return pages[(args as { cursor: string | null }).cursor ?? "start"];
+    return { ok: true };
+  });
+  const update = await createRecaptureSourcesNode(
+    callTool,
+    async () => null,
+  )({
+    agentRunId: "run-recapture",
+  });
+  expect(
+    callTool.mock.calls.filter(([name]) => name === "listScoutCaptureBacklog"),
+  ).toEqual([
+    ["listScoutCaptureBacklog", { cursor: null }],
+    ["listScoutCaptureBacklog", { cursor: "page-2" }],
+  ]);
+  expect(update.recaptureAttempted).toBe(2);
+});
+
+test("a recapture run stops at its page budget and says so", async () => {
+  const callTool = vi.fn(async (name: string, args?: unknown) => {
+    if (name === "listScoutCaptureBacklog")
+      return {
+        isDone: false,
+        continueCursor: `after-${(args as { cursor: string | null }).cursor ?? "start"}`,
+        rows: [],
+      };
+    return { ok: true };
+  });
+  const update = await createRecaptureSourcesNode(
+    callTool,
+    async () => null,
+  )({
+    agentRunId: "run-recapture",
+  });
+  expect(
+    callTool.mock.calls.filter(([name]) => name === "listScoutCaptureBacklog"),
+  ).toHaveLength(25);
+  expect(update.recaptureBacklogIncomplete).toBe(true);
 });

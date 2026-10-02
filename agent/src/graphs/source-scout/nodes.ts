@@ -35,8 +35,11 @@ import {
 import {
   MAX_FEED_PROPOSALS_PER_RUN,
   MAX_INGESTS_PER_RUN,
+  MAX_BACKLOG_PAGES,
+  MAX_RECAPTURES_PER_RUN,
   MAX_RESULTS_PER_SEARCH,
   MAX_SEARCH_CALLS,
+  RECAPTURE_CONCURRENCY,
 } from "./config.js";
 import {
   queryPlanningPrompt,
@@ -417,6 +420,202 @@ export function createIngestSourcesNode(
 
 export const ingestSourcesNode = createIngestSourcesNode();
 
+export function routeAtStart(state: Pick<SourceScoutState, "mode">) {
+  return state.mode === "recapture" ? "recapture_sources" : "fetch_targets";
+}
+
+type CaptureBacklogRow = {
+  id: string;
+  url: string;
+  title?: string;
+  query: string;
+  rationale: string;
+};
+
+function asCaptureBacklog(value: unknown): CaptureBacklogRow[] {
+  const rows = (value as { rows?: unknown } | null)?.rows;
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((entry): CaptureBacklogRow[] => {
+    const row = (entry ?? {}) as Record<string, unknown>;
+    const { id, url, title, query, rationale } = row;
+    return typeof id === "string" &&
+      typeof url === "string" &&
+      typeof query === "string" &&
+      typeof rationale === "string"
+      ? [
+          {
+            id,
+            url,
+            query,
+            rationale,
+            ...(typeof title === "string" && title ? { title } : {}),
+          },
+        ]
+      : [];
+  });
+}
+
+/**
+ * Recapture mode: crawl every Scout URL-only Source again with the current
+ * capture chain, and store any text through the same ingestScoutedSource
+ * enrichment a discovery run uses, so this run is recorded as the capturer.
+ */
+export function createRecaptureSourcesNode(
+  callTool: ToolCaller = callConvex,
+  crawl: (
+    url: string,
+    hint?: PageHint,
+  ) => Promise<CrawledPage | null> = createCrawlPage(),
+) {
+  return async (state: { agentRunId?: string }): Promise<SourceScoutUpdate> => {
+    if (!state.agentRunId)
+      throw new Error("source-scout requires agentRunId provenance");
+    // Page through the backlog (least recently tried first) until a run's
+    // worth of candidates, or its end.
+    // Each call reads one bounded page of ingested URL Sources; a run reads
+    // at most MAX_BACKLOG_PAGES and says so when it stopped short.
+    const backlog: CaptureBacklogRow[] = [];
+    let cursor: string | null = null;
+    let backlogIncomplete = false;
+    for (let page = 0; ; page++) {
+      if (page >= MAX_BACKLOG_PAGES) {
+        backlogIncomplete = true;
+        break;
+      }
+      const result = (await callTool("listScoutCaptureBacklog", {
+        cursor,
+      })) as { continueCursor?: unknown; isDone?: unknown } | null;
+      backlog.push(...asCaptureBacklog(result));
+      if (
+        backlog.length >= MAX_RECAPTURES_PER_RUN ||
+        result?.isDone !== false ||
+        typeof result.continueCursor !== "string" ||
+        result.continueCursor === cursor
+      )
+        break;
+      cursor = result.continueCursor;
+    }
+    backlog.splice(MAX_RECAPTURES_PER_RUN);
+    const pages: Array<CrawledPage | null> = backlog.map(() => null);
+    let next = 0;
+    await Promise.all(
+      Array.from(
+        { length: Math.min(RECAPTURE_CONCURRENCY, backlog.length) },
+        async () => {
+          while (next < backlog.length) {
+            const index = next++;
+            const row = backlog[index];
+            if (!row) continue;
+            try {
+              pages[index] = await crawl(
+                row.url,
+                row.title ? { title: row.title } : undefined,
+              );
+            } catch (error) {
+              console.warn(
+                "[source-scout] Recapture crawl failed:",
+                redactError(error),
+              );
+            }
+          }
+        },
+      ),
+    );
+    const sourceWrites: ScoutWriteResult[] = [];
+    const auditEvents: AgentAuditEvent[] = [];
+    for (const [index, row] of backlog.entries()) {
+      const page = pages[index];
+      if (!page) {
+        // Intake records the failed attempt, moving the Source behind
+        // untried ones for the next recapture run.
+        try {
+          await callTool("ingestScoutedSource", {
+            url: row.url,
+            ...(row.title ? { title: row.title } : {}),
+            query: row.query,
+            rationale: row.rationale,
+            agentRunId: state.agentRunId,
+          });
+        } catch (error) {
+          auditEvents.push(
+            ...(await appendRemoteAuditEvent(
+              callTool,
+              state.agentRunId,
+              "error",
+              "Source scout recapture could not record a failed attempt",
+              { id: row.id, url: row.url, error: redactError(error) },
+            )),
+          );
+        }
+        auditEvents.push(
+          ...(await appendRemoteAuditEvent(
+            callTool,
+            state.agentRunId,
+            "decision",
+            "Source scout recapture found no usable text",
+            { id: row.id, url: row.url },
+          )),
+        );
+        continue;
+      }
+      let result: { id?: unknown; created?: unknown; enriched?: unknown };
+      try {
+        result = (await callTool("ingestScoutedSource", {
+          url: row.url,
+          ...(row.title ? { title: row.title } : {}),
+          rawText: page.text,
+          contentProvider: page.provider,
+          query: row.query,
+          rationale: row.rationale,
+          agentRunId: state.agentRunId,
+        })) as { id?: unknown; created?: unknown; enriched?: unknown };
+      } catch (error) {
+        // One refused write must not lose the rest of the run's captures.
+        auditEvents.push(
+          ...(await appendRemoteAuditEvent(
+            callTool,
+            state.agentRunId,
+            "error",
+            "Source scout recapture could not store captured text",
+            { id: row.id, url: row.url, error: redactError(error) },
+          )),
+        );
+        continue;
+      }
+      const enriched = result.enriched === true;
+      const write = {
+        id: typeof result.id === "string" ? result.id : row.id,
+        url: row.url,
+        title: row.title ?? row.url,
+        targetGap: "recapture",
+        rationale: row.rationale,
+        created: result.created === true,
+        ...(enriched ? { enriched } : {}),
+      };
+      sourceWrites.push(write);
+      auditEvents.push(
+        ...(await appendRemoteAuditEvent(
+          callTool,
+          state.agentRunId,
+          enriched ? "tool_call" : "decision",
+          enriched
+            ? "Source scout captured text for URL-only source"
+            : "Source scout recapture left the source unchanged",
+          { ...write, provider: page.provider },
+        )),
+      );
+    }
+    return {
+      sourceWrites,
+      auditEvents,
+      recaptureAttempted: backlog.length,
+      recaptureBacklogIncomplete: backlogIncomplete,
+    };
+  };
+}
+
+export const recaptureSourcesNode = createRecaptureSourcesNode();
+
 function feedType(url: string): "rss" | "podcast" | "youtube" {
   try {
     const parsed = new URL(url);
@@ -506,6 +705,18 @@ export const proposeFeedsNode = createProposeFeedsNode();
 
 export function createSummarizeNode(callTool: ToolCaller = callConvex) {
   return async (state: SourceScoutState): Promise<SourceScoutUpdate> => {
+    if (state.mode === "recapture") {
+      const captured = state.sourceWrites.filter((write) => write.enriched);
+      // finalizeRunCompleted identifies the graph by this prefix.
+      const summary = `source-scout completed: recapture captured ${captured.length} of ${state.recaptureAttempted} URL-only sources${state.recaptureBacklogIncomplete ? " (backlog scan stopped at its page budget)" : ""}${captured.length ? `: ${captured.map((write) => write.title).join(" | ")}` : ""}`;
+      const auditEvents = await finalizeRunCompleted(
+        callTool,
+        state.agentRunId,
+        summary,
+        state.traceUrl,
+      );
+      return { summary, auditEvents };
+    }
     const gapCount =
       (state.targets?.thinDomains.length ?? 0) +
       (state.targets?.starvedConjectures.length ?? 0);

@@ -413,6 +413,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_status_updatedAt", ["status", "updatedAt"])
+    // Scout capture backlog: ingested URL Sources, least recently touched first.
+    .index("by_status_type_updatedAt", ["status", "type", "updatedAt"])
     .index("by_visibility_updatedAt", ["visibility", "updatedAt"])
     .index("by_type_updatedAt", ["type", "updatedAt"])
     .index("by_dedupeKey", ["dedupeKey"])

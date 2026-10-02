@@ -82,6 +82,8 @@ export type HypothesisDrafterGraphInput = {
 export type SourceScoutGraphInput = {
   agentRunId: string;
   traceUrl?: string;
+  // Enqueue with input { mode: "recapture" } to retry Scout URL-only Sources.
+  mode?: "recapture";
 };
 
 export type GraphInvocation =
@@ -169,6 +171,10 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       input: {
         agentRunId: claim.runId,
         ...(traceUrl ? { traceUrl } : {}),
+        ...((claim.input as { mode?: unknown } | null | undefined)?.mode ===
+        "recapture"
+          ? { mode: "recapture" as const }
+          : {}),
       },
     };
   }

@@ -150,6 +150,13 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Source-scout target selection only; results are bounded to five domains and five conjectures.",
   ),
   entry(
+    "listScoutCaptureBacklog",
+    "read",
+    "internal.sources:listScoutCaptureBacklog",
+    "Page through Scout URL-only Sources that still await page capture, least recently tried first, with their original Scout query and rationale.",
+    "Source-scout recapture runs only; each call reads at most 200 ingested URL Sources, and captured text still enters only through ingestScoutedSource.",
+  ),
+  entry(
     "findExistingSourceUrls",
     "read",
     "internal.sources:existingScoutedUrls",
@@ -161,7 +168,7 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "research_write",
     "internal.sources:createScoutedSource",
     "Ingest one judged source through canonical URL intake with source-scout provenance and optional bounded Crawl4AI text.",
-    "Canonical duplicates are no-ops, except that a scout-created URL-only Source may gain captured text; fetched text enters text_ready for batch Extraction.",
+    "Canonical duplicates are no-ops, except that a scout-created URL-only Source may gain captured text, or, when a source-scout run sends none, a recorded failed capture attempt; fetched text enters text_ready for batch Extraction.",
     { graphOnlyArgs: ["rawText", "contentProvider"] },
   ),
   entry(
