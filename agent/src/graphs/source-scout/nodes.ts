@@ -514,15 +514,30 @@ export function createRecaptureSourcesNode(
         );
         continue;
       }
-      const result = (await callTool("ingestScoutedSource", {
-        url: row.url,
-        ...(row.title ? { title: row.title } : {}),
-        rawText: page.text,
-        contentProvider: page.provider,
-        query: row.query,
-        rationale: row.rationale,
-        agentRunId: state.agentRunId,
-      })) as { id?: unknown; created?: unknown; enriched?: unknown };
+      let result: { id?: unknown; created?: unknown; enriched?: unknown };
+      try {
+        result = (await callTool("ingestScoutedSource", {
+          url: row.url,
+          ...(row.title ? { title: row.title } : {}),
+          rawText: page.text,
+          contentProvider: page.provider,
+          query: row.query,
+          rationale: row.rationale,
+          agentRunId: state.agentRunId,
+        })) as { id?: unknown; created?: unknown; enriched?: unknown };
+      } catch (error) {
+        // One refused write must not lose the rest of the run's captures.
+        auditEvents.push(
+          ...(await appendRemoteAuditEvent(
+            callTool,
+            state.agentRunId,
+            "error",
+            "Source scout recapture could not store captured text",
+            { id: row.id, url: row.url, error: redactError(error) },
+          )),
+        );
+        continue;
+      }
       const enriched = result.enriched === true;
       const write = {
         id: typeof result.id === "string" ? result.id : row.id,

@@ -472,6 +472,8 @@ function awaitsScoutCapture(source: Doc<"sources">): boolean {
   );
 }
 
+const MAX_BACKLOG_SCAN = 2_000;
+
 /**
  * Scout URL-only Sources that still await page capture, oldest first, for a
  * Source Scout recapture run. Each carries its original Scout query and
@@ -491,10 +493,14 @@ export const listScoutCaptureBacklog = internalQuery({
   handler: async (ctx, args) => {
     const limit = Math.min(Math.max(Math.trunc(args.limit ?? 25), 1), 50);
     const backlog = [];
-    for await (const source of ctx.db
+    // A bounded read: the oldest ingested Sources hold the backlog, and a
+    // later recapture run reaches the rest as these leave "ingested".
+    const scanned = await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "ingested"))
-      .order("asc")) {
+      .order("asc")
+      .take(MAX_BACKLOG_SCAN);
+    for (const source of scanned) {
       if (!awaitsScoutCapture(source) || !source.canonicalUrl) continue;
       const scoutedBy =
         (source.metadata as { scoutedBy?: Record<string, unknown> })

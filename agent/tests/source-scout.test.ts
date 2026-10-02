@@ -638,3 +638,33 @@ describe("source-scout recapture mode", () => {
     );
   });
 });
+
+test("a refused recapture write does not stop the run", async () => {
+  const text = "# Measured modes\n" + "A reproducible experiment. ".repeat(5);
+  let ingests = 0;
+  const callTool = vi.fn(async (name: string) => {
+    if (name === "listScoutCaptureBacklog")
+      return [
+        { id: "a", url: "https://example.org/a", query: "q", rationale: "r" },
+        { id: "b", url: "https://example.org/b", query: "q", rationale: "r" },
+      ];
+    if (name === "ingestScoutedSource") {
+      ingests += 1;
+      if (ingests === 1)
+        throw new Error("Convex tool ingestScoutedSource failed: 500");
+      return { id: "b", created: false, enriched: true };
+    }
+    return { ok: true };
+  });
+  const update = await createRecaptureSourcesNode(callTool, async () => ({
+    text,
+    provider: "crawl4ai" as const,
+  }))({ agentRunId: "run-recapture" });
+  expect(update.sourceWrites).toEqual([
+    expect.objectContaining({ id: "b", enriched: true }),
+  ]);
+  expect(callTool).toHaveBeenCalledWith(
+    "appendAgentRunEvent",
+    expect.objectContaining({ kind: "error" }),
+  );
+});
