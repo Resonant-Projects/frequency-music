@@ -10,27 +10,38 @@ import {
 import { claimValidator, compositionParameterValidator } from "./schema";
 
 /**
- * The Extraction that already covers this text for this Source, or for
- * another live Source. An archived Source's Extraction does not count, so a
- * live copy is never archived in favour of it.
+ * The current Extraction that already covers this text for this Source, or
+ * for another live Source. An archived Source's Extraction, or one a later
+ * Extraction superseded, does not count.
  */
 async function extractionForInput(
   db: DatabaseReader,
   inputHash: string,
   sourceId: Id<"sources">,
 ): Promise<{ extraction: Doc<"extractions">; sameSource: boolean } | null> {
-  const own = await db
-    .query("extractions")
-    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", sourceId))
-    .filter((q) => q.eq(q.field("inputHash"), inputHash))
-    .first();
-  if (own) return { extraction: own, sameSource: true };
-  // Streams every match, stopping at the first live holder.
+  // Only a Source's latest Extraction is current; storing a new one
+  // supersedes the claims of the earlier ones.
+  const latest = (id: Id<"sources">) =>
+    db
+      .query("extractions")
+      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", id))
+      .order("desc")
+      .first();
+  const own = await latest(sourceId);
+  if (own?.inputHash === inputHash)
+    return { extraction: own, sameSource: true };
+  // Streams every match, stopping at the first live holder whose current
+  // Extraction it is.
   for await (const match of db
     .query("extractions")
     .withIndex("by_inputHash", (q) => q.eq("inputHash", inputHash))) {
+    if (match.sourceId === sourceId) continue;
     const holder = await db.get("sources", match.sourceId);
-    if (holder && holder.status !== "archived") {
+    if (
+      holder &&
+      holder.status !== "archived" &&
+      (await latest(holder._id))?._id === match._id
+    ) {
       return { extraction: match, sameSource: false };
     }
   }

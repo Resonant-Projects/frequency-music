@@ -323,4 +323,44 @@ describe("extractInternal.storeExtraction", () => {
       }),
     ).toMatchObject({ sourceId: holder, sameSource: false });
   });
+
+  test("a superseded Extraction is not reused", async () => {
+    const t = convexTest(schema, modules);
+    const sourceId = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        canonicalUrl: "https://example.org/revised",
+        rawText: "Revised text",
+        status: "text_ready",
+        dedupeKey: "url:example.org/revised",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1000,
+        updatedAt: 1000,
+      }),
+    );
+    const store = (inputHash: string) =>
+      t.mutation(internal.extractInternal.storeExtraction, {
+        sourceId,
+        model: "test-model",
+        promptVersion: "extract_v2",
+        inputHash,
+        summary: inputHash,
+        claims: [],
+        compositionParameters: [],
+        topics: [],
+        openQuestions: [],
+        confidence: 0.8,
+      });
+    await store("h1");
+    await store("h2");
+    // Text H1 again: its Extraction was superseded by H2, so it is stored anew.
+    expect(
+      await t.query(internal.extractInternal.findExtractionForInput, {
+        inputHash: "h1",
+        sourceId,
+      }),
+    ).toBeNull();
+    expect((await store("h1")).existing).toBeUndefined();
+  });
 });
