@@ -420,7 +420,12 @@ export const resetScoutCapture = mutation({
     if (
       source.type !== "url" ||
       !scoutedBy?.contentProvider ||
-      !["text_ready", "ingested"].includes(source.status)
+      !(
+        ["text_ready", "ingested"].includes(source.status) ||
+        // The extraction gate parks bot walls and excerpts here.
+        (source.status === "review_needed" &&
+          source.blockedReason === "no_text")
+      )
     ) {
       throw new ConvexError({
         code: "INVALID_STATE",
