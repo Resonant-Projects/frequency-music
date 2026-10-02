@@ -54,6 +54,11 @@ describe("extractable source text", () => {
         "In a twelve-week study, children who practised a melodic instrument for twenty minutes a day showed larger gains in phonological awareness than a matched control group, and their parents reported that the participants read more books during the summer.",
       ),
     ).toBeNull();
+    expect(
+      unextractableTextReason(
+        "In a twelve-week study, children who practised a melodic instrument for twenty minutes a day showed larger gains in phonological awareness than a matched control group, and their parents reported that the participants wanted to read more.",
+      ),
+    ).toBeNull();
     // A long article that merely ends with an ellipsis is not an excerpt.
     expect(
       unextractableTextReason(

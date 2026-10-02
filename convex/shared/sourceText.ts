@@ -12,8 +12,9 @@ const EXCERPT_MARKERS = [
   /\bThe post\b[\s\S]{1,300}\bappeared first on\b[^.]{1,80}\.?$/i,
   // "Continue reading <title> →", the WordPress excerpt link.
   /\bcontinue reading\b.{0,150}(?:→|&rarr;)$/i,
-  // A call to action as the final words, not "read more books" in a sentence.
-  /\b(?:read more|continue reading|keep reading|read the full (?:article|story|post))\s*(?:→|»|›|&rarr;|&raquo;|…|\.\.\.)?\s*[.!]?$/i,
+  // A standalone call to action closing the text: it follows a sentence end,
+  // a closing bracket or a line break, so "wanted to read more." is prose.
+  /(?:[.!?…"”’)\]]\s*|\n\s*)(?:read more|continue reading|keep reading|read the full (?:article|story|post))\s*(?:→|»|›|&rarr;|&raquo;|…|\.\.\.)?\s*[.!]?$/i,
   // A truncated description: an ellipsis or a bracketed one closes the text.
   /(?:\[\s*(?:…|\.\.\.|&hellip;)\s*\]|…|&hellip;|\.\.\.)$/,
 ];
