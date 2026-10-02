@@ -52,6 +52,7 @@ const FROZEN_ARGS: Record<string, string> = {
   }),
   listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
   getScoutTargets: frozenArgs({}),
+  listScoutCaptureBacklog: frozenArgs({ limit: field(number, true) }),
   findExistingSourceUrls: frozenArgs({ urls: field(array(string)) }),
   ingestScoutedSource: frozenArgs({
     url: field(string),

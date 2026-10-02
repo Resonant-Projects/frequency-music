@@ -237,6 +237,29 @@ describe("worker graph-input mapping", () => {
     });
   });
 
+  test("source-scout recapture mode comes from the run input", () => {
+    const invocation = buildGraphInvocation(
+      claimedRun({
+        runId: "run_recapture",
+        graphName: "source-scout",
+        input: { mode: "recapture" },
+      }),
+    );
+    if (invocation.graphName !== "source-scout") throw new Error("narrowing");
+    expect(invocation.input).toEqual({
+      agentRunId: "run_recapture",
+      mode: "recapture",
+    });
+    const other = buildGraphInvocation(
+      claimedRun({
+        runId: "run_scout",
+        graphName: "source-scout",
+        input: { mode: "something-else" },
+      }),
+    );
+    expect(other.input).toEqual({ agentRunId: "run_scout" });
+  });
+
   test("terminal-status ownership is split correctly", () => {
     expect(TERMINAL_STATUS_OWNER["research-pipeline"]).toBe("graph");
     expect(TERMINAL_STATUS_OWNER["weekly-brief"]).toBe("runner");

@@ -55,6 +55,9 @@ export const listCorrespondenceTargets = makeAgentToolAction(
   "listCorrespondenceTargets",
 );
 export const getScoutTargets = makeAgentToolAction("getScoutTargets");
+export const listScoutCaptureBacklog = makeAgentToolAction(
+  "listScoutCaptureBacklog",
+);
 export const findExistingSourceUrls = makeAgentToolAction(
   "findExistingSourceUrls",
 );

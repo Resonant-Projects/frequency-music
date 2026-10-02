@@ -150,6 +150,13 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Source-scout target selection only; results are bounded to five domains and five conjectures.",
   ),
   entry(
+    "listScoutCaptureBacklog",
+    "read",
+    "internal.sources:listScoutCaptureBacklog",
+    "List Scout URL-only Sources that still await page capture, oldest first, with their original Scout query and rationale.",
+    "Source-scout recapture runs only; at most 50 rows, and captured text still enters only through ingestScoutedSource.",
+  ),
+  entry(
     "findExistingSourceUrls",
     "read",
     "internal.sources:existingScoutedUrls",

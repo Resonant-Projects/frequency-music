@@ -527,3 +527,46 @@ describe("scout capture providers and repair", () => {
     ).rejects.toThrow("already has an Extraction");
   });
 });
+
+describe("Source Scout capture backlog", () => {
+  test("lists only Scout URL-only Sources awaiting capture, oldest first", async () => {
+    const t = convexTest(schema, modules);
+    const agentRunId = await seedAgentRun(t);
+    const urlOnly = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/walled-older",
+      title: "Older",
+      query: "measured resonance",
+      rationale: "Thin domain",
+      agentRunId,
+    });
+    await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/captured",
+      query: "q",
+      rationale: "r",
+      agentRunId,
+      rawText:
+        "Measured resonance of a free plate excited at 440 Hz, with nodal lines traced by sand. ".repeat(
+          3,
+        ),
+      contentProvider: "crawl4ai",
+    });
+    const newer = await t.mutation(internal.sources.createScoutedSource, {
+      url: "https://example.org/walled-newer",
+      query: "q2",
+      rationale: "r2",
+      agentRunId,
+    });
+    const backlog = await t.query(internal.sources.listScoutCaptureBacklog, {});
+    expect(backlog.map((row) => row.id)).toEqual([urlOnly.id, newer.id]);
+    expect(backlog[0]).toEqual({
+      id: urlOnly.id,
+      url: "https://example.org/walled-older",
+      title: "Older",
+      query: "measured resonance",
+      rationale: "Thin domain",
+    });
+    expect(
+      await t.query(internal.sources.listScoutCaptureBacklog, { limit: 1 }),
+    ).toHaveLength(1);
+  });
+});

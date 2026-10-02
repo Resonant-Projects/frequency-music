@@ -473,6 +473,52 @@ function awaitsScoutCapture(source: Doc<"sources">): boolean {
 }
 
 /**
+ * Scout URL-only Sources that still await page capture, oldest first, for a
+ * Source Scout recapture run. Each carries its original Scout query and
+ * rationale so the recapture writes through ingestScoutedSource unchanged.
+ */
+export const listScoutCaptureBacklog = internalQuery({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(
+    v.object({
+      id: v.id("sources"),
+      url: v.string(),
+      title: v.optional(v.string()),
+      query: v.string(),
+      rationale: v.string(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const limit = Math.min(Math.max(Math.trunc(args.limit ?? 25), 1), 50);
+    const backlog = [];
+    for await (const source of ctx.db
+      .query("sources")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "ingested"))
+      .order("asc")) {
+      if (!awaitsScoutCapture(source) || !source.canonicalUrl) continue;
+      const scoutedBy =
+        (source.metadata as { scoutedBy?: Record<string, unknown> })
+          .scoutedBy ?? {};
+      backlog.push({
+        id: source._id,
+        url: source.canonicalUrl,
+        ...(source.title ? { title: source.title } : {}),
+        query:
+          typeof scoutedBy.query === "string" && scoutedBy.query
+            ? scoutedBy.query
+            : "recapture",
+        rationale:
+          typeof scoutedBy.rationale === "string" && scoutedBy.rationale
+            ? scoutedBy.rationale
+            : "Recapture of a URL-only Scout Source",
+      });
+      if (backlog.length >= limit) break;
+    }
+    return backlog;
+  },
+});
+
+/**
  * Source-scout preflight: which candidate URLs already own a canonical dedupe
  * key, and whether that Source still awaits page capture. Shares
  * createScoutedSource's key so the scout never captures text intake discards.
