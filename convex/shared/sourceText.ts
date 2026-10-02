@@ -11,7 +11,7 @@ const EXCERPT_MARKERS = [
   // WordPress feed footer: "The post <title> appeared first on <site>."
   /\bThe post\b[\s\S]{1,300}\bappeared first on\b/i,
   /\b(?:continue|keep) reading\b/i,
-  /\bread (?:the full|more)\b[^.]{0,40}$/i,
+  /\bread (?:the full|more)\b[^.]{0,40}[.!]?$/i,
   /(?:\[\s*(?:…|\.\.\.|&hellip;)\s*\]|…|&hellip;|\.\.\.)\s*$/,
 ];
 
@@ -21,16 +21,18 @@ export function unextractableTextReason(text: string): string | null {
   if (looksLikeBotChallenge(trimmed)) {
     return "Captured text is a bot wall or browser check, not the source.";
   }
+  // Markers and word counts read the prose: link text without its URL.
   const prose = trimmed
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/https?:\/\/\S+/g, " ");
+    .replace(/https?:\/\/\S+/g, " ")
+    .trim();
   const words = prose.split(/\s+/).filter(Boolean).length;
   if (words < MIN_EXTRACTABLE_WORDS) {
     return `Captured text has only ${words} words.`;
   }
   if (
     words <= EXCERPT_MAX_WORDS &&
-    EXCERPT_MARKERS.some((marker) => marker.test(trimmed))
+    EXCERPT_MARKERS.some((marker) => marker.test(prose))
   ) {
     return `Captured text is a ${words}-word feed excerpt; the full text was not captured.`;
   }

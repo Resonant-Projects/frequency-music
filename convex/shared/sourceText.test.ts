@@ -14,6 +14,16 @@ describe("extractable source text", () => {
         "One of the most frustrating and time consuming things that happens during a mix is figuring out why certain mix elements seem buried when they are at the right level. The problem is often masking, where frequencies from one element cover another [&hellip;]",
       ),
     ).toMatch(/feed excerpt/);
+    const teaser =
+      "Producers chasing a warmer delay often reach for an old bucket brigade pedal instead of a pristine digital unit, because the repeats drift and darken in a way that sits better behind a vocal than a clean echo does.";
+    expect(
+      unextractableTextReason(
+        `${teaser} [Read more](https://example.org/delay)`,
+      ),
+    ).toMatch(/feed excerpt/);
+    expect(unextractableTextReason(`${teaser} Read more.`)).toMatch(
+      /feed excerpt/,
+    );
     expect(
       unextractableTextReason(
         "Title: Just a moment...\n\nPerforming security verification\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.",
