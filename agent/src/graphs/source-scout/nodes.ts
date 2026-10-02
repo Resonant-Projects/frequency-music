@@ -35,7 +35,6 @@ import {
 import {
   MAX_FEED_PROPOSALS_PER_RUN,
   MAX_INGESTS_PER_RUN,
-  MAX_BACKLOG_PAGES,
   MAX_RECAPTURES_PER_RUN,
   MAX_RESULTS_PER_SEARCH,
   MAX_SEARCH_CALLS,
@@ -472,9 +471,10 @@ export function createRecaptureSourcesNode(
       throw new Error("source-scout requires agentRunId provenance");
     // Page through the backlog (least recently tried first) until a run's
     // worth of candidates, or its end.
+    // Each call reads one bounded page, so the whole range is reachable.
     const backlog: CaptureBacklogRow[] = [];
     let cursor: string | null = null;
-    for (let page = 0; page < MAX_BACKLOG_PAGES; page++) {
+    for (;;) {
       const result = (await callTool("listScoutCaptureBacklog", {
         cursor,
       })) as { continueCursor?: unknown; isDone?: unknown } | null;
@@ -482,7 +482,8 @@ export function createRecaptureSourcesNode(
       if (
         backlog.length >= MAX_RECAPTURES_PER_RUN ||
         result?.isDone !== false ||
-        typeof result.continueCursor !== "string"
+        typeof result.continueCursor !== "string" ||
+        result.continueCursor === cursor
       )
         break;
       cursor = result.continueCursor;
@@ -529,9 +530,14 @@ export function createRecaptureSourcesNode(
             agentRunId: state.agentRunId,
           });
         } catch (error) {
-          console.warn(
-            "[source-scout] Could not record a failed recapture:",
-            redactError(error),
+          auditEvents.push(
+            ...(await appendRemoteAuditEvent(
+              callTool,
+              state.agentRunId,
+              "error",
+              "Source scout recapture could not record a failed attempt",
+              { id: row.id, url: row.url, error: redactError(error) },
+            )),
           );
         }
         auditEvents.push(
