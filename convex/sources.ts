@@ -472,55 +472,60 @@ function awaitsScoutCapture(source: Doc<"sources">): boolean {
   );
 }
 
-const MAX_BACKLOG_SCAN = 2_000;
+// Rows of the ingested range read per call; the caller pages until it has
+// enough candidates, so no single query reads an unbounded range.
+const BACKLOG_PAGE_SIZE = 200;
 
 /**
- * Scout URL-only Sources that still await page capture, oldest first, for a
- * Source Scout recapture run. Each carries its original Scout query and
- * rationale so the recapture writes through ingestScoutedSource unchanged.
+ * One page of Scout URL-only Sources that still await page capture, least
+ * recently tried first, for a Source Scout recapture run. Each row carries
+ * its original Scout query and rationale so the recapture writes through
+ * ingestScoutedSource unchanged. A failed capture attempt touches the
+ * Source, so it moves behind untried ones.
  */
 export const listScoutCaptureBacklog = internalQuery({
-  args: { limit: v.optional(v.number()) },
-  returns: v.array(
-    v.object({
-      id: v.id("sources"),
-      url: v.string(),
-      title: v.optional(v.string()),
-      query: v.string(),
-      rationale: v.string(),
-    }),
-  ),
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  returns: v.object({
+    rows: v.array(
+      v.object({
+        id: v.id("sources"),
+        url: v.string(),
+        title: v.optional(v.string()),
+        query: v.string(),
+        rationale: v.string(),
+      }),
+    ),
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+  }),
   handler: async (ctx, args) => {
-    const limit = Math.min(Math.max(Math.trunc(args.limit ?? 25), 1), 50);
-    const backlog = [];
-    // A bounded read: the oldest ingested Sources hold the backlog, and a
-    // later recapture run reaches the rest as these leave "ingested".
-    const scanned = await ctx.db
+    const page = await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "ingested"))
       .order("asc")
-      .take(MAX_BACKLOG_SCAN);
-    for (const source of scanned) {
-      if (!awaitsScoutCapture(source) || !source.canonicalUrl) continue;
+      .paginate({ cursor: args.cursor ?? null, numItems: BACKLOG_PAGE_SIZE });
+    const rows = page.page.flatMap((source) => {
+      if (!awaitsScoutCapture(source) || !source.canonicalUrl) return [];
       const scoutedBy =
         (source.metadata as { scoutedBy?: Record<string, unknown> })
           .scoutedBy ?? {};
-      backlog.push({
-        id: source._id,
-        url: source.canonicalUrl,
-        ...(source.title ? { title: source.title } : {}),
-        query:
-          typeof scoutedBy.query === "string" && scoutedBy.query
-            ? scoutedBy.query
-            : "recapture",
-        rationale:
-          typeof scoutedBy.rationale === "string" && scoutedBy.rationale
-            ? scoutedBy.rationale
-            : "Recapture of a URL-only Scout Source",
-      });
-      if (backlog.length >= limit) break;
-    }
-    return backlog;
+      return [
+        {
+          id: source._id,
+          url: source.canonicalUrl,
+          ...(source.title ? { title: source.title } : {}),
+          query:
+            typeof scoutedBy.query === "string" && scoutedBy.query
+              ? scoutedBy.query
+              : "recapture",
+          rationale:
+            typeof scoutedBy.rationale === "string" && scoutedBy.rationale
+              ? scoutedBy.rationale
+              : "Recapture of a URL-only Scout Source",
+        },
+      ];
+    });
+    return { rows, continueCursor: page.continueCursor, isDone: page.isDone };
   },
 });
 
@@ -609,7 +614,26 @@ export const createScoutedSource = internalMutation({
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
       .first();
     if (existing) {
-      if (!rawText || !awaitsScoutCapture(existing)) {
+      if (!awaitsScoutCapture(existing)) {
+        return { id: existing._id, created: false };
+      }
+      if (!rawText) {
+        // A Scout run tried and failed to capture this URL-only Source:
+        // record the attempt, which also moves it behind untried Sources.
+        if (agentRun.graphName === "source-scout") {
+          const metadata = existing.metadata as { scoutedBy: object };
+          await ctx.db.patch("sources", existing._id, {
+            metadata: {
+              ...metadata,
+              scoutedBy: {
+                ...metadata.scoutedBy,
+                lastCaptureAttemptAt: Date.now(),
+                lastCaptureAttemptRunId: args.agentRunId,
+              },
+            },
+            updatedAt: Date.now(),
+          });
+        }
         return { id: existing._id, created: false };
       }
       const metadata = existing.metadata as { scoutedBy: object };

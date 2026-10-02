@@ -35,6 +35,7 @@ import {
 import {
   MAX_FEED_PROPOSALS_PER_RUN,
   MAX_INGESTS_PER_RUN,
+  MAX_BACKLOG_PAGES,
   MAX_RECAPTURES_PER_RUN,
   MAX_RESULTS_PER_SEARCH,
   MAX_SEARCH_CALLS,
@@ -432,8 +433,9 @@ type CaptureBacklogRow = {
 };
 
 function asCaptureBacklog(value: unknown): CaptureBacklogRow[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((entry): CaptureBacklogRow[] => {
+  const rows = (value as { rows?: unknown } | null)?.rows;
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((entry): CaptureBacklogRow[] => {
     const row = (entry ?? {}) as Record<string, unknown>;
     const { id, url, title, query, rationale } = row;
     return typeof id === "string" &&
@@ -468,11 +470,24 @@ export function createRecaptureSourcesNode(
   return async (state: { agentRunId?: string }): Promise<SourceScoutUpdate> => {
     if (!state.agentRunId)
       throw new Error("source-scout requires agentRunId provenance");
-    const backlog = asCaptureBacklog(
-      await callTool("listScoutCaptureBacklog", {
-        limit: MAX_RECAPTURES_PER_RUN,
-      }),
-    );
+    // Page through the backlog (least recently tried first) until a run's
+    // worth of candidates, or its end.
+    const backlog: CaptureBacklogRow[] = [];
+    let cursor: string | null = null;
+    for (let page = 0; page < MAX_BACKLOG_PAGES; page++) {
+      const result = (await callTool("listScoutCaptureBacklog", {
+        cursor,
+      })) as { continueCursor?: unknown; isDone?: unknown } | null;
+      backlog.push(...asCaptureBacklog(result));
+      if (
+        backlog.length >= MAX_RECAPTURES_PER_RUN ||
+        result?.isDone !== false ||
+        typeof result.continueCursor !== "string"
+      )
+        break;
+      cursor = result.continueCursor;
+    }
+    backlog.splice(MAX_RECAPTURES_PER_RUN);
     const pages: Array<CrawledPage | null> = backlog.map(() => null);
     let next = 0;
     await Promise.all(
@@ -503,6 +518,22 @@ export function createRecaptureSourcesNode(
     for (const [index, row] of backlog.entries()) {
       const page = pages[index];
       if (!page) {
+        // Intake records the failed attempt, moving the Source behind
+        // untried ones for the next recapture run.
+        try {
+          await callTool("ingestScoutedSource", {
+            url: row.url,
+            ...(row.title ? { title: row.title } : {}),
+            query: row.query,
+            rationale: row.rationale,
+            agentRunId: state.agentRunId,
+          });
+        } catch (error) {
+          console.warn(
+            "[source-scout] Could not record a failed recapture:",
+            redactError(error),
+          );
+        }
         auditEvents.push(
           ...(await appendRemoteAuditEvent(
             callTool,
@@ -658,7 +689,8 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
   return async (state: SourceScoutState): Promise<SourceScoutUpdate> => {
     if (state.mode === "recapture") {
       const captured = state.sourceWrites.filter((write) => write.enriched);
-      const summary = `source-scout recapture completed: ${captured.length} of ${state.recaptureAttempted} URL-only sources captured${captured.length ? `: ${captured.map((write) => write.title).join(" | ")}` : ""}`;
+      // finalizeRunCompleted identifies the graph by this prefix.
+      const summary = `source-scout completed: recapture captured ${captured.length} of ${state.recaptureAttempted} URL-only sources${captured.length ? `: ${captured.map((write) => write.title).join(" | ")}` : ""}`;
       const auditEvents = await finalizeRunCompleted(
         callTool,
         state.agentRunId,

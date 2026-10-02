@@ -549,22 +549,26 @@ describe("source-scout recapture mode", () => {
     const text = "# Measured modes\n" + "A reproducible experiment. ".repeat(5);
     const callTool = vi.fn(async (name: string, args?: unknown) => {
       if (name === "listScoutCaptureBacklog")
-        return [
-          {
-            id: "source-a",
-            url: "https://example.org/a",
-            title: "Plate modes",
-            query: "measured resonance",
-            rationale: "Thin domain",
-          },
-          {
-            id: "source-b",
-            url: "https://example.org/b",
-            query: "q",
-            rationale: "r",
-          },
-          { id: "malformed" },
-        ];
+        return {
+          isDone: true,
+          continueCursor: "end",
+          rows: [
+            {
+              id: "source-a",
+              url: "https://example.org/a",
+              title: "Plate modes",
+              query: "measured resonance",
+              rationale: "Thin domain",
+            },
+            {
+              id: "source-b",
+              url: "https://example.org/b",
+              query: "q",
+              rationale: "r",
+            },
+            { id: "malformed" },
+          ],
+        };
       if (name === "ingestScoutedSource")
         return { id: "source-a", created: false, enriched: true, args };
       return { ok: true };
@@ -579,7 +583,7 @@ describe("source-scout recapture mode", () => {
     )({ agentRunId: "run-recapture" });
 
     expect(callTool).toHaveBeenCalledWith("listScoutCaptureBacklog", {
-      limit: 50,
+      cursor: null,
     });
     expect(crawl.mock.calls).toEqual([
       ["https://example.org/a", { title: "Plate modes" }],
@@ -598,6 +602,15 @@ describe("source-scout recapture mode", () => {
           contentProvider: "firecrawl",
           query: "measured resonance",
           rationale: "Thin domain",
+          agentRunId: "run-recapture",
+        },
+      ],
+      [
+        "ingestScoutedSource",
+        {
+          url: "https://example.org/b",
+          query: "q",
+          rationale: "r",
           agentRunId: "run-recapture",
         },
       ],
@@ -634,7 +647,7 @@ describe("source-scout recapture mode", () => {
       agentRunId: "run-recapture",
     } as unknown as SourceScoutState);
     expect(update.summary).toBe(
-      "source-scout recapture completed: 1 of 2 URL-only sources captured: Plate modes",
+      "source-scout completed: recapture captured 1 of 2 URL-only sources: Plate modes",
     );
   });
 });
@@ -644,10 +657,14 @@ test("a refused recapture write does not stop the run", async () => {
   let ingests = 0;
   const callTool = vi.fn(async (name: string) => {
     if (name === "listScoutCaptureBacklog")
-      return [
-        { id: "a", url: "https://example.org/a", query: "q", rationale: "r" },
-        { id: "b", url: "https://example.org/b", query: "q", rationale: "r" },
-      ];
+      return {
+        isDone: true,
+        continueCursor: "end",
+        rows: [
+          { id: "a", url: "https://example.org/a", query: "q", rationale: "r" },
+          { id: "b", url: "https://example.org/b", query: "q", rationale: "r" },
+        ],
+      };
     if (name === "ingestScoutedSource") {
       ingests += 1;
       if (ingests === 1)
@@ -667,4 +684,41 @@ test("a refused recapture write does not stop the run", async () => {
     "appendAgentRunEvent",
     expect.objectContaining({ kind: "error" }),
   );
+});
+
+test("pages the recapture backlog until a run's worth or its end", async () => {
+  const pages: Record<string, unknown> = {
+    start: {
+      isDone: false,
+      continueCursor: "page-2",
+      rows: [
+        { id: "a", url: "https://example.org/a", query: "q", rationale: "r" },
+      ],
+    },
+    "page-2": {
+      isDone: true,
+      continueCursor: "end",
+      rows: [
+        { id: "b", url: "https://example.org/b", query: "q", rationale: "r" },
+      ],
+    },
+  };
+  const callTool = vi.fn(async (name: string, args?: unknown) => {
+    if (name === "listScoutCaptureBacklog")
+      return pages[(args as { cursor: string | null }).cursor ?? "start"];
+    return { ok: true };
+  });
+  const update = await createRecaptureSourcesNode(
+    callTool,
+    async () => null,
+  )({
+    agentRunId: "run-recapture",
+  });
+  expect(
+    callTool.mock.calls.filter(([name]) => name === "listScoutCaptureBacklog"),
+  ).toEqual([
+    ["listScoutCaptureBacklog", { cursor: null }],
+    ["listScoutCaptureBacklog", { cursor: "page-2" }],
+  ]);
+  expect(update.recaptureAttempted).toBe(2);
 });

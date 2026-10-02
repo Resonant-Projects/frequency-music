@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { generateDedupeKey } from "./sourceUtils";
@@ -529,10 +529,16 @@ describe("scout capture providers and repair", () => {
 });
 
 describe("Source Scout capture backlog", () => {
-  test("lists only Scout URL-only Sources awaiting capture, oldest first", async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("pages Scout URL-only Sources awaiting capture, least recently tried first", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(1_000);
     const t = convexTest(schema, modules);
     const agentRunId = await seedAgentRun(t);
-    const urlOnly = await t.mutation(internal.sources.createScoutedSource, {
+    const older = await t.mutation(internal.sources.createScoutedSource, {
       url: "https://example.org/walled-older",
       title: "Older",
       query: "measured resonance",
@@ -556,17 +562,34 @@ describe("Source Scout capture backlog", () => {
       rationale: "r2",
       agentRunId,
     });
-    const backlog = await t.query(internal.sources.listScoutCaptureBacklog, {});
-    expect(backlog.map((row) => row.id)).toEqual([urlOnly.id, newer.id]);
-    expect(backlog[0]).toEqual({
-      id: urlOnly.id,
+    const first = await t.query(internal.sources.listScoutCaptureBacklog, {});
+    expect(first.isDone).toBe(true);
+    expect(first.rows).toEqual([
+      {
+        id: older.id,
+        url: "https://example.org/walled-older",
+        title: "Older",
+        query: "measured resonance",
+        rationale: "Thin domain",
+      },
+      expect.objectContaining({ id: newer.id }),
+    ]);
+
+    // A failed capture attempt by a Scout run moves the Source to the back.
+    vi.setSystemTime(5_000);
+    await t.mutation(internal.sources.createScoutedSource, {
       url: "https://example.org/walled-older",
-      title: "Older",
       query: "measured resonance",
       rationale: "Thin domain",
+      agentRunId,
     });
-    expect(
-      await t.query(internal.sources.listScoutCaptureBacklog, { limit: 1 }),
-    ).toHaveLength(1);
+    const after = await t.query(internal.sources.listScoutCaptureBacklog, {});
+    expect(after.rows.map((row) => row.id)).toEqual([newer.id, older.id]);
+    expect(await t.run((ctx) => ctx.db.get(older.id))).toMatchObject({
+      status: "ingested",
+      metadata: {
+        scoutedBy: { lastCaptureAttemptRunId: agentRunId },
+      },
+    });
   });
 });

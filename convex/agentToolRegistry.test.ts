@@ -12,6 +12,7 @@ const field = (fieldType: unknown, optional = false) => ({
 const string = { type: "string" };
 const number = { type: "number" };
 const any = { type: "any" };
+const nullValue = { type: "null" };
 const array = (value: unknown) => ({ type: "array", value });
 const object = (value: Record<string, unknown>) => ({ type: "object", value });
 const id = (tableName: string) => ({ type: "id", tableName });
@@ -52,7 +53,9 @@ const FROZEN_ARGS: Record<string, string> = {
   }),
   listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
   getScoutTargets: frozenArgs({}),
-  listScoutCaptureBacklog: frozenArgs({ limit: field(number, true) }),
+  listScoutCaptureBacklog: frozenArgs({
+    cursor: field(union(string, nullValue), true),
+  }),
   findExistingSourceUrls: frozenArgs({ urls: field(array(string)) }),
   ingestScoutedSource: frozenArgs({
     url: field(string),

@@ -96,7 +96,7 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
   listScoutCaptureBacklog: (ctx, args) =>
     ctx.runQuery(
       internal.sources.listScoutCaptureBacklog,
-      omitUndefined({ limit: args.limit as number | undefined }),
+      omitUndefined({ cursor: args.cursor as string | null | undefined }),
     ),
   findExistingSourceUrls: (ctx, args) =>
     ctx.runQuery(internal.sources.existingScoutedUrls, {
