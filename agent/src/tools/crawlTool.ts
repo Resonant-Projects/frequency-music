@@ -6,13 +6,13 @@ import {
 } from "../../../convex/shared/agentContract.js";
 import { doiForUrl } from "../../../convex/shared/doi.js";
 import { redactError } from "../shared/redactError.js";
-
-export { doiForUrl };
 import {
   isFirecrawlCloud,
   openAlexHeaders,
   reconstructAbstract,
 } from "./searchTool.js";
+
+export { doiForUrl };
 
 const DEFAULT_CRAWL4AI_URL = "https://crawl4ai.rproj.art";
 const CRAWL_TIMEOUT_MS = 40_000;
