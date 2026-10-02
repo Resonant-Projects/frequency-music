@@ -43,6 +43,8 @@ describe("YouTube transcriber", () => {
         "node",
         "-f",
         "wa[format_note*=original]/wa[language^=en]/wa/ba",
+        "--abort-on-unavailable-fragments",
+        "--no-cache-dir",
       ]),
     );
     // The URL follows "--" so it can never be read as an option.
@@ -98,6 +100,27 @@ describe("YouTube transcriber", () => {
         "dQw4w9WgXcQ",
       ),
     ).toMatchObject({ kind: "failed" });
+    // A partial download that exits non-zero is never transcribed.
+    const partial = async (args: string[]) => {
+      await downloads()(args);
+      return {
+        code: 1,
+        output: "ERROR: fragment 3 not found, unable to continue",
+      };
+    };
+    const unusedGroq = groq({ text: speech.repeat(2) });
+    expect(await make(partial, unusedGroq)("dQw4w9WgXcQ")).toMatchObject({
+      kind: "failed",
+    });
+    expect(unusedGroq).not.toHaveBeenCalled();
+    // A filter-skipped video exits 0 without audio.
+    expect(
+      await make(async () => ({
+        code: 0,
+        output:
+          "[download] x does not pass filter (duration <= 7200), skipping ..",
+      }))("dQw4w9WgXcQ"),
+    ).toMatchObject({ kind: "unavailable" });
     expect(await make(downloads(), groq({ text: "♪" }))("dQw4w9WgXcQ")).toEqual(
       { kind: "unavailable", detail: "No speech to transcribe" },
     );

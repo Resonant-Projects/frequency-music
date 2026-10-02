@@ -171,6 +171,14 @@ describe("transcript capture cron", () => {
       );
     await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});
     expect(await runs()).toHaveLength(0);
+    // Ingested videos that already hold text come first and do not count.
+    for (let i = 0; i < 120; i++) {
+      await insertVideo(t, `X${String(i).padStart(10, "0")}`, {
+        transcript: "held",
+      });
+    }
+    await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});
+    expect(await runs()).toHaveLength(0);
     await insertVideo(t, "HHHHHHHHHHH");
     await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});
     await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});

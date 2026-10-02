@@ -41,23 +41,38 @@ export type YtDlpRunner = (
 function runYtDlp(binary: string): YtDlpRunner {
   return (args) =>
     new Promise((resolve) => {
-      const child = spawn(binary, args, { stdio: ["ignore", "pipe", "pipe"] });
+      // Its own process group: the PyInstaller binary runs yt-dlp in a child
+      // process, which a signal to the bootloader alone would not stop.
+      const child = spawn(binary, args, {
+        stdio: ["ignore", "pipe", "pipe"],
+        detached: true,
+      });
       let output = "";
+      let settled = false;
+      const settle = (result: { code: number | null; output: string }) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(result);
+      };
       const append = (chunk: Buffer) => {
         // Keep the tail: errors come last.
         output = (output + chunk.toString("utf8")).slice(-20_000);
       };
       child.stdout.on("data", append);
       child.stderr.on("data", append);
-      const timer = setTimeout(() => child.kill("SIGKILL"), YTDLP_TIMEOUT_MS);
-      child.on("error", (error) => {
-        clearTimeout(timer);
-        resolve({ code: null, output: `${output}\n${error.message}` });
-      });
-      child.on("close", (code) => {
-        clearTimeout(timer);
-        resolve({ code, output });
-      });
+      const timer = setTimeout(() => {
+        try {
+          if (child.pid) process.kill(-child.pid, "SIGKILL");
+        } catch {
+          // The group already exited.
+        }
+        settle({ code: null, output: `${output}\nyt-dlp timed out` });
+      }, YTDLP_TIMEOUT_MS);
+      child.on("error", (error) =>
+        settle({ code: null, output: `${output}\n${error.message}` }),
+      );
+      child.on("close", (code) => settle({ code, output }));
     });
 }
 
@@ -87,6 +102,8 @@ export function ytDlpAudioArgs(
     "--no-progress",
     // The worker's root filesystem is read-only.
     "--no-cache-dir",
+    // A missing fragment would yield a silently truncated transcript.
+    "--abort-on-unavailable-fragments",
     "--match-filter",
     `duration <= ${MAX_DURATION_SECONDS}`,
     "--max-filesize",
@@ -136,16 +153,24 @@ export function createYouTubeTranscriber(
           detail: `YouTube: ${errorLine(output)}`,
         };
       }
-      const files = (await readdir(dir)).filter(
-        (name) => !name.endsWith(".part"),
-      );
-      if (files.length === 0) {
-        return UNAVAILABLE.test(output) || code === 0
-          ? { kind: "unavailable", detail: errorLine(output) || "No audio" }
+      if (code !== 0) {
+        // Only a completed download is transcribed.
+        return UNAVAILABLE.test(output)
+          ? { kind: "unavailable", detail: errorLine(output) }
           : {
               kind: "failed",
               detail: errorLine(output) || `yt-dlp exited ${code}`,
             };
+      }
+      const files = (await readdir(dir)).filter(
+        (name) => !name.endsWith(".part"),
+      );
+      if (files.length === 0) {
+        // yt-dlp exits 0 when a filter (duration, size) skips the video.
+        return {
+          kind: "unavailable",
+          detail: errorLine(output) || "No audio downloaded",
+        };
       }
       const name = files[0] as string;
       const audio = await readFile(join(dir, name));

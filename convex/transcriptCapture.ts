@@ -162,13 +162,20 @@ export const enqueueIfNeeded = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const awaiting = await ctx.db
+    // Stops at the first Source awaiting a transcript; ingested YouTube Sources
+    // that already hold text are rare, so this reads little.
+    let awaiting = false;
+    for await (const source of ctx.db
       .query("sources")
       .withIndex("by_status_type_updatedAt", (q) =>
         q.eq("status", "ingested").eq("type", "youtube"),
-      )
-      .take(BACKLOG_PAGE_SIZE);
-    if (!awaiting.some(awaitsTranscript)) return null;
+      )) {
+      if (awaitsTranscript(source)) {
+        awaiting = true;
+        break;
+      }
+    }
+    if (!awaiting) return null;
     for (const status of ["queued", "running"] as const) {
       const active = await ctx.db
         .query("agentRuns")
