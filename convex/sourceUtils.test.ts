@@ -73,6 +73,13 @@ describe("source utilities", () => {
     );
     expect(arxivIdForUrl("https://arxiv.org/list/cs.SD/new")).toBeNull();
     expect(arxivIdForUrl("https://example.org/abs/2603.27528")).toBeNull();
+    expect(arxivIdForUrl("https://notarxiv.org/abs/2603.27528")).toBeNull();
+    expect(
+      arxivIdForUrl("https://example.org/arxiv.org/abs/2603.27528"),
+    ).toBeNull();
+    expect(arxivIdForUrl("https://export.arxiv.org/abs/2603.27528v3")).toBe(
+      "2603.27528",
+    );
     const csSd = generateDedupeKey("rss", {
       feedUrl: "https://arxiv.org/rss/cs.SD",
       rssGuid: "oai:arXiv.org:2603.27528v1",

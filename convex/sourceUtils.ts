@@ -14,11 +14,24 @@ export function normalizeUrl(url: string): string {
  * paper's revisions and cross-listed announcements key as one source.
  */
 export function arxivIdForUrl(value: string): string | null {
-  const match =
-    /(?:arxiv\.org\/(?:abs|pdf|html)\/|^oai:arXiv\.org:)((?:\d{4}\.\d{4,5})|(?:[a-z-]+(?:\.[A-Z]{2})?\/\d{7}))(?:v\d+)?(?:\.pdf)?(?:[/?#]|$)/i.exec(
-      value,
-    );
-  return match?.[1] ?? null;
+  const id =
+    "((?:\\d{4}\\.\\d{4,5})|(?:[a-z-]+(?:\\.[A-Z]{2})?\\/\\d{7}))(?:v\\d+)?";
+  const oai = new RegExp(`^oai:arXiv\\.org:${id}$`, "i").exec(value.trim());
+  if (oai) return oai[1] ?? null;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  const host = url.hostname.toLowerCase();
+  // Only arXiv itself names arXiv papers.
+  if (host !== "arxiv.org" && !host.endsWith(".arxiv.org")) return null;
+  const path = new RegExp(
+    `^\\/(?:abs|pdf|html)\\/${id}(?:\\.pdf)?\\/?$`,
+    "i",
+  ).exec(url.pathname);
+  return path?.[1] ?? null;
 }
 
 export function generateDedupeKey(
