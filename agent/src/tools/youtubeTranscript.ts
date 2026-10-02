@@ -9,15 +9,21 @@ import { join } from "node:path";
 import {
   TRANSCRIPT_MAX_CHARS,
   TRANSCRIPT_MIN_CHARS,
+  TRANSCRIPTION_MODEL,
 } from "../../../convex/shared/agentContract.js";
 import { redactError } from "../shared/redactError.js";
 
 export const GROQ_TRANSCRIPTION_URL =
   "https://api.groq.com/openai/v1/audio/transcriptions";
-export const DEFAULT_TRANSCRIPTION_MODEL = "whisper-large-v3-turbo";
+// Groq's API takes the model id without the catalog's "groq/" prefix.
+export const DEFAULT_TRANSCRIPTION_MODEL = TRANSCRIPTION_MODEL.replace(
+  /^groq\//,
+  "",
+);
 // Groq accepts at most 25 MB per request; the lowest-bitrate audio of a
 // two-hour video stays under this.
-const MAX_AUDIO_BYTES = 24 * 1024 * 1024;
+// Groq caps a request at 25,000,000 bytes; leave room for multipart overhead.
+const MAX_AUDIO_BYTES = 24_000_000;
 const MAX_DURATION_SECONDS = 2 * 60 * 60;
 const YTDLP_TIMEOUT_MS = 5 * 60 * 1000;
 const GROQ_TIMEOUT_MS = 3 * 60 * 1000;
@@ -26,7 +32,9 @@ const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const RATE_LIMITED =
   /HTTP Error 429|Too Many Requests|Sign in to confirm you(?:'|’)re not a bot/i;
 const UNAVAILABLE =
-  /Video unavailable|Private video|has been removed|members-only|Join this channel|confirm your age|age-restricted|not available in your country|This live event|Premieres in|does not pass filter|larger than max-filesize/i;
+  /Video unavailable|Private video|has been removed|members-only|Join this channel|confirm your age|age-restricted|not available in your country|does not pass filter|larger than max-filesize/i;
+// A scheduled livestream or premiere becomes downloadable later: retry it.
+const NOT_YET = /This live event|Premieres in|is upcoming|will begin in/i;
 
 export type TranscriptOutcome =
   | { kind: "captured"; text: string; model: string; language?: string }
@@ -152,6 +160,12 @@ export function createYouTubeTranscriber(
         return {
           kind: "rate_limited",
           detail: `YouTube: ${errorLine(output)}`,
+        };
+      }
+      if (NOT_YET.test(output)) {
+        return {
+          kind: "failed",
+          detail: `Not yet available: ${errorLine(output)}`,
         };
       }
       if (code !== 0) {

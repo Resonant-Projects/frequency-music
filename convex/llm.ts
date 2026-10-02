@@ -1,3 +1,4 @@
+import { TRANSCRIPTION_MODEL } from "./shared/agentContract";
 // Pure LLM configuration + parsing shared by all four generators.
 // No "use node" and no node-only imports — this file must stay importable
 // from V8 modules (hypotheses.ts, recipes.ts, weeklyBriefs.ts).
@@ -21,6 +22,8 @@ export const MODELS = {
   // Groq retired moonshotai/kimi-k2-instruct (verified 2026-07-10); gpt-oss-120b
   // is the current production-tier non-Llama option.
   fast: "groq/openai/gpt-oss-120b",
+  // YouTube transcript capture (agent transcript-capture graph): Groq Whisper.
+  transcription: TRANSCRIPTION_MODEL,
 
   // === OpenRouter (model variety) ===
   // Default switched from GPT-5.6 Terra per Keith 2026-10-01: GPT-6.1 Sol at

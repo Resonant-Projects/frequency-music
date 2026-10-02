@@ -127,6 +127,13 @@ describe("YouTube transcriber", () => {
     expect(
       await make(downloads(), groq({ error: {} }, 429))("dQw4w9WgXcQ"),
     ).toEqual({ kind: "rate_limited", detail: "Groq: HTTP 429" });
+    // An upcoming livestream or premiere is retried later, not parked.
+    expect(
+      await make(async () => ({
+        code: 1,
+        output: "ERROR: [youtube] x: This live event will begin in 3 hours.",
+      }))("dQw4w9WgXcQ"),
+    ).toMatchObject({ kind: "failed" });
     expect(await make(downloads())("--exec=rm")).toMatchObject({
       kind: "unavailable",
     });
@@ -151,7 +158,9 @@ describe("transcript-capture graph", () => {
     const callTool = vi.fn(async (name: string) =>
       name === "listTranscriptBacklog"
         ? backlog(["AAAAAAAAAAA", "BBBBBBBBBBB"])
-        : { ok: true },
+        : name === "recordTranscriptCapture"
+          ? { updated: true }
+          : { ok: true },
     );
     const sleep = vi.fn(async () => undefined);
     const transcribe = vi
@@ -200,6 +209,29 @@ describe("transcript-capture graph", () => {
       unavailable: 1,
       rateLimited: false,
     });
+  });
+
+  test("counts a capture only when it was stored", async () => {
+    const callTool = vi.fn(async (name: string) =>
+      name === "listTranscriptBacklog"
+        ? backlog(["AAAAAAAAAAA"])
+        : name === "recordTranscriptCapture"
+          ? { updated: false }
+          : { ok: true },
+    );
+    const update = await createCaptureTranscriptsNode(
+      callTool,
+      {
+        configured: true,
+        transcribe: async () => ({
+          kind: "captured" as const,
+          text: speech.repeat(2),
+          model: "whisper-large-v3-turbo",
+        }),
+      },
+      async () => undefined,
+    )({ agentRunId: "run-t" });
+    expect(update.tally).toMatchObject({ captured: [], failed: 1 });
   });
 
   test("stops at the first rate limit and records the attempt", async () => {

@@ -94,16 +94,18 @@ export function createCaptureTranscriptsNode(
     backlog.splice(MAX_TRANSCRIPTS_PER_RUN);
 
     const auditEvents: AgentAuditEvent[] = [];
+    // Whether the outcome was stored: only then does a capture count.
     const record = async (
       row: BacklogRow,
       args: Record<string, unknown>,
-    ): Promise<void> => {
+    ): Promise<boolean> => {
       try {
-        await callTool("recordTranscriptCapture", {
+        const result = (await callTool("recordTranscriptCapture", {
           sourceId: row.id,
           agentRunId: state.agentRunId,
           ...args,
-        });
+        })) as { updated?: unknown } | null;
+        return result?.updated === true;
       } catch (error) {
         auditEvents.push(
           ...(await appendRemoteAuditEvent(
@@ -117,6 +119,7 @@ export function createCaptureTranscriptsNode(
             },
           )),
         );
+        return false;
       }
     };
     for (const [index, row] of backlog.entries()) {
@@ -124,13 +127,14 @@ export function createCaptureTranscriptsNode(
       tally.attempted++;
       const outcome = await transcriber.transcribe(row.videoId);
       if (outcome.kind === "captured") {
-        await record(row, {
+        const stored = await record(row, {
           outcome: "captured",
           transcript: outcome.text,
           model: outcome.model,
           ...(outcome.language ? { language: outcome.language } : {}),
         });
-        tally.captured.push(row.title ?? row.videoId);
+        if (stored) tally.captured.push(row.title ?? row.videoId);
+        else tally.failed++;
       } else if (outcome.kind === "unavailable") {
         await record(row, { outcome: "unavailable", detail: outcome.detail });
         tally.unavailable++;

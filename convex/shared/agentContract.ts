@@ -16,6 +16,9 @@ export const SCOUTED_TEXT_MAX_CHARS = 30_000;
 // characters; longer transcripts are kept whole for later use.
 export const TRANSCRIPT_MIN_CHARS = 100;
 export const TRANSCRIPT_MAX_CHARS = 400_000;
+// Groq Whisper model for YouTube transcripts; registered in convex/llm.ts
+// MODELS so scripts/check-model-catalog.ts verifies it against Groq's catalog.
+export const TRANSCRIPTION_MODEL = "groq/whisper-large-v3-turbo";
 // Services that may supply Source Scout text. Crawl4AI is tried first; the
 // Lab's Firecrawl scrapes PDFs and pages Crawl4AI could not; OpenAlex supplies
 // a scholarly work's abstract when neither crawler can pass a bot wall.
