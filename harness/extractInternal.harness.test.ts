@@ -212,7 +212,17 @@ describe("extractInternal.storeExtraction", () => {
     });
     expect(refused).toEqual({
       extractionId: stored.extractionId,
+      existing: true,
       duplicateOfSource: first,
+    });
+    // A second, concurrent call for the same Source stores nothing either.
+    const again = await t.mutation(internal.extractInternal.storeExtraction, {
+      ...args,
+      sourceId: first,
+    });
+    expect(again).toEqual({
+      extractionId: stored.extractionId,
+      existing: true,
     });
     const forced = await t.mutation(internal.extractInternal.storeExtraction, {
       ...args,

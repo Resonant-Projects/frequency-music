@@ -16,12 +16,12 @@ export function normalizeUrl(url: string): string {
 export function arxivIdForUrl(value: string): string | null {
   const id =
     "((?:\\d{4}\\.\\d{4,5})|(?:[a-z-]+(?:\\.[A-Z]{2})?\\/\\d{7}))(?:v\\d+)?";
-  // Legacy ids are lowercase archives with uppercase subject classes.
+  // A legacy id's subject class is optional ("math.CA/0611800" is
+  // "math/0611800"), so the identity is the lowercase archive and number.
   const canonical = (raw: string | undefined) =>
     raw?.replace(
-      /^([a-z-]+)(?:\.([a-z]{2}))?\//i,
-      (_m, archive: string, subject?: string) =>
-        `${archive.toLowerCase()}${subject ? `.${subject.toUpperCase()}` : ""}/`,
+      /^([a-z-]+)(?:\.[a-z]{2})?\//i,
+      (_m, archive: string) => `${archive.toLowerCase()}/`,
     ) ?? null;
   const oai = new RegExp(`^oai:arXiv\\.org:${id}$`, "i").exec(value.trim());
   if (oai) return canonical(oai[1]);

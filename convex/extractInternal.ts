@@ -22,6 +22,8 @@ export const storeExtraction = internalMutation({
   },
   returns: v.object({
     extractionId: v.id("extractions"),
+    // Set when an Extraction of this text already existed and none was stored.
+    existing: v.optional(v.boolean()),
     duplicateOfSource: v.optional(v.id("sources")),
   }),
   handler: async (
@@ -29,6 +31,7 @@ export const storeExtraction = internalMutation({
     { allowDuplicateInput, ...args },
   ): Promise<{
     extractionId: Id<"extractions">;
+    existing?: boolean;
     duplicateOfSource?: Id<"sources">;
   }> => {
     // Checked inside this transaction, so two concurrent Extractions of the
@@ -38,10 +41,14 @@ export const storeExtraction = internalMutation({
         .query("extractions")
         .withIndex("by_inputHash", (q) => q.eq("inputHash", args.inputHash))
         .first();
-      if (existing && existing.sourceId !== args.sourceId) {
+      // A concurrent call for this Source or another stored it first.
+      if (existing) {
         return {
           extractionId: existing._id,
-          duplicateOfSource: existing.sourceId,
+          existing: true,
+          ...(existing.sourceId === args.sourceId
+            ? {}
+            : { duplicateOfSource: existing.sourceId }),
         };
       }
     }

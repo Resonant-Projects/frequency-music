@@ -288,6 +288,15 @@ export const extractSource = action({
           allowDuplicateInput: args.force === true,
         },
       );
+      if (stored.existing && !stored.duplicateOfSource) {
+        // A concurrent call for this Source stored the same text first.
+        await ctx.runMutation(api.sources.updateStatus, {
+          id: args.sourceId,
+          status: "extracted",
+          devBypassSecret: args.devBypassSecret,
+        });
+        return { skipped: true as const, reason: "already extracted" };
+      }
       if (stored.duplicateOfSource) {
         // A concurrent Extraction of the same text was stored first.
         await archiveAsDuplicate(
