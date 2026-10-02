@@ -9,7 +9,7 @@ export const MIN_EXTRACTABLE_WORDS = 25;
 const EXCERPT_MAX_WORDS = 150;
 const EXCERPT_MARKERS = [
   // WordPress feed footer: "The post <title> appeared first on <site>."
-  /\bThe post\b[\s\S]{1,300}\bappeared first on\b[^.]{1,80}\.?$/i,
+  /\bThe post\b[\s\S]{1,300}\bappeared first on\b[^\n]{1,80}$/i,
   // "Continue reading <title> →", the WordPress excerpt link.
   /\bcontinue reading\b.{0,150}(?:→|&rarr;)$/i,
   // A standalone call to action closing the text: it follows a sentence end,

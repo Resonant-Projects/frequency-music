@@ -26,6 +26,11 @@ describe("extractable source text", () => {
     );
     expect(
       unextractableTextReason(
+        `${teaser} The post Bucket Brigade Delays appeared first on example.com.`,
+      ),
+    ).toMatch(/feed excerpt/);
+    expect(
+      unextractableTextReason(
         "Title: Just a moment...\n\nPerforming security verification\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.",
       ),
     ).toMatch(/bot wall/);
