@@ -108,8 +108,9 @@ export function ytDlpAudioArgs(
     `duration <= ${MAX_DURATION_SECONDS}`,
     "--max-filesize",
     String(MAX_AUDIO_BYTES),
+    // Direct (DASH) audio only: HLS streams are MPEG-TS, which Groq rejects.
     "-f",
-    "wa[format_note*=original]/wa[language^=en]/wa/ba",
+    "wa[protocol=https][format_note*=original]/wa[protocol=https][language^=en]/wa[protocol=https]/ba[protocol=https]",
     "-o",
     join(outputDir, "%(id)s.%(ext)s"),
     "--",

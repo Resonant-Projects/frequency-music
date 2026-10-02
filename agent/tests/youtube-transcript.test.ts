@@ -42,7 +42,7 @@ describe("YouTube transcriber", () => {
         "--js-runtimes",
         "node",
         "-f",
-        "wa[format_note*=original]/wa[language^=en]/wa/ba",
+        "wa[protocol=https][format_note*=original]/wa[protocol=https][language^=en]/wa[protocol=https]/ba[protocol=https]",
         "--abort-on-unavailable-fragments",
         "--no-cache-dir",
       ]),
