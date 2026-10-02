@@ -166,6 +166,28 @@ export const extractSource = action({
       return { skipped: true as const, reason: unextractable };
     }
 
+    // The same text was extracted for another Source (an arXiv paper in two
+    // feeds, say): reuse that Extraction instead of paying for the model call.
+    const encoder = new TextEncoder();
+    const hashData = encoder.encode(`${content}extract_v2`);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const inputHash = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    const existingExtractions = await ctx.runQuery(
+      api.extractions.getByInputHash,
+      { inputHash },
+    );
+    if (existingExtractions && !args.force) {
+      await ctx.runMutation(api.sources.updateStatus, {
+        id: args.sourceId,
+        status: "extracted",
+        devBypassSecret: args.devBypassSecret,
+      });
+      return { skipped: true as const, reason: "duplicate extraction" };
+    }
+
     // Mark as extracting
     await ctx.runMutation(api.sources.updateStatus, {
       id: args.sourceId,
@@ -197,29 +219,6 @@ export const extractSource = action({
       });
 
       const extraction = json as ExtractionResult;
-
-      // Compute input hash for deduplication
-      const encoder = new TextEncoder();
-      const hashData = encoder.encode(`${content}extract_v2`);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const inputHash = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
-      // Check for existing extraction with same hash
-      const existingExtractions = await ctx.runQuery(
-        api.extractions.getByInputHash,
-        { inputHash },
-      );
-      if (existingExtractions && !args.force) {
-        await ctx.runMutation(api.sources.updateStatus, {
-          id: args.sourceId,
-          status: "extracted",
-          devBypassSecret: args.devBypassSecret,
-        });
-        return { skipped: true as const, reason: "duplicate extraction" };
-      }
 
       // Filter and map parameters before storing
       const filteredParameters = extraction.compositionParameters.flatMap(

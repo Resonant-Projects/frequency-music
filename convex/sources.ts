@@ -841,6 +841,35 @@ export const archive = mutation({
   },
 });
 
+// Pipeline progress of a Source, so a dedupe collision keeps the row whose
+// Extraction and claims already exist instead of the merely older one.
+const DEDUPE_PROGRESS: Record<string, number> = {
+  promoted_public: 7,
+  promoted_followers: 6,
+  triaged: 5,
+  extracted: 4,
+  extracting: 3,
+  review_needed: 2,
+  text_ready: 1,
+  ingested: 0,
+};
+
+/** Whether `holder` keeps the canonical key over a colliding `other` row. */
+export function keepsDedupeKey(
+  holder: Pick<Doc<"sources">, "status" | "blockedReason" | "createdAt">,
+  other: Pick<Doc<"sources">, "status" | "blockedReason" | "createdAt">,
+): boolean {
+  // A source parked for lack of text is behind one with text.
+  const rank = (s: typeof holder) =>
+    s.status === "review_needed" && s.blockedReason === "no_text"
+      ? 0.5
+      : (DEDUPE_PROGRESS[s.status] ?? 0);
+  const difference = rank(holder) - rank(other);
+  return difference !== 0
+    ? difference > 0
+    : holder.createdAt <= other.createdAt;
+}
+
 /**
  * Migration: recompute canonical dedupeKeys (see docs/plans/2026-07-03-01-arch-dedupe-contract.md).
  * Batched via pagination cursor. apply:false reports without writing.
@@ -920,8 +949,8 @@ export const recomputeDedupeKeys = mutation({
           updatedAt: now,
         });
         changed++;
-      } else if (holder && holder.createdAt <= source.createdAt) {
-        // Holder is older: archive this row as the duplicate.
+      } else if (holder && keepsDedupeKey(holder, source)) {
+        // The holder is further along (or as far along and older): archive this row.
         await ctx.db.patch("sources", source._id, {
           status: "archived",
           blockedReason: "duplicate",
@@ -930,7 +959,7 @@ export const recomputeDedupeKeys = mutation({
         });
         collisionsArchived++;
       } else if (holder) {
-        // This row is older: it should own the canonical key. Archive the newer holder first.
+        // This row should own the canonical key. Archive the holder first.
         await ctx.db.patch("sources", holder._id, {
           status: "archived",
           blockedReason: "duplicate",

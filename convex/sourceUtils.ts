@@ -9,6 +9,18 @@ export function normalizeUrl(url: string): string {
   }
 }
 
+/**
+ * The version-less arXiv identifier an arxiv.org URL or OAI guid names, so a
+ * paper's revisions and cross-listed announcements key as one source.
+ */
+export function arxivIdForUrl(value: string): string | null {
+  const match =
+    /(?:arxiv\.org\/(?:abs|pdf|html)\/|^oai:arXiv\.org:)((?:\d{4}\.\d{4,5})|(?:[a-z-]+(?:\.[A-Z]{2})?\/\d{7}))(?:v\d+)?(?:\.pdf)?(?:[/?#]|$)/i.exec(
+      value,
+    );
+  return match?.[1] ?? null;
+}
+
 export function generateDedupeKey(
   type: string,
   identifiers: {
@@ -23,9 +35,16 @@ export function generateDedupeKey(
   switch (type) {
     case "notion":
       return `notion:${identifiers.notionPageId}`;
-    case "rss":
+    case "rss": {
+      const arxivId =
+        arxivIdForUrl(identifiers.canonicalUrl || "") ??
+        arxivIdForUrl(identifiers.rssGuid || "");
+      if (arxivId) return `arxiv:${arxivId}`;
       return `rss:${identifiers.feedUrl}:${identifiers.rssGuid || identifiers.canonicalUrl}`;
+    }
     case "url": {
+      const arxivId = arxivIdForUrl(identifiers.canonicalUrl || "");
+      if (arxivId) return `arxiv:${arxivId}`;
       // One work reached through doi.org and its publisher page is one source.
       const doi = trustedDoiForUrl(identifiers.canonicalUrl || "");
       return doi
