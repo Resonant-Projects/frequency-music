@@ -48,6 +48,12 @@ describe("extractable source text", () => {
         "Abstract from OpenAlex (W1522038856; DOI 10.14704/nq.2015.13.2.795). The full text was not captured.\n\n# Schumann Resonance and Brain Waves: A Quantum Description (2015)\n\nIn this paper for the first time we compared spectra of the brain and Schumann electromagnetic waves. We argue that both modes of electromagnetic radiation can be analyzed with the help of the Planck formula.",
       ),
     ).toBeNull();
+    // A short text whose last sentence merely says "read more" is kept.
+    expect(
+      unextractableTextReason(
+        "In a twelve-week study, children who practised a melodic instrument for twenty minutes a day showed larger gains in phonological awareness than a matched control group, and their parents reported that the participants read more books during the summer.",
+      ),
+    ).toBeNull();
     // A long article that merely ends with an ellipsis is not an excerpt.
     expect(
       unextractableTextReason(

@@ -9,10 +9,13 @@ export const MIN_EXTRACTABLE_WORDS = 25;
 const EXCERPT_MAX_WORDS = 150;
 const EXCERPT_MARKERS = [
   // WordPress feed footer: "The post <title> appeared first on <site>."
-  /\bThe post\b[\s\S]{1,300}\bappeared first on\b/i,
-  /\b(?:continue|keep) reading\b/i,
-  /\bread (?:the full|more)\b[^.]{0,40}[.!]?$/i,
-  /(?:\[\s*(?:…|\.\.\.|&hellip;)\s*\]|…|&hellip;|\.\.\.)\s*$/,
+  /\bThe post\b[\s\S]{1,300}\bappeared first on\b[^.]{1,80}\.?$/i,
+  // "Continue reading <title> →", the WordPress excerpt link.
+  /\bcontinue reading\b.{0,150}(?:→|&rarr;)$/i,
+  // A call to action as the final words, not "read more books" in a sentence.
+  /\b(?:read more|continue reading|keep reading|read the full (?:article|story|post))\s*(?:→|»|›|&rarr;|&raquo;|…|\.\.\.)?\s*[.!]?$/i,
+  // A truncated description: an ellipsis or a bracketed one closes the text.
+  /(?:\[\s*(?:…|\.\.\.|&hellip;)\s*\]|…|&hellip;|\.\.\.)$/,
 ];
 
 /** Why captured text should not be extracted, or null when it should. */

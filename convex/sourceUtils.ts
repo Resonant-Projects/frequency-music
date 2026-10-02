@@ -29,7 +29,8 @@ export function generateDedupeKey(
       // One work reached through doi.org and its publisher page is one source.
       const doi = doiForUrl(identifiers.canonicalUrl || "");
       return doi
-        ? `doi:${doi.toLowerCase()}`
+        ? // DOI names are case-insensitive for ASCII letters only.
+          `doi:${doi.replace(/[A-Z]/g, (letter) => letter.toLowerCase())}`
         : `url:${normalizeUrl(identifiers.canonicalUrl || "")}`;
     }
     case "youtube":
