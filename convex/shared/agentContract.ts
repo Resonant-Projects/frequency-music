@@ -64,6 +64,9 @@ const BOT_CHALLENGE_MARKERS = [
   /\bperforming security verification\b.*\b(?:verifies you are not a bot|protect against malicious bots)\b/is,
   /\bmax challenge attempts exceeded\b.*\brefresh the page\b/is,
   /\baccess denied\b.*\b(?:you don[’']t have permission|reference #|request id)\b/is,
+  // PubMed Central's cookie wall, seen in a Source Scout capture on
+  // 2026-10-02: its heading line, then the reload instruction.
+  /^\W*(?:title:\s*)?cookies must be enabled\W*$.*\breload this page\b/ims,
 ];
 
 /** True for short crawler text that is a bot wall or browser check. */

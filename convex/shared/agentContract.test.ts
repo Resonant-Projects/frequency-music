@@ -102,6 +102,8 @@ describe("Source Scout bot-challenge filter", () => {
       "Performing security verification\nThis website uses a security service to protect against malicious bots.",
       // Cloudflare's failure page in a bepress repository capture.
       "Max challenge attempts exceeded. Please refresh the page to try again!\nWe use cookies that are necessary to make our site work.",
+      // PubMed Central's cookie wall in a Source Scout capture.
+      "Cookies must be enabled\n=======================\n\nEnable cookies for pmc.ncbi.nlm.nih.gov and reload this page to continue.",
     ]) {
       expect(looksLikeBotChallenge(text), text.slice(0, 40)).toBe(true);
     }
@@ -143,6 +145,13 @@ describe("Source Scout bot-challenge filter", () => {
           "Some readers saw max challenge attempts exceeded errors on slow links. ".repeat(
             2,
           ),
+      ),
+    ).toBe(false);
+    // Prose that says cookies must be enabled is not PMC's wall.
+    expect(
+      looksLikeBotChallenge(
+        "Browser privacy settings: some readers learn that cookies must be enabled before a journal site will load, then reload this page in another browser. " +
+          "Others keep cookies blocked and read the PDF instead. ".repeat(2),
       ),
     ).toBe(false);
     // A short page that merely quotes a block-page phrase is real text.
