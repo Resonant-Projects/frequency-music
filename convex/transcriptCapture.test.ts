@@ -139,7 +139,7 @@ describe("recording transcript capture", () => {
     const id = await insertVideo(t, "JJJJJJJJJJJ");
     const record = (
       outcome: "attempted" | "rate_limited",
-      detail: string | undefined = "ERROR: This video is unavailable",
+      detail: string | null = "ERROR: This video is unavailable",
     ) =>
       t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
         sourceId: id,
@@ -154,7 +154,7 @@ describe("recording transcript capture", () => {
       metadata: { transcriptCapture: { attempts: 4 } },
     });
     // A detail-less final attempt keeps the last recorded reason.
-    await record("attempted", undefined);
+    await record("attempted", null);
     expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
       status: "review_needed",
       blockedReason: "no_text",
