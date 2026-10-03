@@ -162,7 +162,7 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "research_write",
     "internal.transcriptCapture:recordTranscriptCapture",
     "Record a transcript-capture outcome for a YouTube Source: a Groq Whisper transcript of its yt-dlp audio, unavailable audio, or a failed attempt.",
-    "Transcript-capture runs only; a captured transcript enters text_ready with model provenance, and only Sources still awaiting a transcript change.",
+    "Transcript-capture runs only; a captured transcript enters text_ready with model provenance; five failed attempts (rate limits excluded) park a video for review; only Sources still awaiting a transcript change.",
     { langchain: false },
   ),
   entry(

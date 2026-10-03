@@ -60,7 +60,12 @@ const FROZEN_ARGS: Record<string, string> = {
     sourceId: field(id("sources")),
     agentRunId: runId,
     outcome: field(
-      union(literal("captured"), literal("unavailable"), literal("attempted")),
+      union(
+        literal("captured"),
+        literal("unavailable"),
+        literal("attempted"),
+        literal("rate_limited"),
+      ),
     ),
     transcript: field(string, true),
     language: field(string, true),

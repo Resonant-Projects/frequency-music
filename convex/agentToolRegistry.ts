@@ -104,7 +104,11 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
       omitUndefined({
         sourceId: args.sourceId as Id<"sources">,
         agentRunId: args.agentRunId as Id<"agentRuns">,
-        outcome: args.outcome as "captured" | "unavailable" | "attempted",
+        outcome: args.outcome as
+          | "captured"
+          | "unavailable"
+          | "attempted"
+          | "rate_limited",
         transcript: args.transcript as string | undefined,
         language: args.language as string | undefined,
         model: args.model as string | undefined,

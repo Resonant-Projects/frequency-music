@@ -16,6 +16,7 @@ import { redactError } from "../shared/redactError.js";
 export const GROQ_TRANSCRIPTION_URL =
   "https://api.groq.com/openai/v1/audio/transcriptions";
 // Groq's API takes the model id without the catalog's "groq/" prefix.
+const OEMBED_URL = "https://www.youtube.com/oembed";
 export const DEFAULT_TRANSCRIPTION_MODEL = TRANSCRIPTION_MODEL.replace(
   /^groq\//,
   "",
@@ -33,6 +34,8 @@ const RATE_LIMITED =
   /HTTP Error 429|Too Many Requests|Sign in to confirm you(?:'|’)re not a bot/i;
 const UNAVAILABLE =
   /Video unavailable|Private video|has been removed|members-only|Join this channel|confirm your age|age-restricted|not available in your country|does not pass filter|larger than max-filesize/i;
+// "This video is unavailable" covers both deleted videos and refusals.
+const GONE_OR_REFUSED = /This video is unavailable/i;
 // A scheduled livestream or premiere becomes downloadable later: retry it.
 const NOT_YET = /This live event|Premieres in|is upcoming|will begin in/i;
 
@@ -146,6 +149,26 @@ export function createYouTubeTranscriber(
   const pluginDirs = deps.pluginDirs ?? process.env.YTDLP_PLUGIN_DIRS;
   const potBaseUrl = deps.potBaseUrl ?? process.env.BGUTIL_POT_BASE_URL;
 
+  // True only when YouTube's oEmbed endpoint says the video does not exist
+  // (404). 401/403 also mean "embedding disabled" for public videos, so they
+  // are not proof; a private video reaches the attempt limit instead.
+  const videoIsGone = async (videoId: string): Promise<boolean> => {
+    try {
+      const url = new URL(OEMBED_URL);
+      url.searchParams.set("url", `https://www.youtube.com/watch?v=${videoId}`);
+      url.searchParams.set("format", "json");
+      const response = await fetchImpl(url, {
+        method: "GET",
+        redirect: "error",
+        signal: AbortSignal.timeout(15_000),
+      });
+      await response.body?.cancel().catch(() => undefined);
+      return response.status === 404;
+    } catch {
+      return false;
+    }
+  };
+
   const transcribe = async (videoId: string): Promise<TranscriptOutcome> => {
     if (!VIDEO_ID.test(videoId)) {
       return { kind: "unavailable", detail: "Not a YouTube video id" };
@@ -175,6 +198,13 @@ export function createYouTubeTranscriber(
           kind: "failed",
           detail: `Not yet available: ${errorLine(output)}`,
         };
+      }
+      if (code !== 0 && GONE_OR_REFUSED.test(output)) {
+        // yt-dlp says the same for a deleted video and a refused request;
+        // YouTube's oEmbed endpoint answers 404 only for a video that is gone.
+        return (await videoIsGone(videoId))
+          ? { kind: "unavailable", detail: errorLine(output) }
+          : { kind: "failed", detail: errorLine(output) };
       }
       if (code !== 0) {
         // Only a completed download is transcribed.

@@ -13,6 +13,9 @@ import { extractYouTubeVideoId } from "./sourceUtils";
 // downloads their audio with yt-dlp and transcribes it with Groq Whisper.
 const BACKLOG_PAGE_SIZE = 100;
 const DETAIL_MAX_CHARS = 500;
+// Failed attempts (not rate limits) before a video is parked for review: a
+// deleted or region-locked video otherwise takes a slot in every run.
+export const MAX_TRANSCRIPT_ATTEMPTS = 5;
 
 function awaitsTranscript(source: Doc<"sources">): boolean {
   return (
@@ -74,13 +77,16 @@ export const listTranscriptBacklog = internalQuery({
  * Record one transcript-capture outcome for a YouTube Source:
  * - captured: the transcript enters text_ready with its provenance;
  * - unavailable: the video has no usable audio or speech (review_needed);
- * - attempted: a transient failure; the Source moves behind untried ones.
+ * - attempted: a failure; the Source moves behind untried ones, and after
+ *   MAX_TRANSCRIPT_ATTEMPTS of them it is parked for review;
+ * - rate_limited: YouTube or Groq refused the request; the Source moves
+ *   behind untried ones without counting against it.
  */
 export const recordTranscriptCapture = internalMutation({
   args: {
     sourceId: v.id("sources"),
     agentRunId: v.id("agentRuns"),
-    outcome: literals("captured", "unavailable", "attempted"),
+    outcome: literals("captured", "unavailable", "attempted", "rate_limited"),
     transcript: v.optional(v.string()),
     language: v.optional(v.string()),
     model: v.optional(v.string()),
@@ -133,18 +139,35 @@ export const recordTranscriptCapture = internalMutation({
       });
       return { updated: true };
     }
+    const previousAttempts =
+      typeof previous.attempts === "number" ? previous.attempts : 0;
+    const attempts =
+      args.outcome === "attempted" ? previousAttempts + 1 : previousAttempts;
     const attempt = {
       ...previous,
+      attempts,
       lastAttemptAt: now,
       lastAttemptRunId: args.agentRunId,
       ...(detail ? { lastAttemptDetail: detail } : {}),
     };
+    const exhausted =
+      args.outcome === "attempted" && attempts >= MAX_TRANSCRIPT_ATTEMPTS;
+    // A detail-less final attempt still parks with the last recorded reason.
+    const parkingDetail =
+      typeof attempt.lastAttemptDetail === "string"
+        ? attempt.lastAttemptDetail
+        : undefined;
     await ctx.db.patch("sources", source._id, {
-      ...(args.outcome === "unavailable"
+      ...(args.outcome === "unavailable" || exhausted
         ? {
             status: "review_needed" as const,
             blockedReason: "no_text" as const,
-            blockedDetails: detail ?? "No transcript could be captured",
+            blockedDetails: exhausted
+              ? `Transcript capture failed ${attempts} times${parkingDetail ? `: ${parkingDetail}` : ""}`.slice(
+                  0,
+                  DETAIL_MAX_CHARS,
+                )
+              : (detail ?? "No transcript could be captured"),
           }
         : {}),
       metadata: { ...metadata, transcriptCapture: attempt },
