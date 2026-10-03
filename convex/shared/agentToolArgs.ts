@@ -56,7 +56,7 @@ export const agentToolArgs = {
   recordTranscriptCapture: z.object({
     sourceId: zid("sources"),
     agentRunId: zid("agentRuns"),
-    outcome: z.enum(["captured", "unavailable", "attempted"]),
+    outcome: z.enum(["captured", "unavailable", "attempted", "rate_limited"]),
     transcript: z
       .string()
       .trim()

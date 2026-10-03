@@ -286,7 +286,7 @@ describe("transcript-capture graph", () => {
     expect(callTool).toHaveBeenCalledWith("recordTranscriptCapture", {
       sourceId: "source-AAAAAAAAAAA",
       agentRunId: "run-t",
-      outcome: "attempted",
+      outcome: "rate_limited",
       detail: "YouTube: HTTP Error 429",
     });
     expect(update.tally?.rateLimited).toBe(true);

@@ -145,7 +145,12 @@ export function createCaptureTranscriptsNode(
         await record(row, { outcome: "unavailable", detail: outcome.detail });
         tally.unavailable++;
       } else {
-        await record(row, { outcome: "attempted", detail: outcome.detail });
+        // A rate limit is not the video's fault and does not count against it.
+        await record(row, {
+          outcome:
+            outcome.kind === "rate_limited" ? "rate_limited" : "attempted",
+          detail: outcome.detail,
+        });
         if (outcome.kind === "failed") tally.failed++;
       }
       auditEvents.push(

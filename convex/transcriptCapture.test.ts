@@ -133,6 +133,33 @@ describe("recording transcript capture", () => {
     });
   });
 
+  test("parks a video after repeated failed attempts, not after rate limits", async () => {
+    const t = convexTest(schema, modules);
+    const runId = await insertRun(t);
+    const id = await insertVideo(t, "JJJJJJJJJJJ");
+    const record = (outcome: "attempted" | "rate_limited") =>
+      t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+        sourceId: id,
+        agentRunId: runId,
+        outcome,
+        detail: "ERROR: This video is unavailable",
+      });
+    for (let i = 0; i < 10; i++) await record("rate_limited");
+    for (let i = 0; i < 4; i++) await record("attempted");
+    expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+      status: "ingested",
+      metadata: { transcriptCapture: { attempts: 4 } },
+    });
+    await record("attempted");
+    expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+      status: "review_needed",
+      blockedReason: "no_text",
+      blockedDetails:
+        "Transcript capture failed 5 times: ERROR: This video is unavailable",
+      metadata: { transcriptCapture: { attempts: 5 } },
+    });
+  });
+
   test("refuses other graphs and malformed captures", async () => {
     const t = convexTest(schema, modules);
     const scoutRun = await insertRun(t, "source-scout");
