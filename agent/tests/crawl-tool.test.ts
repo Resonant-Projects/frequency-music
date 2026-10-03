@@ -280,6 +280,61 @@ describe("bot challenges and the Lab Firecrawl fallback", () => {
     });
   });
 
+  test("retries a long PDF once with a longer budget when Firecrawl asks for it", async () => {
+    const bodies: unknown[] = [];
+    const fetchImpl = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      bodies.push(JSON.parse(init?.body as string));
+      return bodies.length === 1
+        ? new Response(
+            JSON.stringify({
+              success: false,
+              code: "SCRAPE_PDF_INSUFFICIENT_TIME_ERROR",
+              error: "The PDF has 125 pages",
+            }),
+            { status: 500 },
+          )
+        : new Response(
+            JSON.stringify({
+              success: true,
+              data: { markdown: article, metadata: { statusCode: 200 } },
+            }),
+          );
+    });
+    const scrape = createFirecrawlPage({
+      baseUrl: "http://172.16.10.38:3002",
+      egressGuarded: true,
+      fetchImpl,
+    });
+    expect(
+      (await scrape("https://algorithmicbotany.org/papers/lsfp.pdf"))?.provider,
+    ).toBe("firecrawl");
+    expect(bodies).toEqual([
+      expect.objectContaining({ timeout: 40_000 }),
+      expect.objectContaining({ timeout: 175_000 }),
+    ]);
+  });
+
+  test("does not retry other Firecrawl failures or a second slow-PDF answer", async () => {
+    for (const [code, calls] of [
+      ["SCRAPE_ALL_ENGINES_FAILED", 1],
+      ["SCRAPE_PDF_INSUFFICIENT_TIME_ERROR", 2],
+    ] as const) {
+      const fetchImpl = vi.fn(
+        async () =>
+          new Response(JSON.stringify({ success: false, code }), {
+            status: 500,
+          }),
+      );
+      const scrape = createFirecrawlPage({
+        baseUrl: "http://172.16.10.38:3002",
+        egressGuarded: true,
+        fetchImpl,
+      });
+      await expect(scrape("https://example.org/paper.pdf")).resolves.toBeNull();
+      expect(fetchImpl).toHaveBeenCalledTimes(calls);
+    }
+  });
+
   test("never scrapes through Firecrawl Cloud or without certified egress", async () => {
     const fetchImpl = vi.fn(async () => new Response());
     for (const deps of [

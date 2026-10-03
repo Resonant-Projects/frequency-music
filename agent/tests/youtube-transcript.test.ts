@@ -1,8 +1,9 @@
-import { writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { readdir, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
   createYouTubeTranscriber,
+  ffmpegSegmentArgs,
   GROQ_TRANSCRIPTION_URL,
   ytDlpAudioArgs,
 } from "../src/tools/youtubeTranscript";
@@ -27,6 +28,26 @@ const downloads =
 const groq = (body: unknown, status = 200) =>
   vi.fn(async () => new Response(JSON.stringify(body), { status }));
 
+// Audio over Groq's 24 MB upload limit.
+const downloadsLong = async (args: string[]) => {
+  const template = args[args.indexOf("-o") + 1] as string;
+  await writeFile(`${dirname(template)}/vid.webm`, Buffer.alloc(24_000_001, 1));
+  return { code: 0, output: "[download] done" };
+};
+
+// A fake ffmpeg that writes segments where the output pattern points.
+const segments = (count: number, code = 0) =>
+  vi.fn(async (args: string[]) => {
+    const pattern = args.at(-1) as string;
+    for (let i = 0; i < count; i++) {
+      await writeFile(
+        pattern.replace("%03d", String(i).padStart(3, "0")),
+        Buffer.from(`segment ${i}`),
+      );
+    }
+    return { code, output: code ? "Error opening input" : "" };
+  });
+
 describe("YouTube transcriber", () => {
   test("asks yt-dlp for the lowest-bitrate original-language audio", () => {
     const args = ytDlpAudioArgs("dQw4w9WgXcQ", "/tmp/x", {
@@ -45,6 +66,10 @@ describe("YouTube transcriber", () => {
         "wa[protocol=https][format_note*=original]/wa[protocol=https][language^=en]/wa[protocol=https]/ba[protocol=https]",
         "--abort-on-unavailable-fragments",
         "--no-cache-dir",
+        "--max-filesize",
+        "150000000",
+        "--match-filter",
+        "duration <= 7200",
       ]),
     );
     // The URL follows "--" so it can never be read as an option.
@@ -76,6 +101,122 @@ describe("YouTube transcriber", () => {
     const form = init.body as FormData;
     expect(form.get("model")).toBe("whisper-large-v3-turbo");
     expect(form.get("response_format")).toBe("verbose_json");
+  });
+
+  test("splits audio over 24 MB into Opus segments and joins their text in order", async () => {
+    const ffmpeg = segments(3);
+    let call = 0;
+    let filesAtUpload: string[] = [];
+    const fetchImpl = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      if (call === 0) {
+        const ffmpegArgs = ffmpeg.mock.calls[0]?.[0] as string[];
+        const input = ffmpegArgs[ffmpegArgs.indexOf("-i") + 1] as string;
+        filesAtUpload = await readdir(dirname(input));
+      }
+      const file = (init?.body as FormData).get("file") as File;
+      expect(file.size).toBeLessThan(24_000_000);
+      call += 1;
+      return new Response(
+        JSON.stringify({
+          text: ` Part ${call}. ${speech}`,
+          ...(call === 1 ? { language: "English" } : {}),
+        }),
+      );
+    });
+    const { transcribe } = createYouTubeTranscriber({
+      apiKey: "k",
+      ytDlp: downloadsLong,
+      ffmpeg,
+      fetchImpl,
+    });
+    const outcome = await transcribe("dQw4w9WgXcQ");
+    expect(outcome).toMatchObject({ kind: "captured", language: "English" });
+    const text = (outcome as { text: string }).text;
+    expect(text.indexOf("Part 1.")).toBe(0);
+    expect(text.indexOf("Part 2.")).toBeGreaterThan(text.indexOf("Part 1."));
+    expect(text.indexOf("Part 3.")).toBeGreaterThan(text.indexOf("Part 2."));
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    const args = ffmpeg.mock.calls[0]?.[0] as string[];
+    expect(args.slice(0, 4)).toEqual([
+      "-nostdin",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+    ]);
+    expect(args).toEqual(
+      expect.arrayContaining([
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "24k",
+        "-f",
+        "segment",
+      ]),
+    );
+    // The original download is deleted before the segments are uploaded.
+    expect(filesAtUpload).toEqual(["segments"]);
+  });
+
+  test("does not run ffmpeg for audio within the upload limit", async () => {
+    const ffmpeg = segments(1);
+    const { transcribe } = createYouTubeTranscriber({
+      apiKey: "k",
+      ytDlp: downloads(),
+      ffmpeg,
+      fetchImpl: groq({ text: speech.repeat(2) }),
+    });
+    expect(await transcribe("dQw4w9WgXcQ")).toMatchObject({ kind: "captured" });
+    expect(ffmpeg).not.toHaveBeenCalled();
+  });
+
+  test("classifies segmentation failures and segment rate limits", async () => {
+    const make = (
+      ffmpeg: ReturnType<typeof segments>,
+      fetchImpl: typeof fetch = groq({ text: speech.repeat(2) }),
+    ) =>
+      createYouTubeTranscriber({
+        apiKey: "k",
+        ytDlp: downloadsLong,
+        ffmpeg,
+        fetchImpl,
+      }).transcribe("dQw4w9WgXcQ");
+    expect(await make(segments(0, 1))).toEqual({
+      kind: "failed",
+      detail: "ffmpeg: Error opening input",
+    });
+    expect(await make(segments(0))).toEqual({
+      kind: "failed",
+      detail: "ffmpeg produced no segments",
+    });
+    // A rate limit on any segment retries the whole video later.
+    let call = 0;
+    const secondLimited = vi.fn(async () =>
+      ++call === 2
+        ? new Response("{}", { status: 429 })
+        : new Response(JSON.stringify({ text: speech })),
+    );
+    expect(await make(segments(3), secondLimited)).toEqual({
+      kind: "rate_limited",
+      detail: "Groq: HTTP 429",
+    });
+    expect(secondLimited).toHaveBeenCalledTimes(2);
+  });
+
+  test("ffmpeg writes numbered Ogg segments into the given directory", () => {
+    const args = ffmpegSegmentArgs("/tmp/x/vid.webm", "/tmp/x/segments");
+    expect(args.at(-1)).toBe(join("/tmp/x/segments", "segment-%03d.ogg"));
+    expect(args).toEqual(
+      expect.arrayContaining([
+        "-i",
+        "/tmp/x/vid.webm",
+        "-ac",
+        "1",
+        "-ar",
+        "16000",
+        "-segment_time",
+        "1800",
+      ]),
+    );
   });
 
   test("classifies rate limits, unavailable videos and silence", async () => {

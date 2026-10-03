@@ -55,6 +55,10 @@ WORKDIR /app/agent
 
 # Patch the pinned base for CVE-2026-14456; keep Node/Codex unchanged.
 RUN apk add --no-cache libcrypto3=3.5.8-r0 libssl3=3.5.8-r0
+# ffmpeg re-encodes YouTube audio over Groq's 25 MB upload limit into short
+# Opus segments (src/tools/youtubeTranscript.ts).
+RUN apk add --no-cache ffmpeg=8.0.1-r1 \
+    && ffmpeg -hide_banner -encoders | grep -q libopus
 
 ARG CODEX_CLI_VERSION=0.146.0
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
