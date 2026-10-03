@@ -17,6 +17,10 @@ export { doiForUrl };
 const DEFAULT_CRAWL4AI_URL = "https://crawl4ai.rproj.art";
 const CRAWL_TIMEOUT_MS = 40_000;
 const FIRECRAWL_SCRAPE_TIMEOUT_MS = 45_000;
+// Firecrawl refuses a long PDF up front when its page count needs more time
+// than the request allows; such a PDF gets one retry with this budget.
+const FIRECRAWL_PDF_TIMEOUT_MS = 180_000;
+const FIRECRAWL_PDF_TOO_SLOW = "SCRAPE_PDF_INSUFFICIENT_TIME_ERROR";
 const OPENALEX_TIMEOUT_MS = 10_000;
 const OPENALEX_WORKS_URL = "https://api.openalex.org/works";
 // Below this many words a title can coincide with an unrelated work.
@@ -254,12 +258,7 @@ export function createFirecrawlPage(
       .trim()
       .replace(/\/$/, "");
     if (!baseUrl || isFirecrawlCloud(baseUrl)) return null;
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      FIRECRAWL_SCRAPE_TIMEOUT_MS,
-    );
-    try {
+    const scrape = async (budgetMs: number): Promise<unknown> => {
       const response = await fetchImpl(`${baseUrl}/v2/scrape`, {
         method: "POST",
         redirect: "error",
@@ -270,15 +269,29 @@ export function createFirecrawlPage(
           onlyMainContent: true,
           removeBase64Images: true,
           skipTlsVerification: false,
-          timeout: FIRECRAWL_SCRAPE_TIMEOUT_MS - 5_000,
+          timeout: budgetMs - 5_000,
         }),
-        signal: controller.signal,
+        signal: AbortSignal.timeout(budgetMs),
       });
-      if (!response.ok) {
-        await response.body?.cancel().catch(() => undefined);
-        throw new Error(`Firecrawl returned HTTP ${response.status}`);
-      }
-      const payload = await readCappedJson(response, "Firecrawl");
+      if (response.ok) return readCappedJson(response, "Firecrawl");
+      const failure = await readCappedJson(response, "Firecrawl").catch(
+        () => undefined,
+      );
+      const code =
+        failure && typeof failure === "object" && "code" in failure
+          ? failure.code
+          : undefined;
+      if (
+        code === FIRECRAWL_PDF_TOO_SLOW &&
+        budgetMs < FIRECRAWL_PDF_TIMEOUT_MS
+      )
+        return scrape(FIRECRAWL_PDF_TIMEOUT_MS);
+      throw new Error(
+        `Firecrawl returned HTTP ${response.status}${typeof code === "string" ? ` (${code})` : ""}`,
+      );
+    };
+    try {
+      const payload = await scrape(FIRECRAWL_SCRAPE_TIMEOUT_MS);
       if (
         !payload ||
         typeof payload !== "object" ||
@@ -303,8 +316,6 @@ export function createFirecrawlPage(
         redactError(error),
       );
       return null;
-    } finally {
-      clearTimeout(timeout);
     }
   };
 }

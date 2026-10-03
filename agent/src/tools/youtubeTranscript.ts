@@ -1,11 +1,13 @@
 // YouTube transcripts for Sources that arrive without text. YouTube now
 // rate-limits subtitle downloads (timedtext) from the Lab IP even with a PO
 // token, so the worker downloads the video's audio with yt-dlp (PO tokens from
-// the bgutil provider sidecar) and transcribes it with Groq Whisper.
+// the bgutil provider sidecar) and transcribes it with Groq Whisper. Audio
+// over Groq's upload limit is re-encoded with ffmpeg into short segments,
+// transcribed in order and joined.
 import { spawn } from "node:child_process";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import {
   TRANSCRIPT_MAX_CHARS,
   TRANSCRIPT_MIN_CHARS,
@@ -21,12 +23,20 @@ export const DEFAULT_TRANSCRIPTION_MODEL = TRANSCRIPTION_MODEL.replace(
   /^groq\//,
   "",
 );
-// Groq accepts at most 25 MB per request; the lowest-bitrate audio of a
-// two-hour video stays under this.
 // Groq caps a request at 25,000,000 bytes; leave room for multipart overhead.
-const MAX_AUDIO_BYTES = 24_000_000;
+const MAX_UPLOAD_BYTES = 24_000_000;
+// The download fits the worker's 256 MiB /tmp together with its segments.
+const MAX_DOWNLOAD_BYTES = 150_000_000;
+// Groq limits audio seconds per hour, so very long videos stay out of scope.
 const MAX_DURATION_SECONDS = 2 * 60 * 60;
+// Mono 16 kHz Opus at 24 kbit/s (what Whisper resamples to anyway): a
+// 30-minute segment is about 5.4 MB.
+const SEGMENT_SECONDS = 30 * 60;
+// Whisper reads at most 224 prompt tokens; a short tail of the previous
+// segment's text stays well within that.
+const PROMPT_CONTEXT_CHARS = 400;
 const YTDLP_TIMEOUT_MS = 5 * 60 * 1000;
+const FFMPEG_TIMEOUT_MS = 10 * 60 * 1000;
 const GROQ_TIMEOUT_MS = 3 * 60 * 1000;
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
@@ -45,11 +55,16 @@ export type TranscriptOutcome =
   | { kind: "rate_limited"; detail: string }
   | { kind: "failed"; detail: string };
 
-export type YtDlpRunner = (
+export type ProcessRunner = (
   args: string[],
 ) => Promise<{ code: number | null; output: string }>;
+export type YtDlpRunner = ProcessRunner;
 
-function runYtDlp(binary: string): YtDlpRunner {
+function runProcess(
+  binary: string,
+  label: string,
+  timeoutMs: number,
+): ProcessRunner {
   return (args) =>
     new Promise((resolve) => {
       // Its own process group: the PyInstaller binary runs yt-dlp in a child
@@ -78,8 +93,8 @@ function runYtDlp(binary: string): YtDlpRunner {
         } catch {
           // The group already exited.
         }
-        settle({ code: null, output: `${output}\nyt-dlp timed out` });
-      }, YTDLP_TIMEOUT_MS);
+        settle({ code: null, output: `${output}\n${label} timed out` });
+      }, timeoutMs);
       child.on("error", (error) =>
         settle({ code: null, output: `${output}\n${error.message}` }),
       );
@@ -118,7 +133,7 @@ export function ytDlpAudioArgs(
     "--match-filter",
     `duration <= ${MAX_DURATION_SECONDS}`,
     "--max-filesize",
-    String(MAX_AUDIO_BYTES),
+    String(MAX_DOWNLOAD_BYTES),
     // Direct (DASH) audio only: HLS streams are MPEG-TS, which Groq rejects.
     "-f",
     "wa[protocol=https][format_note*=original]/wa[protocol=https][language^=en]/wa[protocol=https]/ba[protocol=https]",
@@ -129,11 +144,43 @@ export function ytDlpAudioArgs(
   ];
 }
 
+/**
+ * ffmpeg arguments: re-encode the audio as mono 16 kHz Opus segments small
+ * enough for one Groq request each.
+ */
+export function ffmpegSegmentArgs(input: string, outputDir: string): string[] {
+  return [
+    "-nostdin",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-i",
+    input,
+    "-vn",
+    "-ac",
+    "1",
+    "-ar",
+    "16000",
+    "-c:a",
+    "libopus",
+    "-b:a",
+    "24k",
+    "-f",
+    "segment",
+    "-segment_time",
+    String(SEGMENT_SECONDS),
+    "-reset_timestamps",
+    "1",
+    join(outputDir, "segment-%03d.ogg"),
+  ];
+}
+
 export function createYouTubeTranscriber(
   deps: {
     apiKey?: string;
     model?: string;
     ytDlp?: YtDlpRunner;
+    ffmpeg?: ProcessRunner;
     fetchImpl?: typeof fetch;
     pluginDirs?: string;
     potBaseUrl?: string;
@@ -144,7 +191,16 @@ export function createYouTubeTranscriber(
     deps.model ??
     process.env.GROQ_TRANSCRIPTION_MODEL ??
     DEFAULT_TRANSCRIPTION_MODEL;
-  const ytDlp = deps.ytDlp ?? runYtDlp(process.env.YTDLP_PATH || "yt-dlp");
+  const ytDlp =
+    deps.ytDlp ??
+    runProcess(process.env.YTDLP_PATH || "yt-dlp", "yt-dlp", YTDLP_TIMEOUT_MS);
+  const ffmpeg =
+    deps.ffmpeg ??
+    runProcess(
+      process.env.FFMPEG_PATH || "ffmpeg",
+      "ffmpeg",
+      FFMPEG_TIMEOUT_MS,
+    );
   const fetchImpl = deps.fetchImpl ?? fetch;
   const pluginDirs = deps.pluginDirs ?? process.env.YTDLP_PLUGIN_DIRS;
   const potBaseUrl = deps.potBaseUrl ?? process.env.BGUTIL_POT_BASE_URL;
@@ -226,40 +282,76 @@ export function createYouTubeTranscriber(
         };
       }
       const name = files[0] as string;
-      const audio = await readFile(join(dir, name));
-      if (audio.byteLength > MAX_AUDIO_BYTES) {
-        return { kind: "unavailable", detail: "Audio exceeds 24 MB" };
+      const downloaded = join(dir, name);
+      let parts: string[] = [downloaded];
+      if ((await stat(downloaded)).size > MAX_UPLOAD_BYTES) {
+        const segmentDir = join(dir, "segments");
+        await mkdir(segmentDir);
+        const split = await ffmpeg(ffmpegSegmentArgs(downloaded, segmentDir));
+        // The original is no longer needed; free /tmp before uploading.
+        await rm(downloaded, { force: true });
+        if (split.code !== 0) {
+          return {
+            kind: "failed",
+            detail: `ffmpeg: ${errorLine(split.output) || `exited ${split.code}`}`,
+          };
+        }
+        parts = (await readdir(segmentDir))
+          .filter((file) => /^segment-\d{3}\.ogg$/.test(file))
+          .sort()
+          .map((file) => join(segmentDir, file));
+        if (parts.length === 0) {
+          return { kind: "failed", detail: "ffmpeg produced no segments" };
+        }
       }
-      const form = new FormData();
-      form.append("file", new Blob([audio]), name);
-      form.append("model", model);
-      form.append("response_format", "verbose_json");
-      form.append("temperature", "0");
-      let response: Response;
-      try {
-        response = await fetchImpl(GROQ_TRANSCRIPTION_URL, {
-          method: "POST",
-          headers: { authorization: `Bearer ${apiKey}` },
-          body: form,
-          redirect: "error",
-          signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
-        });
-      } catch (error) {
-        return { kind: "failed", detail: `Groq: ${redactError(error)}` };
+      const texts: string[] = [];
+      let language: string | undefined;
+      for (const part of parts) {
+        const audio = await readFile(part);
+        if (audio.byteLength > MAX_UPLOAD_BYTES) {
+          return { kind: "failed", detail: "Audio segment exceeds 24 MB" };
+        }
+        const form = new FormData();
+        form.append("file", new Blob([audio]), basename(part));
+        form.append("model", model);
+        form.append("response_format", "verbose_json");
+        form.append("temperature", "0");
+        // Whisper continues across a segment cut more faithfully when it
+        // sees how the previous segment ended.
+        const previous = texts.at(-1);
+        if (previous)
+          form.append("prompt", previous.slice(-PROMPT_CONTEXT_CHARS));
+        let response: Response;
+        try {
+          response = await fetchImpl(GROQ_TRANSCRIPTION_URL, {
+            method: "POST",
+            headers: { authorization: `Bearer ${apiKey}` },
+            body: form,
+            redirect: "error",
+            signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
+          });
+        } catch (error) {
+          return { kind: "failed", detail: `Groq: ${redactError(error)}` };
+        }
+        if (response.status === 429) {
+          await response.body?.cancel().catch(() => undefined);
+          return { kind: "rate_limited", detail: "Groq: HTTP 429" };
+        }
+        if (!response.ok) {
+          await response.body?.cancel().catch(() => undefined);
+          return { kind: "failed", detail: `Groq: HTTP ${response.status}` };
+        }
+        const body = (await response.json()) as {
+          text?: unknown;
+          language?: unknown;
+        };
+        const text = typeof body.text === "string" ? body.text.trim() : "";
+        if (text) texts.push(text);
+        if (!language && typeof body.language === "string" && body.language) {
+          language = body.language;
+        }
       }
-      if (response.status === 429) {
-        await response.body?.cancel().catch(() => undefined);
-        return { kind: "rate_limited", detail: "Groq: HTTP 429" };
-      }
-      if (!response.ok) {
-        await response.body?.cancel().catch(() => undefined);
-        return { kind: "failed", detail: `Groq: HTTP ${response.status}` };
-      }
-      const body = (await response.json()) as {
-        text?: unknown;
-        language?: unknown;
-      };
-      const text = typeof body.text === "string" ? body.text.trim() : "";
+      const text = texts.join(" ");
       if (text.length < TRANSCRIPT_MIN_CHARS) {
         return { kind: "unavailable", detail: "No speech to transcribe" };
       }
@@ -267,9 +359,7 @@ export function createYouTubeTranscriber(
         kind: "captured",
         text: text.slice(0, TRANSCRIPT_MAX_CHARS),
         model,
-        ...(typeof body.language === "string" && body.language
-          ? { language: body.language }
-          : {}),
+        ...(language ? { language } : {}),
       };
     } catch (error) {
       return { kind: "failed", detail: redactError(error) };

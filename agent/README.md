@@ -10,7 +10,7 @@ This directory hosts LangGraph/LangChain agents for the research-to-composition 
 - `research-pipeline` — new dry-run LangGraph skeleton for externalizing orchestration from Convex.
 - `source-scout` — need-directed source and feed discovery driven by graph gaps.
 
-The worker also runs `transcript-capture` (not a Studio graph). It handles YouTube Sources that arrive with no text. YouTube rate-limits subtitle downloads (`timedtext`, HTTP 429) from the Lab IP even with a PO token, so the worker downloads each video's lowest-bitrate original-language DASH audio with yt-dlp instead (HLS streams are MPEG-TS, which Groq rejects). The pinned musl binary is in the image. The bgutil PO-token server, built from its pinned source, runs from the same image as a pod sidecar (`node /opt/bgutil-server/build/main.js --host 127.0.0.1`). The audio is transcribed with Groq Whisper (`whisper-large-v3-turbo`). A run handles at most 20 videos, 20 seconds apart, stops at the first YouTube or Groq rate limit, and records every outcome through `recordTranscriptCapture`. A captured transcript enters `text_ready` with its model and language; private, members-only, over-two-hour or silent videos are parked for review. The Convex cron `enqueue-transcript-capture` queues a run every 3 hours while transcripts are awaited.
+The worker also runs `transcript-capture` (not a Studio graph). It handles YouTube Sources that arrive with no text. YouTube rate-limits subtitle downloads (`timedtext`, HTTP 429) from the Lab IP even with a PO token, so the worker downloads each video's lowest-bitrate original-language DASH audio with yt-dlp instead (HLS streams are MPEG-TS, which Groq rejects). The pinned musl binary is in the image. The bgutil PO-token server, built from its pinned source, runs from the same image as a pod sidecar (`node /opt/bgutil-server/build/main.js --host 127.0.0.1`). The audio is transcribed with Groq Whisper (`whisper-large-v3-turbo`). Audio over Groq's 25 MB upload limit (downloads up to 150 MB) is re-encoded with ffmpeg into 30-minute mono 16 kHz Opus segments, which are transcribed in order and joined. A run handles at most 20 videos, 20 seconds apart, stops at the first YouTube or Groq rate limit, and records every outcome through `recordTranscriptCapture`. A captured transcript enters `text_ready` with its model and language; private, members-only, over-two-hour or silent videos are parked for review. The Convex cron `enqueue-transcript-capture` queues a run every 3 hours while transcripts are awaited.
 
 ## Architecture boundary
 
@@ -84,7 +84,7 @@ Optional model/provider variables:
 - `FIRECRAWL_API_KEY` (Firecrawl Cloud only; sent only to `https://api.firecrawl.dev`, never to a self-hosted URL; failed searches warn and skip)
 - `WEEKLY_BRIEF_AGENT_MODEL`
 - `GROQ_API_KEY` (transcript capture; without it, runs skip and say so) and `GROQ_TRANSCRIPTION_MODEL`
-- `YTDLP_PATH`, `YTDLP_PLUGIN_DIRS` (set by the agent image) and `BGUTIL_POT_BASE_URL` (the pod's PO-token sidecar, `http://127.0.0.1:4416`)
+- `YTDLP_PATH`, `YTDLP_PLUGIN_DIRS` (set by the agent image), `FFMPEG_PATH` (optional; defaults to `ffmpeg` on `PATH`) and `BGUTIL_POT_BASE_URL` (the pod's PO-token sidecar, `http://127.0.0.1:4416`)
 
 Optional tracing variables:
 
