@@ -65,6 +65,15 @@ Respond with a JSON object containing:
 
 Only include claims that are substantive and relevant to music, frequency, acoustics, or related fields. Be conservative - quality over quantity.`;
 
+/**
+ * The Source text a model sees: the first 30,000 characters, never ending on
+ * a lone high surrogate (Convex rejects strings with unpaired surrogates).
+ */
+export function extractionContent(text: string): string {
+  const cut = text.slice(0, EXTRACTION_CONTENT_MAX_CHARS);
+  return /[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut;
+}
+
 /** The user prompt for one Source, with its text cut to the model limit. */
 export function renderExtractionPrompt(source: {
   title?: string;
@@ -74,7 +83,7 @@ export function renderExtractionPrompt(source: {
   const values: Record<string, string> = {
     title: source.title || "Untitled",
     url: source.canonicalUrl || "",
-    content: source.content.slice(0, EXTRACTION_CONTENT_MAX_CHARS),
+    content: extractionContent(source.content),
   };
   // One pass over the template: a title or text that contains "{{content}}"
   // or "$&" is inserted literally and never rescanned.

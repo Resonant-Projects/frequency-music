@@ -25,7 +25,7 @@ import {
   generateDedupeKey,
 } from "./sourceUtils";
 import {
-  EXTRACTION_CONTENT_MAX_CHARS,
+  extractionContent,
   extractionInputHash,
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
@@ -110,7 +110,7 @@ export const operatorExtractionPage = query({
           canonicalUrl: source.canonicalUrl,
           type: source.type,
           ...(text ? { inputHash: await extractionInputHash(text) } : {}),
-          content: text.slice(0, EXTRACTION_CONTENT_MAX_CHARS),
+          content: extractionContent(text),
           ...(text
             ? (() => {
                 const reason = unextractableTextReason(text);

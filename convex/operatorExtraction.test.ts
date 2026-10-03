@@ -13,6 +13,7 @@ import { MODELS } from "./llm";
 import schema from "./schema";
 import {
   EXTRACT_USER_PROMPT,
+  extractionContent,
   extractionInputHash,
   renderExtractionPrompt,
 } from "./shared/extractionPrompt";
@@ -336,6 +337,15 @@ describe("extraction prompt", () => {
     });
     expect(injected).toContain("Title: {{content}} and {{url}}");
     expect(injected.match(/REAL TEXT/g)).toHaveLength(1);
+  });
+
+  test("never cuts an emoji in half at the 30,000-character limit", () => {
+    const text = `${"a".repeat(29_999)}😀tail`;
+    expect(extractionContent(text)).toBe("a".repeat(29_999));
+    expect(extractionContent("short 😀")).toBe("short 😀");
+    expect(renderExtractionPrompt({ content: text }).includes("\uD83D")).toBe(
+      false,
+    );
   });
 
   test("hashes the text with the prompt version", async () => {
