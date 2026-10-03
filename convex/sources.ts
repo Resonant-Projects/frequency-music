@@ -24,6 +24,11 @@ import {
   generateArchivedDedupeKey,
   generateDedupeKey,
 } from "./sourceUtils";
+import {
+  extractionContent,
+  extractionInputHash,
+} from "./shared/extractionPrompt";
+import { unextractableTextReason } from "./shared/sourceText";
 import { sourceReturnValidator } from "./validators";
 
 // ============================================================================
@@ -46,6 +51,80 @@ export const listByStatus = query({
       .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
       .order("desc")
       .take(limit);
+  },
+});
+
+// Twenty documents keep a page's read well under Convex's per-call limits
+// even when every one holds a long transcript.
+const OPERATOR_EXPORT_PAGE_SIZE = 20;
+
+/**
+ * One page of text_ready Sources for operator extraction
+ * (scripts/operator-extraction.ts export), newest first. The inputHash and
+ * the extraction-gate verdict are computed here over the full text; only the
+ * text the extract_v2 prompt shows is returned, so a page stays small.
+ * Operator service identity only.
+ */
+export const operatorExtractionPage = query({
+  args: {
+    cursor: v.optional(v.union(v.string(), v.null())),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    page: v.array(
+      v.object({
+        sourceId: v.id("sources"),
+        title: v.optional(v.string()),
+        canonicalUrl: v.optional(v.string()),
+        type: v.string(),
+        inputHash: v.optional(v.string()),
+        content: v.string(),
+        unextractable: v.optional(v.string()),
+      }),
+    ),
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    if (!identity.isBypass) {
+      throw new ConvexError({
+        code: "FORBIDDEN",
+        message: "Operator extraction requires the operator bypass secret",
+      });
+    }
+    const result = await ctx.db
+      .query("sources")
+      .withIndex("by_status_updatedAt", (q) => q.eq("status", "text_ready"))
+      .order("desc")
+      .paginate({
+        numItems: OPERATOR_EXPORT_PAGE_SIZE,
+        cursor: args.cursor ?? null,
+      });
+    const page = await Promise.all(
+      result.page.map(async (source) => {
+        const text = source.rawText || source.transcript || "";
+        return {
+          sourceId: source._id,
+          title: source.title,
+          canonicalUrl: source.canonicalUrl,
+          type: source.type,
+          ...(text ? { inputHash: await extractionInputHash(text) } : {}),
+          content: extractionContent(text),
+          ...(text
+            ? (() => {
+                const reason = unextractableTextReason(text);
+                return reason ? { unextractable: reason } : {};
+              })()
+            : { unextractable: "no text" }),
+        };
+      }),
+    );
+    return {
+      page,
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
+    };
   },
 });
 

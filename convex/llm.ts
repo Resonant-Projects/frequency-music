@@ -35,6 +35,9 @@ export const MODELS = {
   // slugs; claude-3-5-haiku and grok-3-mini-beta were delisted 2026-07-10).
   sonnet: "anthropic/claude-sonnet-5.5",
   haiku: "anthropic/claude-haiku-4.5",
+  // Extractions written by the Claude Code operator session
+  // (scripts/operator-extraction.ts, extract.storeOperatorExtraction).
+  opus: "anthropic/claude-opus-5.5",
   // Essay metadata generation (scripts/generate-essay-metadata.ts) per Keith
   // 2026-08-01. Listed here rather than as a script-local literal so
   // check-model-catalog.ts verifies it against the live OpenRouter catalog.

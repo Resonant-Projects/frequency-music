@@ -1,0 +1,196 @@
+/**
+ * Extract text_ready Sources a chunk at a time without the worker or
+ * OpenRouter: an operator session (Claude Code) reads the same extract_v2
+ * prompt and writes the extraction JSON itself.
+ *
+ * 1. Export a chunk (read-only unless --park-unextractable; the export query
+ *    is operator-only, so it also needs the bypass secret):
+ *      vpx tsx scripts/operator-extraction.ts export --out <dir> [--limit 40] [--chunk-size 20] [--park-unextractable]
+ *    Writes <dir>/chunk-NNN.json. Each holds the system prompt, the
+ *    instructions, and per Source its id, inputHash and rendered prompt.
+ *    --park-unextractable parks text the extraction gate refuses (through
+ *    extract.parkOperatorUnextractable, which never calls a model).
+ * 2. Write <dir>/results-NNN.json as each chunk's instructions describe.
+ * 3. Import the results:
+ *      vpx tsx scripts/operator-extraction.ts import <results.json> [--dry-run]
+ *    Each Extraction goes through extract.storeOperatorExtraction, which
+ *    refuses a Source whose text changed since export, applies the same text
+ *    gate and duplicate checks as extractSource, and records the model.
+ *
+ * Operator-gated: contacts the deployed Convex backend as the operator service
+ * identity (AUTH_BYPASS_SECRET through Varlock). Export reads pages of 20 from
+ * sources.operatorExtractionPage; --park-unextractable and import write.
+ */
+// oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
+import "varlock/auto-load";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
+import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
+import { MODELS } from "../convex/llm";
+import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
+import {
+  buildChunks,
+  type ExportRow,
+  extractionProblems,
+  parseResults,
+} from "./lib/operator-extraction";
+
+const MODEL = MODELS.opus;
+
+function flag(args: string[], name: string): string | undefined {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+function positiveInt(value: string | undefined, fallback: number): number {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`Expected a positive integer, got ${value}`);
+  }
+  return parsed;
+}
+
+async function exportChunks(args: string[]) {
+  const out = flag(args, "--out");
+  if (!out) throw new Error("export needs --out <dir>");
+  const limit = positiveInt(flag(args, "--limit"), 40);
+  const chunkSize = positiveInt(flag(args, "--chunk-size"), 20);
+  if (
+    existsSync(out) &&
+    readdirSync(out).some((name) => /^chunk-\d+\.json$/.test(name))
+  ) {
+    throw new Error(
+      `${out} already holds chunk files; export to a new directory`,
+    );
+  }
+  const client = getConvexClient();
+  const devBypassSecret = getDevBypassSecret();
+  // Pages of 20, newest first, until --limit Sources are collected.
+  const rows: ExportRow[] = [];
+  let cursor: string | null = null;
+  while (rows.length < limit) {
+    const result: {
+      page: ExportRow[];
+      continueCursor: string;
+      isDone: boolean;
+    } = await client.query(api.sources.operatorExtractionPage, {
+      cursor,
+      devBypassSecret,
+    });
+    rows.push(...result.page);
+    if (result.isDone) break;
+    cursor = result.continueCursor;
+  }
+  const { chunks, unextractable } = buildChunks(rows.slice(0, limit), {
+    model: MODEL,
+    chunkSize,
+  });
+  mkdirSync(out, { recursive: true });
+  chunks.forEach((chunk, index) => {
+    const file = join(out, `chunk-${String(index + 1).padStart(3, "0")}.json`);
+    writeFileSync(file, `${JSON.stringify(chunk, null, 2)}\n`);
+    console.log(`${file}: ${chunk.items.length} sources`);
+  });
+  if (unextractable.length > 0) {
+    console.log(`${unextractable.length} unextractable (not in any chunk):`);
+    for (const { sourceId, reason } of unextractable) {
+      console.log(`  ${sourceId}: ${reason}`);
+    }
+    if (args.includes("--park-unextractable")) {
+      // Parks only when the text is still the exported text and the gate
+      // still refuses it; never calls a model.
+      for (const { sourceId, inputHash } of unextractable) {
+        if (!inputHash) {
+          console.log(`  left ${sourceId}: no text to check`);
+          continue;
+        }
+        const outcome = await client.action(
+          api.extract.parkOperatorUnextractable,
+          { sourceId: sourceId as Id<"sources">, inputHash, devBypassSecret },
+        );
+        console.log(
+          `  ${outcome.parked ? "parked" : "left"} ${sourceId}: ${outcome.reason}`,
+        );
+      }
+    }
+  }
+}
+
+async function importResults(args: string[]) {
+  const file = args.find((arg) => !arg.startsWith("--"));
+  if (!file) throw new Error("import needs <results.json>");
+  const { results } = parseResults(readFileSync(file, "utf8"), MODEL);
+  // Every body is checked before anything is stored, so a bad file stores
+  // nothing and --dry-run predicts the import.
+  const invalid = results.flatMap((result) => {
+    const problems = extractionProblems(result.extraction);
+    return problems.length
+      ? [`${result.sourceId}: ${problems.join("; ")}`]
+      : [];
+  });
+  if (invalid.length > 0) {
+    for (const line of invalid) console.log(`INVALID ${line}`);
+    throw new Error(`${invalid.length} invalid results; nothing stored`);
+  }
+  if (args.includes("--dry-run")) {
+    console.log(`${results.length} results valid; nothing stored (--dry-run)`);
+    return;
+  }
+  const client = getConvexClient();
+  const devBypassSecret = getDevBypassSecret();
+  const tally = { stored: 0, skipped: 0, failed: 0, claims: 0 };
+  for (const result of results) {
+    try {
+      const outcome = await client.action(api.extract.storeOperatorExtraction, {
+        sourceId: result.sourceId as Id<"sources">,
+        model: MODEL,
+        inputHash: result.inputHash,
+        // Checked by extractionProblems above and by Convex's validator.
+        extraction: result.extraction as never,
+        devBypassSecret,
+      });
+      if ("success" in outcome) {
+        tally.stored += 1;
+        tally.claims += outcome.claimCount;
+        console.log(
+          `stored ${result.sourceId}: ${outcome.claimCount} claims, ${outcome.parameterCount} parameters`,
+        );
+      } else {
+        tally.skipped += 1;
+        console.log(`skipped ${result.sourceId}: ${outcome.reason}`);
+      }
+    } catch (error) {
+      tally.failed += 1;
+      console.log(
+        `FAILED ${result.sourceId}: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`,
+      );
+    }
+  }
+  console.log(
+    `${tally.stored} stored (${tally.claims} claims), ${tally.skipped} skipped, ${tally.failed} failed`,
+  );
+  if (tally.failed > 0) process.exitCode = 1;
+}
+
+async function main() {
+  const [command, ...args] = process.argv.slice(2);
+  if (command === "export") return exportChunks(args);
+  if (command === "import") return importResults(args);
+  console.log(
+    "Usage:\n  vpx tsx scripts/operator-extraction.ts export --out <dir> [--limit 40] [--chunk-size 20] [--park-unextractable]\n  vpx tsx scripts/operator-extraction.ts import <results.json> [--dry-run]",
+  );
+  process.exitCode = command ? 1 : 0;
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

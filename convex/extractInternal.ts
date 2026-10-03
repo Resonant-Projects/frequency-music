@@ -1,13 +1,19 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   type DatabaseReader,
   internalMutation,
   internalQuery,
+  type MutationCtx,
 } from "./_generated/server";
 import { claimValidator, compositionParameterValidator } from "./schema";
+import {
+  EXTRACTION_PROMPT_VERSION,
+  extractionInputHash,
+} from "./shared/extractionPrompt";
+import { unextractableTextReason } from "./shared/sourceText";
 
 /**
  * The current Extraction that already covers this text for this Source, or
@@ -74,6 +80,111 @@ export const findExtractionForInput = internalQuery({
   },
 });
 
+type StoreExtractionArgs = {
+  sourceId: Id<"sources">;
+  model: string;
+  promptVersion: string;
+  inputHash: string;
+  summary: string;
+  claims: Infer<typeof claimValidator>[];
+  compositionParameters: Infer<typeof compositionParameterValidator>[];
+  topics: string[];
+  openQuestions: string[];
+  confidence: number;
+};
+
+/**
+ * Inserts an Extraction and its claims, superseding the Source's earlier
+ * claims and registering parameter kinds. Callers check duplicates first.
+ */
+async function insertExtraction(
+  ctx: MutationCtx,
+  args: StoreExtractionArgs,
+): Promise<{ extractionId: Id<"extractions"> }> {
+  const compositionParameters: Doc<"extractions">["compositionParameters"] =
+    await Promise.all(
+      args.compositionParameters.map(
+        async (
+          parameter,
+        ): Promise<Doc<"extractions">["compositionParameters"][number]> => {
+          const kind = (parameter.kind ?? parameter.type ?? "").trim();
+          const registry:
+            | {
+                status: NonNullable<
+                  Doc<"extractions">["compositionParameters"][number]["registryStatus"]
+                >;
+              }
+            | undefined = kind
+            ? await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
+                name: kind,
+              })
+            : undefined;
+          const canonicalKind =
+            parameter.canonicalKind?.trim() || kind || undefined;
+          return {
+            kind,
+            type: parameter.type ?? kind,
+            value: parameter.value,
+            details: parameter.details,
+            registryStatus:
+              registry?.status ??
+              (parameter.registryStatus as Doc<"extractions">["compositionParameters"][number]["registryStatus"]),
+            canonicalKind,
+          };
+        },
+      ),
+    );
+
+  const previousExtraction = await ctx.db
+    .query("extractions")
+    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", args.sourceId))
+    .order("desc")
+    .first();
+  if (previousExtraction) {
+    const previousClaims = await ctx.db
+      .query("claims")
+      .withIndex("by_extractionId_ordinal", (q) =>
+        q.eq("extractionId", previousExtraction._id),
+      )
+      .take(previousExtraction.claims.length);
+    for (const claim of previousClaims) {
+      if (claim.status === "active") {
+        await ctx.db.patch("claims", claim._id, { status: "superseded" });
+      }
+    }
+  }
+
+  const createdBy = "system" as const;
+  const createdAt = Date.now();
+  const extractionId = await ctx.db.insert("extractions", {
+    ...args,
+    compositionParameters,
+    createdBy,
+    createdAt,
+  });
+
+  const claimIds: Id<"claims">[] = [];
+  for (const [ordinal, claim] of args.claims.entries()) {
+    const claimId = await ctx.db.insert("claims", {
+      extractionId,
+      sourceId: args.sourceId,
+      ordinal,
+      ...claim,
+      status: "active",
+      createdBy,
+      createdAt,
+    });
+    claimIds.push(claimId);
+  }
+  if (claimIds.length > 0) {
+    await ctx.scheduler.runAfter(0, internal.embeddings.embedClaims, {
+      claimIds,
+    });
+  }
+
+  return { extractionId };
+}
+
 export const storeExtraction = internalMutation({
   args: {
     sourceId: v.id("sources"),
@@ -122,89 +233,153 @@ export const storeExtraction = internalMutation({
         };
       }
     }
-    const compositionParameters: Doc<"extractions">["compositionParameters"] =
-      await Promise.all(
-        args.compositionParameters.map(
-          async (
-            parameter,
-          ): Promise<Doc<"extractions">["compositionParameters"][number]> => {
-            const kind = (parameter.kind ?? parameter.type ?? "").trim();
-            const registry:
-              | {
-                  status: NonNullable<
-                    Doc<"extractions">["compositionParameters"][number]["registryStatus"]
-                  >;
-                }
-              | undefined = kind
-              ? await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
-                  name: kind,
-                })
-              : undefined;
-            const canonicalKind =
-              parameter.canonicalKind?.trim() || kind || undefined;
-            return {
-              kind,
-              type: parameter.type ?? kind,
-              value: parameter.value,
-              details: parameter.details,
-              registryStatus:
-                registry?.status ??
-                (parameter.registryStatus as Doc<"extractions">["compositionParameters"][number]["registryStatus"]),
-              canonicalKind,
-            };
-          },
-        ),
-      );
+    return await insertExtraction(ctx, args);
+  },
+});
 
-    const previousExtraction = await ctx.db
-      .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) =>
-        q.eq("sourceId", args.sourceId),
-      )
-      .order("desc")
-      .first();
-    if (previousExtraction) {
-      const previousClaims = await ctx.db
-        .query("claims")
-        .withIndex("by_extractionId_ordinal", (q) =>
-          q.eq("extractionId", previousExtraction._id),
-        )
-        .take(previousExtraction.claims.length);
-      for (const claim of previousClaims) {
-        if (claim.status === "active") {
-          await ctx.db.patch("claims", claim._id, { status: "superseded" });
-        }
-      }
+const operatorOutcomeValidator = v.union(
+  v.object({ skipped: v.literal(true), reason: v.string() }),
+  v.object({
+    success: v.literal(true),
+    model: v.string(),
+    summary: v.string(),
+    claimCount: v.number(),
+    parameterCount: v.number(),
+  }),
+);
+
+type OperatorSourceCheck =
+  | { outcome: { skipped: true; reason: string } }
+  | { content: string; outcome?: undefined };
+
+/**
+ * The operator's export is still current: the Source is text_ready and its
+ * text hashes to the exported inputHash. Read inside the writing transaction,
+ * so ingestion that changes the Source cannot slip in between.
+ */
+async function currentOperatorText(
+  ctx: MutationCtx,
+  sourceId: Id<"sources">,
+  inputHash: string,
+): Promise<OperatorSourceCheck> {
+  const source = await ctx.db.get("sources", sourceId);
+  if (!source) throw new Error("Source not found");
+  if (source.status !== "text_ready") {
+    return { outcome: { skipped: true, reason: `source is ${source.status}` } };
+  }
+  const content = source.rawText || source.transcript;
+  if (!content || (await extractionInputHash(content)) !== inputHash) {
+    return {
+      outcome: {
+        skipped: true,
+        reason: "source text changed since export; export it again",
+      },
+    };
+  }
+  return { content };
+}
+
+async function setSourceStatus(
+  ctx: MutationCtx,
+  sourceId: Id<"sources">,
+  status: Doc<"sources">["status"],
+  blocked?: { reason: Doc<"sources">["blockedReason"]; details: string },
+) {
+  await ctx.db.patch("sources", sourceId, {
+    status,
+    blockedReason: blocked?.reason,
+    blockedDetails: blocked?.details,
+    updatedAt: Date.now(),
+  });
+}
+
+/**
+ * Stores an operator-written Extraction in one transaction: the export is
+ * current, the text passes the extraction gate, no current Extraction covers
+ * it, then the Extraction is stored and the Source marked extracted. The
+ * caller (extract.storeOperatorExtraction) authorizes the operator.
+ */
+export const storeOperatorExtraction = internalMutation({
+  args: {
+    sourceId: v.id("sources"),
+    model: v.string(),
+    inputHash: v.string(),
+    summary: v.string(),
+    claims: v.array(claimValidator),
+    compositionParameters: v.array(compositionParameterValidator),
+    topics: v.array(v.string()),
+    openQuestions: v.array(v.string()),
+  },
+  returns: operatorOutcomeValidator,
+  handler: async (ctx, args) => {
+    const checked = await currentOperatorText(
+      ctx,
+      args.sourceId,
+      args.inputHash,
+    );
+    if (checked.outcome) return checked.outcome;
+    const refused = unextractableTextReason(checked.content);
+    if (refused) {
+      await setSourceStatus(ctx, args.sourceId, "review_needed", {
+        reason: "no_text",
+        details: refused,
+      });
+      return { skipped: true as const, reason: refused };
     }
-
-    const createdBy = "system" as const;
-    const createdAt = Date.now();
-    const extractionId = await ctx.db.insert("extractions", {
+    const found = await extractionForInput(
+      ctx.db,
+      args.inputHash,
+      args.sourceId,
+    );
+    if (found?.sameSource) {
+      await setSourceStatus(ctx, args.sourceId, "extracted");
+      return { skipped: true as const, reason: "already extracted" };
+    }
+    if (found) {
+      await setSourceStatus(ctx, args.sourceId, "archived", {
+        reason: "duplicate",
+        details: `Same text as source ${found.extraction.sourceId} (extraction ${found.extraction._id})`,
+      });
+      return { skipped: true as const, reason: "duplicate extraction" };
+    }
+    await insertExtraction(ctx, {
       ...args,
-      compositionParameters,
-      createdBy,
-      createdAt,
+      promptVersion: EXTRACTION_PROMPT_VERSION,
+      confidence: 0.8,
     });
+    await setSourceStatus(ctx, args.sourceId, "extracted");
+    return {
+      success: true as const,
+      model: args.model,
+      summary: args.summary,
+      claimCount: args.claims.length,
+      parameterCount: args.compositionParameters.length,
+    };
+  },
+});
 
-    const claimIds: Id<"claims">[] = [];
-    for (const [ordinal, claim] of args.claims.entries()) {
-      const claimId = await ctx.db.insert("claims", {
-        extractionId,
-        sourceId: args.sourceId,
-        ordinal,
-        ...claim,
-        status: "active",
-        createdBy,
-        createdAt,
-      });
-      claimIds.push(claimId);
+/**
+ * Parks a text_ready Source in one transaction when its text is still the
+ * exported text and the extraction gate refuses it. Never extracts.
+ */
+export const parkOperatorUnextractable = internalMutation({
+  args: { sourceId: v.id("sources"), inputHash: v.string() },
+  returns: v.object({ parked: v.boolean(), reason: v.string() }),
+  handler: async (ctx, args) => {
+    const checked = await currentOperatorText(
+      ctx,
+      args.sourceId,
+      args.inputHash,
+    );
+    if (checked.outcome) {
+      return { parked: false, reason: checked.outcome.reason };
     }
-    if (claimIds.length > 0) {
-      await ctx.scheduler.runAfter(0, internal.embeddings.embedClaims, {
-        claimIds,
-      });
-    }
-
-    return { extractionId };
+    const reason = unextractableTextReason(checked.content);
+    if (!reason) return { parked: false, reason: "text is extractable" };
+    await setSourceStatus(ctx, args.sourceId, "review_needed", {
+      reason: "no_text",
+      details: reason,
+    });
+    return { parked: true, reason };
   },
 });
