@@ -60,7 +60,12 @@ jobs:
 
       - name: Audit production dependencies
         working-directory: agent
-        run: bun audit --prod
+        # GHSA-vfj7-8cjw-p6xm (braces <=3.0.3, stack-exhaustion DoS on deeply
+        # nested brace patterns) has no patched release; it arrives through
+        # deepagents -> micromatch and fast-glob -> micromatch. Accepted on
+        # 2026-10-03: glob patterns come from our own agent tooling, so the
+        # worst case is one failed run. Remove once braces publishes a fix.
+        run: bun audit --prod --ignore=GHSA-vfj7-8cjw-p6xm
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -156,7 +161,12 @@ jobs:
 
       - name: Audit production dependencies
         working-directory: agent
-        run: bun audit --prod
+        # GHSA-vfj7-8cjw-p6xm (braces <=3.0.3, stack-exhaustion DoS on deeply
+        # nested brace patterns) has no patched release; it arrives through
+        # deepagents -> micromatch and fast-glob -> micromatch. Accepted on
+        # 2026-10-03: glob patterns come from our own agent tooling, so the
+        # worst case is one failed run. Remove once braces publishes a fix.
+        run: bun audit --prod --ignore=GHSA-vfj7-8cjw-p6xm
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
