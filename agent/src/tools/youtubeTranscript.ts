@@ -150,7 +150,8 @@ export function createYouTubeTranscriber(
   const potBaseUrl = deps.potBaseUrl ?? process.env.BGUTIL_POT_BASE_URL;
 
   // True only when YouTube's oEmbed endpoint says the video does not exist
-  // (404) or is private (401/403); any other answer or error is not proof.
+  // (404). 401/403 also mean "embedding disabled" for public videos, so they
+  // are not proof; a private video reaches the attempt limit instead.
   const videoIsGone = async (videoId: string): Promise<boolean> => {
     try {
       const url = new URL(OEMBED_URL);
@@ -162,7 +163,7 @@ export function createYouTubeTranscriber(
         signal: AbortSignal.timeout(15_000),
       });
       await response.body?.cancel().catch(() => undefined);
-      return [401, 403, 404].includes(response.status);
+      return response.status === 404;
     } catch {
       return false;
     }

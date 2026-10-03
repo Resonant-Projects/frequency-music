@@ -144,6 +144,10 @@ describe("YouTube transcriber", () => {
     expect(
       await make(unavailableOutput, oembed(200))("dQw4w9WgXcQ"),
     ).toMatchObject({ kind: "failed" });
+    // 401 also means "embedding disabled" for a public video: not proof.
+    expect(
+      await make(unavailableOutput, oembed(401))("dQw4w9WgXcQ"),
+    ).toMatchObject({ kind: "failed" });
     expect(
       await make(
         unavailableOutput,
