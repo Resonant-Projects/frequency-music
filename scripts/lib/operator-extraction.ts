@@ -35,6 +35,13 @@ export type Chunk = {
   items: ChunkItem[];
 };
 
+/** Text the extraction gate refuses; `inputHash` is absent without text. */
+export type Unextractable = {
+  sourceId: string;
+  reason: string;
+  inputHash?: string;
+};
+
 export type ResultItem = {
   sourceId: string;
   inputHash: string;
@@ -57,12 +64,9 @@ const INSTRUCTIONS =
 export async function buildChunks(
   sources: ExportableSource[],
   options: { model: string; chunkSize: number },
-): Promise<{
-  chunks: Chunk[];
-  unextractable: { sourceId: string; reason: string }[];
-}> {
+): Promise<{ chunks: Chunk[]; unextractable: Unextractable[] }> {
   const items: ChunkItem[] = [];
-  const unextractable: { sourceId: string; reason: string }[] = [];
+  const unextractable: Unextractable[] = [];
   for (const source of sources) {
     const content = source.rawText || source.transcript;
     if (!content) {
@@ -71,7 +75,11 @@ export async function buildChunks(
     }
     const reason = unextractableTextReason(content);
     if (reason) {
-      unextractable.push({ sourceId: source._id, reason });
+      unextractable.push({
+        sourceId: source._id,
+        reason,
+        inputHash: await extractionInputHash(content),
+      });
       continue;
     }
     items.push({

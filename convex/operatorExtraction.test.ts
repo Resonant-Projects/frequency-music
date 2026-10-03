@@ -1,5 +1,12 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MODELS } from "./llm";
@@ -36,10 +43,14 @@ const extraction = {
   openQuestions: ["How do well temperaments spread the comma?"],
 };
 
-const operator = {
-  subject: "operator-claude-session",
-  name: "Claude (operator session)",
-};
+const BYPASS = "operator-secret";
+beforeEach(() => {
+  vi.stubEnv("AUTH_BYPASS_ENABLED", "true");
+  vi.stubEnv("AUTH_BYPASS_SECRET", BYPASS);
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 async function setup(rawText = article.repeat(2), status = "text_ready") {
   const t = convexTest(schema, modules);
@@ -66,11 +77,12 @@ const store = (
   inputHash: string,
   overrides: Record<string, unknown> = {},
 ) =>
-  t.withIdentity(operator).action(api.extract.storeOperatorExtraction, {
+  t.action(api.extract.storeOperatorExtraction, {
     sourceId,
     model: MODELS.opus,
     inputHash,
     extraction,
+    devBypassSecret: BYPASS,
     ...overrides,
   });
 
@@ -131,16 +143,65 @@ describe("operator extraction", () => {
     ).toHaveLength(0);
   });
 
-  test("requires an authenticated caller", async () => {
+  test("requires the operator service identity, not a signed-in user", async () => {
     const { t, sourceId, inputHash } = await setup();
     await expect(
-      t.action(api.extract.storeOperatorExtraction, {
-        sourceId,
-        model: MODELS.opus,
-        inputHash,
-        extraction,
-      }),
+      store(t, sourceId, inputHash, { devBypassSecret: undefined }),
     ).rejects.toThrow();
+    await expect(
+      t
+        .withIdentity({ subject: "user_123", name: "Someone" })
+        .action(api.extract.storeOperatorExtraction, {
+          sourceId,
+          model: MODELS.opus,
+          inputHash,
+          extraction,
+        }),
+    ).rejects.toThrow("requires the operator bypass secret");
+    expect(await t.run((ctx) => ctx.db.get("sources", sourceId))).toMatchObject(
+      { status: "text_ready" },
+    );
+  });
+
+  test("a stale export never parks or archives the Source", async () => {
+    // The text became a teaser after export: report stale, change nothing.
+    const { t, sourceId } = await setup("Read more at the link.");
+    expect(
+      await store(t, sourceId, await extractionInputHash(article.repeat(2))),
+    ).toEqual({
+      skipped: true,
+      reason: "source text changed since export; export it again",
+    });
+    expect(await t.run((ctx) => ctx.db.get("sources", sourceId))).toMatchObject(
+      { status: "text_ready" },
+    );
+  });
+
+  test("parks exported unextractable text without a model, and only that", async () => {
+    const short = "Read more at the link.";
+    const { t, sourceId, inputHash } = await setup(short);
+    const park = (id: Id<"sources">, hash: string) =>
+      t.action(api.extract.parkOperatorUnextractable, {
+        sourceId: id,
+        inputHash: hash,
+        devBypassSecret: BYPASS,
+      });
+    expect(await park(sourceId, "0".repeat(64))).toEqual({
+      parked: false,
+      reason: "source text changed since export; export it again",
+    });
+    expect(await park(sourceId, inputHash)).toMatchObject({ parked: true });
+    expect(await t.run((ctx) => ctx.db.get("sources", sourceId))).toMatchObject(
+      { status: "review_needed", blockedReason: "no_text" },
+    );
+    const usable = await setup();
+    expect(
+      await usable.t.action(api.extract.parkOperatorUnextractable, {
+        sourceId: usable.sourceId,
+        inputHash: usable.inputHash,
+        devBypassSecret: BYPASS,
+      }),
+    ).toEqual({ parked: false, reason: "text is extractable" });
   });
 
   test("parks unextractable text instead of storing an Extraction", async () => {
@@ -205,6 +266,14 @@ describe("extraction prompt", () => {
     expect(renderExtractionPrompt({ content: "x" })).toContain(
       "Title: Untitled",
     );
+    // A title holding a placeholder is inserted literally, never rescanned.
+    const injected = renderExtractionPrompt({
+      title: "{{content}} and {{url}}",
+      canonicalUrl: "https://example.org/y",
+      content: "REAL TEXT",
+    });
+    expect(injected).toContain("Title: {{content}} and {{url}}");
+    expect(injected.match(/REAL TEXT/g)).toHaveLength(1);
   });
 
   test("hashes the text with the prompt version", async () => {

@@ -71,15 +71,17 @@ export function renderExtractionPrompt(source: {
   canonicalUrl?: string;
   content: string;
 }): string {
-  // Function replacements: "$&" or "$1" in a Source must stay literal.
+  const values: Record<string, string> = {
+    title: source.title || "Untitled",
+    url: source.canonicalUrl || "",
+    content: source.content.slice(0, EXTRACTION_CONTENT_MAX_CHARS),
+  };
+  // One pass over the template: a title or text that contains "{{content}}"
+  // or "$&" is inserted literally and never rescanned.
   return EXTRACT_USER_PROMPT.replace(
-    "{{title}}",
-    () => source.title || "Untitled",
-  )
-    .replace("{{url}}", () => source.canonicalUrl || "")
-    .replace("{{content}}", () =>
-      source.content.slice(0, EXTRACTION_CONTENT_MAX_CHARS),
-    );
+    /\{\{(title|url|content)\}\}/g,
+    (_, key: string) => values[key] ?? "",
+  );
 }
 
 /** SHA-256 of the Source text and prompt version: the Extraction's inputHash. */

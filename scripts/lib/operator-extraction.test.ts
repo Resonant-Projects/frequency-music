@@ -55,6 +55,11 @@ describe("operator extraction chunks", () => {
       "teaser",
       "empty",
     ]);
+    // A gated text keeps its hash for parking; a Source without text has none.
+    expect(unextractable[0]?.inputHash).toBe(
+      await extractionInputHash("Read more at the link."),
+    );
+    expect(unextractable[1]?.inputHash).toBeUndefined();
   });
 });
 

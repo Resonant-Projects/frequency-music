@@ -7,6 +7,8 @@
  *      vpx tsx scripts/operator-extraction.ts export --out <dir> [--limit 40] [--chunk-size 20] [--park-unextractable]
  *    Writes <dir>/chunk-NNN.json. Each holds the system prompt, the
  *    instructions, and per Source its id, inputHash and rendered prompt.
+ *    --park-unextractable parks text the extraction gate refuses (through
+ *    extract.parkOperatorUnextractable, which never calls a model).
  * 2. Write <dir>/results-NNN.json as each chunk's instructions describe.
  * 3. Import the results:
  *      vpx tsx scripts/operator-extraction.ts import <results.json> [--dry-run]
@@ -15,7 +17,8 @@
  *    gate and duplicate checks as extractSource, and records the model.
  *
  * Operator-gated: contacts the deployed Convex backend. --park-unextractable
- * and import write; both need AUTH_BYPASS_SECRET through Varlock.
+ * and import write as the operator service identity, so both need
+ * AUTH_BYPASS_SECRET through Varlock.
  */
 // oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
 import "varlock/auto-load";
@@ -69,14 +72,21 @@ async function exportChunks(args: string[]) {
       console.log(`  ${sourceId}: ${reason}`);
     }
     if (args.includes("--park-unextractable")) {
-      // extractSource parks these at its text gate, before any model call.
+      // Parks only when the text is still the exported text and the gate
+      // still refuses it; never calls a model.
       const devBypassSecret = getDevBypassSecret();
-      for (const { sourceId } of unextractable) {
-        const outcome = await client.action(api.extract.extractSource, {
-          sourceId: sourceId as Id<"sources">,
-          devBypassSecret,
-        });
-        console.log(`  parked ${sourceId}: ${JSON.stringify(outcome)}`);
+      for (const { sourceId, inputHash } of unextractable) {
+        if (!inputHash) {
+          console.log(`  left ${sourceId}: no text to check`);
+          continue;
+        }
+        const outcome = await client.action(
+          api.extract.parkOperatorUnextractable,
+          { sourceId: sourceId as Id<"sources">, inputHash, devBypassSecret },
+        );
+        console.log(
+          `  ${outcome.parked ? "parked" : "left"} ${sourceId}: ${outcome.reason}`,
+        );
       }
     }
   }
