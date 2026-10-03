@@ -32,6 +32,9 @@ const MAX_DURATION_SECONDS = 2 * 60 * 60;
 // Mono 16 kHz Opus at 24 kbit/s (what Whisper resamples to anyway): a
 // 30-minute segment is about 5.4 MB.
 const SEGMENT_SECONDS = 30 * 60;
+// Whisper reads at most 224 prompt tokens; a short tail of the previous
+// segment's text stays well within that.
+const PROMPT_CONTEXT_CHARS = 400;
 const YTDLP_TIMEOUT_MS = 5 * 60 * 1000;
 const FFMPEG_TIMEOUT_MS = 10 * 60 * 1000;
 const GROQ_TIMEOUT_MS = 3 * 60 * 1000;
@@ -313,6 +316,11 @@ export function createYouTubeTranscriber(
         form.append("model", model);
         form.append("response_format", "verbose_json");
         form.append("temperature", "0");
+        // Whisper continues across a segment cut more faithfully when it
+        // sees how the previous segment ended.
+        const previous = texts.at(-1);
+        if (previous)
+          form.append("prompt", previous.slice(-PROMPT_CONTEXT_CHARS));
         let response: Response;
         try {
           response = await fetchImpl(GROQ_TRANSCRIPTION_URL, {

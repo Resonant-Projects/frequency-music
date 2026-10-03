@@ -84,7 +84,7 @@ Optional model/provider variables:
 - `FIRECRAWL_API_KEY` (Firecrawl Cloud only; sent only to `https://api.firecrawl.dev`, never to a self-hosted URL; failed searches warn and skip)
 - `WEEKLY_BRIEF_AGENT_MODEL`
 - `GROQ_API_KEY` (transcript capture; without it, runs skip and say so) and `GROQ_TRANSCRIPTION_MODEL`
-- `YTDLP_PATH`, `YTDLP_PLUGIN_DIRS` (set by the agent image) and `BGUTIL_POT_BASE_URL` (the pod's PO-token sidecar, `http://127.0.0.1:4416`)
+- `YTDLP_PATH`, `YTDLP_PLUGIN_DIRS` (set by the agent image), `FFMPEG_PATH` (optional; defaults to `ffmpeg` on `PATH`) and `BGUTIL_POT_BASE_URL` (the pod's PO-token sidecar, `http://127.0.0.1:4416`)
 
 Optional tracing variables:
 

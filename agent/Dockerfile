@@ -55,13 +55,15 @@ WORKDIR /app/agent
 
 # Patch the pinned base for CVE-2026-14456; keep Node/Codex unchanged.
 RUN apk add --no-cache libcrypto3=3.5.8-r0 libssl3=3.5.8-r0
-# ffmpeg re-encodes YouTube audio over Groq's 25 MB upload limit into short
-# Opus segments (src/tools/youtubeTranscript.ts).
-RUN apk add --no-cache ffmpeg=8.0.1-r1 \
-    && ffmpeg -hide_banner -encoders | grep -q libopus
 
 ARG CODEX_CLI_VERSION=0.146.0
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
+# ffmpeg re-encodes YouTube audio over Groq's 25 MB upload limit into short
+# Opus segments (src/tools/youtubeTranscript.ts). Under pipefail, a failing
+# ffmpeg fails the build even if it printed libopus.
+RUN apk add --no-cache ffmpeg=8.0.1-r1 \
+    && ffmpeg -hide_banner -encoders | grep libopus >/dev/null
 
 # Codex AUTH is never baked — auth.json is seeded once at runtime into the
 # CODEX_HOME volume. npm is needed only to install the pinned CLI; removing it

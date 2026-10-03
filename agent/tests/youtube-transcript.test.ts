@@ -107,14 +107,18 @@ describe("YouTube transcriber", () => {
     const ffmpeg = segments(3);
     let call = 0;
     let filesAtUpload: string[] = [];
+    const prompts: unknown[] = [];
     const fetchImpl = vi.fn(async (_url: unknown, init?: RequestInit) => {
       if (call === 0) {
         const ffmpegArgs = ffmpeg.mock.calls[0]?.[0] as string[];
         const input = ffmpegArgs[ffmpegArgs.indexOf("-i") + 1] as string;
         filesAtUpload = await readdir(dirname(input));
       }
-      const file = (init?.body as FormData).get("file") as File;
+      const form = init?.body as FormData;
+      const file = form.get("file") as File;
       expect(file.size).toBeLessThan(24_000_000);
+      // Each segment after the first sees how the previous one ended.
+      prompts.push(form.get("prompt"));
       call += 1;
       return new Response(
         JSON.stringify({
@@ -136,6 +140,9 @@ describe("YouTube transcriber", () => {
     expect(text.indexOf("Part 2.")).toBeGreaterThan(text.indexOf("Part 1."));
     expect(text.indexOf("Part 3.")).toBeGreaterThan(text.indexOf("Part 2."));
     expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(prompts[0]).toBeNull();
+    expect(String(prompts[1])).toMatch(/^Part 1\. .*distances\.$/);
+    expect(String(prompts[2])).toMatch(/^Part 2\. /);
     const args = ffmpeg.mock.calls[0]?.[0] as string[];
     expect(args.slice(0, 4)).toEqual([
       "-nostdin",
