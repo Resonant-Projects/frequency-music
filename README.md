@@ -40,6 +40,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - `app.resonantprojects.art` (SolidJS): dashboard, ingestion, briefs, hypotheses/recipes, compositions, feedback
 - Convex backend: data + actions + scheduled jobs
 - Scheduling: Convex crons (feed polling every 6h, batch extraction every 8h, weekly briefs) — see `convex/crons.ts`.
+- Operator extraction: `scripts/operator-extraction.ts` exports `text_ready` Sources in chunks with the same extract_v2 prompt, so an operator session (Claude Code) can write the extraction JSON itself and import it through `extract.storeOperatorExtraction` (recorded as `MODELS.opus`) without the worker or OpenRouter.
 
 ## Strategic Docs
 

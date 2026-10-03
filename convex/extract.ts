@@ -6,72 +6,16 @@ import { type ActionCtx, action } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { DEFAULT_MODEL, MODELS } from "./llm";
 import { generateJson } from "./llmNode";
+import { claimValidator } from "./shared/claims";
+import {
+  EXTRACT_SYSTEM_PROMPT,
+  EXTRACTION_PROMPT_VERSION,
+  extractionInputHash,
+  renderExtractionPrompt,
+} from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
 
 export { MODELS };
-
-// ============================================================================
-// EXTRACTION PROMPTS
-// ============================================================================
-
-const EXTRACT_SYSTEM_PROMPT = `You are a research assistant for a music theory and acoustics project called "Resonant Projects." Your task is to analyze source material and extract structured information relevant to the intersection of music, physics, and mathematics.
-
-Focus on extracting:
-1. **Claims**: Factual assertions about music, sound, frequency, harmony, perception, or related physics/math
-2. **Composition Parameters**: Any specific musical values mentioned (frequencies, tempos, tuning systems, intervals, etc.)
-3. **Concepts**: Key topics and terminology
-4. **Open Questions**: Things worth investigating further
-
-Be rigorous about evidence levels:
-- peer_reviewed: Published in academic journals with peer review
-- preprint: Academic but not yet peer reviewed
-- anecdotal: Personal accounts, case studies, informal observations
-- speculative: Theoretical proposals without direct evidence
-- personal: Your own inferences from the text
-
-For every claim, separate:
-- truthConfidence: how confident the source makes you that the claim is well-supported
-- interestLevel: how creatively fertile the claim seems for composition work
-
-Use low|medium|high for both fields. These are not true/false labels.
-
-For composition parameters, be specific about values and units. If a claim mentions "432 Hz tuning," extract that as a parameter with type "frequency" or "rootNote."`;
-
-const EXTRACT_USER_PROMPT = `Analyze this source and extract structured information.
-
-Title: {{title}}
-URL: {{url}}
-Content:
----
-{{content}}
----
-
-Respond with a JSON object containing:
-{
-  "summary": "3-5 sentence summary of the key points",
-  "claims": [
-    {
-      "text": "The specific claim being made",
-      "evidenceLevel": "peer_reviewed|preprint|anecdotal|speculative|personal",
-      "truthConfidence": "low|medium|high",
-      "interestLevel": "low|medium|high",
-      "citations": [
-        {"quote": "supporting quote from the text", "label": "optional label"}
-      ]
-    }
-  ],
-  "compositionParameters": [
-    {
-      "kind": "parameter type label such as tempo|key|tuningSystem|rootNote|interval|measurement|duration|frequency|note",
-      "value": "human-readable value (e.g., '432 Hz', '120 BPM', 'Pythagorean')",
-      "details": { /* structured details like { "hz": 432 } or { "bpm": 120 } */ }
-    }
-  ],
-  "topics": ["list", "of", "relevant", "concepts"],
-  "openQuestions": ["Questions worth investigating further"]
-}
-
-Only include claims that are substantive and relevant to music, frequency, acoustics, or related fields. Be conservative - quality over quantity.`;
 
 // ============================================================================
 // EXTRACTION ACTION
@@ -123,6 +67,184 @@ async function archiveAsDuplicate(
   });
 }
 
+type ExtractionOutcome =
+  | { skipped: true; reason: string }
+  | {
+      success: true;
+      model: string;
+      summary: string;
+      claimCount: number;
+      parameterCount: number;
+    };
+
+const extractionOutcomeValidator = v.union(
+  v.object({
+    skipped: v.literal(true),
+    reason: v.string(),
+  }),
+  v.object({
+    success: v.literal(true),
+    model: v.string(),
+    summary: v.string(),
+    claimCount: v.number(),
+    parameterCount: v.number(),
+  }),
+);
+
+type ExtractionArgs = {
+  sourceId: Id<"sources">;
+  force?: boolean;
+  devBypassSecret?: string;
+};
+
+/**
+ * Checks shared by every extraction path before any model work: the Source
+ * has extractable text, and no Extraction already covers that text. Returns
+ * the outcome when the Source needs no extraction, or its text and inputHash.
+ */
+async function prepareExtraction(
+  ctx: ActionCtx,
+  args: ExtractionArgs,
+  source: { rawText?: string; transcript?: string },
+): Promise<
+  | { outcome: ExtractionOutcome }
+  | { content: string; inputHash: string; outcome?: undefined }
+> {
+  const content = source.rawText || source.transcript;
+  if (!content) {
+    await ctx.runMutation(api.sources.updateStatus, {
+      id: args.sourceId,
+      status: "review_needed",
+      blockedReason: "no_text",
+      blockedDetails: "No text content available for extraction",
+      devBypassSecret: args.devBypassSecret,
+    });
+    return { outcome: { skipped: true, reason: "no content" } };
+  }
+
+  // Feed excerpts, bot walls and near-empty captures wait for real text
+  // instead of spending a model call.
+  const unextractable = unextractableTextReason(content);
+  if (unextractable) {
+    await ctx.runMutation(api.sources.updateStatus, {
+      id: args.sourceId,
+      status: "review_needed",
+      blockedReason: "no_text",
+      blockedDetails: unextractable,
+      devBypassSecret: args.devBypassSecret,
+    });
+    return { outcome: { skipped: true, reason: unextractable } };
+  }
+
+  // The same text was extracted for another Source (an arXiv paper in two
+  // feeds, say): reuse that Extraction instead of paying for the model call.
+  const inputHash = await extractionInputHash(content);
+  if (!args.force) {
+    const found = await ctx.runQuery(
+      internal.extractInternal.findExtractionForInput,
+      { inputHash, sourceId: args.sourceId },
+    );
+    if (found?.sameSource) {
+      // This Source's own Extraction already covers this text.
+      await ctx.runMutation(api.sources.updateStatus, {
+        id: args.sourceId,
+        status: "extracted",
+        devBypassSecret: args.devBypassSecret,
+      });
+      return { outcome: { skipped: true, reason: "already extracted" } };
+    }
+    if (found) {
+      await archiveAsDuplicate(ctx, args, found.sourceId, found.extractionId);
+      return { outcome: { skipped: true, reason: "duplicate extraction" } };
+    }
+  }
+  return { content, inputHash };
+}
+
+/** Stores a parsed Extraction and moves its Source to `extracted`. */
+async function persistExtraction(
+  ctx: ActionCtx,
+  args: ExtractionArgs,
+  modelId: string,
+  inputHash: string,
+  extraction: ExtractionResult,
+): Promise<ExtractionOutcome> {
+  // Filter and map parameters before storing
+  const filteredParameters = extraction.compositionParameters.flatMap((p) => {
+    const kind = p.kind?.trim();
+    const type = p.type?.trim();
+    const resolvedKind = kind || type;
+    const value = p.value?.trim();
+    if (!resolvedKind || !value) return [];
+    return [
+      {
+        kind: resolvedKind,
+        type: type || resolvedKind,
+        value,
+        details: p.details,
+      },
+    ];
+  });
+
+  // Store the extraction
+  const stored = await ctx.runMutation(
+    internal.extractInternal.storeExtraction,
+    {
+      sourceId: args.sourceId,
+      model: modelId,
+      promptVersion: EXTRACTION_PROMPT_VERSION,
+      inputHash,
+      summary: extraction.summary,
+      claims: extraction.claims.map((c) => ({
+        text: c.text,
+        evidenceLevel: c.evidenceLevel as any,
+        truthConfidence: parseConfidenceBand(c.truthConfidence),
+        interestLevel: parseConfidenceBand(c.interestLevel),
+        citations: c.citations || [],
+      })),
+      compositionParameters: filteredParameters,
+      topics: extraction.topics || [],
+      openQuestions: extraction.openQuestions || [],
+      confidence: 0.8,
+      allowDuplicateInput: args.force === true,
+    },
+  );
+  if (stored.existing && !stored.duplicateOfSource) {
+    // A concurrent call for this Source stored the same text first.
+    await ctx.runMutation(api.sources.updateStatus, {
+      id: args.sourceId,
+      status: "extracted",
+      devBypassSecret: args.devBypassSecret,
+    });
+    return { skipped: true, reason: "already extracted" };
+  }
+  if (stored.duplicateOfSource) {
+    // A concurrent Extraction of the same text was stored first.
+    await archiveAsDuplicate(
+      ctx,
+      args,
+      stored.duplicateOfSource,
+      stored.extractionId,
+    );
+    return { skipped: true, reason: "duplicate extraction" };
+  }
+
+  // Update source status
+  await ctx.runMutation(api.sources.updateStatus, {
+    id: args.sourceId,
+    status: "extracted",
+    devBypassSecret: args.devBypassSecret,
+  });
+
+  return {
+    success: true,
+    model: modelId,
+    summary: extraction.summary,
+    claimCount: extraction.claims.length,
+    parameterCount: filteredParameters.length,
+  };
+}
+
 export const extractSource = action({
   args: {
     sourceId: v.id("sources"),
@@ -130,20 +252,8 @@ export const extractSource = action({
     force: v.optional(v.boolean()), // Re-extract even if already done
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.union(
-    v.object({
-      skipped: v.literal(true),
-      reason: v.string(),
-    }),
-    v.object({
-      success: v.literal(true),
-      model: v.string(),
-      summary: v.string(),
-      claimCount: v.number(),
-      parameterCount: v.number(),
-    }),
-  ),
-  handler: async (ctx, args) => {
+  returns: extractionOutcomeValidator,
+  handler: async (ctx, args): Promise<ExtractionOutcome> => {
     await requireAuth(ctx, args);
     // Get the source
     const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
@@ -156,61 +266,9 @@ export const extractSource = action({
       return { skipped: true as const, reason: "already extracted" };
     }
 
-    // Get content
-    const content = source.rawText || source.transcript;
-    if (!content) {
-      await ctx.runMutation(api.sources.updateStatus, {
-        id: args.sourceId,
-        status: "review_needed",
-        blockedReason: "no_text",
-        blockedDetails: "No text content available for extraction",
-        devBypassSecret: args.devBypassSecret,
-      });
-      return { skipped: true as const, reason: "no content" };
-    }
-
-    // Feed excerpts, bot walls and near-empty captures wait for real text
-    // instead of spending a model call.
-    const unextractable = unextractableTextReason(content);
-    if (unextractable) {
-      await ctx.runMutation(api.sources.updateStatus, {
-        id: args.sourceId,
-        status: "review_needed",
-        blockedReason: "no_text",
-        blockedDetails: unextractable,
-        devBypassSecret: args.devBypassSecret,
-      });
-      return { skipped: true as const, reason: unextractable };
-    }
-
-    // The same text was extracted for another Source (an arXiv paper in two
-    // feeds, say): reuse that Extraction instead of paying for the model call.
-    const encoder = new TextEncoder();
-    const hashData = encoder.encode(`${content}extract_v2`);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", hashData);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const inputHash = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    if (!args.force) {
-      const found = await ctx.runQuery(
-        internal.extractInternal.findExtractionForInput,
-        { inputHash, sourceId: args.sourceId },
-      );
-      if (found?.sameSource) {
-        // This Source's own Extraction already covers this text.
-        await ctx.runMutation(api.sources.updateStatus, {
-          id: args.sourceId,
-          status: "extracted",
-          devBypassSecret: args.devBypassSecret,
-        });
-        return { skipped: true as const, reason: "already extracted" };
-      }
-      if (found) {
-        await archiveAsDuplicate(ctx, args, found.sourceId, found.extractionId);
-        return { skipped: true as const, reason: "duplicate extraction" };
-      }
-    }
+    const prepared = await prepareExtraction(ctx, args, source);
+    if (prepared.outcome) return prepared.outcome;
+    const { content, inputHash } = prepared;
 
     // Mark as extracting
     await ctx.runMutation(api.sources.updateStatus, {
@@ -219,13 +277,11 @@ export const extractSource = action({
       devBypassSecret: args.devBypassSecret,
     });
 
-    // Build the prompt
-    const userPrompt = EXTRACT_USER_PROMPT.replace(
-      "{{title}}",
-      source.title || "Untitled",
-    )
-      .replace("{{url}}", source.canonicalUrl || "")
-      .replace("{{content}}", content.slice(0, 30000)); // Limit content length
+    const userPrompt = renderExtractionPrompt({
+      title: source.title,
+      canonicalUrl: source.canonicalUrl,
+      content,
+    });
 
     const modelId = args.model || DEFAULT_MODEL;
 
@@ -238,88 +294,17 @@ export const extractSource = action({
         metadata: {
           sourceId: args.sourceId,
           sourceType: source.type,
-          promptVersion: "extract_v2",
+          promptVersion: EXTRACTION_PROMPT_VERSION,
         },
       });
 
-      const extraction = json as ExtractionResult;
-
-      // Filter and map parameters before storing
-      const filteredParameters = extraction.compositionParameters.flatMap(
-        (p) => {
-          const kind = p.kind?.trim();
-          const type = p.type?.trim();
-          const resolvedKind = kind || type;
-          const value = p.value?.trim();
-          if (!resolvedKind || !value) return [];
-          return [
-            {
-              kind: resolvedKind,
-              type: type || resolvedKind,
-              value,
-              details: p.details,
-            },
-          ];
-        },
+      return await persistExtraction(
+        ctx,
+        args,
+        modelId,
+        inputHash,
+        json as ExtractionResult,
       );
-
-      // Store the extraction
-      const stored = await ctx.runMutation(
-        internal.extractInternal.storeExtraction,
-        {
-          sourceId: args.sourceId,
-          model: modelId,
-          promptVersion: "extract_v2",
-          inputHash,
-          summary: extraction.summary,
-          claims: extraction.claims.map((c) => ({
-            text: c.text,
-            evidenceLevel: c.evidenceLevel as any,
-            truthConfidence: parseConfidenceBand(c.truthConfidence),
-            interestLevel: parseConfidenceBand(c.interestLevel),
-            citations: c.citations || [],
-          })),
-          compositionParameters: filteredParameters,
-          topics: extraction.topics || [],
-          openQuestions: extraction.openQuestions || [],
-          confidence: 0.8,
-          allowDuplicateInput: args.force === true,
-        },
-      );
-      if (stored.existing && !stored.duplicateOfSource) {
-        // A concurrent call for this Source stored the same text first.
-        await ctx.runMutation(api.sources.updateStatus, {
-          id: args.sourceId,
-          status: "extracted",
-          devBypassSecret: args.devBypassSecret,
-        });
-        return { skipped: true as const, reason: "already extracted" };
-      }
-      if (stored.duplicateOfSource) {
-        // A concurrent Extraction of the same text was stored first.
-        await archiveAsDuplicate(
-          ctx,
-          args,
-          stored.duplicateOfSource,
-          stored.extractionId,
-        );
-        return { skipped: true as const, reason: "duplicate extraction" };
-      }
-
-      // Update source status
-      await ctx.runMutation(api.sources.updateStatus, {
-        id: args.sourceId,
-        status: "extracted",
-        devBypassSecret: args.devBypassSecret,
-      });
-
-      return {
-        success: true as const,
-        model: modelId,
-        summary: extraction.summary,
-        claimCount: extraction.claims.length,
-        parameterCount: filteredParameters.length,
-      };
     } catch (error) {
       // Mark as errored
       await ctx.runMutation(api.sources.updateStatus, {
@@ -331,6 +316,76 @@ export const extractSource = action({
       });
       throw error;
     }
+  },
+});
+
+// Models an operator session may record for an Extraction it wrote itself
+// (scripts/operator-extraction.ts). Catalog-checked through MODELS.
+export const OPERATOR_EXTRACTION_MODELS: readonly string[] = [MODELS.opus];
+
+const operatorExtractionValidator = v.object({
+  summary: v.string(),
+  claims: v.array(claimValidator),
+  compositionParameters: v.array(
+    v.object({
+      kind: v.optional(v.string()),
+      type: v.optional(v.string()),
+      value: v.string(),
+      details: v.optional(v.any()),
+    }),
+  ),
+  topics: v.array(v.string()),
+  openQuestions: v.array(v.string()),
+});
+
+/**
+ * Stores an Extraction written outside the worker by an operator session that
+ * read the same extract_v2 prompt (scripts/operator-extraction.ts export).
+ * The Source must still be text_ready with the exact text the operator read:
+ * `inputHash` from the export must match. The same text gate and duplicate
+ * checks as extractSource apply; no model is called.
+ */
+export const storeOperatorExtraction = action({
+  args: {
+    sourceId: v.id("sources"),
+    model: v.string(),
+    inputHash: v.string(),
+    extraction: operatorExtractionValidator,
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: extractionOutcomeValidator,
+  handler: async (ctx, args): Promise<ExtractionOutcome> => {
+    await requireAuth(ctx, args);
+    if (!OPERATOR_EXTRACTION_MODELS.includes(args.model)) {
+      throw new Error(
+        `Operator extractions record one of: ${OPERATOR_EXTRACTION_MODELS.join(", ")}`,
+      );
+    }
+    if (!args.extraction.summary.trim()) {
+      throw new Error("An operator extraction needs a summary");
+    }
+    const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
+    if (!source) {
+      throw new Error("Source not found");
+    }
+    if (source.status !== "text_ready") {
+      return { skipped: true, reason: `source is ${source.status}` };
+    }
+    const prepared = await prepareExtraction(ctx, args, source);
+    if (prepared.outcome) return prepared.outcome;
+    if (prepared.inputHash !== args.inputHash) {
+      return {
+        skipped: true,
+        reason: "source text changed since export; export it again",
+      };
+    }
+    return await persistExtraction(
+      ctx,
+      args,
+      args.model,
+      prepared.inputHash,
+      args.extraction,
+    );
   },
 });
 
@@ -384,8 +439,9 @@ export const extractAllReady = action({
           id: source._id,
           title: source.title || "Untitled",
           success: true,
-          summary: result.summary,
-          model: result.model,
+          ...("success" in result
+            ? { summary: result.summary, model: result.model }
+            : {}),
         });
       } catch (error) {
         results.push({
@@ -412,12 +468,24 @@ export const listModels = action({
     quality: v.string(),
     sonnet: v.string(),
     haiku: v.string(),
+    opus: v.string(),
     gemini: v.string(),
     gpt4: v.string(),
     deepseek: v.string(),
     grok: v.string(),
   }),
-  handler: () => {
-    return MODELS;
-  },
+  // MODELS also holds non-extraction ids (transcription, luna), which the
+  // return validator would reject: return only the listed ones.
+  handler: () => ({
+    fast: MODELS.fast,
+    default: MODELS.default,
+    quality: MODELS.quality,
+    sonnet: MODELS.sonnet,
+    haiku: MODELS.haiku,
+    opus: MODELS.opus,
+    gemini: MODELS.gemini,
+    gpt4: MODELS.gpt4,
+    deepseek: MODELS.deepseek,
+    grok: MODELS.grok,
+  }),
 });
