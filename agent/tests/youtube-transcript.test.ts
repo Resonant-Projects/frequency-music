@@ -127,6 +127,31 @@ describe("YouTube transcriber", () => {
     expect(
       await make(downloads(), groq({ error: {} }, 429))("dQw4w9WgXcQ"),
     ).toEqual({ kind: "rate_limited", detail: "Groq: HTTP 429" });
+    // "This video is unavailable" is parked only when oEmbed confirms it.
+    const unavailableOutput = async () => ({
+      code: 1,
+      output: "ERROR: [youtube] x: This video is unavailable",
+    });
+    const oembed = (status: number) =>
+      vi.fn(async () => new Response("{}", { status }));
+    const gone = oembed(404);
+    expect(await make(unavailableOutput, gone)("dQw4w9WgXcQ")).toMatchObject({
+      kind: "unavailable",
+    });
+    expect(String((gone.mock.calls[0] as unknown[])[0])).toContain(
+      "https://www.youtube.com/oembed?url=",
+    );
+    expect(
+      await make(unavailableOutput, oembed(200))("dQw4w9WgXcQ"),
+    ).toMatchObject({ kind: "failed" });
+    expect(
+      await make(
+        unavailableOutput,
+        vi.fn(async () => {
+          throw new Error("offline");
+        }),
+      )("dQw4w9WgXcQ"),
+    ).toMatchObject({ kind: "failed" });
     // An upcoming livestream or premiere is retried later, not parked.
     expect(
       await make(async () => ({
