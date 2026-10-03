@@ -1,7 +1,7 @@
 "use node";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { type ActionCtx, action } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { DEFAULT_MODEL, MODELS } from "./llm";
@@ -161,16 +161,11 @@ async function prepareExtraction(
   return { content, inputHash };
 }
 
-/** Stores a parsed Extraction and moves its Source to `extracted`. */
-async function persistExtraction(
-  ctx: ActionCtx,
-  args: ExtractionArgs,
-  modelId: string,
-  inputHash: string,
-  extraction: ExtractionResult,
-): Promise<ExtractionOutcome> {
-  // Filter and map parameters before storing
-  const filteredParameters = extraction.compositionParameters.flatMap((p) => {
+/** Parameters with a kind and a value; `type` falls back to the kind. */
+function filterParameters(
+  parameters: ExtractionResult["compositionParameters"],
+) {
+  return parameters.flatMap((p) => {
     const kind = p.kind?.trim();
     const type = p.type?.trim();
     const resolvedKind = kind || type;
@@ -185,6 +180,17 @@ async function persistExtraction(
       },
     ];
   });
+}
+
+/** Stores a parsed Extraction and moves its Source to `extracted`. */
+async function persistExtraction(
+  ctx: ActionCtx,
+  args: ExtractionArgs,
+  modelId: string,
+  inputHash: string,
+  extraction: ExtractionResult,
+): Promise<ExtractionOutcome> {
+  const filteredParameters = filterParameters(extraction.compositionParameters);
 
   // Store the extraction
   const stored = await ctx.runMutation(
@@ -341,52 +347,24 @@ const operatorExtractionValidator = v.object({
 /**
  * Operator extraction writes run only as the operator service identity (the
  * bypass secret Varlock resolves for scripts), never as a signed-in user.
- * The Source must still be text_ready with the exact text the operator read:
- * the export's inputHash is checked before anything else changes the Source.
  */
-async function requireOperatorSource(
+async function requireOperator(
   ctx: ActionCtx,
-  args: {
-    sourceId: Id<"sources">;
-    inputHash: string;
-    devBypassSecret?: string;
-  },
-): Promise<
-  | { outcome: { skipped: true; reason: string } }
-  | {
-      source: Doc<"sources">;
-      content: string;
-      outcome?: undefined;
-    }
-> {
+  args: { devBypassSecret?: string },
+): Promise<void> {
   const identity = await requireAuth(ctx, args);
   if (!identity.isBypass) {
     throw new Error("Operator extraction requires the operator bypass secret");
   }
-  const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
-  if (!source) {
-    throw new Error("Source not found");
-  }
-  if (source.status !== "text_ready") {
-    return { outcome: { skipped: true, reason: `source is ${source.status}` } };
-  }
-  const content = source.rawText || source.transcript;
-  if (!content || (await extractionInputHash(content)) !== args.inputHash) {
-    return {
-      outcome: {
-        skipped: true,
-        reason: "source text changed since export; export it again",
-      },
-    };
-  }
-  return { source, content };
 }
 
 /**
  * Stores an Extraction written outside the worker by an operator session that
  * read the same extract_v2 prompt (scripts/operator-extraction.ts export).
- * The same text gate and duplicate checks as extractSource apply; no model is
- * called.
+ * One transaction (extractInternal.storeOperatorExtraction) checks that the
+ * Source is still text_ready with the exported text (inputHash), applies the
+ * extraction gate and duplicate checks, stores it and marks the Source
+ * extracted. No model is called.
  */
 export const storeOperatorExtraction = action({
   args: {
@@ -398,32 +376,38 @@ export const storeOperatorExtraction = action({
   },
   returns: extractionOutcomeValidator,
   handler: async (ctx, args): Promise<ExtractionOutcome> => {
+    await requireOperator(ctx, args);
     if (!OPERATOR_EXTRACTION_MODELS.includes(args.model)) {
       throw new Error(
         `Operator extractions record one of: ${OPERATOR_EXTRACTION_MODELS.join(", ")}`,
       );
     }
-    if (!args.extraction.summary.trim()) {
+    const { extraction } = args;
+    if (!extraction.summary.trim()) {
       throw new Error("An operator extraction needs a summary");
     }
-    const checked = await requireOperatorSource(ctx, args);
-    if (checked.outcome) return checked.outcome;
-    const prepared = await prepareExtraction(ctx, args, checked.source);
-    if (prepared.outcome) return prepared.outcome;
-    return await persistExtraction(
-      ctx,
-      args,
-      args.model,
-      prepared.inputHash,
-      args.extraction,
+    return await ctx.runMutation(
+      internal.extractInternal.storeOperatorExtraction,
+      {
+        sourceId: args.sourceId,
+        model: args.model,
+        inputHash: args.inputHash,
+        summary: extraction.summary,
+        claims: extraction.claims,
+        compositionParameters: filterParameters(
+          extraction.compositionParameters,
+        ),
+        topics: extraction.topics,
+        openQuestions: extraction.openQuestions,
+      },
     );
   },
 });
 
 /**
  * Parks a text_ready Source whose exported text the extraction gate refuses
- * (feed excerpt, bot wall, near-empty capture). Never calls a model: text the
- * gate accepts, or text changed since export, is left as it is.
+ * (feed excerpt, bot wall, near-empty capture), in one transaction that
+ * rechecks the exported inputHash. Never calls a model.
  */
 export const parkOperatorUnextractable = action({
   args: {
@@ -432,23 +416,12 @@ export const parkOperatorUnextractable = action({
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({ parked: v.boolean(), reason: v.string() }),
-  handler: async (ctx, args) => {
-    const checked = await requireOperatorSource(ctx, args);
-    if (checked.outcome) {
-      return { parked: false, reason: checked.outcome.reason };
-    }
-    const reason = unextractableTextReason(checked.content);
-    if (!reason) {
-      return { parked: false, reason: "text is extractable" };
-    }
-    await ctx.runMutation(api.sources.updateStatus, {
-      id: args.sourceId,
-      status: "review_needed",
-      blockedReason: "no_text",
-      blockedDetails: reason,
-      devBypassSecret: args.devBypassSecret,
-    });
-    return { parked: true, reason };
+  handler: async (ctx, args): Promise<{ parked: boolean; reason: string }> => {
+    await requireOperator(ctx, args);
+    return await ctx.runMutation(
+      internal.extractInternal.parkOperatorUnextractable,
+      { sourceId: args.sourceId, inputHash: args.inputHash },
+    );
   },
 });
 
