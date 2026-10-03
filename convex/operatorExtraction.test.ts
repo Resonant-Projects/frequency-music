@@ -250,6 +250,68 @@ describe("operator extraction", () => {
   });
 });
 
+describe("operator export page", () => {
+  test("pages text_ready Sources with full-text hashes and prompt-sized text", async () => {
+    const t = convexTest(schema, modules);
+    const long = `${article.repeat(400)}TAIL`;
+    const insert = (n: number, rawText: string, status = "text_ready") =>
+      t.run((ctx) =>
+        ctx.db.insert("sources", {
+          type: "url",
+          canonicalUrl: `https://example.org/${n}`,
+          dedupeKey: `url:example.org/${n}`,
+          title: `S${n}`,
+          rawText,
+          status: status as "text_ready",
+          visibility: "private",
+          createdBy: "system",
+          createdAt: n,
+          updatedAt: n,
+        }),
+      );
+    for (let n = 1; n <= 21; n++) await insert(n, article.repeat(2));
+    const longId = await insert(22, long);
+    const teaserId = await insert(23, "Read more at the link.");
+    await insert(24, article.repeat(2), "extracted");
+    const page = (cursor: string | null) =>
+      t.query(api.sources.operatorExtractionPage, {
+        cursor,
+        devBypassSecret: BYPASS,
+      });
+    const first = await page(null);
+    expect(first.page).toHaveLength(20);
+    expect(first.isDone).toBe(false);
+    // Newest first: the teaser (23) and the long text (22) lead.
+    const [teaser, longRow] = first.page;
+    expect(teaser).toMatchObject({
+      sourceId: teaserId,
+      unextractable: expect.any(String),
+    });
+    expect(longRow?.sourceId).toBe(longId);
+    expect(longRow?.inputHash).toBe(await extractionInputHash(long));
+    expect(longRow?.content).toHaveLength(30_000);
+    expect(longRow?.unextractable).toBeUndefined();
+    const second = await page(first.continueCursor);
+    expect(second.page).toHaveLength(3);
+    expect(second.isDone).toBe(true);
+    // The extracted Source (24) is never exported.
+    const ids = [...first.page, ...second.page].map((row) => row.title);
+    expect(ids).not.toContain("S24");
+  });
+
+  test("is operator-only", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t
+        .withIdentity({ subject: "user_123" })
+        .query(api.sources.operatorExtractionPage, {}),
+    ).rejects.toThrow();
+    await expect(
+      t.query(api.sources.operatorExtractionPage, {}),
+    ).rejects.toThrow();
+  });
+});
+
 describe("extraction prompt", () => {
   test("renders title, URL and text cut to 30,000 characters, literally", () => {
     const prompt = renderExtractionPrompt({

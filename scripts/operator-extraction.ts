@@ -3,7 +3,8 @@
  * OpenRouter: an operator session (Claude Code) reads the same extract_v2
  * prompt and writes the extraction JSON itself.
  *
- * 1. Export a chunk (read-only unless --park-unextractable):
+ * 1. Export a chunk (read-only unless --park-unextractable; the export query
+ *    is operator-only, so it also needs the bypass secret):
  *      vpx tsx scripts/operator-extraction.ts export --out <dir> [--limit 40] [--chunk-size 20] [--park-unextractable]
  *    Writes <dir>/chunk-NNN.json. Each holds the system prompt, the
  *    instructions, and per Source its id, inputHash and rendered prompt.
@@ -16,19 +17,30 @@
  *    refuses a Source whose text changed since export, applies the same text
  *    gate and duplicate checks as extractSource, and records the model.
  *
- * Operator-gated: contacts the deployed Convex backend. --park-unextractable
- * and import write as the operator service identity, so both need
- * AUTH_BYPASS_SECRET through Varlock.
+ * Operator-gated: contacts the deployed Convex backend as the operator service
+ * identity (AUTH_BYPASS_SECRET through Varlock). Export reads pages of 20 from
+ * sources.operatorExtractionPage; --park-unextractable and import write.
  */
 // oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
 import "varlock/auto-load";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { MODELS } from "../convex/llm";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
-import { buildChunks, parseResults } from "./lib/operator-extraction";
+import {
+  buildChunks,
+  type ExportRow,
+  extractionProblems,
+  parseResults,
+} from "./lib/operator-extraction";
 
 const MODEL = MODELS.opus;
 
@@ -51,12 +63,33 @@ async function exportChunks(args: string[]) {
   if (!out) throw new Error("export needs --out <dir>");
   const limit = positiveInt(flag(args, "--limit"), 40);
   const chunkSize = positiveInt(flag(args, "--chunk-size"), 20);
+  if (
+    existsSync(out) &&
+    readdirSync(out).some((name) => /^chunk-\d+\.json$/.test(name))
+  ) {
+    throw new Error(
+      `${out} already holds chunk files; export to a new directory`,
+    );
+  }
   const client = getConvexClient();
-  const sources = await client.query(api.sources.listByStatus, {
-    status: "text_ready",
-    limit,
-  });
-  const { chunks, unextractable } = await buildChunks(sources, {
+  const devBypassSecret = getDevBypassSecret();
+  // Pages of 20, newest first, until --limit Sources are collected.
+  const rows: ExportRow[] = [];
+  let cursor: string | null = null;
+  while (rows.length < limit) {
+    const result: {
+      page: ExportRow[];
+      continueCursor: string;
+      isDone: boolean;
+    } = await client.query(api.sources.operatorExtractionPage, {
+      cursor,
+      devBypassSecret,
+    });
+    rows.push(...result.page);
+    if (result.isDone) break;
+    cursor = result.continueCursor;
+  }
+  const { chunks, unextractable } = buildChunks(rows.slice(0, limit), {
     model: MODEL,
     chunkSize,
   });
@@ -74,7 +107,6 @@ async function exportChunks(args: string[]) {
     if (args.includes("--park-unextractable")) {
       // Parks only when the text is still the exported text and the gate
       // still refuses it; never calls a model.
-      const devBypassSecret = getDevBypassSecret();
       for (const { sourceId, inputHash } of unextractable) {
         if (!inputHash) {
           console.log(`  left ${sourceId}: no text to check`);
@@ -96,8 +128,20 @@ async function importResults(args: string[]) {
   const file = args.find((arg) => !arg.startsWith("--"));
   if (!file) throw new Error("import needs <results.json>");
   const { results } = parseResults(readFileSync(file, "utf8"), MODEL);
+  // Every body is checked before anything is stored, so a bad file stores
+  // nothing and --dry-run predicts the import.
+  const invalid = results.flatMap((result) => {
+    const problems = extractionProblems(result.extraction);
+    return problems.length
+      ? [`${result.sourceId}: ${problems.join("; ")}`]
+      : [];
+  });
+  if (invalid.length > 0) {
+    for (const line of invalid) console.log(`INVALID ${line}`);
+    throw new Error(`${invalid.length} invalid results; nothing stored`);
+  }
   if (args.includes("--dry-run")) {
-    console.log(`${results.length} results parsed; nothing stored (--dry-run)`);
+    console.log(`${results.length} results valid; nothing stored (--dry-run)`);
     return;
   }
   const client = getConvexClient();
@@ -109,7 +153,7 @@ async function importResults(args: string[]) {
         sourceId: result.sourceId as Id<"sources">,
         model: MODEL,
         inputHash: result.inputHash,
-        // Convex validates the extraction's shape before storing it.
+        // Checked by extractionProblems above and by Convex's validator.
         extraction: result.extraction as never,
         devBypassSecret,
       });
