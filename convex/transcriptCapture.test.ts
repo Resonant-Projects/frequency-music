@@ -137,12 +137,15 @@ describe("recording transcript capture", () => {
     const t = convexTest(schema, modules);
     const runId = await insertRun(t);
     const id = await insertVideo(t, "JJJJJJJJJJJ");
-    const record = (outcome: "attempted" | "rate_limited") =>
+    const record = (
+      outcome: "attempted" | "rate_limited",
+      detail: string | undefined = "ERROR: This video is unavailable",
+    ) =>
       t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
         sourceId: id,
         agentRunId: runId,
         outcome,
-        detail: "ERROR: This video is unavailable",
+        ...(detail ? { detail } : {}),
       });
     for (let i = 0; i < 10; i++) await record("rate_limited");
     for (let i = 0; i < 4; i++) await record("attempted");
@@ -150,7 +153,8 @@ describe("recording transcript capture", () => {
       status: "ingested",
       metadata: { transcriptCapture: { attempts: 4 } },
     });
-    await record("attempted");
+    // A detail-less final attempt keeps the last recorded reason.
+    await record("attempted", undefined);
     expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
       status: "review_needed",
       blockedReason: "no_text",

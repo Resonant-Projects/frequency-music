@@ -152,13 +152,18 @@ export const recordTranscriptCapture = internalMutation({
     };
     const exhausted =
       args.outcome === "attempted" && attempts >= MAX_TRANSCRIPT_ATTEMPTS;
+    // A detail-less final attempt still parks with the last recorded reason.
+    const parkingDetail =
+      typeof attempt.lastAttemptDetail === "string"
+        ? attempt.lastAttemptDetail
+        : undefined;
     await ctx.db.patch("sources", source._id, {
       ...(args.outcome === "unavailable" || exhausted
         ? {
             status: "review_needed" as const,
             blockedReason: "no_text" as const,
             blockedDetails: exhausted
-              ? `Transcript capture failed ${attempts} times${detail ? `: ${detail}` : ""}`.slice(
+              ? `Transcript capture failed ${attempts} times${parkingDetail ? `: ${parkingDetail}` : ""}`.slice(
                   0,
                   DETAIL_MAX_CHARS,
                 )
