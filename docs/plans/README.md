@@ -84,6 +84,14 @@ Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** un
 | W2 | [Docket and signed decisions](../superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) | Implementation plan prepared September 30, including live OpenClaw prerequisite checks. Text docket can proceed now; spoken cards depend on the house voice. |
 | W3–W4 | Render ladder and listen page; hypothesis tournament | Specced, not yet planned |
 
+## 1d. Source backlog and operator extraction (2026-10-03)
+
+Capture and extraction backlog remediation (PRs #95–#108). It is paused until
+Tuesday 2026-10-06, with about 1,800 Sources still `text_ready`. Resume from the
+[handoff](./2026-10-03-source-backlog-operator-extraction-handoff.md): current
+counts, the per-round `scripts/operator-extraction.ts` procedure and subagent
+prompt, and open decisions.
+
 ## 2. Operator/live acceptance items
 
 Small; several are gate-specific, and item 1 must finish before plan 13 starts.
