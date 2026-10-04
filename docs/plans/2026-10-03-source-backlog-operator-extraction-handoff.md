@@ -18,7 +18,7 @@ Source counts from the last snapshot (2026-10-03, about 7,470 Sources):
 | `text_ready` (awaiting extraction) | 3,904 | **~1,800** |
 | `extracted` | 2,061 | ~3,100 |
 | `review_needed` / `ai_error` | 643 | **0** |
-| `ingested` without text (capturable) | 225 | 11, all walled (see below) |
+| `ingested` without text (capturable) | 225 | 14 (11 `ingested` + 3 `ingested`/`no_text`), all walled (see below) |
 | YouTube awaiting transcript | 170 | **0** |
 | `archived` / `duplicate` | 39 | ~1,490 |
 
@@ -120,10 +120,11 @@ musical content, and an empty `claims` array is correct for them.
 
 ## Remaining items and decisions
 
-- **11 URL-only Scout Sources are walled:** JSTOR (5), ResearchGate (4), HAL
-  Anubis, PMC cookie wall, dokumen.pub, worldscientific, philarchive, AIP.
-  Crawl4AI, Firecrawl and OpenAlex all fail on them. Recover them by hand or
-  leave them.
+- **14 URL-only Scout Sources are walled.** The snapshot counts 11 as
+  `ingested` and 3 as `ingested`/`no_text`. They sit behind JSTOR, ResearchGate,
+  HAL Anubis, the PMC cookie wall, dokumen.pub, worldscientific, philarchive
+  and AIP pages. Crawl4AI, Firecrawl and OpenAlex all fail on them. Recover
+  them by hand or leave them.
 - **3 YouTube talks over 2 hours stay parked.** The 2-hour cap was kept for
   Groq's audio-seconds-per-hour limit.
 - **Segmented transcripts take their language label from the first segment
