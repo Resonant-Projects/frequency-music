@@ -78,7 +78,7 @@ runtime.
   - PDF: no PDF library is currently a real dependency (plan 007 removes two
     unused ones) — choosing one is a design-doc decision with a shortlist, not
     an install in this spike.
-- Vocabulary (`CONTEXT.md`): "Source Intake: any path by which a source enters
+- Vocabulary (`GLOSSARY.md`): "Source Intake: any path by which a source enters
   the system — RSS cron polling, HTTP ingest routes, or manifest scripts. All
   intake paths share one dedupe contract." Use "Source Intake", "Dedupe Key",
   "blocked state" in the design.
@@ -231,5 +231,5 @@ Stop and report back (do not improvise) if:
   key) is implemented around it.
 - Whoever builds the status surface should reconcile it with `agentRuns`'
   existing queue/heartbeat vocabulary rather than inventing a third job model
-  (`CONTEXT.md` "Agent Run") — the design doc's section 5 comparison is the
+  (`GLOSSARY.md` "Agent Run") — the design doc's section 5 comparison is the
   place that argument gets settled.

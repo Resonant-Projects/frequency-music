@@ -70,7 +70,7 @@ spike must design the parameter contract and the export together, not just
     generated assets (item 7).
   - Decision log 2026-04-18: "DAW integration will be fragile if recipes and
     parameters remain prose-heavy or loosely typed."
-- Vocabulary (`CONTEXT.md`): Recipe = "the experiment protocol that turns a
+- Vocabulary (`GLOSSARY.md`): Recipe = "the experiment protocol that turns a
   hypothesis into concrete composition instructions — parameters, DAW
   checklist, and study protocol." A "Cross-Seam Contract" is "defined once
   under `convex/shared/`; zod-first for payloads" — but `convex/shared/` is

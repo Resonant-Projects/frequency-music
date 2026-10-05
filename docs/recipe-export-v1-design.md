@@ -114,7 +114,7 @@ type ParameterValueV1 = {
 
 The prototype keeps this schema local because the architecture wave has not
 created `convex/shared/`. The eventual contract should be zod-first there, per
-the Cross-Seam Contract rule in `CONTEXT.md`.
+the Cross-Seam Contract rule in `GLOSSARY.md`.
 
 Normalization rules:
 

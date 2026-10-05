@@ -3162,7 +3162,7 @@ In homelab-infra: `git add hosts/ai-5090-02 && git commit -m "feat(ai-5090-02): 
 
 **Files:**
 - Create: `convex/shared/listeningPredicates.ts`, test `convex/shared/listeningPredicates.test.ts`
-- Modify: `CONTEXT.md` (new terms under a new `### Audio substrate` heading in the Language section)
+- Modify: `GLOSSARY.md` (new terms under a new `### Audio substrate` heading in the Language section)
 - Modify: `docs/plans/README.md` (one paragraph pointing at the listen-first specs and this plan)
 - Modify: `AGENTS.md` (one line in Guardrails: the media service is a second standing service identity using `AGENT_TOOL_SECRET`; `media/` is a fourth package with its own configs)
 
@@ -3240,7 +3240,7 @@ Expected: format, lint, typecheck (scripts, web, agent, media), convex+scripts t
 - [ ] **Step 4: Commit**
 
 ```bash
-git add convex/shared/listeningPredicates.ts convex/shared/listeningPredicates.test.ts CONTEXT.md AGENTS.md docs/plans/README.md
+git add convex/shared/listeningPredicates.ts convex/shared/listeningPredicates.test.ts GLOSSARY.md AGENTS.md docs/plans/README.md
 git commit -m "feat(shared): human listening predicate; audio substrate vocabulary and plan index"
 ```
 

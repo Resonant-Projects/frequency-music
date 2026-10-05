@@ -225,7 +225,7 @@ Grounded in repo evidence; each is a design/spike or build decision for Keith,
 not an executor task. Listed so they're captured:
 
 - **DIR-01 — build `recipe_export_v1` / "Starter Kit"**: spike (Wave-1 plan 009)
-  DONE, CONTEXT.md specifies it, `.scl` emitter prototyped, but zero code
+  DONE, GLOSSARY.md specifies it, `.scl` emitter prototyped, but zero code
   (`grep starterKit` → nothing). Highest-leverage "tool does the setup
   arithmetic" win. Resolve `docs/recipe-export-v1-design.md#6` open questions
   first. Effort L.
@@ -233,7 +233,7 @@ not an executor task. Listed so they're captured:
   with sequenced slices in `docs/autonomous-ingest-design.md#7`; the `fetchJobs`
   table (S1) is unstarted (`grep fetchJobs convex/schema.ts` → nothing). Reuses
   the proven `agentRuns` claim/heartbeat contract. S1 alone unblocks the rest.
-- **DIR-03 — implement "Source Scout"**: CONTEXT.md specifies need-directed
+- **DIR-03 — implement "Source Scout"**: GLOSSARY.md specifies need-directed
   discovery driven by graph gaps; zero code, but the correspondence `conjectured`
   lifecycle + domain registry + agent plumbing now exist. Needs a design/spike
   first (no design doc yet). Effort L.

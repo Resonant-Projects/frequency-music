@@ -7,7 +7,7 @@
 
 ## Executor brief
 
-- Build the **Source Scout** graph (`CONTEXT.md` term): discovery driven by the graph's own gaps — under-represented on-mission domains and evidence-starved conjectures become search queries.
+- Build the **Source Scout** graph (`GLOSSARY.md` term): discovery driven by the graph's own gaps — under-represented on-mission domains and evidence-starved conjectures become search queries.
 - Individual sources **direct-ingest** with agent provenance (the source status pipeline is their review structure). New recurring **feeds are proposals** — disabled rows a human enables from the brief.
 - Web search is a new agent capability: pick ONE provider, wrap it as one tool.
 

@@ -82,7 +82,7 @@ while every other secret check in the repo is constant-time.
     return json({ error: "Forbidden" }, 403);
   }
   ```
-- Vocabulary (`CONTEXT.md`): the "Agent-Tool Surface" is the secret-guarded HTTP
+- Vocabulary (`GLOSSARY.md`): the "Agent-Tool Surface" is the secret-guarded HTTP
   interface; graph writes are NOT part of it and must not become part of it.
 - **Standing constraint**: `bunx convex codegen` / `dev` / `deploy` talk to the
   LIVE self-hosted backend — do not run them. This plan only edits existing
@@ -116,7 +116,7 @@ while every other secret check in the repo is constant-time.
   the two helpers is deferred (see Maintenance notes).
 - `convex/agentTools.ts` — its `requireAgentToolSecret` path is already correct.
 - Adding graph writes to the agent-tool surface — explicitly not wanted
-  (CONTEXT.md: human decisions and internal writes are never part of it).
+  (GLOSSARY.md: human decisions and internal writes are never part of it).
 
 ## Git workflow
 

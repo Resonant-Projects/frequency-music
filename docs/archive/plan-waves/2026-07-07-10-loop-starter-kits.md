@@ -7,7 +7,7 @@
 
 ## Executor brief
 
-- Every recipe becomes generatable into its **Starter Kit** (`CONTEXT.md` term): `.scl` + `.kbm` from tuning parameters, a seed MIDI sketch honoring the recipe's constraints, and a parameter card — so studio time starts at "make it sound good," not setup arithmetic.
+- Every recipe becomes generatable into its **Starter Kit** (`GLOSSARY.md` term): `.scl` + `.kbm` from tuning parameters, a seed MIDI sketch honoring the recipe's constraints, and a parameter card — so studio time starts at "make it sound good," not setup arithmetic.
 - CLI-first (`bun run scripts/generate-starter-kit.ts <recipeId>`); pure, unit-tested generation lib; artifacts land in `exports/starter-kits/<recipe-slug>/`.
 - This attacks the funnel's welded-shut bottom: 16 recipes, 0 compositions.
 

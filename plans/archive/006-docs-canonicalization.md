@@ -58,7 +58,7 @@ this plan makes one file canonical and the other a thin delta.
   (`agent/README.md` exists), the worker (`agent/docker-compose.yml`,
   `docs/proxmox-agent-deployment.md`), Convex env
   (`.env.example`), or the agent-tool surface (`docs/agent-tool-surface.md`).
-- Design/vocabulary constraint (`CONTEXT.md` is the canonical glossary):
+- Design/vocabulary constraint (`GLOSSARY.md` is the canonical glossary):
   docs should use its terms — Source, Source Intake, Extraction, Generator,
   Agent Draft, Draft Promotion, Agent-Tool Surface.
 
@@ -78,7 +78,7 @@ this plan makes one file canonical and the other a thin delta.
 - `README.md`
 
 **Out of scope** (do NOT touch):
-- `CONTEXT.md` — already canonical and current.
+- `GLOSSARY.md` — already canonical and current.
 - `docs/**`, `planning/**` — historical/strategic docs; linking to them is in
   scope, editing them is not.
 - `agent/README.md`, `.env.example` — link targets, not edit targets.
@@ -109,7 +109,7 @@ this plan makes one file canonical and the other a thin delta.
 
 Replace AGENTS.md's duplicated content with:
 1. A header: `# Agent instructions` + one line: canonical project reference is
-   `CLAUDE.md` (link) + `CONTEXT.md` for vocabulary — read those first.
+   `CLAUDE.md` (link) + `GLOSSARY.md` for vocabulary — read those first.
 2. KEEP any content that is genuinely AGENTS.md-specific (diff the two files
    first: `diff CLAUDE.md AGENTS.md` — sections present only in AGENTS.md, or
    agent-specific guidance like the `<AUTH_BYPASS_SECRET>` command examples,

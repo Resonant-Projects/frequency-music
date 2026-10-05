@@ -81,7 +81,7 @@ Wave 1 now has a completed five-voice production comparison, including female an
 
 ## Task 1: shared contracts and revision identity
 
-Files: create `convex/shared/decisionIntents.ts`, `convex/shared/docket.ts`, and their tests. Update `convex/schema.ts`, `convex/validators.ts`, `convex/agentDrafts.ts`, `convex/feeds.ts`, `convex/admin.ts`, and `CONTEXT.md`. Create an idempotent bounded revision-backfill mutation in `convex/decisionIntentsMigrations.ts`.
+Files: create `convex/shared/decisionIntents.ts`, `convex/shared/docket.ts`, and their tests. Update `convex/schema.ts`, `convex/validators.ts`, `convex/agentDrafts.ts`, `convex/feeds.ts`, `convex/admin.ts`, and `GLOSSARY.md`. Create an idempotent bounded revision-backfill mutation in `convex/decisionIntentsMigrations.ts`.
 
 - [ ] Define action-specific payloads, target discriminators, provenance, signer events, immutable intent fields, receipts, listening conditions, and stable SHA-256 payload-digest inputs.
 - [ ] Add the four tables in the design: `decisionIntents`, `webhookEvents`, `docketCards`, and `docketDeliveries`, with indexes for code, target, status/expiry, and receipt deduplication.
