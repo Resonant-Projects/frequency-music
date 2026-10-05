@@ -27,7 +27,7 @@
 ## Load on demand
 
 - Purpose and setup: `README.md`
-- Domain vocabulary: `CONTEXT.md`
+- Domain vocabulary: `GLOSSARY.md`
 - Current work and ordering: `docs/plans/README.md`
 - Agent API, runtime, and tracing: `docs/agent-tool-surface.md`, `agent/README.md`, `docs/langsmith-runbook.md`
 - Backend recovery inventory and isolated restore rehearsal tooling: `docs/frequency-backend-recovery-preparation-20260913.md`, `scripts/recovery/`

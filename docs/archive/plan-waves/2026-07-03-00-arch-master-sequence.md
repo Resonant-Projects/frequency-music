@@ -6,7 +6,7 @@
 
 **Decisions already made (do not reopen — recorded in `docs/decision-log.md` 2026-07-03):** convex-test harness (bun spike, scoped-vitest fallback) · zod-first via `convex-helpers/server/zod4` for cross-seam shapes, schema-canonical for internal shapes · archive one-shot scripts, never delete · archive-don't-delete for duplicate source rows · tracing stays best-effort (2026-05-16) · Gate G2 pure promotion builders unchanged (2026-07-01).
 
-**Vocabulary:** architecture terms per the codebase-design glossary (module / interface / seam / adapter / depth / leverage / locality); domain terms per `CONTEXT.md` (Source Intake, Dedupe Key, Generator, Cross-Seam Contract, …).
+**Vocabulary:** architecture terms per the codebase-design glossary (module / interface / seam / adapter / depth / leverage / locality); domain terms per `GLOSSARY.md` (Source Intake, Dedupe Key, Generator, Cross-Seam Contract, …).
 
 ---
 

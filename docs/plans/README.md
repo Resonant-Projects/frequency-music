@@ -56,7 +56,7 @@ deferred by the 2026-07-18 decision, not dropped.
 ## 1b. Passage-retrieval program (planned 2026-08-01)
 
 Grilling session 2026-08-01 (Keith): make source prose retrievable via the
-`@convex-dev/rag` component. Language: **Passage** in `CONTEXT.md`; decision
+`@convex-dev/rag` component. Language: **Passage** in `GLOSSARY.md`; decision
 record: [ADR 0001](../adr/0001-split-embedding-spaces-for-passages.md)
 (3-large passages / 3-small claims, split space, migration is a follow-on).
 
@@ -75,7 +75,7 @@ Wave specs: [voice and podcast feed](../superpowers/specs/2026-09-28-voice-and-p
 [Freq docket and voice decisions](../superpowers/specs/2026-09-28-freq-docket-and-voice-decisions-design.md),
 [render ladder and listen page](../superpowers/specs/2026-09-28-render-ladder-and-listen-page-design.md),
 [hypothesis tournament](../superpowers/specs/2026-09-28-hypothesis-tournament-design.md).
-Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** under `CONTEXT.md` § Audio substrate.
+Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** under `GLOSSARY.md` § Audio substrate.
 
 | # | Plan | Status |
 |---|------|--------|

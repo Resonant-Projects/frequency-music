@@ -529,7 +529,7 @@ Operator-item delegations recorded: the Proxmox worker restart + UNAUTHORIZED-ca
 - `agentReviewDrafts` gains an optional `amendedPayload` field; promoted-row provenance gains `approvedWithEdits`/`editedFields`.
 - The vocabulary registry gains triage mutations; the miner (plan 05) consumes a curated registry.
 - `recipes.updateStatus` and recipe editing get UI surfaces; hypothesis approval schedules recipe drafting.
-- CONTEXT.md updated: Draft Promotion (amendments), new Domain Triage term.
+- GLOSSARY.md updated: Draft Promotion (amendments), new Domain Triage term.
 - Execution order: Wave-2 fixes (011–015) → 04 ∥ 12-triage → 05 → 06 → 07 (amended) → 13-recipe-loop → 08 → 09 → 14-sweep → 10 → 11 → generator steering.
 
 ## **Revisit trigger**

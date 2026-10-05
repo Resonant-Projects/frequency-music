@@ -67,7 +67,7 @@ that `noUncheckedIndexedAccess` can't protect at runtime.
   `convex/sourceUtils.test.ts` (imports named exports directly from the
   sibling module). Test command: `bun test convex/*.test.ts` (59 pass at
   `a30f10c`, ~80ms).
-- Vocabulary (`CONTEXT.md`): a "Source" is the research input; "Extraction" is
+- Vocabulary (`GLOSSARY.md`): a "Source" is the research input; "Extraction" is
   the AI-distilled structured reading (claims/parameters/topics). Use these
   terms in test names.
 - **Standing constraint**: do not run `bunx convex codegen` / `dev` / `deploy`

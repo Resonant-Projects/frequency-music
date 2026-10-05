@@ -5,7 +5,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > **Found-state rule (wave 2026-07-07):** authored pre-arch-wave. Adapt to found state; schemas, interfaces, and gates are binding. **Prerequisites: plan 01 (claims), plan 02 (domains/relevance), arch plan 2026-07-03-05 (agent-tool registry).**
 
-**Goal:** Land the wave's central entity. A **Correspondence** (per `CONTEXT.md`) is an asserted link between two concepts from different domains: the concept pair is its identity and dedupe key; claims cite as evidence; lifecycle `conjectured → evidenced | contradicted → retired`. Agents write correspondences directly (provenance-stamped, no review queue) — the two-doors-one-gate decision recorded 2026-07-07 in `docs/decision-log.md`.
+**Goal:** Land the wave's central entity. A **Correspondence** (per `GLOSSARY.md`) is an asserted link between two concepts from different domains: the concept pair is its identity and dedupe key; claims cite as evidence; lifecycle `conjectured → evidenced | contradicted → retired`. Agents write correspondences directly (provenance-stamped, no review queue) — the two-doors-one-gate decision recorded 2026-07-07 in `docs/decision-log.md`.
 
 **Tech Stack:** Bun, Convex (self-hosted), zod-first cross-seam shapes (`convex/shared/`, per arch wave), bun:test + harness.
 

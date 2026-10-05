@@ -4,7 +4,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
 > **Sequencing:** parallel to plan 04 (embeddings) — touches the vocabulary registry, not embeddings. **Must land before plan 05** so the miner filters on a curated registry.
-> **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). Vocabulary: `CONTEXT.md` → Domain Triage.
+> **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). Vocabulary: `GLOSSARY.md` → Domain Triage.
 
 ## Executor brief
 

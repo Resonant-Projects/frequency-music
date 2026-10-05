@@ -303,7 +303,7 @@ and the artifacts carry `normalization: "skipped"`.
   `scripts/lib/seedMidi.ts` move to `convex/shared/tuning/` with re-export
   shims, because the media package needs them.
 - Every new table gets validators in `convex/shared/`, tests beside the
-  module, and a vocabulary line in `CONTEXT.md`.
+  module, and a vocabulary line in `GLOSSARY.md`.
 - Secrets (`AGENT_TOOL_SECRET`, `PODCAST_FEED_TOKEN`, `MCP_SHARED_SECRET`,
   signer bot tokens, TTS keys) resolve through 1Password references in
   deployment configs; none printed, pasted, or committed.

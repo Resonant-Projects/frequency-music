@@ -23,7 +23,7 @@ Requirement traceability:
 | Automated terminal state | Roadmap: "every supported source type can move from raw input to `text_ready` or a clear blocked state without manual paste work" | Sections 3–4 define the common intake/workflow contract |
 | Retry and exact failure | Roadmap: "blocked items expose exact failure reasons and retry paths" | Sections 3–5 define stable error codes and retry rules |
 | Visible operations | Workstream: "users can tell whether automation is working without checking logs" | Section 5 assigns source and system status surfaces |
-| Shared identity | `CONTEXT.md`: "All intake paths share one dedupe contract" | Section 3 requires `sourceUtils` at every Source Intake boundary |
+| Shared identity | `GLOSSARY.md`: "All intake paths share one dedupe contract" | Section 3 requires `sourceUtils` at every Source Intake boundary |
 
 ## 2. Capability table
 

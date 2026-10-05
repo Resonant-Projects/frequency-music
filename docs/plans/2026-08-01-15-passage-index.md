@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > **Found-state rule:** adapt to found state; schemas, interfaces, gates binding.
-> **Session decisions (grilling 2026-08-01, Keith):** see `docs/adr/0001-split-embedding-spaces-for-passages.md` and the **Passage** entry in `CONTEXT.md`. This plan is wave one of the passage-retrieval program (foundation + agent tool). Follow-on waves — hypothesis context, extraction full-text fix, recipe context — are **not** in scope here.
+> **Session decisions (grilling 2026-08-01, Keith):** see `docs/adr/0001-split-embedding-spaces-for-passages.md` and the **Passage** entry in `GLOSSARY.md`. This plan is wave one of the passage-retrieval program (foundation + agent tool). Follow-on waves — hypothesis context, extraction full-text fix, recipe context — are **not** in scope here.
 
 **Goal:** Make source prose retrievable. Chunk-index every text-bearing source's full text (`rawText`/`transcript`) into a `@convex-dev/rag` passage index, and expose one bounded agent tool, `searchSourcePassages`, so agents can semantically query the corpus and get back what sources actually *say* — with provenance — instead of only claim assertions.
 
@@ -176,4 +176,4 @@ Free-text query → top-8 passages with source titles, scores, and chunk positio
 - `searchSourcePassages` registered in tool registry + manifest + docs, with bounds enforced (limit ≤8, ±1 chunk context, ≤12k chars, archived excluded) and live-status hydration.
 - Probe returns sane cross-domain passages for a hand-picked query (pasted in PR).
 - `docs/agent-tool-surface.md` policy reworded to "no unbounded document text."
-- ADR 0001 and CONTEXT.md **Passage** entry already landed (commit `00dc06a`) — no doc drift.
+- ADR 0001 and GLOSSARY.md **Passage** entry already landed (commit `00dc06a`) — no doc drift.
