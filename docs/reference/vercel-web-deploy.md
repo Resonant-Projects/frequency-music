@@ -2,7 +2,7 @@
 
 The `frequency-music` Vercel project deploys the SolidJS app in `web/`.
 
-- **Project:** `frequency-music` (org `keithces-projects-5000a883`)
+- **Project:** `frequency-music` (owner `rproj`, Resonant Projects; verified October 5, 2026)
 - **Root Directory:** `web`
 - **Framework preset:** Vite
 - **Install / Build:** defaults — `bun install` then `bun run build`, run **inside `web/`**
@@ -14,6 +14,30 @@ The Solid app uses client-side routing, so requests for routes such as
 resolve the page. `web/vercel.json` defines the catch-all rewrite; without it,
 direct navigation and browser refreshes return Vercel's 404 even though
 in-app navigation works.
+
+## Listen page RSS proxy
+
+The signed-in Listen page obtains its private feed address from the existing
+`podcast.subscription` query. It fetches that address's path from the web
+origin; the first rewrite in `web/vercel.json` forwards
+`/podcast/:token/feed.xml` to `https://listen.rproj.art`. Keep this rewrite
+before the SPA fallback so the browser receives RSS rather than `index.html`.
+The Vite development server has a matching proxy.
+
+The page parses episode titles, publication dates, durations and enclosure
+URLs from RSS, refreshes each minute while visible and when visibility returns,
+and offers manual refresh. Unchanged episode rows retain their audio players
+so refreshing does not interrupt playback. Feed failures keep the last loaded
+episodes and offer retry. The feed token stays in the authenticated subscription
+flow and is never embedded in source or logs. This change needs only a web
+release; it adds no backend function or schema.
+
+For a manual Vercel deployment, upload an isolated tree of tracked source and
+reviewed changes. Do not upload the operator worktree's ignored `out/` evidence,
+audio masters, `.env.local`, or local preview harness. Vercel CLI's upload
+selection can include `out/` despite Git ignoring it. Link the existing
+`rproj/frequency-music` project and deploy the repository root so `web/` can
+still import the generated Convex client and repository essays.
 
 ## The `convex/server` resolution gotcha
 

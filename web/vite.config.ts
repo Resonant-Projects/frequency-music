@@ -86,6 +86,13 @@ export default defineConfig({
   },
   server: {
     port: 4173,
+    // Match the same-origin RSS rewrite used by Vercel in production.
+    proxy: {
+      "^/podcast/[^/]+/feed\\.xml$": {
+        target: "https://listen.rproj.art",
+        changeOrigin: true,
+      },
+    },
     fs: {
       allow: [".", "../data", "../convex"],
     },
