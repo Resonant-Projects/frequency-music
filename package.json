@@ -39,6 +39,7 @@
     "convex": "^1.46.0",
     "convex-helpers": "^0.1.124",
     "langsmith": "^0.7.2",
+    "marked": "^18.1.0",
     "midi-file": "^1.2.4",
     "zod": "4.4.3"
   },

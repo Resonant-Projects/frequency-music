@@ -1,0 +1,62 @@
+{
+  "duality-all-the-way-down": {
+    "source": [
+      {
+        "from": "(Γ or ⊤)",
+        "to": "(shaped like a capital gamma or an upside-down T)"
+      },
+      {
+        "from": "inversions on ℤ₁₂ × ℤ.",
+        "to": "inversions on the product of the integers modulo twelve with the integers."
+      },
+      {
+        "from": "on the group ℤ₁₂",
+        "to": "on the integers modulo twelve"
+      },
+      {
+        "from": "(5 + 7 = 12)",
+        "to": "(five plus seven equals twelve)"
+      },
+      {
+        "from": "across the diagonal s_f = s_p.",
+        "to": "across the diagonal where s-f equals s-p."
+      }
+    ]
+  },
+  "against-dominance": {
+    "source": [
+      {
+        "from": "z̃ = α·z_expert − β·z_amateur",
+        "to": "the steered vector equals alpha times the expert vector, minus beta times the amateur vector"
+      },
+      {
+        "from": "The α=2.0, β=1.0 calibration",
+        "to": "The calibration of alpha at 2.0 and beta at 1.0"
+      },
+      {
+        "from": "(α=β=1.0)",
+        "to": "(alpha and beta both at 1.0)"
+      }
+    ]
+  },
+  "everything-is-a-resonant-body": {
+    "source": [
+      {
+        "from": "_input signal × resonant body = colored output_",
+        "to": "input signal times resonant body equals colored output"
+      },
+      {
+        "from": "Memory + periodic input = selective amplification = resonance.",
+        "to": "Memory plus periodic input equals selective amplification, and selective amplification is resonance."
+      }
+    ]
+  },
+  "musics-dark-matter": {
+    "source": [
+      {
+        "from": "(NMI = 0.167)",
+        "to": "(a normalized mutual information of 0.167)"
+      }
+    ]
+  }
+}
