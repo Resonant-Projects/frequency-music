@@ -2,7 +2,22 @@
 
 Date: 2026-09-30. Status: implementation plan ready; external integration setup and human acceptance remain. Wave 2 is not deployed.
 
-Deliver the pending review and listening docket through the existing `freq` agent. The agent proposes actions; Keith confirms them through platform-verified signer bots or the authenticated web page. Prepare and ship text delivery first. Add spoken cards after Keith selects the Wave 1 house voice.
+October 5 update: Keith asked to proceed with Wave 2 and confirmed his
+long-form listening preferences. Production `houseVoiceId` is verified as
+`inworld-max`, Dennis. Preserve it as the regular voice. Before November 2,
+use the three different long-form episodes now published in Inworld Max,
+Voxtral male preset, and ElevenLabs male directed v4 through the existing
+private feed. Inworld's first episode combined existing weekly narrations
+after new synthesis returned HTTP 402. Keith subsequently restored credits,
+and the prepared fresh essay "The tuning codec" was rendered and published
+at 14:47. Its feed download, complete decoding, browser playback and seeking
+are verified; the earlier compilation remains available as extra listening.
+Do not render the same topic three times. Keith reports v4 is slightly
+cleaner but has no strong v3/v4 preference. This feedback creates neither
+numerical ratings nor research listening sessions. Current episode and
+account blockers are tracked in the [live handoff](../../listen-first-live-handoff-2026-09-30.md).
+
+Deliver the pending review and listening docket through the existing `freq` agent. The agent proposes actions; Keith confirms them through platform-verified signer bots or the authenticated web page. Prepare and ship text delivery first. Spoken cards will use Keith's verified Inworld Max house voice.
 
 The canonical behavior and security checks are in [Freq docket and voice decisions](../specs/2026-09-28-freq-docket-and-voice-decisions-design.md). The [program design](../specs/2026-09-28-listen-first-program-design.md) owns wave ordering and the human decision boundary. This plan adds implementation order, concrete files, and operator gates without replacing those contracts.
 
@@ -25,7 +40,7 @@ There are no docket or decision-intent tables/modules, signer webhook handlers, 
 ## Wave 1 dependencies
 
 - Text docket queries, proposal contracts, signer integration, and MCP implementation may proceed now.
-- Spoken blurbs and OpenClaw house-voice configuration wait for Keith to rate the real shootout and explicitly choose the house voice. Agents must not create his ratings or choose a winner.
+- Keith's website selection is now verified as Inworld Max. Spoken blurbs may use that choice once the relevant Wave 2 code is implemented. Verify actual OpenClaw compatibility before configuring spoken agent replies; retain media-generated audio as the planned fallback. Agents must not create his ratings or replace his choice with an evaluation candidate.
 - The signed-in Wave 1 Listen page now provides the private feed address. Human acceptance still requires website and Pocket Casts playback. The shootout can appear in the feed before the house voice is chosen; the first weekly narration follows his choice. See the [live handoff](../../listen-first-live-handoff-2026-09-30.md) for production evidence.
 - Wave 2 must preserve the working feed and media worker. It does not add Wave 3 renderer jobs or Wave 4 tournament execution.
 - Treat historical production and channel descriptions in the specs as leads for verification, not evidence that a configuration is currently installed.
@@ -174,7 +189,7 @@ This task touches production and the separate infrastructure/OpenClaw configurat
 - [ ] Configure the existing `freq` agent with the exact Discord peer binding ahead of its catch-all, channel permissions, MCP secret env reference, and tool access limited to `freq`.
 - [ ] Update the external `freq` workspace instructions: propose rather than apply, ask for missing rejection notes/listening conditions, preserve absent ratings, and direct signatures to the signer card. Do not claim a proposal was applied.
 - [ ] Configure weekly delivery Thursday 17:30 UTC and Friday episode/studio-prompt delivery. Use receipts; no unchanged posts and no auto-resend of unresolved posting receipts. Verify the actual installed heartbeat scheduler supports the intended timing.
-- [ ] After Keith chooses the voice, validate OpenClaw provider compatibility and enable spoken blurbs. If a catalog mapping is unsupported, deliver the existing media-generated audio while documenting the agent-reply TTS limitation; do not silently substitute a house voice.
+- [ ] Validate OpenClaw compatibility with Keith's verified Inworld Max choice and enable spoken blurbs. If a catalog mapping is unsupported, deliver the existing media-generated audio while documenting the agent-reply TTS limitation; do not silently substitute a house voice.
 
 Acceptance: text delivery works independently of speech, platform verification reaches the correct Convex deployment, and existing worker/feed behavior survives each step.
 

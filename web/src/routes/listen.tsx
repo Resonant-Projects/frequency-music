@@ -4,12 +4,14 @@ import {
   createSignal,
   For,
   onMount,
+  onCleanup,
   Show,
 } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import { AudioPlayer } from "../components/audio-player";
+import { parsePodcastFeed, type PodcastEpisode } from "../lib/podcast-feed";
 import {
   fieldLabelClass,
   pageClass,
@@ -129,6 +131,10 @@ export function ListenPage() {
   // Status-bearing queries: a failed query must read as a failure, not as
   // "no shootouts yet" or "not chosen".
   const shootouts = createQueryWithStatus(api.listen.shootouts, () => ({}));
+  const subscription = createQueryWithStatus(
+    api.podcast.subscription,
+    () => ({}),
+  );
   const houseVoice = createQueryWithStatus(api.settings.houseVoice, () => ({}));
   const [groupId, setGroupId] = createSignal<Id<"blindGroups"> | null>(null);
   // Latch the first shootout once; tracking row 0 would jump to a newer
@@ -168,20 +174,31 @@ export function ListenPage() {
       <UICard>
         <h1 class={pageTitleClass}>Listen</h1>
         <p class={proseClass}>
-          Blind voice shootout. Rate every take; the mapping is revealed only
-          after the last rating. Choosing the house voice is a separate,
-          explicit step: the first choice starts narrating briefs from the last{" "}
-          {NARRATION_BACKFILL_DAYS} days right away, and every new brief is
-          narrated in the voice you choose.
+          Listen to the episodes in your private podcast feed here, or subscribe
+          in your podcast app. New weekly briefs use your chosen house voice.
         </p>
         <p class={bannerClass}>House voice: {houseVoiceLabel()}</p>
         <UINotice error={houseVoiceError()} />
       </UICard>
 
-      <PodcastFeedCard />
+      <Show
+        when={(() => {
+          const feed = subscription.data();
+          return feed?.configured ? feed.feedUrl : null;
+        })()}
+      >
+        {(url) => <PodcastEpisodes feedUrl={url()} />}
+      </Show>
+
+      <PodcastFeedCard subscription={subscription} />
 
       <UICard>
-        <h2 class={sectionTitleClass}>Shootouts</h2>
+        <h2 class={sectionTitleClass}>Voice shootouts</h2>
+        <p class={proseClass}>
+          Rate every take to reveal the voices. Choosing a house voice is a
+          separate step; your first choice also narrates briefs from the last{" "}
+          {NARRATION_BACKFILL_DAYS} days.
+        </p>
         <UINotice status={shootoutsStatus()} error={shootoutsError()} />
         <Show when={(shootouts.data()?.length ?? 0) > 0}>
           <div class={listClass}>
@@ -225,13 +242,154 @@ export function ListenPage() {
   );
 }
 
+function PodcastEpisodes(props: { feedUrl: string }) {
+  const [episodes, setEpisodes] = createSignal<PodcastEpisode[]>([]);
+  const [loading, setLoading] = createSignal(true);
+  const [loaded, setLoaded] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+  let activeRequest: AbortController | null = null;
+  let disposed = false;
+
+  async function refresh() {
+    if (activeRequest || disposed) return;
+    const controller = new AbortController();
+    activeRequest = controller;
+    setLoading(true);
+    setError(null);
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      // Same-origin proxy to the RSS host. The authenticated subscription
+      // query is the sole source of the token; no cookie or auth key is sent.
+      const response = await fetch(new URL(props.feedUrl).pathname, {
+        cache: "no-store",
+        credentials: "omit",
+        redirect: "error",
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("Feed unavailable");
+      const next = parsePodcastFeed(await response.text(), props.feedUrl);
+      if (!disposed) {
+        // Keep existing row objects so a routine feed refresh does not
+        // remount the native player and interrupt a long episode.
+        setEpisodes((previous) =>
+          next.map(
+            (episode) =>
+              previous.find(
+                (row) =>
+                  row.id === episode.id &&
+                  row.title === episode.title &&
+                  row.playbackUrl === episode.playbackUrl &&
+                  row.createdAt === episode.createdAt &&
+                  row.durationSecs === episode.durationSecs,
+              ) ?? episode,
+          ),
+        );
+        setLoaded(true);
+      }
+    } catch {
+      if (!disposed)
+        setError(
+          "Unable to refresh episodes. Try again using Refresh episodes.",
+        );
+    } finally {
+      clearTimeout(timeout);
+      activeRequest = null;
+      if (!disposed) setLoading(false);
+    }
+  }
+
+  onMount(() => {
+    void refresh();
+    // Refresh only while visible, and immediately when the listener returns.
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    const interval = setInterval(refreshIfVisible, 60000);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    onCleanup(() => {
+      disposed = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+      activeRequest?.abort();
+    });
+  });
+
+  return (
+    <UICard>
+      <div
+        class={css({
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "3",
+          justifyContent: "space-between",
+          alignItems: "center",
+        })}
+      >
+        <h2 class={sectionTitleClass}>Episodes</h2>
+        <UIButton
+          type="button"
+          variant="outline"
+          disabled={loading()}
+          onClick={() => void refresh()}
+        >
+          Refresh episodes
+        </UIButton>
+      </div>
+      <p class={proseClass}>
+        The same episodes as your RSS feed, newest first.
+      </p>
+      <UINotice
+        status={
+          loading() && !loaded()
+            ? "Loading episodes..."
+            : loaded() && !episodes().length
+              ? "No episodes yet. Published episodes will appear here and in your podcast app."
+              : null
+        }
+        error={error()}
+      />
+      <ol class={css({ listStyle: "none", m: "0", p: "0" })}>
+        <For each={episodes()}>
+          {(episode) => (
+            <li
+              class={css({
+                py: "5",
+                borderBottomWidth: "1px",
+                borderBottomStyle: "solid",
+                borderColor: "zodiac.gold/22",
+                _last: { borderBottom: "none", pb: "0" },
+              })}
+            >
+              <AudioPlayer
+                src={episode.playbackUrl}
+                label={episode.title}
+                durationSecs={episode.durationSecs}
+              />
+              <p class={css({ color: "zodiac.cream/66", mt: "2", mb: "0" })}>
+                <time datetime={new Date(episode.createdAt).toISOString()}>
+                  {new Date(episode.createdAt).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </time>
+              </p>
+            </li>
+          )}
+        </For>
+      </ol>
+    </UICard>
+  );
+}
+
 // The feed address is a bearer credential. It is fetched only through the
 // authenticated query and lives nowhere but this card.
-function PodcastFeedCard() {
-  const subscription = createQueryWithStatus(
-    api.podcast.subscription,
-    () => ({}),
-  );
+function PodcastFeedCard(props: {
+  subscription: ReturnType<
+    typeof createQueryWithStatus<typeof api.podcast.subscription>
+  >;
+}) {
+  const subscription = props.subscription;
   const [copyStatus, setCopyStatus] = createSignal<string | null>(null);
   const [copyError, setCopyError] = createSignal<string | null>(null);
   let urlInput: HTMLInputElement | undefined;

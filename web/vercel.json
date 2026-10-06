@@ -1,3 +1,9 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/podcast/:token/feed.xml",
+      "destination": "https://listen.rproj.art/podcast/:token/feed.xml"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
