@@ -786,8 +786,10 @@ export function shortTitle(title: string): string {
   return title.split(/:\s/)[0] ?? title;
 }
 
+// A bare label that introduces a citation or link list ("Sources:",
+// "Related essays:", "Further reading:").
 const SOURCES_LABEL =
-  /^[_*]*(?:Sources?|References|Citations)\s*:?[_*]*\s*:?\s*$/i;
+  /^[_*]*(?:Sources?|References|Citations|Related(?:\s+[a-z]+)?|Further reading|See also)\s*:?[_*]*\s*:?\s*$/i;
 
 const OMITTED = {
   code: "The written essay includes a code listing here; it is left out of the audio edition.",
@@ -822,6 +824,9 @@ export function toSpokenEssay(
   ];
   let pendingBreak = false;
   let skippingSection = false;
+  // Set by a bare "Sources:" label paragraph: only the next block (its
+  // citation list) is dropped, then narration resumes.
+  let skipNextBlock = false;
   let sectionNumber = 0;
   let sawTitle = false;
   let blockNumber = 0;
@@ -864,6 +869,13 @@ export function toSpokenEssay(
     for (const code of unknownCode) {
       warnings.push(
         `${where}: inline code needs a spoken override: \`${code}\``,
+      );
+    }
+    // Implicit multiplication ("2(3+4)", "(2+3)(4+5)", "(3+4)2") has no
+    // operator to speak at all.
+    if (/[\d)\]]\(\s*[\d([]|[)\]]\d/.test(text)) {
+      warnings.push(
+        `${where}: implicit multiplication needs a spoken override`,
       );
     }
     // A root before a number ("√2/3") has an operand scope the converter
@@ -961,11 +973,11 @@ export function toSpokenEssay(
     ordinal?: string,
   ) => {
     const trimmed = text.trim();
-    // A bare "Sources:" label: the list after it is a citation list too.
+    // A bare "Sources:" label: what it introduces is a citation list. The
+    // caller decides how far that reaches (see walk and list).
     if (SOURCES_LABEL.test(trimmed)) {
-      skippingSection = true;
       pendingBreak = true;
-      return;
+      return "sources-label" as const;
     }
     // Provenance footers and dateline stamps belong to the written page.
     if (
@@ -1003,6 +1015,8 @@ export function toSpokenEssay(
       if (token.type === "space" || token.type === "def") continue;
       const where = `block ${++blockNumber}`;
       if (token.type === "heading") {
+        // A heading ends whatever a bare "Sources:" label introduced.
+        skipNextBlock = false;
         const heading = token as Tokens.Heading;
         const headingCode: string[] = [];
         const headingText = renderInline(heading.tokens, headingCode);
@@ -1040,10 +1054,15 @@ export function toSpokenEssay(
       // A rule ends a dropped citation section as well as marking a break.
       if (token.type === "hr") {
         skippingSection = false;
+        skipNextBlock = false;
         pendingBreak = true;
         continue;
       }
       if (skippingSection) continue;
+      if (skipNextBlock) {
+        skipNextBlock = false;
+        continue;
+      }
       if (token.type === "code") omit("code", where);
       else if (token.type === "table") omit("table", where);
       else if (token.type === "blockquote") {
@@ -1052,7 +1071,9 @@ export function toSpokenEssay(
         list(token as Tokens.List);
       } else if (token.type === "paragraph" || token.type === "text") {
         const block = token as Tokens.Paragraph;
-        paragraph(block.text, block.tokens, where);
+        if (paragraph(block.text, block.tokens, where) === "sources-label") {
+          skipNextBlock = true;
+        }
       } else if (token.type === "html") {
         warnings.push(`${where}: an HTML block needs an override`);
       } else {
@@ -1067,9 +1088,10 @@ export function toSpokenEssay(
   // their number. Nested blocks inside an item are walked in order.
   const list = (token: Tokens.List) => {
     const start = typeof token.start === "number" ? token.start : 1;
+    // A "Sources:" item drops the rest of its own list, and nothing after it.
+    let citations = false;
     for (const [index, item] of token.items.entries()) {
-      // A "Sources:" item drops the citation items after it.
-      if (skippingSection) return;
+      if (citations) break;
       const ordinal = token.ordered
         ? (ORDINALS[start + index - 1] ?? `Number ${start + index}`)
         : undefined;
@@ -1080,13 +1102,25 @@ export function toSpokenEssay(
           (child.type === "text" || child.type === "paragraph")
         ) {
           announced = true;
+          // Inside a citation section (a Sources heading, even one nested
+          // in an earlier item) item text is dropped like any other block.
+          if (skippingSection || skipNextBlock) {
+            skipNextBlock = false;
+            continue;
+          }
           const text = child as Tokens.Text;
-          paragraph(
+          const outcome = paragraph(
             text.text,
             text.tokens ?? Lexer.lexInline(text.text),
             `block ${++blockNumber}`,
             ordinal,
           );
+          if (outcome === "sources-label") {
+            // The label's own nested blocks (an indented citation list) and
+            // the remaining items of this list are all dropped.
+            citations = true;
+            break;
+          }
         } else {
           walk([child]);
         }

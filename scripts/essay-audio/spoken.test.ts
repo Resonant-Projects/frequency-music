@@ -1124,3 +1124,81 @@ describe("review round 56 regressions", () => {
     expect(normalizeProse("**bold** and _italic_")).toBe("bold and italic");
   });
 });
+
+describe("PR review: Sources labels reach only what they introduce", () => {
+  test("narration resumes after a citation list", () => {
+    const inList = toSpokenEssay(
+      "t",
+      "# T\n\n- **Sources:**\n- Smith (2024)\n\nNext paragraph.\n",
+    );
+    const a = inList.segments.map((s) => s.text).join(" ");
+    expect(a).not.toContain("Smith");
+    expect(a).toContain("Next paragraph.");
+    const bare = toSpokenEssay(
+      "t",
+      "# T\n\n**Sources:**\n\n- Smith (2024)\n\nNext paragraph.\n",
+    );
+    const b = bare.segments.map((s) => s.text).join(" ");
+    expect(b).not.toContain("Smith");
+    expect(b).toContain("Next paragraph.");
+  });
+});
+
+describe("related-essay labels", () => {
+  test("a Related essays label drops its list", () => {
+    const essay = toSpokenEssay(
+      "t",
+      "# T\n\nBody.\n\n**Related essays:**\n\n- [When Geometry Sings](x.md) — geometry\n",
+    );
+    expect(essay.segments.map((s) => s.text).join(" ")).not.toContain(
+      "Geometry",
+    );
+  });
+});
+
+describe("review round 59 regressions", () => {
+  test("a heading clears a pending label skip; nested citations under a label are dropped", () => {
+    const a = toSpokenEssay(
+      "t",
+      "# T\n\n**Sources:**\n\n## Conclusion\n\nFinal words.\n",
+    );
+    expect(a.segments.map((s) => s.text)).toContain("Final words.");
+    const b = toSpokenEssay(
+      "t",
+      "# T\n\n- **Sources:**\n  - Smith (2024)\n\nAfter.\n",
+    );
+    const texts = b.segments.map((s) => s.text).join(" ");
+    expect(texts).not.toContain("Smith");
+    expect(texts).toContain("After.");
+  });
+});
+
+describe("review round 60 regressions", () => {
+  test("a Sources heading inside a list drops the following items", () => {
+    const essay = toSpokenEssay(
+      "t",
+      "# T\n\n- ### Sources\n  - Smith (2024)\n- Jones (2025)\n\n## Next\n\nMore.\n",
+    );
+    const texts = essay.segments.map((s) => s.text).join(" ");
+    expect(texts).not.toContain("Jones");
+    expect(texts).not.toContain("Smith");
+    expect(texts).toContain("More.");
+  });
+});
+
+describe("review round 61 regressions", () => {
+  test("implicit multiplication is refused; prose brackets after numbers are fine", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is 2(3+4).\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThen (2+3)(4+5) holds.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay(
+        "t",
+        "# T\n\nA fourth 4:3 (the perfect fourth) and item 2 (3 cents).\n",
+      ).warnings,
+    ).toEqual([]);
+  });
+});
