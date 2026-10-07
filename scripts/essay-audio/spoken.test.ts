@@ -383,9 +383,10 @@ describe("benign slashes", () => {
     expect(normalizeProse("an A/B test and an A/B/C study over I/O")).toBe(
       "an A-B test and an A-B-C study over I-O",
     );
-    expect(
-      normalizeProse("2-note/2-chord blocks, MP3/OGG, F0/F2/intensity"),
-    ).toBe("2-note or 2-chord blocks, MP3 or OGG, F0 or F2 or intensity");
+    // Mixed or coded terms keep their slash for an override.
+    expect(normalizeProse("2-note/2-chord blocks, MP3/OGG")).toBe(
+      "2-note/2-chord blocks, MP3/OGG",
+    );
     expect(normalizeProse("a 24-bit/96 kHz file")).toBe(
       "a 24-bit/96 kilohertz file",
     );
@@ -690,5 +691,436 @@ describe("review round 23 regressions", () => {
     expect(
       toSpokenEssay("t", "# T\n\nThe factor is 2/3².\n").warnings.length,
     ).toBeGreaterThan(0);
+  });
+});
+
+describe("PR review: meter notation", () => {
+  test("time signatures in context read as meters; a bare equal pair is refused", () => {
+    expect(normalizeProse("A 4/4 groove in a 3/4 waltz")).toBe(
+      "A 4 4 groove in a 3 4 waltz",
+    );
+    // Before a duration word, meter and fraction look alike: refused.
+    expect(
+      toSpokenEssay("t", "# T\n\nDelay the pulse by 1/2 beat.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA 3/4 bar has three beats.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    // After a bare "in", meter and fraction look alike: refused for an override.
+    expect(
+      toSpokenEssay("t", "# T\n\nWritten in 7/8.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nTrue in 1/2 of the cases.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("the 12/8 timeline, Time: 4/4")).toBe(
+      "the 12 8 timeline, Time: 4 4",
+    );
+    expect(normalizeProse("a fifth is 3/2 and a third 5/4")).toBe(
+      "a fifth is 3 to 2 and a third 5 to 4",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nStart with 4/4 first.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("the unison 1/1")).toBe("the unison 1 to 1");
+  });
+});
+
+describe("review round 27 regressions", () => {
+  test("common or standard do not make a ratio a meter", () => {
+    expect(normalizeProse("the common 3/2 ratio")).toBe(
+      "the common 3 to 2 ratio",
+    );
+  });
+
+  test("a powered denominator blocks the decimal rule too", () => {
+    expect(normalizeProse("so 1.5/2² here")).not.toContain("out of");
+    expect(
+      toSpokenEssay("t", "# T\n\nSo 1.5/2² here.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("review round 28 regressions", () => {
+  test("a powered operand next to an operator is refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nEvaluate 2-3².\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThen 10²×4 holds.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nArea grows as r² here.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 30 regressions", () => {
+  test("bracketed numeric powers and timestamps are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe value is (2-3)².\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nAt 1:23, the speaker pauses.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe fifth is 3:2 and the comma 81:80.\n")
+        .warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 31 regressions", () => {
+  test("two-digit timestamps after a time word are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nAt 12:34, the speaker pauses.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+  });
+
+  test("a Sources item inside a list drops the items after it", () => {
+    const essay = toSpokenEssay(
+      "t",
+      "# T\n\nBody.\n\n- **Sources:**\n- Smith (2024)\n- Jones (2025)\n",
+    );
+    const texts = essay.segments.map((s) => s.text).join(" ");
+    expect(texts).not.toContain("Smith");
+    expect(texts).not.toContain("Jones");
+  });
+});
+
+describe("review round 32 regressions", () => {
+  test("an ordered Sources item still drops the citations after it", () => {
+    const essay = toSpokenEssay(
+      "t",
+      "# T\n\nBody.\n\n1. **Sources:**\n2. Smith (2024)\n",
+    );
+    const texts = essay.segments.map((s) => s.text).join(" ");
+    expect(texts).not.toContain("Smith");
+    expect(texts).not.toContain("First");
+  });
+});
+
+describe("review round 33 regressions", () => {
+  test("unit denominators read as per", () => {
+    expect(normalizeProse("a density of -80 dB/Hz and 48 samples/ms")).toBe(
+      "a density of minus 80 decibels per hertz and 48 samples per millisecond",
+    );
+  });
+});
+
+describe("review round 34 regressions", () => {
+  test("unit names after a slash are rates", () => {
+    expect(normalizeProse("in watts/hertz and samples/seconds")).toBe(
+      "in watts per hertz and samples per seconds",
+    );
+    expect(normalizeProse("hertz/major")).toBe("hertz/major");
+  });
+});
+
+describe("review round 35 regressions", () => {
+  test("every recognized unit blocks the alternatives reading", () => {
+    expect(normalizeProse("8 bits/pixel")).toBe("8 bits/pixel");
+    expect(normalizeProse("cycles/minute")).toBe("cycles per minute");
+  });
+});
+
+describe("review round 36 regressions", () => {
+  test("arithmetic with fractions is refused; abbreviated rate units are spelled", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 1/2-1/3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("48 samples/s and 60 beats/min")).toBe(
+      "48 samples per second and 60 beats per minute",
+    );
+  });
+});
+
+describe("review round 37 regressions", () => {
+  test("sentence-initial In keeps the meter/fraction ambiguity for an override", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nIn 7/8, accents shift.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("review round 38 regressions", () => {
+  test("spaced unit slashes and unit-bearing fractions are left for an override", () => {
+    expect(normalizeProse("48 samples / second")).toBe("48 samples / second");
+    expect(normalizeProse("stable core / adaptive surface")).toBe(
+      "stable core, adaptive surface",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nWait for 5/2 seconds.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("a 3/2 fifth")).toBe("a 3 to 2 fifth");
+  });
+});
+
+describe("review round 39 regressions", () => {
+  test("a range between colon ratios is refused; ratio chains are fine", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nFrom 4:3–3:2 the fifths widen.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe triad is 4:5:6 in frequency.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 40 regressions", () => {
+  test("a decimal fraction before a unit word is refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nWait for 1.5/2 seconds.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("rated 4.22/5 overall")).toBe(
+      "rated 4.22 out of 5 overall",
+    );
+  });
+});
+
+describe("review round 41 regressions", () => {
+  test("en-dash pairs follow the same ascending-range rule", () => {
+    expect(normalizeProse("3–5 cents and 0.09–0.57")).toBe(
+      "3 to 5 cents and 0.09 to 0.57",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nThe difference is 5–3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("review round 42 regressions", () => {
+  test("hyphenated unit followers and decimal operands are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nA 5/2-second delay.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nEvaluate 1-1.5/2.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("review round 43 regressions", () => {
+  test("full clock timestamps are refused; ordinary ratio chains are fine", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe timestamp is 12:34:56.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe triad is 4:5:6 and the scale 24:27:30.\n")
+        .warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 44 regressions", () => {
+  test("Unicode operators and capitalized or attached units are gated", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe difference is 3/2 − 1/4.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# A 5/2-Second Delay\n\nBody.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nWait 5/2μs.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("a 3/2 fifth")).toBe("a 3 to 2 fifth");
+  });
+});
+
+describe("review round 45 regressions", () => {
+  test("decimal ratio operands and signed ranges are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is 4:3.5 × 3.2:2.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe noise floor spans -80–-60 dB.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nIt spans 3–5 cents at -16 LUFS.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 46 regressions", () => {
+  test("arithmetic chains are refused; spelled units block alternatives", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCalculate 1+2-3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("kilohertz/millisecond")).toBe(
+      "kilohertz/millisecond",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nRanges of 3-5 and 10-20 cents.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 47 regressions: numeric allowlist", () => {
+  test("grouped, spaced, and chained arithmetic is refused; readable shapes pass", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 1+(2-3).\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 2 - 3 now.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay(
+        "t",
+        "# T\n\nA 3:2 fifth, 4:5:6, 3/2, 3-5 cents, 3 – 5 cents, rated 4.22/5.\n",
+      ).warnings,
+    ).toEqual([]);
+  });
+
+  test("a quoted negative fraction keeps its sign", () => {
+    expect(normalizeProse('The coefficient is "-1/2".')).toBe(
+      'The coefficient is "minus one half".',
+    );
+  });
+});
+
+describe("numeric allowlist: prose brackets", () => {
+  test("brackets around a readable shape are prose; inner brackets refuse", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nA fifth (3:2) and a 4 × 4 grid, 7±2 items.\n")
+        .warnings,
+    ).toEqual([]);
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute (1+(2-3)).\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("numeric allowlist: additive groupings and prose colons", () => {
+  test("3+3+2 reads with plus; a colon then a space is punctuation", () => {
+    expect(normalizeProse("a 3+3+2 pattern and 5 + 7")).toBe(
+      "a 3 plus 3 plus 2 pattern and 5 plus 7",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nWith k equals 7: 1,716 necklaces.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 48 regressions", () => {
+  test("roots of numbers are refused; URLs are not checked; additive groupings pass", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe value √2/3 matters.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay(
+        "t",
+        "# T\n\nSee https://example.com/2026/10/06/report for more.\n",
+      ).warnings,
+    ).toEqual([]);
+    expect(toSpokenEssay("t", "# T\n\nA 3+3+2 grouping.\n").warnings).toEqual(
+      [],
+    );
+  });
+});
+
+describe("review round 49 regressions", () => {
+  test("signed operands are refused; image alt text is not checked", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 2+(-3) now.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nBody. ![Plot of $x^2$](plot.png)\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("plus in prose", () => {
+  test("a remaining plus sign is spoken", () => {
+    expect(normalizeProse("two inversions (body + space), 4,000+ scales")).toBe(
+      "two inversions (body plus space), 4,000 plus scales",
+    );
+  });
+});
+
+describe("review round 50 regressions", () => {
+  test("checks see through inline formatting", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute **1**+**2**-**3**.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay(
+        "t",
+        "# T\n\nA **3:2** fifth and [the 5:4 third](https://x.y/a/2026/10).\n",
+      ).warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 51 regressions", () => {
+  test("padded rhythm grids and bit strings are spoken", () => {
+    expect(normalizeProse("A rhythm ` x . . x `.")).toBe(
+      "A rhythm hit, rest, rest, hit.",
+    );
+    expect(normalizeProse("bits ` 1001 `")).toBe("bits one zero zero one");
+  });
+});
+
+describe("range before a punctuation colon", () => {
+  test("a range followed by a colon and a space is still a range", () => {
+    expect(normalizeProse("rate from 1–5: then")).toBe(
+      "rate from 1 to 5: then",
+    );
+    expect(normalizeProse("rate from 1-5:")).toBe("rate from 1 to 5:");
+  });
+});
+
+describe("review round 53 regressions", () => {
+  test("emphasis pressed against digits is arithmetic, refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is 2*3*4.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is 2**3**4.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA *really* good **3:2** fifth.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 54 regressions", () => {
+  test("adjacent emphasis tokens fusing digits and named entities are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is **2***3***4**.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 1&plus;2&minus;3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("review round 55 regressions", () => {
+  test("intraword emphasis around letters is kept raw and refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is 2*x*3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product x*y*z grows.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA *really* good (**3:2**) fifth.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 56 regressions", () => {
+  test("intraword asterisks between Unicode letters survive to the lint", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product α*β*γ grows.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("**bold** and _italic_")).toBe("bold and italic");
   });
 });

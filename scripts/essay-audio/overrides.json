@@ -20,6 +20,10 @@
       {
         "from": "across the diagonal s_f = s_p.",
         "to": "across the diagonal where s-f equals s-p."
+      },
+      {
+        "from": "the 2-voice/3-voice constraint",
+        "to": "the two-voice or three-voice constraint"
       }
     ]
   },
@@ -56,6 +60,14 @@
       {
         "from": "(NMI = 0.167)",
         "to": "(a normalized mutual information of 0.167)"
+      }
+    ]
+  },
+  "style-as-redundant-code": {
+    "source": [
+      {
+        "from": "phase/EQ shimmer",
+        "to": "phase or EQ shimmer"
       }
     ]
   }

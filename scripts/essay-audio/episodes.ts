@@ -50,7 +50,7 @@ import type { JobContext, NewArtifact } from "../../media/src/jobs/types";
 import { runOnce } from "../../media/src/runner";
 import { chunkForLimit } from "../../media/src/tts/chunk";
 import { wrapPcmAsWav } from "../../media/src/tts/elevenlabs";
-import { assertUnderUploadCap } from "../../media/src/upload";
+import { assertUnderUploadCap, MAX_UPLOAD_BYTES } from "../../media/src/upload";
 import { wordErrorRate } from "./wer";
 import {
   type EssayOverride,
@@ -222,16 +222,32 @@ async function synthesize(
 
 // ── Speech recognition check (optional) ─────────────────────────────────
 
+// Groq takes uploads up to 25 MB; a 48 kHz 24-bit chunk can exceed that,
+// so speech recognition gets a 16 kHz mono MP3 (about 6 KB a second).
+const ASR_UPLOAD_LIMIT_BYTES = 25 * 1024 * 1024;
+
 async function transcribe(file: string): Promise<string> {
+  const compact = `${file}.asr.mp3`;
+  await runFfmpeg([
+    "-i",
+    file,
+    "-ac",
+    "1",
+    "-ar",
+    "16000",
+    "-b:a",
+    "48k",
+    compact,
+  ]);
+  const bytes = new Uint8Array(await readFile(compact));
+  if (bytes.length > ASR_UPLOAD_LIMIT_BYTES) {
+    throw new Error(`${file} is too long to check with speech recognition`);
+  }
   const form = new FormData();
   form.append("model", "whisper-large-v3-turbo");
   form.append("language", "en");
   form.append("response_format", "json");
-  form.append(
-    "file",
-    new Blob([new Uint8Array(await readFile(file))], { type: "audio/wav" }),
-    "chunk.wav",
-  );
+  form.append("file", new Blob([bytes], { type: "audio/mpeg" }), "chunk.mp3");
   const response = await fetch(
     "https://api.groq.com/openai/v1/audio/transcriptions",
     {
@@ -514,16 +530,26 @@ async function render(
   const manifest = await readManifest(batch);
   const ledgerFile = join(batchDir(batch), "attempts.jsonl");
   const ledger: Ledger = { attemptedChars: 0 };
+  // A missing ledger is a fresh batch; a corrupt one stops the render, since
+  // the paid cap depends on every line.
+  let ledgerText = "";
   try {
-    for (const line of (await readFile(ledgerFile, "utf8")).split("\n")) {
-      if (line) {
-        // Only paid attempts count toward the cap; lines written before the
-        // flag existed are counted, to stay conservative.
-        const attempt = JSON.parse(line) as { chars: number; paid?: boolean };
-        if (attempt.paid !== false) ledger.attemptedChars += attempt.chars;
-      }
+    ledgerText = await readFile(ledgerFile, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  for (const [index, line] of ledgerText.split("\n").entries()) {
+    if (!line) continue;
+    let attempt: { chars: number; paid?: boolean };
+    try {
+      attempt = JSON.parse(line) as { chars: number; paid?: boolean };
+    } catch {
+      throw new Error(`${ledgerFile} line ${index + 1} is not valid JSON`);
     }
-  } catch {}
+    // Only paid attempts count toward the cap; lines written before the
+    // flag existed are counted, to stay conservative.
+    if (attempt.paid !== false) ledger.attemptedChars += attempt.chars;
+  }
   for (const entry of manifest.entries) {
     const voice = voiceFor(entry.voice, entry.voiceOptions);
     const dir = join(batchDir(batch), entry.slug);
@@ -712,10 +738,20 @@ async function publish(batch: string): Promise<void> {
     pending.push(entry);
   }
   if (pending.length === 0) return;
+  // A queued job left by an interrupted run of this batch (same operator
+  // renderer and an episode title still pending) is resumed by publishOne,
+  // so it does not count as busy; any other live job does.
+  const pendingTitles = new Set(pending.map((entry) => entry.episodeTitle));
   const busy = async () =>
-    (await scanTable(client, "mediaJobs")).some(
-      (job) => job.status === "queued" || job.status === "claimed",
-    );
+    (await scanTable(client, "mediaJobs")).some((job) => {
+      if (job.status !== "queued" && job.status !== "claimed") return false;
+      const input = job.input as { title?: string; rendererVersion?: string };
+      const ours =
+        job.status === "queued" &&
+        input.rendererVersion === RENDERER &&
+        pendingTitles.has(input.title ?? "");
+      return !ours;
+    });
   if (await busy())
     throw new Error("media queue is busy; not stopping the worker");
   console.log(
@@ -757,12 +793,15 @@ async function publishOne(
   const dir = join(batchDir(batch), entry.slug);
   const rendered = JSON.parse(
     await readFile(join(dir, "render.json"), "utf8"),
-  ) as {
-    chapters: { title: string; startSecs: number }[];
-    settings: Record<string, unknown>;
-    voice: string;
-  };
+  ) as RenderRecord;
   const local = join(dir, "normalized.wav");
+  // A hash of the rendered audio itself is part of the job identity, so a
+  // narration job (and its dedupe key) always names the exact audio it
+  // publishes; any re-render can never resume a superseded render's job.
+  const audioHash = createHash("sha256")
+    .update(await readFile(local))
+    .digest("hex");
+  const promptVersion = `${PROMPT_VERSION}+${audioHash.slice(0, 16)}`;
   assertWithinPolicy(await measure(local), -16);
   const script = {
     paragraphs: entry.segments.map((segment) => segment.text),
@@ -784,7 +823,7 @@ async function publishOne(
   ) => {
     const duration = (await measure(input, ctx.signal)).durationSecs;
     // Long 48 kHz masters would pass the 95 MB upload cap; keep 24 kHz then.
-    const rate = duration * 48000 * 2 + 44 > 95_000_000 ? 24000 : 48000;
+    const rate = duration * 48000 * 2 + 44 > MAX_UPLOAD_BYTES ? 24000 : 48000;
     const master = join(ctx.workDir, "master.wav");
     await runFfmpeg(
       [
@@ -871,13 +910,14 @@ async function publishOne(
     return [master1, delivery1];
   };
 
-  const voiceMeta = {
-    catalogId: rendered.voice,
-    promptVersion: PROMPT_VERSION,
-  };
+  const voiceMeta = { catalogId: rendered.voice, promptVersion };
   const narrate = async (ctx: JobContext) => {
     const input = ctx.job.input;
-    if (input.kind !== "narrate" || input.title !== entry.episodeTitle) {
+    if (
+      input.kind !== "narrate" ||
+      input.title !== entry.episodeTitle ||
+      input.promptVersion !== promptVersion
+    ) {
       throw new Error("unexpected narrate job; refusing");
     }
     const artifacts = await upload(ctx, local, "narration", {
@@ -944,7 +984,7 @@ async function publishOne(
       kind: "narrate",
       script,
       voiceId: rendered.voice,
-      promptVersion: PROMPT_VERSION,
+      promptVersion,
       target: "spoken",
       title: entry.episodeTitle,
       access: "feed",
@@ -954,10 +994,56 @@ async function publishOne(
       rendererVersion: RENDERER,
     },
   });
+  let steps: ("narrate" | "assembleEpisode")[] = ["narrate", "assembleEpisode"];
   if (!outcome.created) {
-    throw new Error(
-      `${entry.slug}: an identical job already exists (${outcome.jobId}); inspect before retrying`,
+    // An earlier run narrated this essay but its assembly did not finish:
+    // resume with the assembly alone, re-enqueueing it if the production
+    // worker parked it (it refuses operator renderer versions).
+    const jobs = await scanTable(client, "mediaJobs");
+    type JobInput = { kind?: string; title?: string; rendererVersion?: string };
+    const narration = jobs.find((job) => job._id === outcome.jobId);
+    // Only the assembly of this very narration (its result artifacts) may be
+    // resumed; another script's narration of the same essay is not ours.
+    const narrationArtifacts = new Set(
+      (narration?.resultArtifactIds as string[] | undefined) ?? [],
     );
+    const assembly = jobs
+      .filter((job) => {
+        const input = job.input as JobInput & { narrationArtifactId?: string };
+        return (
+          input.kind === "assembleEpisode" &&
+          input.title === entry.episodeTitle &&
+          input.rendererVersion === RENDERER &&
+          narrationArtifacts.has(input.narrationArtifactId ?? "")
+        );
+      })
+      .sort((a, b) => Number(b._creationTime) - Number(a._creationTime))[0];
+    if (narration?.status === "queued") {
+      // Interrupted before (or requeued after) the narration ran: run both
+      // steps against the existing job, which the live-job guard checks.
+      console.log(`${entry.slug}: resuming its queued narration`);
+    } else if (narration?.status !== "done" || !assembly) {
+      throw new Error(
+        `${entry.slug}: job ${outcome.jobId} already exists (${String(narration?.status)}) with no resumable assembly; inspect before retrying`,
+      );
+    } else if (assembly.status === "parked" || assembly.status === "failed") {
+      const again = await adminMutation(client, internal.mediaJobs.enqueue, {
+        input: assembly.input as FunctionArgs<
+          typeof internal.mediaJobs.enqueue
+        >["input"],
+      });
+      if (!again.created) {
+        throw new Error(`${entry.slug}: could not re-enqueue its assembly`);
+      }
+    } else if (assembly.status !== "queued") {
+      throw new Error(
+        `${entry.slug}: its assembly job is ${String(assembly.status)}; inspect before retrying`,
+      );
+    }
+    if (narration?.status === "done") {
+      console.log(`${entry.slug}: narration already done; resuming assembly`);
+      steps = ["assembleEpisode"];
+    }
   }
   const config = {
     workerId: `operator-${RENDERER}`,
@@ -965,8 +1051,7 @@ async function publishOne(
     workDir,
     rendererVersion: RENDERER,
   };
-  const expectedKinds = ["narrate", "assembleEpisode"] as const;
-  for (const [step, kind] of expectedKinds.entries()) {
+  for (const kind of steps) {
     // runOnce claims by kind, not by job. With the production worker
     // stopped, the only live job must be this essay's; anything else (a
     // weekly brief, say) is left for the worker and the batch stops.
@@ -984,7 +1069,7 @@ async function publishOne(
       input.kind === kind &&
       input.title === entry.episodeTitle &&
       input.rendererVersion === RENDERER &&
-      (step > 0 || live[0]?._id === outcome.jobId);
+      (kind !== "narrate" || live[0]?._id === outcome.jobId);
     if (!ours) {
       throw new Error(
         `${entry.slug}: another media job is live (${live.length} queued or claimed); stopping before any claim`,

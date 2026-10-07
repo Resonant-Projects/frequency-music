@@ -141,6 +141,155 @@ const SUPERSCRIPTS = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 const SUPERSCRIPT_MINUS = "⁻";
 const SUBSCRIPTS = "₀₁₂₃₄₅₆₇₈₉";
 
+// Unit abbreviations read after "per" in a rate ("dB/Hz").
+const RATE_UNITS = {
+  kHz: "kilohertz",
+  Hz: "hertz",
+  ms: "millisecond",
+  s: "second",
+  sec: "second",
+  min: "minute",
+  hr: "hour",
+  dB: "decibel",
+  oct: "octave",
+} as const;
+
+// Full unit words read as "per" after a slash ("samples/second"); the
+// abbreviations (s, sec, min, Hz, ...) are spelled out by RATE_UNITS.
+const RATE_WORDS = [
+  "second",
+  "seconds",
+  "minute",
+  "minutes",
+  "hour",
+  "hours",
+  "day",
+  "days",
+  "sample",
+  "samples",
+  "frame",
+  "frames",
+  "octave",
+  "octaves",
+  "beat",
+  "beats",
+  "bar",
+  "bars",
+  "cycle",
+  "cycles",
+  "word",
+  "words",
+  "token",
+  "tokens",
+  "step",
+  "steps",
+  "channel",
+  "channels",
+  "hertz",
+  "watt",
+  "watts",
+  "volt",
+  "volts",
+  "decibel",
+  "decibels",
+  "cent",
+  "cents",
+  "meter",
+  "meters",
+  "metre",
+  "metres",
+  "gram",
+  "grams",
+  "bit",
+  "bits",
+  "byte",
+  "bytes",
+];
+const RATE_AFTER_SLASH = new RegExp(
+  `(?<=\\p{L})\\/(${RATE_WORDS.join("|")})\\b`,
+  "gu",
+);
+
+// A plain numeric fraction. Before a duration or unit word ("1/2 beat",
+// "3/4 bar", "5/2 seconds") a meter, ratio, and quantity look alike, so the
+// slash is kept for the lint; so it is after a bare "in" ("in 7/8").
+const FRACTION_FOLLOWERS = [
+  ...RATE_WORDS,
+  ...Object.keys(RATE_UNITS),
+  "measure",
+  "measures",
+  "note",
+  "notes",
+  "pattern",
+  "patterns",
+  "grid",
+  "grids",
+];
+// Unit matching is case-insensitive and any letter attached to the number
+// (ASCII or not: "5/2μs") counts as a unit, so the slash is kept.
+const FRACTION = new RegExp(
+  `(?<![\\p{L}\\d_/.,])(?<!\\bin\\s+)(\\d+)\\/(\\d+)(?![\\p{L}\\d_/⁰-⁹¹²³⁻]|[.,]\\d|[\\s-]+(?:${FRACTION_FOLLOWERS.join("|")})\\b)`,
+  "giu",
+);
+
+const DECIMAL_SCORE = new RegExp(
+  `(?<![\\d./])(\\d+\\.\\d+)\\/(\\d+)(?![\\p{L}\\d_/⁰-⁹¹²³⁻]|[./]\\d|[\\s-]+(?:${FRACTION_FOLLOWERS.join("|")})\\b)`,
+  "giu",
+);
+
+// Every arithmetic operator the normalizer speaks, for the gates below.
+const OP = "[-–−+×*·÷±:/]";
+const FRACTION_ARITHMETIC = new RegExp(
+  `\\d\\/[\\d.]+\\s*${OP}\\s*\\d|\\d\\s*${OP}\\s*[\\d.]+\\/\\d`,
+);
+// A colon ratio joined to another number by a non-colon operator
+// ("4:3–3:2"); a plain chain such as 4:5:6 is fine.
+const RATIO_ARITHMETIC =
+  /\d:[\d.]+\s*[-–−+×*·÷±/]\s*\d|\d\s*[-–−+×*·÷±/]\s*[\d.]+:\d/;
+// Every run of numbers joined by operators, brackets included, must be one
+// of the shapes the converter reads: a range (3-5, 3–5), a ratio chain
+// (3:2, 4:5:6), a fraction (3/2), or a decimal score (4.22/5). Anything
+// else ("1+(2-3)", "2 - 3", "1+2-3") waits for a spoken override.
+const NUMBER = String.raw`\d+(?:[.,]\d+)*`;
+const NUMERIC_EXPRESSION = new RegExp(
+  // A colon followed by a space is prose punctuation ("k equals 7: 120").
+  // Later operands may carry a sign ("2+(-3)"), which no readable shape has.
+  String.raw`[([]*${NUMBER}[)\]]*(?:(?:\s*[-–−+×*·÷±/]\s*|:(?!\s))[([]*[-−]?${NUMBER}[)\]]*)+`,
+  "g",
+);
+const READABLE_NUMERIC = [
+  /^\d[\d.,]*(?:-|\s?–\s?)\d[\d.,]*$/,
+  /^\d[\d.]*(?::\d[\d.]*)+$/,
+  /^\d+\/\d+$/,
+  /^\d+\.\d+\/\d+$/,
+  /^\d+\s?×\s?\d+$/,
+  /^\d+(?:\s?\+\s?\d+)+$/,
+  /^\d[\d.]*\s?±\s?\d[\d.]*$/,
+];
+
+const POWERED_OPERAND = new RegExp(
+  `[\\d.]\\s*${OP}\\s*\\d[\\d.,]*[⁰-⁹¹²³⁻]|[⁰-⁹¹²³⁻]\\s*${OP}\\s*[\\d.]`,
+);
+
+// One unit list for both rules: a unit word on either side of a slash is
+// never read as an alternative ("8 bits/pixel" keeps its slash for the lint).
+const UNIT_WORDS = new Set([
+  ...RATE_WORDS,
+  ...Object.keys(RATE_UNITS).map((unit) => unit.toLowerCase()),
+  ...Object.values(RATE_UNITS).flatMap((unit) => [unit, `${unit}s`]),
+  "mhz",
+  "ghz",
+  "dbfs",
+  "dbtp",
+  "lufs",
+  "kbps",
+  "mbps",
+  "bpm",
+  "rpm",
+  "pixel",
+  "pixels",
+]);
+
 export function numberWord(n: number): string {
   return NUMBER_WORDS[n] ?? String(n);
 }
@@ -224,6 +373,13 @@ function speakRhythm(grid: string): string {
 export function normalizeProse(input: string): string {
   let text = input;
 
+  // Code spans lose their padding (` x . x ` is `x . x`), as the markdown
+  // lexer that validates them does, so validation and speech agree.
+  text = text.replaceAll(
+    /`([^`]*)`/g,
+    (_, code: string) => `\`${code.trim()}\``,
+  );
+
   // Record ids (Convex document ids) and repository paths are provenance for
   // the written page; a listener cannot use them. Drop them with any
   // parentheses or list punctuation they sat in.
@@ -263,10 +419,15 @@ export function normalizeProse(input: string): string {
   // Emphasis markers. Emphasis hugs its text; "2 * 3" and "2 ** 3" are
   // arithmetic and stay for the lint.
   text = text
-    .replaceAll(/(?<![\w*])\*\*(?=\S)([^*]*?\S)\*\*(?![\w*])/g, "$1")
-    .replaceAll(/(?<![\w_])__(?=\S)([^_]*?\S)__(?![\w_])/g, "$1")
-    .replaceAll(/(?<![\w*])\*(?=\S)([^*\n]*?\S)\*(?![\w*])/g, "$1")
-    .replaceAll(/(?<![\w_])_(?=\S)([^_\n]*?\S)_(?![\w_])/g, "$1");
+    // Unicode-aware boundaries: intraword markers ("α*β*γ") are arithmetic
+    // and stay for the lint.
+    .replaceAll(
+      /(?<![\p{L}\d_*])\*\*(?=\S)([^*]*?\S)\*\*(?![\p{L}\d_*])/gu,
+      "$1",
+    )
+    .replaceAll(/(?<![\p{L}\d_])__(?=\S)([^_]*?\S)__(?![\p{L}\d_])/gu, "$1")
+    .replaceAll(/(?<![\p{L}\d_*])\*(?=\S)([^*\n]*?\S)\*(?![\p{L}\d_*])/gu, "$1")
+    .replaceAll(/(?<![\p{L}\d_])_(?=\S)([^_\n]*?\S)_(?![\p{L}\d_])/gu, "$1");
 
   // Essay numbers: "(#64)" after a title is dropped; "#82 asked" and
   // "essay #84" become "essay 82" and "essay 84".
@@ -281,31 +442,43 @@ export function normalizeProse(input: string): string {
   // Rates are "per" ("samples/second"); any other word slash is read as
   // alternatives ("major/minor"), not "slash".
   text = text
-    .replaceAll(
-      /(?<=\p{L})\/(second|sec|s|minute|min|hour|day|sample|frame|octave|beat|bar|cycle|word|token|step|channel)\b/gu,
-      " per $1",
-    )
+    .replaceAll(RATE_AFTER_SLASH, " per $1")
     .replaceAll(/\band\/or\b/g, "and or")
+    // A unit abbreviation after a slash is a rate too ("dB/Hz", "samples/ms").
+    .replaceAll(
+      /(?<=[\p{L}\d])\/(kHz|Hz|ms|s|sec|min|hr|dB|oct)\b/gu,
+      (_, unit: keyof typeof RATE_UNITS) => ` per ${RATE_UNITS[unit]}`,
+    )
     // A slash pair naming a ratio is "to" ("signal/noise ratio").
     .replaceAll(
       /\b([\p{L}][\p{L}\d-]*)\/([\p{L}][\p{L}\d-]*)(?=\s+ratios?\b)/gu,
       "$1-to-$2",
     )
     // A spaced slash between words separates phrases ("stable core /
-    // adaptive surface"); "1 / 2" and "x / y" are division, left for the lint.
-    .replaceAll(/(?<=\p{L}{2})\s+\/\s+(?=\p{L}{2})/gu, ", ")
+    // adaptive surface"); "1 / 2" and "x / y" are division, and a unit on
+    // either side ("samples / second") is a rate: both left for the lint.
+    .replaceAll(
+      /(\p{L}{2,})\s+\/\s+(\p{L}{2,})/gu,
+      (match, left: string, right: string) =>
+        UNIT_WORDS.has(left.toLowerCase()) ||
+        UNIT_WORDS.has(right.toLowerCase())
+          ? match
+          : `${left}, ${right}`,
+    )
     .replaceAll(/\bA\/B\/C\b/g, "A-B-C")
     .replaceAll(/\bA\/B\b/g, "A-B")
     .replaceAll(/\bI\/O\b/g, "I-O")
-    // Two terms of two or more characters, each with a letter ("major/minor",
-    // "MP3/OGG", "2-note/2-chord"), are alternatives. Single letters (x/y)
-    // are division and numbers are fractions: both are left for the lint.
+    // Plain words of three or more letters ("major/minor", "acoustic/
+    // electronic") are alternatives. Anything else (x/y, MP3/OGG, a unit
+    // left over) keeps its slash and is refused by the lint.
     .replaceAll(
       /(?<![\p{L}\d-])([\p{L}\d][\p{L}\d-]*)((?:\/[\p{L}\d][\p{L}\d-]*)+)/gu,
       (match, first: string, rest: string) => {
         const terms = [first, ...rest.slice(1).split("/")];
         const wordy = terms.every(
-          (term) => term.length >= 2 && /\p{L}/u.test(term),
+          (term) =>
+            /^\p{L}[\p{L}-]{2,}$/u.test(term) &&
+            !UNIT_WORDS.has(term.toLowerCase()),
         );
         return wordy ? terms.join(" or ") : match;
       },
@@ -331,7 +504,9 @@ export function normalizeProse(input: string): string {
     .replaceAll(/\b([A-G])(?:#|♯)(?=[\s,.;:)-]|$)/g, "$1 sharp")
     .replaceAll(/\b([A-G])♭/g, "$1 flat")
     .replaceAll(/(\w)\^\(([^()]+)\)/g, "$1 to the power $2 ")
-    .replaceAll(/(?<![\d./])(\d+\.\d+)\/(\d+)\b(?![./]\d|\/)/g, "$1 out of $2");
+    // A decimal score ("4.22/5"); before a unit word ("1.5/2 seconds") it
+    // is a quantity, left for the lint like the fractions below.
+    .replaceAll(DECIMAL_SCORE, "$1 out of $2");
 
   // Tuning-system shorthand.
   text = text
@@ -342,18 +517,21 @@ export function normalizeProse(input: string): string {
     .replaceAll(/\bEDOs\b/g, "equal divisions of the octave")
     .replaceAll(/\bEDO\b/g, "equal division of the octave");
 
+  // Additive groupings ("3+3+2", "5 + 7") are spoken with "plus".
+  text = text.replaceAll(/(?<=\d)\s?\+\s?(?=\d)/g, " plus ");
+
   // A sign before a number is spoken before any fraction is spelled out.
-  text = text.replaceAll(/(^|[\s(])[−-](?=\d)/g, "$1minus ");
+  text = text.replaceAll(/(^|[\s(["'“‘])[−-](?=\d)/g, "$1minus ");
 
   // Ranges, ratios, and fractions. Ranges first so "3–5" is not read as a
   // dash; ratios before fractions so "81:80" never reaches the slash rule.
   text = text
-    .replaceAll(/(\d)\s?–\s?(\d)/g, "$1 to $2")
-    // A hyphen between numbers is a range only when it ascends (3-5,
-    // 0.09-0.57, 1995-2005); anything else is left for the lint. A full stop
-    // after the range ends the sentence unless a digit follows it.
+    // A hyphen or en dash between numbers is a range only when it ascends
+    // (3-5, 0.09–0.57, 1995-2005); anything else ("5–3") is left for the
+    // lint. A full stop after the range ends the sentence unless a digit
+    // follows it.
     .replaceAll(
-      /(?<![\w.,-])(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)(?![.,]\d|[\w:/-])/g,
+      /(?<![\w.,–-])(\d+(?:\.\d+)?)(?:-|\s?–\s?)(\d+(?:\.\d+)?)(?![.,]\d|[\w/–-]|:(?!\s|$))/g,
       (match, a: string, b: string) =>
         Number(a) < Number(b) ? `${a} to ${b}` : match,
     )
@@ -362,17 +540,28 @@ export function normalizeProse(input: string): string {
       (_, first: string, rest: string) =>
         [first, ...rest.slice(1).split(":")].join(" to "),
     )
+    // Time signatures read as "4 4": after "Time:", or before a meter word. An equal pair with no such context
+    // ("4/4") is left for the lint rather than read as "4 to 4", and so is
+    // anything after a bare "in" ("in 7/8" is a meter, "in 1/2 of the
+    // cases" is not), which the fraction rule below skips.
     .replaceAll(
-      /(?<![\w/.])(\d+)\/(\d+)(?=\s+(?:time|meter|metre|signature)\b)/g,
+      /(?<=\bTime:\s+)(\d{1,2})\/(2|4|8|16)\b(?![\w/.]|,\d)/g,
+      "$1 $2",
+    )
+    .replaceAll(
+      /(?<![\w/.])(\d{1,2})\/(2|4|8|16)(?=\s+(?:time|meter|metre|signature|groove|feel|timeline|waltz)\b)/g,
       "$1 $2",
     )
     .replaceAll(
       // A power on the denominator (2/3²) is not a plain fraction: left for
       // the lint rather than read as "two thirds squared".
-      /(?<![\w/.,])(\d+)\/(\d+)(?![\w/⁰-⁹¹²³⁻]|[.,]\d)/g,
-      (_, a: string, b: string) => {
+      // Before a duration word ("1/2 beat", "3/4 bar") a meter and a
+      // fraction look alike: left for the lint too.
+      FRACTION,
+      (match, a: string, b: string) => {
         const num = Number(a);
         const den = Number(b);
+        if (num === den && num > 1 && [2, 4, 8, 16].includes(den)) return match;
         if (num >= den) return `${a} to ${b}`;
         return fractionWords(num, den) ?? `${a} over ${b}`;
       },
@@ -430,6 +619,9 @@ export function normalizeProse(input: string): string {
     .replaceAll("×", " times ")
     .replaceAll("÷", " divided by ")
     .replaceAll("±", " plus or minus ")
+    // Any other "+" is spoken ("body + space", "4,000+ scales", "C++");
+    // numeric arithmetic was already refused by the narration checks.
+    .replaceAll(/\s*\+\s*/g, " plus ")
     .replaceAll("≈", " approximately ")
     .replaceAll("≠", " is not equal to ")
     .replaceAll("≥", " at least ")
@@ -468,17 +660,22 @@ export function normalizeProse(input: string): string {
 // read wrongly. Reported as warnings; publishing waits for an override.
 const RESIDUE: [RegExp, string][] = [
   [/[\\${}^|<>=#*[\]`_]/, "markup or math symbol"],
-  [/\d\s*[/:]\s*\d/, "unconverted ratio or fraction"],
+  // A colon then a space is prose punctuation; an unspaced one is a ratio.
+  [/\d\s*\/\s*\d|\d\s?:\d/, "unconverted ratio or fraction"],
   [/https?:|www\./, "URL"],
   [/[\u2070-\u209F]/u, "unconverted superscript or subscript"],
   [/\/|!(?=[=\w])/, "unconverted slash or operator"],
-  [/\d-\d/, "hyphen between numbers"],
-  [/(^|[\s(])-(?=[a-z])/, "sign or dash before a word"],
+  [/\d\s?[-–]\s?\d/, "hyphen or dash between numbers"],
+  // Any dash or minus still touching a number after conversion ("80–-60")
+  // is notation the converter did not resolve.
+  [/\d\s*[–−]|[–−]\s*\d|[-–−]\s*[-–−]\s*\d/, "dash or minus next to a number"],
+  [/(^|[\s(["'“‘])-(?=[a-z])/, "sign or dash before a word"],
   [
     /[\u2100-\u214F\u2200-\u22FF\u27C0-\u27EF\u2980-\u2AFF]/u,
     "unconverted mathematical symbol",
   ],
   [/\b[0-9a-z]{24,}\b/, "opaque identifier"],
+  [/&[A-Za-z][A-Za-z0-9]*;/, "HTML entity"],
 ];
 
 function lint(text: string, where: string, warnings: string[]): void {
@@ -493,14 +690,66 @@ function lint(text: string, where: string, warnings: string[]): void {
   }
 }
 
-// The only inline code read without an override: record ids and repository
-// paths (dropped), rhythm grids, and bit strings (spoken by normalizeProse).
-const SPEAKABLE_CODE = [
-  /^(?:j[0-9a-z]|k[0-9a-z]|jx)[0-9a-z]{28,}$/,
-  /^(?:data|docs|scripts|out)\//,
-  /^[x.](?: [x.])+$/,
-  /^[01]{4,}$/,
-];
+// The inline text a listener hears, rendered from the markdown lexer's own
+// tokens so validation and speech come from one parse: emphasis and links
+// unwrapped to their text (reference links resolved by the lexer), images
+// dropped, and each code span decided on its decoded content. Record ids
+// are dropped, repository paths named, rhythm grids and bit strings spoken;
+// any other code span is kept in backticks and reported in `unknownCode`.
+function renderInline(tokens: Token[], unknownCode: string[]): string {
+  const parts = tokens.map((token) => renderToken(token, unknownCode));
+  // Intraword emphasis, pressed against a letter or digit on either side
+  // ("2*3*4", "2*x*3", "x*y*z", "**2***3***4**"), is arithmetic the lexer
+  // misread: keep it raw so the checks and the lint see the operators
+  // instead of a fused "234" or "2x3".
+  return parts
+    .map((part, index) => {
+      const token = tokens[index]!;
+      if (token.type !== "em" && token.type !== "strong") return part;
+      const intraword =
+        /[\p{L}\d]$/u.test(parts[index - 1] ?? "") ||
+        /^[\p{L}\d]/u.test(parts[index + 1] ?? "");
+      return intraword ? token.raw : part;
+    })
+    .join("");
+}
+
+function renderToken(token: Token, unknownCode: string[]): string {
+  switch (token.type) {
+    case "image":
+      return "";
+    case "br":
+      return " ";
+    case "codespan":
+      return speakCode((token as Tokens.Codespan).text, unknownCode);
+    case "strong":
+    case "em":
+    case "del":
+    case "link":
+      return renderInline((token as Tokens.Strong).tokens, unknownCode);
+    case "text": {
+      const text = token as Tokens.Text;
+      return text.tokens ? renderInline(text.tokens, unknownCode) : text.text;
+    }
+    default:
+      return "text" in token ? String(token.text) : token.raw;
+  }
+}
+
+function speakCode(code: string, unknownCode: string[]): string {
+  const content = code.trim();
+  if (/^(?:j[0-9a-z]|k[0-9a-z]|jx)[0-9a-z]{28,}$/.test(content)) return "";
+  if (/^(?:data|docs|scripts|out)\//.test(content)) return "the project's data";
+  if (/^[x.](?: [x.])+$/.test(content)) return speakRhythm(content);
+  if (/^[01]{4,}$/.test(content)) {
+    return content
+      .split("")
+      .map((bit) => (bit === "1" ? "one" : "zero"))
+      .join(" ");
+  }
+  unknownCode.push(content);
+  return `\`${content}\``;
+}
 
 function cleanHeading(raw: string): string {
   // "2. Method" loses its list-style number; "0.5 seconds" keeps its value.
@@ -526,7 +775,9 @@ export function displayTitle(markdown: string, slug: string): string {
     (token): token is Tokens.Heading =>
       token.type === "heading" && token.depth === 1,
   );
-  return heading ? cleanHeading(heading.text) : slug.replaceAll("-", " ");
+  return heading
+    ? cleanHeading(renderInline(heading.tokens, []))
+    : slug.replaceAll("-", " ");
 }
 
 // The short title used in the intro, the outro, and the episode name: the
@@ -534,6 +785,9 @@ export function displayTitle(markdown: string, slug: string): string {
 export function shortTitle(title: string): string {
   return title.split(/:\s/)[0] ?? title;
 }
+
+const SOURCES_LABEL =
+  /^[_*]*(?:Sources?|References|Citations)\s*:?[_*]*\s*:?\s*$/i;
 
 const OMITTED = {
   code: "The written essay includes a code listing here; it is left out of the audio edition.",
@@ -597,7 +851,26 @@ export function toSpokenEssay(
   // citation sections, footers) are never checked, so their contents cannot
   // block an essay; narrated text holding math, unknown inline code, or
   // tag-like text waits for a spoken override.
-  const checkNarrated = (text: string, where: string) => {
+  // `spoken` is renderInline's output (what will be heard): inline
+  // formatting unwrapped ("**1**+**2**" is "1+2"), images and link
+  // destinations gone. Bare URLs are dropped by normalizeProse, so they are
+  // not checked either.
+  const checkNarrated = (
+    spoken: string,
+    where: string,
+    unknownCode: string[],
+  ) => {
+    const text = spoken.replaceAll(/https?:\/\/\S+/g, "");
+    for (const code of unknownCode) {
+      warnings.push(
+        `${where}: inline code needs a spoken override: \`${code}\``,
+      );
+    }
+    // A root before a number ("√2/3") has an operand scope the converter
+    // cannot read; "√x" is spoken.
+    if (/√\s*[\d([]/.test(text)) {
+      warnings.push(`${where}: a root of a number needs a spoken override`);
+    }
     // Math is never read automatically. Any "$" holds the essay for a
     // `source` override; inline spans, even ones wrapped across lines, carry
     // a suggested reading.
@@ -612,14 +885,52 @@ export function toSpokenEssay(
         warnings.push(`${where}: a "$" needs a spoken override`);
       }
     }
-    // Inline code is never unwrapped into narration unless it is one of the
-    // forms the converter knows how to speak or drop.
-    for (const span of text.matchAll(/`([^`]*)`/g)) {
-      if (!SPEAKABLE_CODE.some((pattern) => pattern.test(span[1]!))) {
+    // A numeric power ("10²", "(2-3)²", "3²/2³") has an operator scope no
+    // automatic reading can be trusted with; letter powers ("r²") are fine.
+    if (/[\d)\]][⁰-⁹¹²³⁻]/.test(text)) {
+      warnings.push(`${where}: a numeric power needs a spoken override`);
+    }
+    // A clock-shaped pair ("0:36") or a colon pair after a time word
+    // ("At 12:34", "from 10:15") is a timestamp, not a ratio.
+    if (
+      /(?<![\d:.])\d:\d\d(?![\d:])/.test(text) ||
+      /\b(?:at|from|until|till|by|around|after|before|between|timestamps?(?:\s+(?:is|of|at))?|time(?:\s+(?:is|of))?)\s+\d{1,2}:\d\d\b/i.test(
+        text,
+      ) ||
+      // A clock-shaped hh:mm:ss chain (hour up to 23, then two-digit minutes
+      // and seconds under 60) reads as a time, not a three-part ratio.
+      /(?<![\d:.])(?:[01]?\d|2[0-3]):[0-5]\d:[0-5]\d(?![\d:])/.test(text)
+    ) {
+      warnings.push(
+        `${where}: a timestamp-like "d:dd" needs a spoken override`,
+      );
+    }
+    // Arithmetic with a fraction or ratio operand ("1/2-1/3", "3 + 1/4",
+    // "4:3–3:2") has no reading the converter can be trusted with.
+    for (const expression of text.matchAll(NUMERIC_EXPRESSION)) {
+      // Brackets around the whole run are prose ("(3:2)"); a bracket inside
+      // it is grouping ("1+(2-3)") and is never readable.
+      const span = expression[0].trim().replaceAll(/^[([]+|[)\]]+$/g, "");
+      if (
+        /[()[\]]/.test(span) ||
+        !READABLE_NUMERIC.some((shape) => shape.test(span))
+      ) {
         warnings.push(
-          `${where}: inline code needs a spoken override: \`${span[1]}\``,
+          `${where}: numeric expression "${span}" needs a spoken override`,
         );
       }
+    }
+    if (FRACTION_ARITHMETIC.test(text) || RATIO_ARITHMETIC.test(text)) {
+      warnings.push(
+        `${where}: arithmetic with a fraction needs a spoken override`,
+      );
+    }
+    // A powered number beside an operator ("2-3²", "2/3²", "10²×4") has an
+    // operator scope no automatic reading can be trusted with.
+    if (POWERED_OPERAND.test(text)) {
+      warnings.push(
+        `${where}: a powered number beside an operator needs a spoken override`,
+      );
     }
     // A plain-text equation ("3-2=1", "x^(n)y", "α=β=1.0") is math too: it
     // waits for a spoken override rather than an automatic reading.
@@ -643,14 +954,15 @@ export function toSpokenEssay(
 
   // A paragraph's own text: footers, labels, and display math are decided
   // here; anything else is checked and narrated.
-  const paragraph = (text: string, where: string) => {
+  const paragraph = (
+    text: string,
+    tokens: Token[],
+    where: string,
+    ordinal?: string,
+  ) => {
     const trimmed = text.trim();
     // A bare "Sources:" label: the list after it is a citation list too.
-    if (
-      /^[_*]*(?:Sources?|References|Citations)\s*:?[_*]*\s*:?\s*$/i.test(
-        trimmed,
-      )
-    ) {
+    if (SOURCES_LABEL.test(trimmed)) {
       skippingSection = true;
       pendingBreak = true;
       return;
@@ -678,8 +990,12 @@ export function toSpokenEssay(
       });
       return;
     }
-    checkNarrated(text, where);
-    pushParagraph(text.replaceAll("\n", " "));
+    const unknownCode: string[] = [];
+    const spoken = renderInline(tokens, unknownCode).replaceAll("\n", " ");
+    checkNarrated(spoken, where, unknownCode);
+    // A list item's spoken ordinal is added only after the label checks, so
+    // "1. Sources:" is still recognized.
+    pushParagraph(ordinal ? `${ordinal}: ${spoken}` : spoken);
   };
 
   const walk = (tokens: Token[]) => {
@@ -688,17 +1004,19 @@ export function toSpokenEssay(
       const where = `block ${++blockNumber}`;
       if (token.type === "heading") {
         const heading = token as Tokens.Heading;
-        const name = cleanHeading(heading.text);
+        const headingCode: string[] = [];
+        const headingText = renderInline(heading.tokens, headingCode);
+        const name = cleanHeading(headingText);
         if (heading.depth === 1 && !sawTitle) {
           sawTitle = true;
-          checkNarrated(heading.text, where);
+          checkNarrated(headingText, where, headingCode);
           continue;
         }
         // A citation heading at any level drops everything up to the next
         // heading or rule.
         skippingSection = DROPPED_SECTIONS.test(name);
         if (skippingSection) continue;
-        checkNarrated(heading.text, where);
+        checkNarrated(headingText, where, headingCode);
         if (heading.depth <= 2) {
           sectionNumber += 1;
           chapters.push({ title: name, startParagraph: segments.length });
@@ -733,7 +1051,8 @@ export function toSpokenEssay(
       } else if (token.type === "list") {
         list(token as Tokens.List);
       } else if (token.type === "paragraph" || token.type === "text") {
-        paragraph((token as Tokens.Paragraph).text, where);
+        const block = token as Tokens.Paragraph;
+        paragraph(block.text, block.tokens, where);
       } else if (token.type === "html") {
         warnings.push(`${where}: an HTML block needs an override`);
       } else {
@@ -749,6 +1068,8 @@ export function toSpokenEssay(
   const list = (token: Tokens.List) => {
     const start = typeof token.start === "number" ? token.start : 1;
     for (const [index, item] of token.items.entries()) {
+      // A "Sources:" item drops the citation items after it.
+      if (skippingSection) return;
       const ordinal = token.ordered
         ? (ORDINALS[start + index - 1] ?? `Number ${start + index}`)
         : undefined;
@@ -759,10 +1080,12 @@ export function toSpokenEssay(
           (child.type === "text" || child.type === "paragraph")
         ) {
           announced = true;
-          const text = (child as Tokens.Text).text;
+          const text = child as Tokens.Text;
           paragraph(
-            ordinal ? `${ordinal}: ${text}` : text,
+            text.text,
+            text.tokens ?? Lexer.lexInline(text.text),
             `block ${++blockNumber}`,
+            ordinal,
           );
         } else {
           walk([child]);
