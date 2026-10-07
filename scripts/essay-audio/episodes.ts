@@ -738,20 +738,57 @@ async function publish(batch: string): Promise<void> {
     pending.push(entry);
   }
   if (pending.length === 0) return;
-  // A queued job left by an interrupted run of this batch (same operator
-  // renderer and an episode title still pending) is resumed by publishOne,
-  // so it does not count as busy; any other live job does.
-  const pendingTitles = new Set(pending.map((entry) => entry.episodeTitle));
-  const busy = async () =>
-    (await scanTable(client, "mediaJobs")).some((job) => {
+  // A queued job left by an interrupted run of this batch is resumed by
+  // publishOne, so it does not count as busy: a narration only if it names
+  // the current render's audio (title and audio-hash promptVersion), an
+  // assembly only if it belongs to such a narration. Anything else live,
+  // including a superseded render's job, blocks the batch.
+  const expected = new Map<string, string>();
+  for (const entry of pending) {
+    expected.set(
+      entry.episodeTitle,
+      await audioPromptVersion(
+        join(batchDir(batch), entry.slug, "normalized.wav"),
+      ),
+    );
+  }
+  type LiveInput = {
+    kind?: string;
+    title?: string;
+    rendererVersion?: string;
+    promptVersion?: string;
+    narrationArtifactId?: string;
+  };
+  const busy = async () => {
+    const jobs = await scanTable(client, "mediaJobs");
+    const currentNarrationArtifacts = new Set(
+      jobs
+        .filter((job) => {
+          const input = job.input as LiveInput;
+          return (
+            input.kind === "narrate" &&
+            input.rendererVersion === RENDERER &&
+            expected.get(input.title ?? "") === input.promptVersion
+          );
+        })
+        .flatMap(
+          (job) => (job.resultArtifactIds as string[] | undefined) ?? [],
+        ),
+    );
+    return jobs.some((job) => {
       if (job.status !== "queued" && job.status !== "claimed") return false;
-      const input = job.input as { title?: string; rendererVersion?: string };
-      const ours =
-        job.status === "queued" &&
-        input.rendererVersion === RENDERER &&
-        pendingTitles.has(input.title ?? "");
-      return !ours;
+      const input = job.input as LiveInput;
+      if (job.status !== "queued" || input.rendererVersion !== RENDERER)
+        return true;
+      if (input.kind === "narrate") {
+        return expected.get(input.title ?? "") !== input.promptVersion;
+      }
+      if (input.kind === "assembleEpisode") {
+        return !currentNarrationArtifacts.has(input.narrationArtifactId ?? "");
+      }
+      return true;
     });
+  };
   if (await busy())
     throw new Error("media queue is busy; not stopping the worker");
   console.log(
@@ -785,6 +822,16 @@ async function publish(batch: string): Promise<void> {
   }
 }
 
+// A hash of the rendered audio itself is part of the job identity, so a
+// narration job (and its dedupe key) always names the exact audio it
+// publishes; any re-render can never resume a superseded render's job.
+async function audioPromptVersion(normalizedWav: string): Promise<string> {
+  const audioHash = createHash("sha256")
+    .update(await readFile(normalizedWav))
+    .digest("hex");
+  return `${PROMPT_VERSION}+${audioHash.slice(0, 16)}`;
+}
+
 async function publishOne(
   client: ConvexHttpClient,
   batch: string,
@@ -795,13 +842,7 @@ async function publishOne(
     await readFile(join(dir, "render.json"), "utf8"),
   ) as RenderRecord;
   const local = join(dir, "normalized.wav");
-  // A hash of the rendered audio itself is part of the job identity, so a
-  // narration job (and its dedupe key) always names the exact audio it
-  // publishes; any re-render can never resume a superseded render's job.
-  const audioHash = createHash("sha256")
-    .update(await readFile(local))
-    .digest("hex");
-  const promptVersion = `${PROMPT_VERSION}+${audioHash.slice(0, 16)}`;
+  const promptVersion = await audioPromptVersion(local);
   assertWithinPolicy(await measure(local), -16);
   const script = {
     paragraphs: entry.segments.map((segment) => segment.text),
