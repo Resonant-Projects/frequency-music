@@ -816,8 +816,18 @@ async function publish(batch: string): Promise<void> {
         .filter((job) => job.status === "queued")
         .map((job) => (job.input as LiveInput).title ?? ""),
     );
+    const resumable = pending.filter((entry) =>
+      queuedTitles.has(entry.episodeTitle),
+    );
+    // Two essays with queued jobs (an interrupted run, then a manual retry)
+    // would trip publishOne's one-live-job guard; say so plainly instead.
+    if (resumable.length > 1) {
+      throw new Error(
+        `more than one essay has a queued job (${resumable.map((entry) => entry.slug).join(", ")}); inspect the media queue`,
+      );
+    }
     const ordered = [
-      ...pending.filter((entry) => queuedTitles.has(entry.episodeTitle)),
+      ...resumable,
       ...pending.filter((entry) => !queuedTitles.has(entry.episodeTitle)),
     ];
     for (const entry of ordered) await publishOne(client, batch, entry);

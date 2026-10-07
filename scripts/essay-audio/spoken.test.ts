@@ -1491,3 +1491,15 @@ describe("review round 84 regressions", () => {
     ).toEqual([]);
   });
 });
+
+describe("review round 86 regressions", () => {
+  test("a Sources label ending one list item drops the next item's citation", () => {
+    const essay = toSpokenEssay(
+      "t",
+      "# T\n\nIntro.\n\n- First point.\n\n  Sources:\n\n- Smith, A. 2020. A citation.\n- Later item.\n",
+    );
+    const spoken = essay.segments.map((s) => s.text).join(" ");
+    expect(spoken).not.toContain("Smith");
+    expect(spoken).toContain("Later item.");
+  });
+});
