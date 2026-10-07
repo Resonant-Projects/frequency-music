@@ -381,7 +381,7 @@ describe("benign slashes", () => {
       "Stable core, adaptive surface",
     );
     expect(normalizeProse("an A/B test and an A/B/C study over I/O")).toBe(
-      "an A-B test and an A-B-C study over I-O",
+      "an A-B test and an A, B, C study over I-O",
     );
     // Mixed or coded terms keep their slash for an override.
     expect(normalizeProse("2-note/2-chord blocks, MP3/OGG")).toBe(
@@ -1199,6 +1199,295 @@ describe("review round 61 regressions", () => {
         "t",
         "# T\n\nA fourth 4:3 (the perfect fourth) and item 2 (3 cents).\n",
       ).warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 63 regressions", () => {
+  test("inequalities with arithmetic are refused; plain thresholds are fine", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe inequality 0 < (2-3) is false.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe inequality 0 < 2-3 is false.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nSignificant at p < 0.01 here.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 64 regressions", () => {
+  test("signed operands and symbolic implicit products are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe inequality 0 < -2-3 is false.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThen -2-3 holds.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is 2(x+3).\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA range of 3-5 cents at -16 LUFS.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 65 regressions", () => {
+  test("a spaced leading minus still marks the expression signed", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute - 2-3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nRoughly 3-5 cents apart.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 66 regressions", () => {
+  test("unary plus and signed Greek symbols are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute +2-3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe coefficient is -α.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe coefficient α is small.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 67 regressions", () => {
+  test("compact comparisons with negatives are refused; chord arrows still read", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe condition x<-1 holds.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe progression I -> vi -> IV.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 69 regressions", () => {
+  test("numeric spans joined to symbolic terms are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute x+2-3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 2-3+x.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 2-3 - y.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay(
+        "t",
+        "# T\n\nA 3:2 fifth, 3-5 cents (about 1/3 of a tone), and 4:5:6.\n",
+      ).warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 70 regressions", () => {
+  test("a hyphen pressed against a numeric expression is subtraction", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute x-1/2.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("review round 73 regressions", () => {
+  test("a two-way arrow reads as corresponds to; symbolic subtraction is refused", () => {
+    expect(normalizeProse("meter ↔ jurisdiction")).toBe(
+      "meter corresponds to jurisdiction",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nThe value x-1 grows.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe value 1-x grows.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA 12-tone row and the 3-limit lattice.\n")
+        .warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 74 regressions", () => {
+  test("an opening rule is not front matter; YAML front matter is dropped", () => {
+    const rule = toSpokenEssay(
+      "t",
+      "---\n\n# Title\n\nKeep this.\n\n---\n\nAnd this.\n",
+    );
+    expect(rule.title).toBe("Title");
+    expect(rule.segments.map((s) => s.text)).toContain("Keep this.");
+    const yaml = toSpokenEssay(
+      "t",
+      '---\ntitle: "X"\ntags:\n  - "a"\n---\n# Title\n\nBody.\n',
+    );
+    expect(yaml.segments.map((s) => s.text).join(" ")).not.toContain("tags");
+  });
+
+  test("letter-minus-letter subtraction is refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe difference is x-y.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("musical chains", () => {
+  test("progressions and note sequences are spoken as lists, not refused as subtraction", () => {
+    expect(normalizeProse("a simple progression (I-V-vi-IV)")).toBe(
+      "a simple progression (one, five, six minor, four)",
+    );
+    expect(normalizeProse("stack fifths (C-G-D-A-E-B-F#, then reduce)")).toBe(
+      "stack fifths (C, G, D, A, E, B, F sharp, then reduce)",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nTake a simple I-IV-V-I progression.\n")
+        .warnings,
+    ).toEqual([]);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe lag t − 1 matters.\n").warnings.length,
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("musical chains: flats", () => {
+  test("a flat inside a note chain is spoken", () => {
+    expect(normalizeProse("Arpeggios: C-E-G-Bb-D now")).toBe(
+      "Arpeggios: C, E, G, B flat, D now",
+    );
+  });
+});
+
+describe("review round 75 regressions", () => {
+  test("lowercase Roman numerals keep their minor quality", () => {
+    expect(normalizeProse("Compare I-IV with i-iv")).toBe(
+      "Compare one, four with one minor, four minor",
+    );
+  });
+});
+
+describe("review round 76 regressions", () => {
+  test("decorated chord chains are refused, not partially converted", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nA progression I-ii°-V here.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(normalizeProse("I-ii°-V")).not.toContain("one, two minor");
+    expect(toSpokenEssay("t", "# T\n\nA 90° phase shift.\n").warnings).toEqual(
+      [],
+    );
+  });
+});
+
+describe("review round 77 regressions", () => {
+  test("accidental-prefixed chord chains are refused, not partially converted", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe borrowed I-♭VII-IV cadence.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe borrowed bVII-IV cadence.\n").warnings
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA plain I-IV-V-I and B♭ major.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 78 regressions", () => {
+  test("mixed hyphen and en-dash chains convert whole", () => {
+    expect(normalizeProse("A ii-V–I in C")).toBe("A two minor, five, one in C");
+    expect(toSpokenEssay("t", "# T\n\nA ii-V–I in C.\n").warnings).toEqual([]);
+  });
+});
+
+describe("review round 79 regressions", () => {
+  test("en-dash subtraction between symbols is refused; en-dash chord chains are not", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe difference is x–y.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(toSpokenEssay("t", "# T\n\nA ii–V–I in C.\n").warnings).toEqual([]);
+  });
+});
+
+describe("review round 80 regressions", () => {
+  test("clock times with am/pm or a time zone are refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nThe clock reads 12:34 p.m.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nIt started 10:30 UTC.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe comma is 81:80 exactly.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 81 regressions", () => {
+  test("a closing bracket pressed against a symbol is implicit multiplication", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute (2-3)x.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe note(s) are fine (really).\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 82 regressions", () => {
+  test("a ruled list is not front matter; a symbol before a numeric bracket is a product", () => {
+    const ruled = toSpokenEssay(
+      "t",
+      "---\n- First principle.\n- Second principle.\n---\n# Title\n\nBody.\n",
+    );
+    expect(ruled.segments.map((s) => s.text).join(" ")).toContain(
+      "First principle",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nThe product is x(2+3).\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nThe function f(x) grows.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 83 regressions", () => {
+  test("spaced ratios convert; ASCII flats read as flat or are refused", () => {
+    expect(
+      normalizeProse("A fifth has the ratio 3 : 2, and 1 : 2.76 : 5.40"),
+    ).toBe("A fifth has the ratio 3 to 2, and 1 to 2.76 to 5.40");
+    expect(normalizeProse("in Bb major and Eb minor")).toBe(
+      "in B flat major and E flat minor",
+    );
+    expect(
+      toSpokenEssay("t", "# T\n\nIt modulates to Bb.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA fifth has the ratio 3 : 2.\n").warnings,
+    ).toEqual([]);
+  });
+});
+
+describe("review round 84 regressions", () => {
+  test("arithmetic with leading-dot decimals is refused", () => {
+    expect(
+      toSpokenEssay("t", "# T\n\nCompute 2-.3.\n").warnings.length,
+    ).toBeGreaterThan(0);
+    expect(
+      toSpokenEssay("t", "# T\n\nA delay of 0.3 seconds and 3-5 cents.\n")
+        .warnings,
     ).toEqual([]);
   });
 });

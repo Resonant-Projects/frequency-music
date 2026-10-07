@@ -250,16 +250,18 @@ const RATIO_ARITHMETIC =
 // of the shapes the converter reads: a range (3-5, 3–5), a ratio chain
 // (3:2, 4:5:6), a fraction (3/2), or a decimal score (4.22/5). Anything
 // else ("1+(2-3)", "2 - 3", "1+2-3") waits for a spoken override.
-const NUMBER = String.raw`\d+(?:[.,]\d+)*`;
+// Leading-dot decimals (".3") count too; no readable shape accepts them.
+const NUMBER = String.raw`(?:\d+(?:[.,]\d+)*|\.\d+)`;
 const NUMERIC_EXPRESSION = new RegExp(
-  // A colon followed by a space is prose punctuation ("k equals 7: 120").
+  // A colon followed by a space alone is prose punctuation ("k equals 7:
+  // 120"); spaced on both sides ("3 : 2") it is a ratio.
   // Later operands may carry a sign ("2+(-3)"), which no readable shape has.
-  String.raw`[([]*${NUMBER}[)\]]*(?:(?:\s*[-–−+×*·÷±/]\s*|:(?!\s))[([]*[-−]?${NUMBER}[)\]]*)+`,
+  String.raw`[([]*${NUMBER}[)\]]*(?:(?:\s*[-–−+×*·÷±/]\s*|:(?!\s)|\s+:\s+)[([]*[-−]?${NUMBER}[)\]]*)+`,
   "g",
 );
 const READABLE_NUMERIC = [
   /^\d[\d.,]*(?:-|\s?–\s?)\d[\d.,]*$/,
-  /^\d[\d.]*(?::\d[\d.]*)+$/,
+  /^\d[\d.]*(?:(?::|\s+:\s+)\d[\d.]*)+$/,
   /^\d+\/\d+$/,
   /^\d+\.\d+\/\d+$/,
   /^\d+\s?×\s?\d+$/,
@@ -289,6 +291,21 @@ const UNIT_WORDS = new Set([
   "pixel",
   "pixels",
 ]);
+
+const ROMAN_DEGREES: Record<string, string> = {
+  I: "one",
+  II: "two",
+  III: "three",
+  IV: "four",
+  V: "five",
+  VI: "six",
+  VII: "seven",
+};
+
+// Two or more Roman numerals, or three or more note names (with an optional
+// sharp or flat), joined by hyphens or en dashes ("ii-V–I"), standing alone.
+const MUSIC_CHAIN =
+  /(?<![\p{L}\d°ø+♭♯#–-])(?:(?:[IViv]{1,3})(?:[-–][IViv]{1,3})+|(?:[A-G][#♯♭b]?)(?:[-–][A-G][#♯♭b]?){2,})(?![\p{L}\d°ø+/^–-])/gu;
 
 export function numberWord(n: number): string {
   return NUMBER_WORDS[n] ?? String(n);
@@ -499,10 +516,30 @@ export function normalizeProse(input: string): string {
     .replaceAll(/\bapprox\.(?=\s)/g, "approximately")
     .replaceAll(/\bw\/(?=\s)/g, "with");
 
+  // Chord progressions and note sequences joined by hyphens ("I-V-vi-IV",
+  // "C-G-D-A-E-B-F#") are lists, not words: Roman numerals are spoken as
+  // degrees and each element is separated by a pause.
+  text = text.replaceAll(MUSIC_CHAIN, (chain: string) =>
+    chain
+      .split(/[-–]/)
+      .map((token) => {
+        // Case carries chord quality: lowercase numerals are minor.
+        const degree = ROMAN_DEGREES[token.toUpperCase()];
+        if (degree)
+          return token === token.toLowerCase() ? `${degree} minor` : degree;
+        return token.replace(/^([A-G])[b♭]$/, "$1 flat");
+      })
+      .join(", "),
+  );
+
   // Note names and powers written in plain text.
   text = text
     .replaceAll(/\b([A-G])(?:#|♯)(?=[\s,.;:)-]|$)/g, "$1 sharp")
     .replaceAll(/\b([A-G])♭/g, "$1 flat")
+    .replaceAll(
+      /\b([A-G])b(?=\s+(?:major|minor|key|chord|scale|note|tuning|clarinet|horn|trumpet|string)s?\b)/g,
+      "$1 flat",
+    )
     .replaceAll(/(\w)\^\(([^()]+)\)/g, "$1 to the power $2 ")
     // A decimal score ("4.22/5"); before a unit word ("1.5/2 seconds") it
     // is a quantity, left for the lint like the fractions below.
@@ -535,6 +572,8 @@ export function normalizeProse(input: string): string {
       (match, a: string, b: string) =>
         Number(a) < Number(b) ? `${a} to ${b}` : match,
     )
+    // A colon spaced on both sides between numbers is a ratio ("3 : 2").
+    .replaceAll(/(?<=\d)\s+:\s+(?=\d)/g, ":")
     .replaceAll(
       /(?<![\w:.])(\d+(?:\.\d+)?)((?::\d+(?:\.\d+)?)+)(?!\s?(?:am|pm|AM|PM)\b)(?![\w:⁰-⁹¹²³⁻])/g,
       (_, first: string, rest: string) =>
@@ -637,7 +676,8 @@ export function normalizeProse(input: string): string {
     .replaceAll(/\s*=\s*/g, " equals ")
     .replaceAll(/(\S)\s*−\s*(\S)/g, "$1 minus $2")
     .replaceAll(/(\p{L})–(\p{L})/gu, "$1-$2")
-    .replaceAll(/\s*↔\s*/g, " and ")
+    // A two-way relation, as the essays use it ("meter ↔ jurisdiction").
+    .replaceAll(/\s*↔\s*/g, " corresponds to ")
     .replaceAll(/\s*⇒\s*/g, " implies ")
     .replaceAll("√", " the square root of ")
     .replaceAll("∞", "infinity")
@@ -676,6 +716,14 @@ const RESIDUE: [RegExp, string][] = [
   ],
   [/\b[0-9a-z]{24,}\b/, "opaque identifier"],
   [/&[A-Za-z][A-Za-z0-9]*;/, "HTML entity"],
+  [/[-–−+×*/:]\s*\.\d/, "operator before a leading-dot decimal"],
+  // An accidental or a chord chain the converter did not resolve
+  // ("I-♭VII-IV", "bVII-IV", "I-ii°-V").
+  [/[♭♯]|\b[A-G]b\b/, "unconverted accidental"],
+  [
+    /(?<!\p{L})[b♭♯#]?(?:[IV]{1,3}|[iv]{1,3})[°ø+]?[-–][b♭♯#]?(?:[IV]{1,3}|[iv]{1,3})(?!\p{L})/u,
+    "unconverted chord progression",
+  ],
 ];
 
 function lint(text: string, where: string, warnings: string[]): void {
@@ -806,7 +854,19 @@ export function toSpokenEssay(
 ): SpokenEssay {
   const warnings: string[] = [];
   const omissions: string[] = [];
-  let body = markdown.replace(/^---\n[\s\S]*?\n---\n/, "");
+  // Front matter is dropped only when it opens with a YAML key and every
+  // line is YAML (a key, a list item, or an indented continuation); an
+  // opening horizontal rule over a list or prose is content.
+  let body = markdown.replace(
+    /^---\n([\s\S]*?)\n---\n/,
+    (block, inner: string) => {
+      const lines = inner.split("\n").filter((line) => line.trim());
+      const yaml =
+        /^[\w-]+\s*:/.test(lines[0] ?? "") &&
+        lines.every((line) => /^(?:[\w-]+\s*:|\s+\S|-\s)/.test(line));
+      return yaml ? "" : block;
+    },
+  );
   for (const { from, to } of override.source ?? []) {
     if (!body.includes(from))
       warnings.push(`source override not found: ${from}`);
@@ -871,9 +931,53 @@ export function toSpokenEssay(
         `${where}: inline code needs a spoken override: \`${code}\``,
       );
     }
-    // Implicit multiplication ("2(3+4)", "(2+3)(4+5)", "(3+4)2") has no
+    // A comparison beside a bracketed or arithmetic operand ("0 < (2-3)",
+    // "0 < 2-3") is an inequality the converter cannot read; a plain
+    // threshold such as "p < 0.01" is fine.
+    if (
+      /[<>≤≥≠≈]\s*[([]|[)\]]\s*[<>≤≥≠≈]/.test(text) ||
+      /[<>≤≥≠≈]\s*[-−]?[\d.]+\s*[-–−+×*·÷/]\s*[-−]?\d|\d\s*[-–−+×*·÷/]\s*[\d.]+\s*[<>≤≥≠≈]/.test(
+        text,
+      )
+    ) {
+      warnings.push(
+        `${where}: an inequality with arithmetic needs a spoken override`,
+      );
+    }
+    // A comparison followed by a minus ("x<-1", "x<-α", "x > -a") collides
+    // with arrow notation ("<-" is "from"); whatever the operand, it waits
+    // for a spoken form.
+    if (/[<>≤≥]\s*[-−]/.test(text)) {
+      warnings.push(
+        `${where}: a comparison with a negative number needs a spoken override`,
+      );
+    }
+    // Subtraction with a single-letter symbol ("x-1", "1 − x", "t − 10")
+    // leaves a hyphen the voice cannot read as "minus". Musical chains
+    // ("I-V-vi-IV", "C-G-D") are spoken as lists and are not subtraction.
+    if (
+      /(?<![\p{L}\d])\p{L}\s*[-–−]\s*(?:\d|\p{L}(?![\p{L}\d]))|\d\s*[-–−]\s*\p{L}(?![\p{L}\d])/u.test(
+        text.replaceAll(MUSIC_CHAIN, " "),
+      )
+    ) {
+      warnings.push(
+        `${where}: subtraction with a symbol needs a spoken override`,
+      );
+    }
+    // A chord-quality sign on a letter ("ii°", "viiø") is chord notation,
+    // not degrees; after a number ("90°") it still reads as degrees.
+    if (/\p{L}[°ø]/u.test(text)) {
+      warnings.push(`${where}: a chord symbol needs a spoken override`);
+    }
+    // A sign on a Greek symbol ("-α") would be read as a dash once the
+    // letter is spelled out.
+    if (/(?:^|[\s(["'“‘])[-−+±]\s?\p{Script=Greek}/u.test(text)) {
+      warnings.push(`${where}: a signed symbol needs a spoken override`);
+    }
+    // Implicit multiplication ("2(3+4)", "(2+3)(4+5)", "(3+4)2", "(2-3)x")
+    // has no
     // operator to speak at all.
-    if (/[\d)\]]\(\s*[\d([]|[)\]]\d/.test(text)) {
+    if (/[\d)\]]\(|[)\]][\p{L}\d]|\p{L}\((?=\s*[\d([])/u.test(text)) {
       warnings.push(
         `${where}: implicit multiplication needs a spoken override`,
       );
@@ -909,6 +1013,11 @@ export function toSpokenEssay(
       /\b(?:at|from|until|till|by|around|after|before|between|timestamps?(?:\s+(?:is|of|at))?|time(?:\s+(?:is|of))?)\s+\d{1,2}:\d\d\b/i.test(
         text,
       ) ||
+      // A colon pair with a clock suffix: am/pm in any form ("p.m.", "PM"),
+      // "o'clock", or a time zone ("UTC", "EST").
+      /\d{1,2}:\d\d\s*(?:[ap]\.?\s?m\b\.?|o['’]clock|UTC|GMT|[A-Z]{2,3}T\b)/i.test(
+        text,
+      ) ||
       // A clock-shaped hh:mm:ss chain (hour up to 23, then two-digit minutes
       // and seconds under 60) reads as a time, not a three-part ratio.
       /(?<![\d:.])(?:[01]?\d|2[0-3]):[0-5]\d:[0-5]\d(?![\d:])/.test(text)
@@ -920,6 +1029,33 @@ export function toSpokenEssay(
     // Arithmetic with a fraction or ratio operand ("1/2-1/3", "3 + 1/4",
     // "4:3–3:2") has no reading the converter can be trusted with.
     for (const expression of text.matchAll(NUMERIC_EXPRESSION)) {
+      // A sign before the first operand ("-2-3") makes the whole run
+      // signed arithmetic, which no readable shape covers.
+      // Whitespace between the sign and the number ("- 2-3") counts too.
+      const before = text.slice(0, expression.index ?? 0).trimEnd();
+      // So does an operator joining the span to a symbol on either side
+      // ("x+2-3", "2-3+x", "x×2/3"): the span is part of a larger expression.
+      const after = text
+        .slice((expression.index ?? 0) + expression[0].length)
+        .trimStart();
+      if (
+        // Any operator before the span, spaced or not, hyphen and en dash
+        // included ("x-1/2", "x- 1/2", "x–1/2"): it is subtraction or more.
+        /[-–−+×*·÷±/^=]$/.test(before) ||
+        /^[−+×*·÷±/^=]/.test(after) ||
+        /^[-–]\s*[\p{L}\d(]/u.test(after)
+      ) {
+        warnings.push(
+          `${where}: numeric expression "${expression[0].trim()}" joined to other terms needs a spoken override`,
+        );
+        continue;
+      }
+      if (/[-−+±]$/.test(before) && !/[\p{L}\d]$/u.test(before.slice(0, -1))) {
+        warnings.push(
+          `${where}: signed numeric expression "${expression[0].trim()}" needs a spoken override`,
+        );
+        continue;
+      }
       // Brackets around the whole run are prose ("(3:2)"); a bracket inside
       // it is grouping ("1+(2-3)") and is never readable.
       const span = expression[0].trim().replaceAll(/^[([]+|[)\]]+$/g, "");

@@ -807,7 +807,20 @@ async function publish(batch: string): Promise<void> {
     stopped = true;
     if (await busy())
       throw new Error("queue changed while stopping the worker");
-    for (const entry of pending) await publishOne(client, batch, entry);
+    // An interrupted run leaves at most one essay with a queued job (each
+    // essay is published to completion before the next is enqueued). Finish
+    // that essay first, so publishOne's one-live-job guard never sees it
+    // beside a newly enqueued job for another essay.
+    const queuedTitles = new Set(
+      (await scanTable(client, "mediaJobs"))
+        .filter((job) => job.status === "queued")
+        .map((job) => (job.input as LiveInput).title ?? ""),
+    );
+    const ordered = [
+      ...pending.filter((entry) => queuedTitles.has(entry.episodeTitle)),
+      ...pending.filter((entry) => !queuedTitles.has(entry.episodeTitle)),
+    ];
+    for (const entry of ordered) await publishOne(client, batch, entry);
   } finally {
     if (stopped) {
       execFileSync(

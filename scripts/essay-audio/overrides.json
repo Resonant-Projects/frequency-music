@@ -19,11 +19,19 @@
       },
       {
         "from": "across the diagonal s_f = s_p.",
-        "to": "across the diagonal where s-f equals s-p."
+        "to": "across the diagonal where s f equals s p."
       },
       {
         "from": "the 2-voice/3-voice constraint",
         "to": "the two-voice or three-voice constraint"
+      },
+      {
+        "from": "(s_f − s_p)",
+        "to": "(s f minus s p)"
+      },
+      {
+        "from": "The s_f–s_p framework",
+        "to": "The s f and s p framework"
       }
     ]
   },
