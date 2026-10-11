@@ -231,23 +231,11 @@ Opacity changes on labels: transition: opacity 0.25s ease
 ### Interaction States
 
 ```text
-Resting:   sector fill 3%, arcs 30-38%, labels 85%
-Previewed: sector fill 10%, arcs 75-85%, labels 100%, hub/domain edges lit
-Selected:  same as Previewed — persists after the pointer or focus leaves
-Active:    isPreviewed OR isSelected
+Resting:  sector fill 3%, arcs 30-38%, labels 58%
+Hovered:  sector fill 10%, arcs 75-85%, outer arc gets z3-sm glow filter
+Selected: same as Hovered — persists after mouse leaves
+Active:   isHovered OR isSelected
 ```
-
-Previewing (hover or keyboard focus on a sidebar domain button) only changes
-opacities on the existing sector materials, edges and labels. Selecting owns the
-overlay lifecycle: the selected sector's constellation, armillary rings, pull
-lines and selection halo are cleared only when another sector is selected, never
-by a preview. The scene starts with the sidebar's default sector selected.
-
-On the canvas a pointer that moves more than 4px between press and release is an
-orbit drag, not a pick. Pull lines and the selection halo follow the orbiting
-bodies they mark every frame. Each body's orbital speed is derived from a hash
-of its item id, so a live data refresh rebuilds the rings without re-rolling
-speeds, and replays any visible pull lines and halo against the new rings.
 
 ---
 
@@ -308,32 +296,16 @@ Overflow:   scroll-y
    - Stats cards: two columns, `padding: 10px`, bordered in domain color at 18% opacity
 
 3. **Domain list** — `padding: 16px 26px`
-   - Each item: flex row, 7px 9px padding, 1px border, 14px label
-   - Active (`aria-pressed`) border: the sector hue at 33% via `--sector-color`
-   - Active background: `zodiac.gold/5`; inactive border: `zodiac.gold/10`
-   - Active label takes the text-safe sector colour (`--sector-text`: violet
-     sectors use `zodiac.violetText`); inactive labels are `zodiac.cream/72`
+   - Each item: flex row, 7px 9px padding, 1px border, 12.5px label
+   - Active border: `domain.color + '55'`
+   - Active background: `rgba(200,168,75,0.05)`
+   - Inactive border: `rgba(200,168,75,0.10)`
 
 4. **Pipeline summary** — `padding: 14px 26px 24px`
    - Chain: SRC → EXT → HYP → REC
    - Values: 15px, `#c8a84b`
    - Codes: 7.5px, letter-spacing 0.2em, cream 25% opacity
    - Separator arrow: 9px, gold 25% opacity
-
-### Keyboard and assistive-technology parity
-
-Everything the canvas reaches is also reachable from the sidebar:
-
-- The selected domain section lists its **Concepts** (12 shown, then a
-  "Show all N" disclosure), its **Sub-topics** (the same panels an armillary
-  ring click opens) and its **Pipeline items** grouped by ring (five per group
-  behind "Show all N"; the same item panels an orbiting-body click opens).
-- Every panel title is an `h2` with `tabIndex={-1}`; after a mode change focus
-  moves to it. Back returns focus to the overview control that opened the
-  drill-down when it still exists.
-- Canvas-driven changes are announced in a visually hidden polite
-  `role="status"` region ("Concept: X", "Sub-topic: Y").
-- The pause/resume rotation control appears in every panel, beside Back.
 
 ---
 
