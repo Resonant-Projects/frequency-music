@@ -626,6 +626,50 @@ describe("federated source-scout search", () => {
     ]);
   });
 
+  test("allows Alexandria thirty seconds while keeping other research deadlines", async () => {
+    vi.useFakeTimers();
+    const callTool = vi.fn(async () => ({ ok: true }));
+    const fetchImpl = vi.fn(async (input: string | URL | Request) => {
+      if (urlOf(input).includes("search/research/papers"))
+        return await new Promise<Response>(() => {});
+      return json({ resultList: { result: [] } });
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      let finished = false;
+      const result = createWebSearch({
+        apiKey: "",
+        fetchImpl,
+        callTool,
+        alexandriaEnabled: true,
+      })({ query: "resonance" }, { agentRunId: "run-scout" }).then((rows) => {
+        finished = true;
+        return rows;
+      });
+      await vi.advanceTimersByTimeAsync(8_000);
+      expect(finished).toBe(false);
+      await vi.advanceTimersByTimeAsync(22_000);
+      await expect(result).resolves.toEqual([]);
+      expect(callTool).toHaveBeenCalledWith(
+        "appendAgentRunEvent",
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            providers: expect.objectContaining({
+              alexandria: expect.objectContaining({
+                status: "failed",
+                error:
+                  "Alexandria Research Index search timed out after 30000ms",
+              }),
+            }),
+          }),
+        }),
+      );
+    } finally {
+      warn.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   test("bounds a research fetch that ignores abort and records the timeout", async () => {
     vi.useFakeTimers();
     const fetchImpl = vi.fn(async (input: string | URL | Request) => {

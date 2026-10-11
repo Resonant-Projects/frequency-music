@@ -25,7 +25,6 @@ import {
   buildDeployArgs,
   buildDeployEnv,
   CONVEX_DEPLOY_URL,
-  envFileKeys,
   parseDeployArgs,
 } from "./lib/convex-deploy";
 import { AUDITED_CONVEX_VERSION } from "./lib/convex-provenance";
@@ -52,8 +51,8 @@ async function confirm(question: string): Promise<boolean> {
  * The deployable source and the CLI child environment. Refuses a dirty
  * checkout repository-wide: the bundle also depends on the lockfile and on
  * anything convex/ imports, so a clean convex/ alone does not make HEAD the
- * source. The CLI dotenv-loads `.env.local` and `.env` itself, so their keys
- * are blanked in the child environment.
+ * source. The CLI dotenv-loads `.env.local` and `.env` itself, so deploys
+ * require a release checkout without either file.
  */
 function snapshotCheckout(): { head: string; env: Record<string, string> } {
   if (git("status", "--porcelain", "--untracked-files=all")) {
@@ -61,13 +60,14 @@ function snapshotCheckout(): { head: string; env: Record<string, string> } {
       "Refusing to deploy from a checkout with uncommitted changes. Commit or stash them first.",
     );
   }
-  const fileKeys = [".env.local", ".env"].flatMap((file) => {
-    const path = join(root, file);
-    return existsSync(path) ? envFileKeys(readFileSync(path, "utf8")) : [];
-  });
+  if ([".env.local", ".env"].some((file) => existsSync(join(root, file)))) {
+    throw new Error(
+      "Refusing to deploy with .env or .env.local present. Use a clean release checkout with brokered credentials.",
+    );
+  }
   return {
     head: git("rev-parse", "HEAD"),
-    env: buildDeployEnv(process.env, fileKeys),
+    env: buildDeployEnv(process.env, []),
   };
 }
 

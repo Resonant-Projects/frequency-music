@@ -13,8 +13,15 @@ import { requireAuth, type AppIdentity } from "./auth";
 import { pairKey } from "./shared/correspondenceKey";
 import { correspondenceStatusValidator } from "./shared/correspondences";
 import { correspondenceReturnValidator } from "./validators";
-import { inferDisplaySectorFromDomain } from "./domainMappings";
-import { BOOTSTRAP_RESEARCH_DOMAINS } from "./shared/researchTopics";
+import {
+  inferDisplaySectorFromDomain,
+  normalizeSectorId,
+} from "./domainMappings";
+import {
+  BOOTSTRAP_RESEARCH_DOMAINS,
+  RESEARCH_AREAS,
+  type ScoutThinDomain,
+} from "./shared/researchTopics";
 
 const DEFAULT_LIST_LIMIT = 20;
 const MAX_LIST_LIMIT = 100;
@@ -73,10 +80,8 @@ function clampLimit(limit: number | undefined): number {
   return Math.max(1, Math.min(Math.floor(limit), MAX_LIST_LIMIT));
 }
 
-type ThinDomain = {
-  domain: string;
-  onMissionConceptCount: number;
-  sourceCount: number;
+type ThinDomain = ScoutThinDomain & {
+  sectorMapping: ReturnType<typeof inferDisplaySectorFromDomain>;
 };
 
 type StarvedConjecture = {
@@ -155,15 +160,29 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     }
     domainCounts.push({
       domain: domain.name,
+      sectorMapping: domain.sectorMapping
+        ? normalizeSectorId(domain.sectorMapping)
+        : inferDisplaySectorFromDomain(domain.name),
       onMissionConceptCount: concepts.length,
       sourceCount: sourceIds.size,
     });
   }
 
+  // Scout runs weekly. Rotate equal-need sectors each UTC week so all six
+  // areas receive turns within the five-target cap, even if intake yields no concepts.
+  const offset =
+    Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)) % RESEARCH_AREAS.length;
+  const sectorRank = (domain: ThinDomain) => {
+    const index = RESEARCH_AREAS.findIndex(
+      (area) => area.sector === domain.sectorMapping,
+    );
+    return (index - offset + RESEARCH_AREAS.length) % RESEARCH_AREAS.length;
+  };
   const ranked = domainCounts.toSorted(
     (left, right) =>
       left.sourceCount - right.sourceCount ||
       left.onMissionConceptCount - right.onMissionConceptCount ||
+      sectorRank(left) - sectorRank(right) ||
       left.domain.localeCompare(right.domain),
   );
   // Reserve the first slots for distinct display areas, so tuning/theory or
@@ -171,7 +190,7 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
   const selected = new Set<string>();
   const sectors = new Set<string>();
   for (const domain of ranked) {
-    const sector = inferDisplaySectorFromDomain(domain.domain);
+    const sector = domain.sectorMapping;
     if (sectors.has(sector)) continue;
     selected.add(domain.domain);
     sectors.add(sector);
@@ -181,7 +200,14 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     if (selected.size === SCOUT_TARGET_LIMIT) break;
     selected.add(domain.domain);
   }
-  return ranked.filter((domain) => selected.has(domain.domain));
+  return ranked
+    .filter((domain) => selected.has(domain.domain))
+    .toSorted(
+      (left, right) =>
+        left.sourceCount - right.sourceCount ||
+        left.onMissionConceptCount - right.onMissionConceptCount ||
+        left.domain.localeCompare(right.domain),
+    );
 }
 
 async function computeStarvedConjectures(
@@ -229,6 +255,7 @@ export const scoutTargets = query({
     thinDomains: v.array(
       v.object({
         domain: v.string(),
+        sectorMapping: v.optional(v.string()),
         onMissionConceptCount: v.number(),
         sourceCount: v.number(),
       }),

@@ -306,6 +306,7 @@ async function fetchResearch(
   map: (payload: unknown, limit: number) => WebSearchResult[],
   limit: number,
   headers: Record<string, string> = {},
+  timeoutMs = RESEARCH_SEARCH_TIMEOUT_MS,
 ): Promise<{ results: WebSearchResult[]; outcome: ProviderOutcome }> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -325,11 +326,11 @@ async function fetchResearch(
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => {
           const error = new Error(
-            `${provider} search timed out after ${RESEARCH_SEARCH_TIMEOUT_MS}ms`,
+            `${provider} search timed out after ${timeoutMs}ms`,
           );
           controller.abort(error);
           reject(error);
-        }, RESEARCH_SEARCH_TIMEOUT_MS);
+        }, timeoutMs);
       }),
     ]);
     const results = map(payload, limit);
@@ -423,6 +424,8 @@ export function createWebSearch(
             `https://api.firecrawl.dev/v2/search/research/papers?${new URLSearchParams({ query: args.query, k: String(maxResults) })}`,
             mapAlexandria,
             maxResults,
+            {},
+            30_000,
           )
         : Promise.resolve(null),
     ]);

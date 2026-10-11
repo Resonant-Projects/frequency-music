@@ -12,7 +12,9 @@ import {
 export function foundationQueries(targets: ScoutTargets): ScoutQuery[] {
   return targets.thinDomains.map((target) => {
     const area = RESEARCH_AREAS.find(
-      (item) => item.sector === inferDisplaySectorFromDomain(target.domain),
+      (item) =>
+        item.sector ===
+        (target.sectorMapping ?? inferDisplaySectorFromDomain(target.domain)),
     );
     return {
       query: `${target.domain} ${area?.foundationQuery ?? "music acoustics primary research"}`,

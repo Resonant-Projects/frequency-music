@@ -1,5 +1,14 @@
 // Research scope shared by gap targeting, discovery, extraction, and classification.
 // The registry remains authoritative for assignable domain names.
+import type { DisplaySectorId } from "./domainMappings";
+
+export type ScoutThinDomain = {
+  domain: string;
+  sectorMapping?: DisplaySectorId;
+  onMissionConceptCount: number;
+  sourceCount: number;
+};
+
 export const RESEARCH_AREAS = [
   {
     sector: "math",

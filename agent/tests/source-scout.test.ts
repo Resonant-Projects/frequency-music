@@ -24,6 +24,23 @@ import type {
   SourceScoutState,
 } from "../src/state/sourceScoutState";
 
+import { foundationQueries } from "../src/graphs/source-scout/prompts";
+
+test("foundation queries honor an explicit registry sector", () => {
+  const [query] = foundationQueries({
+    thinDomains: [
+      {
+        domain: "spectral-fusion",
+        sectorMapping: "synthesis",
+        onMissionConceptCount: 0,
+        sourceCount: 0,
+      },
+    ],
+    starvedConjectures: [],
+  });
+  expect(query?.query).toContain("audio synthesis physical modeling");
+});
+
 const searchHit = (index: number): ScoutSearchHit => ({
   query: {
     query: `query ${index}`,
