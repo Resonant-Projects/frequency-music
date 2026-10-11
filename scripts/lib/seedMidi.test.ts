@@ -16,15 +16,12 @@ const parameters: CompositionParameter[] = [
 ];
 
 describe("deterministic seed MIDI", () => {
-  test.each([
-    "tempo",
-    "rootNote",
-    "rhythm",
-    "chordProgression",
-    "form",
-  ])("recognizes %s as a seed parameter", (type) => {
-    expect(isSeedParameter({ type, value: "test" })).toBe(true);
-  });
+  test.each(["tempo", "rootNote", "rhythm", "chordProgression", "form"])(
+    "recognizes %s as a seed parameter",
+    (type) => {
+      expect(isSeedParameter({ type, value: "test" })).toBe(true);
+    },
+  );
 
   test("does not classify unsupported parameters as seed parameters", () => {
     expect(isSeedParameter({ type: "instrument", value: "sine" })).toBe(false);

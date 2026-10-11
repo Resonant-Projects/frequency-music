@@ -10,6 +10,7 @@ export default defineConfig({
   outdir: "styled-system",
   jsxFramework: "solid",
   presets: [
+    "@pandacss/preset-base",
     createPreset({
       accentColor: gold,
       grayColor: slate,
@@ -19,11 +20,23 @@ export default defineConfig({
   conditions: {
     extend: {
       coarsePointer: "@media (pointer: coarse)",
+      hover: {
+        "@media (hover: hover) and (pointer: fine)": {
+          "&:is(:hover, [data-hover])": "@slot",
+        },
+      },
     },
   },
   theme: {
     extend: {
       tokens: {
+        // The three sanctioned shadows (DESIGN.md Elevation → Shadow Vocabulary).
+        // All are state-only: hover lift, sticky detachment, hover glow.
+        shadows: {
+          cardHover: { value: "0 22px 48px rgba(0, 0, 0, 0.24)" },
+          detachedBar: { value: "0 -12px 40px rgba(13, 6, 32, 0.6)" },
+          goldGlow: { value: "0 0 12px rgba(200, 168, 75, 0.08)" },
+        },
         fonts: {
           display: { value: "'Cormorant Garamond', Georgia, serif" },
           body: { value: "'Cormorant Garamond', Georgia, serif" },

@@ -41,17 +41,18 @@ async function scaleFixture(filename: string): Promise<string> {
 }
 
 describe("tuning parameters to Scala", () => {
-  test.each(
-    Object.entries(NAMED_TUNINGS),
-  )("keeps named tuning %s aligned with its Scala file", async (name, tuning) => {
-    const fixture = await scaleFixture(`${name}.scl`);
-    const spec = parseTuningFromParameters([
-      { type: "tuningSystem", value: tuning.aliases[0]! },
-    ]);
+  test.each(Object.entries(NAMED_TUNINGS))(
+    "keeps named tuning %s aligned with its Scala file",
+    async (name, tuning) => {
+      const fixture = await scaleFixture(`${name}.scl`);
+      const spec = parseTuningFromParameters([
+        { type: "tuningSystem", value: tuning.aliases[0]! },
+      ]);
 
-    expect(spec).toEqual({ kind: "named", name });
-    expect(scalaIntervals(fixture)).toEqual(tuning.intervals);
-  });
+      expect(spec).toEqual({ kind: "named", name });
+      expect(scalaIntervals(fixture)).toEqual(tuning.intervals);
+    },
+  );
 
   test("matches the hand-written geometric keyboard mapping body", async () => {
     const fixture = await scaleFixture("geometric-temperament.kbm");

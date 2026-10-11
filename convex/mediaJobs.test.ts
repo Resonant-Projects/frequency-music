@@ -153,25 +153,25 @@ describe("mediaJobs lifecycle", () => {
     ).toBeNull();
   });
 
-  test.each([
-    "claimed",
-    "done",
-  ] as const)("a %s narration blocks a different script for the same brief", async (status) => {
-    const t = convexTest(schema, modules);
-    const briefId = await insertBrief(t);
-    const first = await t.mutation(internal.mediaJobs.enqueue, {
-      input: narrationInput(briefId, "First script."),
-    });
-    await t.run((ctx) => ctx.db.patch(first.jobId, { status }));
-    expect(
-      await t.mutation(internal.mediaJobs.enqueue, {
-        input: narrationInput(briefId, "Different script."),
-      }),
-    ).toEqual({ jobId: first.jobId, created: false });
-    expect(
-      await t.query(internal.mediaJobs.narrateJobStateForBrief, { briefId }),
-    ).toBe(status);
-  });
+  test.each(["claimed", "done"] as const)(
+    "a %s narration blocks a different script for the same brief",
+    async (status) => {
+      const t = convexTest(schema, modules);
+      const briefId = await insertBrief(t);
+      const first = await t.mutation(internal.mediaJobs.enqueue, {
+        input: narrationInput(briefId, "First script."),
+      });
+      await t.run((ctx) => ctx.db.patch(first.jobId, { status }));
+      expect(
+        await t.mutation(internal.mediaJobs.enqueue, {
+          input: narrationInput(briefId, "Different script."),
+        }),
+      ).toEqual({ jobId: first.jobId, created: false });
+      expect(
+        await t.query(internal.mediaJobs.narrateJobStateForBrief, { briefId }),
+      ).toBe(status);
+    },
+  );
 
   test("a parked narration stays blocked until its job is marked failed", async () => {
     const t = convexTest(schema, modules);

@@ -26,18 +26,16 @@ describe.each([
 ])("$provider sampling parameters", ({ apiKey, model }) => {
   beforeEach(() => vi.stubEnv("OPENROUTER_API_KEY", apiKey));
 
-  test.each([
-    undefined,
-    0,
-    0.2,
-    0.8,
-  ])("omits Sonnet 5.5 temperature when configured as %s", (temperature) => {
-    const params = createOpenRouterAnthropicModel({
-      temperature,
-    }).invocationParams({});
-    expect(params.model).toBe(model);
-    expect(params).not.toHaveProperty("temperature");
-  });
+  test.each([undefined, 0, 0.2, 0.8])(
+    "omits Sonnet 5.5 temperature when configured as %s",
+    (temperature) => {
+      const params = createOpenRouterAnthropicModel({
+        temperature,
+      }).invocationParams({});
+      expect(params.model).toBe(model);
+      expect(params).not.toHaveProperty("temperature");
+    },
+  );
 
   test("omits temperature for a configured Sonnet 5.5 model", () => {
     vi.stubEnv("WEEKLY_BRIEF_AGENT_MODEL", model);
@@ -60,8 +58,8 @@ describe.each([
     const params = createOpenRouterAnthropicModel({ model }).invocationParams(
       {},
     );
-    // The installed ChatAnthropic otherwise sends thinking: disabled, which
-    // Sonnet 5.5 rejects ("Reasoning is mandatory ... cannot be disabled").
+    // Keep Sonnet 5.5's required adaptive thinking explicit even though
+    // ChatAnthropic now omits thinking when it is not configured.
     expect(params.thinking).toEqual({ type: "adaptive" });
     expect(
       createOpenRouterAnthropicModel().invocationParams({}).thinking,
@@ -72,7 +70,7 @@ describe.each([
     const params = createOpenRouterAnthropicModel({
       model: "claude-sonnet-4-6",
     }).invocationParams({});
-    expect(params.thinking).toEqual({ type: "disabled" });
+    expect(params.thinking).toBeUndefined();
   });
 
   test("preserves the default temperature for older models", () => {

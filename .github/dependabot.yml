@@ -5,7 +5,8 @@ version: 2
 # Pinning freezes them, so Dependabot owns the unfreezing: it reads the version
 # comment, opens a PR with the new SHA, and updates the comment to match.
 #
-# Scoped to github-actions on purpose — npm deps are still updated by hand.
+# Scoped to github-actions on purpose — Renovate owns Bun dependencies and
+# Docker base images (see renovate.json).
 updates:
   - package-ecosystem: github-actions
     directory: /

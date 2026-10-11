@@ -22,7 +22,7 @@ const monthPattern =
 
 // Images are stripped before links: the link pattern matches the `[alt](url)`
 // tail of an image, so the other order leaves a stray `!` in the text.
-function stripMarkdown(input: string) {
+export function stripMarkdown(input: string) {
   return input
     .replaceAll(/`([^`]+)`/g, "$1")
     .replaceAll(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
@@ -45,11 +45,17 @@ function parseDateLabel(value: string | null) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function isMetadataLine(line: string) {
-  const trimmed = line.trim();
-  if (!/^\*.*\*$/.test(trimmed)) return false;
-  const inner = trimmed.slice(1, -1).trim();
-  return /\b20\d{2}\b/.test(inner);
+// A dateline is the first line under the title, wrapped in balanced italic or
+// bold markers (`*…*`, `**…**`, `_…_`, `__…__`) around a calendar date, e.g.
+// `**Essay #77 — March 29, 2026**` or `_Freq — May 9, 2026_`. A wrapped line
+// without a month and year (`_A note from the 2026-05-25 pass._`) is prose.
+const wrappedLinePattern = /^(\*{1,2}|_{1,2})(.+)\1$/;
+
+function datelineLabel(line: string): string | null {
+  const match = line.trim().match(wrappedLinePattern);
+  if (!match) return null;
+  const inner = match[2].trim();
+  return monthPattern.test(inner) ? inner : null;
 }
 
 function extractExcerpt(markdown: string) {
@@ -71,11 +77,15 @@ function extractExcerpt(markdown: string) {
   return `${excerpt.slice(0, 187).trimEnd()}...`;
 }
 
-export function parseEssay(slug: string, raw: string): Essay {
+/**
+ * Splits a raw essay file into its title, dateline label, and markdown body
+ * (everything after the title, the dateline, and an optional `---` rule).
+ */
+function splitEssay(raw: string) {
   const normalized = raw.replaceAll("\r", "");
   const lines = normalized.split("\n");
   const titleLine = lines.find((line) => line.trim().startsWith("# "));
-  const title = titleLine?.replace(/^#\s+/, "").trim() ?? slug;
+  const title = titleLine?.replace(/^#\s+/, "").trim() ?? null;
 
   const titleIndex = lines.findIndex((line) => line === titleLine);
   const contentLines =
@@ -83,11 +93,8 @@ export function parseEssay(slug: string, raw: string): Essay {
 
   while (contentLines[0]?.trim() === "") contentLines.shift();
 
-  let dateLabel: string | null = null;
-  if (isMetadataLine(contentLines[0] ?? "")) {
-    dateLabel = contentLines[0].trim().slice(1, -1).trim();
-    contentLines.shift();
-  }
+  const dateLabel = datelineLabel(contentLines[0] ?? "");
+  if (dateLabel !== null) contentLines.shift();
 
   while (contentLines[0]?.trim() === "") contentLines.shift();
   if (contentLines[0]?.trim() === "---") {
@@ -95,13 +102,22 @@ export function parseEssay(slug: string, raw: string): Essay {
   }
   while (contentLines[0]?.trim() === "") contentLines.shift();
 
-  const body = contentLines.join("\n").trim();
+  return { title, dateLabel, body: contentLines.join("\n").trim() };
+}
+
+/** The renderable markdown body of a raw essay file, as `parseEssay` returns it. */
+export function essayBody(raw: string): string {
+  return splitEssay(raw).body;
+}
+
+export function parseEssay(slug: string, raw: string): Essay {
+  const { title, dateLabel, body } = splitEssay(raw);
   const plainText = stripMarkdown(body);
   const words = plainText ? plainText.split(/\s+/).length : 0;
 
   return {
     slug,
-    title,
+    title: title ?? slug,
     excerpt: extractExcerpt(body),
     body,
     dateLabel,

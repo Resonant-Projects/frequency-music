@@ -21,24 +21,21 @@ function nestedAst(depth: number): unknown {
 }
 
 describe("patched braces nesting limits", () => {
-  test.each([
-    "compile",
-    "expand",
-    "stringify",
-    "parse",
-  ] as const)("%s rejects deeply nested input with a bounded syntax error", (method) => {
-    expect(() => braces[method](nestedPattern)).toThrow(SyntaxError);
-    expect(() => braces[method](nestedPattern)).toThrow("nesting depth");
-  });
+  test.each(["compile", "expand", "stringify", "parse"] as const)(
+    "%s rejects deeply nested input with a bounded syntax error",
+    (method) => {
+      expect(() => braces[method](nestedPattern)).toThrow(SyntaxError);
+      expect(() => braces[method](nestedPattern)).toThrow("nesting depth");
+    },
+  );
 
-  test.each([
-    "compile",
-    "expand",
-    "stringify",
-  ] as const)("%s also bounds caller-supplied ASTs", (method) => {
-    expect(() => braces[method](nestedAst(5000))).toThrow(SyntaxError);
-    expect(() => braces[method](nestedAst(5000))).toThrow("nesting depth");
-  });
+  test.each(["compile", "expand", "stringify"] as const)(
+    "%s also bounds caller-supplied ASTs",
+    (method) => {
+      expect(() => braces[method](nestedAst(5000))).toThrow(SyntaxError);
+      expect(() => braces[method](nestedAst(5000))).toThrow("nesting depth");
+    },
+  );
 
   test("preserves filesystem patterns, nested alternatives, ranges and escaped literals", () => {
     expect(braces.expand("src/{graphs,{tools,models}}/*.{ts,js}")).toEqual([

@@ -4,20 +4,20 @@
 import * as THREE from "three";
 import { COLORS } from "./zodiac-data";
 
-// Sector fill — semi-transparent ring-arc face
-export function makeSectorFillMat(color: string, active = false) {
+// Sector fill — semi-transparent ring-arc face. Its opacity belongs to the
+// sector group's lit/rest state (see `setSectorGroupActive`).
+export function makeSectorFillMat(color: string) {
   return new THREE.MeshBasicMaterial({
     color,
     transparent: true,
-    opacity: active ? 0.1 : 0.03,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
 }
 
-// Arc boundary lines (inner r=175, outer r=265)
-export function makeArcMat(color: string, opacity = 0.38) {
-  return new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+// Sector arc boundaries (inner r=175, outer r=265) and spokes; opacity as above.
+export function makeArcMat(color: string) {
+  return new THREE.LineBasicMaterial({ color, transparent: true });
 }
 
 // Source node spheres — glowing emissive orbs floating above disc
@@ -82,15 +82,6 @@ export function makeOuterRingMat(opacity: number) {
   });
 }
 
-// Radial spoke lines at sector boundaries
-export function makeSpokeMat(color: string, active = false) {
-  return new THREE.LineBasicMaterial({
-    color,
-    transparent: true,
-    opacity: active ? 0.55 : 0.22,
-  });
-}
-
 // Tick marks — all gold, varying opacity
 export function makeTickMat(major: boolean) {
   return new THREE.LineBasicMaterial({
@@ -100,22 +91,9 @@ export function makeTickMat(major: boolean) {
   });
 }
 
-// Hub-to-domain edge lines
-export function makeHubEdgeMat(color: string, active = false) {
-  return new THREE.LineBasicMaterial({
-    color,
-    transparent: true,
-    opacity: active ? 0.65 : 0.18,
-  });
-}
-
-// Domain-to-source bezier edges
-export function makeDomainEdgeMat(color: string, active = false) {
-  return new THREE.LineBasicMaterial({
-    color,
-    transparent: true,
-    opacity: active ? 0.55 : 0.14,
-  });
+// Hub-to-domain lines and domain-to-source bezier edges
+export function makeEdgeMat(color: string, opacity: number) {
+  return new THREE.LineBasicMaterial({ color, transparent: true, opacity });
 }
 
 // Background scatter point field

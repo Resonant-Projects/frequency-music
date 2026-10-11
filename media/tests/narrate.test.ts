@@ -150,46 +150,46 @@ const toneSynth = vi.fn(
 );
 
 describe("narrate job", () => {
-  test.each([
-    "abort",
-    "network",
-  ])("%s during synthesis preserves unfinished intent and refuses another paid call", async (kind) => {
-    const controller = new AbortController();
-    const ctx = {
-      job: narrateJob,
-      workDir: workDir("unfinished-"),
-      retainedDir: workDir("unfinished-retained-"),
-      tools: fakeTools().tools,
-      rendererVersion: "0.2.0",
-      signal: controller.signal,
-    };
-    const voice = voiceById(narrateJob.input.voiceId);
-    const synthesize = vi.fn(async () => {
-      if (kind === "abort") controller.abort(new Error("lease lost"));
-      throw new Error(
-        kind === "abort" ? "lease lost" : "ambiguous transport failure",
-      );
-    });
-    await expect(
-      synthesizeRetained(
-        ctx,
-        { synthesize },
-        voice,
-        "test",
-        join(ctx.workDir, "chunk.wav"),
-      ),
-    ).rejects.toThrow();
-    await expect(
-      synthesizeRetained(
-        { ...ctx, signal: new AbortController().signal },
-        { synthesize },
-        voice,
-        "test",
-        join(ctx.workDir, "retry.wav"),
-      ),
-    ).rejects.toThrow("unfinished chunk");
-    expect(synthesize).toHaveBeenCalledTimes(1);
-  });
+  test.each(["abort", "network"])(
+    "%s during synthesis preserves unfinished intent and refuses another paid call",
+    async (kind) => {
+      const controller = new AbortController();
+      const ctx = {
+        job: narrateJob,
+        workDir: workDir("unfinished-"),
+        retainedDir: workDir("unfinished-retained-"),
+        tools: fakeTools().tools,
+        rendererVersion: "0.2.0",
+        signal: controller.signal,
+      };
+      const voice = voiceById(narrateJob.input.voiceId);
+      const synthesize = vi.fn(async () => {
+        if (kind === "abort") controller.abort(new Error("lease lost"));
+        throw new Error(
+          kind === "abort" ? "lease lost" : "ambiguous transport failure",
+        );
+      });
+      await expect(
+        synthesizeRetained(
+          ctx,
+          { synthesize },
+          voice,
+          "test",
+          join(ctx.workDir, "chunk.wav"),
+        ),
+      ).rejects.toThrow();
+      await expect(
+        synthesizeRetained(
+          { ...ctx, signal: new AbortController().signal },
+          { synthesize },
+          voice,
+          "test",
+          join(ctx.workDir, "retry.wav"),
+        ),
+      ).rejects.toThrow("unfinished chunk");
+      expect(synthesize).toHaveBeenCalledTimes(1);
+    },
+  );
 
   test("a confirmed synthesis rejection permits a later call", async () => {
     const ctx = {

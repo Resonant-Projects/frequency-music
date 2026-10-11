@@ -4,6 +4,7 @@ import {
   AGENT_TOOL_MANIFEST,
   type AgentToolManifestEntry,
 } from "../../../convex/shared/agentToolManifest";
+import { agentToolModelJsonSchema } from "../../../convex/shared/agentToolModelSchema";
 
 const rawTextKeys = new Set(["rawText", "transcript"]);
 
@@ -133,14 +134,14 @@ export const convexTools = AGENT_TOOL_MANIFEST.filter(
         definition.name,
         bindAgentRunContext(
           definition,
-          args as Record<string, unknown>,
+          agentModelSchema(definition).parse(args),
           config?.configurable,
         ),
       ),
     {
       name: toSnake(definition.name),
       description: definition.description,
-      schema: agentModelSchema(definition),
+      schema: agentToolModelJsonSchema(agentModelSchema(definition)),
     },
   ),
 );

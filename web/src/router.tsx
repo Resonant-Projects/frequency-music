@@ -132,12 +132,13 @@ const Zodiac3D = lazyRoute(() =>
   import("./routes/zodiac-3d").then((m) => ({ default: m.Zodiac3D })),
 );
 
-// `/` is the 3D home, so warm its chunk immediately rather than waterfalling
-// the download behind the first navigation. This is only an optimization: a
+// `/` is the 3D home, so warm its 600 kB chunk immediately when that is the
+// landing route rather than waterfalling the download behind the first paint;
+// every other route leaves it to `defaultPreload: "intent"`. This is only an optimization: a
 // failed prefetch must stay silent, or every route logs an unhandled rejection
 // when the network blips. Navigating to `/` retries the import and surfaces
 // any real failure there.
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && window.location.pathname === "/") {
   void Zodiac3D.preload().catch(() => undefined);
 }
 

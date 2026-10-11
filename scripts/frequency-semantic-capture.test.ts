@@ -44,11 +44,14 @@ test.each([
   "while(true) {}",
   "process.stdout.write('PRIVATE_PARTIAL'); setInterval(()=>{},1000)",
   "setInterval(()=>process.stdout.write('x'),20)",
-])("wall-clock supervisor terminates stalled child without partial output: %s", (code) => {
-  expect(run(code)).toEqual({
-    error: { complete: false, code: "capture_deadline" },
-  });
-});
+])(
+  "wall-clock supervisor terminates stalled child without partial output: %s",
+  (code) => {
+    expect(run(code)).toEqual({
+      error: { complete: false, code: "capture_deadline" },
+    });
+  },
+);
 
 test("terminates a live capture group including descendants", () => {
   expect(
@@ -106,25 +109,24 @@ test("CLI refuses absent credentials before launching inspector", () => {
   });
 });
 
-test.each([
-  "SIGTERM",
-  "SIGINT",
-  "SIGHUP",
-])("%s terminates the capture subprocess without releasing partial evidence", (signal) => {
-  const code = `import { supervise } from ${JSON.stringify(supervisor)};
+test.each(["SIGTERM", "SIGINT", "SIGHUP"])(
+  "%s terminates the capture subprocess without releasing partial evidence",
+  (signal) => {
+    const code = `import { supervise } from ${JSON.stringify(supervisor)};
 setTimeout(()=>process.kill(process.pid,${JSON.stringify(signal)}),200);
 console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval(()=>{},1000)'],{deadlineMs:2000,env:{APP_ENV:"test"}})));`;
-  const result = spawnSync(
-    process.execPath,
-    ["--input-type=module", "-e", code],
-    { env: testEnvironment, encoding: "utf8", timeout: 4000 },
-  );
-  expect(result.error).toBeUndefined();
-  expect(result.status).toBe(0);
-  expect(JSON.parse(result.stdout)).toEqual({
-    error: { complete: false, code: "capture_interrupted" },
-  });
-});
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "-e", code],
+      { env: testEnvironment, encoding: "utf8", timeout: 4000 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual({
+      error: { complete: false, code: "capture_interrupted" },
+    });
+  },
+);
 
 test("successful exit does not signal a reaped child PID or process group", () => {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};

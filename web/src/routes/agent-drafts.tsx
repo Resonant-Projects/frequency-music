@@ -12,7 +12,8 @@ import {
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { PENDING_DRAFT_CAP } from "../../../convex/shared/agentContract";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { sameIds } from "../lib/keyed-rows";
 import {
   type DraftReviewContext,
   DraftReviewStory,
@@ -22,33 +23,45 @@ import {
   draftLabel,
 } from "../components/agent-draft";
 import {
+  badgeRowClass,
   collapsedNoticeClass,
+  createAnnouncer,
+  DateTime,
+  eyebrowClass,
   fieldLabelClass,
+  metaLabelClass,
   pageClass,
   pageTitleClass,
+  sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
+  UIList,
   UINotice,
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+} from "../integrations/convex";
 
-const helperClass = css({
+/** Lead copy on this page: the 0.66 cream floor at the prose measure. */
+const leadClass = css({
   color: "zodiac.cream/66",
   fontFamily: "display",
   fontSize: "lg",
   lineHeight: "1.6",
+  maxW: "72ch",
 });
 
-const eyebrowClass = css({
-  color: "zodiac.cream/66",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-});
+/**
+ * UICard already sets a gold hairline; the doubled selector outranks it so the
+ * override does not depend on atomic stylesheet order.
+ */
+const violetCardClass = css({ "&&": { borderColor: "zodiac.violet/24" } });
+const neutralCardClass = css({ "&&": { borderColor: "zodiac.cream/12" } });
 
 const queueButtonClass = css({
   bg: "zodiac.void/48",
@@ -68,22 +81,32 @@ const queueButtonClass = css({
     bg: "zodiac.violet/8",
     borderColor: "zodiac.violet/36",
   },
-  _focusVisible: {
-    borderColor: "zodiac.violet",
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
-  },
+  // The gold ring itself is the global focus-visible default.
+  _focusVisible: { borderColor: "zodiac.violet" },
 });
 
-/**
- * Applied to an always-mounted notice wrapper while it carries no text, so the
- * live regions stay in the DOM without occupying a layout box.
- */
+/** The queue row whose draft is open in the review panel. */
 const activeQueueButtonClass = css({
   bg: "zodiac.violet/12",
   borderColor: "zodiac.violet/52",
 });
+
+const queueRowHeaderClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  justifyContent: "space-between",
+});
+
+const queueStatementClass = css({
+  fontFamily: "display",
+  fontSize: "lg",
+  lineClamp: "2",
+  lineHeight: "1.35",
+});
+
+const queueListClass = css({ display: "grid", gap: "3" });
 
 const decideBarClass = css({
   bg: "zodiac.void/94",
@@ -91,25 +114,56 @@ const decideBarClass = css({
   borderRadius: "l3",
   borderWidth: "1px",
   bottom: "4",
-  boxShadow: "0 -12px 40px rgba(13, 6, 32, 0.6)",
+  // Sticky only where there is room for it: on a phone a pinned bar holding
+  // four buttons, a note and a confirm block would cover most of the draft.
+  boxShadow: { md: "detachedBar" },
   display: "grid",
   gap: "3",
   p: { base: "3", md: "4" },
-  position: "sticky",
+  position: { base: "static", md: "sticky" },
   zIndex: "10",
 });
 
+type DraftId = Id<"agentReviewDrafts">;
+
+/** What the decide bar reports once a decision is recorded. */
+type DecidedDraft = { draftId: DraftId; message: string };
+
+const queueButtonDomId = (draftId: string) => `draft-queue-${draftId}`;
+const PAGE_TITLE_ID = "draft-review-title";
+
+/**
+ * The row that should take over when `removedId` leaves the queue: the next
+ * surviving row in the previous order, else the nearest one before it.
+ */
+function successorDraftId<T extends string>(
+  currentIds: readonly T[],
+  previousIds: readonly T[],
+  removedId: T,
+): T | null {
+  const index = previousIds.indexOf(removedId);
+  if (index !== -1) {
+    const after = previousIds
+      .slice(index + 1)
+      .find((id) => currentIds.includes(id));
+    if (after) return after;
+    const before = previousIds
+      .slice(0, index)
+      .reverse()
+      .find((id) => currentIds.includes(id));
+    if (before) return before;
+  }
+  return currentIds.find((id) => id !== removedId) ?? null;
+}
+
+const decisionOutcome: Record<Decision, string> = {
+  approve: "approved",
+  reject: "rejected",
+  supersede: "superseded",
+};
+
 type Promotion = { kind: PersistedReviewDraft["kind"]; promotedId: string };
 type Decision = "approve" | "reject" | "supersede";
-
-const ageFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
-function formatAge(value: number) {
-  return ageFormatter.format(new Date(value));
-}
 
 function queueStatement(draft: PersistedReviewDraft) {
   if (draft.payload && "statement" in draft.payload) {
@@ -146,6 +200,11 @@ function DecideBar(props: {
   onEnterEdit: () => void;
   onCancelEdit: () => void;
   onApproved: (promotion: Promotion) => void;
+  /**
+   * Called once a decision is recorded, while this bar may still hold focus.
+   * The page moves focus to a surviving control and announces the outcome.
+   */
+  onDecided: (decided: DecidedDraft) => void;
 }) {
   const approve = createMutation(api.agentDrafts.approve);
   const reject = createMutation(api.agentDrafts.reject);
@@ -219,7 +278,14 @@ function DecideBar(props: {
 
   async function confirmDecision() {
     const selected = decision();
-    if (!selected || !canConfirm()) return;
+    // In-flight guard instead of `disabled`: disabling the focused Confirm
+    // button would blur it before focus can be handed off.
+    if (busy() || !selected || !canConfirm()) return;
+    // Capture before awaiting: the queue subscription can retire this draft
+    // (and unmount this bar) before the mutation promise resolves.
+    const decidedId = draft()._id;
+    const decidedTitle = draft().title;
+    const onDecided = props.onDecided;
     setBusy(true);
     setError(null);
     try {
@@ -252,13 +318,16 @@ function DecideBar(props: {
           ...(note().trim() ? { decisionNote: note().trim() } : {}),
         });
       }
+      // Hand focus off before the confirm group unmounts.
+      onDecided({
+        draftId: decidedId,
+        message: `Decision recorded: ${decidedTitle} ${decisionOutcome[selected]}.`,
+      });
       setDecision(null);
       setNote("");
       setSupersedingDraftId("");
     } catch (caught) {
-      setError(
-        caught instanceof Error ? caught.message : "Draft decision failed.",
-      );
+      setError(describeError(caught));
     } finally {
       setBusy(false);
     }
@@ -277,12 +346,23 @@ function DecideBar(props: {
       return;
     }
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.repeat || event.isComposing) return;
     const target = event.target;
     if (
       target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement ||
       target instanceof HTMLButtonElement
+    ) {
+      return;
+    }
+    // Links, disclosures, editable regions and the scrollable protocol block
+    // own their own keys.
+    if (
+      target instanceof Element &&
+      target.closest(
+        'a, summary, [contenteditable]:not([contenteditable="false"]), pre[tabindex]',
+      )
     ) {
       return;
     }
@@ -320,8 +400,9 @@ function DecideBar(props: {
       >
         <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
           <UIButton
-            variant="solid"
+            variant="outline"
             disabled={busy() || !props.payload}
+            aria-pressed={decision() === "approve"}
             aria-keyshortcuts="A"
             onClick={(event) =>
               chooseDecision(
@@ -331,17 +412,20 @@ function DecideBar(props: {
             }
           >
             {props.editedFields.length > 0 ? "Approve with edits" : "Approve"}
-            {" · A"}
+            <span aria-hidden="true"> · A</span>
           </UIButton>
           <UIButton
-            variant="solid"
+            // Ghost at rest; pressed takes the outline face, which is the one
+            // UIButton styles for `aria-pressed`.
+            variant={decision() === "reject" ? "outline" : "ghost"}
             disabled={busy()}
+            aria-pressed={decision() === "reject"}
             aria-keyshortcuts="R"
             onClick={(event) =>
               chooseDecision("reject", event.currentTarget as HTMLButtonElement)
             }
           >
-            Reject · R
+            Reject<span aria-hidden="true"> · R</span>
           </UIButton>
           <div class={css({ position: "relative" })}>
             <UIButton
@@ -377,7 +461,8 @@ function DecideBar(props: {
                 })}
               >
                 <UIButton
-                  variant="ghost"
+                  variant="outline"
+                  aria-pressed={decision() === "supersede"}
                   onClick={() => chooseDecision("supersede", overflowTrigger)}
                 >
                   Supersede with draft…
@@ -394,7 +479,7 @@ function DecideBar(props: {
                 aria-keyshortcuts="E"
                 onClick={enterEditMode}
               >
-                Edit · E
+                Edit<span aria-hidden="true"> · E</span>
               </UIButton>
             }
           >
@@ -407,7 +492,9 @@ function DecideBar(props: {
             </UIButton>
           </Show>
         </div>
-        <span class={eyebrowClass}>Shortcuts select, then focus the note</span>
+        <span class={metaLabelClass}>
+          A, R or E picks a decision and moves you to the note
+        </span>
       </div>
 
       <div class={css({ display: "grid", gap: "2" })}>
@@ -451,8 +538,7 @@ function DecideBar(props: {
       <Show when={decision()}>
         {(selected) => (
           <div
-            role="dialog"
-            aria-modal="false"
+            role="group"
             aria-label={`Confirm ${selected()}`}
             class={css({
               bg: "zodiac.gold/8",
@@ -464,7 +550,7 @@ function DecideBar(props: {
               p: "3",
             })}
           >
-            <p class={helperClass}>
+            <p class={leadClass}>
               {selected() === "approve"
                 ? `${props.editedFields.length > 0 ? "Approval with edits" : "Approval"} will create a ${draft().kind === "hypothesis_draft" ? "hypothesis" : "recipe"} titled “${props.payload?.title ?? draft().title}”.`
                 : selected() === "reject"
@@ -476,9 +562,7 @@ function DecideBar(props: {
             >
               <div class={css({ display: "grid", gap: "2" })}>
                 <p class={eyebrowClass}>Changed fields</p>
-                <div
-                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                >
+                <div class={badgeRowClass}>
                   <For each={props.editedFields}>
                     {(field) => <UIBadge tone="violet">{field}</UIBadge>}
                   </For>
@@ -488,7 +572,8 @@ function DecideBar(props: {
             <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
               <UIButton
                 variant="solid"
-                disabled={busy() || !canConfirm()}
+                disabled={!canConfirm()}
+                aria-busy={busy()}
                 onClick={confirmDecision}
               >
                 {busy()
@@ -510,7 +595,7 @@ function DecideBar(props: {
       </Show>
 
       <Show when={!draft().payload}>
-        <p class={helperClass}>
+        <p class={leadClass}>
           This legacy draft has no structured payload. Reject it with a note or
           supersede it; approval is unavailable.
         </p>
@@ -580,9 +665,20 @@ function ReviewWorkspace(props: {
   context: DraftReviewContext;
   pendingDrafts: PersistedReviewDraft[];
   onApproved: (promotion: Promotion) => void;
+  onDecided: (decided: DecidedDraft) => void;
+  /** Focus is inside this panel as it unmounts: move it somewhere stable. */
+  onFocusOrphaned: () => void;
 }) {
   const [editMode, setEditMode] = createSignal(false);
   const [shortcutScope, setShortcutScope] = createSignal<HTMLElement>();
+
+  // Owner cleanup runs before the DOM is removed, so focus can still be read
+  // here and moved before it would fall to <body>.
+  onCleanup(() => {
+    if (shortcutScope()?.contains(document.activeElement)) {
+      props.onFocusOrphaned();
+    }
+  });
   const [workingPayload, setWorkingPayload] = createSignal<
     AgentDraftPayload | undefined
   >(props.context.draft.payload);
@@ -630,6 +726,7 @@ function ReviewWorkspace(props: {
             onEnterEdit={() => setEditMode(true)}
             onCancelEdit={cancelEdits}
             onApproved={props.onApproved}
+            onDecided={props.onDecided}
           />
         }
       />
@@ -651,14 +748,56 @@ export function AgentDraftsPage() {
   const pendingHypothesisCount = createQueryWithStatus(
     api.agentDrafts.countPendingHypothesesPublic,
   );
-  const [activeDraftId, setActiveDraftId] =
-    createSignal<Id<"agentReviewDrafts"> | null>(null);
+  const [activeDraftId, setActiveDraftId] = createSignal<DraftId | null>(null);
   const [lastPromotion, setLastPromotion] = createSignal<Promotion | null>(
     null,
   );
   const rows = createMemo(
     () => (pending.data() ?? []) as PersistedReviewDraft[],
   );
+  // The queue renders from ids, not row objects: every subscription update
+  // delivers fresh objects, and keying on them would remount every button
+  // (dropping focus) whenever any draft changed.
+  const rowIds = createMemo(() => rows().map((row) => row._id), [], {
+    equals: sameIds,
+  });
+  const rowsById = createMemo(
+    () => new Map(rows().map((row) => [row._id, row] as const)),
+  );
+  const [announcement, announce] = createAnnouncer();
+  let reviewPanel: HTMLElement | undefined;
+  /**
+   * A decided draft the queue has not dropped yet: when it leaves, focus
+   * follows the active row (its successor, unless the reviewer moved on).
+   */
+  let focusAfterRemovalOf: DraftId | null = null;
+
+  /**
+   * Focus the active queue row's button, or the page title once the row has
+   * left the queue. Checks `rowIds()` rather than the DOM: owner cleanup runs
+   * before a retired row's button is detached.
+   */
+  function focusActiveRow() {
+    const draftId = activeDraftId();
+    const target =
+      draftId && rowIds().includes(draftId)
+        ? queueButtonDomId(draftId)
+        : PAGE_TITLE_ID;
+    document.getElementById(target)?.focus();
+  }
+
+  function handleDecided(decided: DecidedDraft) {
+    announce(decided.message);
+    // If the queue update already retired the draft, the panel has unmounted
+    // and its cleanup moved focus; only hand off while focus is still here,
+    // before the confirm group unmounts.
+    if (!reviewPanel?.contains(document.activeElement)) return;
+    focusActiveRow();
+    focusAfterRemovalOf = rowIds().includes(decided.draftId)
+      ? decided.draftId
+      : null;
+  }
+
   const hypothesisPendingCount = createMemo(
     () =>
       pendingHypothesisCount.data() ??
@@ -672,12 +811,23 @@ export function AgentDraftsPage() {
     },
   );
 
-  createEffect(() => {
-    const pendingRows = rows();
+  // The one place a successor is picked: a decided or removed draft hands
+  // over to the next row in the previous order, not back to the top.
+  createEffect<readonly DraftId[]>((previousIds = []) => {
+    const ids = rowIds();
     const selected = activeDraftId();
-    if (!selected || !pendingRows.some((row) => row._id === selected)) {
-      setActiveDraftId(pendingRows[0]?._id ?? null);
+    const handOff =
+      focusAfterRemovalOf !== null && !ids.includes(focusAfterRemovalOf);
+    if (handOff) focusAfterRemovalOf = null;
+    if (!selected || !ids.includes(selected)) {
+      setActiveDraftId(
+        selected
+          ? successorDraftId(ids, previousIds, selected)
+          : (ids[0] ?? null),
+      );
+      if (handOff) focusActiveRow();
     }
+    return ids;
   });
 
   const queueError = () =>
@@ -704,10 +854,12 @@ export function AgentDraftsPage() {
 
   return (
     <section class={pageClass}>
-      <UICard style={{ "border-color": "rgba(139, 92, 246, 0.24)" }}>
+      <UICard class={violetCardClass}>
         <p class={eyebrowClass}>Human review gate</p>
-        <h1 class={pageTitleClass}>Draft Review Queue</h1>
-        <p class={helperClass}>
+        <h1 id={PAGE_TITLE_ID} tabIndex={-1} class={pageTitleClass}>
+          Draft Review Queue
+        </h1>
+        <p class={leadClass}>
           Read the complete correspondence story, then make the decision while
           the evidence is still in view.
         </p>
@@ -729,19 +881,22 @@ export function AgentDraftsPage() {
             {(pendingCount.data() ?? rows().length) === 1 ? "" : "s"} awaiting
             review
           </UIBadge>
-          <span class={eyebrowClass}>
+          <span class={metaLabelClass}>
             {hypothesisPendingCount() >= PENDING_DRAFT_CAP
               ? `agent blocked at ${PENDING_DRAFT_CAP}`
               : `${hypothesisPendingCount()} of ${PENDING_DRAFT_CAP} hypothesis slots filled`}
           </span>
         </div>
+        <UINotice class={css({ mt: "4" })} status={announcement()} />
       </UICard>
 
       <Show when={lastPromotion()}>
         {(promotion) => (
-          <UICard style={{ "border-color": "rgba(139, 92, 246, 0.24)" }}>
+          <UICard class={violetCardClass}>
             <UIBadge tone="violet">Promoted</UIBadge>
-            <h2 class={pageTitleClass}>Draft approved</h2>
+            <h2 class={cx(sectionTitleClass, css({ mt: "3" }))}>
+              Draft approved
+            </h2>
             <PromotedLink
               kind={promotion().kind}
               promotedId={promotion().promotedId}
@@ -751,11 +906,13 @@ export function AgentDraftsPage() {
       </Show>
 
       <UICard
-        class={queueStatus() || queueError() ? undefined : collapsedNoticeClass}
-        style={{ "border-color": "rgba(245, 240, 232, 0.12)" }}
+        class={cx(
+          neutralCardClass,
+          queueStatus() || queueError() ? undefined : collapsedNoticeClass,
+        )}
       >
         <UINotice
-          class={helperClass}
+          class={leadClass}
           status={queueStatus()}
           error={queueError()}
         />
@@ -775,57 +932,74 @@ export function AgentDraftsPage() {
         >
           <aside
             aria-label="Pending drafts, oldest first"
-            class={css({
-              display: "grid",
-              gap: "3",
-              position: { lg: "sticky" },
-              top: { lg: "4" },
-            })}
+            class={cx(
+              "zodiac-scroll",
+              css({
+                alignContent: "start",
+                display: "grid",
+                gap: "3",
+                // Up to 50 rows: cap the sticky column at the viewport and let
+                // it scroll on its own. The inset keeps focus rings unclipped.
+                maxH: { lg: "calc(100vh - var(--app-header-height) - 2rem)" },
+                mx: { lg: "-1" },
+                overflowY: { lg: "auto" },
+                p: { lg: "1" },
+                position: { lg: "sticky" },
+                top: { lg: "4" },
+              }),
+            )}
           >
             <p class={eyebrowClass}>Oldest first</p>
-            <For each={rows()}>
-              {(draft) => (
-                <button
-                  type="button"
-                  class={`${queueButtonClass} ${activeDraftId() === draft._id ? activeQueueButtonClass : ""}`}
-                  aria-pressed={activeDraftId() === draft._id}
-                  onClick={() => setActiveDraftId(draft._id)}
-                >
-                  <div
-                    class={css({
-                      alignItems: "center",
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "2",
-                      justifyContent: "space-between",
-                    })}
-                  >
-                    <UIBadge tone="violet">{draftLabel(draft.kind)}</UIBadge>
-                    <span class={eyebrowClass}>
-                      {formatAge(draft.createdAt)}
-                    </span>
-                  </div>
-                  <p
-                    class={css({
-                      fontFamily: "display",
-                      fontSize: "lg",
-                      lineHeight: "1.35",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    })}
-                  >
-                    {queueStatement(draft)}
-                  </p>
-                  <span class={eyebrowClass}>{queueContextLabel(draft)}</span>
-                </button>
-              )}
-            </For>
+            <UIList class={queueListClass}>
+              <For each={rowIds()}>
+                {(draftId) => (
+                  <Show when={rowsById().get(draftId)}>
+                    {(draft) => (
+                      <li>
+                        <button
+                          type="button"
+                          id={queueButtonDomId(draftId)}
+                          class={cx(
+                            queueButtonClass,
+                            activeDraftId() === draftId &&
+                              activeQueueButtonClass,
+                          )}
+                          aria-pressed={activeDraftId() === draftId}
+                          onClick={() => setActiveDraftId(draftId)}
+                        >
+                          <div class={queueRowHeaderClass}>
+                            <UIBadge tone="violet">
+                              {draftLabel(draft().kind)}
+                            </UIBadge>
+                            <DateTime
+                              class={metaLabelClass}
+                              value={draft().createdAt}
+                              format="datetime"
+                            />
+                          </div>
+                          <p class={queueStatementClass}>
+                            {queueStatement(draft())}
+                          </p>
+                          <span class={metaLabelClass}>
+                            {queueContextLabel(draft())}
+                          </span>
+                        </button>
+                      </li>
+                    )}
+                  </Show>
+                )}
+              </For>
+            </UIList>
           </aside>
 
-          <UICard glass style={{ "border-color": "rgba(245, 240, 232, 0.12)" }}>
+          <UICard
+            ref={(element: HTMLElement) => {
+              reviewPanel = element;
+            }}
+            class={neutralCardClass}
+          >
             <UINotice
-              class={helperClass}
+              class={leadClass}
               status={contextStatus()}
               error={contextError()}
             />
@@ -835,6 +1009,8 @@ export function AgentDraftsPage() {
                   context={reviewContext()}
                   pendingDrafts={rows()}
                   onApproved={setLastPromotion}
+                  onDecided={handleDecided}
+                  onFocusOrphaned={focusActiveRow}
                 />
               )}
             </Show>

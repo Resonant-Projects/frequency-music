@@ -65,6 +65,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 - The backend is self-hosted. Copy [`.env.example`](./.env.example) to `.env.local`; scripts load it via `varlock/auto-load` (imported at the top of each env-reading script); Node does not auto-load `.env` files.
 - Caution: `vpx convex dev`, `vpx convex codegen`, and `vpx convex deploy` talk to the live backend.
+- Deploy with `vp run convex:deploy` (or `vp run convex:deploy:dry-run`, which still uploads and prepares schema). It typechecks, refuses a checkout with uncommitted changes, pins the target to `https://convex.resonantprojects.art`, resolves the admin key through Varlock, and asks you to type `deploy` before it runs the audited CLI per the [CLI contract](./docs/frequency-supported-deployment-rollback.md#cli-contract-and-side-effects).
 - The [operator evidence scripts](./docs/frequency-worker-handoff.md#privileged-queue-and-deployed-artifact-evidence) use inherited administrative credentials only; their environment-loading exception is documented in [AGENTS.md](./AGENTS.md#guardrails).
 - For CLI mutation auth, see [Guardrails in AGENTS.md](./AGENTS.md#guardrails).
 
@@ -80,6 +81,27 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - Web: `vp run typecheck:web` and `vp run build:web`
 - Agent: `cd agent && vp run verify && vp test`
 - Everything at once: `vp run verify`.
+
+### Dependency updates
+
+- [Renovate](https://developer.mend.io/github/Resonant-Projects/frequency-music)
+  updates dependencies and lockfiles for the root, `web/`, `agent/`, and `media/`
+  Bun packages, plus Docker base images. Its policy lives in
+  [`renovate.json`](./renovate.json).
+- The Dependency Dashboard issue lists pending updates. Major upgrades need
+  approval there before Renovate opens a PR. All updates require a manual merge
+  after reviewing the diff and CI results.
+- Renovate waits three days after a release, opens at most five concurrent PRs
+  and two PRs per hour, and refreshes lockfiles on Monday between 3am and 6am
+  America/New_York. Convex dependencies and Vite Plus packages have dedicated
+  groups. Docker images retain their digest pins.
+- Bun runtime upgrades remain manual. Update the package-manager declarations
+  in all four packages, `bun-version` in GitHub workflows, and `BUN_VERSION` in
+  both Dockerfiles together. Refresh all four lockfiles and run `vp run verify`.
+- Dependabot continues to own GitHub Actions updates in
+  [`.github/dependabot.yml`](./.github/dependabot.yml). Renovate's enabled managers
+  exclude GitHub Actions to avoid duplicate PRs. `scripts/archive/` is excluded
+  from Renovate updates.
 
 ## App routes (TanStack Router)
 

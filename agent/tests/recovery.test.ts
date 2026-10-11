@@ -28,31 +28,34 @@ describe("recovery seams", () => {
     )![1];
     expect((input as { rawText: string }).rawText).toHaveLength(30_000);
   });
-  test.each([
-    400, 403, 429, 503,
-  ])("outbox quarantines terminal HTTP errors and retains transient status %s", async (status) => {
-    const dir = await mkdtemp(join(tmpdir(), "recovery-outbox-"));
-    try {
-      const outbox = new DurableOutbox(dir);
-      await outbox.enqueue({
-        tool: "appendAgentRunEvent",
-        args: { deliveryId: "stable" },
-      });
-      await expect(
-        outbox.flush(async () => {
-          throw new ConvexToolHttpError("rejected", status);
-        }),
-      ).rejects.toThrow("rejected");
-      const files = await readdir(dir);
-      if (status < 429) {
-        expect(files).toEqual(["dead-letter"]);
-        expect(await readdir(join(dir, "dead-letter"))).toHaveLength(1);
-      } else
-        expect(files.filter((file) => file.endsWith(".json"))).toHaveLength(1);
-    } finally {
-      await rm(dir, { recursive: true, force: true });
-    }
-  });
+  test.each([400, 403, 429, 503])(
+    "outbox quarantines terminal HTTP errors and retains transient status %s",
+    async (status) => {
+      const dir = await mkdtemp(join(tmpdir(), "recovery-outbox-"));
+      try {
+        const outbox = new DurableOutbox(dir);
+        await outbox.enqueue({
+          tool: "appendAgentRunEvent",
+          args: { deliveryId: "stable" },
+        });
+        await expect(
+          outbox.flush(async () => {
+            throw new ConvexToolHttpError("rejected", status);
+          }),
+        ).rejects.toThrow("rejected");
+        const files = await readdir(dir);
+        if (status < 429) {
+          expect(files).toEqual(["dead-letter"]);
+          expect(await readdir(join(dir, "dead-letter"))).toHaveLength(1);
+        } else
+          expect(files.filter((file) => file.endsWith(".json"))).toHaveLength(
+            1,
+          );
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    },
+  );
   test("capture recovery transport aborts stalled read and completion responses", async () => {
     vi.stubEnv("CONVEX_SITE_URL", "https://test.invalid");
     vi.stubEnv("AGENT_TOOL_SECRET", "test-only");

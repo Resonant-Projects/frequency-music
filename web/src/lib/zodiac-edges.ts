@@ -3,20 +3,26 @@
 import * as THREE from "three";
 import { dotWorldPos, R, SECTORS } from "./zodiac-data";
 import { getSectorMidArc } from "./zodiac-geometry";
-import { makeDomainEdgeMat, makeHubEdgeMat } from "./zodiac-materials";
+import { makeEdgeMat } from "./zodiac-materials";
+
+type SectorEdge = { line: THREE.Line; sectorId: string };
+
+// Resting / lit opacity per edge kind; a sector's edges light with it.
+const EDGE_OPACITY = {
+  hub: { rest: 0.18, lit: 0.65 },
+  domain: { rest: 0.14, lit: 0.55 },
+} as const;
 
 // --- Hub → Domain edges (straight lines from origin to sector inner midpoint) ---
 
-export function buildHubEdges(
-  scene: THREE.Scene,
-): Array<{ line: THREE.Line; sectorId: string }> {
-  const edges: Array<{ line: THREE.Line; sectorId: string }> = [];
+export function buildHubEdges(scene: THREE.Scene): SectorEdge[] {
+  const edges: SectorEdge[] = [];
 
   SECTORS.forEach((sector) => {
     const target = getSectorMidArc(sector, R.sectorInner);
     const pts = [new THREE.Vector3(0, 0, 0), target];
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = makeHubEdgeMat(sector.color);
+    const mat = makeEdgeMat(sector.color, EDGE_OPACITY.hub.rest);
     const line = new THREE.Line(geo, mat);
     scene.add(line);
     edges.push({ line, sectorId: sector.id });
@@ -45,14 +51,13 @@ function buildBezierEdge(
   return new THREE.Line(geo, mat);
 }
 
-export function buildDomainEdges(
-  scene: THREE.Scene,
-): Array<{ line: THREE.Line; sectorId: string }> {
-  const edges: Array<{ line: THREE.Line; sectorId: string }> = [];
+export function buildDomainEdges(scene: THREE.Scene): SectorEdge[] {
+  const edges: SectorEdge[] = [];
 
   SECTORS.forEach((sector) => {
     const origin = getSectorMidArc(sector, 200); // slightly inside sector
-    const mat = makeDomainEdgeMat(sector.color); // one material per sector
+    // One material per sector
+    const mat = makeEdgeMat(sector.color, EDGE_OPACITY.domain.rest);
 
     sector.dots.forEach((dot, di) => {
       const pos = dotWorldPos(sector, dot, 30 + di * 10);
@@ -68,17 +73,22 @@ export function buildDomainEdges(
 
 // --- Update edge opacity on sector activation --------------------------------
 
-export function setEdgeActivity(
-  hubEdges: Array<{ line: THREE.Line; sectorId: string }>,
-  domainEdges: Array<{ line: THREE.Line; sectorId: string }>,
-  activeSectorId: string | null,
+/** Light or rest one sector's edges. */
+export function setSectorEdgesActive(
+  hubEdges: SectorEdge[],
+  domainEdges: SectorEdge[],
+  sectorId: string,
+  active: boolean,
 ): void {
-  hubEdges.forEach(({ line, sectorId }) => {
-    const mat = line.material as THREE.LineBasicMaterial;
-    mat.opacity = activeSectorId === sectorId ? 0.65 : 0.18;
-  });
-  domainEdges.forEach(({ line, sectorId }) => {
-    const mat = line.material as THREE.LineBasicMaterial;
-    mat.opacity = activeSectorId === sectorId ? 0.55 : 0.14;
-  });
+  const state = active ? "lit" : "rest";
+  for (const edge of hubEdges) {
+    if (edge.sectorId !== sectorId) continue;
+    (edge.line.material as THREE.LineBasicMaterial).opacity =
+      EDGE_OPACITY.hub[state];
+  }
+  for (const edge of domainEdges) {
+    if (edge.sectorId !== sectorId) continue;
+    (edge.line.material as THREE.LineBasicMaterial).opacity =
+      EDGE_OPACITY.domain[state];
+  }
 }

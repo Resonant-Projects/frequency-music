@@ -1,16 +1,22 @@
 import { Link } from "@tanstack/solid-router";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { entityCardClass } from "../components/entity-card";
+import { createKeyedRows } from "../lib/keyed-rows";
 import {
+  badgeRowClass,
   fieldLabelClass,
+  helperClass,
   pageClass,
   pageTitleClass,
+  recordLinkClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
 } from "../components/ui";
@@ -18,8 +24,37 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+
+type CompositionRow = {
+  _id: string;
+  status: string;
+  artifactType: string;
+  version: string;
+  title: string;
+  revisionParentId?: string;
+  revisionVariable?: string;
+};
+
+const fieldGridClass = css({
+  display: "grid",
+  gap: "3",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+  },
+  marginTop: "3",
+});
+
+const listClass = css({ display: "grid", gap: "3" });
+
+const rowBadgesClass = cx(badgeRowClass, css({ marginBottom: "2" }));
+
+const rowTitleClass = css({ fontSize: "xl", marginBottom: "2" });
+
+const revisionOfClass = cx(helperClass, css({ mb: "2" }));
 
 export function CompositionsPage() {
   onMount(() => {
@@ -29,6 +64,12 @@ export function CompositionsPage() {
   const compositions = createQueryWithStatus(api.compositions.list, () => ({
     limit: 24,
   }));
+  // Keyed by id: a status change refreshes the list with fresh objects, and
+  // the pressed status button must stay mounted (and focused).
+  const compositionRows = createKeyedRows<CompositionRow>(
+    () => compositions.data(),
+    (row) => String(row._id),
+  );
   const recipes = createQuery(api.recipes.listByStatus, () => ({
     limit: 40,
   }));
@@ -77,7 +118,7 @@ export function CompositionsPage() {
       setRevisionVariable("");
       setNotice("Composition created.");
     } catch (error) {
-      setNoticeError(`Failed to create composition: ${String(error)}`);
+      setNoticeError(`Failed to create composition: ${describeError(error)}`);
     }
   }
 
@@ -91,14 +132,24 @@ export function CompositionsPage() {
       });
       setNotice(`Composition set to ${status}.`);
     } catch (error) {
-      setNoticeError(`Status update failed: ${String(error)}`);
+      setNoticeError(`Status update failed: ${describeError(error)}`);
     }
   }
 
   return (
     <section class={pageClass}>
-      <UICard as="form" onSubmit={submitComposition as any}>
+      <UICard>
         <h1 class={pageTitleClass}>Compositions</h1>
+      </UICard>
+
+      <UICard
+        as="form"
+        aria-labelledby="composition-form-heading"
+        onSubmit={submitComposition}
+      >
+        <h2 id="composition-form-heading" class={sectionTitleClass}>
+          New Composition
+        </h2>
 
         <label class={fieldLabelClass} for="composition-title">
           Title
@@ -110,14 +161,7 @@ export function CompositionsPage() {
           placeholder="Drift Study A"
         />
 
-        <div
-          class={css({
-            display: "grid",
-            gap: "3",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
-            marginTop: "3",
-          })}
-        >
+        <div class={fieldGridClass}>
           <div>
             <label class={fieldLabelClass} for="composition-recipe">
               Recipe
@@ -152,14 +196,7 @@ export function CompositionsPage() {
           </div>
         </div>
 
-        <div
-          class={css({
-            display: "grid",
-            gap: "3",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
-            marginTop: "3",
-          })}
-        >
+        <div class={fieldGridClass}>
           <div>
             <label class={fieldLabelClass} for="composition-revision-parent">
               Revision Of
@@ -173,7 +210,7 @@ export function CompositionsPage() {
             >
               <option value="">Original composition</option>
               <For each={compositions.data() ?? []}>
-                {(item: { _id: string; title: string; version: string }) => (
+                {(item: CompositionRow) => (
                   <option value={String(item._id)}>
                     {item.title} ({item.version})
                   </option>
@@ -198,13 +235,7 @@ export function CompositionsPage() {
                 }
                 placeholder="tuning, tempo, timbre, rhythm density, voicing..."
               />
-              <p
-                class={css({
-                  color: "zodiac.cream/58",
-                  fontSize: "xs",
-                  mt: "2",
-                })}
-              >
+              <p class={cx(helperClass, css({ mt: "2" }))}>
                 Name the one major variable this revision is testing: tuning,
                 tempo, timbre, rhythm density, voicing, etc.
               </p>
@@ -232,141 +263,107 @@ export function CompositionsPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Artifact Pipeline</h2>
         <UINotice
-          status={compositions.isLoading() ? "Loading compositions…" : null}
+          class={css({ textAlign: "center" })}
+          status={
+            compositions.isLoading()
+              ? "Loading compositions…"
+              : !compositions.isError() &&
+                  (compositions.data() ?? []).length === 0
+                ? "No compositions yet. Create one above to begin."
+                : null
+          }
+          error={
+            compositions.isError()
+              ? `Unable to load compositions: ${compositions.error()?.message ?? "unknown error"}`
+              : null
+          }
         />
         <Show when={!compositions.isLoading()}>
-          <Show
-            when={(compositions.data() ?? []).length > 0}
-            fallback={
-              <p
-                class={css({
-                  color: "zodiac.cream/55",
-                  fontFamily: "display",
-                  fontSize: "md",
-                  lineHeight: "1.6",
-                  textAlign: "center",
-                  py: "8",
-                })}
-              >
-                No compositions yet. Create one above to begin.
-              </p>
-            }
-          >
-            <div class={css({ display: "grid", gap: "3" })}>
-              <For each={compositions.data() ?? []}>
-                {(item: {
-                  _id: string;
-                  status: string;
-                  artifactType: string;
-                  version: string;
-                  title: string;
-                  revisionParentId?: string;
-                  revisionVariable?: string;
-                }) => {
-                  const revisionParent = () =>
-                    (compositions.data() ?? []).find(
-                      (candidate: { _id: string }) =>
-                        String(candidate._id) === String(item.revisionParentId),
-                    ) as { title: string } | undefined;
+          <Show when={(compositions.data() ?? []).length > 0}>
+            <UIList class={listClass}>
+              <For each={compositionRows.ids()}>
+                {(id) => (
+                  <Show when={compositionRows.byId().get(id)}>
+                    {(item) => {
+                      const revisionParent = () =>
+                        (compositions.data() ?? []).find(
+                          (candidate: { _id: string }) =>
+                            String(candidate._id) ===
+                            String(item().revisionParentId),
+                        ) as { title: string } | undefined;
 
-                  return (
-                    <div
-                      data-testid="entity-row"
-                      class={css({
-                        borderColor: "zodiac.gold/22",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        p: "4",
-                      })}
-                    >
-                      <div
-                        class={css({
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2",
-                          marginBottom: "2",
-                        })}
-                      >
-                        <UIBadge tone="gold">{item.status}</UIBadge>
-                        <UIBadge tone="violet">{item.artifactType}</UIBadge>
-                        <UIBadge tone="cream">{item.version}</UIBadge>
-                        <Show when={item.revisionVariable}>
-                          <UIBadge tone="gold">
-                            variable: {item.revisionVariable}
-                          </UIBadge>
-                        </Show>
-                      </div>
+                      return (
+                        <li data-testid="entity-row" class={entityCardClass}>
+                          <div class={rowBadgesClass}>
+                            <UIBadge tone="gold">{item().status}</UIBadge>
+                            <UIBadge tone="violet">
+                              {item().artifactType}
+                            </UIBadge>
+                            <UIBadge tone="cream">{item().version}</UIBadge>
+                            <Show when={item().revisionVariable}>
+                              <UIBadge tone="gold">
+                                variable: {item().revisionVariable}
+                              </UIBadge>
+                            </Show>
+                          </div>
 
-                      <Link
-                        to="/compositions/$compositionId"
-                        params={{ compositionId: String(item._id) }}
-                        class={css({
-                          color: "zodiac.cream",
-                          display: "inline-block",
-                          fontSize: "xl",
-                          marginBottom: "2",
-                          textDecoration: "none",
-                        })}
-                      >
-                        <h3>{item.title}</h3>
-                      </Link>
+                          <h3 class={rowTitleClass}>
+                            <Link
+                              to="/compositions/$compositionId"
+                              params={{ compositionId: String(item()._id) }}
+                              class={recordLinkClass}
+                            >
+                              {item().title}
+                            </Link>
+                          </h3>
 
-                      <Show when={item.revisionParentId}>
-                        <p
-                          class={css({
-                            color: "zodiac.cream/62",
-                            fontSize: "sm",
-                            mb: "2",
-                          })}
-                        >
-                          Revision of{" "}
-                          {revisionParent()?.title ?? "an earlier composition"}
-                        </p>
-                      </Show>
+                          <Show when={item().revisionParentId}>
+                            <p class={revisionOfClass}>
+                              Revision of{" "}
+                              {revisionParent()?.title ??
+                                "an earlier composition"}
+                            </p>
+                          </Show>
 
-                      <div
-                        class={css({
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2",
-                        })}
-                      >
-                        <UIButton
-                          variant="outline"
-                          aria-pressed={item.status === "in_progress"}
-                          aria-label={`Set ${item.title} to in progress`}
-                          onClick={() =>
-                            setStatus(String(item._id), "in_progress")
-                          }
-                        >
-                          In Progress
-                        </UIButton>
-                        <UIButton
-                          variant="outline"
-                          aria-pressed={item.status === "rendered"}
-                          aria-label={`Set ${item.title} to rendered`}
-                          onClick={() =>
-                            setStatus(String(item._id), "rendered")
-                          }
-                        >
-                          Rendered
-                        </UIButton>
-                        <UIButton
-                          variant="ghost"
-                          aria-pressed={item.status === "published"}
-                          aria-label={`Set ${item.title} to published`}
-                          onClick={() =>
-                            setStatus(String(item._id), "published")
-                          }
-                        >
-                          Published
-                        </UIButton>
-                      </div>
-                    </div>
-                  );
-                }}
+                          <div class={badgeRowClass}>
+                            <UIButton
+                              variant="outline"
+                              aria-pressed={item().status === "in_progress"}
+                              aria-label={`Set ${item().title} to in progress`}
+                              onClick={() =>
+                                setStatus(String(item()._id), "in_progress")
+                              }
+                            >
+                              In Progress
+                            </UIButton>
+                            <UIButton
+                              variant="outline"
+                              aria-pressed={item().status === "rendered"}
+                              aria-label={`Set ${item().title} to rendered`}
+                              onClick={() =>
+                                setStatus(String(item()._id), "rendered")
+                              }
+                            >
+                              Rendered
+                            </UIButton>
+                            <UIButton
+                              variant="outline"
+                              aria-pressed={item().status === "published"}
+                              aria-label={`Set ${item().title} to published`}
+                              onClick={() =>
+                                setStatus(String(item()._id), "published")
+                              }
+                            >
+                              Published
+                            </UIButton>
+                          </div>
+                        </li>
+                      );
+                    }}
+                  </Show>
+                )}
               </For>
-            </div>
+            </UIList>
           </Show>
         </Show>
       </UICard>

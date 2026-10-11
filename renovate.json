@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["bun", "dockerfile"],
+  "ignorePaths": ["scripts/archive/**"],
+  "timezone": "America/New_York",
+  "dependencyDashboard": true,
+  "automerge": false,
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "minimumReleaseAge": "3 days",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["* 3-5 * * 1"]
+  },
+  "packageRules": [
+    {
+      "description": "Approve major upgrades in the dependency dashboard first.",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Keep Convex dependencies together across runtime packages.",
+      "matchPackageNames": ["convex", "convex-helpers", "@convex-dev/*"],
+      "groupName": "Convex dependencies"
+    },
+    {
+      "description": "Update Vite Plus and its aliased packages together.",
+      "matchPackageNames": [
+        "vite-plus",
+        "@voidzero-dev/vite-plus-core",
+        "@voidzero-dev/vite-plus-test"
+      ],
+      "groupName": "Vite Plus"
+    },
+    {
+      "description": "Bun runtime upgrades must also update CI and Dockerfile pins.",
+      "matchPackageNames": ["bun"],
+      "enabled": false
+    },
+    {
+      "description": "Preserve digest-pinned Docker base images.",
+      "matchManagers": ["dockerfile"],
+      "pinDigests": true
+    }
+  ]
+}

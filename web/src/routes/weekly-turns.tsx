@@ -8,9 +8,20 @@ import {
   Show,
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
+  entityCardClass,
+  entityCardLinkClass,
+  entityCardTitleLinkClass,
+} from "../components/entity-card";
+import { RecommendedActionCard } from "../components/recommended-action-card";
+import {
+  badgeRowClass,
+  DateTime,
   fieldLabelClass,
+  goldDivider,
+  helperClass,
+  metaLine,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -18,6 +29,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
   UITextarea,
@@ -27,9 +39,13 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import { extractTitle } from "../lib/markdown-utils";
+
+const BRIEF_LIMIT = 12;
+const CAMPAIGN_LIMIT = 20;
 
 function extractExcerpt(bodyMd: string, maxLen = 180): string {
   const lines = bodyMd.split("\n");
@@ -59,12 +75,106 @@ function extractExcerpt(bodyMd: string, maxLen = 180): string {
   return text.length > maxLen ? `${text.slice(0, maxLen)}...` : text;
 }
 
+/** True once focus has fallen to <body>, e.g. because its element moved. */
+function focusWasLost() {
+  return (
+    document.activeElement === null || document.activeElement === document.body
+  );
+}
+
+type CampaignStatus = "active" | "paused" | "completed";
+
 type CampaignDraft = {
   title: string;
   question: string;
   descriptionMd: string;
-  status: "active" | "paused" | "completed";
+  status: CampaignStatus;
 };
+
+type CampaignSaveArgs = {
+  id: Id<"campaigns">;
+  title: string;
+  question: string;
+  descriptionMd?: string;
+  status: CampaignStatus;
+};
+
+const cardHeaderClass = css({
+  alignItems: "center",
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "2",
+  mb: "3",
+  flexWrap: "wrap",
+});
+
+const campaignTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "xl",
+  fontWeight: "normal",
+  lineHeight: "1.35",
+  mb: "2",
+});
+
+const attachedThesesClass = css({ marginTop: "3" });
+
+const cardFooterClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+  justifyContent: "space-between",
+  mt: "4",
+});
+
+const pushEndClass = css({ ml: "auto" });
+
+const pageHeaderClass = css({
+  alignItems: "center",
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "3",
+  flexWrap: "wrap",
+});
+
+const noticeSpacingClass = css({ mt: "3" });
+
+const formEndClass = css({
+  display: "flex",
+  justifyContent: "flex-end",
+  marginTop: "4",
+});
+
+const stackClass = css({ display: "grid", gap: "3" });
+
+const limitNoteClass = cx(helperClass, css({ mb: "3" }));
+
+const emptyBriefsClass = css({
+  color: "zodiac.cream/66",
+  fontFamily: "display",
+  fontSize: "md",
+  lineHeight: "1.6",
+  textAlign: "center",
+  py: "8",
+});
+
+const briefBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+
+const publishedBadgeClass = css({ gap: "1" });
+
+const briefTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "lg",
+  fontWeight: "normal",
+  lineHeight: "1.4",
+  mb: "2",
+});
+
+const campaignMarkClass = css({ ml: "2", verticalAlign: "middle" });
+
+const briefExcerptClass = cx(helperClass, css({ mb: "2" }));
 
 function buildDraft(campaign: Doc<"campaigns">): CampaignDraft {
   return {
@@ -78,16 +188,9 @@ function buildDraft(campaign: Doc<"campaigns">): CampaignDraft {
 function CampaignCard(props: {
   campaign: Doc<"campaigns">;
   thesisTitleById: Map<string, string>;
-  onActivate: (id: Id<"campaigns">) => Promise<void>;
+  onActivate: (id: Id<"campaigns">) => Promise<unknown>;
   onCreateRecap: (id: Id<"campaigns">) => Promise<void>;
-  onSave: (args: {
-    id: Id<"campaigns">;
-    title: string;
-    question: string;
-    descriptionMd?: string;
-    status: "active" | "paused" | "completed";
-  }) => Promise<void>;
-  onValidationError?: (message: string) => void;
+  onSave: (args: CampaignSaveArgs) => Promise<unknown>;
 }) {
   const [draft, setDraft] = createSignal<CampaignDraft>(
     buildDraft(props.campaign),
@@ -96,6 +199,13 @@ function CampaignCard(props: {
   const [saving, setSaving] = createSignal(false);
   const [activating, setActivating] = createSignal(false);
   const [creatingRecap, setCreatingRecap] = createSignal(false);
+  const [notice, setNotice] = createSignal<string | null>(null);
+  const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  const busy = () => saving() || activating() || creatingRecap();
+  // The heading outlives "Set Active", which unmounts once the campaign is
+  // active, so it is where focus goes after a successful activation.
+  let heading: HTMLHeadingElement | undefined;
+  let saveButton: HTMLButtonElement | undefined;
 
   function resetDraftFromCampaign(campaign: Doc<"campaigns">) {
     setDraft(buildDraft(campaign));
@@ -108,6 +218,11 @@ function CampaignCard(props: {
   ) {
     setDirty(true);
     setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function clearNotice() {
+    setNotice(null);
+    setNoticeError(null);
   }
 
   let lastCampaignId = String(props.campaign._id);
@@ -132,10 +247,12 @@ function CampaignCard(props: {
     const title = currentDraft.title.trim();
     const question = currentDraft.question.trim();
     if (!title || !question) {
-      props.onValidationError?.("Campaign title and question are required.");
+      setNotice(null);
+      setNoticeError("Campaign title and question are required.");
       return false;
     }
     setSaving(true);
+    clearNotice();
     try {
       await props.onSave({
         id: props.campaign._id,
@@ -145,93 +262,104 @@ function CampaignCard(props: {
         status: currentDraft.status,
       });
       setDirty(false);
+      setNotice("Campaign updated.");
+      // A save bumps `updatedAt`, which reorders the list and can drop focus
+      // from the moved card's button.
+      if (focusWasLost()) saveButton?.focus();
       return true;
-    } catch {
-      // The page has already shown the error; keep `dirty` so the edit
-      // survives and `handleCreateRecap` stops here.
+    } catch (error) {
+      // Keep `dirty` so the edit survives and `handleCreateRecap` stops here.
+      setNoticeError(`Campaign update failed: ${describeError(error)}`);
       return false;
     } finally {
       setSaving(false);
     }
   }
 
+  async function handleSave() {
+    if (busy()) return;
+    await saveCampaign();
+  }
+
   async function handleActivate() {
+    if (busy()) return;
     setActivating(true);
+    clearNotice();
+    // Activation hides this button for the now-active card, and the Convex
+    // push that does so lands before the mutation resolves: park focus on the
+    // card heading first, and give it back only if activation fails.
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    heading?.focus();
     try {
       await props.onActivate(props.campaign._id);
       setDirty(false);
-    } catch {
-      // Reported by the page; leave any unsaved edit marked as such.
+      setNotice("Active campaign updated.");
+      // Activation bumps `updatedAt`, which reorders the list; moving the
+      // card node resets focus inside it, so put it back on the heading.
+      if (focusWasLost()) heading?.focus();
+    } catch (error) {
+      // Leave any unsaved edit marked as such.
+      setNoticeError(`Campaign activation failed: ${describeError(error)}`);
+      if (trigger?.isConnected) trigger.focus();
     } finally {
       setActivating(false);
     }
   }
 
   async function handleCreateRecap() {
+    if (busy()) return;
     setCreatingRecap(true);
+    clearNotice();
     try {
       if (dirty() && !(await saveCampaign())) return;
       await props.onCreateRecap(props.campaign._id);
+    } catch (error) {
+      setNoticeError(`Campaign summary draft failed: ${describeError(error)}`);
     } finally {
       setCreatingRecap(false);
     }
   }
 
   return (
-    <div
-      data-testid="campaign-card"
-      class={css({
-        borderColor: "zodiac.gold/22",
-        borderRadius: "l2",
-        borderWidth: "1px",
-        p: "4",
-      })}
-    >
-      <div
-        class={css({
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "2",
-          mb: "3",
-          flexWrap: "wrap",
-        })}
-      >
-        <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+    <div data-testid="campaign-card" class={entityCardClass}>
+      <div class={cardHeaderClass}>
+        <div class={badgeRowClass}>
           <UIBadge tone={props.campaign.status === "active" ? "gold" : "cream"}>
             {props.campaign.status}
           </UIBadge>
-          <UIBadge tone="violet">
+          <UIBadge tone="cream">
             {props.campaign.thesisIds.length} theses
           </UIBadge>
         </div>
         <Show when={props.campaign.status !== "active"}>
           <UIButton
             variant="outline"
-            onClick={handleActivate}
-            disabled={saving() || activating() || creatingRecap()}
+            onClick={() => void handleActivate()}
+            aria-busy={activating()}
+            aria-disabled={busy() || undefined}
           >
             {activating() ? "Activating..." : "Set Active"}
           </UIButton>
         </Show>
         <UIButton
           variant="outline"
-          onClick={handleCreateRecap}
-          disabled={saving() || activating() || creatingRecap()}
+          onClick={() => void handleCreateRecap()}
+          aria-busy={creatingRecap()}
+          aria-disabled={busy() || undefined}
         >
           {creatingRecap() ? "Creating summary..." : "Create summary"}
         </UIButton>
       </div>
 
       <h3
-        class={css({
-          color: "zodiac.cream",
-          fontFamily: "display",
-          fontSize: "xl",
-          fontWeight: "normal",
-          lineHeight: "1.35",
-          mb: "2",
-        })}
+        ref={(element) => {
+          heading = element;
+        }}
+        tabindex="-1"
+        class={campaignTitleClass}
       >
         {draft().title || "Untitled campaign"}
       </h3>
@@ -284,10 +412,7 @@ function CampaignCard(props: {
         id={`campaign-${props.campaign._id}-status`}
         value={draft().status}
         onChange={(event) =>
-          updateDraft(
-            "status",
-            event.currentTarget.value as "active" | "paused" | "completed",
-          )
+          updateDraft("status", event.currentTarget.value as CampaignStatus)
         }
       >
         <option value="active">active</option>
@@ -296,9 +421,9 @@ function CampaignCard(props: {
       </UISelect>
 
       <Show when={props.campaign.thesisIds.length > 0}>
-        <div class={css({ marginTop: "3" })}>
+        <div class={attachedThesesClass}>
           <p class={fieldLabelClass}>Attached Theses</p>
-          <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+          <div class={badgeRowClass}>
             <For each={props.campaign.thesisIds}>
               {(thesisId) => (
                 <UIBadge tone="cream">
@@ -311,14 +436,18 @@ function CampaignCard(props: {
         </div>
       </Show>
 
-      <div
-        class={css({ display: "flex", justifyContent: "flex-end", mt: "4" })}
-      >
+      <div class={cardFooterClass}>
+        <UINotice status={notice()} error={noticeError()} />
         <UIButton
+          ref={(element) => {
+            saveButton = element;
+          }}
           type="button"
-          variant="solid"
-          onClick={saveCampaign}
-          disabled={saving() || activating()}
+          variant="outline"
+          class={pushEndClass}
+          onClick={() => void handleSave()}
+          aria-busy={saving()}
+          aria-disabled={busy() || undefined}
         >
           {saving() ? "Saving..." : "Save Campaign"}
         </UIButton>
@@ -334,15 +463,15 @@ export function WeeklyTurnsPage() {
   });
 
   const briefs = createQueryWithStatus(api.weeklyBriefs.list, () => ({
-    limit: 12,
+    limit: BRIEF_LIMIT,
   }));
   const campaigns = createQueryWithStatus(api.campaigns.list, () => ({
-    limit: 20,
+    limit: CAMPAIGN_LIMIT,
   }));
   const theses = createQuery(api.theses.list, () => ({
     limit: 100,
   }));
-  const steering = createQuery(api.campaigns.getRecommendedActions);
+  const steering = createQueryWithStatus(api.campaigns.getRecommendedActions);
 
   const briefRows = createMemo<Doc<"weeklyBriefs">[]>(
     () => (briefs.data() ?? []) as Doc<"weeklyBriefs">[],
@@ -350,6 +479,18 @@ export function WeeklyTurnsPage() {
   const campaignRows = createMemo<Doc<"campaigns">[]>(
     () => (campaigns.data() ?? []) as Doc<"campaigns">[],
   );
+  // Each live update delivers fresh row objects. Keying the cards by id keeps a
+  // card (its draft, notice and focused control) mounted across those updates.
+  const campaignIds = createMemo(() =>
+    campaignRows().map((campaign) => String(campaign._id)),
+  );
+  const campaignById = createMemo(() => {
+    const map = new Map<string, Doc<"campaigns">>();
+    for (const campaign of campaignRows()) {
+      map.set(String(campaign._id), campaign);
+    }
+    return map;
+  });
   const thesisTitleById = createMemo(() => {
     const map = new Map<string, string>();
     for (const thesis of (theses() ?? []) as Doc<"theses">[]) {
@@ -369,9 +510,7 @@ export function WeeklyTurnsPage() {
   const [title, setTitle] = createSignal("");
   const [question, setQuestion] = createSignal("");
   const [descriptionMd, setDescriptionMd] = createSignal("");
-  const [status, setStatus] = createSignal<"active" | "paused" | "completed">(
-    "paused",
-  );
+  const [status, setStatus] = createSignal<CampaignStatus>("paused");
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [generating, setGenerating] = createSignal(false);
@@ -385,7 +524,7 @@ export function WeeklyTurnsPage() {
       const result = await generateBrief({ daysBack: 7 });
       setNotice(`Weekly turn generated for ${result.weekOf}.`);
     } catch (error) {
-      setNoticeError(`Generation failed: ${String(error)}`);
+      setNoticeError(`Generation failed: ${describeError(error)}`);
     } finally {
       setGenerating(false);
     }
@@ -414,56 +553,18 @@ export function WeeklyTurnsPage() {
       setStatus("paused");
       setNotice("Campaign created.");
     } catch (error) {
-      setNoticeError(`Campaign create failed: ${String(error)}`);
+      setNoticeError(`Campaign create failed: ${describeError(error)}`);
     }
   }
 
-  async function handleActivateCampaign(id: Id<"campaigns">) {
-    setNotice(null);
-    setNoticeError(null);
-    try {
-      await setActiveCampaign({ id });
-      setNotice("Active campaign updated.");
-    } catch (error) {
-      setNoticeError(`Campaign activation failed: ${String(error)}`);
-      // Reported above, but the caller has to see the failure: resolving here
-      // would let the card clear its unsaved-edit state.
-      throw error;
-    }
-  }
-
-  async function handleSaveCampaign(args: {
-    id: Id<"campaigns">;
-    title: string;
-    question: string;
-    descriptionMd?: string;
-    status: "active" | "paused" | "completed";
-  }) {
-    setNotice(null);
-    setNoticeError(null);
-    try {
-      await updateCampaign(args);
-      setNotice("Campaign updated.");
-    } catch (error) {
-      setNoticeError(`Campaign update failed: ${String(error)}`);
-      // Reported above, but the caller has to see the failure: resolving here
-      // would clear `dirty` and let a recap be built from the pre-save state.
-      throw error;
-    }
-  }
-
+  // The card reports the outcome of its activate, save and recap calls in its
+  // own notice, so they only run the call and let a failure reach it.
   async function handleCreateCampaignRecap(id: Id<"campaigns">) {
-    setNotice(null);
-    setNoticeError(null);
-    try {
-      const artifactId = await createCampaignDraft({ campaignId: id });
-      void navigate({
-        to: "/editorial/$artifactId",
-        params: { artifactId: String(artifactId) },
-      });
-    } catch (error) {
-      setNoticeError(`Campaign summary draft failed: ${String(error)}`);
-    }
+    const artifactId = await createCampaignDraft({ campaignId: id });
+    void navigate({
+      to: "/editorial/$artifactId",
+      params: { artifactId: String(artifactId) },
+    });
   }
 
   return (
@@ -474,23 +575,10 @@ export function WeeklyTurnsPage() {
           void handleCreateCampaign(e);
         }}
       >
-        <div
-          class={css({
-            alignItems: "center",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "3",
-            flexWrap: "wrap",
-          })}
-        >
+        <div class={pageHeaderClass}>
           <div>
             <h1 class={pageTitleClass}>Weekly Turns</h1>
-            <p
-              class={css({
-                color: "zodiac.cream/62",
-                lineHeight: "1.6",
-              })}
-            >
+            <p class={helperClass}>
               Weekly briefs now steer against an active campaign, persisted
               studio prompts, and recommendation signals drawn from listening
               outcomes.
@@ -500,19 +588,20 @@ export function WeeklyTurnsPage() {
             variant="solid"
             type="button"
             aria-busy={generating()}
-            disabled={generating()}
-            onClick={runGenerate}
+            aria-disabled={generating() || undefined}
+            onClick={() => void runGenerate()}
           >
             {generating() ? "Generating..." : "Generate Now"}
           </UIButton>
         </div>
 
-        <hr
-          class={css({
-            borderColor: "zodiac.gold/18",
-            marginY: "4",
-          })}
+        <UINotice
+          class={noticeSpacingClass}
+          status={notice()}
+          error={noticeError()}
         />
+
+        <hr class={goldDivider} />
 
         <h2 class={sectionTitleClass}>Create Campaign</h2>
         <label class={fieldLabelClass} for="campaign-title">
@@ -552,9 +641,7 @@ export function WeeklyTurnsPage() {
           id="campaign-status"
           value={status()}
           onChange={(event) =>
-            setStatus(
-              event.currentTarget.value as "active" | "paused" | "completed",
-            )
+            setStatus(event.currentTarget.value as CampaignStatus)
           }
         >
           <option value="paused">paused</option>
@@ -562,16 +649,7 @@ export function WeeklyTurnsPage() {
           <option value="completed">completed</option>
         </UISelect>
 
-        <div
-          class={css({
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "4",
-            gap: "3",
-            flexWrap: "wrap",
-          })}
-        >
-          <UINotice status={notice()} error={noticeError()} />
+        <div class={formEndClass}>
           <UIButton type="submit" variant="outline">
             Create Campaign
           </UIButton>
@@ -580,88 +658,46 @@ export function WeeklyTurnsPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Current Steering</h2>
-        <Show when={steering()}>
+        <UINotice
+          status={steering.isLoading() ? "Loading current steering..." : null}
+          error={
+            steering.isError()
+              ? `Failed to load current steering. ${steering.error()?.message}`
+              : null
+          }
+        />
+        <Show when={steering.data()}>
           {(preview) => (
-            <div class={css({ display: "grid", gap: "3" })}>
-              <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+            <div class={stackClass}>
+              <div class={badgeRowClass}>
                 <UIBadge tone={preview().campaign ? "gold" : "cream"}>
                   {preview().campaign
                     ? `Active Campaign: ${preview().campaign?.title}`
                     : "No active campaign"}
                 </UIBadge>
                 <For each={preview().theses}>
-                  {(thesis) => <UIBadge tone="violet">{thesis.title}</UIBadge>}
+                  {(thesis) => <UIBadge tone="cream">{thesis.title}</UIBadge>}
                 </For>
               </div>
 
               <Show
                 when={preview().actions.length > 0}
                 fallback={
-                  <p class={css({ color: "zodiac.cream/58" })}>
+                  <p class={helperClass}>
                     No recommendation candidates yet. Create or attach a thesis
                     to a campaign, then generate more hypotheses and recipes.
                   </p>
                 }
               >
-                <For each={preview().actions}>
-                  {(action) => {
-                    const linkClass = css({
-                      borderColor: "zodiac.gold/20",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      color: "inherit",
-                      display: "block",
-                      p: "3",
-                      textDecoration: "none",
-                    });
-                    const cardBody = (
-                      <>
-                        <div
-                          class={css({
-                            display: "flex",
-                            gap: "2",
-                            flexWrap: "wrap",
-                            mb: "1",
-                          })}
-                        >
-                          <UIBadge tone="gold">{action.durationBucket}</UIBadge>
-                          <UIBadge tone="cream">{action.kind}</UIBadge>
-                        </div>
-                        <div class={css({ color: "zodiac.cream", mb: "1" })}>
-                          {action.targetType} {action.targetId.slice(-6)}
-                        </div>
-                        <p class={css({ color: "zodiac.cream/62" })}>
-                          {action.reason}
-                        </p>
-                      </>
-                    );
-                    return action.targetType === "hypothesis" ? (
-                      <Link
-                        to="/hypotheses/$hypothesisId"
-                        params={{ hypothesisId: action.targetId }}
-                        class={linkClass}
-                      >
-                        {cardBody}
-                      </Link>
-                    ) : action.targetType === "recipe" ? (
-                      <Link
-                        to="/recipes/$recipeId"
-                        params={{ recipeId: action.targetId }}
-                        class={linkClass}
-                      >
-                        {cardBody}
-                      </Link>
-                    ) : (
-                      <Link
-                        to="/compositions/$compositionId"
-                        params={{ compositionId: action.targetId }}
-                        class={linkClass}
-                      >
-                        {cardBody}
-                      </Link>
-                    );
-                  }}
-                </For>
+                <UIList class={stackClass}>
+                  <For each={preview().actions}>
+                    {(action) => (
+                      <li>
+                        <RecommendedActionCard action={action} />
+                      </li>
+                    )}
+                  </For>
+                </UIList>
               </Show>
             </div>
           )}
@@ -687,23 +723,30 @@ export function WeeklyTurnsPage() {
         <Show when={!campaigns.isLoading()}>
           <Show when={!campaigns.isError()}>
             <Show when={campaignRows().length > 0}>
-              <div class={css({ display: "grid", gap: "3" })}>
-                <For each={campaignRows()}>
-                  {(campaign) => (
-                    <CampaignCard
-                      campaign={campaign}
-                      thesisTitleById={thesisTitleById()}
-                      onActivate={handleActivateCampaign}
-                      onCreateRecap={handleCreateCampaignRecap}
-                      onSave={handleSaveCampaign}
-                      onValidationError={(message) => {
-                        setNotice(null);
-                        setNoticeError(message);
-                      }}
-                    />
+              <Show when={campaignRows().length >= CAMPAIGN_LIMIT}>
+                <p class={limitNoteClass}>
+                  Showing the {CAMPAIGN_LIMIT} most recently updated campaigns.
+                </p>
+              </Show>
+              <UIList class={stackClass}>
+                <For each={campaignIds()}>
+                  {(campaignId) => (
+                    <Show when={campaignById().get(campaignId)}>
+                      {(campaign) => (
+                        <li>
+                          <CampaignCard
+                            campaign={campaign()}
+                            thesisTitleById={thesisTitleById()}
+                            onActivate={(id) => setActiveCampaign({ id })}
+                            onCreateRecap={handleCreateCampaignRecap}
+                            onSave={updateCampaign}
+                          />
+                        </li>
+                      )}
+                    </Show>
                   )}
                 </For>
-              </div>
+              </UIList>
             </Show>
           </Show>
         </Show>
@@ -725,126 +768,73 @@ export function WeeklyTurnsPage() {
             <Show
               when={briefRows().length > 0}
               fallback={
-                <p
-                  class={css({
-                    color: "zodiac.cream/55",
-                    fontFamily: "display",
-                    fontSize: "md",
-                    lineHeight: "1.6",
-                    textAlign: "center",
-                    py: "8",
-                  })}
-                >
+                <p class={emptyBriefsClass}>
                   No weekly turns yet. Generate one to summarize the latest
                   ingest cycle.
                 </p>
               }
             >
-              <div class={css({ display: "grid", gap: "3" })}>
+              <Show when={briefRows().length >= BRIEF_LIMIT}>
+                <p class={limitNoteClass}>
+                  Showing the {BRIEF_LIMIT} most recent weekly turns.
+                </p>
+              </Show>
+              <UIList class={stackClass}>
                 <For each={briefRows()}>
                   {(brief) => (
-                    <Link
-                      to="/weekly-turns/$briefId"
-                      params={{ briefId: String(brief._id) }}
-                      class={css({
-                        borderColor: "zodiac.gold/25",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        cursor: "pointer",
-                        display: "block",
-                        p: "4",
-                        textDecoration: "none",
-                        transition: "border-color 0.15s",
-                        _hover: {
-                          borderColor: "zodiac.gold/50",
-                        },
-                      })}
-                    >
-                      <div
-                        class={css({
-                          alignItems: "center",
-                          display: "flex",
-                          gap: "2",
-                          justifyContent: "space-between",
-                          marginBottom: "2",
-                        })}
-                      >
-                        <div
-                          class={css({
-                            display: "flex",
-                            gap: "2",
-                            flexWrap: "wrap",
-                          })}
+                    <li class={entityCardLinkClass}>
+                      <div class={briefBadgesClass}>
+                        <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
+                        <UIBadge tone="cream">{brief.visibility}</UIBadge>
+                        <Show when={(brief.activeThesisIds ?? []).length > 0}>
+                          <UIBadge tone="cream">
+                            {(brief.activeThesisIds ?? []).length} theses
+                          </UIBadge>
+                        </Show>
+                        <Show
+                          when={(brief.recommendedActions ?? []).length > 0}
                         >
-                          <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
-                          <UIBadge tone="cream">{brief.visibility}</UIBadge>
-                          <Show when={brief.campaignId}>
-                            <UIBadge tone="violet">campaign</UIBadge>
-                          </Show>
-                          <Show when={(brief.activeThesisIds ?? []).length > 0}>
-                            <UIBadge tone="violet">
-                              {(brief.activeThesisIds ?? []).length} theses
+                          <UIBadge tone="cream">
+                            {(brief.recommendedActions ?? []).length} actions
+                          </UIBadge>
+                        </Show>
+                        <Show when={brief.publishedAt}>
+                          {(ts) => (
+                            <UIBadge tone="gold" class={publishedBadgeClass}>
+                              Published
+                              <DateTime value={ts()} />
                             </UIBadge>
-                          </Show>
-                          <Show
-                            when={(brief.recommendedActions ?? []).length > 0}
-                          >
-                            <UIBadge tone="violet">
-                              {(brief.recommendedActions ?? []).length} actions
-                            </UIBadge>
-                          </Show>
-                          <Show when={brief.publishedAt}>
-                            {(ts) => (
-                              <UIBadge tone="violet">
-                                Published{" "}
-                                {new Date(ts()).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </UIBadge>
-                            )}
-                          </Show>
-                        </div>
+                          )}
+                        </Show>
                       </div>
 
-                      <h3
-                        class={css({
-                          color: "zodiac.cream",
-                          fontFamily: "display",
-                          fontSize: "lg",
-                          fontWeight: "normal",
-                          lineHeight: "1.4",
-                          mb: "2",
-                        })}
-                      >
-                        {extractTitle(brief.bodyMd)}
+                      <h3 class={briefTitleClass}>
+                        <Link
+                          to="/weekly-turns/$briefId"
+                          params={{ briefId: String(brief._id) }}
+                          class={entityCardTitleLinkClass}
+                        >
+                          {extractTitle(brief.bodyMd)}
+                          {/* Inside the link so the link names its campaign. */}
+                          <Show when={brief.campaignId}>
+                            <UIBadge tone="cream" class={campaignMarkClass}>
+                              campaign
+                            </UIBadge>
+                          </Show>
+                        </Link>
                       </h3>
 
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontFamily: "body",
-                          fontSize: "sm",
-                          lineHeight: "1.6",
-                          mb: "2",
-                        })}
-                      >
+                      <p class={briefExcerptClass}>
                         {extractExcerpt(brief.bodyMd)}
                       </p>
 
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontFamily: "mono",
-                          fontSize: "xs",
-                        })}
-                      >
+                      <p class={metaLine}>
                         model: {brief.model} · prompt: {brief.promptVersion}
                       </p>
-                    </Link>
+                    </li>
                   )}
                 </For>
-              </div>
+              </UIList>
             </Show>
           </Show>
         </Show>

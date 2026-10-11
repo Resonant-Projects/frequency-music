@@ -1,27 +1,32 @@
 import type { FunctionArgs, FunctionReturnType } from "convex/server";
-import {
-  createMemo,
-  createSignal,
-  For,
-  onCleanup,
-  onMount,
-  Show,
-} from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { DECISION_NOTE_MAX_LENGTH } from "../../../convex/shared/vocabularyTriage";
 import { css } from "../../styled-system/css";
+import { createKeyedRows } from "../lib/keyed-rows";
 import {
+  badgeRowClass,
+  createAnnouncer,
+  DateTime,
+  eyebrowClass,
   fieldLabelClass,
+  helperClass,
+  metaLabelClass,
   pageClass,
   pageTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
 } from "../components/ui";
-import { createMutation, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+} from "../integrations/convex";
 
 type TriageBoard = FunctionReturnType<typeof api.vocabulary.triageBoard>;
 type TriageList = TriageBoard[keyof TriageBoard];
@@ -56,17 +61,17 @@ const SECTIONS = [
   tone: "violet" | "cream";
 }>;
 
-const helperClass = css({
-  color: "zodiac.cream/62",
-  lineHeight: "1.6",
-});
+/**
+ * UICard already sets a gold hairline; the doubled selector outranks it so the
+ * override does not depend on atomic stylesheet order.
+ */
+const violetCardClass = css({ "&&": { borderColor: "zodiac.violet/24" } });
 
-const eyebrowClass = css({
-  color: "zodiac.cream/66",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
+const termHeadingClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "xl",
+  fontWeight: "normal",
 });
 
 const triageRowClass = css({
@@ -78,17 +83,44 @@ const triageRowClass = css({
   p: { base: "3", md: "4" },
 });
 
+const triageRowHeaderClass = css({
+  alignItems: "flex-start",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+  justifyContent: "space-between",
+});
+
+const stackClass = css({ display: "grid", gap: "2" });
+const entryNotesClass = css({ display: "grid", gap: "1" });
+
+const decisionPanelClass = css({
+  bg: "zodiac.glow-inner/32",
+  borderRadius: "l2",
+  display: "grid",
+  gap: "3",
+  p: "3",
+  // Violet at rest marks the speculative choice; focus keeps the fields' own
+  // gold border and ring.
+  "& select:not(:focus), & input:not(:focus)": {
+    borderColor: "zodiac.violet/42",
+  },
+});
+
+const sectionHeadingClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "2xl",
+  fontWeight: "normal",
+  lineHeight: "1.2",
+  textWrap: "balance",
+});
+
+const triageListClass = css({ display: "grid", gap: "3" });
+
 function mentionLabel(entry: TriageEntry) {
   if (entry.mentionCount === null) return null;
   return `${entry.mentionCount}${entry.mentionCountCapped ? "+" : ""} mention${entry.mentionCount === 1 ? "" : "s"}`;
-}
-
-const createdAtFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-});
-
-function formatCreatedAt(createdAt: number) {
-  return createdAtFormatter.format(new Date(createdAt));
 }
 
 function TriageRow(props: {
@@ -131,10 +163,20 @@ function TriageRow(props: {
 
   async function confirmDecision() {
     const selected = decision();
-    if (!selected || !canConfirm()) return;
+    // In-flight guard instead of `disabled`: disabling the focused Confirm
+    // button would blur it before focus is handed to the next heading.
+    if (busy() || !selected || !canConfirm()) return;
     setBusy(true);
     setError(null);
     const optionalNote = note().trim() ? { note: note().trim() } : {};
+    // The decided row unmounts with the Convex push, which lands before the
+    // mutation resolves; hand focus to the next row's heading first and give
+    // it back to the pressed button only if the decision fails.
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    document.getElementById(props.nextFocusId)?.focus();
     try {
       if (selected === "promote") {
         await promote({
@@ -157,14 +199,9 @@ function TriageRow(props: {
         });
       }
       props.onDecided(term());
-      // Hand focus to the next heading while this row is still mounted.
-      document.getElementById(props.nextFocusId)?.focus();
     } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : "Vocabulary decision failed.",
-      );
+      setError(describeError(caught));
+      if (trigger?.isConnected) trigger.focus();
     } finally {
       setBusy(false);
     }
@@ -172,47 +209,24 @@ function TriageRow(props: {
 
   return (
     <article class={triageRowClass}>
-      <div
-        class={css({
-          alignItems: "flex-start",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "3",
-          justifyContent: "space-between",
-        })}
-      >
-        <div class={css({ display: "grid", gap: "2" })}>
-          <div class={css({ alignItems: "center", display: "flex", gap: "2" })}>
-            <Show
-              when={props.list === "conceptDomain"}
-              fallback={
-                <h3
-                  id={headingId()}
-                  tabIndex={-1}
-                  class={css({
-                    color: "zodiac.cream",
-                    fontFamily: "display",
-                    fontSize: "xl",
-                    fontWeight: "normal",
-                  })}
-                >
-                  {term()}
-                </h3>
-              }
-            >
-              <h3 id={headingId()} tabIndex={-1}>
-                <UIBadge tone="violet">{term()}</UIBadge>
-              </h3>
+      <div class={triageRowHeaderClass}>
+        <div class={stackClass}>
+          <div class={badgeRowClass}>
+            <h3 id={headingId()} tabIndex={-1} class={termHeadingClass}>
+              {term()}
+            </h3>
+            <Show when={props.list === "conceptDomain"}>
+              <UIBadge tone="violet">Domain</UIBadge>
             </Show>
           </div>
-          <p class={eyebrowClass}>
-            Added {formatCreatedAt(props.entry.createdAt)}
+          <p class={metaLabelClass}>
+            Added <DateTime value={props.entry.createdAt} />
             <Show when={mentionLabel(props.entry)}>
               {(label) => ` · ${label()}`}
             </Show>
           </p>
         </div>
-        <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+        <div class={badgeRowClass}>
           <UIButton
             variant="outline"
             aria-pressed={decision() === "promote"}
@@ -230,7 +244,9 @@ function TriageRow(props: {
             Merge <span aria-hidden="true">→</span>
           </UIButton>
           <UIButton
-            variant="ghost"
+            // Ghost at rest; pressed takes the outline face, which is the one
+            // UIButton styles for `aria-pressed`.
+            variant={decision() === "reject" ? "outline" : "ghost"}
             aria-pressed={decision() === "reject"}
             disabled={busy()}
             onClick={() => chooseDecision("reject")}
@@ -241,7 +257,7 @@ function TriageRow(props: {
       </div>
 
       <Show when={props.entry.description || props.entry.notes}>
-        <div class={css({ display: "grid", gap: "1" })}>
+        <div class={entryNotesClass}>
           <Show when={props.entry.description}>
             {(description) => <p class={helperClass}>{description()}</p>}
           </Show>
@@ -253,24 +269,9 @@ function TriageRow(props: {
 
       <Show when={decision()}>
         {(selectedDecision) => (
-          <div
-            class={css({
-              bg: "zodiac.glow-inner/32",
-              borderRadius: "l2",
-              display: "grid",
-              gap: "3",
-              p: "3",
-              "& select, & input": {
-                borderColor: "zodiac.violet/42",
-              },
-              "& select:focus-visible, & input:focus-visible": {
-                borderColor: "zodiac.violet",
-                boxShadow: "0 0 0 1px rgba(139, 92, 246, 0.4)",
-              },
-            })}
-          >
+          <div class={decisionPanelClass}>
             <Show when={selectedDecision() === "merge"}>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <div class={stackClass}>
                 <label
                   class={fieldLabelClass}
                   for={`merge-target-${props.entry._id}`}
@@ -293,7 +294,7 @@ function TriageRow(props: {
                 </UISelect>
               </div>
             </Show>
-            <div class={css({ display: "grid", gap: "2" })}>
+            <div class={stackClass}>
               <label
                 class={fieldLabelClass}
                 for={`decision-note-${props.entry._id}`}
@@ -309,10 +310,11 @@ function TriageRow(props: {
               />
             </div>
             <UINotice error={error()} />
-            <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <div class={badgeRowClass}>
               <UIButton
                 variant="solid"
-                disabled={busy() || !canConfirm()}
+                disabled={!canConfirm()}
+                aria-busy={busy()}
                 onClick={confirmDecision}
               >
                 {busy()
@@ -341,20 +343,15 @@ function TriageSection(props: {
   onDecided: (term: string) => void;
 }) {
   const headingId = () => `triage-heading-${props.list}`;
+  // Keyed by id: the board refresh after a decision delivers fresh entry
+  // objects, and the next row's heading (which took focus) must survive it.
+  const provisionalRows = createKeyedRows(
+    () => props.data.provisional,
+    (entry) => String(entry._id),
+  );
   return (
-    <UICard style={{ "border-color": "rgba(139, 92, 246, 0.22)" }}>
-      <h2
-        id={headingId()}
-        tabIndex={-1}
-        class={css({
-          color: "zodiac.cream",
-          fontFamily: "display",
-          fontSize: "2xl",
-          fontWeight: "normal",
-          lineHeight: "1.2",
-          textWrap: "balance",
-        })}
-      >
+    <UICard class={violetCardClass}>
+      <h2 id={headingId()} tabIndex={-1} class={sectionHeadingClass}>
         {props.title}
       </h2>
       <div class={css({ display: "grid", gap: "3", mt: "4" })}>
@@ -367,21 +364,29 @@ function TriageSection(props: {
           }
         />
         <Show when={props.data.provisional.length > 0}>
-          <For each={props.data.provisional}>
-            {(entry, index) => (
-              <TriageRow
-                entry={entry}
-                knownTargets={props.data.knownTargets}
-                list={props.list}
-                nextFocusId={
-                  props.data.provisional[index() + 1]
-                    ? `triage-entry-${props.data.provisional[index() + 1]._id}`
-                    : headingId()
-                }
-                onDecided={props.onDecided}
-              />
-            )}
-          </For>
+          <UIList class={triageListClass}>
+            <For each={provisionalRows.ids()}>
+              {(id, index) => (
+                <li>
+                  <Show when={provisionalRows.byId().get(id)}>
+                    {(entry) => (
+                      <TriageRow
+                        entry={entry()}
+                        knownTargets={props.data.knownTargets}
+                        list={props.list}
+                        nextFocusId={
+                          provisionalRows.ids()[index() + 1]
+                            ? `triage-entry-${provisionalRows.ids()[index() + 1]}`
+                            : headingId()
+                        }
+                        onDecided={props.onDecided}
+                      />
+                    )}
+                  </Show>
+                </li>
+              )}
+            </For>
+          </UIList>
         </Show>
       </div>
     </UICard>
@@ -394,27 +399,16 @@ export function VocabularyTriagePage() {
   });
 
   const board = createQueryWithStatus(api.vocabulary.triageBoard);
-  const [announcement, setAnnouncement] = createSignal<string | null>(null);
-  let announcementTimer: ReturnType<typeof setTimeout> | undefined;
-
-  // Retire the announcement once assistive tech has had time to read it;
-  // leaving it mounted re-announces a stale decision on the next load flip.
-  function announce(message: string) {
-    clearTimeout(announcementTimer);
-    setAnnouncement(message);
-    announcementTimer = setTimeout(() => setAnnouncement(null), 5000);
-  }
-
-  onCleanup(() => clearTimeout(announcementTimer));
+  const [announcement, announce] = createAnnouncer();
 
   return (
     <section class={pageClass}>
-      <UICard style={{ "border-color": "rgba(139, 92, 246, 0.22)" }}>
+      <UICard class={violetCardClass}>
         <p class={eyebrowClass}>Domain Triage</p>
         <h1 class={pageTitleClass}>Curate the vocabulary registry.</h1>
         <p
           class={css({
-            color: "zodiac.cream/62",
+            color: "zodiac.cream/66",
             lineHeight: "1.6",
             maxW: "70ch",
           })}

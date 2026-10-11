@@ -76,113 +76,114 @@ describe("phase 2 lineage", () => {
 });
 
 describe("phase 4 editorial artifacts", () => {
-  test.each([
-    false,
-    true,
-  ])("blocks publication of private material including superseded history, historical=%s", async (historical) => {
-    const privateTitle = historical ? "" : "Private Notebook";
-    const privateSummary = "verbatim private extraction summary";
-    const artifact = {
-      _id: "artifact-1",
-      _creationTime: 1,
-      kind: "experiment_recap",
-      slug: "artifact-1",
-      title: `Recap mentioning ${privateTitle}`,
-      dek: "Draft",
-      bodyMd: `We quoted ${privateSummary} in the public draft.`,
-      whyItMattersMd: "Why this matters.",
-      uncertaintyMd: "Still uncertain.",
-      evidenceStatus: "mixed",
-      status: "approved",
-      visibility: "public",
-      primaryRef: { type: "hypothesis", id: "hyp-1" },
-      linkedIds: {
-        thesisIds: [],
-        hypothesisIds: ["hyp-1"],
-        recipeIds: [],
-        compositionIds: [],
-        listeningSessionIds: [],
-        failureKeys: [],
-      },
-      publicEvidenceCards: [],
-      createdBy: "system",
-      createdAt: 1,
-      updatedAt: 2,
-      publishedAt: 3,
-    } as unknown as Doc<"editorialArtifacts">;
-
-    const db = makeDb({
-      campaigns: [],
-      theses: [],
-      hypotheses: [
-        {
-          _id: "hyp-1",
-          title: "Hypothesis",
-          question: "Q",
-          hypothesis: "H",
-          whyThisMatters: "W",
-          rationaleMd: "R",
-          sourceIds: ["source-1"],
-          status: "active",
-          visibility: "private",
-          createdBy: "system",
-          createdAt: 1,
-          updatedAt: 1,
+  test.each([false, true])(
+    "blocks publication of private material including superseded history, historical=%s",
+    async (historical) => {
+      const privateTitle = historical ? "" : "Private Notebook";
+      const privateSummary = "verbatim private extraction summary";
+      const artifact = {
+        _id: "artifact-1",
+        _creationTime: 1,
+        kind: "experiment_recap",
+        slug: "artifact-1",
+        title: `Recap mentioning ${privateTitle}`,
+        dek: "Draft",
+        bodyMd: `We quoted ${privateSummary} in the public draft.`,
+        whyItMattersMd: "Why this matters.",
+        uncertaintyMd: "Still uncertain.",
+        evidenceStatus: "mixed",
+        status: "approved",
+        visibility: "public",
+        primaryRef: { type: "hypothesis", id: "hyp-1" },
+        linkedIds: {
+          thesisIds: [],
+          hypothesisIds: ["hyp-1"],
+          recipeIds: [],
+          compositionIds: [],
+          listeningSessionIds: [],
+          failureKeys: [],
         },
-      ],
-      recipes: [],
-      compositions: [],
-      listeningSessions: [],
-      weeklyBriefs: [],
-      editorialArtifacts: [artifact],
-      sources: [
-        {
-          _id: "source-1",
-          title: privateTitle,
-          visibility: "private",
-          createdBy: "system",
-          createdAt: 1,
-          updatedAt: 1,
-        },
-      ],
-      extractions: [
-        {
-          _id: "extract-1",
-          sourceId: "source-1",
-          summary: privateSummary,
-          historical,
-          createdAt: 1,
-          claims: [],
-          compositionParameters: [],
-          topics: [],
-        },
-        ...(historical
-          ? [
-              {
-                _id: "extract-current",
-                sourceId: "source-1",
-                summary: "A newer private reading",
-                createdAt: 2,
-                claims: [],
-                compositionParameters: [],
-                topics: [],
-                historical: false,
-              },
-            ]
-          : []),
-      ],
-    });
+        publicEvidenceCards: [],
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 2,
+        publishedAt: 3,
+      } as unknown as Doc<"editorialArtifacts">;
 
-    const validation = await validateArtifactForPublish(db as any, artifact);
+      const db = makeDb({
+        campaigns: [],
+        theses: [],
+        hypotheses: [
+          {
+            _id: "hyp-1",
+            title: "Hypothesis",
+            question: "Q",
+            hypothesis: "H",
+            whyThisMatters: "W",
+            rationaleMd: "R",
+            sourceIds: ["source-1"],
+            status: "active",
+            visibility: "private",
+            createdBy: "system",
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+        recipes: [],
+        compositions: [],
+        listeningSessions: [],
+        weeklyBriefs: [],
+        editorialArtifacts: [artifact],
+        sources: [
+          {
+            _id: "source-1",
+            title: privateTitle,
+            visibility: "private",
+            createdBy: "system",
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+        extractions: [
+          {
+            _id: "extract-1",
+            sourceId: "source-1",
+            summary: privateSummary,
+            historical,
+            createdAt: 1,
+            claims: [],
+            compositionParameters: [],
+            topics: [],
+          },
+          ...(historical
+            ? [
+                {
+                  _id: "extract-current",
+                  sourceId: "source-1",
+                  summary: "A newer private reading",
+                  createdAt: 2,
+                  claims: [],
+                  compositionParameters: [],
+                  topics: [],
+                  historical: false,
+                },
+              ]
+            : []),
+        ],
+      });
 
-    expect(validation.canPublish).toBe(false);
-    expect(
-      validation.checks.find((check) => check.key === "privateSources")?.ok,
-    ).toBe(historical);
-    expect(
-      validation.checks.find((check) => check.key === "privateExtractions")?.ok,
-    ).toBe(false);
-  });
+      const validation = await validateArtifactForPublish(db as any, artifact);
+
+      expect(validation.canPublish).toBe(false);
+      expect(
+        validation.checks.find((check) => check.key === "privateSources")?.ok,
+      ).toBe(historical);
+      expect(
+        validation.checks.find((check) => check.key === "privateExtractions")
+          ?.ok,
+      ).toBe(false);
+    },
+  );
 
   test("treats follower-only source material as non-public during publish validation", async () => {
     const artifact = {

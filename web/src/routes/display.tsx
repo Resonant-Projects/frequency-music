@@ -1,7 +1,11 @@
 import { createSignal, For, onMount, Show } from "solid-js";
+import { createKeyedRows } from "../lib/keyed-rows";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { StatTiles } from "../components/stat-tiles";
 import {
+  badgeRowClass,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -15,31 +19,9 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
-
-const statGridClass = css({
-  display: "grid",
-  gap: "3",
-  gridTemplateColumns: {
-    base: "repeat(2, minmax(0, 1fr))",
-    md: "repeat(4, minmax(0, 1fr))",
-  },
-});
-
-/** dt must precede dd in the DOM; the tile still reads value-over-label. */
-const statTileClass = css({
-  display: "flex",
-  flexDirection: "column-reverse",
-});
-
-const statLabelClass = css({
-  color: "zodiac.cream/58",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-});
 
 function statusTone(status: string): "gold" | "violet" | "cream" {
   if (status === "text_ready") return "violet";
@@ -54,6 +36,57 @@ function confidenceTone(value: string): "gold" | "violet" | "cream" {
 }
 
 const DISPLAY_QUEUE_LIMIT = import.meta.env.VITE_E2E_MODE === "1" ? 200 : 24;
+
+const ACTION_QUEUE_HEADING_ID = "display-action-queue-heading";
+const clusterHeadingClass = css({
+  color: "zodiac.gold",
+  fontSize: "sm",
+  mb: "2",
+});
+const clusterClass = css({ mb: "2" });
+const clusterDomainClass = css({ color: "zodiac.cream" });
+const helperSpacedClass = cx(helperClass, css({ mb: "2" }));
+const rowClass = css({
+  borderColor: "zodiac.gold/24",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  p: "4",
+});
+const rowBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+const rowTitleClass = css({ fontSize: "xl", marginBottom: "1" });
+const claimClass = css({
+  bg: "zodiac.cream/2",
+  borderColor: "zodiac.gold/16",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  p: "2.5",
+});
+const claimTextClass = css({
+  color: "zodiac.cream/68",
+  maxW: "72ch",
+  fontSize: "sm",
+  marginBottom: "2",
+});
+const stackClass = css({ display: "grid", gap: "2" });
+
+/**
+ * Where focus goes when `row` is about to leave the queue (or its action is
+ * about to be disabled): the first enabled action in the next row, else the
+ * previous row, else the Action Queue heading. Never `<body>`.
+ */
+function focusTargetAfter(row: Element): HTMLElement | null {
+  // A busy control may disable itself when its own action lands, which would
+  // drop the focus we just handed it; skip those too.
+  const firstAction = (candidate: Element | null) =>
+    candidate?.querySelector<HTMLButtonElement>(
+      'button:not(:disabled):not([aria-busy="true"])',
+    ) ?? null;
+  return (
+    firstAction(row.nextElementSibling) ??
+    firstAction(row.previousElementSibling) ??
+    document.getElementById(ACTION_QUEUE_HEADING_ID)
+  );
+}
 
 export function DisplayPage() {
   onMount(() => {
@@ -81,6 +114,12 @@ export function DisplayPage() {
   const inboxRows = createQueryWithStatus(api.inbox.list, () => ({
     limit: DISPLAY_QUEUE_LIMIT,
   }));
+  // Rows keyed by id so a refresh after Mark Triaged / Promote Followers
+  // keeps the neighbouring row (and the focus handed to it) mounted.
+  const inboxRowList = createKeyedRows<InboxRow>(
+    () => inboxRows.data(),
+    (row) => row._id,
+  );
   const counts = createQuery(api.inbox.counts);
   const editorialSignals = createQuery(api.dashboard.editorialSignals, () => ({
     limit: 6,
@@ -119,50 +158,96 @@ export function DisplayPage() {
     }
   }
 
-  async function runRowExtraction(sourceId: Id<"sources">) {
+  async function runRowExtraction(
+    sourceId: Id<"sources">,
+    trigger: HTMLButtonElement,
+  ) {
+    if (isRowPending(sourceId)) return;
+    // A started extraction moves the source past text_ready, which disables
+    // this button — and the live query can push that status before the
+    // action resolves. Chromium drops focus to <body> the moment a focused
+    // button disables, so hand focus to a stable queue target first: the
+    // row's next enabled action, else a neighbouring row, else the heading.
+    const row = trigger.closest("[data-testid='display-row']");
+    const target =
+      row?.querySelector<HTMLButtonElement>(
+        'button:not(:disabled):not([aria-busy="true"]):not([aria-label^="Run extraction"])',
+      ) ?? (row ? focusTargetAfter(row) : null);
+    target?.focus();
     await withRowPending(sourceId, async () => {
       try {
         await runExtraction({ sourceId });
         setNotice("Extraction started.");
       } catch (error) {
-        setNoticeError(`Extraction failed: ${String(error)}`);
+        setNoticeError(`Extraction failed: ${describeError(error)}`);
+        // The button stays enabled on failure; give it focus back.
+        if (trigger.isConnected && !trigger.disabled) trigger.focus();
       }
     });
   }
 
-  async function markTriaged(sourceId: Id<"sources">) {
+  /**
+   * Runs a mutation that removes the row from the queue. Focus moves to a
+   * stable neighbour before the row unmounts, and returns to the trigger if
+   * the mutation fails and the row stays.
+   */
+  async function runRowRemoval(
+    sourceId: Id<"sources">,
+    trigger: HTMLButtonElement,
+    mutate: () => Promise<unknown>,
+    success: string,
+    failure: string,
+  ) {
+    if (isRowPending(sourceId)) return;
+    const row = trigger.closest("[data-testid='display-row']");
+    if (row) focusTargetAfter(row)?.focus();
     await withRowPending(sourceId, async () => {
       try {
-        await updateStatus({
+        await mutate();
+        setNotice(success);
+      } catch (error) {
+        setNoticeError(`${failure}: ${describeError(error)}`);
+        if (trigger.isConnected) trigger.focus();
+      }
+    });
+  }
+
+  function markTriaged(sourceId: Id<"sources">, trigger: HTMLButtonElement) {
+    return runRowRemoval(
+      sourceId,
+      trigger,
+      () =>
+        updateStatus({
           id: sourceId,
           status: "triaged" as const,
-        });
-        setNotice("Source marked as triaged.");
-      } catch (error) {
-        setNoticeError(`Status update failed: ${String(error)}`);
-      }
-    });
+        }),
+      "Source marked as triaged.",
+      "Status update failed",
+    );
   }
 
-  async function promoteFollowers(sourceId: Id<"sources">) {
-    await withRowPending(sourceId, async () => {
-      try {
-        await setVisibility({
+  function promoteFollowers(
+    sourceId: Id<"sources">,
+    trigger: HTMLButtonElement,
+  ) {
+    return runRowRemoval(
+      sourceId,
+      trigger,
+      () =>
+        setVisibility({
           id: sourceId,
           visibility: "followers",
-        });
-        setNotice("Visibility promoted to followers.");
-      } catch (error) {
-        setNoticeError(`Promotion failed: ${String(error)}`);
-      }
-    });
+        }),
+      "Visibility promoted to followers.",
+      "Promotion failed",
+    );
   }
 
   return (
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Display & Triage</h1>
-        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
+        <p class={helperClass}>
           This queue prioritizes blocked and oldest private sources so weekly
           review stays aligned with ingest throughput.
         </p>
@@ -175,43 +260,35 @@ export function DisplayPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Inbox Totals</h2>
-        <dl class={statGridClass}>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Ingested</dt>
-            <dd class={css({ color: "zodiac.gold", fontSize: "3xl" })}>
-              {counts()?.ingested ?? 0}
-            </dd>
-          </div>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Text Ready</dt>
-            <dd class={css({ color: "zodiac.violet", fontSize: "3xl" })}>
-              {counts()?.textReady ?? 0}
-            </dd>
-          </div>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Review Needed</dt>
-            <dd class={css({ color: "zodiac.cream", fontSize: "3xl" })}>
-              {counts()?.reviewNeeded ?? 0}
-            </dd>
-          </div>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Blocked</dt>
-            <dd class={css({ color: "zodiac.error", fontSize: "3xl" })}>
-              {counts()?.blocked ?? 0}
-            </dd>
-          </div>
-        </dl>
+        <StatTiles
+          items={[
+            {
+              label: "Ingested",
+              value: counts()?.ingested ?? 0,
+              tone: "gold",
+            },
+            {
+              label: "Text Ready",
+              value: counts()?.textReady ?? 0,
+              tone: "violet",
+            },
+            {
+              label: "Review Needed",
+              value: counts()?.reviewNeeded ?? 0,
+              tone: "cream",
+            },
+            {
+              label: "Blocked",
+              value: counts()?.blocked ?? 0,
+              tone: "error",
+            },
+          ]}
+        />
       </UICard>
 
       <UICard>
         <h2 class={sectionTitleClass}>Editorial Signals</h2>
-        <p
-          class={css({
-            color: "zodiac.cream/58",
-            lineHeight: "1.6",
-            mb: "3",
-          })}
-        >
+        <p class={cx(helperClass, css({ mb: "3" }))}>
           These concept areas combine hypothesis outcomes, downstream recipes,
           compositions, and listening verdicts into a pragmatic yield score.
         </p>
@@ -219,33 +296,23 @@ export function DisplayPage() {
           class={css({
             display: "grid",
             gap: "4",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            gridTemplateColumns: {
+              base: "minmax(0, 1fr)",
+              md: "repeat(2, minmax(0, 1fr))",
+            },
           })}
         >
           <div>
-            <h3 class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
-              High-yield areas
-            </h3>
+            <h3 class={clusterHeadingClass}>High-yield areas</h3>
             <Show
               when={(editorialSignals()?.highYieldClusters ?? []).length > 0}
-              fallback={
-                <p class={css({ color: "zodiac.cream/58" })}>
-                  No high-yield clusters yet.
-                </p>
-              }
+              fallback={<p class={helperClass}>No high-yield clusters yet.</p>}
             >
               <For each={editorialSignals()?.highYieldClusters ?? []}>
                 {(cluster) => (
-                  <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>
-                      {cluster.domain}
-                    </div>
-                    <div
-                      class={css({
-                        color: "zodiac.cream/58",
-                        fontSize: "sm",
-                      })}
-                    >
+                  <div class={clusterClass}>
+                    <div class={clusterDomainClass}>{cluster.domain}</div>
+                    <div class={helperClass}>
                       {cluster.conceptNames.join(", ")} · score {cluster.score}
                     </div>
                   </div>
@@ -254,29 +321,16 @@ export function DisplayPage() {
             </Show>
           </div>
           <div>
-            <h3 class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
-              Low-yield areas
-            </h3>
+            <h3 class={clusterHeadingClass}>Low-yield areas</h3>
             <Show
               when={(editorialSignals()?.lowYieldClusters ?? []).length > 0}
-              fallback={
-                <p class={css({ color: "zodiac.cream/58" })}>
-                  No low-yield clusters yet.
-                </p>
-              }
+              fallback={<p class={helperClass}>No low-yield clusters yet.</p>}
             >
               <For each={editorialSignals()?.lowYieldClusters ?? []}>
                 {(cluster) => (
-                  <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>
-                      {cluster.domain}
-                    </div>
-                    <div
-                      class={css({
-                        color: "zodiac.cream/58",
-                        fontSize: "sm",
-                      })}
-                    >
+                  <div class={clusterClass}>
+                    <div class={clusterDomainClass}>{cluster.domain}</div>
+                    <div class={helperClass}>
                       {cluster.conceptNames.join(", ")} · score {cluster.score}
                     </div>
                   </div>
@@ -288,10 +342,22 @@ export function DisplayPage() {
       </UICard>
 
       <UICard>
-        <h2 class={sectionTitleClass}>Action Queue</h2>
+        <h2
+          id={ACTION_QUEUE_HEADING_ID}
+          tabIndex={-1}
+          class={sectionTitleClass}
+        >
+          Action Queue
+        </h2>
 
         <UINotice
-          status={inboxRows.isLoading() ? "Loading inbox…" : null}
+          status={
+            inboxRows.isLoading()
+              ? "Loading inbox…"
+              : !inboxRows.error() && (inboxRows.data() ?? []).length === 0
+                ? "No sources need action right now."
+                : null
+          }
           error={
             inboxRows.error()
               ? `Unable to load the inbox: ${inboxRows.error()?.message}`
@@ -300,146 +366,108 @@ export function DisplayPage() {
         />
         <Show when={!inboxRows.isLoading()}>
           <div class={css({ display: "grid", gap: "3" })}>
-            <For each={inboxRows.data() ?? []}>
-              {(row: InboxRow) => (
-                <div
-                  data-testid="display-row"
-                  class={css({
-                    borderColor: "zodiac.gold/24",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    p: "4",
-                  })}
-                >
-                  <div
-                    class={css({
-                      alignItems: "center",
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "2",
-                      marginBottom: "2",
-                    })}
-                  >
-                    <UIBadge tone={statusTone(row.status)}>
-                      {row.status}
-                    </UIBadge>
-                    <UIBadge tone="cream">{row.type}</UIBadge>
-                    <Show when={row.blockedReason}>
-                      <UIBadge tone="violet">
-                        blocked: {row.blockedReason}
-                      </UIBadge>
-                    </Show>
-                  </div>
-
-                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
-                    {row.title ?? "Untitled source"}
-                  </h3>
-                  <p
-                    class={css({
-                      color: "zodiac.cream/66",
-                      fontSize: "sm",
-                      marginBottom: "2",
-                    })}
-                  >
-                    Next action: <strong>{row.nextAction}</strong>
-                  </p>
-
-                  <Show when={row.extractionPreview}>
-                    {(preview) => (
-                      <div class={css({ marginBottom: "2" })}>
-                        <p
-                          class={css({
-                            color: "zodiac.cream/56",
-                            fontSize: "sm",
-                            marginBottom: "2",
-                          })}
-                        >
-                          {preview().summary}
-                        </p>
-                        <Show when={preview().claimPreviews.length > 0}>
-                          <div class={css({ display: "grid", gap: "2" })}>
-                            <For each={preview().claimPreviews}>
-                              {(claim) => (
-                                <div
-                                  class={css({
-                                    bg: "zodiac.cream/2",
-                                    borderColor: "zodiac.gold/16",
-                                    borderRadius: "l2",
-                                    borderWidth: "1px",
-                                    p: "2.5",
-                                  })}
-                                >
-                                  <p
-                                    class={css({
-                                      color: "zodiac.cream/68",
-                                      fontSize: "sm",
-                                      marginBottom: "2",
-                                    })}
-                                  >
-                                    {claim.text}
-                                  </p>
-                                  <div
-                                    class={css({
-                                      display: "flex",
-                                      flexWrap: "wrap",
-                                      gap: "2",
-                                    })}
-                                  >
-                                    <Show when={claim.truthConfidence}>
-                                      {(value) => (
-                                        <UIBadge tone={confidenceTone(value())}>
-                                          truth: {value()}
-                                        </UIBadge>
-                                      )}
-                                    </Show>
-                                    <Show when={claim.interestLevel}>
-                                      {(value) => (
-                                        <UIBadge tone={confidenceTone(value())}>
-                                          interest: {value()}
-                                        </UIBadge>
-                                      )}
-                                    </Show>
-                                  </div>
-                                </div>
-                              )}
-                            </For>
-                          </div>
+            <For each={inboxRowList.ids()}>
+              {(id) => (
+                <Show when={inboxRowList.byId().get(id)}>
+                  {(row) => (
+                    <div data-testid="display-row" class={rowClass}>
+                      <div class={rowBadgesClass}>
+                        <UIBadge tone={statusTone(row().status)}>
+                          {row().status}
+                        </UIBadge>
+                        <UIBadge tone="cream">{row().type}</UIBadge>
+                        <Show when={row().blockedReason}>
+                          <UIBadge tone="cream">
+                            blocked: {row().blockedReason}
+                          </UIBadge>
                         </Show>
                       </div>
-                    )}
-                  </Show>
 
-                  <div
-                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                  >
-                    <UIButton
-                      variant="outline"
-                      disabled={
-                        row.status !== "text_ready" || isRowPending(row._id)
-                      }
-                      aria-label={`Run extraction for ${row.title ?? "Untitled source"}`}
-                      onClick={() => runRowExtraction(row._id)}
-                    >
-                      Run Extraction
-                    </UIButton>
-                    <UIButton
-                      variant="outline"
-                      disabled={isRowPending(row._id)}
-                      aria-label={`Mark ${row.title ?? "Untitled source"} as triaged`}
-                      onClick={() => markTriaged(row._id)}
-                    >
-                      Mark Triaged
-                    </UIButton>
-                    <UIButton
-                      variant="ghost"
-                      disabled={isRowPending(row._id)}
-                      aria-label={`Promote ${row.title ?? "Untitled source"} to followers`}
-                      onClick={() => promoteFollowers(row._id)}
-                    >
-                      Promote Followers
-                    </UIButton>
-                  </div>
-                </div>
+                      <h3 class={rowTitleClass}>
+                        {row().title ?? "Untitled source"}
+                      </h3>
+                      <p class={helperSpacedClass}>
+                        Next action: <strong>{row().nextAction}</strong>
+                      </p>
+
+                      <Show when={row().extractionPreview}>
+                        {(preview) => (
+                          <div class={clusterClass}>
+                            <p class={helperSpacedClass}>{preview().summary}</p>
+                            <Show when={preview().claimPreviews.length > 0}>
+                              <div class={stackClass}>
+                                <For each={preview().claimPreviews}>
+                                  {(claim) => (
+                                    <div class={claimClass}>
+                                      <p class={claimTextClass}>{claim.text}</p>
+                                      <div class={badgeRowClass}>
+                                        <Show when={claim.truthConfidence}>
+                                          {(value) => (
+                                            <UIBadge
+                                              tone={confidenceTone(value())}
+                                            >
+                                              truth: {value()}
+                                            </UIBadge>
+                                          )}
+                                        </Show>
+                                        <Show when={claim.interestLevel}>
+                                          {(value) => (
+                                            <UIBadge
+                                              tone={confidenceTone(value())}
+                                            >
+                                              interest: {value()}
+                                            </UIBadge>
+                                          )}
+                                        </Show>
+                                      </div>
+                                    </div>
+                                  )}
+                                </For>
+                              </div>
+                            </Show>
+                          </div>
+                        )}
+                      </Show>
+
+                      <div class={badgeRowClass}>
+                        {/* aria-busy, not disabled, while a row action is in
+                        flight: disabling the pressed button would blur it.
+                        withRowPending ignores repeat presses. */}
+                        <UIButton
+                          variant="outline"
+                          disabled={row().status !== "text_ready"}
+                          aria-busy={isRowPending(row()._id)}
+                          aria-label={`Run extraction for ${row().title ?? "Untitled source"}`}
+                          onClick={(event) =>
+                            runRowExtraction(row()._id, event.currentTarget)
+                          }
+                        >
+                          Run Extraction
+                        </UIButton>
+                        <UIButton
+                          variant="outline"
+                          aria-busy={isRowPending(row()._id)}
+                          aria-label={`Mark ${row().title ?? "Untitled source"} as triaged`}
+                          onClick={(event) =>
+                            markTriaged(row()._id, event.currentTarget)
+                          }
+                        >
+                          Mark Triaged
+                        </UIButton>
+                        <UIButton
+                          variant="ghost"
+                          aria-busy={isRowPending(row()._id)}
+                          aria-label={`Promote ${row().title ?? "Untitled source"} to followers`}
+                          onClick={(event) =>
+                            promoteFollowers(row()._id, event.currentTarget)
+                          }
+                        >
+                          Promote Followers
+                        </UIButton>
+                      </div>
+                    </div>
+                  )}
+                </Show>
               )}
             </For>
           </div>

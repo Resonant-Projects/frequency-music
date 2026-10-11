@@ -58,90 +58,90 @@ describe("runOnce", () => {
     expect(readdirSync(join(scratch, "retained"))).toEqual([]);
   });
 
-  test.each([
-    false,
-    true,
-  ])("a transient renewal failure survives, consecutive failures abort=%s", async (repeatFailure) => {
-    vi.useFakeTimers();
-    let calls = 0;
-    const tool = vi.fn(async (name: string) => {
-      if (name === "claimNextMediaJob")
-        return { ...claimedJob({}), leaseExpiresAt: Date.now() + LEASE_MS };
-      if (name === "renewMediaJobLease") {
-        if (++calls === 1 || repeatFailure)
-          throw new Error("transient network error");
-        return { leaseExpiresAt: Date.now() + LEASE_MS };
-      }
-      return null;
-    });
-    let resolve!: (value: { kind: "probe"; artifacts: [] }) => void;
-    let signal!: AbortSignal;
-    let started!: () => void;
-    const ready = new Promise<void>((done) => {
-      started = done;
-    });
-    const running = runOnce(
-      {
-        workerId: "w",
-        kinds: ["probe"],
-        workDir: scratch,
-        rendererVersion: "0.1.0",
-      },
-      tool as never,
-      {
-        probe: (ctx) => {
-          signal = ctx.signal;
-          started();
-          return new Promise((done, reject) => {
-            resolve = done;
-            signal.addEventListener("abort", () => reject(signal.reason));
-          });
+  test.each([false, true])(
+    "a transient renewal failure survives, consecutive failures abort=%s",
+    async (repeatFailure) => {
+      vi.useFakeTimers();
+      let calls = 0;
+      const tool = vi.fn(async (name: string) => {
+        if (name === "claimNextMediaJob")
+          return { ...claimedJob({}), leaseExpiresAt: Date.now() + LEASE_MS };
+        if (name === "renewMediaJobLease") {
+          if (++calls === 1 || repeatFailure)
+            throw new Error("transient network error");
+          return { leaseExpiresAt: Date.now() + LEASE_MS };
+        }
+        return null;
+      });
+      let resolve!: (value: { kind: "probe"; artifacts: [] }) => void;
+      let signal!: AbortSignal;
+      let started!: () => void;
+      const ready = new Promise<void>((done) => {
+        started = done;
+      });
+      const running = runOnce(
+        {
+          workerId: "w",
+          kinds: ["probe"],
+          workDir: scratch,
+          rendererVersion: "0.1.0",
         },
-      },
-    );
-    try {
-      await ready;
-      await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
-      expect(signal.aborted).toBe(false);
-      await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
-      expect(signal.aborted).toBe(repeatFailure);
-      if (!repeatFailure) resolve({ kind: "probe", artifacts: [] });
-      expect(await running).toBe(repeatFailure ? "failed" : "done");
-    } finally {
-      vi.useRealTimers();
-    }
-  });
+        tool as never,
+        {
+          probe: (ctx) => {
+            signal = ctx.signal;
+            started();
+            return new Promise((done, reject) => {
+              resolve = done;
+              signal.addEventListener("abort", () => reject(signal.reason));
+            });
+          },
+        },
+      );
+      try {
+        await ready;
+        await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
+        expect(signal.aborted).toBe(false);
+        await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
+        expect(signal.aborted).toBe(repeatFailure);
+        if (!repeatFailure) resolve({ kind: "probe", artifacts: [] });
+        expect(await running).toBe(repeatFailure ? "failed" : "done");
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
 
-  test.each([
-    true,
-    false,
-  ])("a server-confirmed pre-render failure can start without a paid-work checkpoint, allowed=%s", async (freshStartAllowed) => {
-    const tool = vi.fn(async (name: string) =>
-      name === "claimNextMediaJob"
-        ? {
-            jobId: "rollout",
-            kind: "probe",
-            input: { kind: "probe", rendererVersion: "new" },
-            leaseToken: "lease",
-            attempts: 1,
-            freshStartAllowed,
-          }
-        : null,
-    );
-    const handler = vi.fn(async () => ({ kind: "probe", artifacts: [] }));
-    const outcome = await runOnce(
-      {
-        workerId: "new",
-        kinds: ["probe"],
-        workDir: scratch,
-        rendererVersion: "new",
-      },
-      tool as never,
-      { probe: handler as never },
-    );
-    expect(outcome).toBe(freshStartAllowed ? "done" : "failed");
-    expect(handler).toHaveBeenCalledTimes(freshStartAllowed ? 1 : 0);
-  });
+  test.each([true, false])(
+    "a server-confirmed pre-render failure can start without a paid-work checkpoint, allowed=%s",
+    async (freshStartAllowed) => {
+      const tool = vi.fn(async (name: string) =>
+        name === "claimNextMediaJob"
+          ? {
+              jobId: "rollout",
+              kind: "probe",
+              input: { kind: "probe", rendererVersion: "new" },
+              leaseToken: "lease",
+              attempts: 1,
+              freshStartAllowed,
+            }
+          : null,
+      );
+      const handler = vi.fn(async () => ({ kind: "probe", artifacts: [] }));
+      const outcome = await runOnce(
+        {
+          workerId: "new",
+          kinds: ["probe"],
+          workDir: scratch,
+          rendererVersion: "new",
+        },
+        tool as never,
+        { probe: handler as never },
+      );
+      expect(outcome).toBe(freshStartAllowed ? "done" : "failed");
+      expect(handler).toHaveBeenCalledTimes(freshStartAllowed ? 1 : 0);
+    },
+  );
 
   test("idle when nothing is claimed", async () => {
     const calls: string[] = [];
