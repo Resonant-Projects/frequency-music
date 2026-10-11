@@ -23,7 +23,9 @@ const value = {
   modules: [],
   schemas: [],
 };
-function run(childCode: string, deadlineMs = 300, maxBytes = 4096) {
+// Validation and output-limit cases need room for Node startup on busy CI.
+// Deadline behavior is exercised separately with the explicit short bound.
+function run(childCode: string, deadlineMs = 2000, maxBytes = 4096) {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
 const result = await supervise(process.execPath, ['-e', ${JSON.stringify(childCode)}], {deadlineMs:${deadlineMs},maxBytes:${maxBytes},env:{APP_ENV:"test"}});
 console.log(JSON.stringify(result));`;
@@ -47,7 +49,7 @@ test.each([
 ])(
   "wall-clock supervisor terminates stalled child without partial output: %s",
   (code) => {
-    expect(run(code)).toEqual({
+    expect(run(code, 300)).toEqual({
       error: { complete: false, code: "capture_deadline" },
     });
   },
@@ -57,6 +59,7 @@ test("terminates a live capture group including descendants", () => {
   expect(
     run(
       "require('node:child_process').spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'inherit'});setInterval(()=>{},1000)",
+      300,
     ),
   ).toEqual({ error: { complete: false, code: "capture_deadline" } });
 });

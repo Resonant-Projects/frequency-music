@@ -14,7 +14,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV BUN_INSTALL=/usr/local
 ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl ca-certificates unzip \
+    && apt-get install -y --no-install-recommends curl ca-certificates unzip patch \
     && curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -41,13 +41,15 @@ RUN curl -fsSLo /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/download/
 # Patch the bundled lockfile's proxy-addr/source-map-js security advisories
 # without changing the checksum-verified bgutil source release.
 ARG BGUTIL_SERVER_SHA256=bae71b7971fa22376af57edca8d3487724ac9a8ada56d1cccf07a547b4b9b62c
+COPY agent/bgutil-security.patch /tmp/bgutil-security.patch
+# Patch only proxy-addr and source-map-js in the verified upstream lockfile.
+# Exact versions and integrity hashes remain frozen for npm ci.
 RUN curl -fsSLo /tmp/bgutil.tar.gz "https://github.com/Brainicism/bgutil-ytdlp-pot-provider/archive/refs/tags/${BGUTIL_PLUGIN_VERSION}.tar.gz" \
     && echo "${BGUTIL_SERVER_SHA256}  /tmp/bgutil.tar.gz" | sha256sum -c - \
     && mkdir -p /tmp/bgutil \
     && tar -xzf /tmp/bgutil.tar.gz -C /tmp/bgutil --strip-components=1 \
+    && patch --batch --fuzz=0 -p1 -d /tmp/bgutil < /tmp/bgutil-security.patch \
     && cd /tmp/bgutil/server \
-    && npm pkg set 'overrides.proxy-addr=2.0.8' 'overrides.source-map-js=1.2.2' \
-    && npm install --package-lock-only --ignore-scripts --no-audit --no-fund \
     && npm ci --ignore-scripts --no-audit --no-fund \
     && npx tsc \
     && npm prune --omit=dev --ignore-scripts --no-audit --no-fund \
@@ -57,8 +59,9 @@ RUN curl -fsSLo /tmp/bgutil.tar.gz "https://github.com/Brainicism/bgutil-ytdlp-p
 FROM ${RUNTIME_NODE_IMAGE} AS runtime
 WORKDIR /app/agent
 
-# Patch the pinned base for CVE-2026-14456; keep Node/Codex unchanged.
-RUN apk add --no-cache libcrypto3=3.5.9-r0 libssl3=3.5.9-r0
+# Refresh APK 3's baked index and install the published OpenSSL patch release.
+# 3.5.9 includes the 3.5.8 fixes for CVE-2026-14456; keep Node/Codex unchanged.
+RUN apk add --no-cache --update-cache libcrypto3=3.5.9-r0 libssl3=3.5.9-r0
 
 ARG CODEX_CLI_VERSION=0.146.0
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]

@@ -12,6 +12,7 @@ import type { Id } from "./_generated/dataModel";
 import { MODELS } from "./llm";
 import schema from "./schema";
 import {
+  EXTRACTION_PROMPT_VERSION,
   EXTRACT_USER_PROMPT,
   extractionContent,
   extractionInputHash,
@@ -88,6 +89,22 @@ const store = (
   });
 
 describe("operator extraction", () => {
+  test("stores textbook foundations as reference evidence without asserting peer review", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    await store(t, sourceId, inputHash, {
+      extraction: {
+        ...extraction,
+        claims: [{ ...extraction.claims[0], evidenceLevel: "reference" }],
+      },
+    });
+    const { claims, stored } = await t.run(async (ctx) => ({
+      claims: await ctx.db.query("claims").collect(),
+      stored: await ctx.db.query("extractions").collect(),
+    }));
+    expect(claims[0]?.evidenceLevel).toBe("reference");
+    expect(stored[0]?.claims[0]?.evidenceLevel).toBe("reference");
+  });
+
   test("stores an operator Extraction and marks the Source extracted", async () => {
     const { t, sourceId, inputHash } = await setup();
     expect(await store(t, sourceId, inputHash)).toEqual({
@@ -109,7 +126,7 @@ describe("operator extraction", () => {
     expect(stored).toHaveLength(1);
     expect(stored[0]).toMatchObject({
       model: "anthropic/claude-opus-5.5",
-      promptVersion: "extract_v2",
+      promptVersion: EXTRACTION_PROMPT_VERSION,
       inputHash,
       topics: ["tuning", "Pythagorean comma"],
     });

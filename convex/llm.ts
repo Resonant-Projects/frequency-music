@@ -55,6 +55,7 @@ export const MODELS = {
 // ("Unterminated string" / cut mid-array). Recipes are the longest payload.
 export const TOKEN_BUDGETS = {
   extract_v2: 8000,
+  extract_v3: 8000,
   hypothesis_v1: 6000,
   recipe_v1: 16000,
   brief_v2: 8000,

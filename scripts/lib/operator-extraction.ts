@@ -1,5 +1,5 @@
 // Chunk files for operator extraction (scripts/operator-extraction.ts): an
-// operator session reads the same extract_v2 prompt the worker would send
+// operator session reads the same extract_v3 prompt the worker would send
 // to a model, writes the extraction JSON itself, and imports the results.
 import {
   confidenceBandValidator,

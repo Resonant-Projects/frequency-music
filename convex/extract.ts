@@ -293,7 +293,7 @@ export const extractSource = action({
 
     try {
       const { json } = await generateJson({
-        task: "extract_v2",
+        task: "extract_v3",
         model: modelId,
         system: EXTRACT_SYSTEM_PROMPT,
         prompt: userPrompt,
@@ -360,7 +360,7 @@ async function requireOperator(
 
 /**
  * Stores an Extraction written outside the worker by an operator session that
- * read the same extract_v2 prompt (scripts/operator-extraction.ts export).
+ * read the same extract_v3 prompt (scripts/operator-extraction.ts export).
  * One transaction (extractInternal.storeOperatorExtraction) checks that the
  * Source is still text_ready with the exported text (inputHash), applies the
  * extraction gate and duplicate checks, stores it and marks the Source

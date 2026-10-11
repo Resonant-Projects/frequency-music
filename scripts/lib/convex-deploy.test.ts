@@ -16,13 +16,12 @@ describe("parseDeployArgs", () => {
     expect(parseDeployArgs(["--dry-run"])).toEqual({ dryRun: true });
   });
 
-  test.each([
-    ["--yes"],
-    ["--cmd", "vite build"],
-    ["--dry-run", "--verbose"],
-  ])("rejects %s", (...argv) => {
-    expect(() => parseDeployArgs(argv)).toThrow(/Only --dry-run/);
-  });
+  test.each([["--yes"], ["--cmd", "vite build"], ["--dry-run", "--verbose"]])(
+    "rejects %s",
+    (...argv) => {
+      expect(() => parseDeployArgs(argv)).toThrow(/Only --dry-run/);
+    },
+  );
 });
 
 describe("buildDeployArgs", () => {

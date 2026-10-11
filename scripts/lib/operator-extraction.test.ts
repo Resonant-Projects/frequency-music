@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vite-plus/test";
-import { EXTRACT_SYSTEM_PROMPT } from "../../convex/shared/extractionPrompt.ts";
+import {
+  EXTRACT_SYSTEM_PROMPT,
+  EXTRACTION_PROMPT_VERSION,
+} from "../../convex/shared/extractionPrompt.ts";
 import {
   buildChunks,
   extractionProblems,
@@ -31,7 +34,7 @@ describe("operator extraction chunks", () => {
     expect(chunks.map((chunk) => chunk.items.length)).toEqual([2, 1]);
     const [first] = chunks;
     expect(first).toMatchObject({
-      promptVersion: "extract_v2",
+      promptVersion: EXTRACTION_PROMPT_VERSION,
       model: "anthropic/claude-opus-5.5",
       system: EXTRACT_SYSTEM_PROMPT,
     });

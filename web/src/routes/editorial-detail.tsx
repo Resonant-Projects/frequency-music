@@ -761,6 +761,7 @@ export function EditorialDetailPage() {
                                 peer_reviewed
                               </option>
                               <option value="preprint">preprint</option>
+                              <option value="reference">reference</option>
                               <option value="anecdotal">anecdotal</option>
                               <option value="speculative">speculative</option>
                               <option value="personal">personal</option>

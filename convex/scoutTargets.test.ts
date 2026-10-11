@@ -1,18 +1,212 @@
 /* eslint-disable no-underscore-dangle -- Convex fixture ids are named `_id`. */
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { scoutConceptLimitPerDomain } from "./correspondences";
 import schema from "./schema";
+import { BOOTSTRAP_RESEARCH_DOMAINS } from "./shared/researchTopics";
 import { modules } from "../harness/modules";
 
 describe("source scout target census", () => {
+  test("bootstraps approved empty research areas outside the recent domain window", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (const [name, status] of [
+        ["mathematics", "known"],
+        ["psychoacoustics", "experimental"],
+        ["acoustics", "deprecated"],
+        ["geometry", "provisional"],
+        ["unrelated-empty-domain", "known"],
+      ] as const) {
+        await ctx.db.insert("conceptDomains", {
+          name,
+          status,
+          introducedBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+      for (let index = 0; index < 60; index++) {
+        await ctx.db.insert("conceptDomains", {
+          name: `recent-${index}`,
+          status: "known",
+          introducedBy: "system",
+          createdAt: index + 2,
+          updatedAt: index + 2,
+        });
+      }
+    });
+    const result = await t.query(api.correspondences.scoutTargets, {});
+    expect(result.thinDomains).toEqual([
+      {
+        domain: "mathematics",
+        sectorMapping: "math",
+        onMissionConceptCount: 0,
+        sourceCount: 0,
+      },
+      {
+        domain: "psychoacoustics",
+        sectorMapping: "psycho",
+        onMissionConceptCount: 0,
+        sourceCount: 0,
+      },
+    ]);
+  });
+
+  test("reserves scarce discovery slots for different research areas", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (const name of [
+        "mathematics",
+        "acoustics",
+        "psychoacoustics",
+        "theory",
+        "tuning",
+        "instrument",
+        "production",
+      ]) {
+        await ctx.db.insert("conceptDomains", {
+          name,
+          status: "known",
+          introducedBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+    });
+    const result = await t.query(api.correspondences.scoutTargets, {});
+    expect(result.thinDomains.map((target) => target.domain)).toEqual([
+      "acoustics",
+      "instrument",
+      "mathematics",
+      "psychoacoustics",
+      "theory",
+    ]);
+    expect(result.thinDomains).toHaveLength(5);
+  });
+
+  test("rotates six tied areas through the five weekly slots", async () => {
+    vi.useFakeTimers();
+    try {
+      const t = convexTest(schema, modules);
+      await t.run(async (ctx) => {
+        for (const name of BOOTSTRAP_RESEARCH_DOMAINS) {
+          await ctx.db.insert("conceptDomains", {
+            name,
+            status: "known",
+            introducedBy: "system",
+            createdAt: 1,
+            updatedAt: 1,
+          });
+        }
+      });
+      const seen = new Set<string>();
+      const omitted = new Set<string>();
+      for (let week = 0; week < 6; week++) {
+        vi.setSystemTime(new Date(Date.UTC(2026, 0, 7 + week * 7)));
+        const result = await t.query(api.correspondences.scoutTargets, {});
+        const sectors = new Set(
+          result.thinDomains.map((target) => target.sectorMapping),
+        );
+        expect(sectors.size).toBe(5);
+        for (const sector of sectors) seen.add(sector ?? "");
+        for (const sector of [
+          "math",
+          "wave",
+          "music",
+          "psycho",
+          "geometry",
+          "synthesis",
+        ] as const)
+          if (!sectors.has(sector)) omitted.add(sector);
+      }
+      expect(seen.size).toBe(6);
+      expect(omitted.size).toBe(6);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("preserves an explicit registry sector that the slug cannot infer", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("conceptDomains", {
+        name: "spectral-fusion",
+        sectorMapping: "synth",
+        status: "known",
+        introducedBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert("concepts", {
+        name: "Spectral mechanism",
+        displayName: "Spectral mechanism",
+        aliases: [],
+        domain: "spectral-fusion",
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+    const result = await t.query(api.correspondences.scoutTargets, {});
+    expect(result.thinDomains[0]?.sectorMapping).toBe("synthesis");
+  });
+
   test("shares the bounded concept budget across every scanned domain", () => {
     expect(scoutConceptLimitPerDomain(1)).toBe(50);
     expect(scoutConceptLimitPerDomain(4)).toBe(25);
     expect(scoutConceptLimitPerDomain(10)).toBe(10);
     expect(scoutConceptLimitPerDomain(50)).toBe(2);
+    expect(scoutConceptLimitPerDomain(58)).toBe(2);
+    expect(scoutConceptLimitPerDomain(16, 16)).toBe(1);
+  });
+
+  test("empty bootstrap rows preserve second-concept discovery in the full recent window", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (const name of BOOTSTRAP_RESEARCH_DOMAINS) {
+        await ctx.db.insert("conceptDomains", {
+          name,
+          status: "provisional",
+          introducedBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+      for (let index = 0; index < 50; index++) {
+        const domain = `recent-${index}`;
+        await ctx.db.insert("conceptDomains", {
+          name: domain,
+          status: "known",
+          introducedBy: "system",
+          createdAt: 2,
+          updatedAt: 2,
+        });
+        for (const relevance of ["off", "on"] as const) {
+          await ctx.db.insert("concepts", {
+            name: `${domain}-${relevance}`,
+            displayName: `${domain}-${relevance}`,
+            aliases: [],
+            domain,
+            missionRelevance: relevance,
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 2,
+            updatedAt: 2,
+          });
+        }
+      }
+    });
+    const result = await t.query(api.correspondences.scoutTargets, {});
+    expect(result.thinDomains).toContainEqual({
+      domain: "recent-0",
+      sectorMapping: "music",
+      onMissionConceptCount: 1,
+      sourceCount: 0,
+    });
   });
 
   test("includes newly-added domains in the bounded census window", async () => {
@@ -45,6 +239,7 @@ describe("source scout target census", () => {
 
     expect(targets.thinDomains).toContainEqual({
       domain: "domain-50",
+      sectorMapping: "music",
       onMissionConceptCount: 1,
       sourceCount: 0,
     });
@@ -181,10 +376,21 @@ describe("source scout target census", () => {
     const targets = await t.query(api.correspondences.scoutTargets, {});
 
     expect(targets.thinDomains).toEqual([
-      { domain: "cymatics", onMissionConceptCount: 1, sourceCount: 0 },
-      { domain: "wave-physics", onMissionConceptCount: 1, sourceCount: 1 },
+      {
+        domain: "cymatics",
+        sectorMapping: "music",
+        onMissionConceptCount: 1,
+        sourceCount: 0,
+      },
+      {
+        domain: "wave-physics",
+        sectorMapping: "wave",
+        onMissionConceptCount: 1,
+        sourceCount: 1,
+      },
       {
         domain: "psychoacoustics",
+        sectorMapping: "psycho",
         onMissionConceptCount: 2,
         sourceCount: 2,
       },
