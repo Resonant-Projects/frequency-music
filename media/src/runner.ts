@@ -74,7 +74,11 @@ export async function runOnce(
         rendererVersion: job.input.rendererVersion,
       }),
     );
-    if (job.attempts > 0 && !(await readCheckpoint(retainedDir, "started"))) {
+    if (
+      job.attempts > 0 &&
+      job.freshStartAllowed !== true &&
+      !(await readCheckpoint(retainedDir, "started"))
+    ) {
       throw new Error(
         "Retained job checkpoint missing; automatic recovery cannot safely repeat paid work",
       );

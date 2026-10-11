@@ -37,6 +37,7 @@ const claimedReturn = v.union(
     leaseToken: v.string(),
     leaseExpiresAt: v.number(),
     attempts: v.number(),
+    freshStartAllowed: v.optional(v.boolean()),
   }),
 );
 
@@ -206,6 +207,8 @@ export const claimNext = internalMutation({
       leaseToken,
       leaseExpiresAt,
       attempts: job.attempts,
+      freshStartAllowed:
+        job.attempts === 0 || job.preRenderFailuresOnly === true,
     };
   },
 });
@@ -292,6 +295,11 @@ async function requeueOrPark(
   await ctx.db.patch(job._id, {
     status,
     attempts,
+    // A version mismatch happens before any handler or paid synthesis starts.
+    // An unknown failure or expired lease permanently removes this exemption.
+    preRenderFailuresOnly:
+      (job.attempts === 0 || job.preRenderFailuresOnly === true) &&
+      error.startsWith("renderer version mismatch: job requested "),
     error: error.slice(0, 2000),
     leaseToken: undefined,
     leaseExpiresAt: undefined,

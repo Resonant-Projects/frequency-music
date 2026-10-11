@@ -854,6 +854,7 @@ export default defineSchema({
     leaseExpiresAt: v.optional(v.number()),
     workerId: v.optional(v.string()),
     attempts: v.number(),
+    preRenderFailuresOnly: v.optional(v.boolean()),
     result: v.optional(mediaJobResultValidator),
     resultArtifactIds: v.optional(v.array(v.id("audioArtifacts"))),
     error: v.optional(v.string()),

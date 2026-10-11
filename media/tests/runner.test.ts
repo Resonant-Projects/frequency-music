@@ -56,6 +56,37 @@ describe("runOnce", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  test.each([
+    true,
+    false,
+  ])("a server-confirmed pre-render failure can start without a paid-work checkpoint, allowed=%s", async (freshStartAllowed) => {
+    const tool = vi.fn(async (name: string) =>
+      name === "claimNextMediaJob"
+        ? {
+            jobId: "rollout",
+            kind: "probe",
+            input: { kind: "probe", rendererVersion: "new" },
+            leaseToken: "lease",
+            attempts: 1,
+            freshStartAllowed,
+          }
+        : null,
+    );
+    const handler = vi.fn(async () => ({ kind: "probe", artifacts: [] }));
+    const outcome = await runOnce(
+      {
+        workerId: "new",
+        kinds: ["probe"],
+        workDir: scratch,
+        rendererVersion: "new",
+      },
+      tool as never,
+      { probe: handler as never },
+    );
+    expect(outcome).toBe(freshStartAllowed ? "done" : "failed");
+    expect(handler).toHaveBeenCalledTimes(freshStartAllowed ? 1 : 0);
+  });
+
   test("idle when nothing is claimed", async () => {
     const calls: string[] = [];
     const tool = vi.fn(async (name: string) => {
