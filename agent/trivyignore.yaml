@@ -1,0 +1,12 @@
+# Same accepted risk as the Bun production audit in publish-agent-image.yml.
+# Remove when braces publishes a fix; review again by the expiration date.
+vulnerabilities:
+  - id: CVE-2026-93687
+    paths:
+      - app/agent/node_modules/braces/package.json
+    expired_at: 2026-11-03
+    statement: >-
+      GHSA-vfj7-8cjw-p6xm, accepted 2026-10-03. braces 3.0.3 has no patched
+      release. It enters through deepagents/micromatch and fast-glob/micromatch;
+      patterns originate in agent tooling, with a failed run as the accepted
+      denial-of-service impact. Scope this exception to this runtime package.
