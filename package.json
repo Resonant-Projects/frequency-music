@@ -25,6 +25,8 @@
     "essays:publish": "vp run essays:metadata && vp run essays:export",
     "eval:export": "vpx tsx scripts/export-eval-datasets.ts",
     "convex:extract": "vpx convex run workflows:startBatchExtraction '{\"limit\": 3}'",
+    "convex:deploy": "vp run typecheck:scripts && vpx tsx scripts/convex-deploy.ts",
+    "convex:deploy:dry-run": "vp run typecheck:scripts && vpx tsx scripts/convex-deploy.ts --dry-run",
     "env:check": "varlock load",
     "env:check:all": "varlock load --show-all"
   },
