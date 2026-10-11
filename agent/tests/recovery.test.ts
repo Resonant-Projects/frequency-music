@@ -20,6 +20,177 @@ import type { SourceScoutState } from "../src/state/sourceScoutState.js";
 import { captureInputZ } from "../../convex/shared/operationRecovery";
 
 describe("recovery seams", () => {
+  test("competing flushes serialize across instances while a freed slot is reused", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-slot-reuse-"));
+    try {
+      const first = new DurableOutbox(dir);
+      const second = new DurableOutbox(dir);
+      await first.enqueue({
+        tool: "appendAgentRunEvent",
+        args: { deliveryId: "old" },
+      });
+      let entered!: () => void;
+      const inside = new Promise<void>((resolve) => {
+        entered = resolve;
+      });
+      let release!: () => void;
+      const finish = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const firstFlush = first.flush(async () => {
+        entered();
+        await finish;
+        return null;
+      });
+      await inside;
+      const later = vi.fn(async (_name, args) => {
+        expect(args.deliveryId).toBe("new");
+        return null;
+      });
+      const secondFlush = second.flush(later);
+      // Admission is independent of delivery and cannot reuse the occupied slot.
+      await second.enqueue({
+        tool: "appendAgentRunEvent",
+        args: { deliveryId: "new" },
+      });
+      expect(later).not.toHaveBeenCalled();
+      release();
+      await Promise.all([firstFlush, secondFlush]);
+      expect(later).toHaveBeenCalledTimes(1);
+      expect(await readdir(dir)).toEqual([]);
+      await second.enqueue({
+        tool: "appendAgentRunEvent",
+        args: { deliveryId: "reused" },
+      });
+      const final = vi.fn(async () => null);
+      await first.flush(final);
+      expect(final).toHaveBeenCalledExactlyOnceWith("appendAgentRunEvent", {
+        deliveryId: "reused",
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  test("concurrent outbox instances reserve only the final active slot and preserve its report", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-admission-race-"));
+    try {
+      await Promise.all(
+        Array.from({ length: 1999 }, (_, index) =>
+          writeFile(
+            join(dir, `${index}.json`),
+            JSON.stringify({
+              tool: "appendAgentRunEvent",
+              args: { deliveryId: `legacy-${index}` },
+            }),
+          ),
+        ),
+      );
+      const attempts = await Promise.allSettled(
+        Array.from({ length: 16 }, (_, index) =>
+          new DurableOutbox(dir).enqueue({
+            tool: "appendAgentRunEvent",
+            args: { deliveryId: `writer-${index}` },
+          }),
+        ),
+      );
+      const winner = attempts.findIndex(
+        (attempt) => attempt.status === "fulfilled",
+      );
+      expect(winner).toBeGreaterThanOrEqual(0);
+      expect(
+        attempts.filter((attempt) => attempt.status === "fulfilled"),
+      ).toHaveLength(1);
+      for (const attempt of attempts)
+        if (attempt.status === "rejected")
+          expect(attempt.reason.message).toBe(
+            "Recovery outbox capacity reached",
+          );
+      const files = await readdir(dir);
+      expect(files).toHaveLength(2000);
+      const spool = files.find((file) => file.endsWith(".spool"))!;
+      expect(JSON.parse(await readFile(join(dir, spool), "utf8"))).toEqual({
+        ready: 1,
+        delivery: {
+          tool: "appendAgentRunEvent",
+          args: { deliveryId: `writer-${winner}` },
+        },
+      });
+      expect(
+        JSON.parse(await readFile(join(dir, "0.json"), "utf8")).args.deliveryId,
+      ).toBe("legacy-0");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  test("concurrent reserved records remain distinct and replay immediately after reconstruction", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-reserved-writes-"));
+    try {
+      await Promise.all(
+        Array.from({ length: 12 }, (_, index) =>
+          new DurableOutbox(dir).enqueue({
+            tool: "appendAgentRunEvent",
+            args: { deliveryId: `writer-${index}` },
+          }),
+        ),
+      );
+      expect(await readdir(dir)).toHaveLength(12);
+      const delivered: string[] = [];
+      const outbox = new DurableOutbox(dir);
+      for (let batch = 0; batch < 3; batch++)
+        await outbox.flush(async (_name, args) => {
+          delivered.push(args.deliveryId as string);
+          return null;
+        });
+      expect(delivered.sort()).toEqual(
+        Array.from({ length: 12 }, (_, index) => `writer-${index}`).sort(),
+      );
+      expect(await readdir(dir)).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  test.each([false, true])(
+    "interrupted reservations recover after grace while recent reservations remain untouched (partial: %s)",
+    async (partial) => {
+      const dir = await mkdtemp(join(tmpdir(), "recovery-reservation-grace-"));
+      try {
+        const bytes = partial
+          ? ""
+          : JSON.stringify({
+              ready: 0,
+              delivery: {
+                tool: "appendAgentRunEvent",
+                args: { deliveryId: "abandoned" },
+              },
+            });
+        for (const file of ["0.spool", "1.spool"])
+          await writeFile(join(dir, file), bytes);
+        const old = new Date(Date.now() - 16 * 60_000);
+        await utimes(join(dir, "0.spool"), old, old);
+        const callTool = vi.fn(async () => null);
+        const flushing = new DurableOutbox(dir).flush(callTool);
+        if (partial) {
+          await expect(flushing).rejects.toBeInstanceOf(SyntaxError);
+          expect(callTool).not.toHaveBeenCalled();
+          expect(
+            await readFile(join(dir, "dead-letter", "slot-0.json"), "utf8"),
+          ).toBe(bytes);
+        } else {
+          await flushing;
+          expect(callTool).toHaveBeenCalledExactlyOnceWith(
+            "appendAgentRunEvent",
+            { deliveryId: "abandoned" },
+          );
+        }
+        expect(await readFile(join(dir, "1.spool"), "utf8")).toBe(bytes);
+        expect(
+          (await readdir(dir)).filter((file) => file.endsWith(".spool")),
+        ).toEqual(["1.spool"]);
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    },
+  );
   test("reconstruction replays an abandoned temporary write and preserves a recent write", async () => {
     const dir = await mkdtemp(join(tmpdir(), "recovery-temp-"));
     try {
@@ -178,7 +349,7 @@ describe("recovery seams", () => {
           args: { deliveryId: "new" },
         });
         expect(
-          (await readdir(dir)).filter((file) => file.endsWith(".json")),
+          (await readdir(dir)).filter((file) => /\.(json|spool)$/.test(file)),
         ).toHaveLength(2);
       } finally {
         await rm(dir, { recursive: true, force: true });
@@ -200,17 +371,8 @@ describe("recovery seams", () => {
           join(dir, `${ordinal}.json`),
           JSON.stringify({ tool: "appendAgentRunEvent", args: { ordinal } }),
         );
-      let entered = 0;
-      let release!: () => void;
-      const bothRead = new Promise<void>((resolve) => {
-        release = resolve;
-      });
       const delivered: number[] = [];
       const callTool = async (_name: string, args: Record<string, unknown>) => {
-        if (args.ordinal === 0) {
-          if (++entered === 2) release();
-          await bothRead;
-        }
         if (args.ordinal !== 2) throw new ConvexToolHttpError("rejected", 400);
         delivered.push(args.ordinal as number);
         return null;
@@ -336,7 +498,7 @@ describe("recovery seams", () => {
           expect(files).toEqual(["dead-letter"]);
           expect(await readdir(join(dir, "dead-letter"))).toHaveLength(1);
         } else
-          expect(files.filter((file) => file.endsWith(".json"))).toHaveLength(
+          expect(files.filter((file) => file.endsWith(".spool"))).toHaveLength(
             1,
           );
       } finally {

@@ -1,13 +1,12 @@
-import { randomUUID } from "node:crypto";
 import {
   link,
   mkdir,
+  open,
   readdir,
   readFile,
-  rename,
+  realpath,
   stat,
   unlink,
-  writeFile,
 } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -18,33 +17,61 @@ import { ConvexToolHttpError } from "../tools/convexTools.js";
 const OUTBOX_TOOLS = ["appendAgentRunEvent", "reportCaptureFailure"] as const;
 const OUTBOX_CAPACITY = 2000;
 const TEMP_WRITE_GRACE_MS = 15 * 60_000;
+const READY_OFFSET = '{"ready":'.length;
+const ACTIVE_SLOTS = Array.from(
+  { length: OUTBOX_CAPACITY },
+  (_, index) => `${index.toString(16)}.spool`,
+);
 const DEAD_LETTER_SLOTS = Array.from(
   { length: OUTBOX_CAPACITY },
   (_, index) => `slot-${index}.json`,
 );
+const flushQueues = new Map<string, Promise<void>>();
 type Delivery = {
   tool: (typeof OUTBOX_TOOLS)[number];
   args: Record<string, unknown>;
 };
-/** Bounded disk spool. Callers supply domain IDs, never HTTP credentials. */
+/** Bounded disk spool with one worker consumer. Callers supply domain IDs, never HTTP credentials. */
 export class DurableOutbox {
   private lastAttemptedFile = "";
   constructor(private readonly dir: string) {}
   async enqueue(delivery: Delivery) {
     await mkdir(this.dir, { recursive: true, mode: 0o700 });
-    if (
-      (await readdir(this.dir)).filter(
-        (file) => file.endsWith(".json") || file.endsWith(".tmp"),
-      ).length >= OUTBOX_CAPACITY
-    )
-      throw new Error("Recovery outbox capacity reached");
-    const bytes = JSON.stringify(delivery);
+    const bytes = JSON.stringify({ ready: 0, delivery });
     if (Buffer.byteLength(bytes) > 256_000)
       throw new Error("Recovery outbox record exceeds limit");
-    const id = randomUUID();
-    const temporary = join(this.dir, `${id}.tmp`);
-    await writeFile(temporary, bytes, { mode: 0o600 });
-    await rename(temporary, join(this.dir, `${id}.json`));
+    const existing = new Set(
+      (await readdir(this.dir)).filter((file) =>
+        /\.(json|tmp|spool)$/.test(file),
+      ),
+    );
+    // Legacy records consume capacity too. Concurrent writers compete for the
+    // same remaining slots, and exclusive creation reserves before writing.
+    const slots = ACTIVE_SLOTS.filter((slot) => !existing.has(slot)).slice(
+      0,
+      Math.max(0, OUTBOX_CAPACITY - existing.size),
+    );
+    for (const slot of slots) {
+      let handle;
+      try {
+        handle = await open(join(this.dir, slot), "wx", 0o600);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "EEXIST") continue;
+        throw error;
+      }
+      try {
+        await handle.writeFile(bytes);
+        // Publish with one byte on the reserved inode. Keeping its filename
+        // stable avoids releasing capacity or overwriting another writer.
+        const result = await handle.write("1", READY_OFFSET, "utf8");
+        if (result.bytesWritten !== 1)
+          throw new Error("Recovery outbox completion marker failed");
+      } finally {
+        await handle.close();
+      }
+      return;
+    }
+    throw new Error("Recovery outbox capacity reached");
   }
   private async quarantine(path: string) {
     const dir = join(this.dir, "dead-letter");
@@ -70,8 +97,26 @@ export class DurableOutbox {
   }
   async flush(callTool: ToolCaller) {
     await mkdir(this.dir, { recursive: true, mode: 0o700 });
+    const key = await realpath(this.dir);
+    const previous = flushQueues.get(key);
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    flushQueues.set(key, current);
+    await previous;
+    try {
+      // Slot names are reusable. Serialize local consumers so a late
+      // acknowledgment cannot unlink a later writer's record at the same slot.
+      await this.flushBatch(callTool);
+    } finally {
+      release();
+      if (flushQueues.get(key) === current) flushQueues.delete(key);
+    }
+  }
+  private async flushBatch(callTool: ToolCaller) {
     const pending = (await readdir(this.dir))
-      .filter((file) => /^[a-f0-9-]+\.(json|tmp)$/.test(file))
+      .filter((file) => /^[a-f0-9-]+\.(json|tmp|spool)$/.test(file))
       .sort();
     // Failed records stay durable, but cannot monopolize every poll's batch.
     const files = [
@@ -94,8 +139,18 @@ export class DurableOutbox {
         )
           continue;
         const bytes = await readFile(path, "utf8");
+        const reserved = file.endsWith(".spool");
+        if (
+          reserved &&
+          bytes[READY_OFFSET] !== "1" &&
+          Date.now() - (await stat(path)).mtimeMs < TEMP_WRITE_GRACE_MS
+        )
+          continue;
         invalidRecord = true;
-        const delivery = JSON.parse(bytes) as Delivery;
+        const record = JSON.parse(bytes);
+        if (reserved && (!record || ![0, 1].includes(record.ready)))
+          throw new Error("Invalid outbox reservation");
+        const delivery = (reserved ? record.delivery : record) as Delivery;
         if (
           !delivery ||
           !OUTBOX_TOOLS.includes(delivery.tool) ||
