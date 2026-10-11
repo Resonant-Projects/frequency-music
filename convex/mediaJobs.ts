@@ -2,6 +2,7 @@ import { recordOperationFailure } from "./operationFailures";
 // Pull-based, leased job lifecycle. Convex never calls the media service.
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import {
   internalMutation,
   internalQuery,
@@ -352,6 +353,8 @@ export const sweepStale = internalMutation({
       if (outcome.status === "queued") requeued++;
       else parked++;
     }
+    if (expired.length === SWEEP_LIMIT)
+      await ctx.scheduler.runAfter(0, internal.mediaJobs.sweepStale, { now });
     return { requeued, parked };
   },
 });

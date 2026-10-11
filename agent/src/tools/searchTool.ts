@@ -6,6 +6,7 @@ import {
 } from "../graphs/shared/audit.js";
 import { redactError } from "../shared/redactError.js";
 import { callConvex } from "./convexTools.js";
+import { arxivIdForUrl } from "../../../convex/shared/arxiv.js";
 
 // Firecrawl Cloud needs the paid key. A self-hosted Firecrawl (for example the
 // Lab's, set through FIRECRAWL_API_URL) has no authentication and never
@@ -193,6 +194,55 @@ function mapEuropePmc(payload: unknown, limit: number): WebSearchResult[] {
     .slice(0, limit);
 }
 
+function mapAlexandria(payload: unknown, limit: number): WebSearchResult[] {
+  const response = record(payload);
+  if (response.success !== true || !Array.isArray(response.results)) {
+    throw new Error("Alexandria Research Index returned an invalid response");
+  }
+  return response.results
+    .flatMap((entry): WebSearchResult[] => {
+      const paper = record(entry);
+      const ids = record(paper.ids);
+      const firstId = (kind: string) => {
+        const values = ids[kind];
+        return Array.isArray(values) ? text(values[0]) : undefined;
+      };
+      const primary = text(paper.primaryId) ?? "";
+      const doi =
+        firstId("doi") ??
+        (primary.startsWith("doi:") ? primary.slice(4) : undefined);
+      const arxiv =
+        firstId("arxiv") ??
+        (primary.startsWith("arxiv:") ? primary.slice(6) : undefined);
+      const pmid =
+        firstId("pmid") ??
+        (primary.startsWith("pmid:") ? primary.slice(5) : undefined);
+      const pmcid =
+        firstId("pmcid") ??
+        (primary.startsWith("pmcid:") ? primary.slice(6) : undefined);
+      const url =
+        doiUrl(doi) ??
+        (arxiv &&
+        /^(?:\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(?:v\d+)?$/i.test(
+          arxiv,
+        )
+          ? `https://arxiv.org/abs/${arxiv}`
+          : undefined) ??
+        (pmid && /^\d+$/.test(pmid)
+          ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`
+          : undefined) ??
+        (pmcid && /^PMC\d+$/i.test(pmcid)
+          ? `https://pmc.ncbi.nlm.nih.gov/articles/${pmcid.toUpperCase()}/`
+          : undefined);
+      const title = text(paper.title);
+      if (!title || !url) return [];
+      return [
+        { title, url, snippet: text(paper.abstract)?.slice(0, 2000) ?? title },
+      ];
+    })
+    .slice(0, limit);
+}
+
 function canonicalUrl(url: string): string {
   try {
     const parsed = new URL(url);
@@ -219,6 +269,8 @@ function canonicalUrl(url: string): string {
 }
 
 function canonicalKey(url: string): string {
+  const arxiv = arxivIdForUrl(url);
+  if (arxiv) return `arxiv:${arxiv}`;
   try {
     const parsed = new URL(canonicalUrl(url));
     if (parsed.hostname.toLowerCase() === "doi.org")
@@ -233,6 +285,7 @@ type ProviderOutcome = {
   status: "ok" | "failed";
   returned: number;
   error?: string;
+  partial?: boolean;
 };
 
 /**
@@ -248,11 +301,12 @@ export function openAlexHeaders(
 
 async function fetchResearch(
   fetchImpl: FetchLike,
-  provider: "OpenAlex" | "Europe PMC",
+  provider: "OpenAlex" | "Europe PMC" | "Alexandria Research Index",
   url: string,
   map: (payload: unknown, limit: number) => WebSearchResult[],
   limit: number,
   headers: Record<string, string> = {},
+  timeoutMs = RESEARCH_SEARCH_TIMEOUT_MS,
 ): Promise<{ results: WebSearchResult[]; outcome: ProviderOutcome }> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -272,15 +326,22 @@ async function fetchResearch(
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => {
           const error = new Error(
-            `${provider} search timed out after ${RESEARCH_SEARCH_TIMEOUT_MS}ms`,
+            `${provider} search timed out after ${timeoutMs}ms`,
           );
           controller.abort(error);
           reject(error);
-        }, RESEARCH_SEARCH_TIMEOUT_MS);
+        }, timeoutMs);
       }),
     ]);
     const results = map(payload, limit);
-    return { results, outcome: { status: "ok", returned: results.length } };
+    return {
+      results,
+      outcome: {
+        status: "ok",
+        returned: results.length,
+        ...(record(payload).partial === true ? { partial: true } : {}),
+      },
+    };
   } catch (error) {
     const message = redactError(error);
     console.warn(`[source-scout] ${provider} search failed:`, message);
@@ -310,6 +371,7 @@ export function createWebSearch(
     fetchImpl?: FetchLike;
     callTool?: ToolCaller;
     openAlexApiKey?: string;
+    alexandriaEnabled?: boolean;
   } = {},
 ) {
   const configuredApiKey = dependencies.apiKey;
@@ -354,6 +416,18 @@ export function createWebSearch(
         mapEuropePmc,
         maxResults,
       ),
+      (dependencies.alexandriaEnabled ??
+      process.env.ALEXANDRIA_RESEARCH_ENABLED === "true")
+        ? fetchResearch(
+            fetchImpl,
+            "Alexandria Research Index",
+            `https://api.firecrawl.dev/v2/search/research/papers?${new URLSearchParams({ query: args.query, k: String(maxResults) })}`,
+            mapAlexandria,
+            maxResults,
+            {},
+            30_000,
+          )
+        : Promise.resolve(null),
     ]);
     let firecrawlResults: WebSearchResult[] = [];
     try {
@@ -423,16 +497,22 @@ export function createWebSearch(
       providers.firecrawl = { status: "failed", returned: 0, error: message };
     }
 
-    const [openalex, europePmc] = await research;
+    const [openalex, europePmc, alexandria] = await research;
     providers.openalex = openalex.outcome;
     providers.europePmc = europePmc.outcome;
+    if (alexandria) providers.alexandria = alexandria.outcome;
     const results: WebSearchResult[] = [];
     const resultProviders: Array<{ url: string; provider: string }> = [];
     const seen = new Set<string>();
     // Interleave provider rankings so a full web result page cannot crowd out
     // paper metadata. Preserve each provider's own ordering and the global cap.
-    const ranked = [firecrawlResults, openalex.results, europePmc.results];
-    const names = ["firecrawl", "openalex", "europePmc"] as const;
+    const ranked = [
+      firecrawlResults,
+      openalex.results,
+      europePmc.results,
+      alexandria?.results ?? [],
+    ];
+    const names = ["firecrawl", "openalex", "europePmc", "alexandria"] as const;
     for (
       let rank = 0;
       rank < maxResults && results.length < maxResults;
@@ -501,7 +581,7 @@ export const webSearchTool = tool(
   {
     name: "web_search",
     description:
-      "Search Firecrawl, OpenAlex, and Europe PMC for source-scout candidates. Research providers work without API keys; individual provider failures do not discard other results.",
+      "Search Firecrawl, OpenAlex, Europe PMC, and the optionally enabled Alexandria Research Index for source-scout candidates. Research providers work without API keys; individual provider failures do not discard other results.",
     schema: webSearchInputSchema,
   },
 );

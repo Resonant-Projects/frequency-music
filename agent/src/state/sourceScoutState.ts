@@ -1,13 +1,10 @@
 import { Annotation } from "@langchain/langgraph";
 import type { AgentAuditEvent } from "../graphs/shared/audit.js";
 import type { WebSearchResult } from "../tools/searchTool.js";
+import type { ScoutThinDomain } from "../../../convex/shared/researchTopics.js";
 
 export type ScoutTargets = {
-  thinDomains: Array<{
-    domain: string;
-    onMissionConceptCount: number;
-    sourceCount: number;
-  }>;
+  thinDomains: ScoutThinDomain[];
   starvedConjectures: Array<{
     correspondenceId: string;
     statement: string;

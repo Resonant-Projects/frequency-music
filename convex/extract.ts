@@ -140,7 +140,8 @@ async function executeAttempt(
   try {
     if (!attempt.result) {
       const { json } = await generateJson({
-        task: "extract_v2",
+        task:
+          attempt.promptVersion === "extract_v3" ? "extract_v3" : "extract_v2",
         model: attempt.model,
         system: attempt.systemPrompt,
         prompt: attempt.prompt,
@@ -271,7 +272,7 @@ export const beginOperatorExtraction = action({
 
 /**
  * Stores an Extraction written outside the worker by an operator session that
- * read the same extract_v2 prompt (scripts/operator-extraction.ts export).
+ * read the same extract_v3 prompt (scripts/operator-extraction.ts export).
  * One transaction (extractInternal.storeOperatorExtraction) checks that the
  * Source is still text_ready with the exported text (inputHash), applies the
  * extraction gate and duplicate checks, stores it and marks the Source

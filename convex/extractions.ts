@@ -9,6 +9,7 @@ import {
   query,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { internal } from "./_generated/api";
 import { recordEditCapture } from "./editCaptures";
 import { compositionParameterValidator } from "./schema";
 import { claimValidator } from "./shared/claims";
@@ -198,6 +199,12 @@ export const normalizeLegacyHistory = internalMutation({
       }
       await ctx.db.patch(row._id, { historical: !current });
     }
+    if (rows.length)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.extractions.normalizeLegacyHistory,
+        {},
+      );
     return null;
   },
 });

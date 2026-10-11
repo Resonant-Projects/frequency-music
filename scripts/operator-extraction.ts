@@ -1,6 +1,6 @@
 /**
  * Extract text_ready Sources a chunk at a time without the worker or
- * OpenRouter: an operator session (Claude Code) reads the same extract_v2
+ * OpenRouter: an operator session (Claude Code) reads the same extract_v3
  * prompt and writes the extraction JSON itself.
  *
  * 1. Export a chunk (pins durable snapshots before external generation; the export query

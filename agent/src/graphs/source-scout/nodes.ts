@@ -44,6 +44,8 @@ import {
   RECAPTURE_CONCURRENCY,
 } from "./config.js";
 import {
+  conjectureQueries,
+  foundationQueries,
   queryPlanningPrompt,
   resultJudgePrompt,
   targetGapLabels,
@@ -139,17 +141,35 @@ export function createPlanQueriesNode(
       errorEventMessage: "Source scout could not plan search queries",
       errorEventPayload: (message) => ({ reason: "planner_error", message }),
     });
-    if (planned.judgeError) {
-      return {
-        plannedQueries: [],
-        plannerErrorCount: 1,
-        auditEvents: planned.auditEvents,
-      };
-    }
     const allowedGaps = new Set(targetGapLabels(targets));
-    const plannedQueries = planned.verdict.queries
-      .filter((query) => allowedGaps.has(query.targetGap))
-      .slice(0, MAX_SEARCH_CALLS);
+    const modelQueries = planned.judgeError ? [] : planned.verdict.queries;
+    const validQueries = modelQueries.filter((query) =>
+      allowedGaps.has(query.targetGap),
+    );
+    // Every target receives a query before repeat searches consume the cap.
+    // Deterministic fallbacks also preserve coverage during planner outages.
+    const reservedQueries = [
+      ...foundationQueries(targets),
+      ...conjectureQueries(targets),
+    ];
+    const plannedQueries = reservedQueries.map(
+      (query) =>
+        validQueries.find(
+          (candidate) => candidate.targetGap === query.targetGap,
+        ) ?? query,
+    );
+    for (const query of validQueries) {
+      if (
+        !plannedQueries.some(
+          (candidate) =>
+            candidate.targetGap === query.targetGap &&
+            candidate.query === query.query,
+        )
+      ) {
+        plannedQueries.push(query);
+      }
+    }
+    plannedQueries.splice(MAX_SEARCH_CALLS);
     const auditEvents = [
       ...planned.auditEvents,
       ...(await appendRemoteAuditEvent(
@@ -159,13 +179,28 @@ export function createPlanQueriesNode(
         "Planned need-directed source-scout queries",
         {
           planned: plannedQueries.length,
-          rejectedUnknownGaps:
-            planned.verdict.queries.length - plannedQueries.length,
+          rejectedUnknownGaps: modelQueries.length - validQueries.length,
+          foundationFallbacks: foundationQueries(targets).filter(
+            (query) =>
+              !validQueries.some(
+                (candidate) => candidate.targetGap === query.targetGap,
+              ),
+          ).length,
+          conjectureFallbacks: conjectureQueries(targets).filter(
+            (query) =>
+              !validQueries.some(
+                (candidate) => candidate.targetGap === query.targetGap,
+              ),
+          ).length,
           targetGaps: plannedQueries.map((query) => query.targetGap),
         },
       )),
     ];
-    return { plannedQueries, auditEvents };
+    return {
+      plannedQueries,
+      auditEvents,
+      plannerErrorCount: planned.judgeError ? 1 : 0,
+    };
   };
 }
 
@@ -332,7 +367,7 @@ export function createIngestSourcesNode(
     const sourceWrites: ScoutWriteResult[] = [];
     const auditEvents: AgentAuditEvent[] = [];
     const seenUrls = new Set<string>();
-    const candidates = state.judgments
+    const eligible = state.judgments
       .filter(
         (judgment): judgment is Extract<ScoutJudgment, { verdict: object }> =>
           judgment.verdict?.kind === "source",
@@ -342,8 +377,19 @@ export function createIngestSourcesNode(
         if (seenUrls.has(url)) return false;
         seenUrls.add(url);
         return true;
-      })
-      .slice(0, MAX_INGESTS_PER_RUN);
+      });
+    const candidates: typeof eligible = [];
+    const selectedGaps = new Set<string>();
+    for (const candidate of eligible) {
+      if (selectedGaps.has(candidate.verdict.targetGap)) continue;
+      candidates.push(candidate);
+      selectedGaps.add(candidate.verdict.targetGap);
+      if (candidates.length === MAX_INGESTS_PER_RUN) break;
+    }
+    for (const candidate of eligible) {
+      if (candidates.length === MAX_INGESTS_PER_RUN) break;
+      if (!candidates.includes(candidate)) candidates.push(candidate);
+    }
     const known = await existingSourceUrls(callTool, [
       ...new Set(
         candidates.flatMap(({ searchHit: { result } }) =>
@@ -730,11 +776,11 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
     const summary =
       gapCount === 0
         ? "source-scout completed: no research gaps"
-        : plannerFailed
+        : plannerFailed && !state.plannedQueries?.length
           ? `source-scout completed: query planning failed for ${gapCount} research gaps; no searches run (planner error)`
           : allJudgesFailed
             ? `source-scout completed: zero judgments; ${state.judgeErrorCount} judge errors discarded`
-            : `source-scout completed: ${sourcesCreated} sources ingested, ${sourcesEnriched ? `${sourcesEnriched} URL-only sources captured, ` : ""}${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors, ${state.captureFailureCount ?? 0} failed captures${rationales ? `. Rationale: ${rationales}` : ""}`;
+            : `source-scout completed: ${sourcesCreated} sources ingested, ${sourcesEnriched ? `${sourcesEnriched} URL-only sources captured, ` : ""}${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors, ${state.captureFailureCount ?? 0} failed captures${plannerFailed ? "; used foundational queries after planner error" : ""}${rationales ? `. Rationale: ${rationales}` : ""}`;
     const auditEvents = await finalizeRunCompleted(
       callTool,
       state.agentRunId,

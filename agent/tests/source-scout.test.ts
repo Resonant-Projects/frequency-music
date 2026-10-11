@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
   createIngestSourcesNode,
+  createPlanQueriesNode,
   createJudgeResultsNode,
   createProposeFeedsNode,
   createRecaptureSourcesNode,
@@ -22,6 +23,23 @@ import type {
   ScoutSearchHit,
   SourceScoutState,
 } from "../src/state/sourceScoutState";
+
+import { foundationQueries } from "../src/graphs/source-scout/prompts";
+
+test("foundation queries honor an explicit registry sector", () => {
+  const [query] = foundationQueries({
+    thinDomains: [
+      {
+        domain: "spectral-fusion",
+        sectorMapping: "synthesis",
+        onMissionConceptCount: 0,
+        sourceCount: 0,
+      },
+    ],
+    starvedConjectures: [],
+  });
+  expect(query?.query).toContain("audio synthesis physical modeling");
+});
 
 const searchHit = (index: number): ScoutSearchHit => ({
   query: {
@@ -112,6 +130,126 @@ describe("source scout routing", () => {
 });
 
 describe("source scout execution caps and resilience", () => {
+  test.each([false, true])(
+    "reserves all ten domain and conjecture gaps when planner failure is %s",
+    async (failure) => {
+      const targets = {
+        thinDomains: Array.from({ length: 5 }, (_, index) => ({
+          domain: `domain-${index}`,
+          onMissionConceptCount: 0,
+          sourceCount: 0,
+        })),
+        starvedConjectures: Array.from({ length: 5 }, (_, index) => ({
+          correspondenceId: `conjecture-${index}`,
+          statement: `Test correspondence ${index}`,
+          conceptA: "beating",
+          conceptB: "roughness",
+          evidenceCount: 0,
+        })),
+      };
+      const result = await createPlanQueriesNode({
+        planner: {
+          invoke: vi.fn(async () => {
+            if (failure) throw new Error("planner unavailable");
+            return {
+              queries: Array.from({ length: 10 }, (_, index) => ({
+                query: `repeat ${index}`,
+                targetGap: "thin-domain:domain-0",
+                rationale: "Research this domain.",
+              })),
+            };
+          }),
+        },
+        callTool: vi.fn(async () => ({})),
+      })({ targets });
+      expect(result.plannedQueries).toHaveLength(MAX_SEARCH_CALLS);
+      expect(result.plannedQueries?.map((query) => query.targetGap)).toEqual([
+        ...targets.thinDomains.map((target) => `thin-domain:${target.domain}`),
+        ...targets.starvedConjectures.map(
+          (target) => `starved-conjecture:${target.correspondenceId}`,
+        ),
+      ]);
+      expect(result.plannedQueries?.[5]?.query).toContain("beating roughness");
+    },
+  );
+
+  test("covers each thin domain before repeated queries or conjectures", async () => {
+    const targets = {
+      thinDomains: [
+        { domain: "mathematics", onMissionConceptCount: 0, sourceCount: 0 },
+        { domain: "psychoacoustics", onMissionConceptCount: 0, sourceCount: 0 },
+      ],
+      starvedConjectures: [],
+    };
+    const planner = {
+      invoke: vi.fn(async () => ({
+        queries: Array.from({ length: 10 }, (_, index) => ({
+          query: `roughness study ${index}`,
+          targetGap: "thin-domain:psychoacoustics",
+          rationale: "Measure roughness.",
+        })),
+      })),
+    };
+    const result = await createPlanQueriesNode({
+      planner,
+      callTool: vi.fn(async () => ({})),
+    })({ targets });
+    expect(result.plannedQueries).toHaveLength(10);
+    expect(
+      result.plannedQueries?.slice(0, 2).map((query) => query.targetGap),
+    ).toEqual(["thin-domain:mathematics", "thin-domain:psychoacoustics"]);
+    expect(result.plannedQueries?.[0]?.query).toContain("Fourier");
+  });
+
+  test("uses grounded foundational queries when the planner fails", async () => {
+    const planner = {
+      invoke: vi.fn(async () => {
+        throw new Error("planner unavailable");
+      }),
+    };
+    const result = await createPlanQueriesNode({
+      planner,
+      callTool: vi.fn(async () => ({})),
+    })({
+      targets: {
+        thinDomains: [
+          { domain: "acoustics", onMissionConceptCount: 0, sourceCount: 0 },
+        ],
+        starvedConjectures: [],
+      },
+    });
+    expect(result.plannerErrorCount).toBe(1);
+    expect(result.plannedQueries).toEqual([
+      expect.objectContaining({
+        targetGap: "thin-domain:acoustics",
+        query: expect.stringContaining("normal modes"),
+      }),
+    ]);
+    expect(
+      routeAfterQueries({ plannedQueries: result.plannedQueries ?? [] }),
+    ).toBe("search_loop");
+  });
+
+  test("ingests different motivating gaps before spending the cap on one domain", async () => {
+    const many = Array.from({ length: 5 }, (_, index) =>
+      judgment(index, "source"),
+    );
+    const other = judgment(6, "source");
+    if (other.verdict) other.verdict.targetGap = "thin-domain:mathematics";
+    other.searchHit.query.targetGap = "thin-domain:mathematics";
+    const callTool = vi.fn(async (name: string) =>
+      name === "ingestScoutedSource" ? { id: "source", created: true } : [],
+    );
+    const result = await createIngestSourcesNode(
+      callTool,
+      vi.fn(async () => null),
+    )({ agentRunId: "run-scout", judgments: [...many, other] });
+    expect(result.sourceWrites).toHaveLength(MAX_INGESTS_PER_RUN);
+    expect(
+      result.sourceWrites?.slice(0, 2).map((write) => write.targetGap),
+    ).toEqual(["thin-domain:cymatics", "thin-domain:mathematics"]);
+  });
+
   test("runs no more than ten gap-tagged searches", async () => {
     const search = vi.fn(async () => []);
     await createSearchLoopNode(search)({

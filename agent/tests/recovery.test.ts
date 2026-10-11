@@ -1,5 +1,5 @@
 import { callConvex, ConvexToolHttpError } from "../src/tools/convexTools.js";
-import { mkdtemp, rm, readdir, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, readdir, writeFile, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
@@ -11,6 +11,70 @@ import type { SourceScoutState } from "../src/state/sourceScoutState.js";
 import { captureInputZ } from "../../convex/shared/operationRecovery";
 
 describe("recovery seams", () => {
+  test("a concurrent removal during dead-letter handling does not strand later deliveries", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-race-"));
+    try {
+      for (let i = 0; i < 2; i++)
+        await writeFile(
+          join(dir, `0000000${i}.json`),
+          JSON.stringify({
+            tool: "appendAgentRunEvent",
+            args: { ordinal: i },
+          }),
+        );
+      const delivered: number[] = [];
+      const rejected = new ConvexToolHttpError("rejected", 400);
+      await expect(
+        new DurableOutbox(dir).flush(async (_name, args) => {
+          if (args.ordinal === 0) {
+            await unlink(join(dir, "00000000.json"));
+            throw rejected;
+          }
+          delivered.push(args.ordinal as number);
+          return null;
+        }),
+      ).rejects.toBe(rejected);
+      expect(delivered).toEqual([1]);
+      expect(
+        (await readdir(dir)).filter((name) => name.endsWith(".json")),
+      ).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  test.each([false, true])(
+    "an emoji at the capture limit remains valid for intake and retained failure (intake fails: %s)",
+    async (failIntake) => {
+      const calls = new Map<string, Record<string, unknown>>();
+      const callTool = vi.fn(async (name: string, args: unknown) => {
+        calls.set(name, args as Record<string, unknown>);
+        if (name === "ingestScoutedSource") {
+          if (failIntake) throw new Error("intake offline");
+          return { id: "source", created: true };
+        }
+        return null;
+      });
+      const result = await captureSourceAttempt(
+        {
+          agentRunId: "run",
+          input: { url: "https://example.org", query: "q", rationale: "r" },
+          page: { text: "x".repeat(29_999) + "🎵", provider: "firecrawl" },
+        },
+        callTool,
+      );
+      const text = calls.get("ingestScoutedSource")!.rawText as string;
+      expect(text.isWellFormed()).toBe(true);
+      expect(Buffer.from(text).toString("utf8")).toBe(text);
+      expect(text).toHaveLength(29_999);
+      expect(result.failed).toBe(failIntake);
+      if (failIntake) {
+        const retained = captureInputZ.parse(
+          calls.get("reportCaptureFailure")!.input,
+        );
+        expect(retained.rawText).toBe(text);
+      } else expect(calls.has("reportCaptureFailure")).toBe(false);
+    },
+  );
   test("capture and retained recovery inputs use the same text bound", async () => {
     const callTool = vi.fn(async (name: string, _args: unknown) =>
       name === "ingestScoutedSource" ? { id: "source" } : null,

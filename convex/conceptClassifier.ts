@@ -16,6 +16,7 @@ import { normalizeConceptDomainSlug } from "./conceptDomainNormalization";
 import { MODELS } from "./llm";
 import { relevanceEmbeddingFields } from "./shared/embeddingText";
 import { getNonDeprecatedConceptDomains } from "./vocabulary";
+import { RESEARCH_SOURCE_GUIDANCE } from "./shared/researchTopics";
 
 const classificationValidator = v.object({
   conceptId: v.id("concepts"),
@@ -379,7 +380,9 @@ export const getClassificationInputs = internalQuery({
   },
 });
 
-const SYSTEM_PROMPT = `You classify concepts for a research-to-composition program spanning music, physics, mathematics, geometry, consciousness, and sound. Domain names are canonical registry slugs: copy them verbatim from registryDomains.name. Never change hyphens to spaces, invent synonyms, or return any domain absent from registryDomains. Mark incidental ML/software/general science capture off-mission. Return one classification per concept in the same order, with 1-3 domains (primary first), on/off mission relevance, and a one-sentence rationale.`;
+const SYSTEM_PROMPT = `You classify concepts for a research-to-composition program spanning music theory, tuning, wave physics, mathematics, geometry, synthesis, psychoacoustics, and embodied listening. Domain names are canonical registry slugs: copy them verbatim from registryDomains.name. Never change hyphens to spaces, invent synonyms, or return any domain absent from registryDomains. Return one classification per concept in the same order, with 1-3 domains (primary first), on/off mission relevance, and a one-sentence rationale. Assign a cross-domain mechanism to all applicable registry domains rather than forcing every acoustic or perceptual idea into production or geometry. Primary domain describes the mechanism, not merely the source's format.
+
+${RESEARCH_SOURCE_GUIDANCE}`;
 
 export const classifyConceptBatch = internalAction({
   args: {

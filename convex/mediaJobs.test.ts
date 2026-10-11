@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -102,6 +102,75 @@ async function probePair(t: ReturnType<typeof convexTest>, jobId: string) {
 }
 
 describe("mediaJobs lifecycle", () => {
+  test("a capped media job still receives one complete execution per operational recovery attempt", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId } = await t.mutation(internal.mediaJobs.enqueue, {
+      input: probe,
+    });
+    const failureId = await t.run(async (ctx) => {
+      await ctx.db.patch(jobId, { status: "parked", attempts: 3 });
+      return ctx.db.insert("operationFailures", {
+        operationId: `audio:${jobId}`,
+        causeKey: "audio:upload",
+        target: { kind: "audioUpload", jobId },
+        message: "Upload failed",
+        status: "retrying",
+        attempts: 1,
+        nextAttemptAt: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+    expect(
+      await t.mutation(internal.operationFailures.dispatch, {
+        failureId,
+        attempt: 1,
+      }),
+    ).toBe(true);
+    const claim = await t.mutation(internal.mediaJobs.claimNext, {
+      workerId: "recovery",
+      kinds: ["probe"],
+    });
+    expect(claim?.jobId).toBe(jobId);
+    expect(claim?.attempts).toBe(3);
+    const { result } = await probePair(t, jobId);
+    await t.mutation(internal.mediaJobs.complete, {
+      jobId,
+      leaseToken: claim!.leaseToken,
+      result,
+    });
+    expect((await t.run((ctx) => ctx.db.get(jobId)))?.status).toBe("done");
+  });
+  test("one stale-lease sweep drains a crash backlog through separate bounded transactions", async () => {
+    vi.useFakeTimers();
+    try {
+      const t = convexTest({ schema, modules, transactionLimits: true });
+      const jobs: Id<"mediaJobs">[] = [];
+      for (let i = 0; i < 3; i++) {
+        const { jobId } = await t.mutation(internal.mediaJobs.enqueue, {
+          input: { ...probe, toneHz: 440 + i },
+        });
+        jobs.push(jobId);
+        await t.mutation(internal.mediaJobs.claimNext, {
+          workerId: `worker-${i}`,
+          kinds: ["probe"],
+        });
+        await t.run((ctx) => ctx.db.patch(jobId, { leaseExpiresAt: 0 }));
+      }
+      expect(await t.mutation(internal.mediaJobs.sweepStale, {})).toEqual({
+        requeued: 1,
+        parked: 0,
+      });
+      await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+      for (const id of jobs)
+        expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+          status: "queued",
+          attempts: 1,
+        });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   test("assembly claims refresh from the lossless master rather than its delivery", async () => {
     const t = convexTest(schema, modules);
     const job = await t.mutation(internal.mediaJobs.enqueue, { input: probe });

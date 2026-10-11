@@ -75,7 +75,7 @@ async function requireOperatorIdentity(
  * One page of text_ready Sources for operator extraction
  * (scripts/operator-extraction.ts export), newest first. The inputHash and
  * the extraction-gate verdict are computed here over the full text; only the
- * text the extract_v2 prompt shows is returned, so a page stays small.
+ * text the extract_v3 prompt shows is returned, so a page stays small.
  * Operator service identity only.
  */
 export const operatorExtractionPage = query({

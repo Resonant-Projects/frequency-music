@@ -601,13 +601,19 @@ export const commitExtraction = internalMutation({
     const attempt = await ctx.db.get(attemptId);
     if (!attempt?.result) throw new Error("Extraction has no retained result");
     const result = attempt.result;
-    const outcome = (extractionId: Id<"extractions">, current: boolean) => ({
+    const outcome = (
+      extractionId: Id<"extractions">,
+      current: boolean,
+      stored?: Doc<"extractions"> | null,
+    ) => ({
       extractionId,
       current,
-      model: attempt.model,
-      summary: result.summary,
-      claimCount: result.claims.length,
-      parameterCount: result.compositionParameters.length,
+      model: stored?.model ?? attempt.model,
+      summary: stored?.summary ?? result.summary,
+      claimCount: (stored?.claims ?? result.claims).length,
+      parameterCount: (
+        stored?.compositionParameters ?? result.compositionParameters
+      ).length,
     });
     if (attempt.extractionId) {
       const stored = await ctx.db.get(attempt.extractionId);
@@ -615,6 +621,7 @@ export const commitExtraction = internalMutation({
       return outcome(
         attempt.extractionId,
         attempt.current === true && !!stored && stored.historical !== true,
+        stored,
       );
     }
     const source = await ctx.db.get(attempt.sourceId);
@@ -674,7 +681,7 @@ export const commitExtraction = internalMutation({
       updatedAt: Date.now(),
     });
     await resolveOperationFailure(ctx, `extraction:${attemptId}`);
-    return outcome(extractionId, current);
+    return outcome(extractionId, current, found?.extraction);
   },
 });
 
@@ -880,6 +887,7 @@ export const reconcileAttempts = internalMutation({
     // Three queues share one transaction. Each row also loads its full Source
     // and worker failure handling rereads the snapshot. Leave room for those
     // reads even when documents approach Convex's 1 MiB document limit.
+    let changed = false;
     for (const status of ["pending", "generated"] as const) {
       const rows =
         status === "pending"
@@ -923,6 +931,7 @@ export const reconcileAttempts = internalMutation({
             error: "Operator snapshot expired without an imported result",
             updatedAt: Date.now(),
           });
+          changed = true;
           const source = await ctx.db.get(row.sourceId);
           if (source?.activeExtractionAttemptId === row._id) {
             await ctx.db.patch(source._id, {
@@ -938,8 +947,15 @@ export const reconcileAttempts = internalMutation({
           generationLease: row.generationLease,
           error: "Extraction interrupted before completion",
         });
+        changed = true;
       }
     }
+    if (changed)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.extractInternal.reconcileAttempts,
+        {},
+      );
     return null;
   },
 });

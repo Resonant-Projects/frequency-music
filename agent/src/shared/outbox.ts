@@ -69,6 +69,7 @@ export class DurableOutbox {
         await callTool(delivery.tool, delivery.args);
         await unlink(path);
       } catch (error) {
+        lastError = error;
         const permanentlyRejected =
           error instanceof ConvexToolHttpError &&
           error.status >= 400 &&
@@ -76,10 +77,14 @@ export class DurableOutbox {
           ![408, 409, 425, 429].includes(error.status);
         if (invalidRecord || permanentlyRejected) {
           const deadLetters = join(this.dir, "dead-letter");
-          await mkdir(deadLetters, { recursive: true, mode: 0o700 });
-          await rename(path, join(deadLetters, file));
+          try {
+            await mkdir(deadLetters, { recursive: true, mode: 0o700 });
+            await rename(path, join(deadLetters, file));
+          } catch (moveError) {
+            if ((moveError as NodeJS.ErrnoException).code !== "ENOENT")
+              lastError = moveError;
+          }
         }
-        lastError = error;
       }
     }
     if (lastError) throw lastError;

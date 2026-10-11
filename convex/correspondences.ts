@@ -13,6 +13,15 @@ import { requireAuth, type AppIdentity } from "./auth";
 import { pairKey } from "./shared/correspondenceKey";
 import { correspondenceStatusValidator } from "./shared/correspondences";
 import { correspondenceReturnValidator } from "./validators";
+import {
+  inferDisplaySectorFromDomain,
+  normalizeSectorId,
+} from "./domainMappings";
+import {
+  BOOTSTRAP_RESEARCH_DOMAINS,
+  RESEARCH_AREAS,
+  type ScoutThinDomain,
+} from "./shared/researchTopics";
 
 const DEFAULT_LIST_LIMIT = 20;
 const MAX_LIST_LIMIT = 100;
@@ -26,12 +35,15 @@ const SCOUT_CONJECTURE_SCAN_LIMIT = 100;
 const SCOUT_TARGET_LIMIT = 5;
 export const AUTO_RETIRE_AFTER_MS = 90 * 24 * 60 * 60 * 1000;
 
-export function scoutConceptLimitPerDomain(domainCount: number): number {
+export function scoutConceptLimitPerDomain(
+  domainCount: number,
+  remainingBudget = SCOUT_TOTAL_CONCEPT_LIMIT,
+): number {
   return Math.max(
     1,
     Math.min(
       SCOUT_CONCEPTS_PER_DOMAIN_LIMIT,
-      Math.floor(SCOUT_TOTAL_CONCEPT_LIMIT / Math.max(1, domainCount)),
+      Math.ceil(remainingBudget / Math.max(1, domainCount)),
     ),
   );
 }
@@ -68,10 +80,8 @@ function clampLimit(limit: number | undefined): number {
   return Math.max(1, Math.min(Math.floor(limit), MAX_LIST_LIMIT));
 }
 
-type ThinDomain = {
-  domain: string;
-  onMissionConceptCount: number;
-  sourceCount: number;
+type ThinDomain = ScoutThinDomain & {
+  sectorMapping: ReturnType<typeof inferDisplaySectorFromDomain>;
 };
 
 type StarvedConjecture = {
@@ -89,25 +99,51 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     .query("conceptDomains")
     .order("desc")
     .take(SCOUT_DOMAIN_SCAN_LIMIT);
-  const activeDomains = domainRows
+  // Core research areas must remain reachable when newer registry rows fill
+  // the bounded scan. Eight indexed registry reads supplement that scan;
+  // the shared concept sample budget below remains unchanged.
+  const bootstrapRows = await Promise.all(
+    BOOTSTRAP_RESEARCH_DOMAINS.map((name) =>
+      ctx.db
+        .query("conceptDomains")
+        .withIndex("by_name", (q) => q.eq("name", name))
+        .first(),
+    ),
+  );
+  const activeDomains = [
+    ...new Map(
+      [...bootstrapRows.filter((row) => row !== null), ...domainRows].map(
+        (row) => [row.name, row],
+      ),
+    ).values(),
+  ]
     .filter((domain) => domain.status !== "deprecated")
     .toSorted((left, right) => left.name.localeCompare(right.name));
 
-  const conceptLimitPerDomain = scoutConceptLimitPerDomain(
-    activeDomains.length,
-  );
+  let remainingConceptBudget = SCOUT_TOTAL_CONCEPT_LIMIT;
   const domainCounts: ThinDomain[] = [];
-  for (const domain of activeDomains) {
-    // Worst case: 50 domain + 100 concept + (100 x 50) edge reads = 5,150.
+  for (const [index, domain] of activeDomains.entries()) {
+    // At most 58 registry + 100 concept + (100 x 50) edge rows = 5,158.
     // Counts intentionally approximate a bounded window and may miss later on-mission concepts.
     const domainConcepts = await ctx.db
       .query("concepts")
       .withIndex("by_domain", (q) => q.eq("domain", domain.name))
-      .take(conceptLimitPerDomain);
+      .take(
+        scoutConceptLimitPerDomain(
+          activeDomains.length - index,
+          remainingConceptBudget,
+        ),
+      );
+    // Empty domains consume no concept rows. Redistribute their unused slots
+    // and division remainders among the domains still to inspect.
+    remainingConceptBudget -= domainConcepts.length;
     const concepts = domainConcepts.filter(
       (concept) => concept.missionRelevance === "on",
     );
-    if (concepts.length === 0) continue;
+    const approvedBootstrap =
+      BOOTSTRAP_RESEARCH_DOMAINS.includes(domain.name) &&
+      (domain.status === "known" || domain.status === "experimental");
+    if (concepts.length === 0 && !approvedBootstrap) continue;
 
     const sourceIds = new Set<string>();
     for (const concept of concepts) {
@@ -124,18 +160,54 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     }
     domainCounts.push({
       domain: domain.name,
+      sectorMapping: domain.sectorMapping
+        ? normalizeSectorId(domain.sectorMapping)
+        : inferDisplaySectorFromDomain(domain.name),
       onMissionConceptCount: concepts.length,
       sourceCount: sourceIds.size,
     });
   }
 
-  return domainCounts
+  // Scout runs weekly. Rotate equal-need sectors each UTC week so all six
+  // areas receive turns within the five-target cap, even if intake yields no concepts.
+  const offset =
+    Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)) % RESEARCH_AREAS.length;
+  const sectorRank = (domain: ThinDomain) => {
+    const index = RESEARCH_AREAS.findIndex(
+      (area) => area.sector === domain.sectorMapping,
+    );
+    return (index - offset + RESEARCH_AREAS.length) % RESEARCH_AREAS.length;
+  };
+  const ranked = domainCounts.toSorted(
+    (left, right) =>
+      left.sourceCount - right.sourceCount ||
+      left.onMissionConceptCount - right.onMissionConceptCount ||
+      sectorRank(left) - sectorRank(right) ||
+      left.domain.localeCompare(right.domain),
+  );
+  // Reserve the first slots for distinct display areas, so tuning/theory or
+  // production/instrument cannot consume the whole five-domain courtesy cap.
+  const selected = new Set<string>();
+  const sectors = new Set<string>();
+  for (const domain of ranked) {
+    const sector = domain.sectorMapping;
+    if (sectors.has(sector)) continue;
+    selected.add(domain.domain);
+    sectors.add(sector);
+    if (selected.size === SCOUT_TARGET_LIMIT) break;
+  }
+  for (const domain of ranked) {
+    if (selected.size === SCOUT_TARGET_LIMIT) break;
+    selected.add(domain.domain);
+  }
+  return ranked
+    .filter((domain) => selected.has(domain.domain))
     .toSorted(
       (left, right) =>
         left.sourceCount - right.sourceCount ||
+        left.onMissionConceptCount - right.onMissionConceptCount ||
         left.domain.localeCompare(right.domain),
-    )
-    .slice(0, SCOUT_TARGET_LIMIT);
+    );
 }
 
 async function computeStarvedConjectures(
@@ -183,6 +255,7 @@ export const scoutTargets = query({
     thinDomains: v.array(
       v.object({
         domain: v.string(),
+        sectorMapping: v.optional(v.string()),
         onMissionConceptCount: v.number(),
         sourceCount: v.number(),
       }),

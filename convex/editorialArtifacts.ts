@@ -85,12 +85,7 @@ type DraftPayload = {
     sourceTitle: string;
     sourceCanonicalUrl?: string;
     summary: string;
-    evidenceLevel:
-      | "peer_reviewed"
-      | "preprint"
-      | "anecdotal"
-      | "speculative"
-      | "personal";
+    evidenceLevel: Doc<"claims">["evidenceLevel"];
     truthConfidence?: "low" | "medium" | "high";
     interestLevel?: "low" | "medium" | "high";
   }>;
@@ -1246,9 +1241,20 @@ async function loadPublishedExportBundle(db: DatabaseReader) {
   };
   const bundle = [];
   for (const artifact of publishedArtifacts) {
+    const validation = await validateArtifactForPublish(
+      db,
+      artifact,
+      privacyBudget,
+    );
+    if (!privacyBudget.complete)
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message:
+          "Published export privacy coverage is incomplete; export was not generated",
+      });
     bundle.push({
       artifact,
-      validation: await validateArtifactForPublish(db, artifact, privacyBudget),
+      validation,
       ...(await resolveExportContext(db, artifact)),
     });
   }

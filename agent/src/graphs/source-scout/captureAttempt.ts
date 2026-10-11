@@ -60,7 +60,9 @@ export async function captureSourceAttempt(
       }
     }
     if (page) {
-      input.rawText = page.text.slice(0, SCOUTED_TEXT_MAX_CHARS);
+      const cut = page.text.slice(0, SCOUTED_TEXT_MAX_CHARS);
+      // Convex rejects a string ending on half of a supplementary character.
+      input.rawText = /[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut;
       input.contentProvider = page.provider;
     }
     stage = "intake";

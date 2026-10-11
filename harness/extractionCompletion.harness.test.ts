@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { validateArtifactForPublish } from "../convex/editorialArtifacts";
@@ -49,6 +49,115 @@ async function setup(transactionLimits = false) {
   return { t, sourceId, begin };
 }
 describe("Extraction completion", () => {
+  test("published export refuses incomplete shared privacy coverage instead of returning a partial manifest", async () => {
+    const { t, sourceId } = await setup(true);
+    const briefId = await t.run(async (ctx) => {
+      await ctx.db.patch(sourceId, { visibility: "public" });
+      return ctx.db.insert("weeklyBriefs", {
+        weekOf: "2026-10-11",
+        model: "test",
+        promptVersion: "test",
+        bodyMd: "Public research",
+        sourceIds: [sourceId],
+        recommendedRecipeIds: [],
+        recommendedHypothesisIds: [],
+        visibility: "public",
+        createdBy: "system",
+        createdAt: 1,
+      });
+    });
+    const addArtifact = (i: number) =>
+      t.run((ctx) =>
+        ctx.db.insert("editorialArtifacts", {
+          kind: "experiment_recap",
+          slug: `export-${i}`,
+          title: "Public research",
+          dek: "New work",
+          bodyMd: "Independent public text",
+          whyItMattersMd: "A separate finding",
+          uncertaintyMd: "Limited evidence",
+          evidenceStatus: "mixed",
+          status: "published",
+          visibility: "public",
+          primaryRef: { type: "weeklyBrief", id: briefId },
+          linkedIds: {
+            thesisIds: [],
+            hypothesisIds: [],
+            recipeIds: [],
+            compositionIds: [],
+            listeningSessionIds: [],
+            failureKeys: [],
+          },
+          publicEvidenceCards: [],
+          createdBy: "system",
+          createdAt: i,
+          updatedAt: i,
+        }),
+      );
+    await addArtifact(0);
+    const initial = await t.query(
+      internal.editorialArtifacts.getExportBundleInternal,
+      {},
+    );
+    expect(initial).toHaveLength(1);
+    expect(initial[0]!.validation.canPublish).toBe(true);
+    for (let i = 1; i < 70; i++) await addArtifact(i);
+    await expect(
+      t.query(internal.editorialArtifacts.getExportBundleInternal, {}),
+    ).rejects.toThrow("Published export privacy coverage is incomplete");
+  });
+  test("one reconciliation invocation drains its expired backlog through bounded scheduled transactions", async () => {
+    vi.useFakeTimers();
+    try {
+      const { t, sourceId } = await setup(true);
+      const attempts: Id<"extractionAttempts">[] = [];
+      for (let i = 0; i < 3; i++) {
+        const id =
+          i === 0
+            ? sourceId
+            : await t.run(async (ctx) => {
+                const { _id, _creationTime, ...source } = (await ctx.db.get(
+                  sourceId,
+                ))!;
+                return ctx.db.insert("sources", {
+                  ...source,
+                  dedupeKey: `backlog-${i}`,
+                });
+              });
+        const started = await t.mutation(
+          internal.extractInternal.beginExtraction,
+          { sourceId: id, model: "test", force: true },
+        );
+        attempts.push(started.attemptId!);
+        await t.run((ctx) =>
+          ctx.db.patch(started.attemptId!, { updatedAt: 0 }),
+        );
+      }
+      await t.mutation(internal.extractInternal.reconcileAttempts, {});
+      await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+      for (const id of attempts)
+        expect((await t.run((ctx) => ctx.db.get(id)))?.status).toBe("failed");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  test("reconciliation does not schedule a busy loop for an unexpired generation lease", async () => {
+    const { t, begin } = await setup();
+    const id = await begin();
+    await t.run((ctx) =>
+      ctx.db.patch(id, {
+        updatedAt: 0,
+        generationLeaseUntil: Date.now() + 60_000,
+      }),
+    );
+    await t.mutation(internal.extractInternal.reconcileAttempts, {});
+    expect(
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      ),
+    ).toEqual([]);
+    expect((await t.run((ctx) => ctx.db.get(id)))?.status).toBe("pending");
+  });
   test.each([false, true])(
     "atomic completion links 300 topics within transaction limits, existing=%s",
     async (existing) => {
@@ -392,8 +501,12 @@ describe("Extraction completion", () => {
     expect(
       (await t.run((ctx) => ctx.db.get(ids[0]!)))?.historical,
     ).toBeUndefined();
-    for (let i = 0; i < 25; i++)
-      await t.mutation(internal.extractions.normalizeLegacyHistory, {});
+    vi.useFakeTimers();
+    try {
+      await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+    } finally {
+      vi.useRealTimers();
+    }
     for (const id of ids)
       expect((await t.run((ctx) => ctx.db.get(id)))?.historical).toBe(
         id !== ids.at(-1),
@@ -493,24 +606,37 @@ describe("Extraction completion", () => {
     for (const id of [sourceId, otherId]) {
       const started = await t.mutation(
         internal.extractInternal.beginExtraction,
-        { sourceId: id, model: "test" },
+        { sourceId: id, model: id === sourceId ? "test" : "different-model" },
       );
       attempts.push(started.attemptId!);
       await t.mutation(internal.extractInternal.retainExtractionResult, {
         attemptId: started.attemptId!,
-        result,
+        result:
+          id === sourceId
+            ? result
+            : {
+                ...result,
+                summary: "Different retained output",
+                claims: [],
+                compositionParameters: [
+                  { kind: "frequency", type: "frequency", value: "440" },
+                ],
+              },
       });
     }
-    await t.action(internal.extractInternal.completeExtraction, {
+    const first = await t.action(internal.extractInternal.completeExtraction, {
       attemptId: attempts[0]!,
     });
+    const duplicate = await t.action(
+      internal.extractInternal.completeExtraction,
+      { attemptId: attempts[1]! },
+    );
+    expect(duplicate).toMatchObject({ ...first, current: false });
     expect(
-      (
-        await t.action(internal.extractInternal.completeExtraction, {
-          attemptId: attempts[1]!,
-        })
-      ).current,
-    ).toBe(false);
+      await t.action(internal.extractInternal.completeExtraction, {
+        attemptId: attempts[1]!,
+      }),
+    ).toEqual(duplicate);
     expect(await t.run((ctx) => ctx.db.get(otherId))).toMatchObject({
       status: "archived",
       blockedReason: "duplicate",
@@ -999,8 +1125,13 @@ describe("Extraction completion", () => {
         });
       return ids;
     });
-    for (let i = 0; i < 25; i++)
+    vi.useFakeTimers();
+    try {
       await t.mutation(internal.extractions.normalizeLegacyHistory, {});
+      await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+    } finally {
+      vi.useRealTimers();
+    }
     expect(
       (await t.query(api.extractions.listRecent, { limit: 10000 })).map(
         (row) => row._id,
