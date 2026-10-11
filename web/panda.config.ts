@@ -10,6 +10,7 @@ export default defineConfig({
   outdir: "styled-system",
   jsxFramework: "solid",
   presets: [
+    "@pandacss/preset-base",
     createPreset({
       accentColor: gold,
       grayColor: slate,
@@ -19,6 +20,11 @@ export default defineConfig({
   conditions: {
     extend: {
       coarsePointer: "@media (pointer: coarse)",
+      hover: {
+        "@media (hover: hover) and (pointer: fine)": {
+          "&:is(:hover, [data-hover])": "@slot",
+        },
+      },
     },
   },
   theme: {

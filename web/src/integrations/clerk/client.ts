@@ -1,4 +1,4 @@
-import { Clerk } from "@clerk/clerk-js/headless";
+import { Clerk } from "@clerk/clerk-js/no-rhc";
 import { createSignal } from "solid-js";
 import type { AuthAdapter } from "../convex";
 
@@ -42,14 +42,16 @@ export async function initializeClerk() {
   const publishableKey = getRequiredEnv("VITE_CLERK_PUBLISHABLE_KEY");
 
   // Sign-in and sign-up live on the hosted Clerk pages, so the app only needs
-  // session management: the headless build drops the component UI (the full
-  // build is ~950 kB gzipped).
+  // session management. The no-rhc build omits remote wallet/payment scripts;
+  // leaving `ui` unset also skips Clerk's component UI.
   const clerk = new Clerk(publishableKey);
   await clerk.load({
     signInUrl: import.meta.env.VITE_CLERK_SIGN_IN_URL,
     signUpUrl: import.meta.env.VITE_CLERK_SIGN_UP_URL,
-    afterSignInUrl: import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL ?? "/",
-    afterSignUpUrl: import.meta.env.VITE_CLERK_AFTER_SIGN_UP_URL ?? "/",
+    signInFallbackRedirectUrl:
+      import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL ?? "/",
+    signUpFallbackRedirectUrl:
+      import.meta.env.VITE_CLERK_AFTER_SIGN_UP_URL ?? "/",
   });
 
   clerk.addListener(() => {

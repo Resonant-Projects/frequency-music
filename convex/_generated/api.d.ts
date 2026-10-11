@@ -230,26 +230,68 @@ export declare const components: {
       aggregateBetween: FunctionReference<
         "query",
         "internal",
-        { k1?: any; k2?: any; namespace?: any },
-        { count: number; sum: number }
+        {
+          k1?: any;
+          k2?: any;
+          namespace?: any;
+          stale?: boolean;
+        },
+        {
+          count: number;
+          sum: number;
+        },
+        "aggregate"
       >;
       aggregateBetweenBatch: FunctionReference<
         "query",
         "internal",
-        { queries: Array<{ k1?: any; k2?: any; namespace?: any }> },
-        Array<{ count: number; sum: number }>
+        {
+          queries: Array<{
+            k1?: any;
+            k2?: any;
+            namespace?: any;
+          }>;
+          stale?: boolean;
+        },
+        Array<{
+          count: number;
+          sum: number;
+        }>,
+        "aggregate"
       >;
       atNegativeOffset: FunctionReference<
         "query",
         "internal",
-        { k1?: any; k2?: any; namespace?: any; offset: number },
-        { k: any; s: number; v: any }
+        {
+          k1?: any;
+          k2?: any;
+          namespace?: any;
+          offset: number;
+          stale?: boolean;
+        },
+        {
+          k: any;
+          s: number;
+          v: any;
+        },
+        "aggregate"
       >;
       atOffset: FunctionReference<
         "query",
         "internal",
-        { k1?: any; k2?: any; namespace?: any; offset: number },
-        { k: any; s: number; v: any }
+        {
+          k1?: any;
+          k2?: any;
+          namespace?: any;
+          offset: number;
+          stale?: boolean;
+        },
+        {
+          k: any;
+          s: number;
+          v: any;
+        },
+        "aggregate"
       >;
       atOffsetBatch: FunctionReference<
         "query",
@@ -261,26 +303,53 @@ export declare const components: {
             namespace?: any;
             offset: number;
           }>;
+          stale?: boolean;
         },
-        Array<{ k: any; s: number; v: any }>
+        Array<{
+          k: any;
+          s: number;
+          v: any;
+        }>,
+        "aggregate"
       >;
       get: FunctionReference<
         "query",
         "internal",
-        { key: any; namespace?: any },
-        null | { k: any; s: number; v: any }
+        {
+          key: any;
+          namespace?: any;
+          stale?: boolean;
+        },
+        null | {
+          k: any;
+          s: number;
+          v: any;
+        },
+        "aggregate"
       >;
       offset: FunctionReference<
         "query",
         "internal",
-        { k1?: any; key: any; namespace?: any },
-        number
+        {
+          k1?: any;
+          key: any;
+          namespace?: any;
+          stale?: boolean;
+        },
+        number,
+        "aggregate"
       >;
       offsetUntil: FunctionReference<
         "query",
         "internal",
-        { k2?: any; key: any; namespace?: any },
-        number
+        {
+          k2?: any;
+          key: any;
+          namespace?: any;
+          stale?: boolean;
+        },
+        number,
+        "aggregate"
       >;
       paginate: FunctionReference<
         "query",
@@ -292,96 +361,389 @@ export declare const components: {
           limit: number;
           namespace?: any;
           order: "asc" | "desc";
+          stale?: boolean;
         },
         {
           cursor: string;
           isDone: boolean;
-          page: Array<{ k: any; s: number; v: any }>;
-        }
+          page: Array<{
+            k: any;
+            s: number;
+            v: any;
+          }>;
+        },
+        "aggregate"
       >;
       paginateNamespaces: FunctionReference<
         "query",
         "internal",
-        { cursor?: string; limit: number },
-        { cursor: string; isDone: boolean; page: Array<any> }
+        {
+          cursor?: string;
+          limit: number;
+          stale?: boolean;
+        },
+        {
+          cursor: string;
+          isDone: boolean;
+          page: Array<any>;
+        },
+        "aggregate"
       >;
       validate: FunctionReference<
         "query",
         "internal",
-        { namespace?: any },
-        any
+        {
+          namespace?: any;
+          stale?: boolean;
+        },
+        any,
+        "aggregate"
+      >;
+    };
+    deadLetter: {
+      delete_: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          id: string;
+        },
+        boolean,
+        "aggregate"
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        {
+          id: string;
+        },
+        {
+          _creationTime: number;
+          _id: string;
+          commitTs: bigint;
+          error: string;
+          operation:
+            | {
+                key: any;
+                namespace?: any;
+                summand?: number;
+                type: "insert";
+                value: any;
+              }
+            | {
+                key: any;
+                namespace?: any;
+                type: "delete";
+              }
+            | {
+                currentKey: any;
+                namespace?: any;
+                newKey: any;
+                newNamespace?: any;
+                summand?: number;
+                type: "replace";
+                value: any;
+              }
+            | {
+                key: any;
+                namespace?: any;
+                type: "deleteIfExists";
+              }
+            | {
+                currentKey: any;
+                namespace?: any;
+                newKey: any;
+                newNamespace?: any;
+                summand?: number;
+                type: "replaceOrInsert";
+                value: any;
+              };
+        } | null,
+        "aggregate"
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        {
+          order?: "asc" | "desc";
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            _creationTime: number;
+            _id: string;
+            commitTs: bigint;
+            error: string;
+            operation:
+              | {
+                  key: any;
+                  namespace?: any;
+                  summand?: number;
+                  type: "insert";
+                  value: any;
+                }
+              | {
+                  key: any;
+                  namespace?: any;
+                  type: "delete";
+                }
+              | {
+                  currentKey: any;
+                  namespace?: any;
+                  newKey: any;
+                  newNamespace?: any;
+                  summand?: number;
+                  type: "replace";
+                  value: any;
+                }
+              | {
+                  key: any;
+                  namespace?: any;
+                  type: "deleteIfExists";
+                }
+              | {
+                  currentKey: any;
+                  namespace?: any;
+                  newKey: any;
+                  newNamespace?: any;
+                  summand?: number;
+                  type: "replaceOrInsert";
+                  value: any;
+                };
+          }>;
+          pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+          splitCursor?: string | null;
+        },
+        "aggregate"
       >;
     };
     inspect: {
-      display: FunctionReference<"query", "internal", { namespace?: any }, any>;
-      dump: FunctionReference<"query", "internal", { namespace?: any }, string>;
+      display: FunctionReference<
+        "query",
+        "internal",
+        {
+          namespace?: any;
+        },
+        any,
+        "aggregate"
+      >;
+      dump: FunctionReference<
+        "query",
+        "internal",
+        {
+          namespace?: any;
+        },
+        string,
+        "aggregate"
+      >;
       inspectNode: FunctionReference<
         "query",
         "internal",
-        { namespace?: any; node?: string },
-        null
+        {
+          namespace?: any;
+          node?: string;
+        },
+        null,
+        "aggregate"
       >;
       listTreeNodes: FunctionReference<
         "query",
         "internal",
-        { take?: number },
+        {
+          take?: number;
+        },
         Array<{
           _creationTime: number;
           _id: string;
-          aggregate?: { count: number; sum: number };
-          items: Array<{ k: any; s: number; v: any }>;
+          aggregate?: {
+            count: number;
+            sum: number;
+          };
+          items: Array<{
+            k: any;
+            s: number;
+            v: any;
+          }>;
           subtrees: Array<string>;
-        }>
+        }>,
+        "aggregate"
       >;
       listTrees: FunctionReference<
         "query",
         "internal",
-        { take?: number },
+        {
+          take?: number;
+        },
         Array<{
           _creationTime: number;
           _id: string;
           maxNodeSize: number;
           namespace?: any;
           root: string;
-        }>
+        }>,
+        "aggregate"
       >;
     };
     public: {
       clear: FunctionReference<
         "mutation",
         "internal",
-        { maxNodeSize?: number; namespace?: any; rootLazy?: boolean },
-        null
+        {
+          maxNodeSize?: number;
+          namespace?: any;
+          rootLazy?: boolean;
+        },
+        null,
+        "aggregate"
       >;
       delete_: FunctionReference<
         "mutation",
         "internal",
-        { key: any; namespace?: any },
-        null
+        {
+          key: any;
+          namespace?: any;
+        },
+        null,
+        "aggregate"
       >;
       deleteIfExists: FunctionReference<
         "mutation",
         "internal",
-        { key: any; namespace?: any },
-        any
+        {
+          key: any;
+          namespace?: any;
+        },
+        any,
+        "aggregate"
+      >;
+      enqueue: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          operation:
+            | {
+                key: any;
+                namespace?: any;
+                summand?: number;
+                type: "insert";
+                value: any;
+              }
+            | {
+                key: any;
+                namespace?: any;
+                type: "delete";
+              }
+            | {
+                currentKey: any;
+                namespace?: any;
+                newKey: any;
+                newNamespace?: any;
+                summand?: number;
+                type: "replace";
+                value: any;
+              }
+            | {
+                key: any;
+                namespace?: any;
+                type: "deleteIfExists";
+              }
+            | {
+                currentKey: any;
+                namespace?: any;
+                newKey: any;
+                newNamespace?: any;
+                summand?: number;
+                type: "replaceOrInsert";
+                value: any;
+              };
+        },
+        null,
+        "aggregate"
+      >;
+      enqueueBatch: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          operations: Array<
+            | {
+                key: any;
+                namespace?: any;
+                summand?: number;
+                type: "insert";
+                value: any;
+              }
+            | {
+                key: any;
+                namespace?: any;
+                type: "delete";
+              }
+            | {
+                currentKey: any;
+                namespace?: any;
+                newKey: any;
+                newNamespace?: any;
+                summand?: number;
+                type: "replace";
+                value: any;
+              }
+            | {
+                key: any;
+                namespace?: any;
+                type: "deleteIfExists";
+              }
+            | {
+                currentKey: any;
+                namespace?: any;
+                newKey: any;
+                newNamespace?: any;
+                summand?: number;
+                type: "replaceOrInsert";
+                value: any;
+              }
+          >;
+        },
+        null,
+        "aggregate"
       >;
       init: FunctionReference<
         "mutation",
         "internal",
-        { maxNodeSize?: number; namespace?: any; rootLazy?: boolean },
-        null
+        {
+          maxNodeSize?: number;
+          namespace?: any;
+          rootLazy?: boolean;
+        },
+        null,
+        "aggregate"
       >;
       insert: FunctionReference<
         "mutation",
         "internal",
-        { key: any; namespace?: any; summand?: number; value: any },
-        null
+        {
+          key: any;
+          namespace?: any;
+          summand?: number;
+          value: any;
+        },
+        null,
+        "aggregate"
       >;
       makeRootLazy: FunctionReference<
         "mutation",
         "internal",
-        { namespace?: any },
-        null
+        {
+          namespace?: any;
+        },
+        null,
+        "aggregate"
       >;
       replace: FunctionReference<
         "mutation",
@@ -394,7 +756,8 @@ export declare const components: {
           summand?: number;
           value: any;
         },
-        null
+        null,
+        "aggregate"
       >;
       replaceOrInsert: FunctionReference<
         "mutation",
@@ -407,7 +770,8 @@ export declare const components: {
           summand?: number;
           value: any;
         },
-        any
+        any,
+        "aggregate"
       >;
     };
   };
@@ -416,16 +780,31 @@ export declare const components: {
       purge: FunctionReference<
         "mutation",
         "internal",
-        { expiresAt?: number },
-        null
+        {
+          expiresAt?: number;
+        },
+        null,
+        "actionCache"
       >;
     };
     lib: {
       get: FunctionReference<
         "query",
         "internal",
-        { args: any; name: string; ttl: number | null },
-        { kind: "hit"; value: any } | { expiredEntry?: string; kind: "miss" }
+        {
+          args: any;
+          name: string;
+          ttl: number | null;
+        },
+        | {
+            kind: "hit";
+            value: any;
+          }
+        | {
+            expiredEntry?: string;
+            kind: "miss";
+          },
+        "actionCache"
       >;
       put: FunctionReference<
         "mutation",
@@ -437,19 +816,32 @@ export declare const components: {
           ttl: number | null;
           value: any;
         },
-        { cacheHit: boolean; deletedExpiredEntry: boolean }
+        {
+          cacheHit: boolean;
+          deletedExpiredEntry: boolean;
+        },
+        "actionCache"
       >;
       remove: FunctionReference<
         "mutation",
         "internal",
-        { args: any; name: string },
-        null
+        {
+          args: any;
+          name: string;
+        },
+        null,
+        "actionCache"
       >;
       removeAll: FunctionReference<
         "mutation",
         "internal",
-        { batchSize?: number; before?: number; name?: string },
-        null
+        {
+          batchSize?: number;
+          before?: number;
+          name?: string;
+        },
+        null,
+        "actionCache"
       >;
     };
   };
@@ -458,8 +850,12 @@ export declare const components: {
       create: FunctionReference<
         "mutation",
         "internal",
-        { name: string; workflowId: string },
-        string
+        {
+          name: string;
+          workflowId: string;
+        },
+        string,
+        "workflow"
       >;
       send: FunctionReference<
         "mutation",
@@ -468,9 +864,17 @@ export declare const components: {
           eventId?: string;
           name?: string;
           result:
-            | { kind: "success"; returnValue: any }
-            | { error: string; kind: "failed" }
-            | { kind: "canceled" };
+            | {
+                kind: "success";
+                returnValue: any;
+              }
+            | {
+                error: string;
+                kind: "failed";
+              }
+            | {
+                kind: "canceled";
+              };
           workflowId?: string;
           workpoolOptions?: {
             defaultRetryBehavior?: {
@@ -483,14 +887,18 @@ export declare const components: {
             retryActionsByDefault?: boolean;
           };
         },
-        string
+        string,
+        "workflow"
       >;
     };
     journal: {
       load: FunctionReference<
         "query",
         "internal",
-        { shortCircuit?: boolean; workflowId: string },
+        {
+          shortCircuit?: boolean;
+          workflowId: string;
+        },
         {
           blocked?: boolean;
           journalEntries: Array<{
@@ -507,9 +915,17 @@ export declare const components: {
                   kind?: "function";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workId?: string;
                 }
@@ -522,14 +938,24 @@ export declare const components: {
                   kind: "workflow";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workflowId?: string;
                 }
               | {
-                  args: { eventId?: string };
+                  args: {
+                    eventId?: string;
+                  };
                   argsSize: number;
                   completedAt?: number;
                   eventId?: string;
@@ -537,9 +963,17 @@ export declare const components: {
                   kind: "event";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                 }
               | {
@@ -550,9 +984,17 @@ export declare const components: {
                   kind: "sleep";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workId?: string;
                 };
@@ -568,16 +1010,28 @@ export declare const components: {
             generationNumber: number;
             logLevel?: any;
             name?: string;
-            onComplete?: { context?: any; fnHandle: string };
+            onComplete?: {
+              context?: any;
+              fnHandle: string;
+            };
             runResult?:
-              | { kind: "success"; returnValue: any }
-              | { error: string; kind: "failed" }
-              | { kind: "canceled" };
+              | {
+                  kind: "success";
+                  returnValue: any;
+                }
+              | {
+                  error: string;
+                  kind: "failed";
+                }
+              | {
+                  kind: "canceled";
+                };
             startedAt?: any;
             state?: any;
             workflowHandle: string;
           };
-        }
+        },
+        "workflow"
       >;
       startSteps: FunctionReference<
         "mutation",
@@ -587,8 +1041,18 @@ export declare const components: {
           steps: Array<{
             retry?:
               | boolean
-              | { base: number; initialBackoffMs: number; maxAttempts: number };
-            schedulerOptions?: { runAt?: number } | { runAfter?: number };
+              | {
+                  base: number;
+                  initialBackoffMs: number;
+                  maxAttempts: number;
+                };
+            schedulerOptions?:
+              | {
+                  runAt?: number;
+                }
+              | {
+                  runAfter?: number;
+                };
             step:
               | {
                   args: any;
@@ -600,9 +1064,17 @@ export declare const components: {
                   kind?: "function";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workId?: string;
                 }
@@ -615,14 +1087,24 @@ export declare const components: {
                   kind: "workflow";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workflowId?: string;
                 }
               | {
-                  args: { eventId?: string };
+                  args: {
+                    eventId?: string;
+                  };
                   argsSize: number;
                   completedAt?: number;
                   eventId?: string;
@@ -630,9 +1112,17 @@ export declare const components: {
                   kind: "event";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                 }
               | {
@@ -643,9 +1133,17 @@ export declare const components: {
                   kind: "sleep";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workId?: string;
                 };
@@ -676,9 +1174,17 @@ export declare const components: {
                 kind?: "function";
                 name: string;
                 runResult?:
-                  | { kind: "success"; returnValue: any }
-                  | { error: string; kind: "failed" }
-                  | { kind: "canceled" };
+                  | {
+                      kind: "success";
+                      returnValue: any;
+                    }
+                  | {
+                      error: string;
+                      kind: "failed";
+                    }
+                  | {
+                      kind: "canceled";
+                    };
                 startedAt: number;
                 workId?: string;
               }
@@ -691,14 +1197,24 @@ export declare const components: {
                 kind: "workflow";
                 name: string;
                 runResult?:
-                  | { kind: "success"; returnValue: any }
-                  | { error: string; kind: "failed" }
-                  | { kind: "canceled" };
+                  | {
+                      kind: "success";
+                      returnValue: any;
+                    }
+                  | {
+                      error: string;
+                      kind: "failed";
+                    }
+                  | {
+                      kind: "canceled";
+                    };
                 startedAt: number;
                 workflowId?: string;
               }
             | {
-                args: { eventId?: string };
+                args: {
+                  eventId?: string;
+                };
                 argsSize: number;
                 completedAt?: number;
                 eventId?: string;
@@ -706,9 +1222,17 @@ export declare const components: {
                 kind: "event";
                 name: string;
                 runResult?:
-                  | { kind: "success"; returnValue: any }
-                  | { error: string; kind: "failed" }
-                  | { kind: "canceled" };
+                  | {
+                      kind: "success";
+                      returnValue: any;
+                    }
+                  | {
+                      error: string;
+                      kind: "failed";
+                    }
+                  | {
+                      kind: "canceled";
+                    };
                 startedAt: number;
               }
             | {
@@ -719,29 +1243,45 @@ export declare const components: {
                 kind: "sleep";
                 name: string;
                 runResult?:
-                  | { kind: "success"; returnValue: any }
-                  | { error: string; kind: "failed" }
-                  | { kind: "canceled" };
+                  | {
+                      kind: "success";
+                      returnValue: any;
+                    }
+                  | {
+                      error: string;
+                      kind: "failed";
+                    }
+                  | {
+                      kind: "canceled";
+                    };
                 startedAt: number;
                 workId?: string;
               };
           stepNumber: number;
           workflowId: string;
-        }>
+        }>,
+        "workflow"
       >;
     };
     workflow: {
       cancel: FunctionReference<
         "mutation",
         "internal",
-        { workflowId: string },
-        null
+        {
+          workflowId: string;
+        },
+        null,
+        "workflow"
       >;
       cleanup: FunctionReference<
         "mutation",
         "internal",
-        { force?: boolean; workflowId: string },
-        boolean
+        {
+          force?: boolean;
+          workflowId: string;
+        },
+        boolean,
+        "workflow"
       >;
       complete: FunctionReference<
         "mutation",
@@ -749,30 +1289,46 @@ export declare const components: {
         {
           generationNumber: number;
           runResult:
-            | { kind: "success"; returnValue: any }
-            | { error: string; kind: "failed" }
-            | { kind: "canceled" };
+            | {
+                kind: "success";
+                returnValue: any;
+              }
+            | {
+                error: string;
+                kind: "failed";
+              }
+            | {
+                kind: "canceled";
+              };
           workflowId: string;
         },
-        null
+        null,
+        "workflow"
       >;
       create: FunctionReference<
         "mutation",
         "internal",
         {
+          createOnly?: boolean;
           maxParallelism?: number;
-          onComplete?: { context?: any; fnHandle: string };
+          onComplete?: {
+            context?: any;
+            fnHandle: string;
+          };
           startAsync?: boolean;
           workflowArgs: any;
           workflowHandle: string;
           workflowName: string;
         },
-        string
+        string,
+        "workflow"
       >;
       getStatus: FunctionReference<
         "query",
         "internal",
-        { workflowId: string },
+        {
+          workflowId: string;
+        },
         {
           inProgress: Array<{
             _creationTime: number;
@@ -788,9 +1344,17 @@ export declare const components: {
                   kind?: "function";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workId?: string;
                 }
@@ -803,14 +1367,24 @@ export declare const components: {
                   kind: "workflow";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workflowId?: string;
                 }
               | {
-                  args: { eventId?: string };
+                  args: {
+                    eventId?: string;
+                  };
                   argsSize: number;
                   completedAt?: number;
                   eventId?: string;
@@ -818,9 +1392,17 @@ export declare const components: {
                   kind: "event";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                 }
               | {
@@ -831,9 +1413,17 @@ export declare const components: {
                   kind: "sleep";
                   name: string;
                   runResult?:
-                    | { kind: "success"; returnValue: any }
-                    | { error: string; kind: "failed" }
-                    | { kind: "canceled" };
+                    | {
+                        kind: "success";
+                        returnValue: any;
+                      }
+                    | {
+                        error: string;
+                        kind: "failed";
+                      }
+                    | {
+                        kind: "canceled";
+                      };
                   startedAt: number;
                   workId?: string;
                 };
@@ -848,16 +1438,28 @@ export declare const components: {
             generationNumber: number;
             logLevel?: any;
             name?: string;
-            onComplete?: { context?: any; fnHandle: string };
+            onComplete?: {
+              context?: any;
+              fnHandle: string;
+            };
             runResult?:
-              | { kind: "success"; returnValue: any }
-              | { error: string; kind: "failed" }
-              | { kind: "canceled" };
+              | {
+                  kind: "success";
+                  returnValue: any;
+                }
+              | {
+                  error: string;
+                  kind: "failed";
+                }
+              | {
+                  kind: "canceled";
+                };
             startedAt?: any;
             state?: any;
             workflowHandle: string;
           };
-        }
+        },
+        "workflow"
       >;
       list: FunctionReference<
         "query",
@@ -881,14 +1483,23 @@ export declare const components: {
             context?: any;
             name?: string;
             runResult?:
-              | { kind: "success"; returnValue: any }
-              | { error: string; kind: "failed" }
-              | { kind: "canceled" };
+              | {
+                  kind: "success";
+                  returnValue: any;
+                }
+              | {
+                  error: string;
+                  kind: "failed";
+                }
+              | {
+                  kind: "canceled";
+                };
             workflowId: string;
           }>;
           pageStatus?: "SplitRecommended" | "SplitRequired" | null;
           splitCursor?: string | null;
-        }
+        },
+        "workflow"
       >;
       listByName: FunctionReference<
         "query",
@@ -913,14 +1524,23 @@ export declare const components: {
             context?: any;
             name?: string;
             runResult?:
-              | { kind: "success"; returnValue: any }
-              | { error: string; kind: "failed" }
-              | { kind: "canceled" };
+              | {
+                  kind: "success";
+                  returnValue: any;
+                }
+              | {
+                  error: string;
+                  kind: "failed";
+                }
+              | {
+                  kind: "canceled";
+                };
             workflowId: string;
           }>;
           pageStatus?: "SplitRecommended" | "SplitRequired" | null;
           splitCursor?: string | null;
-        }
+        },
+        "workflow"
       >;
       listSteps: FunctionReference<
         "query",
@@ -948,9 +1568,17 @@ export declare const components: {
             name: string;
             nestedWorkflowId?: string;
             runResult?:
-              | { kind: "success"; returnValue: any }
-              | { error: string; kind: "failed" }
-              | { kind: "canceled" };
+              | {
+                  kind: "success";
+                  returnValue: any;
+                }
+              | {
+                  error: string;
+                  kind: "failed";
+                }
+              | {
+                  kind: "canceled";
+                };
             startedAt: number;
             stepId: string;
             stepNumber: number;
@@ -959,13 +1587,19 @@ export declare const components: {
           }>;
           pageStatus?: "SplitRecommended" | "SplitRequired" | null;
           splitCursor?: string | null;
-        }
+        },
+        "workflow"
       >;
       restart: FunctionReference<
         "mutation",
         "internal",
-        { from?: number | string; startAsync?: boolean; workflowId: string },
-        null
+        {
+          from?: number | string;
+          startAsync?: boolean;
+          workflowId: string;
+        },
+        null,
+        "workflow"
       >;
     };
   };
