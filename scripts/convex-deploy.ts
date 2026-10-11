@@ -6,9 +6,10 @@
  *
  * Production-contacting: even --dry-run uploads bundles and can start schema
  * and index preparation (docs/frequency-supported-deployment-rollback.md).
- * The package scripts run the root typecheck first, because the CLI's own
- * typecheck is disabled (this repo has no convex/tsconfig.json). Credentials
- * resolve through Varlock and 1Password and reach only the CLI child process.
+ * It refuses a checkout with uncommitted changes. The package scripts run the
+ * root typecheck first, because the CLI's own typecheck is disabled (this repo
+ * has no convex/tsconfig.json). Credentials resolve through Varlock and
+ * 1Password and reach only the CLI child process.
  */
 // oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
 import "varlock/auto-load";
@@ -47,6 +48,29 @@ async function confirm(question: string): Promise<boolean> {
   }
 }
 
+/**
+ * The deployable source and the CLI child environment. Refuses a dirty
+ * checkout repository-wide: the bundle also depends on the lockfile and on
+ * anything convex/ imports, so a clean convex/ alone does not make HEAD the
+ * source. The CLI dotenv-loads `.env.local` and `.env` itself, so their keys
+ * are blanked in the child environment.
+ */
+function snapshotCheckout(): { head: string; env: Record<string, string> } {
+  if (git("status", "--porcelain")) {
+    throw new Error(
+      "Refusing to deploy from a checkout with uncommitted changes. Commit or stash them first.",
+    );
+  }
+  const fileKeys = [".env.local", ".env"].flatMap((file) => {
+    const path = join(root, file);
+    return existsSync(path) ? envFileKeys(readFileSync(path, "utf8")) : [];
+  });
+  return {
+    head: git("rev-parse", "--short", "HEAD"),
+    env: buildDeployEnv(process.env, fileKeys),
+  };
+}
+
 async function main(): Promise<number> {
   const options = parseDeployArgs(process.argv.slice(2));
 
@@ -59,21 +83,9 @@ async function main(): Promise<number> {
     );
   assertCliVersion(cliPackage.version, AUDITED_CONVEX_VERSION);
 
-  // The CLI dotenv-loads these itself; blank their keys in the child env.
-  const fileKeys = [".env.local", ".env"].flatMap((file) => {
-    const path = join(root, file);
-    return existsSync(path) ? envFileKeys(readFileSync(path, "utf8")) : [];
-  });
-  const env = buildDeployEnv(process.env, fileKeys);
-  const head = git("rev-parse", "--short", "HEAD");
-  // Repository-wide: the bundle also depends on the lockfile and on anything
-  // convex/ imports, so a clean convex/ alone does not make the SHA the source.
-  const dirty = git("status", "--porcelain");
-
+  const { head } = snapshotCheckout();
   console.log(`Target:  ${CONVEX_DEPLOY_URL}`);
-  console.log(
-    `Source:  ${head}${dirty ? " plus uncommitted changes in the checkout" : ""}`,
-  );
+  console.log(`Source:  ${head}`);
   console.log(
     options.dryRun
       ? "Mode:    --dry-run (uploads and prepares schema/indexes; no activation)"
@@ -84,6 +96,11 @@ async function main(): Promise<number> {
     return 1;
   }
 
+  // Re-read everything the prompt may have outlived, right before the spawn.
+  const { env, head: finalHead } = snapshotCheckout();
+  if (finalHead !== head) {
+    throw new Error(`HEAD moved from ${head} to ${finalHead}; not deploying.`);
+  }
   const result = spawnSync(process.execPath, buildDeployArgs(options), {
     cwd: root,
     env: env as unknown as NodeJS.ProcessEnv,
