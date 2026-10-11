@@ -53,8 +53,8 @@ RUN curl -fsSLo /tmp/bgutil.tar.gz "https://github.com/Brainicism/bgutil-ytdlp-p
 FROM ${RUNTIME_NODE_IMAGE} AS runtime
 WORKDIR /app/agent
 
-# Patch the pinned base for CVE-2026-14456; keep Node/Codex unchanged.
-RUN apk add --no-cache libcrypto3=3.5.8-r0 libssl3=3.5.8-r0
+# Keep the patched minimum for CVE-2026-14456 while Alpine rotates security releases.
+RUN apk add --no-cache 'libcrypto3>=3.5.8-r0' 'libssl3>=3.5.8-r0'
 
 ARG CODEX_CLI_VERSION=0.146.0
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
@@ -81,7 +81,8 @@ ENV YTDLP_PATH=/usr/local/bin/yt-dlp
 ENV YTDLP_PLUGIN_DIRS=/opt/yt-dlp/plugins
 
 RUN adduser -D -h /home/agent -s /bin/sh agent \
-    && mkdir -p /data/codex-home /data/codex-scratch \
+    && mkdir -p /data/codex-home /data/codex-scratch /data/outbox \
+    && chmod 0700 /data/outbox \
     && chown -R agent:agent /data
 
 # File-backed Codex credential store (no OS keyring exists in a container).
