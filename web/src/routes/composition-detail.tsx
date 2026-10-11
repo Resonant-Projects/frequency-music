@@ -5,19 +5,24 @@ import {
   createSignal,
   For,
   on,
+  onMount,
   Show,
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { entityCellClass } from "../components/entity-card";
 import {
   backLink,
   collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
+  focusRingClass,
   goldDivider,
+  helperClass,
   Markdown,
   metaLine,
   pageClass,
+  proseClass,
   sectionLabel,
   UIBadge,
   UIButton,
@@ -27,18 +32,33 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+} from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import { useClerkAuthSnapshot } from "../integrations/clerk";
 
-const lineItem = css({
-  borderColor: "zodiac.gold/18",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  p: "3",
+const lineItem = entityCellClass;
+
+/** Secondary line under a lineage, source or extraction title. */
+const subLine = css({
+  color: "zodiac.cream/66",
+  fontSize: "sm",
 });
 
-/** Wrapper for an always-mounted notice that currently carries no text. */
+/** A record title that links to its own page. */
+const recordLink = cx(
+  css({
+    color: "zodiac.cream",
+    textDecoration: "none",
+    _hover: { textDecoration: "underline" },
+  }),
+  focusRingClass,
+);
+
+/** Split a textarea into trimmed, non-empty lines. */
 function parseLines(value: string) {
   return value
     .split("\n")
@@ -80,6 +100,14 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
   const [questionsText, setQuestionsText] = createSignal("");
   const [confidenceText, setConfidenceText] = createSignal("");
   let summaryField: HTMLTextAreaElement | undefined;
+  let correctTrigger: HTMLButtonElement | undefined;
+
+  // Closing the panel unmounts the focused Save/Cancel button; hand focus
+  // back to the "Correct extraction" trigger that opened it.
+  function closeEditor() {
+    setEditMode(false);
+    queueMicrotask(() => correctTrigger?.focus());
+  }
 
   const originalClaimsJson = () =>
     JSON.stringify(props.extraction.claims, null, 2);
@@ -136,7 +164,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
 
   async function saveCorrection() {
     const fields = changedFields();
-    if (fields.length === 0) return;
+    if (fields.length === 0 || saving()) return;
     setSaving(true);
     setNotice(null);
     setNoticeError(null);
@@ -178,12 +206,10 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
           ? { confidence }
           : {}),
       });
-      setEditMode(false);
+      closeEditor();
       setNotice("Extraction correction saved with edit provenance.");
     } catch (error) {
-      setNoticeError(
-        error instanceof Error ? error.message : "Could not save extraction.",
-      );
+      setNoticeError(describeError(error));
     } finally {
       setSaving(false);
     }
@@ -205,7 +231,14 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
           confidence {props.extraction.confidence} ·{" "}
           {props.extraction.topics.length} topics
         </span>
-        <UIButton variant="outline" disabled={editMode()} onClick={beginEdit}>
+        <UIButton
+          ref={(element) => {
+            correctTrigger = element;
+          }}
+          variant="outline"
+          disabled={editMode()}
+          onClick={beginEdit}
+        >
           Correct extraction
         </UIButton>
       </div>
@@ -307,17 +340,14 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
           />
           <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
             <UIButton
-              variant="solid"
-              disabled={saving() || changedFields().length === 0}
+              variant="outline"
+              aria-busy={saving()}
+              disabled={changedFields().length === 0}
               onClick={saveCorrection}
             >
               {saving() ? "Saving…" : "Save correction"}
             </UIButton>
-            <UIButton
-              variant="ghost"
-              disabled={saving()}
-              onClick={() => setEditMode(false)}
-            >
+            <UIButton variant="ghost" disabled={saving()} onClick={closeEditor}>
               Cancel
             </UIButton>
           </div>
@@ -366,7 +396,7 @@ function ListeningVisibilityControl(props: {
   );
 
   async function saveVisibility() {
-    if (visibility() === props.session.visibility) return;
+    if (saving() || visibility() === props.session.visibility) return;
     setSaving(true);
     setNotice(null);
     setNoticeError(null);
@@ -377,9 +407,7 @@ function ListeningVisibilityControl(props: {
       });
       setNotice(`Visibility set to ${visibility()}.`);
     } catch (error) {
-      setNoticeError(
-        error instanceof Error ? error.message : "Could not update visibility.",
-      );
+      setNoticeError(describeError(error));
     } finally {
       setSaving(false);
     }
@@ -414,11 +442,16 @@ function ListeningVisibilityControl(props: {
           <option value="followers">Followers</option>
           <option value="public">Public</option>
         </UISelect>
+        {/* Outline, not solid: one of these renders per listening session.
+            While unchanged it is `aria-disabled` rather than `disabled`, so a
+            successful save does not blur the button the user just pressed. */}
         <UIButton
-          variant="solid"
-          disabled={
-            !canEdit() || saving() || visibility() === props.session.visibility
+          variant="outline"
+          disabled={!canEdit()}
+          aria-disabled={
+            visibility() === props.session.visibility ? true : undefined
           }
+          aria-busy={saving()}
           onClick={saveVisibility}
         >
           {saving() ? "Saving…" : "Confirm visibility"}
@@ -454,6 +487,10 @@ export function CompositionDetailPage() {
   const [deleting, setDeleting] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string | null>(null);
 
+  onMount(() => {
+    document.title = "Composition — Frequency Music";
+  });
+
   // Lineage links navigate composition→composition without unmounting, so
   // per-composition dialog state must reset on the route param.
   createEffect(
@@ -477,18 +514,14 @@ export function CompositionDetailPage() {
 
   async function handleDeleteComposition() {
     const row = lineage()?.composition;
-    if (!row) return;
+    if (!row || deleting()) return;
     setDeleting(true);
     setDeleteError(null);
     try {
       await deleteComposition({ id: row._id });
       void navigate({ to: "/compositions" });
     } catch (error) {
-      setDeleteError(
-        error instanceof Error
-          ? error.message
-          : "Could not delete composition.",
-      );
+      setDeleteError(describeError(error));
     } finally {
       setDeleting(false);
     }
@@ -543,12 +576,10 @@ export function CompositionDetailPage() {
               <UIBadge tone="violet">{row().composition.artifactType}</UIBadge>
               <UIBadge tone="cream">{row().composition.version}</UIBadge>
               <Show when={row().summary.localFailureStatus}>
-                {(status) => <UIBadge tone="violet">local: {status()}</UIBadge>}
+                {(status) => <UIBadge tone="cream">local: {status()}</UIBadge>}
               </Show>
               <Show when={row().summary.branchFailureStatus}>
-                {(status) => (
-                  <UIBadge tone="violet">branch: {status()}</UIBadge>
-                )}
+                {(status) => <UIBadge tone="cream">branch: {status()}</UIBadge>}
               </Show>
             </div>
 
@@ -604,7 +635,7 @@ export function CompositionDetailPage() {
                       deleteConfirmButton = element;
                     }}
                     variant="solid"
-                    disabled={deleting()}
+                    aria-busy={deleting()}
                     onClick={handleDeleteComposition}
                   >
                     {deleting() ? "Deleting…" : "Confirm delete"}
@@ -626,7 +657,7 @@ export function CompositionDetailPage() {
 
             <p
               class={css({
-                color: "zodiac.cream/62",
+                color: "zodiac.cream/66",
                 fontSize: "sm",
                 lineHeight: "1.7",
               })}
@@ -650,13 +681,7 @@ export function CompositionDetailPage() {
               <h2 class={sectionLabel}>Archive Signal</h2>
               <Show when={row().summary.localFailureStatus}>
                 {(status) => (
-                  <p
-                    class={css({
-                      color: "zodiac.cream/76",
-                      lineHeight: "1.7",
-                      mb: "2",
-                    })}
-                  >
+                  <p class={cx(proseClass, css({ mb: "2" }))}>
                     This composition is currently classified locally as{" "}
                     <code>{status()}</code> based on its own listening history.
                   </p>
@@ -664,12 +689,7 @@ export function CompositionDetailPage() {
               </Show>
               <Show when={row().summary.branchFailureStatus}>
                 {(status) => (
-                  <p
-                    class={css({
-                      color: "zodiac.cream/76",
-                      lineHeight: "1.7",
-                    })}
-                  >
+                  <p class={proseClass}>
                     This revision branch is currently classified as{" "}
                     <code>{status()}</code> in the derived failure archive.
                   </p>
@@ -686,20 +706,11 @@ export function CompositionDetailPage() {
                     <Link
                       to="/compositions/$compositionId"
                       params={{ compositionId: String(ancestor._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
+                      class={recordLink}
                     >
                       {ancestor.title}
                     </Link>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/55",
-                        fontSize: "sm",
-                        mt: "1",
-                      })}
-                    >
+                    <p class={cx(subLine, css({ mt: "1" }))}>
                       {ancestor.version}
                       <Show when={ancestor.revisionVariable}>
                         {(variable) => <> · variable: {variable()}</>}
@@ -712,15 +723,7 @@ export function CompositionDetailPage() {
                 <div class={css({ color: "zodiac.gold" })}>
                   {row().composition.title}
                 </div>
-                <p
-                  class={css({
-                    color: "zodiac.cream/55",
-                    fontSize: "sm",
-                    mt: "1",
-                  })}
-                >
-                  current node
-                </p>
+                <p class={cx(subLine, css({ mt: "1" }))}>current node</p>
               </div>
             </div>
 
@@ -734,20 +737,11 @@ export function CompositionDetailPage() {
                       <Link
                         to="/compositions/$compositionId"
                         params={{ compositionId: String(child._id) }}
-                        class={css({
-                          color: "zodiac.cream",
-                          textDecoration: "none",
-                        })}
+                        class={recordLink}
                       >
                         {child.title}
                       </Link>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontSize: "sm",
-                          mt: "1",
-                        })}
-                      >
+                      <p class={cx(subLine, css({ mt: "1" }))}>
                         {child.version}
                         <Show when={child.revisionVariable}>
                           {(variable) => <> · variable: {variable()}</>}
@@ -777,10 +771,7 @@ export function CompositionDetailPage() {
                     <Link
                       to="/recipes/$recipeId"
                       params={{ recipeId: String(recipe()._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
+                      class={recordLink}
                     >
                       {recipe().title}
                     </Link>
@@ -802,10 +793,7 @@ export function CompositionDetailPage() {
                     <Link
                       to="/hypotheses/$hypothesisId"
                       params={{ hypothesisId: String(hypothesis()._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
+                      class={recordLink}
                     >
                       {hypothesis().title}
                     </Link>
@@ -827,10 +815,7 @@ export function CompositionDetailPage() {
                     <Link
                       to="/theses/$thesisId"
                       params={{ thesisId: String(thesis()._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
+                      class={recordLink}
                     >
                       {thesis().title}
                     </Link>
@@ -849,15 +834,7 @@ export function CompositionDetailPage() {
                       <div class={css({ color: "zodiac.cream" })}>
                         {source.title ?? "Untitled source"}
                       </div>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontSize: "sm",
-                          mt: "1",
-                        })}
-                      >
-                        {source.type}
-                      </p>
+                      <p class={cx(subLine, css({ mt: "1" }))}>{source.type}</p>
                     </div>
                   )}
                 </For>
@@ -874,12 +851,7 @@ export function CompositionDetailPage() {
                       <div class={css({ color: "zodiac.cream", mb: "1" })}>
                         {extraction.summary}
                       </div>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontSize: "sm",
-                        })}
-                      >
+                      <p class={subLine}>
                         {extraction.claims.length} claims ·{" "}
                         {extraction.compositionParameters.length} parameters
                       </p>
@@ -895,7 +867,7 @@ export function CompositionDetailPage() {
             <Show
               when={row().listeningSessions.length > 0}
               fallback={
-                <p class={css({ color: "zodiac.cream/58" })}>
+                <p class={helperClass}>
                   No listening sessions logged for this composition yet.
                 </p>
               }
@@ -951,7 +923,7 @@ export function CompositionDetailPage() {
                       >
                         <div
                           class={css({
-                            color: "zodiac.cream/62",
+                            color: "zodiac.cream/66",
                             fontSize: "sm",
                             lineHeight: "1.7",
                             marginBottom:
@@ -974,7 +946,7 @@ export function CompositionDetailPage() {
                       <Show when={(session.standoutMoments?.length ?? 0) > 0}>
                         <div
                           class={css({
-                            color: "zodiac.cream/58",
+                            color: "zodiac.cream/66",
                             fontSize: "sm",
                             lineHeight: "1.7",
                           })}

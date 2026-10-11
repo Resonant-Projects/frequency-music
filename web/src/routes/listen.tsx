@@ -9,11 +9,13 @@ import {
 } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import { AudioPlayer } from "../components/audio-player";
 import { parsePodcastFeed, type PodcastEpisode } from "../lib/podcast-feed";
 import {
   fieldLabelClass,
+  focusRingClass,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -23,7 +25,11 @@ import {
   UIInput,
   UINotice,
 } from "../components/ui";
-import { createMutation, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+} from "../integrations/convex";
 
 const RATING_KEYS = [
   "naturalness",
@@ -36,7 +42,7 @@ type RatingKey = (typeof RATING_KEYS)[number];
 const RATING_LABELS: Record<RatingKey, string> = {
   naturalness: "Naturalness",
   prosody: "Prosody",
-  clean: "Clean (5 = no artifacts)",
+  clean: "Clean",
   clarity: "Clarity",
   overall: "Overall",
 };
@@ -54,34 +60,85 @@ const EMPTY_FORM: MemberForm = {
 };
 const RATING_REQUIRED = "Every rating needs a whole number from 0 to 5.";
 
+// Listener-facing names for the catalog ids in convex/shared/voices.ts. An id
+// missing here (a voice added later) falls back to the raw id.
+const VOICE_NAMES: Record<string, string> = {
+  "gemini-flash-tts": "Gemini Flash (Charon)",
+  "inworld-max": "Inworld Max (Dennis)",
+  "elevenlabs-v3": "ElevenLabs v3",
+  "breeze-2": "Breeze 2 (local)",
+  "cartesia-sonic-nandi": "Cartesia Sonic (Nandi)",
+  "cartesia-sonic-quentin": "Cartesia Sonic (Quentin)",
+};
+const voiceName = (voiceId: string) => VOICE_NAMES[voiceId] ?? voiceId;
+
+// Episodes after the first few load nothing until played, so a long feed does
+// not fetch metadata for every file on page load.
+const EAGER_EPISODES = 3;
+
+const SHOOTOUT_GROUP_ID = "shootout-group";
+
 function parseRating(raw: string): number | null {
   if (raw.trim() === "") return null;
   const value = Number(raw);
   return Number.isInteger(value) && value >= 0 && value <= 5 ? value : null;
 }
 
-const proseClass = css({ color: "zodiac.cream/66" });
 const bannerClass = css({ color: "zodiac.cream/82", mt: "2" });
-const listClass = css({ display: "flex", flexDirection: "column", gap: "1" });
-const rowButtonClass = css({
-  bg: "transparent",
-  border: "none",
-  color: "zodiac.cream/82",
-  cursor: "pointer",
+const listClass = css({
   display: "flex",
-  gap: "2",
-  alignItems: "center",
-  py: "1",
-  textAlign: "left",
-  _hover: { color: "zodiac.cream" },
-  "&[aria-current='true']": { color: "zodiac.gold" },
+  flexDirection: "column",
+  gap: "1",
+  listStyle: "none",
+  m: "0",
+  p: "0",
+});
+// The selected shootout carries a gold left rule as well as gold text, so the
+// selection never depends on colour alone (WCAG 1.4.1).
+const rowButtonClass = cx(
+  css({
+    alignItems: "center",
+    bg: "transparent",
+    borderLeftColor: "transparent",
+    borderLeftStyle: "solid",
+    borderLeftWidth: "2px",
+    color: "zodiac.cream/82",
+    cursor: "pointer",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "2",
+    minH: "9",
+    pl: "2",
+    py: "1",
+    textAlign: "left",
+    w: "full",
+    _hover: { color: "zodiac.cream" },
+    _coarsePointer: { minH: "11" },
+    "&[aria-pressed='true']": {
+      borderLeftColor: "zodiac.gold",
+      color: "zodiac.gold",
+    },
+  }),
+  focusRingClass,
+);
+const groupHeadingClass = css({
+  color: "zodiac.gold",
+  fontFamily: "mono",
+  fontSize: "sm",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
 });
 const ratingGridClass = css({
   display: "grid",
-  gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(5, 1fr)" },
+  gridTemplateColumns: {
+    base: "repeat(2, minmax(0, 1fr))",
+    md: "repeat(3, minmax(0, 1fr))",
+    lg: "repeat(5, minmax(0, 1fr))",
+  },
   gap: "3",
   mt: "3",
 });
+const ratingHelpClass = cx(helperClass, css({ mt: "2" }));
 const fieldClass = css({ display: "flex", flexDirection: "column", gap: "1" });
 const actionsClass = css({
   display: "flex",
@@ -124,6 +181,10 @@ const FEED_NOT_CONFIGURED: Record<FeedNotConfiguredReason, string> = {
     "The private feed is set up incorrectly, so there is no address to share yet.",
 };
 
+function formatShootoutDate(createdAt: number) {
+  return new Date(createdAt).toLocaleString();
+}
+
 export function ListenPage() {
   onMount(() => {
     document.title = "Listen — Frequency Music";
@@ -156,7 +217,8 @@ export function ListenPage() {
   const houseVoiceLabel = () => {
     if (houseVoice.isLoading()) return "loading...";
     if (houseVoice.error()) return "unavailable";
-    return houseVoice.data()?.voiceId ?? "not chosen";
+    const voiceId = houseVoice.data()?.voiceId;
+    return voiceId ? voiceName(voiceId) : "not chosen";
   };
   const houseVoiceError = () =>
     houseVoice.error()
@@ -173,7 +235,7 @@ export function ListenPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Listen</h1>
-        <p class={proseClass}>
+        <p class={helperClass}>
           Listen to the episodes in your private podcast feed here, or subscribe
           in your podcast app. New weekly briefs use your chosen house voice.
         </p>
@@ -194,50 +256,62 @@ export function ListenPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Voice shootouts</h2>
-        <p class={proseClass}>
+        <p class={helperClass}>
           Rate every take to reveal the voices. Choosing a house voice is a
           separate step; your first choice also narrates briefs from the last{" "}
           {NARRATION_BACKFILL_DAYS} days.
         </p>
         <UINotice status={shootoutsStatus()} error={shootoutsError()} />
         <Show when={(shootouts.data()?.length ?? 0) > 0}>
-          <div class={listClass}>
+          <ul role="list" class={listClass}>
             <For each={shootouts.data() ?? []}>
               {(row) => (
-                <button
-                  type="button"
-                  class={rowButtonClass}
-                  aria-current={selected() === row.groupId ? "true" : undefined}
-                  onClick={() => setGroupId(row.groupId)}
-                >
-                  <span>
-                    {new Date(row.createdAt).toLocaleString()} ·{" "}
-                    {row.memberCount} takes
-                  </span>
-                  <Show when={row.revealed}>
-                    <UIBadge tone="violet">revealed</UIBadge>
-                  </Show>
-                  <Show when={row.episodeArtifactId}>
-                    <UIBadge tone="cream">episode</UIBadge>
-                  </Show>
-                </button>
+                <li>
+                  <button
+                    type="button"
+                    class={rowButtonClass}
+                    aria-pressed={selected() === row.groupId}
+                    aria-controls={SHOOTOUT_GROUP_ID}
+                    onClick={() => setGroupId(row.groupId)}
+                  >
+                    <span>
+                      <time datetime={new Date(row.createdAt).toISOString()}>
+                        {formatShootoutDate(row.createdAt)}
+                      </time>{" "}
+                      · {row.memberCount} takes
+                    </span>
+                    <Show when={row.revealed}>
+                      <UIBadge tone="gold">revealed</UIBadge>
+                    </Show>
+                    <Show when={row.episodeArtifactId}>
+                      <UIBadge tone="cream">episode</UIBadge>
+                    </Show>
+                  </button>
+                </li>
               )}
             </For>
-          </div>
+          </ul>
         </Show>
       </UICard>
 
       <UINotice status={notice()} error={noticeError()} />
 
-      <Show when={selected()} keyed>
-        {(id) => (
-          <ShootoutGroup
-            groupId={id}
-            houseVoiceId={houseVoice.data()?.voiceId ?? null}
-            onNotice={report}
-          />
-        )}
-      </Show>
+      {/* Always mounted so the shootout buttons' aria-controls resolves;
+          display: contents keeps its children on the page grid. */}
+      <div id={SHOOTOUT_GROUP_ID} class={css({ display: "contents" })}>
+        <Show when={selected()} keyed>
+          {(id) => (
+            <ShootoutGroup
+              groupId={id}
+              createdAt={
+                shootouts.data()?.find((row) => row.groupId === id)?.createdAt
+              }
+              houseVoiceId={houseVoice.data()?.voiceId ?? null}
+              onNotice={report}
+            />
+          )}
+        </Show>
+      </div>
     </section>
   );
 }
@@ -326,16 +400,18 @@ function PodcastEpisodes(props: { feedUrl: string }) {
         })}
       >
         <h2 class={sectionTitleClass}>Episodes</h2>
+        {/* aria-busy, not disabled: the 60 s poll would otherwise blur the
+            button out from under a keyboard user; refresh() ignores repeats. */}
         <UIButton
           type="button"
           variant="outline"
-          disabled={loading()}
+          aria-busy={loading()}
           onClick={() => void refresh()}
         >
           Refresh episodes
         </UIButton>
       </div>
-      <p class={proseClass}>
+      <p class={helperClass}>
         The same episodes as your RSS feed, newest first.
       </p>
       <UINotice
@@ -348,9 +424,9 @@ function PodcastEpisodes(props: { feedUrl: string }) {
         }
         error={error()}
       />
-      <ol class={css({ listStyle: "none", m: "0", p: "0" })}>
+      <ol role="list" class={css({ listStyle: "none", m: "0", p: "0" })}>
         <For each={episodes()}>
-          {(episode) => (
+          {(episode, index) => (
             <li
               class={css({
                 py: "5",
@@ -364,6 +440,8 @@ function PodcastEpisodes(props: { feedUrl: string }) {
                 src={episode.playbackUrl}
                 label={episode.title}
                 durationSecs={episode.durationSecs}
+                headingLevel={3}
+                preload={index() < EAGER_EPISODES ? "metadata" : "none"}
               />
               <p class={css({ color: "zodiac.cream/66", mt: "2", mb: "0" })}>
                 <time datetime={new Date(episode.createdAt).toISOString()}>
@@ -433,7 +511,7 @@ function PodcastFeedCard(props: {
   return (
     <UICard>
       <h2 class={sectionTitleClass}>Podcast feed</h2>
-      <p class={proseClass}>
+      <p class={helperClass}>
         Episodes arrive as a private podcast. Anyone with this address can
         listen, so keep it to yourself.
       </p>
@@ -478,6 +556,7 @@ function PodcastFeedCard(props: {
 // Mounted only with a concrete group id, so every query has real args.
 function ShootoutGroup(props: {
   groupId: Id<"blindGroups">;
+  createdAt?: number;
   houseVoiceId: string | null;
   onNotice: (text: string, isError?: boolean) => void;
 }) {
@@ -498,27 +577,55 @@ function ShootoutGroup(props: {
   const submit = createMutation(api.voiceRatings.submit);
   const setHouseVoice = createMutation(api.settings.setHouseVoice);
   const [form, setForm] = createSignal<Record<string, MemberForm>>({});
+  // Per-take feedback sits beside the take, not at the top of the page.
+  const [takeErrors, setTakeErrors] = createSignal<
+    Record<string, string | null>
+  >({});
+  const [invalidFields, setInvalidFields] = createSignal<
+    Record<string, RatingKey | null>
+  >({});
+  const [savingId, setSavingId] = createSignal<string | null>(null);
 
   const formFor = (memberId: string) => form()[memberId] ?? EMPTY_FORM;
-  const update = (memberId: string, key: keyof MemberForm, value: string) =>
+  const update = (memberId: string, key: keyof MemberForm, value: string) => {
     setForm({ ...form(), [memberId]: { ...formFor(memberId), [key]: value } });
+    if (invalidFields()[memberId] === key)
+      setInvalidFields({ ...invalidFields(), [memberId]: null });
+  };
+  const setTakeError = (memberId: string, text: string | null) =>
+    setTakeErrors({ ...takeErrors(), [memberId]: text });
   const ratedIds = createMemo(
     () => new Set((ratings() ?? []).map((row) => row.memberId)),
   );
   const ratingFor = (memberId: string) =>
     (ratings() ?? []).find((row) => row.memberId === memberId);
+  const fieldId = (memberId: string, key: RatingKey) =>
+    `rating-${memberId}-${key}`;
+  const takeHeadingId = (memberId: string) => `take-${memberId}-heading`;
+  const helpId = (memberId: string) => `rating-${memberId}-help`;
+  const headingId = `shootout-${props.groupId}-heading`;
 
-  async function rate(memberId: string) {
+  async function rate(memberId: string, trigger: HTMLButtonElement) {
+    if (savingId() !== null) return;
     const values = formFor(memberId);
     const parsed: Partial<Record<RatingKey, number>> = {};
     for (const key of RATING_KEYS) {
       const value = parseRating(values[key]);
       if (value === null) {
-        props.onNotice(`${RATING_REQUIRED} (${RATING_LABELS[key]})`, true);
+        setInvalidFields({ ...invalidFields(), [memberId]: key });
+        setTakeError(memberId, `${RATING_REQUIRED} (${RATING_LABELS[key]})`);
+        document.getElementById(fieldId(memberId, key))?.focus();
         return;
       }
       parsed[key] = value;
     }
+    setInvalidFields({ ...invalidFields(), [memberId]: null });
+    setTakeError(memberId, null);
+    setSavingId(memberId);
+    // A saved rating unmounts this form (and the last one reveals the group),
+    // so park focus on the take's heading before the swap rather than letting
+    // it fall to <body>.
+    document.getElementById(takeHeadingId(memberId))?.focus();
     try {
       const result = await submit({
         groupId: props.groupId,
@@ -532,10 +639,10 @@ function ShootoutGroup(props: {
           : `${result.remaining} take(s) left to rate.`,
       );
     } catch (error) {
-      props.onNotice(
-        error instanceof Error ? error.message : "Rating failed",
-        true,
-      );
+      setTakeError(memberId, describeError(error));
+      if (trigger.isConnected) trigger.focus();
+    } finally {
+      setSavingId(null);
     }
   }
 
@@ -545,18 +652,16 @@ function ShootoutGroup(props: {
   async function chooseHouseVoice(voiceId: string) {
     if (choosing()) return;
     setChoosing(true);
+    const name = voiceName(voiceId);
     try {
       const { initialNarrationScheduled } = await setHouseVoice({ voiceId });
       props.onNotice(
         initialNarrationScheduled
-          ? `House voice set to ${voiceId}. Narration of briefs from the last ${NARRATION_BACKFILL_DAYS} days is starting; episodes appear in the feed as they finish.`
-          : `House voice set to ${voiceId}. New briefs will be narrated in this voice.`,
+          ? `House voice set to ${name}. Narration of briefs from the last ${NARRATION_BACKFILL_DAYS} days is starting; episodes appear in the feed as they finish.`
+          : `House voice set to ${name}. New briefs will be narrated in this voice.`,
       );
     } catch (error) {
-      props.onNotice(
-        error instanceof Error ? error.message : "Could not set house voice",
-        true,
-      );
+      props.onNotice(describeError(error), true);
     } finally {
       setChoosing(false);
     }
@@ -564,6 +669,18 @@ function ShootoutGroup(props: {
 
   return (
     <>
+      <h3 id={headingId} class={groupHeadingClass}>
+        <Show when={props.createdAt} fallback="Shootout">
+          {(createdAt) => (
+            <>
+              Shootout from{" "}
+              <time datetime={new Date(createdAt()).toISOString()}>
+                {formatShootoutDate(createdAt())}
+              </time>
+            </>
+          )}
+        </Show>
+      </h3>
       <UINotice status={null} error={groupError()} />
       <Show when={projection()}>
         {(group) => (
@@ -574,6 +691,8 @@ function ShootoutGroup(props: {
                   src={member.playbackUrl}
                   label={member.label}
                   durationSecs={member.durationSecs}
+                  headingLevel={4}
+                  headingId={takeHeadingId(member.memberId)}
                 />
                 <Show
                   when={!group().revealed && !ratedIds().has(member.memberId)}
@@ -584,19 +703,28 @@ function ShootoutGroup(props: {
                         <div class={fieldClass}>
                           <label
                             class={fieldLabelClass}
-                            for={`rating-${member.memberId}-${key}`}
+                            for={fieldId(member.memberId, key)}
                           >
                             {RATING_LABELS[key]} (0-5)
                           </label>
                           <UIInput
-                            id={`rating-${member.memberId}-${key}`}
+                            id={fieldId(member.memberId, key)}
                             type="number"
                             min="0"
                             max="5"
                             step="1"
-                            required
                             placeholder="0-5"
                             inputmode="numeric"
+                            aria-invalid={
+                              invalidFields()[member.memberId] === key
+                                ? "true"
+                                : undefined
+                            }
+                            aria-describedby={
+                              key === "clean"
+                                ? helpId(member.memberId)
+                                : undefined
+                            }
                             value={formFor(member.memberId)[key]}
                             onInput={(event) =>
                               update(
@@ -610,6 +738,9 @@ function ShootoutGroup(props: {
                       )}
                     </For>
                   </div>
+                  <p id={helpId(member.memberId)} class={ratingHelpClass}>
+                    Clean: 5 means no artifacts.
+                  </p>
                   <div class={actionsClass}>
                     <UIInput
                       placeholder="Notes"
@@ -625,12 +756,16 @@ function ShootoutGroup(props: {
                     />
                     <UIButton
                       type="button"
-                      onClick={() => rate(member.memberId)}
+                      aria-busy={savingId() === member.memberId}
+                      onClick={(event) =>
+                        rate(member.memberId, event.currentTarget)
+                      }
                     >
                       Save rating
                     </UIButton>
                   </div>
                 </Show>
+                <UINotice error={takeErrors()[member.memberId] ?? null} />
                 <Show
                   when={ratedIds().has(member.memberId) && !group().revealed}
                 >
@@ -640,8 +775,11 @@ function ShootoutGroup(props: {
                 </Show>
                 <Show when={group().revealed}>
                   <div class={actionsClass}>
-                    <UIBadge tone="violet">
-                      {ratingFor(member.memberId)?.voiceId ?? "unrated"}
+                    <UIBadge tone="cream">
+                      {(() => {
+                        const voiceId = ratingFor(member.memberId)?.voiceId;
+                        return voiceId ? voiceName(voiceId) : "unrated";
+                      })()}
                     </UIBadge>
                     <Show when={ratingFor(member.memberId)?.voiceId}>
                       {(voiceId) => (
@@ -654,7 +792,7 @@ function ShootoutGroup(props: {
                           </Show>
                           <UIButton
                             type="button"
-                            disabled={choosing()}
+                            aria-busy={choosing()}
                             onClick={() => chooseHouseVoice(voiceId())}
                           >
                             Set as house voice

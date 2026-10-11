@@ -11,11 +11,16 @@ import type {
   OrbitalSource,
 } from "./zodiac-types";
 
-interface OrbitalItem {
+export interface OrbitalItem {
   id: string;
   title: string;
   status: string;
   sectorId?: string; // inferred from topics/concepts
+}
+
+/** The sector an orbiting body is drawn in; unplaced items sit in Music. */
+export function orbitalItemSector(item: OrbitalItem): string {
+  return item.sectorId ?? "music";
 }
 
 export interface OrbitalRing {
@@ -33,6 +38,17 @@ export interface OrbitalSystem {
 }
 
 const reusableOrbitDummy = new THREE.Object3D();
+
+// Stable per-item value in [0, 1): a live data refresh rebuilds the rings, and
+// a body must keep its orbital speed across rebuilds instead of re-rolling it.
+function hashUnit(id: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0) / 0x100000000;
+}
 
 // Infer which sector an item belongs to from its topics
 function inferSectorFromTopics(topics: string[]): string {
@@ -124,7 +140,7 @@ function buildOrbitalRing(
   // Group items by sector to create density clusters
   const sectorGroups = new Map<string, number[]>();
   items.forEach((item, i) => {
-    const sid = item.sectorId ?? "music";
+    const sid = orbitalItemSector(item);
     if (!sectorGroups.has(sid)) sectorGroups.set(sid, []);
     sectorGroups.get(sid)!.push(i);
   });
@@ -134,7 +150,7 @@ function buildOrbitalRing(
     indices.forEach((idx, j) => {
       const t = indices.length > 1 ? j / (indices.length - 1) : 0.5;
       angleAttrib[idx] = start + t * (end - start);
-      speedAttrib[idx] = 0.02 + Math.random() * 0.01; // slow orbit
+      speedAttrib[idx] = 0.02 + hashUnit(items[idx].id) * 0.01; // slow orbit
 
       // Color by status
       const statusColor = STATUS_COLORS[items[idx].status] ?? COLORS.gold;
@@ -186,6 +202,46 @@ function buildOrbitalRing(
   };
 }
 
+/** Pipeline items as orbiting bodies, one list per ring. The sidebar reads
+ *  the same lists so its keyboard path names exactly what the scene draws. */
+export function buildOrbitalItemGroups(
+  sources: OrbitalSource[],
+  extractions: OrbitalExtraction[],
+  hypotheses: OrbitalHypothesis[],
+  recipes: OrbitalRecipe[],
+): {
+  sources: OrbitalItem[];
+  extractions: OrbitalItem[];
+  hypotheses: OrbitalItem[];
+  recipes: OrbitalItem[];
+} {
+  return {
+    sources: sources.map((s) => ({
+      id: s._id,
+      title: s.title ?? "Untitled",
+      status: s.status,
+      sectorId: inferSectorFromTopics(s.topics ?? []),
+    })),
+    extractions: extractions.map((e) => ({
+      id: e._id,
+      title: `Extraction (${e.topics.slice(0, 2).join(", ")})`,
+      status: e.confidence > 0.7 ? "extracted" : "review_needed",
+      sectorId: inferSectorFromTopics(e.topics),
+    })),
+    hypotheses: hypotheses.map((h) => ({
+      id: h._id,
+      title: h.title,
+      status: h.status,
+      sectorId: inferSectorFromTopics(h.concepts ?? []),
+    })),
+    recipes: recipes.map((r) => ({
+      id: r._id,
+      title: r.title,
+      status: r.status,
+    })),
+  };
+}
+
 export function buildOrbitalSystem(
   sources: OrbitalSource[],
   extractions: OrbitalExtraction[],
@@ -195,33 +251,12 @@ export function buildOrbitalSystem(
   const group = new THREE.Group();
   group.userData.type = "orbital-system";
 
-  // Map sources to orbital items with sector inference
-  const sourceItems: OrbitalItem[] = sources.map((s) => ({
-    id: s._id,
-    title: s.title ?? "Untitled",
-    status: s.status,
-    sectorId: inferSectorFromTopics(s.topics ?? []),
-  }));
-
-  const extractionItems: OrbitalItem[] = extractions.map((e) => ({
-    id: e._id,
-    title: `Extraction (${e.topics.slice(0, 2).join(", ")})`,
-    status: e.confidence > 0.7 ? "extracted" : "review_needed",
-    sectorId: inferSectorFromTopics(e.topics),
-  }));
-
-  const hypothesisItems: OrbitalItem[] = hypotheses.map((h) => ({
-    id: h._id,
-    title: h.title,
-    status: h.status,
-    sectorId: inferSectorFromTopics(h.concepts ?? []),
-  }));
-
-  const recipeItems: OrbitalItem[] = recipes.map((r) => ({
-    id: r._id,
-    title: r.title,
-    status: r.status,
-  }));
+  const {
+    sources: sourceItems,
+    extractions: extractionItems,
+    hypotheses: hypothesisItems,
+    recipes: recipeItems,
+  } = buildOrbitalItemGroups(sources, extractions, hypotheses, recipes);
 
   // Build each ring
   const sourcesRing = buildOrbitalRing(
@@ -296,20 +331,28 @@ export function updateOrbits(system: OrbitalSystem, time: number): void {
   }
 }
 
-// Build pull-lines from a clicked item to its related items on other rings
+const PULL_LINE_SEGMENTS = 20;
+
+export interface PullLines {
+  group: THREE.Group;
+  /** Re-trace every line from the bodies' current instance matrices. */
+  update: () => void;
+}
+
+// Build pull-lines from a clicked item to its related items on other rings.
+// The bodies keep orbiting, so the lines are re-traced every frame via
+// `update()` rather than baked at build time.
 export function buildPullLines(
   clickedRing: OrbitalRing,
   clickedIndex: number,
   relations: ItemRelation[],
   allRings: OrbitalRing[],
-): THREE.Group {
+): PullLines {
   const group = new THREE.Group();
   group.userData.type = "pull-lines";
 
-  // Get clicked item position from instance matrix
-  const srcMatrix = new THREE.Matrix4();
-  clickedRing.mesh.getMatrixAt(clickedIndex, srcMatrix);
-  const srcPos = new THREE.Vector3().setFromMatrixPosition(srcMatrix);
+  const links: Array<{ line: THREE.Line; ring: OrbitalRing; index: number }> =
+    [];
 
   for (const relation of relations) {
     // Find the target item across all rings
@@ -317,30 +360,59 @@ export function buildPullLines(
       const targetIdx = ring.items.findIndex((item) => item.id === relation.id);
       if (targetIdx === -1) continue;
 
-      const tgtMatrix = new THREE.Matrix4();
-      ring.mesh.getMatrixAt(targetIdx, tgtMatrix);
-      const tgtPos = new THREE.Vector3().setFromMatrixPosition(tgtMatrix);
-
-      // Catmull-Rom curve through midpoint raised above disc
-      const midZ = Math.max(srcPos.z, tgtPos.z) + 30;
-      const midPoint = new THREE.Vector3(
-        (srcPos.x + tgtPos.x) / 2,
-        (srcPos.y + tgtPos.y) / 2,
-        midZ,
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+          new Float32Array((PULL_LINE_SEGMENTS + 1) * 3),
+          3,
+        ),
       );
-
-      const curve = new THREE.CatmullRomCurve3([srcPos, midPoint, tgtPos]);
-      const pts = curve.getPoints(20);
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const mat = new THREE.LineBasicMaterial({
         color: COLORS.gold,
         transparent: true,
         opacity: 0.5,
         depthWrite: false,
       });
-      group.add(new THREE.Line(geo, mat));
+      const line = new THREE.Line(geo, mat);
+      // The geometry moves every frame; a stale bounding sphere would cull it.
+      line.frustumCulled = false;
+      group.add(line);
+      links.push({ line, ring, index: targetIdx });
     }
   }
 
-  return group;
+  const matrix = new THREE.Matrix4();
+  const srcPos = new THREE.Vector3();
+  const tgtPos = new THREE.Vector3();
+  const midPoint = new THREE.Vector3();
+  const point = new THREE.Vector3();
+  // Catmull-Rom curve through a midpoint raised above the disc. The curve
+  // holds these vectors by reference, so mutating them re-shapes it.
+  const curve = new THREE.CatmullRomCurve3([srcPos, midPoint, tgtPos]);
+
+  function update() {
+    clickedRing.mesh.getMatrixAt(clickedIndex, matrix);
+    srcPos.setFromMatrixPosition(matrix);
+    for (const link of links) {
+      link.ring.mesh.getMatrixAt(link.index, matrix);
+      tgtPos.setFromMatrixPosition(matrix);
+      midPoint.set(
+        (srcPos.x + tgtPos.x) / 2,
+        (srcPos.y + tgtPos.y) / 2,
+        Math.max(srcPos.z, tgtPos.z) + 30,
+      );
+      const position = link.line.geometry.getAttribute(
+        "position",
+      ) as THREE.BufferAttribute;
+      for (let i = 0; i <= PULL_LINE_SEGMENTS; i++) {
+        curve.getPoint(i / PULL_LINE_SEGMENTS, point);
+        position.setXYZ(i, point.x, point.y, point.z);
+      }
+      position.needsUpdate = true;
+    }
+  }
+
+  update();
+  return { group, update };
 }

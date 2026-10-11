@@ -1,10 +1,13 @@
+import { Link } from "@tanstack/solid-router";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { FunctionArgs } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { SOURCE_STATUSES } from "../../../convex/shared/statuses";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   fieldLabelClass,
+  helperClass,
+  inlineActionLink,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -15,15 +18,35 @@ import {
   UINotice,
   UISelect,
 } from "../components/ui";
-import { createMutation, createQuery } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+} from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
 type SourceStatus = FunctionArgs<typeof api.admin.setSourceStatus>["status"];
 
-const helperClass = css({
-  color: "zodiac.cream/58",
-  fontSize: "sm",
-  lineHeight: "1.6",
+const SOURCE_ID_REQUIRED = "Source ID is required.";
+
+const countClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "2xl",
+  mt: "2",
+});
+
+const badgeRowClass = css({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  marginTop: "2",
+});
+
+const formActionsClass = css({
+  display: "flex",
+  justifyContent: "flex-end",
+  marginTop: "3",
 });
 
 export function AdminPage() {
@@ -31,12 +54,12 @@ export function AdminPage() {
     document.title = "Admin — Frequency Music";
   });
 
-  const snapshot = createQuery(api.admin.workspaceSnapshot);
+  const snapshot = createQueryWithStatus(api.admin.workspaceSnapshot);
   const setSourceStatus = createMutation(api.admin.setSourceStatus);
   const startBatchExtraction = createMutation(
     api.workflows.startBatchExtraction,
   );
-  const reviewSummary = createQuery(api.vocabulary.reviewSummary);
+  const reviewSummary = createQueryWithStatus(api.vocabulary.reviewSummary);
 
   const [sourceId, setSourceId] = createSignal("");
   const [sourceStatus, setSourceStatusValue] =
@@ -45,20 +68,41 @@ export function AdminPage() {
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
   const [sourceIdInvalid, setSourceIdInvalid] = createSignal(false);
+  const [isQueueing, setIsQueueing] = createSignal(false);
+  const [isApplying, setIsApplying] = createSignal(false);
   let sourceIdField: HTMLInputElement | undefined;
+
+  /** A snapshot count, or an em dash until the snapshot has loaded. */
+  const count = (
+    key:
+      | "sources"
+      | "hypotheses"
+      | "recipes"
+      | "compositions"
+      | "weeklyBriefs"
+      | "feeds",
+  ) => {
+    const data = snapshot.data();
+    return data ? data[key] : "—";
+  };
 
   async function submitSourceStatus(event: SubmitEvent) {
     event.preventDefault();
+    if (isApplying()) return;
     setNotice(null);
     setNoticeError(null);
 
     if (!sourceId().trim()) {
       setSourceIdInvalid(true);
+      // Enter-to-submit never leaves the field, so its error text alone would
+      // go unannounced; the page alert carries it too.
+      setNoticeError(SOURCE_ID_REQUIRED);
       sourceIdField?.focus();
       return;
     }
     setSourceIdInvalid(false);
 
+    setIsApplying(true);
     try {
       await setSourceStatus({
         id: sourceId().trim() as Id<"sources">,
@@ -66,48 +110,38 @@ export function AdminPage() {
       });
       setNotice("Source status updated.");
     } catch (error) {
-      setNoticeError(`Source status update failed: ${String(error)}`);
+      setNoticeError(`Source status update failed: ${describeError(error)}`);
+    } finally {
+      setIsApplying(false);
     }
   }
 
   async function queueBatchExtraction(event: SubmitEvent) {
     event.preventDefault();
+    if (isQueueing()) return;
     setNotice(null);
     setNoticeError(null);
 
+    setIsQueueing(true);
     try {
       const result = await startBatchExtraction({
         limit: Number(batchLimit()) || 25,
       });
       setNotice(`Batch extraction queued: ${result.workflowId}`);
     } catch (error) {
-      setNoticeError(`Batch extraction failed: ${String(error)}`);
+      setNoticeError(`Batch extraction failed: ${describeError(error)}`);
+    } finally {
+      setIsQueueing(false);
     }
   }
 
   return (
     <section class={pageClass}>
       <UICard>
-        <div
-          class={css({
-            alignItems: "center",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "3",
-          })}
-        >
-          <div>
-            <h1 class={pageTitleClass}>Admin</h1>
-            <p
-              class={css({
-                color: "zodiac.cream/62",
-                lineHeight: "1.6",
-              })}
-            >
-              Workspace metrics and emergency operational overrides.
-            </p>
-          </div>
-        </div>
+        <h1 class={pageTitleClass}>Admin</h1>
+        <p class={helperClass}>
+          Workspace metrics and emergency operational overrides.
+        </p>
 
         <UINotice
           class={css({ marginTop: "3" })}
@@ -118,6 +152,14 @@ export function AdminPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Workspace Snapshot</h2>
+        <UINotice
+          status={snapshot.isLoading() ? "Loading workspace snapshot…" : null}
+          error={
+            snapshot.error()
+              ? `Unable to load workspace snapshot: ${snapshot.error()?.message}`
+              : null
+          }
+        />
         <dl
           class={css({
             display: "grid",
@@ -132,42 +174,46 @@ export function AdminPage() {
             <dt>
               <UIBadge tone="gold">Sources</UIBadge>
             </dt>
-            <dd>{snapshot()?.sources ?? 0}</dd>
+            <dd class={countClass}>{count("sources")}</dd>
           </div>
           <div>
             <dt>
               <UIBadge tone="violet">Hypotheses</UIBadge>
             </dt>
-            <dd>{snapshot()?.hypotheses ?? 0}</dd>
+            <dd class={countClass}>{count("hypotheses")}</dd>
           </div>
           <div>
             <dt>
               <UIBadge tone="cream">Recipes</UIBadge>
             </dt>
-            <dd>{snapshot()?.recipes ?? 0}</dd>
+            <dd class={countClass}>{count("recipes")}</dd>
           </div>
           <div>
             <dt>
               <UIBadge tone="gold">Compositions</UIBadge>
             </dt>
-            <dd>{snapshot()?.compositions ?? 0}</dd>
+            <dd class={countClass}>{count("compositions")}</dd>
           </div>
           <div>
             <dt>
               <UIBadge tone="violet">Weekly Briefs</UIBadge>
             </dt>
-            <dd>{snapshot()?.weeklyBriefs ?? 0}</dd>
+            <dd class={countClass}>{count("weeklyBriefs")}</dd>
           </div>
           <div>
             <dt>
               <UIBadge tone="cream">Feeds</UIBadge>
             </dt>
-            <dd>{snapshot()?.feeds ?? 0}</dd>
+            <dd class={countClass}>{count("feeds")}</dd>
           </div>
         </dl>
       </UICard>
 
-      <UICard as="form" onSubmit={queueBatchExtraction}>
+      <UICard
+        as="form"
+        onSubmit={queueBatchExtraction}
+        aria-busy={isQueueing()}
+      >
         <h2 class={sectionTitleClass}>Extraction Backlog</h2>
         <p class={helperClass}>
           Queue extraction for existing `text_ready` sources so they can create
@@ -183,14 +229,8 @@ export function AdminPage() {
           onInput={(event) => setBatchLimit(event.currentTarget.value)}
           placeholder="25"
         />
-        <div
-          class={css({
-            display: "flex",
-            justifyContent: "flex-end",
-            marginTop: "3",
-          })}
-        >
-          <UIButton type="submit" variant="solid">
+        <div class={formActionsClass}>
+          <UIButton type="submit" variant="solid" aria-busy={isQueueing()}>
             Queue Batch Extraction
           </UIButton>
         </div>
@@ -202,97 +242,57 @@ export function AdminPage() {
           New parameter kinds, concept domains, and edge relationships are
           stored provisionally instead of blocking extraction.
         </p>
+        <UINotice
+          status={
+            reviewSummary.isLoading() ? "Loading vocabulary review…" : null
+          }
+          error={
+            reviewSummary.error()
+              ? `Unable to load vocabulary review: ${reviewSummary.error()?.message}`
+              : null
+          }
+        />
         <div class={css({ display: "grid", gap: "4", marginTop: "3" })}>
           <div>
             <UIBadge tone="gold">Parameter Kinds</UIBadge>
-            <div
-              class={css({
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "2",
-                marginTop: "2",
-              })}
-            >
-              <Show
-                when={
-                  (reviewSummary()?.provisionalParameterKinds.length ?? 0) > 0
-                }
-                fallback={<span class={helperClass}>None</span>}
-              >
-                <For each={reviewSummary()?.provisionalParameterKinds ?? []}>
-                  {(item) => <UIBadge tone="cream">{item}</UIBadge>}
-                </For>
-              </Show>
+            <div class={badgeRowClass}>
+              <ProvisionalTerms
+                loaded={Boolean(reviewSummary.data())}
+                terms={reviewSummary.data()?.provisionalParameterKinds}
+              />
             </div>
           </div>
           <div>
             <UIBadge tone="violet">Concept Domains</UIBadge>
-            <div
-              class={css({
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "2",
-                marginTop: "2",
-              })}
-            >
-              <Show
-                when={
-                  (reviewSummary()?.provisionalConceptDomains.length ?? 0) > 0
-                }
-                fallback={<span class={helperClass}>None</span>}
-              >
-                <For each={reviewSummary()?.provisionalConceptDomains ?? []}>
-                  {(item) => <UIBadge tone="cream">{item}</UIBadge>}
-                </For>
-              </Show>
+            <div class={badgeRowClass}>
+              <ProvisionalTerms
+                loaded={Boolean(reviewSummary.data())}
+                terms={reviewSummary.data()?.provisionalConceptDomains}
+              />
             </div>
           </div>
           <div>
             <UIBadge tone="cream">Relationship Kinds</UIBadge>
-            <div
-              class={css({
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "2",
-                marginTop: "2",
-              })}
-            >
-              <Show
-                when={
-                  (reviewSummary()?.provisionalRelationshipKinds.length ?? 0) >
-                  0
-                }
-                fallback={<span class={helperClass}>None</span>}
-              >
-                <For each={reviewSummary()?.provisionalRelationshipKinds ?? []}>
-                  {(item) => <UIBadge tone="cream">{item}</UIBadge>}
-                </For>
-              </Show>
+            <div class={badgeRowClass}>
+              <ProvisionalTerms
+                loaded={Boolean(reviewSummary.data())}
+                terms={reviewSummary.data()?.provisionalRelationshipKinds}
+              />
             </div>
           </div>
         </div>
       </UICard>
 
-      <UICard as="form" onSubmit={submitSourceStatus}>
+      <UICard as="form" onSubmit={submitSourceStatus} aria-busy={isApplying()}>
         <h2 class={sectionTitleClass}>Source Override</h2>
-        <p class={css({ color: "zodiac.cream/62", marginBottom: "3" })}>
+        <p class={cx(helperClass, css({ marginBottom: "3" }))}>
           Emergency/manual override. For normal source workflow, use the Display
           queue.
         </p>
         <p class={css({ marginBottom: "3" })}>
-          <a
-            href="/display"
-            class={css({
-              color: "zodiac.gold",
-              fontFamily: "mono",
-              fontSize: "xs",
-              letterSpacing: "0.12em",
-              textDecoration: "none",
-              textTransform: "uppercase",
-            })}
-          >
-            Open Display Queue →
-          </a>
+          <Link to="/display" class={inlineActionLink}>
+            Open Display Queue <span aria-hidden="true">→</span>
+          </Link>
         </p>
         <label class={fieldLabelClass} for="admin-source-id">
           Source ID
@@ -318,7 +318,7 @@ export function AdminPage() {
             id="admin-source-id-error"
             class={css({ color: "zodiac.error", fontSize: "sm", mt: "1" })}
           >
-            Source ID is required.
+            {SOURCE_ID_REQUIRED}
           </p>
         </Show>
 
@@ -337,18 +337,26 @@ export function AdminPage() {
           </For>
         </UISelect>
 
-        <div
-          class={css({
-            display: "flex",
-            justifyContent: "flex-end",
-            marginTop: "3",
-          })}
-        >
-          <UIButton type="submit" variant="solid">
+        <div class={formActionsClass}>
+          <UIButton type="submit" variant="outline" aria-busy={isApplying()}>
             Apply Status
           </UIButton>
         </div>
       </UICard>
     </section>
+  );
+}
+
+/** Provisional vocabulary terms as badges; "None" once loaded and empty. */
+function ProvisionalTerms(props: { loaded: boolean; terms?: string[] }) {
+  return (
+    <Show
+      when={(props.terms?.length ?? 0) > 0}
+      fallback={<span class={helperClass}>{props.loaded ? "None" : "—"}</span>}
+    >
+      <For each={props.terms ?? []}>
+        {(item) => <UIBadge tone="cream">{item}</UIBadge>}
+      </For>
+    </Show>
   );
 }

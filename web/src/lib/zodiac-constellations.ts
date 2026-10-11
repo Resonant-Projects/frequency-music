@@ -1,9 +1,8 @@
 // ZODIAC constellation overlay — concept clusters rendered as star patterns.
 // Each concept = a star (THREE.Points), edges between them = constellation lines.
-// Cross-domain concepts get gold bezier arcs.
 
 import * as THREE from "three";
-import { COLORS, type SectorDef } from "./zodiac-data";
+import type { SectorDef } from "./zodiac-data";
 import type {
   ConstellationConcept,
   ZodiacConstellationEdge,
@@ -249,46 +248,4 @@ export function updateConstellationTime(
   if (mat.uniforms?.uTime) {
     mat.uniforms.uTime.value = time;
   }
-}
-
-// Build cross-domain arcs for concepts appearing in multiple sectors
-export function buildCrossDomainArcs(
-  concepts: Array<{ name: string; domain: string }>,
-  starPositions: Map<string, THREE.Vector3>,
-): THREE.Group {
-  const group = new THREE.Group();
-  group.userData.type = "crossDomainArcs";
-
-  // Find concepts that exist in starPositions from different sectors
-  // For now, draw gold arcs between same-named concepts across sectors
-  const conceptPositions = new Map<string, THREE.Vector3[]>();
-  for (const [name, pos] of starPositions) {
-    if (!conceptPositions.has(name)) conceptPositions.set(name, []);
-    conceptPositions.get(name)!.push(pos);
-  }
-
-  for (const [, positions] of conceptPositions) {
-    if (positions.length < 2) continue;
-    for (let i = 0; i < positions.length - 1; i++) {
-      const start = positions[i];
-      const end = positions[i + 1];
-      const curve = new THREE.CubicBezierCurve3(
-        start,
-        new THREE.Vector3(start.x, start.y, 25),
-        new THREE.Vector3(end.x, end.y, 25),
-        end,
-      );
-      const pts = curve.getPoints(24);
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      const mat = new THREE.LineBasicMaterial({
-        color: COLORS.gold,
-        transparent: true,
-        opacity: 0.3,
-        depthWrite: false,
-      });
-      group.add(new THREE.Line(geo, mat));
-    }
-  }
-
-  return group;
 }

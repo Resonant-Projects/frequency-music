@@ -2,10 +2,18 @@ import { Link } from "@tanstack/solid-router";
 import type { FunctionReturnType } from "convex/server";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
-  collapsedNoticeClass,
+  AgentRunEventList,
+  AgentRunTime,
+  AgentRunTimesList,
+} from "../components/agent-run-event";
+import {
   fieldLabelClass,
+  focusRingClass,
+  helperClass,
+  inlineActionLink,
+  metaLine,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -15,10 +23,13 @@ import {
   UISelect,
 } from "../components/ui";
 import { createQueryWithStatus } from "../integrations/convex";
+import {
+  type AgentRunStatus,
+  formatDuration,
+  runStatusTone,
+} from "../lib/agent-run-format";
 import { api } from "../../../convex/_generated/api";
 
-type AgentRunStatus = Doc<"agentRuns">["status"];
-type AgentRunEventKind = Doc<"agentRunEvents">["kind"];
 type AgentRun = FunctionReturnType<
   typeof api.agentRuns.listRecentPublic
 >[number];
@@ -39,12 +50,6 @@ const GRAPHS = [
   { value: "weekly-brief", label: "Weekly Brief" },
 ] as const;
 
-const helperClass = css({
-  color: "zodiac.cream/58",
-  fontSize: "sm",
-  lineHeight: "1.6",
-});
-
 const metricGridClass = css({
   display: "grid",
   gap: "3",
@@ -55,6 +60,14 @@ const metricGridClass = css({
   },
 });
 
+const runListClass = css({
+  display: "grid",
+  gap: "3",
+  listStyleType: "none",
+  m: "0",
+  p: "0",
+});
+
 const runRowClass = css({
   bg: "zodiac.cream/2.5",
   borderColor: "zodiac.gold/18",
@@ -62,6 +75,7 @@ const runRowClass = css({
   borderWidth: "1px",
   display: "grid",
   gap: "3",
+  minW: "0",
   p: "4",
   textAlign: "left",
   transition: "border-color 160ms ease, background 160ms ease",
@@ -82,6 +96,7 @@ const runRowTriggerClass = css({
   cursor: "pointer",
   display: "grid",
   gap: "3",
+  minW: "0",
   p: "0",
   textAlign: "left",
   width: "100%",
@@ -92,80 +107,17 @@ const runRowTriggerClass = css({
   },
 });
 
-/** Wrapper for an always-mounted notice that currently carries no text. */
-const DETAILS_CARD_ID = "agent-run-details";
-
 const selectedRunRowClass = css({
   bg: "zodiac.violet/8",
   borderColor: "zodiac.violet/58",
 });
 
-const metaClass = css({
-  color: "zodiac.cream/60",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-});
+/** The details card that each run row's `aria-controls` points at. */
+const DETAILS_CARD_ID = "agent-run-details";
+const DETAILS_TITLE_ID = "agent-run-details-title";
 
-const eventClass = css({
-  borderColor: "zodiac.cream/12",
-  borderLeftWidth: "1px",
-  display: "grid",
-  gap: "2",
-  pl: "4",
-  position: "relative",
-  _before: {
-    bg: "zodiac.gold",
-    borderRadius: "full",
-    content: '""',
-    height: "2",
-    left: "-1",
-    position: "absolute",
-    top: "2",
-    width: "2",
-  },
-});
-
-function statusTone(status: AgentRunStatus): "gold" | "violet" | "cream" {
-  if (status === "failed") return "violet";
-  if (status === "completed") return "gold";
-  return "cream";
-}
-
-function eventTone(kind: AgentRunEventKind): "gold" | "violet" | "cream" {
-  if (kind === "error") return "violet";
-  if (kind === "decision" || kind === "review_request") return "gold";
-  return "cream";
-}
-
-const timeFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "medium",
-});
-
-function formatTime(value?: number) {
-  if (!value) return "—";
-  return timeFormatter.format(new Date(value));
-}
-
-function formatDuration(run: AgentRun) {
-  const start = run.startedAt ?? run.createdAt;
-  const end = run.finishedAt ?? run.updatedAt;
-  const durationMs = Math.max(0, end - start);
-  if (durationMs < 1000) return `${durationMs} ms`;
-  return `${(durationMs / 1000).toFixed(1)} s`;
-}
-
-function formatPayload(payload: unknown) {
-  if (payload === undefined || payload === null) return "";
-  try {
-    return JSON.stringify(payload, null, 2);
-  } catch {
-    // oxlint-disable-next-line typescript/no-base-to-string -- Preserve the existing fallback for non-JSON-serializable payloads.
-    return String(payload);
-  }
-}
+/** Panda's `xl` breakpoint, where the details card sits beside the list. */
+const SIDE_BY_SIDE_QUERY = "(min-width: 80em)";
 
 function isSmokeRun(run: { smokeMode?: boolean; input?: unknown }) {
   if (run.smokeMode === true) return true;
@@ -187,6 +139,8 @@ export function AgentRunsPage() {
   const [graphName, setGraphName] = createSignal("");
   const [selectedRunId, setSelectedRunId] =
     createSignal<Id<"agentRuns"> | null>(null);
+  let detailsCard: HTMLElement | undefined;
+  let detailsTitle: HTMLHeadingElement | undefined;
 
   const runs = createQueryWithStatus(api.agentRuns.listRecentPublic, () => ({
     limit: 40,
@@ -237,9 +191,20 @@ export function AgentRunsPage() {
     events.error() ? `Unable to load events: ${events.error()?.message}` : null;
 
   function selectRun(run: AgentRun) {
-    setSelectedRunId((current) =>
-      current === run._id ? null : (run._id as Id<"agentRuns">),
-    );
+    const opening = selectedRunId() !== run._id;
+    setSelectedRunId(opening ? (run._id as Id<"agentRuns">) : null);
+    // Below `xl` the details card stacks under the whole list, so opening a
+    // run would otherwise change content far off-screen. Bring it to the
+    // reader and hand focus to its heading.
+    if (!opening || window.matchMedia(SIDE_BY_SIDE_QUERY).matches) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    detailsTitle?.focus({ preventScroll: true });
+    detailsCard?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
   }
 
   return (
@@ -247,46 +212,42 @@ export function AgentRunsPage() {
       <UICard>
         <UIBadge tone="gold">LangGraph Control Plane</UIBadge>
         <h1 class={pageTitleClass}>Agent Runs</h1>
-        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
+        <p class={helperClass}>
           Observe dry-runs and production agent lifecycle records written
           through the Convex audit surface. Details load only when a run is
           selected.
         </p>
         <Link
           to="/agent-drafts"
-          class={css({
-            alignItems: "center",
-            display: "inline-flex",
-            gap: "2",
-            mt: "3",
-            textDecoration: "none",
-          })}
+          class={cx(inlineActionLink, css({ gap: "2", mt: "3" }))}
         >
           <UIBadge
             tone={(pendingDraftCount.data() ?? 0) > 0 ? "violet" : "cream"}
           >
             {pendingDraftCount.data() ?? 0} Pending Review
           </UIBadge>
-          <span
-            class={css({
-              color: "zodiac.gold",
-              fontFamily: "mono",
-              fontSize: "xs",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            })}
-          >
-            Open Review Queue ↗
+          <span>
+            Open Review Queue <span aria-hidden="true">↗</span>
           </span>
         </Link>
-      </UICard>
 
-      <UICard class={listError() ? undefined : collapsedNoticeClass}>
         <Show when={listError()}>
-          <UIBadge tone="violet">Convex Query Error</UIBadge>
-          <h2 class={sectionTitleClass}>Agent run data is not available yet</h2>
+          <div
+            class={css({
+              alignItems: "center",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "2",
+              mt: "5",
+            })}
+          >
+            <UIBadge tone="violet">Convex Query Error</UIBadge>
+            <h2 class={cx(sectionTitleClass, css({ mb: "0" }))}>
+              Agent run data is not available yet
+            </h2>
+          </div>
         </Show>
-        <UINotice error={listErrorMessage()} />
+        <UINotice class={css({ mt: "3" })} error={listErrorMessage()} />
         <Show when={listError()}>
           <p class={helperClass}>
             This usually means the browser is not fully authenticated with
@@ -313,7 +274,9 @@ export function AgentRunsPage() {
                     mt: "2",
                   })}
                 >
-                  {counts.data()?.[item.value as AgentRunStatus] ?? 0}
+                  {counts.isLoading()
+                    ? "—"
+                    : (counts.data()?.[item.value as AgentRunStatus] ?? 0)}
                 </p>
               </div>
             )}
@@ -327,7 +290,10 @@ export function AgentRunsPage() {
           class={css({
             display: "grid",
             gap: "3",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            gridTemplateColumns: {
+              base: "minmax(0, 1fr)",
+              md: "repeat(2, minmax(0, 1fr))",
+            },
           })}
         >
           <div>
@@ -372,7 +338,7 @@ export function AgentRunsPage() {
           display: "grid",
           gap: "4",
           gridTemplateColumns: {
-            base: "1fr",
+            base: "minmax(0, 1fr)",
             xl: "minmax(0, 1.08fr) minmax(360px, 0.92fr)",
           },
         })}
@@ -381,13 +347,13 @@ export function AgentRunsPage() {
           <h2 class={sectionTitleClass}>Runs</h2>
           <UINotice status={runsStatus()} error={runsError()} />
           <Show when={!runs.isLoading() && (runs.data() ?? []).length > 0}>
-            <div class={css({ display: "grid", gap: "3" })}>
+            <ul role="list" class={runListClass}>
               <For each={runs.data() ?? []}>
                 {(run: AgentRun) => (
-                  <div
+                  <li
                     class={
                       run._id === selectedRunId()
-                        ? `${runRowClass} ${selectedRunRowClass}`
+                        ? cx(runRowClass, selectedRunRowClass)
                         : runRowClass
                     }
                   >
@@ -415,15 +381,15 @@ export function AgentRunsPage() {
                             gap: "2",
                           })}
                         >
-                          <UIBadge tone={statusTone(run.status)}>
+                          <UIBadge tone={runStatusTone(run.status)}>
                             {run.status}
                           </UIBadge>
-                          <UIBadge tone="violet">{run.graphName}</UIBadge>
+                          <UIBadge tone="cream">{run.graphName}</UIBadge>
                           <Show when={isSmokeRun(run)}>
                             <UIBadge tone="cream">Smoke</UIBadge>
                           </Show>
                         </div>
-                        <span class={metaClass}>{formatDuration(run)}</span>
+                        <span class={metaLine}>{formatDuration(run)}</span>
                       </div>
                       <p
                         class={css({
@@ -431,6 +397,7 @@ export function AgentRunsPage() {
                           fontFamily: "display",
                           fontSize: "lg",
                           lineHeight: "1.35",
+                          overflowWrap: "anywhere",
                         })}
                       >
                         {run.summary ?? "No summary yet"}
@@ -444,35 +411,48 @@ export function AgentRunsPage() {
                         alignItems: "center",
                       })}
                     >
-                      <span class={metaClass}>
-                        Updated {formatTime(run.updatedAt)}
+                      <span class={metaLine}>
+                        Updated <AgentRunTime value={run.updatedAt} />
                       </span>
-                      <span class={metaClass}>
+                      <span class={metaLine}>
                         Run {String(run._id).slice(0, 12)}
                       </span>
                       <Link
                         to="/agent-runs/$runId"
                         params={{ runId: String(run._id) }}
-                        class={css({
-                          color: "zodiac.gold",
-                          fontFamily: "mono",
-                          fontSize: "xs",
-                          letterSpacing: "0.08em",
-                          textTransform: "uppercase",
-                        })}
+                        class={inlineActionLink}
                       >
                         Open Detail <span aria-hidden="true">↗</span>
                       </Link>
                     </div>
-                  </div>
+                  </li>
                 )}
               </For>
-            </div>
+            </ul>
           </Show>
         </UICard>
 
-        <UICard id={DETAILS_CARD_ID}>
-          <h2 class={sectionTitleClass}>Details On Demand</h2>
+        <UICard
+          id={DETAILS_CARD_ID}
+          ref={(element: HTMLElement) => {
+            detailsCard = element;
+          }}
+          aria-labelledby={DETAILS_TITLE_ID}
+          class={css({
+            minW: "0",
+            scrollMarginTop: "calc(var(--app-header-height) + 1rem)",
+          })}
+        >
+          <h2
+            id={DETAILS_TITLE_ID}
+            ref={(element) => {
+              detailsTitle = element;
+            }}
+            tabIndex={-1}
+            class={cx(sectionTitleClass, focusRingClass)}
+          >
+            Details On Demand
+          </h2>
           <Show
             when={selectedRun()}
             fallback={
@@ -486,29 +466,26 @@ export function AgentRunsPage() {
                 <div>
                   <div
                     class={css({
+                      alignItems: "center",
                       display: "flex",
                       flexWrap: "wrap",
                       gap: "2",
                       mb: "3",
                     })}
                   >
-                    <UIBadge tone={statusTone(run().status)}>
+                    <UIBadge tone={runStatusTone(run().status)}>
                       {run().status}
                     </UIBadge>
-                    <UIBadge tone="violet">{run().graphName}</UIBadge>
+                    <UIBadge tone="cream">{run().graphName}</UIBadge>
                     <Show when={run().traceUrl}>
                       {(traceUrl) => (
                         <a
-                          class={css({
-                            color: "zodiac.gold",
-                            fontFamily: "mono",
-                            fontSize: "xs",
-                          })}
+                          class={inlineActionLink}
                           href={traceUrl()}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          Trace ↗
+                          Trace <span aria-hidden="true">↗</span>
                         </a>
                       )}
                     </Show>
@@ -517,105 +494,21 @@ export function AgentRunsPage() {
                     {run().summary ??
                       "This run has not recorded a summary yet."}
                   </p>
-                  <dl
-                    class={css({
-                      display: "grid",
-                      gap: "2",
-                      gridTemplateColumns: "auto 1fr",
-                      mt: "3",
-                    })}
-                  >
-                    <dt class={metaClass}>Created</dt>
-                    <dd class={helperClass}>{formatTime(run().createdAt)}</dd>
-                    <dt class={metaClass}>Started</dt>
-                    <dd class={helperClass}>{formatTime(run().startedAt)}</dd>
-                    <dt class={metaClass}>Finished</dt>
-                    <dd class={helperClass}>{formatTime(run().finishedAt)}</dd>
-                    <dt class={metaClass}>Duration</dt>
-                    <dd class={helperClass}>{formatDuration(run())}</dd>
-                  </dl>
+                  <AgentRunTimesList run={run()} class={css({ mt: "3" })} />
                 </div>
 
                 <div>
-                  <h3
-                    class={css({
-                      color: "zodiac.gold",
-                      fontFamily: "mono",
-                      fontSize: "sm",
-                      letterSpacing: "0.18em",
-                      mb: "3",
-                      textTransform: "uppercase",
-                    })}
-                  >
-                    Event Timeline
-                  </h3>
+                  <h3 class={sectionTitleClass}>Event Timeline</h3>
                   <UINotice status={eventsStatus()} error={eventsError()} />
                   <Show
                     when={
                       !events.isLoading() && (events.data() ?? []).length > 0
                     }
                   >
-                    <div class={css({ display: "grid", gap: "4" })}>
-                      <For each={events.data() ?? []}>
-                        {(event: Doc<"agentRunEvents">) => {
-                          const payload = () => formatPayload(event.payload);
-                          return (
-                            <article
-                              class={eventClass}
-                              data-testid="agent-run-event"
-                            >
-                              <div
-                                class={css({
-                                  display: "flex",
-                                  flexWrap: "wrap",
-                                  gap: "2",
-                                  justifyContent: "space-between",
-                                })}
-                              >
-                                <UIBadge tone={eventTone(event.kind)}>
-                                  {event.kind}
-                                </UIBadge>
-                                <span class={metaClass}>
-                                  {formatTime(event.createdAt)}
-                                </span>
-                              </div>
-                              <p
-                                class={css({
-                                  color: "zodiac.cream",
-                                  lineHeight: "1.55",
-                                })}
-                              >
-                                {event.message}
-                              </p>
-                              <Show when={payload()}>
-                                {(text) => (
-                                  <pre
-                                    role="group"
-                                    tabIndex={0}
-                                    aria-label={`Payload for ${event.kind} event`}
-                                    class={css({
-                                      bg: "rgba(0, 0, 0, 0.22)",
-                                      borderColor: "zodiac.cream/12",
-                                      borderRadius: "l2",
-                                      borderWidth: "1px",
-                                      color: "zodiac.cream/72",
-                                      fontFamily: "mono",
-                                      fontSize: "xs",
-                                      maxH: "18rem",
-                                      overflow: "auto",
-                                      p: "3",
-                                      whiteSpace: "pre-wrap",
-                                    })}
-                                  >
-                                    {text()}
-                                  </pre>
-                                )}
-                              </Show>
-                            </article>
-                          );
-                        }}
-                      </For>
-                    </div>
+                    <AgentRunEventList
+                      events={(events.data() ?? []) as Doc<"agentRunEvents">[]}
+                      itemTestId="agent-run-event"
+                    />
                   </Show>
                 </div>
               </div>

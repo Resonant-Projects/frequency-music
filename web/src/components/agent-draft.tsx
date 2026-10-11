@@ -8,7 +8,16 @@ import type {
   RecipeDraftPayload,
 } from "../../../convex/shared/draftPayloads";
 import { css, cx } from "../../styled-system/css";
-import { fieldLabelClass, UIBadge, UIInput, UITextarea } from "./ui";
+import {
+  eyebrowClass,
+  fieldLabelClass,
+  focusRingClass,
+  helperClass,
+  inlineActionLink,
+  UIBadge,
+  UIInput,
+  UITextarea,
+} from "./ui";
 
 // ---------------------------------------------------------------------------
 // Shared types + rendering for agent human-review drafts. These mirror the
@@ -65,11 +74,6 @@ export function statusTone(
   return "cream";
 }
 
-const helperClass = css({
-  color: "zodiac.cream/62",
-  lineHeight: "1.6",
-});
-
 const monoValueClass = css({
   color: "zodiac.cream/72",
   fontFamily: "mono",
@@ -93,6 +97,7 @@ const srOnlyClass = css({
 const bodyValueClass = css({
   color: "zodiac.cream",
   lineHeight: "1.6",
+  maxW: "72ch",
 });
 
 function PayloadField(props: { label: string; children: JSX.Element }) {
@@ -211,15 +216,19 @@ function RecipePreview(props: { payload: RecipeDraftPayload }) {
               role="group"
               aria-label="Recipe protocol JSON"
               tabIndex={0}
-              class={css({
-                color: "zodiac.cream/72",
-                fontFamily: "mono",
-                fontSize: "xs",
-                lineHeight: "1.5",
-                overflow: "auto",
-                overflowWrap: "anywhere",
-                whiteSpace: "pre-wrap",
-              })}
+              class={cx(
+                "zodiac-scroll",
+                css({
+                  color: "zodiac.cream/72",
+                  fontFamily: "mono",
+                  fontSize: "xs",
+                  lineHeight: "1.5",
+                  maxH: "18rem",
+                  overflow: "auto",
+                  overflowWrap: "anywhere",
+                  whiteSpace: "pre-wrap",
+                }),
+              )}
             >
               {JSON.stringify(protocol(), null, 2)}
             </pre>
@@ -267,13 +276,54 @@ const reviewSectionClass = css({
   pt: "5",
 });
 
-const reviewEyebrowClass = css({
+/** Mono uppercase section legends and metadata (scores, stance, status). */
+const reviewMetaClass = css({
   color: "zodiac.cream/66",
   fontFamily: "mono",
   fontSize: "xs",
   letterSpacing: "0.18em",
   textTransform: "uppercase",
 });
+
+/** The `<summary>` face shared by every disclosure in the review story. */
+const disclosureSummaryClass = cx(
+  focusRingClass,
+  css({
+    color: "zodiac.cream/72",
+    cursor: "pointer",
+    fontFamily: "mono",
+    fontSize: "xs",
+    letterSpacing: "0.14em",
+    minHeight: "7",
+    py: "2",
+    textTransform: "uppercase",
+    _coarsePointer: {
+      minHeight: "11",
+      py: "3",
+    },
+  }),
+);
+
+/** A link whose label is a source title: gold mono, sentence case, 24px+. */
+const sourceLinkClass = cx(
+  focusRingClass,
+  css({
+    alignItems: "center",
+    color: "zodiac.gold",
+    display: "inline-flex",
+    fontFamily: "mono",
+    fontSize: "xs",
+    gap: "1.5",
+    minH: "6",
+    overflowWrap: "anywhere",
+    textDecoration: "none",
+    _hover: { textDecoration: "underline" },
+    _coarsePointer: { minH: "11" },
+  }),
+);
+
+/** Repeated rows rendered as a list (evidence, prior work). */
+const stackListClass = css({ display: "grid", gap: "3" });
 
 const reviewHeadingClass = css({
   color: "zodiac.cream",
@@ -299,7 +349,7 @@ function ReviewSection(props: {
   const headingId = createUniqueId();
   return (
     <section class={reviewSectionClass} aria-labelledby={headingId}>
-      <h2 class={reviewEyebrowClass} id={headingId}>
+      <h2 class={reviewMetaClass} id={headingId}>
         {String(props.index).padStart(2, "0")} · {props.label}
       </h2>
       {props.children}
@@ -322,7 +372,7 @@ function ConceptPanel(props: {
         p: "3",
       })}
     >
-      <h3 class={reviewHeadingClass}>{props.concept.displayName}</h3>
+      <h4 class={reviewHeadingClass}>{props.concept.displayName}</h4>
       <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
         <For each={props.concept.domains}>
           {(domain) => <UIBadge tone="violet">{domain}</UIBadge>}
@@ -417,9 +467,9 @@ export function DraftReviewStory(props: {
                   justifyContent: "space-between",
                 })}
               >
-                <h2 class={reviewHeadingClass}>
+                <h3 class={reviewHeadingClass}>
                   {correspondence().row.statement}
-                </h2>
+                </h3>
                 <UIBadge tone="cream">{correspondence().row.status}</UIBadge>
               </div>
               <Show
@@ -428,7 +478,7 @@ export function DraftReviewStory(props: {
                   correspondence().row.noveltyScore !== undefined
                 }
               >
-                <p class={reviewEyebrowClass}>
+                <p class={reviewMetaClass}>
                   {correspondence().row.similarityScore !== undefined
                     ? `Similarity ${Math.round((correspondence().row.similarityScore ?? 0) * 100)}%`
                     : ""}
@@ -445,29 +495,17 @@ export function DraftReviewStory(props: {
                 class={css({
                   display: "grid",
                   gap: "3",
-                  gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+                  gridTemplateColumns: {
+                    base: "minmax(0, 1fr)",
+                    md: "repeat(2, minmax(0, 1fr))",
+                  },
                 })}
               >
                 <ConceptPanel concept={correspondence().conceptA} />
                 <ConceptPanel concept={correspondence().conceptB} />
               </div>
               <details>
-                <summary
-                  class={css({
-                    color: "zodiac.cream/72",
-                    cursor: "pointer",
-                    fontFamily: "mono",
-                    fontSize: "xs",
-                    letterSpacing: "0.12em",
-                    minHeight: "7",
-                    py: "2",
-                    textTransform: "uppercase",
-                    _coarsePointer: {
-                      minHeight: "11",
-                      py: "3",
-                    },
-                  })}
-                >
+                <summary class={disclosureSummaryClass}>
                   Correspondence rationale
                 </summary>
                 <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
@@ -484,7 +522,7 @@ export function DraftReviewStory(props: {
           when={(props.context.correspondence?.evidence.length ?? 0) > 0}
           fallback={<p class={reviewBodyClass}>No evidence is attached.</p>}
         >
-          <div class={css({ display: "grid", gap: "3" })}>
+          <ul role="list" class={stackListClass}>
             <For each={props.context.correspondence?.evidence ?? []}>
               {(evidence) => {
                 // Persisted review context can contain the legacy neutral value
@@ -493,7 +531,7 @@ export function DraftReviewStory(props: {
                 const supports = stance === "supports";
                 const contradicts = stance === "contradicts";
                 return (
-                  <div
+                  <li
                     class={css({
                       bg: contradicts ? "zodiac.violet/14" : "zodiac.cream/3.5",
                       borderColor: contradicts
@@ -521,7 +559,7 @@ export function DraftReviewStory(props: {
                             ? "zodiac.error"
                             : supports
                               ? "zodiac.success"
-                              : "zodiac.cream/60",
+                              : "zodiac.cream/66",
                         })}
                       >
                         {contradicts ? "⊘" : supports ? "✓" : "—"}
@@ -529,7 +567,7 @@ export function DraftReviewStory(props: {
                       <UIBadge tone={contradicts ? "violet" : "cream"}>
                         {stance}
                       </UIBadge>
-                      <span class={reviewEyebrowClass}>
+                      <span class={reviewMetaClass}>
                         {humanize(evidence.claim.evidenceLevel)}
                         {evidence.claim.truthConfidence
                           ? ` · ${humanize(evidence.claim.truthConfidence)} confidence`
@@ -540,18 +578,14 @@ export function DraftReviewStory(props: {
                     <Show
                       when={evidence.sourceUrl}
                       fallback={
-                        <span class={reviewEyebrowClass}>
+                        <span class={reviewMetaClass}>
                           {evidence.sourceTitle}
                         </span>
                       }
                     >
                       {(sourceUrl) => (
                         <a
-                          class={css({
-                            color: "zodiac.violet",
-                            fontFamily: "mono",
-                            fontSize: "xs",
-                          })}
+                          class={sourceLinkClass}
                           href={sourceUrl()}
                           target="_blank"
                           rel="noreferrer"
@@ -561,11 +595,11 @@ export function DraftReviewStory(props: {
                         </a>
                       )}
                     </Show>
-                  </div>
+                  </li>
                 );
               }}
             </For>
-          </div>
+          </ul>
         </Show>
       </ReviewSection>
 
@@ -578,19 +612,19 @@ export function DraftReviewStory(props: {
                 fallback={
                   <>
                     <div>
-                      <p class={reviewEyebrowClass}>Title</p>
-                      <h2 class={reviewHeadingClass}>{draftPayload().title}</h2>
+                      <p class={eyebrowClass}>Title</p>
+                      <h3 class={reviewHeadingClass}>{draftPayload().title}</h3>
                     </div>
                     <div>
-                      <p class={reviewEyebrowClass}>Question</p>
+                      <p class={eyebrowClass}>Question</p>
                       <p class={reviewBodyClass}>{draftPayload().question}</p>
                     </div>
                     <div>
-                      <p class={reviewEyebrowClass}>Statement</p>
+                      <p class={eyebrowClass}>Statement</p>
                       <p class={reviewBodyClass}>{draftPayload().statement}</p>
                     </div>
                     <div>
-                      <p class={reviewEyebrowClass}>Why this matters</p>
+                      <p class={eyebrowClass}>Why this matters</p>
                       <p class={reviewBodyClass}>
                         {draftPayload().whyThisMatters}
                       </p>
@@ -609,7 +643,7 @@ export function DraftReviewStory(props: {
                     p: "3",
                   })}
                 >
-                  <h2 class={srOnlyClass}>{draftPayload().title}</h2>
+                  <h3 class={srOnlyClass}>{draftPayload().title}</h3>
                   <UIBadge tone="violet">Edit mode</UIBadge>
                   <EditableTextField
                     id={`edit-title-${props.context.draft._id}`}
@@ -652,22 +686,7 @@ export function DraftReviewStory(props: {
                 </div>
               </Show>
               <details>
-                <summary
-                  class={css({
-                    color: "zodiac.cream/72",
-                    cursor: "pointer",
-                    fontFamily: "mono",
-                    fontSize: "xs",
-                    letterSpacing: "0.12em",
-                    minHeight: "7",
-                    py: "2",
-                    textTransform: "uppercase",
-                    _coarsePointer: {
-                      minHeight: "11",
-                      py: "3",
-                    },
-                  })}
-                >
+                <summary class={disclosureSummaryClass}>
                   Draft rationale
                 </summary>
                 <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
@@ -685,11 +704,11 @@ export function DraftReviewStory(props: {
                 fallback={
                   <>
                     <div>
-                      <p class={reviewEyebrowClass}>Recipe title</p>
-                      <h2 class={reviewHeadingClass}>{draftPayload().title}</h2>
+                      <p class={eyebrowClass}>Recipe title</p>
+                      <h3 class={reviewHeadingClass}>{draftPayload().title}</h3>
                     </div>
                     <div>
-                      <p class={reviewEyebrowClass}>Why this matters</p>
+                      <p class={eyebrowClass}>Why this matters</p>
                       <p class={reviewBodyClass}>
                         {draftPayload().whyThisMatters}
                       </p>
@@ -712,7 +731,7 @@ export function DraftReviewStory(props: {
                     p: "3",
                   })}
                 >
-                  <h2 class={srOnlyClass}>{draftPayload().title}</h2>
+                  <h3 class={srOnlyClass}>{draftPayload().title}</h3>
                   <UIBadge tone="violet">Edit mode</UIBadge>
                   <EditableTextField
                     id={`edit-title-${props.context.draft._id}`}
@@ -781,22 +800,14 @@ export function DraftReviewStory(props: {
           <Link
             to="/agent-runs/$runId"
             params={{ runId: String(props.context.runTrace.runId) }}
-            class={css({
-              color: "zodiac.violet",
-              fontFamily: "mono",
-              fontSize: "xs",
-            })}
+            class={inlineActionLink}
           >
             Open run <span aria-hidden="true">↗</span>
           </Link>
           <Show when={props.context.runTrace.traceUrl}>
             {(traceUrl) => (
               <a
-                class={css({
-                  color: "zodiac.violet",
-                  fontFamily: "mono",
-                  fontSize: "xs",
-                })}
+                class={inlineActionLink}
                 href={traceUrl()}
                 target="_blank"
                 rel="noreferrer"
@@ -807,24 +818,7 @@ export function DraftReviewStory(props: {
           </Show>
         </div>
         <details>
-          <summary
-            class={css({
-              color: "zodiac.cream/72",
-              cursor: "pointer",
-              fontFamily: "mono",
-              fontSize: "xs",
-              letterSpacing: "0.12em",
-              minHeight: "7",
-              py: "2",
-              textTransform: "uppercase",
-              _coarsePointer: {
-                minHeight: "11",
-                py: "3",
-              },
-            })}
-          >
-            Agent run summary
-          </summary>
+          <summary class={disclosureSummaryClass}>Agent run summary</summary>
           <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
             {props.context.runTrace.summary}
           </p>
@@ -840,56 +834,63 @@ export function DraftReviewStory(props: {
             class={css({
               display: "grid",
               gap: "4",
-              gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+              gridTemplateColumns: {
+                base: "minmax(0, 1fr)",
+                md: "repeat(2, minmax(0, 1fr))",
+              },
             })}
           >
             <div class={css({ display: "grid", gap: "2" })}>
-              <p class={reviewEyebrowClass}>Prior hypotheses</p>
-              <For each={props.context.related.priorHypotheses}>
-                {(hypothesis) => (
-                  <div
-                    class={css({
-                      borderColor: "zodiac.cream/12",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      display: "grid",
-                      gap: "2",
-                      p: "3",
-                    })}
-                  >
-                    <p class={reviewBodyClass}>{hypothesis.title}</p>
-                    <span class={reviewEyebrowClass}>
-                      {hypothesis.status}
-                      {hypothesis.resolution
-                        ? ` · ${hypothesis.resolution}`
-                        : ""}
-                    </span>
-                  </div>
-                )}
-              </For>
+              <p class={eyebrowClass}>Prior hypotheses</p>
+              <ul role="list" class={css({ display: "grid", gap: "2" })}>
+                <For each={props.context.related.priorHypotheses}>
+                  {(hypothesis) => (
+                    <li
+                      class={css({
+                        borderColor: "zodiac.cream/12",
+                        borderRadius: "l2",
+                        borderWidth: "1px",
+                        display: "grid",
+                        gap: "2",
+                        p: "3",
+                      })}
+                    >
+                      <p class={reviewBodyClass}>{hypothesis.title}</p>
+                      <span class={reviewMetaClass}>
+                        {hypothesis.status}
+                        {hypothesis.resolution
+                          ? ` · ${hypothesis.resolution}`
+                          : ""}
+                      </span>
+                    </li>
+                  )}
+                </For>
+              </ul>
             </div>
             <div class={css({ display: "grid", gap: "2" })}>
-              <p class={reviewEyebrowClass}>Failure archive hits</p>
-              <For each={props.context.related.failures}>
-                {(failure) => (
-                  <div
-                    class={css({
-                      bg: "zodiac.violet/10",
-                      borderColor: "zodiac.violet/32",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      display: "grid",
-                      gap: "2",
-                      p: "3",
-                    })}
-                  >
-                    <p class={reviewBodyClass}>{failure.title}</p>
-                    <span class={reviewEyebrowClass}>
-                      {humanize(failure.reason)}
-                    </span>
-                  </div>
-                )}
-              </For>
+              <p class={eyebrowClass}>Failure archive hits</p>
+              <ul role="list" class={css({ display: "grid", gap: "2" })}>
+                <For each={props.context.related.failures}>
+                  {(failure) => (
+                    <li
+                      class={css({
+                        bg: "zodiac.violet/10",
+                        borderColor: "zodiac.violet/32",
+                        borderRadius: "l2",
+                        borderWidth: "1px",
+                        display: "grid",
+                        gap: "2",
+                        p: "3",
+                      })}
+                    >
+                      <p class={reviewBodyClass}>{failure.title}</p>
+                      <span class={reviewMetaClass}>
+                        {humanize(failure.reason)}
+                      </span>
+                    </li>
+                  )}
+                </For>
+              </ul>
             </div>
           </div>
         </Show>
@@ -916,11 +917,7 @@ export function PromotedLink(props: {
             <Link
               to="/recipes/$recipeId"
               params={{ recipeId: promotedId() }}
-              class={css({
-                color: "zodiac.gold",
-                fontFamily: "mono",
-                fontSize: "sm",
-              })}
+              class={inlineActionLink}
             >
               View Promoted Recipe <span aria-hidden="true">↗</span>
             </Link>
@@ -929,11 +926,7 @@ export function PromotedLink(props: {
           <Link
             to="/hypotheses/$hypothesisId"
             params={{ hypothesisId: promotedId() }}
-            class={css({
-              color: "zodiac.gold",
-              fontFamily: "mono",
-              fontSize: "sm",
-            })}
+            class={inlineActionLink}
           >
             View Promoted Hypothesis <span aria-hidden="true">↗</span>
           </Link>

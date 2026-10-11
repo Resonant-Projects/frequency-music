@@ -23,6 +23,13 @@ export const COLORS = {
   glowInner: "#1a0f35",
 } as const;
 
+// The violet sectors only reach 4.66:1 on the void at full alpha, so any
+// sector-coloured text below heading size substitutes the lighter text-safe
+// violet. Gold and cream are legible as they are.
+export function textSafeSectorColor(color: string): string {
+  return color === COLORS.violet ? COLORS.violetText : color;
+}
+
 export const TAU = 2 * Math.PI;
 export const BASE = -Math.PI / 2;
 export const STEP = TAU / 6;
@@ -32,19 +39,15 @@ export const R = {
   hubDot: 6,
   hubViolet: 22,
   hubOuter: 36,
-  hubLabel: 50,
   recipe: 58,
   hypothesis: 92,
   extract: 128,
   sources: 160,
   sectorInner: 175,
   arcLabel: 220,
-  sourceCount: 246,
   sectorOuter: 265,
   outerThin: 268,
   outerMain: 280,
-  dotZoneMin: 282,
-  dotZoneMax: 315,
 } as const;
 
 export interface SectorDef {
@@ -53,8 +56,6 @@ export interface SectorDef {
   color: string;
   startAngle: number;
   endAngle: number;
-  sources: number;
-  claims: number;
   summary: string;
   dots: Array<{ angleRel: number; r: number }>;
 }
@@ -73,8 +74,6 @@ export const SECTORS: SectorDef[] = [
     color: "#8b5cf6",
     startAngle: BASE,
     endAngle: BASE + STEP,
-    sources: 12,
-    claims: 45,
     summary:
       "Group theory, Tonnetz geometry, Fourier analysis, and tuning lattice mathematics",
     dots: [
@@ -89,8 +88,6 @@ export const SECTORS: SectorDef[] = [
     color: "#c8a84b",
     startAngle: BASE + STEP,
     endAngle: BASE + 2 * STEP,
-    sources: 15,
-    claims: 67,
     summary:
       "Standing waves, harmonic series, resonance modes, cymatics, acoustic field coupling",
     dots: [
@@ -106,8 +103,6 @@ export const SECTORS: SectorDef[] = [
     color: "#f5f0e8",
     startAngle: BASE + 2 * STEP,
     endAngle: BASE + 3 * STEP,
-    sources: 11,
-    claims: 38,
     summary:
       "Just intonation, microtuning, EDO systems, xenharmonic voice-leading geometry",
     dots: [
@@ -122,8 +117,6 @@ export const SECTORS: SectorDef[] = [
     color: "#8b5cf6",
     startAngle: BASE + 3 * STEP,
     endAngle: BASE + 4 * STEP,
-    sources: 9,
-    claims: 29,
     summary:
       "Consonance perception, auditory masking, critical bands, tonal memory encoding",
     dots: [
@@ -137,8 +130,6 @@ export const SECTORS: SectorDef[] = [
     color: "#c8a84b",
     startAngle: BASE + 4 * STEP,
     endAngle: BASE + 5 * STEP,
-    sources: 8,
-    claims: 24,
     summary:
       "Polygon-angle correspondence, sacred geometry, Grant's cipher, Platonic solids",
     dots: [
@@ -153,8 +144,6 @@ export const SECTORS: SectorDef[] = [
     color: "#f5f0e8",
     startAngle: BASE + 5 * STEP,
     endAngle: BASE + TAU,
-    sources: 6,
-    claims: 18,
     summary:
       "Spectral composition, additive and FM synthesis, granular textures, microtonal DAW",
     dots: [
@@ -184,23 +173,6 @@ export function dotWorldPos(
     y: -dot.r * Math.sin(angle), // Y flipped: SVG Y↓ → Three.js Y↑
     z,
   };
-}
-
-// Map concept domains (9) to zodiac display sectors (6)
-export const CONCEPT_DOMAIN_TO_SECTOR: Record<string, string> = {
-  mathematics: "math",
-  acoustics: "wave",
-  tuning: "music",
-  theory: "music",
-  psychoacoustics: "psycho",
-  geometry: "geometry",
-  production: "synthesis",
-  instrument: "synthesis",
-  general: "music", // fallback
-};
-
-export function conceptDomainToSector(domain: string): string {
-  return CONCEPT_DOMAIN_TO_SECTOR[domain] ?? "music";
 }
 
 type PipelineStatus = SourceStatus | HypothesisStatus | RecipeStatus;

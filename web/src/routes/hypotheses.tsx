@@ -16,9 +16,14 @@ import {
   UITextarea,
 } from "../components/ui";
 import {
+  entityCardLinkClass,
+  entityCardTitleLinkClass,
+} from "../components/entity-card";
+import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
@@ -98,6 +103,8 @@ export function HypothesesPage() {
         question: question().trim(),
         hypothesis: statement().trim(),
         whyThisMatters: whyThisMatters().trim(),
+        // `hypotheses.create` requires `rationaleMd` (a `v.string()`, and the
+        // fallback for `whyThisMatters`), so a blank field keeps the stub.
         rationaleMd: rationale().trim() || "Draft rationale.",
         thesisId: thesisId().trim()
           ? (thesisId().trim() as Doc<"theses">["_id"])
@@ -115,14 +122,24 @@ export function HypothesesPage() {
       setSelectedSources([]);
       setNotice("Hypothesis created.");
     } catch (error) {
-      setNoticeError(`Failed to create hypothesis: ${String(error)}`);
+      setNoticeError(`Failed to create hypothesis: ${describeError(error)}`);
     }
   }
 
   return (
     <section class={pageClass}>
-      <UICard as="form" onSubmit={submitHypothesis as any}>
+      <UICard>
         <h1 class={pageTitleClass}>Hypotheses</h1>
+      </UICard>
+
+      <UICard
+        as="form"
+        aria-labelledby="hyp-form-heading"
+        onSubmit={submitHypothesis}
+      >
+        <h2 id="hyp-form-heading" class={sectionTitleClass}>
+          New Hypothesis
+        </h2>
 
         <label class={fieldLabelClass} for="hyp-title">
           Title
@@ -205,7 +222,7 @@ export function HypothesesPage() {
               display: "grid",
               gap: "2",
               gridTemplateColumns: {
-                base: "1fr",
+                base: "minmax(0, 1fr)",
                 md: "repeat(2, minmax(0, 1fr))",
               },
             })}
@@ -218,13 +235,24 @@ export function HypothesesPage() {
                     borderColor: "zodiac.gold/20",
                     borderRadius: "l2",
                     borderWidth: "1px",
+                    cursor: "pointer",
                     display: "flex",
                     gap: "2",
                     p: "2",
+                    _coarsePointer: { minH: "11" },
                   })}
                 >
                   <input
                     type="checkbox"
+                    class={css({
+                      accentColor: "zodiac.gold",
+                      flexShrink: 0,
+                      _focusVisible: {
+                        outline: "2px solid",
+                        outlineColor: "zodiac.gold",
+                        outlineOffset: "2px",
+                      },
+                    })}
                     checked={selectedSources().includes(source._id)}
                     onChange={() => toggleSource(source._id)}
                   />
@@ -272,80 +300,74 @@ export function HypothesesPage() {
         />
         <Show when={!hypotheses.isLoading()}>
           <Show when={hypothesisRows().length > 0}>
-            <div class={css({ display: "grid", gap: "3" })}>
+            <ul
+              role="list"
+              class={css({ display: "grid", gap: "3", listStyle: "none" })}
+            >
               <For each={hypothesisRows()}>
                 {(item) => (
-                  <Link
-                    to={"/hypotheses/" + item._id}
-                    style={{ "text-decoration": "none", color: "inherit" }}
-                  >
+                  <li data-testid="entity-row" class={entityCardLinkClass}>
                     <div
-                      data-testid="entity-row"
                       class={css({
-                        borderColor: "zodiac.gold/25",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        cursor: "pointer",
-                        p: "4",
-                        transition: "border-color 0.2s",
-                        _hover: {
-                          borderColor: "zodiac.gold/45",
-                        },
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "2",
+                        marginBottom: "2",
                       })}
                     >
-                      <div
-                        class={css({
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2",
-                          marginBottom: "2",
-                        })}
-                      >
-                        <UIBadge tone="cream">{item.status}</UIBadge>
-                        <UIBadge tone="violet">
-                          {item.sourceIds.length} citations
-                        </UIBadge>
-                        <Show when={item.thesisId}>
-                          <UIBadge tone="gold">linked thesis</UIBadge>
-                        </Show>
-                      </div>
-                      <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
-                        {item.title}
-                      </h3>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/70",
-                          marginBottom: "1",
-                        })}
-                      >
-                        {item.question}
-                      </p>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontSize: "sm",
-                        })}
-                      >
-                        {item.hypothesis}
-                      </p>
-                      <Show when={item.whyThisMatters}>
-                        {(value) => (
-                          <p
-                            class={css({
-                              color: "zodiac.cream/66",
-                              fontSize: "sm",
-                              marginTop: "2",
-                            })}
-                          >
-                            Why this matters: {truncate(value(), 140)}
-                          </p>
-                        )}
+                      <UIBadge tone="gold">{item.status}</UIBadge>
+                      <UIBadge tone="cream">
+                        {item.sourceIds.length} citations
+                      </UIBadge>
+                      <Show when={item.thesisId}>
+                        <UIBadge tone="gold">linked thesis</UIBadge>
                       </Show>
                     </div>
-                  </Link>
+                    <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                      <Link
+                        to="/hypotheses/$hypothesisId"
+                        params={{ hypothesisId: String(item._id) }}
+                        class={entityCardTitleLinkClass}
+                      >
+                        {item.title}
+                      </Link>
+                    </h3>
+                    <p
+                      class={css({
+                        color: "zodiac.cream/70",
+                        marginBottom: "1",
+                        maxW: "72ch",
+                      })}
+                    >
+                      {item.question}
+                    </p>
+                    <p
+                      class={css({
+                        color: "zodiac.cream/66",
+                        fontSize: "sm",
+                        maxW: "72ch",
+                      })}
+                    >
+                      {item.hypothesis}
+                    </p>
+                    <Show when={item.whyThisMatters}>
+                      {(value) => (
+                        <p
+                          class={css({
+                            color: "zodiac.cream/66",
+                            fontSize: "sm",
+                            marginTop: "2",
+                            maxW: "72ch",
+                          })}
+                        >
+                          Why this matters: {truncate(value(), 140)}
+                        </p>
+                      )}
+                    </Show>
+                  </li>
                 )}
               </For>
-            </div>
+            </ul>
           </Show>
         </Show>
       </UICard>

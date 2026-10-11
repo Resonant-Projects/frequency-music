@@ -71,14 +71,14 @@ export function buildDomainEdges(
 export function setEdgeActivity(
   hubEdges: Array<{ line: THREE.Line; sectorId: string }>,
   domainEdges: Array<{ line: THREE.Line; sectorId: string }>,
-  activeSectorId: string | null,
+  activeSectorIds: ReadonlySet<string>,
 ): void {
   hubEdges.forEach(({ line, sectorId }) => {
     const mat = line.material as THREE.LineBasicMaterial;
-    mat.opacity = activeSectorId === sectorId ? 0.65 : 0.18;
+    mat.opacity = activeSectorIds.has(sectorId) ? 0.65 : 0.18;
   });
   domainEdges.forEach(({ line, sectorId }) => {
     const mat = line.material as THREE.LineBasicMaterial;
-    mat.opacity = activeSectorId === sectorId ? 0.55 : 0.14;
+    mat.opacity = activeSectorIds.has(sectorId) ? 0.55 : 0.14;
   });
 }

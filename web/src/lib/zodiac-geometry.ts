@@ -99,6 +99,18 @@ function createSectorFillGeometry(sector: SectorDef): THREE.BufferGeometry {
   return geo;
 }
 
+// Resting / lit opacity for each part of a sector group. A sector is lit while
+// it is selected or previewed; the change is an opacity mutation on the
+// existing materials, never a rebuild.
+const SECTOR_PART_OPACITY = {
+  fill: { rest: 0.03, lit: 0.1 },
+  inner: { rest: 0.3, lit: 0.75 },
+  outer: { rest: 0.38, lit: 0.85 },
+  spoke: { rest: 0.22, lit: 0.55 },
+} as const;
+
+type SectorPart = keyof typeof SECTOR_PART_OPACITY;
+
 export function buildSectorGroup(
   sector: SectorDef,
   active = false,
@@ -110,15 +122,30 @@ export function buildSectorGroup(
   const fillMat = makeSectorFillMat(sector.color, active);
   const fillMesh = new THREE.Mesh(fillGeo, fillMat);
   fillMesh.userData.sectorId = sector.id;
+  fillMesh.userData.sectorPart = "fill" satisfies SectorPart;
   g.add(fillMesh);
 
   // Inner arc (r=175)
-  const innerMat = makeArcMat(sector.color, active ? 0.75 : 0.3);
-  g.add(arcLine(R.sectorInner, sector.startAngle, sector.endAngle, innerMat));
+  const innerMat = makeArcMat(sector.color);
+  const inner = arcLine(
+    R.sectorInner,
+    sector.startAngle,
+    sector.endAngle,
+    innerMat,
+  );
+  inner.userData.sectorPart = "inner" satisfies SectorPart;
+  g.add(inner);
 
   // Outer arc (r=265)
-  const outerMat = makeArcMat(sector.color, active ? 0.85 : 0.38);
-  g.add(arcLine(R.sectorOuter, sector.startAngle, sector.endAngle, outerMat));
+  const outerMat = makeArcMat(sector.color);
+  const outer = arcLine(
+    R.sectorOuter,
+    sector.startAngle,
+    sector.endAngle,
+    outerMat,
+  );
+  outer.userData.sectorPart = "outer" satisfies SectorPart;
+  g.add(outer);
 
   // Radial spoke at start
   const spokePts = [
@@ -126,10 +153,24 @@ export function buildSectorGroup(
     polar3(R.sectorOuter, sector.startAngle),
   ];
   const spokeGeo = new THREE.BufferGeometry().setFromPoints(spokePts);
-  const spokeMat = makeArcMat(sector.color, active ? 0.55 : 0.22);
-  g.add(new THREE.Line(spokeGeo, spokeMat));
+  const spokeMat = makeArcMat(sector.color);
+  const spoke = new THREE.Line(spokeGeo, spokeMat);
+  spoke.userData.sectorPart = "spoke" satisfies SectorPart;
+  g.add(spoke);
 
+  setSectorGroupActive(g, active);
   return g;
+}
+
+/** Light or rest a sector group by mutating its material opacities in place. */
+export function setSectorGroupActive(group: THREE.Group, active: boolean) {
+  for (const child of group.children) {
+    const part = child.userData.sectorPart as SectorPart | undefined;
+    if (!part) continue;
+    if (!(child instanceof THREE.Mesh || child instanceof THREE.Line)) continue;
+    const opacity = SECTOR_PART_OPACITY[part][active ? "lit" : "rest"];
+    (child.material as THREE.Material).opacity = opacity;
+  }
 }
 
 // --- Source scatter nodes (spheres above disc plane) -------------------------

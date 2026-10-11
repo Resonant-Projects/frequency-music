@@ -1,8 +1,12 @@
-import { createSignal, For, onMount, Show } from "solid-js";
+import { createSignal, For, Index, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   fieldLabelClass,
+  focusRingClass,
+  helperClass,
+  inlineActionLink,
+  metaLine,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -17,27 +21,38 @@ import {
 import {
   createAction,
   createMutation,
-  createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
+// Every grid column is `minmax(0, 1fr)`: a bare `1fr` keeps an `auto`
+// minimum, so one nowrap feed URL would widen the page past a phone viewport.
 const twoColClass = css({
   display: "grid",
   gap: "4",
-  gridTemplateColumns: { base: "1fr", lg: "1fr 1fr" },
-});
-
-const helperClass = css({
-  color: "zodiac.cream/58",
-  fontSize: "sm",
-  lineHeight: "1.6",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    lg: "repeat(2, minmax(0, 1fr))",
+  },
 });
 
 const sourceListClass = css({
   display: "grid",
   gap: "3",
-  gridTemplateColumns: { base: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+  },
+  listStyleType: "none",
+  m: "0",
+  p: "0",
+});
+
+const formActionsClass = css({
+  display: "flex",
+  justifyContent: "flex-end",
+  marginTop: "4",
 });
 
 function formatTimestamp(timestamp: number) {
@@ -80,7 +95,9 @@ export function IngestPage() {
 
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = createSignal(false);
+  const [isAddingFeed, setIsAddingFeed] = createSignal(false);
+  const [isIngestingUrl, setIsIngestingUrl] = createSignal(false);
+  const [isIngestingYouTube, setIsIngestingYouTube] = createSignal(false);
 
   const createFromUrlInput = createAction(api.sources.createFromUrlAndQueue);
   const createFromYouTubeInput = createAction(
@@ -89,7 +106,7 @@ export function IngestPage() {
   const createFeed = createMutation(api.admin.createFeed);
   const setFeedEnabled = createMutation(api.admin.setFeedEnabled);
   const pollFeedsNow = createAction(api.admin.pollFeedsNow);
-  const feeds = createQuery(api.admin.listFeeds);
+  const feeds = createQueryWithStatus(api.admin.listFeeds);
 
   const recentSources = createQueryWithStatus(api.sources.listRecent, () => ({
     limit: 14,
@@ -97,6 +114,7 @@ export function IngestPage() {
 
   async function submitUrl(event: SubmitEvent) {
     event.preventDefault();
+    if (isIngestingUrl()) return;
 
     if (!urlValue().trim()) {
       setNotice(null);
@@ -104,7 +122,7 @@ export function IngestPage() {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsIngestingUrl(true);
     setNotice(null);
     setNoticeError(null);
 
@@ -133,14 +151,15 @@ export function IngestPage() {
       setUrlRawText("");
       setUrlTags("");
     } catch (error) {
-      setNoticeError(`URL ingest failed: ${String(error)}`);
+      setNoticeError(`URL ingest failed: ${describeError(error)}`);
     } finally {
-      setIsSubmitting(false);
+      setIsIngestingUrl(false);
     }
   }
 
   async function submitYouTube(event: SubmitEvent) {
     event.preventDefault();
+    if (isIngestingYouTube()) return;
 
     if (!ytValue().trim()) {
       setNotice(null);
@@ -148,7 +167,7 @@ export function IngestPage() {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsIngestingYouTube(true);
     setNotice(null);
     setNoticeError(null);
 
@@ -177,14 +196,15 @@ export function IngestPage() {
       setYtTranscript("");
       setYtTags("");
     } catch (error) {
-      setNoticeError(`YouTube ingest failed: ${String(error)}`);
+      setNoticeError(`YouTube ingest failed: ${describeError(error)}`);
     } finally {
-      setIsSubmitting(false);
+      setIsIngestingYouTube(false);
     }
   }
 
   async function submitFeed(event: SubmitEvent) {
     event.preventDefault();
+    if (isAddingFeed()) return;
 
     if (!feedName().trim() || !feedUrl().trim()) {
       setNotice(null);
@@ -192,7 +212,7 @@ export function IngestPage() {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsAddingFeed(true);
     setNotice(null);
     setNoticeError(null);
 
@@ -206,9 +226,9 @@ export function IngestPage() {
       setFeedUrl("");
       setNotice("Feed created.");
     } catch (error) {
-      setNoticeError(`Feed creation failed: ${String(error)}`);
+      setNoticeError(`Feed creation failed: ${describeError(error)}`);
     } finally {
-      setIsSubmitting(false);
+      setIsAddingFeed(false);
     }
   }
 
@@ -219,7 +239,7 @@ export function IngestPage() {
       await setFeedEnabled({ id: id as Id<"feeds">, enabled: !enabled });
       setNotice("Feed state updated.");
     } catch (error) {
-      setNoticeError(`Failed to toggle feed: ${String(error)}`);
+      setNoticeError(`Failed to toggle feed: ${describeError(error)}`);
     }
   }
 
@@ -230,7 +250,7 @@ export function IngestPage() {
       await pollFeedsNow({});
       setNotice("Feed poll started.");
     } catch (error) {
-      setNoticeError(`Feed poll failed: ${String(error)}`);
+      setNoticeError(`Feed poll failed: ${describeError(error)}`);
     }
   }
 
@@ -278,7 +298,8 @@ export function IngestPage() {
           <UICard
             as="form"
             data-testid="ingest-feed-form"
-            onSubmit={submitFeed as any}
+            onSubmit={submitFeed}
+            aria-busy={isAddingFeed()}
             class={css({ bg: "zodiac.void/38" })}
           >
             <h3 class={sectionTitleClass}>Add Feed</h3>
@@ -316,14 +337,12 @@ export function IngestPage() {
               <option value="youtube">youtube</option>
             </UISelect>
 
-            <div
-              class={css({
-                display: "flex",
-                justifyContent: "flex-end",
-                marginTop: "3",
-              })}
-            >
-              <UIButton type="submit" variant="solid" disabled={isSubmitting()}>
+            <div class={cx(formActionsClass, css({ marginTop: "3" }))}>
+              <UIButton
+                type="submit"
+                variant="solid"
+                aria-busy={isAddingFeed()}
+              >
                 Add Feed
               </UIButton>
             </div>
@@ -341,24 +360,43 @@ export function IngestPage() {
               })}
             >
               <h3 class={sectionTitleClass}>Feed List</h3>
-              <UIBadge tone="violet">{(feeds() ?? []).length} feeds</UIBadge>
+              <UIBadge tone="violet">
+                {feeds.data() ? feeds.data()?.length : "—"} feeds
+              </UIBadge>
             </div>
+            <UINotice
+              status={feeds.isLoading() ? "Loading feeds…" : null}
+              error={
+                feeds.error()
+                  ? `Unable to load feeds: ${feeds.error()?.message}`
+                  : null
+              }
+            />
             <ul
+              role="list"
               tabIndex={0}
               aria-label="Feed list"
-              class={`${css({
-                display: "grid",
-                gap: "2",
-                listStyleType: "none",
-                margin: 0,
-                maxH: "96",
-                overflowY: "auto",
-                overflowX: "hidden",
-                padding: 0,
-              })} zodiac-scroll`}
+              class={cx(
+                css({
+                  display: "grid",
+                  gap: "2",
+                  gridTemplateColumns: "minmax(0, 1fr)",
+                  listStyleType: "none",
+                  margin: 0,
+                  maxH: "96",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  padding: 0,
+                }),
+                focusRingClass,
+                "zodiac-scroll",
+              )}
             >
-              <For each={feeds() ?? []}>
-                {(feed: FeedRow) => (
+              {/* <Index>, not <For>: each live update hands back fresh objects,
+                  and <For> would rebuild every row, unmounting the toggle that
+                  was just pressed and dropping focus to <body>. */}
+              <Index each={(feeds.data() ?? []) as FeedRow[]}>
+                {(feed) => (
                   <li
                     data-testid="ingest-feed-row"
                     class={css({
@@ -369,44 +407,50 @@ export function IngestPage() {
                       display: "flex",
                       gap: "2",
                       justifyContent: "space-between",
+                      minW: 0,
                       p: "3",
                     })}
                   >
-                    <div class={css({ minW: 0, overflow: "hidden" })}>
-                      <p class={css({ margin: 0 })}>{feed.name}</p>
+                    <div
+                      class={css({ flex: "1", minW: 0, overflow: "hidden" })}
+                    >
+                      <p class={css({ margin: 0, overflowWrap: "anywhere" })}>
+                        {feed().name}
+                      </p>
                       <p
-                        class={css({
-                          color: "zodiac.cream/58",
-                          fontFamily: "mono",
-                          fontSize: "xs",
-                          margin: 0,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        })}
+                        class={cx(
+                          metaLine,
+                          css({
+                            margin: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }),
+                        )}
                       >
-                        {feed.type} · {feed.url}
+                        {feed().type} · {feed().url}
                       </p>
                     </div>
                     <UIButton
                       variant="outline"
-                      aria-label={`${feed.enabled ? "Disable" : "Enable"} feed ${feed.name}`}
+                      class={css({ flexShrink: 0 })}
+                      aria-label={`${feed().enabled ? "Disable" : "Enable"} feed ${feed().name}`}
                       onClick={() =>
-                        toggleFeed(String(feed._id), Boolean(feed.enabled))
+                        toggleFeed(String(feed()._id), Boolean(feed().enabled))
                       }
                     >
-                      {feed.enabled ? "Disable" : "Enable"}
+                      {feed().enabled ? "Disable" : "Enable"}
                     </UIButton>
                   </li>
                 )}
-              </For>
+              </Index>
             </ul>
           </UICard>
         </div>
       </UICard>
 
       <div class={twoColClass}>
-        <UICard as="form" onSubmit={submitUrl as any}>
+        <UICard as="form" onSubmit={submitUrl} aria-busy={isIngestingUrl()}>
           <h2 class={sectionTitleClass}>URL Ingest</h2>
 
           <label class={fieldLabelClass} for="url-input-url">
@@ -449,20 +493,22 @@ export function IngestPage() {
             placeholder="Paste text if fetch step is not automated yet"
           />
 
-          <div
-            class={css({
-              display: "flex",
-              justifyContent: "flex-end",
-              marginTop: "4",
-            })}
-          >
-            <UIButton type="submit" variant="solid" disabled={isSubmitting()}>
+          <div class={formActionsClass}>
+            <UIButton
+              type="submit"
+              variant="outline"
+              aria-busy={isIngestingUrl()}
+            >
               Ingest URL
             </UIButton>
           </div>
         </UICard>
 
-        <UICard as="form" onSubmit={submitYouTube as any}>
+        <UICard
+          as="form"
+          onSubmit={submitYouTube}
+          aria-busy={isIngestingYouTube()}
+        >
           <h2 class={sectionTitleClass}>YouTube Ingest</h2>
 
           <label class={fieldLabelClass} for="yt-input-url">
@@ -505,14 +551,12 @@ export function IngestPage() {
             placeholder="Paste transcript text if already available"
           />
 
-          <div
-            class={css({
-              display: "flex",
-              justifyContent: "flex-end",
-              marginTop: "4",
-            })}
-          >
-            <UIButton type="submit" variant="solid" disabled={isSubmitting()}>
+          <div class={formActionsClass}>
+            <UIButton
+              type="submit"
+              variant="outline"
+              aria-busy={isIngestingYouTube()}
+            >
               Ingest YouTube
             </UIButton>
           </div>
@@ -544,13 +588,17 @@ export function IngestPage() {
           }
         />
         <Show when={!recentSources.isLoading()}>
-          <div class={sourceListClass}>
+          <ul role="list" class={sourceListClass}>
             <For each={recentSources.data() ?? []}>
               {(source: RecentSourceRow) => (
-                <UICard class={css({ bg: "zodiac.void/38", p: "4" })}>
+                <UICard
+                  as="li"
+                  class={css({ bg: "zodiac.void/38", minW: 0, p: "4" })}
+                >
                   <div
                     class={css({
                       display: "flex",
+                      flexWrap: "wrap",
                       gap: "2",
                       marginBottom: "2",
                     })}
@@ -559,17 +607,19 @@ export function IngestPage() {
                     <UIBadge tone="gold">{source.status}</UIBadge>
                   </div>
 
-                  <h3 class={css({ fontSize: "lg", marginBottom: "1" })}>
+                  <h3
+                    class={cx(
+                      sectionTitleClass,
+                      css({ marginBottom: "1", overflowWrap: "anywhere" }),
+                    )}
+                  >
                     {source.title ?? "Untitled source"}
                   </h3>
-                  <p
-                    class={css({
-                      color: "zodiac.cream/58",
-                      fontFamily: "mono",
-                      fontSize: "xs",
-                    })}
-                  >
-                    Updated {formatTimestamp(source.updatedAt)}
+                  <p class={metaLine}>
+                    Updated{" "}
+                    <time datetime={new Date(source.updatedAt).toISOString()}>
+                      {formatTimestamp(source.updatedAt)}
+                    </time>
                   </p>
 
                   <Show when={source.canonicalUrl}>
@@ -584,14 +634,7 @@ export function IngestPage() {
                         href={source.canonicalUrl}
                         target="_blank"
                         rel="noreferrer"
-                        class={css({
-                          color: "zodiac.gold",
-                          fontFamily: "mono",
-                          fontSize: "xs",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          textDecoration: "none",
-                        })}
+                        class={inlineActionLink}
                       >
                         Open
                       </a>
@@ -600,7 +643,7 @@ export function IngestPage() {
                 </UICard>
               )}
             </For>
-          </div>
+          </ul>
         </Show>
       </UICard>
     </section>

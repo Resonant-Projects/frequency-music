@@ -1,8 +1,16 @@
 import { Link } from "@tanstack/solid-router";
-import { createMemo, createSignal, For, onMount, Show } from "solid-js";
-import type { Doc } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
 import {
+  createMemo,
+  createSignal,
+  createUniqueId,
+  For,
+  onMount,
+  Show,
+} from "solid-js";
+import type { Doc } from "../../../convex/_generated/dataModel";
+import { css, cx } from "../../styled-system/css";
+import {
+  focusRingClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -13,23 +21,58 @@ import {
 } from "../components/ui";
 import {
   createAction,
-  createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
+import {
+  evidenceStatusTone,
+  formatEditorialKind,
+} from "../lib/editorial-format";
 import { api } from "../../../convex/_generated/api";
 
-function kindLabel(kind: Doc<"editorialArtifacts">["kind"]) {
-  switch (kind) {
-    case "experiment_recap":
-      return "Experiment recap";
-    case "what_changed_my_mind":
-      return "What changed my mind";
-    case "campaign_summary":
-      return "Campaign summary";
-    case "thesis_summary":
-      return "Thesis summary";
-  }
-}
+const auditLinkClass = cx(
+  focusRingClass,
+  css({
+    borderColor: "zodiac.gold/18",
+    borderRadius: "l2",
+    borderWidth: "1px",
+    color: "inherit",
+    display: "block",
+    p: "3",
+    textDecoration: "none",
+    transition: "border-color 0.2s ease",
+    _hover: { borderColor: "zodiac.gold/45" },
+  }),
+);
+
+const artifactCardClass = css({
+  position: "relative",
+  borderColor: "zodiac.gold/22",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  p: "4",
+  transition: "border-color 0.2s ease",
+  _hover: { borderColor: "zodiac.gold/45" },
+});
+
+// Covers the whole card so it stays one click target, while the heading sits
+// outside the anchor and names it through aria-labelledby.
+const stretchedLinkClass = cx(
+  focusRingClass,
+  css({
+    position: "absolute",
+    inset: "0",
+    zIndex: "1",
+    borderRadius: "l2",
+  }),
+);
+
+const plainListClass = css({
+  display: "grid",
+  listStyle: "none",
+  m: "0",
+  p: "0",
+});
 
 export function EditorialPage() {
   onMount(() => {
@@ -39,12 +82,13 @@ export function EditorialPage() {
   const artifacts = createQueryWithStatus(api.editorialArtifacts.list, () => ({
     limit: 50,
   }));
-  const missingWhyThisMatters = createQuery(
+  const missingWhyThisMattersQuery = createQueryWithStatus(
     api.hypotheses.listMissingWhyThisMatters,
     () => ({
       limit: 20,
     }),
   );
+  const missingWhyThisMatters = missingWhyThisMattersQuery.data;
   const exportForAstro = createAction(api.editorialArtifacts.exportForAstro);
 
   const [notice, setNotice] = createSignal<string | null>(null);
@@ -62,6 +106,9 @@ export function EditorialPage() {
   );
 
   async function handleExport() {
+    // aria-busy/aria-disabled rather than `disabled`, so the button keeps
+    // focus while the export runs; this guard stops a second activation.
+    if (exporting() || publishedPublicCount() === 0) return;
     setExporting(true);
     setNotice(null);
     setNoticeError(null);
@@ -71,7 +118,7 @@ export function EditorialPage() {
         `Exported ${result.exportedCount} public artifact(s) to ${result.manifestPath}.`,
       );
     } catch (error) {
-      setNoticeError(`Export failed: ${String(error)}`);
+      setNoticeError(`Export failed: ${describeError(error)}`);
     } finally {
       setExporting(false);
     }
@@ -93,7 +140,7 @@ export function EditorialPage() {
             <h1 class={pageTitleClass}>Editorial</h1>
             <p
               class={css({
-                color: "zodiac.cream/64",
+                color: "zodiac.cream/66",
                 lineHeight: "1.6",
                 maxWidth: "48rem",
               })}
@@ -109,8 +156,8 @@ export function EditorialPage() {
                 mt: "3",
               })}
             >
-              <UIBadge tone="gold">{rows().length} artifacts</UIBadge>
-              <UIBadge tone="violet">
+              <UIBadge tone="cream">{rows().length} artifacts</UIBadge>
+              <UIBadge tone="gold">
                 {publishedPublicCount()} ready for export
               </UIBadge>
             </div>
@@ -118,7 +165,8 @@ export function EditorialPage() {
           <UIButton
             variant="outline"
             onClick={handleExport}
-            disabled={exporting() || publishedPublicCount() === 0}
+            aria-busy={exporting()}
+            aria-disabled={exporting() || publishedPublicCount() === 0}
           >
             {exporting() ? "Exporting..." : "Export public snapshot"}
           </UIButton>
@@ -130,39 +178,41 @@ export function EditorialPage() {
         />
       </UICard>
 
+      <UINotice
+        error={
+          missingWhyThisMattersQuery.isError()
+            ? `Unable to load the Phase 1 audit: ${missingWhyThisMattersQuery.error()?.message ?? "unknown error"}`
+            : null
+        }
+      />
+
       <Show when={(missingWhyThisMatters() ?? []).length > 0}>
         <UICard>
           <h2 class={sectionTitleClass}>Phase 1 Audit</h2>
-          <p class={css({ color: "zodiac.cream/64", mb: "3" })}>
+          <p class={css({ color: "zodiac.cream/66", mb: "3" })}>
             These hypotheses still have no <em>why this matters</em> copy and
             should be cleaned up before they feed public artifacts.
           </p>
-          <div class={css({ display: "grid", gap: "2" })}>
+          <ul role="list" class={cx(plainListClass, css({ gap: "2" }))}>
             <For each={missingWhyThisMatters() ?? []}>
               {(hypothesis) => (
-                <Link
-                  to="/hypotheses/$hypothesisId"
-                  params={{ hypothesisId: String(hypothesis._id) }}
-                  class={css({
-                    borderColor: "zodiac.gold/18",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    color: "inherit",
-                    display: "block",
-                    p: "3",
-                    textDecoration: "none",
-                  })}
-                >
-                  <div class={css({ color: "zodiac.cream" })}>
-                    {hypothesis.title}
-                  </div>
-                  <div class={css({ color: "zodiac.cream/58", mt: "1" })}>
-                    {hypothesis.question}
-                  </div>
-                </Link>
+                <li>
+                  <Link
+                    to="/hypotheses/$hypothesisId"
+                    params={{ hypothesisId: String(hypothesis._id) }}
+                    class={auditLinkClass}
+                  >
+                    <div class={css({ color: "zodiac.cream" })}>
+                      {hypothesis.title}
+                    </div>
+                    <div class={css({ color: "zodiac.cream/66", mt: "1" })}>
+                      {hypothesis.question}
+                    </div>
+                  </Link>
+                </li>
               )}
             </For>
-          </div>
+          </ul>
         </UICard>
       </Show>
 
@@ -184,56 +234,60 @@ export function EditorialPage() {
         />
         <Show when={!artifacts.isLoading()}>
           <Show when={rows().length > 0}>
-            <div class={css({ display: "grid", gap: "3" })}>
+            <ul role="list" class={cx(plainListClass, css({ gap: "3" }))}>
               <For each={rows()}>
-                {(artifact) => (
-                  <Link
-                    to="/editorial/$artifactId"
-                    params={{ artifactId: String(artifact._id) }}
-                    class={css({
-                      borderColor: "zodiac.gold/22",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      color: "inherit",
-                      display: "block",
-                      p: "4",
-                      textDecoration: "none",
-                    })}
-                  >
-                    <div
-                      class={css({
-                        display: "flex",
-                        gap: "2",
-                        flexWrap: "wrap",
-                        mb: "2",
-                      })}
-                    >
-                      <UIBadge tone="gold">{kindLabel(artifact.kind)}</UIBadge>
-                      <UIBadge tone="cream">{artifact.status}</UIBadge>
-                      <UIBadge tone="cream">{artifact.visibility}</UIBadge>
-                      <UIBadge tone="violet">{artifact.evidenceStatus}</UIBadge>
-                      <UIBadge tone="violet">
-                        {artifact.publicEvidenceCards.length} evidence cards
-                      </UIBadge>
-                    </div>
-                    <h3
-                      class={css({
-                        color: "zodiac.cream",
-                        fontFamily: "display",
-                        fontSize: "xl",
-                        lineHeight: "1.4",
-                        mb: "2",
-                      })}
-                    >
-                      {artifact.title}
-                    </h3>
-                    <p class={css({ color: "zodiac.cream/64" })}>
-                      {artifact.dek}
-                    </p>
-                  </Link>
-                )}
+                {(artifact) => {
+                  const titleId = createUniqueId();
+                  return (
+                    <li class={artifactCardClass}>
+                      <div
+                        class={css({
+                          display: "flex",
+                          gap: "2",
+                          flexWrap: "wrap",
+                          mb: "2",
+                        })}
+                      >
+                        <UIBadge tone="gold">
+                          {formatEditorialKind(artifact.kind)}
+                        </UIBadge>
+                        <UIBadge tone="cream">{artifact.status}</UIBadge>
+                        <UIBadge tone="cream">{artifact.visibility}</UIBadge>
+                        <UIBadge
+                          tone={evidenceStatusTone(artifact.evidenceStatus)}
+                        >
+                          {artifact.evidenceStatus}
+                        </UIBadge>
+                        <UIBadge tone="cream">
+                          {artifact.publicEvidenceCards.length} evidence cards
+                        </UIBadge>
+                      </div>
+                      <h3
+                        id={titleId}
+                        class={css({
+                          color: "zodiac.cream",
+                          fontFamily: "display",
+                          fontSize: "xl",
+                          lineHeight: "1.4",
+                          mb: "2",
+                        })}
+                      >
+                        {artifact.title}
+                      </h3>
+                      <p class={css({ color: "zodiac.cream/66" })}>
+                        {artifact.dek}
+                      </p>
+                      <Link
+                        to="/editorial/$artifactId"
+                        params={{ artifactId: String(artifact._id) }}
+                        aria-labelledby={titleId}
+                        class={stretchedLinkClass}
+                      />
+                    </li>
+                  );
+                }}
               </For>
-            </div>
+            </ul>
           </Show>
         </Show>
       </UICard>

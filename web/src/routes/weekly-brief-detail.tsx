@@ -10,6 +10,7 @@ import {
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import { RecommendedActionCard } from "../components/recommended-action-card";
 import {
   Markdown,
   UIBadge,
@@ -20,6 +21,7 @@ import {
   backLink,
   detailTitleClass,
   fieldLabelClass,
+  focusRingClass,
   goldDivider,
   metaLine,
   pageClass,
@@ -30,6 +32,7 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
   useConvexClient,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
@@ -105,6 +108,38 @@ const violetAccentContainerClass = css({
   p: "3",
 });
 
+const studioPromptBoxClass = css({
+  borderColor: "zodiac.gold/18",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  p: "3",
+});
+
+/** One stored studio prompt, or the fallback copy for an older brief. */
+function StudioPromptBox(props: { label: string; content: string }) {
+  return (
+    <div class={studioPromptBoxClass}>
+      <UIBadge tone="gold">{props.label}</UIBadge>
+      <div class={css({ mt: "2" })}>
+        <Markdown content={props.content} />
+      </div>
+    </div>
+  );
+}
+
+const TITLE_LINE = /^#\s+.+(?:\r?\n)?/m;
+
+/**
+ * The body without the `# …` line that `extractTitle` lifts into the page
+ * `<h1>`, so the rendered markdown does not emit a second `<h1>`.
+ */
+function bodyWithoutTitle(bodyMd: string): string {
+  return bodyMd.replace(TITLE_LINE, "");
+}
+
+const sameIds = (left: readonly string[], right: readonly string[]) =>
+  left.join(",") === right.join(",");
+
 type FeedEnableState = { id: Id<"feeds">; enabled: boolean };
 
 function createLiveFeedStates(feedIds: () => Id<"feeds">[]) {
@@ -165,8 +200,12 @@ export function WeeklyBriefDetailPage() {
   const referencedFailureEntries = createQuery(api.failures.getByKeys, () => ({
     keys: brief()?.referencedFailureKeys ?? [],
   }));
-  const proposedFeedIds = createMemo(() =>
-    (brief()?.loopReport?.proposedFeeds ?? []).map((feed) => feed.feedId),
+  // Compared by value: `brief()` changes on every field update, and a fresh
+  // array here would resubscribe every `getByIds` batch.
+  const proposedFeedIds = createMemo(
+    () => (brief()?.loopReport?.proposedFeeds ?? []).map((feed) => feed.feedId),
+    [],
+    { equals: sameIds },
   );
   const liveFeedStates = createLiveFeedStates(proposedFeedIds);
   const activeTheses = createMemo<Doc<"theses">[]>(
@@ -257,7 +296,7 @@ export function WeeklyBriefDetailPage() {
 
   function beginEdit() {
     const row = brief();
-    if (!row) return;
+    if (!row || editMode() || savingEdit()) return;
     setBodyMd(row.bodyMd);
     setTodoText((row.todo ?? []).join("\n"));
     setTenMinuteMd(row.studioPrompts?.tenMinuteMd ?? "");
@@ -266,10 +305,19 @@ export function WeeklyBriefDetailPage() {
     setNotice(null);
     setNoticeError(null);
     setEditMode(true);
+    queueMicrotask(() => bodyField?.focus());
+  }
+
+  function closeEdit() {
+    setEditMode(false);
+    editTrigger?.focus();
   }
 
   // Focus handling for the publish confirmation dialog.
   let publishTrigger: HTMLButtonElement | null = null;
+  // "Edit brief" outlives the edit panel, so closing the panel returns there.
+  let editTrigger: HTMLButtonElement | undefined;
+  let bodyField: HTMLTextAreaElement | undefined;
   // The title outlives every visibility change, so it is the fallback whenever
   // the trigger will not survive the dialog closing.
   let briefTitle: HTMLHeadingElement | null = null;
@@ -295,7 +343,7 @@ export function WeeklyBriefDetailPage() {
   async function handleSaveEdit() {
     const row = brief();
     const fields = editedFields();
-    if (!row || fields.length === 0) return;
+    if (!row || fields.length === 0 || savingEdit()) return;
     setSavingEdit(true);
     setNotice(null);
     setNoticeError(null);
@@ -314,12 +362,10 @@ export function WeeklyBriefDetailPage() {
             }
           : {}),
       });
-      setEditMode(false);
+      closeEdit();
       setNotice("Weekly brief changes saved with edit provenance.");
     } catch (error) {
-      setNoticeError(
-        error instanceof Error ? error.message : "Could not save weekly brief.",
-      );
+      setNoticeError(describeError(error));
     } finally {
       setSavingEdit(false);
     }
@@ -327,12 +373,15 @@ export function WeeklyBriefDetailPage() {
 
   async function handlePublishToNotion() {
     const b = brief();
-    if (!b) return;
+    if (!b || publishingToNotion()) return;
     setPublishingToNotion(true);
     setNotice(null);
     setNoticeError(null);
     try {
       const result = await publishToNotion({ id: b._id as Id<"weeklyBriefs"> });
+      // The button sits inside a not-yet-in-Notion <Show>, and the page id
+      // that unmounts it arrives after this action resolves.
+      briefTitle?.focus();
       setNotice(`Published to Notion: ${result.notionUrl ?? "success"}`);
     } catch (error) {
       console.error("Weekly brief publish failed", error);
@@ -344,7 +393,7 @@ export function WeeklyBriefDetailPage() {
 
   async function handlePublishBrief() {
     const row = brief();
-    if (!row) return;
+    if (!row || publishingBrief()) return;
     setPublishingBrief(true);
     setNotice(null);
     setNoticeError(null);
@@ -356,11 +405,7 @@ export function WeeklyBriefDetailPage() {
       dismissPublishConfirm(briefTitle);
       setNotice("Weekly brief published in the app.");
     } catch (error) {
-      setNoticeError(
-        error instanceof Error
-          ? error.message
-          : "Could not publish weekly brief.",
-      );
+      setNoticeError(describeError(error));
     } finally {
       setPublishingBrief(false);
     }
@@ -368,7 +413,7 @@ export function WeeklyBriefDetailPage() {
 
   async function handleCreateRecap() {
     const b = brief();
-    if (!b) return;
+    if (!b || creatingRecap()) return;
     setCreatingRecap(true);
     setNotice(null);
     setNoticeError(null);
@@ -389,6 +434,7 @@ export function WeeklyBriefDetailPage() {
   }
 
   async function handleEnableFeed(feedId: Id<"feeds">, name: string) {
+    if (enablingFeedId() !== null) return;
     setEnablingFeedId(feedId);
     setNotice(null);
     setNoticeError(null);
@@ -445,20 +491,20 @@ export function WeeklyBriefDetailPage() {
               <UIBadge tone="violet">
                 {b().recommendedHypothesisIds.length} hypotheses
               </UIBadge>
-              <UIBadge tone="violet">
+              <UIBadge tone="cream">
                 {b().recommendedRecipeIds.length} recipes
               </UIBadge>
-              <UIBadge tone="violet">{b().sourceIds.length} sources</UIBadge>
+              <UIBadge tone="cream">{b().sourceIds.length} sources</UIBadge>
               <Show when={b().campaignId}>
                 <UIBadge tone="gold">campaign</UIBadge>
               </Show>
               <Show when={(b().activeThesisIds ?? []).length > 0}>
-                <UIBadge tone="violet">
+                <UIBadge tone="cream">
                   {(b().activeThesisIds ?? []).length} theses
                 </UIBadge>
               </Show>
               <Show when={(b().referencedFailureKeys ?? []).length > 0}>
-                <UIBadge tone="violet">
+                <UIBadge tone="cream">
                   {(b().referencedFailureKeys ?? []).length} reversals
                 </UIBadge>
               </Show>
@@ -482,11 +528,13 @@ export function WeeklyBriefDetailPage() {
                 {(ts) => (
                   <>
                     {" · published: "}
-                    {new Date(ts()).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    <time datetime={new Date(ts()).toISOString()}>
+                      {new Date(ts()).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </time>
                   </>
                 )}
               </Show>
@@ -502,22 +550,31 @@ export function WeeklyBriefDetailPage() {
             >
               <UIButton
                 variant="outline"
-                onClick={handleCreateRecap}
-                disabled={creatingRecap()}
+                onClick={() => void handleCreateRecap()}
+                aria-busy={creatingRecap()}
+                aria-disabled={creatingRecap() || undefined}
               >
                 {creatingRecap() ? "Creating recap..." : "Create recap draft"}
               </UIButton>
               <UIButton
+                ref={(element) => {
+                  editTrigger = element;
+                }}
                 variant="outline"
                 onClick={beginEdit}
-                disabled={editMode() || savingEdit()}
+                aria-expanded={editMode()}
+                aria-controls="weekly-brief-edit-panel"
+                aria-disabled={editMode() || savingEdit() || undefined}
               >
                 Edit brief
               </UIButton>
               <Show when={b().visibility === "private"}>
                 <UIButton
-                  variant="solid"
+                  variant={publishConfirmOpen() ? "outline" : "solid"}
                   onClick={(event) => openPublishConfirm(event.currentTarget)}
+                  aria-haspopup="dialog"
+                  aria-expanded={publishConfirmOpen()}
+                  aria-controls="weekly-brief-publish-dialog"
                   disabled={publishingBrief()}
                 >
                   Publish brief
@@ -526,8 +583,9 @@ export function WeeklyBriefDetailPage() {
               <Show when={!b().notionPageId}>
                 <UIButton
                   variant="outline"
-                  onClick={handlePublishToNotion}
-                  disabled={publishingToNotion()}
+                  onClick={() => void handlePublishToNotion()}
+                  aria-busy={publishingToNotion()}
+                  aria-disabled={publishingToNotion() || undefined}
                 >
                   {publishingToNotion() ? "Publishing..." : "Publish to Notion"}
                 </UIButton>
@@ -536,6 +594,7 @@ export function WeeklyBriefDetailPage() {
 
             <Show when={publishConfirmOpen()}>
               <div
+                id="weekly-brief-publish-dialog"
                 role="dialog"
                 aria-modal="false"
                 aria-label="Confirm weekly brief publication"
@@ -560,8 +619,9 @@ export function WeeklyBriefDetailPage() {
                 >
                   <UIButton
                     variant="solid"
-                    disabled={publishingBrief()}
-                    onClick={handlePublishBrief}
+                    aria-busy={publishingBrief()}
+                    aria-disabled={publishingBrief() || undefined}
+                    onClick={() => void handlePublishBrief()}
                   >
                     {publishingBrief() ? "Publishing..." : "Confirm publish"}
                   </UIButton>
@@ -577,7 +637,10 @@ export function WeeklyBriefDetailPage() {
             </Show>
 
             <Show when={editMode()}>
-              <div class={cx(violetAccentContainerClass, css({ gap: "2" }))}>
+              <div
+                id="weekly-brief-edit-panel"
+                class={cx(violetAccentContainerClass, css({ gap: "2" }))}
+              >
                 <div
                   class={css({
                     alignItems: "center",
@@ -606,6 +669,9 @@ export function WeeklyBriefDetailPage() {
                   Brief markdown
                 </label>
                 <UITextarea
+                  ref={(element) => {
+                    bodyField = element;
+                  }}
                   id="weekly-brief-body"
                   value={bodyMd()}
                   onInput={(event) => setBodyMd(event.currentTarget.value)}
@@ -651,16 +717,19 @@ export function WeeklyBriefDetailPage() {
                   class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
                 >
                   <UIButton
-                    variant="solid"
-                    disabled={savingEdit() || editedFields().length === 0}
-                    onClick={handleSaveEdit}
+                    variant="outline"
+                    aria-busy={savingEdit()}
+                    aria-disabled={
+                      savingEdit() || editedFields().length === 0 || undefined
+                    }
+                    onClick={() => void handleSaveEdit()}
                   >
                     {savingEdit() ? "Saving..." : "Save changes"}
                   </UIButton>
                   <UIButton
                     variant="ghost"
                     disabled={savingEdit()}
-                    onClick={() => setEditMode(false)}
+                    onClick={closeEdit}
                   >
                     Cancel
                   </UIButton>
@@ -709,126 +778,41 @@ export function WeeklyBriefDetailPage() {
             <hr class={goldDivider} />
             <h2 class={sectionLabel}>Studio Prompts</h2>
             <div class={css({ display: "grid", gap: "3" })}>
-              <div
-                class={css({
-                  borderColor: "zodiac.gold/18",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  p: "3",
-                })}
-              >
-                <UIBadge tone="gold">10-minute</UIBadge>
-                <div class={css({ mt: "2" })}>
-                  <Markdown
-                    content={
-                      b().studioPrompts?.tenMinuteMd ??
-                      "No 10-minute prompt was stored for this older brief."
-                    }
-                  />
-                </div>
-              </div>
-              <div
-                class={css({
-                  borderColor: "zodiac.gold/18",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  p: "3",
-                })}
-              >
-                <UIBadge tone="gold">30-minute</UIBadge>
-                <div class={css({ mt: "2" })}>
-                  <Markdown
-                    content={
-                      b().studioPrompts?.thirtyMinuteMd ??
-                      "No 30-minute prompt was stored for this older brief."
-                    }
-                  />
-                </div>
-              </div>
-              <div
-                class={css({
-                  borderColor: "zodiac.gold/18",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  p: "3",
-                })}
-              >
-                <UIBadge tone="gold">90-minute</UIBadge>
-                <div class={css({ mt: "2" })}>
-                  <Markdown
-                    content={
-                      b().studioPrompts?.ninetyMinuteMd ??
-                      "No 90-minute prompt was stored for this older brief."
-                    }
-                  />
-                </div>
-              </div>
+              <StudioPromptBox
+                label="10-minute"
+                content={
+                  b().studioPrompts?.tenMinuteMd ??
+                  "No 10-minute prompt was stored for this older brief."
+                }
+              />
+              <StudioPromptBox
+                label="30-minute"
+                content={
+                  b().studioPrompts?.thirtyMinuteMd ??
+                  "No 30-minute prompt was stored for this older brief."
+                }
+              />
+              <StudioPromptBox
+                label="90-minute"
+                content={
+                  b().studioPrompts?.ninetyMinuteMd ??
+                  "No 90-minute prompt was stored for this older brief."
+                }
+              />
             </div>
 
             <Show when={(b().recommendedActions ?? []).length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Recommended Actions</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <ul role="list" class={css({ display: "grid", gap: "2" })}>
                 <For each={b().recommendedActions ?? []}>
-                  {(action) => {
-                    const linkClass = css({
-                      borderColor: "zodiac.gold/18",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      color: "inherit",
-                      display: "block",
-                      p: "3",
-                      textDecoration: "none",
-                    });
-                    const cardBody = (
-                      <>
-                        <div
-                          class={css({
-                            display: "flex",
-                            gap: "2",
-                            flexWrap: "wrap",
-                            mb: "1",
-                          })}
-                        >
-                          <UIBadge tone="gold">{action.durationBucket}</UIBadge>
-                          <UIBadge tone="cream">{action.kind}</UIBadge>
-                        </div>
-                        <div class={css({ color: "zodiac.cream", mb: "1" })}>
-                          {action.targetType} {action.targetId.slice(-6)}
-                        </div>
-                        <div class={css({ color: "zodiac.cream/68" })}>
-                          {action.reason}
-                        </div>
-                      </>
-                    );
-                    return action.targetType === "hypothesis" ? (
-                      <Link
-                        to="/hypotheses/$hypothesisId"
-                        params={{ hypothesisId: action.targetId }}
-                        class={linkClass}
-                      >
-                        {cardBody}
-                      </Link>
-                    ) : action.targetType === "recipe" ? (
-                      <Link
-                        to="/recipes/$recipeId"
-                        params={{ recipeId: action.targetId }}
-                        class={linkClass}
-                      >
-                        {cardBody}
-                      </Link>
-                    ) : (
-                      <Link
-                        to="/compositions/$compositionId"
-                        params={{ compositionId: action.targetId }}
-                        class={linkClass}
-                      >
-                        {cardBody}
-                      </Link>
-                    );
-                  }}
+                  {(action) => (
+                    <li>
+                      <RecommendedActionCard action={action} />
+                    </li>
+                  )}
                 </For>
-              </div>
+              </ul>
             </Show>
 
             <Show when={b().loopReport}>
@@ -942,11 +926,11 @@ export function WeeklyBriefDetailPage() {
 
                   <h3 class={loopSubheadingClass}>Review queue</h3>
                   <div
-                    class={`${reviewQueueBannerClass} ${
-                      loopReport().reviewQueue.agentBlocked
-                        ? reviewQueueBlockedClass
-                        : ""
-                    }`}
+                    class={cx(
+                      reviewQueueBannerClass,
+                      loopReport().reviewQueue.agentBlocked &&
+                        reviewQueueBlockedClass,
+                    )}
                   >
                     <span>
                       <strong>{loopReport().reviewQueue.pendingDrafts}</strong>
@@ -1050,13 +1034,20 @@ export function WeeklyBriefDetailPage() {
                                   href={feed.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  class={css({
-                                    color: "zodiac.cream",
-                                    textDecorationColor: "zodiac.gold/45",
-                                    textUnderlineOffset: "3px",
-                                  })}
+                                  class={cx(
+                                    css({
+                                      color: "zodiac.cream",
+                                      textDecorationColor: "zodiac.gold/45",
+                                      textUnderlineOffset: "3px",
+                                    }),
+                                    focusRingClass,
+                                  )}
                                 >
                                   {feed.name}
+                                  <span class={css({ srOnly: true })}>
+                                    {" "}
+                                    (opens in a new tab)
+                                  </span>
                                 </a>
                                 <p
                                   class={css({
@@ -1070,18 +1061,22 @@ export function WeeklyBriefDetailPage() {
                               </div>
                               <UIButton
                                 type="button"
-                                variant={enabled() ? "ghost" : "solid"}
+                                variant={enabled() ? "ghost" : "outline"}
                                 aria-label={
                                   enabled()
                                     ? `${feed.name} enabled`
                                     : `Enable feed ${feed.name}`
                                 }
-                                disabled={
-                                  enabled() || enablingFeedId() === feed.feedId
+                                aria-busy={enablingFeedId() === feed.feedId}
+                                aria-disabled={
+                                  enabled() ||
+                                  enablingFeedId() === feed.feedId ||
+                                  undefined
                                 }
-                                onClick={() =>
-                                  void handleEnableFeed(feed.feedId, feed.name)
-                                }
+                                onClick={() => {
+                                  if (enabled()) return;
+                                  void handleEnableFeed(feed.feedId, feed.name);
+                                }}
                               >
                                 {enabled()
                                   ? "Enabled"
@@ -1101,7 +1096,7 @@ export function WeeklyBriefDetailPage() {
 
             {/* Rendered Markdown Body */}
             <hr class={goldDivider} />
-            <Markdown content={b().bodyMd} />
+            <Markdown content={bodyWithoutTitle(b().bodyMd)} />
 
             {/* Todo Items */}
             <Show when={(b().todo ?? []).length > 0}>
@@ -1130,7 +1125,16 @@ export function WeeklyBriefDetailPage() {
                     <Link
                       to="/theses/$thesisId"
                       params={{ thesisId: String(thesis._id) }}
-                      class={css({ textDecoration: "none" })}
+                      class={cx(
+                        css({
+                          alignItems: "center",
+                          display: "inline-flex",
+                          minHeight: "6",
+                          textDecoration: "none",
+                          _coarsePointer: { minHeight: "11" },
+                        }),
+                        focusRingClass,
+                      )}
                     >
                       <UIBadge tone="gold">{thesis.title}</UIBadge>
                     </Link>
@@ -1148,15 +1152,18 @@ export function WeeklyBriefDetailPage() {
                     <Link
                       to="/failures"
                       hash={failure.key}
-                      class={css({
-                        borderColor: "zodiac.gold/18",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        color: "zodiac.cream/76",
-                        display: "block",
-                        p: "3",
-                        textDecoration: "none",
-                      })}
+                      class={cx(
+                        css({
+                          borderColor: "zodiac.gold/18",
+                          borderRadius: "l2",
+                          borderWidth: "1px",
+                          color: "zodiac.cream/76",
+                          display: "block",
+                          p: "3",
+                          textDecoration: "none",
+                        }),
+                        focusRingClass,
+                      )}
                     >
                       <div
                         class={css({
@@ -1182,11 +1189,13 @@ export function WeeklyBriefDetailPage() {
             <hr class={goldDivider} />
             <div class={metaLine}>
               Created:{" "}
-              {new Date(b().createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
+              <time datetime={new Date(b().createdAt).toISOString()}>
+                {new Date(b().createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </time>
               {" | "}Visibility: {b().visibility}
               <Show when={b().notionPageId}>
                 {(id) => (

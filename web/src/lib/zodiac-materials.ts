@@ -82,15 +82,6 @@ export function makeOuterRingMat(opacity: number) {
   });
 }
 
-// Radial spoke lines at sector boundaries
-export function makeSpokeMat(color: string, active = false) {
-  return new THREE.LineBasicMaterial({
-    color,
-    transparent: true,
-    opacity: active ? 0.55 : 0.22,
-  });
-}
-
 // Tick marks — all gold, varying opacity
 export function makeTickMat(major: boolean) {
   return new THREE.LineBasicMaterial({

@@ -3,7 +3,12 @@ import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
+  entityCardLinkClass,
+  entityCardTitleLinkClass,
+} from "../components/entity-card";
+import {
   fieldLabelClass,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -16,19 +21,6 @@ import {
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
-
-const thesisCard = css({
-  borderColor: "zodiac.gold/22",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  display: "block",
-  p: "4",
-  textDecoration: "none",
-  transition: "border-color 0.15s",
-  _hover: {
-    borderColor: "zodiac.gold/45",
-  },
-});
 
 export function ThesesPage() {
   onMount(() => {
@@ -66,15 +58,21 @@ export function ThesesPage() {
           <h2 id={headingId} class={sectionTitleClass}>
             {label}
           </h2>
-          <div class={css({ display: "grid", gap: "3" })}>
+          <ul
+            role="list"
+            class={css({ display: "grid", gap: "3", listStyle: "none" })}
+          >
             <For each={rows}>
               {(thesis) => (
-                <Link
-                  to="/theses/$thesisId"
-                  params={{ thesisId: String(thesis._id) }}
-                  class={thesisCard}
-                >
-                  <div class={css({ display: "flex", gap: "2", mb: "2" })}>
+                <li class={entityCardLinkClass}>
+                  <div
+                    class={css({
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "2",
+                      mb: "2",
+                    })}
+                  >
                     <UIBadge tone="gold">{thesis.status}</UIBadge>
                     <UIBadge tone="cream">{thesis.visibility}</UIBadge>
                   </div>
@@ -85,20 +83,27 @@ export function ThesesPage() {
                       mb: "2",
                     })}
                   >
-                    {thesis.title}
+                    <Link
+                      to="/theses/$thesisId"
+                      params={{ thesisId: String(thesis._id) }}
+                      class={entityCardTitleLinkClass}
+                    >
+                      {thesis.title}
+                    </Link>
                   </h3>
                   <p
                     class={css({
                       color: "zodiac.cream/66",
                       lineHeight: "1.7",
+                      maxW: "72ch",
                     })}
                   >
                     {thesis.statement}
                   </p>
-                </Link>
+                </li>
               )}
             </For>
-          </div>
+          </ul>
         </section>
       </Show>
     );
@@ -131,12 +136,22 @@ export function ThesesPage() {
 
   return (
     <section class={pageClass}>
-      <UICard as="form" onSubmit={handleCreate as any}>
+      <UICard>
         <h1 class={pageTitleClass}>Theses</h1>
-        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
+        <p class={helperClass}>
           Theses are the lightweight organizing questions that accumulate
           hypotheses, recipes, compositions, and reversals over time.
         </p>
+      </UICard>
+
+      <UICard
+        as="form"
+        aria-labelledby="thesis-form-heading"
+        onSubmit={handleCreate}
+      >
+        <h2 id="thesis-form-heading" class={sectionTitleClass}>
+          New Thesis
+        </h2>
 
         <label class={fieldLabelClass} for="thesis-title">
           Title
@@ -179,7 +194,7 @@ export function ThesesPage() {
           })}
         >
           <UINotice status={notice()} error={noticeError()} />
-          <UIButton type="submit" variant="outline">
+          <UIButton type="submit" variant="solid">
             Create Thesis
           </UIButton>
         </div>

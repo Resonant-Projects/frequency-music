@@ -1,7 +1,14 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  Index,
+  Show,
+} from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   backLink,
   collapsedNoticeClass,
@@ -18,7 +25,15 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQuery } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+} from "../integrations/convex";
+import {
+  evidenceStatusTone,
+  formatEditorialKind,
+} from "../lib/editorial-format";
 import { api } from "../../../convex/_generated/api";
 
 type EditorialArtifact = Doc<"editorialArtifacts">;
@@ -64,24 +79,23 @@ function buildDraft(artifact: EditorialArtifact): ArtifactDraft {
   };
 }
 
-function formatKind(kind: EditorialArtifact["kind"]) {
-  switch (kind) {
-    case "experiment_recap":
-      return "Experiment recap";
-    case "what_changed_my_mind":
-      return "What changed my mind";
-    case "campaign_summary":
-      return "Campaign summary";
-    case "thesis_summary":
-      return "Thesis summary";
-  }
-}
+const threeColumnGrid = css({
+  display: "grid",
+  gap: "3",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(3, minmax(0, 1fr))",
+  },
+});
+
+const EVIDENCE_HEADING_ID = "evidence-card-review-heading";
 
 export function EditorialDetailPage() {
   const params = useParams({ from: "/editorial/$artifactId" });
-  const detail = createQuery(api.editorialArtifacts.get, () => ({
+  const detailQuery = createQueryWithStatus(api.editorialArtifacts.get, () => ({
     id: params().artifactId as Id<"editorialArtifacts">,
   }));
+  const detail = detailQuery.data;
 
   const updateArtifact = createMutation(api.editorialArtifacts.update);
   const submitForReview = createMutation(
@@ -99,6 +113,26 @@ export function EditorialDetailPage() {
   const [approving, setApproving] = createSignal(false);
   const [publishing, setPublishing] = createSignal(false);
   const isBusy = () => saving() || submitting() || approving() || publishing();
+  // The action the user activated. Its button stays enabled and focused, marked
+  // aria-busy; the others are aria-disabled so none of them drops focus when a
+  // run starts or when the artifact's new status makes it unavailable.
+  const activeAction = () =>
+    publishing()
+      ? "publish"
+      : approving()
+        ? "approve"
+        : submitting()
+          ? "submit"
+          : saving()
+            ? "save"
+            : null;
+
+  createEffect(() => {
+    if (detailQuery.isLoading() || detail()) return;
+    document.title = detailQuery.isError()
+      ? "Editorial artifact unavailable — Frequency Music"
+      : "Editorial artifact not found — Frequency Music";
+  });
 
   createEffect(() => {
     const row = detail();
@@ -172,6 +206,18 @@ export function EditorialDetailPage() {
   }
 
   function removeEvidenceCard(index: number) {
+    const count = draft()?.publicEvidenceCards.length ?? 0;
+    // Rows are positional (<Index>), so the row at `index` survives unless it is
+    // the last one. Move focus first, onto a field that outlives the removal:
+    // this position's (now the next card's) title, the previous card's title,
+    // or the section heading once no cards remain.
+    const focusTarget =
+      index < count - 1
+        ? `evidence-${index}-source-title`
+        : index > 0
+          ? `evidence-${index - 1}-source-title`
+          : EVIDENCE_HEADING_ID;
+    document.getElementById(focusTarget)?.focus();
     setDraft((current) => {
       if (!current) return current;
       return {
@@ -201,13 +247,38 @@ export function EditorialDetailPage() {
     });
   }
 
+  function handleSaveClick() {
+    if (isBusy()) return;
+    void handleSave();
+  }
+
+  // Also the first step of submit, approve, and publish, which set their own
+  // busy flag first; so this guards only against a second concurrent save.
   async function handleSave() {
     const current = draft();
     const row = detail();
-    if (!current || !row || isBusy()) return false;
-    setSaving(true);
+    if (!current || !row || saving()) return false;
     setNotice(null);
     setNoticeError(null);
+    const incomplete = current.publicEvidenceCards
+      .map((card, index) => ({
+        index,
+        field: !card.sourceTitle.trim()
+          ? ("source-title" as const)
+          : !card.summary.trim()
+            ? ("summary" as const)
+            : null,
+      }))
+      .find((entry) => entry.field !== null);
+    if (incomplete?.field) {
+      const fieldName =
+        incomplete.field === "source-title" ? "a source title" : "a summary";
+      setNoticeError(
+        `Save blocked: evidence card ${incomplete.index + 1} needs ${fieldName}.`,
+      );
+      return false;
+    }
+    setSaving(true);
     try {
       await updateArtifact({
         id: row.artifact._id,
@@ -222,9 +293,9 @@ export function EditorialDetailPage() {
         evidenceStatus: current.evidenceStatus,
         visibility: current.visibility,
         publicEvidenceCards: current.publicEvidenceCards.map((card) => ({
-          sourceTitle: card.sourceTitle.trim() || "Untitled evidence",
+          sourceTitle: card.sourceTitle.trim(),
           sourceCanonicalUrl: card.sourceCanonicalUrl?.trim() || undefined,
-          summary: card.summary.trim() || "Summary pending.",
+          summary: card.summary.trim(),
           evidenceLevel: card.evidenceLevel,
           truthConfidence: card.truthConfidence,
           interestLevel: card.interestLevel,
@@ -233,7 +304,7 @@ export function EditorialDetailPage() {
       setNotice("Editorial artifact saved.");
       return true;
     } catch (error) {
-      setNoticeError(`Save failed: ${String(error)}`);
+      setNoticeError(`Save failed: ${describeError(error)}`);
       return false;
     } finally {
       setSaving(false);
@@ -242,7 +313,7 @@ export function EditorialDetailPage() {
 
   async function handleSubmitForReview() {
     const row = detail();
-    if (!row || isBusy()) return;
+    if (!row || isBusy() || !validation().canSubmitForReview) return;
     setSubmitting(true);
     setNotice(null);
     setNoticeError(null);
@@ -254,7 +325,7 @@ export function EditorialDetailPage() {
       // handleSave may already have reported success; drop it so the two live
       // regions never contradict each other for one action.
       setNotice(null);
-      setNoticeError(`Submit for review failed: ${String(error)}`);
+      setNoticeError(`Submit for review failed: ${describeError(error)}`);
     } finally {
       setSubmitting(false);
     }
@@ -262,7 +333,7 @@ export function EditorialDetailPage() {
 
   async function handleApprove() {
     const row = detail();
-    if (!row || isBusy()) return;
+    if (!row || isBusy() || row.artifact.status !== "in_review") return;
     setApproving(true);
     setNotice(null);
     setNoticeError(null);
@@ -274,7 +345,7 @@ export function EditorialDetailPage() {
       // handleSave may already have reported success; drop it so the two live
       // regions never contradict each other for one action.
       setNotice(null);
-      setNoticeError(`Approve failed: ${String(error)}`);
+      setNoticeError(`Approve failed: ${describeError(error)}`);
     } finally {
       setApproving(false);
     }
@@ -282,7 +353,7 @@ export function EditorialDetailPage() {
 
   async function handlePublish() {
     const row = detail();
-    if (!row || isBusy()) return;
+    if (!row || isBusy() || !validation().canPublish) return;
     setPublishing(true);
     setNotice(null);
     setNoticeError(null);
@@ -294,7 +365,7 @@ export function EditorialDetailPage() {
       // handleSave may already have reported success; drop it so the two live
       // regions never contradict each other for one action.
       setNotice(null);
-      setNoticeError(`Publish failed: ${String(error)}`);
+      setNoticeError(`Publish failed: ${describeError(error)}`);
     } finally {
       setPublishing(false);
     }
@@ -311,15 +382,26 @@ export function EditorialDetailPage() {
       <UINotice
         class={detail() && draft() ? collapsedNoticeClass : undefined}
         status={
-          !detail()
+          detailQuery.isLoading()
             ? "Loading editorial artifact..."
-            : !draft()
-              ? "Loading editorial draft..."
-              : null
+            : detailQuery.isError()
+              ? null
+              : !detail()
+                ? "Editorial artifact not found."
+                : !draft()
+                  ? "Loading editorial draft..."
+                  : null
+        }
+        error={
+          detailQuery.isError()
+            ? `Unable to load editorial artifact: ${detailQuery.error()?.message ?? "unknown error"}`
+            : null
         }
       />
 
-      <Show when={detail()} keyed>
+      {/* Not keyed: a live update to the artifact must not remount the form and
+          drop focus from the field or button the user is on. */}
+      <Show when={detail()}>
         {(detailRow) => {
           const current = () => draft();
           const d = () => current()!;
@@ -335,27 +417,32 @@ export function EditorialDetailPage() {
                   })}
                 >
                   <UIBadge tone="gold">
-                    {formatKind(detailRow.artifact.kind)}
+                    {formatEditorialKind(detailRow().artifact.kind)}
                   </UIBadge>
-                  <UIBadge tone="cream">{detailRow.artifact.status}</UIBadge>
+                  <UIBadge tone="cream">{detailRow().artifact.status}</UIBadge>
                   <UIBadge tone="cream">
-                    {detailRow.artifact.visibility}
+                    {detailRow().artifact.visibility}
                   </UIBadge>
-                  <UIBadge tone="violet">
-                    {detailRow.artifact.evidenceStatus}
+                  <UIBadge
+                    tone={evidenceStatusTone(
+                      detailRow().artifact.evidenceStatus,
+                    )}
+                  >
+                    {detailRow().artifact.evidenceStatus}
                   </UIBadge>
                 </div>
 
-                <h1 class={detailTitleClass}>{detailRow.artifact.title}</h1>
-                <p class={css({ color: "zodiac.cream/64" })}>
-                  Primary ref: {detailRow.artifact.primaryRef.type}{" "}
-                  {detailRow.artifact.primaryRef.id.slice(-6)}
+                <h1 class={detailTitleClass}>{detailRow().artifact.title}</h1>
+                <p class={css({ color: "zodiac.cream/66" })}>
+                  Primary ref: {detailRow().artifact.primaryRef.type}{" "}
+                  {detailRow().artifact.primaryRef.id.slice(-6)}
                 </p>
-                <p class={css({ color: "zodiac.cream/58", mt: "1" })}>
-                  linked: {detailRow.artifact.linkedIds.thesisIds.length} theses
-                  · {detailRow.artifact.linkedIds.hypothesisIds.length}{" "}
-                  hypotheses · {detailRow.artifact.linkedIds.recipeIds.length}{" "}
-                  recipes · {detailRow.artifact.linkedIds.compositionIds.length}{" "}
+                <p class={css({ color: "zodiac.cream/66", mt: "1" })}>
+                  linked: {detailRow().artifact.linkedIds.thesisIds.length}{" "}
+                  theses · {detailRow().artifact.linkedIds.hypothesisIds.length}{" "}
+                  hypotheses · {detailRow().artifact.linkedIds.recipeIds.length}{" "}
+                  recipes ·{" "}
+                  {detailRow().artifact.linkedIds.compositionIds.length}{" "}
                   compositions
                 </p>
 
@@ -369,23 +456,30 @@ export function EditorialDetailPage() {
                 >
                   <UIButton
                     variant="outline"
-                    onClick={handleSave}
-                    disabled={isBusy()}
+                    onClick={handleSaveClick}
+                    aria-busy={activeAction() === "save"}
+                    aria-disabled={isBusy() && activeAction() !== "save"}
                   >
                     {saving() ? "Saving..." : "Save draft"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleSubmitForReview}
-                    disabled={isBusy() || !validation().canSubmitForReview}
+                    aria-busy={activeAction() === "submit"}
+                    aria-disabled={
+                      (isBusy() && activeAction() !== "submit") ||
+                      !validation().canSubmitForReview
+                    }
                   >
                     {submitting() ? "Submitting..." : "Submit for review"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleApprove}
-                    disabled={
-                      isBusy() || detailRow.artifact.status !== "in_review"
+                    aria-busy={activeAction() === "approve"}
+                    aria-disabled={
+                      (isBusy() && activeAction() !== "approve") ||
+                      detailRow().artifact.status !== "in_review"
                     }
                   >
                     {approving() ? "Approving..." : "Approve"}
@@ -393,7 +487,11 @@ export function EditorialDetailPage() {
                   <UIButton
                     variant="solid"
                     onClick={handlePublish}
-                    disabled={isBusy() || !validation().canPublish}
+                    aria-busy={activeAction() === "publish"}
+                    aria-disabled={
+                      (isBusy() && activeAction() !== "publish") ||
+                      !validation().canPublish
+                    }
                   >
                     {publishing() ? "Publishing..." : "Publish"}
                   </UIButton>
@@ -452,13 +550,7 @@ export function EditorialDetailPage() {
                   }
                 />
 
-                <div
-                  class={css({
-                    display: "grid",
-                    gap: "3",
-                    gridTemplateColumns: { base: "1fr", md: "1fr 1fr 1fr" },
-                  })}
-                >
+                <div class={threeColumnGrid}>
                   <div>
                     <label class={fieldLabelClass} for="artifact-slug">
                       Slug
@@ -575,14 +667,20 @@ export function EditorialDetailPage() {
                     alignItems: "center",
                   })}
                 >
-                  <h2 class={sectionLabel}>Evidence Card Review</h2>
+                  <h2
+                    id={EVIDENCE_HEADING_ID}
+                    tabIndex={-1}
+                    class={sectionLabel}
+                  >
+                    Evidence Card Review
+                  </h2>
                   <UIButton variant="outline" onClick={addEvidenceCard}>
                     Add evidence card
                   </UIButton>
                 </div>
 
                 <div class={css({ display: "grid", gap: "3", mt: "3" })}>
-                  <For each={d().publicEvidenceCards}>
+                  <Index each={d().publicEvidenceCards}>
                     {(card, index) => (
                       <div
                         class={css({
@@ -602,11 +700,11 @@ export function EditorialDetailPage() {
                             flexWrap: "wrap",
                           })}
                         >
-                          <UIBadge tone="gold">Card {index() + 1}</UIBadge>
+                          <UIBadge tone="gold">Card {index + 1}</UIBadge>
                           <UIButton
                             variant="outline"
-                            aria-label={`Remove card ${index() + 1}`}
-                            onClick={() => removeEvidenceCard(index())}
+                            aria-label={`Remove card ${index + 1}`}
+                            onClick={() => removeEvidenceCard(index)}
                           >
                             Remove
                           </UIButton>
@@ -614,16 +712,16 @@ export function EditorialDetailPage() {
 
                         <label
                           class={fieldLabelClass}
-                          for={`evidence-${index()}-source-title`}
+                          for={`evidence-${index}-source-title`}
                         >
                           Source Title
                         </label>
                         <UIInput
-                          id={`evidence-${index()}-source-title`}
-                          value={card.sourceTitle}
+                          id={`evidence-${index}-source-title`}
+                          value={card().sourceTitle}
                           onInput={(event) =>
                             updateEvidenceCard(
-                              index(),
+                              index,
                               "sourceTitle",
                               event.currentTarget.value,
                             )
@@ -632,16 +730,16 @@ export function EditorialDetailPage() {
 
                         <label
                           class={fieldLabelClass}
-                          for={`evidence-${index()}-canonical-url`}
+                          for={`evidence-${index}-canonical-url`}
                         >
                           Canonical URL
                         </label>
                         <UIInput
-                          id={`evidence-${index()}-canonical-url`}
-                          value={card.sourceCanonicalUrl ?? ""}
+                          id={`evidence-${index}-canonical-url`}
+                          value={card().sourceCanonicalUrl ?? ""}
                           onInput={(event) =>
                             updateEvidenceCard(
-                              index(),
+                              index,
                               "sourceCanonicalUrl",
                               event.currentTarget.value,
                             )
@@ -650,46 +748,37 @@ export function EditorialDetailPage() {
 
                         <label
                           class={fieldLabelClass}
-                          for={`evidence-${index()}-summary`}
+                          for={`evidence-${index}-summary`}
                         >
                           Summary
                         </label>
                         <UITextarea
-                          id={`evidence-${index()}-summary`}
+                          id={`evidence-${index}-summary`}
                           rows={5}
-                          value={card.summary}
+                          value={card().summary}
                           onInput={(event) =>
                             updateEvidenceCard(
-                              index(),
+                              index,
                               "summary",
                               event.currentTarget.value,
                             )
                           }
                         />
 
-                        <div
-                          class={css({
-                            display: "grid",
-                            gap: "3",
-                            gridTemplateColumns: {
-                              base: "1fr",
-                              md: "1fr 1fr 1fr",
-                            },
-                          })}
-                        >
+                        <div class={threeColumnGrid}>
                           <div>
                             <label
                               class={fieldLabelClass}
-                              for={`evidence-${index()}-evidence-level`}
+                              for={`evidence-${index}-evidence-level`}
                             >
                               Evidence Level
                             </label>
                             <UISelect
-                              id={`evidence-${index()}-evidence-level`}
-                              value={card.evidenceLevel}
+                              id={`evidence-${index}-evidence-level`}
+                              value={card().evidenceLevel}
                               onChange={(event) =>
                                 updateEvidenceCard(
-                                  index(),
+                                  index,
                                   "evidenceLevel",
                                   event.currentTarget
                                     .value as EvidenceCard["evidenceLevel"],
@@ -708,16 +797,16 @@ export function EditorialDetailPage() {
                           <div>
                             <label
                               class={fieldLabelClass}
-                              for={`evidence-${index()}-truth-confidence`}
+                              for={`evidence-${index}-truth-confidence`}
                             >
                               Truth Confidence
                             </label>
                             <UISelect
-                              id={`evidence-${index()}-truth-confidence`}
-                              value={card.truthConfidence ?? ""}
+                              id={`evidence-${index}-truth-confidence`}
+                              value={card().truthConfidence ?? ""}
                               onChange={(event) =>
                                 updateEvidenceCard(
-                                  index(),
+                                  index,
                                   "truthConfidence",
                                   (event.currentTarget.value ||
                                     undefined) as EvidenceCard["truthConfidence"],
@@ -733,16 +822,16 @@ export function EditorialDetailPage() {
                           <div>
                             <label
                               class={fieldLabelClass}
-                              for={`evidence-${index()}-interest-level`}
+                              for={`evidence-${index}-interest-level`}
                             >
                               Interest Level
                             </label>
                             <UISelect
-                              id={`evidence-${index()}-interest-level`}
-                              value={card.interestLevel ?? ""}
+                              id={`evidence-${index}-interest-level`}
+                              value={card().interestLevel ?? ""}
                               onChange={(event) =>
                                 updateEvidenceCard(
-                                  index(),
+                                  index,
                                   "interestLevel",
                                   (event.currentTarget.value ||
                                     undefined) as EvidenceCard["interestLevel"],
@@ -758,7 +847,7 @@ export function EditorialDetailPage() {
                         </div>
                       </div>
                     )}
-                  </For>
+                  </Index>
                 </div>
               </UICard>
 
@@ -780,7 +869,7 @@ export function EditorialDetailPage() {
                         <div class={css({ color: "zodiac.cream", mb: "1" })}>
                           {check.ok ? "Pass" : "Block"}
                         </div>
-                        <div class={css({ color: "zodiac.cream/64" })}>
+                        <div class={css({ color: "zodiac.cream/66" })}>
                           {check.message}
                         </div>
                       </div>
@@ -796,15 +885,19 @@ export function EditorialDetailPage() {
                   role="group"
                   tabIndex={0}
                   aria-label="Export preview JSON"
-                  class={css({
-                    color: "zodiac.cream/70",
-                    fontFamily: "mono",
-                    fontSize: "sm",
-                    lineHeight: "1.6",
-                    overflowX: "auto",
-                    overflowWrap: "anywhere",
-                    whiteSpace: "pre-wrap",
-                  })}
+                  class={cx(
+                    "zodiac-scroll",
+                    css({
+                      color: "zodiac.cream/70",
+                      fontFamily: "mono",
+                      fontSize: "sm",
+                      lineHeight: "1.6",
+                      maxH: "70vh",
+                      overflow: "auto",
+                      overflowWrap: "anywhere",
+                      whiteSpace: "pre-wrap",
+                    }),
+                  )}
                 >
                   {exportPreview()}
                 </pre>

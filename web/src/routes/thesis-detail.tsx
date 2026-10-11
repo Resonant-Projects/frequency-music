@@ -1,13 +1,25 @@
 import { Link, useNavigate, useParams } from "@tanstack/solid-router";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onMount,
+  Show,
+} from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { entityCellClass } from "../components/entity-card";
+import { StatTiles } from "../components/stat-tiles";
 import {
   backLink,
   collapsedNoticeClass,
   detailTitleClass,
+  fieldLabelClass,
+  focusRingClass,
   goldDivider,
   pageClass,
+  proseClass,
   sectionLabel,
   UIBadge,
   UIButton,
@@ -15,52 +27,41 @@ import {
   UINotice,
   UISelect,
 } from "../components/ui";
-import { createMutation, createQuery } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+} from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
-
-const statGrid = css({
-  display: "grid",
-  gap: "3",
-  gridTemplateColumns: {
-    base: "repeat(2, minmax(0, 1fr))",
-    md: "repeat(4, minmax(0, 1fr))",
-  },
-});
-
-const statCard = css({
-  bg: "zodiac.cream/3",
-  borderColor: "zodiac.gold/18",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  // Value reads above its label while the <dt> still precedes the <dd>.
-  display: "flex",
-  flexDirection: "column-reverse",
-  p: "3",
-});
-
-const statValue = css({
-  color: "zodiac.gold",
-  fontSize: "2xl",
-  margin: 0,
-});
-
-const statLabel = css({
-  color: "zodiac.cream/58",
-  fontSize: "sm",
-});
 
 const linkList = css({
   display: "grid",
   gap: "2",
+  listStyle: "none",
 });
+
+const linkListItem = cx(
+  css({
+    alignItems: "center",
+    color: "zodiac.cream/78",
+    display: "inline-flex",
+    minH: "6",
+    textDecoration: "none",
+    _hover: { color: "zodiac.cream", textDecoration: "underline" },
+    _coarsePointer: { minH: "11" },
+  }),
+  focusRingClass,
+);
 
 export function ThesisDetailPage() {
   const params = useParams({ from: "/theses/$thesisId" });
   const navigate = useNavigate();
-  const detail = createQuery(api.theses.getDetail, () => ({
+  const detailQuery = createQueryWithStatus(api.theses.getDetail, () => ({
     id: params().thesisId as Id<"theses">,
   }));
-  const campaigns = createQuery(api.campaigns.listForSelection);
+  const detail = detailQuery.data;
+  const campaignsQuery = createQueryWithStatus(api.campaigns.listForSelection);
+  const campaigns = campaignsQuery.data;
   const attachThesis = createMutation(api.campaigns.attachThesis);
   const detachThesis = createMutation(api.campaigns.detachThesis);
   const createDraftFromThesis = createMutation(
@@ -72,6 +73,8 @@ export function ThesisDetailPage() {
   const [campaignError, setCampaignError] = createSignal<string | null>(null);
   const [creatingSummary, setCreatingSummary] = createSignal(false);
   const [creatingChangedMind, setCreatingChangedMind] = createSignal(false);
+  const [detaching, setDetaching] = createSignal<Id<"campaigns"> | null>(null);
+  let campaignsHeading: HTMLHeadingElement | undefined;
   const contradictedHypotheses = createMemo(
     () =>
       detail()?.hypotheses.filter(
@@ -88,10 +91,23 @@ export function ThesisDetailPage() {
     );
   });
 
+  onMount(() => {
+    document.title = "Thesis — Frequency Music";
+  });
+
   createEffect(() => {
     const thesis = detail()?.thesis;
     if (thesis) document.title = `${thesis.title} — Frequency Music`;
   });
+
+  const loadErrorText = () =>
+    detailQuery.error()
+      ? `Unable to load thesis: ${detailQuery.error()?.message}`
+      : null;
+  const loadStatus = () => {
+    if (detailQuery.error() || detail()) return null;
+    return detailQuery.isLoading() ? "Loading thesis..." : "Thesis not found.";
+  };
 
   function focusCampaignSelect() {
     const element = document.getElementById("thesis-campaign-select");
@@ -117,11 +133,13 @@ export function ThesisDetailPage() {
       setNotice("Thesis attached to campaign.");
       setSelectedCampaignId("");
     } catch (error) {
-      setNoticeError(`Attach failed: ${String(error)}`);
+      setNoticeError(`Attach failed: ${describeError(error)}`);
     }
   }
 
   async function handleDetach(campaignId: Id<"campaigns">) {
+    if (detaching()) return;
+    setDetaching(campaignId);
     setNotice(null);
     setNoticeError(null);
     try {
@@ -130,12 +148,18 @@ export function ThesisDetailPage() {
         thesisId: params().thesisId as Id<"theses">,
       });
       setNotice("Thesis detached from campaign.");
+      // The detached row unmounts with the next Convex push; hand focus to
+      // the section heading first so it never falls to <body>.
+      queueMicrotask(() => campaignsHeading?.focus());
     } catch (error) {
-      setNoticeError(`Detach failed: ${String(error)}`);
+      setNoticeError(`Detach failed: ${describeError(error)}`);
+    } finally {
+      setDetaching(null);
     }
   }
 
   async function handleCreateSummary() {
+    if (creatingSummary()) return;
     setCreatingSummary(true);
     setNotice(null);
     setNoticeError(null);
@@ -149,13 +173,14 @@ export function ThesisDetailPage() {
         params: { artifactId: String(artifactId) },
       });
     } catch (error) {
-      setNoticeError(`Summary draft failed: ${String(error)}`);
+      setNoticeError(`Summary draft failed: ${describeError(error)}`);
     } finally {
       setCreatingSummary(false);
     }
   }
 
   async function handleCreateChangedMind(hypothesisId: Id<"hypotheses">) {
+    if (creatingChangedMind()) return;
     setCreatingChangedMind(true);
     setNotice(null);
     setNoticeError(null);
@@ -170,7 +195,7 @@ export function ThesisDetailPage() {
         params: { artifactId: String(artifactId) },
       });
     } catch (error) {
-      setNoticeError(`Changed-mind draft failed: ${String(error)}`);
+      setNoticeError(`Changed-mind draft failed: ${describeError(error)}`);
     } finally {
       setCreatingChangedMind(false);
     }
@@ -184,10 +209,9 @@ export function ThesisDetailPage() {
         </Link>
       </div>
 
-      <UINotice
-        class={detail() ? collapsedNoticeClass : undefined}
-        status={detail() ? null : "Loading thesis..."}
-      />
+      <UICard class={detail() ? collapsedNoticeClass : undefined}>
+        <UINotice status={loadStatus()} error={loadErrorText()} />
+      </UICard>
 
       <Show when={detail()}>
         {(row) => (
@@ -203,11 +227,11 @@ export function ThesisDetailPage() {
               >
                 <UIBadge tone="gold">{row().thesis.status}</UIBadge>
                 <UIBadge tone="cream">{row().thesis.visibility}</UIBadge>
-                <UIBadge tone="violet">
+                <UIBadge tone="cream">
                   {row().hypotheses.length} hypotheses
                 </UIBadge>
-                <UIBadge tone="violet">{row().recipes.length} recipes</UIBadge>
-                <UIBadge tone="violet">
+                <UIBadge tone="cream">{row().recipes.length} recipes</UIBadge>
+                <UIBadge tone="cream">
                   {row().compositions.length} compositions
                 </UIBadge>
               </div>
@@ -215,9 +239,11 @@ export function ThesisDetailPage() {
               <h1 class={detailTitleClass}>{row().thesis.title}</h1>
               <p
                 class={css({
-                  color: "zodiac.cream/78",
+                  color: "zodiac.cream/82",
+                  fontFamily: "display",
                   fontSize: "lg",
                   lineHeight: "1.7",
+                  maxW: "72ch",
                 })}
               >
                 {row().thesis.statement}
@@ -234,7 +260,7 @@ export function ThesisDetailPage() {
                 <UIButton
                   variant="outline"
                   onClick={handleCreateSummary}
-                  disabled={creatingSummary()}
+                  aria-busy={creatingSummary()}
                 >
                   {creatingSummary()
                     ? "Creating summary..."
@@ -245,7 +271,7 @@ export function ThesisDetailPage() {
                     <UIButton
                       variant="outline"
                       onClick={() => handleCreateChangedMind(hypothesis._id)}
-                      disabled={creatingChangedMind()}
+                      aria-busy={creatingChangedMind()}
                     >
                       {creatingChangedMind()
                         ? "Creating changed-mind draft..."
@@ -260,13 +286,7 @@ export function ThesisDetailPage() {
                   <>
                     <hr class={goldDivider} />
                     <h2 class={sectionLabel}>Description</h2>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/70",
-                        lineHeight: "1.7",
-                        whiteSpace: "pre-wrap",
-                      })}
-                    >
+                    <p class={cx(proseClass, css({ whiteSpace: "pre-wrap" }))}>
                       {description()}
                     </p>
                   </>
@@ -275,32 +295,34 @@ export function ThesisDetailPage() {
 
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Thesis Signals</h2>
-              <dl class={statGrid}>
-                <div class={statCard}>
-                  <dt class={statLabel}>contradictions</dt>
-                  <dd class={statValue}>{row().stats.contradictionCount}</dd>
-                </div>
-                <div class={statCard}>
-                  <dt class={statLabel}>active</dt>
-                  <dd class={statValue}>{row().stats.activeCount}</dd>
-                </div>
-                <div class={statCard}>
-                  <dt class={statLabel}>evaluated</dt>
-                  <dd class={statValue}>{row().stats.evaluatedCount}</dd>
-                </div>
-                <div class={statCard}>
-                  <dt class={statLabel}>retired</dt>
-                  <dd class={statValue}>{row().stats.retiredCount}</dd>
-                </div>
-              </dl>
+              <StatTiles
+                items={[
+                  {
+                    label: "contradictions",
+                    value: row().stats.contradictionCount,
+                  },
+                  { label: "active", value: row().stats.activeCount },
+                  { label: "evaluated", value: row().stats.evaluatedCount },
+                  { label: "retired", value: row().stats.retiredCount },
+                ]}
+              />
 
               <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Campaign Membership</h2>
+              <h2
+                id="thesis-campaigns-heading"
+                ref={(element) => {
+                  campaignsHeading = element;
+                }}
+                tabIndex={-1}
+                class={sectionLabel}
+              >
+                Campaign Membership
+              </h2>
               <div class={css({ display: "grid", gap: "3" })}>
                 <Show
                   when={row().campaigns.length > 0}
                   fallback={
-                    <p class={css({ color: "zodiac.cream/62" })}>
+                    <p class={css({ color: "zodiac.cream/66" })}>
                       This thesis is not attached to a campaign yet.
                     </p>
                   }
@@ -308,25 +330,24 @@ export function ThesisDetailPage() {
                   <For each={row().campaigns}>
                     {(campaign) => (
                       <div
-                        class={css({
-                          alignItems: "center",
-                          borderColor: "zodiac.gold/18",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          display: "flex",
-                          gap: "3",
-                          justifyContent: "space-between",
-                          p: "3",
-                          flexWrap: "wrap",
-                        })}
+                        class={cx(
+                          entityCellClass,
+                          css({
+                            alignItems: "center",
+                            display: "flex",
+                            gap: "3",
+                            justifyContent: "space-between",
+                            flexWrap: "wrap",
+                          }),
+                        )}
                       >
-                        <div>
+                        <div class={css({ minW: 0 })}>
                           <div class={css({ color: "zodiac.cream", mb: "1" })}>
                             {campaign.title}
                           </div>
                           <div
                             class={css({
-                              color: "zodiac.cream/62",
+                              color: "zodiac.cream/66",
                               fontSize: "sm",
                             })}
                           >
@@ -344,6 +365,7 @@ export function ThesisDetailPage() {
                           <UIButton
                             variant="outline"
                             aria-label={`Detach ${campaign.title}`}
+                            aria-busy={detaching() === campaign._id}
                             onClick={() => handleDetach(campaign._id)}
                           >
                             Detach
@@ -357,11 +379,7 @@ export function ThesisDetailPage() {
                 <div>
                   <label
                     for="thesis-campaign-select"
-                    class={css({
-                      color: "zodiac.cream/68",
-                      display: "block",
-                      mb: "2",
-                    })}
+                    class={cx(fieldLabelClass, css({ "&&": { mt: "0" } }))}
                   >
                     Attach To Campaign
                   </label>
@@ -411,89 +429,94 @@ export function ThesisDetailPage() {
                   </Show>
                 </div>
 
-                <UINotice status={notice()} error={noticeError()} />
+                <UINotice
+                  status={notice()}
+                  error={
+                    noticeError() ??
+                    campaignError() ??
+                    (campaignsQuery.error()
+                      ? `Unable to load campaigns: ${campaignsQuery.error()?.message}`
+                      : null)
+                  }
+                />
               </div>
 
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Hypotheses</h2>
-              <div class={linkList}>
+              <ul role="list" class={linkList}>
                 <For each={row().hypotheses}>
                   {(hypothesis) => (
-                    <Link
-                      to="/hypotheses/$hypothesisId"
-                      params={{ hypothesisId: String(hypothesis._id) }}
-                      class={css({
-                        color: "zodiac.cream/78",
-                        textDecoration: "none",
-                      })}
-                    >
-                      {hypothesis.title}
-                    </Link>
+                    <li>
+                      <Link
+                        to="/hypotheses/$hypothesisId"
+                        params={{ hypothesisId: String(hypothesis._id) }}
+                        class={linkListItem}
+                      >
+                        {hypothesis.title}
+                      </Link>
+                    </li>
                   )}
                 </For>
-              </div>
+              </ul>
 
               <Show when={row().recipes.length > 0}>
                 <hr class={goldDivider} />
                 <h2 class={sectionLabel}>Recipes</h2>
-                <div class={linkList}>
+                <ul role="list" class={linkList}>
                   <For each={row().recipes}>
                     {(recipe) => (
-                      <Link
-                        to="/recipes/$recipeId"
-                        params={{ recipeId: String(recipe._id) }}
-                        class={css({
-                          color: "zodiac.cream/78",
-                          textDecoration: "none",
-                        })}
-                      >
-                        {recipe.title}
-                      </Link>
+                      <li>
+                        <Link
+                          to="/recipes/$recipeId"
+                          params={{ recipeId: String(recipe._id) }}
+                          class={linkListItem}
+                        >
+                          {recipe.title}
+                        </Link>
+                      </li>
                     )}
                   </For>
-                </div>
+                </ul>
               </Show>
 
               <Show when={row().compositions.length > 0}>
                 <hr class={goldDivider} />
                 <h2 class={sectionLabel}>Compositions</h2>
-                <div class={linkList}>
+                <ul role="list" class={linkList}>
                   <For each={row().compositions}>
                     {(composition) => (
-                      <Link
-                        to="/compositions/$compositionId"
-                        params={{ compositionId: String(composition._id) }}
-                        class={css({
-                          color: "zodiac.cream/78",
-                          textDecoration: "none",
-                        })}
-                      >
-                        {composition.title}
-                      </Link>
+                      <li>
+                        <Link
+                          to="/compositions/$compositionId"
+                          params={{ compositionId: String(composition._id) }}
+                          class={linkListItem}
+                        >
+                          {composition.title}
+                        </Link>
+                      </li>
                     )}
                   </For>
-                </div>
+                </ul>
               </Show>
 
               <Show when={row().recentWeeklyBriefIds.length > 0}>
                 <hr class={goldDivider} />
                 <h2 class={sectionLabel}>Recent Weekly Briefs</h2>
-                <div class={linkList}>
+                <ul role="list" class={linkList}>
                   <For each={row().recentWeeklyBriefIds}>
                     {(briefId) => (
-                      <Link
-                        to="/weekly-turns/$briefId"
-                        params={{ briefId: String(briefId) }}
-                        class={css({
-                          color: "zodiac.cream/78",
-                          textDecoration: "none",
-                        })}
-                      >
-                        Weekly brief {String(briefId).slice(-6)}
-                      </Link>
+                      <li>
+                        <Link
+                          to="/weekly-turns/$briefId"
+                          params={{ briefId: String(briefId) }}
+                          class={linkListItem}
+                        >
+                          Weekly brief {String(briefId).slice(-6)}
+                        </Link>
+                      </li>
                     )}
                   </For>
-                </div>
+                </ul>
               </Show>
             </UICard>
           </>

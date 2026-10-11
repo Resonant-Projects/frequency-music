@@ -2,24 +2,31 @@
 // Three.js 3D implementation of the ZODIAC design with live Convex metrics.
 // Phases 1-3: Constellations, Armillary Rings, Planetary Orrery with sidebar drill-down.
 
-import { useNavigate } from "@tanstack/solid-router";
+import { Link } from "@tanstack/solid-router";
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createEffect,
   createMemo,
   createSignal,
   For,
+  type JSX,
   on,
   onCleanup,
   onMount,
   Show,
 } from "solid-js";
-import { css } from "../../styled-system/css";
+import { Dynamic } from "solid-js/web";
+import { css, cva, cx } from "../../styled-system/css";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import type { ConstellationEdge } from "../lib/zodiac-constellations";
 import { prefersReducedMotion, watchReducedMotion } from "../lib/zodiac-camera";
-import { COLORS, SECTORS } from "../lib/zodiac-data";
+import { COLORS, SECTORS, textSafeSectorColor } from "../lib/zodiac-data";
+import {
+  buildOrbitalItemGroups,
+  type OrbitalItem,
+  orbitalItemSector,
+} from "../lib/zodiac-orbits";
 import { initZodiacScene, type ZodiacHandle } from "../lib/zodiac-scene";
 import type {
   ConceptDetailData,
@@ -42,18 +49,24 @@ const focusRing = {
     borderColor: "zodiac.gold",
     outline: "2px solid",
     outlineColor: "zodiac.gold",
-    outlineOffset: "1px",
+    outlineOffset: "2px",
   },
 } as const;
 
+const srOnly = css({ srOnly: true });
+
 // -- Layout --
 
+// Below `lg` the canvas takes a fixed 60vh band and the page scrolls
+// naturally, so the sidebar is never squeezed; from `lg` up the page is a
+// fixed-height split with the canvas flexing beside the sidebar.
 const pageContainer = css({
-  height: "calc(100vh - var(--app-header-height))",
+  height: { base: "auto", lg: "calc(100vh - var(--app-header-height))" },
+  minHeight: { base: "calc(100vh - var(--app-header-height))", lg: "0" },
   background: "zodiac.void",
   color: "zodiac.cream",
   overflowX: "hidden",
-  overflowY: { base: "auto", lg: "hidden" },
+  overflowY: { base: "visible", lg: "hidden" },
   fontFamily: "display",
   display: "flex",
   flexDirection: { base: "column", lg: "row" },
@@ -64,22 +77,40 @@ const dotOverlay = css({
   inset: "0",
   pointerEvents: "none",
   opacity: 0.022,
-  backgroundImage: "radial-gradient(circle, #c8a84b 1px, transparent 1px)",
+  backgroundImage:
+    "radial-gradient(circle, {colors.zodiac.gold} 1px, transparent 1px)",
   backgroundSize: "52px 52px",
 });
 
 const canvasWrapper = css({
-  flex: "1",
+  flex: { base: "0 0 60vh", lg: "1 1 0%" },
+  // A definite height below `lg` so the canvas's 100% height resolves.
+  height: { base: "60vh", lg: "auto" },
   position: "relative",
   overflow: "hidden",
   minWidth: "0",
-  height: { base: "60vh", lg: "auto" },
 });
 
 const canvasEl = css({
   width: "100%",
   height: "100%",
   display: "block",
+});
+
+// Hover label over the canvas; the scene positions it and toggles display.
+const sceneTooltip = css({
+  position: "absolute",
+  zIndex: 100,
+  pointerEvents: "none",
+  whiteSpace: "nowrap",
+  fontFamily: "mono",
+  fontSize: "xs",
+  color: "zodiac.gold",
+  background: "zodiac.void/88",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/35",
+  padding: "4px 8px",
 });
 
 const sidebarContainer = css({
@@ -94,22 +125,26 @@ const sidebarContainer = css({
   borderTopColor: "zodiac.gold/12",
   overflowY: "auto",
   flexShrink: 0,
+  // Keep the last section clear of the home indicator on notched phones.
+  paddingBottom: "env(safe-area-inset-bottom)",
 });
 
 // -- Sidebar sections --
 
-const sidebarSection = css({
-  padding: "36px 26px 20px",
+const sectionDivider = {
   borderBottomWidth: "1px",
   borderBottomStyle: "solid",
   borderBottomColor: "zodiac.gold/10",
+} as const;
+
+const sidebarSection = css({
+  padding: "36px 26px 20px",
+  ...sectionDivider,
 });
 
 const sidebarSectionCompact = css({
   padding: "20px 26px",
-  borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
-  borderBottomColor: "zodiac.gold/10",
+  ...sectionDivider,
 });
 
 const sidebarSectionScrollable = css({
@@ -121,9 +156,7 @@ const sidebarSectionScrollable = css({
 const sidebarSectionDomain = css({
   padding: "22px 26px",
   flex: "1",
-  borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
-  borderBottomColor: "zodiac.gold/10",
+  ...sectionDivider,
 });
 
 const sidebarSectionDomains = css({
@@ -148,54 +181,53 @@ const sidebarSectionPipeline = css({
 
 // -- Typography --
 
-const sidebarEyebrow = css({
-  fontSize: "10px",
-  letterSpacing: "0.4em",
-  color: "zodiac.gold/78",
-  marginBottom: "14px",
+// Every eyebrow and section heading in the sidebar: 10px mono uppercase,
+// tracked wide, gold at the 78% floor unless a tone says otherwise.
+const eyebrow = cva({
+  base: {
+    fontFamily: "mono",
+    fontSize: "10px",
+    fontWeight: "400",
+    lineHeight: "1.4",
+    letterSpacing: "0.3em",
+    textTransform: "uppercase",
+    color: "zodiac.gold/78",
+  },
+  variants: {
+    tone: {
+      gold: {},
+      violet: { color: "zodiac.violetText" },
+      // Text-safe per-sector colour set on an ancestor (see sectorStyle).
+      sector: { color: "var(--sector-text)" },
+    },
+    tracking: {
+      normal: {},
+      wide: { letterSpacing: "0.35em" },
+      widest: { letterSpacing: "0.4em" },
+    },
+    space: {
+      tight: { marginBottom: "8px" },
+      normal: { marginBottom: "10px" },
+      loose: { marginBottom: "14px" },
+      top: { margin: "12px 0 10px" },
+      group: { margin: "16px 0 8px" },
+    },
+  },
+  defaultVariants: { tone: "gold", tracking: "normal", space: "tight" },
 });
 
-const sidebarEyebrowSmall = css({
-  fontSize: "10px",
-  letterSpacing: "0.35em",
-  opacity: 1,
-  marginBottom: "10px",
+const sidebarEyebrow = eyebrow({ tracking: "widest", space: "loose" });
+const sidebarEyebrowSector = eyebrow({
+  tone: "sector",
+  tracking: "wide",
+  space: "normal",
 });
-
-const sidebarEyebrowViolet = css({
-  fontSize: "10px",
-  letterSpacing: "0.35em",
-  color: "zodiac.violetText",
-  marginBottom: "8px",
-});
-
-const sidebarEyebrowGold = css({
-  fontSize: "10px",
-  letterSpacing: "0.35em",
-  color: "zodiac.gold/78",
-  marginBottom: "8px",
-});
-
-const sidebarEyebrowSection = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  marginBottom: "10px",
-});
-
-const sidebarEyebrowSectionTop = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  margin: "12px 0 10px",
-});
-
-const sidebarEyebrowConceptsLabel = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  margin: "16px 0 8px",
-});
+const sidebarEyebrowViolet = eyebrow({ tone: "violet", tracking: "wide" });
+const sidebarEyebrowGold = eyebrow({ tracking: "wide" });
+const sidebarEyebrowSection = eyebrow({ space: "normal" });
+const sidebarEyebrowSectionTop = eyebrow({ space: "top" });
+const sidebarEyebrowGroup = eyebrow({ space: "group" });
+const sidebarEyebrowTight = eyebrow();
 
 const sidebarTitle = css({
   fontSize: "34px",
@@ -209,6 +241,13 @@ const sidebarTitleMd = css({
   fontWeight: "300",
   marginBottom: "8px",
 });
+
+const sidebarTitleDomain = cx(
+  sidebarTitleMd,
+  css({ color: "var(--sector-color)" }),
+);
+
+const sidebarTitleSubTopic = cx(sidebarTitleMd, css({ color: "zodiac.gold" }));
 
 const sidebarTitleSm = css({
   fontSize: "24px",
@@ -296,11 +335,18 @@ const statCellViolet = css({
   textAlign: "center",
 });
 
-const statValue = css({
+const statValueGold = css({
   fontSize: "26px",
+  color: "zodiac.gold",
+});
+
+const statValueViolet = css({
+  fontSize: "26px",
+  color: "zodiac.violet",
 });
 
 const statLabel = css({
+  fontFamily: "mono",
   fontSize: "10px",
   letterSpacing: "0.25em",
   color: "zodiac.cream/66",
@@ -325,8 +371,8 @@ const conceptTag = css({
   color: "zodiac.gold",
   padding: "5px 10px",
   minHeight: "28px",
-  fontSize: "10px",
-  letterSpacing: "0.08em",
+  fontSize: "xs",
+  letterSpacing: "0.04em",
   _coarsePointer: {
     minHeight: "44px",
     padding: "10px 14px",
@@ -335,15 +381,29 @@ const conceptTag = css({
 });
 
 const conceptTagCount = css({
-  opacity: 0.78,
+  color: "zodiac.gold/78",
   marginLeft: "4px",
 });
 
-// -- Buttons --
+// -- Buttons and links --
 
-const openDomainBtn = css({
+// Square-cornered instrument controls (intentional; see DESIGN.md): 12px mono
+// uppercase faces tracked 0.16em.
+const buttonFace = {
+  fontFamily: "mono",
+  fontSize: "xs",
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+} as const;
+
+const openDomainLink = css({
+  ...buttonFace,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   width: "100%",
-  cursor: "pointer",
+  textAlign: "center",
+  textDecoration: "none",
   borderWidth: "1px",
   borderStyle: "solid",
   borderColor: "zodiac.gold/45",
@@ -351,13 +411,20 @@ const openDomainBtn = css({
   color: "zodiac.void",
   padding: "8px 10px",
   minHeight: "40px",
-  letterSpacing: "0.18em",
-  fontSize: "10px",
-  textTransform: "uppercase",
   _coarsePointer: {
     minHeight: "48px",
   },
   ...focusRing,
+});
+
+const plainList = css({
+  listStyle: "none",
+  margin: "0",
+  padding: "0",
+});
+
+const subTopicList = css({
+  marginBottom: "14px",
 });
 
 const sectorButton = css({
@@ -368,18 +435,32 @@ const sectorButton = css({
   minHeight: "36px",
   marginBottom: "3px",
   cursor: "pointer",
-  border: "1px solid",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "zodiac.gold/10",
+  background: "transparent",
   transition: "all 0.2s",
   width: "100%",
   textAlign: "left",
+  _pressed: {
+    // The per-sector hue at a third, as before; set via --sector-color.
+    borderColor: "color-mix(in srgb, var(--sector-color) 33%, transparent)",
+    background: "zodiac.gold/5",
+  },
   _coarsePointer: {
     minHeight: "44px",
   },
   ...focusRing,
 });
 
+// Inactive labels drop the sector hue: the rest state is cream and only the
+// active sector carries its (text-safe) colour.
 const sectorButtonLabel = css({
   fontSize: "14px",
+  color: "zodiac.cream/72",
+  "[aria-pressed=true] > &": {
+    color: "var(--sector-text)",
+  },
 });
 
 const sectorButtonMeta = css({
@@ -390,11 +471,17 @@ const sectorButtonMeta = css({
 const workspaceGrid = css({
   display: "grid",
   gap: "6px",
-  gridTemplateColumns: "1fr 1fr",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
 });
 
-const workspaceButton = css({
-  cursor: "pointer",
+const workspaceLink = css({
+  ...buttonFace,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "100%",
+  textAlign: "center",
+  textDecoration: "none",
   borderWidth: "1px",
   borderStyle: "solid",
   borderColor: "zodiac.gold/20",
@@ -402,18 +489,15 @@ const workspaceButton = css({
   color: "zodiac.cream",
   padding: "7px 8px",
   minHeight: "32px",
-  fontSize: "10px",
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-  textAlign: "center",
   _coarsePointer: {
     minHeight: "44px",
   },
   ...focusRing,
 });
 
-// Mirrors backButton; gives the auto-rotating orrery a pause/resume control.
-const motionToggleButton = css({
+// Back, pause/resume and show-all toggles share one bar-button face.
+const barButton = css({
+  ...buttonFace,
   cursor: "pointer",
   borderWidth: "1px",
   borderStyle: "solid",
@@ -422,34 +506,22 @@ const motionToggleButton = css({
   color: "zodiac.gold",
   padding: "5px 12px",
   minHeight: "32px",
-  fontSize: "10px",
-  letterSpacing: "0.15em",
-  textTransform: "uppercase",
-  marginTop: "12px",
   _coarsePointer: {
     minHeight: "44px",
   },
   ...focusRing,
 });
 
-const backButton = css({
-  cursor: "pointer",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/25",
-  background: "transparent",
-  color: "zodiac.gold",
-  padding: "5px 12px",
-  minHeight: "32px",
-  fontSize: "10px",
-  letterSpacing: "0.15em",
-  textTransform: "uppercase",
+const motionToggleOverview = cx(barButton, css({ marginTop: "12px" }));
+
+const barRow = css({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "8px",
   marginBottom: "14px",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
 });
+
+const showAllToggle = cx(barButton, css({ marginBottom: "14px" }));
 
 // -- Pipeline --
 
@@ -471,6 +543,7 @@ const pipelineCellValue = css({
 });
 
 const pipelineCellLabel = css({
+  fontFamily: "mono",
   fontSize: "10px",
   letterSpacing: "0.2em",
   color: "zodiac.cream/66",
@@ -486,14 +559,9 @@ const pipelineSectionContainer = css({
   marginBottom: "16px",
 });
 
-const pipelineSectionEyebrow = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  marginBottom: "8px",
-});
+// -- List buttons (sub-topics, concepts in a cluster, pipeline items) --
 
-const pipelineItemButton = css({
+const listButtonBase = {
   display: "block",
   width: "100%",
   textAlign: "left",
@@ -512,66 +580,33 @@ const pipelineItemButton = css({
     minHeight: "44px",
   },
   ...focusRing,
+} as const;
+
+const listButton = css(listButtonBase);
+
+const relationButton = css({
+  ...listButtonBase,
+  padding: "8px",
+  marginBottom: "4px",
+});
+
+const listButtonMeta = css({
+  float: "right",
+  marginLeft: "8px",
+  color: "zodiac.gold/78",
+  fontSize: "12px",
 });
 
 const pipelineItemStatus = css({
-  fontSize: "10px",
+  fontSize: "12px",
   color: "zodiac.cream/66",
   marginTop: "2px",
 });
 
-// -- Sub-topic / Item-detail list buttons --
-
-const listButton = css({
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  cursor: "pointer",
-  padding: "6px 8px",
-  minHeight: "36px",
-  marginBottom: "3px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/12",
-  background: "transparent",
-  color: "zodiac.cream",
-  fontSize: "14px",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-const listButtonMentions = css({
-  float: "right",
-  color: "zodiac.gold/78",
-  fontSize: "10px",
-});
-
-const relationButton = css({
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  cursor: "pointer",
-  padding: "8px",
-  minHeight: "36px",
-  marginBottom: "4px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/12",
-  background: "transparent",
-  color: "zodiac.cream",
-  fontSize: "14px",
-  lineHeight: "1.4",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
 const relationTypeLabel = css({
-  fontSize: "10px",
-  letterSpacing: "0.15em",
+  fontFamily: "mono",
+  fontSize: "12px",
+  letterSpacing: "0.14em",
   color: "zodiac.violetText",
   marginBottom: "2px",
 });
@@ -608,27 +643,22 @@ const fallbackCard = css({
   background: "zodiac.void/50",
 });
 
-const fallbackEyebrow = css({
-  fontSize: "10px",
-  letterSpacing: "0.24em",
-  color: "zodiac.gold",
-  opacity: 0.72,
-});
-
-const fallbackEyebrowSpaced = css({
-  fontSize: "10px",
-  letterSpacing: "0.24em",
-  color: "zodiac.gold",
-  opacity: 0.72,
-  marginBottom: "12px",
-});
-
-const fallbackEyebrowPipeline = css({
-  fontSize: "10px",
-  letterSpacing: "0.24em",
-  color: "zodiac.gold",
-  opacity: 0.72,
-  marginBottom: "10px",
+const fallbackEyebrow = cva({
+  base: {
+    fontFamily: "mono",
+    fontSize: "10px",
+    fontWeight: "400",
+    letterSpacing: "0.24em",
+    color: "zodiac.gold/78",
+  },
+  variants: {
+    space: {
+      none: {},
+      normal: { marginBottom: "10px" },
+      loose: { marginBottom: "12px" },
+    },
+  },
+  defaultVariants: { space: "none" },
 });
 
 const fallbackTitle = css({
@@ -647,11 +677,15 @@ const fallbackBody = css({
 const fallbackLinkGrid = css({
   display: "grid",
   gap: "10px",
-  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))",
 });
 
-const fallbackLinkButton = css({
-  cursor: "pointer",
+const fallbackLink = css({
+  ...buttonFace,
+  display: "flex",
+  alignItems: "center",
+  height: "100%",
+  textDecoration: "none",
   background: "zodiac.glow-inner",
   borderWidth: "1px",
   borderStyle: "solid",
@@ -660,10 +694,6 @@ const fallbackLinkButton = css({
   minHeight: "44px",
   color: "zodiac.cream",
   textAlign: "left",
-  fontFamily: "mono",
-  fontSize: "11px",
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
   ...focusRing,
 });
 
@@ -689,6 +719,7 @@ const fallbackPipelineValue = css({
 });
 
 const fallbackPipelineLabel = css({
+  fontFamily: "mono",
   fontSize: "10px",
   letterSpacing: "0.18em",
   color: "zodiac.cream/66",
@@ -700,14 +731,18 @@ const fallbackPipelineArrow = css({
 
 // ---------------------------------------------------------------------------
 
-const sectorRouteMap: Record<string, string> = {
+const sectorRouteMap = {
   math: "/display",
   wave: "/ingest",
   music: "/recipes",
   psycho: "/hypotheses",
   geometry: "/weekly-turns",
   synthesis: "/compositions",
-};
+} as const;
+
+function sectorRoute(id: string) {
+  return sectorRouteMap[id as keyof typeof sectorRouteMap] ?? "/display";
+}
 
 const workspaceLinks = [
   { label: "Display", to: "/display" },
@@ -721,6 +756,46 @@ const workspaceLinks = [
   { label: "Admin", to: "/admin" },
 ] as const;
 
+// Sector colours are design tokens; DOM text and borders reference them as
+// CSS variables rather than raw hex, so per-sector colour stays dynamic.
+const COLOR_VARS: Record<string, string> = {
+  [COLORS.violet]: "var(--colors-zodiac-violet)",
+  [COLORS.violetText]: "var(--colors-zodiac-violet-text)",
+  [COLORS.gold]: "var(--colors-zodiac-gold)",
+  [COLORS.cream]: "var(--colors-zodiac-cream)",
+};
+
+function sectorStyle(color: string): JSX.CSSProperties {
+  return {
+    "--sector-color": COLOR_VARS[color] ?? COLOR_VARS[COLORS.gold],
+    "--sector-text":
+      COLOR_VARS[textSafeSectorColor(color)] ?? COLOR_VARS[COLORS.gold],
+  };
+}
+
+function formatCount(value: number | null) {
+  return value === null ? "—" : String(value);
+}
+
+const CONCEPT_PREVIEW_COUNT = 12;
+const PIPELINE_ITEM_PREVIEW_COUNT = 5;
+
+// The orbital rings, in the order the scene draws them, with the item type
+// the sidebar's item-detail mode expects (same mapping as a body click).
+const ORBITAL_GROUPS = [
+  { key: "sources", label: "SOURCES", type: "source" },
+  { key: "extractions", label: "EXTRACTIONS", type: "extraction" },
+  { key: "hypotheses", label: "HYPOTHESES", type: "hypothesis" },
+  { key: "recipes", label: "RECIPES", type: "recipe" },
+] as const;
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  source: "Source",
+  extraction: "Extraction",
+  hypothesis: "Hypothesis",
+  recipe: "Recipe",
+};
+
 type SectorMetricRow = {
   id: string;
   sources: number;
@@ -733,17 +808,30 @@ type SidebarMode =
   | { kind: "sub-topic"; label: string; conceptNames: string[] }
   | { kind: "item-detail"; itemId: string; itemType: string; title: string };
 
+type PipelineListItem = { _id: string; title?: string; status: string };
+
+function toPipelineListItem(item: OrbitalItem): PipelineListItem {
+  return { _id: item.id, title: item.title, status: item.status };
+}
+
 export function Zodiac3D() {
   onMount(() => {
     document.title = "Zodiac — Frequency Music";
   });
 
-  const navigate = useNavigate();
   const [selSector, setSelSector] = createSignal<string>("math");
   const [webglUnavailable, setWebglUnavailable] = createSignal(false);
   const [sidebarMode, setSidebarMode] = createSignal<SidebarMode>({
     kind: "overview",
   });
+  // Lists the reader has expanded past their preview count. Kept here, not in
+  // the panels, so Back returns to the list exactly as it was left.
+  const [expandedLists, setExpandedLists] = createSignal<ReadonlySet<string>>(
+    new Set(),
+  );
+  // Polite announcement of mode changes that start on the canvas, where focus
+  // cannot follow (the panel title announces sidebar-driven changes itself).
+  const [liveStatus, setLiveStatus] = createSignal("");
 
   // --- Convex Queries (existing, stable) ---
   const sectorMetrics = createQuery(api.dashboard.zodiacSectors, () => ({
@@ -796,7 +884,8 @@ export function Zodiac3D() {
     api.graph.getConceptDetail,
     () => {
       const id = activeConceptId();
-      return id ? { conceptId: id } : {};
+      if (!id) return "skip" as const;
+      return { conceptId: id };
     },
   );
   const conceptDetail = createMemo<ConceptDetailData | undefined>(() =>
@@ -816,7 +905,7 @@ export function Zodiac3D() {
     () => (subTopicsQ.data() ?? []) as ZodiacSubTopic[],
   );
 
-  // Phase 3: Pipeline items (loaded once)
+  // Phase 3: Pipeline items (live)
   const pipelineItemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
   const pipelineItems = createMemo<
     | {
@@ -836,6 +925,29 @@ export function Zodiac3D() {
             recipes: OrbitalRecipe[];
           }
         | undefined,
+  );
+
+  // The orbiting bodies drawn in the selected sector, grouped by ring: the
+  // keyboard path to everything a body click reaches.
+  const domainPipelineGroups = createMemo(() => {
+    const items = pipelineItems();
+    if (!items) return [];
+    const groups = buildOrbitalItemGroups(
+      items.sources,
+      items.extractions,
+      items.hypotheses,
+      items.recipes,
+    );
+    const sector = selSector();
+    return ORBITAL_GROUPS.map((group) => ({
+      ...group,
+      items: groups[group.key]
+        .filter((item) => orbitalItemSector(item) === sector)
+        .map(toPipelineListItem),
+    })).filter((group) => group.items.length > 0);
+  });
+  const domainPipelineCount = createMemo(() =>
+    domainPipelineGroups().reduce((sum, group) => sum + group.items.length, 0),
   );
 
   // Phase 3: Item relations — conditional
@@ -859,24 +971,28 @@ export function Zodiac3D() {
       : undefined,
   );
 
+  // Sources/claims are null until the live metrics arrive, and render as an
+  // em dash rather than a placeholder number.
   const sectors = createMemo(() => {
-    const rows = (sectorMetrics() ?? []) as SectorMetricRow[];
-    const metrics = new Map<string, { sources: number; claims: number }>(
-      rows.map((entry: SectorMetricRow) => [
-        entry.id,
-        {
-          sources: Number(entry.sources ?? 0),
-          claims: Number(entry.claims ?? 0),
-        },
-      ]),
-    );
+    const rows = sectorMetrics() as SectorMetricRow[] | undefined;
+    const metrics = rows
+      ? new Map<string, { sources: number; claims: number }>(
+          rows.map((entry: SectorMetricRow) => [
+            entry.id,
+            {
+              sources: Number(entry.sources ?? 0),
+              claims: Number(entry.claims ?? 0),
+            },
+          ]),
+        )
+      : null;
 
     return SECTORS.map((sector) => {
-      const metric = metrics.get(sector.id);
+      const metric = metrics?.get(sector.id);
       return {
         ...sector,
-        sources: metric?.sources ?? sector.sources,
-        claims: metric?.claims ?? sector.claims,
+        sources: metrics ? (metric?.sources ?? 0) : null,
+        claims: metrics ? (metric?.claims ?? 0) : null,
       };
     });
   });
@@ -900,6 +1016,8 @@ export function Zodiac3D() {
   let canvasRef!: HTMLCanvasElement;
   // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
   let cssContainerRef!: HTMLDivElement;
+  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
+  let sidebarRef!: HTMLDivElement;
   let sceneHandle: ZodiacHandle | null = null;
   const [autoRotate, setAutoRotate] = createSignal(!prefersReducedMotion());
   let stopReducedMotionWatch: (() => void) | null = null;
@@ -910,6 +1028,109 @@ export function Zodiac3D() {
     setAutoRotate(next);
   }
 
+  // --- Sidebar focus management ---------------------------------------------
+  // Each panel registers its title (tabIndex -1). After a mode change focus
+  // moves to the new title, or — on Back — to the overview control that
+  // started the drill-down, so focus never falls to <body>.
+  let panelTitleEl: HTMLElement | undefined;
+  const registerPanelTitle = (el: HTMLElement) => {
+    panelTitleEl = el;
+  };
+  let overviewOriginKey: string | null = null;
+  let restoreOriginOnRender = false;
+  let modeChangeFromCanvas = false;
+  let titleFocusPending = false;
+
+  function isExpanded(key: string) {
+    return expandedLists().has(key);
+  }
+
+  function toggleExpanded(key: string) {
+    const next = new Set(expandedLists());
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setExpandedLists(next);
+  }
+
+  function announce(message: string) {
+    setLiveStatus("");
+    queueMicrotask(() => setLiveStatus(message));
+  }
+
+  function openPanel(
+    mode: SidebarMode,
+    options: { originKey?: string; fromCanvas?: boolean } = {},
+  ) {
+    if (sidebarMode().kind === "overview") {
+      overviewOriginKey = options.originKey ?? null;
+    }
+    modeChangeFromCanvas = options.fromCanvas ?? false;
+    setSidebarMode(mode);
+  }
+
+  function focusPanelTitle(preventScroll: boolean) {
+    if (panelTitleEl?.isConnected) {
+      titleFocusPending = false;
+      panelTitleEl.focus({ preventScroll });
+      return;
+    }
+    // The title is not rendered yet (concept detail still loading): hold
+    // focus on the panel's loading text until the title arrives.
+    const fallback = sidebarRef?.querySelector<HTMLElement>(
+      "[data-panel-fallback]",
+    );
+    if (fallback) {
+      titleFocusPending = true;
+      fallback.focus({ preventScroll });
+    }
+  }
+
+  createEffect(
+    on(
+      sidebarMode,
+      (mode, prev) => {
+        // Re-selecting a domain within the overview keeps focus on its button.
+        if (mode.kind === "overview" && prev?.kind === "overview") return;
+        const fromCanvas = modeChangeFromCanvas;
+        modeChangeFromCanvas = false;
+        const originKey = restoreOriginOnRender ? overviewOriginKey : null;
+        restoreOriginOnRender = false;
+        requestAnimationFrame(() => {
+          if (originKey) {
+            const origin = sidebarRef?.querySelector<HTMLElement>(
+              `[data-focus-key="${CSS.escape(originKey)}"]`,
+            );
+            if (origin) {
+              origin.focus();
+              return;
+            }
+          }
+          // A canvas click must not scroll the page to the sidebar.
+          focusPanelTitle(fromCanvas);
+        });
+      },
+      { defer: true },
+    ),
+  );
+
+  // When a loading panel's title arrives, finish the pending focus move.
+  createEffect(
+    on(
+      () => Boolean(conceptDetail()),
+      (ready) => {
+        if (!ready || !titleFocusPending) return;
+        requestAnimationFrame(() => {
+          // The loading text that held focus is gone; only reclaim focus if
+          // it fell to <body> (the reader has not moved on).
+          const active = document.activeElement;
+          if (active && active !== document.body) return;
+          focusPanelTitle(true);
+        });
+      },
+      { defer: true },
+    ),
+  );
+
   onMount(() => {
     try {
       sceneHandle = initZodiacScene(
@@ -918,21 +1139,43 @@ export function Zodiac3D() {
         // onSectorClick
         (id) => {
           setSelSector(id);
-          setSidebarMode({ kind: "overview" });
+          if (sidebarMode().kind !== "overview") {
+            openPanel({ kind: "overview" }, { fromCanvas: true });
+          }
+          const sector = SECTORS.find((s) => s.id === id);
+          if (sector) announce(`Domain: ${sector.label}`);
         },
         // onConceptClick
         (conceptId) => {
-          setSidebarMode({ kind: "concept-detail", conceptId });
+          openPanel(
+            { kind: "concept-detail", conceptId },
+            { fromCanvas: true },
+          );
+          const name = domainConcepts().find(
+            (c) => c._id === conceptId,
+          )?.displayName;
+          announce(name ? `Concept: ${name}` : "Loading concept details…");
         },
         // onOrbitalClick
         (itemId, itemType, title) => {
-          setSidebarMode({ kind: "item-detail", itemId, itemType, title });
+          openPanel(
+            { kind: "item-detail", itemId, itemType, title },
+            { fromCanvas: true },
+          );
+          announce(`${ITEM_TYPE_LABELS[itemType] ?? "Item"}: ${title}`);
         },
         // onArmillaryClick
         (label, names) => {
-          setSidebarMode({ kind: "sub-topic", label, conceptNames: names });
+          openPanel(
+            { kind: "sub-topic", label, conceptNames: names },
+            { fromCanvas: true },
+          );
+          announce(`Sub-topic: ${label}`);
         },
+        { tooltipClass: sceneTooltip },
       );
+      // The sidebar opens with a sector selected; light it to match.
+      sceneHandle.setActiveSector(selSector());
       setAutoRotate(sceneHandle.isAutoRotating());
     } catch (error) {
       console.error("Zodiac scene initialization failed:", error);
@@ -1001,42 +1244,91 @@ export function Zodiac3D() {
 
   function handleSectorSelect(id: string) {
     setSelSector(id);
-    setSidebarMode({ kind: "overview" });
+    if (sidebarMode().kind !== "overview") setSidebarMode({ kind: "overview" });
     sceneHandle?.setActiveSector(id);
   }
 
-  function handleSectorHover(id: string | null) {
-    sceneHandle?.setActiveSector(id ?? selSector());
-  }
-
-  function openDomainWorkspace() {
-    const destination = sectorRouteMap[selSector()] ?? "/display";
-    void navigate({ to: destination });
-  }
-
-  function openWorkspace(path: string) {
-    void navigate({ to: path });
+  // Hover/focus on a domain button previews the sector (opacity only); it
+  // never touches the selected sector's overlays.
+  function handleSectorPreview(id: string | null) {
+    sceneHandle?.previewSector(id);
   }
 
   function goBack() {
-    const mode = sidebarMode();
-    if (
-      mode.kind === "item-detail" ||
-      mode.kind === "concept-detail" ||
-      mode.kind === "sub-topic"
-    ) {
-      setSidebarMode({ kind: "overview" });
-      sceneHandle?.clearPullLines();
-    }
+    if (sidebarMode().kind === "overview") return;
+    restoreOriginOnRender = true;
+    modeChangeFromCanvas = false;
+    setSidebarMode({ kind: "overview" });
+    sceneHandle?.clearPullLines();
+  }
+
+  function openConcept(conceptId: Id<"concepts">) {
+    openPanel(
+      { kind: "concept-detail", conceptId },
+      { originKey: `concept:${conceptId}` },
+    );
+  }
+
+  function openItem(item: PipelineListItem, type: string) {
+    openPanel(
+      {
+        kind: "item-detail",
+        itemId: item._id,
+        itemType: type,
+        title: item.title ?? "Untitled",
+      },
+      { originKey: `item:${item._id}` },
+    );
   }
 
   // --- Sidebar Panel Renderers ---
 
+  function MotionToggle(props: { class: string }) {
+    return (
+      <button type="button" onClick={toggleAutoRotate} class={props.class}>
+        {autoRotate() ? "Pause rotation" : "Resume rotation"}
+      </button>
+    );
+  }
+
+  function ShowAllToggle(props: {
+    listKey: string;
+    total: number;
+    label: string;
+  }) {
+    return (
+      <button
+        type="button"
+        class={showAllToggle}
+        aria-expanded={isExpanded(props.listKey)}
+        aria-controls={`zodiac-list-${props.listKey}`}
+        onClick={() => toggleExpanded(props.listKey)}
+      >
+        {isExpanded(props.listKey) ? (
+          "Show fewer"
+        ) : (
+          <>
+            Show all {props.total}
+            <span class={srOnly}> {props.label}</span>
+          </>
+        )}
+      </button>
+    );
+  }
+
   function SidebarOverview() {
+    const visibleConcepts = createMemo(() =>
+      isExpanded("concepts")
+        ? domainConcepts()
+        : domainConcepts().slice(0, CONCEPT_PREVIEW_COUNT),
+    );
+
     return (
       <>
         <div class={sidebarSection}>
-          <div class={sidebarEyebrow}>∴ RESEARCH ZODIAC — 3D</div>
+          <div class={sidebarEyebrow}>
+            <span aria-hidden="true">∴</span> RESEARCH ZODIAC — 3D
+          </div>
           <h1 class={sidebarTitle}>
             Astrolabe
             <br />
@@ -1048,146 +1340,177 @@ export function Zodiac3D() {
             Drag to orbit. Click a sector to focus. Click stars for concept
             details. Click orbiting bodies for pipeline items.
           </p>
-          <button
-            type="button"
-            onClick={toggleAutoRotate}
-            class={motionToggleButton}
-          >
-            {autoRotate() ? "Pause rotation" : "Resume rotation"}
-          </button>
+          <MotionToggle class={motionToggleOverview} />
         </div>
 
-        <div class={sidebarSectionDomain}>
-          <div
-            class={sidebarEyebrowSmall}
-            style={{ color: activeSector().color }}
-          >
+        <div
+          class={sidebarSectionDomain}
+          style={sectorStyle(activeSector().color)}
+        >
+          <div class={sidebarEyebrowSector}>
             {activeSector().id.toUpperCase()} DOMAIN
           </div>
-          <div class={sidebarTitleMd} style={{ color: activeSector().color }}>
+          <h2 class={sidebarTitleDomain} tabIndex={-1} ref={registerPanelTitle}>
             {activeSector().label}
-          </div>
+          </h2>
           <p class={sidebarBodySm}>{activeSector().summary}</p>
           <div class={statRow}>
             <div class={statCellGold}>
-              <div class={statValue} style={{ color: COLORS.gold }}>
-                {activeSector().sources}
+              <div class={statValueGold}>
+                {formatCount(activeSector().sources)}
               </div>
               <div class={statLabel}>SOURCES</div>
             </div>
             <div class={statCellViolet}>
-              <div class={statValue} style={{ color: COLORS.violet }}>
-                {activeSector().claims}
+              <div class={statValueViolet}>
+                {formatCount(activeSector().claims)}
               </div>
               <div class={statLabel}>CLAIMS</div>
             </div>
           </div>
 
-          <Show when={(domainConcepts() ?? []).length > 0}>
-            <div class={sidebarEyebrowConceptsLabel}>
-              CONCEPTS ({(domainConcepts() ?? []).length})
-            </div>
-            <div class={conceptTagRow}>
-              <For each={domainConcepts().slice(0, 12)}>
+          <Show when={domainConcepts().length > 0}>
+            <h3 class={sidebarEyebrowGroup}>
+              CONCEPTS ({domainConcepts().length})
+            </h3>
+            <ul
+              role="list"
+              id="zodiac-list-concepts"
+              class={cx(plainList, conceptTagRow)}
+            >
+              <For each={visibleConcepts()}>
                 {(concept) => (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSidebarMode({
-                        kind: "concept-detail",
-                        conceptId: concept._id,
-                      })
-                    }
-                    class={conceptTag}
-                  >
-                    {concept.displayName}
-                    <span class={conceptTagCount}>{concept.mentionCount}</span>
-                  </button>
+                  <li>
+                    <button
+                      type="button"
+                      data-focus-key={`concept:${concept._id}`}
+                      onClick={() => openConcept(concept._id)}
+                      class={conceptTag}
+                    >
+                      {concept.displayName}
+                      <span class={conceptTagCount}>
+                        {concept.mentionCount}
+                        <span class={srOnly}> mentions</span>
+                      </span>
+                    </button>
+                  </li>
                 )}
               </For>
-            </div>
+            </ul>
+            <Show when={domainConcepts().length > CONCEPT_PREVIEW_COUNT}>
+              <ShowAllToggle
+                listKey="concepts"
+                total={domainConcepts().length}
+                label="concepts"
+              />
+            </Show>
           </Show>
 
-          <button
-            type="button"
-            onClick={openDomainWorkspace}
-            class={openDomainBtn}
-          >
+          <Show when={subTopics().length > 0}>
+            <h3 class={sidebarEyebrowGroup}>
+              SUB-TOPICS ({subTopics().length})
+            </h3>
+            <ul role="list" class={cx(plainList, subTopicList)}>
+              <For each={subTopics()}>
+                {(subTopic) => (
+                  <li>
+                    <button
+                      type="button"
+                      data-focus-key={`subtopic:${subTopic.label}`}
+                      onClick={() =>
+                        openPanel(
+                          {
+                            kind: "sub-topic",
+                            label: subTopic.label,
+                            conceptNames: subTopic.conceptNames,
+                          },
+                          { originKey: `subtopic:${subTopic.label}` },
+                        )
+                      }
+                      class={listButton}
+                    >
+                      {subTopic.label}
+                      <span class={listButtonMeta}>
+                        {subTopic.conceptNames.length} concepts
+                      </span>
+                    </button>
+                  </li>
+                )}
+              </For>
+            </ul>
+          </Show>
+
+          <Show when={domainPipelineCount() > 0}>
+            <h3 class={sidebarEyebrowGroup}>
+              PIPELINE ITEMS ({domainPipelineCount()})
+            </h3>
+            <For each={domainPipelineGroups()}>
+              {(group) => (
+                <PipelineSection
+                  label={group.label}
+                  items={group.items}
+                  type={group.type}
+                  headingLevel="h4"
+                  listKey={`pipeline-${group.key}`}
+                />
+              )}
+            </For>
+          </Show>
+
+          <Link to={sectorRoute(selSector())} class={openDomainLink}>
             Open Domain Workspace
-          </button>
+          </Link>
         </div>
 
         <div class={sidebarSectionDomains}>
-          <div class={sidebarEyebrowSection}>ALL DOMAINS</div>
-          <For each={sectors()}>
-            {(sector) => (
-              <button
-                type="button"
-                class={sectorButton}
-                aria-pressed={selSector() === sector.id}
-                style={{
-                  "border-color":
-                    selSector() === sector.id
-                      ? `${sector.color}55`
-                      : `${COLORS.gold}1a`,
-                  background:
-                    selSector() === sector.id
-                      ? `${COLORS.gold}0d`
-                      : "transparent",
-                }}
-                onClick={() => handleSectorSelect(sector.id)}
-                onMouseEnter={() => handleSectorHover(sector.id)}
-                onMouseLeave={() => handleSectorHover(null)}
-              >
-                <div
-                  class={sectorButtonLabel}
-                  style={{
-                    // Inactive labels drop the sector hue: at any alpha that
-                    // stays legible the violet sectors still fail on the void,
-                    // so the rest state is cream and only the active sector
-                    // carries colour.
-                    color:
-                      selSector() === sector.id ? sector.color : COLORS.cream,
-                    opacity: selSector() === sector.id ? 1 : 0.72,
-                  }}
-                >
-                  {sector.label}
-                </div>
-                <div class={sectorButtonMeta}>{sector.sources} src</div>
-              </button>
-            )}
-          </For>
+          <h2 class={sidebarEyebrowSection}>ALL DOMAINS</h2>
+          <ul role="list" class={plainList}>
+            <For each={sectors()}>
+              {(sector) => (
+                <li>
+                  <button
+                    type="button"
+                    class={sectorButton}
+                    aria-pressed={selSector() === sector.id}
+                    style={sectorStyle(sector.color)}
+                    onClick={() => handleSectorSelect(sector.id)}
+                    onMouseEnter={() => handleSectorPreview(sector.id)}
+                    onMouseLeave={() => handleSectorPreview(null)}
+                    onFocus={() => handleSectorPreview(sector.id)}
+                    onBlur={() => handleSectorPreview(null)}
+                  >
+                    <span class={sectorButtonLabel}>{sector.label}</span>
+                    <span class={sectorButtonMeta}>
+                      {formatCount(sector.sources)} src
+                    </span>
+                  </button>
+                </li>
+              )}
+            </For>
+          </ul>
         </div>
 
         <div class={sidebarSectionWorkflow}>
-          <div class={sidebarEyebrowSectionTop}>WORKFLOW SHORTCUTS</div>
-          <div class={workspaceGrid}>
+          <h2 class={sidebarEyebrowSectionTop}>WORKFLOW SHORTCUTS</h2>
+          <ul role="list" class={cx(plainList, workspaceGrid)}>
             <For each={workspaceLinks}>
               {(link) => (
-                <button
-                  type="button"
-                  data-testid="home-workspace-link"
-                  onClick={() => openWorkspace(link.to)}
-                  class={workspaceButton}
-                >
-                  {link.label}
-                </button>
+                <li>
+                  <Link
+                    to={link.to}
+                    data-testid="home-workspace-link"
+                    class={workspaceLink}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
               )}
             </For>
-          </div>
+          </ul>
         </div>
 
         <div class={sidebarSectionPipeline}>
-          <div
-            class={css({
-              fontSize: "10px",
-              letterSpacing: "0.3em",
-              color: "zodiac.gold/78",
-              marginBottom: "8px",
-            })}
-          >
-            PIPELINE
-          </div>
+          <h2 class={sidebarEyebrowTight}>PIPELINE</h2>
           <div class={pipelineRow}>
             <For each={pipelineSummary()}>
               {(item, index) => (
@@ -1217,14 +1540,18 @@ export function Zodiac3D() {
     return (
       <>
         <div class={sidebarSectionCompact}>
-          <BackButton />
+          <BackBar />
           <Show when={detail()}>
             {(detailData) => (
               <>
                 <div class={sidebarEyebrowViolet}>CONCEPT</div>
-                <div class={sidebarTitleSm}>
+                <h2
+                  class={sidebarTitleSm}
+                  tabIndex={-1}
+                  ref={registerPanelTitle}
+                >
                   {detailData().concept.displayName}
-                </div>
+                </h2>
                 <div class={sidebarMeta}>
                   {detailData().concept.domain} &middot;{" "}
                   {detailData().concept.mentionCount} mentions &middot;{" "}
@@ -1247,7 +1574,7 @@ export function Zodiac3D() {
 
         <Show when={detail()}>
           {(detailData) => (
-            <div class={sidebarSectionScrollable}>
+            <div class={cx(sidebarSectionScrollable, "zodiac-scroll")}>
               <Show when={detailData().linkedSources.length > 0}>
                 <PipelineSection
                   label="SOURCES"
@@ -1274,7 +1601,9 @@ export function Zodiac3D() {
         </Show>
 
         <Show when={!detail()}>
-          <div class={sidebarLoading}>Loading concept details...</div>
+          <div class={sidebarLoading} tabIndex={-1} data-panel-fallback>
+            Loading concept details...
+          </div>
         </Show>
       </>
     );
@@ -1290,43 +1619,47 @@ export function Zodiac3D() {
     return (
       <>
         <div class={sidebarSectionCompact}>
-          <BackButton />
+          <BackBar />
           <div class={sidebarEyebrowGold}>SUB-TOPIC</div>
-          <div class={sidebarTitleMd} style={{ color: COLORS.gold }}>
+          <h2
+            class={sidebarTitleSubTopic}
+            tabIndex={-1}
+            ref={registerPanelTitle}
+          >
             {mode().label}
-          </div>
+          </h2>
           <div class={sidebarMeta}>{mode().conceptNames.length} concepts</div>
         </div>
 
-        <div class={sidebarSectionScrollable}>
-          <div class={sidebarEyebrowSection}>CONCEPTS IN CLUSTER</div>
-          <For each={mode().conceptNames}>
-            {(name) => {
-              const concept = () =>
-                domainConcepts().find((c) => c.name === name);
-              return (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const c = concept();
-                    if (c)
-                      setSidebarMode({
-                        kind: "concept-detail",
-                        conceptId: c._id,
-                      });
-                  }}
-                  class={listButton}
-                >
-                  {concept()?.displayName ?? name}
-                  <Show when={concept()}>
-                    <span class={listButtonMentions}>
-                      {concept()?.mentionCount} mentions
-                    </span>
-                  </Show>
-                </button>
-              );
-            }}
-          </For>
+        <div class={cx(sidebarSectionScrollable, "zodiac-scroll")}>
+          <h3 class={sidebarEyebrowSection}>CONCEPTS IN CLUSTER</h3>
+          <ul role="list" class={plainList}>
+            <For each={mode().conceptNames}>
+              {(name) => {
+                const concept = () =>
+                  domainConcepts().find((c) => c.name === name);
+                return (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const c = concept();
+                        if (c) openConcept(c._id);
+                      }}
+                      class={listButton}
+                    >
+                      {concept()?.displayName ?? name}
+                      <Show when={concept()}>
+                        <span class={listButtonMeta}>
+                          {concept()?.mentionCount} mentions
+                        </span>
+                      </Show>
+                    </button>
+                  </li>
+                );
+              }}
+            </For>
+          </ul>
         </div>
       </>
     );
@@ -1345,37 +1678,43 @@ export function Zodiac3D() {
     return (
       <>
         <div class={sidebarSectionCompact}>
-          <BackButton />
+          <BackBar />
           <div class={sidebarEyebrowGold}>{mode().itemType.toUpperCase()}</div>
-          <div class={sidebarTitleItem}>{mode().title}</div>
+          <h2 class={sidebarTitleItem} tabIndex={-1} ref={registerPanelTitle}>
+            {mode().title}
+          </h2>
         </div>
 
-        <div class={sidebarSectionScrollable}>
+        <div class={cx(sidebarSectionScrollable, "zodiac-scroll")}>
           <Show when={relations().length > 0}>
-            <div class={sidebarEyebrowSection}>
+            <h3 class={sidebarEyebrowSection}>
               RELATED ITEMS ({relations().length})
-            </div>
-            <For each={relations()}>
-              {(rel) => (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSidebarMode({
-                      kind: "item-detail",
-                      itemId: rel.id,
-                      itemType: rel.type,
-                      title: rel.title,
-                    })
-                  }
-                  class={relationButton}
-                >
-                  <div class={relationTypeLabel}>
-                    {rel.type.toUpperCase()} &middot; {rel.relationship}
-                  </div>
-                  <div class={relationTitle}>{rel.title}</div>
-                </button>
-              )}
-            </For>
+            </h3>
+            <ul role="list" class={plainList}>
+              <For each={relations()}>
+                {(rel) => (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openPanel({
+                          kind: "item-detail",
+                          itemId: rel.id,
+                          itemType: rel.type,
+                          title: rel.title,
+                        })
+                      }
+                      class={relationButton}
+                    >
+                      <div class={relationTypeLabel}>
+                        {rel.type.toUpperCase()} &middot; {rel.relationship}
+                      </div>
+                      <div class={relationTitle}>{rel.title}</div>
+                    </button>
+                  </li>
+                )}
+              </For>
+            </ul>
           </Show>
           <Show when={relations().length === 0}>
             <div class={sidebarEmpty}>No cross-pipeline relations found.</div>
@@ -1385,53 +1724,82 @@ export function Zodiac3D() {
     );
   }
 
-  function BackButton() {
+  // Back plus the pause/resume control, so motion stays controllable in
+  // every panel, not only the overview.
+  function BackBar() {
     return (
-      <button type="button" onClick={goBack} class={backButton}>
-        ← Back
-      </button>
+      <div class={barRow}>
+        <button type="button" onClick={goBack} class={barButton}>
+          <span aria-hidden="true">←</span> Back
+        </button>
+        <MotionToggle class={barButton} />
+      </div>
     );
   }
 
   function PipelineSection(props: {
     label: string;
-    items: Array<{ _id: string; title?: string; status: string }>;
+    items: PipelineListItem[];
     type: string;
+    headingLevel?: "h3" | "h4";
+    /** When set, the list previews a few items behind a Show-all toggle. */
+    listKey?: string;
   }) {
+    const visibleItems = createMemo(() =>
+      props.listKey && !isExpanded(props.listKey)
+        ? props.items.slice(0, PIPELINE_ITEM_PREVIEW_COUNT)
+        : props.items,
+    );
     return (
       <div class={pipelineSectionContainer}>
-        <div class={pipelineSectionEyebrow}>
+        <Dynamic
+          component={props.headingLevel ?? "h3"}
+          class={sidebarEyebrowTight}
+        >
           {props.label} ({props.items.length})
-        </div>
-        <For each={props.items}>
-          {(item) => (
-            <button
-              type="button"
-              onClick={() =>
-                setSidebarMode({
-                  kind: "item-detail",
-                  itemId: item._id,
-                  itemType: props.type,
-                  title: item.title ?? "Untitled",
-                })
-              }
-              class={pipelineItemButton}
-            >
-              <div>{item.title ?? "Untitled"}</div>
-              <div class={pipelineItemStatus}>{item.status}</div>
-            </button>
-          )}
-        </For>
+        </Dynamic>
+        <ul
+          role="list"
+          class={plainList}
+          id={props.listKey ? `zodiac-list-${props.listKey}` : undefined}
+        >
+          <For each={visibleItems()}>
+            {(item) => (
+              <li>
+                <button
+                  type="button"
+                  data-focus-key={`item:${item._id}`}
+                  onClick={() => openItem(item, props.type)}
+                  class={listButton}
+                >
+                  <div>{item.title ?? "Untitled"}</div>
+                  <div class={pipelineItemStatus}>{item.status}</div>
+                </button>
+              </li>
+            )}
+          </For>
+        </ul>
+        <Show
+          when={
+            props.listKey && props.items.length > PIPELINE_ITEM_PREVIEW_COUNT
+          }
+        >
+          <ShowAllToggle
+            listKey={props.listKey ?? ""}
+            total={props.items.length}
+            label={props.label.toLowerCase()}
+          />
+        </Show>
       </div>
     );
   }
 
-  if (webglUnavailable()) {
+  function WebglFallback() {
     return (
       <div class={fallbackContainer}>
         <div class={fallbackGrid}>
           <div class={fallbackCard}>
-            <div class={fallbackEyebrow}>HOME FALLBACK</div>
+            <div class={fallbackEyebrow()}>HOME FALLBACK</div>
             <h1 class={fallbackTitle}>Workspace Navigator</h1>
             <p class={fallbackBody}>
               3D mode is unavailable in this environment. Use direct workflow
@@ -1441,25 +1809,28 @@ export function Zodiac3D() {
           </div>
 
           <div class={fallbackCard}>
-            <div class={fallbackEyebrowSpaced}>QUICK ACCESS</div>
-            <div class={fallbackLinkGrid}>
+            <h2 class={fallbackEyebrow({ space: "loose" })}>QUICK ACCESS</h2>
+            <ul role="list" class={cx(plainList, fallbackLinkGrid)}>
               <For each={workspaceLinks}>
                 {(link) => (
-                  <button
-                    type="button"
-                    data-testid="home-workspace-link"
-                    onClick={() => openWorkspace(link.to)}
-                    class={fallbackLinkButton}
-                  >
-                    {link.label}
-                  </button>
+                  <li>
+                    <Link
+                      to={link.to}
+                      data-testid="home-workspace-link"
+                      class={fallbackLink}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
                 )}
               </For>
-            </div>
+            </ul>
           </div>
 
           <div class={fallbackCard}>
-            <div class={fallbackEyebrowPipeline}>PIPELINE SNAPSHOT</div>
+            <h2 class={fallbackEyebrow({ space: "normal" })}>
+              PIPELINE SNAPSHOT
+            </h2>
             <div class={fallbackPipelineRow}>
               <For each={pipelineSummary()}>
                 {(item, index) => (
@@ -1483,33 +1854,43 @@ export function Zodiac3D() {
     );
   }
 
+  // The scene initialises after this tree mounts, so a WebGL failure has to
+  // swap the tree reactively rather than through an early return.
   return (
-    <div class={pageContainer}>
-      <div class={dotOverlay} />
+    <Show when={!webglUnavailable()} fallback={<WebglFallback />}>
+      <div class={pageContainer}>
+        <div class={dotOverlay} />
 
-      <div ref={cssContainerRef} class={canvasWrapper}>
-        <canvas
-          ref={canvasRef}
-          class={canvasEl}
-          role="img"
-          aria-label="Interactive knowledge orrery. Use the sidebar for keyboard access."
-        />
-      </div>
+        <div ref={cssContainerRef} class={canvasWrapper}>
+          <canvas
+            ref={canvasRef}
+            class={canvasEl}
+            role="img"
+            aria-label="Interactive knowledge orrery. Use the sidebar for keyboard access."
+          />
+        </div>
 
-      <div class={`${sidebarContainer} zodiac-scroll`}>
-        <Show when={sidebarMode().kind === "overview"}>
-          <SidebarOverview />
-        </Show>
-        <Show when={sidebarMode().kind === "concept-detail"}>
-          <SidebarConceptDetail />
-        </Show>
-        <Show when={sidebarMode().kind === "sub-topic"}>
-          <SidebarSubTopic />
-        </Show>
-        <Show when={sidebarMode().kind === "item-detail"}>
-          <SidebarItemDetail />
-        </Show>
+        <div ref={sidebarRef} class={cx(sidebarContainer, "zodiac-scroll")}>
+          <p role="status" aria-live="polite" class={srOnly}>
+            {liveStatus()}
+          </p>
+          <Show when={sidebarMode().kind !== "overview"}>
+            <h1 class={srOnly}>Astrolabe Knowledge Orrery</h1>
+          </Show>
+          <Show when={sidebarMode().kind === "overview"}>
+            <SidebarOverview />
+          </Show>
+          <Show when={sidebarMode().kind === "concept-detail"}>
+            <SidebarConceptDetail />
+          </Show>
+          <Show when={sidebarMode().kind === "sub-topic"}>
+            <SidebarSubTopic />
+          </Show>
+          <Show when={sidebarMode().kind === "item-detail"}>
+            <SidebarItemDetail />
+          </Show>
+        </div>
       </div>
-    </div>
+    </Show>
   );
 }

@@ -1,6 +1,13 @@
 import { Link, useParams } from "@tanstack/solid-router";
 import { createEffect, createResource, For, Show } from "solid-js";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import {
+  EssayCard,
+  EssayDateBadge,
+  essayDisplayTitleClass,
+  essayHeroClass,
+  essayMetaClass,
+} from "../components/essay-card";
 import {
   backLink,
   collapsedNoticeClass,
@@ -13,33 +20,7 @@ import {
 } from "../components/ui";
 import { essayLibrary, getEssayBySlug } from "../lib/essays";
 
-const heroCard = css({
-  position: "relative",
-  overflow: "hidden",
-  bg: "linear-gradient(135deg, rgba(200, 168, 75, 0.16), rgba(13, 6, 32, 0.88) 58%)",
-  _before: {
-    content: '""',
-    position: "absolute",
-    inset: "auto -10% -30% auto",
-    width: "18rem",
-    height: "18rem",
-    borderRadius: "full",
-    background:
-      "radial-gradient(circle, rgba(200, 168, 75, 0.22), rgba(200, 168, 75, 0) 68%)",
-    filter: "blur(14px)",
-    pointerEvents: "none",
-  },
-});
-
-const titleClass = css({
-  color: "zodiac.cream",
-  fontFamily: "display",
-  fontSize: { base: "44px", md: "56px" },
-  fontWeight: "normal",
-  lineHeight: "0.96",
-  letterSpacing: "-0.015em",
-  mt: "4",
-});
+const titleClass = css({ mt: "4" });
 
 const dekClass = css({
   color: "zodiac.cream/74",
@@ -67,7 +48,7 @@ const articleHeader = css({
 });
 
 const articleLabel = css({
-  color: "zodiac.cream/58",
+  color: "zodiac.cream/66",
   fontFamily: "mono",
   fontSize: "xs",
   letterSpacing: "0.2em",
@@ -77,43 +58,17 @@ const articleLabel = css({
 const relatedGrid = css({
   display: "grid",
   gap: "3",
-  gridTemplateColumns: { base: "1fr", lg: "repeat(3, minmax(0, 1fr))" },
-});
-
-const relatedLink = css({
-  display: "grid",
-  alignContent: "start",
-  gap: "8px",
-  textDecoration: "none",
-  minHeight: "12rem",
-  bg: "zodiac.void/92",
-  borderColor: "zodiac.gold/22",
-  borderRadius: "l3",
-  borderWidth: "1px",
-  color: "zodiac.cream",
-  p: "16px 18px",
-  transition:
-    "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
-  _hover: {
-    transform: "translateY(-3px)",
-    borderColor: "zodiac.gold/48",
-    boxShadow: "0 22px 48px rgba(0, 0, 0, 0.24)",
-    _motionReduce: { transform: "none" },
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    lg: "repeat(3, minmax(0, 1fr))",
   },
+  listStyle: "none",
+  m: "0",
+  p: "0",
 });
 
-const relatedTitle = css({
-  color: "zodiac.cream",
-  fontFamily: "display",
-  fontSize: "xl",
-  fontWeight: "normal",
-  lineHeight: "1.2",
-});
-
-const relatedExcerpt = css({
-  color: "zodiac.cream/62",
-  lineHeight: "1.65",
-});
+// Lets each card stretch to its grid row's height.
+const relatedItem = css({ display: "grid" });
 
 export function EssayDetailPage() {
   const params = useParams({ from: "/essays/$essaySlug" });
@@ -134,8 +89,13 @@ export function EssayDetailPage() {
   const loadFailed = () => essayResult()?.failed ?? false;
 
   createEffect(() => {
+    if (essayResult.loading) return;
     const e = essay();
-    if (e) document.title = `${e.title} — Frequency Music`;
+    document.title = e
+      ? `${e.title} — Frequency Music`
+      : loadFailed()
+        ? "Essay unavailable — Frequency Music"
+        : "Essay not found — Frequency Music";
   });
   const related = () =>
     essayLibrary
@@ -168,21 +128,19 @@ export function EssayDetailPage() {
         <Show when={essay()}>
           {(entry) => (
             <>
-              <UICard glass class={heroCard}>
-                <div
-                  class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}
-                >
-                  <UIBadge tone="gold">
-                    {entry().dateLabel ?? "Research essay"}
-                  </UIBadge>
+              <UICard class={essayHeroClass}>
+                <div class={essayMetaClass}>
+                  <EssayDateBadge essay={entry()} />
                   <UIBadge tone="cream">
                     {entry().readTimeMinutes} min read
                   </UIBadge>
-                  <UIBadge tone="violet">
+                  <UIBadge tone="cream">
                     {entry().wordCount.toLocaleString()} words
                   </UIBadge>
                 </div>
-                <h1 class={titleClass}>{entry().title}</h1>
+                <h1 class={cx(essayDisplayTitleClass, titleClass)}>
+                  {entry().title}
+                </h1>
                 <p class={dekClass}>{entry().excerpt}</p>
               </UICard>
 
@@ -198,34 +156,15 @@ export function EssayDetailPage() {
               <Show when={related().length > 0}>
                 <UICard>
                   <h2 class={sectionTitleClass}>Continue Reading</h2>
-                  <div class={relatedGrid}>
+                  <ul role="list" class={relatedGrid}>
                     <For each={related()}>
                       {(nextEssay) => (
-                        <Link
-                          to="/essays/$essaySlug"
-                          params={{ essaySlug: nextEssay.slug }}
-                          class={relatedLink}
-                        >
-                          <div
-                            class={css({
-                              display: "flex",
-                              gap: "2",
-                              flexWrap: "wrap",
-                            })}
-                          >
-                            <UIBadge tone="gold">
-                              {nextEssay.dateLabel ?? "Research essay"}
-                            </UIBadge>
-                            <UIBadge tone="cream">
-                              {nextEssay.readTimeMinutes} min
-                            </UIBadge>
-                          </div>
-                          <h3 class={relatedTitle}>{nextEssay.title}</h3>
-                          <p class={relatedExcerpt}>{nextEssay.excerpt}</p>
-                        </Link>
+                        <li class={relatedItem}>
+                          <EssayCard essay={nextEssay} />
+                        </li>
                       )}
                     </For>
-                  </div>
+                  </ul>
                 </UICard>
               </Show>
             </>

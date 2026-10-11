@@ -44,11 +44,6 @@ export interface ItemRelation {
   relationship: string;
 }
 
-export type PipelineSectionItem =
-  | Pick<Doc<"sources">, "_id" | "title" | "status">
-  | Pick<Doc<"hypotheses">, "_id" | "title" | "status">
-  | Pick<Doc<"recipes">, "_id" | "title" | "status">;
-
 export interface ConceptDetailData {
   concept: Doc<"concepts">;
   linkedSources: Array<Pick<Doc<"sources">, "_id" | "title" | "status">>;

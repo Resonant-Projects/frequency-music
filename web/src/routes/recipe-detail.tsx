@@ -1,7 +1,8 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, For, Show } from "solid-js";
+import { createEffect, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
+import { entityCellClass } from "../components/entity-card";
 import {
   backLink,
   collapsedNoticeClass,
@@ -9,25 +10,22 @@ import {
   goldDivider,
   Markdown,
   pageClass,
+  proseClass,
   sectionLabel,
   UIBadge,
   UICard,
   UINotice,
 } from "../components/ui";
-import { createQuery } from "../integrations/convex";
+import { createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
 const paramGrid = css({
   display: "grid",
   gap: "3",
-  gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
-});
-
-const paramCell = css({
-  borderColor: "zodiac.gold/18",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  p: "3",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+  },
 });
 
 const paramType = css({
@@ -83,7 +81,10 @@ const protocolMeta = css({
 const protocolColumns = css({
   display: "grid",
   gap: "4",
-  gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+  },
   mt: "4",
 });
 
@@ -122,14 +123,28 @@ function formatDuration(secs: number): string {
 export function RecipeDetailPage() {
   const params = useParams({ from: "/recipes/$recipeId" });
 
-  const recipe = createQuery(api.recipes.get, () => ({
+  const recipeQuery = createQueryWithStatus(api.recipes.get, () => ({
     id: params().recipeId as Id<"recipes">,
   }));
+  const recipe = recipeQuery.data;
+
+  onMount(() => {
+    document.title = "Recipe — Frequency Music";
+  });
 
   createEffect(() => {
     const r = recipe();
     if (r) document.title = `${r.title} — Frequency Music`;
   });
+
+  const loadErrorText = () =>
+    recipeQuery.error()
+      ? `Unable to load recipe: ${recipeQuery.error()?.message}`
+      : null;
+  const loadStatus = () => {
+    if (recipeQuery.error() || recipe()) return null;
+    return recipeQuery.isLoading() ? "Loading recipe..." : "Recipe not found.";
+  };
 
   return (
     <section class={pageClass}>
@@ -139,10 +154,9 @@ export function RecipeDetailPage() {
         </Link>
       </div>
 
-      <UINotice
-        class={recipe() ? collapsedNoticeClass : undefined}
-        status={recipe() ? null : "Loading recipe..."}
-      />
+      <UICard class={recipe() ? collapsedNoticeClass : undefined}>
+        <UINotice status={loadStatus()} error={loadErrorText()} />
+      </UICard>
 
       <Show when={recipe()}>
         {(r) => (
@@ -168,11 +182,13 @@ export function RecipeDetailPage() {
                     ml: "auto",
                   })}
                 >
-                  {new Date(r().createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  <time datetime={new Date(r().createdAt).toISOString()}>
+                    {new Date(r().createdAt).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </time>
                 </span>
               </div>
 
@@ -198,16 +214,7 @@ export function RecipeDetailPage() {
                   <>
                     <hr class={goldDivider} />
                     <h2 class={sectionLabel}>Why This Matters</h2>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/74",
-                        fontFamily: "display",
-                        fontSize: "md",
-                        lineHeight: "1.7",
-                      })}
-                    >
-                      {value()}
-                    </p>
+                    <p class={proseClass}>{value()}</p>
                   </>
                 )}
               </Show>
@@ -224,7 +231,7 @@ export function RecipeDetailPage() {
                 <div class={paramGrid}>
                   <For each={r().parameters}>
                     {(param) => (
-                      <div class={paramCell}>
+                      <div class={entityCellClass}>
                         <div class={paramType}>
                           {param.kind ?? param.type ?? "parameter"}
                         </div>

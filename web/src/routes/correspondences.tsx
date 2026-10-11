@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/solid-router";
 import { createUniqueId, For, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   UIBadge,
   UICard,
   UINotice,
+  helperClass,
   metaLine,
   pageClass,
   pageTitleClass,
@@ -54,7 +55,7 @@ const rowLinkClass = css({
   },
   _focusVisible: {
     outline: "2px solid",
-    outlineColor: "zodiac.violet",
+    outlineColor: "zodiac.gold",
     outlineOffset: "2px",
   },
 });
@@ -126,9 +127,14 @@ export function CorrespondencesPage() {
                   )}
                 </Show>
               </div>
-              <p class={css({ color: "zodiac.cream/62", mb: "3" })}>
+              <p class={cx(helperClass, css({ mb: "3" }))}>
                 {section.description}
               </p>
+              <Show when={(section.query.data() ?? []).length >= LIST_LIMIT}>
+                <p class={cx(helperClass, css({ mb: "3" }))}>
+                  Showing the {LIST_LIMIT} most recently updated.
+                </p>
+              </Show>
 
               <UINotice status={sectionStatus()} error={sectionError()} />
               <Show
@@ -138,32 +144,38 @@ export function CorrespondencesPage() {
                   (section.query.data() ?? []).length > 0
                 }
               >
-                <div class={css({ display: "grid", gap: "2" })}>
+                <ul role="list" class={css({ display: "grid", gap: "2" })}>
                   <For each={section.query.data() ?? []}>
                     {(row) => (
-                      <Link
-                        to="/correspondences/$correspondenceId"
-                        params={{ correspondenceId: String(row._id) }}
-                        class={rowLinkClass}
-                      >
-                        <span
-                          class={css({
-                            color: "zodiac.cream",
-                            fontFamily: "display",
-                            fontSize: "lg",
-                            lineHeight: "1.35",
-                          })}
+                      <li>
+                        <Link
+                          to="/correspondences/$correspondenceId"
+                          params={{ correspondenceId: String(row._id) }}
+                          class={rowLinkClass}
                         >
-                          {row.statement}
-                        </span>
-                        <span class={metaLine}>
-                          {row.evidence.length} evidence · updated{" "}
-                          {formatUpdatedAt(row.updatedAt)}
-                        </span>
-                      </Link>
+                          <span
+                            class={css({
+                              color: "zodiac.cream",
+                              fontFamily: "display",
+                              fontSize: "lg",
+                              lineHeight: "1.35",
+                            })}
+                          >
+                            {row.statement}
+                          </span>
+                          <span class={metaLine}>
+                            {row.evidence.length} evidence · updated{" "}
+                            <time
+                              datetime={new Date(row.updatedAt).toISOString()}
+                            >
+                              {formatUpdatedAt(row.updatedAt)}
+                            </time>
+                          </span>
+                        </Link>
+                      </li>
                     )}
                   </For>
-                </div>
+                </ul>
               </Show>
             </UICard>
           );

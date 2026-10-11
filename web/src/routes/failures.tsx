@@ -1,10 +1,14 @@
 import { Link } from "@tanstack/solid-router";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
+  fieldLabelClass,
+  focusRingClass,
+  helperClass,
   pageClass,
   pageTitleClass,
+  proseClass,
   sectionTitleClass,
   UIBadge,
   UICard,
@@ -28,6 +32,30 @@ const REASONS = [
   "low_expandability_composition",
   "repeat_no_expand_composition",
 ] as const;
+type Reason = (typeof REASONS)[number];
+
+const REASON_LABELS: Record<Reason, string> = {
+  contradicted_hypothesis: "Contradicted hypothesis",
+  retired_hypothesis: "Retired hypothesis",
+  archived_recipe: "Archived recipe",
+  low_expandability_composition: "Low-expandability composition",
+  repeat_no_expand_composition: "Repeated no-expand composition",
+};
+const reasonLabel = (value: string) => REASON_LABELS[value as Reason] ?? value;
+
+// Standalone links to the related records: violet text (provisional work),
+// at least 24px tall (44px on touch), with the gold focus ring.
+const archiveLinkClass = cx(
+  css({
+    alignItems: "center",
+    color: "zodiac.violetText",
+    display: "inline-flex",
+    minH: "6",
+    _hover: { textDecoration: "underline" },
+    _coarsePointer: { minH: "11" },
+  }),
+  focusRingClass,
+);
 
 export function FailuresPage() {
   onMount(() => {
@@ -40,7 +68,7 @@ export function FailuresPage() {
   const theses = createQuery(api.theses.list, () => ({ limit: 100 }));
   const archive = createQueryWithStatus(api.failures.listArchive, () => ({
     limit: 100,
-    reason: reason() ? (reason() as (typeof REASONS)[number]) : undefined,
+    reason: reason() ? (reason() as Reason) : undefined,
     thesisId: thesisId() ? (thesisId() as Id<"theses">) : undefined,
   }));
 
@@ -48,7 +76,7 @@ export function FailuresPage() {
     <section class={pageClass}>
       <UICard>
         <h1 class={pageTitleClass}>Failure Archive</h1>
-        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
+        <p class={helperClass}>
           Contradictions and low-yield paths stay visible here so the system can
           learn honestly instead of silently discarding reversals.
         </p>
@@ -60,18 +88,14 @@ export function FailuresPage() {
           class={css({
             display: "grid",
             gap: "3",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            gridTemplateColumns: {
+              base: "minmax(0, 1fr)",
+              md: "repeat(2, minmax(0, 1fr))",
+            },
           })}
         >
           <div>
-            <label
-              class={css({
-                color: "zodiac.cream/70",
-                display: "block",
-                mb: "2",
-              })}
-              for="failure-reason"
-            >
+            <label class={fieldLabelClass} for="failure-reason">
               Reason
             </label>
             <UISelect
@@ -81,19 +105,14 @@ export function FailuresPage() {
             >
               <option value="">All reasons</option>
               <For each={REASONS}>
-                {(value) => <option value={value}>{value}</option>}
+                {(value) => (
+                  <option value={value}>{REASON_LABELS[value]}</option>
+                )}
               </For>
             </UISelect>
           </div>
           <div>
-            <label
-              class={css({
-                color: "zodiac.cream/70",
-                display: "block",
-                mb: "2",
-              })}
-              for="failure-thesis"
-            >
+            <label class={fieldLabelClass} for="failure-thesis">
               Thesis
             </label>
             <UISelect
@@ -146,7 +165,7 @@ export function FailuresPage() {
                       mb: "2",
                     })}
                   >
-                    <UIBadge tone="gold">{entry.reason}</UIBadge>
+                    <UIBadge tone="gold">{reasonLabel(entry.reason)}</UIBadge>
                     <UIBadge tone="cream">
                       {entry.recommendedNextAction}
                     </UIBadge>
@@ -160,22 +179,10 @@ export function FailuresPage() {
                   >
                     {entry.title}
                   </h3>
-                  <p
-                    class={css({
-                      color: "zodiac.cream/75",
-                      lineHeight: "1.7",
-                      mb: "2",
-                    })}
-                  >
+                  <p class={cx(proseClass, css({ mb: "2" }))}>
                     {entry.explanation}
                   </p>
-                  <p
-                    class={css({
-                      color: "zodiac.cream/58",
-                      lineHeight: "1.7",
-                      mb: "2",
-                    })}
-                  >
+                  <p class={cx(helperClass, css({ mb: "2" }))}>
                     {entry.summary}
                   </p>
                   <div
@@ -192,7 +199,7 @@ export function FailuresPage() {
                           to="/hypotheses/$hypothesisId"
                           params={{ hypothesisId: String(hypothesisId()) }}
                           aria-label={`Hypothesis for ${entry.title}`}
-                          class={css({ color: "zodiac.violet" })}
+                          class={archiveLinkClass}
                         >
                           Hypothesis
                         </Link>
@@ -204,7 +211,7 @@ export function FailuresPage() {
                           to="/recipes/$recipeId"
                           params={{ recipeId: String(recipeId()) }}
                           aria-label={`Recipe for ${entry.title}`}
-                          class={css({ color: "zodiac.violet" })}
+                          class={archiveLinkClass}
                         >
                           Recipe
                         </Link>
@@ -216,7 +223,7 @@ export function FailuresPage() {
                           to="/compositions/$compositionId"
                           params={{ compositionId: String(compositionId()) }}
                           aria-label={`Composition for ${entry.title}`}
-                          class={css({ color: "zodiac.violet" })}
+                          class={archiveLinkClass}
                         >
                           Composition
                         </Link>
@@ -228,7 +235,7 @@ export function FailuresPage() {
                           to="/theses/$thesisId"
                           params={{ thesisId: String(thesisId()) }}
                           aria-label={`Thesis for ${entry.title}`}
-                          class={css({ color: "zodiac.violet" })}
+                          class={archiveLinkClass}
                         >
                           Thesis
                         </Link>

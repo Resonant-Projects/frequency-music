@@ -1,10 +1,12 @@
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   fieldLabelClass,
+  focusRingClass,
   pageClass,
   pageTitleClass,
+  proseClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
@@ -18,6 +20,7 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
@@ -78,6 +81,24 @@ function appendCommaValue(current: string, next: string): string {
     ? values.join(", ")
     : [...values, next].join(", ");
 }
+
+const helperChipClass = cx(
+  css({
+    borderColor: "zodiac.gold/22",
+    borderRadius: "full",
+    borderWidth: "1px",
+    color: "zodiac.cream/72",
+    fontSize: "xs",
+    minHeight: "7",
+    px: "2.5",
+    py: "1",
+    _coarsePointer: {
+      minHeight: "11",
+      py: "2.5",
+    },
+  }),
+  focusRingClass,
+);
 
 export function FeedbackPage() {
   onMount(() => {
@@ -166,7 +187,7 @@ export function FeedbackPage() {
       setStandoutMoments("");
       setNotice("Listening session logged.");
     } catch (error) {
-      setNoticeError(`Failed to log session: ${String(error)}`);
+      setNoticeError(`Failed to log session: ${describeError(error)}`);
     }
   }
 
@@ -226,7 +247,7 @@ export function FeedbackPage() {
             display: "grid",
             gap: "3",
             gridTemplateColumns: {
-              base: "1fr",
+              base: "minmax(0, 1fr)",
               md: "repeat(3, minmax(0, 1fr))",
               lg: "repeat(5, minmax(0, 1fr))",
             },
@@ -307,8 +328,8 @@ export function FeedbackPage() {
             display: "grid",
             gap: "3",
             gridTemplateColumns: {
-              base: "1fr",
-              md: "1fr 1fr",
+              base: "minmax(0, 1fr)",
+              md: "repeat(2, minmax(0, 1fr))",
             },
             marginTop: "3",
           })}
@@ -336,20 +357,7 @@ export function FeedbackPage() {
                   <button
                     type="button"
                     aria-controls="feedback-felt"
-                    class={css({
-                      borderColor: "zodiac.gold/22",
-                      borderRadius: "full",
-                      borderWidth: "1px",
-                      color: "zodiac.cream/72",
-                      fontSize: "xs",
-                      minHeight: "7",
-                      px: "2.5",
-                      py: "1",
-                      _coarsePointer: {
-                        minHeight: "11",
-                        py: "2.5",
-                      },
-                    })}
+                    class={helperChipClass}
                     onClick={() =>
                       setFeltQualities((current) =>
                         appendCommaValue(current, helper),
@@ -385,20 +393,7 @@ export function FeedbackPage() {
                   <button
                     type="button"
                     aria-controls="feedback-body-tags"
-                    class={css({
-                      borderColor: "zodiac.gold/22",
-                      borderRadius: "full",
-                      borderWidth: "1px",
-                      color: "zodiac.cream/72",
-                      fontSize: "xs",
-                      minHeight: "7",
-                      px: "2.5",
-                      py: "1",
-                      _coarsePointer: {
-                        minHeight: "11",
-                        py: "2.5",
-                      },
-                    })}
+                    class={helperChipClass}
                     onClick={() =>
                       setBodyMapTags((current) =>
                         appendCommaValue(current, helper),
@@ -453,7 +448,13 @@ export function FeedbackPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Recent Feedback</h2>
         <UINotice
-          status={sessions.isLoading() ? "Loading sessions…" : null}
+          status={
+            sessions.isLoading()
+              ? "Loading sessions…"
+              : !sessions.isError() && (sessions.data() ?? []).length === 0
+                ? "No listening sessions logged yet."
+                : null
+          }
           error={
             sessions.isError()
               ? `Failed to load sessions: ${sessions.error()?.message ?? "Unknown error"}`
@@ -489,20 +490,15 @@ export function FeedbackPage() {
                         {session.participants.length} listeners
                       </UIBadge>
                       <Show when={session.expandVerdict}>
-                        {(value) => <UIBadge tone="violet">{value()}</UIBadge>}
+                        {(value) => <UIBadge tone="gold">{value()}</UIBadge>}
                       </Show>
                     </div>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/75",
-                        marginBottom: "2",
-                      })}
-                    >
+                    <p class={cx(proseClass, css({ marginBottom: "2" }))}>
                       {session.feedbackMd}
                     </p>
                     <p
                       class={css({
-                        color: "zodiac.cream/55",
+                        color: "zodiac.cream/66",
                         fontFamily: "mono",
                         fontSize: "xs",
                         marginBottom:
@@ -522,7 +518,7 @@ export function FeedbackPage() {
                     <Show when={session.ratings?.expandability !== undefined}>
                       <p
                         class={css({
-                          color: "zodiac.cream/62",
+                          color: "zodiac.cream/66",
                           fontFamily: "mono",
                           fontSize: "xs",
                           marginBottom:
@@ -540,7 +536,8 @@ export function FeedbackPage() {
                     <Show when={(session.feltQualities?.length ?? 0) > 0}>
                       <p
                         class={css({
-                          color: "zodiac.cream/62",
+                          color: "zodiac.cream/66",
+                          maxW: "72ch",
                           fontSize: "sm",
                           marginBottom:
                             (session.standoutMoments?.length ?? 0) > 0 ||
@@ -556,7 +553,8 @@ export function FeedbackPage() {
                     <Show when={(session.bodyMapTags?.length ?? 0) > 0}>
                       <p
                         class={css({
-                          color: "zodiac.cream/62",
+                          color: "zodiac.cream/66",
+                          maxW: "72ch",
                           fontSize: "sm",
                           marginBottom:
                             Boolean(session.bodyMapNotes) ||
@@ -572,7 +570,8 @@ export function FeedbackPage() {
                       {(value) => (
                         <p
                           class={css({
-                            color: "zodiac.cream/62",
+                            color: "zodiac.cream/66",
+                            maxW: "72ch",
                             fontSize: "sm",
                             whiteSpace: "pre-wrap",
                             marginBottom:
@@ -588,7 +587,8 @@ export function FeedbackPage() {
                     <Show when={(session.standoutMoments?.length ?? 0) > 0}>
                       <p
                         class={css({
-                          color: "zodiac.cream/55",
+                          color: "zodiac.cream/66",
+                          maxW: "72ch",
                           fontSize: "sm",
                         })}
                       >

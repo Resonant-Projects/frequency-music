@@ -1,5 +1,5 @@
 import essayIndex from "virtual:essay-index";
-import { type Essay, type EssaySummary, parseEssay } from "./essay-parse";
+import { type Essay, type EssaySummary, essayBody } from "./essay-parse";
 
 const essayBodyLoaders = import.meta.glob("../../../docs/essays/*.md", {
   query: "?raw",
@@ -16,11 +16,17 @@ const loaderBySlug = new Map(
 /** Build-time summaries, sorted newest first (see `compareEssays`). */
 export const essayLibrary: EssaySummary[] = essayIndex;
 
-/** Fetches the essay's markdown body on demand; `null` when the slug is unknown. */
+const summaryBySlug = new Map(essayLibrary.map((entry) => [entry.slug, entry]));
+
+/**
+ * Fetches the essay's markdown body on demand and joins it to the build-time
+ * summary; `null` when the slug is unknown.
+ */
 export async function getEssayBySlug(slug: string): Promise<Essay | null> {
   const load = loaderBySlug.get(slug);
-  if (!load) return null;
-  return parseEssay(slug, await load());
+  const summary = summaryBySlug.get(slug);
+  if (!load || !summary) return null;
+  return { ...summary, body: essayBody(await load()) };
 }
 
 export type { Essay, EssaySummary };

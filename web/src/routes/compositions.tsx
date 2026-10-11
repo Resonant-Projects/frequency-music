@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/solid-router";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { entityCardClass } from "../components/entity-card";
 import {
   fieldLabelClass,
+  focusRingClass,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -18,8 +21,30 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+
+/**
+ * The row's current status: the outline face with a lit gold border and gold
+ * label (DESIGN.md: pressed state is a border, never a second solid).
+ */
+const pressedClass = css({
+  _pressed: {
+    borderColor: "zodiac.gold/75",
+    color: "zodiac.gold",
+    _hover: { color: "zodiac.gold" },
+  },
+});
+
+const titleLinkClass = cx(
+  css({
+    color: "zodiac.cream",
+    textDecoration: "none",
+    _hover: { textDecoration: "underline" },
+  }),
+  focusRingClass,
+);
 
 export function CompositionsPage() {
   onMount(() => {
@@ -77,7 +102,7 @@ export function CompositionsPage() {
       setRevisionVariable("");
       setNotice("Composition created.");
     } catch (error) {
-      setNoticeError(`Failed to create composition: ${String(error)}`);
+      setNoticeError(`Failed to create composition: ${describeError(error)}`);
     }
   }
 
@@ -91,14 +116,24 @@ export function CompositionsPage() {
       });
       setNotice(`Composition set to ${status}.`);
     } catch (error) {
-      setNoticeError(`Status update failed: ${String(error)}`);
+      setNoticeError(`Status update failed: ${describeError(error)}`);
     }
   }
 
   return (
     <section class={pageClass}>
-      <UICard as="form" onSubmit={submitComposition as any}>
+      <UICard>
         <h1 class={pageTitleClass}>Compositions</h1>
+      </UICard>
+
+      <UICard
+        as="form"
+        aria-labelledby="composition-form-heading"
+        onSubmit={submitComposition}
+      >
+        <h2 id="composition-form-heading" class={sectionTitleClass}>
+          New Composition
+        </h2>
 
         <label class={fieldLabelClass} for="composition-title">
           Title
@@ -114,7 +149,10 @@ export function CompositionsPage() {
           class={css({
             display: "grid",
             gap: "3",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            gridTemplateColumns: {
+              base: "minmax(0, 1fr)",
+              md: "repeat(2, minmax(0, 1fr))",
+            },
             marginTop: "3",
           })}
         >
@@ -156,7 +194,10 @@ export function CompositionsPage() {
           class={css({
             display: "grid",
             gap: "3",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            gridTemplateColumns: {
+              base: "minmax(0, 1fr)",
+              md: "repeat(2, minmax(0, 1fr))",
+            },
             marginTop: "3",
           })}
         >
@@ -198,13 +239,7 @@ export function CompositionsPage() {
                 }
                 placeholder="tuning, tempo, timbre, rhythm density, voicing..."
               />
-              <p
-                class={css({
-                  color: "zodiac.cream/58",
-                  fontSize: "xs",
-                  mt: "2",
-                })}
-              >
+              <p class={cx(helperClass, css({ mt: "2" }))}>
                 Name the one major variable this revision is testing: tuning,
                 tempo, timbre, rhythm density, voicing, etc.
               </p>
@@ -232,27 +267,27 @@ export function CompositionsPage() {
       <UICard>
         <h2 class={sectionTitleClass}>Artifact Pipeline</h2>
         <UINotice
-          status={compositions.isLoading() ? "Loading compositions…" : null}
+          class={css({ textAlign: "center" })}
+          status={
+            compositions.isLoading()
+              ? "Loading compositions…"
+              : !compositions.isError() &&
+                  (compositions.data() ?? []).length === 0
+                ? "No compositions yet. Create one above to begin."
+                : null
+          }
+          error={
+            compositions.isError()
+              ? `Unable to load compositions: ${compositions.error()?.message ?? "unknown error"}`
+              : null
+          }
         />
         <Show when={!compositions.isLoading()}>
-          <Show
-            when={(compositions.data() ?? []).length > 0}
-            fallback={
-              <p
-                class={css({
-                  color: "zodiac.cream/55",
-                  fontFamily: "display",
-                  fontSize: "md",
-                  lineHeight: "1.6",
-                  textAlign: "center",
-                  py: "8",
-                })}
-              >
-                No compositions yet. Create one above to begin.
-              </p>
-            }
-          >
-            <div class={css({ display: "grid", gap: "3" })}>
+          <Show when={(compositions.data() ?? []).length > 0}>
+            <ul
+              role="list"
+              class={css({ display: "grid", gap: "3", listStyle: "none" })}
+            >
               <For each={compositions.data() ?? []}>
                 {(item: {
                   _id: string;
@@ -270,15 +305,7 @@ export function CompositionsPage() {
                     ) as { title: string } | undefined;
 
                   return (
-                    <div
-                      data-testid="entity-row"
-                      class={css({
-                        borderColor: "zodiac.gold/22",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        p: "4",
-                      })}
-                    >
+                    <li data-testid="entity-row" class={entityCardClass}>
                       <div
                         class={css({
                           display: "flex",
@@ -297,24 +324,20 @@ export function CompositionsPage() {
                         </Show>
                       </div>
 
-                      <Link
-                        to="/compositions/$compositionId"
-                        params={{ compositionId: String(item._id) }}
-                        class={css({
-                          color: "zodiac.cream",
-                          display: "inline-block",
-                          fontSize: "xl",
-                          marginBottom: "2",
-                          textDecoration: "none",
-                        })}
-                      >
-                        <h3>{item.title}</h3>
-                      </Link>
+                      <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
+                        <Link
+                          to="/compositions/$compositionId"
+                          params={{ compositionId: String(item._id) }}
+                          class={titleLinkClass}
+                        >
+                          {item.title}
+                        </Link>
+                      </h3>
 
                       <Show when={item.revisionParentId}>
                         <p
                           class={css({
-                            color: "zodiac.cream/62",
+                            color: "zodiac.cream/66",
                             fontSize: "sm",
                             mb: "2",
                           })}
@@ -333,6 +356,7 @@ export function CompositionsPage() {
                       >
                         <UIButton
                           variant="outline"
+                          class={pressedClass}
                           aria-pressed={item.status === "in_progress"}
                           aria-label={`Set ${item.title} to in progress`}
                           onClick={() =>
@@ -343,6 +367,7 @@ export function CompositionsPage() {
                         </UIButton>
                         <UIButton
                           variant="outline"
+                          class={pressedClass}
                           aria-pressed={item.status === "rendered"}
                           aria-label={`Set ${item.title} to rendered`}
                           onClick={() =>
@@ -353,6 +378,7 @@ export function CompositionsPage() {
                         </UIButton>
                         <UIButton
                           variant="ghost"
+                          class={pressedClass}
                           aria-pressed={item.status === "published"}
                           aria-label={`Set ${item.title} to published`}
                           onClick={() =>
@@ -362,11 +388,11 @@ export function CompositionsPage() {
                           Published
                         </UIButton>
                       </div>
-                    </div>
+                    </li>
                   );
                 }}
               </For>
-            </div>
+            </ul>
           </Show>
         </Show>
       </UICard>
