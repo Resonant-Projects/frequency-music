@@ -7,6 +7,7 @@ import {
   buildAtlas,
   connectedIds,
   mergeAtlas,
+  mergeDiscoveredNodes,
   relationshipLabel,
   type AtlasNode,
   type AtlasPipeline,
@@ -58,6 +59,34 @@ const pipeline: AtlasPipeline = {
 };
 
 describe("knowledge atlas relationships", () => {
+  it("retains discovered metadata when later relations return sparse records", () => {
+    const source: AtlasNode = {
+      id: "source:older",
+      recordId: "older",
+      kind: "source",
+      title: "Earlier source",
+      status: "extracted",
+    };
+    const stub: AtlasNode = {
+      id: source.id,
+      recordId: source.recordId,
+      kind: source.kind,
+      title: "Updated source title",
+    };
+    const discovered = mergeDiscoveredNodes(
+      mergeDiscoveredNodes([], [source]),
+      [stub],
+    );
+    expect(
+      mergeAtlas(buildAtlas([], []), discovered, []).nodes.find(
+        (node) => node.id === source.id,
+      ),
+    ).toEqual({ ...source, title: stub.title });
+    expect(mergeDiscoveredNodes([stub], [source])).toEqual([source]);
+    expect(
+      mergeDiscoveredNodes(discovered, [{ ...source, status: "archived" }]),
+    ).toEqual([{ ...source, status: "archived" }]);
+  });
   it("joins canonical concept names to record IDs and removes missing endpoints", () => {
     const graph = buildAtlas(
       [concept("a", "Resonance"), concept("b", "Harmonics")],

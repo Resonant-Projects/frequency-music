@@ -42,6 +42,24 @@ export interface AtlasPipeline {
 export const atlasId = (kind: string, id: string) => `${kind}:${id}`;
 export const normalizeConcept = (name: string) => name.trim().toLowerCase();
 
+export function mergeDiscoveredNodes(
+  previous: AtlasNode[],
+  additions: AtlasNode[],
+): AtlasNode[] {
+  const nodes = new Map(previous.map((node) => [node.id, node]));
+  for (const node of additions) {
+    const existing = nodes.get(node.id);
+    nodes.set(node.id, {
+      ...existing,
+      ...node,
+      domain: node.domain ?? existing?.domain,
+      status: node.status ?? existing?.status,
+      mentions: node.mentions ?? existing?.mentions,
+    });
+  }
+  return [...nodes.values()];
+}
+
 /** Organization is spatial. Lines represent only relationships returned by data. */
 export function buildAtlas(
   concepts: Array<ConstellationConcept & { sector?: string }>,

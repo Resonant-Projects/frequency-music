@@ -18,6 +18,7 @@ import {
   atlasId,
   buildAtlas,
   mergeAtlas,
+  mergeDiscoveredNodes,
   relationshipLabel,
   type AtlasEdge,
   type AtlasKind,
@@ -186,11 +187,7 @@ export function Zodiac3D() {
       }
     }
     if (additions.length) {
-      setDiscovered((previous) => [
-        ...new Map(
-          [...previous, ...additions].map((item) => [item.id, item]),
-        ).values(),
-      ]);
+      setDiscovered((previous) => mergeDiscoveredNodes(previous, additions));
       setDiscoveredEdges((previous) => [
         ...new Map(
           [...previous, ...links].map((edge) => [JSON.stringify(edge), edge]),
@@ -363,10 +360,7 @@ export function Zodiac3D() {
     const node = navigation.pending();
     if (!node) return;
     untrack(() => {
-      setDiscovered((nodes) => [
-        ...nodes.filter((item) => item.id !== node.id),
-        node,
-      ]);
+      setDiscovered((nodes) => mergeDiscoveredNodes(nodes, [node]));
       setLayers((previous) => new Set([...previous, node.kind]));
       select(node);
       navigation.select(null);
