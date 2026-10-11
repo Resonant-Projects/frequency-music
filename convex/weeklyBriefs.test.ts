@@ -200,11 +200,11 @@ Research summary.
     );
     expect(actionArgs?.promptVersion).toBe("v2.loop-report");
     expect(mutationArgs?.loopReport).toEqual(loopReport);
-    // Narration is scheduled immediately after the row lands.
-    expect(scheduled).toEqual([[0, { briefId: "brief-1" }]]);
+    // Weekly Turns remain text-only, even after successful generation.
+    expect(scheduled).toEqual([]);
   });
 
-  test("still returns the brief when narration scheduling fails", async () => {
+  test("generates a text brief without depending on the narration scheduler", async () => {
     const warnings: unknown[] = [];
     const originalWarn = console.warn;
     console.warn = (...args: unknown[]) => {
@@ -264,9 +264,7 @@ Research summary.
       const result = await generateBriefCore(ctx as unknown as ActionCtx, {});
 
       expect(result.briefId).toBe("brief-1");
-      expect(warnings).toEqual([
-        ["narration scheduling failed", "scheduler down"],
-      ]);
+      expect(warnings).toEqual([]);
     } finally {
       console.warn = originalWarn;
     }

@@ -78,5 +78,19 @@
         "to": "phase or EQ shimmer"
       }
     ]
+  },
+  "the-asymmetry-you-need": {
+    "source": [
+      {
+        "from": "## Connections",
+        "to": "## Further reading"
+      }
+    ],
+    "replace": [
+      {
+        "from": "Klangfarbenmelodie",
+        "to": "tone-color melody"
+      }
+    ]
   }
 }

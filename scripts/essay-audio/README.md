@@ -1,7 +1,12 @@
 # Essay audio editions
 
 Operator tool that reads the essays in `docs/essays/` aloud and publishes
-them to the private podcast feed, one batch at a time.
+them to the private podcast feed, one batch at a time. Weekly Turns stay in
+text; brief generation and cron jobs no longer enqueue their narration.
+The default for new essay batches is ElevenLabs so the monthly subscription
+allowance goes toward essays. Use included credits only, with no paid overage.
+Keep batches small. Each essay gets one audio edition, regardless of voice;
+try voices on different essays. Existing manifests retain their chosen voice.
 
 ## What it fixes over the October 5 listening trials
 
@@ -31,27 +36,41 @@ them to the private podcast feed, one batch at a time.
 
 ```sh
 vpx tsx scripts/essay-audio/episodes.ts queue --limit 10
-vpx tsx scripts/essay-audio/episodes.ts prepare --batch 20261006-inworld-01 --voice inworld --next 8
-vpx tsx scripts/essay-audio/episodes.ts render --batch 20261006-inworld-01 --cap-chars 90000
-vpx tsx scripts/essay-audio/episodes.ts publish --batch 20261006-inworld-01
+vpx tsx scripts/essay-audio/episodes.ts prepare --batch 20261010-elevenlabs-01 --voice elevenlabs --next 8
+vpx tsx scripts/essay-audio/episodes.ts render --batch 20261010-elevenlabs-01 --cap-chars 90000
+vpx tsx scripts/essay-audio/episodes.ts publish --batch 20261010-elevenlabs-01
 ```
 
 - `queue` lists unpublished essays, those with a feedback round first. Essays
   that lose tables or code come after the ones that read whole. It reads
   production Convex and skips any essay whose source already has an episode,
-  including the October 5 trial editions.
-- `prepare` writes `out/essay-audio/<batch>/manifest.json` and a readable
+  including the October 5 trial editions. It also skips essays reserved by
+  local batch manifests, including unpublished voice trials. Keep those
+  manifests with their audio so the history remains available. Run one
+  operator batch at a time; local reservations are not a distributed lock.
+- `prepare` checks the full production publication history and local batch
+  manifests even for explicit `--slugs`. It rejects duplicates, including
+  repeated slugs within a batch, and refuses to overwrite an existing batch.
+  Resume an interrupted batch with `render` or `publish`.
+  It writes `out/essay-audio/<batch>/manifest.json` and a readable
   `<slug>.txt` per essay. Read those before rendering. It refuses an essay
   with unconverted notation; add an entry to `overrides.json`, keyed by slug:
   `{"replace": [{"from": "ℤ[i]", "to": "the Gaussian integers"}]}`. `replace`
   edits the spoken text; `source` edits the markdown before conversion, which
   is how a display equation or table gets a spoken form. Use
   `{"skip": "reason"}` to keep an essay out of the queue.
-- `render` works only in `out/`. Chunks are cached by text and settings, so a
-  rerun resumes; a finished essay is re-rendered if its manifest entry
-  changed, and `publish` refuses audio made from another entry. Paid
+- `render` rechecks production publication history before synthesis and skips
+  published essays, including ones older than the newest 100 feed entries.
+  It rejects essays reserved by another local batch. It writes only in
+  `out/`. Chunks are cached by text and settings, so interrupted work resumes
+  in its original batch. A finished render cannot be replaced by changing
+  its manifest settings, and `publish` refuses mismatched audio. Paid
   attempts, including rejected ones, are logged in `attempts.jsonl`;
-  `--cap-chars` stops the batch before it exceeds the cap.
+  `--cap-chars` is required and stops the batch before it exceeds the cap.
+  Check the provider's current included allowance and API-key limit first.
+  The cap counts characters attempted in this batch, not credits remaining
+  across the account or other batches. Do not assume unused subscription
+  credits override a lower API-key allowance.
 - `publish` checks that the house voice is still `inworld-max` and the media
   queue is idle. It then stops the production media worker on ai-5090-02,
   publishes each rendered essay through the leased narrate and assemble
@@ -64,11 +83,33 @@ The private feed lists the newest 100 episodes (`FEED_LIMIT` in
 ## Voices
 
 - `inworld`: Inworld TTS 1.5 Max, Dennis, at 48 kHz. This is the house voice
-  and the default for the series.
+  but new essay batches default to ElevenLabs.
 - `elevenlabs`: Eleven v4 with `--eleven-voice-id`/`--eleven-voice-name`
   (default George), stability 0.5, 192 kbps MP3. This plan refuses 44.1 kHz
   PCM (`output_format_not_allowed`, Pro tier). Eleven v4 has no speed or SSML
   controls.
+- `cartesia-nandi` and `cartesia-quentin`: the catalog's pinned Sonic model
+  with Nandi and Quentin, respectively, delivered as 48 kHz PCM WAV. Both
+  use the essay pipeline's spoken-text conversion, section pacing, chunk
+  checks, and optional ASR. Each synthesis call makes one request so all
+  paid attempts remain visible to the character cap. Resolve
+  `CARTESIA_API_KEY` through the root Varlock schema.
 - `voxtral`: Voxtral 4B TTS (`neutral_male`) on a temporary vLLM-Omni GPU pod.
   Pass `--voxtral-url`. Uses 360-character chunks, up to three re-renders with
   a new seed, and `--asr`.
+
+## Trying another voice
+
+Use a different, unpublished essay for each voice. Same-essay comparison
+renders are no longer part of the workflow. Choose the next available essay
+through the queue instead of reusing an essay you have already heard.
+
+```sh
+vpx tsx scripts/essay-audio/episodes.ts prepare --batch cartesia-nandi-next --voice cartesia-nandi --next 1
+vpx tsx scripts/essay-audio/episodes.ts render --batch cartesia-nandi-next --cap-chars 12000 --asr
+```
+
+Read the prepared script and check the provider's allowance before rendering.
+Use `out/essay-audio/<batch>/<slug>/normalized.wav` for listening before
+publishing. Voice selection for a batch does not change the saved house voice.
+ASR checks transcription, not how natural the delivery sounds.

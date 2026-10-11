@@ -1,9 +1,5 @@
-// Weekly-turn episodes: narration is enqueued by brief generation itself;
-// `reconcile` only catches briefs that missed it. It skips briefs with live
-// narration jobs before paying for scripts; atomic per-brief admission in
-// mediaJobs.enqueue prevents duplicates if callers overlap (ruling R19).
-// No "use node": these actions only call ctx.run*, and this file also exports
-// a query, which a node file cannot.
+// Manual Weekly Turn narration and voice comparisons. Brief generation and
+// cron jobs do not enqueue Weekly Turn audio; the podcast focuses on essays.
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
