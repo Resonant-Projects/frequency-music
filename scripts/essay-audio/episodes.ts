@@ -6,8 +6,8 @@
 //   vpx tsx scripts/essay-audio/episodes.ts render --batch NAME [--asr] [--voxtral-url URL]
 //   vpx tsx scripts/essay-audio/episodes.ts publish --batch NAME
 //
-// prepare and render touch only out/essay-audio/. queue and publish read
-// production Convex; publish also stops the idle production media worker
+// All commands read production Convex to prevent duplicate essays. prepare
+// and render write only out/essay-audio/. publish stops the idle media worker
 // for the length of the batch, renders nothing, and restarts it.
 import "varlock/auto-load";
 import { execFileSync } from "node:child_process";
@@ -49,9 +49,10 @@ import { downloadTo } from "../../media/src/download";
 import type { JobContext, NewArtifact } from "../../media/src/jobs/types";
 import { runOnce } from "../../media/src/runner";
 import { chunkForLimit } from "../../media/src/tts/chunk";
-import { wrapPcmAsWav } from "../../media/src/tts/elevenlabs";
+import { type VoiceKey, synthesize, voiceFor } from "./voices";
 import { assertUnderUploadCap, MAX_UPLOAD_BYTES } from "../../media/src/upload";
 import { wordErrorRate } from "./wer";
+import { assertNewSources, reservedSources } from "./history";
 import {
   type EssayOverride,
   type SpokenSegment,
@@ -69,155 +70,10 @@ const MEDIA_CONTAINER = "frequency-media-media-1";
 
 // ── Voices ──────────────────────────────────────────────────────────────
 
-type VoiceKey = "inworld" | "elevenlabs" | "voxtral";
-type Voice = {
-  key: VoiceKey;
-  catalogId: string;
-  label: string;
-  // Request size. Voxtral drifts on long inputs, so it gets short chunks.
-  maxChars: number;
-  paid: boolean;
-  // Re-renders allowed for a chunk that fails the sanity gate.
-  retries: number;
-  // Lay a noise bed under the gaps at the take's own floor (see pacing.ts).
-  roomTone: boolean;
-  settings: Record<string, unknown>;
-};
-
-function voiceFor(
-  key: VoiceKey,
-  options: { elevenVoiceId?: string; elevenVoiceName?: string } = {},
-): Voice {
-  if (key === "inworld") {
-    return {
-      key,
-      catalogId: "inworld-max",
-      label: "Inworld Max, Dennis",
-      maxChars: 1900,
-      paid: true,
-      retries: 1,
-      roomTone: false,
-      settings: { model: "inworld-tts-1.5-max", voice: "Dennis" },
-    };
-  }
-  if (key === "elevenlabs") {
-    const voiceId = options.elevenVoiceId ?? "JBFqnCBsd6RMkjVDRZzb";
-    const name = options.elevenVoiceName ?? "George";
-    return {
-      key,
-      catalogId: `elevenlabs-v4-${name.toLowerCase().replaceAll(/\W+/g, "-")}`,
-      label: `ElevenLabs v4, ${name}`,
-      maxChars: 2400,
-      paid: true,
-      retries: 1,
-      roomTone: true,
-      settings: {
-        model: "eleven_v4",
-        voice: voiceId,
-        stability: 0.5,
-        similarity_boost: 0.75,
-        // 44.1 kHz PCM needs the Pro tier (403 output_format_not_allowed on
-        // this plan); 192 kbps MP3 is the best format it allows.
-        output_format: "mp3_44100_192",
-      },
-    };
-  }
-  return {
-    key,
-    catalogId: "voxtral-male-preset",
-    label: "Voxtral, male preset",
-    maxChars: 360,
-    paid: false,
-    retries: 3,
-    roomTone: false,
-    settings: {
-      model: "mistralai/Voxtral-4B-TTS-2603",
-      voice: "neutral_male",
-      seed: 42,
-    },
-  };
-}
-
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is not set`);
   return value;
-}
-
-async function synthesize(
-  voice: Voice,
-  text: string,
-  attempt: number,
-  output: string,
-  voxtralUrl?: string,
-): Promise<void> {
-  const signal = AbortSignal.timeout(300_000);
-  let response: Response;
-  if (voice.key === "inworld") {
-    response = await fetch("https://api.inworld.ai/tts/v1/voice", {
-      method: "POST",
-      headers: {
-        authorization: `Basic ${requireEnv("INWORLD_API_KEY")}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        voiceId: voice.settings.voice,
-        modelId: voice.settings.model,
-        audioConfig: { audioEncoding: "LINEAR16", sampleRateHertz: 48000 },
-      }),
-      redirect: "error",
-      signal,
-    });
-  } else if (voice.key === "elevenlabs") {
-    const { voice: id, output_format, model, ...settings } = voice.settings;
-    response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${String(id)}?output_format=${String(output_format)}`,
-      {
-        method: "POST",
-        headers: {
-          "xi-api-key": requireEnv("ELEVENLABS_API_KEY"),
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          text,
-          model_id: model,
-          voice_settings: settings,
-        }),
-        redirect: "error",
-        signal,
-      },
-    );
-  } else {
-    if (!voxtralUrl) throw new Error("--voxtral-url is required for Voxtral");
-    response = await fetch(`${voxtralUrl.replace(/\/$/, "")}/v1/audio/speech`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        model: voice.settings.model,
-        input: text,
-        voice: voice.settings.voice,
-        // A re-render after a failed gate tries another seed.
-        seed: Number(voice.settings.seed) + attempt,
-        response_format: "wav",
-      }),
-      redirect: "error",
-      signal,
-    });
-  }
-  // Status only: a body may echo the request.
-  if (!response.ok) throw new Error(`${voice.key} status ${response.status}`);
-  if (voice.key === "inworld") {
-    const body = (await response.json()) as { audioContent: string };
-    const pcm = new Uint8Array(Buffer.from(body.audioContent, "base64"));
-    await writeFile(output, wrapPcmAsWav(pcm, 48000, 1));
-  } else if (voice.key === "elevenlabs") {
-    const mp3 = `${output}.mp3`;
-    await writeFile(mp3, new Uint8Array(await response.arrayBuffer()));
-    await runFfmpeg(["-i", mp3, "-ac", "1", "-c:a", "pcm_s24le", output]);
-  } else {
-    await writeFile(output, new Uint8Array(await response.arrayBuffer()));
-  }
 }
 
 // ── Speech recognition check (optional) ─────────────────────────────────
@@ -400,12 +256,14 @@ async function publishedSources(
 
 async function queue(limit: number): Promise<string[]> {
   const published = await publishedSources(productionClient());
+  const reserved = await reservedSources(OUT);
   const overrides = await readOverrides();
   const ready: string[] = [];
   const blocked: string[] = [];
   const withOmissions: string[] = [];
   for (const slug of await essaySlugs()) {
     if (published.has(`${ESSAYS}/${slug}.md`)) continue;
+    if (reserved.has(`${ESSAYS}/${slug}.md`)) continue;
     if (overrides[slug]?.skip) continue;
     const essay = toSpokenEssay(
       slug,
@@ -436,6 +294,21 @@ async function prepare(
   slugs: string[],
   voiceOptions: ManifestEntry["voiceOptions"],
 ): Promise<void> {
+  if (await exists(join(batchDir(batch), "manifest.json"))) {
+    throw new Error(
+      `batch ${batch} already exists; resume it with render or publish`,
+    );
+  }
+  if (slugs.some((slug) => !/^[a-z0-9-]+$/.test(slug))) {
+    throw new Error(
+      "essay slugs must contain only lowercase letters, digits, and hyphens",
+    );
+  }
+  assertNewSources(
+    slugs.map((slug) => join(ESSAYS, `${slug}.md`)),
+    await publishedSources(productionClient()),
+    await reservedSources(OUT),
+  );
   const voice = voiceFor(voiceKey, voiceOptions);
   const overrides = await readOverrides();
   const entries: ManifestEntry[] = [];
@@ -528,6 +401,15 @@ async function render(
   options: { asr: boolean; voxtralUrl?: string; capChars: number },
 ): Promise<void> {
   const manifest = await readManifest(batch);
+  const published = await publishedSources(productionClient());
+  const pending = manifest.entries.filter(
+    (entry) => !published.has(entry.source),
+  );
+  assertNewSources(
+    pending.map((entry) => entry.source),
+    published,
+    await reservedSources(OUT, batch),
+  );
   const ledgerFile = join(batchDir(batch), "attempts.jsonl");
   const ledger: Ledger = { attemptedChars: 0 };
   // A missing ledger is a fresh batch; a corrupt one stops the render, since
@@ -551,11 +433,20 @@ async function render(
     if (attempt.paid !== false) ledger.attemptedChars += attempt.chars;
   }
   for (const entry of manifest.entries) {
+    if (published.has(entry.source)) {
+      console.log(`${entry.slug}: already published; skipping synthesis`);
+      continue;
+    }
     const voice = voiceFor(entry.voice, entry.voiceOptions);
     const dir = join(batchDir(batch), entry.slug);
     await mkdir(dir, { recursive: true });
     const fingerprint = inputFingerprint(entry);
     const previous = await readRender(dir);
+    if (previous && previous.fingerprint !== fingerprint) {
+      throw new Error(
+        `${entry.slug}: already rendered with different settings; refusing another edition`,
+      );
+    }
     if (
       previous?.fingerprint === fingerprint &&
       (previous.asrChecked || !options.asr)
@@ -1200,7 +1091,7 @@ async function main(): Promise<void> {
     allowPositionals: true,
     options: {
       batch: { type: "string" },
-      voice: { type: "string", default: "inworld" },
+      voice: { type: "string", default: "elevenlabs" },
       next: { type: "string" },
       slugs: { type: "string" },
       limit: { type: "string", default: "10" },
@@ -1208,7 +1099,7 @@ async function main(): Promise<void> {
       "voxtral-url": { type: "string" },
       "eleven-voice-id": { type: "string" },
       "eleven-voice-name": { type: "string" },
-      "cap-chars": { type: "string", default: "200000" },
+      "cap-chars": { type: "string" },
     },
   });
   const command = positionals[0];
@@ -1221,7 +1112,15 @@ async function main(): Promise<void> {
     throw new Error("--batch NAME is required");
   if (command === "prepare") {
     const voice = values.voice as VoiceKey;
-    if (!["inworld", "elevenlabs", "voxtral"].includes(voice)) {
+    if (
+      ![
+        "inworld",
+        "elevenlabs",
+        "voxtral",
+        "cartesia-nandi",
+        "cartesia-quentin",
+      ].includes(voice)
+    ) {
       throw new Error(`unknown voice ${voice}`);
     }
     const slugs = values.slugs
