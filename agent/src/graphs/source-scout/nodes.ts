@@ -42,6 +42,7 @@ import {
   RECAPTURE_CONCURRENCY,
 } from "./config.js";
 import {
+  conjectureQueries,
   foundationQueries,
   queryPlanningPrompt,
   resultJudgePrompt,
@@ -143,9 +144,13 @@ export function createPlanQueriesNode(
     const validQueries = modelQueries.filter((query) =>
       allowedGaps.has(query.targetGap),
     );
-    // One query for every thin domain precedes repeat searches. Deterministic
-    // foundations also keep empty areas reachable during planner outages.
-    const plannedQueries = foundationQueries(targets).map(
+    // Every target receives a query before repeat searches consume the cap.
+    // Deterministic fallbacks also preserve coverage during planner outages.
+    const reservedQueries = [
+      ...foundationQueries(targets),
+      ...conjectureQueries(targets),
+    ];
+    const plannedQueries = reservedQueries.map(
       (query) =>
         validQueries.find(
           (candidate) => candidate.targetGap === query.targetGap,
@@ -174,6 +179,12 @@ export function createPlanQueriesNode(
           planned: plannedQueries.length,
           rejectedUnknownGaps: modelQueries.length - validQueries.length,
           foundationFallbacks: foundationQueries(targets).filter(
+            (query) =>
+              !validQueries.some(
+                (candidate) => candidate.targetGap === query.targetGap,
+              ),
+          ).length,
+          conjectureFallbacks: conjectureQueries(targets).filter(
             (query) =>
               !validQueries.some(
                 (candidate) => candidate.targetGap === query.targetGap,

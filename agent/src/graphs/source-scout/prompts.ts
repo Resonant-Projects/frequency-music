@@ -31,10 +31,18 @@ export function targetGapLabels(targets: ScoutTargets): string[] {
   ];
 }
 
+export function conjectureQueries(targets: ScoutTargets): ScoutQuery[] {
+  return targets.starvedConjectures.map((target) => ({
+    query: `${target.conceptA} ${target.conceptB} ${target.statement.slice(0, 200)} research evidence`,
+    targetGap: `starved-conjecture:${target.correspondenceId}`,
+    rationale: `Find supporting or contrary evidence for ${target.statement}; the conjecture has ${target.evidenceCount} linked evidence items.`,
+  }));
+}
+
 export function queryPlanningPrompt(targets: ScoutTargets): string {
   return `You plan need-directed web discovery for Frequency Music, a research-to-composition program connecting music with physics, mathematics, geometry, psychoacoustics, resonance, and embodied listening.
 
-Produce at most 10 concrete search queries. Every query must use one exact targetGap label from the list below and explain how it addresses that gap. Include at least one query per thin domain, including empty domains. Use remaining queries for specific mechanisms, competing explanations, and contrary evidence. Prefer readable original papers, substantive textbook chapters, author documentation, and durable specialist sources over indexes, feed teasers, and search summaries. Do not generate generic music-AI or unrelated machine-learning searches.
+Produce at most 10 concrete search queries. Every query must use one exact targetGap label from the list below and explain how it addresses that gap. Include at least one query per target gap, covering every thin domain, including empty domains, and every evidence-starved conjecture. Use remaining queries for specific mechanisms, competing explanations, and contrary evidence. Prefer readable original papers, substantive textbook chapters, author documentation, and durable specialist sources over indexes, feed teasers, and search summaries. Do not generate generic music-AI or unrelated machine-learning searches.
 
 ${RESEARCH_SOURCE_GUIDANCE}
 

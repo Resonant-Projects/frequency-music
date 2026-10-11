@@ -28,12 +28,15 @@ const SCOUT_CONJECTURE_SCAN_LIMIT = 100;
 const SCOUT_TARGET_LIMIT = 5;
 export const AUTO_RETIRE_AFTER_MS = 90 * 24 * 60 * 60 * 1000;
 
-export function scoutConceptLimitPerDomain(domainCount: number): number {
+export function scoutConceptLimitPerDomain(
+  domainCount: number,
+  remainingBudget = SCOUT_TOTAL_CONCEPT_LIMIT,
+): number {
   return Math.max(
     1,
     Math.min(
       SCOUT_CONCEPTS_PER_DOMAIN_LIMIT,
-      Math.floor(SCOUT_TOTAL_CONCEPT_LIMIT / Math.max(1, domainCount)),
+      Math.ceil(remainingBudget / Math.max(1, domainCount)),
     ),
   );
 }
@@ -112,17 +115,23 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     .filter((domain) => domain.status !== "deprecated")
     .toSorted((left, right) => left.name.localeCompare(right.name));
 
-  const conceptLimitPerDomain = scoutConceptLimitPerDomain(
-    activeDomains.length,
-  );
+  let remainingConceptBudget = SCOUT_TOTAL_CONCEPT_LIMIT;
   const domainCounts: ThinDomain[] = [];
-  for (const domain of activeDomains) {
+  for (const [index, domain] of activeDomains.entries()) {
     // At most 58 registry + 100 concept + (100 x 50) edge rows = 5,158.
     // Counts intentionally approximate a bounded window and may miss later on-mission concepts.
     const domainConcepts = await ctx.db
       .query("concepts")
       .withIndex("by_domain", (q) => q.eq("domain", domain.name))
-      .take(conceptLimitPerDomain);
+      .take(
+        scoutConceptLimitPerDomain(
+          activeDomains.length - index,
+          remainingConceptBudget,
+        ),
+      );
+    // Empty domains consume no concept rows. Redistribute their unused slots
+    // and division remainders among the domains still to inspect.
+    remainingConceptBudget -= domainConcepts.length;
     const concepts = domainConcepts.filter(
       (concept) => concept.missionRelevance === "on",
     );

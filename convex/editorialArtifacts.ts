@@ -84,12 +84,7 @@ type DraftPayload = {
     sourceTitle: string;
     sourceCanonicalUrl?: string;
     summary: string;
-    evidenceLevel:
-      | "peer_reviewed"
-      | "preprint"
-      | "anecdotal"
-      | "speculative"
-      | "personal";
+    evidenceLevel: Doc<"claims">["evidenceLevel"];
     truthConfidence?: "low" | "medium" | "high";
     interestLevel?: "low" | "medium" | "high";
   }>;

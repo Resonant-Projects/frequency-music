@@ -5,6 +5,7 @@ import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { scoutConceptLimitPerDomain } from "./correspondences";
 import schema from "./schema";
+import { BOOTSTRAP_RESEARCH_DOMAINS } from "./shared/researchTopics";
 import { modules } from "../harness/modules";
 
 describe("source scout target census", () => {
@@ -80,6 +81,52 @@ describe("source scout target census", () => {
     expect(scoutConceptLimitPerDomain(4)).toBe(25);
     expect(scoutConceptLimitPerDomain(10)).toBe(10);
     expect(scoutConceptLimitPerDomain(50)).toBe(2);
+    expect(scoutConceptLimitPerDomain(58)).toBe(2);
+    expect(scoutConceptLimitPerDomain(16, 16)).toBe(1);
+  });
+
+  test("empty bootstrap rows preserve second-concept discovery in the full recent window", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (const name of BOOTSTRAP_RESEARCH_DOMAINS) {
+        await ctx.db.insert("conceptDomains", {
+          name,
+          status: "provisional",
+          introducedBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+      for (let index = 0; index < 50; index++) {
+        const domain = `recent-${index}`;
+        await ctx.db.insert("conceptDomains", {
+          name: domain,
+          status: "known",
+          introducedBy: "system",
+          createdAt: 2,
+          updatedAt: 2,
+        });
+        for (const relevance of ["off", "on"] as const) {
+          await ctx.db.insert("concepts", {
+            name: `${domain}-${relevance}`,
+            displayName: `${domain}-${relevance}`,
+            aliases: [],
+            domain,
+            missionRelevance: relevance,
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 2,
+            updatedAt: 2,
+          });
+        }
+      }
+    });
+    const result = await t.query(api.correspondences.scoutTargets, {});
+    expect(result.thinDomains).toContainEqual({
+      domain: "recent-0",
+      onMissionConceptCount: 1,
+      sourceCount: 0,
+    });
   });
 
   test("includes newly-added domains in the bounded census window", async () => {

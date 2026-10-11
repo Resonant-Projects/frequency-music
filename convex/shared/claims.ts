@@ -3,6 +3,7 @@ import { v } from "convex/values";
 export const evidenceLevelValidator = v.union(
   v.literal("peer_reviewed"),
   v.literal("preprint"),
+  v.literal("reference"),
   v.literal("anecdotal"),
   v.literal("speculative"),
   v.literal("personal"),
