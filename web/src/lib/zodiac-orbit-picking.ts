@@ -1,6 +1,5 @@
-// ZODIAC orbit picking — spatial index for instanced mesh raycasting.
-// THREE.js default InstancedMesh raycasting is expensive for 200+ instances.
-// This uses a simple grid-based spatial lookup.
+// ZODIAC picking — raycasts the interactive overlays (concept stars,
+// armillary rings, orbiting pipeline bodies) in priority order.
 
 import * as THREE from "three";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -15,7 +14,6 @@ export interface PickResult {
   position: THREE.Vector3;
   ringLabel?: string;
   ringIndex?: number;
-  itemIndex?: number;
 }
 
 // Raycaster config for points
@@ -72,7 +70,6 @@ export function pickOrbitalItem(
       label: item.title,
       position: pos,
       ringLabel: ring.label,
-      itemIndex: instanceId,
     };
   }
 

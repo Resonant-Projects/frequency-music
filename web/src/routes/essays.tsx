@@ -1,10 +1,20 @@
-import { Link } from "@tanstack/solid-router";
 import { createSignal, For, onMount, Show } from "solid-js";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import {
+  EssayCard,
+  EssayDateBadge,
+  EssayTitleLink,
+  essayCardLiftClass,
+  essayDisplayTitleClass,
+  essayHeroClass,
+  essayMetaClass,
+} from "../components/essay-card";
 import {
   UIBadge,
   UIButton,
   UICard,
+  UIList,
+  eyebrowClass,
   pageClass,
   sectionTitleClass,
 } from "../components/ui";
@@ -12,29 +22,12 @@ import { essayLibrary } from "../lib/essays";
 
 const ARCHIVE_PAGE_SIZE = 24;
 
-const heroCard = css({
-  position: "relative",
-  overflow: "hidden",
-  p: "0",
-  bg: "linear-gradient(135deg, rgba(200, 168, 75, 0.16), rgba(13, 6, 32, 0.88) 58%)",
-  _before: {
-    content: '""',
-    position: "absolute",
-    inset: "auto -10% -30% auto",
-    width: "18rem",
-    height: "18rem",
-    borderRadius: "full",
-    background:
-      "radial-gradient(circle, rgba(200, 168, 75, 0.22), rgba(200, 168, 75, 0) 68%)",
-    filter: "blur(14px)",
-    pointerEvents: "none",
-  },
-});
+const heroCard = css({ p: "0" });
 
 const heroLayout = css({
   display: "grid",
   gridTemplateColumns: {
-    base: "1fr",
+    base: "minmax(0, 1fr)",
     lg: "minmax(0, 1.08fr) minmax(360px, 0.92fr)",
   },
   alignItems: "start",
@@ -49,10 +42,8 @@ const heroLead = css({
 const heroFeaturedZone = css({
   p: { base: "5", md: "6" },
   borderTopWidth: { base: "1px", lg: "0" },
-  borderTopStyle: "solid",
   borderTopColor: "zodiac.gold/10",
   borderLeftWidth: { base: "0", lg: "1px" },
-  borderLeftStyle: "solid",
   borderLeftColor: "zodiac.gold/10",
   display: "grid",
   alignContent: "start",
@@ -60,25 +51,7 @@ const heroFeaturedZone = css({
   minHeight: { base: "auto", lg: "100%" },
 });
 
-const eyebrow = css({
-  color: "zodiac.gold/78",
-  fontFamily: "mono",
-  fontSize: "10px",
-  letterSpacing: "0.4em",
-  textTransform: "uppercase",
-  mb: "12px",
-});
-
-const heroTitle = css({
-  color: "zodiac.cream",
-  fontFamily: "display",
-  fontSize: { base: "44px", md: "56px" },
-  fontWeight: "normal",
-  lineHeight: "0.96",
-  letterSpacing: "-0.015em",
-  maxW: "12ch",
-  m: "0",
-});
+const heroTitle = css({ maxW: "12ch" });
 
 const heroBody = css({
   color: "zodiac.cream/66",
@@ -88,7 +61,6 @@ const heroBody = css({
   lineHeight: "1.75",
   maxW: "36rem",
   mt: "16px",
-  mb: "0",
 });
 
 const statRow = css({
@@ -98,23 +70,18 @@ const statRow = css({
   mt: "20px",
 });
 
-const featuredLink = css({
+const featuredCard = css({
   display: "grid",
   gap: "12px",
-  textDecoration: "none",
   borderColor: "zodiac.cream/14",
   borderWidth: "1px",
   borderRadius: "l3",
   p: { base: "18px", md: "22px 26px" },
   bg: "zodiac.void/45",
-  transition: "transform 0.2s ease, border-color 0.2s ease",
   alignSelf: "start",
-  _hover: {
-    transform: "translateY(-2px)",
-    borderColor: "zodiac.gold/45",
-    _motionReduce: { transform: "none" },
-  },
 });
+
+const featuredEyebrow = css({ mb: "12px" });
 
 const featuredTitle = css({
   color: "zodiac.cream",
@@ -123,84 +90,27 @@ const featuredTitle = css({
   fontWeight: "normal",
   lineHeight: "1.08",
   letterSpacing: "-0.012em",
-  m: "0",
 });
 
 const featuredExcerpt = css({
-  color: "zodiac.cream/62",
+  color: "zodiac.cream/66",
   fontSize: "14px",
   fontWeight: "400",
   lineHeight: "1.65",
-  m: "0",
 });
 
 const archiveGrid = css({
   display: "grid",
   gap: { base: "4", md: "5", xl: "6" },
   gridTemplateColumns: {
-    base: "1fr",
+    base: "minmax(0, 1fr)",
     md: "repeat(2, minmax(0, 1fr))",
     xl: "repeat(3, minmax(0, 1fr))",
   },
 });
 
-const essayCard = css({
-  position: "relative",
-  overflow: "hidden",
-  display: "grid",
-  alignContent: "start",
-  gap: "8px",
-  textDecoration: "none",
-  minHeight: { base: "auto", md: "13.5rem" },
-  bg: "zodiac.void/92",
-  transition:
-    "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
-  borderColor: "zodiac.gold/22",
-  borderRadius: "l3",
-  borderWidth: "1px",
-  color: "zodiac.cream",
-  p: "16px 18px",
-  _hover: {
-    transform: "translateY(-3px)",
-    borderColor: "zodiac.gold/48",
-    boxShadow: "0 22px 48px rgba(0, 0, 0, 0.24)",
-    _motionReduce: { transform: "none" },
-  },
-});
-
-const essayMeta = css({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "8px",
-  alignItems: "center",
-});
-
-const essayTitle = css({
-  color: "zodiac.cream",
-  fontFamily: "display",
-  fontSize: { base: "22px", md: "24px" },
-  fontWeight: "normal",
-  lineHeight: "1.08",
-  letterSpacing: "-0.01em",
-  m: "0",
-});
-
-const essayExcerpt = css({
-  color: "zodiac.cream/68",
-  fontSize: "14px",
-  fontWeight: "400",
-  lineHeight: "1.65",
-  m: "0",
-});
-
-const essayFooter = css({
-  color: "zodiac.cream/66",
-  fontFamily: "mono",
-  fontSize: "11px",
-  letterSpacing: "0.26em",
-  textTransform: "uppercase",
-  mt: "12px",
-});
+// Lets each card stretch to its grid row's height.
+const archiveItem = css({ display: "grid" });
 
 const showMoreRow = css({
   display: "flex",
@@ -213,18 +123,29 @@ export function EssaysPage() {
     document.title = "Essays — Frequency Music";
   });
 
-  const [featured, ...archive] = essayLibrary;
-  const archiveList = archive.length > 0 ? archive : featured ? [featured] : [];
+  // The newest essay is the hero's featured dispatch, so the archive starts
+  // with the one after it and never repeats it.
+  const [featured, ...archiveList] = essayLibrary;
   const [visibleCount, setVisibleCount] = createSignal(ARCHIVE_PAGE_SIZE);
   const visibleArchive = () => archiveList.slice(0, visibleCount());
+  let archiveListRef: HTMLElement | undefined;
+
+  function showMore() {
+    const firstRevealed = visibleCount();
+    setVisibleCount(firstRevealed + ARCHIVE_PAGE_SIZE);
+    // The button unmounts once the last page is revealed, so focus always
+    // moves on to the first newly revealed card.
+    queueMicrotask(() => {
+      archiveListRef?.children[firstRevealed]?.querySelector("a")?.focus();
+    });
+  }
 
   return (
     <section class={pageClass}>
-      <UICard glass class={heroCard}>
+      <UICard class={cx(essayHeroClass, heroCard)}>
         <div class={heroLayout}>
           <div class={heroLead}>
-            <div class={eyebrow}>Written Essays</div>
-            <h1 class={heroTitle}>Essays</h1>
+            <h1 class={cx(essayDisplayTitleClass, heroTitle)}>Essays</h1>
             <p class={heroBody}>
               These essays take the project&apos;s raw material, papers, and
               notes and turn them into arguments worth reading end to end. The
@@ -240,70 +161,58 @@ export function EssaysPage() {
                   .toLocaleString()}{" "}
                 words
               </UIBadge>
-              <UIBadge tone="violet">Frequency Music archive</UIBadge>
+              <UIBadge tone="cream">Frequency Music archive</UIBadge>
             </div>
           </div>
 
           {featured ? (
             <div class={heroFeaturedZone}>
-              <Link
-                to="/essays/$essaySlug"
-                params={{ essaySlug: featured.slug }}
-                class={featuredLink}
-              >
-                <div class={eyebrow}>Latest dispatch</div>
-                <div class={essayMeta}>
-                  <UIBadge tone="gold">
-                    {featured.dateLabel ?? "Research essay"}
-                  </UIBadge>
+              <article class={cx(featuredCard, essayCardLiftClass)}>
+                <div class={cx(eyebrowClass, featuredEyebrow)}>
+                  Latest dispatch
+                </div>
+                <div class={essayMetaClass}>
+                  <EssayDateBadge essay={featured} />
                   <UIBadge tone="cream">
                     {featured.readTimeMinutes} min read
                   </UIBadge>
                 </div>
-                <h2 class={featuredTitle}>{featured.title}</h2>
+                <h2 class={featuredTitle}>
+                  <EssayTitleLink essay={featured} />
+                </h2>
                 <p class={featuredExcerpt}>{featured.excerpt}</p>
-              </Link>
+              </article>
             </div>
           ) : null}
         </div>
       </UICard>
 
-      <UICard>
-        <h2 class={sectionTitleClass}>Archive</h2>
-        <div class={archiveGrid}>
-          <For each={visibleArchive()}>
-            {(essay) => (
-              <Link
-                to="/essays/$essaySlug"
-                params={{ essaySlug: essay.slug }}
-                class={essayCard}
-              >
-                <div class={essayMeta}>
-                  <UIBadge tone="gold">
-                    {essay.dateLabel ?? "Research essay"}
-                  </UIBadge>
-                  <UIBadge tone="cream">{essay.readTimeMinutes} min</UIBadge>
-                </div>
-                <h3 class={essayTitle}>{essay.title}</h3>
-                <p class={essayExcerpt}>{essay.excerpt}</p>
-                <div class={essayFooter}>Read essay</div>
-              </Link>
-            )}
-          </For>
-        </div>
-        <Show when={visibleCount() < archiveList.length}>
-          <div class={showMoreRow}>
-            <UIButton
-              variant="outline"
-              onClick={() =>
-                setVisibleCount((count) => count + ARCHIVE_PAGE_SIZE)
-              }
-            >
-              Show more
-            </UIButton>
-          </div>
-        </Show>
-      </UICard>
+      <Show when={archiveList.length > 0}>
+        <UICard>
+          <h2 class={sectionTitleClass}>Archive</h2>
+          <UIList
+            class={archiveGrid}
+            ref={(element) => {
+              archiveListRef = element;
+            }}
+          >
+            <For each={visibleArchive()}>
+              {(essay) => (
+                <li class={archiveItem}>
+                  <EssayCard essay={essay} footer />
+                </li>
+              )}
+            </For>
+          </UIList>
+          <Show when={visibleCount() < archiveList.length}>
+            <div class={showMoreRow}>
+              <UIButton variant="outline" onClick={showMore}>
+                Show more
+              </UIButton>
+            </div>
+          </Show>
+        </UICard>
+      </Show>
     </section>
   );
 }

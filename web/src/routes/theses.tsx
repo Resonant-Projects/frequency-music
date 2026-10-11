@@ -1,9 +1,15 @@
 import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
+  entityCardLinkClass,
+  entityCardTitleLinkClass,
+} from "../components/entity-card";
+import {
+  badgeRowClass,
   fieldLabelClass,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -11,23 +17,23 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
-const thesisCard = css({
-  borderColor: "zodiac.gold/22",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  display: "block",
-  p: "4",
-  textDecoration: "none",
-  transition: "border-color 0.15s",
-  _hover: {
-    borderColor: "zodiac.gold/45",
-  },
+const listClass = css({ display: "grid", gap: "3" });
+
+const rowBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+
+const rowTitleClass = css({ color: "zodiac.cream", fontSize: "xl", mb: "2" });
+
+const rowStatementClass = css({
+  color: "zodiac.cream/66",
+  lineHeight: "1.7",
+  maxW: "72ch",
 });
 
 export function ThesesPage() {
@@ -66,39 +72,28 @@ export function ThesesPage() {
           <h2 id={headingId} class={sectionTitleClass}>
             {label}
           </h2>
-          <div class={css({ display: "grid", gap: "3" })}>
+          <UIList class={listClass}>
             <For each={rows}>
               {(thesis) => (
-                <Link
-                  to="/theses/$thesisId"
-                  params={{ thesisId: String(thesis._id) }}
-                  class={thesisCard}
-                >
-                  <div class={css({ display: "flex", gap: "2", mb: "2" })}>
+                <li class={entityCardLinkClass}>
+                  <div class={rowBadgesClass}>
                     <UIBadge tone="gold">{thesis.status}</UIBadge>
                     <UIBadge tone="cream">{thesis.visibility}</UIBadge>
                   </div>
-                  <h3
-                    class={css({
-                      color: "zodiac.cream",
-                      fontSize: "xl",
-                      mb: "2",
-                    })}
-                  >
-                    {thesis.title}
+                  <h3 class={rowTitleClass}>
+                    <Link
+                      to="/theses/$thesisId"
+                      params={{ thesisId: String(thesis._id) }}
+                      class={entityCardTitleLinkClass}
+                    >
+                      {thesis.title}
+                    </Link>
                   </h3>
-                  <p
-                    class={css({
-                      color: "zodiac.cream/66",
-                      lineHeight: "1.7",
-                    })}
-                  >
-                    {thesis.statement}
-                  </p>
-                </Link>
+                  <p class={rowStatementClass}>{thesis.statement}</p>
+                </li>
               )}
             </For>
-          </div>
+          </UIList>
         </section>
       </Show>
     );
@@ -131,12 +126,22 @@ export function ThesesPage() {
 
   return (
     <section class={pageClass}>
-      <UICard as="form" onSubmit={handleCreate as any}>
+      <UICard>
         <h1 class={pageTitleClass}>Theses</h1>
-        <p class={css({ color: "zodiac.cream/62", lineHeight: "1.6" })}>
+        <p class={helperClass}>
           Theses are the lightweight organizing questions that accumulate
           hypotheses, recipes, compositions, and reversals over time.
         </p>
+      </UICard>
+
+      <UICard
+        as="form"
+        aria-labelledby="thesis-form-heading"
+        onSubmit={handleCreate}
+      >
+        <h2 id="thesis-form-heading" class={sectionTitleClass}>
+          New Thesis
+        </h2>
 
         <label class={fieldLabelClass} for="thesis-title">
           Title
@@ -179,7 +184,7 @@ export function ThesesPage() {
           })}
         >
           <UINotice status={notice()} error={noticeError()} />
-          <UIButton type="submit" variant="outline">
+          <UIButton type="submit" variant="solid">
             Create Thesis
           </UIButton>
         </div>

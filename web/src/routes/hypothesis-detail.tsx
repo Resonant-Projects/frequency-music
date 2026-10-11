@@ -1,16 +1,22 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, createSignal, For, on, Show } from "solid-js";
+import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { entityCellClass } from "../components/entity-card";
 import {
   backLink,
+  badgeRowClass,
   collapsedNoticeClass,
+  DateTime,
   detailTitleClass,
   fieldLabelClass,
   goldDivider,
+  Markdown,
   metaLine,
   pageClass,
+  proseClass,
   sectionLabel,
+  srOnlyClass,
   UIBadge,
   UIButton,
   UICard,
@@ -18,36 +24,66 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQuery } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+  describeLoad,
+} from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
-const bodyClass = css({
-  color: "zodiac.cream/70",
-  fontFamily: "display",
-  fontSize: "md",
-  lineHeight: "1.75",
-  whiteSpace: "pre-wrap",
-});
+const bodyClass = cx(proseClass, css({ whiteSpace: "pre-wrap" }));
 
 const questionClass = css({
   color: "zodiac.cream/85",
   fontFamily: "display",
   fontSize: "lg",
   lineHeight: "1.75",
+  maxW: "72ch",
 });
 
 const sourceGrid = css({
   display: "grid",
   gap: "3",
-  gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+  },
 });
 
-const sourceCell = css({
-  borderColor: "zodiac.gold/25",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  p: "3",
+const headerBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+
+const openQuestionsClass = css({
+  color: "zodiac.cream/82",
+  fontFamily: "display",
+  listStyleType: "disc",
+  maxW: "72ch",
+  pl: "5",
 });
+
+const openQuestionClass = css({ py: "1" });
+
+const sourceTypeRowClass = css({ display: "flex", gap: "2", mb: "1" });
+
+const sourceTitleClass = css({
+  color: "zodiac.cream",
+  fontSize: "sm",
+  fontWeight: "medium",
+});
+
+const sourceUrlClass = css({
+  color: "zodiac.violetText",
+  display: "block",
+  fontFamily: "mono",
+  fontSize: "xs",
+  mt: "1",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  _hover: { textDecoration: "underline" },
+});
+
+const choiceRowClass = css({ display: "flex", flexWrap: "wrap", gap: "2" });
 
 const STATUSES = [
   "draft",
@@ -66,22 +102,33 @@ type HypothesisSource = Doc<"sources">;
 export function HypothesisDetailPage() {
   const params = useParams({ from: "/hypotheses/$hypothesisId" });
 
-  const hypothesis = createQuery(api.hypotheses.get, () => ({
+  const hypothesisQuery = createQueryWithStatus(api.hypotheses.get, () => ({
     id: params().hypothesisId as Id<"hypotheses">,
   }));
-  const theses = createQuery(api.theses.list, () => ({
+  const hypothesis = hypothesisQuery.data;
+  const thesesQuery = createQueryWithStatus(api.theses.list, () => ({
     limit: 100,
   }));
+
+  onMount(() => {
+    document.title = "Hypothesis — Frequency Music";
+  });
 
   createEffect(() => {
     const h = hypothesis();
     if (h) document.title = `${h.title} — Frequency Music`;
   });
 
+  const load = describeLoad(hypothesisQuery, "hypothesis");
+
   const updateHypothesis = createMutation(api.hypotheses.update);
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
-  const [saving, setSaving] = createSignal(false);
+  // Which control the in-flight write came from, so only that button reports
+  // `aria-busy`. Buttons stay enabled (a disabled control drops focus); the
+  // handlers guard on `saving()` instead.
+  const [pending, setPending] = createSignal<string | null>(null);
+  const saving = () => pending() !== null;
   const [whyThisMattersDraft, setWhyThisMattersDraft] = createSignal("");
   const [thesisIdDraft, setThesisIdDraft] = createSignal("");
   // Set by the meaning-metadata inputs, cleared on a successful save. Keeps a
@@ -122,41 +169,36 @@ export function HypothesisDetailPage() {
   }
 
   async function handleStatusClick(status: Status) {
-    setSaving(true);
+    if (saving()) return;
+    setPending(`status:${status}`);
     setNotice(null);
     setNoticeError(null);
     try {
       await setStatus(status);
     } catch (error) {
-      setNoticeError(
-        error instanceof Error
-          ? error.message
-          : "Failed to update hypothesis status.",
-      );
+      setNoticeError(describeError(error));
     } finally {
-      setSaving(false);
+      setPending(null);
     }
   }
 
   async function handleResolutionClick(resolution: Resolution) {
-    setSaving(true);
+    if (saving()) return;
+    setPending(`resolution:${resolution}`);
     setNotice(null);
     setNoticeError(null);
     try {
       await setResolution(resolution);
     } catch (error) {
-      setNoticeError(
-        error instanceof Error
-          ? error.message
-          : "Failed to update hypothesis resolution.",
-      );
+      setNoticeError(describeError(error));
     } finally {
-      setSaving(false);
+      setPending(null);
     }
   }
 
   async function saveMeaningMetadata() {
-    setSaving(true);
+    if (saving()) return;
+    setPending("meaning");
     setNotice(null);
     setNoticeError(null);
     // The drafts this mutation carries. An edit made while it is in flight has
@@ -178,13 +220,9 @@ export function HypothesisDetailPage() {
       }
       setNotice("Meaning metadata updated.");
     } catch (error) {
-      setNoticeError(
-        error instanceof Error
-          ? error.message
-          : "Failed to update meaning metadata.",
-      );
+      setNoticeError(describeError(error));
     } finally {
-      setSaving(false);
+      setPending(null);
     }
   }
 
@@ -196,26 +234,17 @@ export function HypothesisDetailPage() {
         </Link>
       </div>
 
-      <UINotice
-        class={hypothesis() ? collapsedNoticeClass : undefined}
-        status={hypothesis() ? null : "Loading hypothesis..."}
-      />
+      <UICard class={hypothesis() ? collapsedNoticeClass : undefined}>
+        <UINotice status={load.status()} error={load.error()} />
+      </UICard>
 
       <Show when={hypothesis()}>
         {(h) => (
           <UICard>
             {/* Badges */}
-            <div
-              class={css({
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: "2",
-                mb: "2",
-              })}
-            >
+            <div class={headerBadgesClass}>
               <UIBadge tone="gold">{h().status}</UIBadge>
-              <UIBadge tone="violet">{h().sourceIds.length} citations</UIBadge>
+              <UIBadge tone="cream">{h().sourceIds.length} citations</UIBadge>
               <Show when={h().resolution}>
                 {(res) => <UIBadge tone="cream">{res()}</UIBadge>}
               </Show>
@@ -263,13 +292,13 @@ export function HypothesisDetailPage() {
             {/* Rationale */}
             <hr class={goldDivider} />
             <h2 class={sectionLabel}>Rationale</h2>
-            <div class={bodyClass}>{h().rationaleMd}</div>
+            <Markdown content={h().rationaleMd} />
 
             {/* Concepts */}
             <Show when={(h().concepts ?? []).length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Concepts</h2>
-              <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+              <div class={choiceRowClass}>
                 <For each={h().concepts}>
                   {(concept) => <UIBadge tone="violet">{concept}</UIBadge>}
                 </For>
@@ -280,16 +309,9 @@ export function HypothesisDetailPage() {
             <Show when={(h().openQuestions ?? []).length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Open Questions</h2>
-              <ul
-                class={css({
-                  color: "zodiac.cream/70",
-                  fontFamily: "display",
-                  listStyleType: "disc",
-                  pl: "5",
-                })}
-              >
+              <ul class={openQuestionsClass}>
                 <For each={h().openQuestions}>
-                  {(q) => <li class={css({ py: "1" })}>{q}</li>}
+                  {(q) => <li class={openQuestionClass}>{q}</li>}
                 </For>
               </ul>
             </Show>
@@ -301,23 +323,11 @@ export function HypothesisDetailPage() {
               <div class={sourceGrid}>
                 <For each={h().sources}>
                   {(source: HypothesisSource) => (
-                    <div class={sourceCell}>
-                      <div
-                        class={css({
-                          display: "flex",
-                          gap: "2",
-                          mb: "1",
-                        })}
-                      >
+                    <div class={entityCellClass}>
+                      <div class={sourceTypeRowClass}>
                         <UIBadge tone="cream">{source.type}</UIBadge>
                       </div>
-                      <div
-                        class={css({
-                          color: "zodiac.cream",
-                          fontSize: "sm",
-                          fontWeight: "medium",
-                        })}
-                      >
+                      <div class={sourceTitleClass}>
                         {source.title ?? "Untitled"}
                       </div>
                       <Show when={source.canonicalUrl}>
@@ -326,19 +336,13 @@ export function HypothesisDetailPage() {
                             href={url()}
                             target="_blank"
                             rel="noopener noreferrer"
-                            class={css({
-                              color: "zodiac.violetText",
-                              display: "block",
-                              fontFamily: "mono",
-                              fontSize: "xs",
-                              mt: "1",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              _hover: { color: "zodiac.violet" },
-                            })}
+                            class={sourceUrlClass}
                           >
                             {url()}
+                            <span class={srOnlyClass}>
+                              {" "}
+                              (opens in a new tab)
+                            </span>
                           </a>
                         )}
                       </Show>
@@ -365,7 +369,7 @@ export function HypothesisDetailPage() {
                   }}
                 >
                   <option value="">No thesis yet</option>
-                  <For each={theses() ?? []}>
+                  <For each={thesesQuery.data() ?? []}>
                     {(thesis: Doc<"theses">) => (
                       <option value={String(thesis._id)}>
                         {thesis.title} ({thesis.status})
@@ -373,6 +377,13 @@ export function HypothesisDetailPage() {
                     )}
                   </For>
                 </UISelect>
+                <UINotice
+                  error={
+                    thesesQuery.error()
+                      ? `Unable to load theses: ${thesesQuery.error()?.message}`
+                      : null
+                  }
+                />
               </div>
               <div>
                 <label class={fieldLabelClass} for="hyp-detail-why">
@@ -390,7 +401,7 @@ export function HypothesisDetailPage() {
               <div class={css({ display: "flex", justifyContent: "flex-end" })}>
                 <UIButton
                   variant="solid"
-                  disabled={saving()}
+                  aria-busy={pending() === "meaning"}
                   onClick={() => void saveMeaningMetadata()}
                 >
                   Save Meaning Metadata
@@ -399,14 +410,20 @@ export function HypothesisDetailPage() {
             </div>
 
             <hr class={goldDivider} />
-            <h2 class={sectionLabel}>Status</h2>
-            <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <h2 id="hyp-status-heading" class={sectionLabel}>
+              Status
+            </h2>
+            <div
+              role="group"
+              aria-labelledby="hyp-status-heading"
+              class={choiceRowClass}
+            >
               <For each={STATUSES}>
                 {(status) => (
                   <UIButton
-                    variant={h().status === status ? "solid" : "outline"}
+                    variant="outline"
                     aria-pressed={h().status === status}
-                    disabled={saving()}
+                    aria-busy={pending() === `status:${status}`}
                     onClick={() => void handleStatusClick(status)}
                   >
                     {status}
@@ -417,45 +434,36 @@ export function HypothesisDetailPage() {
 
             {/* Resolution (only when evaluated) */}
             <Show when={h().status === "evaluated"}>
-              <div
-                class={css({
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "2",
-                  mt: "3",
-                })}
-              >
-                <h2 class={sectionLabel}>Resolution</h2>
-                <For each={RESOLUTIONS}>
-                  {(res) => (
-                    <UIButton
-                      variant={h().resolution === res ? "solid" : "outline"}
-                      aria-pressed={h().resolution === res}
-                      disabled={saving()}
-                      onClick={() => void handleResolutionClick(res)}
-                    >
-                      {res}
-                    </UIButton>
-                  )}
-                </For>
+              <div class={css({ mt: "4" })}>
+                <h2 id="hyp-resolution-heading" class={sectionLabel}>
+                  Resolution
+                </h2>
+                <div
+                  role="group"
+                  aria-labelledby="hyp-resolution-heading"
+                  class={choiceRowClass}
+                >
+                  <For each={RESOLUTIONS}>
+                    {(res) => (
+                      <UIButton
+                        variant="outline"
+                        aria-pressed={h().resolution === res}
+                        aria-busy={pending() === `resolution:${res}`}
+                        onClick={() => void handleResolutionClick(res)}
+                      >
+                        {res}
+                      </UIButton>
+                    )}
+                  </For>
+                </div>
               </div>
             </Show>
 
             {/* Meta */}
             <hr class={goldDivider} />
             <div class={metaLine}>
-              Created:{" "}
-              {new Date(h().createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-              {" | "}Updated:{" "}
-              {new Date(h().updatedAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
+              Created: <DateTime value={h().createdAt} />
+              {" | "}Updated: <DateTime value={h().updatedAt} />
               {" | "}Visibility: {h().visibility}
             </div>
           </UICard>

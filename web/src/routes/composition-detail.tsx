@@ -5,19 +5,26 @@ import {
   createSignal,
   For,
   on,
+  onMount,
   Show,
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { entityCellClass } from "../components/entity-card";
+import { createKeyedRows } from "../lib/keyed-rows";
 import {
   backLink,
+  badgeRowClass,
   collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
   goldDivider,
+  helperClass,
   Markdown,
   metaLine,
   pageClass,
+  proseClass,
+  recordLinkClass,
   sectionLabel,
   UIBadge,
   UIButton,
@@ -27,23 +34,90 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+  describeLoad,
+} from "../integrations/convex";
+import { parseLines } from "../lib/markdown-utils";
 import { api } from "../../../convex/_generated/api";
 import { useClerkAuthSnapshot } from "../integrations/clerk";
 
-const lineItem = css({
-  borderColor: "zodiac.gold/18",
+/** Secondary line under a lineage or source title. */
+const subLineSpaced = cx(helperClass, css({ mt: "1" }));
+
+/** A vertical stack of entity cells. */
+const cellStackClass = css({ display: "grid", gap: "2" });
+
+const violetPanelClass = css({
+  bg: "zodiac.violet/7",
+  borderColor: "zodiac.violet/30",
   borderRadius: "l2",
   borderWidth: "1px",
+  display: "grid",
+  mt: "3",
   p: "3",
 });
 
-/** Wrapper for an always-mounted notice that currently carries no text. */
-function parseLines(value: string) {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
+const extractionMetaRowClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between", mt: "2" }),
+);
+
+const correctionPanelClass = cx(violetPanelClass, css({ gap: "2" }));
+
+const correctionNoteClass = css({ color: "zodiac.cream/68" });
+
+const claimsFieldClass = css({ minH: "72" });
+
+const parametersFieldClass = css({ minH: "56" });
+
+const correctionNoticeClass = css({ mt: "2" });
+
+const visibilityControlClass = css({ display: "grid", gap: "2", mt: "3" });
+
+const visibilitySelectClass = css({ maxW: "52" });
+
+const cellTitleClass = css({ color: "zodiac.cream" });
+
+const extractionSummaryClass = css({ color: "zodiac.cream", mb: "1" });
+
+const provenanceLabelClass = css({
+  color: "zodiac.gold",
+  fontSize: "sm",
+  mb: "1",
+});
+
+const sessionBadgesClass = cx(badgeRowClass, css({ mb: "1" }));
+
+const sessionFeedbackClass = css({
+  color: "zodiac.cream/70",
+  lineHeight: "1.7",
+});
+
+const sessionNotesClass = css({
+  color: "zodiac.cream/66",
+  fontSize: "sm",
+  lineHeight: "1.7",
+});
+
+const spacedBelowClass = css({ mb: "2" });
+
+const standoutListClass = css({ listStyleType: "disc", paddingLeft: "5" });
+
+type ListeningSession = Doc<"listeningSessions">;
+
+function hasBodyNotes(session: ListeningSession) {
+  return (
+    (session.feltQualities?.length ?? 0) > 0 ||
+    (session.bodyMapTags?.length ?? 0) > 0 ||
+    Boolean(session.bodyMapNotes)
+  );
+}
+
+function hasStandoutMoments(session: ListeningSession) {
+  return (session.standoutMoments?.length ?? 0) > 0;
 }
 
 function parseJsonArray<T>(value: string, label: string): T[] {
@@ -80,6 +154,14 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
   const [questionsText, setQuestionsText] = createSignal("");
   const [confidenceText, setConfidenceText] = createSignal("");
   let summaryField: HTMLTextAreaElement | undefined;
+  let correctTrigger: HTMLButtonElement | undefined;
+
+  // Closing the panel unmounts the focused Save/Cancel button; hand focus
+  // back to the always-mounted "Correct extraction" trigger that opened it.
+  function closeEditor() {
+    setEditMode(false);
+    correctTrigger?.focus();
+  }
 
   const originalClaimsJson = () =>
     JSON.stringify(props.extraction.claims, null, 2);
@@ -121,6 +203,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
   });
 
   function beginEdit() {
+    if (editMode()) return;
     setSummary(props.extraction.summary);
     setClaimsJson(originalClaimsJson());
     setParametersJson(originalParametersJson());
@@ -130,16 +213,23 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     setNotice(null);
     setNoticeError(null);
     setEditMode(true);
-    // The trigger disables itself, so move focus into the panel it opened.
+    // Move focus into the panel the trigger opened; deferred because the
+    // summary field mounts in this same tick. The trigger stays enabled
+    // (an opening guard above makes a second press a no-op) so focus never
+    // passes through <body> on the way.
     queueMicrotask(() => summaryField?.focus());
   }
 
   async function saveCorrection() {
     const fields = changedFields();
-    if (fields.length === 0) return;
+    if (fields.length === 0 || saving()) return;
     setSaving(true);
     setNotice(null);
     setNoticeError(null);
+    // The saved extraction refreshes before the mutation resolves, which
+    // empties `changedFields()` and would disable this button under focus;
+    // the trigger that opened the panel is stable, so park focus there now.
+    correctTrigger?.focus();
     try {
       const confidenceValue = confidenceText().trim();
       const confidence =
@@ -178,12 +268,10 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
           ? { confidence }
           : {}),
       });
-      setEditMode(false);
+      closeEditor();
       setNotice("Extraction correction saved with edit provenance.");
     } catch (error) {
-      setNoticeError(
-        error instanceof Error ? error.message : "Could not save extraction.",
-      );
+      setNoticeError(describeError(error));
     } finally {
       setSaving(false);
     }
@@ -191,44 +279,31 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
 
   return (
     <>
-      <div
-        class={css({
-          alignItems: "center",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "2",
-          justifyContent: "space-between",
-          mt: "2",
-        })}
-      >
+      <div class={extractionMetaRowClass}>
         <span class={metaLine}>
           confidence {props.extraction.confidence} ·{" "}
           {props.extraction.topics.length} topics
         </span>
-        <UIButton variant="outline" disabled={editMode()} onClick={beginEdit}>
+        <UIButton
+          ref={(element) => {
+            correctTrigger = element;
+          }}
+          variant="outline"
+          aria-expanded={editMode()}
+          onClick={beginEdit}
+        >
           Correct extraction
         </UIButton>
       </div>
 
       <Show when={editMode()}>
-        <div
-          class={css({
-            bg: "zodiac.violet/7",
-            borderColor: "zodiac.violet/30",
-            borderRadius: "l2",
-            borderWidth: "1px",
-            display: "grid",
-            gap: "2",
-            mt: "3",
-            p: "3",
-          })}
-        >
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+        <div class={correctionPanelClass}>
+          <div class={badgeRowClass}>
             <For each={changedFields()}>
               {(field) => <UIBadge tone="violet">changed: {field}</UIBadge>}
             </For>
           </div>
-          <p class={css({ color: "zodiac.cream/68" })}>
+          <p class={correctionNoteClass}>
             Saving preserves the generated and edited field sets as eval
             provenance. Claims and parameters use their stored JSON shape.
           </p>
@@ -256,7 +331,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             id={`extraction-claims-${props.extraction._id}`}
             value={claimsJson()}
             onInput={(event) => setClaimsJson(event.currentTarget.value)}
-            class={css({ minH: "72" })}
+            class={claimsFieldClass}
           />
           <label
             class={fieldLabelClass}
@@ -268,7 +343,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             id={`extraction-parameters-${props.extraction._id}`}
             value={parametersJson()}
             onInput={(event) => setParametersJson(event.currentTarget.value)}
-            class={css({ minH: "56" })}
+            class={parametersFieldClass}
           />
           <label
             class={fieldLabelClass}
@@ -305,29 +380,25 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             value={confidenceText()}
             onInput={(event) => setConfidenceText(event.currentTarget.value)}
           />
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+          <div class={badgeRowClass}>
             <UIButton
-              variant="solid"
-              disabled={saving() || changedFields().length === 0}
+              variant="outline"
+              aria-busy={saving()}
+              aria-disabled={changedFields().length === 0}
               onClick={saveCorrection}
             >
               {saving() ? "Saving…" : "Save correction"}
             </UIButton>
-            <UIButton
-              variant="ghost"
-              disabled={saving()}
-              onClick={() => setEditMode(false)}
-            >
+            <UIButton variant="ghost" disabled={saving()} onClick={closeEditor}>
               Cancel
             </UIButton>
           </div>
         </div>
       </Show>
 
+      {/* An empty notice collapses itself, so the margin only shows with text. */}
       <UINotice
-        class={
-          notice() || noticeError() ? css({ mt: "2" }) : collapsedNoticeClass
-        }
+        class={correctionNoticeClass}
         status={notice()}
         error={noticeError()}
       />
@@ -366,7 +437,7 @@ function ListeningVisibilityControl(props: {
   );
 
   async function saveVisibility() {
-    if (visibility() === props.session.visibility) return;
+    if (saving() || visibility() === props.session.visibility) return;
     setSaving(true);
     setNotice(null);
     setNoticeError(null);
@@ -377,30 +448,21 @@ function ListeningVisibilityControl(props: {
       });
       setNotice(`Visibility set to ${visibility()}.`);
     } catch (error) {
-      setNoticeError(
-        error instanceof Error ? error.message : "Could not update visibility.",
-      );
+      setNoticeError(describeError(error));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div class={css({ display: "grid", gap: "2", mt: "3" })}>
+    <div class={visibilityControlClass}>
       <label
         class={fieldLabelClass}
         for={`listening-visibility-${props.session._id}`}
       >
         Session visibility
       </label>
-      <div
-        class={css({
-          alignItems: "center",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "2",
-        })}
-      >
+      <div class={badgeRowClass}>
         <UISelect
           id={`listening-visibility-${props.session._id}`}
           value={visibility()}
@@ -408,17 +470,22 @@ function ListeningVisibilityControl(props: {
           onChange={(event) =>
             setVisibility(event.currentTarget.value as Visibility)
           }
-          class={css({ maxW: "52" })}
+          class={visibilitySelectClass}
         >
           <option value="private">Private</option>
           <option value="followers">Followers</option>
           <option value="public">Public</option>
         </UISelect>
+        {/* Outline, not solid: one of these renders per listening session.
+            While unchanged it is `aria-disabled` rather than `disabled`, so a
+            successful save does not blur the button the user just pressed. */}
         <UIButton
-          variant="solid"
-          disabled={
-            !canEdit() || saving() || visibility() === props.session.visibility
+          variant="outline"
+          disabled={!canEdit()}
+          aria-disabled={
+            visibility() === props.session.visibility ? true : undefined
           }
+          aria-busy={saving()}
           onClick={saveVisibility}
         >
           {saving() ? "Saving…" : "Confirm visibility"}
@@ -430,11 +497,7 @@ function ListeningVisibilityControl(props: {
           to the session creator.
         </p>
       </Show>
-      <UINotice
-        class={notice() || noticeError() ? undefined : collapsedNoticeClass}
-        status={notice()}
-        error={noticeError()}
-      />
+      <UINotice status={notice()} error={noticeError()} />
     </div>
   );
 }
@@ -454,6 +517,10 @@ export function CompositionDetailPage() {
   const [deleting, setDeleting] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string | null>(null);
 
+  onMount(() => {
+    document.title = "Composition — Frequency Music";
+  });
+
   // Lineage links navigate composition→composition without unmounting, so
   // per-composition dialog state must reset on the route param.
   createEffect(
@@ -469,41 +536,34 @@ export function CompositionDetailPage() {
   );
   let deleteConfirmButton: HTMLButtonElement | undefined;
   let deleteTrigger: HTMLButtonElement | undefined;
+  let backToCompositions: HTMLAnchorElement | undefined;
 
   function closeDeleteConfirm() {
     setDeleteConfirmOpen(false);
-    queueMicrotask(() => deleteTrigger?.focus());
+    deleteTrigger?.focus();
   }
 
   async function handleDeleteComposition() {
     const row = lineage()?.composition;
-    if (!row) return;
+    if (!row || deleting()) return;
     setDeleting(true);
     setDeleteError(null);
+    // The lineage query drops the record (and this dialog) before the
+    // mutation resolves; park focus on the back link, which outlives it, and
+    // return it to the confirm button only if deletion fails.
+    backToCompositions?.focus();
     try {
       await deleteComposition({ id: row._id });
       void navigate({ to: "/compositions" });
     } catch (error) {
-      setDeleteError(
-        error instanceof Error
-          ? error.message
-          : "Could not delete composition.",
-      );
+      setDeleteError(describeError(error));
+      if (deleteConfirmButton?.isConnected) deleteConfirmButton.focus();
     } finally {
       setDeleting(false);
     }
   }
 
-  const lineageErrorText = () =>
-    lineageQuery.error()
-      ? `Unable to load composition: ${lineageQuery.error()?.message}`
-      : null;
-  const lineageStatus = () => {
-    if (lineageQuery.error() || lineage()) return null;
-    return lineageQuery.isLoading()
-      ? "Loading composition..."
-      : "Composition not found.";
-  };
+  const load = describeLoad(lineageQuery, "composition");
 
   createEffect(() => {
     const row = lineage()?.composition;
@@ -511,6 +571,7 @@ export function CompositionDetailPage() {
   });
 
   createEffect(() => {
+    // Deferred: the confirm button mounts in the same tick that opens the panel.
     if (deleteConfirmOpen()) {
       queueMicrotask(() => deleteConfirmButton?.focus());
     }
@@ -519,487 +580,398 @@ export function CompositionDetailPage() {
   return (
     <section class={pageClass}>
       <div>
-        <Link to="/compositions" class={backLink}>
+        <Link
+          to="/compositions"
+          class={backLink}
+          ref={(element) => {
+            backToCompositions = element;
+          }}
+        >
           <span aria-hidden="true">&larr;</span> Compositions
         </Link>
       </div>
 
       <UICard class={lineage() ? collapsedNoticeClass : undefined}>
-        <UINotice status={lineageStatus()} error={lineageErrorText()} />
+        <UINotice status={load.status()} error={load.error()} />
       </UICard>
 
       <Show when={lineage()}>
-        {(row) => (
-          <UICard>
-            <div
-              class={css({
-                display: "flex",
-                gap: "2",
-                flexWrap: "wrap",
-                mb: "2",
-              })}
-            >
-              <UIBadge tone="gold">{row().composition.status}</UIBadge>
-              <UIBadge tone="violet">{row().composition.artifactType}</UIBadge>
-              <UIBadge tone="cream">{row().composition.version}</UIBadge>
-              <Show when={row().summary.localFailureStatus}>
-                {(status) => <UIBadge tone="violet">local: {status()}</UIBadge>}
+        {(row) => {
+          // Keyed by id: a correction or visibility save refreshes the lineage
+          // with fresh objects, and the control that must take focus back
+          // (or show the confirmation) has to survive that refresh.
+          const extractionRows = createKeyedRows(
+            () => row().extractions,
+            (extraction) => extraction._id,
+          );
+          const sessionRows = createKeyedRows(
+            () => row().listeningSessions,
+            (session) => session._id,
+          );
+          return (
+            <UICard>
+              <div class={cx(badgeRowClass, css({ mb: "2" }))}>
+                <UIBadge tone="gold">{row().composition.status}</UIBadge>
+                <UIBadge tone="violet">
+                  {row().composition.artifactType}
+                </UIBadge>
+                <UIBadge tone="cream">{row().composition.version}</UIBadge>
+                <Show when={row().summary.localFailureStatus}>
+                  {(status) => (
+                    <UIBadge tone="cream">local: {status()}</UIBadge>
+                  )}
+                </Show>
+                <Show when={row().summary.branchFailureStatus}>
+                  {(status) => (
+                    <UIBadge tone="cream">branch: {status()}</UIBadge>
+                  )}
+                </Show>
+              </div>
+
+              <h1 class={detailTitleClass}>{row().composition.title}</h1>
+
+              <div class={css({ display: "flex", gap: "2", mt: "3" })}>
+                <UIButton
+                  ref={(element) => {
+                    deleteTrigger = element;
+                  }}
+                  variant="outline"
+                  disabled={deleting()}
+                  onClick={() => {
+                    setDeleteError(null);
+                    setDeleteConfirmOpen(true);
+                  }}
+                >
+                  Delete composition
+                </UIButton>
+              </div>
+
+              <Show when={deleteConfirmOpen()}>
+                <div
+                  role="alertdialog"
+                  aria-modal="false"
+                  aria-label="Confirm composition deletion"
+                  onKeyDown={(event) => {
+                    if (event.key !== "Escape" || deleting()) return;
+                    event.preventDefault();
+                    closeDeleteConfirm();
+                  }}
+                  class={cx(violetPanelClass, css({ gap: "3" }))}
+                >
+                  <p class={css({ color: "zodiac.cream/74" })}>
+                    Delete “{row().composition.title}”? This uses the existing
+                    composition deletion path and cannot be undone from this
+                    screen.
+                  </p>
+                  <div class={badgeRowClass}>
+                    <UIButton
+                      ref={(element) => {
+                        deleteConfirmButton = element;
+                      }}
+                      variant="solid"
+                      aria-busy={deleting()}
+                      onClick={handleDeleteComposition}
+                    >
+                      {deleting() ? "Deleting…" : "Confirm delete"}
+                    </UIButton>
+                    <UIButton
+                      variant="ghost"
+                      disabled={deleting()}
+                      onClick={closeDeleteConfirm}
+                    >
+                      Cancel
+                    </UIButton>
+                  </div>
+                  <UINotice error={deleteError()} />
+                </div>
               </Show>
-              <Show when={row().summary.branchFailureStatus}>
-                {(status) => (
-                  <UIBadge tone="violet">branch: {status()}</UIBadge>
-                )}
-              </Show>
-            </div>
 
-            <h1 class={detailTitleClass}>{row().composition.title}</h1>
-
-            <div class={css({ display: "flex", gap: "2", mt: "3" })}>
-              <UIButton
-                ref={(element) => {
-                  deleteTrigger = element;
-                }}
-                variant="outline"
-                disabled={deleting()}
-                onClick={() => {
-                  setDeleteError(null);
-                  setDeleteConfirmOpen(true);
-                }}
-              >
-                Delete composition
-              </UIButton>
-            </div>
-
-            <Show when={deleteConfirmOpen()}>
-              <div
-                role="alertdialog"
-                aria-modal="false"
-                aria-label="Confirm composition deletion"
-                onKeyDown={(event) => {
-                  if (event.key !== "Escape" || deleting()) return;
-                  event.preventDefault();
-                  closeDeleteConfirm();
-                }}
+              <p
                 class={css({
-                  bg: "zodiac.violet/7",
-                  borderColor: "zodiac.violet/30",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  display: "grid",
-                  gap: "3",
-                  mt: "3",
-                  p: "3",
+                  color: "zodiac.cream/66",
+                  fontSize: "sm",
+                  lineHeight: "1.7",
                 })}
               >
-                <p class={css({ color: "zodiac.cream/74" })}>
-                  Delete “{row().composition.title}”? This uses the existing
-                  composition deletion path and cannot be undone from this
-                  screen.
-                </p>
-                <div
-                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                >
-                  <UIButton
-                    ref={(element) => {
-                      deleteConfirmButton = element;
-                    }}
-                    variant="solid"
-                    disabled={deleting()}
-                    onClick={handleDeleteComposition}
-                  >
-                    {deleting() ? "Deleting…" : "Confirm delete"}
-                  </UIButton>
-                  <UIButton
-                    variant="ghost"
-                    disabled={deleting()}
-                    onClick={closeDeleteConfirm}
-                  >
-                    Cancel
-                  </UIButton>
-                </div>
-                <UINotice
-                  class={deleteError() ? undefined : collapsedNoticeClass}
-                  error={deleteError()}
-                />
-              </div>
-            </Show>
+                Depth {row().summary.depth} in revision branch
+                <Show when={row().summary.revisionVariable}>
+                  {(variable) => <> · changed variable: {variable()}</>}
+                </Show>
+                <Show when={row().summary.latestExpandVerdict}>
+                  {(verdict) => <> · latest expand verdict: {verdict()}</>}
+                </Show>
+              </p>
 
-            <p
-              class={css({
-                color: "zodiac.cream/62",
-                fontSize: "sm",
-                lineHeight: "1.7",
-              })}
-            >
-              Depth {row().summary.depth} in revision branch
-              <Show when={row().summary.revisionVariable}>
-                {(variable) => <> · changed variable: {variable()}</>}
-              </Show>
-              <Show when={row().summary.latestExpandVerdict}>
-                {(verdict) => <> · latest expand verdict: {verdict()}</>}
-              </Show>
-            </p>
-
-            <Show
-              when={
-                row().summary.localFailureStatus ||
-                row().summary.branchFailureStatus
-              }
-            >
-              <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Archive Signal</h2>
-              <Show when={row().summary.localFailureStatus}>
-                {(status) => (
-                  <p
-                    class={css({
-                      color: "zodiac.cream/76",
-                      lineHeight: "1.7",
-                      mb: "2",
-                    })}
-                  >
-                    This composition is currently classified locally as{" "}
-                    <code>{status()}</code> based on its own listening history.
-                  </p>
-                )}
-              </Show>
-              <Show when={row().summary.branchFailureStatus}>
-                {(status) => (
-                  <p
-                    class={css({
-                      color: "zodiac.cream/76",
-                      lineHeight: "1.7",
-                    })}
-                  >
-                    This revision branch is currently classified as{" "}
-                    <code>{status()}</code> in the derived failure archive.
-                  </p>
-                )}
-              </Show>
-            </Show>
-
-            <hr class={goldDivider} />
-            <h2 class={sectionLabel}>Lineage</h2>
-            <div class={css({ display: "grid", gap: "2" })}>
-              <For each={row().ancestry}>
-                {(ancestor) => (
-                  <div class={lineItem}>
-                    <Link
-                      to="/compositions/$compositionId"
-                      params={{ compositionId: String(ancestor._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
-                    >
-                      {ancestor.title}
-                    </Link>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/55",
-                        fontSize: "sm",
-                        mt: "1",
-                      })}
-                    >
-                      {ancestor.version}
-                      <Show when={ancestor.revisionVariable}>
-                        {(variable) => <> · variable: {variable()}</>}
-                      </Show>
+              <Show
+                when={
+                  row().summary.localFailureStatus ||
+                  row().summary.branchFailureStatus
+                }
+              >
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Archive Signal</h2>
+                <Show when={row().summary.localFailureStatus}>
+                  {(status) => (
+                    <p class={cx(proseClass, css({ mb: "2" }))}>
+                      This composition is currently classified locally as{" "}
+                      <code>{status()}</code> based on its own listening
+                      history.
                     </p>
-                  </div>
-                )}
-              </For>
-              <div class={lineItem}>
-                <div class={css({ color: "zodiac.gold" })}>
-                  {row().composition.title}
-                </div>
-                <p
-                  class={css({
-                    color: "zodiac.cream/55",
-                    fontSize: "sm",
-                    mt: "1",
-                  })}
-                >
-                  current node
-                </p>
-              </div>
-            </div>
+                  )}
+                </Show>
+                <Show when={row().summary.branchFailureStatus}>
+                  {(status) => (
+                    <p class={proseClass}>
+                      This revision branch is currently classified as{" "}
+                      <code>{status()}</code> in the derived failure archive.
+                    </p>
+                  )}
+                </Show>
+              </Show>
 
-            <Show when={row().children.length > 0}>
               <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Direct Revisions</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
-                <For each={row().children}>
-                  {(child) => (
-                    <div class={lineItem}>
+              <h2 class={sectionLabel}>Lineage</h2>
+              <div class={cellStackClass}>
+                <For each={row().ancestry}>
+                  {(ancestor) => (
+                    <div class={entityCellClass}>
                       <Link
                         to="/compositions/$compositionId"
-                        params={{ compositionId: String(child._id) }}
-                        class={css({
-                          color: "zodiac.cream",
-                          textDecoration: "none",
-                        })}
+                        params={{ compositionId: String(ancestor._id) }}
+                        class={recordLinkClass}
                       >
-                        {child.title}
+                        {ancestor.title}
                       </Link>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontSize: "sm",
-                          mt: "1",
-                        })}
-                      >
-                        {child.version}
-                        <Show when={child.revisionVariable}>
+                      <p class={subLineSpaced}>
+                        {ancestor.version}
+                        <Show when={ancestor.revisionVariable}>
                           {(variable) => <> · variable: {variable()}</>}
                         </Show>
                       </p>
                     </div>
                   )}
                 </For>
+                <div class={entityCellClass}>
+                  <div class={css({ color: "zodiac.gold" })}>
+                    {row().composition.title}
+                  </div>
+                  <p class={subLineSpaced}>current node</p>
+                </div>
               </div>
-            </Show>
 
-            <hr class={goldDivider} />
-            <h2 class={sectionLabel}>Provenance</h2>
-            <div class={css({ display: "grid", gap: "3" })}>
-              <Show when={row().recipe}>
-                {(recipe) => (
-                  <div class={lineItem}>
-                    <h3
-                      class={css({
-                        color: "zodiac.gold",
-                        fontSize: "sm",
-                        mb: "1",
-                      })}
-                    >
-                      Recipe
-                    </h3>
-                    <Link
-                      to="/recipes/$recipeId"
-                      params={{ recipeId: String(recipe()._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
-                    >
-                      {recipe().title}
-                    </Link>
-                  </div>
-                )}
+              <Show when={row().children.length > 0}>
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Direct Revisions</h2>
+                <div class={cellStackClass}>
+                  <For each={row().children}>
+                    {(child) => (
+                      <div class={entityCellClass}>
+                        <Link
+                          to="/compositions/$compositionId"
+                          params={{ compositionId: String(child._id) }}
+                          class={recordLinkClass}
+                        >
+                          {child.title}
+                        </Link>
+                        <p class={subLineSpaced}>
+                          {child.version}
+                          <Show when={child.revisionVariable}>
+                            {(variable) => <> · variable: {variable()}</>}
+                          </Show>
+                        </p>
+                      </div>
+                    )}
+                  </For>
+                </div>
               </Show>
-              <Show when={row().hypothesis}>
-                {(hypothesis) => (
-                  <div class={lineItem}>
-                    <h3
-                      class={css({
-                        color: "zodiac.gold",
-                        fontSize: "sm",
-                        mb: "1",
-                      })}
-                    >
-                      Hypothesis
-                    </h3>
-                    <Link
-                      to="/hypotheses/$hypothesisId"
-                      params={{ hypothesisId: String(hypothesis()._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
-                    >
-                      {hypothesis().title}
-                    </Link>
-                  </div>
-                )}
-              </Show>
-              <Show when={row().thesis}>
-                {(thesis) => (
-                  <div class={lineItem}>
-                    <h3
-                      class={css({
-                        color: "zodiac.gold",
-                        fontSize: "sm",
-                        mb: "1",
-                      })}
-                    >
-                      Thesis
-                    </h3>
-                    <Link
-                      to="/theses/$thesisId"
-                      params={{ thesisId: String(thesis()._id) }}
-                      class={css({
-                        color: "zodiac.cream",
-                        textDecoration: "none",
-                      })}
-                    >
-                      {thesis().title}
-                    </Link>
-                  </div>
-                )}
-              </Show>
-            </div>
 
-            <Show when={row().sources.length > 0}>
               <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Linked Sources</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
-                <For each={row().sources}>
-                  {(source) => (
-                    <div class={lineItem}>
-                      <div class={css({ color: "zodiac.cream" })}>
-                        {source.title ?? "Untitled source"}
-                      </div>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontSize: "sm",
-                          mt: "1",
-                        })}
+              <h2 class={sectionLabel}>Provenance</h2>
+              <div class={css({ display: "grid", gap: "3" })}>
+                <Show when={row().recipe}>
+                  {(recipe) => (
+                    <div class={entityCellClass}>
+                      <h3 class={provenanceLabelClass}>Recipe</h3>
+                      <Link
+                        to="/recipes/$recipeId"
+                        params={{ recipeId: String(recipe()._id) }}
+                        class={recordLinkClass}
                       >
-                        {source.type}
-                      </p>
+                        {recipe().title}
+                      </Link>
                     </div>
                   )}
-                </For>
+                </Show>
+                <Show when={row().hypothesis}>
+                  {(hypothesis) => (
+                    <div class={entityCellClass}>
+                      <h3 class={provenanceLabelClass}>Hypothesis</h3>
+                      <Link
+                        to="/hypotheses/$hypothesisId"
+                        params={{ hypothesisId: String(hypothesis()._id) }}
+                        class={recordLinkClass}
+                      >
+                        {hypothesis().title}
+                      </Link>
+                    </div>
+                  )}
+                </Show>
+                <Show when={row().thesis}>
+                  {(thesis) => (
+                    <div class={entityCellClass}>
+                      <h3 class={provenanceLabelClass}>Thesis</h3>
+                      <Link
+                        to="/theses/$thesisId"
+                        params={{ thesisId: String(thesis()._id) }}
+                        class={recordLinkClass}
+                      >
+                        {thesis().title}
+                      </Link>
+                    </div>
+                  )}
+                </Show>
               </div>
-            </Show>
 
-            <Show when={row().extractions.length > 0}>
+              <Show when={row().sources.length > 0}>
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Linked Sources</h2>
+                <div class={cellStackClass}>
+                  <For each={row().sources}>
+                    {(source) => (
+                      <div class={entityCellClass}>
+                        <div class={cellTitleClass}>
+                          {source.title ?? "Untitled source"}
+                        </div>
+                        <p class={subLineSpaced}>{source.type}</p>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
+
+              <Show when={row().extractions.length > 0}>
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Extractions</h2>
+                <div class={cellStackClass}>
+                  <For each={extractionRows.ids()}>
+                    {(id) => (
+                      <Show when={extractionRows.byId().get(id)}>
+                        {(extraction) => (
+                          <div class={entityCellClass}>
+                            <div class={extractionSummaryClass}>
+                              {extraction().summary}
+                            </div>
+                            <p class={helperClass}>
+                              {extraction().claims.length} claims ·{" "}
+                              {extraction().compositionParameters.length}{" "}
+                              parameters
+                            </p>
+                            <ExtractionCorrection extraction={extraction()} />
+                          </div>
+                        )}
+                      </Show>
+                    )}
+                  </For>
+                </div>
+              </Show>
+
               <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Extractions</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
-                <For each={row().extractions}>
-                  {(extraction) => (
-                    <div class={lineItem}>
-                      <div class={css({ color: "zodiac.cream", mb: "1" })}>
-                        {extraction.summary}
-                      </div>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/55",
-                          fontSize: "sm",
-                        })}
-                      >
-                        {extraction.claims.length} claims ·{" "}
-                        {extraction.compositionParameters.length} parameters
-                      </p>
-                      <ExtractionCorrection extraction={extraction} />
-                    </div>
-                  )}
-                </For>
-              </div>
-            </Show>
-
-            <hr class={goldDivider} />
-            <h2 class={sectionLabel}>Listening History</h2>
-            <Show
-              when={row().listeningSessions.length > 0}
-              fallback={
-                <p class={css({ color: "zodiac.cream/58" })}>
-                  No listening sessions logged for this composition yet.
-                </p>
-              }
-            >
-              <div class={css({ display: "grid", gap: "2" })}>
-                <For each={row().listeningSessions}>
-                  {(session) => (
-                    <div class={lineItem}>
-                      <div
-                        class={css({
-                          display: "flex",
-                          gap: "2",
-                          flexWrap: "wrap",
-                          mb: "1",
-                        })}
-                      >
-                        <Show when={session.expandVerdict}>
-                          {(verdict) => (
-                            <UIBadge tone="gold">{verdict()}</UIBadge>
-                          )}
-                        </Show>
-                        <Show
-                          when={session.ratings.expandability !== undefined}
-                        >
-                          {(score) => (
-                            <UIBadge tone="cream">
-                              expandability {score()}
-                            </UIBadge>
-                          )}
-                        </Show>
-                      </div>
-                      <div
-                        class={css({
-                          color: "zodiac.cream/70",
-                          lineHeight: "1.7",
-                          marginBottom:
-                            (session.feltQualities?.length ?? 0) > 0 ||
-                            (session.bodyMapTags?.length ?? 0) > 0 ||
-                            Boolean(session.bodyMapNotes) ||
-                            (session.standoutMoments?.length ?? 0) > 0
-                              ? "2"
-                              : "0",
-                        })}
-                      >
-                        <Markdown content={session.feedbackMd} />
-                      </div>
-                      <Show
-                        when={
-                          (session.feltQualities?.length ?? 0) > 0 ||
-                          (session.bodyMapTags?.length ?? 0) > 0 ||
-                          Boolean(session.bodyMapNotes)
-                        }
-                      >
-                        <div
-                          class={css({
-                            color: "zodiac.cream/62",
-                            fontSize: "sm",
-                            lineHeight: "1.7",
-                            marginBottom:
-                              (session.standoutMoments?.length ?? 0) > 0
-                                ? "2"
-                                : "0",
-                          })}
-                        >
-                          <Show when={(session.feltQualities?.length ?? 0) > 0}>
-                            <p>Felt: {session.feltQualities?.join(", ")}</p>
-                          </Show>
-                          <Show when={(session.bodyMapTags?.length ?? 0) > 0}>
-                            <p>Body map: {session.bodyMapTags?.join(", ")}</p>
-                          </Show>
-                          <Show when={session.bodyMapNotes}>
-                            {(value) => <p>Body notes: {value()}</p>}
-                          </Show>
-                        </div>
+              <h2 class={sectionLabel}>Listening History</h2>
+              <Show
+                when={row().listeningSessions.length > 0}
+                fallback={
+                  <p class={helperClass}>
+                    No listening sessions logged for this composition yet.
+                  </p>
+                }
+              >
+                <div class={cellStackClass}>
+                  <For each={sessionRows.ids()}>
+                    {(id) => (
+                      <Show when={sessionRows.byId().get(id)}>
+                        {(session) => (
+                          <div class={entityCellClass}>
+                            <div class={sessionBadgesClass}>
+                              <Show when={session().expandVerdict}>
+                                {(verdict) => (
+                                  <UIBadge tone="gold">{verdict()}</UIBadge>
+                                )}
+                              </Show>
+                              <Show
+                                when={
+                                  session().ratings.expandability !== undefined
+                                }
+                              >
+                                {(score) => (
+                                  <UIBadge tone="cream">
+                                    expandability {score()}
+                                  </UIBadge>
+                                )}
+                              </Show>
+                            </div>
+                            <div
+                              class={cx(
+                                sessionFeedbackClass,
+                                (hasBodyNotes(session()) ||
+                                  hasStandoutMoments(session())) &&
+                                  spacedBelowClass,
+                              )}
+                            >
+                              <Markdown content={session().feedbackMd} />
+                            </div>
+                            <Show when={hasBodyNotes(session())}>
+                              <div
+                                class={cx(
+                                  sessionNotesClass,
+                                  hasStandoutMoments(session()) &&
+                                    spacedBelowClass,
+                                )}
+                              >
+                                <Show
+                                  when={
+                                    (session().feltQualities?.length ?? 0) > 0
+                                  }
+                                >
+                                  <p>
+                                    Felt: {session().feltQualities?.join(", ")}
+                                  </p>
+                                </Show>
+                                <Show
+                                  when={
+                                    (session().bodyMapTags?.length ?? 0) > 0
+                                  }
+                                >
+                                  <p>
+                                    Body map:{" "}
+                                    {session().bodyMapTags?.join(", ")}
+                                  </p>
+                                </Show>
+                                <Show when={session().bodyMapNotes}>
+                                  {(value) => <p>Body notes: {value()}</p>}
+                                </Show>
+                              </div>
+                            </Show>
+                            <Show when={hasStandoutMoments(session())}>
+                              <div class={sessionNotesClass}>
+                                <p>Standout moments:</p>
+                                <ul class={standoutListClass}>
+                                  <For each={session().standoutMoments}>
+                                    {(moment) => <li>{moment}</li>}
+                                  </For>
+                                </ul>
+                              </div>
+                            </Show>
+                            <ListeningVisibilityControl session={session()} />
+                          </div>
+                        )}
                       </Show>
-                      <Show when={(session.standoutMoments?.length ?? 0) > 0}>
-                        <div
-                          class={css({
-                            color: "zodiac.cream/58",
-                            fontSize: "sm",
-                            lineHeight: "1.7",
-                          })}
-                        >
-                          <p>Standout moments:</p>
-                          <ul
-                            class={css({
-                              paddingLeft: "5",
-                              listStyleType: "disc",
-                            })}
-                          >
-                            <For each={session.standoutMoments}>
-                              {(moment) => <li>{moment}</li>}
-                            </For>
-                          </ul>
-                        </div>
-                      </Show>
-                      <ListeningVisibilityControl session={session} />
-                    </div>
-                  )}
-                </For>
-              </div>
-            </Show>
-          </UICard>
-        )}
+                    )}
+                  </For>
+                </div>
+              </Show>
+            </UICard>
+          );
+        }}
       </Show>
     </section>
   );

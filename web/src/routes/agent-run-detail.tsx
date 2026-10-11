@@ -1,31 +1,46 @@
 import { Link, useParams } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   DecisionState,
   DraftPayloadPreview,
-  draftLabel as persistedDraftLabel,
+  draftLabel,
   type PersistedReviewDraft,
 } from "../components/agent-draft";
 import {
+  AgentRunEventList,
+  AgentRunTimesList,
+} from "../components/agent-run-event";
+import {
   backLink,
-  collapsedNoticeClass,
+  badgeRowClass,
+  DateTime,
   detailTitleClass,
   fieldLabelClass,
+  focusRingClass,
+  helperClass,
+  inlineActionLink,
+  metaLine,
   pageClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
+  UIList,
   UINotice,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQueryWithStatus } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+  describeLoad,
+} from "../integrations/convex";
+import { runStatusTone } from "../lib/agent-run-format";
+import { createKeyedRows } from "../lib/keyed-rows";
 import { api } from "../../../convex/_generated/api";
 
-type AgentRunStatus = Doc<"agentRuns">["status"];
-type AgentRunEventKind = Doc<"agentRunEvents">["kind"];
 type PublicReviewDraft = {
   kind: "dry_run_summary" | "hypothesis_draft" | "recipe_draft";
   title: string;
@@ -38,89 +53,57 @@ type PublicAgentRun = Omit<Doc<"agentRuns">, "input"> & {
   reviewDraft?: PublicReviewDraft;
 };
 
-const helperClass = css({
-  color: "zodiac.cream/62",
-  lineHeight: "1.6",
-});
+const sectionStackClass = css({ display: "grid", gap: "4" });
 
-const monoClass = css({
-  color: "zodiac.cream/62",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.08em",
-  overflowWrap: "anywhere",
-  textTransform: "uppercase",
-});
-
-/** Wrapper for an always-mounted notice that currently carries no text. */
-const eventClass = css({
+const draftItemClass = css({
   borderColor: "zodiac.cream/12",
-  borderLeftWidth: "1px",
+  borderRadius: "l2",
+  borderWidth: "1px",
   display: "grid",
-  gap: "2",
-  pl: "4",
-  position: "relative",
-  _before: {
-    bg: "zodiac.gold",
-    borderRadius: "full",
-    content: '""',
-    height: "2",
-    left: "-1",
-    position: "absolute",
-    top: "2",
-    width: "2",
-  },
+  gap: "3",
+  minW: "0",
+  p: "4",
 });
 
-function statusTone(status: AgentRunStatus): "gold" | "violet" | "cream" {
-  if (status === "failed") return "violet";
-  if (status === "completed") return "gold";
-  return "cream";
-}
+const stackClass = css({ display: "grid", gap: "3" });
 
-function eventTone(kind: AgentRunEventKind): "gold" | "violet" | "cream" {
-  if (kind === "error") return "violet";
-  if (kind === "decision" || kind === "review_request") return "gold";
-  return "cream";
-}
+const draftActionsClass = css({ display: "grid", gap: "2" });
 
-const timeFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "medium",
+const draftHeaderClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between" }),
+);
+
+/** Badge row under a field label. */
+const labelledBadgeRowClass = cx(badgeRowClass, css({ mt: "2" }));
+
+const reviewDraftTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "2xl",
+  lineHeight: "1.2",
 });
 
-function formatTime(value?: number) {
-  if (!value) return "—";
-  return timeFormatter.format(new Date(value));
-}
+const persistedDraftTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "xl",
+  lineHeight: "1.2",
+});
 
-function formatDuration(
-  run: Pick<
-    PublicAgentRun,
-    "createdAt" | "startedAt" | "finishedAt" | "updatedAt"
-  >,
-) {
-  const start = run.startedAt ?? run.createdAt;
-  const end = run.finishedAt ?? run.updatedAt;
-  const durationMs = Math.max(0, end - start);
-  if (durationMs < 1000) return `${durationMs} ms`;
-  return `${(durationMs / 1000).toFixed(1)} s`;
+/** Id of a persisted draft's title, the focus target once it is decided. */
+function draftTitleId(draft: PersistedReviewDraft) {
+  return `persisted-draft-title-${draft._id}`;
 }
-
-function formatPayload(payload: unknown) {
-  if (payload === undefined || payload === null) return "";
-  try {
-    return JSON.stringify(payload, null, 2);
-  } catch {
-    // oxlint-disable-next-line typescript/no-base-to-string -- Preserve the existing fallback for non-JSON-serializable payloads.
-    return String(payload);
-  }
-}
-
-const draftLabel = persistedDraftLabel;
 
 /** Per-draft approve/reject controls for a persisted human-review draft. */
-function PersistedDraftActions(props: { draft: PersistedReviewDraft }) {
+function PersistedDraftActions(props: {
+  draft: PersistedReviewDraft;
+  /** A heading that outlives the controls, focused once a decision lands. */
+  focusTargetId: string;
+  /** Announces a decision from a region that outlives this component. */
+  onDecided: (message: string) => void;
+}) {
   const approve = createMutation(api.agentDrafts.approve);
   const reject = createMutation(api.agentDrafts.reject);
 
@@ -131,79 +114,109 @@ function PersistedDraftActions(props: { draft: PersistedReviewDraft }) {
   const canReject = createMemo(() => note().trim().length > 0);
   const canPromote = createMemo(() => Boolean(props.draft.payload));
 
-  async function handleApprove() {
+  // A decision swaps these controls for <DecisionState>, unmounting the
+  // focused button. Convex pushes the status update before the mutation
+  // promise resolves, so focus moves to the draft's title BEFORE the call;
+  // a failure hands it back to the button, which is still mounted.
+  function focusDraftTitle() {
+    document.getElementById(props.focusTargetId)?.focus();
+  }
+
+  async function decide(
+    trigger: HTMLButtonElement,
+    run: () => Promise<unknown>,
+    verb: "Approved" | "Rejected",
+  ) {
     setError(null);
     setBusy(true);
+    focusDraftTitle();
     try {
-      await approve({
-        draftId: props.draft._id,
-        ...(note().trim() ? { decisionNote: note().trim() } : {}),
-      });
+      await run();
+      props.onDecided(`${verb} draft: ${props.draft.title}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to approve draft.");
+      setError(
+        `Failed to ${verb === "Approved" ? "approve" : "reject"} draft: ${describeError(err)}`,
+      );
+      if (trigger.isConnected) trigger.focus();
     } finally {
       setBusy(false);
     }
   }
 
-  async function handleReject() {
-    if (!canReject()) return;
-    setError(null);
-    setBusy(true);
-    try {
-      await reject({ draftId: props.draft._id, decisionNote: note().trim() });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reject draft.");
-    } finally {
-      setBusy(false);
-    }
+  function handleApprove(
+    event: MouseEvent & { currentTarget: HTMLButtonElement },
+  ) {
+    if (busy() || !canPromote()) return;
+    void decide(
+      event.currentTarget,
+      () =>
+        approve({
+          draftId: props.draft._id,
+          ...(note().trim() ? { decisionNote: note().trim() } : {}),
+        }),
+      "Approved",
+    );
+  }
+
+  function handleReject(
+    event: MouseEvent & { currentTarget: HTMLButtonElement },
+  ) {
+    if (busy() || !canReject()) return;
+    void decide(
+      event.currentTarget,
+      () => reject({ draftId: props.draft._id, decisionNote: note().trim() }),
+      "Rejected",
+    );
   }
 
   return (
-    <Show
-      when={props.draft.status === "pending_review"}
-      fallback={<DecisionState draft={props.draft} />}
-    >
-      <div class={css({ display: "grid", gap: "2" })}>
-        <label class={fieldLabelClass} for={`note-${props.draft._id}`}>
-          Decision Note (required to reject)
-        </label>
-        <UITextarea
-          id={`note-${props.draft._id}`}
-          value={note()}
-          onInput={(event) => setNote(event.currentTarget.value)}
-          placeholder="Why approve or reject? A note is required to reject."
-        />
-        <Show when={!canPromote()}>
-          <p class={helperClass}>
-            This draft has no structured payload, so it cannot be promoted. It
-            can only be rejected with a note.
-          </p>
-        </Show>
-        <UINotice
-          class={error() ? undefined : collapsedNoticeClass}
-          error={error()}
-        />
-        <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
-          <UIButton
-            variant="solid"
-            disabled={busy() || !canPromote()}
-            aria-label={`Approve draft: ${props.draft.title}`}
-            onClick={handleApprove}
-          >
-            {busy() ? "Working…" : "Approve"}
-          </UIButton>
-          <UIButton
-            variant="outline"
-            disabled={busy() || !canReject()}
-            aria-label={`Reject draft: ${props.draft.title}`}
-            onClick={handleReject}
-          >
-            Reject
-          </UIButton>
+    <>
+      <UINotice error={error()} />
+      <Show
+        when={props.draft.status === "pending_review"}
+        fallback={<DecisionState draft={props.draft} />}
+      >
+        <div class={draftActionsClass}>
+          <label class={fieldLabelClass} for={`note-${props.draft._id}`}>
+            Decision Note (required to reject)
+          </label>
+          <UITextarea
+            id={`note-${props.draft._id}`}
+            value={note()}
+            onInput={(event) => setNote(event.currentTarget.value)}
+            placeholder="Why approve or reject? A note is required to reject."
+          />
+          <Show when={!canPromote()}>
+            <p class={helperClass}>
+              This draft has no structured payload, so it cannot be promoted. It
+              can only be rejected with a note.
+            </p>
+          </Show>
+          <div class={badgeRowClass}>
+            {/* aria-busy plus the in-flight guard, not `disabled`: disabling
+                the activated button would blur it before the swap. */}
+            <UIButton
+              variant="outline"
+              disabled={!canPromote()}
+              aria-busy={busy()}
+              aria-label={`Approve draft: ${props.draft.title}`}
+              onClick={handleApprove}
+            >
+              {busy() ? "Working…" : "Approve"}
+            </UIButton>
+            <UIButton
+              variant="outline"
+              disabled={!canReject()}
+              aria-busy={busy()}
+              aria-label={`Reject draft: ${props.draft.title}`}
+              onClick={handleReject}
+            >
+              Reject
+            </UIButton>
+          </div>
         </div>
-      </div>
-    </Show>
+      </Show>
+    </>
   );
 }
 
@@ -226,16 +239,22 @@ export function AgentRunDetailPage() {
     }),
   );
 
+  // Rows render by draft id: listByRun sorts by updatedAt, so a newer draft
+  // can move above the one being reviewed, and a positional row would carry
+  // its half-written note onto a different draft.
+  const persistedDraftRows = createKeyedRows(
+    () => persistedDrafts.data() as PersistedReviewDraft[] | undefined,
+    (draft) => String(draft._id),
+  );
+
   onMount(() => {
     document.title = "Agent Run — Frequency Music";
   });
 
-  const runErrorText = () =>
-    run.error() ? `Unable to load agent run: ${run.error()?.message}` : null;
-  const runStatusText = () => {
-    if (run.error() || run.data()) return null;
-    return run.isLoading() ? "Loading agent run..." : "Agent run not found.";
-  };
+  const runRow = () => run.data() as PublicAgentRun | null | undefined;
+  const [draftDecision, setDraftDecision] = createSignal<string | null>(null);
+
+  const runLoad = describeLoad(run, "agent run");
   const persistedDraftsError = () =>
     persistedDrafts.error()
       ? `Unable to load persisted drafts: ${persistedDrafts.error()?.message}`
@@ -263,26 +282,16 @@ export function AgentRunDetailPage() {
         </Link>
       </div>
 
-      <UICard class={run.data() ? collapsedNoticeClass : undefined}>
-        <UINotice status={runStatusText()} error={runErrorText()} />
-      </UICard>
-
-      <Show when={run.data() as PublicAgentRun | null | undefined}>
-        {(row) => (
-          <>
-            <UICard>
-              <div
-                class={css({
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "2",
-                  mb: "3",
-                })}
-              >
-                <UIBadge tone={statusTone(row().status)}>
+      <UICard>
+        <UINotice status={runLoad.status()} error={runLoad.error()} />
+        <Show when={runRow()}>
+          {(row) => (
+            <>
+              <div class={cx(badgeRowClass, css({ mb: "3" }))}>
+                <UIBadge tone={runStatusTone(row().status)}>
                   {row().status}
                 </UIBadge>
-                <UIBadge tone="violet">{row().graphName}</UIBadge>
+                <UIBadge tone="cream">{row().graphName}</UIBadge>
                 <Show when={row().smokeMode}>
                   <UIBadge tone="cream">Smoke</UIBadge>
                 </Show>
@@ -293,33 +302,11 @@ export function AgentRunDetailPage() {
               <p class={helperClass}>
                 {row().summary ?? "This run has not recorded a summary yet."}
               </p>
-              <dl
-                class={css({
-                  display: "grid",
-                  gap: "2",
-                  gridTemplateColumns: "auto 1fr",
-                  mt: "4",
-                })}
-              >
-                <dt class={monoClass}>Created</dt>
-                <dd class={helperClass}>{formatTime(row().createdAt)}</dd>
-                <dt class={monoClass}>Started</dt>
-                <dd class={helperClass}>{formatTime(row().startedAt)}</dd>
-                <dt class={monoClass}>Finished</dt>
-                <dd class={helperClass}>{formatTime(row().finishedAt)}</dd>
-                <dt class={monoClass}>Duration</dt>
-                <dd class={helperClass}>{formatDuration(row())}</dd>
-              </dl>
+              <AgentRunTimesList run={row()} class={css({ mt: "4" })} />
               <Show when={row().traceUrl}>
                 {(traceUrl) => (
                   <a
-                    class={css({
-                      color: "zodiac.gold",
-                      display: "inline-block",
-                      fontFamily: "mono",
-                      fontSize: "sm",
-                      mt: "4",
-                    })}
+                    class={cx(inlineActionLink, css({ mt: "4" }))}
                     href={traceUrl()}
                     target="_blank"
                     rel="noreferrer"
@@ -328,8 +315,14 @@ export function AgentRunDetailPage() {
                   </a>
                 )}
               </Show>
-            </UICard>
+            </>
+          )}
+        </Show>
+      </UICard>
 
+      <Show when={runRow()}>
+        {(row) => (
+          <>
             <UICard>
               <h2 class={sectionTitleClass}>Review Draft</h2>
               <Show
@@ -341,40 +334,18 @@ export function AgentRunDetailPage() {
                 }
               >
                 {(draft) => (
-                  <div class={css({ display: "grid", gap: "4" })}>
-                    <div
-                      class={css({
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2",
-                      })}
-                    >
+                  <div class={sectionStackClass}>
+                    <div class={badgeRowClass}>
                       <UIBadge tone="gold">{draftLabel(draft().kind)}</UIBadge>
                       <UIBadge tone={draft().needsReview ? "violet" : "cream"}>
                         {draft().needsReview ? "Needs Review" : "Read Only"}
                       </UIBadge>
                     </div>
-                    <h3
-                      class={css({
-                        color: "zodiac.cream",
-                        fontFamily: "display",
-                        fontSize: "2xl",
-                        lineHeight: "1.2",
-                      })}
-                    >
-                      {draft().title}
-                    </h3>
+                    <h3 class={reviewDraftTitleClass}>{draft().title}</h3>
                     <p class={helperClass}>{draft().summary}</p>
                     <div>
                       <div class={fieldLabelClass}>Candidate IDs</div>
-                      <div
-                        class={css({
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2",
-                          mt: "2",
-                        })}
-                      >
+                      <div class={labelledBadgeRowClass}>
                         <For each={draft().candidateIds}>
                           {(candidateId) => (
                             <UIBadge tone="cream">{candidateId}</UIBadge>
@@ -395,7 +366,7 @@ export function AgentRunDetailPage() {
             <UICard>
               <h2 class={sectionTitleClass}>Persisted Draft Records</h2>
               <UINotice
-                status={persistedDraftsStatus()}
+                status={persistedDraftsStatus() ?? draftDecision()}
                 error={persistedDraftsError()}
               />
               <Show
@@ -404,96 +375,82 @@ export function AgentRunDetailPage() {
                   (persistedDrafts.data() ?? []).length > 0
                 }
               >
-                <div class={css({ display: "grid", gap: "4" })}>
-                  <For
-                    each={
-                      (persistedDrafts.data() ?? []) as PersistedReviewDraft[]
-                    }
-                  >
-                    {(draft) => (
-                      <article
-                        class={css({
-                          borderColor: "zodiac.cream/12",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          display: "grid",
-                          gap: "3",
-                          p: "4",
-                        })}
-                      >
-                        <div
-                          class={css({
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: "2",
-                            justifyContent: "space-between",
-                          })}
-                        >
-                          <div
-                            class={css({
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: "2",
-                            })}
-                          >
-                            <UIBadge tone="gold">
-                              {draftLabel(draft.kind)}
-                            </UIBadge>
-                            <UIBadge
-                              tone={
-                                draft.status === "pending_review"
-                                  ? "violet"
-                                  : "cream"
-                              }
+                <UIList class={sectionStackClass}>
+                  <For each={persistedDraftRows.ids()}>
+                    {(id) => (
+                      <Show when={persistedDraftRows.byId().get(id)}>
+                        {(draft) => (
+                          <li class={draftItemClass}>
+                            <article
+                              aria-labelledby={draftTitleId(draft())}
+                              class={stackClass}
                             >
-                              {draft.status}
-                            </UIBadge>
-                          </div>
-                          <span class={monoClass}>
-                            {formatTime(draft.createdAt)}
-                          </span>
-                        </div>
-                        <h3
-                          class={css({
-                            color: "zodiac.cream",
-                            fontFamily: "display",
-                            fontSize: "xl",
-                            lineHeight: "1.2",
-                          })}
-                        >
-                          {draft.title}
-                        </h3>
-                        <p class={helperClass}>{draft.summary}</p>
-                        <DraftPayloadPreview
-                          kind={draft.kind}
-                          payload={draft.payload}
-                        />
-                        <div>
-                          <div class={fieldLabelClass}>Draft Row</div>
-                          <span class={monoClass}>{String(draft._id)}</span>
-                        </div>
-                        <div>
-                          <div class={fieldLabelClass}>Candidate IDs</div>
-                          <div
-                            class={css({
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: "2",
-                              mt: "2",
-                            })}
-                          >
-                            <For each={draft.candidateIds}>
-                              {(candidateId) => (
-                                <UIBadge tone="cream">{candidateId}</UIBadge>
-                              )}
-                            </For>
-                          </div>
-                        </div>
-                        <PersistedDraftActions draft={draft} />
-                      </article>
+                              <div class={draftHeaderClass}>
+                                <div class={badgeRowClass}>
+                                  <UIBadge tone="gold">
+                                    {draftLabel(draft().kind)}
+                                  </UIBadge>
+                                  <UIBadge
+                                    tone={
+                                      draft().status === "pending_review"
+                                        ? "violet"
+                                        : "cream"
+                                    }
+                                  >
+                                    {draft().status}
+                                  </UIBadge>
+                                </div>
+                                <DateTime
+                                  format="datetime"
+                                  class={metaLine}
+                                  value={draft().createdAt}
+                                />
+                              </div>
+                              <h3
+                                id={draftTitleId(draft())}
+                                tabIndex={-1}
+                                class={cx(
+                                  persistedDraftTitleClass,
+                                  focusRingClass,
+                                )}
+                              >
+                                {draft().title}
+                              </h3>
+                              <p class={helperClass}>{draft().summary}</p>
+                              <DraftPayloadPreview
+                                kind={draft().kind}
+                                payload={draft().payload}
+                              />
+                              <div>
+                                <div class={fieldLabelClass}>Draft Row</div>
+                                <span class={metaLine}>
+                                  {String(draft()._id)}
+                                </span>
+                              </div>
+                              <div>
+                                <div class={fieldLabelClass}>Candidate IDs</div>
+                                <div class={labelledBadgeRowClass}>
+                                  <For each={draft().candidateIds}>
+                                    {(candidateId) => (
+                                      <UIBadge tone="cream">
+                                        {candidateId}
+                                      </UIBadge>
+                                    )}
+                                  </For>
+                                </div>
+                              </div>
+                              <PersistedDraftActions
+                                draft={draft()}
+                                focusTargetId={draftTitleId(draft())}
+                                onDecided={setDraftDecision}
+                              />
+                            </article>
+                          </li>
+                        )}
+                      </Show>
                     )}
                   </For>
-                </div>
+                </UIList>
               </Show>
             </UICard>
 
@@ -503,64 +460,9 @@ export function AgentRunDetailPage() {
               <Show
                 when={!events.isLoading() && (events.data() ?? []).length > 0}
               >
-                <div class={css({ display: "grid", gap: "4" })}>
-                  <For each={events.data() ?? []}>
-                    {(event: Doc<"agentRunEvents">) => {
-                      const payload = () => formatPayload(event.payload);
-                      return (
-                        <article class={eventClass}>
-                          <div
-                            class={css({
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: "2",
-                              justifyContent: "space-between",
-                            })}
-                          >
-                            <UIBadge tone={eventTone(event.kind)}>
-                              {event.kind}
-                            </UIBadge>
-                            <span class={monoClass}>
-                              {formatTime(event.createdAt)}
-                            </span>
-                          </div>
-                          <p
-                            class={css({
-                              color: "zodiac.cream",
-                              lineHeight: "1.55",
-                            })}
-                          >
-                            {event.message}
-                          </p>
-                          <Show when={payload()}>
-                            {(text) => (
-                              <pre
-                                role="group"
-                                tabIndex={0}
-                                aria-label={`Payload for ${event.kind} event`}
-                                class={css({
-                                  bg: "rgba(0, 0, 0, 0.22)",
-                                  borderColor: "zodiac.cream/12",
-                                  borderRadius: "l2",
-                                  borderWidth: "1px",
-                                  color: "zodiac.cream/72",
-                                  fontFamily: "mono",
-                                  fontSize: "xs",
-                                  maxH: "18rem",
-                                  overflow: "auto",
-                                  p: "3",
-                                  whiteSpace: "pre-wrap",
-                                })}
-                              >
-                                {text()}
-                              </pre>
-                            )}
-                          </Show>
-                        </article>
-                      );
-                    }}
-                  </For>
-                </div>
+                <AgentRunEventList
+                  events={(events.data() ?? []) as Doc<"agentRunEvents">[]}
+                />
               </Show>
             </UICard>
           </>

@@ -1,13 +1,23 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  Index,
+  Show,
+} from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
+import { entityCellClass } from "../components/entity-card";
 import {
   backLink,
+  badgeRowClass,
   collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
   goldDivider,
+  jsonBlockClass,
   pageClass,
   sectionLabel,
   UIBadge,
@@ -18,7 +28,16 @@ import {
   UISelect,
   UITextarea,
 } from "../components/ui";
-import { createMutation, createQuery } from "../integrations/convex";
+import {
+  createMutation,
+  createQueryWithStatus,
+  describeError,
+  describeLoad,
+} from "../integrations/convex";
+import {
+  evidenceStatusTone,
+  formatEditorialKind,
+} from "../lib/editorial-format";
 import { api } from "../../../convex/_generated/api";
 
 type EditorialArtifact = Doc<"editorialArtifacts">;
@@ -64,24 +83,44 @@ function buildDraft(artifact: EditorialArtifact): ArtifactDraft {
   };
 }
 
-function formatKind(kind: EditorialArtifact["kind"]) {
-  switch (kind) {
-    case "experiment_recap":
-      return "Experiment recap";
-    case "what_changed_my_mind":
-      return "What changed my mind";
-    case "campaign_summary":
-      return "Campaign summary";
-    case "thesis_summary":
-      return "Thesis summary";
-  }
-}
+const threeColumnGrid = css({
+  display: "grid",
+  gap: "3",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(3, minmax(0, 1fr))",
+  },
+});
+
+const headerBadgeRowClass = cx(badgeRowClass, css({ mb: "2" }));
+const actionRowClass = cx(badgeRowClass, css({ mt: "4" }));
+const mutedClass = css({ color: "zodiac.cream/66" });
+const linkedCountsClass = css({ color: "zodiac.cream/66", mt: "1" });
+const evidenceHeaderClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between" }),
+);
+const evidenceCardHeaderClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between", mb: "2" }),
+);
+const evidenceListClass = css({ display: "grid", gap: "3", mt: "3" });
+const checkListClass = css({ display: "grid", gap: "2", mt: "3" });
+const checkBase = { borderRadius: "l2", borderWidth: "1px", p: "3" } as const;
+const checkPassClass = css({ ...checkBase, borderColor: "zodiac.success/28" });
+const checkBlockClass = css({ ...checkBase, borderColor: "zodiac.error/28" });
+const checkVerdictClass = css({ color: "zodiac.cream", mb: "1" });
+
+type BusyAction = "save" | "submit" | "approve" | "publish";
+
+const EVIDENCE_HEADING_ID = "evidence-card-review-heading";
 
 export function EditorialDetailPage() {
   const params = useParams({ from: "/editorial/$artifactId" });
-  const detail = createQuery(api.editorialArtifacts.get, () => ({
+  const detailQuery = createQueryWithStatus(api.editorialArtifacts.get, () => ({
     id: params().artifactId as Id<"editorialArtifacts">,
   }));
+  const detail = detailQuery.data;
 
   const updateArtifact = createMutation(api.editorialArtifacts.update);
   const submitForReview = createMutation(
@@ -94,11 +133,22 @@ export function EditorialDetailPage() {
   const [loadedVersion, setLoadedVersion] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
-  const [saving, setSaving] = createSignal(false);
-  const [submitting, setSubmitting] = createSignal(false);
-  const [approving, setApproving] = createSignal(false);
-  const [publishing, setPublishing] = createSignal(false);
-  const isBusy = () => saving() || submitting() || approving() || publishing();
+  // The action the user activated. Its button stays enabled and focused, marked
+  // aria-busy; the others are aria-disabled so none of them drops focus when a
+  // run starts or when the artifact's new status makes it unavailable.
+  const [busyAction, setBusyAction] = createSignal<BusyAction | null>(null);
+  const blocked = (action: BusyAction) =>
+    busyAction() !== null && busyAction() !== action;
+  const load = describeLoad(detailQuery, "editorial artifact", () =>
+    Boolean(detail()),
+  );
+
+  createEffect(() => {
+    if (detailQuery.isLoading() || detail()) return;
+    document.title = detailQuery.isError()
+      ? "Editorial artifact unavailable — Frequency Music"
+      : "Editorial artifact not found — Frequency Music";
+  });
 
   createEffect(() => {
     const row = detail();
@@ -172,6 +222,18 @@ export function EditorialDetailPage() {
   }
 
   function removeEvidenceCard(index: number) {
+    const count = draft()?.publicEvidenceCards.length ?? 0;
+    // Rows are positional (<Index>), so the row at `index` survives unless it is
+    // the last one. Move focus first, onto a field that outlives the removal:
+    // this position's (now the next card's) title, the previous card's title,
+    // or the section heading once no cards remain.
+    const focusTarget =
+      index < count - 1
+        ? `evidence-${index}-source-title`
+        : index > 0
+          ? `evidence-${index - 1}-source-title`
+          : EVIDENCE_HEADING_ID;
+    document.getElementById(focusTarget)?.focus();
     setDraft((current) => {
       if (!current) return current;
       return {
@@ -201,13 +263,47 @@ export function EditorialDetailPage() {
     });
   }
 
-  async function handleSave() {
+  async function handleSaveClick() {
+    if (busyAction()) return;
+    setBusyAction("save");
+    try {
+      await saveDraft();
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  // The save step of every action. Callers claim `busyAction` first, so it
+  // never runs twice at once. A plain save keeps work in progress (an
+  // evidence card may still be missing its title or summary); submit,
+  // approve and publish pass `requireComplete` so nothing unfinished moves on.
+  async function saveDraft(requireComplete = false) {
     const current = draft();
     const row = detail();
-    if (!current || !row || isBusy()) return false;
-    setSaving(true);
+    if (!current || !row) return false;
     setNotice(null);
     setNoticeError(null);
+    const incomplete = current.publicEvidenceCards
+      .map((card, index) => ({
+        index,
+        field: !card.sourceTitle.trim()
+          ? ("source-title" as const)
+          : !card.summary.trim()
+            ? ("summary" as const)
+            : null,
+      }))
+      .find((entry) => entry.field !== null);
+    const incompleteNote = incomplete?.field
+      ? `Evidence card ${incomplete.index + 1} still needs ${
+          incomplete.field === "source-title" ? "a source title" : "a summary"
+        }.`
+      : null;
+    if (incompleteNote && requireComplete) {
+      setNoticeError(
+        `${incompleteNote} Complete it before moving the artifact on.`,
+      );
+      return false;
+    }
     try {
       await updateArtifact({
         id: row.artifact._id,
@@ -222,83 +318,79 @@ export function EditorialDetailPage() {
         evidenceStatus: current.evidenceStatus,
         visibility: current.visibility,
         publicEvidenceCards: current.publicEvidenceCards.map((card) => ({
-          sourceTitle: card.sourceTitle.trim() || "Untitled evidence",
+          sourceTitle: card.sourceTitle.trim(),
           sourceCanonicalUrl: card.sourceCanonicalUrl?.trim() || undefined,
-          summary: card.summary.trim() || "Summary pending.",
+          summary: card.summary.trim(),
           evidenceLevel: card.evidenceLevel,
           truthConfidence: card.truthConfidence,
           interestLevel: card.interestLevel,
         })),
       });
-      setNotice("Editorial artifact saved.");
+      setNotice(
+        incompleteNote
+          ? `Editorial artifact saved. ${incompleteNote}`
+          : "Editorial artifact saved.",
+      );
       return true;
     } catch (error) {
-      setNoticeError(`Save failed: ${String(error)}`);
+      setNoticeError(`Save failed: ${describeError(error)}`);
       return false;
-    } finally {
-      setSaving(false);
     }
   }
 
-  async function handleSubmitForReview() {
+  // Saves the draft, then runs `action` on the saved artifact.
+  async function saveThen(
+    action: Exclude<BusyAction, "save">,
+    allowed: boolean,
+    run: (id: Id<"editorialArtifacts">) => Promise<unknown>,
+    success: string,
+    failure: string,
+  ) {
     const row = detail();
-    if (!row || isBusy()) return;
-    setSubmitting(true);
+    if (!row || busyAction() || !allowed) return;
+    setBusyAction(action);
     setNotice(null);
     setNoticeError(null);
     try {
-      if (!(await handleSave())) return;
-      await submitForReview({ id: row.artifact._id });
-      setNotice("Artifact moved to in review.");
+      if (!(await saveDraft(true))) return;
+      await run(row.artifact._id);
+      setNotice(success);
     } catch (error) {
-      // handleSave may already have reported success; drop it so the two live
+      // saveDraft may already have reported success; drop it so the two live
       // regions never contradict each other for one action.
       setNotice(null);
-      setNoticeError(`Submit for review failed: ${String(error)}`);
+      setNoticeError(`${failure} failed: ${describeError(error)}`);
     } finally {
-      setSubmitting(false);
+      setBusyAction(null);
     }
   }
 
-  async function handleApprove() {
-    const row = detail();
-    if (!row || isBusy()) return;
-    setApproving(true);
-    setNotice(null);
-    setNoticeError(null);
-    try {
-      if (!(await handleSave())) return;
-      await approveArtifact({ id: row.artifact._id });
-      setNotice("Artifact approved.");
-    } catch (error) {
-      // handleSave may already have reported success; drop it so the two live
-      // regions never contradict each other for one action.
-      setNotice(null);
-      setNoticeError(`Approve failed: ${String(error)}`);
-    } finally {
-      setApproving(false);
-    }
-  }
+  const handleSubmitForReview = () =>
+    saveThen(
+      "submit",
+      validation().canSubmitForReview,
+      (id) => submitForReview({ id }),
+      "Artifact moved to in review.",
+      "Submit for review",
+    );
 
-  async function handlePublish() {
-    const row = detail();
-    if (!row || isBusy()) return;
-    setPublishing(true);
-    setNotice(null);
-    setNoticeError(null);
-    try {
-      if (!(await handleSave())) return;
-      await publishArtifact({ id: row.artifact._id });
-      setNotice("Artifact published and ready for export.");
-    } catch (error) {
-      // handleSave may already have reported success; drop it so the two live
-      // regions never contradict each other for one action.
-      setNotice(null);
-      setNoticeError(`Publish failed: ${String(error)}`);
-    } finally {
-      setPublishing(false);
-    }
-  }
+  const handleApprove = () =>
+    saveThen(
+      "approve",
+      detail()?.artifact.status === "in_review",
+      (id) => approveArtifact({ id }),
+      "Artifact approved.",
+      "Approve",
+    );
+
+  const handlePublish = () =>
+    saveThen(
+      "publish",
+      validation().canPublish,
+      (id) => publishArtifact({ id }),
+      "Artifact published and ready for export.",
+      "Publish",
+    );
 
   return (
     <section class={pageClass}>
@@ -311,91 +403,93 @@ export function EditorialDetailPage() {
       <UINotice
         class={detail() && draft() ? collapsedNoticeClass : undefined}
         status={
-          !detail()
-            ? "Loading editorial artifact..."
-            : !draft()
-              ? "Loading editorial draft..."
-              : null
+          load.status() ??
+          (detail() && !draft() ? "Loading editorial draft..." : null)
         }
+        error={load.error()}
       />
 
-      <Show when={detail()} keyed>
+      {/* Not keyed: a live update to the artifact must not remount the form and
+          drop focus from the field or button the user is on. */}
+      <Show when={detail()}>
         {(detailRow) => {
           const current = () => draft();
           const d = () => current()!;
           return (
             <Show when={current()}>
               <UICard>
-                <div
-                  class={css({
-                    display: "flex",
-                    gap: "2",
-                    flexWrap: "wrap",
-                    mb: "2",
-                  })}
-                >
+                <div class={headerBadgeRowClass}>
                   <UIBadge tone="gold">
-                    {formatKind(detailRow.artifact.kind)}
+                    {formatEditorialKind(detailRow().artifact.kind)}
                   </UIBadge>
-                  <UIBadge tone="cream">{detailRow.artifact.status}</UIBadge>
+                  <UIBadge tone="cream">{detailRow().artifact.status}</UIBadge>
                   <UIBadge tone="cream">
-                    {detailRow.artifact.visibility}
+                    {detailRow().artifact.visibility}
                   </UIBadge>
-                  <UIBadge tone="violet">
-                    {detailRow.artifact.evidenceStatus}
+                  <UIBadge
+                    tone={evidenceStatusTone(
+                      detailRow().artifact.evidenceStatus,
+                    )}
+                  >
+                    {detailRow().artifact.evidenceStatus}
                   </UIBadge>
                 </div>
 
-                <h1 class={detailTitleClass}>{detailRow.artifact.title}</h1>
-                <p class={css({ color: "zodiac.cream/64" })}>
-                  Primary ref: {detailRow.artifact.primaryRef.type}{" "}
-                  {detailRow.artifact.primaryRef.id.slice(-6)}
+                <h1 class={detailTitleClass}>{detailRow().artifact.title}</h1>
+                <p class={mutedClass}>
+                  Primary ref: {detailRow().artifact.primaryRef.type}{" "}
+                  {detailRow().artifact.primaryRef.id.slice(-6)}
                 </p>
-                <p class={css({ color: "zodiac.cream/58", mt: "1" })}>
-                  linked: {detailRow.artifact.linkedIds.thesisIds.length} theses
-                  · {detailRow.artifact.linkedIds.hypothesisIds.length}{" "}
-                  hypotheses · {detailRow.artifact.linkedIds.recipeIds.length}{" "}
-                  recipes · {detailRow.artifact.linkedIds.compositionIds.length}{" "}
+                <p class={linkedCountsClass}>
+                  linked: {detailRow().artifact.linkedIds.thesisIds.length}{" "}
+                  theses · {detailRow().artifact.linkedIds.hypothesisIds.length}{" "}
+                  hypotheses · {detailRow().artifact.linkedIds.recipeIds.length}{" "}
+                  recipes ·{" "}
+                  {detailRow().artifact.linkedIds.compositionIds.length}{" "}
                   compositions
                 </p>
 
-                <div
-                  class={css({
-                    display: "flex",
-                    gap: "2",
-                    flexWrap: "wrap",
-                    mt: "4",
-                  })}
-                >
+                <div class={actionRowClass}>
                   <UIButton
                     variant="outline"
-                    onClick={handleSave}
-                    disabled={isBusy()}
+                    onClick={handleSaveClick}
+                    aria-busy={busyAction() === "save"}
+                    aria-disabled={blocked("save")}
                   >
-                    {saving() ? "Saving..." : "Save draft"}
+                    {busyAction() === "save" ? "Saving..." : "Save draft"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleSubmitForReview}
-                    disabled={isBusy() || !validation().canSubmitForReview}
+                    aria-busy={busyAction() === "submit"}
+                    aria-disabled={
+                      blocked("submit") || !validation().canSubmitForReview
+                    }
                   >
-                    {submitting() ? "Submitting..." : "Submit for review"}
+                    {busyAction() === "submit"
+                      ? "Submitting..."
+                      : "Submit for review"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleApprove}
-                    disabled={
-                      isBusy() || detailRow.artifact.status !== "in_review"
+                    aria-busy={busyAction() === "approve"}
+                    aria-disabled={
+                      blocked("approve") ||
+                      detailRow().artifact.status !== "in_review"
                     }
                   >
-                    {approving() ? "Approving..." : "Approve"}
+                    {busyAction() === "approve" ? "Approving..." : "Approve"}
                   </UIButton>
                   <UIButton
                     variant="solid"
                     onClick={handlePublish}
-                    disabled={isBusy() || !validation().canPublish}
+                    aria-busy={busyAction() === "publish"}
+                    aria-disabled={
+                      blocked("publish") || !validation().canPublish
+                    }
                   >
-                    {publishing() ? "Publishing..." : "Publish"}
+                    {busyAction() === "publish" ? "Publishing..." : "Publish"}
                   </UIButton>
                 </div>
 
@@ -452,13 +546,7 @@ export function EditorialDetailPage() {
                   }
                 />
 
-                <div
-                  class={css({
-                    display: "grid",
-                    gap: "3",
-                    gridTemplateColumns: { base: "1fr", md: "1fr 1fr 1fr" },
-                  })}
-                >
+                <div class={threeColumnGrid}>
                   <div>
                     <label class={fieldLabelClass} for="artifact-slug">
                       Slug
@@ -566,47 +654,29 @@ export function EditorialDetailPage() {
               </UICard>
 
               <UICard>
-                <div
-                  class={css({
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: "2",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                  })}
-                >
-                  <h2 class={sectionLabel}>Evidence Card Review</h2>
+                <div class={evidenceHeaderClass}>
+                  <h2
+                    id={EVIDENCE_HEADING_ID}
+                    tabIndex={-1}
+                    class={sectionLabel}
+                  >
+                    Evidence Card Review
+                  </h2>
                   <UIButton variant="outline" onClick={addEvidenceCard}>
                     Add evidence card
                   </UIButton>
                 </div>
 
-                <div class={css({ display: "grid", gap: "3", mt: "3" })}>
-                  <For each={d().publicEvidenceCards}>
+                <div class={evidenceListClass}>
+                  <Index each={d().publicEvidenceCards}>
                     {(card, index) => (
-                      <div
-                        class={css({
-                          borderColor: "zodiac.gold/18",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          p: "3",
-                        })}
-                      >
-                        <div
-                          class={css({
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: "2",
-                            alignItems: "center",
-                            mb: "2",
-                            flexWrap: "wrap",
-                          })}
-                        >
-                          <UIBadge tone="gold">Card {index() + 1}</UIBadge>
+                      <div class={entityCellClass}>
+                        <div class={evidenceCardHeaderClass}>
+                          <UIBadge tone="gold">Card {index + 1}</UIBadge>
                           <UIButton
                             variant="outline"
-                            aria-label={`Remove card ${index() + 1}`}
-                            onClick={() => removeEvidenceCard(index())}
+                            aria-label={`Remove card ${index + 1}`}
+                            onClick={() => removeEvidenceCard(index)}
                           >
                             Remove
                           </UIButton>
@@ -614,16 +684,16 @@ export function EditorialDetailPage() {
 
                         <label
                           class={fieldLabelClass}
-                          for={`evidence-${index()}-source-title`}
+                          for={`evidence-${index}-source-title`}
                         >
                           Source Title
                         </label>
                         <UIInput
-                          id={`evidence-${index()}-source-title`}
-                          value={card.sourceTitle}
+                          id={`evidence-${index}-source-title`}
+                          value={card().sourceTitle}
                           onInput={(event) =>
                             updateEvidenceCard(
-                              index(),
+                              index,
                               "sourceTitle",
                               event.currentTarget.value,
                             )
@@ -632,16 +702,16 @@ export function EditorialDetailPage() {
 
                         <label
                           class={fieldLabelClass}
-                          for={`evidence-${index()}-canonical-url`}
+                          for={`evidence-${index}-canonical-url`}
                         >
                           Canonical URL
                         </label>
                         <UIInput
-                          id={`evidence-${index()}-canonical-url`}
-                          value={card.sourceCanonicalUrl ?? ""}
+                          id={`evidence-${index}-canonical-url`}
+                          value={card().sourceCanonicalUrl ?? ""}
                           onInput={(event) =>
                             updateEvidenceCard(
-                              index(),
+                              index,
                               "sourceCanonicalUrl",
                               event.currentTarget.value,
                             )
@@ -650,46 +720,37 @@ export function EditorialDetailPage() {
 
                         <label
                           class={fieldLabelClass}
-                          for={`evidence-${index()}-summary`}
+                          for={`evidence-${index}-summary`}
                         >
                           Summary
                         </label>
                         <UITextarea
-                          id={`evidence-${index()}-summary`}
+                          id={`evidence-${index}-summary`}
                           rows={5}
-                          value={card.summary}
+                          value={card().summary}
                           onInput={(event) =>
                             updateEvidenceCard(
-                              index(),
+                              index,
                               "summary",
                               event.currentTarget.value,
                             )
                           }
                         />
 
-                        <div
-                          class={css({
-                            display: "grid",
-                            gap: "3",
-                            gridTemplateColumns: {
-                              base: "1fr",
-                              md: "1fr 1fr 1fr",
-                            },
-                          })}
-                        >
+                        <div class={threeColumnGrid}>
                           <div>
                             <label
                               class={fieldLabelClass}
-                              for={`evidence-${index()}-evidence-level`}
+                              for={`evidence-${index}-evidence-level`}
                             >
                               Evidence Level
                             </label>
                             <UISelect
-                              id={`evidence-${index()}-evidence-level`}
-                              value={card.evidenceLevel}
+                              id={`evidence-${index}-evidence-level`}
+                              value={card().evidenceLevel}
                               onChange={(event) =>
                                 updateEvidenceCard(
-                                  index(),
+                                  index,
                                   "evidenceLevel",
                                   event.currentTarget
                                     .value as EvidenceCard["evidenceLevel"],
@@ -708,16 +769,16 @@ export function EditorialDetailPage() {
                           <div>
                             <label
                               class={fieldLabelClass}
-                              for={`evidence-${index()}-truth-confidence`}
+                              for={`evidence-${index}-truth-confidence`}
                             >
                               Truth Confidence
                             </label>
                             <UISelect
-                              id={`evidence-${index()}-truth-confidence`}
-                              value={card.truthConfidence ?? ""}
+                              id={`evidence-${index}-truth-confidence`}
+                              value={card().truthConfidence ?? ""}
                               onChange={(event) =>
                                 updateEvidenceCard(
-                                  index(),
+                                  index,
                                   "truthConfidence",
                                   (event.currentTarget.value ||
                                     undefined) as EvidenceCard["truthConfidence"],
@@ -733,16 +794,16 @@ export function EditorialDetailPage() {
                           <div>
                             <label
                               class={fieldLabelClass}
-                              for={`evidence-${index()}-interest-level`}
+                              for={`evidence-${index}-interest-level`}
                             >
                               Interest Level
                             </label>
                             <UISelect
-                              id={`evidence-${index()}-interest-level`}
-                              value={card.interestLevel ?? ""}
+                              id={`evidence-${index}-interest-level`}
+                              value={card().interestLevel ?? ""}
                               onChange={(event) =>
                                 updateEvidenceCard(
-                                  index(),
+                                  index,
                                   "interestLevel",
                                   (event.currentTarget.value ||
                                     undefined) as EvidenceCard["interestLevel"],
@@ -758,31 +819,20 @@ export function EditorialDetailPage() {
                         </div>
                       </div>
                     )}
-                  </For>
+                  </Index>
                 </div>
               </UICard>
 
               <UICard>
                 <h2 class={sectionLabel}>Pre-publish Checklist</h2>
-                <div class={css({ display: "grid", gap: "2", mt: "3" })}>
+                <div class={checkListClass}>
                   <For each={validation().checks}>
                     {(check) => (
-                      <div
-                        class={css({
-                          borderColor: check.ok
-                            ? "zodiac.success/28"
-                            : "zodiac.error/28",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          p: "3",
-                        })}
-                      >
-                        <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                      <div class={check.ok ? checkPassClass : checkBlockClass}>
+                        <div class={checkVerdictClass}>
                           {check.ok ? "Pass" : "Block"}
                         </div>
-                        <div class={css({ color: "zodiac.cream/64" })}>
-                          {check.message}
-                        </div>
+                        <div class={mutedClass}>{check.message}</div>
                       </div>
                     )}
                   </For>
@@ -796,15 +846,7 @@ export function EditorialDetailPage() {
                   role="group"
                   tabIndex={0}
                   aria-label="Export preview JSON"
-                  class={css({
-                    color: "zodiac.cream/70",
-                    fontFamily: "mono",
-                    fontSize: "sm",
-                    lineHeight: "1.6",
-                    overflowX: "auto",
-                    overflowWrap: "anywhere",
-                    whiteSpace: "pre-wrap",
-                  })}
+                  class={cx(jsonBlockClass, "zodiac-scroll")}
                 >
                   {exportPreview()}
                 </pre>

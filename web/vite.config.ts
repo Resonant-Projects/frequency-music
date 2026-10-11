@@ -94,7 +94,7 @@ export default defineConfig({
       },
     },
     fs: {
-      allow: [".", "../data", "../convex"],
+      allow: [".", "../data", "../convex", "../docs"],
     },
   },
 });

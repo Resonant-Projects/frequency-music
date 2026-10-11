@@ -20,9 +20,11 @@ const toneStyles = {
     borderColor: "zodiac.gold/45",
     color: "zodiac.gold",
   }),
+  // 10px text takes the text-safe violet step (Lifted Violet Rule); the
+  // border keeps the surface hue.
   violet: css({
     borderColor: "zodiac.violet/45",
-    color: "zodiac.violet",
+    color: "zodiac.violetText",
   }),
   cream: css({
     borderColor: "zodiac.cream/38",

@@ -2,9 +2,15 @@ import { Link } from "@tanstack/solid-router";
 import type { FunctionReturnType } from "convex/server";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
+  entityCardLinkClass,
+  entityCardTitleLinkClass,
+} from "../components/entity-card";
+import {
+  badgeRowClass,
   fieldLabelClass,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -12,6 +18,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
   UITextarea,
@@ -21,32 +28,44 @@ import {
   createMutation,
   createQuery,
   createQueryWithStatus,
+  describeError,
 } from "../integrations/convex";
+import { stripMarkdown } from "../lib/essay-parse";
+import { parseLines } from "../lib/markdown-utils";
 import { api } from "../../../convex/_generated/api";
 
 type HypothesisRow = { _id: string; title: string };
 type RecipeRow = FunctionReturnType<typeof api.recipes.listByStatus>[number];
 
 function parseParameters(input: string) {
-  return input
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [type, ...rest] = line.split(":");
-      return {
-        type: type?.trim() || "custom",
-        value: rest.join(":").trim() || line,
-      };
-    });
+  return parseLines(input).map((line) => {
+    const [type, ...rest] = line.split(":");
+    return {
+      type: type?.trim() || "custom",
+      value: rest.join(":").trim() || line,
+    };
+  });
 }
 
-function parseChecklist(input: string) {
-  return input
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
+/** Recipe cards add the gold discovery glow to the shared hover lift. */
+const recipeCardClass = cx(
+  entityCardLinkClass,
+  css({ _hover: { boxShadow: "goldGlow" } }),
+);
+
+const listClass = css({ display: "grid", gap: "3" });
+
+const rowBadgesClass = cx(badgeRowClass, css({ marginBottom: "2" }));
+
+const rowTitleClass = css({ fontSize: "xl", marginBottom: "2" });
+
+/** Three lines of the plain-text body. */
+const bodyPreviewClass = cx(
+  helperClass,
+  css({ lineClamp: 3, overflow: "hidden" }),
+);
+
+const rowWhyClass = cx(helperClass, css({ marginTop: "2" }));
 
 export function RecipesPage() {
   onMount(() => {
@@ -100,7 +119,7 @@ export function RecipesPage() {
         whyThisMatters: whyThisMatters().trim(),
         bodyMd: bodyMd().trim(),
         parameters: parseParameters(parameters()),
-        dawChecklist: parseChecklist(checklist()),
+        dawChecklist: parseLines(checklist()),
       });
 
       setTitle("");
@@ -110,7 +129,7 @@ export function RecipesPage() {
       setChecklist("");
       setNotice("Recipe created.");
     } catch (error) {
-      setNoticeError(`Failed to create recipe: ${String(error)}`);
+      setNoticeError(`Failed to create recipe: ${describeError(error)}`);
     }
   }
 
@@ -131,7 +150,7 @@ export function RecipesPage() {
       });
       setNotice("Auto recipe generation started.");
     } catch (error) {
-      setNoticeError(`Auto generation failed: ${String(error)}`);
+      setNoticeError(`Auto generation failed: ${describeError(error)}`);
     } finally {
       setAutoGenerating(false);
     }
@@ -139,9 +158,18 @@ export function RecipesPage() {
 
   return (
     <section class={pageClass}>
-      {/* UICard's onSubmit prop typing doesn't align with submitRecipe's SubmitEvent signature in Solid. */}
-      <UICard as="form" onSubmit={submitRecipe as any}>
+      <UICard>
         <h1 class={pageTitleClass}>Recipes</h1>
+      </UICard>
+
+      <UICard
+        as="form"
+        aria-labelledby="recipe-form-heading"
+        onSubmit={submitRecipe}
+      >
+        <h2 id="recipe-form-heading" class={sectionTitleClass}>
+          New Recipe
+        </h2>
 
         <label class={fieldLabelClass} for="recipe-hypothesis">
           Hypothesis
@@ -193,7 +221,10 @@ export function RecipesPage() {
           class={css({
             display: "grid",
             gap: "3",
-            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            gridTemplateColumns: {
+              base: "minmax(0, 1fr)",
+              md: "repeat(2, minmax(0, 1fr))",
+            },
           })}
         >
           <div>
@@ -239,7 +270,6 @@ export function RecipesPage() {
               type="button"
               variant="outline"
               aria-busy={autoGenerating()}
-              disabled={autoGenerating()}
               onClick={runAutoGenerate}
             >
               {autoGenerating() ? "Generating…" : "Auto Generate"}
@@ -270,70 +300,37 @@ export function RecipesPage() {
         />
         <Show when={!recipes.isLoading()}>
           <Show when={(recipes.data() ?? []).length > 0}>
-            <div class={css({ display: "grid", gap: "3" })}>
+            <UIList class={listClass}>
               <For each={recipes.data() ?? []}>
                 {(recipe: RecipeRow) => (
-                  <Link
-                    to="/recipes/$recipeId"
-                    params={{ recipeId: recipe._id }}
-                    data-testid="entity-row"
-                    class={css({
-                      borderColor: "zodiac.gold/25",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      cursor: "pointer",
-                      display: "block",
-                      p: "4",
-                      textDecoration: "none",
-                      transition: "border-color 0.15s, box-shadow 0.15s",
-                      _hover: {
-                        borderColor: "zodiac.gold/50",
-                        boxShadow: "0 0 12px rgba(200, 168, 75, 0.08)",
-                      },
-                    })}
-                  >
-                    <div
-                      class={css({
-                        display: "flex",
-                        gap: "2",
-                        marginBottom: "2",
-                      })}
-                    >
+                  <li data-testid="entity-row" class={recipeCardClass}>
+                    <div class={rowBadgesClass}>
                       <UIBadge tone="gold">{recipe.status}</UIBadge>
-                      <UIBadge tone="violet">
+                      <UIBadge tone="cream">
                         {recipe.parameters.length} params
                       </UIBadge>
                     </div>
-                    <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
-                      {recipe.title}
+                    <h3 class={rowTitleClass}>
+                      <Link
+                        to="/recipes/$recipeId"
+                        params={{ recipeId: recipe._id }}
+                        class={entityCardTitleLinkClass}
+                      >
+                        {recipe.title}
+                      </Link>
                     </h3>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/62",
-                        lineClamp: 3,
-                        marginBottom: recipe.whyThisMatters ? "2" : "0",
-                        fontSize: "sm",
-                        overflow: "hidden",
-                      })}
-                    >
-                      {recipe.bodyMd}
+                    <p class={bodyPreviewClass}>
+                      {stripMarkdown(recipe.bodyMd)}
                     </p>
                     <Show when={recipe.whyThisMatters}>
                       {(value) => (
-                        <p
-                          class={css({
-                            color: "zodiac.cream/66",
-                            fontSize: "sm",
-                          })}
-                        >
-                          Why this matters: {value()}
-                        </p>
+                        <p class={rowWhyClass}>Why this matters: {value()}</p>
                       )}
                     </Show>
-                  </Link>
+                  </li>
                 )}
               </For>
-            </div>
+            </UIList>
           </Show>
         </Show>
       </UICard>

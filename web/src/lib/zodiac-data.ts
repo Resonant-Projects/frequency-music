@@ -6,6 +6,7 @@ import type {
   RecipeStatus,
   SourceStatus,
 } from "../../../convex/shared/statuses";
+import type { Token } from "../../styled-system/tokens";
 
 // Three.js needs plain hex strings, so these mirror the `zodiac.*` semantic
 // tokens in `web/panda.config.ts`. Panda is the source of truth: if a value
@@ -32,29 +33,30 @@ export const R = {
   hubDot: 6,
   hubViolet: 22,
   hubOuter: 36,
-  hubLabel: 50,
   recipe: 58,
   hypothesis: 92,
   extract: 128,
   sources: 160,
   sectorInner: 175,
   arcLabel: 220,
-  sourceCount: 246,
   sectorOuter: 265,
   outerThin: 268,
   outerMain: 280,
-  dotZoneMin: 282,
-  dotZoneMax: 315,
 } as const;
 
 export interface SectorDef {
   id: string;
   label: string;
+  /** Hex for Three.js materials. */
   color: string;
+  /** The same colour as a design token, for DOM borders and headings. */
+  colorToken: Token;
+  /** The token for sector-coloured text below heading size. The violet
+   *  sectors only reach 4.66:1 on the void at full alpha, so their text uses
+   *  the lighter text-safe violet; gold and cream are legible as they are. */
+  textToken: Token;
   startAngle: number;
   endAngle: number;
-  sources: number;
-  claims: number;
   summary: string;
   dots: Array<{ angleRel: number; r: number }>;
 }
@@ -71,10 +73,10 @@ export const SECTORS: SectorDef[] = [
     id: "math",
     label: "Mathematics",
     color: "#8b5cf6",
+    colorToken: "colors.zodiac.violet",
+    textToken: "colors.zodiac.violetText",
     startAngle: BASE,
     endAngle: BASE + STEP,
-    sources: 12,
-    claims: 45,
     summary:
       "Group theory, Tonnetz geometry, Fourier analysis, and tuning lattice mathematics",
     dots: [
@@ -87,10 +89,10 @@ export const SECTORS: SectorDef[] = [
     id: "wave",
     label: "Wave Physics",
     color: "#c8a84b",
+    colorToken: "colors.zodiac.gold",
+    textToken: "colors.zodiac.gold",
     startAngle: BASE + STEP,
     endAngle: BASE + 2 * STEP,
-    sources: 15,
-    claims: 67,
     summary:
       "Standing waves, harmonic series, resonance modes, cymatics, acoustic field coupling",
     dots: [
@@ -104,10 +106,10 @@ export const SECTORS: SectorDef[] = [
     id: "music",
     label: "Music Theory",
     color: "#f5f0e8",
+    colorToken: "colors.zodiac.cream",
+    textToken: "colors.zodiac.cream",
     startAngle: BASE + 2 * STEP,
     endAngle: BASE + 3 * STEP,
-    sources: 11,
-    claims: 38,
     summary:
       "Just intonation, microtuning, EDO systems, xenharmonic voice-leading geometry",
     dots: [
@@ -120,10 +122,10 @@ export const SECTORS: SectorDef[] = [
     id: "psycho",
     label: "Psychoacoustics",
     color: "#8b5cf6",
+    colorToken: "colors.zodiac.violet",
+    textToken: "colors.zodiac.violetText",
     startAngle: BASE + 3 * STEP,
     endAngle: BASE + 4 * STEP,
-    sources: 9,
-    claims: 29,
     summary:
       "Consonance perception, auditory masking, critical bands, tonal memory encoding",
     dots: [
@@ -135,10 +137,10 @@ export const SECTORS: SectorDef[] = [
     id: "geometry",
     label: "Geometry",
     color: "#c8a84b",
+    colorToken: "colors.zodiac.gold",
+    textToken: "colors.zodiac.gold",
     startAngle: BASE + 4 * STEP,
     endAngle: BASE + 5 * STEP,
-    sources: 8,
-    claims: 24,
     summary:
       "Polygon-angle correspondence, sacred geometry, Grant's cipher, Platonic solids",
     dots: [
@@ -151,10 +153,10 @@ export const SECTORS: SectorDef[] = [
     id: "synthesis",
     label: "Synthesis",
     color: "#f5f0e8",
+    colorToken: "colors.zodiac.cream",
+    textToken: "colors.zodiac.cream",
     startAngle: BASE + 5 * STEP,
     endAngle: BASE + TAU,
-    sources: 6,
-    claims: 18,
     summary:
       "Spectral composition, additive and FM synthesis, granular textures, microtonal DAW",
     dots: [
@@ -187,7 +189,7 @@ export function dotWorldPos(
 }
 
 // Map concept domains (9) to zodiac display sectors (6)
-export const CONCEPT_DOMAIN_TO_SECTOR: Record<string, string> = {
+const CONCEPT_DOMAIN_TO_SECTOR: Record<string, string> = {
   mathematics: "math",
   acoustics: "wave",
   tuning: "music",

@@ -2,11 +2,12 @@ export { createAction } from "./action";
 export { useConvexAuth } from "./auth";
 
 export { useConvexClient } from "./client";
+export { describeError } from "./errors";
 export { createMutation } from "./mutation";
 export type { ConvexProviderProps } from "./provider";
 export { ConvexProvider } from "./provider";
 export type { QueryStatus } from "./query";
-export { createQuery, createQueryWithStatus } from "./query";
+export { createQuery, createQueryWithStatus, describeLoad } from "./query";
 
 export type {
   AuthAdapter,
