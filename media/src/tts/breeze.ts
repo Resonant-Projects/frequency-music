@@ -17,6 +17,7 @@ import {
   fetchAudioWithRetry,
   requireEnv,
   sleep,
+  SynthesisRejectedError,
 } from "./types";
 
 export const BREEZE_SAMPLE_RATE = 24000;
@@ -57,7 +58,7 @@ export async function waitForBreezeReady(
       if (signal?.aborted) throw error;
     }
     if (Date.now() + intervalMs > deadline) {
-      throw new Error(
+      throw new SynthesisRejectedError(
         `Breeze TTS did not become ready within ${Math.round(timeoutMs / 60_000)} min`,
       );
     }
@@ -80,7 +81,15 @@ export const breeze: TtsProvider = {
     const headers: Record<string, string> = key
       ? { authorization: `Bearer ${key}` }
       : {};
-    await waitForBreezeReady(base, signal, { headers });
+    try {
+      await waitForBreezeReady(base, signal, { headers });
+    } catch (error) {
+      // Only GET /health has run. Cancellation here cannot have started speech.
+      if (error instanceof SynthesisRejectedError) throw error;
+      throw new SynthesisRejectedError(
+        "Breeze readiness failed before synthesis",
+      );
+    }
     // fetch derives the multipart content-type (with boundary) from the
     // FormData body; setting it by hand would break the request.
     const form = new FormData();
@@ -97,6 +106,7 @@ export const breeze: TtsProvider = {
         signal,
       },
       {
+        retryableRejections: [429, ...BUSY_STATUSES],
         backoffMs: (status, attempt) =>
           status !== undefined && BUSY_STATUSES.has(status)
             ? BUSY_BACKOFF_MS

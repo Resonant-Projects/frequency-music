@@ -63,15 +63,12 @@ export const generateAudioUploadUrl = internalMutation({
     }
     const previous = await ctx.db
       .query("audioArtifacts")
-      .withIndex("by_contentHash", (q) =>
-        q.eq("contentHash", fields.contentHash),
-      )
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("refs.mediaJobId"), args.jobId),
-          q.eq(q.field("role"), fields.role),
-          q.neq(q.field("status"), "deleted"),
-        ),
+      .withIndex("by_job_content_role_status", (q) =>
+        q
+          .eq("refs.mediaJobId", args.jobId)
+          .eq("contentHash", fields.contentHash)
+          .eq("role", fields.role)
+          .eq("status", "pending"),
       )
       .first();
     if (previous?.storageId)

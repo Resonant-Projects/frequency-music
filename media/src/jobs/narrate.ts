@@ -56,11 +56,7 @@ export async function synthesizeRetained(
     try {
       await synth.synthesize(text, voice, file, ctx.signal);
     } catch (error) {
-      if (
-        ctx.retainedDir &&
-        !ctx.signal.aborted &&
-        error instanceof SynthesisRejectedError
-      )
+      if (ctx.retainedDir && error instanceof SynthesisRejectedError)
         await failSynthesis(ctx.retainedDir, key);
       throw error;
     }

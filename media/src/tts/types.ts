@@ -7,7 +7,7 @@ export type TtsProvider = {
   id: VoiceProvider;
   maxChars: number;
   // `signal` is the job deadline; providers pass it to the request so an
-  // aborted job does not leave a TTS call in flight.
+  // aborted job stops waiting; the provider may still finish or charge.
   synthesize: (
     text: string,
     voice: VoiceEntry,
@@ -19,11 +19,11 @@ export type TtsProvider = {
 // One attempt may not hang past this: a provider that accepts the request
 // and never answers would otherwise hold the job until the runner's lease
 // deadline. Like media/src/convex.ts, the timeout rides alongside the job
-// signal, so neither can outlive the other. A timed-out attempt is retried
-// like any other failed attempt.
+// signal. A timeout leaves the provider outcome unknown and cannot authorize
+// another synthesis request.
 export const TTS_REQUEST_TIMEOUT_MS = 180_000;
 
-// TTS failure policy: two retries with backoff, then fail with the
+// TTS failure policy: explicit rate-limit rejections get two retries, then fail with the
 // provider's status code only. The response body is never read into the
 // error (it may echo the request, including the key), and a network-level
 // failure surfaces without the URL (whose query string may carry a key) or
@@ -33,8 +33,10 @@ export const TTS_REQUEST_TIMEOUT_MS = 180_000;
 // it renders another request) without changing the attempt count.
 export type RetryOptions = {
   attempts?: number;
-  // Delay before the next attempt, given the failed status (undefined for a
-  // network error) and the 1-based number of the attempt that just failed.
+  // Provider-specific statuses that definitively reject before synthesis.
+  // Breeze also uses 409/503 for busy/loading; hosted providers default to 429.
+  retryableRejections?: readonly number[];
+  // Delay before another rejected attempt.
   backoffMs?: (status: number | undefined, attempt: number) => number;
   // Per-attempt cap; tests shorten it. Production uses TTS_REQUEST_TIMEOUT_MS.
   timeoutMs?: number;
@@ -80,45 +82,55 @@ export async function fetchAudioWithRetry(
   options: RetryOptions = {},
 ): Promise<ArrayBuffer> {
   const attempts = options.attempts ?? 3;
+  if (!Number.isInteger(attempts) || attempts < 1)
+    throw new SynthesisRejectedError("TTS attempts must be a positive integer");
+  const retryable = options.retryableRejections ?? [429];
   const backoffMs =
     options.backoffMs ?? ((_status, attempt) => defaultBackoffMs(attempt));
   const timeoutMs = options.timeoutMs ?? TTS_REQUEST_TIMEOUT_MS;
   const deadline = init.signal ?? undefined;
-  let lastStatus: number | undefined;
-  let ambiguous = false;
   for (let attempt = 1; attempt <= attempts; attempt++) {
+    if (deadline?.aborted)
+      throw new SynthesisRejectedError(
+        "TTS request cancelled before synthesis",
+      );
+    let response: Response;
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         ...init,
         redirect: "error",
         signal: attemptSignal(deadline, timeoutMs),
       });
       if (response.ok) return await response.arrayBuffer();
-      lastStatus = response.status;
-      if (
-        lastStatus < 400 ||
-        lastStatus >= 500 ||
-        lastStatus === 408 ||
-        lastStatus === 499
-      )
-        ambiguous = true;
     } catch (error) {
-      // The caller's deadline is not a provider failure; stop immediately.
-      // An attempt timeout is one, and is retried like a network error.
       if (deadline?.aborted) throw error;
-      lastStatus = undefined;
-      ambiguous = true;
+      // A transport failure or lost response cannot prove synthesis stopped.
+      throw new Error(
+        "TTS request failed (ambiguous transport failure; refusing synthesis retry)",
+      );
     }
-    if (attempt < attempts) {
-      await sleep(backoffMs(lastStatus, attempt), deadline);
+    const status = response.status;
+    const rejected =
+      retryable.includes(status) ||
+      (status >= 400 && status < 500 && status !== 408 && status !== 499);
+    if (!rejected)
+      throw new Error(
+        `TTS request failed with status ${status} (synthesis outcome unknown)`,
+      );
+    if (!retryable.includes(status) || attempt === attempts)
+      throw new SynthesisRejectedError(
+        `TTS request failed with status ${status}`,
+      );
+    try {
+      await sleep(backoffMs(status, attempt), deadline);
+    } catch {
+      // Every prior request was explicitly rejected. No next request began.
+      throw new SynthesisRejectedError(
+        "TTS retry cancelled after provider rejection",
+      );
     }
   }
-  const Failure = ambiguous ? Error : SynthesisRejectedError;
-  throw new Failure(
-    lastStatus === undefined
-      ? `TTS request failed after ${attempts} attempts (network error)`
-      : `TTS request failed with status ${lastStatus}`,
-  );
+  throw new Error("TTS retry loop did not settle");
 }
 
 export function requireEnv(name: string): string {

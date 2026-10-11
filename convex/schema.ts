@@ -839,6 +839,12 @@ export default defineSchema({
     .index("by_access_kind_createdAt", ["access", "kind", "createdAt"])
     .index("by_blindGroupId", ["blindGroupId"])
     .index("by_refs_compositionId", ["refs.compositionId"])
+    .index("by_job_content_role_status", [
+      "refs.mediaJobId",
+      "contentHash",
+      "role",
+      "status",
+    ])
     .index("by_contentHash", ["contentHash"])
     .index("by_storageId", ["storageId"]),
 
