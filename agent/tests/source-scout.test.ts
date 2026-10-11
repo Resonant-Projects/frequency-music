@@ -113,48 +113,48 @@ describe("source scout routing", () => {
 });
 
 describe("source scout execution caps and resilience", () => {
-  test.each([
-    false,
-    true,
-  ])("reserves all ten domain and conjecture gaps when planner failure is %s", async (failure) => {
-    const targets = {
-      thinDomains: Array.from({ length: 5 }, (_, index) => ({
-        domain: `domain-${index}`,
-        onMissionConceptCount: 0,
-        sourceCount: 0,
-      })),
-      starvedConjectures: Array.from({ length: 5 }, (_, index) => ({
-        correspondenceId: `conjecture-${index}`,
-        statement: `Test correspondence ${index}`,
-        conceptA: "beating",
-        conceptB: "roughness",
-        evidenceCount: 0,
-      })),
-    };
-    const result = await createPlanQueriesNode({
-      planner: {
-        invoke: vi.fn(async () => {
-          if (failure) throw new Error("planner unavailable");
-          return {
-            queries: Array.from({ length: 10 }, (_, index) => ({
-              query: `repeat ${index}`,
-              targetGap: "thin-domain:domain-0",
-              rationale: "Research this domain.",
-            })),
-          };
-        }),
-      },
-      callTool: vi.fn(async () => ({})),
-    })({ targets });
-    expect(result.plannedQueries).toHaveLength(MAX_SEARCH_CALLS);
-    expect(result.plannedQueries?.map((query) => query.targetGap)).toEqual([
-      ...targets.thinDomains.map((target) => `thin-domain:${target.domain}`),
-      ...targets.starvedConjectures.map(
-        (target) => `starved-conjecture:${target.correspondenceId}`,
-      ),
-    ]);
-    expect(result.plannedQueries?.[5]?.query).toContain("beating roughness");
-  });
+  test.each([false, true])(
+    "reserves all ten domain and conjecture gaps when planner failure is %s",
+    async (failure) => {
+      const targets = {
+        thinDomains: Array.from({ length: 5 }, (_, index) => ({
+          domain: `domain-${index}`,
+          onMissionConceptCount: 0,
+          sourceCount: 0,
+        })),
+        starvedConjectures: Array.from({ length: 5 }, (_, index) => ({
+          correspondenceId: `conjecture-${index}`,
+          statement: `Test correspondence ${index}`,
+          conceptA: "beating",
+          conceptB: "roughness",
+          evidenceCount: 0,
+        })),
+      };
+      const result = await createPlanQueriesNode({
+        planner: {
+          invoke: vi.fn(async () => {
+            if (failure) throw new Error("planner unavailable");
+            return {
+              queries: Array.from({ length: 10 }, (_, index) => ({
+                query: `repeat ${index}`,
+                targetGap: "thin-domain:domain-0",
+                rationale: "Research this domain.",
+              })),
+            };
+          }),
+        },
+        callTool: vi.fn(async () => ({})),
+      })({ targets });
+      expect(result.plannedQueries).toHaveLength(MAX_SEARCH_CALLS);
+      expect(result.plannedQueries?.map((query) => query.targetGap)).toEqual([
+        ...targets.thinDomains.map((target) => `thin-domain:${target.domain}`),
+        ...targets.starvedConjectures.map(
+          (target) => `starved-conjecture:${target.correspondenceId}`,
+        ),
+      ]);
+      expect(result.plannedQueries?.[5]?.query).toContain("beating roughness");
+    },
+  );
 
   test("covers each thin domain before repeated queries or conjectures", async () => {
     const targets = {
