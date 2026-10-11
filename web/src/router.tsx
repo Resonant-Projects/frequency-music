@@ -2,11 +2,21 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Link,
   Outlet,
   RouterProvider,
 } from "@tanstack/solid-router";
-import { type Component, createEffect, createSignal, lazy } from "solid-js";
+import {
+  type Component,
+  createEffect,
+  createSignal,
+  lazy,
+  onMount,
+  onCleanup,
+} from "solid-js";
+import { AppNavigation } from "./components/app-navigation";
+import { appLinks } from "./lib/app-navigation";
+import { SiteSearch } from "./components/site-search";
+import { SpaceNavigationProvider } from "./lib/space-navigation";
 import { UIBadge, UICard } from "./components/ui";
 import {
   buildHostedSignInUrl,
@@ -131,67 +141,40 @@ if (typeof window !== "undefined") {
   void Zodiac3D.preload().catch(() => undefined);
 }
 
-const appLinks = [
-  { to: "/", label: "Home" },
-  { to: "/ingest", label: "Ingest" },
-  { to: "/display", label: "Display" },
-  { to: "/essays", label: "Essays" },
-  { to: "/hypotheses", label: "Hypotheses" },
-  { to: "/theses", label: "Theses" },
-  { to: "/recipes", label: "Recipes" },
-  { to: "/correspondences", label: "Correspondences" },
-  { to: "/weekly-turns", label: "Weekly Turns" },
-  { to: "/compositions", label: "Compositions" },
-  { to: "/editorial", label: "Editorial" },
-  { to: "/failures", label: "Failures" },
-  { to: "/feedback", label: "Feedback" },
-  { to: "/listen", label: "Listen" },
-  { to: "/agent-runs", label: "Agent Runs" },
-  { to: "/agent-drafts", label: "Review Queue" },
-  { to: "/vocabulary-triage", label: "Triage" },
-  { to: "/admin", label: "Admin" },
-] as const;
-
 const AppShell: Component = () => {
-  const [menuOpen, setMenuOpen] = createSignal(false);
+  const [menu, setMenu] = createSignal("");
+  let header!: HTMLElement;
+  onMount(() => {
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        "--app-header-height",
+        `${header.offsetHeight}px`,
+      );
+    });
+    observer.observe(header);
+    onCleanup(() => observer.disconnect());
+  });
 
   return (
-    <div class="app-root">
-      <header class="app-header">
-        <div class="app-title">
-          <span class="app-title-mark">∴</span> Frequency Music
-        </div>
-        <button
-          type="button"
-          class="app-nav-toggle"
-          aria-expanded={menuOpen()}
-          aria-controls="app-nav-menu"
-          aria-label="Toggle navigation menu"
-          onClick={() => setMenuOpen((prev) => !prev)}
+    <SpaceNavigationProvider>
+      <div class="app-root">
+        <header
+          ref={(element) => {
+            header = element;
+          }}
+          class="app-header"
         >
-          ≡
-        </button>
-        <nav
-          id="app-nav-menu"
-          class="app-nav"
-          classList={{ "is-open": menuOpen() }}
-        >
-          {appLinks.map((link) => (
-            <Link
-              to={link.to}
-              class="app-nav-link"
-              activeProps={{ class: "app-nav-link is-active" }}
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </header>
-      <main class="app-main">
-        <Outlet />
-      </main>
-    </div>
+          <div class="app-title">
+            <span class="app-title-mark">∴</span> Frequency Music
+          </div>
+          <AppNavigation value={menu()} onValueChange={setMenu} />
+          <SiteSearch pages={appLinks} onOpen={() => setMenu("")} />
+        </header>
+        <main class="app-main">
+          <Outlet />
+        </main>
+      </div>
+    </SpaceNavigationProvider>
   );
 };
 
