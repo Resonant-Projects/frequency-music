@@ -2,7 +2,6 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Link,
   Outlet,
   RouterProvider,
 } from "@tanstack/solid-router";
@@ -11,9 +10,13 @@ import {
   createEffect,
   createSignal,
   lazy,
-  onCleanup,
   onMount,
+  onCleanup,
 } from "solid-js";
+import { AppNavigation } from "./components/app-navigation";
+import { appLinks } from "./lib/app-navigation";
+import { SiteSearch } from "./components/site-search";
+import { SpaceNavigationProvider } from "./lib/space-navigation";
 import { UIBadge, UICard } from "./components/ui";
 import {
   buildHostedSignInUrl,
@@ -139,116 +142,40 @@ if (typeof window !== "undefined" && window.location.pathname === "/") {
   void Zodiac3D.preload().catch(() => undefined);
 }
 
-const appLinks = [
-  { to: "/", label: "Home" },
-  { to: "/ingest", label: "Ingest" },
-  { to: "/display", label: "Display" },
-  { to: "/essays", label: "Essays" },
-  { to: "/hypotheses", label: "Hypotheses" },
-  { to: "/theses", label: "Theses" },
-  { to: "/recipes", label: "Recipes" },
-  { to: "/correspondences", label: "Correspondences" },
-  { to: "/weekly-turns", label: "Weekly Turns" },
-  { to: "/compositions", label: "Compositions" },
-  { to: "/editorial", label: "Editorial" },
-  { to: "/failures", label: "Failures" },
-  { to: "/feedback", label: "Feedback" },
-  { to: "/listen", label: "Listen" },
-  { to: "/agent-runs", label: "Agent Runs" },
-  { to: "/agent-drafts", label: "Review Queue" },
-  { to: "/vocabulary-triage", label: "Triage" },
-  { to: "/admin", label: "Admin" },
-] as const;
-
 const AppShell: Component = () => {
-  const [menuOpen, setMenuOpen] = createSignal(false);
-  let headerEl: HTMLElement | undefined;
-
-  // The nav wraps to a second row on viewports narrower than its 18 links, so
-  // the fixed header is taller than the 52px `--app-header-height` default.
-  // Publish the measured height (while the mobile menu is closed) so `main`
-  // never slides underneath it.
+  const [menu, setMenu] = createSignal("");
+  let header!: HTMLElement;
   onMount(() => {
-    if (!headerEl) return;
-    const root = document.documentElement;
-    // Matches the `.app-nav` collapse breakpoint in index.css. Only an OPEN
-    // mobile menu makes the header taller than its resting height; on the
-    // desktop layout the open flag is inert, so it must not block updates.
-    const mobileLayout = window.matchMedia("(max-width: 767px)");
-    let published = 0;
-    let measured = 0;
-    const publish = () => {
-      if ((menuOpen() && mobileLayout.matches) || measured === published) {
-        return;
-      }
-      published = measured;
-      root.style.setProperty("--app-header-height", `${published}px`);
-    };
-    const observer = new ResizeObserver(([entry]) => {
-      measured = Math.ceil(
-        entry.borderBoxSize?.[0]?.blockSize ??
-          entry.target.getBoundingClientRect().height,
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        "--app-header-height",
+        `${header.offsetHeight}px`,
       );
-      publish();
     });
-    observer.observe(headerEl);
-    createEffect(publish);
-    // Leaving the mobile layout with the menu open would otherwise leave the
-    // flag set (and the toggle hidden) until the next tap.
-    const onLayoutChange = () => {
-      if (!mobileLayout.matches) setMenuOpen(false);
-      publish();
-    };
-    mobileLayout.addEventListener("change", onLayoutChange);
-    onCleanup(() => {
-      observer.disconnect();
-      mobileLayout.removeEventListener("change", onLayoutChange);
-      root.style.removeProperty("--app-header-height");
-    });
+    observer.observe(header);
+    onCleanup(() => observer.disconnect());
   });
 
   return (
-    <div class="app-root">
-      <header
-        class="app-header"
-        ref={(element) => {
-          headerEl = element;
-        }}
-      >
-        <div class="app-title">
-          <span class="app-title-mark">∴</span> Frequency Music
-        </div>
-        <button
-          type="button"
-          class="app-nav-toggle"
-          aria-expanded={menuOpen()}
-          aria-controls="app-nav-menu"
-          aria-label="Toggle navigation menu"
-          onClick={() => setMenuOpen((prev) => !prev)}
+    <SpaceNavigationProvider>
+      <div class="app-root">
+        <header
+          ref={(element) => {
+            header = element;
+          }}
+          class="app-header"
         >
-          ≡
-        </button>
-        <nav
-          id="app-nav-menu"
-          class="app-nav"
-          classList={{ "is-open": menuOpen() }}
-        >
-          {appLinks.map((link) => (
-            <Link
-              to={link.to}
-              class="app-nav-link"
-              activeProps={{ class: "app-nav-link is-active" }}
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </header>
-      <main class="app-main">
-        <Outlet />
-      </main>
-    </div>
+          <div class="app-title">
+            <span class="app-title-mark">∴</span> Frequency Music
+          </div>
+          <AppNavigation value={menu()} onValueChange={setMenu} />
+          <SiteSearch pages={appLinks} onOpen={() => setMenu("")} />
+        </header>
+        <main class="app-main">
+          <Outlet />
+        </main>
+      </div>
+    </SpaceNavigationProvider>
   );
 };
 

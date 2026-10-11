@@ -45,3 +45,4 @@ agent/env.d.ts
 .worktrees/
 .vercel
 __pycache__/
+.impeccable/review/

@@ -19,8 +19,13 @@ const CONCEPT_DETAIL_LINK_LIMIT = 20;
 
 function leanConcept(
   concept: Doc<"concepts">,
-): Omit<Doc<"concepts">, "embedding" | "embeddingModel"> {
-  const { embedding: _embedding, embeddingModel: _model, ...lean } = concept;
+): Omit<Doc<"concepts">, "embedding" | "embeddingModel" | "lastProbedAt"> {
+  const {
+    embedding: _embedding,
+    embeddingModel: _model,
+    lastProbedAt: _lastProbedAt,
+    ...lean
+  } = concept;
   return lean;
 }
 

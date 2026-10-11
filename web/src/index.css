@@ -59,6 +59,8 @@ body {
 }
 
 .app-title {
+  flex: none;
+  white-space: nowrap;
   color: var(--colors-zodiac-gold);
   display: flex;
   align-items: center;
@@ -72,76 +74,11 @@ body {
   margin-right: 2px;
 }
 
-.app-nav-toggle {
-  display: none;
-  background: transparent;
-  border: 1px solid
-    color-mix(in srgb, var(--colors-zodiac-gold) 20%, transparent);
-  color: var(--colors-zodiac-gold);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 22px;
-  line-height: 1;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.app-nav-toggle:hover {
-  border-color: color-mix(in srgb, var(--colors-zodiac-gold) 45%, transparent);
-}
-
-.app-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.app-nav-link {
-  border: 1px solid
-    color-mix(in srgb, var(--colors-zodiac-gold) 20%, transparent);
-  color: color-mix(in srgb, var(--colors-zodiac-cream) 70%, transparent);
-  font-family: "JetBrains Mono", monospace;
-  text-decoration: none;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-size: 11px;
-  padding: 4px 8px;
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
-  transition:
-    color 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.app-nav-link:hover {
-  color: var(--colors-zodiac-cream);
-  border-color: color-mix(in srgb, var(--colors-zodiac-gold) 45%, transparent);
-}
-
-.app-nav-link.is-active {
-  color: var(--colors-zodiac-void);
-  background: var(--colors-zodiac-gold);
-  border-color: var(--colors-zodiac-gold);
-}
-
 /* The system focus ring on every focusable element. Zero specificity, so a
    component class (inputs use a 1px offset) still wins. */
 :where(a, button, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--colors-zodiac-gold);
   outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-nav-link,
-  .app-nav-toggle {
-    transition-duration: 0s;
-  }
 }
 
 .app-main {
@@ -211,59 +148,15 @@ body {
     transparent;
 }
 
-/* ── Mobile responsive navigation ── */
-
-@media (max-width: 767px) {
-  .app-nav-toggle {
-    display: block;
-    min-height: 44px;
-    min-width: 44px;
-  }
-
+@media (max-width: 850px) {
   .app-header {
-    flex-wrap: wrap;
+    gap: 0.5rem;
   }
-
-  .app-nav {
-    display: none;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    width: 100%;
-    gap: 0;
-    order: 3;
-    border-top: 1px solid
-      color-mix(in srgb, var(--colors-zodiac-gold) 15%, transparent);
-    padding-top: 4px;
-    margin-top: 4px;
+  .app-header > .site-search {
+    order: 1;
+    margin-inline-start: auto;
   }
-
-  .app-nav.is-open {
-    display: flex;
-    max-height: calc(100vh - var(--app-header-height));
-    overflow-y: auto;
-  }
-
-  .app-nav .app-nav-link {
-    padding: 10px 16px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-    border: none;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--colors-zodiac-gold) 10%, transparent);
-  }
-
-  .app-nav .app-nav-link:last-child {
-    border-bottom: none;
-  }
-
-  .app-nav .app-nav-link.is-active {
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--colors-zodiac-gold) 10%, transparent);
-  }
-
-  .app-nav .app-nav-link.is-active:last-child {
-    border-bottom: none;
+  .app-header > .app-nav {
+    order: 2;
   }
 }

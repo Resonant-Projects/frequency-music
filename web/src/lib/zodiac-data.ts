@@ -188,6 +188,23 @@ export function dotWorldPos(
   };
 }
 
+// Map concept domains (9) to zodiac display sectors (6)
+const CONCEPT_DOMAIN_TO_SECTOR: Record<string, string> = {
+  mathematics: "math",
+  acoustics: "wave",
+  tuning: "music",
+  theory: "music",
+  psychoacoustics: "psycho",
+  geometry: "geometry",
+  production: "synthesis",
+  instrument: "synthesis",
+  general: "music", // fallback
+};
+
+export function conceptDomainToSector(domain: string): string {
+  return CONCEPT_DOMAIN_TO_SECTOR[domain] ?? "music";
+}
+
 type PipelineStatus = SourceStatus | HypothesisStatus | RecipeStatus;
 
 // Compile-checked against the contract: an unknown key here is now a type error.

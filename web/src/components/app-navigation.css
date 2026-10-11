@@ -1,0 +1,157 @@
+.app-nav {
+  --nav-line: color-mix(in oklch, var(--nav-gold) 23%, var(--nav-void));
+  --nav-muted: color-mix(in oklch, var(--nav-cream) 72%, var(--nav-void));
+  margin-inline-start: auto;
+}
+.app-nav-list {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.app-nav-list > [data-part="item"] {
+  position: relative;
+}
+.app-nav-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-block-size: 44px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--nav-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  font:
+    11px "JetBrains Mono",
+    monospace;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.app-nav-control svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+.app-nav-control[data-current],
+.app-nav-control.is-current-group {
+  color: var(--nav-gold);
+  border-block-end-color: var(--nav-gold);
+}
+.app-nav-control[data-state="open"] {
+  position: relative;
+  z-index: 1;
+  color: var(--nav-cream);
+  border-color: var(--nav-line);
+  border-block-end-color: var(--nav-void);
+  background: var(--nav-void);
+}
+.app-nav-control[data-state="open"] svg {
+  rotate: 180deg;
+}
+.app-menu-panel {
+  position: absolute;
+  inset-block-start: calc(100% - 1px);
+  inset-inline-end: 0;
+  inline-size: min(21rem, calc(100vw - 2rem));
+  max-block-size: calc(100dvh - var(--app-header-height) - 1rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem;
+  border: 1px solid var(--nav-line);
+  background: var(--nav-void);
+  color: var(--nav-cream);
+  scrollbar-width: thin;
+  scrollbar-color: var(--nav-line) transparent;
+}
+.app-menu-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.25rem;
+}
+.app-menu-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+  min-block-size: 44px;
+  padding: 0.8rem;
+  color: var(--nav-cream);
+  text-decoration: none;
+  font-size: 21px;
+  line-height: 1.2;
+}
+.app-menu-link small {
+  color: var(--nav-muted);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.app-menu-link[data-current] {
+  background: color-mix(in oklch, var(--nav-gold) 10%, var(--nav-void));
+  color: var(--nav-gold);
+}
+.app-nav :is(a, button):focus-visible {
+  outline: 2px solid var(--nav-gold);
+  outline-offset: 2px;
+}
+.app-menu-link:active {
+  background: var(--nav-line);
+}
+.app-nav-mobile {
+  display: none;
+}
+.app-nav ::selection {
+  background: var(--nav-gold);
+  color: var(--nav-void);
+}
+@media (hover: hover) and (pointer: fine) {
+  .app-nav-control:not([data-state="open"]):hover,
+  .app-menu-link:hover {
+    background: color-mix(in oklch, var(--nav-gold) 8%, var(--nav-void));
+    color: var(--nav-gold);
+  }
+}
+@media (max-width: 850px) {
+  .app-nav-desktop {
+    display: none;
+  }
+  .app-nav-mobile {
+    display: block;
+  }
+  .app-nav {
+    margin-inline-start: 0;
+  }
+  .app-mobile-trigger {
+    padding-inline: 0.5rem;
+  }
+  .app-mobile-trigger svg {
+    inline-size: 19px;
+    block-size: 19px;
+  }
+  .app-mobile-trigger[data-state="open"] svg {
+    rotate: none;
+  }
+  .app-menu-mobile {
+    inline-size: min(30rem, calc(100vw - 2rem));
+  }
+  .app-menu-group {
+    border-block-start: 1px solid var(--nav-line);
+    margin-block-start: 0.75rem;
+    padding-block-start: 1rem;
+  }
+  .app-menu-group h2 {
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--nav-gold);
+    margin: 0 0.8rem 0.5rem;
+  }
+}
+@media (max-width: 420px) {
+  .app-mobile-trigger {
+    min-inline-size: 44px;
+  }
+  .app-mobile-trigger span {
+    display: none;
+  }
+}

@@ -1,1826 +1,683 @@
-// Design 6: ZODIAC 3D — Illuminated Astrolabe Knowledge Orrery
-// Three.js 3D implementation of the ZODIAC design with live Convex metrics.
-// Phases 1-3: Constellations, Armillary Rings, Planetary Orrery with sidebar drill-down.
-
-import { Link } from "@tanstack/solid-router";
-import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createEffect,
   createMemo,
   createSignal,
   For,
-  Index,
-  type JSX,
-  on,
   onCleanup,
   onMount,
   Show,
   untrack,
 } from "solid-js";
-import { Dynamic } from "solid-js/web";
-import { css, cva, cx } from "../../styled-system/css";
-import { sameIds } from "../lib/keyed-rows";
-import { token } from "../../styled-system/tokens";
-import {
-  createAnnouncer,
-  eyebrowClass,
-  focusRingStyle,
-  srOnlyClass,
-  UIList,
-  UINotice,
-} from "../components/ui";
-import { createQuery, createQueryWithStatus } from "../integrations/convex";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
-import type { ConstellationEdge } from "../lib/zodiac-constellations";
+import { createQueryWithStatus } from "../integrations/convex";
+import { COLORS, SECTORS } from "../lib/zodiac-data";
 import { prefersReducedMotion, watchReducedMotion } from "../lib/zodiac-camera";
-import { SECTORS, type SectorDef } from "../lib/zodiac-data";
 import {
-  buildOrbitalItemGroups,
-  type OrbitalItem,
-  type OrbitalItemGroups,
-  orbitalItemSector,
-} from "../lib/zodiac-orbits";
-import { initZodiacScene, type ZodiacHandle } from "../lib/zodiac-scene";
-import type {
-  ConceptDetailData,
-  ConstellationConcept,
-  ItemRelation,
-  PipelineItems,
-  ZodiacConstellationEdge,
-  ZodiacSubTopic,
-} from "../lib/zodiac-types";
-
-// ---------------------------------------------------------------------------
-// PandaCSS style constants — Sidebar
-// ---------------------------------------------------------------------------
-
-// -- Layout --
-
-// Below `lg` the canvas takes a fixed 60vh band and the page scrolls
-// naturally, so the sidebar is never squeezed; from `lg` up the page is a
-// fixed-height split with the canvas flexing beside the sidebar.
-const pageContainer = css({
-  height: { base: "auto", lg: "calc(100vh - var(--app-header-height))" },
-  minHeight: { base: "calc(100vh - var(--app-header-height))", lg: "0" },
-  background: "zodiac.void",
-  color: "zodiac.cream",
-  overflowX: "hidden",
-  overflowY: { base: "visible", lg: "hidden" },
-  fontFamily: "display",
-  display: "flex",
-  flexDirection: { base: "column", lg: "row" },
-});
-
-const dotOverlay = css({
-  position: "fixed",
-  inset: "0",
-  pointerEvents: "none",
-  opacity: 0.022,
-  backgroundImage:
-    "radial-gradient(circle, {colors.zodiac.gold} 1px, transparent 1px)",
-  backgroundSize: "52px 52px",
-});
-
-const canvasWrapper = css({
-  flex: { base: "0 0 60vh", lg: "1 1 0%" },
-  // A definite height below `lg` so the canvas's 100% height resolves.
-  height: { base: "60vh", lg: "auto" },
-  position: "relative",
-  overflow: "hidden",
-  minWidth: "0",
-});
-
-const canvasEl = css({
-  width: "100%",
-  height: "100%",
-  display: "block",
-});
-
-// Hover label over the canvas; the scene positions it and toggles display.
-const sceneTooltip = css({
-  position: "absolute",
-  zIndex: 100,
-  pointerEvents: "none",
-  whiteSpace: "nowrap",
-  fontFamily: "mono",
-  fontSize: "xs",
-  color: "zodiac.gold",
-  background: "zodiac.void/88",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/35",
-  padding: "4px 8px",
-});
-
-const sidebarContainer = css({
-  width: { base: "100%", lg: "355px" },
-  display: "flex",
-  flexDirection: "column",
-  borderLeftWidth: { base: "0", lg: "1px" },
-  borderLeftColor: "zodiac.gold/12",
-  borderTopWidth: { base: "1px", lg: "0" },
-  borderTopColor: "zodiac.gold/12",
-  overflowY: "auto",
-  flexShrink: 0,
-  // Keep the last section clear of the home indicator on notched phones.
-  paddingBottom: "env(safe-area-inset-bottom)",
-});
-
-// -- Sidebar sections --
-
-const sectionDivider = {
-  borderBottomWidth: "1px",
-  borderBottomColor: "zodiac.gold/10",
-} as const;
-
-const sidebarSection = css({
-  padding: "36px 26px 20px",
-  ...sectionDivider,
-});
-
-const sidebarSectionCompact = css({
-  padding: "20px 26px",
-  ...sectionDivider,
-});
-
-const sidebarSectionScrollable = cx(
-  css({
-    padding: "16px 26px",
-    flex: "1",
-    overflowY: "auto",
-  }),
-  "zodiac-scroll",
-);
-
-const sidebarSectionDomain = css({
-  padding: "22px 26px",
-  flex: "1",
-  ...sectionDivider,
-});
-
-const sidebarSectionDomains = css({
-  padding: "16px 26px",
-  flexShrink: 0,
-});
-
-const sidebarSectionWorkflow = css({
-  padding: "0 26px 16px",
-  flexShrink: 0,
-  borderTopWidth: "1px",
-  borderTopColor: "zodiac.gold/10",
-});
-
-const sidebarSectionPipeline = css({
-  padding: "14px 26px 24px",
-  borderTopWidth: "1px",
-  borderTopColor: "zodiac.gold/10",
-});
-
-// -- Typography --
-
-// Every eyebrow and section heading in the sidebar is the shared eyebrow
-// plus a tone, tracking and spacing. Tone and tracking override the shared
-// class, so they use the doubled `&&` selector to win regardless of order.
-const eyebrowVariant = cva({
-  base: {
-    fontWeight: "400",
-    lineHeight: "1.4",
-  },
-  variants: {
-    tone: {
-      gold: {},
-      violet: { "&&": { color: "zodiac.violetText" } },
-      // Text-safe per-sector colour set on an ancestor (see sectorStyle).
-      sector: { "&&": { color: "var(--sector-text)" } },
-    },
-    tracking: {
-      normal: {},
-      wide: { "&&": { letterSpacing: "0.35em" } },
-      widest: { "&&": { letterSpacing: "0.4em" } },
-    },
-    space: {
-      tight: { marginBottom: "8px" },
-      normal: { marginBottom: "10px" },
-      loose: { marginBottom: "14px" },
-      top: { margin: "12px 0 10px" },
-      group: { margin: "16px 0 8px" },
-    },
-  },
-  defaultVariants: { tone: "gold", tracking: "normal", space: "tight" },
-});
-
-const eyebrow = (variant?: Parameters<typeof eyebrowVariant>[0]) =>
-  cx(eyebrowClass, eyebrowVariant(variant));
-
-const sidebarEyebrow = eyebrow({ tracking: "widest", space: "loose" });
-const sidebarEyebrowSector = eyebrow({
-  tone: "sector",
-  tracking: "wide",
-  space: "normal",
-});
-const sidebarEyebrowViolet = eyebrow({ tone: "violet", tracking: "wide" });
-const sidebarEyebrowGold = eyebrow({ tracking: "wide" });
-const sidebarEyebrowSection = eyebrow({ space: "normal" });
-const sidebarEyebrowSectionTop = eyebrow({ space: "top" });
-const sidebarEyebrowGroup = eyebrow({ space: "group" });
-const sidebarEyebrowTight = eyebrow();
-
-const sidebarTitle = css({
-  fontSize: "34px",
-  fontWeight: "300",
-  lineHeight: "1.15",
-  margin: "0 0 10px",
-});
-
-const sidebarTitleMd = css({
-  fontSize: "22px",
-  fontWeight: "300",
-  marginBottom: "8px",
-});
-
-const sidebarTitleDomain = cx(
-  sidebarTitleMd,
-  css({ color: "var(--sector-color)" }),
-);
-
-const sidebarTitleSubTopic = cx(sidebarTitleMd, css({ color: "zodiac.gold" }));
-
-const sidebarTitleSm = css({
-  fontSize: "24px",
-  color: "zodiac.gold",
-  fontWeight: "300",
-  marginBottom: "6px",
-});
-
-const sidebarTitleItem = css({
-  fontSize: "18px",
-  color: "zodiac.gold",
-  fontWeight: "300",
-  marginBottom: "4px",
-  lineHeight: "1.3",
-});
-
-const sidebarTitleEmphasis = css({ color: "zodiac.gold" });
-
-const sidebarBody = css({
-  fontSize: "14px",
-  fontWeight: "400",
-  lineHeight: "1.65",
-  color: "zodiac.cream/66",
-});
-
-const sidebarBodySm = css({
-  fontSize: "14px",
-  lineHeight: "1.65",
-  color: "zodiac.cream/66",
-  margin: "0 0 18px",
-});
-
-const sidebarBodyDetail = css({
-  fontSize: "14px",
-  lineHeight: "1.65",
-  color: "zodiac.cream/66",
-  margin: "0 0 16px",
-});
-
-const sidebarMeta = css({
-  fontSize: "12px",
-  color: "zodiac.cream/66",
-  marginBottom: "12px",
-});
-
-const sidebarAliases = css({
-  fontSize: "12px",
-  color: "zodiac.cream/66",
-  marginBottom: "16px",
-});
-
-const sidebarLoading = css({
-  padding: "26px",
-  color: "zodiac.cream/66",
-  fontSize: "14px",
-});
-
-const sidebarEmpty = css({
-  color: "zodiac.cream/66",
-  fontSize: "14px",
-});
-
-// -- Stats --
-
-const statRow = css({
-  display: "flex",
-  gap: "12px",
-  marginBottom: "14px",
-});
-
-const statCellGold = css({
-  flex: "1",
-  padding: "10px",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/18",
-  textAlign: "center",
-});
-
-const statCellViolet = css({
-  flex: "1",
-  padding: "10px",
-  borderWidth: "1px",
-  borderColor: "zodiac.violet/18",
-  textAlign: "center",
-});
-
-const statValueGold = css({
-  fontSize: "26px",
-  color: "zodiac.gold",
-});
-
-const statValueViolet = css({
-  fontSize: "26px",
-  color: "zodiac.violet",
-});
-
-const statLabel = css({
-  fontFamily: "mono",
-  fontSize: "10px",
-  letterSpacing: "0.25em",
-  color: "zodiac.cream/66",
-  marginTop: "2px",
-});
-
-// -- Concept tags --
-
-const conceptTagRow = css({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "4px",
-  marginBottom: "14px",
-});
-
-const conceptTag = css({
-  cursor: "pointer",
-  background: "zodiac.violet/10",
-  borderWidth: "1px",
-  borderColor: "zodiac.violet/25",
-  color: "zodiac.gold",
-  padding: "5px 10px",
-  minHeight: "28px",
-  fontSize: "xs",
-  letterSpacing: "0.04em",
-  _coarsePointer: {
-    minHeight: "44px",
-    padding: "10px 14px",
-  },
-  ...focusRingStyle,
-});
-
-const conceptTagCount = css({
-  color: "zodiac.gold/78",
-  marginLeft: "4px",
-});
-
-// -- Buttons and links --
-
-// Square-cornered instrument controls (intentional; see DESIGN.md): 12px mono
-// uppercase faces tracked 0.16em.
-const buttonFace = {
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-} as const;
-
-const openDomainLink = css({
-  ...buttonFace,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "100%",
-  textAlign: "center",
-  textDecoration: "none",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/45",
-  background: "zodiac.gold",
-  color: "zodiac.void",
-  padding: "8px 10px",
-  minHeight: "40px",
-  _coarsePointer: {
-    minHeight: "48px",
-  },
-  ...focusRingStyle,
-});
-
-const subTopicList = css({
-  marginBottom: "14px",
-});
-
-const sectorButton = css({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "7px 9px",
-  minHeight: "36px",
-  marginBottom: "3px",
-  cursor: "pointer",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/10",
-  background: "transparent",
-  transition: "all 0.2s",
-  width: "100%",
-  textAlign: "left",
-  _pressed: {
-    // The per-sector hue at a third, as before; set via --sector-color.
-    borderColor: "color-mix(in srgb, var(--sector-color) 33%, transparent)",
-    background: "zodiac.gold/5",
-  },
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRingStyle,
-});
-
-// Inactive labels drop the sector hue: the rest state is cream and only the
-// active sector carries its (text-safe) colour.
-const sectorButtonLabel = css({
-  fontSize: "14px",
-  color: "zodiac.cream/72",
-  "[aria-pressed=true] > &": {
-    color: "var(--sector-text)",
-  },
-});
-
-const sectorButtonMeta = css({
-  fontSize: "12px",
-  color: "zodiac.cream/66",
-});
-
-const workspaceGrid = css({
-  display: "grid",
-  gap: "6px",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-});
-
-const workspaceLink = css({
-  ...buttonFace,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "100%",
-  textAlign: "center",
-  textDecoration: "none",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/20",
-  background: "zodiac.glow-inner/55",
-  color: "zodiac.cream",
-  padding: "7px 8px",
-  minHeight: "32px",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRingStyle,
-});
-
-// Back, pause/resume and show-all toggles share one bar-button face.
-const barButton = css({
-  ...buttonFace,
-  cursor: "pointer",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/25",
-  background: "transparent",
-  color: "zodiac.gold",
-  padding: "5px 12px",
-  minHeight: "32px",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRingStyle,
-});
-
-const motionToggleOverview = cx(barButton, css({ marginTop: "12px" }));
-
-const barRow = css({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "8px",
-  marginBottom: "14px",
-});
-
-const showAllToggle = cx(barButton, css({ marginBottom: "14px" }));
-
-// -- Pipeline --
-
-const pipelineRow = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "5px",
-  flexWrap: "wrap",
-});
-
-const pipelineCell = css({
-  textAlign: "center",
-  minWidth: "46px",
-});
-
-const pipelineCellValue = css({
-  fontSize: "15px",
-  color: "zodiac.gold",
-});
-
-const pipelineCellLabel = css({
-  fontFamily: "mono",
-  fontSize: "10px",
-  letterSpacing: "0.2em",
-  color: "zodiac.cream/66",
-});
-
-const pipelineArrow = css({
-  fontSize: "10px",
-  color: "zodiac.gold/55",
-  marginBottom: "8px",
-});
-
-const pipelineSectionContainer = css({
-  marginBottom: "16px",
-});
-
-// -- List buttons (sub-topics, concepts in a cluster, pipeline items) --
-
-const listButtonBase = {
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  cursor: "pointer",
-  padding: "6px 8px",
-  minHeight: "36px",
-  marginBottom: "3px",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/12",
-  background: "transparent",
-  color: "zodiac.cream",
-  fontSize: "14px",
-  lineHeight: "1.4",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRingStyle,
-} as const;
-
-const listButton = css(listButtonBase);
-
-const relationButton = css({
-  ...listButtonBase,
-  padding: "8px",
-  marginBottom: "4px",
-});
-
-const listButtonMeta = css({
-  float: "right",
-  marginLeft: "8px",
-  color: "zodiac.gold/78",
-  fontSize: "12px",
-});
-
-const pipelineItemStatus = css({
-  fontSize: "12px",
-  color: "zodiac.cream/66",
-  marginTop: "2px",
-});
-
-const relationTypeLabel = css({
-  fontFamily: "mono",
-  fontSize: "12px",
-  letterSpacing: "0.14em",
-  color: "zodiac.violetText",
-  marginBottom: "2px",
-});
-
-const relationTitle = css({
-  color: "zodiac.cream/70",
-  fontSize: "14px",
-});
-
-// ---------------------------------------------------------------------------
-// PandaCSS style constants — WebGL fallback
-// ---------------------------------------------------------------------------
-
-const fallbackContainer = css({
-  minHeight: "calc(100vh - var(--app-header-height))",
-  background: "zodiac.void",
-  color: "zodiac.cream",
-  padding: "24px",
-});
-
-const fallbackGrid = css({
-  maxWidth: "1120px",
-  margin: "0 auto",
-  display: "grid",
-  gap: "16px",
-});
-
-const fallbackCard = css({
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/20",
-  padding: "18px",
-  borderRadius: "8px",
-  background: "zodiac.void/50",
-});
-
-const fallbackEyebrow = cva({
-  base: {
-    fontFamily: "mono",
-    fontSize: "10px",
-    fontWeight: "400",
-    letterSpacing: "0.24em",
-    color: "zodiac.gold/78",
-  },
-  variants: {
-    space: {
-      none: {},
-      normal: { marginBottom: "10px" },
-      loose: { marginBottom: "12px" },
-    },
-  },
-  defaultVariants: { space: "none" },
-});
-
-const fallbackTitle = css({
-  margin: "10px 0 8px",
-  fontSize: "34px",
-  fontWeight: "300",
-});
-
-const fallbackBody = css({
-  fontSize: "14px",
-  color: "zodiac.cream/66",
-  lineHeight: "1.6",
-});
-
-const fallbackLinkGrid = css({
-  display: "grid",
-  gap: "10px",
-  gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))",
-});
-
-const fallbackLink = css({
-  ...buttonFace,
-  display: "flex",
-  alignItems: "center",
-  height: "100%",
-  textDecoration: "none",
-  background: "zodiac.glow-inner",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/55",
-  padding: "11px 12px",
-  minHeight: "44px",
-  color: "zodiac.cream",
-  textAlign: "left",
-  ...focusRingStyle,
-});
-
-const fallbackPipelineRow = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  flexWrap: "wrap",
-});
-
-const fallbackPipelineCell = css({
-  minWidth: "72px",
-  padding: "8px",
-  borderWidth: "1px",
-  borderColor: "zodiac.gold/20",
-  textAlign: "center",
-});
-
-const fallbackPipelineValue = css({
-  fontSize: "20px",
-  color: "zodiac.gold",
-});
-
-const fallbackPipelineLabel = css({
-  fontFamily: "mono",
-  fontSize: "10px",
-  letterSpacing: "0.18em",
-  color: "zodiac.cream/66",
-});
-
-const fallbackPipelineArrow = css({
-  color: "zodiac.gold/58",
-});
-
-// ---------------------------------------------------------------------------
-
-const sectorRouteMap = {
-  math: "/display",
-  wave: "/ingest",
-  music: "/recipes",
-  psycho: "/hypotheses",
-  geometry: "/weekly-turns",
-  synthesis: "/compositions",
-} as const;
-
-function sectorRoute(id: string) {
-  return sectorRouteMap[id as keyof typeof sectorRouteMap] ?? "/display";
-}
-
-const workspaceLinks = [
-  { label: "Display", to: "/display" },
-  { label: "Ingest", to: "/ingest" },
-  { label: "Hypotheses", to: "/hypotheses" },
-  { label: "Recipes", to: "/recipes" },
-  { label: "Essays", to: "/essays" },
-  { label: "Weekly Turns", to: "/weekly-turns" },
-  { label: "Compositions", to: "/compositions" },
-  { label: "Feedback", to: "/feedback" },
-  { label: "Admin", to: "/admin" },
-] as const;
-
-// Per-sector colour reaches DOM text and borders through CSS variables on an
-// ancestor, so one class serves every sector.
-function sectorStyle(sector: SectorDef): JSX.CSSProperties {
-  return {
-    "--sector-color": token.var(sector.colorToken),
-    "--sector-text": token.var(sector.textToken),
-  };
-}
-
-function formatCount(value: number | null) {
-  return value === null ? "—" : String(value);
-}
-
-const CONCEPT_PREVIEW_COUNT = 12;
-const PIPELINE_ITEM_PREVIEW_COUNT = 5;
-
-// The orbital rings, in the order the scene draws them, with the item type
-// the sidebar's item-detail mode expects (same mapping as a body click).
-const ORBITAL_GROUPS = [
-  { key: "sources", label: "SOURCES", type: "source" },
-  { key: "extractions", label: "EXTRACTIONS", type: "extraction" },
-  { key: "hypotheses", label: "HYPOTHESES", type: "hypothesis" },
-  { key: "recipes", label: "RECIPES", type: "recipe" },
-] as const;
-
-const ITEM_TYPE_LABELS: Record<string, string> = {
-  source: "Source",
-  extraction: "Extraction",
-  hypothesis: "Hypothesis",
-  recipe: "Recipe",
+  ATLAS_LAYERS,
+  atlasId,
+  buildAtlas,
+  mergeAtlas,
+  mergeDiscoveredNodes,
+  relationshipLabel,
+  type AtlasEdge,
+  type AtlasKind,
+  type AtlasNode,
+} from "../lib/knowledge-atlas";
+import {
+  createAtlasScene,
+  type AtlasScene,
+} from "../lib/knowledge-atlas-scene";
+import type { ConstellationConcept } from "../lib/zodiac-types";
+import { useSpaceNavigation } from "../lib/space-navigation";
+import "./knowledge-atlas.css";
+
+const layerNames: Record<AtlasKind, string> = {
+  domain: "Domains",
+  concept: "Concepts",
+  source: "Sources",
+  extraction: "Extractions",
+  hypothesis: "Hypotheses",
+  recipe: "Recipes",
+};
+const destinations: Partial<Record<AtlasKind, string>> = {
+  source: "/display",
+  extraction: "/display",
+  hypothesis: "/hypotheses",
+  recipe: "/recipes",
 };
 
-type SectorMetricRow = {
-  id: string;
-  sources: number;
-  claims: number;
-};
-
-type SidebarView =
-  | { kind: "overview" }
-  | { kind: "concept-detail"; conceptId: Id<"concepts"> }
-  | { kind: "sub-topic"; label: string; conceptNames: string[] }
-  | { kind: "item-detail"; itemId: string; itemType: string; title: string };
-
-/** Where focus goes once the panel a mode change mounts is in the page. */
-type FocusIntent = {
-  /** On Back: the overview control to return to, if it still exists. */
-  originKey?: string;
-  /** Canvas-driven changes must not scroll the page to the sidebar. */
-  preventScroll?: boolean;
-};
-
-type SidebarMode = SidebarView & {
-  /** The overview control that opened this drill-down, for Back. */
-  origin?: string;
-  /** Present on every user-driven change; absent on first render. */
-  focus?: FocusIntent;
-};
-
-type PipelineListItem = { id: string; title?: string; status: string };
-
-type LinkedDoc = { _id: string; title?: string; status: string };
-
-function toListItem(doc: LinkedDoc): PipelineListItem {
-  return { id: doc._id, title: doc.title, status: doc.status };
-}
-
-/** A live list's keys, unchanged (same array) while a push keeps them. */
-function createIds<T, K extends string>(
-  list: () => readonly T[],
-  idOf: (item: T) => K,
-) {
-  return createMemo<K[]>(() => list().map(idOf), [], { equals: sameIds });
+function AtlasMark(props: { kind: AtlasKind }) {
+  return (
+    <svg
+      class="atlas-mark"
+      data-kind={props.kind}
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.3"
+      aria-hidden="true"
+    >
+      <Show when={props.kind === "source" || props.kind === "domain"}>
+        <circle cx="10" cy="10" r="5" />
+        <Show when={props.kind === "domain"}>
+          <ellipse
+            cx="10"
+            cy="10"
+            rx="9"
+            ry="3"
+            transform="rotate(-35 10 10)"
+          />
+        </Show>
+      </Show>
+      <Show when={props.kind === "concept" || props.kind === "hypothesis"}>
+        <path d="M10 2 17 10 10 18 3 10Z" />
+        <Show when={props.kind === "concept"}>
+          <path d="M10 2v16M3 10h14" />
+        </Show>
+      </Show>
+      <Show when={props.kind === "extraction"}>
+        <path d="m10 3 7 13H3Z" />
+      </Show>
+      <Show when={props.kind === "recipe"}>
+        <path d="M4 4h12v12H4Z" />
+      </Show>
+    </svg>
+  );
 }
 
 export function Zodiac3D() {
-  onMount(() => {
-    document.title = "Zodiac — Frequency Music";
-  });
-
-  const [selSector, setSelSector] = createSignal<string>("math");
-  const [webglUnavailable, setWebglUnavailable] = createSignal(false);
-  const [sidebarMode, setSidebarMode] = createSignal<SidebarMode>({
-    kind: "overview",
-  });
-  // Lists the reader has expanded past their preview count. Kept here, not in
-  // the panels, so Back returns to the list exactly as it was left.
-  const [expandedLists, setExpandedLists] = createSignal<ReadonlySet<string>>(
-    new Set(),
-  );
-  // Polite announcement of mode changes that start on the canvas, where focus
-  // cannot follow (the panel title announces sidebar-driven changes itself).
-  const [liveStatus, announce] = createAnnouncer();
-
-  // --- Convex Queries (existing, stable) ---
-  const sectorMetrics = createQuery(api.dashboard.zodiacSectors, () => ({
-    limit: 200,
-  }));
-  const pipeline = createQuery(api.dashboard.pipeline);
-
-  // --- New queries (use createQueryWithStatus so errors don't crash the page) ---
-
-  // Phase 1: Concepts for active sector
-  const domainConceptsQ = createQueryWithStatus(
-    api.graph.getConceptsForDomain,
-    () => ({
-      domain: selSector(),
-      limit: 40,
-    }),
-  );
-  const domainConcepts = createMemo<ConstellationConcept[]>(
-    () => (domainConceptsQ.data() ?? []) as ConstellationConcept[],
-  );
-  const conceptsById = createMemo(
-    () => new Map(domainConcepts().map((concept) => [concept._id, concept])),
-  );
-  const conceptsByName = createMemo(
-    () => new Map(domainConcepts().map((concept) => [concept.name, concept])),
-  );
-
-  // Phase 1: Edges between those concepts. The names are the next query's
-  // argument, so they only change when the names do.
-  const conceptNames = createIds(domainConcepts, (c) => c.name);
-  const conceptEdgesQ = createQueryWithStatus(
-    api.graph.getConceptEdges,
-    () => ({
-      conceptNames: conceptNames(),
-    }),
-  );
-  const conceptEdges = createMemo<ConstellationEdge[]>(() =>
-    (
-      (conceptEdgesQ.data() ?? []) as Array<{
-        fromId: string;
-        toId: string;
-        relationship: string;
-      }>
-    ).map<ZodiacConstellationEdge>((edge) => ({
-      from: edge.fromId,
-      to: edge.toId,
-      relationship: edge.relationship,
+  const domainQueries = SECTORS.map((sector) =>
+    createQueryWithStatus(api.graph.getConceptsForDomain, () => ({
+      domain: sector.id,
+      limit: 24,
     })),
   );
-
-  // Phase 1: Concept detail — conditional, only queries when sidebar is in concept-detail mode
-  const activeConceptId = createMemo<Id<"concepts"> | undefined>(() => {
-    const mode = sidebarMode();
-    return mode.kind === "concept-detail" ? mode.conceptId : undefined;
-  });
-  const conceptDetailQ = createQueryWithStatus(
-    api.graph.getConceptDetail,
-    () => {
-      const id = activeConceptId();
-      if (!id) return "skip" as const;
-      return { conceptId: id };
-    },
-  );
-  const conceptDetail = createMemo<ConceptDetailData | undefined>(() =>
-    activeConceptId()
-      ? (conceptDetailQ.data() as ConceptDetailData | undefined)
-      : undefined,
-  );
-
-  // Phase 2: Sub-topics for active sector
-  const subTopicsQ = createQueryWithStatus(
-    api.dashboard.domainSubTopics,
-    () => ({
-      domain: selSector(),
-    }),
-  );
-  const subTopics = createMemo<ZodiacSubTopic[]>(
-    () => (subTopicsQ.data() ?? []) as ZodiacSubTopic[],
-  );
-  const subTopicsByLabel = createMemo(
-    () => new Map(subTopics().map((subTopic) => [subTopic.label, subTopic])),
-  );
-  const subTopicLabels = createIds(subTopics, (subTopic) => subTopic.label);
-
-  // Phase 3: Pipeline items (live), grouped by orbital ring once per push and
-  // shared by the scene and the sidebar.
-  const pipelineItemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
-  const orbitalGroups = createMemo<OrbitalItemGroups | undefined>(() => {
-    const items = pipelineItemsQ.data() as PipelineItems | undefined;
-    return items ? buildOrbitalItemGroups(items) : undefined;
-  });
-
-  // The orbiting bodies drawn in the selected sector, per ring: the keyboard
-  // path to everything a body click reaches.
-  const sectorOrbitalItems = createMemo<OrbitalItemGroups | undefined>(() => {
-    const groups = orbitalGroups();
-    if (!groups) return undefined;
-    const sector = selSector();
-    const inSector = (items: OrbitalItem[]) =>
-      items.filter((item) => orbitalItemSector(item) === sector);
-    return {
-      sources: inSector(groups.sources),
-      extractions: inSector(groups.extractions),
-      hypotheses: inSector(groups.hypotheses),
-      recipes: inSector(groups.recipes),
-    };
-  });
-  const domainPipelineCount = createMemo(() => {
-    const groups = sectorOrbitalItems();
-    if (!groups) return 0;
-    return ORBITAL_GROUPS.reduce((sum, { key }) => sum + groups[key].length, 0);
-  });
-
-  // Phase 3: Item relations — conditional
-  const activeItem = createMemo(() => {
-    const mode = sidebarMode();
-    return mode.kind === "item-detail"
-      ? { id: mode.itemId, type: mode.itemType }
-      : undefined;
-  });
-  const itemRelationsQ = createQueryWithStatus(
-    api.dashboard.itemRelations,
-    () => {
-      const item = activeItem();
-      if (!item?.id) return "skip" as const;
-      return { itemId: item.id, itemType: item.type };
-    },
-  );
-  const itemRelations = createMemo<ItemRelation[] | undefined>(() =>
-    activeItem()
-      ? (itemRelationsQ.data() as ItemRelation[] | undefined)
-      : undefined,
-  );
-
-  // Sources/claims are null until the live metrics arrive, and render as an
-  // em dash rather than a placeholder number.
-  const sectors = createMemo(() => {
-    const rows = sectorMetrics() as SectorMetricRow[] | undefined;
-    const metrics = rows
-      ? new Map<string, { sources: number; claims: number }>(
-          rows.map((entry: SectorMetricRow) => [
-            entry.id,
-            {
-              sources: Number(entry.sources ?? 0),
-              claims: Number(entry.claims ?? 0),
-            },
-          ]),
+  const concepts = createMemo(() => [
+    ...new Map(
+      domainQueries
+        .flatMap((q, index) =>
+          ((q.data() ?? []) as ConstellationConcept[]).map((concept) => ({
+            ...concept,
+            sector: concept.domain === "general" ? "music" : SECTORS[index].id,
+          })),
         )
-      : null;
-
-    return SECTORS.map((sector) => {
-      const metric = metrics?.get(sector.id);
-      return {
-        ...sector,
-        sources: metrics ? (metric?.sources ?? 0) : null,
-        claims: metrics ? (metric?.claims ?? 0) : null,
-      };
-    });
-  });
-
-  const activeSector = createMemo(
-    () => sectors().find((sector) => sector.id === selSector()) ?? sectors()[0],
+        .map((node) => [node._id, node]),
+    ).values(),
+  ]);
+  const edgesQ = createQueryWithStatus(api.graph.getConceptEdges, () =>
+    concepts().length
+      ? { conceptNames: concepts().map((node) => node.name) }
+      : "skip",
   );
-
-  const pipelineSummary = createMemo(() => {
-    const live = pipeline();
-    return [
-      { label: "SRC", value: live?.sources ?? 0 },
-      { label: "EXT", value: live?.extractions ?? 0 },
-      { label: "HYP", value: live?.hypotheses ?? 0 },
-      { label: "REC", value: live?.recipes ?? 0 },
-      { label: "COMP", value: live?.compositions ?? 0 },
-    ];
-  });
-
-  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
-  let canvasRef!: HTMLCanvasElement;
-  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
-  let cssContainerRef!: HTMLDivElement;
-  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
-  let sidebarRef!: HTMLDivElement;
-  let sceneHandle: ZodiacHandle | null = null;
-  const [autoRotate, setAutoRotate] = createSignal(!prefersReducedMotion());
-  let stopReducedMotionWatch: (() => void) | null = null;
-
-  function toggleAutoRotate() {
-    const next = !autoRotate();
-    sceneHandle?.setAutoRotate(next);
-    setAutoRotate(next);
-  }
-
-  function isExpanded(key: string) {
-    return expandedLists().has(key);
-  }
-
-  function toggleExpanded(key: string) {
-    const next = new Set(expandedLists());
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    setExpandedLists(next);
-  }
-
-  // --- Sidebar focus management ---------------------------------------------
-  // Every user-driven mode change carries a focus intent and mounts a fresh
-  // panel (the sidebar's <Show> is keyed on the mode). The panel's title
-  // claims focus as it mounts — or, on Back, the overview control that
-  // started the drill-down — so focus never falls to <body>.
-
-  function openPanel(
-    view: SidebarView,
-    options: { originKey?: string; fromCanvas?: boolean } = {},
-  ) {
-    const current = sidebarMode();
-    setSidebarMode({
-      ...view,
-      origin: current.kind === "overview" ? options.originKey : current.origin,
-      focus: { preventScroll: options.fromCanvas },
-    });
-  }
-
-  function goBack() {
-    const current = sidebarMode();
-    if (current.kind === "overview") return;
-    setSidebarMode({ kind: "overview", focus: { originKey: current.origin } });
-    sceneHandle?.clearPullLines();
-  }
-
-  /** Ref for a panel title, or the text that stands in while it loads. */
-  function claimFocus(el: HTMLElement) {
-    const intent = untrack(sidebarMode).focus;
-    if (!intent) return;
-    // The panel mounts in this tick; focus it once it is in the document.
-    queueMicrotask(() => {
-      // Focus left <body> only if the reader moved on (the control that made
-      // the change, or a loading stand-in, unmounted with the old content).
-      const active = document.activeElement;
-      if (active && active !== document.body) return;
-      const origin = intent.originKey
-        ? sidebarRef.querySelector<HTMLElement>(
-            `[data-focus-key="${CSS.escape(intent.originKey)}"]`,
-          )
-        : null;
-      (origin ?? el).focus({ preventScroll: intent.preventScroll });
-    });
-  }
-
-  onMount(() => {
-    try {
-      sceneHandle = initZodiacScene(
-        canvasRef,
-        cssContainerRef,
-        // onSectorClick
-        (id) => {
-          setSelSector(id);
-          if (sidebarMode().kind !== "overview") {
-            openPanel({ kind: "overview" }, { fromCanvas: true });
-          }
-          const sector = SECTORS.find((s) => s.id === id);
-          if (sector) announce(`Domain: ${sector.label}`);
-        },
-        // onConceptClick
-        (conceptId) => {
-          openPanel(
-            { kind: "concept-detail", conceptId },
-            { fromCanvas: true },
-          );
-          const name = conceptsById().get(conceptId)?.displayName;
-          announce(name ? `Concept: ${name}` : "Loading concept details…");
-        },
-        // onOrbitalClick
-        (itemId, itemType, title) => {
-          openPanel(
-            { kind: "item-detail", itemId, itemType, title },
-            { fromCanvas: true },
-          );
-          announce(`${ITEM_TYPE_LABELS[itemType] ?? "Item"}: ${title}`);
-        },
-        // onArmillaryClick
-        (label, names) => {
-          openPanel(
-            { kind: "sub-topic", label, conceptNames: names },
-            { fromCanvas: true },
-          );
-          announce(`Sub-topic: ${label}`);
-        },
-        { tooltipClass: sceneTooltip },
-      );
-      // The sidebar opens with a sector selected; light it to match.
-      sceneHandle.setActiveSector(selSector());
-      setAutoRotate(sceneHandle.isAutoRotating());
-    } catch (error) {
-      console.error("Zodiac scene initialization failed:", error);
-      setWebglUnavailable(true);
-    }
-    // Registered after the scene's own reduced-motion watcher so that it runs
-    // second and mirrors whatever the scene settled on, rather than
-    // recomputing the state and overriding an explicit pause.
-    stopReducedMotionWatch = watchReducedMotion(() => {
-      if (sceneHandle) setAutoRotate(sceneHandle.isAutoRotating());
-    });
-  });
-
-  onCleanup(() => {
-    stopReducedMotionWatch?.();
-    sceneHandle?.cleanup();
-  });
-
-  // Phase 1: Load constellations when concepts arrive for the selected sector
-  createEffect(
-    on([domainConcepts, conceptEdges], ([concepts, edges]) => {
-      sceneHandle?.loadConstellations(selSector(), concepts, edges);
-    }),
+  const itemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
+  const [selected, setSelected] = createSignal<AtlasNode | null>(null);
+  const [history, setHistory] = createSignal<AtlasNode[]>([]);
+  const navigation = useSpaceNavigation();
+  const [drawerOpen, setDrawerOpen] = createSignal(false);
+  const [layers, setLayers] = createSignal(
+    new Set<AtlasKind>([...ATLAS_LAYERS, "domain"]),
   );
-
-  // Phase 2: Load armillary rings when sub-topics arrive
-  createEffect(
-    on(subTopics, (st) => {
-      sceneHandle?.loadArmillaryRings(selSector(), st);
-    }),
+  const [connections, setConnections] = createSignal(true);
+  const [rotating, setRotating] = createSignal(false);
+  const [flat, setFlat] = createSignal(false);
+  const [reduced, setReduced] = createSignal(prefersReducedMotion());
+  const [unavailable, setUnavailable] = createSignal(false);
+  const [ready, setReady] = createSignal(false);
+  const [retry, setRetry] = createSignal(0);
+  const detailQ = createQueryWithStatus(api.graph.getConceptDetail, () => {
+    retry();
+    const node = selected();
+    return node?.kind === "concept"
+      ? { conceptId: node.recordId as Id<"concepts"> }
+      : "skip";
+  });
+  const relationsQ = createQueryWithStatus(api.dashboard.itemRelations, () => {
+    retry();
+    const node = selected();
+    return node && node.kind !== "concept" && node.kind !== "domain"
+      ? { itemId: node.recordId, itemType: node.kind }
+      : "skip";
+  });
+  const baseGraph = createMemo(() =>
+    buildAtlas(concepts(), edgesQ.data() ?? [], itemsQ.data()),
   );
-
-  // Phase 3: Load orbital bodies when pipeline items arrive
-  createEffect(
-    on(orbitalGroups, (groups) => {
-      if (groups) sceneHandle?.loadOrbitalBodies(groups);
-    }),
-  );
-
-  // Phase 3: Show pull-lines when viewing item detail
-  createEffect(
-    on(itemRelations, (relations) => {
-      const mode = sidebarMode();
-      if (!sceneHandle) return;
-      if (mode.kind === "item-detail" && relations) {
-        sceneHandle.showPullLines(mode.itemId, relations);
-      } else {
-        sceneHandle.clearPullLines();
+  // Keep previously visited records so Back remains meaningful outside the initial sample.
+  const [discovered, setDiscovered] = createSignal<AtlasNode[]>([]);
+  const [discoveredEdges, setDiscoveredEdges] = createSignal<AtlasEdge[]>([]);
+  createEffect(() => {
+    const detail = detailQ.data();
+    const relations = relationsQ.data();
+    // Selection can change before the query effects clear the previous result.
+    // Only query updates may add discoveries to the currently selected node.
+    const node = untrack(selected);
+    if (!node) return;
+    const additions: AtlasNode[] = [];
+    const links: AtlasEdge[] = [];
+    if (node.kind === "concept" && detail?.concept._id === node.recordId) {
+      for (const [kind, records] of [
+        ["source", detail.linkedSources],
+        ["hypothesis", detail.linkedHypotheses],
+        ["recipe", detail.linkedRecipes],
+      ] as const) {
+        for (const record of records) {
+          const id = atlasId(kind, record._id);
+          additions.push({
+            id,
+            recordId: record._id,
+            kind,
+            title: record.title ?? "Untitled source",
+            status: record.status,
+          });
+          links.push({ from: node.id, to: id, label: "linked research" });
+        }
       }
-    }),
+    } else if (node.kind !== "domain" && node.kind !== "concept") {
+      for (const relation of relations ?? []) {
+        if (
+          !ATLAS_LAYERS.includes(relation.type as (typeof ATLAS_LAYERS)[number])
+        )
+          continue;
+        const id = atlasId(relation.type, relation.id);
+        additions.push({
+          id,
+          recordId: relation.id,
+          kind: relation.type as AtlasKind,
+          title: relation.title,
+        });
+        // itemRelations does not return direction, so this is an undirected connection.
+        links.push({ from: node.id, to: id, label: relation.relationship });
+      }
+    }
+    if (additions.length) {
+      setDiscovered((previous) => mergeDiscoveredNodes(previous, additions));
+      setDiscoveredEdges((previous) => [
+        ...new Map(
+          [...previous, ...links].map((edge) => [JSON.stringify(edge), edge]),
+        ).values(),
+      ]);
+    }
+  });
+  const graph = createMemo(() =>
+    mergeAtlas(baseGraph(), discovered(), discoveredEdges()),
   );
-
-  // Domain buttons live in the overview, so selecting one never changes mode.
-  function handleSectorSelect(id: string) {
-    setSelSector(id);
-    sceneHandle?.setActiveSector(id);
+  const related = createMemo(() => {
+    const node = selected();
+    if (!node || node.kind === "domain") return [];
+    const nodes = new Map(graph().nodes.map((item) => [item.id, item]));
+    return graph()
+      .edges.filter((edge) => edge.from === node.id || edge.to === node.id)
+      .map((edge) => ({
+        node: nodes.get(edge.from === node.id ? edge.to : edge.from)!,
+        label: relationshipLabel(edge, node.id),
+      }))
+      .filter(
+        (item, index, list) =>
+          list.findIndex(
+            (other) =>
+              other.node.id === item.node.id && other.label === item.label,
+          ) === index,
+      );
+  });
+  const matchingNodes = createMemo(() => {
+    const domain = selected()?.kind === "domain" ? selected()?.domain : null;
+    return graph()
+      .nodes.filter(
+        (node) =>
+          node.kind !== "domain" &&
+          layers().has(node.kind) &&
+          (!domain || node.domain === domain),
+      )
+      .sort(
+        (a, b) =>
+          (b.mentions ?? 0) - (a.mentions ?? 0) ||
+          a.title.localeCompare(b.title),
+      );
+  });
+  const loading = () =>
+    itemsQ.isLoading() || domainQueries.some((query) => query.isLoading());
+  const selectedLoading = () =>
+    selected()?.kind === "concept"
+      ? detailQ.isLoading()
+      : relationsQ.isLoading();
+  const selectedError = () =>
+    selected()?.kind === "concept" ? detailQ.isError() : relationsQ.isError();
+  let scene: AtlasScene | undefined;
+  let canvas!: HTMLCanvasElement;
+  let labels!: HTMLDivElement;
+  let inspector!: HTMLElement;
+  let returnFocus: HTMLElement | null = null;
+  let revealFrame = 0;
+  function reveal(destination: "map" | "inspector") {
+    setDrawerOpen(destination === "inspector");
+    cancelAnimationFrame(revealFrame);
+    revealFrame = requestAnimationFrame(() => {
+      if (destination === "inspector") {
+        const content = inspector.querySelector<HTMLElement>(
+          ".atlas-inspector-content",
+        );
+        if (content) content.scrollTop = 0;
+        inspector
+          .querySelector<HTMLElement>("h2")
+          ?.focus({ preventScroll: true });
+      } else canvas.focus({ preventScroll: true });
+    });
   }
-
-  // Hover/focus on a domain button previews the sector (opacity only); it
-  // never touches the selected sector's overlays.
-  function handleSectorPreview(id: string | null) {
-    sceneHandle?.previewSector(id);
+  function select(node: AtlasNode, remember = true) {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && !inspector?.contains(active))
+      returnFocus = active;
+    const current = selected();
+    if (remember && current && current.id !== node.id)
+      setHistory((previous) => [...previous, current].slice(-30));
+    setSelected(node);
+    reveal("inspector");
+    // Preserve the wide framing; focus is a deliberate camera action.
   }
-
-  function openConcept(conceptId: Id<"concepts">) {
-    openPanel(
-      { kind: "concept-detail", conceptId },
-      { originKey: `concept:${conceptId}` },
-    );
+  function reset(restoreFocus = true) {
+    cancelAnimationFrame(revealFrame);
+    if (!restoreFocus && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    } else if (inspector.contains(document.activeElement)) {
+      (returnFocus?.isConnected ? returnFocus : canvas).focus({
+        preventScroll: true,
+      });
+    }
+    setDrawerOpen(false);
+    setSelected(null);
+    setHistory([]);
+    scene?.reset(flat());
   }
-
-  function openItem(item: PipelineListItem, type: string) {
-    openPanel(
-      {
-        kind: "item-detail",
-        itemId: item.id,
-        itemType: type,
-        title: item.title ?? "Untitled",
-      },
-      { originKey: `item:${item.id}` },
-    );
+  function back() {
+    const previous = history().at(-1);
+    if (!previous) {
+      reset();
+      return;
+    }
+    setHistory((items) => items.slice(0, -1));
+    setSelected(previous);
+    reveal("inspector");
   }
-
-  // --- Sidebar Panel Renderers ---
-
-  function MotionToggle(props: { class: string }) {
-    return (
-      <button type="button" onClick={toggleAutoRotate} class={props.class}>
-        {autoRotate() ? "Pause rotation" : "Resume rotation"}
-      </button>
-    );
+  function toggleLayer(kind: AtlasKind) {
+    setLayers((previous) => {
+      const next = new Set(previous);
+      if (next.has(kind)) next.delete(kind);
+      else next.add(kind);
+      return next;
+    });
   }
-
-  function ShowAllToggle(props: {
-    listKey: string;
-    total: number;
-    label: string;
-  }) {
-    return (
-      <button
-        type="button"
-        class={showAllToggle}
-        aria-expanded={isExpanded(props.listKey)}
-        aria-controls={`zodiac-list-${props.listKey}`}
-        onClick={() => toggleExpanded(props.listKey)}
-      >
-        {isExpanded(props.listKey) ? (
-          "Show fewer"
-        ) : (
-          <>
-            Show all {props.total}
-            <span class={srOnlyClass}> {props.label}</span>
-          </>
-        )}
-      </button>
-    );
+  function toggleRotation() {
+    const next = !rotating();
+    setRotating(next);
+    scene?.rotate(next);
   }
+  onMount(() => {
+    document.title = "Knowledge atlas · Frequency Music";
+    const clearOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.isComposing || event.defaultPrevented)
+        return;
+      event.preventDefault();
+      reset(false);
+    };
+    window.addEventListener("keydown", clearOnEscape);
+    const stopMotion = watchReducedMotion((value) => {
+      setReduced(value);
+      if (value) setRotating(false);
+    });
+    try {
+      scene = createAtlasScene(canvas, labels, select, () => {
+        setUnavailable(true);
+        setRotating(false);
+        scene?.dispose();
+        scene = undefined;
+      });
+      setReady(true);
+    } catch (error) {
+      console.error("Knowledge atlas renderer unavailable", error);
+      setUnavailable(true);
+    }
+    onCleanup(() => {
+      window.removeEventListener("keydown", clearOnEscape);
+      cancelAnimationFrame(revealFrame);
+      stopMotion();
+      scene?.dispose();
+    });
+  });
+  createEffect(() => {
+    if (ready()) scene?.update(graph());
+  });
+  createEffect(() => {
+    if (ready())
+      scene?.state({
+        selected: selected()?.id ?? null,
+        layers: layers(),
+        connections: connections(),
+        query: "",
+      });
+  });
+  createEffect(() => {
+    if (ready()) scene?.enabled(!unavailable());
+  });
 
-  function SidebarOverview() {
-    const conceptIds = createIds(domainConcepts, (concept) => concept._id);
-    const visibleConceptIds = createMemo(
-      () =>
-        isExpanded("concepts")
-          ? conceptIds()
-          : conceptIds().slice(0, CONCEPT_PREVIEW_COUNT),
-      [],
-      { equals: sameIds },
-    );
+  createEffect(() => {
+    const node = navigation.pending();
+    if (!node) return;
+    untrack(() => {
+      setDiscovered((nodes) => mergeDiscoveredNodes(nodes, [node]));
+      setLayers((previous) => new Set([...previous, node.kind]));
+      select(node);
+      navigation.select(null);
+    });
+  });
 
-    return (
-      <>
-        <div class={sidebarSection}>
-          <div class={sidebarEyebrow}>
-            <span aria-hidden="true">∴</span> RESEARCH ZODIAC — 3D
-          </div>
-          <h1 class={sidebarTitle}>
-            Astrolabe
-            <br />
-            <em class={sidebarTitleEmphasis}>Knowledge</em>
-            <br />
-            Orrery
-          </h1>
-          <p class={sidebarBody}>
-            Drag to orbit. Click a sector to focus. Click stars for concept
-            details. Click orbiting bodies for pipeline items.
-          </p>
-          <MotionToggle class={motionToggleOverview} />
-        </div>
-
-        <div class={sidebarSectionDomain} style={sectorStyle(activeSector())}>
-          <div class={sidebarEyebrowSector}>
-            {activeSector().id.toUpperCase()} DOMAIN
-          </div>
-          <h2 class={sidebarTitleDomain} tabIndex={-1} ref={claimFocus}>
-            {activeSector().label}
-          </h2>
-          <p class={sidebarBodySm}>{activeSector().summary}</p>
-          <div class={statRow}>
-            <div class={statCellGold}>
-              <div class={statValueGold}>
-                {formatCount(activeSector().sources)}
-              </div>
-              <div class={statLabel}>SOURCES</div>
-            </div>
-            <div class={statCellViolet}>
-              <div class={statValueViolet}>
-                {formatCount(activeSector().claims)}
-              </div>
-              <div class={statLabel}>CLAIMS</div>
-            </div>
-          </div>
-
-          <Show when={conceptIds().length > 0}>
-            <h3 class={sidebarEyebrowGroup}>
-              CONCEPTS ({conceptIds().length})
-            </h3>
-            <UIList id="zodiac-list-concepts" class={conceptTagRow}>
-              <For each={visibleConceptIds()}>
-                {(id) => {
-                  const concept = () => conceptsById().get(id);
-                  return (
-                    <li>
-                      <button
-                        type="button"
-                        data-focus-key={`concept:${id}`}
-                        onClick={() => openConcept(id)}
-                        class={conceptTag}
-                      >
-                        {concept()?.displayName}
-                        <span class={conceptTagCount}>
-                          {concept()?.mentionCount}
-                          <span class={srOnlyClass}> mentions</span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                }}
-              </For>
-            </UIList>
-            <Show when={conceptIds().length > CONCEPT_PREVIEW_COUNT}>
-              <ShowAllToggle
-                listKey="concepts"
-                total={conceptIds().length}
-                label="concepts"
-              />
-            </Show>
-          </Show>
-
-          <Show when={subTopicLabels().length > 0}>
-            <h3 class={sidebarEyebrowGroup}>
-              SUB-TOPICS ({subTopicLabels().length})
-            </h3>
-            <UIList class={subTopicList}>
-              <For each={subTopicLabels()}>
-                {(label) => {
-                  const conceptNames = () =>
-                    subTopicsByLabel().get(label)?.conceptNames ?? [];
-                  return (
-                    <li>
-                      <button
-                        type="button"
-                        data-focus-key={`subtopic:${label}`}
-                        onClick={() =>
-                          openPanel(
-                            {
-                              kind: "sub-topic",
-                              label,
-                              conceptNames: conceptNames(),
-                            },
-                            { originKey: `subtopic:${label}` },
-                          )
-                        }
-                        class={listButton}
-                      >
-                        {label}
-                        <span class={listButtonMeta}>
-                          {conceptNames().length} concepts
-                        </span>
-                      </button>
-                    </li>
-                  );
-                }}
-              </For>
-            </UIList>
-          </Show>
-
-          <Show when={domainPipelineCount() > 0}>
-            <h3 class={sidebarEyebrowGroup}>
-              PIPELINE ITEMS ({domainPipelineCount()})
-            </h3>
-            <For each={ORBITAL_GROUPS}>
-              {(group) => {
-                const items = () => sectorOrbitalItems()?.[group.key] ?? [];
-                return (
-                  <Show when={items().length > 0}>
-                    <PipelineSection
-                      label={group.label}
-                      items={items()}
-                      type={group.type}
-                      headingLevel="h4"
-                      listKey={`pipeline-${group.key}`}
-                    />
-                  </Show>
-                );
+  return (
+    <div
+      class="knowledge-atlas"
+      style={{
+        "--atlas-void": COLORS.void,
+        "--atlas-gold": COLORS.gold,
+        "--atlas-cream": COLORS.cream,
+        "--atlas-violet": COLORS.violetText,
+        "--atlas-raised": COLORS.glowInner,
+      }}
+    >
+      <div class="atlas-workbench">
+        <section class="atlas-map" aria-label="Knowledge space">
+          <div
+            class="atlas-stage"
+            classList={{ "is-unavailable": unavailable() }}
+          >
+            <canvas
+              ref={(element) => {
+                canvas = element;
               }}
-            </For>
-          </Show>
-
-          <Link to={sectorRoute(selSector())} class={openDomainLink}>
-            Open Domain Workspace
-          </Link>
-        </div>
-
-        <div class={sidebarSectionDomains}>
-          <h2 class={sidebarEyebrowSection}>ALL DOMAINS</h2>
-          <UIList>
-            <Index each={sectors()}>
-              {(sector) => (
-                <li>
-                  <button
-                    type="button"
-                    class={sectorButton}
-                    aria-pressed={selSector() === sector().id}
-                    style={sectorStyle(sector())}
-                    onClick={() => handleSectorSelect(sector().id)}
-                    onMouseEnter={() => handleSectorPreview(sector().id)}
-                    onMouseLeave={() => handleSectorPreview(null)}
-                    onFocus={() => handleSectorPreview(sector().id)}
-                    onBlur={() => handleSectorPreview(null)}
+              class="atlas-canvas"
+              role="img"
+              tabindex="0"
+              aria-label="3D knowledge atlas. Drag to orbit, scroll to zoom. Use the top-bar search for keyboard access."
+              aria-hidden={unavailable()}
+            />
+            <div
+              ref={(element) => {
+                labels = element;
+              }}
+              class="atlas-labels"
+              aria-hidden={unavailable()}
+            />
+            <Show when={unavailable()}>
+              <div class="atlas-unavailable" role="status">
+                <p>
+                  3D is unavailable in this browser. Use the search in the top
+                  bar to explore concepts and research.
+                </p>
+              </div>
+            </Show>
+            <Show when={!unavailable()}>
+              <div
+                class="atlas-camera"
+                role="group"
+                aria-label="Camera controls"
+              >
+                <button
+                  type="button"
+                  title="Zoom in"
+                  aria-label="Zoom in"
+                  onClick={() => scene?.zoom(0.8)}
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    aria-hidden="true"
                   >
-                    <span class={sectorButtonLabel}>{sector().label}</span>
-                    <span class={sectorButtonMeta}>
-                      {formatCount(sector().sources)} src
-                    </span>
-                  </button>
-                </li>
-              )}
-            </Index>
-          </UIList>
-        </div>
-
-        <div class={sidebarSectionWorkflow}>
-          <h2 class={sidebarEyebrowSectionTop}>WORKFLOW SHORTCUTS</h2>
-          <UIList class={workspaceGrid}>
-            <For each={workspaceLinks}>
-              {(link) => (
-                <li>
-                  <Link
-                    to={link.to}
-                    data-testid="home-workspace-link"
-                    class={workspaceLink}
+                    <path d="M4 10h12M10 4v12" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  title="Zoom out"
+                  aria-label="Zoom out"
+                  onClick={() => scene?.zoom(1.25)}
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    aria-hidden="true"
                   >
-                    {link.label}
-                  </Link>
-                </li>
+                    <path d="M4 10h12" />
+                  </svg>
+                </button>
+                <button type="button" onClick={() => scene?.reset(flat())}>
+                  Reset view
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={flat()}
+                  onClick={() => {
+                    setFlat(!flat());
+                    scene?.reset(flat());
+                  }}
+                >
+                  Top view
+                </button>
+                <button
+                  type="button"
+                  disabled={reduced()}
+                  aria-pressed={rotating()}
+                  onClick={toggleRotation}
+                >
+                  {rotating() ? "Pause rotation" : "Rotate"}
+                </button>
+              </div>
+              <div class="atlas-gesture-hint">
+                Drag to orbit <span>·</span> Scroll to zoom <span>·</span>{" "}
+                Select to trace
+              </div>
+            </Show>
+          </div>
+          <div class="atlas-layer-bar">
+            <span class="atlas-control-label">Layers</span>
+            <For each={ATLAS_LAYERS}>
+              {(kind) => (
+                <button
+                  type="button"
+                  aria-pressed={layers().has(kind)}
+                  onClick={() => toggleLayer(kind)}
+                >
+                  <AtlasMark kind={kind} />
+                  {layerNames[kind]}
+                </button>
               )}
             </For>
-          </UIList>
-        </div>
-
-        <div class={sidebarSectionPipeline}>
-          <h2 class={sidebarEyebrowTight}>PIPELINE</h2>
-          <div class={pipelineRow}>
-            <Index each={pipelineSummary()}>
-              {(item, index) => (
-                <>
-                  <div class={pipelineCell}>
-                    <div class={pipelineCellValue}>{item().value}</div>
-                    <div class={pipelineCellLabel}>{item().label}</div>
+            <button
+              type="button"
+              class="atlas-connections-toggle"
+              aria-pressed={connections()}
+              onClick={() => setConnections(!connections())}
+            >
+              Connections {connections() ? "on" : "off"}
+            </button>
+          </div>
+        </section>
+        <aside
+          ref={(element) => {
+            inspector = element;
+          }}
+          class="atlas-inspector"
+          classList={{ "is-open": drawerOpen() }}
+          inert={!drawerOpen()}
+          aria-hidden={!drawerOpen()}
+          aria-label="Connection inspector"
+        >
+          <Show when={selected()}>
+            {(node) => (
+              <>
+                <div class="atlas-inspector-content">
+                  <div class="atlas-selection">
+                    <h2 tabindex="-1">{node().title}</h2>
+                    <div class="atlas-selection-kind">
+                      <AtlasMark kind={node().kind} />
+                      {node().kind}
+                      <Show when={node().status}>
+                        <span class="atlas-record-status">
+                          {" "}
+                          · {node().status?.replaceAll("_", " ")}
+                        </span>
+                      </Show>
+                    </div>
+                    <Show when={node().mentions !== undefined}>
+                      <p class="atlas-meta">
+                        {node().mentions} mentions in the research
+                      </p>
+                    </Show>
+                    <Show when={node().kind === "domain"}>
+                      <p>
+                        {
+                          SECTORS.find((sector) => sector.id === node().domain)
+                            ?.summary
+                        }
+                      </p>
+                    </Show>
+                    <Show
+                      when={
+                        node().kind === "concept" &&
+                        detailQ.data()?.concept.description
+                      }
+                    >
+                      <p>{detailQ.data()?.concept.description}</p>
+                    </Show>
+                    <div class="atlas-selection-actions">
+                      <button
+                        type="button"
+                        class="atlas-primary"
+                        disabled={unavailable()}
+                        onClick={() => {
+                          scene?.focus(node().id);
+                          reveal("map");
+                        }}
+                      >
+                        Focus in space
+                      </button>
+                      <Show when={destinations[node().kind]}>
+                        {(href) => (
+                          <a href={href()}>
+                            Open {layerNames[node().kind].toLowerCase()}
+                          </a>
+                        )}
+                      </Show>
+                    </div>
                   </div>
-                  <Show when={index < pipelineSummary().length - 1}>
-                    <div class={pipelineArrow} aria-hidden="true">
-                      →
+                  <Show
+                    when={node().kind === "domain"}
+                    fallback={
+                      <div class="atlas-relations">
+                        <div class="atlas-section-title">
+                          <h3>Connected research</h3>
+                          <span>{related().length}</span>
+                        </div>
+                        <Show when={selectedError()}>
+                          <p role="alert" class="atlas-message">
+                            Connections could not load.{" "}
+                            <button
+                              type="button"
+                              class="atlas-text-button"
+                              onClick={() => setRetry((value) => value + 1)}
+                            >
+                              Retry
+                            </button>
+                          </p>
+                        </Show>
+                        <Show when={selectedLoading()}>
+                          <p class="atlas-message" role="status">
+                            Loading connections…
+                          </p>
+                        </Show>
+                        <Show
+                          when={
+                            !selectedLoading() &&
+                            !selectedError() &&
+                            !related().length
+                          }
+                        >
+                          <p class="atlas-message">
+                            No connections were returned for this object in the
+                            loaded graph. Other research may exist outside this
+                            sample.
+                          </p>
+                        </Show>
+                        <For each={related()}>
+                          {(relation) => (
+                            <button
+                              type="button"
+                              class="atlas-relation"
+                              onClick={() => select(relation.node)}
+                            >
+                              <AtlasMark kind={relation.node.kind} />
+                              <span class="atlas-relation-body">
+                                <span class="atlas-relation-title">
+                                  {relation.node.title}
+                                </span>
+                                <span class="atlas-relation-meta">
+                                  <small>{relation.node.kind}</small>
+                                  <span aria-hidden="true">·</span>
+                                  <span class="atlas-relation-label">
+                                    {relation.label.replaceAll("_", " ")}
+                                  </span>
+                                </span>
+                              </span>
+                            </button>
+                          )}
+                        </For>
+                      </div>
+                    }
+                  >
+                    <div class="atlas-relations">
+                      <div class="atlas-section-title">
+                        <h3>Concepts in this domain</h3>
+                        <span>{matchingNodes().length}</span>
+                      </div>
+                      <For each={matchingNodes()}>
+                        {(concept) => (
+                          <button
+                            type="button"
+                            class="atlas-relation"
+                            onClick={() => select(concept)}
+                          >
+                            <AtlasMark kind="concept" />
+                            <span class="atlas-relation-body">
+                              <span class="atlas-relation-title">
+                                {concept.title}
+                              </span>
+                              <small>{concept.mentions} mentions</small>
+                            </span>
+                          </button>
+                        )}
+                      </For>
+                      <Show when={!matchingNodes().length}>
+                        <p class="atlas-message">
+                          {loading()
+                            ? "Loading concepts…"
+                            : "No concepts in the current sample. Check the Concepts layer or explore another domain."}
+                        </p>
+                      </Show>
                     </div>
                   </Show>
-                </>
-              )}
-            </Index>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  function SidebarConceptDetail() {
-    return (
-      <>
-        <div class={sidebarSectionCompact}>
-          <BackBar />
-          <Show when={conceptDetail()}>
-            {(detail) => (
-              <>
-                <div class={sidebarEyebrowViolet}>CONCEPT</div>
-                <h2 class={sidebarTitleSm} tabIndex={-1} ref={claimFocus}>
-                  {detail().concept.displayName}
-                </h2>
-                <div class={sidebarMeta}>
-                  {detail().concept.domain} &middot;{" "}
-                  {detail().concept.mentionCount} mentions &middot;{" "}
-                  {detail().edgeCount} edges
                 </div>
-                <Show when={detail().concept.description}>
-                  <p class={sidebarBodyDetail}>
-                    {detail().concept.description}
-                  </p>
-                </Show>
-                <Show when={detail().concept.aliases?.length > 0}>
-                  <div class={sidebarAliases}>
-                    Also: {detail().concept.aliases.join(", ")}
-                  </div>
-                </Show>
+                <footer class="atlas-inspector-footer">
+                  <button type="button" class="atlas-back" onClick={back}>
+                    {history().length
+                      ? "Back to previous object"
+                      : "Back to overview"}
+                  </button>
+                </footer>
               </>
             )}
           </Show>
-        </div>
-
-        <Show
-          when={conceptDetail()}
-          fallback={
-            // Holds focus until the title arrives and claims it.
-            <div class={sidebarLoading} tabIndex={-1} ref={claimFocus}>
-              Loading concept details...
-            </div>
-          }
-        >
-          {(detail) => (
-            <div class={sidebarSectionScrollable}>
-              <Show when={detail().linkedSources.length > 0}>
-                <PipelineSection
-                  label="SOURCES"
-                  items={detail().linkedSources.map(toListItem)}
-                  type="source"
-                />
-              </Show>
-              <Show when={detail().linkedHypotheses.length > 0}>
-                <PipelineSection
-                  label="HYPOTHESES"
-                  items={detail().linkedHypotheses.map(toListItem)}
-                  type="hypothesis"
-                />
-              </Show>
-              <Show when={detail().linkedRecipes.length > 0}>
-                <PipelineSection
-                  label="RECIPES"
-                  items={detail().linkedRecipes.map(toListItem)}
-                  type="recipe"
-                />
-              </Show>
-            </div>
-          )}
-        </Show>
-      </>
-    );
-  }
-
-  function SidebarSubTopic(props: {
-    mode: Extract<SidebarView, { kind: "sub-topic" }>;
-  }) {
-    return (
-      <>
-        <div class={sidebarSectionCompact}>
-          <BackBar />
-          <div class={sidebarEyebrowGold}>SUB-TOPIC</div>
-          <h2 class={sidebarTitleSubTopic} tabIndex={-1} ref={claimFocus}>
-            {props.mode.label}
-          </h2>
-          <div class={sidebarMeta}>
-            {props.mode.conceptNames.length} concepts
-          </div>
-        </div>
-
-        <div class={sidebarSectionScrollable}>
-          <h3 class={sidebarEyebrowSection}>CONCEPTS IN CLUSTER</h3>
-          <UIList>
-            <For each={props.mode.conceptNames}>
-              {(name) => {
-                const concept = () => conceptsByName().get(name);
-                return (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const c = concept();
-                        if (c) openConcept(c._id);
-                      }}
-                      class={listButton}
-                    >
-                      {concept()?.displayName ?? name}
-                      <Show when={concept()}>
-                        {(c) => (
-                          <span class={listButtonMeta}>
-                            {c().mentionCount} mentions
-                          </span>
-                        )}
-                      </Show>
-                    </button>
-                  </li>
-                );
-              }}
-            </For>
-          </UIList>
-        </div>
-      </>
-    );
-  }
-
-  function SidebarItemDetail(props: {
-    mode: Extract<SidebarView, { kind: "item-detail" }>;
-  }) {
-    const relations = createMemo<ItemRelation[]>(() => itemRelations() ?? []);
-
-    return (
-      <>
-        <div class={sidebarSectionCompact}>
-          <BackBar />
-          <div class={sidebarEyebrowGold}>
-            {props.mode.itemType.toUpperCase()}
-          </div>
-          <h2 class={sidebarTitleItem} tabIndex={-1} ref={claimFocus}>
-            {props.mode.title}
-          </h2>
-        </div>
-
-        <div class={sidebarSectionScrollable}>
-          <Show
-            when={relations().length > 0}
-            fallback={
-              <div class={sidebarEmpty}>No cross-pipeline relations found.</div>
-            }
-          >
-            <h3 class={sidebarEyebrowSection}>
-              RELATED ITEMS ({relations().length})
-            </h3>
-            <UIList>
-              <Index each={relations()}>
-                {(rel) => (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openPanel({
-                          kind: "item-detail",
-                          itemId: rel().id,
-                          itemType: rel().type,
-                          title: rel().title,
-                        })
-                      }
-                      class={relationButton}
-                    >
-                      <div class={relationTypeLabel}>
-                        {rel().type.toUpperCase()} &middot; {rel().relationship}
-                      </div>
-                      <div class={relationTitle}>{rel().title}</div>
-                    </button>
-                  </li>
-                )}
-              </Index>
-            </UIList>
-          </Show>
-        </div>
-      </>
-    );
-  }
-
-  // Back plus the pause/resume control, so motion stays controllable in
-  // every panel, not only the overview.
-  function BackBar() {
-    return (
-      <div class={barRow}>
-        <button type="button" onClick={goBack} class={barButton}>
-          <span aria-hidden="true">←</span> Back
-        </button>
-        <MotionToggle class={barButton} />
+        </aside>
       </div>
-    );
-  }
-
-  function PipelineSection(props: {
-    label: string;
-    items: readonly PipelineListItem[];
-    type: string;
-    headingLevel?: "h3" | "h4";
-    /** When set, the list previews a few items behind a Show-all toggle. */
-    listKey?: string;
-  }) {
-    const itemsById = createMemo(
-      () => new Map(props.items.map((item) => [item.id, item])),
-    );
-    // Rows are keyed by id: a live push that keeps the ids re-renders no row,
-    // and a reorder moves rows (and a focused button) rather than relabelling.
-    const visibleIds = createMemo(
-      () => {
-        const ids = props.items.map((item) => item.id);
-        return props.listKey && !isExpanded(props.listKey)
-          ? ids.slice(0, PIPELINE_ITEM_PREVIEW_COUNT)
-          : ids;
-      },
-      [],
-      { equals: sameIds },
-    );
-    return (
-      <div class={pipelineSectionContainer}>
-        <Dynamic
-          component={props.headingLevel ?? "h3"}
-          class={sidebarEyebrowTight}
-        >
-          {props.label} ({props.items.length})
-        </Dynamic>
-        <UIList id={props.listKey ? `zodiac-list-${props.listKey}` : undefined}>
-          <For each={visibleIds()}>
-            {(id) => {
-              const item = () => itemsById().get(id);
-              return (
-                <li>
-                  <button
-                    type="button"
-                    data-focus-key={`item:${id}`}
-                    onClick={() => {
-                      const current = item();
-                      if (current) openItem(current, props.type);
-                    }}
-                    class={listButton}
-                  >
-                    <div>{item()?.title ?? "Untitled"}</div>
-                    <div class={pipelineItemStatus}>{item()?.status}</div>
-                  </button>
-                </li>
-              );
-            }}
-          </For>
-        </UIList>
-        <Show
-          when={
-            props.listKey && props.items.length > PIPELINE_ITEM_PREVIEW_COUNT
-          }
-        >
-          <ShowAllToggle
-            listKey={props.listKey ?? ""}
-            total={props.items.length}
-            label={props.label.toLowerCase()}
-          />
-        </Show>
-      </div>
-    );
-  }
-
-  function WebglFallback() {
-    return (
-      <div class={fallbackContainer}>
-        <div class={fallbackGrid}>
-          <div class={fallbackCard}>
-            <div class={fallbackEyebrow()}>HOME FALLBACK</div>
-            <h1 class={fallbackTitle}>Workspace Navigator</h1>
-            <p class={fallbackBody}>
-              3D mode is unavailable in this environment. Use direct workflow
-              links below to continue managing intake, research, production, and
-              participation.
-            </p>
-          </div>
-
-          <div class={fallbackCard}>
-            <h2 class={fallbackEyebrow({ space: "loose" })}>QUICK ACCESS</h2>
-            <UIList class={fallbackLinkGrid}>
-              <For each={workspaceLinks}>
-                {(link) => (
-                  <li>
-                    <Link
-                      to={link.to}
-                      data-testid="home-workspace-link"
-                      class={fallbackLink}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                )}
-              </For>
-            </UIList>
-          </div>
-
-          <div class={fallbackCard}>
-            <h2 class={fallbackEyebrow({ space: "normal" })}>
-              PIPELINE SNAPSHOT
-            </h2>
-            <div class={fallbackPipelineRow}>
-              <Index each={pipelineSummary()}>
-                {(item, index) => (
-                  <>
-                    <div class={fallbackPipelineCell}>
-                      <div class={fallbackPipelineValue}>{item().value}</div>
-                      <div class={fallbackPipelineLabel}>{item().label}</div>
-                    </div>
-                    <Show when={index < pipelineSummary().length - 1}>
-                      <div class={fallbackPipelineArrow} aria-hidden="true">
-                        →
-                      </div>
-                    </Show>
-                  </>
-                )}
-              </Index>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // The scene initialises after this tree mounts, so a WebGL failure has to
-  // swap the tree reactively rather than through an early return.
-  return (
-    <Show when={!webglUnavailable()} fallback={<WebglFallback />}>
-      <div class={pageContainer}>
-        <div class={dotOverlay} />
-
-        <div ref={cssContainerRef} class={canvasWrapper}>
-          <canvas
-            ref={canvasRef}
-            class={canvasEl}
-            role="img"
-            aria-label="Interactive knowledge orrery. Use the sidebar for keyboard access."
-          />
-        </div>
-
-        <div ref={sidebarRef} class={cx(sidebarContainer, "zodiac-scroll")}>
-          <UINotice status={liveStatus()} class={srOnlyClass} />
-          <Show when={sidebarMode().kind !== "overview"}>
-            <h1 class={srOnlyClass}>Astrolabe Knowledge Orrery</h1>
-          </Show>
-          {/* Keyed: every mode change mounts a fresh panel, whose title then
-              claims the focus the change carries. */}
-          <Show when={sidebarMode()} keyed>
-            {(mode) => {
-              switch (mode.kind) {
-                case "overview":
-                  return <SidebarOverview />;
-                case "concept-detail":
-                  return <SidebarConceptDetail />;
-                case "sub-topic":
-                  return <SidebarSubTopic mode={mode} />;
-                case "item-detail":
-                  return <SidebarItemDetail mode={mode} />;
-              }
-            }}
-          </Show>
-        </div>
-      </div>
-    </Show>
+    </div>
   );
 }
