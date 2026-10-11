@@ -24,13 +24,14 @@ type WorkflowManagerOptions = NonNullable<
 >;
 
 const workflowOptions = {
-  // Default retry policy for all steps
-  defaultRetryPolicy: {
-    maxAttempts: 3,
-    initialBackoffMs: 1000,
-    maxBackoffMs: 60000,
+  workpoolOptions: {
+    defaultRetryBehavior: {
+      maxAttempts: 3,
+      initialBackoffMs: 1000,
+      base: 2,
+    },
   },
-} as unknown as WorkflowManagerOptions;
+} satisfies WorkflowManagerOptions;
 
 export const workflowManager = new WorkflowManager(
   components.workflow,

@@ -29,6 +29,10 @@ export default defineConfig({
       "scripts/archive/**",
     ],
     rules: {
+      "no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
       "typescript/no-namespace": "error",
       "typescript/no-require-imports": "error",
       "import/no-unassigned-import": "warn",
@@ -39,6 +43,13 @@ export default defineConfig({
       "vite-plus/prefer-vite-plus-imports": "error",
     },
     overrides: [
+      {
+        files: ["convex/agentToolRegistry.test.ts"],
+        rules: {
+          // Manifest coverage intentionally checks every dynamically named export.
+          "import/namespace": ["error", { allowComputed: true }],
+        },
+      },
       {
         files: ["src/styles/**", "src/polyfills.js"],
         rules: {

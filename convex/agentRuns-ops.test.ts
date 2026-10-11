@@ -86,34 +86,29 @@ describe("internal migration queue counts", () => {
     });
   });
 
-  test.each([
-    0,
-    -1,
-    201,
-    1.5,
-    Number.NaN,
-    Number.POSITIVE_INFINITY,
-  ])("rejects invalid page size %s", async (pageSize) => {
-    const t = convexTest(schema, modules);
-    await expect(
-      t.query(internal.agentRuns.opsStatusCountsPage, {
-        cursor: null,
-        pageSize,
-      }),
-    ).rejects.toThrow();
-  });
+  test.each([0, -1, 201, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects invalid page size %s",
+    async (pageSize) => {
+      const t = convexTest(schema, modules);
+      await expect(
+        t.query(internal.agentRuns.opsStatusCountsPage, {
+          cursor: null,
+          pageSize,
+        }),
+      ).rejects.toThrow();
+    },
+  );
 
-  test.each([
-    "",
-    "x".repeat(16385),
-    "not-a-valid-cursor",
-  ])("rejects invalid cursor (case %#)", async (cursor) => {
-    const t = convexTest(schema, modules);
-    await seed(t, 2);
-    await expect(
-      t.query(internal.agentRuns.opsStatusCountsPage, { cursor }),
-    ).rejects.toThrow();
-  });
+  test.each(["", "x".repeat(16385), "not-a-valid-cursor"])(
+    "rejects invalid cursor (case %#)",
+    async (cursor) => {
+      const t = convexTest(schema, modules);
+      await seed(t, 2);
+      await expect(
+        t.query(internal.agentRuns.opsStatusCountsPage, { cursor }),
+      ).rejects.toThrow();
+    },
+  );
 
   test("reports byte-limited incomplete pages so aggregation can fail closed", async () => {
     const t = convexTest(schema, modules);

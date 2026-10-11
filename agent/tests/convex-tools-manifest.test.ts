@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
 import { AGENT_TOOL_MANIFEST } from "../../convex/shared/agentToolManifest";
+import { agentToolModelJsonSchema } from "../../convex/shared/agentToolModelSchema";
+import { z } from "zod";
 import {
   agentModelSchema,
   bindAgentRunContext,
@@ -22,6 +24,23 @@ describe("convexTools derive from the manifest", () => {
     expect(convexTools.map((toolDefinition) => toolDefinition.name)).toEqual(
       expected,
     );
+  });
+
+  test("represents registered Convex IDs as strings without a second conversion", () => {
+    const definition = AGENT_TOOL_MANIFEST.find(
+      (candidate) => candidate.name === "getExtraction",
+    );
+    if (!definition) throw new Error("getExtraction is missing");
+    const schema = agentToolModelJsonSchema(agentModelSchema(definition));
+    expect(schema.properties?.id).toEqual({ type: "string" });
+    expect(schema).not.toHaveProperty("~standard");
+    expect(() => agentModelSchema(definition).parse({ id: 123 })).toThrow();
+  });
+
+  test("rejects arbitrary custom validators instead of widening their model schema", () => {
+    expect(() =>
+      agentToolModelJsonSchema(z.object({ value: z.custom() })),
+    ).toThrow(/Only Convex ID custom schemas/);
   });
 
   test("keeps queue claiming worker-only", () => {

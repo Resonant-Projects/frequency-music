@@ -34,8 +34,7 @@ export function createOpenRouterAnthropicModel(options: ChatModelOptions = {}) {
     ? normalizeOpenRouterModel(configuredModel ?? DEFAULT_OPENROUTER_MODEL)
     : (configuredModel ?? DEFAULT_ANTHROPIC_MODEL);
   // Sonnet 5.5 rejects non-default sampling parameters and requires
-  // reasoning. The installed ChatAnthropic sends temperature and
-  // `thinking: { type: "disabled" }` by default, so both are overridden here;
+  // reasoning. Set adaptive thinking explicitly and omit temperature;
   // adaptive thinking works with plain calls, tools, and JSON-schema output.
   const isSonnet55 = /(?:^|\/)claude-sonnet-5[.-]5(?:$|-)/.test(model);
 

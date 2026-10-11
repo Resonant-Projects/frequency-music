@@ -15,30 +15,30 @@
   },
   "dependencies": {
     "@ark-ui/solid": "5.39.3",
-    "@clerk/clerk-js": "^5.125.7",
+    "@clerk/clerk-js": "^6.39.0",
     "@park-ui/panda-preset": "^0.43.1",
-    "@tanstack/solid-router": "^1.168.9",
+    "@tanstack/solid-router": "^1.170.39",
     "convex": "^1.46.0",
-    "solid-js": "^1.9.12",
+    "solid-js": "^1.9.17",
     "solid-markdown": "^2.1.1",
-    "three": "^0.183.2"
+    "three": "^0.186.1"
   },
   "devDependencies": {
-    "@fontsource/cormorant-garamond": "^5.2.11",
-    "@fontsource/jetbrains-mono": "^5.2.8",
-    "@pandacss/dev": "^1.9.1",
-    "@playwright/test": "^1.59.1",
-    "@types/node": "^24",
-    "@types/three": "^0.183.1",
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@pandacss/dev": "^2.2.0",
+    "@pandacss/preset-base": "^2.2.0",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.5",
+    "@types/three": "^0.186.0",
     "typescript": "^7.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vite-plugin-solid": "^2.11.12",
-    "vite-plus": "latest"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plugin-solid": "^2.11.14",
+    "vite-plus": "1.1.0"
   },
   "overrides": {
     "hono": "4.13.12",
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
     "ws": "^8.21.0"
   },
   "packageManager": "bun@1.4.2"

@@ -102,24 +102,24 @@ test("identity delta compares two sanitized observations symmetrically and never
   ).toThrow();
 });
 
-test.each([
-  false,
-  true,
-])("private manifest snapshot is exact and removed after verifier failure=%s", (fail) => {
-  let privatePath = "";
-  const bytes = Buffer.from("synthetic captured manifest");
-  const run = () =>
-    verifyManifestSnapshot(bytes, (path) => {
-      privatePath = path;
-      expect(readFileSync(path)).toEqual(bytes);
-      expect(statSync(dirname(path)).mode & 0o777).toBe(0o700);
-      expect(statSync(path).mode & 0o777).toBe(0o400);
-      if (fail) throw new Error("synthetic attestation rejection");
-    });
-  if (fail) expect(run).toThrow("synthetic attestation rejection");
-  else run();
-  expect(existsSync(dirname(privatePath))).toBe(false);
-});
+test.each([false, true])(
+  "private manifest snapshot is exact and removed after verifier failure=%s",
+  (fail) => {
+    let privatePath = "";
+    const bytes = Buffer.from("synthetic captured manifest");
+    const run = () =>
+      verifyManifestSnapshot(bytes, (path) => {
+        privatePath = path;
+        expect(readFileSync(path)).toEqual(bytes);
+        expect(statSync(dirname(path)).mode & 0o777).toBe(0o700);
+        expect(statSync(path).mode & 0o777).toBe(0o400);
+        if (fail) throw new Error("synthetic attestation rejection");
+      });
+    if (fail) expect(run).toThrow("synthetic attestation rejection");
+    else run();
+    expect(existsSync(dirname(privatePath))).toBe(false);
+  },
+);
 
 const request = {
   adminKey: "frequency-offline-inert",
