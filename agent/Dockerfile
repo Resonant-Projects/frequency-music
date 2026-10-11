@@ -38,12 +38,16 @@ RUN curl -fsSLo /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/download/
 # source tarball. The worker pod runs it from this same image as a sidecar on
 # 127.0.0.1:4416. canvas is never imported by the server; skipping install
 # scripts leaves its native build out (jsdom loads it only if present).
+# Patch the bundled lockfile's proxy-addr/source-map-js security advisories
+# without changing the checksum-verified bgutil source release.
 ARG BGUTIL_SERVER_SHA256=bae71b7971fa22376af57edca8d3487724ac9a8ada56d1cccf07a547b4b9b62c
 RUN curl -fsSLo /tmp/bgutil.tar.gz "https://github.com/Brainicism/bgutil-ytdlp-pot-provider/archive/refs/tags/${BGUTIL_PLUGIN_VERSION}.tar.gz" \
     && echo "${BGUTIL_SERVER_SHA256}  /tmp/bgutil.tar.gz" | sha256sum -c - \
     && mkdir -p /tmp/bgutil \
     && tar -xzf /tmp/bgutil.tar.gz -C /tmp/bgutil --strip-components=1 \
     && cd /tmp/bgutil/server \
+    && npm pkg set 'overrides.proxy-addr=2.0.8' 'overrides.source-map-js=1.2.2' \
+    && npm install --package-lock-only --ignore-scripts --no-audit --no-fund \
     && npm ci --ignore-scripts --no-audit --no-fund \
     && npx tsc \
     && npm prune --omit=dev --ignore-scripts --no-audit --no-fund \
