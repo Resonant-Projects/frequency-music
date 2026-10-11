@@ -1,3 +1,4 @@
+import { listCurrentExtractions } from "./extractions";
 import { makeFunctionReference } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -575,11 +576,7 @@ export const listUnlinkedBatchCandidates = internalQuery({
   args: { limit: v.number(), minClaims: v.number() },
   returns: v.array(extractionReturnValidator),
   handler: async (ctx, args) => {
-    const extractions = await ctx.db
-      .query("extractions")
-      .filter((q) => q.neq(q.field("historical"), true))
-      .order("desc")
-      .take(50);
+    const extractions = await listCurrentExtractions(ctx.db, 50);
     return await selectUnlinkedExtractionCandidates(extractions, {
       ...args,
       isLinked: async (extractionId) =>

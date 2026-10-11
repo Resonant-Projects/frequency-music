@@ -140,21 +140,23 @@ async function insertExtraction(
       ),
     );
 
-  const previousExtraction = await currentExtractions(
-    ctx.db,
-    args.sourceId,
-  ).first();
-  if (previousExtraction && !args.historical) {
-    await ctx.db.patch(previousExtraction._id, { historical: true });
-    const previousClaims = await ctx.db
-      .query("claims")
-      .withIndex("by_extractionId_ordinal", (q) =>
-        q.eq("extractionId", previousExtraction._id),
-      )
-      .take(previousExtraction.claims.length);
-    for (const claim of previousClaims) {
-      if (claim.status === "active") {
-        await ctx.db.patch("claims", claim._id, { status: "superseded" });
+  if (!args.historical) {
+    // Legacy rows have no historical flag. Retire every prior current reading.
+    for await (const previousExtraction of currentExtractions(
+      ctx.db,
+      args.sourceId,
+    )) {
+      await ctx.db.patch(previousExtraction._id, { historical: true });
+      const previousClaims = await ctx.db
+        .query("claims")
+        .withIndex("by_extractionId_ordinal", (q) =>
+          q.eq("extractionId", previousExtraction._id),
+        )
+        .collect();
+      for (const claim of previousClaims) {
+        if (claim.status === "active") {
+          await ctx.db.patch("claims", claim._id, { status: "superseded" });
+        }
       }
     }
   }
@@ -315,6 +317,8 @@ async function settleFoundExtraction(
           details: `Same text as source ${found.extraction.sourceId} (extraction ${found.extraction._id})`,
         },
   );
+  // Covering output retires ownership, but preserves unfinished snapshots as history.
+  await ctx.db.patch(sourceId, { activeExtractionAttemptId: undefined });
 }
 
 /** Capture admission and input in the same transaction as Source disposition. */
@@ -352,6 +356,18 @@ export const beginExtraction = internalMutation({
       return { skipped: true as const, reason };
     }
     const origin = args.expectedInputHash ? "operator" : "worker";
+    if (!args.force) {
+      const found = await extractionForInput(ctx.db, inputHash, source._id);
+      if (found) {
+        await settleFoundExtraction(ctx, source._id, found);
+        return {
+          skipped: true as const,
+          reason: found.sameSource
+            ? "already extracted"
+            : "duplicate extraction",
+        };
+      }
+    }
     if (source.activeExtractionAttemptId) {
       const active = await ctx.db.get(source.activeExtractionAttemptId);
       if (
@@ -361,6 +377,7 @@ export const beginExtraction = internalMutation({
         active.origin === origin &&
         active.title === source.title &&
         active.canonicalUrl === source.canonicalUrl &&
+        active.force === (args.force === true) &&
         (active.status === "pending" ||
           active.status === "generated" ||
           active.status === "failed")
@@ -372,18 +389,6 @@ export const beginExtraction = internalMutation({
           prompt: active.prompt,
           systemPrompt: active.systemPrompt,
           promptVersion: active.promptVersion,
-        };
-      }
-    }
-    if (!args.force) {
-      const found = await extractionForInput(ctx.db, inputHash, source._id);
-      if (found) {
-        await settleFoundExtraction(ctx, source._id, found);
-        return {
-          skipped: true as const,
-          reason: found.sameSource
-            ? "already extracted"
-            : "duplicate extraction",
         };
       }
     }
@@ -491,6 +496,7 @@ export const completeExtraction = internalMutation({
     let current =
       source.activeExtractionAttemptId === attemptId &&
       (source.status === "extracting" ||
+        source.status === "text_ready" ||
         (source.status === "review_needed" &&
           source.blockedReason === "ai_error")) &&
       source.title === attempt.title &&
@@ -629,6 +635,7 @@ export const storeOperatorExtraction = internalMutation({
       promptVersion: EXTRACTION_PROMPT_VERSION,
       confidence: 0.8,
     });
+    await ctx.db.patch(args.sourceId, { activeExtractionAttemptId: undefined });
     await setSourceStatus(ctx, args.sourceId, "extracted");
     return {
       success: true as const,
@@ -690,6 +697,22 @@ export const claimGeneration = internalMutation({
       throw new Error(
         "Archived or missing Source cannot start a new generation",
       );
+    if (
+      source.activeExtractionAttemptId !== attemptId ||
+      source.title !== attempt.title ||
+      source.canonicalUrl !== attempt.canonicalUrl ||
+      !(
+        source.status === "extracting" ||
+        source.status === "text_ready" ||
+        (source.status === "review_needed" &&
+          source.blockedReason === "ai_error")
+      ) ||
+      (await extractionInputHash(
+        source.rawText || source.transcript || "",
+        attempt.promptVersion,
+      )) !== attempt.inputHash
+    )
+      throw new Error("Only retained output can complete this snapshot");
     await ctx.db.patch(attemptId, {
       generationLease: lease,
       generationLeaseUntil: Date.now() + 15 * 60_000,

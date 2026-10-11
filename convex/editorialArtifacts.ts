@@ -260,10 +260,16 @@ async function findPrivacyViolations(
     if (title && text.includes(title.toLowerCase())) {
       privateSourceMentions.push(title);
     }
-    const extraction = await currentExtractions(db, source._id).first();
-    const summary = extraction?.summary?.trim();
-    if (summary && text.includes(summary.toLowerCase())) {
-      privateExtractionMentions.push(summary);
+    // Private material remains private even when a newer reading supersedes it.
+    const extractions = await db
+      .query("extractions")
+      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
+      .collect();
+    for (const extraction of extractions) {
+      const summary = extraction.summary?.trim();
+      if (summary && text.includes(summary.toLowerCase())) {
+        privateExtractionMentions.push(summary);
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
-import { internal } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import { modules } from "./modules";
 
@@ -30,6 +30,33 @@ async function setup() {
   return { t, runId, input, failureId, due };
 }
 describe("operational recovery", () => {
+  test("capture recovery run pages include assigned failures without duplicate reporter rows", async () => {
+    const { t, runId, failureId, due } = await setup();
+    await due();
+    const attempt = await t.mutation(internal.operationFailures.claimRecovery, {
+      failureId,
+    });
+    await t.mutation(internal.operationFailures.dispatch, {
+      failureId,
+      attempt: attempt!,
+    });
+    const failure = (await t.query(internal.operationFailures.getForRecovery, {
+      failureId,
+    }))!;
+    const recoveryRunId = failure.recoveryRunId!;
+    const read = (agentRunId: typeof runId) =>
+      t
+        .withIdentity({ subject: "operator" })
+        .query(api.operationFailures.listForRun, { agentRunId });
+    expect(await read(recoveryRunId)).toMatchObject([
+      { _id: failureId, status: "recovering", attempts: 1 },
+    ]);
+    await t.run((ctx) =>
+      ctx.db.patch(failureId, { agentRunId: recoveryRunId }),
+    );
+    expect(await read(recoveryRunId)).toHaveLength(1);
+  });
+
   test("100 same-cause failures use five groups and running groups accept no new members", async () => {
     const { t, failureId } = await setup();
     const original = (await t.query(internal.operationFailures.getForRecovery, {

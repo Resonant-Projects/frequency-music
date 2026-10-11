@@ -20,6 +20,30 @@ export function currentExtractions(
     .filter((q) => q.neq(q.field("historical"), true));
 }
 
+/** Derive one current reading per Source, including deployments with unmarked legacy history. */
+export async function listCurrentExtractions(
+  db: Pick<DatabaseReader, "query">,
+  limit: number,
+) {
+  const rows: Doc<"extractions">[] = [];
+  if (limit <= 0) return rows;
+  const latestIds = new Map<Id<"sources">, Id<"extractions"> | undefined>();
+  for await (const row of db
+    .query("extractions")
+    .order("desc")
+    .filter((q) => q.neq(q.field("historical"), true))) {
+    if (!latestIds.has(row.sourceId))
+      latestIds.set(
+        row.sourceId,
+        (await currentExtractions(db, row.sourceId).first())?._id,
+      );
+    if (latestIds.get(row.sourceId) !== row._id) continue;
+    rows.push(row);
+    if (rows.length >= limit) break;
+  }
+  return rows;
+}
+
 // ============================================================================
 // EDIT CAPTURE - pure helpers (unit-testable without a DB harness)
 // ============================================================================
@@ -146,7 +170,7 @@ export const getBySourceId = query({
           )
           .order("desc")
           .collect()
-      : await currentExtractions(ctx.db, args.sourceId).collect();
+      : await currentExtractions(ctx.db, args.sourceId).take(1);
   },
 });
 
@@ -158,11 +182,7 @@ export const listRecent = query({
   returns: v.array(extractionReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    return await ctx.db
-      .query("extractions")
-      .order("desc")
-      .filter((q) => q.neq(q.field("historical"), true))
-      .take(limit);
+    return await listCurrentExtractions(ctx.db, limit);
   },
 });
 

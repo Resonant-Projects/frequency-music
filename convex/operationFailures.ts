@@ -512,9 +512,18 @@ export const listForRun = query({
         q.eq("investigationRunId", args.agentRunId),
       )
       .take(50);
+    const recovered = await ctx.db
+      .query("operationFailures")
+      .withIndex("by_recovery_run", (q) =>
+        q.eq("recoveryRunId", args.agentRunId),
+      )
+      .take(50);
     return [
       ...new Map(
-        [...reported, ...investigated].map((row) => [row._id, row]),
+        [...reported, ...investigated, ...recovered].map((row) => [
+          row._id,
+          row,
+        ]),
       ).values(),
     ].map(({ target: _, ...row }) => row);
   },

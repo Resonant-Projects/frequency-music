@@ -6,7 +6,7 @@ import schema from "../convex/schema";
 import { modules } from "./modules";
 
 describe("batch hypothesis candidates", () => {
-  test("uses extraction provenance to skip an already-linked extraction", async () => {
+  test("skips a linked current extraction without falling back to its unlinked history", async () => {
     const t = convexTest(schema, modules);
     const { unlinkedId } = await t.run(async (ctx) => {
       const sourceId = await ctx.db.insert("sources", {
@@ -20,9 +20,16 @@ describe("batch hypothesis candidates", () => {
         createdAt: 1000,
         updatedAt: 1000,
       });
-      const insertExtraction = (inputHash: string) =>
+      const candidateSource = await ctx.db.get(sourceId);
+      const { _id, _creationTime, ...sourceFields } = candidateSource!;
+      const otherSourceId = await ctx.db.insert("sources", {
+        ...sourceFields,
+        dedupeKey: "url:other-candidate",
+        title: "Independent candidate",
+      });
+      const insertExtraction = (inputHash: string, id = sourceId) =>
         ctx.db.insert("extractions", {
-          sourceId,
+          sourceId: id,
           model: "test-model",
           promptVersion: "test-v1",
           inputHash,
@@ -49,7 +56,8 @@ describe("batch hypothesis candidates", () => {
           createdAt: 1000,
         });
 
-      const unlinkedId = await insertExtraction("unlinked");
+      await insertExtraction("unlinked-history");
+      const unlinkedId = await insertExtraction("unlinked", otherSourceId);
       const linkedId = await insertExtraction("linked");
       await ctx.db.insert("hypotheses", {
         title: "Existing hypothesis",

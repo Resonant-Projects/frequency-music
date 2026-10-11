@@ -21,7 +21,7 @@ export async function loadExtractionsForHypothesisSourceIds(
   sourceIds: Id<"sources">[],
 ) {
   const extractionLists = await Promise.all(
-    sourceIds.map((sourceId) => currentExtractions(db, sourceId).collect()),
+    sourceIds.map((sourceId) => currentExtractions(db, sourceId).take(1)),
   );
 
   return extractionLists.flat().toSorted((a, b) => b.createdAt - a.createdAt);

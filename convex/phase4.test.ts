@@ -71,14 +71,16 @@ describe("phase 2 lineage", () => {
     expect(result.map((row) => row._id)).toEqual([
       "extract-newer",
       "extract-b",
-      "extract-older",
     ]);
   });
 });
 
 describe("phase 4 editorial artifacts", () => {
-  test("blocks publish when private source material is referenced directly", async () => {
-    const privateTitle = "Private Notebook";
+  test.each([
+    false,
+    true,
+  ])("blocks publication of private material including superseded history, historical=%s", async (historical) => {
+    const privateTitle = historical ? "" : "Private Notebook";
     const privateSummary = "verbatim private extraction summary";
     const artifact = {
       _id: "artifact-1",
@@ -148,11 +150,26 @@ describe("phase 4 editorial artifacts", () => {
           _id: "extract-1",
           sourceId: "source-1",
           summary: privateSummary,
+          historical,
           createdAt: 1,
           claims: [],
           compositionParameters: [],
           topics: [],
         },
+        ...(historical
+          ? [
+              {
+                _id: "extract-current",
+                sourceId: "source-1",
+                summary: "A newer private reading",
+                createdAt: 2,
+                claims: [],
+                compositionParameters: [],
+                topics: [],
+                historical: false,
+              },
+            ]
+          : []),
       ],
     });
 
@@ -161,7 +178,7 @@ describe("phase 4 editorial artifacts", () => {
     expect(validation.canPublish).toBe(false);
     expect(
       validation.checks.find((check) => check.key === "privateSources")?.ok,
-    ).toBe(false);
+    ).toBe(historical);
     expect(
       validation.checks.find((check) => check.key === "privateExtractions")?.ok,
     ).toBe(false);

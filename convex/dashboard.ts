@@ -1,3 +1,4 @@
+import { listCurrentExtractions } from "./extractions";
 import type { GenericDatabaseReader } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
@@ -363,10 +364,7 @@ export const zodiacSectors = query({
   ),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 120;
-    const extractions = await ctx.db
-      .query("extractions")
-      .order("desc")
-      .take(limit);
+    const extractions = await listCurrentExtractions(ctx.db, limit);
 
     const sectorMetrics: Record<
       SectorId,
@@ -556,7 +554,7 @@ export const pipelineItems = query({
   handler: async (ctx) => {
     const [sources, extractions, hypotheses, recipes] = await Promise.all([
       ctx.db.query("sources").order("desc").take(200),
-      ctx.db.query("extractions").order("desc").take(100),
+      listCurrentExtractions(ctx.db, 100),
       ctx.db.query("hypotheses").order("desc").take(100),
       ctx.db.query("recipes").order("desc").take(100),
     ]);

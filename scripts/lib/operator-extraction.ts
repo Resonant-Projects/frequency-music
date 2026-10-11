@@ -257,7 +257,8 @@ export function parseResults(
   if (!Array.isArray(results)) {
     throw new Error("Results file needs a results array");
   }
-  const seen = new Set<string>();
+  const seenSources = new Map<string, boolean>();
+  const seenSnapshots = new Set<string>();
   return {
     model,
     results: results.map((entry, index) => {
@@ -274,10 +275,25 @@ export function parseResults(
           `results[${index}] needs sourceId, a 64-hex inputHash and an extraction object`,
         );
       }
-      if (seen.has(item.sourceId)) {
+      if (
+        item.snapshotId !== undefined &&
+        (typeof item.snapshotId !== "string" || !item.snapshotId)
+      ) {
+        throw new Error(`results[${index}] needs a non-empty snapshotId`);
+      }
+      if (
+        seenSources.has(item.sourceId) &&
+        (!item.snapshotId || !seenSources.get(item.sourceId))
+      ) {
         throw new Error(`results[${index}] repeats source ${item.sourceId}`);
       }
-      seen.add(item.sourceId);
+      if (item.snapshotId && seenSnapshots.has(item.snapshotId)) {
+        throw new Error(
+          `results[${index}] repeats snapshot ${item.snapshotId}`,
+        );
+      }
+      seenSources.set(item.sourceId, !!item.snapshotId);
+      if (item.snapshotId) seenSnapshots.add(item.snapshotId);
       return {
         sourceId: item.sourceId,
         inputHash: item.inputHash,

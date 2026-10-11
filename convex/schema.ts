@@ -270,7 +270,8 @@ export default defineSchema({
     .index("by_operation", ["operationId"])
     .index("by_status_due", ["status", "nextAttemptAt"])
     .index("by_investigation", ["investigationRunId"])
-    .index("by_agent_run", ["agentRunId"]),
+    .index("by_agent_run", ["agentRunId"])
+    .index("by_recovery_run", ["recoveryRunId"]),
   // ==========================================================================
   // USERS
   // ==========================================================================

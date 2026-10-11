@@ -142,6 +142,26 @@ describe("operator extraction results", () => {
     ]);
   });
 
+  test("imports distinct snapshots of one Source and rejects repeated snapshots", () => {
+    const entries = ["old", "current"].map((snapshotId) => ({
+      sourceId: "s1",
+      snapshotId,
+      inputHash: hash,
+      extraction: { summary: snapshotId },
+    }));
+    const model = "anthropic/claude-opus-5.5";
+    expect(parseResults(file(entries), model).results).toEqual(entries);
+    expect(() => parseResults(file([entries[0], entries[0]]), model)).toThrow(
+      "repeats snapshot old",
+    );
+    expect(() =>
+      parseResults(
+        file([entries[0], { ...entries[1], snapshotId: undefined }]),
+        model,
+      ),
+    ).toThrow("repeats source s1");
+  });
+
   test("rejects another model, malformed entries and repeated Sources", () => {
     const expected = "anthropic/claude-opus-5.5";
     expect(() =>
