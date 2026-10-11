@@ -35,3 +35,5 @@ Authenticated production E2E tests, container deployment, and Convex deployment 
 The local independent review workflow could not produce a validated report: the installed Codex 0.160 CLI rejected its legacy approval flag, and a temporary compatible 0.153.4 CLI then reported the required `gpt-6.1-sol` model unavailable. This limitation was disclosed before the user requested the PR, GitHub review/CI, and merge workflow. Local validation results do not constitute an independent review approval.
 
 Verification initially found missing FFmpeg on this workstation; it was installed locally, and all media tests then passed. Updated lint emits warnings for existing code but no errors. The web build retains its chunk-size warning and the documented upstream Park warning.
+
+The PR image check also exposed an inherited unavailable Alpine OpenSSL pin (`3.5.8-r0`). The agent Dockerfile now pins `libcrypto3` and `libssl3` to `3.5.9-r0`, the current patched package on Alpine 3.23. Installation was verified in the exact digest-pinned Node runtime base before pushing the fix. [Alpine package](https://pkgs.alpinelinux.org/package/v3.23/main/x86_64/libcrypto3).
