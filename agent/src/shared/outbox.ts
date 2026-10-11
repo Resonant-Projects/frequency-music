@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  link,
   mkdir,
   readdir,
   readFile,
@@ -14,6 +15,11 @@ import { redactError } from "./redactError.js";
 import { ConvexToolHttpError } from "../tools/convexTools.js";
 
 const OUTBOX_TOOLS = ["appendAgentRunEvent", "reportCaptureFailure"] as const;
+const OUTBOX_CAPACITY = 2000;
+const DEAD_LETTER_SLOTS = Array.from(
+  { length: OUTBOX_CAPACITY },
+  (_, index) => `slot-${index}.json`,
+);
 type Delivery = {
   tool: (typeof OUTBOX_TOOLS)[number];
   args: Record<string, unknown>;
@@ -27,7 +33,7 @@ export class DurableOutbox {
     if (
       (await readdir(this.dir)).filter(
         (file) => file.endsWith(".json") || file.endsWith(".tmp"),
-      ).length >= 2000
+      ).length >= OUTBOX_CAPACITY
     )
       throw new Error("Recovery outbox capacity reached");
     const bytes = JSON.stringify(delivery);
@@ -37,6 +43,28 @@ export class DurableOutbox {
     const temporary = join(this.dir, `${id}.tmp`);
     await writeFile(temporary, bytes, { mode: 0o600 });
     await rename(temporary, join(this.dir, `${id}.json`));
+  }
+  private async quarantine(path: string) {
+    const dir = join(this.dir, "dead-letter");
+    await mkdir(dir, { recursive: true, mode: 0o700 });
+    const existing = new Set(await readdir(dir));
+    // Legacy UUID files remain intact and count against the same capacity.
+    const availableSlots = DEAD_LETTER_SLOTS.filter(
+      (slot) => !existing.has(slot),
+    ).slice(0, Math.max(0, OUTBOX_CAPACITY - existing.size));
+    for (const slot of availableSlots) {
+      try {
+        // Exclusive hard links bound concurrent writers without overwriting reports.
+        // A crash before unlink leaves a durable copy in both queues.
+        await link(path, join(dir, slot));
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "EEXIST") continue;
+        throw error;
+      }
+      await unlink(path);
+      return;
+    }
+    throw new Error("Recovery outbox dead-letter capacity reached");
   }
   async flush(callTool: ToolCaller) {
     await mkdir(this.dir, { recursive: true, mode: 0o700 });
@@ -76,10 +104,8 @@ export class DurableOutbox {
           error.status < 500 &&
           ![408, 409, 425, 429].includes(error.status);
         if (invalidRecord || permanentlyRejected) {
-          const deadLetters = join(this.dir, "dead-letter");
           try {
-            await mkdir(deadLetters, { recursive: true, mode: 0o700 });
-            await rename(path, join(deadLetters, file));
+            await this.quarantine(path);
           } catch (moveError) {
             if ((moveError as NodeJS.ErrnoException).code !== "ENOENT")
               lastError = moveError;

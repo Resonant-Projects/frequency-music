@@ -1,5 +1,13 @@
 import { callConvex, ConvexToolHttpError } from "../src/tools/convexTools.js";
-import { mkdtemp, rm, readdir, writeFile, unlink } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  rm,
+  readdir,
+  readFile,
+  writeFile,
+  unlink,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
@@ -11,6 +19,110 @@ import type { SourceScoutState } from "../src/state/sourceScoutState.js";
 import { captureInputZ } from "../../convex/shared/operationRecovery";
 
 describe("recovery seams", () => {
+  test.each([false, true])(
+    "full quarantine preserves reports and continues delivery (corrupt record: %s)",
+    async (corrupt) => {
+      const dir = await mkdtemp(join(tmpdir(), "recovery-capacity-"));
+      try {
+        const deadLetters = join(dir, "dead-letter");
+        await mkdir(deadLetters);
+        await Promise.all(
+          Array.from({ length: 2000 }, (_, index) =>
+            writeFile(join(deadLetters, `${index}.json`), "legacy report"),
+          ),
+        );
+        const rejected = JSON.stringify({
+          tool: "appendAgentRunEvent",
+          args: { ordinal: 0 },
+        });
+        await writeFile(
+          join(dir, "0.json"),
+          corrupt ? "invalid JSON" : rejected,
+        );
+        await writeFile(
+          join(dir, "1.json"),
+          JSON.stringify({ tool: "appendAgentRunEvent", args: { ordinal: 1 } }),
+        );
+        const delivered: number[] = [];
+        await expect(
+          new DurableOutbox(dir).flush(async (_name, args) => {
+            if (args.ordinal === 0)
+              throw new ConvexToolHttpError("rejected", 400);
+            delivered.push(args.ordinal as number);
+            return null;
+          }),
+        ).rejects.toThrow("dead-letter capacity reached");
+        expect(delivered).toEqual([1]);
+        expect(await readFile(join(dir, "0.json"), "utf8")).toBe(
+          corrupt ? "invalid JSON" : rejected,
+        );
+        expect(await readdir(deadLetters)).toHaveLength(2000);
+        expect(await readFile(join(deadLetters, "0.json"), "utf8")).toBe(
+          "legacy report",
+        );
+        // Quarantine does not consume active capacity, even when it is full.
+        await new DurableOutbox(dir).enqueue({
+          tool: "reportCaptureFailure",
+          args: { deliveryId: "new" },
+        });
+        expect(
+          (await readdir(dir)).filter((file) => file.endsWith(".json")),
+        ).toHaveLength(2);
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    },
+  );
+  test("concurrent flushes share the last quarantine slot without losing reports", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-quarantine-race-"));
+    try {
+      const deadLetters = join(dir, "dead-letter");
+      await mkdir(deadLetters);
+      await Promise.all(
+        Array.from({ length: 1999 }, (_, index) =>
+          writeFile(join(deadLetters, `${index}.json`), "legacy report"),
+        ),
+      );
+      for (let ordinal = 0; ordinal < 3; ordinal++)
+        await writeFile(
+          join(dir, `${ordinal}.json`),
+          JSON.stringify({ tool: "appendAgentRunEvent", args: { ordinal } }),
+        );
+      let entered = 0;
+      let release!: () => void;
+      const bothRead = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const delivered: number[] = [];
+      const callTool = async (_name: string, args: Record<string, unknown>) => {
+        if (args.ordinal === 0) {
+          if (++entered === 2) release();
+          await bothRead;
+        }
+        if (args.ordinal !== 2) throw new ConvexToolHttpError("rejected", 400);
+        delivered.push(args.ordinal as number);
+        return null;
+      };
+      await Promise.allSettled([
+        new DurableOutbox(dir).flush(callTool),
+        new DurableOutbox(dir).flush(callTool),
+      ]);
+      expect(await readdir(deadLetters)).toHaveLength(2000);
+      const quarantined = JSON.parse(
+        await readFile(join(deadLetters, "slot-0.json"), "utf8"),
+      );
+      expect(quarantined.args.ordinal).toBe(0);
+      expect(
+        JSON.parse(await readFile(join(dir, "1.json"), "utf8")).args.ordinal,
+      ).toBe(1);
+      expect(delivered).toContain(2);
+      expect(
+        (await readdir(dir)).filter((file) => file.endsWith(".json")),
+      ).toEqual(["1.json"]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
   test("a concurrent removal during dead-letter handling does not strand later deliveries", async () => {
     const dir = await mkdtemp(join(tmpdir(), "recovery-race-"));
     try {
