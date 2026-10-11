@@ -68,5 +68,24 @@ test("corrupt history fails closed instead of permitting duplicate spending", as
   const root = await fixture();
   await mkdir(join(root, "broken"));
   await writeFile(join(root, "broken", "manifest.json"), "{");
-  await expect(reservedSources(root)).rejects.toThrow();
+  await expect(reservedSources(root)).rejects.toThrow(
+    join(root, "broken", "manifest.json"),
+  );
+});
+
+test.each([
+  "null",
+  "{}",
+  "[]",
+  '{"entries":{}}',
+  '{"entries":[null]}',
+  '{"entries":[{}]}',
+  '{"entries":[{"source":42}]}',
+  '{"entries":[{"source":" "}]}',
+])("invalid manifest shape reports its file: %s", async (raw) => {
+  const root = await fixture();
+  await mkdir(join(root, "broken"));
+  const path = join(root, "broken", "manifest.json");
+  await writeFile(path, raw);
+  await expect(reservedSources(root)).rejects.toThrow(path);
 });

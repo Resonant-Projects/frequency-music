@@ -1,3 +1,4 @@
+import type { Dirent } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { join, normalize } from "node:path";
 
@@ -8,7 +9,7 @@ export async function reservedSources(
   currentBatch?: string,
 ): Promise<Map<string, string>> {
   const reserved = new Map<string, string>();
-  let directories;
+  let directories: Dirent[];
   try {
     directories = await readdir(root, { withFileTypes: true });
   } catch (error) {
@@ -25,8 +26,34 @@ export async function reservedSources(
       if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
       throw error;
     }
-    const manifest = JSON.parse(raw) as { entries: { source: string }[] };
+    let manifest: unknown;
+    try {
+      manifest = JSON.parse(raw);
+    } catch {
+      throw new Error(`${path}: manifest is not valid JSON`);
+    }
+    if (
+      typeof manifest !== "object" ||
+      manifest === null ||
+      Array.isArray(manifest) ||
+      !("entries" in manifest) ||
+      !Array.isArray(manifest.entries)
+    ) {
+      throw new Error(`${path}: manifest must have an entries array`);
+    }
     for (const entry of manifest.entries) {
+      if (
+        typeof entry !== "object" ||
+        entry === null ||
+        Array.isArray(entry) ||
+        !("source" in entry) ||
+        typeof entry.source !== "string" ||
+        entry.source.trim() === ""
+      ) {
+        throw new Error(
+          `${path}: manifest entry must have a nonempty source string`,
+        );
+      }
       reserved.set(normalize(entry.source), directory.name);
     }
   }
