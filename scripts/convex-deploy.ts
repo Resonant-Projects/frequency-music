@@ -56,7 +56,7 @@ async function confirm(question: string): Promise<boolean> {
  * are blanked in the child environment.
  */
 function snapshotCheckout(): { head: string; env: Record<string, string> } {
-  if (git("status", "--porcelain")) {
+  if (git("status", "--porcelain", "--untracked-files=all")) {
     throw new Error(
       "Refusing to deploy from a checkout with uncommitted changes. Commit or stash them first.",
     );
