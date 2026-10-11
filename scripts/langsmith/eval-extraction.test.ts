@@ -9,9 +9,8 @@ vi.mock("./eval-helper", () => ({
   runEval,
   stringifyPromptValue: (value: unknown) => String(value),
 }));
-import "./eval-extraction";
-
-test("the default v3 evaluation uses the deployed extraction prompt", () => {
+test("the default v3 evaluation uses the deployed extraction prompt", async () => {
+  await import("./eval-extraction");
   const options = runEval.mock.calls[0]?.[0];
   expect(options.defaultVersion).toBe("v3");
   expect(options.prompts.v3.system).toBe(EXTRACT_SYSTEM_PROMPT);
