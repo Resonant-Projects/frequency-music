@@ -25,7 +25,7 @@ export const audioAccessZ = z.enum(["feed", "private"]);
 export const normalizationZ = z.enum(["applied", "skipped"]);
 
 export const audioEncodingZ = z.object({
-  codec: z.enum(["wav", "mp3", "opus"]),
+  codec: z.enum(["wav", "flac", "mp3", "opus"]),
   bitrateKbps: z.number().int().positive().optional(),
   sampleRate: z.number().int().positive(),
   channels: z.number().int().min(1).max(2),

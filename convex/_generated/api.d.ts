@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as operationFailures from "../operationFailures.js";
+import type * as recoveryWorkflows from "../recoveryWorkflows.js";
 import type * as admin from "../admin.js";
 import type * as agentDraftPromotion from "../agentDraftPromotion.js";
 import type * as agentDrafts from "../agentDrafts.js";
@@ -106,6 +108,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  operationFailures: typeof operationFailures;
+  recoveryWorkflows: typeof recoveryWorkflows;
   admin: typeof admin;
   agentDraftPromotion: typeof agentDraftPromotion;
   agentDrafts: typeof agentDrafts;

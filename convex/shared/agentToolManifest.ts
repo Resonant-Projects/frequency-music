@@ -38,6 +38,46 @@ function entry(
 
 export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
   entry(
+    "reportCaptureFailure",
+    "audit_write",
+    "internal.operationFailures:reportCaptureFailure",
+    "Record a failed capture for recovery.",
+    "Deterministic Source Scout nodes only.",
+    { langchain: false },
+  ),
+  entry(
+    "getFailureInvestigation",
+    "read",
+    "internal.operationFailures:getInvestigation",
+    "Read failures assigned to this investigation.",
+    "The backend binds assignment to the Agent Run.",
+    { langchain: false },
+  ),
+  entry(
+    "submitFailureDiagnosis",
+    "audit_write",
+    "internal.operationFailures:submitDiagnosis",
+    "Record diagnosis and request supported recovery.",
+    "Only the assigned investigation can submit.",
+    { langchain: false },
+  ),
+  entry(
+    "getCaptureRecovery",
+    "read",
+    "internal.operationFailures:getCaptureRecovery",
+    "Read the capture assigned to this recovery run.",
+    "The backend supplies retained input.",
+    { langchain: false },
+  ),
+  entry(
+    "finishCaptureRecovery",
+    "audit_write",
+    "internal.operationFailures:finishCaptureRecovery",
+    "Record a capture recovery outcome.",
+    "Only the owning Source Scout can finish.",
+    { langchain: false },
+  ),
+  entry(
     "listRecentExtractions",
     "read",
     "extractions:listRecent",

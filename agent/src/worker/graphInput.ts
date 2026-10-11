@@ -80,6 +80,7 @@ export type HypothesisDrafterGraphInput = {
   traceUrl?: string;
 };
 export type SourceScoutGraphInput = {
+  recovery?: boolean;
   agentRunId: string;
   traceUrl?: string;
   // Enqueue with input { mode: "recapture" } to retry Scout URL-only Sources.
@@ -92,6 +93,7 @@ export type TranscriptCaptureGraphInput = {
 };
 
 export type GraphInvocation =
+  | { graphName: "failure-investigation"; input: { agentRunId: string } }
   | { graphName: "research-pipeline"; input: ResearchPipelineGraphInput }
   | { graphName: "weekly-brief"; input: WeeklyBriefGraphInput }
   | { graphName: "correspondence-miner"; input: CorrespondenceMinerGraphInput }
@@ -120,6 +122,11 @@ function claimedTraceUrl(claim: ClaimedRun): string | undefined {
 // expects. For research-pipeline the claimed Convex run id is threaded in as
 // `agentRunId` so initializeRunNode reuses it instead of creating a second run.
 export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
+  if (claim.graphName === "failure-investigation")
+    return {
+      graphName: "failure-investigation",
+      input: { agentRunId: claim.runId },
+    };
   if (claim.graphName === "research-pipeline") {
     return {
       graphName: "research-pipeline",
@@ -176,6 +183,9 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       graphName: "source-scout",
       input: {
         agentRunId: claim.runId,
+        ...((claim.input as { recoveryFailureId?: unknown })?.recoveryFailureId
+          ? { recovery: true }
+          : {}),
         ...(traceUrl ? { traceUrl } : {}),
         ...((claim.input as { mode?: unknown } | null | undefined)?.mode ===
         "recapture"

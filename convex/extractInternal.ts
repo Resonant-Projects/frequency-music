@@ -1,5 +1,7 @@
+import { recordOperationFailure } from "./operationFailures";
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { type Infer, v } from "convex/values";
+import { currentExtractions } from "./extractions";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
@@ -8,10 +10,16 @@ import {
   internalQuery,
   type MutationCtx,
 } from "./_generated/server";
-import { claimValidator, compositionParameterValidator } from "./schema";
 import {
+  claimValidator,
+  compositionParameterValidator,
+  extractionResultValidator,
+} from "./schema";
+import {
+  EXTRACT_SYSTEM_PROMPT,
   EXTRACTION_PROMPT_VERSION,
   extractionInputHash,
+  renderExtractionPrompt,
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
 
@@ -27,12 +35,7 @@ async function extractionForInput(
 ): Promise<{ extraction: Doc<"extractions">; sameSource: boolean } | null> {
   // Only a Source's latest Extraction is current; storing a new one
   // supersedes the claims of the earlier ones.
-  const latest = (id: Id<"sources">) =>
-    db
-      .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", id))
-      .order("desc")
-      .first();
+  const latest = (id: Id<"sources">) => currentExtractions(db, id).first();
   const own = await latest(sourceId);
   if (own?.inputHash === inputHash)
     return { extraction: own, sameSource: true };
@@ -91,6 +94,8 @@ type StoreExtractionArgs = {
   topics: string[];
   openQuestions: string[];
   confidence: number;
+  historical?: boolean;
+  snapshotId?: Id<"extractionAttempts">;
 };
 
 /**
@@ -135,12 +140,12 @@ async function insertExtraction(
       ),
     );
 
-  const previousExtraction = await ctx.db
-    .query("extractions")
-    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", args.sourceId))
-    .order("desc")
-    .first();
-  if (previousExtraction) {
+  const previousExtraction = await currentExtractions(
+    ctx.db,
+    args.sourceId,
+  ).first();
+  if (previousExtraction && !args.historical) {
+    await ctx.db.patch(previousExtraction._id, { historical: true });
     const previousClaims = await ctx.db
       .query("claims")
       .withIndex("by_extractionId_ordinal", (q) =>
@@ -170,13 +175,13 @@ async function insertExtraction(
       sourceId: args.sourceId,
       ordinal,
       ...claim,
-      status: "active",
+      status: args.historical ? "superseded" : "active",
       createdBy,
       createdAt,
     });
     claimIds.push(claimId);
   }
-  if (claimIds.length > 0) {
+  if (claimIds.length > 0 && !args.historical) {
     await ctx.scheduler.runAfter(0, internal.embeddings.embedClaims, {
       claimIds,
     });
@@ -293,6 +298,287 @@ async function setSourceStatus(
   });
 }
 
+/** A covering Extraction settles the Source: extracted if its own, else archived as a duplicate. */
+async function settleFoundExtraction(
+  ctx: MutationCtx,
+  sourceId: Id<"sources">,
+  found: { extraction: Doc<"extractions">; sameSource: boolean },
+) {
+  await setSourceStatus(
+    ctx,
+    sourceId,
+    found.sameSource ? "extracted" : "archived",
+    found.sameSource
+      ? undefined
+      : {
+          reason: "duplicate",
+          details: `Same text as source ${found.extraction.sourceId} (extraction ${found.extraction._id})`,
+        },
+  );
+}
+
+/** Capture admission and input in the same transaction as Source disposition. */
+export const beginExtraction = internalMutation({
+  args: {
+    sourceId: v.id("sources"),
+    model: v.string(),
+    force: v.optional(v.boolean()),
+    expectedInputHash: v.optional(v.string()),
+  },
+  returns: v.union(
+    v.object({ skipped: v.literal(true), reason: v.string() }),
+    v.object({
+      attemptId: v.id("extractionAttempts"),
+      prompt: v.string(),
+      systemPrompt: v.string(),
+      promptVersion: v.string(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const source = await ctx.db.get(args.sourceId);
+    if (!source) throw new Error("Source not found");
+    if (source.status === "archived")
+      return { skipped: true as const, reason: "source is archived" };
+    const content = source.rawText || source.transcript || "";
+    const inputHash = await extractionInputHash(content);
+    if (args.expectedInputHash && inputHash !== args.expectedInputHash)
+      return { skipped: true as const, reason: "Source changed since export" };
+    const reason = unextractableTextReason(content);
+    if (reason) {
+      await setSourceStatus(ctx, source._id, "review_needed", {
+        reason: "no_text",
+        details: reason,
+      });
+      return { skipped: true as const, reason };
+    }
+    const origin = args.expectedInputHash ? "operator" : "worker";
+    if (source.activeExtractionAttemptId) {
+      const active = await ctx.db.get(source.activeExtractionAttemptId);
+      if (
+        active &&
+        active.inputHash === inputHash &&
+        active.model === args.model &&
+        active.origin === origin &&
+        active.title === source.title &&
+        active.canonicalUrl === source.canonicalUrl &&
+        (active.status === "pending" ||
+          active.status === "generated" ||
+          active.status === "failed")
+      ) {
+        // Saving identical text can reset disposition without changing ownership.
+        await setSourceStatus(ctx, source._id, "extracting");
+        return {
+          attemptId: active._id,
+          prompt: active.prompt,
+          systemPrompt: active.systemPrompt,
+          promptVersion: active.promptVersion,
+        };
+      }
+    }
+    if (!args.force) {
+      const found = await extractionForInput(ctx.db, inputHash, source._id);
+      if (found) {
+        await settleFoundExtraction(ctx, source._id, found);
+        return {
+          skipped: true as const,
+          reason: found.sameSource
+            ? "already extracted"
+            : "duplicate extraction",
+        };
+      }
+    }
+    const now = Date.now();
+    const prompt = renderExtractionPrompt({
+      title: source.title,
+      canonicalUrl: source.canonicalUrl,
+      content,
+    });
+    const attemptId = await ctx.db.insert("extractionAttempts", {
+      sourceId: source._id,
+      inputHash,
+      prompt,
+      origin,
+      systemPrompt: EXTRACT_SYSTEM_PROMPT,
+      promptVersion: EXTRACTION_PROMPT_VERSION,
+      title: source.title,
+      canonicalUrl: source.canonicalUrl,
+      model: args.model,
+      force: args.force === true,
+      sourceVersion: source.updatedAt,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch(source._id, {
+      status: "extracting",
+      activeExtractionAttemptId: attemptId,
+      blockedReason: undefined,
+      blockedDetails: undefined,
+      updatedAt: now,
+    });
+    return {
+      attemptId,
+      prompt,
+      systemPrompt: EXTRACT_SYSTEM_PROMPT,
+      promptVersion: EXTRACTION_PROMPT_VERSION,
+    };
+  },
+});
+
+export const retainExtractionResult = internalMutation({
+  args: {
+    attemptId: v.id("extractionAttempts"),
+    result: extractionResultValidator,
+    generationLease: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, { attemptId, result, generationLease }) => {
+    const attempt = await ctx.db.get(attemptId);
+    if (!attempt) throw new Error("Extraction attempt not found");
+    if (attempt.generationLease && attempt.generationLease !== generationLease)
+      throw new Error("Extraction generation lease changed");
+    // First result wins, including after an ambiguous response or duplicate delivery.
+    if (!attempt.result && attempt.status !== "completed") {
+      await ctx.db.patch(attemptId, {
+        result,
+        status: "generated",
+        error: undefined,
+        updatedAt: Date.now(),
+      });
+    }
+    return null;
+  },
+});
+
+const completionValidator = v.object({
+  extractionId: v.id("extractions"),
+  current: v.boolean(),
+  model: v.string(),
+  summary: v.string(),
+  claimCount: v.number(),
+  parameterCount: v.number(),
+});
+
+export const completeExtraction = internalMutation({
+  args: { attemptId: v.id("extractionAttempts") },
+  returns: completionValidator,
+  handler: async (
+    ctx,
+    { attemptId },
+  ): Promise<Infer<typeof completionValidator>> => {
+    const attempt = await ctx.db.get(attemptId);
+    if (!attempt?.result) throw new Error("Extraction has no retained result");
+    const result = attempt.result;
+    const outcome = (extractionId: Id<"extractions">, current: boolean) => ({
+      extractionId,
+      current,
+      model: attempt.model,
+      summary: result.summary,
+      claimCount: result.claims.length,
+      parameterCount: result.compositionParameters.length,
+    });
+    if (attempt.extractionId) {
+      const stored = await ctx.db.get(attempt.extractionId);
+      return outcome(
+        attempt.extractionId,
+        attempt.current === true && !!stored && stored.historical !== true,
+      );
+    }
+    const source = await ctx.db.get(attempt.sourceId);
+    if (!source)
+      throw new Error("Source was deleted; retained extraction needs review");
+    const content = source.rawText || source.transcript || "";
+    let current =
+      source.activeExtractionAttemptId === attemptId &&
+      (source.status === "extracting" ||
+        (source.status === "review_needed" &&
+          source.blockedReason === "ai_error")) &&
+      source.title === attempt.title &&
+      source.canonicalUrl === attempt.canonicalUrl &&
+      (await extractionInputHash(content, attempt.promptVersion)) ===
+        attempt.inputHash;
+    let extractionId: Id<"extractions">;
+    const found =
+      current && !attempt.force
+        ? await extractionForInput(ctx.db, attempt.inputHash, attempt.sourceId)
+        : null;
+    if (found) {
+      extractionId = found.extraction._id;
+      current = found.sameSource;
+      await settleFoundExtraction(ctx, attempt.sourceId, found);
+    } else {
+      ({ extractionId } = await insertExtraction(ctx, {
+        ...result,
+        sourceId: attempt.sourceId,
+        model: attempt.model,
+        promptVersion: attempt.promptVersion,
+        inputHash: attempt.inputHash,
+        confidence: 0.8,
+        snapshotId: attemptId,
+        historical: !current,
+      }));
+      if (current) await setSourceStatus(ctx, attempt.sourceId, "extracted");
+    }
+    if (current)
+      await ctx.runMutation(internal.graph.linkExtractionConceptsAtomic, {
+        extractionId,
+      });
+    await ctx.db.patch(attemptId, {
+      extractionId,
+      current,
+      status: "completed",
+      updatedAt: Date.now(),
+    });
+    return outcome(extractionId, current);
+  },
+});
+
+export const failExtraction = internalMutation({
+  args: {
+    attemptId: v.id("extractionAttempts"),
+    error: v.string(),
+    generationLease: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, { attemptId, error, generationLease }) => {
+    const attempt = await ctx.db.get(attemptId);
+    if (
+      !attempt ||
+      attempt.status === "completed" ||
+      (attempt.generationLease && attempt.generationLease !== generationLease)
+    )
+      return null;
+    await ctx.db.patch(attemptId, {
+      status: attempt.result ? "generated" : "failed",
+      generationLease: undefined,
+      generationLeaseUntil: undefined,
+      error: error.slice(0, 1000),
+      updatedAt: Date.now(),
+    });
+    await recordOperationFailure(ctx, {
+      operationId: `extraction:${attemptId}`,
+      causeKey: `extraction:${attempt.model}`,
+      target: { kind: "extraction", attemptId },
+      message: error.slice(0, 1000),
+    });
+    const source = await ctx.db.get(attempt.sourceId);
+    if (
+      source?.activeExtractionAttemptId === attemptId &&
+      source.status === "extracting" &&
+      (await extractionInputHash(
+        source.rawText || source.transcript || "",
+        attempt.promptVersion,
+      )) === attempt.inputHash
+    ) {
+      await setSourceStatus(ctx, source._id, "review_needed", {
+        reason: "ai_error",
+        details: "Extraction failed; recovery pending",
+      });
+    }
+    return null;
+  },
+});
+
 /**
  * Stores an operator-written Extraction in one transaction: the export is
  * current, the text passes the extraction gate, no current Extraction covers
@@ -331,16 +617,12 @@ export const storeOperatorExtraction = internalMutation({
       args.inputHash,
       args.sourceId,
     );
-    if (found?.sameSource) {
-      await setSourceStatus(ctx, args.sourceId, "extracted");
-      return { skipped: true as const, reason: "already extracted" };
-    }
     if (found) {
-      await setSourceStatus(ctx, args.sourceId, "archived", {
-        reason: "duplicate",
-        details: `Same text as source ${found.extraction.sourceId} (extraction ${found.extraction._id})`,
-      });
-      return { skipped: true as const, reason: "duplicate extraction" };
+      await settleFoundExtraction(ctx, args.sourceId, found);
+      return {
+        skipped: true as const,
+        reason: found.sameSource ? "already extracted" : "duplicate extraction",
+      };
     }
     await insertExtraction(ctx, {
       ...args,
@@ -381,5 +663,68 @@ export const parkOperatorUnextractable = internalMutation({
       details: reason,
     });
     return { parked: true, reason };
+  },
+});
+
+export const getAttempt = internalQuery({
+  args: { attemptId: v.id("extractionAttempts") },
+  handler: (ctx, args) => ctx.db.get(args.attemptId),
+});
+
+/** A duplicate action may reuse a result but must not start a second model call. */
+export const claimGeneration = internalMutation({
+  args: { attemptId: v.id("extractionAttempts"), lease: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, { attemptId, lease }) => {
+    const attempt = await ctx.db.get(attemptId);
+    if (
+      !attempt ||
+      attempt.result ||
+      (attempt.generationLeaseUntil ?? 0) > Date.now()
+    )
+      return false;
+    if (attempt.origin === "operator")
+      throw new Error("Operator snapshot awaits an external result");
+    const source = await ctx.db.get(attempt.sourceId);
+    if (!source || source.status === "archived")
+      throw new Error(
+        "Archived or missing Source cannot start a new generation",
+      );
+    await ctx.db.patch(attemptId, {
+      generationLease: lease,
+      generationLeaseUntil: Date.now() + 15 * 60_000,
+    });
+    return true;
+  },
+});
+
+/** Recover generation/commit interruptions even when the calling workflow disappeared. */
+export const reconcileAttempts = internalMutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx): Promise<null> => {
+    for (const status of ["pending", "generated"] as const) {
+      const rows = await ctx.db
+        .query("extractionAttempts")
+        .withIndex("by_status_updated", (q) =>
+          q.eq("status", status).lte("updatedAt", Date.now() - 15 * 60_000),
+        )
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("origin"), "worker"),
+            q.eq(q.field("status"), "generated"),
+          ),
+        )
+        .take(20);
+      for (const row of rows) {
+        if ((row.generationLeaseUntil ?? 0) > Date.now()) continue;
+        await ctx.runMutation(internal.extractInternal.failExtraction, {
+          attemptId: row._id,
+          generationLease: row.generationLease,
+          error: "Extraction interrupted before completion",
+        });
+      }
+    }
+    return null;
   },
 });

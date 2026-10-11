@@ -26,6 +26,22 @@ function omitUndefined<T extends Record<string, unknown>>(value: T): T {
 }
 
 const runs: Record<AgentToolName, AgentToolDef["run"]> = {
+  reportCaptureFailure: (ctx, args) =>
+    ctx.runMutation(
+      mutationRef("operationFailures:reportCaptureFailure"),
+      args,
+    ),
+  getFailureInvestigation: (ctx, args) =>
+    ctx.runQuery(queryRef("operationFailures:getInvestigation"), args),
+  submitFailureDiagnosis: (ctx, args) =>
+    ctx.runMutation(mutationRef("operationFailures:submitDiagnosis"), args),
+  getCaptureRecovery: (ctx, args) =>
+    ctx.runQuery(queryRef("operationFailures:getCaptureRecovery"), args),
+  finishCaptureRecovery: (ctx, args) =>
+    ctx.runMutation(
+      mutationRef("operationFailures:finishCaptureRecovery"),
+      args,
+    ),
   listRecentExtractions: (ctx, args) =>
     ctx.runQuery(queryRef("extractions:listRecent"), {
       limit: (args.limit as number) ?? 20,

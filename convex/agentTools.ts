@@ -247,3 +247,15 @@ export const selfImprovementStats = internalQuery({
     });
   },
 });
+
+export const reportCaptureFailure = makeAgentToolAction("reportCaptureFailure");
+export const getFailureInvestigation = makeAgentToolAction(
+  "getFailureInvestigation",
+);
+export const submitFailureDiagnosis = makeAgentToolAction(
+  "submitFailureDiagnosis",
+);
+export const getCaptureRecovery = makeAgentToolAction("getCaptureRecovery");
+export const finishCaptureRecovery = makeAgentToolAction(
+  "finishCaptureRecovery",
+);

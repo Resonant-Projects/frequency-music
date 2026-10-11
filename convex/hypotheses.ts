@@ -577,6 +577,7 @@ export const listUnlinkedBatchCandidates = internalQuery({
   handler: async (ctx, args) => {
     const extractions = await ctx.db
       .query("extractions")
+      .filter((q) => q.neq(q.field("historical"), true))
       .order("desc")
       .take(50);
     return await selectUnlinkedExtractionCandidates(extractions, {

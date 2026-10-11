@@ -1,3 +1,7 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+let scratch: string;
 import {
   afterEach,
   beforeEach,
@@ -10,13 +14,48 @@ import { runOnce } from "../src/runner";
 
 // The runner logs claim/failure lines; keep test output quiet.
 beforeEach(() => {
+  scratch = mkdtempSync(join(tmpdir(), "media-runner-test-"));
   vi.spyOn(console, "log").mockImplementation(() => {});
 });
 afterEach(() => {
+  rmSync(scratch, { recursive: true, force: true });
   vi.restoreAllMocks();
 });
 
 describe("runOnce", () => {
+  test("a failed completion write reuses the persisted result on the next lease", async () => {
+    let attempt = 0;
+    let completeCalls = 0;
+    const tool = vi.fn(async (name: string) => {
+      if (name === "claimNextMediaJob")
+        return {
+          jobId: "retained-job",
+          kind: "probe",
+          input: { kind: "probe", rendererVersion: "0.1.0" },
+          leaseToken: `lease-${attempt}`,
+          attempts: attempt,
+        };
+      if (name === "completeMediaJob" && completeCalls++ === 0)
+        throw new Error("connection lost");
+      if (name === "failMediaJob") attempt++;
+      return null;
+    });
+    const handler = vi.fn(async () => ({ kind: "probe", artifacts: [] }));
+    const config = {
+      workerId: "w",
+      kinds: ["probe"],
+      workDir: scratch,
+      rendererVersion: "0.1.0",
+    };
+    expect(
+      await runOnce(config, tool as never, { probe: handler as never }),
+    ).toBe("failed");
+    expect(
+      await runOnce(config, tool as never, { probe: handler as never }),
+    ).toBe("done");
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   test("idle when nothing is claimed", async () => {
     const calls: string[] = [];
     const tool = vi.fn(async (name: string) => {
@@ -27,7 +66,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
       },
       tool as never,
@@ -62,7 +101,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
       },
       tool as never,
@@ -94,7 +133,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
       },
       tool as never,
@@ -118,7 +157,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
         deadlineMs: 50,
       },
@@ -152,7 +191,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
         deadlineMs: 20,
         deadlineGraceMs: 20,

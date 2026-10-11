@@ -22,6 +22,16 @@ function stripLargeTextFields(value: unknown): unknown {
   return result;
 }
 
+// Recovery, audit, and terminal calls fail fast instead of holding the worker's slot.
+const BOUNDED_TOOLS = new Set([
+  "appendAgentRunEvent",
+  "reportCaptureFailure",
+  "ingestScoutedSource",
+  "getCaptureRecovery",
+  "finishCaptureRecovery",
+  "markAgentRunCompleted",
+]);
+
 export async function callConvex<T>(
   path: string,
   body: Record<string, unknown>,
@@ -32,11 +42,14 @@ export async function callConvex<T>(
   if (!convexUrl) throw new Error("CONVEX_SITE_URL is required");
   if (!agentSecret) throw new Error("AGENT_TOOL_SECRET is required");
 
+  const boundedSignal =
+    signal ??
+    (BOUNDED_TOOLS.has(path) ? AbortSignal.timeout(30_000) : undefined);
   const resp = await fetch(
     convexUrl.replace(/\/$/, "") + "/agent-tools/" + path,
     {
       method: "POST",
-      ...(signal ? { signal } : {}),
+      ...(boundedSignal ? { signal: boundedSignal } : {}),
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ secret: agentSecret, ...body }),
     },
@@ -51,7 +64,11 @@ export async function callConvex<T>(
         (await resp.text()),
     );
   }
-  return stripLargeTextFields(await resp.json()) as T;
+  const result = await resp.json();
+  // This deterministic recovery tool must receive its retained input. It is never model-bound.
+  return (
+    path === "getCaptureRecovery" ? result : stripLargeTextFields(result)
+  ) as T;
 }
 
 function toSnake(name: string): string {

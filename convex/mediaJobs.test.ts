@@ -102,6 +102,31 @@ async function probePair(t: ReturnType<typeof convexTest>, jobId: string) {
 }
 
 describe("mediaJobs lifecycle", () => {
+  test("assembly claims refresh from the lossless master rather than its delivery", async () => {
+    const t = convexTest(schema, modules);
+    const job = await t.mutation(internal.mediaJobs.enqueue, { input: probe });
+    const master = await pendingArtifact(t, job.jobId, "masterNormalized");
+    const delivery = await pendingArtifact(t, job.jobId, "delivery", master);
+    const expected = await t.run(async (ctx) =>
+      ctx.storage.getUrl((await ctx.db.get(master))!.storageId!),
+    );
+    await t.mutation(internal.mediaJobs.enqueue, {
+      input: {
+        kind: "assembleEpisode",
+        narrationArtifactId: delivery,
+        narrationStorageUrl: "https://expired.example/master",
+        title: "episode",
+        chapters: [],
+        rendererVersion: "0.1.0",
+      },
+    });
+    const claim = await t.mutation(internal.mediaJobs.claimNext, {
+      workerId: "w",
+      kinds: ["assembleEpisode"],
+    });
+    expect(claim?.input).toMatchObject({ narrationStorageUrl: expected });
+  });
+
   test("competing narration scripts for one brief admit only one job", async () => {
     const t = convexTest(schema, modules);
     const briefId = await insertBrief(t);

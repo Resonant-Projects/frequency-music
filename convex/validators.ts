@@ -57,6 +57,7 @@ const sourceTypeValidator = v.union(
 );
 
 export const sourceReturnValidator = v.object({
+  activeExtractionAttemptId: v.optional(v.id("extractionAttempts")),
   _id: v.id("sources"),
   _creationTime: v.number(),
   type: sourceTypeValidator,
@@ -118,6 +119,8 @@ export const feedReturnValidator = v.object({
 // ============================================================================
 
 export const extractionReturnValidator = v.object({
+  historical: v.optional(v.boolean()),
+  snapshotId: v.optional(v.id("extractionAttempts")),
   _id: v.id("extractions"),
   _creationTime: v.number(),
   sourceId: v.id("sources"),

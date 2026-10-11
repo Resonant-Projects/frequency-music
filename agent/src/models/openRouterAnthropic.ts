@@ -2,6 +2,8 @@ import { ChatAnthropic } from "@langchain/anthropic";
 
 export interface ChatModelOptions {
   temperature?: number;
+  maxTokens?: number;
+  maxRetries?: number;
   model?: string;
 }
 
@@ -41,6 +43,12 @@ export function createOpenRouterAnthropicModel(options: ChatModelOptions = {}) {
 
   return new ChatAnthropic({
     model,
+    ...(options.maxTokens === undefined
+      ? {}
+      : { maxTokens: options.maxTokens }),
+    ...(options.maxRetries === undefined
+      ? {}
+      : { maxRetries: options.maxRetries }),
     ...(isSonnet55
       ? { thinking: { type: "adaptive" } }
       : { temperature: options.temperature ?? 0.2 }),

@@ -19,18 +19,11 @@ import { components } from "./_generated/api";
  * Workflow manager for durable pipelines
  * Handles retries, timeouts, and status tracking
  */
-type WorkflowManagerOptions = NonNullable<
-  ConstructorParameters<typeof WorkflowManager>[1]
->;
-
 const workflowOptions = {
-  // Default retry policy for all steps
-  defaultRetryPolicy: {
-    maxAttempts: 3,
-    initialBackoffMs: 1000,
-    maxBackoffMs: 60000,
+  workpoolOptions: {
+    defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
   },
-} as unknown as WorkflowManagerOptions;
+};
 
 export const workflowManager = new WorkflowManager(
   components.workflow,

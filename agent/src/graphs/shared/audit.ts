@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { deliverOrSpool } from "../../shared/outbox.js";
 import type { AgentRunEventKind } from "../../../../convex/shared/agentContract.js";
 import type { AgentToolName } from "../../../../convex/shared/agentToolArgs.js";
 import { redactError } from "../../shared/redactError.js";
@@ -5,6 +7,7 @@ import { redactError } from "../../shared/redactError.js";
 export type ToolCaller = (
   name: AgentToolName,
   args: Record<string, unknown>,
+  signal?: AbortSignal,
 ) => Promise<unknown>;
 
 export type AgentAuditEvent<
@@ -33,22 +36,28 @@ export async function appendRemoteAuditEvent<Kind extends AgentRunEventKind>(
 ): Promise<AgentAuditEvent<Kind | "error">[]> {
   const event = localEvent(kind, message, payload);
   if (!agentRunId) return [event];
-  try {
-    await callTool("appendAgentRunEvent", {
-      runId: agentRunId,
-      kind,
-      message,
-      payload,
-    });
-    return [event];
-  } catch (error) {
-    return [
-      event,
-      localEvent("error", "Failed to append remote agent-run audit event", {
-        message: redactError(error),
-      }),
-    ];
-  }
+  const args = {
+    runId: agentRunId,
+    kind,
+    message,
+    payload,
+    deliveryId: randomUUID(),
+  };
+  const failed = await deliverOrSpool(callTool, "appendAgentRunEvent", args, {
+    ...args,
+    message: redactError(message),
+    payload:
+      payload === undefined
+        ? undefined
+        : { detail: redactError(JSON.stringify(payload)) },
+  });
+  if (!failed) return [event];
+  return [
+    event,
+    localEvent("error", "Failed to append remote agent-run audit event", {
+      message: redactError(failed.error),
+    }),
+  ];
 }
 
 export async function finalizeRunCompleted(

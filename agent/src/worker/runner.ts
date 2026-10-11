@@ -1,3 +1,5 @@
+import { workerOutbox } from "../shared/outbox.js";
+import { graph as failureInvestigationGraph } from "../graphs/failure-investigation/index.js";
 // Production worker runner.
 //
 // Polls the Convex agent-tool surface for the oldest queued agentRun, maps it to
@@ -56,6 +58,8 @@ type StreamableGraph = {
 };
 
 const GRAPHS: Record<KnownGraphName, StreamableGraph> = {
+  "failure-investigation":
+    failureInvestigationGraph as unknown as StreamableGraph,
   "research-pipeline": researchPipelineGraph as unknown as StreamableGraph,
   "weekly-brief": weeklyBriefAgent as unknown as StreamableGraph,
   "correspondence-miner":
@@ -274,6 +278,13 @@ export async function pollOnce(
   workerId: string,
   graphName?: string,
 ): Promise<boolean> {
+  try {
+    await workerOutbox?.flush((name, args) =>
+      callConvex(name, args, AbortSignal.timeout(2000)),
+    );
+  } catch (error) {
+    log("outbox delivery deferred:", redactError(error));
+  }
   const claim = await callConvex<ClaimedRun | null>("claimNextPendingRun", {
     workerId,
     ...(graphName ? { graphName } : {}),

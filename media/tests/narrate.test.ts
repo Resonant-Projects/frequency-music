@@ -12,6 +12,7 @@ import {
   test,
   vi,
 } from "vite-plus/test";
+import { runFfmpeg } from "../src/audio/ffmpeg";
 import { probeStreams } from "../src/audio/encode";
 import type { Measurement } from "../src/audio/loudness";
 import { synthTone } from "../src/audio/synth";
@@ -210,6 +211,74 @@ describe("narrate job", () => {
     for (const upload of uploaded) expect(upload.signal).toBe(signal);
     for (const call of toneSynth.mock.calls) expect(call[3]).toBe(signal);
     expect(tools.attachAudioStorage).toHaveBeenCalledTimes(2);
+  });
+
+  test("oversize WAV uses lossless FLAC at 48 kHz with identical decoded PCM", async () => {
+    statOverride.sizeFor = (path) =>
+      path.endsWith("master.wav") ? MAX_UPLOAD_BYTES + 1 : undefined;
+    const { tools, minted, uploaded } = fakeTools();
+    const dir = workDir("narr-flac-");
+    await narrateHandler(
+      {
+        job: narrateJob,
+        workDir: dir,
+        tools,
+        rendererVersion: "0.2.0",
+        signal: new AbortController().signal,
+      },
+      { synthesize: toneSynth },
+    );
+    expect(minted[0]?.encoding).toEqual({
+      codec: "flac",
+      sampleRate: 48000,
+      channels: 1,
+    });
+    expect(uploaded[0]?.mimeType).toBe("audio/flac");
+    expect(await probeStreams(join(dir, "master.flac"))).toMatchObject({
+      sampleRate: 48000,
+      channels: 1,
+    });
+    for (const format of ["wav", "flac"])
+      await runFfmpeg([
+        "-i",
+        join(dir, `master.${format}`),
+        "-f",
+        "s16le",
+        join(dir, `${format}.pcm`),
+      ]);
+    expect(await readFile(join(dir, "flac.pcm"))).toEqual(
+      await readFile(join(dir, "wav.pcm")),
+    );
+  });
+
+  test("oversize FLAC prevents upload and retains synthesized chunks for retry", async () => {
+    const { tools, minted } = fakeTools();
+    const retainedDir = workDir("narr-retained-");
+    const ctx = {
+      job: narrateJob,
+      workDir: workDir("narr-oversize-"),
+      retainedDir,
+      tools,
+      rendererVersion: "0.2.0",
+      signal: new AbortController().signal,
+    };
+    statOverride.sizeFor = (path) =>
+      path.endsWith("master.wav") || path.endsWith("master.flac")
+        ? MAX_UPLOAD_BYTES + 1
+        : undefined;
+    toneSynth.mockClear();
+    await expect(
+      narrateHandler(ctx, { synthesize: toneSynth }),
+    ).rejects.toThrow(/upload cap/);
+    const calls = toneSynth.mock.calls.length;
+    expect(calls).toBeGreaterThan(0);
+    expect(minted).toHaveLength(0);
+    statOverride.sizeFor = undefined;
+    await narrateHandler(
+      { ...ctx, workDir: workDir("narr-retry-") },
+      { synthesize: toneSynth },
+    );
+    expect(toneSynth).toHaveBeenCalledTimes(calls);
   });
 
   test("a delivery that breaks the true-peak ceiling is rejected before any upload is minted for it", async () => {

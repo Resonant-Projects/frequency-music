@@ -140,3 +140,13 @@ An Audio Artifact the podcast feed lists: only rows with `access: "feed"`, `role
 
 **Announcer Voice**:
 The voice that speaks a shootout episode's intro and take labels. Never a candidate: a configured catalog voice outside the job's candidates when one exists, otherwise a dedicated `ANNOUNCER_VOICES` entry; only when neither is configured does a candidate announce, and then the intro says nothing about being a non-candidate. Recorded on the episode's `engine.params.announcerVoiceId`.
+
+**Extraction Snapshot**:
+The Source and instructions an Extraction began with. A completed reading of an older snapshot remains history; it does not replace a newer reading or reactivate an archived Source.
+
+**Operational Failure**:
+A recorded failure of capture, extraction, or media work, with its provenance, investigation, and recovery outcome. Independent work continues while steps that need the missing result wait.
+_Avoid_: Failure Archive (which records research outcomes, not service failures)
+
+**Recovery**:
+A bounded attempt to finish a failed operation using retained inputs and completed outputs. Persistent failures receive an investigation; unsupported fixes remain for review.

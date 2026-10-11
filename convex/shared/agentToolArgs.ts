@@ -1,3 +1,4 @@
+import { captureInputZ, diagnosisZ } from "./operationRecovery";
 // Zod-first argument schemas for the agent-tool surface. The transport owns
 // agentSecret, so it never appears in these cross-workspace schemas.
 import { zid } from "convex-helpers/server/zod4";
@@ -21,6 +22,23 @@ import {
 const limit = z.number().int().positive().max(100).optional();
 
 export const agentToolArgs = {
+  reportCaptureFailure: z.object({
+    agentRunId: zid("agentRuns"),
+    input: captureInputZ,
+    stage: z.enum(["capture", "intake"]),
+    diagnostic: z.string().max(1000).optional(),
+  }),
+  getFailureInvestigation: z.object({ agentRunId: zid("agentRuns") }),
+  submitFailureDiagnosis: z.object({
+    agentRunId: zid("agentRuns"),
+    result: diagnosisZ,
+  }),
+  getCaptureRecovery: z.object({ agentRunId: zid("agentRuns") }),
+  finishCaptureRecovery: z.object({
+    agentRunId: zid("agentRuns"),
+    failureId: zid("operationFailures"),
+    success: z.boolean(),
+  }),
   listRecentExtractions: z.object({ limit }),
   getExtraction: z.object({ id: zid("extractions") }),
   listRecentHypotheses: z.object({ limit }),
@@ -117,6 +135,7 @@ export const agentToolArgs = {
     traceUrl: z.string().optional(),
   }),
   appendAgentRunEvent: z.object({
+    deliveryId: z.string().uuid().optional(),
     runId: zid("agentRuns"),
     kind: z.enum(AGENT_RUN_EVENT_KINDS),
     message: z.string().min(1),

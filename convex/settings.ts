@@ -17,7 +17,10 @@ export const HOUSE_VOICE_KEY = "houseVoiceId";
 export const INITIAL_NARRATION_KEY = "initialNarrationScheduledAt";
 export const INITIAL_NARRATION_DAYS_BACK = 14;
 
-async function readSetting(ctx: QueryCtx, key: string): Promise<string | null> {
+export async function readSetting(
+  ctx: Pick<QueryCtx, "db">,
+  key: string,
+): Promise<string | null> {
   const row = await ctx.db
     .query("settings")
     .withIndex("by_key", (q) => q.eq("key", key))
@@ -25,16 +28,16 @@ async function readSetting(ctx: QueryCtx, key: string): Promise<string | null> {
   return row?.value ?? null;
 }
 
-async function writeSetting(
-  ctx: MutationCtx,
+export async function writeSetting(
+  ctx: Pick<MutationCtx, "db">,
   key: string,
   value: string,
+  updatedAt = Date.now(),
 ): Promise<void> {
   const row = await ctx.db
     .query("settings")
     .withIndex("by_key", (q) => q.eq("key", key))
     .unique();
-  const updatedAt = Date.now();
   if (row) await ctx.db.patch(row._id, { value, updatedAt });
   else await ctx.db.insert("settings", { key, value, updatedAt });
 }

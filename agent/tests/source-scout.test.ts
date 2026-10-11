@@ -647,7 +647,7 @@ describe("source-scout recapture mode", () => {
       agentRunId: "run-recapture",
     } as unknown as SourceScoutState);
     expect(update.summary).toBe(
-      "source-scout completed: recapture captured 1 of 2 URL-only sources: Plate modes",
+      "source-scout completed: recapture captured 1 of 2 URL-only sources; 0 failed attempts: Plate modes",
     );
   });
 });

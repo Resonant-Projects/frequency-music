@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, type MutationCtx } from "./_generated/server";
+import { readSetting, writeSetting } from "./settings";
 
 const DEFAULT_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
 const SCAN_LIMIT = 200;
@@ -80,13 +81,46 @@ export const sweep = internalMutation({
 
     let artifactsDeleted = 0;
     let blobsDeleted = 0;
+    const pendingCursorKey = "mediaSweeper.pendingCursor";
+    const pendingCursor = await readSetting(ctx, pendingCursorKey);
+    let pendingScan: { cursor: string; cutoff: number } | undefined;
+    try {
+      const parsed = pendingCursor ? JSON.parse(pendingCursor) : undefined;
+      if (
+        typeof parsed?.cursor === "string" &&
+        typeof parsed?.cutoff === "number" &&
+        Number.isFinite(parsed.cutoff)
+      )
+        pendingScan = parsed;
+    } catch {
+      /* Restart a malformed cursor record with a fresh query. */
+    }
+    const pendingCutoff = pendingScan?.cutoff ?? cutoff;
     const stalePending = await ctx.db
       .query("audioArtifacts")
       .withIndex("by_status_createdAt", (q) =>
-        q.eq("status", "pending").lt("createdAt", cutoff),
+        q.eq("status", "pending").lt("createdAt", pendingCutoff),
       )
-      .take(SCAN_LIMIT);
-    for (const row of stalePending) {
+      .paginate({ cursor: pendingScan?.cursor ?? null, numItems: SCAN_LIMIT });
+    const cursorValue = stalePending.isDone
+      ? ""
+      : JSON.stringify({
+          cursor: stalePending.continueCursor,
+          cutoff: pendingCutoff,
+        });
+    await writeSetting(ctx, pendingCursorKey, cursorValue, now);
+    for (const row of stalePending.page) {
+      if (row.refs.mediaJobId) {
+        const job = await ctx.db.get(row.refs.mediaJobId);
+        if (job?.status === "queued" || job?.status === "claimed") continue;
+        const failure = await ctx.db
+          .query("operationFailures")
+          .withIndex("by_operation", (q) =>
+            q.eq("operationId", `media:${row.refs.mediaJobId}`),
+          )
+          .unique();
+        if (failure && failure.status !== "resolved") continue;
+      }
       // storage.delete throws on a missing blob, and the sweep is one
       // mutation: an unguarded delete would roll back lease recovery too.
       if (row.storageId && (await ctx.db.system.get(row.storageId))) {

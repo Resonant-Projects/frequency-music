@@ -27,6 +27,38 @@ const base = {
 };
 
 describe("mediaSweeper", () => {
+  test("a pending scan keeps its original cutoff until its cursor is exhausted", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+    const fresh = await t.run(async (ctx) => {
+      for (let i = 0; i < 400; i++)
+        await ctx.db.insert("audioArtifacts", {
+          ...base,
+          status: "pending",
+          createdAt: now - 2 * DAY,
+          updatedAt: now - 2 * DAY,
+        });
+      return ctx.db.insert("audioArtifacts", {
+        ...base,
+        status: "pending",
+        createdAt: now - DAY + 100,
+        updatedAt: now - DAY + 100,
+      });
+    });
+    await t.mutation(internal.mediaSweeper.sweep, { now });
+    const saved = await t.run((ctx) =>
+      ctx.db
+        .query("settings")
+        .withIndex("by_key", (q) => q.eq("key", "mediaSweeper.pendingCursor"))
+        .unique(),
+    );
+    expect(JSON.parse(saved!.value).cutoff).toBe(now - DAY);
+    await t.mutation(internal.mediaSweeper.sweep, { now: now + DAY });
+    expect(await t.run((ctx) => ctx.db.get(fresh))).not.toBeNull();
+    await t.mutation(internal.mediaSweeper.sweep, { now: now + DAY });
+    expect(await t.run((ctx) => ctx.db.get(fresh))).toBeNull();
+  });
+
   test("deletes stale pending artifacts with their blobs and unreferenced blobs, keeps fresh and referenced ones", async () => {
     const t = convexTest(schema, modules);
     const now = Date.now();

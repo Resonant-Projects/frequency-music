@@ -20,6 +20,8 @@ All tool calls require `AGENT_TOOL_SECRET`.
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
+| `getFailureInvestigation` | `/agent-tools/getFailureInvestigation` | `internal.operationFailures:getInvestigation` | Read failures assigned to this investigation. | The backend binds assignment to the Agent Run. |
+| `getCaptureRecovery` | `/agent-tools/getCaptureRecovery` | `internal.operationFailures:getCaptureRecovery` | Read the capture assigned to this recovery run. | The backend supplies retained input. |
 | `listRecentExtractions` | `/agent-tools/listRecentExtractions` | `extractions:listRecent` | Fetch recent structured source extractions with claims, topics, open questions, and composition parameters. | Use first when a brief or synthesis needs fresh source material. |
 | `getExtraction` | `/agent-tools/getExtraction` | `extractions:get` | Fetch one extraction by Convex extraction id. | Use after listRecentExtractions when the agent needs full detail for a selected item. |
 | `listRecentHypotheses` | `/agent-tools/listRecentHypotheses` | `hypotheses:listByStatus` | Fetch recent hypotheses with rationale and whyThisMatters. | No status filter in phase one; returns newest rows. |
@@ -61,6 +63,9 @@ These tools write only to agent audit/review records and must not substitute for
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
+| `reportCaptureFailure` | `/agent-tools/reportCaptureFailure` | `internal.operationFailures:reportCaptureFailure` | Record a failed capture for recovery. | Deterministic Source Scout nodes only. |
+| `submitFailureDiagnosis` | `/agent-tools/submitFailureDiagnosis` | `internal.operationFailures:submitDiagnosis` | Record diagnosis and request supported recovery. | Only the assigned investigation can submit. |
+| `finishCaptureRecovery` | `/agent-tools/finishCaptureRecovery` | `internal.operationFailures:finishCaptureRecovery` | Record a capture recovery outcome. | Only the owning Source Scout can finish. |
 | `createAgentRun` | `/agent-tools/createAgentRun` | `agentRuns:createRunning` | Atomically create a running audit-only Convex agent run record. Does not mutate research data. | Returns safe metadata: run id, status, and timestamps. |
 | `appendAgentRunEvent` | `/agent-tools/appendAgentRunEvent` | `agentRuns:appendEvent` | Append an audit-only lifecycle event to a Convex agent run. Does not mutate research data. | Payloads should be sanitized; never include secrets or raw env data. |
 | `markAgentRunCompleted` | `/agent-tools/markAgentRunCompleted` | `agentRuns:markCompleted` | Mark an audit-only Convex agent run completed. Does not mutate research data. | Optional summary and trace URL only. |

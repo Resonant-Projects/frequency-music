@@ -2,12 +2,16 @@
 // narration. Each paragraph is chunked to the provider's cap, the chunks and
 // then the paragraphs are joined with short gaps, and the paragraph starts
 // become chapter marks.
-import { stat } from "node:fs/promises";
+import {
+  retainedKey,
+  restoreChunk,
+  retainChunk,
+  beginSynthesis,
+  failSynthesis,
+} from "../retained";
 import { join } from "node:path";
-import { fnv1a64Hex, stableStringify } from "../../../convex/shared/stableHash";
 import { type VoiceEntry, voiceById } from "../../../convex/shared/voices";
 import { concatWithGaps } from "../audio/concat";
-import { encodeMp3, encodeWav } from "../audio/encode";
 import {
   assertWithinPolicy,
   LOUDNESS_TARGETS,
@@ -15,8 +19,8 @@ import {
   normalize,
 } from "../audio/loudness";
 import { chunkForLimit, providerFor } from "../tts";
-import { assertUnderUploadCap } from "../upload";
-import type { ArtifactResult, JobContext, NewArtifact } from "./types";
+import type { JobContext } from "./types";
+import { uploadMasterAndDelivery } from "../audio/artifacts";
 
 export const PARAGRAPH_GAP_MS = 400;
 
@@ -32,6 +36,33 @@ export type Synth = {
   maxChars?: number;
 };
 
+export async function synthesizeRetained(
+  ctx: JobContext,
+  synth: Synth,
+  voice: VoiceEntry,
+  text: string,
+  file: string,
+) {
+  const key = retainedKey({
+    text,
+    voice,
+    rendererVersion: ctx.rendererVersion,
+    input: ctx.job.input,
+  });
+  if (!ctx.retainedDir || !(await restoreChunk(ctx.retainedDir, key, file))) {
+    ctx.signal.throwIfAborted();
+    if (ctx.retainedDir) await beginSynthesis(ctx.retainedDir, key);
+    try {
+      await synth.synthesize(text, voice, file, ctx.signal);
+    } catch (error) {
+      if (ctx.retainedDir) await failSynthesis(ctx.retainedDir, key);
+      throw error;
+    }
+    if (ctx.retainedDir) await retainChunk(ctx.retainedDir, key, file);
+    ctx.signal.throwIfAborted();
+  }
+}
+
 export async function renderParagraph(
   ctx: JobContext,
   synth: Synth,
@@ -43,108 +74,12 @@ export async function renderParagraph(
   const files: string[] = [];
   for (const [chunkIndex, chunk] of chunkForLimit(text, maxChars).entries()) {
     const file = join(ctx.workDir, `p${index}-c${chunkIndex}.wav`);
-    await synth.synthesize(chunk, voice, file, ctx.signal);
+    await synthesizeRetained(ctx, synth, voice, chunk, file);
     files.push(file);
   }
   const out = join(ctx.workDir, `p${index}.wav`);
   await concatWithGaps(files, out, PARAGRAPH_GAP_MS, {}, ctx.signal);
   return out;
-}
-
-// Encodes a normalized WAV as a 16-bit mono master and a dual-mono MP3
-// delivery and uploads both, master first. The master is always private:
-// only the delivery is ever published, and `base.access` is the delivery's.
-// Each file is measured, checked against policy, and checked against the
-// upload size cap before its upload URL is minted, so a failed file creates
-// no server state.
-export async function uploadMasterAndDelivery(
-  ctx: JobContext,
-  normalizedWav: string,
-  base: Omit<NewArtifact, "role" | "encoding" | "contentHash">,
-  hashBase: Record<string, unknown>,
-  targetLufs: number,
-): Promise<ArtifactResult[]> {
-  const master = join(ctx.workDir, "master.wav");
-  await encodeWav(
-    normalizedWav,
-    master,
-    { channels: 1, bitDepth: 16 },
-    ctx.signal,
-  );
-  const delivery = join(ctx.workDir, "delivery.mp3");
-  // Dual-mono delivery: ffmpeg's loudness-preserving upmix keeps integrated
-  // LUFS and reads ~3 dB lower in true peak, which stays within the ceiling.
-  await encodeMp3(
-    master,
-    delivery,
-    { bitrateKbps: 128, channels: 2 },
-    ctx.signal,
-  );
-  const upload = async (
-    path: string,
-    artifact: NewArtifact,
-    mimeType: string,
-  ): Promise<ArtifactResult> => {
-    const measured = await measure(path, ctx.signal);
-    assertWithinPolicy(measured, targetLufs);
-    assertUnderUploadCap(artifact.role, (await stat(path)).size);
-    const { artifactId, uploadUrl } = await ctx.tools.generateAudioUploadUrl({
-      jobId: ctx.job.jobId,
-      leaseToken: ctx.job.leaseToken,
-      artifact,
-    });
-    const { storageId } = await ctx.tools.uploadBytes(
-      uploadUrl,
-      path,
-      mimeType,
-      ctx.signal,
-    );
-    await ctx.tools.attachAudioStorage({
-      jobId: ctx.job.jobId,
-      leaseToken: ctx.job.leaseToken,
-      artifactId,
-      storageId,
-    });
-    return {
-      artifactId: artifactId as ArtifactResult["artifactId"],
-      durationSecs: measured.durationSecs,
-      loudnessLufs: measured.integratedLufs,
-      truePeakDbtp: measured.truePeakDbtp,
-      mimeType,
-    };
-  };
-  const masterResult = await upload(
-    master,
-    {
-      ...base,
-      role: "masterNormalized",
-      access: "private",
-      encoding: { codec: "wav", sampleRate: 48000, channels: 1 },
-      contentHash: fnv1a64Hex(
-        stableStringify({ ...hashBase, role: "masterNormalized" }),
-      ),
-    },
-    "audio/wav",
-  );
-  const deliveryResult = await upload(
-    delivery,
-    {
-      ...base,
-      role: "delivery",
-      masterArtifactId: masterResult.artifactId,
-      encoding: {
-        codec: "mp3",
-        bitrateKbps: 128,
-        sampleRate: 48000,
-        channels: 2,
-      },
-      contentHash: fnv1a64Hex(
-        stableStringify({ ...hashBase, role: "delivery" }),
-      ),
-    },
-    "audio/mpeg",
-  );
-  return [masterResult, deliveryResult];
 }
 
 export async function narrateHandler(ctx: JobContext, synthOverride?: Synth) {

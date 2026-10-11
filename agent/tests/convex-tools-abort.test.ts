@@ -29,7 +29,7 @@ describe("Convex HTTP request cancellation", () => {
     await rejected;
   });
 
-  test("leaves existing callers without a signal or timeout", async () => {
+  test("bounds terminal completion requests without requiring a caller signal", async () => {
     vi.stubEnv("CONVEX_SITE_URL", "https://synthetic.invalid");
     vi.stubEnv("AGENT_TOOL_SECRET", "synthetic-test-secret");
     const fetchMock = vi
@@ -39,6 +39,6 @@ describe("Convex HTTP request cancellation", () => {
     await expect(callConvex("markAgentRunCompleted", {})).resolves.toEqual({
       status: "completed",
     });
-    expect(fetchMock.mock.calls[0][1]).not.toHaveProperty("signal");
+    expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
   });
 });

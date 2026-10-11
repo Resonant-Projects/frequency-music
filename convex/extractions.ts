@@ -1,12 +1,24 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { ConvexError, v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import { type DatabaseReader, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
 import { compositionParameterValidator } from "./schema";
 import { claimValidator } from "./shared/claims";
 import { extractionReturnValidator } from "./validators";
+
+/** A Source's current Extractions, newest first. Historical snapshots are never current evidence. */
+export function currentExtractions(
+  db: Pick<DatabaseReader, "query">,
+  sourceId: Id<"sources">,
+) {
+  return db
+    .query("extractions")
+    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", sourceId))
+    .order("desc")
+    .filter((q) => q.neq(q.field("historical"), true));
+}
 
 // ============================================================================
 // EDIT CAPTURE - pure helpers (unit-testable without a DB harness)
@@ -117,19 +129,24 @@ export const getByInputHash = query({
 });
 
 /**
- * Get extractions for a source
+ * Get current extractions for a source, with an explicit history option.
  */
 export const getBySourceId = query({
-  args: { sourceId: v.id("sources") },
+  args: {
+    sourceId: v.id("sources"),
+    includeHistorical: v.optional(v.boolean()),
+  },
   returns: v.array(extractionReturnValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) =>
-        q.eq("sourceId", args.sourceId),
-      )
-      .order("desc")
-      .collect();
+    return args.includeHistorical
+      ? await ctx.db
+          .query("extractions")
+          .withIndex("by_sourceId_createdAt", (q) =>
+            q.eq("sourceId", args.sourceId),
+          )
+          .order("desc")
+          .collect()
+      : await currentExtractions(ctx.db, args.sourceId).collect();
   },
 });
 
@@ -141,7 +158,11 @@ export const listRecent = query({
   returns: v.array(extractionReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    return await ctx.db.query("extractions").order("desc").take(limit);
+    return await ctx.db
+      .query("extractions")
+      .order("desc")
+      .filter((q) => q.neq(q.field("historical"), true))
+      .take(limit);
   },
 });
 
@@ -238,13 +259,10 @@ export const backfillClaims = mutation({
         continue;
       }
 
-      const newestExtraction = await ctx.db
-        .query("extractions")
-        .withIndex("by_sourceId_createdAt", (q) =>
-          q.eq("sourceId", extraction.sourceId),
-        )
-        .order("desc")
-        .first();
+      const newestExtraction = await currentExtractions(
+        ctx.db,
+        extraction.sourceId,
+      ).first();
       const status =
         newestExtraction?._id === extraction._id ? "active" : "superseded";
       claimsInserted += extraction.claims.length;

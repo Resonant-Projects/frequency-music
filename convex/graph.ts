@@ -535,7 +535,7 @@ export const deleteEdge = internalMutation({
  * Link an extraction's topics to concepts
  * Called after extraction to build concept graph
  */
-export const linkExtractionConcepts = internalAction({
+export const linkExtractionConceptsAtomic = internalMutation({
   args: { extractionId: v.id("extractions") },
   returns: v.object({
     linked: v.number(),
@@ -545,19 +545,31 @@ export const linkExtractionConcepts = internalAction({
     ctx,
     args,
   ): Promise<{ linked: number; concepts: string[] }> => {
-    const extraction: Doc<"extractions"> | null = await ctx.runQuery(
-      api.extractions.get,
-      {
-        id: args.extractionId,
-      },
-    );
+    const extraction = await ctx.db.get(args.extractionId);
 
     if (!extraction) throw new Error("Extraction not found");
+    const source = await ctx.db.get(extraction.sourceId);
+    if (extraction.historical || !source || source.status === "archived")
+      return { linked: 0, concepts: [] };
 
     const linkedConcepts: string[] = [];
     const conceptIds: Id<"concepts">[] = [];
 
     for (const topic of extraction.topics) {
+      const existing = await ctx.db
+        .query("edges")
+        .withIndex("by_from", (q) =>
+          q.eq("fromType", "source").eq("fromId", extraction.sourceId),
+        )
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("toType"), "concept"),
+            q.eq(q.field("toId"), topic.toLowerCase().trim()),
+            q.eq(q.field("relationship"), "mentions"),
+          ),
+        )
+        .first();
+      if (existing) continue;
       // Upsert the concept
       const conceptId: Id<"concepts"> = await ctx.runMutation(
         internal.graph.upsertConcept,
@@ -589,6 +601,13 @@ export const linkExtractionConcepts = internalAction({
 
     return { linked: linkedConcepts.length, concepts: linkedConcepts };
   },
+});
+
+export const linkExtractionConcepts = internalAction({
+  args: { extractionId: v.id("extractions") },
+  returns: v.object({ linked: v.number(), concepts: v.array(v.string()) }),
+  handler: (ctx, args): Promise<{ linked: number; concepts: string[] }> =>
+    ctx.runMutation(internal.graph.linkExtractionConceptsAtomic, args),
 });
 
 /**

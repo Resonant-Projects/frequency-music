@@ -94,10 +94,13 @@ export function renderExtractionPrompt(source: {
 }
 
 /** SHA-256 of the Source text and prompt version: the Extraction's inputHash. */
-export async function extractionInputHash(content: string): Promise<string> {
+export async function extractionInputHash(
+  content: string,
+  promptVersion = EXTRACTION_PROMPT_VERSION,
+): Promise<string> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(`${content}${EXTRACTION_PROMPT_VERSION}`),
+    new TextEncoder().encode(`${content}${promptVersion}`),
   );
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))

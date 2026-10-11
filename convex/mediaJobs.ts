@@ -1,3 +1,4 @@
+import { recordOperationFailure } from "./operationFailures";
 // Pull-based, leased job lifecycle. Convex never calls the media service.
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
@@ -188,10 +189,20 @@ export const claimNext = internalMutation({
       workerId: args.workerId,
       claimedAt: now,
     });
+    let input = job.input;
+    if (input.kind === "assembleEpisode") {
+      const narration = await ctx.db.get(input.narrationArtifactId);
+      const master = narration?.masterArtifactId
+        ? await ctx.db.get(narration.masterArtifactId)
+        : null;
+      const storageId = master?.storageId ?? narration?.storageId;
+      const url = storageId ? await ctx.storage.getUrl(storageId) : null;
+      if (url) input = { ...input, narrationStorageUrl: url };
+    }
     return {
       jobId: job._id,
       kind: job.kind as ClaimedMediaJob["kind"],
-      input: job.input,
+      input,
       leaseToken,
       leaseExpiresAt,
       attempts: job.attempts,
@@ -256,6 +267,20 @@ export const complete = internalMutation({
   },
 });
 
+/** A parked job's failure identity; delivery retries resolve to the same record. */
+function recordMediaFailure(
+  ctx: MutationCtx,
+  job: Doc<"mediaJobs">,
+  message: string,
+) {
+  return recordOperationFailure(ctx, {
+    operationId: `media:${job._id}`,
+    causeKey: `media:${job.kind}`,
+    target: { kind: "audioUpload", jobId: job._id },
+    message,
+  });
+}
+
 async function requeueOrPark(
   ctx: MutationCtx,
   job: Doc<"mediaJobs">,
@@ -273,6 +298,12 @@ async function requeueOrPark(
     workerId: undefined,
     ...(status === "parked" ? { finishedAt: now } : {}),
   });
+  if (status === "parked")
+    await recordMediaFailure(
+      ctx,
+      job,
+      "Media job exhausted its attempts; inspect retained audio and job diagnostics",
+    );
   return { status, attempts };
 }
 
@@ -313,5 +344,35 @@ export const sweepStale = internalMutation({
       else parked++;
     }
     return { requeued, parked };
+  },
+});
+
+/** The operator publisher may defer only its own unleased job so other essays can proceed. */
+export const deferOperatorPublication = internalMutation({
+  args: {
+    jobId: v.id("mediaJobs"),
+    rendererVersion: v.string(),
+    title: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const job = await ctx.db.get(args.jobId);
+    if (!job || job.status === "done" || job.status === "parked") return null;
+    if (
+      job.status !== "queued" ||
+      job.input.rendererVersion !== args.rendererVersion ||
+      !("title" in job.input) ||
+      job.input.title !== args.title ||
+      !args.rendererVersion.startsWith("essay-")
+    ) {
+      throw new Error("Only the publisher's queued essay job may be deferred");
+    }
+    await ctx.db.patch(job._id, { status: "parked", finishedAt: Date.now() });
+    await recordMediaFailure(
+      ctx,
+      job,
+      "Operator publication failed; retained local audio requires its operator renderer",
+    );
+    return null;
   },
 });

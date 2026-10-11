@@ -88,6 +88,46 @@ const store = (
   });
 
 describe("operator extraction", () => {
+  test("an interrupted export can recover its original snapshot and import late output as history", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+      sourceId,
+      inputHash,
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+    });
+    expect(snapshot).not.toBeNull();
+    await t.run((ctx) =>
+      ctx.db.patch(sourceId, {
+        rawText: "Different current content",
+        status: "archived",
+      }),
+    );
+    const resumed = await t.query(api.sources.operatorExtractionSnapshots, {
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+    });
+    expect(resumed).toHaveLength(1);
+    expect(resumed[0]).toMatchObject({
+      snapshotId: snapshot!.snapshotId,
+      prompt: snapshot!.prompt,
+      system: snapshot!.system,
+      inputHash,
+    });
+    const stored = await t.action(api.extract.storeOperatorExtraction, {
+      sourceId,
+      inputHash,
+      snapshotId: snapshot!.snapshotId,
+      model: MODELS.opus,
+      extraction,
+      devBypassSecret: BYPASS,
+    });
+    expect(stored).toMatchObject({ success: true, current: false });
+    expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
+      "archived",
+    );
+  });
+
   test("stores an operator Extraction and marks the Source extracted", async () => {
     const { t, sourceId, inputHash } = await setup();
     expect(await store(t, sourceId, inputHash)).toEqual({

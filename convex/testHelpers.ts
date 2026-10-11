@@ -32,6 +32,22 @@ export class FakeQuery<T extends Record<string, any>> {
     );
   }
 
+  filter(
+    apply: (q: {
+      field: (name: string) => string;
+      neq: (field: string, value: unknown) => (row: T) => boolean;
+    }) => (row: T) => boolean,
+  ) {
+    return new FakeQuery(
+      this.rows.filter(
+        apply({
+          field: (name) => name,
+          neq: (field, value) => (row) => row[field] !== value,
+        }),
+      ),
+    );
+  }
+
   order(direction: "asc" | "desc") {
     const sorted = [...this.rows].toSorted((a, b) =>
       direction === "desc"

@@ -1,3 +1,7 @@
+import {
+  recoveryTargetValidator,
+  failureStatusValidator,
+} from "./shared/operationRecovery";
 import { defineSchema, defineTable } from "convex/server";
 import { literals } from "convex-helpers/validators";
 import { v } from "convex/values";
@@ -122,6 +126,14 @@ export const compositionParameterValidator = v.object({
   canonicalKind: v.optional(v.string()),
 });
 
+export const extractionResultValidator = v.object({
+  summary: v.string(),
+  claims: v.array(claimValidator),
+  compositionParameters: v.array(compositionParameterValidator),
+  topics: v.array(v.string()),
+  openQuestions: v.array(v.string()),
+});
+
 export const studioPromptVariantsValidator = v.object({
   tenMinuteMd: v.string(),
   thirtyMinuteMd: v.string(),
@@ -235,6 +247,30 @@ export const agentOriginFields = {
 };
 
 export default defineSchema({
+  failureInvestigationGroups: defineTable({
+    causeKey: v.string(),
+    runId: v.id("agentRuns"),
+    openSlots: v.number(),
+  }).index("by_cause_slots", ["causeKey", "openSlots"]),
+  operationFailures: defineTable({
+    operationId: v.string(),
+    causeKey: v.string(),
+    target: recoveryTargetValidator,
+    agentRunId: v.optional(v.id("agentRuns")),
+    status: failureStatusValidator,
+    message: v.string(),
+    diagnosis: v.optional(v.string()),
+    attempts: v.number(),
+    investigationRunId: v.optional(v.id("agentRuns")),
+    recoveryRunId: v.optional(v.id("agentRuns")),
+    nextAttemptAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_operation", ["operationId"])
+    .index("by_status_due", ["status", "nextAttemptAt"])
+    .index("by_investigation", ["investigationRunId"])
+    .index("by_agent_run", ["agentRunId"]),
   // ==========================================================================
   // USERS
   // ==========================================================================
@@ -290,12 +326,15 @@ export default defineSchema({
     .index("by_updatedAt", ["updatedAt"]),
 
   agentRunEvents: defineTable({
+    deliveryId: v.optional(v.string()),
     runId: v.id("agentRuns"),
     kind: agentRunEventKindValidator,
     message: v.string(),
     payload: v.optional(v.any()),
     createdAt: v.number(),
-  }).index("by_runId_createdAt", ["runId", "createdAt"]),
+  })
+    .index("by_runId_createdAt", ["runId", "createdAt"])
+    .index("by_delivery", ["deliveryId"]),
 
   agentReviewDrafts: defineTable({
     agentRunId: v.id("agentRuns"),
@@ -363,6 +402,7 @@ export default defineSchema({
   // SOURCES - Ingested items from various pipelines
   // ==========================================================================
   sources: defineTable({
+    activeExtractionAttemptId: v.optional(v.id("extractionAttempts")),
     // Type discriminator
     type: v.union(
       v.literal("notion"),
@@ -445,7 +485,37 @@ export default defineSchema({
   // ==========================================================================
   // EXTRACTIONS - AI-generated structured output from sources
   // ==========================================================================
+  extractionAttempts: defineTable({
+    sourceId: v.id("sources"),
+    origin: v.union(v.literal("worker"), v.literal("operator")),
+    inputHash: v.string(),
+    prompt: v.string(),
+    systemPrompt: v.string(),
+    promptVersion: v.string(),
+    generationLease: v.optional(v.string()),
+    generationLeaseUntil: v.optional(v.number()),
+    title: v.optional(v.string()),
+    canonicalUrl: v.optional(v.string()),
+    sourceVersion: v.number(),
+    model: v.string(),
+    force: v.boolean(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("generated"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    result: v.optional(extractionResultValidator),
+    extractionId: v.optional(v.id("extractions")),
+    current: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    error: v.optional(v.string()),
+  }).index("by_status_updated", ["status", "updatedAt"]),
+
   extractions: defineTable({
+    historical: v.optional(v.boolean()),
+    snapshotId: v.optional(v.id("extractionAttempts")),
     sourceId: v.id("sources"),
 
     // AI metadata

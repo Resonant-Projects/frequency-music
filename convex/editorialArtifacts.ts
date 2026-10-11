@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { currentExtractions } from "./extractions";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import {
@@ -185,11 +186,7 @@ async function buildPublicEvidenceCards(
     uniqueIds.map(async (sourceId) => {
       const source = await db.get("sources", sourceId);
       if (!source || source.visibility !== "public") return null;
-      const extraction = await db
-        .query("extractions")
-        .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
-        .order("desc")
-        .first();
+      const extraction = await currentExtractions(db, source._id).first();
       const featuredClaim = extraction?.claims[0];
       return {
         sourceTitle: source.title ?? "Untitled source",
@@ -263,11 +260,7 @@ async function findPrivacyViolations(
     if (title && text.includes(title.toLowerCase())) {
       privateSourceMentions.push(title);
     }
-    const extraction = await db
-      .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
-      .order("desc")
-      .first();
+    const extraction = await currentExtractions(db, source._id).first();
     const summary = extraction?.summary?.trim();
     if (summary && text.includes(summary.toLowerCase())) {
       privateExtractionMentions.push(summary);
