@@ -655,6 +655,77 @@ describe("Extraction completion", () => {
     expect(source?.activeExtractionAttemptId).toBeUndefined();
     expect(await begin()).not.toBe(attemptId);
   });
+  test("recovery releases failed ownership after an actual metadata-only upsert refuses generation", async () => {
+    const t = convexTest(schema, modules);
+    const operator = t.withIdentity({ subject: "system" });
+    const url = "https://example.org/failed-fifths";
+    const { id: sourceId } = await operator.mutation(
+      api.sources.createFromUrlInput,
+      {
+        url,
+        title: "Fifths",
+        rawText: text,
+      },
+    );
+    const { attemptId } = await t.mutation(
+      internal.extractInternal.beginExtraction,
+      {
+        sourceId,
+        model: "test",
+        force: true,
+      },
+    );
+    await t.mutation(internal.extractInternal.failExtraction, {
+      attemptId: attemptId!,
+      error: "temporary",
+    });
+    expect(
+      await operator.action(api.sources.createFromUrlAndQueue, {
+        url,
+        title: "Renamed fifths",
+        rawText: text,
+      }),
+    ).toMatchObject({ contentChanged: false, queued: false });
+    expect(await t.run((ctx) => ctx.db.get(sourceId))).toMatchObject({
+      status: "review_needed",
+      blockedReason: "ai_error",
+      activeExtractionAttemptId: attemptId,
+    });
+    const failure = (await t.run((ctx) =>
+      ctx.db.query("operationFailures").first(),
+    ))!;
+    await t.run((ctx) =>
+      ctx.db.patch(failure._id, {
+        diagnosis: "Transient, retry",
+        nextAttemptAt: 0,
+      }),
+    );
+    const recoveryAttempt = await t.mutation(
+      internal.operationFailures.claimRecovery,
+      { failureId: failure._id },
+    );
+    await t.action(internal.recoveryWorkflows.execute, {
+      failureId: failure._id,
+      attempt: recoveryAttempt!,
+    });
+    const source = await t.run((ctx) => ctx.db.get(sourceId));
+    expect(source?.status).toBe("text_ready");
+    expect(source?.activeExtractionAttemptId).toBeUndefined();
+    expect(source?.blockedReason).toBeUndefined();
+    expect(source?.blockedDetails).toBeUndefined();
+    const old = await t.query(internal.extractInternal.getAttempt, {
+      attemptId: attemptId!,
+    });
+    expect(old?.generationLease).toBeUndefined();
+    expect(old?.result).toBeUndefined();
+    const fresh = await t.mutation(internal.extractInternal.beginExtraction, {
+      sourceId,
+      model: "test",
+      force: true,
+    });
+    expect(fresh.attemptId).toBeDefined();
+    expect(fresh.attemptId).not.toBe(attemptId);
+  });
   test("reconciliation stays within read limits across large worker, operator and generated queues", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     const transcript = text
@@ -796,62 +867,79 @@ describe("Extraction completion", () => {
       failures[1]!.investigationRunId,
     );
   });
-  test("metadata-only edits release an owned historical completion for another admission", async () => {
-    const t = convexTest(schema, modules);
-    const operator = t.withIdentity({ subject: "system" });
-    const url = "https://example.org/fifths";
-    const { id: sourceId } = await operator.mutation(
-      api.sources.createFromUrlInput,
-      {
-        url,
-        title: "Fifths",
-        rawText: text,
-      },
-    );
-    const { attemptId } = await t.mutation(
-      internal.extractInternal.beginExtraction,
-      {
+  test.each([false, true])(
+    "metadata-only edits release an owned historical completion for another admission (failed: %s)",
+    async (failed) => {
+      const t = convexTest(schema, modules);
+      const operator = t.withIdentity({ subject: "system" });
+      const url = "https://example.org/fifths";
+      const { id: sourceId } = await operator.mutation(
+        api.sources.createFromUrlInput,
+        {
+          url,
+          title: "Fifths",
+          rawText: text,
+        },
+      );
+      const { attemptId } = await t.mutation(
+        internal.extractInternal.beginExtraction,
+        {
+          sourceId,
+          model: "test",
+          force: true,
+        },
+      );
+      if (failed)
+        await t.mutation(internal.extractInternal.failExtraction, {
+          attemptId: attemptId!,
+          error: "Generation interrupted",
+        });
+      expect(
+        await operator.action(api.sources.createFromUrlAndQueue, {
+          url,
+          title: "Renamed fifths",
+          rawText: text,
+        }),
+      ).toMatchObject({ id: sourceId, contentChanged: false, queued: false });
+      expect(await t.run((ctx) => ctx.db.get(sourceId))).toMatchObject({
+        status: failed ? "review_needed" : "extracting",
+        activeExtractionAttemptId: attemptId,
+      });
+      await t.mutation(internal.extractInternal.retainExtractionResult, {
+        attemptId: attemptId!,
+        result,
+      });
+      const completed = await t.action(
+        internal.extractInternal.completeExtraction,
+        {
+          attemptId: attemptId!,
+        },
+      );
+      expect(completed.current).toBe(false);
+      expect(
+        await t.run((ctx) => ctx.db.get(completed.extractionId)),
+      ).toMatchObject({ historical: true });
+      const source = await t.run((ctx) => ctx.db.get(sourceId));
+      expect(source?.status).toBe("text_ready");
+      expect(source?.activeExtractionAttemptId).toBeUndefined();
+      expect(source?.blockedReason).toBeUndefined();
+      expect(source?.blockedDetails).toBeUndefined();
+      if (failed) {
+        const failures = await t.run((ctx) =>
+          ctx.db.query("operationFailures").collect(),
+        );
+        expect(failures).toHaveLength(1);
+        expect(failures[0]?.status).toBe("resolved");
+      }
+      const next = await t.mutation(internal.extractInternal.beginExtraction, {
         sourceId,
         model: "test",
         force: true,
-      },
-    );
-    expect(
-      await operator.action(api.sources.createFromUrlAndQueue, {
-        url,
-        title: "Renamed fifths",
-        rawText: text,
-      }),
-    ).toMatchObject({ id: sourceId, contentChanged: false, queued: false });
-    expect(await t.run((ctx) => ctx.db.get(sourceId))).toMatchObject({
-      status: "extracting",
-      activeExtractionAttemptId: attemptId,
-    });
-    await t.mutation(internal.extractInternal.retainExtractionResult, {
-      attemptId: attemptId!,
-      result,
-    });
-    const completed = await t.action(
-      internal.extractInternal.completeExtraction,
-      {
-        attemptId: attemptId!,
-      },
-    );
-    expect(completed.current).toBe(false);
-    expect(
-      await t.run((ctx) => ctx.db.get(completed.extractionId)),
-    ).toMatchObject({ historical: true });
-    const source = await t.run((ctx) => ctx.db.get(sourceId));
-    expect(source?.status).toBe("text_ready");
-    expect(source?.activeExtractionAttemptId).toBeUndefined();
-    const next = await t.mutation(internal.extractInternal.beginExtraction, {
-      sourceId,
-      model: "test",
-      force: true,
-    });
-    expect(next.attemptId).toBeDefined();
-    expect(next.attemptId).not.toBe(attemptId);
-  });
+      });
+      expect(next.attemptId).toBeDefined();
+      expect(next.attemptId).not.toBe(attemptId);
+    },
+  );
   test("completion and current readers skip more than 16 MiB of retained history", async () => {
     const { t, sourceId, begin } = await setup(true);
     const summary = "x".repeat(400_000);

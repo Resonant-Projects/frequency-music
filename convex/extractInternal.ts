@@ -667,7 +667,9 @@ export const commitExtraction = internalMutation({
     else if (
       !found &&
       source.activeExtractionAttemptId === attemptId &&
-      source.status === "extracting"
+      (source.status === "extracting" ||
+        (source.status === "review_needed" &&
+          source.blockedReason === "ai_error"))
     ) {
       // Metadata may change without a replacement admission. Release only
       // this completed owner; archives and newer owners retain their disposition.
@@ -716,7 +718,9 @@ export const failExtraction = internalMutation({
     const source = await ctx.db.get(attempt.sourceId);
     if (
       source?.activeExtractionAttemptId === attemptId &&
-      source.status === "extracting"
+      (source.status === "extracting" ||
+        (source.status === "review_needed" &&
+          source.blockedReason === "ai_error"))
     ) {
       const matches =
         source.title === attempt.title &&

@@ -125,19 +125,19 @@ async function executeAttempt(
   });
   if (!attempt) throw new Error("Extraction attempt not found");
   const generationLease = randomUUID();
-  if (
-    !attempt.result &&
-    !(await ctx.runMutation(internal.extractInternal.claimGeneration, {
-      attemptId,
-      lease: generationLease,
-    }))
-  ) {
-    return {
-      skipped: true,
-      reason: "extraction generation already in progress",
-    };
-  }
   try {
+    if (
+      !attempt.result &&
+      !(await ctx.runMutation(internal.extractInternal.claimGeneration, {
+        attemptId,
+        lease: generationLease,
+      }))
+    ) {
+      return {
+        skipped: true,
+        reason: "extraction generation already in progress",
+      };
+    }
     if (!attempt.result) {
       const { json } = await generateJson({
         task:
