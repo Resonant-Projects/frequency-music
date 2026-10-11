@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, open, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { stableStringify } from "../../convex/shared/stableHash";
 
 export const sha256Hex = (bytes: string | Uint8Array) =>
@@ -8,7 +8,32 @@ export const sha256Hex = (bytes: string | Uint8Array) =>
 export const retainedKey = (input: unknown) =>
   sha256Hex(stableStringify(input));
 
-/** Rename publishes complete files only. Lease attempts never share scratch files. */
+async function syncDirectoryTree(dir: string) {
+  let current = resolve(dir);
+  for (;;) {
+    const handle = await open(current, "r");
+    try {
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    const parent = dirname(current);
+    if (parent === current) return;
+    current = parent;
+  }
+}
+
+async function writeDurableFile(path: string, bytes: string | Uint8Array) {
+  const handle = await open(path, "wx", 0o600);
+  try {
+    await handle.writeFile(bytes);
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+}
+
+/** Publish complete files atomically, then persist their directory ancestry. */
 export async function writeCheckpoint(
   dir: string,
   key: string,
@@ -16,8 +41,9 @@ export async function writeCheckpoint(
 ) {
   await mkdir(dir, { recursive: true, mode: 0o700 });
   const temporary = join(dir, `${key}.${randomUUID()}.tmp`);
-  await writeFile(temporary, JSON.stringify(value), { mode: 0o600 });
+  await writeDurableFile(temporary, JSON.stringify(value));
   await rename(temporary, join(dir, `${key}.json`));
+  await syncDirectoryTree(dir);
 }
 export async function readCheckpoint<T>(
   dir: string,
@@ -73,7 +99,7 @@ export async function retainChunk(dir: string, key: string, input: string) {
   const bytes = await readFile(input);
   if (bytes.length === 0) throw new Error("TTS returned empty audio");
   const file = `${randomUUID()}.wav`;
-  await writeFile(join(dir, file), bytes, { mode: 0o600 });
+  await writeDurableFile(join(dir, file), bytes);
   await writeCheckpoint(dir, key, { file, sha256: sha256Hex(bytes) });
   await writeCheckpoint(dir, `${key}-intent`, { status: "completed" });
 }
