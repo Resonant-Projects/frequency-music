@@ -6,7 +6,7 @@ import type {
   RecipeStatus,
   SourceStatus,
 } from "../../../convex/shared/statuses";
-import type { Token } from "../../styled-system/tokens";
+import type { Token } from "../../styled-system/types/tokens";
 
 // Three.js needs plain hex strings, so these mirror the `zodiac.*` semantic
 // tokens in `web/panda.config.ts`. Panda is the source of truth: if a value

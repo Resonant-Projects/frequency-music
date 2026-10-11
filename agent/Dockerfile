@@ -38,6 +38,8 @@ RUN curl -fsSLo /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/download/
 # source tarball. The worker pod runs it from this same image as a sidecar on
 # 127.0.0.1:4416. canvas is never imported by the server; skipping install
 # scripts leaves its native build out (jsdom loads it only if present).
+# Patch the bundled lockfile's proxy-addr/source-map-js security advisories
+# without changing the checksum-verified bgutil source release.
 ARG BGUTIL_SERVER_SHA256=bae71b7971fa22376af57edca8d3487724ac9a8ada56d1cccf07a547b4b9b62c
 COPY agent/bgutil-security.patch /tmp/bgutil-security.patch
 # Patch only proxy-addr and source-map-js in the verified upstream lockfile.

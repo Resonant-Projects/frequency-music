@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vite-plus/test";
 import {
   assertCliVersion,
-  assertCleanDeploySource,
   buildDeployArgs,
   buildDeployEnv,
   CONVEX_DEPLOY_URL,
@@ -17,13 +16,12 @@ describe("parseDeployArgs", () => {
     expect(parseDeployArgs(["--dry-run"])).toEqual({ dryRun: true });
   });
 
-  test.each([
-    ["--yes"],
-    ["--cmd", "vite build"],
-    ["--dry-run", "--verbose"],
-  ])("rejects %s", (...argv) => {
-    expect(() => parseDeployArgs(argv)).toThrow(/Only --dry-run/);
-  });
+  test.each([["--yes"], ["--cmd", "vite build"], ["--dry-run", "--verbose"]])(
+    "rejects %s",
+    (...argv) => {
+      expect(() => parseDeployArgs(argv)).toThrow(/Only --dry-run/);
+    },
+  );
 });
 
 describe("buildDeployArgs", () => {
@@ -168,17 +166,4 @@ describe("assertCliVersion", () => {
       /audited deploy CLI is 1\.46\.0/,
     );
   });
-});
-
-test("deployment refuses staged, unstaged, and untracked source", () => {
-  expect(() => assertCleanDeploySource("")).not.toThrow();
-  for (const status of [
-    " M convex/graph.ts",
-    "M  package.json",
-    "?? convex/new.ts",
-  ]) {
-    expect(() => assertCleanDeploySource(status)).toThrow(
-      /uncommitted checkout/,
-    );
-  }
 });

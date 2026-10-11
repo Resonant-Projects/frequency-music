@@ -108,12 +108,3 @@ export function assertCliVersion(installed: string, audited: string): void {
     );
   }
 }
-
-/** A displayed commit must identify every deployable source byte. */
-export function assertCleanDeploySource(status: string): void {
-  if (status.trim()) {
-    throw new Error(
-      "Refusing to deploy an uncommitted checkout. Commit or restore source changes first.",
-    );
-  }
-}

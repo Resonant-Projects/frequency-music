@@ -61,42 +61,36 @@ describe("worker handoff claim admission", () => {
     ).toBe(true);
   });
 
-  test.each([
-    "true",
-    "1",
-    "TRUE",
-    "false ",
-    "0",
-    " ",
-    "typo",
-  ])("pause value %j preserves queued records and events", async (value) => {
-    vi.stubEnv("FREQUENCY_WORKER_CLAIMS_PAUSED", value);
-    const t = convexTest(schema, modules);
-    await seedQueue(t);
-    const before = await snapshot(t);
+  test.each(["true", "1", "TRUE", "false ", "0", " ", "typo"])(
+    "pause value %j preserves queued records and events",
+    async (value) => {
+      vi.stubEnv("FREQUENCY_WORKER_CLAIMS_PAUSED", value);
+      const t = convexTest(schema, modules);
+      await seedQueue(t);
+      const before = await snapshot(t);
 
-    expect(
-      await t.mutation(internal.agentRuns.claimNextPending, {
-        workerId: "synthetic-old-worker",
-      }),
-    ).toBeNull();
-    expect(await snapshot(t)).toEqual(before);
-  });
+      expect(
+        await t.mutation(internal.agentRuns.claimNextPending, {
+          workerId: "synthetic-old-worker",
+        }),
+      ).toBeNull();
+      expect(await snapshot(t)).toEqual(before);
+    },
+  );
 
-  test.each([
-    undefined,
-    "",
-    "false",
-  ])("value %j admits claims without changing the legacy request contract", async (value) => {
-    vi.stubEnv("FREQUENCY_WORKER_CLAIMS_PAUSED", value);
-    const t = convexTest(schema, modules);
-    const queued = await seedQueue(t);
-    expect(
-      await t.mutation(internal.agentRuns.claimNextPending, {
-        workerId: "synthetic-worker",
-      }),
-    ).toMatchObject({ runId: queued.runId, status: "running" });
-  });
+  test.each([undefined, "", "false"])(
+    "value %j admits claims without changing the legacy request contract",
+    async (value) => {
+      vi.stubEnv("FREQUENCY_WORKER_CLAIMS_PAUSED", value);
+      const t = convexTest(schema, modules);
+      const queued = await seedQueue(t);
+      expect(
+        await t.mutation(internal.agentRuns.claimNextPending, {
+          workerId: "synthetic-worker",
+        }),
+      ).toMatchObject({ runId: queued.runId, status: "running" });
+    },
+  );
 
   test("graph-filtered claims cannot bypass the pause", async () => {
     vi.stubEnv("FREQUENCY_WORKER_CLAIMS_PAUSED", "true");

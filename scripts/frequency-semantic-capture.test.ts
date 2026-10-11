@@ -23,7 +23,9 @@ const value = {
   modules: [],
   schemas: [],
 };
-function run(childCode: string, deadlineMs = 300, maxBytes = 4096) {
+// Validation and output-limit cases need room for Node startup on busy CI.
+// Deadline behavior is exercised separately with the explicit short bound.
+function run(childCode: string, deadlineMs = 2000, maxBytes = 4096) {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
 const result = await supervise(process.execPath, ['-e', ${JSON.stringify(childCode)}], {deadlineMs:${deadlineMs},maxBytes:${maxBytes},env:{APP_ENV:"test"}});
 console.log(JSON.stringify(result));`;
@@ -44,16 +46,20 @@ test.each([
   "while(true) {}",
   "process.stdout.write('PRIVATE_PARTIAL'); setInterval(()=>{},1000)",
   "setInterval(()=>process.stdout.write('x'),20)",
-])("wall-clock supervisor terminates stalled child without partial output: %s", (code) => {
-  expect(run(code)).toEqual({
-    error: { complete: false, code: "capture_deadline" },
-  });
-});
+])(
+  "wall-clock supervisor terminates stalled child without partial output: %s",
+  (code) => {
+    expect(run(code, 300)).toEqual({
+      error: { complete: false, code: "capture_deadline" },
+    });
+  },
+);
 
 test("terminates a live capture group including descendants", () => {
   expect(
     run(
       "require('node:child_process').spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'inherit'});setInterval(()=>{},1000)",
+      300,
     ),
   ).toEqual({ error: { complete: false, code: "capture_deadline" } });
 });
@@ -106,25 +112,24 @@ test("CLI refuses absent credentials before launching inspector", () => {
   });
 });
 
-test.each([
-  "SIGTERM",
-  "SIGINT",
-  "SIGHUP",
-])("%s terminates the capture subprocess without releasing partial evidence", (signal) => {
-  const code = `import { supervise } from ${JSON.stringify(supervisor)};
+test.each(["SIGTERM", "SIGINT", "SIGHUP"])(
+  "%s terminates the capture subprocess without releasing partial evidence",
+  (signal) => {
+    const code = `import { supervise } from ${JSON.stringify(supervisor)};
 setTimeout(()=>process.kill(process.pid,${JSON.stringify(signal)}),200);
 console.log(JSON.stringify(await supervise(process.execPath,['-e','setInterval(()=>{},1000)'],{deadlineMs:2000,env:{APP_ENV:"test"}})));`;
-  const result = spawnSync(
-    process.execPath,
-    ["--input-type=module", "-e", code],
-    { env: testEnvironment, encoding: "utf8", timeout: 4000 },
-  );
-  expect(result.error).toBeUndefined();
-  expect(result.status).toBe(0);
-  expect(JSON.parse(result.stdout)).toEqual({
-    error: { complete: false, code: "capture_interrupted" },
-  });
-});
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "-e", code],
+      { env: testEnvironment, encoding: "utf8", timeout: 4000 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual({
+      error: { complete: false, code: "capture_interrupted" },
+    });
+  },
+);
 
 test("successful exit does not signal a reaped child PID or process group", () => {
   const code = `import { supervise } from ${JSON.stringify(supervisor)};
