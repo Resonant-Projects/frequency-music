@@ -519,7 +519,26 @@ export function AgentRunDetailPage() {
               />
               <For each={failures.data() ?? []}>
                 {(failure) => (
-                  <article class={eventClass}>
+                  <article
+                    class={css({
+                      borderColor: "zodiac.cream/12",
+                      borderInlineStartWidth: "1px",
+                      display: "grid",
+                      gap: "2",
+                      paddingInlineStart: "4",
+                      position: "relative",
+                      _before: {
+                        bg: "zodiac.gold",
+                        borderRadius: "full",
+                        content: '""',
+                        height: "2",
+                        insetInlineStart: "-1",
+                        position: "absolute",
+                        insetBlockStart: "2",
+                        width: "2",
+                      },
+                    })}
+                  >
                     <p>
                       <UIBadge
                         tone={
