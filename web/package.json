@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "panda codegen && panda cssgen && vp dev",
-    "build": "panda codegen && panda cssgen && vp build",
-    "codegen": "panda codegen && panda cssgen",
+    "dev": "panda codegen --clean && panda cssgen && vp dev",
+    "build": "panda codegen --clean && panda cssgen && vp build",
+    "codegen": "panda codegen --clean && panda cssgen",
     "preview": "vp preview",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed --project=chromium",
