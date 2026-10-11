@@ -66,11 +66,13 @@ async function main(): Promise<number> {
   });
   const env = buildDeployEnv(process.env, fileKeys);
   const head = git("rev-parse", "--short", "HEAD");
-  const dirty = git("status", "--porcelain", "--", "convex", "package.json");
+  // Repository-wide: the bundle also depends on the lockfile and on anything
+  // convex/ imports, so a clean convex/ alone does not make the SHA the source.
+  const dirty = git("status", "--porcelain");
 
   console.log(`Target:  ${CONVEX_DEPLOY_URL}`);
   console.log(
-    `Source:  ${head}${dirty ? " plus uncommitted convex/ or package.json changes" : ""}`,
+    `Source:  ${head}${dirty ? " plus uncommitted changes in the checkout" : ""}`,
   );
   console.log(
     options.dryRun
