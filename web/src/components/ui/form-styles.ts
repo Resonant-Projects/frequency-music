@@ -67,3 +67,30 @@ export const eyebrowClass = css({
   letterSpacing: "0.3em",
   textTransform: "uppercase",
 });
+
+/** A `<ul>`/`<ol>` with no bullets or default spacing (see `UIList`). */
+export const plainListClass = css({
+  listStyle: "none",
+  m: "0",
+  p: "0",
+});
+
+/** A wrapping row of badges or small controls. */
+export const badgeRowClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+});
+
+/** A form's trailing action row. */
+export const formActionsClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+  justifyContent: "flex-end",
+});
+
+/** Visually hidden, still read by assistive technology. */
+export const srOnlyClass = css({ srOnly: true });

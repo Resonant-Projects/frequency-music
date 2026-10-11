@@ -53,3 +53,25 @@ export const entityCardTitleLinkClass = css({
   // The card draws the ring (see `entityCardLinkClass`).
   _focusVisible: { outline: "none" },
 });
+
+/**
+ * A bordered block that is itself a link (recommended actions, audit links,
+ * failure hits): hairline at 20%, lifted on hover, ringed on focus.
+ */
+export const linkCardClass = css({
+  ...entityCardBase,
+  borderColor: "zodiac.gold/20",
+  color: "zodiac.cream",
+  display: "block",
+  p: "3",
+  textDecoration: "none",
+  transitionDuration: "normal",
+  transitionProperty: "border-color",
+  transitionTimingFunction: "default",
+  _hover: { borderColor: "zodiac.gold/45" },
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
+});

@@ -18,6 +18,9 @@ body {
   padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  /* Unbreakable ids, URLs and error tokens wrap instead of widening a phone
+     layout; inherited, so no block has to opt in. */
+  overflow-wrap: anywhere;
   font-family: "Cormorant Garamond", Georgia, serif;
   background: #0d0620;
   color: #f5f0e8;
@@ -125,8 +128,9 @@ body {
   border-color: var(--colors-zodiac-gold);
 }
 
-.app-nav-link:focus-visible,
-.app-nav-toggle:focus-visible {
+/* The system focus ring on every focusable element. Zero specificity, so a
+   component class (inputs use a 1px offset) still wins. */
+:where(a, button, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--colors-zodiac-gold);
   outline-offset: 2px;
 }

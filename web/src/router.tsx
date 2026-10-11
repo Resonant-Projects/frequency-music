@@ -169,21 +169,24 @@ const AppShell: Component = () => {
   // Publish the measured height (while the mobile menu is closed) so `main`
   // never slides underneath it.
   onMount(() => {
-    if (!headerEl || typeof ResizeObserver === "undefined") return;
-    const header = headerEl;
+    if (!headerEl) return;
     const root = document.documentElement;
-    const apply = () => {
-      if (menuOpen()) return;
-      root.style.setProperty(
-        "--app-header-height",
-        `${Math.ceil(header.getBoundingClientRect().height)}px`,
-      );
+    let published = 0;
+    let measured = 0;
+    const publish = () => {
+      if (menuOpen() || measured === published) return;
+      published = measured;
+      root.style.setProperty("--app-header-height", `${published}px`);
     };
-    const observer = new ResizeObserver(apply);
-    observer.observe(header);
-    createEffect(() => {
-      if (!menuOpen()) apply();
+    const observer = new ResizeObserver(([entry]) => {
+      measured = Math.ceil(
+        entry.borderBoxSize?.[0]?.blockSize ??
+          entry.target.getBoundingClientRect().height,
+      );
+      publish();
     });
+    observer.observe(headerEl);
+    createEffect(publish);
     onCleanup(() => {
       observer.disconnect();
       root.style.removeProperty("--app-header-height");

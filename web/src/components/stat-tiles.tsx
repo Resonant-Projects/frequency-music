@@ -1,6 +1,7 @@
 import type { JSX } from "solid-js";
-import { For } from "solid-js";
+import { Index } from "solid-js";
 import { css, cx } from "../../styled-system/css";
+import { metaLabelClass } from "./ui/detail-styles";
 
 const gridClass = css({
   display: "grid",
@@ -15,7 +16,6 @@ const tileClass = css({
   bg: "zodiac.cream/3",
   borderColor: "zodiac.gold/22",
   borderRadius: "l2",
-  borderStyle: "solid",
   borderWidth: "1px",
   // Value reads above its label while the <dt> still precedes the <dd>.
   display: "flex",
@@ -24,37 +24,36 @@ const tileClass = css({
   p: "3",
 });
 
-const valueClass = css({
-  color: "zodiac.gold",
-  fontSize: "2xl",
-  margin: 0,
-});
+const valueClass = css({ fontSize: "2xl", margin: 0 });
 
-const labelClass = css({
-  color: "zodiac.cream/66",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-});
+const toneClass = {
+  gold: css({ color: "zodiac.gold" }),
+  violet: css({ color: "zodiac.violet" }),
+  cream: css({ color: "zodiac.cream" }),
+  error: css({ color: "zodiac.error" }),
+} as const;
 
 export type StatTile = {
   label: string;
   value: JSX.Element;
+  /** Colour of the numeral; gold (confirmed) unless the count is speculative or failing. */
+  tone?: keyof typeof toneClass;
 };
 
-/** A row of bordered stat tiles: a gold numeral over a mono uppercase label. */
+/** A row of bordered stat tiles: a numeral over a mono uppercase label. */
 export function StatTiles(props: { items: StatTile[]; class?: string }) {
   return (
     <dl class={cx(gridClass, props.class)}>
-      <For each={props.items}>
+      <Index each={props.items}>
         {(item) => (
           <div class={tileClass}>
-            <dt class={labelClass}>{item.label}</dt>
-            <dd class={valueClass}>{item.value}</dd>
+            <dt class={metaLabelClass}>{item().label}</dt>
+            <dd class={cx(valueClass, toneClass[item().tone ?? "gold"])}>
+              {item().value}
+            </dd>
           </div>
         )}
-      </For>
+      </Index>
     </dl>
   );
 }

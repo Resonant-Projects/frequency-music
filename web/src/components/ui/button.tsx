@@ -55,6 +55,12 @@ const variantStyles: Record<ButtonVariant, string> = {
       borderColor: "zodiac.gold/75",
       color: "zodiac.cream",
     },
+    // `aria-pressed="true"` is the selected state: a lifted gold border and
+    // gold text, never a solid fill (One Gold Action Rule).
+    _pressed: {
+      borderColor: "zodiac.gold/75",
+      color: "zodiac.gold",
+    },
   }),
   ghost: css({
     bg: "transparent",

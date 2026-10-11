@@ -1,5 +1,17 @@
 import { css } from "../../../styled-system/css";
 
+/**
+ * The system focus ring (DESIGN.md Buttons → Focus). Spread into a `css()`
+ * object; `focusRingClass` is the same thing as a composable class.
+ */
+export const focusRingStyle = {
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
+} as const;
+
 /** Gold horizontal rule used as a section divider on detail pages. */
 export const goldDivider = css({
   border: "none",
@@ -23,11 +35,7 @@ export const backLink = css({
   textTransform: "uppercase",
   opacity: 0.85,
   _hover: { opacity: 1 },
-  _focusVisible: {
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
-  },
+  ...focusRingStyle,
   _coarsePointer: { minH: "11" },
 });
 
@@ -59,16 +67,49 @@ export const metaLine = css({
   overflowWrap: "anywhere",
 });
 
+/** `focusRingStyle` as a class for anchors and custom buttons; compose with `cx`. */
+export const focusRingClass = css(focusRingStyle);
+
+/** `metaLine` in uppercase: the mono label beside a value or above a row. */
+export const metaLabelClass = css({
+  color: "zodiac.cream/66",
+  fontFamily: "mono",
+  fontSize: "xs",
+  letterSpacing: "0.14em",
+  overflowWrap: "anywhere",
+  textTransform: "uppercase",
+});
+
+/** A record title that links somewhere: cream, underlined on hover, ringed on focus. */
+export const recordLinkClass = css({
+  alignItems: "center",
+  color: "zodiac.cream",
+  display: "inline-flex",
+  minH: "6",
+  textDecoration: "none",
+  _hover: { textDecoration: "underline" },
+  ...focusRingStyle,
+  _coarsePointer: { minH: "11" },
+});
+
 /**
- * The system focus ring (DESIGN.md Buttons → Focus) for anchors and custom
- * buttons that do not go through `UIButton`. Compose with `cx`.
+ * A focusable, scrollable block of pretty-printed JSON or raw text. Use with
+ * `role="group"`, `tabIndex={0}`, an `aria-label` and the `zodiac-scroll` class.
  */
-export const focusRingClass = css({
-  _focusVisible: {
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
-  },
+export const jsonBlockClass = css({
+  bg: "zodiac.void/60",
+  borderColor: "zodiac.cream/12",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  color: "zodiac.cream/72",
+  fontFamily: "mono",
+  fontSize: "xs",
+  maxH: "18rem",
+  overflow: "auto",
+  overflowWrap: "anywhere",
+  p: "3",
+  whiteSpace: "pre-wrap",
+  ...focusRingStyle,
 });
 
 /**
@@ -87,10 +128,6 @@ export const inlineActionLink = css({
   textDecoration: "none",
   textTransform: "uppercase",
   _hover: { textDecoration: "underline" },
-  _focusVisible: {
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
-  },
+  ...focusRingStyle,
   _coarsePointer: { minH: "11" },
 });

@@ -1,3 +1,4 @@
+import { type Accessor, createSignal, onCleanup } from "solid-js";
 import { css, cx } from "../../../styled-system/css";
 
 // While empty, a region is visually hidden (sr-only) rather than display:none,
@@ -79,4 +80,26 @@ export function UINotice(props: UINoticeProps) {
       </p>
     </div>
   );
+}
+
+/**
+ * A self-retiring status message for `UINotice status`. `announce` clears the
+ * region first so identical text is read again, and the message retires after
+ * `retireMs` so a stale confirmation does not linger beside the next action.
+ */
+export function createAnnouncer(
+  retireMs = 5000,
+): [Accessor<string | null>, (text: string) => void] {
+  const [message, setMessage] = createSignal<string | null>(null);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => clearTimeout(timer));
+  const announce = (text: string) => {
+    clearTimeout(timer);
+    setMessage(null);
+    queueMicrotask(() => {
+      setMessage(text);
+      timer = setTimeout(() => setMessage(null), retireMs);
+    });
+  };
+  return [message, announce];
 }

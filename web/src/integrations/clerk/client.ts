@@ -1,4 +1,4 @@
-import type { Clerk } from "@clerk/clerk-js/headless";
+import { Clerk } from "@clerk/clerk-js/headless";
 import { createSignal } from "solid-js";
 import type { AuthAdapter } from "../convex";
 
@@ -42,10 +42,8 @@ export async function initializeClerk() {
   const publishableKey = getRequiredEnv("VITE_CLERK_PUBLISHABLE_KEY");
 
   // Sign-in and sign-up live on the hosted Clerk pages, so the app only needs
-  // session management. The headless build drops the component UI (the full
-  // build is ~950 kB gzipped), and the dynamic import keeps it out of the
-  // entry chunk when auth is bypassed.
-  const { Clerk } = await import("@clerk/clerk-js/headless");
+  // session management: the headless build drops the component UI (the full
+  // build is ~950 kB gzipped).
   const clerk = new Clerk(publishableKey);
   await clerk.load({
     signInUrl: import.meta.env.VITE_CLERK_SIGN_IN_URL,

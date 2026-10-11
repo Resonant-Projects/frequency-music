@@ -22,7 +22,7 @@ const monthPattern =
 
 // Images are stripped before links: the link pattern matches the `[alt](url)`
 // tail of an image, so the other order leaves a stray `!` in the text.
-function stripMarkdown(input: string) {
+export function stripMarkdown(input: string) {
   return input
     .replaceAll(/`([^`]+)`/g, "$1")
     .replaceAll(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
