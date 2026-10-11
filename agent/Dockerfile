@@ -19,6 +19,7 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY agent/package.json agent/bun.lock ./
+COPY agent/patches ./patches
 RUN bun install --frozen-lockfile --production --omit=peer
 
 # YouTube audio for transcript capture (src/tools/youtubeTranscript.ts): a
@@ -44,6 +45,8 @@ RUN curl -fsSLo /tmp/bgutil.tar.gz "https://github.com/Brainicism/bgutil-ytdlp-p
     && mkdir -p /tmp/bgutil \
     && tar -xzf /tmp/bgutil.tar.gz -C /tmp/bgutil --strip-components=1 \
     && cd /tmp/bgutil/server \
+    && npm pkg set 'overrides.proxy-addr=2.0.8' 'overrides.source-map-js=1.2.2' \
+    && npm install --package-lock-only --ignore-scripts --no-audit --no-fund \
     && npm ci --ignore-scripts --no-audit --no-fund \
     && npx tsc \
     && npm prune --omit=dev --ignore-scripts --no-audit --no-fund \
