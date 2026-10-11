@@ -158,22 +158,27 @@ export function ThesisDetailPage() {
     }
   }
 
-  async function handleDetach(campaignId: Id<"campaigns">) {
+  async function handleDetach(
+    campaignId: Id<"campaigns">,
+    trigger: HTMLButtonElement,
+  ) {
     if (detaching()) return;
     setDetaching(campaignId);
     setNotice(null);
     setNoticeError(null);
+    // The detached row unmounts with the Convex push, which lands before the
+    // mutation promise resolves; hand focus to the always-mounted section
+    // heading first so it never falls to <body>.
+    campaignsHeading?.focus();
     try {
       await detachThesis({
         campaignId,
         thesisId: params().thesisId as Id<"theses">,
       });
       setNotice("Thesis detached from campaign.");
-      // The detached row unmounts with the next Convex push; hand focus to
-      // the always-mounted section heading first so it never falls to <body>.
-      campaignsHeading?.focus();
     } catch (error) {
       setNoticeError(`Detach failed: ${describeError(error)}`);
+      if (trigger.isConnected) trigger.focus();
     } finally {
       setDetaching(null);
     }
@@ -343,7 +348,9 @@ export function ThesisDetailPage() {
                             variant="outline"
                             aria-label={`Detach ${campaign.title}`}
                             aria-busy={detaching() === campaign._id}
-                            onClick={() => handleDetach(campaign._id)}
+                            onClick={(event) =>
+                              handleDetach(campaign._id, event.currentTarget)
+                            }
                           >
                             Detach
                           </UIButton>

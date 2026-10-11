@@ -472,15 +472,21 @@ export function WeeklyBriefDetailPage() {
     setPublishingToNotion(true);
     setNotice(null);
     setNoticeError(null);
+    // The button sits inside a not-yet-in-Notion <Show>; the page id that
+    // unmounts it can be pushed before this action resolves, so park focus
+    // on the title first and give it back only if publishing fails.
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    briefTitle?.focus();
     try {
       const result = await publishToNotion({ id: b._id as Id<"weeklyBriefs"> });
-      // The button sits inside a not-yet-in-Notion <Show>, and the page id
-      // that unmounts it arrives after this action resolves.
-      briefTitle?.focus();
       setNotice(`Published to Notion: ${result.notionUrl ?? "success"}`);
     } catch (error) {
       console.error("Weekly brief publish failed", error);
       setNoticeError("Publish failed. Please try again or contact support.");
+      if (trigger?.isConnected) trigger.focus();
     } finally {
       setPublishingToNotion(false);
     }

@@ -159,27 +159,28 @@ export function DisplayPage() {
     sourceId: Id<"sources">,
     trigger: HTMLButtonElement,
   ) {
+    if (isRowPending(sourceId)) return;
+    // A started extraction moves the source past text_ready, which disables
+    // this button — and the live query can push that status before the
+    // action resolves. Chromium drops focus to <body> the moment a focused
+    // button disables, so hand focus to a stable queue target first: the
+    // row's next enabled action, else a neighbouring row, else the heading.
     const row = trigger.closest("[data-testid='display-row']");
+    const target =
+      row?.querySelector<HTMLButtonElement>(
+        "button:not(:disabled):not([aria-label^='Run extraction'])",
+      ) ?? (row ? focusTargetAfter(row) : null);
+    target?.focus();
     await withRowPending(sourceId, async () => {
       try {
         await runExtraction({ sourceId });
         setNotice("Extraction started.");
       } catch (error) {
         setNoticeError(`Extraction failed: ${describeError(error)}`);
+        // The button stays enabled on failure; give it focus back.
+        if (trigger.isConnected && !trigger.disabled) trigger.focus();
       }
     });
-    // A finished extraction moves the source past text_ready, which disables
-    // this button; keep focus inside the queue instead of on <body>.
-    // Chromium drops focus to <body> the moment a focused button disables.
-    const focusLost =
-      document.activeElement === trigger ||
-      document.activeElement === document.body;
-    if (focusLost && trigger.disabled && row?.isConnected) {
-      (
-        row.querySelector<HTMLButtonElement>("button:not(:disabled)") ??
-        focusTargetAfter(row)
-      )?.focus();
-    }
   }
 
   /**

@@ -203,6 +203,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
   });
 
   function beginEdit() {
+    if (editMode()) return;
     setSummary(props.extraction.summary);
     setClaimsJson(originalClaimsJson());
     setParametersJson(originalParametersJson());
@@ -212,8 +213,10 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     setNotice(null);
     setNoticeError(null);
     setEditMode(true);
-    // The trigger disables itself, so move focus into the panel it opened;
-    // deferred because the summary field mounts in this same tick.
+    // Move focus into the panel the trigger opened; deferred because the
+    // summary field mounts in this same tick. The trigger stays enabled
+    // (an opening guard above makes a second press a no-op) so focus never
+    // passes through <body> on the way.
     queueMicrotask(() => summaryField?.focus());
   }
 
@@ -282,7 +285,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             correctTrigger = element;
           }}
           variant="outline"
-          disabled={editMode()}
+          aria-expanded={editMode()}
           onClick={beginEdit}
         >
           Correct extraction

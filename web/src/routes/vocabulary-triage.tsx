@@ -168,6 +168,14 @@ function TriageRow(props: {
     setBusy(true);
     setError(null);
     const optionalNote = note().trim() ? { note: note().trim() } : {};
+    // The decided row unmounts with the Convex push, which lands before the
+    // mutation resolves; hand focus to the next row's heading first and give
+    // it back to the pressed button only if the decision fails.
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    document.getElementById(props.nextFocusId)?.focus();
     try {
       if (selected === "promote") {
         await promote({
@@ -190,10 +198,9 @@ function TriageRow(props: {
         });
       }
       props.onDecided(term());
-      // Hand focus to the next heading while this row is still mounted.
-      document.getElementById(props.nextFocusId)?.focus();
     } catch (caught) {
       setError(describeError(caught));
+      if (trigger?.isConnected) trigger.focus();
     } finally {
       setBusy(false);
     }

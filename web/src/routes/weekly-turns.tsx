@@ -285,14 +285,22 @@ function CampaignCard(props: {
     if (busy()) return;
     setActivating(true);
     clearNotice();
+    // Activation hides this button for the now-active card, and the Convex
+    // push that does so lands before the mutation resolves: park focus on the
+    // card heading first, and give it back only if activation fails.
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    heading?.focus();
     try {
       await props.onActivate(props.campaign._id);
       setDirty(false);
       setNotice("Active campaign updated.");
-      heading?.focus();
     } catch (error) {
       // Leave any unsaved edit marked as such.
       setNoticeError(`Campaign activation failed: ${describeError(error)}`);
+      if (trigger?.isConnected) trigger.focus();
     } finally {
       setActivating(false);
     }
