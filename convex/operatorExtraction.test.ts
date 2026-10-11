@@ -12,6 +12,7 @@ import type { Id } from "./_generated/dataModel";
 import { MODELS } from "./llm";
 import schema from "./schema";
 import {
+  EXTRACTION_PROMPT_VERSION,
   EXTRACT_USER_PROMPT,
   extractionContent,
   extractionInputHash,
@@ -109,7 +110,7 @@ describe("operator extraction", () => {
     expect(stored).toHaveLength(1);
     expect(stored[0]).toMatchObject({
       model: "anthropic/claude-opus-5.5",
-      promptVersion: "extract_v2",
+      promptVersion: EXTRACTION_PROMPT_VERSION,
       inputHash,
       topics: ["tuning", "Pythagorean comma"],
     });

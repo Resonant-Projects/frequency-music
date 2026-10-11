@@ -4,6 +4,7 @@ import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import schema from "./schema";
 import { keepsDedupeKey } from "./sources";
+import { EXTRACTION_PROMPT_VERSION } from "./shared/extractionPrompt";
 import { modules } from "../harness/modules";
 
 const arxivRow = (overrides: {
@@ -223,7 +224,7 @@ describe("duplicate Extraction text", () => {
     });
     const text =
       "Abstract: This paper presents the results of the 2025 Automatic Music Transcription Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted systems, and the best ones improved note-level F1 on unseen recordings by a wide margin.";
-    const inputHash = await sha256(`${text}extract_v2`);
+    const inputHash = await sha256(`${text}${EXTRACTION_PROMPT_VERSION}`);
     const { copy, holder, extraction } = await t.run(async (ctx) => {
       const holder = await ctx.db.insert(
         "sources",
@@ -246,7 +247,7 @@ describe("duplicate Extraction text", () => {
       const extraction = await ctx.db.insert("extractions", {
         sourceId: holder,
         model: "test-model",
-        promptVersion: "extract_v2",
+        promptVersion: EXTRACTION_PROMPT_VERSION,
         inputHash,
         summary: "Summary",
         claims: [],

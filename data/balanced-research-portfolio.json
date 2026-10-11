@@ -1,0 +1,509 @@
+[
+  {
+    "type": "url",
+    "title": "The discrete Fourier transform definition",
+    "url": "https://www.dsprelated.com/freebooks/mdft/DFT_Definition.html",
+    "author": "Julius O. Smith",
+    "tags": ["balanced-research-2026-10-11", "math"],
+    "topics": ["Fourier analysis", "frequency bins", "spectral representation"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "math",
+        "primaryDomain": "mathematics",
+        "workId": "smith-mdft",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Sinusoids and their parameters",
+    "url": "https://www.dsprelated.com/freebooks/mdft/Sinusoids.html",
+    "author": "Julius O. Smith",
+    "tags": ["balanced-research-2026-10-11", "math"],
+    "topics": ["sinusoids", "amplitude", "phase", "frequency"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "math",
+        "primaryDomain": "mathematics",
+        "workId": "smith-mdft",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Roots of unity and cyclic structure",
+    "url": "https://www.dsprelated.com/freebooks/mdft/Roots_Unity.html",
+    "author": "Julius O. Smith",
+    "tags": ["balanced-research-2026-10-11", "math"],
+    "topics": ["roots of unity", "cyclic symmetry", "Fourier basis"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "math",
+        "primaryDomain": "mathematics",
+        "workId": "smith-mdft",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "The Euclidean algorithm generates traditional musical rhythms",
+    "url": "https://cgm.cs.mcgill.ca/~godfried/publications/banff.pdf",
+    "author": "Godfried Toussaint",
+    "tags": ["balanced-research-2026-10-11", "math"],
+    "topics": ["Euclidean rhythms", "cyclic rhythm", "rhythmic distribution"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "math",
+        "primaryDomain": "mathematics",
+        "workId": "toussaint-euclidean-rhythm",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Entropy-based Tuning of Musical Instruments",
+    "url": "https://arxiv.org/abs/1203.5101",
+    "tags": ["balanced-research-2026-10-11", "math"],
+    "topics": ["entropy", "tuning optimization", "inharmonicity"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "math",
+        "primaryDomain": "mathematics",
+        "workId": "arxiv:1203.5101",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Standing waves and resonance",
+    "url": "https://openstax.org/books/university-physics-volume-1/pages/16-6-standing-waves-and-resonance",
+    "author": "OpenStax",
+    "tags": ["balanced-research-2026-10-11", "wave"],
+    "topics": ["standing waves", "boundary conditions", "resonance"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "wave",
+        "primaryDomain": "acoustics",
+        "workId": "openstax-university-physics-1",
+        "contentScope": "reference_only",
+        "reuse": "CC BY-NC-SA 4.0; AI reuse terms require review",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Beats and superposition",
+    "url": "https://openstax.org/books/university-physics-volume-1/pages/17-6-beats",
+    "author": "OpenStax",
+    "tags": ["balanced-research-2026-10-11", "wave"],
+    "topics": ["beating", "superposition", "amplitude modulation"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "wave",
+        "primaryDomain": "acoustics",
+        "workId": "openstax-university-physics-1",
+        "contentScope": "reference_only",
+        "reuse": "CC BY-NC-SA 4.0; AI reuse terms require review",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Interference beats and Tartini tones",
+    "url": "https://www.phys.unsw.edu.au/jw/beats.html",
+    "author": "UNSW Music Acoustics",
+    "tags": ["balanced-research-2026-10-11", "wave"],
+    "topics": ["beating", "combination tones", "physical interference"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "wave",
+        "primaryDomain": "acoustics",
+        "workId": "unsw-beats",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Resonant guitar modes",
+    "url": "https://www.phys.unsw.edu.au/music/guitaracoustics/modes.html",
+    "author": "UNSW Music Acoustics",
+    "tags": ["balanced-research-2026-10-11", "wave"],
+    "topics": ["coupled resonators", "guitar modes", "radiation efficiency"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "wave",
+        "primaryDomain": "acoustics",
+        "workId": "unsw-guitar-modes",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Teaching Fourier Analysis and Wave Physics with the Bass Guitar",
+    "url": "https://arxiv.org/abs/physics/0605154",
+    "tags": ["balanced-research-2026-10-11", "wave"],
+    "topics": ["Fourier analysis", "string modes", "harmonic series"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "wave",
+        "primaryDomain": "acoustics",
+        "workId": "arxiv:physics/0605154",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Voice leading",
+    "url": "https://musictheory.pugetsound.edu/mt21c/VoiceLeading.html",
+    "author": "Robert Hutchinson",
+    "tags": ["balanced-research-2026-10-11", "music"],
+    "topics": ["voice leading", "part independence", "motion economy"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "music",
+        "primaryDomain": "theory",
+        "workId": "hutchinson-music-theory",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Note names MIDI numbers and frequencies",
+    "url": "https://www.phys.unsw.edu.au/jw/notes.html",
+    "author": "UNSW Music Acoustics",
+    "tags": ["balanced-research-2026-10-11", "music"],
+    "topics": ["equal temperament", "pitch ratios", "MIDI pitch"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "music",
+        "primaryDomain": "tuning",
+        "workId": "unsw-note-frequencies",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Playing Music in Just Intonation: A Dynamically Adapting Tuning Scheme",
+    "url": "https://arxiv.org/abs/1706.04338",
+    "tags": ["balanced-research-2026-10-11", "music"],
+    "topics": ["just intonation", "adaptive tuning", "linear equations"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "music",
+        "primaryDomain": "tuning",
+        "workId": "arxiv:1706.04338",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "An algorithm to assign musical prime commas and construct free Just Intonation notation",
+    "url": "https://arxiv.org/abs/1612.01860",
+    "tags": ["balanced-research-2026-10-11", "music"],
+    "topics": ["just intonation", "prime commas", "tuning notation"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "music",
+        "primaryDomain": "tuning",
+        "workId": "arxiv:1612.01860",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Harmony Perception by Periodicity Detection",
+    "url": "https://arxiv.org/abs/1306.6458",
+    "tags": ["balanced-research-2026-10-11", "music"],
+    "topics": ["periodicity detection", "harmony models", "consonance"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "music",
+        "primaryDomain": "theory",
+        "workId": "arxiv:1306.6458",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Register impacts perceptual consonance through roughness and sharpness",
+    "url": "https://link.springer.com/article/10.3758/s13423-021-02033-5",
+    "author": "Tuomas Eerola and Imre Lahdelma",
+    "tags": ["balanced-research-2026-10-11", "psycho"],
+    "topics": ["register", "roughness", "sharpness", "consonance"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "psycho",
+        "primaryDomain": "psychoacoustics",
+        "workId": "doi:10.3758/s13423-021-02033-5",
+        "contentScope": "full_text",
+        "reuse": "CC BY 4.0",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Evidence for a universal association of auditory roughness with musical stability",
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0291642",
+    "author": "Andrew J. Milne and colleagues",
+    "tags": ["balanced-research-2026-10-11", "psycho"],
+    "topics": [
+      "roughness",
+      "stability",
+      "finishedness",
+      "cultural familiarity"
+    ],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "psycho",
+        "primaryDomain": "psychoacoustics",
+        "workId": "doi:10.1371/journal.pone.0291642",
+        "contentScope": "full_text",
+        "reuse": "CC BY 4.0",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Indifference to dissonance in native Amazonians reveals cultural variation in music perception",
+    "url": "https://www.nature.com/articles/nature18635",
+    "author": "Josh H. McDermott and colleagues",
+    "tags": ["balanced-research-2026-10-11", "psycho"],
+    "topics": ["pleasantness", "consonance preference", "cultural variation"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "psycho",
+        "primaryDomain": "psychoacoustics",
+        "workId": "doi:10.1038/nature18635",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Is Harmonicity a Misnomer for Cultural Familiarity in Consonance Preferences?",
+    "url": "https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.802385/full",
+    "author": "Imre Lahdelma Tuomas Eerola and Samuel Armitage",
+    "tags": ["balanced-research-2026-10-11", "psycho"],
+    "topics": [
+      "harmonicity",
+      "familiarity",
+      "consonance preference",
+      "opinion"
+    ],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "psycho",
+        "primaryDomain": "psychoacoustics",
+        "workId": "doi:10.3389/fpsyg.2022.802385",
+        "contentScope": "full_text",
+        "reuse": "CC BY 4.0",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Musical consonance: a review of theory and evidence on perception and preference of auditory roughness",
+    "url": "https://arxiv.org/abs/2510.14159",
+    "tags": ["balanced-research-2026-10-11", "psycho"],
+    "topics": ["roughness", "harmonicity", "perception", "preference"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "psycho",
+        "primaryDomain": "psychoacoustics",
+        "workId": "arxiv:2510.14159",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Chladni patterns for violin plates",
+    "url": "https://www.phys.unsw.edu.au/jw/chladni.html",
+    "author": "UNSW Music Acoustics",
+    "tags": ["balanced-research-2026-10-11", "geometry"],
+    "topics": ["nodal lines", "plate geometry", "normal modes"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "geometry",
+        "primaryDomain": "geometry",
+        "workId": "unsw-chladni",
+        "contentScope": "reference_only",
+        "reuse": "Copyright; permission requested for text and images",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Geometry of Music Perception",
+    "url": "https://arxiv.org/abs/2207.11035",
+    "tags": ["balanced-research-2026-10-11", "geometry"],
+    "topics": ["chord spaces", "roughness", "harmonicity", "geometry"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "geometry",
+        "primaryDomain": "geometry",
+        "workId": "arxiv:2207.11035",
+        "contentScope": "abstract",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Digital waveguides",
+    "url": "https://www.dsprelated.com/freebooks/pasp/Digital_Waveguides.html",
+    "author": "Julius O. Smith",
+    "tags": ["balanced-research-2026-10-11", "synthesis"],
+    "topics": ["digital waveguides", "string models", "physical synthesis"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "synthesis",
+        "primaryDomain": "production",
+        "workId": "smith-pasp",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  },
+  {
+    "type": "url",
+    "title": "Damping filters for reverberation delay lines",
+    "url": "https://www.dsprelated.com/freebooks/pasp/Damping_Filters_Reverberation_Delay.html",
+    "author": "Julius O. Smith",
+    "tags": ["balanced-research-2026-10-11", "synthesis"],
+    "topics": ["damping", "reverberation", "delay lines", "decay time"],
+    "fetchText": false,
+    "metadata": {
+      "researchPortfolio": {
+        "id": "balanced-research-2026-10-11",
+        "area": "synthesis",
+        "primaryDomain": "production",
+        "workId": "smith-pasp",
+        "contentScope": "full_text",
+        "reuse": "not_verified",
+        "selectedAt": "2026-10-11",
+        "selectionBasis": "Foundational mechanism or cross-domain comparison for the approved balanced research portfolio"
+      }
+    }
+  }
+]

@@ -8,6 +8,73 @@ import schema from "./schema";
 import { modules } from "../harness/modules";
 
 describe("source scout target census", () => {
+  test("bootstraps approved empty research areas outside the recent domain window", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (const [name, status] of [
+        ["mathematics", "known"],
+        ["psychoacoustics", "experimental"],
+        ["acoustics", "deprecated"],
+        ["geometry", "provisional"],
+        ["unrelated-empty-domain", "known"],
+      ] as const) {
+        await ctx.db.insert("conceptDomains", {
+          name,
+          status,
+          introducedBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+      for (let index = 0; index < 60; index++) {
+        await ctx.db.insert("conceptDomains", {
+          name: `recent-${index}`,
+          status: "known",
+          introducedBy: "system",
+          createdAt: index + 2,
+          updatedAt: index + 2,
+        });
+      }
+    });
+    const result = await t.query(api.correspondences.scoutTargets, {});
+    expect(result.thinDomains).toEqual([
+      { domain: "mathematics", onMissionConceptCount: 0, sourceCount: 0 },
+      { domain: "psychoacoustics", onMissionConceptCount: 0, sourceCount: 0 },
+    ]);
+  });
+
+  test("reserves scarce discovery slots for different research areas", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (const name of [
+        "mathematics",
+        "acoustics",
+        "psychoacoustics",
+        "theory",
+        "tuning",
+        "instrument",
+        "production",
+      ]) {
+        await ctx.db.insert("conceptDomains", {
+          name,
+          status: "known",
+          introducedBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+    });
+    const result = await t.query(api.correspondences.scoutTargets, {});
+    expect(result.thinDomains.map((target) => target.domain)).toEqual([
+      "acoustics",
+      "instrument",
+      "mathematics",
+      "psychoacoustics",
+      "theory",
+    ]);
+    expect(result.thinDomains).toHaveLength(5);
+  });
+
   test("shares the bounded concept budget across every scanned domain", () => {
     expect(scoutConceptLimitPerDomain(1)).toBe(50);
     expect(scoutConceptLimitPerDomain(4)).toBe(25);

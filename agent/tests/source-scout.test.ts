@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
   createIngestSourcesNode,
+  createPlanQueriesNode,
   createJudgeResultsNode,
   createProposeFeedsNode,
   createRecaptureSourcesNode,
@@ -112,6 +113,83 @@ describe("source scout routing", () => {
 });
 
 describe("source scout execution caps and resilience", () => {
+  test("covers each thin domain before repeated queries or conjectures", async () => {
+    const targets = {
+      thinDomains: [
+        { domain: "mathematics", onMissionConceptCount: 0, sourceCount: 0 },
+        { domain: "psychoacoustics", onMissionConceptCount: 0, sourceCount: 0 },
+      ],
+      starvedConjectures: [],
+    };
+    const planner = {
+      invoke: vi.fn(async () => ({
+        queries: Array.from({ length: 10 }, (_, index) => ({
+          query: `roughness study ${index}`,
+          targetGap: "thin-domain:psychoacoustics",
+          rationale: "Measure roughness.",
+        })),
+      })),
+    };
+    const result = await createPlanQueriesNode({
+      planner,
+      callTool: vi.fn(async () => ({})),
+    })({ targets });
+    expect(result.plannedQueries).toHaveLength(10);
+    expect(
+      result.plannedQueries?.slice(0, 2).map((query) => query.targetGap),
+    ).toEqual(["thin-domain:mathematics", "thin-domain:psychoacoustics"]);
+    expect(result.plannedQueries?.[0]?.query).toContain("Fourier");
+  });
+
+  test("uses grounded foundational queries when the planner fails", async () => {
+    const planner = {
+      invoke: vi.fn(async () => {
+        throw new Error("planner unavailable");
+      }),
+    };
+    const result = await createPlanQueriesNode({
+      planner,
+      callTool: vi.fn(async () => ({})),
+    })({
+      targets: {
+        thinDomains: [
+          { domain: "acoustics", onMissionConceptCount: 0, sourceCount: 0 },
+        ],
+        starvedConjectures: [],
+      },
+    });
+    expect(result.plannerErrorCount).toBe(1);
+    expect(result.plannedQueries).toEqual([
+      expect.objectContaining({
+        targetGap: "thin-domain:acoustics",
+        query: expect.stringContaining("normal modes"),
+      }),
+    ]);
+    expect(
+      routeAfterQueries({ plannedQueries: result.plannedQueries ?? [] }),
+    ).toBe("search_loop");
+  });
+
+  test("ingests different motivating gaps before spending the cap on one domain", async () => {
+    const many = Array.from({ length: 5 }, (_, index) =>
+      judgment(index, "source"),
+    );
+    const other = judgment(6, "source");
+    if (other.verdict) other.verdict.targetGap = "thin-domain:mathematics";
+    other.searchHit.query.targetGap = "thin-domain:mathematics";
+    const callTool = vi.fn(async (name: string) =>
+      name === "ingestScoutedSource" ? { id: "source", created: true } : [],
+    );
+    const result = await createIngestSourcesNode(
+      callTool,
+      vi.fn(async () => null),
+    )({ agentRunId: "run-scout", judgments: [...many, other] });
+    expect(result.sourceWrites).toHaveLength(MAX_INGESTS_PER_RUN);
+    expect(
+      result.sourceWrites?.slice(0, 2).map((write) => write.targetGap),
+    ).toEqual(["thin-domain:cymatics", "thin-domain:mathematics"]);
+  });
+
   test("runs no more than ten gap-tagged searches", async () => {
     const search = vi.fn(async () => []);
     await createSearchLoopNode(search)({

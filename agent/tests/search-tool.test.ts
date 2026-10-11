@@ -14,6 +14,7 @@ import { createWebSearch } from "../src/tools/searchTool";
 beforeEach(() => {
   vi.stubEnv("FIRECRAWL_API_URL", "");
   vi.stubEnv("OPENALEX_API_KEY", "");
+  vi.stubEnv("ALEXANDRIA_RESEARCH_ENABLED", "false");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -29,6 +30,137 @@ const urlOf = (input: string | URL | Request): string =>
       : input.url;
 
 describe("federated source-scout search", () => {
+  test("discovers Alexandria papers without keys and dedupes canonical works", async () => {
+    const fetchImpl = vi.fn(async (input: string | URL | Request) => {
+      const url = urlOf(input);
+      if (url.includes("/search/research/papers"))
+        return json({
+          success: true,
+          partial: true,
+          results: [
+            {
+              primaryId: "doi:10.1234/STUDY",
+              ids: {},
+              title: "Duplicate DOI",
+              abstract: "Study abstract",
+            },
+            {
+              primaryId: "arxiv:1706.04338v2",
+              ids: {},
+              title: "Adaptive tuning",
+              abstract: "A tuning model.",
+            },
+            {
+              primaryId: "arxiv:physics/0605154",
+              ids: {},
+              title: "Bass guitar Fourier analysis",
+              abstract: "Instrument modes.",
+            },
+            {
+              primaryId: "unknown:bad",
+              ids: {},
+              title: "No usable identity",
+              abstract: "Ignore.",
+            },
+          ],
+        });
+      if (url.includes("openalex.org"))
+        return json({
+          results: [{ title: "Measured study", doi: "10.1234/study" }],
+        });
+      return json({ resultList: { result: [] } });
+    });
+    const callTool = vi.fn(async () => ({}));
+    const result = await createWebSearch({
+      apiKey: "",
+      openAlexApiKey: "only-openalex-key",
+      alexandriaEnabled: true,
+      fetchImpl,
+      callTool,
+    })({ query: "tuning", maxResults: 5 }, { agentRunId: "run-scout" });
+    expect(result.map((paper) => paper.url)).toEqual([
+      "https://doi.org/10.1234/study",
+      "https://arxiv.org/abs/1706.04338v2",
+      "https://arxiv.org/abs/physics/0605154",
+    ]);
+    const calls = fetchImpl.mock.calls as unknown as Array<
+      [string, RequestInit]
+    >;
+    const alexandria = calls.find(([url]) =>
+      url.includes("/search/research/papers"),
+    );
+    expect(alexandria?.[1].headers).toEqual({});
+    expect(alexandria?.[0]).toContain("k=5");
+    expect(callTool).toHaveBeenCalledWith(
+      "appendAgentRunEvent",
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          providers: expect.objectContaining({
+            alexandria: { status: "ok", returned: 3, partial: true },
+          }),
+          resultProviders: expect.arrayContaining([
+            {
+              url: "https://arxiv.org/abs/1706.04338v2",
+              provider: "alexandria",
+            },
+          ]),
+        }),
+      }),
+    );
+  });
+
+  test("retains existing results when Alexandria is unavailable or returns an error envelope", async () => {
+    for (const failure of [
+      new Response("", { status: 429 }),
+      json({ success: false, results: [] }),
+    ]) {
+      const callTool = vi.fn(async () => ({}));
+      const fetchImpl = vi.fn(async (input: string | URL | Request) => {
+        const url = urlOf(input);
+        if (url.includes("/search/research/papers")) return failure;
+        if (url.includes("openalex.org"))
+          return json({
+            results: [{ title: "Foundation", doi: "10.1234/foundation" }],
+          });
+        return json({ resultList: { result: [] } });
+      });
+      const result = await createWebSearch({
+        apiKey: "",
+        alexandriaEnabled: true,
+        fetchImpl,
+        callTool,
+      })({ query: "resonance" }, { agentRunId: "run-scout" });
+      expect(result).toEqual([
+        {
+          title: "Foundation",
+          url: "https://doi.org/10.1234/foundation",
+          snippet: "Foundation",
+        },
+      ]);
+      expect(callTool).toHaveBeenCalledWith(
+        "appendAgentRunEvent",
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            providers: expect.objectContaining({
+              alexandria: expect.objectContaining({ status: "failed" }),
+            }),
+          }),
+        }),
+      );
+    }
+  });
+
+  test("makes no Alexandria request without explicit enablement", async () => {
+    const fetchImpl = vi.fn(async () =>
+      json({ results: [], resultList: { result: [] } }),
+    );
+    await createWebSearch({ apiKey: "", fetchImpl })({ query: "tuning" });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls.flat().join(" ")).not.toContain(
+      "/search/research/papers",
+    );
+  });
+
   test("sends an OpenAlex key as a header only to OpenAlex, never in a URL", async () => {
     const fetchImpl = vi.fn(async (input: string | URL | Request) =>
       urlOf(input).includes("openalex.org")

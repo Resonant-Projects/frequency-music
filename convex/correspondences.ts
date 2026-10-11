@@ -13,6 +13,8 @@ import { requireAuth, type AppIdentity } from "./auth";
 import { pairKey } from "./shared/correspondenceKey";
 import { correspondenceStatusValidator } from "./shared/correspondences";
 import { correspondenceReturnValidator } from "./validators";
+import { inferDisplaySectorFromDomain } from "./domainMappings";
+import { BOOTSTRAP_RESEARCH_DOMAINS } from "./shared/researchTopics";
 
 const DEFAULT_LIST_LIMIT = 20;
 const MAX_LIST_LIMIT = 100;
@@ -89,7 +91,24 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     .query("conceptDomains")
     .order("desc")
     .take(SCOUT_DOMAIN_SCAN_LIMIT);
-  const activeDomains = domainRows
+  // Core research areas must remain reachable when newer registry rows fill
+  // the bounded scan. Eight indexed registry reads supplement that scan;
+  // the shared concept sample budget below remains unchanged.
+  const bootstrapRows = await Promise.all(
+    BOOTSTRAP_RESEARCH_DOMAINS.map((name) =>
+      ctx.db
+        .query("conceptDomains")
+        .withIndex("by_name", (q) => q.eq("name", name))
+        .first(),
+    ),
+  );
+  const activeDomains = [
+    ...new Map(
+      [...bootstrapRows.filter((row) => row !== null), ...domainRows].map(
+        (row) => [row.name, row],
+      ),
+    ).values(),
+  ]
     .filter((domain) => domain.status !== "deprecated")
     .toSorted((left, right) => left.name.localeCompare(right.name));
 
@@ -98,7 +117,7 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
   );
   const domainCounts: ThinDomain[] = [];
   for (const domain of activeDomains) {
-    // Worst case: 50 domain + 100 concept + (100 x 50) edge reads = 5,150.
+    // At most 58 registry + 100 concept + (100 x 50) edge rows = 5,158.
     // Counts intentionally approximate a bounded window and may miss later on-mission concepts.
     const domainConcepts = await ctx.db
       .query("concepts")
@@ -107,7 +126,10 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     const concepts = domainConcepts.filter(
       (concept) => concept.missionRelevance === "on",
     );
-    if (concepts.length === 0) continue;
+    const approvedBootstrap =
+      BOOTSTRAP_RESEARCH_DOMAINS.includes(domain.name) &&
+      (domain.status === "known" || domain.status === "experimental");
+    if (concepts.length === 0 && !approvedBootstrap) continue;
 
     const sourceIds = new Set<string>();
     for (const concept of concepts) {
@@ -129,13 +151,28 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     });
   }
 
-  return domainCounts
-    .toSorted(
-      (left, right) =>
-        left.sourceCount - right.sourceCount ||
-        left.domain.localeCompare(right.domain),
-    )
-    .slice(0, SCOUT_TARGET_LIMIT);
+  const ranked = domainCounts.toSorted(
+    (left, right) =>
+      left.sourceCount - right.sourceCount ||
+      left.onMissionConceptCount - right.onMissionConceptCount ||
+      left.domain.localeCompare(right.domain),
+  );
+  // Reserve the first slots for distinct display areas, so tuning/theory or
+  // production/instrument cannot consume the whole five-domain courtesy cap.
+  const selected = new Set<string>();
+  const sectors = new Set<string>();
+  for (const domain of ranked) {
+    const sector = inferDisplaySectorFromDomain(domain.domain);
+    if (sectors.has(sector)) continue;
+    selected.add(domain.domain);
+    sectors.add(sector);
+    if (selected.size === SCOUT_TARGET_LIMIT) break;
+  }
+  for (const domain of ranked) {
+    if (selected.size === SCOUT_TARGET_LIMIT) break;
+    selected.add(domain.domain);
+  }
+  return ranked.filter((domain) => selected.has(domain.domain));
 }
 
 async function computeStarvedConjectures(
