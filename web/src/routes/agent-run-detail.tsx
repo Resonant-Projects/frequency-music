@@ -114,43 +114,58 @@ function PersistedDraftActions(props: {
   const canPromote = createMemo(() => Boolean(props.draft.payload));
 
   // A decision swaps these controls for <DecisionState>, unmounting the
-  // focused button. Hand focus to the draft's title so it never falls to
-  // <body>; the parent announces the outcome from a region that stays put.
+  // focused button. Convex pushes the status update before the mutation
+  // promise resolves, so focus moves to the draft's title BEFORE the call;
+  // a failure hands it back to the button, which is still mounted.
   function focusDraftTitle() {
     document.getElementById(props.focusTargetId)?.focus();
   }
 
-  async function handleApprove() {
-    if (busy() || !canPromote()) return;
+  async function decide(
+    trigger: HTMLButtonElement,
+    run: () => Promise<unknown>,
+    verb: "Approved" | "Rejected",
+  ) {
     setError(null);
     setBusy(true);
+    focusDraftTitle();
     try {
-      await approve({
-        draftId: props.draft._id,
-        ...(note().trim() ? { decisionNote: note().trim() } : {}),
-      });
-      props.onDecided(`Approved draft: ${props.draft.title}.`);
-      focusDraftTitle();
+      await run();
+      props.onDecided(`${verb} draft: ${props.draft.title}.`);
     } catch (err) {
-      setError(`Failed to approve draft: ${describeError(err)}`);
+      setError(
+        `Failed to ${verb === "Approved" ? "approve" : "reject"} draft: ${describeError(err)}`,
+      );
+      if (trigger.isConnected) trigger.focus();
     } finally {
       setBusy(false);
     }
   }
 
-  async function handleReject() {
+  function handleApprove(
+    event: MouseEvent & { currentTarget: HTMLButtonElement },
+  ) {
+    if (busy() || !canPromote()) return;
+    void decide(
+      event.currentTarget,
+      () =>
+        approve({
+          draftId: props.draft._id,
+          ...(note().trim() ? { decisionNote: note().trim() } : {}),
+        }),
+      "Approved",
+    );
+  }
+
+  function handleReject(
+    event: MouseEvent & { currentTarget: HTMLButtonElement },
+  ) {
     if (busy() || !canReject()) return;
-    setError(null);
-    setBusy(true);
-    try {
-      await reject({ draftId: props.draft._id, decisionNote: note().trim() });
-      props.onDecided(`Rejected draft: ${props.draft.title}.`);
-      focusDraftTitle();
-    } catch (err) {
-      setError(`Failed to reject draft: ${describeError(err)}`);
-    } finally {
-      setBusy(false);
-    }
+    void decide(
+      event.currentTarget,
+      () => reject({ draftId: props.draft._id, decisionNote: note().trim() }),
+      "Rejected",
+    );
   }
 
   return (

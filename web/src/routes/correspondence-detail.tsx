@@ -75,6 +75,9 @@ export function CorrespondenceDetailPage() {
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
   let reasonField: HTMLTextAreaElement | undefined;
   // "Review lifecycle" outlives the review panel, so closing it returns there.
+  // It reports `aria-busy` rather than `disabled` while a decision saves: a
+  // disabled control refuses focus, and the panel closes before `saving`
+  // clears.
   let reviewTrigger: HTMLButtonElement | undefined;
 
   function closeReview() {
@@ -97,6 +100,7 @@ export function CorrespondenceDetailPage() {
   );
 
   function beginReview(current: CorrespondenceStatus) {
+    if (saving()) return;
     setNextStatus(current === "conjectured" ? "evidenced" : current);
     setStatusReason("");
     setNotice(null);
@@ -168,7 +172,7 @@ export function CorrespondenceDetailPage() {
                 }}
                 variant="outline"
                 onClick={() => beginReview(row().status)}
-                disabled={saving()}
+                aria-busy={saving()}
                 aria-expanded={reviewOpen()}
                 aria-controls="correspondence-review-panel"
               >

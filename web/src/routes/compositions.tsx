@@ -3,6 +3,7 @@ import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import { entityCardClass } from "../components/entity-card";
+import { createKeyedRows } from "../lib/keyed-rows";
 import {
   badgeRowClass,
   fieldLabelClass,
@@ -63,6 +64,12 @@ export function CompositionsPage() {
   const compositions = createQueryWithStatus(api.compositions.list, () => ({
     limit: 24,
   }));
+  // Keyed by id: a status change refreshes the list with fresh objects, and
+  // the pressed status button must stay mounted (and focused).
+  const compositionRows = createKeyedRows<CompositionRow>(
+    () => compositions.data(),
+    (row) => String(row._id),
+  );
   const recipes = createQuery(api.recipes.listByStatus, () => ({
     limit: 40,
   }));
@@ -274,79 +281,87 @@ export function CompositionsPage() {
         <Show when={!compositions.isLoading()}>
           <Show when={(compositions.data() ?? []).length > 0}>
             <UIList class={listClass}>
-              <For each={compositions.data() ?? []}>
-                {(item: CompositionRow) => {
-                  const revisionParent = () =>
-                    (compositions.data() ?? []).find(
-                      (candidate: { _id: string }) =>
-                        String(candidate._id) === String(item.revisionParentId),
-                    ) as { title: string } | undefined;
+              <For each={compositionRows.ids()}>
+                {(id) => (
+                  <Show when={compositionRows.byId().get(id)}>
+                    {(item) => {
+                      const revisionParent = () =>
+                        (compositions.data() ?? []).find(
+                          (candidate: { _id: string }) =>
+                            String(candidate._id) ===
+                            String(item().revisionParentId),
+                        ) as { title: string } | undefined;
 
-                  return (
-                    <li data-testid="entity-row" class={entityCardClass}>
-                      <div class={rowBadgesClass}>
-                        <UIBadge tone="gold">{item.status}</UIBadge>
-                        <UIBadge tone="violet">{item.artifactType}</UIBadge>
-                        <UIBadge tone="cream">{item.version}</UIBadge>
-                        <Show when={item.revisionVariable}>
-                          <UIBadge tone="gold">
-                            variable: {item.revisionVariable}
-                          </UIBadge>
-                        </Show>
-                      </div>
+                      return (
+                        <li data-testid="entity-row" class={entityCardClass}>
+                          <div class={rowBadgesClass}>
+                            <UIBadge tone="gold">{item().status}</UIBadge>
+                            <UIBadge tone="violet">
+                              {item().artifactType}
+                            </UIBadge>
+                            <UIBadge tone="cream">{item().version}</UIBadge>
+                            <Show when={item().revisionVariable}>
+                              <UIBadge tone="gold">
+                                variable: {item().revisionVariable}
+                              </UIBadge>
+                            </Show>
+                          </div>
 
-                      <h3 class={rowTitleClass}>
-                        <Link
-                          to="/compositions/$compositionId"
-                          params={{ compositionId: String(item._id) }}
-                          class={recordLinkClass}
-                        >
-                          {item.title}
-                        </Link>
-                      </h3>
+                          <h3 class={rowTitleClass}>
+                            <Link
+                              to="/compositions/$compositionId"
+                              params={{ compositionId: String(item()._id) }}
+                              class={recordLinkClass}
+                            >
+                              {item().title}
+                            </Link>
+                          </h3>
 
-                      <Show when={item.revisionParentId}>
-                        <p class={revisionOfClass}>
-                          Revision of{" "}
-                          {revisionParent()?.title ?? "an earlier composition"}
-                        </p>
-                      </Show>
+                          <Show when={item().revisionParentId}>
+                            <p class={revisionOfClass}>
+                              Revision of{" "}
+                              {revisionParent()?.title ??
+                                "an earlier composition"}
+                            </p>
+                          </Show>
 
-                      <div class={badgeRowClass}>
-                        <UIButton
-                          variant="outline"
-                          aria-pressed={item.status === "in_progress"}
-                          aria-label={`Set ${item.title} to in progress`}
-                          onClick={() =>
-                            setStatus(String(item._id), "in_progress")
-                          }
-                        >
-                          In Progress
-                        </UIButton>
-                        <UIButton
-                          variant="outline"
-                          aria-pressed={item.status === "rendered"}
-                          aria-label={`Set ${item.title} to rendered`}
-                          onClick={() =>
-                            setStatus(String(item._id), "rendered")
-                          }
-                        >
-                          Rendered
-                        </UIButton>
-                        <UIButton
-                          variant="outline"
-                          aria-pressed={item.status === "published"}
-                          aria-label={`Set ${item.title} to published`}
-                          onClick={() =>
-                            setStatus(String(item._id), "published")
-                          }
-                        >
-                          Published
-                        </UIButton>
-                      </div>
-                    </li>
-                  );
-                }}
+                          <div class={badgeRowClass}>
+                            <UIButton
+                              variant="outline"
+                              aria-pressed={item().status === "in_progress"}
+                              aria-label={`Set ${item().title} to in progress`}
+                              onClick={() =>
+                                setStatus(String(item()._id), "in_progress")
+                              }
+                            >
+                              In Progress
+                            </UIButton>
+                            <UIButton
+                              variant="outline"
+                              aria-pressed={item().status === "rendered"}
+                              aria-label={`Set ${item().title} to rendered`}
+                              onClick={() =>
+                                setStatus(String(item()._id), "rendered")
+                              }
+                            >
+                              Rendered
+                            </UIButton>
+                            <UIButton
+                              variant="outline"
+                              aria-pressed={item().status === "published"}
+                              aria-label={`Set ${item().title} to published`}
+                              onClick={() =>
+                                setStatus(String(item()._id), "published")
+                              }
+                            >
+                              Published
+                            </UIButton>
+                          </div>
+                        </li>
+                      );
+                    }}
+                  </Show>
+                )}
               </For>
             </UIList>
           </Show>
