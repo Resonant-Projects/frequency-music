@@ -30,7 +30,7 @@
     },
   },
   "overrides": {
-    "hono": "4.13.12",
+    "hono": "4.13.13",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
     "ws": "^8.21.0",
   },
