@@ -1,4 +1,5 @@
 import { recordOperationFailure } from "./operationFailures";
+import { truncateText } from "./shared/truncateText";
 // Pull-based, leased job lifecycle. Convex never calls the media service.
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
@@ -302,7 +303,7 @@ async function requeueOrPark(
     preRenderFailuresOnly:
       (job.attempts === 0 || job.preRenderFailuresOnly === true) &&
       error.startsWith("renderer version mismatch: job requested "),
-    error: error.slice(0, 2000),
+    error: truncateText(error, 2000),
     leaseToken: undefined,
     leaseExpiresAt: undefined,
     workerId: undefined,

@@ -20,6 +20,38 @@ import type { SourceScoutState } from "../src/state/sourceScoutState.js";
 import { captureInputZ } from "../../convex/shared/operationRecovery";
 
 describe("recovery seams", () => {
+  test.each(["capture", "intake"])(
+    "%s diagnostics preserve Unicode at the report limit",
+    async (stage) => {
+      const error = new Error(`${"x".repeat(999)}🧠 detail`);
+      const callTool = vi.fn(
+        async (name: string, _args: Record<string, unknown>) => {
+          if (name === "ingestScoutedSource") {
+            if (stage === "intake") throw error;
+            return { id: "source", created: true };
+          }
+          return null;
+        },
+      );
+      await captureSourceAttempt(
+        {
+          agentRunId: "run",
+          input: { url: "https://example.org", query: "q", rationale: "r" },
+        },
+        callTool,
+        async () => {
+          throw error;
+        },
+      );
+      const report = callTool.mock.calls.find(
+        ([name]) => name === "reportCaptureFailure",
+      )!;
+      expect((report[1] as { diagnostic: string }).diagnostic).toBe(
+        "x".repeat(999),
+      );
+    },
+  );
+
   test("competing flushes serialize across instances while a freed slot is reused", async () => {
     const dir = await mkdtemp(join(tmpdir(), "recovery-slot-reuse-"));
     try {

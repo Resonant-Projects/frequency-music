@@ -3,6 +3,7 @@
 // extracted from the same instructions and the same text either way.
 
 import { RESEARCH_SOURCE_GUIDANCE } from "./researchTopics";
+import { truncateText } from "./truncateText";
 
 export const EXTRACTION_PROMPT_VERSION = "extract_v3";
 /** Source text beyond this many characters is not shown to the model. */
@@ -77,8 +78,7 @@ Only include claims that are substantive and relevant to music, frequency, acous
  * a lone high surrogate (Convex rejects strings with unpaired surrogates).
  */
 export function extractionContent(text: string): string {
-  const cut = text.slice(0, EXTRACTION_CONTENT_MAX_CHARS);
-  return /[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut;
+  return truncateText(text, EXTRACTION_CONTENT_MAX_CHARS);
 }
 
 /** The user prompt for one Source, with its text cut to the model limit. */

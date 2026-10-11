@@ -12,6 +12,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { audioArtifactInputValidator } from "./shared/audioArtifacts";
+import { truncateText } from "./shared/truncateText";
 
 const playbackReturn = v.union(
   v.null(),
@@ -138,7 +139,7 @@ export const markFailed = internalMutation({
     }
     await ctx.db.patch(args.artifactId, {
       status: "failed",
-      error: args.error.slice(0, 2000),
+      error: truncateText(args.error, 2000),
       updatedAt: Date.now(),
     });
     return null;

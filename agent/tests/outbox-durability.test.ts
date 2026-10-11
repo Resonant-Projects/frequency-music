@@ -1,16 +1,20 @@
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
 import { DurableOutbox } from "../src/shared/outbox.js";
 import { ConvexToolHttpError } from "../src/tools/convexTools.js";
 
-const fault = vi.hoisted(() => ({ path: "" }));
+const fault = vi.hoisted(() => ({ path: "", unreadable: "" }));
 vi.mock("node:fs/promises", async (importOriginal) => {
   const fs = await importOriginal<typeof import("node:fs/promises")>();
   return {
     ...fs,
     open: async (...args: Parameters<typeof fs.open>) => {
+      if (String(args[0]) === fault.unreadable)
+        throw Object.assign(new Error("Unreadable ancestor"), {
+          code: "EACCES",
+        });
       const handle = await fs.open(...args);
       const sync = handle.sync.bind(handle);
       vi.spyOn(handle, "sync").mockImplementation(async () => {
@@ -27,6 +31,73 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 });
 
 describe("outbox storage failures", () => {
+  test("nested first-use outboxes sync their provisioned boundary and preserve quarantine retries", async () => {
+    const root = await mkdtemp(join(tmpdir(), "outbox-first-use-"));
+    try {
+      const dir = join(root, "state", "outbox");
+      const outbox = new DurableOutbox(dir, root);
+      fault.path = join(root, "state");
+      await expect(
+        outbox.enqueue({
+          tool: "reportCaptureFailure",
+          args: { deliveryId: "retained" },
+        }),
+      ).rejects.toThrow("Injected storage sync failure");
+      fault.path = root;
+      const reject = async () => {
+        throw new ConvexToolHttpError("permanent rejection", 400);
+      };
+      await expect(outbox.flush(reject)).rejects.toThrow(
+        "Injected storage sync failure",
+      );
+      expect(await readdir(dir)).toEqual(["0.spool", "dead-letter"]);
+      fault.path = "";
+      await expect(new DurableOutbox(dir, root).flush(reject)).rejects.toThrow(
+        "permanent rejection",
+      );
+      expect(await readdir(dir)).toEqual(["dead-letter"]);
+      expect(await readdir(join(dir, "dead-letter"))).toEqual(["slot-0.json"]);
+    } finally {
+      fault.path = "";
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("an unreadable traversable ancestor does not block delivery or quarantine", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "outbox-boundary-"));
+    try {
+      fault.unreadable = dirname(dir);
+      const outbox = new DurableOutbox(dir);
+      await outbox.enqueue({
+        tool: "appendAgentRunEvent",
+        args: { deliveryId: "rejected" },
+      });
+      await outbox.enqueue({
+        tool: "reportCaptureFailure",
+        args: { deliveryId: "later" },
+      });
+      const delivered: unknown[] = [];
+      await expect(
+        new DurableOutbox(dir).flush(async (_tool, args) => {
+          if (args.deliveryId === "rejected")
+            throw new ConvexToolHttpError("permanent rejection", 400);
+          delivered.push(args.deliveryId);
+          return null;
+        }),
+      ).rejects.toThrow("permanent rejection");
+      expect(delivered).toEqual(["later"]);
+      expect(await readdir(dir)).toEqual(["dead-letter"]);
+      expect(
+        JSON.parse(
+          await readFile(join(dir, "dead-letter", "slot-0.json"), "utf8"),
+        ).delivery.args.deliveryId,
+      ).toBe("rejected");
+    } finally {
+      fault.unreadable = "";
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   test.each([false, true])(
     "quarantine reuses an interrupted diagnostic link after sync recovers (full: %s)",
     async (full) => {

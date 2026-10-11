@@ -1,5 +1,8 @@
-import { describe, expect, test } from "vite-plus/test";
-import { parseConfidenceBand } from "./extract";
+import { describe, expect, test, vi } from "vite-plus/test";
+import { getFunctionName } from "convex/server";
+import type { ActionCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { parseConfidenceBand, resumeAttempt } from "./extract";
 import { parseExtractionJson } from "./llm";
 
 const extraction = {
@@ -9,6 +12,35 @@ const extraction = {
   topics: ["resonance"],
   openQuestions: [],
 };
+
+test("extraction action sends valid Unicode to failure mutation and preserves its original error", async () => {
+  const original = new Error(`${"x".repeat(999)}🧠 detail`);
+  const attemptId = "attempt" as Id<"extractionAttempts">;
+  const runMutation = vi.fn(async (ref, args) => {
+    if (getFunctionName(ref).endsWith(":claimGeneration")) throw original;
+    expect(getFunctionName(ref)).toBe("extractInternal:failExtraction");
+    if (!args.error.isWellFormed())
+      throw new Error("Convex rejects invalid Unicode");
+    expect(args.error).toBe("x".repeat(999));
+    expect(args.attemptId).toBe(attemptId);
+    expect(args.generationLease).toBeTypeOf("string");
+    return null;
+  });
+  const ctx = {
+    runMutation,
+    runQuery: vi.fn(async () => ({ _id: attemptId })),
+  } as unknown as ActionCtx;
+  const handler = (
+    resumeAttempt as unknown as {
+      _handler: (
+        ctx: ActionCtx,
+        args: { attemptId: Id<"extractionAttempts"> },
+      ) => Promise<unknown>;
+    }
+  )._handler;
+  await expect(handler(ctx, { attemptId })).rejects.toBe(original);
+  expect(runMutation).toHaveBeenCalledTimes(2);
+});
 
 describe("LLM extraction response parsing", () => {
   test("round-trips a pure JSON extraction", () => {

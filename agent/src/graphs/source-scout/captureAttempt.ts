@@ -13,6 +13,7 @@ import {
   type ToolCaller,
 } from "../shared/audit.js";
 import { redactError } from "../../shared/redactError.js";
+import { truncateText } from "../../../../convex/shared/truncateText.js";
 
 export type CaptureAttemptResult = {
   id?: string;
@@ -46,7 +47,7 @@ export async function captureSourceAttempt(
       try {
         page = await crawl(input.url, { title: input.title });
       } catch (error) {
-        diagnostic = redactError(error).slice(0, 1000);
+        diagnostic = truncateText(redactError(error), 1000);
         auditEvents.push(
           ...(await appendRemoteAuditEvent(
             callTool,
@@ -60,9 +61,7 @@ export async function captureSourceAttempt(
       }
     }
     if (page) {
-      const cut = page.text.slice(0, SCOUTED_TEXT_MAX_CHARS);
-      // Convex rejects a string ending on half of a supplementary character.
-      input.rawText = /[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut;
+      input.rawText = truncateText(page.text, SCOUTED_TEXT_MAX_CHARS);
       input.contentProvider = page.provider;
     }
     stage = "intake";
@@ -87,7 +86,7 @@ export async function captureSourceAttempt(
       auditEvents,
     };
   } catch (error) {
-    diagnostic = redactError(error).slice(0, 1000);
+    diagnostic = truncateText(redactError(error), 1000);
     auditEvents.push(
       ...(await appendRemoteAuditEvent(
         callTool,

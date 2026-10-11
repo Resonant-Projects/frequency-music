@@ -42,6 +42,8 @@ export type JobContext = {
   job: ClaimedMediaJob;
   workDir: string;
   retainedDir?: string;
+  // Provisioned durable boundary. If omitted, retainedDir must already exist.
+  retainedRoot?: string;
   tools: ToolClient;
   rendererVersion: string;
   // Fires when the runner's job deadline passes; handlers forward it to every

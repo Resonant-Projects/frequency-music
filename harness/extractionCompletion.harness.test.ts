@@ -49,6 +49,28 @@ async function setup(transactionLimits = false) {
   return { t, sourceId, begin };
 }
 describe("Extraction completion", () => {
+  test("extraction failure retains valid Unicode diagnostics and its recovery record", async () => {
+    const { t, begin } = await setup();
+    const attemptId = await begin();
+    await t.mutation(internal.extractInternal.failExtraction, {
+      attemptId,
+      error: `${"x".repeat(999)}🧠 detail`,
+    });
+    expect((await t.run((ctx) => ctx.db.get(attemptId)))?.error).toBe(
+      "x".repeat(999),
+    );
+    const failure = await t.run((ctx) =>
+      ctx.db
+        .query("operationFailures")
+        .withIndex("by_operation", (q) =>
+          q.eq("operationId", `extraction:${attemptId}`),
+        )
+        .unique(),
+    );
+    expect(failure?.message).toBe("x".repeat(999));
+    expect(failure?.status).toBe("recorded");
+  });
+
   test("published export refuses incomplete shared privacy coverage instead of returning a partial manifest", async () => {
     const { t, sourceId } = await setup(true);
     const briefId = await t.run(async (ctx) => {

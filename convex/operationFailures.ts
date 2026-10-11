@@ -21,6 +21,7 @@ import {
 } from "./shared/operationRecovery";
 import { redactError } from "./shared/redactError";
 import { fnv1a64Hex } from "./shared/stableHash";
+import { truncateText } from "./shared/truncateText";
 
 /** Server-derived operation identity makes delivery retries harmless. */
 export async function recordOperationFailure(
@@ -41,7 +42,7 @@ export async function recordOperationFailure(
   const now = Date.now();
   const id = await ctx.db.insert("operationFailures", {
     ...args,
-    message: args.message.slice(0, 1000),
+    message: truncateText(args.message, 1000),
     status: "recorded",
     attempts: 0,
     createdAt: now,
@@ -88,7 +89,7 @@ export const reportCaptureFailure = internalMutation({
       causeKey: `capture:${new URL(input.url).hostname}:${args.stage}`,
       target: { kind: "capture", input },
       message: args.diagnostic
-        ? redactError(args.diagnostic).slice(0, 1000)
+        ? redactError(args.diagnostic)
         : `Source Scout ${args.stage} failed`,
       agentRunId: args.agentRunId,
     });

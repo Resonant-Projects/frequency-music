@@ -52,15 +52,17 @@ export async function synthesizeRetained(
   });
   if (!ctx.retainedDir || !(await restoreChunk(ctx.retainedDir, key, file))) {
     ctx.signal.throwIfAborted();
-    if (ctx.retainedDir) await beginSynthesis(ctx.retainedDir, key);
+    if (ctx.retainedDir)
+      await beginSynthesis(ctx.retainedDir, key, ctx.retainedRoot);
     try {
       await synth.synthesize(text, voice, file, ctx.signal);
     } catch (error) {
       if (ctx.retainedDir && error instanceof SynthesisRejectedError)
-        await failSynthesis(ctx.retainedDir, key);
+        await failSynthesis(ctx.retainedDir, key, ctx.retainedRoot);
       throw error;
     }
-    if (ctx.retainedDir) await retainChunk(ctx.retainedDir, key, file);
+    if (ctx.retainedDir)
+      await retainChunk(ctx.retainedDir, key, file, ctx.retainedRoot);
     ctx.signal.throwIfAborted();
   }
 }

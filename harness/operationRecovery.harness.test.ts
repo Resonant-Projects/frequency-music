@@ -4,6 +4,7 @@ import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import type { Id } from "../convex/_generated/dataModel";
 import { modules } from "./modules";
+import { recordOperationFailure } from "../convex/operationFailures";
 
 async function setup() {
   const t = convexTest(schema, modules);
@@ -31,6 +32,42 @@ async function setup() {
   return { t, runId, input, failureId, due };
 }
 describe("operational recovery", () => {
+  test.each(["report", "record"])(
+    "%s failure diagnostics retain valid Unicode and schedule recovery",
+    async (path) => {
+      const { t, runId, input } = await setup();
+      const message = `${"x".repeat(999)}🧠 detail`;
+      const failureId =
+        path === "report"
+          ? await t.mutation(internal.operationFailures.reportCaptureFailure, {
+              agentRunId: runId,
+              input: { ...input, url: "https://example.org/unicode" },
+              stage: "intake",
+              diagnostic: message,
+            })
+          : await t.run((ctx) =>
+              recordOperationFailure(ctx, {
+                operationId: "unicode",
+                causeKey: "unicode",
+                target: { kind: "capture", input },
+                message,
+              }),
+            );
+      expect((await t.run((ctx) => ctx.db.get(failureId)))?.message).toBe(
+        "x".repeat(999),
+      );
+      const scheduled = await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      );
+      expect(
+        scheduled.some(
+          (row) =>
+            (row.args[0] as { failureId?: string }).failureId === failureId,
+        ),
+      ).toBe(true);
+    },
+  );
+
   test("reconciliation advances large media snapshots and an independent queue within transaction limits", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     const ids: Id<"operationFailures">[] = [];

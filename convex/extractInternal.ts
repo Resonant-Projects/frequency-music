@@ -29,6 +29,7 @@ import {
 import { redactError } from "./shared/redactError";
 import { unextractableTextReason } from "./shared/sourceText";
 import { fnv1a64Hex } from "./shared/stableHash";
+import { truncateText } from "./shared/truncateText";
 
 function extractionFailureClass(error: string) {
   if (
@@ -706,14 +707,14 @@ export const failExtraction = internalMutation({
       status: attempt.result ? "generated" : "failed",
       generationLease: undefined,
       generationLeaseUntil: undefined,
-      error: error.slice(0, 1000),
+      error: truncateText(error, 1000),
       updatedAt: Date.now(),
     });
     await recordOperationFailure(ctx, {
       operationId: `extraction:${attemptId}`,
       causeKey: `extraction:${attempt.model}:${extractionFailureClass(error)}`,
       target: { kind: "extraction", attemptId },
-      message: error.slice(0, 1000),
+      message: error,
     });
     const source = await ctx.db.get(attempt.sourceId);
     if (

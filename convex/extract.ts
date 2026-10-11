@@ -10,6 +10,7 @@ import { DEFAULT_MODEL, MODELS } from "./llm";
 import { generateJson } from "./llmNode";
 import { claimValidator } from "./shared/claims";
 import { redactError } from "./shared/redactError";
+import { truncateText } from "./shared/truncateText";
 
 export { MODELS };
 
@@ -178,7 +179,7 @@ async function executeAttempt(
     await ctx.runMutation(internal.extractInternal.failExtraction, {
       attemptId: attempt._id,
       generationLease,
-      error: redactError(error).slice(0, 1000),
+      error: truncateText(redactError(error), 1000),
     });
     throw error;
   }

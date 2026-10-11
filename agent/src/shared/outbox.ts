@@ -9,7 +9,7 @@ import {
   unlink,
 } from "node:fs/promises";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { ToolCaller } from "../graphs/shared/audit.js";
 import { redactError } from "./redactError.js";
 import { ConvexToolHttpError } from "../tools/convexTools.js";
@@ -35,13 +35,12 @@ async function syncDirectory(dir: string) {
     await handle.close();
   }
 }
-async function syncDirectoryTree(dir: string) {
+async function syncDirectoryTree(dir: string, root: string) {
   let current = resolve(dir);
   for (;;) {
     await syncDirectory(current);
-    const parent = dirname(current);
-    if (parent === current) return;
-    current = parent;
+    if (current === root) return;
+    current = dirname(current);
   }
 }
 type Delivery = {
@@ -51,9 +50,23 @@ type Delivery = {
 /** Bounded disk spool with one worker consumer. Callers supply domain IDs, never HTTP credentials. */
 export class DurableOutbox {
   private lastAttemptedFile = "";
-  constructor(private readonly dir: string) {}
-  async enqueue(delivery: Delivery) {
+  constructor(
+    private readonly dir: string,
+    private readonly durableRoot = dir,
+  ) {
+    this.dir = resolve(dir);
+    this.durableRoot = resolve(durableRoot);
+    const path = relative(this.durableRoot, this.dir);
+    if (path === ".." || path.startsWith(`..${sep}`) || isAbsolute(path))
+      throw new Error("Outbox directory is outside its durable root");
+  }
+  private async prepareDirectory() {
+    if (!(await stat(this.durableRoot)).isDirectory())
+      throw new Error("Outbox durable root must be a provisioned directory");
     await mkdir(this.dir, { recursive: true, mode: 0o700 });
+  }
+  async enqueue(delivery: Delivery) {
+    await this.prepareDirectory();
     const bytes = JSON.stringify({ ready: 0, delivery });
     if (Buffer.byteLength(bytes) > 256_000)
       throw new Error("Recovery outbox record exceeds limit");
@@ -88,7 +101,7 @@ export class DurableOutbox {
         await handle.close();
       }
       // Enqueue succeeds only after both payload and slot survive a host crash.
-      await syncDirectoryTree(this.dir);
+      await syncDirectoryTree(this.dir, this.durableRoot);
       return;
     }
     throw new Error("Recovery outbox capacity reached");
@@ -110,7 +123,7 @@ export class DurableOutbox {
     for (const file of existing) {
       const diagnostic = await stat(join(dir, file), { bigint: true });
       if (diagnostic.dev === active.dev && diagnostic.ino === active.ino) {
-        await syncDirectoryTree(dir);
+        await syncDirectoryTree(dir, this.durableRoot);
         await unlink(path);
         return;
       }
@@ -129,14 +142,14 @@ export class DurableOutbox {
         throw error;
       }
       // Persist the diagnostic link before releasing its active slot.
-      await syncDirectoryTree(dir);
+      await syncDirectoryTree(dir, this.durableRoot);
       await unlink(path);
       return;
     }
     throw new Error("Recovery outbox dead-letter capacity reached");
   }
   async flush(callTool: ToolCaller) {
-    await mkdir(this.dir, { recursive: true, mode: 0o700 });
+    await this.prepareDirectory();
     const key = await realpath(this.dir);
     const previous = flushQueues.get(key);
     let release!: () => void;
@@ -223,12 +236,14 @@ export class DurableOutbox {
   }
 }
 // Unit tests inject their own temporary spool; never write test events into the worker's spool.
+const configuredOutboxDir = process.env.AGENT_OUTBOX_DIR;
 export const workerOutbox =
   process.env.NODE_ENV === "test"
     ? undefined
     : new DurableOutbox(
-        process.env.AGENT_OUTBOX_DIR ??
+        configuredOutboxDir ??
           join(homedir(), ".local", "state", "frequency-agent", "outbox"),
+        configuredOutboxDir ?? homedir(),
       );
 
 /** Deliver now, or spool `spooled` args for replay; returns the delivery error, if any. */

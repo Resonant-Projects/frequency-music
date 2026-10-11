@@ -133,7 +133,7 @@ describe("audioArtifacts", () => {
     });
     await t.mutation(internal.audioArtifacts.markFailed, {
       artifactId,
-      error: "boom",
+      error: `${"x".repeat(1999)}🧠 detail`,
     });
     await t.mutation(internal.audioArtifacts.markFailed, {
       artifactId,
@@ -141,7 +141,7 @@ describe("audioArtifacts", () => {
     });
     const failed = await t.run((ctx) => ctx.db.get(artifactId));
     expect(failed?.status).toBe("failed");
-    expect(failed?.error).toBe("boom");
+    expect(failed?.error).toBe("x".repeat(1999));
 
     const readyId = await t.mutation(internal.audioArtifacts.createPending, {
       fields: pendingFields,

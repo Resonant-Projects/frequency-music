@@ -105,7 +105,12 @@ export async function runOnce(
         "Retained job checkpoint missing; automatic recovery cannot safely repeat paid work",
       );
     }
-    await writeCheckpoint(retainedDir, "started", { jobId: job.jobId });
+    await writeCheckpoint(
+      retainedDir,
+      "started",
+      { jobId: job.jobId },
+      config.workDir,
+    );
     const retainedResult = await readCheckpoint<
       Awaited<ReturnType<JobHandler>>
     >(retainedDir, "result");
@@ -142,6 +147,7 @@ export async function runOnce(
         job,
         workDir,
         retainedDir,
+        retainedRoot: config.workDir,
         tools: tools ?? liveTools(abort.signal),
         rendererVersion: config.rendererVersion,
         signal: abort.signal,
@@ -164,7 +170,7 @@ export async function runOnce(
     } finally {
       clearTimeout(deadline);
     }
-    await writeCheckpoint(retainedDir, "result", result);
+    await writeCheckpoint(retainedDir, "result", result, config.workDir);
     await tool("completeMediaJob", {
       jobId: job.jobId,
       leaseToken: job.leaseToken,

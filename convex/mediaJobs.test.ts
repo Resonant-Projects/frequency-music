@@ -102,6 +102,35 @@ async function probePair(t: ReturnType<typeof convexTest>, jobId: string) {
 }
 
 describe("mediaJobs lifecycle", () => {
+  test("media failure diagnostics preserve Unicode while exhausting the existing retry budget", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId } = await t.mutation(internal.mediaJobs.enqueue, {
+      input: probe,
+    });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const claim = await t.mutation(internal.mediaJobs.claimNext, {
+        workerId: "w",
+        kinds: ["probe"],
+      });
+      await t.mutation(internal.mediaJobs.fail, {
+        jobId,
+        leaseToken: claim!.leaseToken,
+        error: `${"x".repeat(1999)}🧠 detail`,
+      });
+      expect((await t.run((ctx) => ctx.db.get(jobId)))?.error).toBe(
+        "x".repeat(1999),
+      );
+    }
+    expect((await t.run((ctx) => ctx.db.get(jobId)))?.status).toBe("parked");
+    const failure = await t.run((ctx) =>
+      ctx.db
+        .query("operationFailures")
+        .withIndex("by_operation", (q) => q.eq("operationId", `media:${jobId}`))
+        .unique(),
+    );
+    expect(failure?.status).toBe("recorded");
+  });
+
   test("a capped media job still receives one complete execution per operational recovery attempt", async () => {
     const t = convexTest(schema, modules);
     const { jobId } = await t.mutation(internal.mediaJobs.enqueue, {
