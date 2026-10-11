@@ -10,6 +10,7 @@ import {
   createSignal,
   onCleanup,
 } from "solid-js";
+import { toError } from "./errors";
 import { useConvexClient } from "./provider";
 
 export interface QueryStatus<T> {
@@ -18,26 +19,6 @@ export interface QueryStatus<T> {
   isLoading: Accessor<boolean>;
   isError: Accessor<boolean>;
 }
-
-function toError(err: unknown): Error {
-  if (err instanceof Error) return err;
-  if (typeof err === "string") return new Error(err);
-  if (typeof err === "number" || typeof err === "boolean") {
-    return new Error(String(err));
-  }
-
-  if (err && typeof err === "object" && "message" in err) {
-    const message = (err as { message?: unknown }).message;
-    if (typeof message === "string") return new Error(message);
-  }
-
-  try {
-    return new Error(JSON.stringify(err));
-  } catch {
-    return new Error("Unknown error");
-  }
-}
-
 export function createQuery<Query extends FunctionReference<"query">>(
   query: Query,
   args?: FunctionArgs<Query> | (() => FunctionArgs<Query>),
@@ -127,6 +108,7 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
       },
       (err: unknown) => {
         if (version !== requestVersion || !isMounted) return;
+        console.error("createQueryWithStatus subscription error:", err);
         setError(() => toError(err));
       },
     );

@@ -4,14 +4,19 @@ export { UICard } from "./card";
 export {
   backLink,
   detailTitleClass,
+  focusRingClass,
   goldDivider,
+  inlineActionLink,
   metaLine,
   sectionLabel,
 } from "./detail-styles";
 export {
+  eyebrowClass,
   fieldLabelClass,
+  helperClass,
   pageClass,
   pageTitleClass,
+  proseClass,
   sectionTitleClass,
 } from "./form-styles";
 export { UIInput } from "./input";

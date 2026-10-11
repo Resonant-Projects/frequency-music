@@ -21,6 +21,7 @@ const statusClass = css({
   fontFamily: "display",
   fontSize: "md",
   lineHeight: "1.6",
+  overflowWrap: "anywhere",
   ...emptyCollapse,
 });
 
@@ -29,6 +30,7 @@ const alertClass = css({
   fontFamily: "display",
   fontSize: "md",
   lineHeight: "1.6",
+  overflowWrap: "anywhere",
   ...emptyCollapse,
 });
 

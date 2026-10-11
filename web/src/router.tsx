@@ -6,7 +6,14 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/solid-router";
-import { type Component, createEffect, createSignal, lazy } from "solid-js";
+import {
+  type Component,
+  createEffect,
+  createSignal,
+  lazy,
+  onCleanup,
+  onMount,
+} from "solid-js";
 import { UIBadge, UICard } from "./components/ui";
 import {
   buildHostedSignInUrl,
@@ -122,12 +129,13 @@ const Zodiac3D = lazyRoute(() =>
   import("./routes/zodiac-3d").then((m) => ({ default: m.Zodiac3D })),
 );
 
-// `/` is the 3D home, so warm its chunk immediately rather than waterfalling
-// the download behind the first navigation. This is only an optimization: a
+// `/` is the 3D home, so warm its 600 kB chunk immediately when that is the
+// landing route rather than waterfalling the download behind the first paint;
+// every other route leaves it to `defaultPreload: "intent"`. This is only an optimization: a
 // failed prefetch must stay silent, or every route logs an unhandled rejection
 // when the network blips. Navigating to `/` retries the import and surfaces
 // any real failure there.
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && window.location.pathname === "/") {
   void Zodiac3D.preload().catch(() => undefined);
 }
 
@@ -154,10 +162,42 @@ const appLinks = [
 
 const AppShell: Component = () => {
   const [menuOpen, setMenuOpen] = createSignal(false);
+  let headerEl: HTMLElement | undefined;
+
+  // The nav wraps to a second row on viewports narrower than its 18 links, so
+  // the fixed header is taller than the 52px `--app-header-height` default.
+  // Publish the measured height (while the mobile menu is closed) so `main`
+  // never slides underneath it.
+  onMount(() => {
+    if (!headerEl || typeof ResizeObserver === "undefined") return;
+    const header = headerEl;
+    const root = document.documentElement;
+    const apply = () => {
+      if (menuOpen()) return;
+      root.style.setProperty(
+        "--app-header-height",
+        `${Math.ceil(header.getBoundingClientRect().height)}px`,
+      );
+    };
+    const observer = new ResizeObserver(apply);
+    observer.observe(header);
+    createEffect(() => {
+      if (!menuOpen()) apply();
+    });
+    onCleanup(() => {
+      observer.disconnect();
+      root.style.removeProperty("--app-header-height");
+    });
+  });
 
   return (
     <div class="app-root">
-      <header class="app-header">
+      <header
+        class="app-header"
+        ref={(element) => {
+          headerEl = element;
+        }}
+      >
         <div class="app-title">
           <span class="app-title-mark">∴</span> Frequency Music
         </div>

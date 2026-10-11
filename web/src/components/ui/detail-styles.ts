@@ -18,10 +18,17 @@ export const backLink = css({
   fontSize: "xs",
   gap: "1.5",
   letterSpacing: "0.14em",
+  minH: "6",
   textDecoration: "none",
   textTransform: "uppercase",
   opacity: 0.85,
   _hover: { opacity: 1 },
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
+  _coarsePointer: { minH: "11" },
 });
 
 /** Detail-page h1 — cream display font, responsive size, normal weight. */
@@ -46,8 +53,44 @@ export const sectionLabel = css({
 
 /** Faded mono metadata footer line. */
 export const metaLine = css({
-  color: "zodiac.cream/55",
+  color: "zodiac.cream/66",
   fontFamily: "mono",
   fontSize: "xs",
   overflowWrap: "anywhere",
+});
+
+/**
+ * The system focus ring (DESIGN.md Buttons → Focus) for anchors and custom
+ * buttons that do not go through `UIButton`. Compose with `cx`.
+ */
+export const focusRingClass = css({
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
+});
+
+/**
+ * A standalone text link that is not inline in a sentence: gold mono, at least
+ * 24px tall (44px under a coarse pointer) so it meets WCAG 2.5.8 on its own.
+ */
+export const inlineActionLink = css({
+  alignItems: "center",
+  color: "zodiac.gold",
+  display: "inline-flex",
+  fontFamily: "mono",
+  fontSize: "xs",
+  gap: "1.5",
+  letterSpacing: "0.14em",
+  minH: "6",
+  textDecoration: "none",
+  textTransform: "uppercase",
+  _hover: { textDecoration: "underline" },
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
+  _coarsePointer: { minH: "11" },
 });
