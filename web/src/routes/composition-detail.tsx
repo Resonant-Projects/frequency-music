@@ -226,6 +226,10 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     setSaving(true);
     setNotice(null);
     setNoticeError(null);
+    // The saved extraction refreshes before the mutation resolves, which
+    // empties `changedFields()` and would disable this button under focus;
+    // the trigger that opened the panel is stable, so park focus there now.
+    correctTrigger?.focus();
     try {
       const confidenceValue = confidenceText().trim();
       const confidence =
@@ -380,7 +384,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             <UIButton
               variant="outline"
               aria-busy={saving()}
-              disabled={changedFields().length === 0}
+              aria-disabled={changedFields().length === 0}
               onClick={saveCorrection}
             >
               {saving() ? "Saving…" : "Save correction"}
@@ -532,6 +536,7 @@ export function CompositionDetailPage() {
   );
   let deleteConfirmButton: HTMLButtonElement | undefined;
   let deleteTrigger: HTMLButtonElement | undefined;
+  let backToCompositions: HTMLAnchorElement | undefined;
 
   function closeDeleteConfirm() {
     setDeleteConfirmOpen(false);
@@ -543,11 +548,16 @@ export function CompositionDetailPage() {
     if (!row || deleting()) return;
     setDeleting(true);
     setDeleteError(null);
+    // The lineage query drops the record (and this dialog) before the
+    // mutation resolves; park focus on the back link, which outlives it, and
+    // return it to the confirm button only if deletion fails.
+    backToCompositions?.focus();
     try {
       await deleteComposition({ id: row._id });
       void navigate({ to: "/compositions" });
     } catch (error) {
       setDeleteError(describeError(error));
+      if (deleteConfirmButton?.isConnected) deleteConfirmButton.focus();
     } finally {
       setDeleting(false);
     }
@@ -570,7 +580,13 @@ export function CompositionDetailPage() {
   return (
     <section class={pageClass}>
       <div>
-        <Link to="/compositions" class={backLink}>
+        <Link
+          to="/compositions"
+          class={backLink}
+          ref={(element) => {
+            backToCompositions = element;
+          }}
+        >
           <span aria-hidden="true">&larr;</span> Compositions
         </Link>
       </div>

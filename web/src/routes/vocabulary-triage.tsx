@@ -3,6 +3,7 @@ import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { DECISION_NOTE_MAX_LENGTH } from "../../../convex/shared/vocabularyTriage";
 import { css } from "../../styled-system/css";
+import { createKeyedRows } from "../lib/keyed-rows";
 import {
   badgeRowClass,
   createAnnouncer,
@@ -342,6 +343,12 @@ function TriageSection(props: {
   onDecided: (term: string) => void;
 }) {
   const headingId = () => `triage-heading-${props.list}`;
+  // Keyed by id: the board refresh after a decision delivers fresh entry
+  // objects, and the next row's heading (which took focus) must survive it.
+  const provisionalRows = createKeyedRows(
+    () => props.data.provisional,
+    (entry) => String(entry._id),
+  );
   return (
     <UICard class={violetCardClass}>
       <h2 id={headingId()} tabIndex={-1} class={sectionHeadingClass}>
@@ -358,20 +365,24 @@ function TriageSection(props: {
         />
         <Show when={props.data.provisional.length > 0}>
           <UIList class={triageListClass}>
-            <For each={props.data.provisional}>
-              {(entry, index) => (
+            <For each={provisionalRows.ids()}>
+              {(id, index) => (
                 <li>
-                  <TriageRow
-                    entry={entry}
-                    knownTargets={props.data.knownTargets}
-                    list={props.list}
-                    nextFocusId={
-                      props.data.provisional[index() + 1]
-                        ? `triage-entry-${props.data.provisional[index() + 1]._id}`
-                        : headingId()
-                    }
-                    onDecided={props.onDecided}
-                  />
+                  <Show when={provisionalRows.byId().get(id)}>
+                    {(entry) => (
+                      <TriageRow
+                        entry={entry()}
+                        knownTargets={props.data.knownTargets}
+                        list={props.list}
+                        nextFocusId={
+                          provisionalRows.ids()[index() + 1]
+                            ? `triage-entry-${provisionalRows.ids()[index() + 1]}`
+                            : headingId()
+                        }
+                        onDecided={props.onDecided}
+                      />
+                    )}
+                  </Show>
                 </li>
               )}
             </For>
