@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vite-plus/test";
 import {
   assertCliVersion,
+  assertCleanDeploySource,
   buildDeployArgs,
   buildDeployEnv,
   CONVEX_DEPLOY_URL,
@@ -167,4 +168,17 @@ describe("assertCliVersion", () => {
       /audited deploy CLI is 1\.46\.0/,
     );
   });
+});
+
+test("deployment refuses staged, unstaged, and untracked source", () => {
+  expect(() => assertCleanDeploySource("")).not.toThrow();
+  for (const status of [
+    " M convex/graph.ts",
+    "M  package.json",
+    "?? convex/new.ts",
+  ]) {
+    expect(() => assertCleanDeploySource(status)).toThrow(
+      /uncommitted checkout/,
+    );
+  }
 });

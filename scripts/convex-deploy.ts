@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import {
   assertCliVersion,
+  assertCleanDeploySource,
   buildDeployArgs,
   buildDeployEnv,
   CONVEX_DEPLOY_URL,
@@ -65,13 +66,11 @@ async function main(): Promise<number> {
     return existsSync(path) ? envFileKeys(readFileSync(path, "utf8")) : [];
   });
   const env = buildDeployEnv(process.env, fileKeys);
-  const head = git("rev-parse", "--short", "HEAD");
-  const dirty = git("status", "--porcelain", "--", "convex", "package.json");
+  const head = git("rev-parse", "HEAD");
+  assertCleanDeploySource(git("status", "--porcelain"));
 
   console.log(`Target:  ${CONVEX_DEPLOY_URL}`);
-  console.log(
-    `Source:  ${head}${dirty ? " plus uncommitted convex/ or package.json changes" : ""}`,
-  );
+  console.log(`Source:  ${head}`);
   console.log(
     options.dryRun
       ? "Mode:    --dry-run (uploads and prepares schema/indexes; no activation)"
@@ -80,6 +79,13 @@ async function main(): Promise<number> {
   if (!(await confirm('Type "deploy" to continue: '))) {
     console.log("Cancelled.");
     return 1;
+  }
+
+  assertCleanDeploySource(git("status", "--porcelain"));
+  if (git("rev-parse", "HEAD") !== head) {
+    throw new Error(
+      "Source commit changed during confirmation. Restart the deployment.",
+    );
   }
 
   const result = spawnSync(process.execPath, buildDeployArgs(options), {
