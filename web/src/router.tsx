@@ -171,10 +171,16 @@ const AppShell: Component = () => {
   onMount(() => {
     if (!headerEl) return;
     const root = document.documentElement;
+    // Matches the `.app-nav` collapse breakpoint in index.css. Only an OPEN
+    // mobile menu makes the header taller than its resting height; on the
+    // desktop layout the open flag is inert, so it must not block updates.
+    const mobileLayout = window.matchMedia("(max-width: 767px)");
     let published = 0;
     let measured = 0;
     const publish = () => {
-      if (menuOpen() || measured === published) return;
+      if ((menuOpen() && mobileLayout.matches) || measured === published) {
+        return;
+      }
       published = measured;
       root.style.setProperty("--app-header-height", `${published}px`);
     };
@@ -187,8 +193,16 @@ const AppShell: Component = () => {
     });
     observer.observe(headerEl);
     createEffect(publish);
+    // Leaving the mobile layout with the menu open would otherwise leave the
+    // flag set (and the toggle hidden) until the next tap.
+    const onLayoutChange = () => {
+      if (!mobileLayout.matches) setMenuOpen(false);
+      publish();
+    };
+    mobileLayout.addEventListener("change", onLayoutChange);
     onCleanup(() => {
       observer.disconnect();
+      mobileLayout.removeEventListener("change", onLayoutChange);
       root.style.removeProperty("--app-header-height");
     });
   });

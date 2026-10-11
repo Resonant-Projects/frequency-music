@@ -297,6 +297,9 @@ function CampaignCard(props: {
       await props.onActivate(props.campaign._id);
       setDirty(false);
       setNotice("Active campaign updated.");
+      // Activation bumps `updatedAt`, which reorders the list; moving the
+      // card node resets focus inside it, so put it back on the heading.
+      if (focusWasLost()) heading?.focus();
     } catch (error) {
       // Leave any unsaved edit marked as such.
       setNoticeError(`Campaign activation failed: ${describeError(error)}`);

@@ -75,9 +75,12 @@ const stackClass = css({ display: "grid", gap: "2" });
  * previous row, else the Action Queue heading. Never `<body>`.
  */
 function focusTargetAfter(row: Element): HTMLElement | null {
+  // A busy control may disable itself when its own action lands, which would
+  // drop the focus we just handed it; skip those too.
   const firstAction = (candidate: Element | null) =>
-    candidate?.querySelector<HTMLButtonElement>("button:not(:disabled)") ??
-    null;
+    candidate?.querySelector<HTMLButtonElement>(
+      'button:not(:disabled):not([aria-busy="true"])',
+    ) ?? null;
   return (
     firstAction(row.nextElementSibling) ??
     firstAction(row.previousElementSibling) ??
@@ -168,7 +171,7 @@ export function DisplayPage() {
     const row = trigger.closest("[data-testid='display-row']");
     const target =
       row?.querySelector<HTMLButtonElement>(
-        "button:not(:disabled):not([aria-label^='Run extraction'])",
+        'button:not(:disabled):not([aria-busy="true"]):not([aria-label^="Run extraction"])',
       ) ?? (row ? focusTargetAfter(row) : null);
     target?.focus();
     await withRowPending(sourceId, async () => {
