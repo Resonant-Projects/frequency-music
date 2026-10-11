@@ -1,1514 +1,682 @@
-// Design 6: ZODIAC 3D — Illuminated Astrolabe Knowledge Orrery
-// Three.js 3D implementation of the ZODIAC design with live Convex metrics.
-// Phases 1-3: Constellations, Armillary Rings, Planetary Orrery with sidebar drill-down.
-
-import { useNavigate } from "@tanstack/solid-router";
-import type { Id } from "../../../convex/_generated/dataModel";
 import {
   createEffect,
   createMemo,
   createSignal,
   For,
-  on,
   onCleanup,
   onMount,
   Show,
+  untrack,
 } from "solid-js";
-import { css } from "../../styled-system/css";
-import { createQuery, createQueryWithStatus } from "../integrations/convex";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
-import type { ConstellationEdge } from "../lib/zodiac-constellations";
-import { prefersReducedMotion, watchReducedMotion } from "../lib/zodiac-camera";
+import { createQueryWithStatus } from "../integrations/convex";
 import { COLORS, SECTORS } from "../lib/zodiac-data";
-import { initZodiacScene, type ZodiacHandle } from "../lib/zodiac-scene";
-import type {
-  ConceptDetailData,
-  ConstellationConcept,
-  ItemRelation,
-  OrbitalExtraction,
-  OrbitalHypothesis,
-  OrbitalRecipe,
-  OrbitalSource,
-  ZodiacConstellationEdge,
-  ZodiacSubTopic,
-} from "../lib/zodiac-types";
-
-// ---------------------------------------------------------------------------
-// PandaCSS style constants — Sidebar
-// ---------------------------------------------------------------------------
-
-const focusRing = {
-  _focusVisible: {
-    borderColor: "zodiac.gold",
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "1px",
-  },
-} as const;
-
-// -- Layout --
-
-const pageContainer = css({
-  height: "calc(100vh - var(--app-header-height))",
-  background: "zodiac.void",
-  color: "zodiac.cream",
-  overflowX: "hidden",
-  overflowY: { base: "auto", lg: "hidden" },
-  fontFamily: "display",
-  display: "flex",
-  flexDirection: { base: "column", lg: "row" },
-});
-
-const dotOverlay = css({
-  position: "fixed",
-  inset: "0",
-  pointerEvents: "none",
-  opacity: 0.022,
-  backgroundImage: "radial-gradient(circle, #c8a84b 1px, transparent 1px)",
-  backgroundSize: "52px 52px",
-});
-
-const canvasWrapper = css({
-  flex: "1",
-  position: "relative",
-  overflow: "hidden",
-  minWidth: "0",
-  height: { base: "60vh", lg: "auto" },
-});
-
-const canvasEl = css({
-  width: "100%",
-  height: "100%",
-  display: "block",
-});
-
-const sidebarContainer = css({
-  width: { base: "100%", lg: "355px" },
-  display: "flex",
-  flexDirection: "column",
-  borderLeftWidth: { base: "0", lg: "1px" },
-  borderLeftStyle: "solid",
-  borderLeftColor: "zodiac.gold/12",
-  borderTopWidth: { base: "1px", lg: "0" },
-  borderTopStyle: "solid",
-  borderTopColor: "zodiac.gold/12",
-  overflowY: "auto",
-  flexShrink: 0,
-});
-
-// -- Sidebar sections --
-
-const sidebarSection = css({
-  padding: "36px 26px 20px",
-  borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
-  borderBottomColor: "zodiac.gold/10",
-});
-
-const sidebarSectionCompact = css({
-  padding: "20px 26px",
-  borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
-  borderBottomColor: "zodiac.gold/10",
-});
-
-const sidebarSectionScrollable = css({
-  padding: "16px 26px",
-  flex: "1",
-  overflowY: "auto",
-});
-
-const sidebarSectionDomain = css({
-  padding: "22px 26px",
-  flex: "1",
-  borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
-  borderBottomColor: "zodiac.gold/10",
-});
-
-const sidebarSectionDomains = css({
-  padding: "16px 26px",
-  flexShrink: 0,
-});
-
-const sidebarSectionWorkflow = css({
-  padding: "0 26px 16px",
-  flexShrink: 0,
-  borderTopWidth: "1px",
-  borderTopStyle: "solid",
-  borderTopColor: "zodiac.gold/10",
-});
-
-const sidebarSectionPipeline = css({
-  padding: "14px 26px 24px",
-  borderTopWidth: "1px",
-  borderTopStyle: "solid",
-  borderTopColor: "zodiac.gold/10",
-});
-
-// -- Typography --
-
-const sidebarEyebrow = css({
-  fontSize: "10px",
-  letterSpacing: "0.4em",
-  color: "zodiac.gold/78",
-  marginBottom: "14px",
-});
-
-const sidebarEyebrowSmall = css({
-  fontSize: "10px",
-  letterSpacing: "0.35em",
-  opacity: 1,
-  marginBottom: "10px",
-});
-
-const sidebarEyebrowViolet = css({
-  fontSize: "10px",
-  letterSpacing: "0.35em",
-  color: "zodiac.violetText",
-  marginBottom: "8px",
-});
-
-const sidebarEyebrowGold = css({
-  fontSize: "10px",
-  letterSpacing: "0.35em",
-  color: "zodiac.gold/78",
-  marginBottom: "8px",
-});
-
-const sidebarEyebrowSection = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  marginBottom: "10px",
-});
-
-const sidebarEyebrowSectionTop = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  margin: "12px 0 10px",
-});
-
-const sidebarEyebrowConceptsLabel = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  margin: "16px 0 8px",
-});
-
-const sidebarTitle = css({
-  fontSize: "34px",
-  fontWeight: "300",
-  lineHeight: "1.15",
-  margin: "0 0 10px",
-});
-
-const sidebarTitleMd = css({
-  fontSize: "22px",
-  fontWeight: "300",
-  marginBottom: "8px",
-});
-
-const sidebarTitleSm = css({
-  fontSize: "24px",
-  color: "zodiac.gold",
-  fontWeight: "300",
-  marginBottom: "6px",
-});
-
-const sidebarTitleItem = css({
-  fontSize: "18px",
-  color: "zodiac.gold",
-  fontWeight: "300",
-  marginBottom: "4px",
-  lineHeight: "1.3",
-});
-
-const sidebarBody = css({
-  fontSize: "14px",
-  fontWeight: "400",
-  lineHeight: "1.65",
-  color: "zodiac.cream/66",
-  margin: "0",
-});
-
-const sidebarBodySm = css({
-  fontSize: "14px",
-  lineHeight: "1.65",
-  color: "zodiac.cream/66",
-  margin: "0 0 18px",
-});
-
-const sidebarBodyDetail = css({
-  fontSize: "14px",
-  lineHeight: "1.65",
-  color: "zodiac.cream/66",
-  margin: "0 0 16px",
-});
-
-const sidebarMeta = css({
-  fontSize: "12px",
-  color: "zodiac.cream/66",
-  marginBottom: "12px",
-});
-
-const sidebarAliases = css({
-  fontSize: "12px",
-  color: "zodiac.cream/66",
-  marginBottom: "16px",
-});
-
-const sidebarLoading = css({
-  padding: "26px",
-  color: "zodiac.cream/66",
-  fontSize: "14px",
-});
-
-const sidebarEmpty = css({
-  color: "zodiac.cream/66",
-  fontSize: "14px",
-});
-
-// -- Stats --
-
-const statRow = css({
-  display: "flex",
-  gap: "12px",
-  marginBottom: "14px",
-});
-
-const statCellGold = css({
-  flex: "1",
-  padding: "10px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/18",
-  textAlign: "center",
-});
-
-const statCellViolet = css({
-  flex: "1",
-  padding: "10px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.violet/18",
-  textAlign: "center",
-});
-
-const statValue = css({
-  fontSize: "26px",
-});
-
-const statLabel = css({
-  fontSize: "10px",
-  letterSpacing: "0.25em",
-  color: "zodiac.cream/66",
-  marginTop: "2px",
-});
-
-// -- Concept tags --
-
-const conceptTagRow = css({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "4px",
-  marginBottom: "14px",
-});
-
-const conceptTag = css({
-  cursor: "pointer",
-  background: "zodiac.violet/10",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.violet/25",
-  color: "zodiac.gold",
-  padding: "5px 10px",
-  minHeight: "28px",
-  fontSize: "10px",
-  letterSpacing: "0.08em",
-  _coarsePointer: {
-    minHeight: "44px",
-    padding: "10px 14px",
-  },
-  ...focusRing,
-});
-
-const conceptTagCount = css({
-  opacity: 0.78,
-  marginLeft: "4px",
-});
-
-// -- Buttons --
-
-const openDomainBtn = css({
-  width: "100%",
-  cursor: "pointer",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/45",
-  background: "zodiac.gold",
-  color: "zodiac.void",
-  padding: "8px 10px",
-  minHeight: "40px",
-  letterSpacing: "0.18em",
-  fontSize: "10px",
-  textTransform: "uppercase",
-  _coarsePointer: {
-    minHeight: "48px",
-  },
-  ...focusRing,
-});
-
-const sectorButton = css({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "7px 9px",
-  minHeight: "36px",
-  marginBottom: "3px",
-  cursor: "pointer",
-  border: "1px solid",
-  transition: "all 0.2s",
-  width: "100%",
-  textAlign: "left",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-const sectorButtonLabel = css({
-  fontSize: "14px",
-});
-
-const sectorButtonMeta = css({
-  fontSize: "12px",
-  color: "zodiac.cream/66",
-});
-
-const workspaceGrid = css({
-  display: "grid",
-  gap: "6px",
-  gridTemplateColumns: "1fr 1fr",
-});
-
-const workspaceButton = css({
-  cursor: "pointer",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/20",
-  background: "zodiac.glow-inner/55",
-  color: "zodiac.cream",
-  padding: "7px 8px",
-  minHeight: "32px",
-  fontSize: "10px",
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-  textAlign: "center",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-// Mirrors backButton; gives the auto-rotating orrery a pause/resume control.
-const motionToggleButton = css({
-  cursor: "pointer",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/25",
-  background: "transparent",
-  color: "zodiac.gold",
-  padding: "5px 12px",
-  minHeight: "32px",
-  fontSize: "10px",
-  letterSpacing: "0.15em",
-  textTransform: "uppercase",
-  marginTop: "12px",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-const backButton = css({
-  cursor: "pointer",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/25",
-  background: "transparent",
-  color: "zodiac.gold",
-  padding: "5px 12px",
-  minHeight: "32px",
-  fontSize: "10px",
-  letterSpacing: "0.15em",
-  textTransform: "uppercase",
-  marginBottom: "14px",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-// -- Pipeline --
-
-const pipelineRow = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "5px",
-  flexWrap: "wrap",
-});
-
-const pipelineCell = css({
-  textAlign: "center",
-  minWidth: "46px",
-});
-
-const pipelineCellValue = css({
-  fontSize: "15px",
-  color: "zodiac.gold",
-});
-
-const pipelineCellLabel = css({
-  fontSize: "10px",
-  letterSpacing: "0.2em",
-  color: "zodiac.cream/66",
-});
-
-const pipelineArrow = css({
-  fontSize: "10px",
-  color: "zodiac.gold/55",
-  marginBottom: "8px",
-});
-
-const pipelineSectionContainer = css({
-  marginBottom: "16px",
-});
-
-const pipelineSectionEyebrow = css({
-  fontSize: "10px",
-  letterSpacing: "0.3em",
-  color: "zodiac.gold/78",
-  marginBottom: "8px",
-});
-
-const pipelineItemButton = css({
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  cursor: "pointer",
-  padding: "6px 8px",
-  minHeight: "36px",
-  marginBottom: "3px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/12",
-  background: "transparent",
-  color: "zodiac.cream",
-  fontSize: "14px",
-  lineHeight: "1.4",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-const pipelineItemStatus = css({
-  fontSize: "10px",
-  color: "zodiac.cream/66",
-  marginTop: "2px",
-});
-
-// -- Sub-topic / Item-detail list buttons --
-
-const listButton = css({
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  cursor: "pointer",
-  padding: "6px 8px",
-  minHeight: "36px",
-  marginBottom: "3px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/12",
-  background: "transparent",
-  color: "zodiac.cream",
-  fontSize: "14px",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-const listButtonMentions = css({
-  float: "right",
-  color: "zodiac.gold/78",
-  fontSize: "10px",
-});
-
-const relationButton = css({
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  cursor: "pointer",
-  padding: "8px",
-  minHeight: "36px",
-  marginBottom: "4px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/12",
-  background: "transparent",
-  color: "zodiac.cream",
-  fontSize: "14px",
-  lineHeight: "1.4",
-  _coarsePointer: {
-    minHeight: "44px",
-  },
-  ...focusRing,
-});
-
-const relationTypeLabel = css({
-  fontSize: "10px",
-  letterSpacing: "0.15em",
-  color: "zodiac.violetText",
-  marginBottom: "2px",
-});
-
-const relationTitle = css({
-  color: "zodiac.cream/70",
-  fontSize: "14px",
-});
-
-// ---------------------------------------------------------------------------
-// PandaCSS style constants — WebGL fallback
-// ---------------------------------------------------------------------------
-
-const fallbackContainer = css({
-  minHeight: "calc(100vh - var(--app-header-height))",
-  background: "zodiac.void",
-  color: "zodiac.cream",
-  padding: "24px",
-});
-
-const fallbackGrid = css({
-  maxWidth: "1120px",
-  margin: "0 auto",
-  display: "grid",
-  gap: "16px",
-});
-
-const fallbackCard = css({
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/20",
-  padding: "18px",
-  borderRadius: "8px",
-  background: "zodiac.void/50",
-});
-
-const fallbackEyebrow = css({
-  fontSize: "10px",
-  letterSpacing: "0.24em",
-  color: "zodiac.gold",
-  opacity: 0.72,
-});
-
-const fallbackEyebrowSpaced = css({
-  fontSize: "10px",
-  letterSpacing: "0.24em",
-  color: "zodiac.gold",
-  opacity: 0.72,
-  marginBottom: "12px",
-});
-
-const fallbackEyebrowPipeline = css({
-  fontSize: "10px",
-  letterSpacing: "0.24em",
-  color: "zodiac.gold",
-  opacity: 0.72,
-  marginBottom: "10px",
-});
-
-const fallbackTitle = css({
-  margin: "10px 0 8px",
-  fontSize: "34px",
-  fontWeight: "300",
-});
-
-const fallbackBody = css({
-  margin: "0",
-  fontSize: "14px",
-  color: "zodiac.cream/66",
-  lineHeight: "1.6",
-});
-
-const fallbackLinkGrid = css({
-  display: "grid",
-  gap: "10px",
-  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-});
-
-const fallbackLinkButton = css({
-  cursor: "pointer",
-  background: "zodiac.glow-inner",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/55",
-  padding: "11px 12px",
-  minHeight: "44px",
-  color: "zodiac.cream",
-  textAlign: "left",
-  fontFamily: "mono",
-  fontSize: "11px",
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  ...focusRing,
-});
-
-const fallbackPipelineRow = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  flexWrap: "wrap",
-});
-
-const fallbackPipelineCell = css({
-  minWidth: "72px",
-  padding: "8px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "zodiac.gold/20",
-  textAlign: "center",
-});
-
-const fallbackPipelineValue = css({
-  fontSize: "20px",
-  color: "zodiac.gold",
-});
-
-const fallbackPipelineLabel = css({
-  fontSize: "10px",
-  letterSpacing: "0.18em",
-  color: "zodiac.cream/66",
-});
-
-const fallbackPipelineArrow = css({
-  color: "zodiac.gold/58",
-});
-
-// ---------------------------------------------------------------------------
-
-const sectorRouteMap: Record<string, string> = {
-  math: "/display",
-  wave: "/ingest",
-  music: "/recipes",
-  psycho: "/hypotheses",
-  geometry: "/weekly-turns",
-  synthesis: "/compositions",
+import { prefersReducedMotion, watchReducedMotion } from "../lib/zodiac-camera";
+import {
+  ATLAS_LAYERS,
+  atlasId,
+  buildAtlas,
+  mergeAtlas,
+  mergeDiscoveredNodes,
+  relationshipLabel,
+  type AtlasEdge,
+  type AtlasKind,
+  type AtlasNode,
+} from "../lib/knowledge-atlas";
+import {
+  createAtlasScene,
+  type AtlasScene,
+} from "../lib/knowledge-atlas-scene";
+import type { ConstellationConcept } from "../lib/zodiac-types";
+import { useSpaceNavigation } from "../lib/space-navigation";
+import "./knowledge-atlas.css";
+
+const layerNames: Record<AtlasKind, string> = {
+  domain: "Domains",
+  concept: "Concepts",
+  source: "Sources",
+  extraction: "Extractions",
+  hypothesis: "Hypotheses",
+  recipe: "Recipes",
+};
+const destinations: Partial<Record<AtlasKind, string>> = {
+  source: "/display",
+  extraction: "/display",
+  hypothesis: "/hypotheses",
+  recipe: "/recipes",
 };
 
-const workspaceLinks = [
-  { label: "Display", to: "/display" },
-  { label: "Ingest", to: "/ingest" },
-  { label: "Hypotheses", to: "/hypotheses" },
-  { label: "Recipes", to: "/recipes" },
-  { label: "Essays", to: "/essays" },
-  { label: "Weekly Turns", to: "/weekly-turns" },
-  { label: "Compositions", to: "/compositions" },
-  { label: "Feedback", to: "/feedback" },
-  { label: "Admin", to: "/admin" },
-] as const;
-
-type SectorMetricRow = {
-  id: string;
-  sources: number;
-  claims: number;
-};
-
-type SidebarMode =
-  | { kind: "overview" }
-  | { kind: "concept-detail"; conceptId: Id<"concepts"> }
-  | { kind: "sub-topic"; label: string; conceptNames: string[] }
-  | { kind: "item-detail"; itemId: string; itemType: string; title: string };
+function AtlasMark(props: { kind: AtlasKind }) {
+  return (
+    <svg
+      class="atlas-mark"
+      data-kind={props.kind}
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.3"
+      aria-hidden="true"
+    >
+      <Show when={props.kind === "source" || props.kind === "domain"}>
+        <circle cx="10" cy="10" r="5" />
+        <Show when={props.kind === "domain"}>
+          <ellipse
+            cx="10"
+            cy="10"
+            rx="9"
+            ry="3"
+            transform="rotate(-35 10 10)"
+          />
+        </Show>
+      </Show>
+      <Show when={props.kind === "concept" || props.kind === "hypothesis"}>
+        <path d="M10 2 17 10 10 18 3 10Z" />
+        <Show when={props.kind === "concept"}>
+          <path d="M10 2v16M3 10h14" />
+        </Show>
+      </Show>
+      <Show when={props.kind === "extraction"}>
+        <path d="m10 3 7 13H3Z" />
+      </Show>
+      <Show when={props.kind === "recipe"}>
+        <path d="M4 4h12v12H4Z" />
+      </Show>
+    </svg>
+  );
+}
 
 export function Zodiac3D() {
-  onMount(() => {
-    document.title = "Zodiac — Frequency Music";
-  });
-
-  const navigate = useNavigate();
-  const [selSector, setSelSector] = createSignal<string>("math");
-  const [webglUnavailable, setWebglUnavailable] = createSignal(false);
-  const [sidebarMode, setSidebarMode] = createSignal<SidebarMode>({
-    kind: "overview",
-  });
-
-  // --- Convex Queries (existing, stable) ---
-  const sectorMetrics = createQuery(api.dashboard.zodiacSectors, () => ({
-    limit: 200,
-  }));
-  const pipeline = createQuery(api.dashboard.pipeline);
-
-  // --- New queries (use createQueryWithStatus so errors don't crash the page) ---
-
-  // Phase 1: Concepts for active sector
-  const domainConceptsQ = createQueryWithStatus(
-    api.graph.getConceptsForDomain,
-    () => ({
-      domain: selSector(),
-      limit: 40,
-    }),
-  );
-  const domainConcepts = createMemo<ConstellationConcept[]>(
-    () => (domainConceptsQ.data() ?? []) as ConstellationConcept[],
-  );
-
-  // Phase 1: Edges between those concepts
-  const conceptNames = createMemo(() => domainConcepts().map((c) => c.name));
-  const conceptEdgesQ = createQueryWithStatus(
-    api.graph.getConceptEdges,
-    () => ({
-      conceptNames: conceptNames(),
-    }),
-  );
-  const conceptEdges = createMemo<ConstellationEdge[]>(() =>
-    (
-      (conceptEdgesQ.data() ?? []) as Array<{
-        fromId: string;
-        toId: string;
-        relationship: string;
-      }>
-    ).map<ZodiacConstellationEdge>((edge) => ({
-      from: edge.fromId,
-      to: edge.toId,
-      relationship: edge.relationship,
+  const domainQueries = SECTORS.map((sector) =>
+    createQueryWithStatus(api.graph.getConceptsForDomain, () => ({
+      domain: sector.id,
+      limit: 24,
     })),
   );
-
-  // Phase 1: Concept detail — conditional, only queries when sidebar is in concept-detail mode
-  const activeConceptId = createMemo<Id<"concepts"> | undefined>(() => {
-    const mode = sidebarMode();
-    return mode.kind === "concept-detail" ? mode.conceptId : undefined;
+  const concepts = createMemo(() => [
+    ...new Map(
+      domainQueries
+        .flatMap((q, index) =>
+          ((q.data() ?? []) as ConstellationConcept[]).map((concept) => ({
+            ...concept,
+            sector: concept.domain === "general" ? "music" : SECTORS[index].id,
+          })),
+        )
+        .map((node) => [node._id, node]),
+    ).values(),
+  ]);
+  const edgesQ = createQueryWithStatus(api.graph.getConceptEdges, () =>
+    concepts().length
+      ? { conceptNames: concepts().map((node) => node.name) }
+      : "skip",
+  );
+  const itemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
+  const [selected, setSelected] = createSignal<AtlasNode | null>(null);
+  const [history, setHistory] = createSignal<AtlasNode[]>([]);
+  const navigation = useSpaceNavigation();
+  const [drawerOpen, setDrawerOpen] = createSignal(false);
+  const [layers, setLayers] = createSignal(
+    new Set<AtlasKind>([...ATLAS_LAYERS, "domain"]),
+  );
+  const [connections, setConnections] = createSignal(true);
+  const [rotating, setRotating] = createSignal(false);
+  const [flat, setFlat] = createSignal(false);
+  const [reduced, setReduced] = createSignal(prefersReducedMotion());
+  const [unavailable, setUnavailable] = createSignal(false);
+  const [ready, setReady] = createSignal(false);
+  const [retry, setRetry] = createSignal(0);
+  const detailQ = createQueryWithStatus(api.graph.getConceptDetail, () => {
+    retry();
+    const node = selected();
+    return node?.kind === "concept"
+      ? { conceptId: node.recordId as Id<"concepts"> }
+      : "skip";
   });
-  const conceptDetailQ = createQueryWithStatus(
-    api.graph.getConceptDetail,
-    () => {
-      const id = activeConceptId();
-      return id ? { conceptId: id } : {};
-    },
+  const relationsQ = createQueryWithStatus(api.dashboard.itemRelations, () => {
+    retry();
+    const node = selected();
+    return node && node.kind !== "concept" && node.kind !== "domain"
+      ? { itemId: node.recordId, itemType: node.kind }
+      : "skip";
+  });
+  const baseGraph = createMemo(() =>
+    buildAtlas(concepts(), edgesQ.data() ?? [], itemsQ.data()),
   );
-  const conceptDetail = createMemo<ConceptDetailData | undefined>(() =>
-    activeConceptId()
-      ? (conceptDetailQ.data() as ConceptDetailData | undefined)
-      : undefined,
-  );
-
-  // Phase 2: Sub-topics for active sector
-  const subTopicsQ = createQueryWithStatus(
-    api.dashboard.domainSubTopics,
-    () => ({
-      domain: selSector(),
-    }),
-  );
-  const subTopics = createMemo<ZodiacSubTopic[]>(
-    () => (subTopicsQ.data() ?? []) as ZodiacSubTopic[],
-  );
-
-  // Phase 3: Pipeline items (loaded once)
-  const pipelineItemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
-  const pipelineItems = createMemo<
-    | {
-        sources: OrbitalSource[];
-        extractions: OrbitalExtraction[];
-        hypotheses: OrbitalHypothesis[];
-        recipes: OrbitalRecipe[];
+  // Keep previously visited records so Back remains meaningful outside the initial sample.
+  const [discovered, setDiscovered] = createSignal<AtlasNode[]>([]);
+  const [discoveredEdges, setDiscoveredEdges] = createSignal<AtlasEdge[]>([]);
+  createEffect(() => {
+    const detail = detailQ.data();
+    const relations = relationsQ.data();
+    // Selection can change before the query effects clear the previous result.
+    // Only query updates may add discoveries to the currently selected node.
+    const node = untrack(selected);
+    if (!node) return;
+    const additions: AtlasNode[] = [];
+    const links: AtlasEdge[] = [];
+    if (node.kind === "concept" && detail?.concept._id === node.recordId) {
+      for (const [kind, records] of [
+        ["source", detail.linkedSources],
+        ["hypothesis", detail.linkedHypotheses],
+        ["recipe", detail.linkedRecipes],
+      ] as const) {
+        for (const record of records) {
+          const id = atlasId(kind, record._id);
+          additions.push({
+            id,
+            recordId: record._id,
+            kind,
+            title: record.title ?? "Untitled source",
+            status: record.status,
+          });
+          links.push({ from: node.id, to: id, label: "linked research" });
+        }
       }
-    | undefined
-  >(
-    () =>
-      pipelineItemsQ.data() as
-        | {
-            sources: OrbitalSource[];
-            extractions: OrbitalExtraction[];
-            hypotheses: OrbitalHypothesis[];
-            recipes: OrbitalRecipe[];
-          }
-        | undefined,
-  );
-
-  // Phase 3: Item relations — conditional
-  const activeItem = createMemo(() => {
-    const mode = sidebarMode();
-    return mode.kind === "item-detail"
-      ? { id: mode.itemId, type: mode.itemType }
-      : undefined;
+    } else if (node.kind !== "domain" && node.kind !== "concept") {
+      for (const relation of relations ?? []) {
+        if (
+          !ATLAS_LAYERS.includes(relation.type as (typeof ATLAS_LAYERS)[number])
+        )
+          continue;
+        const id = atlasId(relation.type, relation.id);
+        additions.push({
+          id,
+          recordId: relation.id,
+          kind: relation.type as AtlasKind,
+          title: relation.title,
+        });
+        // itemRelations does not return direction, so this is an undirected connection.
+        links.push({ from: node.id, to: id, label: relation.relationship });
+      }
+    }
+    if (additions.length) {
+      setDiscovered((previous) => mergeDiscoveredNodes(previous, additions));
+      setDiscoveredEdges((previous) => [
+        ...new Map(
+          [...previous, ...links].map((edge) => [JSON.stringify(edge), edge]),
+        ).values(),
+      ]);
+    }
   });
-  const itemRelationsQ = createQueryWithStatus(
-    api.dashboard.itemRelations,
-    () => {
-      const item = activeItem();
-      if (!item?.id) return "skip" as const;
-      return { itemId: item.id, itemType: item.type };
-    },
+  const graph = createMemo(() =>
+    mergeAtlas(baseGraph(), discovered(), discoveredEdges()),
   );
-  const itemRelations = createMemo<ItemRelation[] | undefined>(() =>
-    activeItem()
-      ? (itemRelationsQ.data() as ItemRelation[] | undefined)
-      : undefined,
-  );
-
-  const sectors = createMemo(() => {
-    const rows = (sectorMetrics() ?? []) as SectorMetricRow[];
-    const metrics = new Map<string, { sources: number; claims: number }>(
-      rows.map((entry: SectorMetricRow) => [
-        entry.id,
-        {
-          sources: Number(entry.sources ?? 0),
-          claims: Number(entry.claims ?? 0),
-        },
-      ]),
-    );
-
-    return SECTORS.map((sector) => {
-      const metric = metrics.get(sector.id);
-      return {
-        ...sector,
-        sources: metric?.sources ?? sector.sources,
-        claims: metric?.claims ?? sector.claims,
-      };
+  const related = createMemo(() => {
+    const node = selected();
+    if (!node || node.kind === "domain") return [];
+    const nodes = new Map(graph().nodes.map((item) => [item.id, item]));
+    return graph()
+      .edges.filter((edge) => edge.from === node.id || edge.to === node.id)
+      .map((edge) => ({
+        node: nodes.get(edge.from === node.id ? edge.to : edge.from)!,
+        label: relationshipLabel(edge, node.id),
+      }))
+      .filter(
+        (item, index, list) =>
+          list.findIndex(
+            (other) =>
+              other.node.id === item.node.id && other.label === item.label,
+          ) === index,
+      );
+  });
+  const matchingNodes = createMemo(() => {
+    const domain = selected()?.kind === "domain" ? selected()?.domain : null;
+    return graph()
+      .nodes.filter(
+        (node) =>
+          node.kind !== "domain" &&
+          layers().has(node.kind) &&
+          (!domain || node.domain === domain),
+      )
+      .sort(
+        (a, b) =>
+          (b.mentions ?? 0) - (a.mentions ?? 0) ||
+          a.title.localeCompare(b.title),
+      );
+  });
+  const loading = () =>
+    itemsQ.isLoading() || domainQueries.some((query) => query.isLoading());
+  const selectedLoading = () =>
+    selected()?.kind === "concept"
+      ? detailQ.isLoading()
+      : relationsQ.isLoading();
+  const selectedError = () =>
+    selected()?.kind === "concept" ? detailQ.isError() : relationsQ.isError();
+  let scene: AtlasScene | undefined;
+  let canvas!: HTMLCanvasElement;
+  let labels!: HTMLDivElement;
+  let inspector!: HTMLElement;
+  let returnFocus: HTMLElement | null = null;
+  let revealFrame = 0;
+  function reveal(destination: "map" | "inspector") {
+    setDrawerOpen(destination === "inspector");
+    cancelAnimationFrame(revealFrame);
+    revealFrame = requestAnimationFrame(() => {
+      if (destination === "inspector") {
+        const content = inspector.querySelector<HTMLElement>(
+          ".atlas-inspector-content",
+        );
+        if (content) content.scrollTop = 0;
+        inspector
+          .querySelector<HTMLElement>("h2")
+          ?.focus({ preventScroll: true });
+      } else canvas.focus({ preventScroll: true });
     });
-  });
-
-  const activeSector = createMemo(
-    () => sectors().find((sector) => sector.id === selSector()) ?? sectors()[0],
-  );
-
-  const pipelineSummary = createMemo(() => {
-    const live = pipeline();
-    return [
-      { label: "SRC", value: live?.sources ?? 0 },
-      { label: "EXT", value: live?.extractions ?? 0 },
-      { label: "HYP", value: live?.hypotheses ?? 0 },
-      { label: "REC", value: live?.recipes ?? 0 },
-      { label: "COMP", value: live?.compositions ?? 0 },
-    ];
-  });
-
-  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
-  let canvasRef!: HTMLCanvasElement;
-  // oxlint-disable-next-line no-unassigned-vars -- SolidJS ref pattern
-  let cssContainerRef!: HTMLDivElement;
-  let sceneHandle: ZodiacHandle | null = null;
-  const [autoRotate, setAutoRotate] = createSignal(!prefersReducedMotion());
-  let stopReducedMotionWatch: (() => void) | null = null;
-
-  function toggleAutoRotate() {
-    const next = !autoRotate();
-    sceneHandle?.setAutoRotate(next);
-    setAutoRotate(next);
   }
-
+  function select(node: AtlasNode, remember = true) {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && !inspector?.contains(active))
+      returnFocus = active;
+    const current = selected();
+    if (remember && current && current.id !== node.id)
+      setHistory((previous) => [...previous, current].slice(-30));
+    setSelected(node);
+    reveal("inspector");
+    // Preserve the wide framing; focus is a deliberate camera action.
+  }
+  function reset(restoreFocus = true) {
+    cancelAnimationFrame(revealFrame);
+    if (!restoreFocus && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    } else if (inspector.contains(document.activeElement)) {
+      (returnFocus?.isConnected ? returnFocus : canvas).focus({
+        preventScroll: true,
+      });
+    }
+    setDrawerOpen(false);
+    setSelected(null);
+    setHistory([]);
+    scene?.reset(flat());
+  }
+  function back() {
+    const previous = history().at(-1);
+    if (!previous) {
+      reset();
+      return;
+    }
+    setHistory((items) => items.slice(0, -1));
+    setSelected(previous);
+    reveal("inspector");
+  }
+  function toggleLayer(kind: AtlasKind) {
+    setLayers((previous) => {
+      const next = new Set(previous);
+      if (next.has(kind)) next.delete(kind);
+      else next.add(kind);
+      return next;
+    });
+  }
+  function toggleRotation() {
+    const next = !rotating();
+    setRotating(next);
+    scene?.rotate(next);
+  }
   onMount(() => {
+    document.title = "Knowledge atlas · Frequency Music";
+    const clearOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.isComposing || event.defaultPrevented)
+        return;
+      event.preventDefault();
+      reset(false);
+    };
+    window.addEventListener("keydown", clearOnEscape);
+    const stopMotion = watchReducedMotion((value) => {
+      setReduced(value);
+      if (value) setRotating(false);
+    });
     try {
-      sceneHandle = initZodiacScene(
-        canvasRef,
-        cssContainerRef,
-        // onSectorClick
-        (id) => {
-          setSelSector(id);
-          setSidebarMode({ kind: "overview" });
-        },
-        // onConceptClick
-        (conceptId) => {
-          setSidebarMode({ kind: "concept-detail", conceptId });
-        },
-        // onOrbitalClick
-        (itemId, itemType, title) => {
-          setSidebarMode({ kind: "item-detail", itemId, itemType, title });
-        },
-        // onArmillaryClick
-        (label, names) => {
-          setSidebarMode({ kind: "sub-topic", label, conceptNames: names });
-        },
-      );
-      setAutoRotate(sceneHandle.isAutoRotating());
+      scene = createAtlasScene(canvas, labels, select, () => {
+        setUnavailable(true);
+        setRotating(false);
+        scene?.dispose();
+        scene = undefined;
+      });
+      setReady(true);
     } catch (error) {
-      console.error("Zodiac scene initialization failed:", error);
-      setWebglUnavailable(true);
+      console.error("Knowledge atlas renderer unavailable", error);
+      setUnavailable(true);
     }
-    // Registered after the scene's own reduced-motion watcher so that it runs
-    // second and mirrors whatever the scene settled on, rather than
-    // recomputing the state and overriding an explicit pause.
-    stopReducedMotionWatch = watchReducedMotion(() => {
-      if (sceneHandle) setAutoRotate(sceneHandle.isAutoRotating());
+    onCleanup(() => {
+      window.removeEventListener("keydown", clearOnEscape);
+      cancelAnimationFrame(revealFrame);
+      stopMotion();
+      scene?.dispose();
+    });
+  });
+  createEffect(() => {
+    if (ready()) scene?.update(graph());
+  });
+  createEffect(() => {
+    if (ready())
+      scene?.state({
+        selected: selected()?.id ?? null,
+        layers: layers(),
+        connections: connections(),
+        query: "",
+      });
+  });
+  createEffect(() => {
+    if (ready()) scene?.enabled(!unavailable());
+  });
+
+  createEffect(() => {
+    const node = navigation.pending();
+    if (!node) return;
+    untrack(() => {
+      setDiscovered((nodes) => mergeDiscoveredNodes(nodes, [node]));
+      setLayers((previous) => new Set([...previous, node.kind]));
+      select(node);
+      navigation.select(null);
     });
   });
 
-  onCleanup(() => {
-    stopReducedMotionWatch?.();
-    sceneHandle?.cleanup();
-  });
-
-  // Phase 1: Load constellations when concepts arrive for the selected sector
-  createEffect(
-    on([domainConcepts, conceptEdges], () => {
-      const concepts = domainConcepts();
-      const edges = conceptEdges();
-      if (!concepts || !sceneHandle) return;
-
-      sceneHandle.loadConstellations(selSector(), concepts, edges ?? []);
-    }),
-  );
-
-  // Phase 2: Load armillary rings when sub-topics arrive
-  createEffect(
-    on(subTopics, () => {
-      const st = subTopics();
-      if (!st || !sceneHandle) return;
-      sceneHandle.loadArmillaryRings(selSector(), st);
-    }),
-  );
-
-  // Phase 3: Load orbital bodies when pipeline items arrive
-  createEffect(
-    on(pipelineItems, () => {
-      const items = pipelineItems();
-      if (!items || !sceneHandle) return;
-      sceneHandle.loadOrbitalBodies(
-        items.sources,
-        items.extractions,
-        items.hypotheses,
-        items.recipes,
-      );
-    }),
-  );
-
-  // Phase 3: Show pull-lines when viewing item detail
-  createEffect(
-    on(itemRelations, () => {
-      const relations = itemRelations();
-      const mode = sidebarMode();
-      if (!sceneHandle) return;
-      if (mode.kind === "item-detail" && relations) {
-        sceneHandle.showPullLines(mode.itemId, relations);
-      } else {
-        sceneHandle.clearPullLines();
-      }
-    }),
-  );
-
-  function handleSectorSelect(id: string) {
-    setSelSector(id);
-    setSidebarMode({ kind: "overview" });
-    sceneHandle?.setActiveSector(id);
-  }
-
-  function handleSectorHover(id: string | null) {
-    sceneHandle?.setActiveSector(id ?? selSector());
-  }
-
-  function openDomainWorkspace() {
-    const destination = sectorRouteMap[selSector()] ?? "/display";
-    void navigate({ to: destination });
-  }
-
-  function openWorkspace(path: string) {
-    void navigate({ to: path });
-  }
-
-  function goBack() {
-    const mode = sidebarMode();
-    if (
-      mode.kind === "item-detail" ||
-      mode.kind === "concept-detail" ||
-      mode.kind === "sub-topic"
-    ) {
-      setSidebarMode({ kind: "overview" });
-      sceneHandle?.clearPullLines();
-    }
-  }
-
-  // --- Sidebar Panel Renderers ---
-
-  function SidebarOverview() {
-    return (
-      <>
-        <div class={sidebarSection}>
-          <div class={sidebarEyebrow}>∴ RESEARCH ZODIAC — 3D</div>
-          <h1 class={sidebarTitle}>
-            Astrolabe
-            <br />
-            <em class={css({ color: "zodiac.gold" })}>Knowledge</em>
-            <br />
-            Orrery
-          </h1>
-          <p class={sidebarBody}>
-            Drag to orbit. Click a sector to focus. Click stars for concept
-            details. Click orbiting bodies for pipeline items.
-          </p>
-          <button
-            type="button"
-            onClick={toggleAutoRotate}
-            class={motionToggleButton}
-          >
-            {autoRotate() ? "Pause rotation" : "Resume rotation"}
-          </button>
-        </div>
-
-        <div class={sidebarSectionDomain}>
+  return (
+    <div
+      class="knowledge-atlas"
+      style={{
+        "--atlas-void": COLORS.void,
+        "--atlas-gold": COLORS.gold,
+        "--atlas-cream": COLORS.cream,
+        "--atlas-violet": COLORS.violetText,
+        "--atlas-raised": COLORS.glowInner,
+      }}
+    >
+      <div class="atlas-workbench">
+        <section class="atlas-map" aria-label="Knowledge space">
           <div
-            class={sidebarEyebrowSmall}
-            style={{ color: activeSector().color }}
+            class="atlas-stage"
+            classList={{ "is-unavailable": unavailable() }}
           >
-            {activeSector().id.toUpperCase()} DOMAIN
-          </div>
-          <div class={sidebarTitleMd} style={{ color: activeSector().color }}>
-            {activeSector().label}
-          </div>
-          <p class={sidebarBodySm}>{activeSector().summary}</p>
-          <div class={statRow}>
-            <div class={statCellGold}>
-              <div class={statValue} style={{ color: COLORS.gold }}>
-                {activeSector().sources}
+            <canvas
+              ref={(element) => {
+                canvas = element;
+              }}
+              class="atlas-canvas"
+              role="img"
+              tabindex="0"
+              aria-label="3D knowledge atlas. Drag to orbit, scroll to zoom. Use the top-bar search for keyboard access."
+              aria-hidden={unavailable()}
+            />
+            <div
+              ref={(element) => {
+                labels = element;
+              }}
+              class="atlas-labels"
+              aria-hidden={unavailable()}
+            />
+            <Show when={unavailable()}>
+              <div class="atlas-unavailable" role="status">
+                <p>
+                  3D is unavailable in this browser. Use the search in the top
+                  bar to explore concepts and research.
+                </p>
               </div>
-              <div class={statLabel}>SOURCES</div>
-            </div>
-            <div class={statCellViolet}>
-              <div class={statValue} style={{ color: COLORS.violet }}>
-                {activeSector().claims}
-              </div>
-              <div class={statLabel}>CLAIMS</div>
-            </div>
-          </div>
-
-          <Show when={(domainConcepts() ?? []).length > 0}>
-            <div class={sidebarEyebrowConceptsLabel}>
-              CONCEPTS ({(domainConcepts() ?? []).length})
-            </div>
-            <div class={conceptTagRow}>
-              <For each={domainConcepts().slice(0, 12)}>
-                {(concept) => (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSidebarMode({
-                        kind: "concept-detail",
-                        conceptId: concept._id,
-                      })
-                    }
-                    class={conceptTag}
-                  >
-                    {concept.displayName}
-                    <span class={conceptTagCount}>{concept.mentionCount}</span>
-                  </button>
-                )}
-              </For>
-            </div>
-          </Show>
-
-          <button
-            type="button"
-            onClick={openDomainWorkspace}
-            class={openDomainBtn}
-          >
-            Open Domain Workspace
-          </button>
-        </div>
-
-        <div class={sidebarSectionDomains}>
-          <div class={sidebarEyebrowSection}>ALL DOMAINS</div>
-          <For each={sectors()}>
-            {(sector) => (
-              <button
-                type="button"
-                class={sectorButton}
-                aria-pressed={selSector() === sector.id}
-                style={{
-                  "border-color":
-                    selSector() === sector.id
-                      ? `${sector.color}55`
-                      : `${COLORS.gold}1a`,
-                  background:
-                    selSector() === sector.id
-                      ? `${COLORS.gold}0d`
-                      : "transparent",
-                }}
-                onClick={() => handleSectorSelect(sector.id)}
-                onMouseEnter={() => handleSectorHover(sector.id)}
-                onMouseLeave={() => handleSectorHover(null)}
+            </Show>
+            <Show when={!unavailable()}>
+              <div
+                class="atlas-camera"
+                role="group"
+                aria-label="Camera controls"
               >
-                <div
-                  class={sectorButtonLabel}
-                  style={{
-                    // Inactive labels drop the sector hue: at any alpha that
-                    // stays legible the violet sectors still fail on the void,
-                    // so the rest state is cream and only the active sector
-                    // carries colour.
-                    color:
-                      selSector() === sector.id ? sector.color : COLORS.cream,
-                    opacity: selSector() === sector.id ? 1 : 0.72,
-                  }}
-                >
-                  {sector.label}
-                </div>
-                <div class={sectorButtonMeta}>{sector.sources} src</div>
-              </button>
-            )}
-          </For>
-        </div>
-
-        <div class={sidebarSectionWorkflow}>
-          <div class={sidebarEyebrowSectionTop}>WORKFLOW SHORTCUTS</div>
-          <div class={workspaceGrid}>
-            <For each={workspaceLinks}>
-              {(link) => (
                 <button
                   type="button"
-                  data-testid="home-workspace-link"
-                  onClick={() => openWorkspace(link.to)}
-                  class={workspaceButton}
+                  title="Zoom in"
+                  aria-label="Zoom in"
+                  onClick={() => scene?.zoom(0.8)}
                 >
-                  {link.label}
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 10h12M10 4v12" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  title="Zoom out"
+                  aria-label="Zoom out"
+                  onClick={() => scene?.zoom(1.25)}
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 10h12" />
+                  </svg>
+                </button>
+                <button type="button" onClick={() => scene?.reset(flat())}>
+                  Reset view
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={flat()}
+                  onClick={() => {
+                    setFlat(!flat());
+                    scene?.reset(flat());
+                  }}
+                >
+                  Top view
+                </button>
+                <button
+                  type="button"
+                  disabled={reduced()}
+                  aria-pressed={rotating()}
+                  onClick={toggleRotation}
+                >
+                  {rotating() ? "Pause rotation" : "Rotate"}
+                </button>
+              </div>
+              <div class="atlas-gesture-hint">
+                Drag to orbit <span>·</span> Scroll to zoom <span>·</span>{" "}
+                Select to trace
+              </div>
+            </Show>
+          </div>
+          <div class="atlas-layer-bar">
+            <span class="atlas-control-label">Layers</span>
+            <For each={ATLAS_LAYERS}>
+              {(kind) => (
+                <button
+                  type="button"
+                  aria-pressed={layers().has(kind)}
+                  onClick={() => toggleLayer(kind)}
+                >
+                  <AtlasMark kind={kind} />
+                  {layerNames[kind]}
                 </button>
               )}
             </For>
+            <button
+              type="button"
+              class="atlas-connections-toggle"
+              aria-pressed={connections()}
+              onClick={() => setConnections(!connections())}
+            >
+              Connections {connections() ? "on" : "off"}
+            </button>
           </div>
-        </div>
-
-        <div class={sidebarSectionPipeline}>
-          <div
-            class={css({
-              fontSize: "10px",
-              letterSpacing: "0.3em",
-              color: "zodiac.gold/78",
-              marginBottom: "8px",
-            })}
-          >
-            PIPELINE
-          </div>
-          <div class={pipelineRow}>
-            <For each={pipelineSummary()}>
-              {(item, index) => (
-                <>
-                  <div class={pipelineCell}>
-                    <div class={pipelineCellValue}>{item.value}</div>
-                    <div class={pipelineCellLabel}>{item.label}</div>
+        </section>
+        <aside
+          ref={(element) => {
+            inspector = element;
+          }}
+          class="atlas-inspector"
+          classList={{ "is-open": drawerOpen() }}
+          inert={!drawerOpen()}
+          aria-hidden={!drawerOpen()}
+          aria-label="Connection inspector"
+        >
+          <Show when={selected()}>
+            {(node) => (
+              <>
+                <div class="atlas-inspector-content">
+                  <div class="atlas-selection">
+                    <h2 tabindex="-1">{node().title}</h2>
+                    <div class="atlas-selection-kind">
+                      <AtlasMark kind={node().kind} />
+                      {node().kind}
+                      <Show when={node().status}>
+                        <span class="atlas-record-status">
+                          {" "}
+                          · {node().status?.replaceAll("_", " ")}
+                        </span>
+                      </Show>
+                    </div>
+                    <Show when={node().mentions !== undefined}>
+                      <p class="atlas-meta">
+                        {node().mentions} mentions in the research
+                      </p>
+                    </Show>
+                    <Show when={node().kind === "domain"}>
+                      <p>
+                        {
+                          SECTORS.find((sector) => sector.id === node().domain)
+                            ?.summary
+                        }
+                      </p>
+                    </Show>
+                    <Show
+                      when={
+                        node().kind === "concept" &&
+                        detailQ.data()?.concept.description
+                      }
+                    >
+                      <p>{detailQ.data()?.concept.description}</p>
+                    </Show>
+                    <div class="atlas-selection-actions">
+                      <button
+                        type="button"
+                        class="atlas-primary"
+                        disabled={unavailable()}
+                        onClick={() => {
+                          scene?.focus(node().id);
+                          reveal("map");
+                        }}
+                      >
+                        Focus in space
+                      </button>
+                      <Show when={destinations[node().kind]}>
+                        {(href) => (
+                          <a href={href()}>
+                            Open {layerNames[node().kind].toLowerCase()}
+                          </a>
+                        )}
+                      </Show>
+                    </div>
                   </div>
-                  <Show when={index() < pipelineSummary().length - 1}>
-                    <div class={pipelineArrow} aria-hidden="true">
-                      →
+                  <Show
+                    when={node().kind === "domain"}
+                    fallback={
+                      <div class="atlas-relations">
+                        <div class="atlas-section-title">
+                          <h3>Connected research</h3>
+                          <span>{related().length}</span>
+                        </div>
+                        <Show when={selectedError()}>
+                          <p role="alert" class="atlas-message">
+                            Connections could not load.{" "}
+                            <button
+                              type="button"
+                              class="atlas-text-button"
+                              onClick={() => setRetry((value) => value + 1)}
+                            >
+                              Retry
+                            </button>
+                          </p>
+                        </Show>
+                        <Show when={selectedLoading()}>
+                          <p class="atlas-message" role="status">
+                            Loading connections…
+                          </p>
+                        </Show>
+                        <Show
+                          when={
+                            !selectedLoading() &&
+                            !selectedError() &&
+                            !related().length
+                          }
+                        >
+                          <p class="atlas-message">
+                            No connections were returned for this object in the
+                            loaded graph. Other research may exist outside this
+                            sample.
+                          </p>
+                        </Show>
+                        <For each={related()}>
+                          {(relation) => (
+                            <button
+                              type="button"
+                              class="atlas-relation"
+                              onClick={() => select(relation.node)}
+                            >
+                              <AtlasMark kind={relation.node.kind} />
+                              <span class="atlas-relation-body">
+                                <span class="atlas-relation-title">
+                                  {relation.node.title}
+                                </span>
+                                <span class="atlas-relation-meta">
+                                  <small>{relation.node.kind}</small>
+                                  <span aria-hidden="true">·</span>
+                                  <span class="atlas-relation-label">
+                                    {relation.label.replaceAll("_", " ")}
+                                  </span>
+                                </span>
+                              </span>
+                            </button>
+                          )}
+                        </For>
+                      </div>
+                    }
+                  >
+                    <div class="atlas-relations">
+                      <div class="atlas-section-title">
+                        <h3>Concepts in this domain</h3>
+                        <span>{matchingNodes().length}</span>
+                      </div>
+                      <For each={matchingNodes()}>
+                        {(concept) => (
+                          <button
+                            type="button"
+                            class="atlas-relation"
+                            onClick={() => select(concept)}
+                          >
+                            <AtlasMark kind="concept" />
+                            <span class="atlas-relation-body">
+                              <span class="atlas-relation-title">
+                                {concept.title}
+                              </span>
+                              <small>{concept.mentions} mentions</small>
+                            </span>
+                          </button>
+                        )}
+                      </For>
+                      <Show when={!matchingNodes().length}>
+                        <p class="atlas-message">
+                          {loading()
+                            ? "Loading concepts…"
+                            : "No concepts in the current sample. Check the Concepts layer or explore another domain."}
+                        </p>
+                      </Show>
                     </div>
                   </Show>
-                </>
-              )}
-            </For>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  function SidebarConceptDetail() {
-    const detail = createMemo<ConceptDetailData | undefined>(() =>
-      conceptDetail(),
-    );
-    return (
-      <>
-        <div class={sidebarSectionCompact}>
-          <BackButton />
-          <Show when={detail()}>
-            {(detailData) => (
-              <>
-                <div class={sidebarEyebrowViolet}>CONCEPT</div>
-                <div class={sidebarTitleSm}>
-                  {detailData().concept.displayName}
                 </div>
-                <div class={sidebarMeta}>
-                  {detailData().concept.domain} &middot;{" "}
-                  {detailData().concept.mentionCount} mentions &middot;{" "}
-                  {detailData().edgeCount} edges
-                </div>
-                <Show when={detailData().concept.description}>
-                  <p class={sidebarBodyDetail}>
-                    {detailData().concept.description}
-                  </p>
-                </Show>
-                <Show when={detailData().concept.aliases?.length > 0}>
-                  <div class={sidebarAliases}>
-                    Also: {detailData().concept.aliases.join(", ")}
-                  </div>
-                </Show>
+                <footer class="atlas-inspector-footer">
+                  <button type="button" class="atlas-back" onClick={back}>
+                    {history().length
+                      ? "Back to previous object"
+                      : "Back to overview"}
+                  </button>
+                </footer>
               </>
             )}
           </Show>
-        </div>
-
-        <Show when={detail()}>
-          {(detailData) => (
-            <div class={sidebarSectionScrollable}>
-              <Show when={detailData().linkedSources.length > 0}>
-                <PipelineSection
-                  label="SOURCES"
-                  items={detailData().linkedSources}
-                  type="source"
-                />
-              </Show>
-              <Show when={detailData().linkedHypotheses.length > 0}>
-                <PipelineSection
-                  label="HYPOTHESES"
-                  items={detailData().linkedHypotheses}
-                  type="hypothesis"
-                />
-              </Show>
-              <Show when={detailData().linkedRecipes.length > 0}>
-                <PipelineSection
-                  label="RECIPES"
-                  items={detailData().linkedRecipes}
-                  type="recipe"
-                />
-              </Show>
-            </div>
-          )}
-        </Show>
-
-        <Show when={!detail()}>
-          <div class={sidebarLoading}>Loading concept details...</div>
-        </Show>
-      </>
-    );
-  }
-
-  function SidebarSubTopic() {
-    const mode = () =>
-      sidebarMode() as {
-        kind: "sub-topic";
-        label: string;
-        conceptNames: string[];
-      };
-    return (
-      <>
-        <div class={sidebarSectionCompact}>
-          <BackButton />
-          <div class={sidebarEyebrowGold}>SUB-TOPIC</div>
-          <div class={sidebarTitleMd} style={{ color: COLORS.gold }}>
-            {mode().label}
-          </div>
-          <div class={sidebarMeta}>{mode().conceptNames.length} concepts</div>
-        </div>
-
-        <div class={sidebarSectionScrollable}>
-          <div class={sidebarEyebrowSection}>CONCEPTS IN CLUSTER</div>
-          <For each={mode().conceptNames}>
-            {(name) => {
-              const concept = () =>
-                domainConcepts().find((c) => c.name === name);
-              return (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const c = concept();
-                    if (c)
-                      setSidebarMode({
-                        kind: "concept-detail",
-                        conceptId: c._id,
-                      });
-                  }}
-                  class={listButton}
-                >
-                  {concept()?.displayName ?? name}
-                  <Show when={concept()}>
-                    <span class={listButtonMentions}>
-                      {concept()?.mentionCount} mentions
-                    </span>
-                  </Show>
-                </button>
-              );
-            }}
-          </For>
-        </div>
-      </>
-    );
-  }
-
-  function SidebarItemDetail() {
-    const mode = () =>
-      sidebarMode() as {
-        kind: "item-detail";
-        itemId: string;
-        itemType: string;
-        title: string;
-      };
-    const relations = createMemo<ItemRelation[]>(() => itemRelations() ?? []);
-
-    return (
-      <>
-        <div class={sidebarSectionCompact}>
-          <BackButton />
-          <div class={sidebarEyebrowGold}>{mode().itemType.toUpperCase()}</div>
-          <div class={sidebarTitleItem}>{mode().title}</div>
-        </div>
-
-        <div class={sidebarSectionScrollable}>
-          <Show when={relations().length > 0}>
-            <div class={sidebarEyebrowSection}>
-              RELATED ITEMS ({relations().length})
-            </div>
-            <For each={relations()}>
-              {(rel) => (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSidebarMode({
-                      kind: "item-detail",
-                      itemId: rel.id,
-                      itemType: rel.type,
-                      title: rel.title,
-                    })
-                  }
-                  class={relationButton}
-                >
-                  <div class={relationTypeLabel}>
-                    {rel.type.toUpperCase()} &middot; {rel.relationship}
-                  </div>
-                  <div class={relationTitle}>{rel.title}</div>
-                </button>
-              )}
-            </For>
-          </Show>
-          <Show when={relations().length === 0}>
-            <div class={sidebarEmpty}>No cross-pipeline relations found.</div>
-          </Show>
-        </div>
-      </>
-    );
-  }
-
-  function BackButton() {
-    return (
-      <button type="button" onClick={goBack} class={backButton}>
-        ← Back
-      </button>
-    );
-  }
-
-  function PipelineSection(props: {
-    label: string;
-    items: Array<{ _id: string; title?: string; status: string }>;
-    type: string;
-  }) {
-    return (
-      <div class={pipelineSectionContainer}>
-        <div class={pipelineSectionEyebrow}>
-          {props.label} ({props.items.length})
-        </div>
-        <For each={props.items}>
-          {(item) => (
-            <button
-              type="button"
-              onClick={() =>
-                setSidebarMode({
-                  kind: "item-detail",
-                  itemId: item._id,
-                  itemType: props.type,
-                  title: item.title ?? "Untitled",
-                })
-              }
-              class={pipelineItemButton}
-            >
-              <div>{item.title ?? "Untitled"}</div>
-              <div class={pipelineItemStatus}>{item.status}</div>
-            </button>
-          )}
-        </For>
-      </div>
-    );
-  }
-
-  if (webglUnavailable()) {
-    return (
-      <div class={fallbackContainer}>
-        <div class={fallbackGrid}>
-          <div class={fallbackCard}>
-            <div class={fallbackEyebrow}>HOME FALLBACK</div>
-            <h1 class={fallbackTitle}>Workspace Navigator</h1>
-            <p class={fallbackBody}>
-              3D mode is unavailable in this environment. Use direct workflow
-              links below to continue managing intake, research, production, and
-              participation.
-            </p>
-          </div>
-
-          <div class={fallbackCard}>
-            <div class={fallbackEyebrowSpaced}>QUICK ACCESS</div>
-            <div class={fallbackLinkGrid}>
-              <For each={workspaceLinks}>
-                {(link) => (
-                  <button
-                    type="button"
-                    data-testid="home-workspace-link"
-                    onClick={() => openWorkspace(link.to)}
-                    class={fallbackLinkButton}
-                  >
-                    {link.label}
-                  </button>
-                )}
-              </For>
-            </div>
-          </div>
-
-          <div class={fallbackCard}>
-            <div class={fallbackEyebrowPipeline}>PIPELINE SNAPSHOT</div>
-            <div class={fallbackPipelineRow}>
-              <For each={pipelineSummary()}>
-                {(item, index) => (
-                  <>
-                    <div class={fallbackPipelineCell}>
-                      <div class={fallbackPipelineValue}>{item.value}</div>
-                      <div class={fallbackPipelineLabel}>{item.label}</div>
-                    </div>
-                    <Show when={index() < pipelineSummary().length - 1}>
-                      <div class={fallbackPipelineArrow} aria-hidden="true">
-                        →
-                      </div>
-                    </Show>
-                  </>
-                )}
-              </For>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div class={pageContainer}>
-      <div class={dotOverlay} />
-
-      <div ref={cssContainerRef} class={canvasWrapper}>
-        <canvas
-          ref={canvasRef}
-          class={canvasEl}
-          role="img"
-          aria-label="Interactive knowledge orrery. Use the sidebar for keyboard access."
-        />
-      </div>
-
-      <div class={`${sidebarContainer} zodiac-scroll`}>
-        <Show when={sidebarMode().kind === "overview"}>
-          <SidebarOverview />
-        </Show>
-        <Show when={sidebarMode().kind === "concept-detail"}>
-          <SidebarConceptDetail />
-        </Show>
-        <Show when={sidebarMode().kind === "sub-topic"}>
-          <SidebarSubTopic />
-        </Show>
-        <Show when={sidebarMode().kind === "item-detail"}>
-          <SidebarItemDetail />
-        </Show>
+        </aside>
       </div>
     </div>
   );

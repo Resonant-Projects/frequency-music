@@ -14,7 +14,7 @@
     "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
-    "@ark-ui/solid": "^5.35.0",
+    "@ark-ui/solid": "5.39.3",
     "@clerk/clerk-js": "^5.125.7",
     "@park-ui/panda-preset": "^0.43.1",
     "@tanstack/solid-router": "^1.168.9",

@@ -115,3 +115,34 @@ describe("graph concept detail authorization", () => {
     expect(detail?.linkedSources).toHaveLength(20);
   });
 });
+
+describe("graph concept return contracts", () => {
+  test("probe bookkeeping does not break atlas domain and detail queries", async () => {
+    const t = convexTest(schema, modules);
+    const conceptId = await t.run(async (ctx) =>
+      ctx.db.insert("concepts", {
+        name: "resonance",
+        displayName: "Resonance",
+        aliases: [],
+        domain: "acoustics",
+        mentionCount: 10,
+        hypothesisCount: 0,
+        lastProbedAt: 123,
+        embedding: [0.1],
+        embeddingModel: "test",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const rows = await t.query(api.graph.getConceptsForDomain, {
+      domain: "wave",
+      limit: 24,
+    });
+    expect(rows.some((row) => row._id === conceptId)).toBe(true);
+    expect(rows[0]).not.toHaveProperty("lastProbedAt");
+    expect(rows[0]).not.toHaveProperty("embedding");
+    const detail = await t.query(api.graph.getConceptDetail, { conceptId });
+    expect(detail?.concept.displayName).toBe("Resonance");
+    expect(detail?.concept).not.toHaveProperty("lastProbedAt");
+  });
+});

@@ -206,7 +206,7 @@ Both families are self-hosted through Fontsource; there is no CDN dependency. Co
 
 ## Layout
 
-The shell is a fixed 52px header over a single scrolling column. The header carries the wordmark on the left and a right-aligned row of nav pills, sits above everything at `z-index: 100`, and reserves its own height on `main` via the `--app-header-height` custom property so content never slides underneath it. Below 768px the nav collapses behind a bordered toggle and expands into a full-width vertical stack separated by gold hairlines at 10%.
+The shell uses a fixed header with a wordmark, grouped Ark UI Solid Navigation Menu, and global search. Its actual height is measured into `--app-header-height`, which reserves space on `main`. The navigation stays on one row: Home, Research, Compose, Library, and Operations. Below 851px, one Menu trigger opens a scrollable panel containing Home and the four groups; search remains beside it. Menus overlay the page without changing header height.
 
 Content pages use one container: a centred grid capped at 1200px, 1rem of padding on mobile and 1.5rem from the medium breakpoint up, with a 1.5rem gap between stacked sections. Reading surfaces narrow further — essay and correspondence bodies cap at 44–48rem or 70–72ch — because the serif body face needs a short measure.
 
@@ -281,12 +281,12 @@ The component character is refined and restrained: thin gold outlines, wide-trac
 
 ### Navigation
 
-- **Style:** Right-aligned row of bordered pills in the fixed header — 11px uppercase tracked 0.16em, cream at 70%, 1px gold border at 20%, square corners.
-- **Hover:** Label rises to full cream and the border to 45% gold.
-- **Active:** Full inversion — solid gold background, gold border, void text. This is the only other solid gold surface the system permits besides the primary button.
-- **Focus:** 2px gold outline at 2px offset, matching buttons.
-- **Mobile (below 768px):** The row collapses behind a bordered `☰` toggle and reopens as a full-width vertical stack with 10px/16px touch targets, borderless except for gold hairlines at 10% between items.
-- **Motion:** All nav transitions are colour and border only, 0.2s ease, and drop to zero duration under `prefers-reduced-motion`.
+- Ark UI Solid's `NavigationMenu` owns triggers, link semantics, keyboard movement, and content visibility. The shell uses the installed 5.39.3 release.
+- `web/src/lib/app-navigation.ts` groups every destination and supplies the same catalog to global search. `web/src/components/app-navigation.tsx` renders the menu and uses TanStack links for client-side routing.
+- Desktop controls are square, 44px high, in the mono face. The active page or group receives a gold underline; the open trigger receives a hairline outline. No wrapping row of destination pills.
+- Menu panels attach directly beneath their own trigger, sharing its right edge and opening its bottom border into the panel. The trigger and panel use the same indigo fill, including on hover, with a continuous gold hairline around their combined outline. Desktop menus use a compact single column of title/description links. Active links use a quiet gold wash. Mobile uses the same connected outline with one scrollable panel of named groups.
+- Menu links use a subtle gold wash on hover and press. Navigation headers have no press flash or animated chevron rotation. Tab focus uses the shared gold outline. Escape closes the open menu without leaving a focus border.
+- Global search opens a native modal dialog on every page with Command/Control+K, with a platform-specific shortcut hint in the header. The combobox keeps input focus while arrow keys select results; Enter opens a result, Tab stays within the dialog, and Escape dismisses without leaving a focus border. It searches site pages, indexed concepts, essay titles, and bounded recent research; results state the scope. The palette uses a centered indigo panel, a gold hairline, and a dim backdrop without entrance animation.
 
 ### Notice Regions
 
