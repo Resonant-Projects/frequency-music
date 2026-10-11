@@ -1,4 +1,4 @@
-import { callConvex } from "../src/tools/convexTools.js";
+import { callConvex, ConvexToolHttpError } from "../src/tools/convexTools.js";
 import { mkdtemp, rm, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -11,11 +11,58 @@ import type { SourceScoutState } from "../src/state/sourceScoutState.js";
 import { captureInputZ } from "../../convex/shared/operationRecovery";
 
 describe("recovery seams", () => {
+  test("capture and retained recovery inputs use the same text bound", async () => {
+    const callTool = vi.fn(async (name: string, _args: unknown) =>
+      name === "ingestScoutedSource" ? { id: "source" } : null,
+    );
+    await captureSourceAttempt(
+      {
+        agentRunId: "run",
+        input: { url: "https://example.org", query: "q", rationale: "r" },
+        page: { text: "x".repeat(40_000), provider: "firecrawl" },
+      },
+      callTool,
+    );
+    const input = callTool.mock.calls.find(
+      ([name]) => name === "ingestScoutedSource",
+    )![1];
+    expect((input as { rawText: string }).rawText).toHaveLength(30_000);
+  });
+  test.each([
+    400, 403, 429, 503,
+  ])("outbox quarantines terminal HTTP errors and retains transient status %s", async (status) => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-outbox-"));
+    try {
+      const outbox = new DurableOutbox(dir);
+      await outbox.enqueue({
+        tool: "appendAgentRunEvent",
+        args: { deliveryId: "stable" },
+      });
+      await expect(
+        outbox.flush(async () => {
+          throw new ConvexToolHttpError("rejected", status);
+        }),
+      ).rejects.toThrow("rejected");
+      const files = await readdir(dir);
+      if (status < 429) {
+        expect(files).toEqual(["dead-letter"]);
+        expect(await readdir(join(dir, "dead-letter"))).toHaveLength(1);
+      } else
+        expect(files.filter((file) => file.endsWith(".json"))).toHaveLength(1);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
   test("capture recovery transport aborts stalled read and completion responses", async () => {
     vi.stubEnv("CONVEX_SITE_URL", "https://test.invalid");
     vi.stubEnv("AGENT_TOOL_SECRET", "test-only");
     try {
-      for (const name of ["getCaptureRecovery", "finishCaptureRecovery"]) {
+      for (const name of [
+        "getCaptureRecovery",
+        "finishCaptureRecovery",
+        "markAgentRunFailed",
+        "getAgentRun",
+      ]) {
         const abort = new AbortController();
         const timeout = vi
           .spyOn(AbortSignal, "timeout")

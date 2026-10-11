@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { renderAgentToolDocs } from "../scripts/lib/agentToolDocs";
 import * as agentTools from "./agentTools";
@@ -253,6 +253,21 @@ const FROZEN_ARGS: Record<string, string> = {
 };
 
 describe("agent tool registry", () => {
+  test("audit delivery identity reaches the backing mutation", async () => {
+    const runMutation = vi.fn(async () => null);
+    await agentToolByName.appendAgentRunEvent.run({ runMutation } as never, {
+      runId: "run",
+      kind: "status",
+      message: "done",
+      deliveryId: "stable",
+    });
+    expect(runMutation).toHaveBeenCalledWith(expect.anything(), {
+      runId: "run",
+      kind: "status",
+      message: "done",
+      deliveryId: "stable",
+    });
+  });
   test("registry covers the manifest one-to-one", () => {
     expect(AGENT_TOOL_REGISTRY.map((tool) => tool.name)).toEqual(
       AGENT_TOOL_MANIFEST.map((tool) => tool.name),

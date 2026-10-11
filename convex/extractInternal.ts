@@ -727,20 +727,58 @@ export const reconcileAttempts = internalMutation({
   returns: v.null(),
   handler: async (ctx): Promise<null> => {
     for (const status of ["pending", "generated"] as const) {
-      const rows = await ctx.db
-        .query("extractionAttempts")
-        .withIndex("by_status_updated", (q) =>
-          q.eq("status", status).lte("updatedAt", Date.now() - 15 * 60_000),
-        )
-        .filter((q) =>
-          q.or(
-            q.eq(q.field("origin"), "worker"),
-            q.eq(q.field("status"), "generated"),
-          ),
-        )
-        .take(20);
+      const rows =
+        status === "pending"
+          ? (
+              await Promise.all(
+                (["worker", "operator"] as const).map((origin) =>
+                  ctx.db
+                    .query("extractionAttempts")
+                    .withIndex("by_origin_status_updated", (q) =>
+                      q
+                        .eq("origin", origin)
+                        .eq("status", "pending")
+                        .lte(
+                          "updatedAt",
+                          Date.now() -
+                            (origin === "operator"
+                              ? 24 * 60 * 60_000
+                              : 15 * 60_000),
+                        ),
+                    )
+                    .take(20),
+                ),
+              )
+            ).flat()
+          : await ctx.db
+              .query("extractionAttempts")
+              .withIndex("by_status_updated", (q) =>
+                q
+                  .eq("status", "generated")
+                  .lte("updatedAt", Date.now() - 15 * 60_000),
+              )
+              .take(20);
       for (const row of rows) {
         if ((row.generationLeaseUntil ?? 0) > Date.now()) continue;
+        if (row.origin === "operator" && row.status === "pending") {
+          // External generation has no worker lease. Give it a full day, then
+          // release admission while retaining the immutable snapshot for late imports.
+          if (row.updatedAt > Date.now() - 24 * 60 * 60_000) continue;
+          await ctx.db.patch(row._id, {
+            status: "failed",
+            error: "Operator snapshot expired without an imported result",
+            updatedAt: Date.now(),
+          });
+          const source = await ctx.db.get(row.sourceId);
+          if (source?.activeExtractionAttemptId === row._id) {
+            await ctx.db.patch(source._id, {
+              activeExtractionAttemptId: undefined,
+            });
+            if (source.status === "extracting")
+              await setSourceStatus(ctx, source._id, "text_ready");
+          }
+          continue;
+        }
         await ctx.runMutation(internal.extractInternal.failExtraction, {
           attemptId: row._id,
           generationLease: row.generationLease,

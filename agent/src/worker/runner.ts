@@ -177,9 +177,13 @@ async function getRunStatus(runId: string): Promise<string | undefined> {
 
 async function markRunnerCompleted(
   runId: string,
+  graphName: KnownGraphName,
   messageCount: number,
+  graphSummary?: string,
 ): Promise<void> {
-  const summary = `weekly-brief agent run completed (${messageCount} messages)`;
+  const summary =
+    graphSummary ??
+    `${graphName} agent run completed (${messageCount} messages)`;
   try {
     await callConvex("markAgentRunCompleted", { runId, summary });
     return;
@@ -205,8 +209,9 @@ async function streamGraph(
   runId: string,
   graphName: KnownGraphName,
   invocationInput: unknown,
-): Promise<{ messageCount: number }> {
+): Promise<{ messageCount: number; summary?: string }> {
   let messageCount = 0;
+  let summary: string | undefined;
 
   const handleChunk = async (chunk: unknown) => {
     if (!chunk || typeof chunk !== "object") return;
@@ -216,6 +221,8 @@ async function streamGraph(
       if (update && typeof update === "object") {
         const messages = (update as { messages?: unknown }).messages;
         if (Array.isArray(messages)) messageCount = messages.length;
+        const value = (update as { summary?: unknown }).summary;
+        if (typeof value === "string") summary = value;
       }
       await appendNodeEvent(runId, node, update);
     }
@@ -227,7 +234,7 @@ async function streamGraph(
   });
   for await (const chunk of stream) await handleChunk(chunk);
 
-  return { messageCount };
+  return { messageCount, summary };
 }
 
 async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
@@ -248,7 +255,7 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
   const stopHeartbeat = startRunHeartbeat(runId);
 
   try {
-    const { messageCount } = await streamGraph(
+    const { messageCount, summary } = await streamGraph(
       runId,
       invocation.graphName,
       invocation.input,
@@ -258,7 +265,7 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
     if (TERMINAL_STATUS_OWNER[invocation.graphName] === "runner") {
       // weekly-brief: the graph writes no audit terminal status, so the runner
       // owns it. Isolate terminal-write failures from graph execution failures.
-      await markRunnerCompleted(runId, messageCount);
+      await markRunnerCompleted(runId, graphName, messageCount, summary);
     }
   } catch (error) {
     // The graph threw before reaching its own terminal-status write (or has no

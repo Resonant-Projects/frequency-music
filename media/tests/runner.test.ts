@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 let scratch: string;
@@ -11,6 +11,7 @@ import {
   vi,
 } from "vite-plus/test";
 import { runOnce } from "../src/runner";
+import { LEASE_MS } from "../../convex/shared/mediaJobs";
 
 // The runner logs claim/failure lines; keep test output quiet.
 beforeEach(() => {
@@ -54,6 +55,61 @@ describe("runOnce", () => {
       await runOnce(config, tool as never, { probe: handler as never }),
     ).toBe("done");
     expect(handler).toHaveBeenCalledTimes(1);
+    expect(readdirSync(join(scratch, "retained"))).toEqual([]);
+  });
+
+  test.each([
+    false,
+    true,
+  ])("a transient renewal failure survives, consecutive failures abort=%s", async (repeatFailure) => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const tool = vi.fn(async (name: string) => {
+      if (name === "claimNextMediaJob")
+        return { ...claimedJob({}), leaseExpiresAt: Date.now() + LEASE_MS };
+      if (name === "renewMediaJobLease") {
+        if (++calls === 1 || repeatFailure)
+          throw new Error("transient network error");
+        return { leaseExpiresAt: Date.now() + LEASE_MS };
+      }
+      return null;
+    });
+    let resolve!: (value: { kind: "probe"; artifacts: [] }) => void;
+    let signal!: AbortSignal;
+    let started!: () => void;
+    const ready = new Promise<void>((done) => {
+      started = done;
+    });
+    const running = runOnce(
+      {
+        workerId: "w",
+        kinds: ["probe"],
+        workDir: scratch,
+        rendererVersion: "0.1.0",
+      },
+      tool as never,
+      {
+        probe: (ctx) => {
+          signal = ctx.signal;
+          started();
+          return new Promise((done, reject) => {
+            resolve = done;
+            signal.addEventListener("abort", () => reject(signal.reason));
+          });
+        },
+      },
+    );
+    try {
+      await ready;
+      await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
+      expect(signal.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
+      expect(signal.aborted).toBe(repeatFailure);
+      if (!repeatFailure) resolve({ kind: "probe", artifacts: [] });
+      expect(await running).toBe(repeatFailure ? "failed" : "done");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test.each([

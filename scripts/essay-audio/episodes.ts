@@ -973,11 +973,19 @@ async function publishOne(
       assembleEpisode: assemble,
     });
     if (result !== "done") {
-      await adminMutation(client, internal.mediaJobs.deferOperatorPublication, {
-        jobId: live[0]!._id as Id<"mediaJobs">,
-        rendererVersion: RENDERER,
-        title: entry.episodeTitle,
-      });
+      try {
+        await adminMutation(
+          client,
+          internal.mediaJobs.deferOperatorPublication,
+          {
+            jobId: live[0]!._id as Id<"mediaJobs">,
+            rendererVersion: RENDERER,
+            title: entry.episodeTitle,
+          },
+        );
+      } catch (error) {
+        console.error(`${entry.slug}: publication deferral failed`, error);
+      }
       throw new Error(`${entry.slug}: publication ${result}`);
     }
   }

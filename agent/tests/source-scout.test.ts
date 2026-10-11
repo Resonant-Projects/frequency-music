@@ -616,6 +616,9 @@ describe("source-scout recapture mode", () => {
       ],
     ]);
     expect(update.recaptureAttempted).toBe(2);
+    expect(
+      callTool.mock.calls.some(([name]) => name === "reportCaptureFailure"),
+    ).toBe(false);
     expect(update.sourceWrites).toEqual([
       expect.objectContaining({ id: "source-a", enriched: true }),
     ]);

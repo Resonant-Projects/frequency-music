@@ -1,7 +1,12 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { type DatabaseReader, mutation, query } from "./_generated/server";
+import {
+  type DatabaseReader,
+  internalMutation,
+  mutation,
+  query,
+} from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
 import { compositionParameterValidator } from "./schema";
@@ -26,16 +31,29 @@ export async function listCurrentExtractions(
   limit: number,
 ) {
   const rows: Doc<"extractions">[] = [];
-  if (limit <= 0) return rows;
+  if (!Number.isFinite(limit) || limit <= 0) return rows;
+  limit = Math.min(Math.floor(limit), 120);
+  const candidates = (
+    await Promise.all(
+      [false, undefined].map((historical) =>
+        db
+          .query("extractions")
+          .withIndex("by_historical_createdAt", (q) =>
+            q.eq("historical", historical),
+          )
+          .order("desc")
+          .take(240),
+      ),
+    )
+  )
+    .flat()
+    .sort(newestFirst);
   const latestIds = new Map<Id<"sources">, Id<"extractions"> | undefined>();
-  for await (const row of db
-    .query("extractions")
-    .order("desc")
-    .filter((q) => q.neq(q.field("historical"), true))) {
+  for (const row of candidates) {
     if (!latestIds.has(row.sourceId))
       latestIds.set(
         row.sourceId,
-        (await currentExtractions(db, row.sourceId).first())?._id,
+        (await newestCurrentExtraction(db, row.sourceId))?._id,
       );
     if (latestIds.get(row.sourceId) !== row._id) continue;
     rows.push(row);
@@ -43,6 +61,61 @@ export async function listCurrentExtractions(
   }
   return rows;
 }
+
+function newestFirst(a: Doc<"extractions">, b: Doc<"extractions">) {
+  return b.createdAt - a.createdAt || b._creationTime - a._creationTime;
+}
+
+async function newestCurrentExtraction(
+  db: Pick<DatabaseReader, "query">,
+  sourceId: Id<"sources">,
+) {
+  const candidates = await Promise.all(
+    [false, undefined].map((historical) =>
+      db
+        .query("extractions")
+        .withIndex("by_sourceId_historical_createdAt", (q) =>
+          q.eq("sourceId", sourceId).eq("historical", historical),
+        )
+        .order("desc")
+        .first(),
+    ),
+  );
+  return candidates
+    .filter((row): row is Doc<"extractions"> => row !== null)
+    .sort(newestFirst)[0];
+}
+
+/** Normalize legacy history in bounded batches without requiring a live operator migration. */
+export const normalizeLegacyHistory = internalMutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query("extractions")
+      .withIndex("by_historical_createdAt", (q) =>
+        q.eq("historical", undefined),
+      )
+      .take(20);
+    for (const row of rows) {
+      const current =
+        (await newestCurrentExtraction(ctx.db, row.sourceId))?._id === row._id;
+      await ctx.db.patch(row._id, { historical: !current });
+      if (!current) {
+        const claims = await ctx.db
+          .query("claims")
+          .withIndex("by_extractionId_ordinal", (q) =>
+            q.eq("extractionId", row._id),
+          )
+          .collect();
+        for (const claim of claims)
+          if (claim.status === "active")
+            await ctx.db.patch(claim._id, { status: "superseded" });
+      }
+    }
+    return null;
+  },
+});
 
 // ============================================================================
 // EDIT CAPTURE - pure helpers (unit-testable without a DB harness)

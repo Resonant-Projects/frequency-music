@@ -11,6 +11,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ToolCaller } from "../graphs/shared/audit.js";
 import { redactError } from "./redactError.js";
+import { ConvexToolHttpError } from "../tools/convexTools.js";
 
 const OUTBOX_TOOLS = ["appendAgentRunEvent", "reportCaptureFailure"] as const;
 type Delivery = {
@@ -23,7 +24,11 @@ export class DurableOutbox {
   constructor(private readonly dir: string) {}
   async enqueue(delivery: Delivery) {
     await mkdir(this.dir, { recursive: true, mode: 0o700 });
-    if ((await readdir(this.dir)).length >= 2000)
+    if (
+      (await readdir(this.dir)).filter(
+        (file) => file.endsWith(".json") || file.endsWith(".tmp"),
+      ).length >= 2000
+    )
       throw new Error("Recovery outbox capacity reached");
     const bytes = JSON.stringify(delivery);
     if (Buffer.byteLength(bytes) > 256_000)
@@ -46,14 +51,34 @@ export class DurableOutbox {
     let lastError: unknown;
     for (const file of files) {
       this.lastAttemptedFile = file;
+      const path = join(this.dir, file);
+      let invalidRecord = false;
       try {
-        const path = join(this.dir, file);
-        const delivery = JSON.parse(await readFile(path, "utf8")) as Delivery;
-        if (!OUTBOX_TOOLS.includes(delivery.tool))
+        const bytes = await readFile(path, "utf8");
+        invalidRecord = true;
+        const delivery = JSON.parse(bytes) as Delivery;
+        if (
+          !delivery ||
+          !OUTBOX_TOOLS.includes(delivery.tool) ||
+          !delivery.args ||
+          typeof delivery.args !== "object" ||
+          Array.isArray(delivery.args)
+        )
           throw new Error("Invalid outbox action");
+        invalidRecord = false;
         await callTool(delivery.tool, delivery.args);
         await unlink(path);
       } catch (error) {
+        const permanentlyRejected =
+          error instanceof ConvexToolHttpError &&
+          error.status >= 400 &&
+          error.status < 500 &&
+          ![408, 409, 425, 429].includes(error.status);
+        if (invalidRecord || permanentlyRejected) {
+          const deadLetters = join(this.dir, "dead-letter");
+          await mkdir(deadLetters, { recursive: true, mode: 0o700 });
+          await rename(path, join(deadLetters, file));
+        }
         lastError = error;
       }
     }

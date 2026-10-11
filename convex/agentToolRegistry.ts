@@ -226,6 +226,7 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ctx.runMutation(
       mutationRef("agentRuns:appendEvent"),
       omitUndefined({
+        deliveryId: args.deliveryId,
         runId: args.runId,
         kind: args.kind,
         message: args.message,

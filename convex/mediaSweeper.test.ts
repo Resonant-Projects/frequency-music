@@ -27,6 +27,37 @@ const base = {
 };
 
 describe("mediaSweeper", () => {
+  test("a valid setting with an invalid cursor resets without rolling back the sweep", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+    const artifactId = await t.run(async (ctx) => {
+      await ctx.db.insert("settings", {
+        key: "mediaSweeper.pendingCursor",
+        value: JSON.stringify({ cursor: "garbage", cutoff: now }),
+        updatedAt: now,
+      });
+      return ctx.db.insert("audioArtifacts", {
+        ...base,
+        status: "pending",
+        createdAt: now - 2 * DAY,
+        updatedAt: now,
+      });
+    });
+    expect(
+      (await t.mutation(internal.mediaSweeper.sweep, { now })).artifactsDeleted,
+    ).toBe(0);
+    const setting = await t.run((ctx) =>
+      ctx.db
+        .query("settings")
+        .withIndex("by_key", (q) => q.eq("key", "mediaSweeper.pendingCursor"))
+        .unique(),
+    );
+    expect(setting?.value).toBe("");
+    expect(
+      (await t.mutation(internal.mediaSweeper.sweep, { now })).artifactsDeleted,
+    ).toBe(1);
+    expect(await t.run((ctx) => ctx.db.get(artifactId))).toBeNull();
+  });
   test("a pending scan keeps its original cutoff until its cursor is exhausted", async () => {
     const t = convexTest(schema, modules);
     const now = Date.now();

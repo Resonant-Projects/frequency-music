@@ -139,47 +139,69 @@ export const operatorExtractionPage = query({
 export const operatorExtractionSnapshots = query({
   args: {
     model: v.string(),
+    cursor: v.optional(v.union(v.string(), v.null())),
     limit: v.optional(v.number()),
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.array(
-    v.object({
-      sourceId: v.id("sources"),
-      snapshotId: v.id("extractionAttempts"),
-      title: v.optional(v.string()),
-      canonicalUrl: v.optional(v.string()),
-      type: v.string(),
-      inputHash: v.string(),
-      content: v.string(),
-      prompt: v.string(),
-      system: v.string(),
-      promptVersion: v.string(),
-    }),
-  ),
+  returns: v.object({
+    page: v.array(
+      v.object({
+        sourceId: v.id("sources"),
+        snapshotId: v.id("extractionAttempts"),
+        title: v.optional(v.string()),
+        canonicalUrl: v.optional(v.string()),
+        type: v.string(),
+        inputHash: v.string(),
+        content: v.string(),
+        prompt: v.string(),
+        system: v.string(),
+        promptVersion: v.string(),
+      }),
+    ),
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     await requireOperatorIdentity(ctx, args);
-    const snapshots = await ctx.db
+    const result = await ctx.db
       .query("extractionAttempts")
-      .withIndex("by_status_updated", (q) => q.eq("status", "pending"))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("origin"), "operator"),
-          q.eq(q.field("model"), args.model),
-        ),
+      .withIndex("by_origin_model_status_updated", (q) =>
+        q
+          .eq("origin", "operator")
+          .eq("model", args.model)
+          .eq("status", "pending"),
       )
-      .take(Math.min(Math.max(args.limit ?? 40, 1), 200));
-    return snapshots.map((snapshot) => ({
-      sourceId: snapshot.sourceId,
-      snapshotId: snapshot._id,
-      title: snapshot.title,
-      canonicalUrl: snapshot.canonicalUrl,
-      type: "snapshot",
-      inputHash: snapshot.inputHash,
-      content: "",
-      prompt: snapshot.prompt,
-      system: snapshot.systemPrompt,
-      promptVersion: snapshot.promptVersion,
-    }));
+      .paginate({
+        cursor: args.cursor ?? null,
+        numItems: Math.min(Math.max(args.limit ?? 40, 1), 200),
+      });
+    const live = [];
+    for (const snapshot of result.page) {
+      const source = await ctx.db.get(snapshot.sourceId);
+      if (
+        !source ||
+        source.status === "archived" ||
+        source.activeExtractionAttemptId !== snapshot._id
+      )
+        continue;
+      live.push(snapshot);
+    }
+    return {
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
+      page: live.map((snapshot) => ({
+        sourceId: snapshot.sourceId,
+        snapshotId: snapshot._id,
+        title: snapshot.title,
+        canonicalUrl: snapshot.canonicalUrl,
+        type: "snapshot",
+        inputHash: snapshot.inputHash,
+        content: "",
+        prompt: snapshot.prompt,
+        system: snapshot.systemPrompt,
+        promptVersion: snapshot.promptVersion,
+      })),
+    };
   },
 });
 

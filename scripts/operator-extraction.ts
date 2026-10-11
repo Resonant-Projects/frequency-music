@@ -74,10 +74,23 @@ async function exportChunks(args: string[]) {
   const client = getConvexClient();
   const devBypassSecret = getDevBypassSecret();
   // Pages of 20, newest first, until --limit Sources are collected.
-  const rows: ExportRow[] = await client.query(
-    api.sources.operatorExtractionSnapshots,
-    { model: MODEL, limit, devBypassSecret },
-  );
+  const rows: ExportRow[] = [];
+  let snapshotCursor: string | null = null;
+  while (rows.length < limit) {
+    const result: {
+      page: ExportRow[];
+      continueCursor: string;
+      isDone: boolean;
+    } = await client.query(api.sources.operatorExtractionSnapshots, {
+      model: MODEL,
+      limit: Math.min(limit - rows.length, 200),
+      cursor: snapshotCursor,
+      devBypassSecret,
+    });
+    rows.push(...result.page);
+    if (result.isDone) break;
+    snapshotCursor = result.continueCursor;
+  }
   const seen = new Set(rows.map((row) => row.sourceId));
   let cursor: string | null = null;
   while (rows.length < limit) {

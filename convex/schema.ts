@@ -512,7 +512,15 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     error: v.optional(v.string()),
-  }).index("by_status_updated", ["status", "updatedAt"]),
+  })
+    .index("by_status_updated", ["status", "updatedAt"])
+    .index("by_origin_status_updated", ["origin", "status", "updatedAt"])
+    .index("by_origin_model_status_updated", [
+      "origin",
+      "model",
+      "status",
+      "updatedAt",
+    ]),
 
   extractions: defineTable({
     historical: v.optional(v.boolean()),
@@ -537,6 +545,12 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_sourceId_createdAt", ["sourceId", "createdAt"])
+    .index("by_historical_createdAt", ["historical", "createdAt"])
+    .index("by_sourceId_historical_createdAt", [
+      "sourceId",
+      "historical",
+      "createdAt",
+    ])
     .index("by_inputHash", ["inputHash"]),
 
   // ==========================================================================

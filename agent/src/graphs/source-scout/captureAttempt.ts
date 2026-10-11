@@ -1,4 +1,5 @@
 import { deliverOrSpool } from "../../shared/outbox.js";
+import { SCOUTED_TEXT_MAX_CHARS } from "../../../../convex/shared/agentContract";
 import type { CaptureInput } from "../../../../convex/shared/operationRecovery";
 import {
   createCrawlPage,
@@ -59,7 +60,7 @@ export async function captureSourceAttempt(
       }
     }
     if (page) {
-      input.rawText = page.text;
+      input.rawText = page.text.slice(0, SCOUTED_TEXT_MAX_CHARS);
       input.contentProvider = page.provider;
     }
     stage = "intake";

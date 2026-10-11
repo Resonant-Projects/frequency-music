@@ -546,6 +546,7 @@ export function createRecaptureSourcesNode(
             rationale: row.rationale,
           },
           page: pages[index] ?? null,
+          reportFailure: false,
         },
         callTool,
         crawl,

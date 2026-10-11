@@ -9,6 +9,9 @@ vi.mock("../src/graphs/correspondence-miner/index.js", () => ({ graph: {} }));
 vi.mock("../src/graphs/evidence-hunter/index.js", () => ({ graph: {} }));
 vi.mock("../src/graphs/hypothesis-drafter/index.js", () => ({ graph: {} }));
 vi.mock("../src/graphs/source-scout/index.js", () => ({ graph: {} }));
+vi.mock("../src/graphs/failure-investigation/index.js", () => ({
+  graph: { stream: mocks.stream },
+}));
 vi.mock("../src/agents/weekly-brief/index.js", () => ({
   agent: { stream: mocks.stream },
 }));
@@ -47,6 +50,23 @@ function start(poll = () => pollOnce("synthetic-worker")) {
   return { signals, log, onPollError, done, loop };
 }
 describe("worker graceful drain with synthetic queue and graph", () => {
+  test("investigation terminal status retains its graph diagnosis", async () => {
+    mocks.callConvex.mockImplementation(async (name: string) =>
+      name === "claimNextPendingRun"
+        ? { ...claim, graphName: "failure-investigation" }
+        : null,
+    );
+    mocks.stream.mockImplementation(async function* () {
+      yield {
+        investigate: { summary: "Failure investigation: provider recovered" },
+      };
+    });
+    expect(await pollOnce("worker")).toBe(true);
+    expect(mocks.callConvex).toHaveBeenCalledWith("markAgentRunCompleted", {
+      runId: claim.runId,
+      summary: "Failure investigation: provider recovered",
+    });
+  });
   test("drains a late claim, graph effect, and terminal write once despite repeated signals", async () => {
     const pendingClaim = deferred<typeof claim>();
     const graphGate = deferred<void>();

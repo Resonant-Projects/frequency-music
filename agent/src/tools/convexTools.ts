@@ -30,7 +30,18 @@ const BOUNDED_TOOLS = new Set([
   "getCaptureRecovery",
   "finishCaptureRecovery",
   "markAgentRunCompleted",
+  "markAgentRunFailed",
+  "getAgentRun",
 ]);
+
+export class ConvexToolHttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 
 export async function callConvex<T>(
   path: string,
@@ -55,13 +66,14 @@ export async function callConvex<T>(
     },
   );
   if (!resp.ok) {
-    throw new Error(
+    throw new ConvexToolHttpError(
       "Convex tool " +
         path +
         " failed: " +
         resp.status +
         " " +
         (await resp.text()),
+      resp.status,
     );
   }
   const result = await resp.json();

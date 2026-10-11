@@ -3,6 +3,11 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 crons.interval(
+  "normalize-legacy-extraction-history",
+  { minutes: 5 },
+  internal.extractions.normalizeLegacyHistory,
+);
+crons.interval(
   "reconcile-extraction-attempts",
   { minutes: 5 },
   internal.extractInternal.reconcileAttempts,

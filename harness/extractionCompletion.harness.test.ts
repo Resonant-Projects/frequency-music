@@ -47,6 +47,85 @@ async function setup() {
   return { t, sourceId, begin };
 }
 describe("Extraction completion", () => {
+  test("operator snapshots expire admission but late paid output remains importable as history", async () => {
+    const { t, sourceId } = await setup();
+    const admitted = await t.mutation(
+      internal.extractInternal.beginExtraction,
+      {
+        sourceId,
+        model: "test",
+        expectedInputHash: await extractionInputHash(text),
+      },
+    );
+    const attemptId = admitted.attemptId!;
+    await t.run((ctx) =>
+      ctx.db.patch(attemptId, { updatedAt: Date.now() - 25 * 60 * 60_000 }),
+    );
+    await t.mutation(internal.extractInternal.reconcileAttempts, {});
+    expect(await t.run((ctx) => ctx.db.get(sourceId))).toMatchObject({
+      status: "text_ready",
+    });
+    expect(
+      (await t.run((ctx) => ctx.db.get(sourceId)))?.activeExtractionAttemptId,
+    ).toBeUndefined();
+    expect(await t.run((ctx) => ctx.db.get(attemptId))).toMatchObject({
+      status: "failed",
+    });
+    await t.mutation(internal.extractInternal.retainExtractionResult, {
+      attemptId,
+      result,
+    });
+    expect(
+      (
+        await t.mutation(internal.extractInternal.completeExtraction, {
+          attemptId,
+        })
+      ).current,
+    ).toBe(false);
+  });
+  test("legacy normalization keeps only the newest reading and excludes large history from bounded lists", async () => {
+    const { t, sourceId } = await setup();
+    const ids = await t.run(async (ctx) => {
+      const ids = [];
+      for (let i = 0; i < 25; i++)
+        ids.push(
+          await ctx.db.insert("extractions", {
+            sourceId,
+            model: "legacy",
+            promptVersion: "old",
+            inputHash: "old",
+            ...result,
+            confidence: 0.8,
+            createdBy: "system",
+            createdAt: i,
+          }),
+        );
+      for (let i = 0; i < 500; i++)
+        await ctx.db.insert("extractions", {
+          sourceId,
+          historical: true,
+          model: "old",
+          promptVersion: "old",
+          inputHash: "old",
+          ...result,
+          confidence: 0.8,
+          createdBy: "system",
+          createdAt: 1000 + i,
+        });
+      return ids;
+    });
+    for (let i = 0; i < 2; i++)
+      await t.mutation(internal.extractions.normalizeLegacyHistory, {});
+    expect(
+      (await t.query(api.extractions.listRecent, { limit: 10000 })).map(
+        (row) => row._id,
+      ),
+    ).toEqual([ids[24]]);
+    for (const id of ids)
+      expect((await t.run((ctx) => ctx.db.get(id)))?.historical).toBe(
+        id !== ids[24],
+      );
+  });
   test("saving identical text during an in-flight call still completes current without re-admission", async () => {
     const { t, sourceId } = await setup();
     const started = await t.mutation(internal.extractInternal.beginExtraction, {

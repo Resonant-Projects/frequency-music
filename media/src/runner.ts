@@ -47,14 +47,36 @@ export async function runOnce(
   // is failed promptly instead of waiting out its lease.
   let workDir: string | undefined;
   const abort = new AbortController();
+  let leaseExpiresAt = job.leaseExpiresAt;
+  let renewalFailures = 0;
+  let renewalInFlight = false;
   const renew = setInterval(() => {
-    tool("renewMediaJobLease", {
+    if (Date.now() >= leaseExpiresAt) {
+      abort.abort(new Error("Media lease expired"));
+      return;
+    }
+    if (renewalInFlight) return;
+    renewalInFlight = true;
+    tool<{ leaseExpiresAt: number }>("renewMediaJobLease", {
       jobId: job.jobId,
       leaseToken: job.leaseToken,
-    }).catch((error) => {
-      abort.abort(new Error("Media lease renewal failed"));
-      log(`lease renewal failed for ${job.jobId}: ${redactError(error)}`);
-    });
+    })
+      .then((result) => {
+        leaseExpiresAt = result.leaseExpiresAt;
+        renewalFailures = 0;
+      })
+      .catch((error) => {
+        renewalFailures++;
+        if (
+          renewalFailures >= 2 ||
+          Date.now() + RENEW_EVERY_MS >= leaseExpiresAt
+        )
+          abort.abort(new Error("Media lease renewal failed"));
+        log(`lease renewal failed for ${job.jobId}: ${redactError(error)}`);
+      })
+      .finally(() => {
+        renewalInFlight = false;
+      });
   }, RENEW_EVERY_MS);
   try {
     const handler = handlers[job.kind];
@@ -93,6 +115,7 @@ export async function runOnce(
         leaseToken: job.leaseToken,
         result: retainedResult,
       });
+      await removeCompletedCheckpoints(retainedDir);
       return "done";
     }
     workDir = await mkdtemp(join(config.workDir, `${job.kind}-`));
@@ -147,6 +170,7 @@ export async function runOnce(
       leaseToken: job.leaseToken,
       result,
     });
+    await removeCompletedCheckpoints(retainedDir);
     log(`completed ${job.kind} job ${job.jobId}`);
     return "done";
   } catch (error) {
@@ -167,5 +191,13 @@ export async function runOnce(
   } finally {
     clearInterval(renew);
     if (workDir) await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+async function removeCompletedCheckpoints(dir: string) {
+  try {
+    await rm(dir, { recursive: true, force: true });
+  } catch (error) {
+    log(`could not remove completed media checkpoints: ${redactError(error)}`);
   }
 }

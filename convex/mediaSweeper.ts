@@ -1,6 +1,6 @@
 // Reclaims expired leases, abandoned pending artifacts, and storage blobs no
 // artifact references (a worker that crashed between upload and attach).
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { readSetting, writeSetting } from "./settings";
@@ -96,12 +96,33 @@ export const sweep = internalMutation({
       /* Restart a malformed cursor record with a fresh query. */
     }
     const pendingCutoff = pendingScan?.cutoff ?? cutoff;
-    const stalePending = await ctx.db
+    const pendingQuery = ctx.db
       .query("audioArtifacts")
       .withIndex("by_status_createdAt", (q) =>
         q.eq("status", "pending").lt("createdAt", pendingCutoff),
-      )
-      .paginate({ cursor: pendingScan?.cursor ?? null, numItems: SCAN_LIMIT });
+      );
+    let stalePending;
+    try {
+      stalePending = await pendingQuery.paginate({
+        cursor: pendingScan?.cursor ?? null,
+        numItems: SCAN_LIMIT,
+      });
+    } catch (error) {
+      const invalidCursor =
+        error instanceof SyntaxError ||
+        (error instanceof Error &&
+          (error.message.includes("InvalidCursor") ||
+            error.message.includes("is not valid JSON"))) ||
+        (error instanceof ConvexError &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "paginationError" in error.data &&
+          error.data.paginationError === "InvalidCursor");
+      if (!pendingScan || !invalidCursor) throw error;
+      // Convex permits one paginate call per function. Persist a reset now;
+      // the next sweep starts at the beginning while this sweep still recovers leases/blobs.
+      stalePending = { page: [], isDone: true, continueCursor: "" };
+    }
     const cursorValue = stalePending.isDone
       ? ""
       : JSON.stringify({

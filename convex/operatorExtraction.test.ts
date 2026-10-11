@@ -88,6 +88,41 @@ const store = (
   });
 
 describe("operator extraction", () => {
+  test("snapshot recovery pages past 200 abandoned reservations to the live owner", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+      sourceId,
+      inputHash,
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+    });
+    await t.run(async (ctx) => {
+      const {
+        _id: _ignoredId,
+        _creationTime: _ignoredTime,
+        ...row
+      } = (await ctx.db.get(snapshot!.snapshotId))!;
+      for (let i = 0; i < 200; i++)
+        await ctx.db.insert("extractionAttempts", { ...row, updatedAt: 1 });
+    });
+    const first = await t.query(api.sources.operatorExtractionSnapshots, {
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+      limit: 200,
+    });
+    expect(first.page).toEqual([]);
+    expect(first.isDone).toBe(false);
+    const next = await t.query(api.sources.operatorExtractionSnapshots, {
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+      limit: 200,
+      cursor: first.continueCursor,
+    });
+    expect(next.page.map((row) => row.snapshotId)).toEqual([
+      snapshot!.snapshotId,
+    ]);
+    expect(next.isDone).toBe(true);
+  });
   test("an interrupted export can recover its original snapshot and import late output as history", async () => {
     const { t, sourceId, inputHash } = await setup();
     const snapshot = await t.action(api.extract.beginOperatorExtraction, {
@@ -97,23 +132,31 @@ describe("operator extraction", () => {
       devBypassSecret: BYPASS,
     });
     expect(snapshot).not.toBeNull();
+    const resumed = await t.query(api.sources.operatorExtractionSnapshots, {
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+    });
+    expect(resumed.page).toHaveLength(1);
+    expect(resumed.page[0]).toMatchObject({
+      snapshotId: snapshot!.snapshotId,
+      prompt: snapshot!.prompt,
+      system: snapshot!.system,
+      inputHash,
+    });
     await t.run((ctx) =>
       ctx.db.patch(sourceId, {
         rawText: "Different current content",
         status: "archived",
       }),
     );
-    const resumed = await t.query(api.sources.operatorExtractionSnapshots, {
-      model: MODELS.opus,
-      devBypassSecret: BYPASS,
-    });
-    expect(resumed).toHaveLength(1);
-    expect(resumed[0]).toMatchObject({
-      snapshotId: snapshot!.snapshotId,
-      prompt: snapshot!.prompt,
-      system: snapshot!.system,
-      inputHash,
-    });
+    expect(
+      (
+        await t.query(api.sources.operatorExtractionSnapshots, {
+          model: MODELS.opus,
+          devBypassSecret: BYPASS,
+        })
+      ).page,
+    ).toEqual([]);
     const stored = await t.action(api.extract.storeOperatorExtraction, {
       sourceId,
       inputHash,
