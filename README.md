@@ -81,6 +81,27 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - Agent: `cd agent && vp run verify && vp test`
 - Everything at once: `vp run verify`.
 
+### Dependency updates
+
+- [Renovate](https://developer.mend.io/github/Resonant-Projects/frequency-music)
+  updates dependencies and lockfiles for the root, `web/`, `agent/`, and `media/`
+  Bun packages, plus Docker base images. Its policy lives in
+  [`renovate.json`](./renovate.json).
+- The Dependency Dashboard issue lists pending updates. Major upgrades need
+  approval there before Renovate opens a PR. All updates require a manual merge
+  after reviewing the diff and CI results.
+- Renovate waits three days after a release, opens at most five concurrent PRs
+  and two PRs per hour, and refreshes lockfiles on Monday between 3am and 6am
+  America/New_York. Convex dependencies and Vite Plus packages have dedicated
+  groups. Docker images retain their digest pins.
+- Bun runtime upgrades remain manual. Update the package-manager declarations
+  in all four packages, `bun-version` in GitHub workflows, and `BUN_VERSION` in
+  both Dockerfiles together. Refresh all four lockfiles and run `vp run verify`.
+- Dependabot continues to own GitHub Actions updates in
+  [`.github/dependabot.yml`](./.github/dependabot.yml). Renovate's enabled managers
+  exclude GitHub Actions to avoid duplicate PRs. `scripts/archive/` is excluded
+  from Renovate updates.
+
 ## App routes (TanStack Router)
 
 - `/` Zodiac 3D knowledge navigation (live Convex pipeline + sector metrics)
