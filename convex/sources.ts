@@ -173,7 +173,8 @@ export const operatorExtractionSnapshots = query({
       )
       .paginate({
         cursor: args.cursor ?? null,
-        numItems: Math.min(Math.max(args.limit ?? 40, 1), 200),
+        numItems: Math.min(Math.max(args.limit ?? 8, 1), 8),
+        maximumBytesRead: 4_000_000,
       });
     const live = [];
     for (const snapshot of result.page) {

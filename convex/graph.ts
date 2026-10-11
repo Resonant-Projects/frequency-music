@@ -480,15 +480,13 @@ export const createEdge = internalMutation({
     // Check if edge already exists
     const existing = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", args.fromType).eq("fromId", args.fromId),
-      )
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("toType"), args.toType),
-          q.eq(q.field("toId"), args.toId),
-          q.eq(q.field("relationship"), relationship),
-        ),
+      .withIndex("by_identity", (q) =>
+        q
+          .eq("fromType", args.fromType)
+          .eq("fromId", args.fromId)
+          .eq("toType", args.toType)
+          .eq("toId", args.toId)
+          .eq("relationship", relationship),
       )
       .first();
 
@@ -558,15 +556,13 @@ export const linkExtractionConceptsAtomic = internalMutation({
     for (const topic of extraction.topics) {
       const existing = await ctx.db
         .query("edges")
-        .withIndex("by_from", (q) =>
-          q.eq("fromType", "source").eq("fromId", extraction.sourceId),
-        )
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("toType"), "concept"),
-            q.eq(q.field("toId"), topic.toLowerCase().trim()),
-            q.eq(q.field("relationship"), "mentions"),
-          ),
+        .withIndex("by_identity", (q) =>
+          q
+            .eq("fromType", "source")
+            .eq("fromId", extraction.sourceId)
+            .eq("toType", "concept")
+            .eq("toId", topic.toLowerCase().trim())
+            .eq("relationship", "mentions"),
         )
         .first();
       if (existing) continue;

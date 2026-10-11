@@ -12,7 +12,7 @@ import {
 import { voiceById } from "../../convex/shared/voices";
 import { isConfigured, providerFor } from "../src/tts";
 import { waitForBreezeReady } from "../src/tts/breeze";
-import { fetchAudioWithRetry } from "../src/tts/types";
+import { fetchAudioWithRetry, SynthesisRejectedError } from "../src/tts/types";
 
 // The shape every provider hands to fetch; typing it here keeps the
 // assertions cast-free. Hosted providers send a JSON string; Breeze sends a
@@ -524,6 +524,44 @@ describe("tts providers", () => {
       controller.abort();
       for (const signal of seen) expect(signal.aborted, id).toBe(true);
     }
+  });
+
+  test("only unambiguous provider rejections permit another synthesis call", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("private", { status: 429 }))),
+    );
+    await expect(
+      fetchAudioWithRetry("https://tts.test", {}, { attempts: 1 }),
+    ).rejects.toBeInstanceOf(SynthesisRejectedError);
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockRejectedValueOnce(new TypeError("network"))
+        .mockResolvedValueOnce(new Response("private", { status: 400 })),
+    );
+    const outcome = await fetchAudioWithRetry(
+      "https://tts.test",
+      {},
+      { attempts: 2, backoffMs: () => 0 },
+    ).catch((error: unknown) => error);
+    expect(outcome).toBeInstanceOf(Error);
+    expect(outcome).not.toBeInstanceOf(SynthesisRejectedError);
+  });
+
+  test("server errors leave synthesis completion ambiguous", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("private", { status: 500 }))),
+    );
+    const outcome = await fetchAudioWithRetry(
+      "https://tts.test",
+      {},
+      { attempts: 1 },
+    ).catch((error: unknown) => error);
+    expect(outcome).toBeInstanceOf(Error);
+    expect(outcome).not.toBeInstanceOf(SynthesisRejectedError);
   });
 
   test("provider failures retry twice then throw with status only", async () => {

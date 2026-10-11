@@ -22,7 +22,8 @@ import {
   mediaJobStatusValidator,
 } from "./shared/mediaJobs";
 
-const SWEEP_LIMIT = 100;
+// Leaves headroom for pending-artifact and blob cleanup in mediaSweeper.
+const SWEEP_LIMIT = 1;
 
 // Narrate jobs are enqueued at this priority (episodes.narrateBrief passes it
 // explicitly) so narrateJobStateForBrief can range the index on it.

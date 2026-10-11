@@ -551,6 +551,7 @@ export default defineSchema({
       "historical",
       "createdAt",
     ])
+    .index("by_inputHash_historical", ["inputHash", "historical"])
     .index("by_inputHash", ["inputHash"]),
 
   // ==========================================================================
@@ -573,6 +574,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_extractionId_ordinal", ["extractionId", "ordinal"])
+    .index("by_extractionId_status", ["extractionId", "status"])
     .index("by_sourceId", ["sourceId"])
     .index("by_sourceId_status", ["sourceId", "status"])
     .index("by_status", ["status"])
@@ -1154,6 +1156,13 @@ export default defineSchema({
     createdAt: v.number(),
     createdBy: v.union(v.id("users"), v.literal("system")),
   })
+    .index("by_identity", [
+      "fromType",
+      "fromId",
+      "toType",
+      "toId",
+      "relationship",
+    ])
     .index("by_from", ["fromType", "fromId"])
     .index("by_to", ["toType", "toId"])
     .index("by_to_fromType", ["toType", "toId", "fromType"])

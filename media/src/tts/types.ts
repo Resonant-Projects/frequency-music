@@ -1,5 +1,8 @@
 import type { VoiceEntry, VoiceProvider } from "../../../convex/shared/voices";
 
+/** The provider rejected synthesis, or local validation refused before calling it. */
+export class SynthesisRejectedError extends Error {}
+
 export type TtsProvider = {
   id: VoiceProvider;
   maxChars: number;
@@ -82,6 +85,7 @@ export async function fetchAudioWithRetry(
   const timeoutMs = options.timeoutMs ?? TTS_REQUEST_TIMEOUT_MS;
   const deadline = init.signal ?? undefined;
   let lastStatus: number | undefined;
+  let ambiguous = false;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       const response = await fetch(url, {
@@ -91,17 +95,26 @@ export async function fetchAudioWithRetry(
       });
       if (response.ok) return await response.arrayBuffer();
       lastStatus = response.status;
+      if (
+        lastStatus < 400 ||
+        lastStatus >= 500 ||
+        lastStatus === 408 ||
+        lastStatus === 499
+      )
+        ambiguous = true;
     } catch (error) {
       // The caller's deadline is not a provider failure; stop immediately.
       // An attempt timeout is one, and is retried like a network error.
       if (deadline?.aborted) throw error;
       lastStatus = undefined;
+      ambiguous = true;
     }
     if (attempt < attempts) {
       await sleep(backoffMs(lastStatus, attempt), deadline);
     }
   }
-  throw new Error(
+  const Failure = ambiguous ? Error : SynthesisRejectedError;
+  throw new Failure(
     lastStatus === undefined
       ? `TTS request failed after ${attempts} attempts (network error)`
       : `TTS request failed with status ${lastStatus}`,
@@ -110,6 +123,6 @@ export async function fetchAudioWithRetry(
 
 export function requireEnv(name: string): string {
   const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set`);
+  if (!value) throw new SynthesisRejectedError(`${name} is not set`);
   return value;
 }

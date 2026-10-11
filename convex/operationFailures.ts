@@ -54,6 +54,22 @@ export async function recordOperationFailure(
   return id;
 }
 
+/** A successful operation settles its failure even when an operator resumed it. */
+export async function resolveOperationFailure(
+  ctx: MutationCtx,
+  operationId: string,
+) {
+  const failure = await ctx.db
+    .query("operationFailures")
+    .withIndex("by_operation", (q) => q.eq("operationId", operationId))
+    .unique();
+  if (failure && failure.status !== "resolved")
+    await ctx.db.patch(failure._id, {
+      status: "resolved",
+      updatedAt: Date.now(),
+    });
+}
+
 export const reportCaptureFailure = internalMutation({
   args: {
     agentRunId: v.id("agentRuns"),
@@ -85,30 +101,43 @@ async function unsupportedRecovery(
 ): Promise<string | undefined> {
   if (failure.target.kind === "audioUpload") {
     const job = await ctx.db.get(failure.target.jobId);
-    if (!job) return "Media job no longer exists";
-    if (job.input.rendererVersion.startsWith("essay-"))
-      return "Operator renderer must resume its retained local audio";
-    if (
-      /renderer version mismatch|checkpoint missing|checksum mismatch|over the .*upload cap|no handler for kind/i.test(
-        job.error ?? "",
-      )
-    )
-      return "Media prerequisites require operator review";
+    return mediaRecoveryConstraint(job);
   }
   if (failure.target.kind === "extraction") {
     const attempt = await ctx.db.get(failure.target.attemptId);
-    if (!attempt) return "Extraction snapshot no longer exists";
-    if (!attempt.result) {
-      const source = await ctx.db.get(attempt.sourceId);
-      if (
-        attempt.origin === "operator" ||
-        !source ||
-        source.status === "archived" ||
-        source.activeExtractionAttemptId !== attempt._id
-      )
-        return "Only retained output can complete this snapshot";
-    }
+    const source =
+      attempt && !attempt.result ? await ctx.db.get(attempt.sourceId) : null;
+    return extractionRecoveryConstraint(attempt, source);
   }
+  return undefined;
+}
+
+function mediaRecoveryConstraint(job: Doc<"mediaJobs"> | null) {
+  if (!job) return "Media job no longer exists";
+  if (job.input.rendererVersion.startsWith("essay-"))
+    return "Operator renderer must resume its retained local audio";
+  if (
+    /renderer version mismatch|checkpoint missing|checksum mismatch|over the .*upload cap|no handler for kind/i.test(
+      job.error ?? "",
+    )
+  )
+    return "Media prerequisites require operator review";
+  return undefined;
+}
+
+function extractionRecoveryConstraint(
+  attempt: Doc<"extractionAttempts"> | null,
+  source: Doc<"sources"> | null,
+) {
+  if (!attempt) return "Extraction snapshot no longer exists";
+  if (
+    !attempt.result &&
+    (attempt.origin === "operator" ||
+      !source ||
+      source.status === "archived" ||
+      source.activeExtractionAttemptId !== attempt._id)
+  )
+    return "Only retained output can complete this snapshot";
   return undefined;
 }
 
@@ -304,9 +333,11 @@ export const getInvestigation = internalQuery({
     return Promise.all(
       rows.map(async (row) => {
         let evidence: Record<string, unknown>;
+        let unsupportedReason: string | undefined;
         if (row.target.kind === "extraction") {
           const attempt = await ctx.db.get(row.target.attemptId);
           const source = attempt ? await ctx.db.get(attempt.sourceId) : null;
+          unsupportedReason = extractionRecoveryConstraint(attempt, source);
           evidence = {
             attemptStatus: attempt?.status,
             retainedResult: !!attempt?.result,
@@ -317,6 +348,7 @@ export const getInvestigation = internalQuery({
           };
         } else if (row.target.kind === "audioUpload") {
           const job = await ctx.db.get(row.target.jobId);
+          unsupportedReason = mediaRecoveryConstraint(job);
           evidence = {
             jobStatus: job?.status,
             jobKind: job?.kind,
@@ -341,7 +373,7 @@ export const getInvestigation = internalQuery({
           message: row.message,
           attempts: row.attempts,
           evidence,
-          unsupportedReason: await unsupportedRecovery(ctx, row),
+          unsupportedReason,
         };
       }),
     );
@@ -419,6 +451,8 @@ export const reconcile = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
+    // Each queue may load a full failure and a full job/run snapshot. Keep
+    // independent queues inside one transaction even near document limits.
     for (const status of [
       "recorded",
       "retrying",
@@ -430,7 +464,7 @@ export const reconcile = internalMutation({
         .withIndex("by_status_due", (q) =>
           q.eq("status", status).lte("nextAttemptAt", Date.now()),
         )
-        .take(20);
+        .take(1);
       for (const row of rows) {
         if (status === "recorded") {
           await ctx.scheduler.runAfter(0, internal.recoveryWorkflows.start, {

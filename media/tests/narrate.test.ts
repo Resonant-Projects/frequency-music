@@ -20,7 +20,9 @@ import {
   assembleEpisodeHandler,
   EPISODE_LEAD_IN_SECS,
 } from "../src/jobs/assembleEpisode";
-import { narrateHandler } from "../src/jobs/narrate";
+import { narrateHandler, synthesizeRetained } from "../src/jobs/narrate";
+import { voiceById } from "../../convex/shared/voices";
+import { SynthesisRejectedError } from "../src/tts/types";
 import type { NewArtifact, ToolClient } from "../src/jobs/types";
 import { assertUnderUploadCap, MAX_UPLOAD_BYTES } from "../src/upload";
 
@@ -148,6 +150,84 @@ const toneSynth = vi.fn(
 );
 
 describe("narrate job", () => {
+  test.each([
+    "abort",
+    "network",
+  ])("%s during synthesis preserves unfinished intent and refuses another paid call", async (kind) => {
+    const controller = new AbortController();
+    const ctx = {
+      job: narrateJob,
+      workDir: workDir("unfinished-"),
+      retainedDir: workDir("unfinished-retained-"),
+      tools: fakeTools().tools,
+      rendererVersion: "0.2.0",
+      signal: controller.signal,
+    };
+    const voice = voiceById(narrateJob.input.voiceId);
+    const synthesize = vi.fn(async () => {
+      if (kind === "abort") controller.abort(new Error("lease lost"));
+      throw new Error(
+        kind === "abort" ? "lease lost" : "ambiguous transport failure",
+      );
+    });
+    await expect(
+      synthesizeRetained(
+        ctx,
+        { synthesize },
+        voice,
+        "test",
+        join(ctx.workDir, "chunk.wav"),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      synthesizeRetained(
+        { ...ctx, signal: new AbortController().signal },
+        { synthesize },
+        voice,
+        "test",
+        join(ctx.workDir, "retry.wav"),
+      ),
+    ).rejects.toThrow("unfinished chunk");
+    expect(synthesize).toHaveBeenCalledTimes(1);
+  });
+
+  test("a confirmed synthesis rejection permits a later call", async () => {
+    const ctx = {
+      job: narrateJob,
+      workDir: workDir("rejected-"),
+      retainedDir: workDir("rejected-retained-"),
+      tools: fakeTools().tools,
+      rendererVersion: "0.2.0",
+      signal: new AbortController().signal,
+    };
+    const voice = voiceById(narrateJob.input.voiceId);
+    const synthesize = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new SynthesisRejectedError("Provider rejected request"),
+      )
+      .mockImplementationOnce(async (_text, _voice, output) => {
+        const { writeFile } = await import("node:fs/promises");
+        await writeFile(output, "acknowledged audio");
+      });
+    await expect(
+      synthesizeRetained(
+        ctx,
+        { synthesize },
+        voice,
+        "test",
+        join(ctx.workDir, "chunk.wav"),
+      ),
+    ).rejects.toThrow("Provider rejected");
+    await synthesizeRetained(
+      ctx,
+      { synthesize },
+      voice,
+      "test",
+      join(ctx.workDir, "retry.wav"),
+    );
+    expect(synthesize).toHaveBeenCalledTimes(2);
+  });
   test("renders paragraphs, joins with gaps, computes chapter starts, uploads master then delivery", async () => {
     const { tools, minted, uploaded } = fakeTools();
     const signal = new AbortController().signal;

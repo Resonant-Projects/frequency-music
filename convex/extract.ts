@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { type ActionCtx, action, internalAction } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { prepareRetirement } from "./extractInternal";
 import { DEFAULT_MODEL, MODELS } from "./llm";
 import { generateJson } from "./llmNode";
 import { claimValidator } from "./shared/claims";
@@ -167,7 +168,7 @@ async function executeAttempt(
         },
       });
     }
-    const completed = await ctx.runMutation(
+    const completed = await ctx.runAction(
       internal.extractInternal.completeExtraction,
       { attemptId: attempt._id },
     );
@@ -303,6 +304,7 @@ export const storeOperatorExtraction = action({
       });
       if (
         !attempt ||
+        attempt.origin !== "operator" ||
         attempt.sourceId !== args.sourceId ||
         attempt.inputHash !== args.inputHash ||
         attempt.model !== args.model
@@ -319,11 +321,15 @@ export const storeOperatorExtraction = action({
       });
       return {
         success: true,
-        ...(await ctx.runMutation(internal.extractInternal.completeExtraction, {
+        ...(await ctx.runAction(internal.extractInternal.completeExtraction, {
           attemptId: args.snapshotId,
         })),
       };
     }
+    await prepareRetirement(ctx, {
+      sourceId: args.sourceId,
+      inputHash: args.inputHash,
+    });
     return await ctx.runMutation(
       internal.extractInternal.storeOperatorExtraction,
       {

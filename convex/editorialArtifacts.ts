@@ -206,23 +206,41 @@ async function buildPublicEvidenceCards(
   );
 }
 
+type PrivacyReadBudget = { bytes: number; rows: number; complete: boolean };
+
+function privacyReadAvailable(budget: PrivacyReadBudget) {
+  if (budget.bytes > 0 && budget.rows > 0) return true;
+  budget.complete = false;
+  return false;
+}
+
+function recordPrivacyRead(budget: PrivacyReadBudget, row: unknown) {
+  budget.rows--;
+  if (row)
+    budget.bytes -= new TextEncoder().encode(JSON.stringify(row)).byteLength;
+  if (budget.bytes < 0) budget.complete = false;
+}
+
 async function collectSourceIdsForArtifact(
   db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
+  budget: PrivacyReadBudget,
 ): Promise<Id<"sources">[]> {
   const sourceIds = new Set<Id<"sources">>();
 
   if (artifact.primaryRef.type === "weeklyBrief") {
+    if (!privacyReadAvailable(budget)) return [];
     const brief = await db.get("weeklyBriefs", artifact.primaryRef.id);
+    recordPrivacyRead(budget, brief);
     for (const sourceId of brief?.sourceIds ?? []) {
       sourceIds.add(sourceId);
     }
   }
 
-  const hypotheses = await Promise.all(
-    artifact.linkedIds.hypothesisIds.map((id) => db.get("hypotheses", id)),
-  );
-  for (const hypothesis of hypotheses) {
+  for (const id of artifact.linkedIds.hypothesisIds) {
+    if (!privacyReadAvailable(budget)) break;
+    const hypothesis = await db.get("hypotheses", id);
+    recordPrivacyRead(budget, hypothesis);
     for (const sourceId of hypothesis?.sourceIds ?? []) {
       sourceIds.add(sourceId);
     }
@@ -234,11 +252,12 @@ async function collectSourceIdsForArtifact(
 async function findPrivacyViolations(
   db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
+  budget: PrivacyReadBudget,
 ): Promise<{
   privateSourceMentions: string[];
   privateExtractionMentions: string[];
 }> {
-  const sourceIds = await collectSourceIdsForArtifact(db, artifact);
+  const sourceIds = await collectSourceIdsForArtifact(db, artifact, budget);
   const text = [
     artifact.title,
     artifact.dek,
@@ -254,22 +273,25 @@ async function findPrivacyViolations(
   const privateExtractionMentions: string[] = [];
 
   for (const sourceId of sourceIds) {
+    if (!privacyReadAvailable(budget)) break;
     const source = await db.get("sources", sourceId);
+    recordPrivacyRead(budget, source);
     if (!source || source.visibility === "public") continue;
     const title = source.title?.trim();
     if (title && text.includes(title.toLowerCase())) {
       privateSourceMentions.push(title);
     }
     // Private material remains private even when a newer reading supersedes it.
-    const extractions = await db
+    const extractions = db
       .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
-      .collect();
-    for (const extraction of extractions) {
+      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id));
+    for await (const extraction of extractions) {
+      recordPrivacyRead(budget, extraction);
       const summary = extraction.summary?.trim();
       if (summary && text.includes(summary.toLowerCase())) {
         privateExtractionMentions.push(summary);
       }
+      if (!privacyReadAvailable(budget)) break;
     }
   }
 
@@ -279,14 +301,21 @@ async function findPrivacyViolations(
 export async function validateArtifactForPublish(
   db: DatabaseReader,
   artifact: Doc<"editorialArtifacts">,
+  privacyBudget: PrivacyReadBudget = {
+    bytes: 4_000_000,
+    rows: 128,
+    complete: true,
+  },
 ): Promise<PublishValidation> {
+  // Read allowance is shared, but coverage describes only this artifact.
+  privacyBudget.complete = true;
   const bodyOk = artifact.bodyMd.trim().length > 0;
   const whyOk = artifact.whyItMattersMd.trim().length > 0;
   const uncertaintyOk = artifact.uncertaintyMd.trim().length > 0;
   const visibilityOk = artifact.visibility === "public";
   const statusOk =
     artifact.status === "approved" || artifact.status === "published";
-  const privacy = await findPrivacyViolations(db, artifact);
+  const privacy = await findPrivacyViolations(db, artifact, privacyBudget);
   const noPrivateSourceMentions = privacy.privateSourceMentions.length === 0;
   const noPrivateExtractionMentions =
     privacy.privateExtractionMentions.length === 0;
@@ -326,6 +355,13 @@ export async function validateArtifactForPublish(
       message: statusOk
         ? "Artifact is approved for publishing."
         : "Artifact must be approved before publishing.",
+    },
+    {
+      key: "privacyCoverage",
+      ok: privacyBudget.complete,
+      message: privacyBudget.complete
+        ? "Linked private evidence was checked."
+        : "Private evidence could not be fully checked. Review the linked evidence before publishing.",
     },
     {
       key: "privateSources",
@@ -1202,13 +1238,21 @@ async function loadPublishedExportBundle(db: DatabaseReader) {
   const publishedArtifacts = artifacts.filter(
     (artifact) => artifact.status === "published",
   );
-  return await Promise.all(
-    publishedArtifacts.map(async (artifact) => ({
+  // Multiple artifact validations share one transaction's privacy-read allowance.
+  const privacyBudget: PrivacyReadBudget = {
+    bytes: 4_000_000,
+    rows: 128,
+    complete: true,
+  };
+  const bundle = [];
+  for (const artifact of publishedArtifacts) {
+    bundle.push({
       artifact,
-      validation: await validateArtifactForPublish(db, artifact),
+      validation: await validateArtifactForPublish(db, artifact, privacyBudget),
       ...(await resolveExportContext(db, artifact)),
-    })),
-  );
+    });
+  }
+  return bundle;
 }
 
 async function patchAstroExportMetadata(

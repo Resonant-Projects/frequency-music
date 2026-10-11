@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import type { FunctionReturnType } from "convex/server";
 import {
   afterEach,
   beforeEach,
@@ -7,7 +8,7 @@ import {
   test,
   vi,
 } from "vite-plus/test";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MODELS } from "./llm";
 import schema from "./schema";
@@ -88,6 +89,25 @@ const store = (
   });
 
 describe("operator extraction", () => {
+  test("snapshot imports reject worker provenance even without a generation lease", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    const { attemptId } = await t.mutation(
+      internal.extractInternal.beginExtraction,
+      {
+        sourceId,
+        model: MODELS.opus,
+      },
+    );
+    await expect(
+      store(t, sourceId, inputHash, { snapshotId: attemptId }),
+    ).rejects.toThrow("Operator snapshot does not match result provenance");
+    const attempt = await t.run((ctx) => ctx.db.get(attemptId!));
+    expect(attempt?.origin).toBe("worker");
+    expect(attempt?.result).toBeUndefined();
+    expect(
+      await t.run((ctx) => ctx.db.query("extractions").first()),
+    ).toBeNull();
+  });
   test("snapshot recovery pages past 200 abandoned reservations to the live owner", async () => {
     const { t, sourceId, inputHash } = await setup();
     const snapshot = await t.action(api.extract.beginOperatorExtraction, {
@@ -112,16 +132,74 @@ describe("operator extraction", () => {
     });
     expect(first.page).toEqual([]);
     expect(first.isDone).toBe(false);
-    const next = await t.query(api.sources.operatorExtractionSnapshots, {
-      model: MODELS.opus,
-      devBypassSecret: BYPASS,
-      limit: 200,
-      cursor: first.continueCursor,
-    });
-    expect(next.page.map((row) => row.snapshotId)).toEqual([
-      snapshot!.snapshotId,
-    ]);
-    expect(next.isDone).toBe(true);
+    let page = first;
+    const recovered = [];
+    let pages = 1;
+    while (!page.isDone && pages < 30) {
+      page = await t.query(api.sources.operatorExtractionSnapshots, {
+        model: MODELS.opus,
+        devBypassSecret: BYPASS,
+        limit: 200,
+        cursor: page.continueCursor,
+      });
+      recovered.push(...page.page.map((row) => row.snapshotId));
+      pages++;
+    }
+    expect(recovered).toEqual([snapshot!.snapshotId]);
+    expect(page.isDone).toBe(true);
+    expect(pages).toBe(26);
+  });
+  test("large transcript snapshots remain recoverable within transaction read limits", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const transcript = article
+      .repeat(Math.ceil(400_000 / article.length))
+      .slice(0, 400_000);
+    const inputHash = await extractionInputHash(transcript);
+    const expected = [];
+    for (let i = 0; i < 40; i++) {
+      const sourceId = await t.run((ctx) =>
+        ctx.db.insert("sources", {
+          type: "youtube",
+          title: `Long transcript ${i}`,
+          transcript,
+          dedupeKey: `large:${i}`,
+          status: "text_ready",
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        }),
+      );
+      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+        sourceId,
+        inputHash,
+        model: MODELS.opus,
+        devBypassSecret: BYPASS,
+      });
+      expected.push(snapshot!.snapshotId);
+    }
+    const recovered = [];
+    let cursor: string | null = null;
+    let done = false;
+    let pages = 0;
+    while (!done && pages < 10) {
+      const page: FunctionReturnType<
+        typeof api.sources.operatorExtractionSnapshots
+      > = await t.query(api.sources.operatorExtractionSnapshots, {
+        model: MODELS.opus,
+        devBypassSecret: BYPASS,
+        limit: 200,
+        cursor,
+      });
+      expect(page.page.length).toBeLessThanOrEqual(8);
+      recovered.push(...page.page.map((row) => row.snapshotId));
+      cursor = page.continueCursor;
+      done = page.isDone;
+      pages++;
+    }
+    expect(done).toBe(true);
+    expect(pages).toBe(5);
+    expect(new Set(recovered)).toEqual(new Set(expected));
   });
   test("an interrupted export can recover its original snapshot and import late output as history", async () => {
     const { t, sourceId, inputHash } = await setup();

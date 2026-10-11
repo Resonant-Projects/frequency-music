@@ -19,6 +19,7 @@ import {
   normalize,
 } from "../audio/loudness";
 import { chunkForLimit, providerFor } from "../tts";
+import { SynthesisRejectedError } from "../tts/types";
 import type { JobContext } from "./types";
 import { uploadMasterAndDelivery } from "../audio/artifacts";
 
@@ -55,7 +56,12 @@ export async function synthesizeRetained(
     try {
       await synth.synthesize(text, voice, file, ctx.signal);
     } catch (error) {
-      if (ctx.retainedDir) await failSynthesis(ctx.retainedDir, key);
+      if (
+        ctx.retainedDir &&
+        !ctx.signal.aborted &&
+        error instanceof SynthesisRejectedError
+      )
+        await failSynthesis(ctx.retainedDir, key);
       throw error;
     }
     if (ctx.retainedDir) await retainChunk(ctx.retainedDir, key, file);

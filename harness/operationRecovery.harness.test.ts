@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
 import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
+import type { Id } from "../convex/_generated/dataModel";
 import { modules } from "./modules";
 
 async function setup() {
@@ -30,6 +31,83 @@ async function setup() {
   return { t, runId, input, failureId, due };
 }
 describe("operational recovery", () => {
+  test("reconciliation advances large media snapshots and an independent queue within transaction limits", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const ids: Id<"operationFailures">[] = [];
+    for (let i = 0; i < 22; i++) {
+      const jobId = await t.run((ctx) =>
+        ctx.db.insert("mediaJobs", {
+          kind: "narrate",
+          input: {
+            kind: "narrate",
+            script: { paragraphs: ["x".repeat(900_000)], chapters: [] },
+            voiceId: "local",
+            promptVersion: "v1",
+            target: "spoken",
+            title: "Large narration",
+            access: "private",
+            refs: {},
+            assembleOnDone: false,
+            rendererVersion: "test",
+          },
+          dedupeKey: `large-${i}`,
+          status: i === 0 ? "queued" : i === 21 ? "done" : "parked",
+          priority: 0,
+          attempts: 3,
+          createdAt: i,
+        }),
+      );
+      ids.push(
+        await t.run((ctx) =>
+          ctx.db.insert("operationFailures", {
+            operationId: `large-${i}`,
+            causeKey: "audio:large",
+            target: { kind: "audioUpload", jobId },
+            message: "Upload interrupted",
+            status: "recovering",
+            attempts: 1,
+            nextAttemptAt: 0,
+            createdAt: i,
+            updatedAt: i,
+          }),
+        ),
+      );
+    }
+    const independent = await t.run((ctx) =>
+      ctx.db.insert("operationFailures", {
+        operationId: "independent-capture",
+        causeKey: "capture:intake",
+        target: {
+          kind: "capture",
+          input: {
+            url: "https://example.org",
+            query: "test",
+            rationale: "test",
+          },
+        },
+        message: "Interrupted",
+        status: "retrying",
+        attempts: 1,
+        nextAttemptAt: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await t.mutation(internal.operationFailures.reconcile, {});
+    expect((await t.run((ctx) => ctx.db.get(independent)))?.status).toBe(
+      "recorded",
+    );
+    expect(
+      (await t.run((ctx) => ctx.db.get(ids[0]!)))?.nextAttemptAt,
+    ).toBeGreaterThan(Date.now());
+    for (let tick = 0; tick < 21; tick++)
+      await t.mutation(internal.operationFailures.reconcile, {});
+    for (const id of ids.slice(1, 21))
+      expect((await t.run((ctx) => ctx.db.get(id)))?.status).toBe("recorded");
+    expect((await t.run((ctx) => ctx.db.get(ids[21]!)))?.status).toBe(
+      "resolved",
+    );
+  });
   test("capture recovery run pages include assigned failures without duplicate reporter rows", async () => {
     const { t, runId, failureId, due } = await setup();
     await due();
@@ -57,7 +135,7 @@ describe("operational recovery", () => {
     expect(await read(recoveryRunId)).toHaveLength(1);
   });
 
-  test("100 same-cause failures use five groups and running groups accept no new members", async () => {
+  test("100 same-cause failures use bounded groups and running groups accept no new members", async () => {
     const { t, failureId } = await setup();
     const original = (await t.query(internal.operationFailures.getForRecovery, {
       failureId,
@@ -83,7 +161,7 @@ describe("operational recovery", () => {
         .filter((q) => q.eq(q.field("graphName"), "failure-investigation"))
         .collect(),
     );
-    expect(runs).toHaveLength(5);
+    expect(runs).toHaveLength(34);
     for (const run of runs)
       expect(
         await t.run((ctx) =>
@@ -94,7 +172,7 @@ describe("operational recovery", () => {
             )
             .collect(),
         ),
-      ).toHaveLength(20);
+      ).toHaveLength(run === runs.at(-1) ? 1 : 3);
     const id = await t.run((ctx) =>
       ctx.db.insert("operationFailures", {
         ...fields,
@@ -166,7 +244,8 @@ describe("operational recovery", () => {
         failureId: rows[0]!,
       }))!.nextAttemptAt,
     ).toBeGreaterThan(Date.now());
-    await t.mutation(internal.operationFailures.reconcile, {});
+    for (let tick = 0; tick < 20; tick++)
+      await t.mutation(internal.operationFailures.reconcile, {});
     expect(
       (
         await t.query(internal.operationFailures.getForRecovery, {

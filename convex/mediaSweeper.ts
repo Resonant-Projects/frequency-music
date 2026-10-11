@@ -6,7 +6,9 @@ import { internalMutation, type MutationCtx } from "./_generated/server";
 import { readSetting, writeSetting } from "./settings";
 
 const DEFAULT_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
-const SCAN_LIMIT = 200;
+// Full artifacts, their jobs and expired leases share one transaction.
+const PENDING_SCAN_LIMIT = 2;
+const SCAN_LIMIT = 8;
 // settings row holding the last _storage blob examined as
 // "<_creationTime>:<_id>". The next sweep resumes inclusively at that
 // creation time (skipping only that blob), so blobs sharing the boundary
@@ -105,7 +107,8 @@ export const sweep = internalMutation({
     try {
       stalePending = await pendingQuery.paginate({
         cursor: pendingScan?.cursor ?? null,
-        numItems: SCAN_LIMIT,
+        numItems: PENDING_SCAN_LIMIT,
+        maximumBytesRead: 1_000_000,
       });
     } catch (error) {
       const invalidCursor =
@@ -167,7 +170,10 @@ export const sweep = internalMutation({
       .order("asc")
       // Inclusive resume returns the last examined blob once more, so fetch
       // one extra row to keep the window at scanLimit new blobs.
-      .take((args.scanLimit ?? SCAN_LIMIT) + (cursor.blobId ? 1 : 0));
+      .take(
+        Math.min(Math.max(args.scanLimit ?? SCAN_LIMIT, 1), SCAN_LIMIT) +
+          (cursor.blobId ? 1 : 0),
+      );
     // Inclusive resume, tie-safe within the boundary timestamp: every blob at
     // the cursor's creation time is skipped until the cursor blob itself has
     // been seen (it is skipped too); later timestamps are always examined. If

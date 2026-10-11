@@ -61,6 +61,10 @@ export class FakeQuery<T extends Record<string, any>> {
     return Promise.resolve([...this.rows]);
   }
 
+  async *[Symbol.asyncIterator]() {
+    for (const row of this.rows) yield row;
+  }
+
   take(limit: number) {
     return Promise.resolve(this.rows.slice(0, limit));
   }

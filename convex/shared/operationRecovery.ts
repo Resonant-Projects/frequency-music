@@ -36,4 +36,5 @@ export const diagnosisZ = z.object({
   recover: z.boolean(),
 });
 export const MAX_RECOVERY_ATTEMPTS = 3;
-export const MAX_GROUP_FAILURES = 20;
+// Evidence and diagnosis load full prerequisites under one transaction budget.
+export const MAX_GROUP_FAILURES = 3;

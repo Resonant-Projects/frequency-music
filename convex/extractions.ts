@@ -4,6 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import {
   type DatabaseReader,
   internalMutation,
+  type MutationCtx,
   mutation,
   query,
 } from "./_generated/server";
@@ -18,11 +19,53 @@ export function currentExtractions(
   db: Pick<DatabaseReader, "query">,
   sourceId: Id<"sources">,
 ) {
-  return db
-    .query("extractions")
-    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", sourceId))
-    .order("desc")
-    .filter((q) => q.neq(q.field("historical"), true));
+  async function* readings() {
+    const streams = [false, undefined].map((historical) =>
+      db
+        .query("extractions")
+        .withIndex("by_sourceId_historical_createdAt", (q) =>
+          q.eq("sourceId", sourceId).eq("historical", historical),
+        )
+        .order("desc")
+        [Symbol.asyncIterator](),
+    );
+    try {
+      const heads = await Promise.all(streams.map((stream) => stream.next()));
+      while (!heads[0]!.done || !heads[1]!.done) {
+        const index = heads[0]!.done
+          ? 1
+          : heads[1]!.done
+            ? 0
+            : newestFirst(heads[0]!.value, heads[1]!.value) <= 0
+              ? 0
+              : 1;
+        yield heads[index]!.value;
+        heads[index] = await streams[index]!.next();
+      }
+    } finally {
+      await Promise.all(
+        streams.map((stream) => Promise.resolve(stream.return?.())),
+      );
+    }
+  }
+  return {
+    [Symbol.asyncIterator]: readings,
+    first: async (recordRead?: (row: Doc<"extractions">) => void) =>
+      (await newestCurrentExtraction(db, sourceId, recordRead)) ?? null,
+    take: async (limit: number) => {
+      const rows: Doc<"extractions">[] = [];
+      if (limit <= 0) return rows;
+      if (limit === 1) {
+        const row = await newestCurrentExtraction(db, sourceId);
+        return row ? [row] : rows;
+      }
+      for await (const row of readings()) {
+        rows.push(row);
+        if (rows.length >= limit) break;
+      }
+      return rows;
+    },
+  };
 }
 
 /** Derive one current reading per Source, including deployments with unmarked legacy history. */
@@ -31,33 +74,60 @@ export async function listCurrentExtractions(
   limit: number,
 ) {
   const rows: Doc<"extractions">[] = [];
-  if (!Number.isFinite(limit) || limit <= 0) return rows;
-  limit = Math.min(Math.floor(limit), 120);
-  const candidates = (
-    await Promise.all(
-      [false, undefined].map((historical) =>
-        db
-          .query("extractions")
-          .withIndex("by_historical_createdAt", (q) =>
-            q.eq("historical", historical),
-          )
-          .order("desc")
-          .take(240),
-      ),
-    )
-  )
-    .flat()
-    .sort(newestFirst);
+  if (!Number.isFinite(limit)) return rows;
+  limit = Math.min(Math.max(Math.floor(limit), 0), 120);
+  if (limit === 0) return rows;
+  // Merge both indexed streams by recency. Legacy duplicates consume scan
+  // budget, not the caller's result limit. Byte accounting includes latest-row
+  // lookups so large Claim payloads cannot exhaust Convex's read allowance.
+  const streams = [false, undefined].map((historical) =>
+    db
+      .query("extractions")
+      .withIndex("by_historical_createdAt", (q) =>
+        q.eq("historical", historical),
+      )
+      .order("desc")
+      [Symbol.asyncIterator](),
+  );
+  let readBytes = 0;
+  const recordRead = (row: Doc<"extractions">) => {
+    readBytes += new TextEncoder().encode(JSON.stringify(row)).byteLength;
+  };
+  const next = async (index: number) => {
+    const result = await streams[index]!.next();
+    if (!result.done) recordRead(result.value);
+    return result;
+  };
   const latestIds = new Map<Id<"sources">, Id<"extractions"> | undefined>();
-  for (const row of candidates) {
-    if (!latestIds.has(row.sourceId))
-      latestIds.set(
-        row.sourceId,
-        (await newestCurrentExtraction(db, row.sourceId))?._id,
-      );
-    if (latestIds.get(row.sourceId) !== row._id) continue;
-    rows.push(row);
-    if (rows.length >= limit) break;
+  try {
+    const heads = await Promise.all(streams.map((_, index) => next(index)));
+    let scanned = 0;
+    while (rows.length < limit && scanned < 1024 && readBytes < 4_000_000) {
+      const index = heads[0]!.done
+        ? 1
+        : heads[1]!.done
+          ? 0
+          : newestFirst(heads[0]!.value, heads[1]!.value) <= 0
+            ? 0
+            : 1;
+      const head = heads[index]!;
+      if (head.done) break;
+      const row = head.value;
+      scanned++;
+      if (!latestIds.has(row.sourceId))
+        latestIds.set(
+          row.sourceId,
+          (await newestCurrentExtraction(db, row.sourceId, recordRead))?._id,
+        );
+      if (latestIds.get(row.sourceId) === row._id) rows.push(row);
+      if (rows.length >= limit || scanned >= 1024 || readBytes >= 4_000_000)
+        break;
+      heads[index] = await next(index);
+    }
+  } finally {
+    await Promise.all(
+      streams.map((stream) => Promise.resolve(stream.return?.())),
+    );
   }
   return rows;
 }
@@ -69,6 +139,7 @@ function newestFirst(a: Doc<"extractions">, b: Doc<"extractions">) {
 async function newestCurrentExtraction(
   db: Pick<DatabaseReader, "query">,
   sourceId: Id<"sources">,
+  recordRead?: (row: Doc<"extractions">) => void,
 ) {
   const candidates = await Promise.all(
     [false, undefined].map((historical) =>
@@ -81,12 +152,33 @@ async function newestCurrentExtraction(
         .first(),
     ),
   );
+  for (const row of candidates) if (row) recordRead?.(row);
   return candidates
     .filter((row): row is Doc<"extractions"> => row !== null)
     .sort(newestFirst)[0];
 }
 
 /** Normalize legacy history in bounded batches without requiring a live operator migration. */
+export async function retireClaimsBatch(
+  ctx: MutationCtx,
+  extractionId: Id<"extractions">,
+) {
+  const claims = await ctx.db
+    .query("claims")
+    .withIndex("by_extractionId_status", (q) =>
+      q.eq("extractionId", extractionId).eq("status", "active"),
+    )
+    .take(3);
+  for (const claim of claims)
+    await ctx.db.patch(claim._id, { status: "superseded" });
+  return !(await ctx.db
+    .query("claims")
+    .withIndex("by_extractionId_status", (q) =>
+      q.eq("extractionId", extractionId).eq("status", "active"),
+    )
+    .first());
+}
+
 export const normalizeLegacyHistory = internalMutation({
   args: {},
   returns: v.null(),
@@ -96,22 +188,15 @@ export const normalizeLegacyHistory = internalMutation({
       .withIndex("by_historical_createdAt", (q) =>
         q.eq("historical", undefined),
       )
-      .take(20);
+      .take(1);
     for (const row of rows) {
       const current =
         (await newestCurrentExtraction(ctx.db, row.sourceId))?._id === row._id;
-      await ctx.db.patch(row._id, { historical: !current });
       if (!current) {
-        const claims = await ctx.db
-          .query("claims")
-          .withIndex("by_extractionId_ordinal", (q) =>
-            q.eq("extractionId", row._id),
-          )
-          .collect();
-        for (const claim of claims)
-          if (claim.status === "active")
-            await ctx.db.patch(claim._id, { status: "superseded" });
+        // Keep this legacy row eligible until every obsolete Claim is retired.
+        if (!(await retireClaimsBatch(ctx, row._id))) continue;
       }
+      await ctx.db.patch(row._id, { historical: !current });
     }
     return null;
   },

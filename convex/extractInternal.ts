@@ -1,15 +1,20 @@
-import { recordOperationFailure } from "./operationFailures";
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { type Infer, v } from "convex/values";
-import { currentExtractions } from "./extractions";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
+  type ActionCtx,
   type DatabaseReader,
+  internalAction,
   internalMutation,
   internalQuery,
   type MutationCtx,
 } from "./_generated/server";
+import { currentExtractions, retireClaimsBatch } from "./extractions";
+import {
+  recordOperationFailure,
+  resolveOperationFailure,
+} from "./operationFailures";
 import {
   claimValidator,
   compositionParameterValidator,
@@ -21,7 +26,25 @@ import {
   extractionInputHash,
   renderExtractionPrompt,
 } from "./shared/extractionPrompt";
+import { redactError } from "./shared/redactError";
 import { unextractableTextReason } from "./shared/sourceText";
+import { fnv1a64Hex } from "./shared/stableHash";
+
+function extractionFailureClass(error: string) {
+  if (
+    /\b(?:401|403)\b|unauthori[sz]ed|forbidden|authentication|invalid.api.key/i.test(
+      error,
+    )
+  )
+    return "authentication";
+  if (/\b429\b|rate.limit|too many requests/i.test(error)) return "rate_limit";
+  if (/timed? ?out|timeout|deadline/i.test(error)) return "timeout";
+  if (/\b(?:500|502|503|504)\b|service unavailable|bad gateway/i.test(error))
+    return "provider_unavailable";
+  if (/network|connection|fetch failed|ECONN/i.test(error)) return "network";
+  // Unknown causes only share a diagnosis when their redacted messages match.
+  return fnv1a64Hex(redactError(error).trim().toLowerCase());
+}
 
 /**
  * The current Extraction that already covers this text for this Source, or
@@ -33,25 +56,43 @@ async function extractionForInput(
   inputHash: string,
   sourceId: Id<"sources">,
 ): Promise<{ extraction: Doc<"extractions">; sameSource: boolean } | null> {
-  // Only a Source's latest Extraction is current; storing a new one
-  // supersedes the claims of the earlier ones.
-  const latest = (id: Id<"sources">) => currentExtractions(db, id).first();
+  let readBytes = 0;
+  let reads = 0;
+  const recordRead = (row: unknown) => {
+    reads++;
+    if (row)
+      readBytes += new TextEncoder().encode(JSON.stringify(row)).byteLength;
+  };
+  const available = () => readBytes < 4_000_000 && reads < 128;
+  // Always check our latest reading, then perform bounded cross-Source dedupe.
+  // Retained history cannot consume this scan. Legacy duplicates may consume
+  // its allowance, but cannot prevent reserving a new exact snapshot.
+  const latest = (id: Id<"sources">) =>
+    currentExtractions(db, id).first(recordRead);
   const own = await latest(sourceId);
   if (own?.inputHash === inputHash)
     return { extraction: own, sameSource: true };
-  // Streams every match, stopping at the first live holder whose current
-  // Extraction it is.
-  for await (const match of db
-    .query("extractions")
-    .withIndex("by_inputHash", (q) => q.eq("inputHash", inputHash))) {
-    if (match.sourceId === sourceId) continue;
-    const holder = await db.get("sources", match.sourceId);
-    if (
-      holder &&
-      holder.status !== "archived" &&
-      (await latest(holder._id))?._id === match._id
-    ) {
-      return { extraction: match, sameSource: false };
+  for (const historical of [false, undefined]) {
+    if (!available()) break;
+    for await (const match of db
+      .query("extractions")
+      .withIndex("by_inputHash_historical", (q) =>
+        q.eq("inputHash", inputHash).eq("historical", historical),
+      )
+      .order("desc")) {
+      recordRead(match);
+      if (!available()) return null;
+      if (match.sourceId === sourceId) continue;
+      const holder = await db.get("sources", match.sourceId);
+      recordRead(holder);
+      if (!available()) return null;
+      if (
+        holder &&
+        holder.status !== "archived" &&
+        (await latest(holder._id))?._id === match._id
+      )
+        return { extraction: match, sameSource: false };
+      if (!available()) return null;
     }
   }
   return null;
@@ -141,23 +182,30 @@ async function insertExtraction(
     );
 
   if (!args.historical) {
-    // Legacy rows have no historical flag. Retire every prior current reading.
-    for await (const previousExtraction of currentExtractions(
-      ctx.db,
-      args.sourceId,
-    )) {
-      await ctx.db.patch(previousExtraction._id, { historical: true });
-      const previousClaims = await ctx.db
+    // Obsolete legacy readings drain in separate transactions before this
+    // atomic transition. Preserve the latest reading until all checks pass.
+    const readings = await currentExtractions(ctx.db, args.sourceId).take(2);
+    if (readings.length > 1)
+      throw new Error("Legacy retirement needs another completion batch");
+    const previousExtraction = readings[0];
+    if (previousExtraction) {
+      const claims: Doc<"claims">[] = [];
+      let bytes = 0;
+      for await (const claim of ctx.db
         .query("claims")
-        .withIndex("by_extractionId_ordinal", (q) =>
-          q.eq("extractionId", previousExtraction._id),
-        )
-        .collect();
-      for (const claim of previousClaims) {
-        if (claim.status === "active") {
-          await ctx.db.patch("claims", claim._id, { status: "superseded" });
-        }
+        .withIndex("by_extractionId_status", (q) =>
+          q.eq("extractionId", previousExtraction._id).eq("status", "active"),
+        )) {
+        bytes += new TextEncoder().encode(JSON.stringify(claim)).byteLength;
+        if (bytes > 1_000_000 || claims.length >= 1000)
+          throw new Error(
+            "Current Claim retirement requires review; retained output is preserved",
+          );
+        claims.push(claim);
       }
+      for (const claim of claims)
+        await ctx.db.patch(claim._id, { status: "superseded" });
+      await ctx.db.patch(previousExtraction._id, { historical: true });
     }
   }
 
@@ -464,7 +512,86 @@ const completionValidator = v.object({
   parameterCount: v.number(),
 });
 
-export const completeExtraction = internalMutation({
+export const prepareRetirementBatch = internalMutation({
+  args: {
+    attemptId: v.optional(v.id("extractionAttempts")),
+    sourceId: v.optional(v.id("sources")),
+    inputHash: v.optional(v.string()),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const attempt = args.attemptId ? await ctx.db.get(args.attemptId) : null;
+    if (args.attemptId && !attempt?.result)
+      throw new Error("Extraction has no retained result");
+    if (attempt?.extractionId) return true;
+    const sourceId = attempt?.sourceId ?? args.sourceId;
+    if (!sourceId) throw new Error("Source required");
+    const source = await ctx.db.get(sourceId);
+    if (!source) return true;
+    if (attempt) {
+      if (
+        source.activeExtractionAttemptId !== attempt._id ||
+        !["extracting", "text_ready", "review_needed"].includes(
+          source.status,
+        ) ||
+        (source.status === "review_needed" &&
+          source.blockedReason !== "ai_error") ||
+        source.title !== attempt.title ||
+        source.canonicalUrl !== attempt.canonicalUrl ||
+        (await extractionInputHash(
+          source.rawText || source.transcript || "",
+          attempt.promptVersion,
+        )) !== attempt.inputHash
+      )
+        return true;
+      await ctx.db.patch(attempt._id, { updatedAt: Date.now() });
+    } else if (
+      source.status !== "text_ready" ||
+      !args.inputHash ||
+      (await extractionInputHash(source.rawText || source.transcript || "")) !==
+        args.inputHash
+    )
+      return true;
+    const readings = await currentExtractions(ctx.db, sourceId).take(2);
+    const obsolete = readings[1];
+    if (!obsolete) return true;
+    if (await retireClaimsBatch(ctx, obsolete._id))
+      await ctx.db.patch(obsolete._id, { historical: true });
+    return false;
+  },
+});
+
+export async function prepareRetirement(
+  ctx: Pick<ActionCtx, "runMutation">,
+  args: {
+    attemptId?: Id<"extractionAttempts">;
+    sourceId?: Id<"sources">;
+    inputHash?: string;
+  },
+): Promise<void> {
+  for (let batch = 0; batch < 512; batch++)
+    if (
+      await ctx.runMutation(
+        internal.extractInternal.prepareRetirementBatch,
+        args,
+      )
+    )
+      return;
+  throw new Error(
+    "Legacy retirement needs another completion pass; retained output is preserved",
+  );
+}
+
+export const completeExtraction = internalAction({
+  args: { attemptId: v.id("extractionAttempts") },
+  returns: completionValidator,
+  handler: async (ctx, args): Promise<Infer<typeof completionValidator>> => {
+    await prepareRetirement(ctx, args);
+    return ctx.runMutation(internal.extractInternal.commitExtraction, args);
+  },
+});
+
+export const commitExtraction = internalMutation({
   args: { attemptId: v.id("extractionAttempts") },
   returns: completionValidator,
   handler: async (
@@ -484,6 +611,7 @@ export const completeExtraction = internalMutation({
     });
     if (attempt.extractionId) {
       const stored = await ctx.db.get(attempt.extractionId);
+      if (stored) await resolveOperationFailure(ctx, `extraction:${attemptId}`);
       return outcome(
         attempt.extractionId,
         attempt.current === true && !!stored && stored.historical !== true,
@@ -529,12 +657,23 @@ export const completeExtraction = internalMutation({
       await ctx.runMutation(internal.graph.linkExtractionConceptsAtomic, {
         extractionId,
       });
+    else if (
+      !found &&
+      source.activeExtractionAttemptId === attemptId &&
+      source.status === "extracting"
+    ) {
+      // Metadata may change without a replacement admission. Release only
+      // this completed owner; archives and newer owners retain their disposition.
+      await ctx.db.patch(source._id, { activeExtractionAttemptId: undefined });
+      await setSourceStatus(ctx, source._id, "text_ready");
+    }
     await ctx.db.patch(attemptId, {
       extractionId,
       current,
       status: "completed",
       updatedAt: Date.now(),
     });
+    await resolveOperationFailure(ctx, `extraction:${attemptId}`);
     return outcome(extractionId, current);
   },
 });
@@ -563,23 +702,33 @@ export const failExtraction = internalMutation({
     });
     await recordOperationFailure(ctx, {
       operationId: `extraction:${attemptId}`,
-      causeKey: `extraction:${attempt.model}`,
+      causeKey: `extraction:${attempt.model}:${extractionFailureClass(error)}`,
       target: { kind: "extraction", attemptId },
       message: error.slice(0, 1000),
     });
     const source = await ctx.db.get(attempt.sourceId);
     if (
       source?.activeExtractionAttemptId === attemptId &&
-      source.status === "extracting" &&
-      (await extractionInputHash(
-        source.rawText || source.transcript || "",
-        attempt.promptVersion,
-      )) === attempt.inputHash
+      source.status === "extracting"
     ) {
-      await setSourceStatus(ctx, source._id, "review_needed", {
-        reason: "ai_error",
-        details: "Extraction failed; recovery pending",
-      });
+      const matches =
+        source.title === attempt.title &&
+        source.canonicalUrl === attempt.canonicalUrl &&
+        (await extractionInputHash(
+          source.rawText || source.transcript || "",
+          attempt.promptVersion,
+        )) === attempt.inputHash;
+      if (matches) {
+        await setSourceStatus(ctx, source._id, "review_needed", {
+          reason: "ai_error",
+          details: "Extraction failed; recovery pending",
+        });
+      } else {
+        await ctx.db.patch(source._id, {
+          activeExtractionAttemptId: undefined,
+        });
+        await setSourceStatus(ctx, source._id, "text_ready");
+      }
     }
     return null;
   },
@@ -714,6 +863,8 @@ export const claimGeneration = internalMutation({
     )
       throw new Error("Only retained output can complete this snapshot");
     await ctx.db.patch(attemptId, {
+      status: "pending",
+      updatedAt: Date.now(),
       generationLease: lease,
       generationLeaseUntil: Date.now() + 15 * 60_000,
     });
@@ -726,6 +877,9 @@ export const reconcileAttempts = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx): Promise<null> => {
+    // Three queues share one transaction. Each row also loads its full Source
+    // and worker failure handling rereads the snapshot. Leave room for those
+    // reads even when documents approach Convex's 1 MiB document limit.
     for (const status of ["pending", "generated"] as const) {
       const rows =
         status === "pending"
@@ -746,7 +900,7 @@ export const reconcileAttempts = internalMutation({
                               : 15 * 60_000),
                         ),
                     )
-                    .take(20),
+                    .take(1),
                 ),
               )
             ).flat()
@@ -757,7 +911,7 @@ export const reconcileAttempts = internalMutation({
                   .eq("status", "generated")
                   .lte("updatedAt", Date.now() - 15 * 60_000),
               )
-              .take(20);
+              .take(1);
       for (const row of rows) {
         if ((row.generationLeaseUntil ?? 0) > Date.now()) continue;
         if (row.origin === "operator" && row.status === "pending") {
