@@ -1,8 +1,11 @@
 import { convexTest } from "convex-test";
+import { getFunctionName } from "convex/server";
 import { describe, expect, test, vi } from "vite-plus/test";
 import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import type { ActionCtx } from "../convex/_generated/server";
 import { validateArtifactForPublish } from "../convex/editorialArtifacts";
+import { resumeAttempt } from "../convex/extract";
 import schema from "../convex/schema";
 import { extractionInputHash } from "../convex/shared/extractionPrompt";
 import { modules } from "./modules";
@@ -49,6 +52,89 @@ async function setup(transactionLimits = false) {
   return { t, sourceId, begin };
 }
 describe("Extraction completion", () => {
+  test.each(["retained-generation", undefined])(
+    "retained-result completion failure records its cause and replays without generation (lease: %s)",
+    async (generationLease) => {
+      const { t, begin } = await setup();
+      const attemptId = await begin();
+      await t.run((ctx) =>
+        ctx.db.patch(attemptId, {
+          result,
+          status: "generated",
+          generationLease,
+        }),
+      );
+      const original = new Error("Completion storage temporarily unavailable");
+      const runMutation = vi.fn(async (ref, args) => t.mutation(ref, args));
+      const runAction = vi.fn(async () => {
+        throw original;
+      });
+      const ctx = {
+        runQuery: t.query,
+        runMutation,
+        runAction,
+      } as unknown as ActionCtx;
+      const handler = (
+        resumeAttempt as unknown as {
+          _handler: (
+            ctx: ActionCtx,
+            args: { attemptId: Id<"extractionAttempts"> },
+          ) => Promise<unknown>;
+        }
+      )._handler;
+      await expect(handler(ctx, { attemptId })).rejects.toBe(original);
+      expect(runMutation).toHaveBeenCalledTimes(1);
+      expect(getFunctionName(runMutation.mock.calls[0]![0])).toBe(
+        "extractInternal:failExtraction",
+      );
+      expect(runMutation.mock.calls[0]![1]).toEqual({
+        attemptId,
+        generationLease,
+        error: original.message,
+      });
+      const retained = await t.run((ctx) => ctx.db.get(attemptId));
+      expect(retained?.status).toBe("generated");
+      expect(retained?.result).toEqual(result);
+      expect(retained?.error).toBe(original.message);
+      expect(retained?.generationLease).toBeUndefined();
+      const failure = await t.run((ctx) =>
+        ctx.db
+          .query("operationFailures")
+          .withIndex("by_operation", (q) =>
+            q.eq("operationId", `extraction:${attemptId}`),
+          )
+          .unique(),
+      );
+      expect(failure?.message).toBe(original.message);
+      expect(failure?.status).toBe("recorded");
+      expect(
+        await t.run((ctx) =>
+          ctx.db.system.query("_scheduled_functions").collect(),
+        ),
+      ).toHaveLength(1);
+
+      const replayAction = vi.fn(async (ref, args) => t.action(ref, args));
+      await expect(
+        handler({ ...ctx, runAction: replayAction } as ActionCtx, {
+          attemptId,
+        }),
+      ).resolves.toMatchObject({ success: true, summary: result.summary });
+      // Only failure reporting mutated through the action seam. No generation was claimed.
+      expect(runMutation).toHaveBeenCalledTimes(1);
+      expect(replayAction).toHaveBeenCalledTimes(1);
+      expect(getFunctionName(replayAction.mock.calls[0]![0])).toBe(
+        "extractInternal:completeExtraction",
+      );
+      expect(replayAction.mock.calls[0]![1]).toEqual({ attemptId });
+      expect((await t.run((ctx) => ctx.db.get(attemptId)))?.status).toBe(
+        "completed",
+      );
+      expect((await t.run((ctx) => ctx.db.get(failure!._id)))?.status).toBe(
+        "resolved",
+      );
+    },
+  );
+
   test("extraction failure retains valid Unicode diagnostics and its recovery record", async () => {
     const { t, begin } = await setup();
     const attemptId = await begin();

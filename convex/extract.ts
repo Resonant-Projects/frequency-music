@@ -178,7 +178,10 @@ async function executeAttempt(
   } catch (error) {
     await ctx.runMutation(internal.extractInternal.failExtraction, {
       attemptId: attempt._id,
-      generationLease,
+      // Result replay did not acquire a new generation lease.
+      generationLease: attempt.result
+        ? attempt.generationLease
+        : generationLease,
       error: truncateText(redactError(error), 1000),
     });
     throw error;
