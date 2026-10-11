@@ -146,11 +146,14 @@ export function Zodiac3D() {
   const [discovered, setDiscovered] = createSignal<AtlasNode[]>([]);
   const [discoveredEdges, setDiscoveredEdges] = createSignal<AtlasEdge[]>([]);
   createEffect(() => {
-    const node = selected();
+    const detail = detailQ.data();
+    const relations = relationsQ.data();
+    // Selection can change before the query effects clear the previous result.
+    // Only query updates may add discoveries to the currently selected node.
+    const node = untrack(selected);
     if (!node) return;
     const additions: AtlasNode[] = [];
     const links: AtlasEdge[] = [];
-    const detail = detailQ.data();
     if (node.kind === "concept" && detail?.concept._id === node.recordId) {
       for (const [kind, records] of [
         ["source", detail.linkedSources],
@@ -170,7 +173,7 @@ export function Zodiac3D() {
         }
       }
     } else if (node.kind !== "domain" && node.kind !== "concept") {
-      for (const relation of relationsQ.data() ?? []) {
+      for (const relation of relations ?? []) {
         if (
           !ATLAS_LAYERS.includes(relation.type as (typeof ATLAS_LAYERS)[number])
         )
@@ -391,7 +394,7 @@ export function Zodiac3D() {
               class="atlas-canvas"
               role="img"
               tabindex="0"
-              aria-label="3D knowledge atlas. Drag to orbit, scroll to zoom. Use the top-bar search or tab through the space labels for keyboard access."
+              aria-label="3D knowledge atlas. Drag to orbit, scroll to zoom. Use the top-bar search for keyboard access."
               aria-hidden={unavailable()}
             />
             <div
@@ -410,7 +413,11 @@ export function Zodiac3D() {
               </div>
             </Show>
             <Show when={!unavailable()}>
-              <div class="atlas-camera" aria-label="Camera controls">
+              <div
+                class="atlas-camera"
+                role="group"
+                aria-label="Camera controls"
+              >
                 <button
                   type="button"
                   title="Zoom in"

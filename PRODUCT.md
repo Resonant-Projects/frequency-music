@@ -22,4 +22,4 @@ The web application uses Solid, Three.js, and Convex subscriptions. The current 
 
 DESIGN.md and web/docs/zodiac-style-guide.md document the established visual identity. GLOSSARY.md and convex/schema.ts define the domain. Product doctrine lives in docs/vision-and-meaning.md.
 
-The home has only the spatial view. Search results and domain concepts remain keyboard-accessible in its inspector. Escape clears the current selection, history, and search, and resets the camera. Workflow navigation belongs in the shared top navigation.
+The home has only the spatial view. Global header search and the inspector's domain concept list provide keyboard access. Escape dismisses an open search or menu first; in the home space, it clears the current selection and history and resets the camera. Workflow navigation belongs in the shared top navigation.
