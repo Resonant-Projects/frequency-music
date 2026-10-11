@@ -2,6 +2,7 @@ import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import { createKeyedRows } from "../lib/keyed-rows";
 import {
   badgeRowClass,
   fieldLabelClass,
@@ -87,6 +88,10 @@ export function HypothesesPage() {
   }));
   const recentSourceRows = createMemo<Doc<"sources">[]>(
     () => (recentSources() ?? []) as Doc<"sources">[],
+  );
+  // Keyed by id so a live refresh of recent sources keeps a focused checkbox.
+  const sourceRows = createKeyedRows(recentSourceRows, (source) =>
+    String(source._id),
   );
   const thesisRows = createMemo<Doc<"theses">[]>(
     () => (activeTheses() ?? []) as Doc<"theses">[],
@@ -258,19 +263,23 @@ export function HypothesesPage() {
               },
             })}
           >
-            <For each={recentSourceRows()}>
-              {(source) => (
-                <label class={sourceOptionClass}>
-                  <input
-                    type="checkbox"
-                    class={checkboxClass}
-                    checked={selectedSources().includes(source._id)}
-                    onChange={() => toggleSource(source._id)}
-                  />
-                  <span class={sourceOptionTextClass}>
-                    {source.title ?? "Untitled source"}
-                  </span>
-                </label>
+            <For each={sourceRows.ids()}>
+              {(id) => (
+                <Show when={sourceRows.byId().get(id)}>
+                  {(source) => (
+                    <label class={sourceOptionClass}>
+                      <input
+                        type="checkbox"
+                        class={checkboxClass}
+                        checked={selectedSources().includes(source()._id)}
+                        onChange={() => toggleSource(source()._id)}
+                      />
+                      <span class={sourceOptionTextClass}>
+                        {source().title ?? "Untitled source"}
+                      </span>
+                    </label>
+                  )}
+                </Show>
               )}
             </For>
           </div>

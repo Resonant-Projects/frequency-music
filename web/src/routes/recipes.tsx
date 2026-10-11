@@ -270,7 +270,6 @@ export function RecipesPage() {
               type="button"
               variant="outline"
               aria-busy={autoGenerating()}
-              disabled={autoGenerating()}
               onClick={runAutoGenerate}
             >
               {autoGenerating() ? "Generating…" : "Auto Generate"}

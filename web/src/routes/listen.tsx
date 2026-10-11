@@ -196,6 +196,12 @@ export function ListenPage() {
   // Status-bearing queries: a failed query must read as a failure, not as
   // "no shootouts yet" or "not chosen".
   const shootouts = createQueryWithStatus(api.listen.shootouts, () => ({}));
+  // Keyed by group so a refresh (a reveal, a new shootout) keeps the pressed
+  // row button mounted.
+  const shootoutRows = createKeyedRows(
+    () => shootouts.data(),
+    (row) => String(row.groupId),
+  );
   const subscription = createQueryWithStatus(
     api.podcast.subscription,
     () => ({}),
@@ -266,28 +272,32 @@ export function ListenPage() {
         <UINotice status={shootoutsStatus()} error={shootoutsError()} />
         <Show when={(shootouts.data()?.length ?? 0) > 0}>
           <UIList class={listClass}>
-            <For each={shootouts.data() ?? []}>
-              {(row) => (
-                <li>
-                  <button
-                    type="button"
-                    class={rowButtonClass}
-                    aria-pressed={groupId() === row.groupId}
-                    aria-controls={SHOOTOUT_GROUP_ID}
-                    onClick={() => setGroupId(row.groupId)}
-                  >
-                    <span>
-                      <DateTime value={row.createdAt} format="datetime" /> ·{" "}
-                      {row.memberCount} takes
-                    </span>
-                    <Show when={row.revealed}>
-                      <UIBadge tone="gold">revealed</UIBadge>
-                    </Show>
-                    <Show when={row.episodeArtifactId}>
-                      <UIBadge tone="cream">episode</UIBadge>
-                    </Show>
-                  </button>
-                </li>
+            <For each={shootoutRows.ids()}>
+              {(id) => (
+                <Show when={shootoutRows.byId().get(id)}>
+                  {(row) => (
+                    <li>
+                      <button
+                        type="button"
+                        class={rowButtonClass}
+                        aria-pressed={groupId() === row().groupId}
+                        aria-controls={SHOOTOUT_GROUP_ID}
+                        onClick={() => setGroupId(row().groupId)}
+                      >
+                        <span>
+                          <DateTime value={row().createdAt} format="datetime" />{" "}
+                          · {row().memberCount} takes
+                        </span>
+                        <Show when={row().revealed}>
+                          <UIBadge tone="gold">revealed</UIBadge>
+                        </Show>
+                        <Show when={row().episodeArtifactId}>
+                          <UIBadge tone="cream">episode</UIBadge>
+                        </Show>
+                      </button>
+                    </li>
+                  )}
+                </Show>
               )}
             </For>
           </UIList>
