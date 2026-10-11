@@ -9,7 +9,7 @@ import {
   unlink,
 } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { ToolCaller } from "../graphs/shared/audit.js";
 import { redactError } from "./redactError.js";
 import { ConvexToolHttpError } from "../tools/convexTools.js";
@@ -27,6 +27,23 @@ const DEAD_LETTER_SLOTS = Array.from(
   (_, index) => `slot-${index}.json`,
 );
 const flushQueues = new Map<string, Promise<void>>();
+async function syncDirectory(dir: string) {
+  const handle = await open(dir, "r");
+  try {
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+}
+async function syncDirectoryTree(dir: string) {
+  let current = resolve(dir);
+  for (;;) {
+    await syncDirectory(current);
+    const parent = dirname(current);
+    if (parent === current) return;
+    current = parent;
+  }
+}
 type Delivery = {
   tool: (typeof OUTBOX_TOOLS)[number];
   args: Record<string, unknown>;
@@ -66,9 +83,12 @@ export class DurableOutbox {
         const result = await handle.write("1", READY_OFFSET, "utf8");
         if (result.bytesWritten !== 1)
           throw new Error("Recovery outbox completion marker failed");
+        await handle.sync();
       } finally {
         await handle.close();
       }
+      // Enqueue succeeds only after both payload and slot survive a host crash.
+      await syncDirectoryTree(this.dir);
       return;
     }
     throw new Error("Recovery outbox capacity reached");
@@ -76,7 +96,25 @@ export class DurableOutbox {
   private async quarantine(path: string) {
     const dir = join(this.dir, "dead-letter");
     await mkdir(dir, { recursive: true, mode: 0o700 });
+    // Recovered writes may never have reached enqueue's successful file sync.
+    const record = await open(path, "r");
+    try {
+      await record.sync();
+    } finally {
+      await record.close();
+    }
     const existing = new Set(await readdir(dir));
+    const active = await stat(path, { bigint: true });
+    // A failed directory sync can leave both names. Reuse that inode's link
+    // before checking capacity, so retries never consume additional slots.
+    for (const file of existing) {
+      const diagnostic = await stat(join(dir, file), { bigint: true });
+      if (diagnostic.dev === active.dev && diagnostic.ino === active.ino) {
+        await syncDirectoryTree(dir);
+        await unlink(path);
+        return;
+      }
+    }
     // Legacy UUID files remain intact and count against the same capacity.
     const availableSlots = DEAD_LETTER_SLOTS.filter(
       (slot) => !existing.has(slot),
@@ -90,6 +128,8 @@ export class DurableOutbox {
         if ((error as NodeJS.ErrnoException).code === "EEXIST") continue;
         throw error;
       }
+      // Persist the diagnostic link before releasing its active slot.
+      await syncDirectoryTree(dir);
       await unlink(path);
       return;
     }
