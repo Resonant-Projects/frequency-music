@@ -9,6 +9,7 @@ import {
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import { createKeyedRows } from "../lib/keyed-rows";
 import { entityCellClass } from "../components/entity-card";
 import { StatTiles } from "../components/stat-tiles";
 import {
@@ -102,6 +103,12 @@ export function ThesisDetailPage() {
         (hypothesis: Doc<"hypotheses">) =>
           hypothesis.resolution === "contradicted",
       ) ?? [],
+  );
+  // Keyed by id: the detail refresh after a draft is created delivers fresh
+  // hypothesis objects, and the pressed button must stay mounted.
+  const contradictedRows = createKeyedRows(
+    contradictedHypotheses,
+    (hypothesis) => String(hypothesis._id),
   );
   const attachableCampaigns = createMemo(() => {
     const linkedIds = new Set(
@@ -256,17 +263,23 @@ export function ThesisDetailPage() {
                     ? "Creating summary..."
                     : "Create thesis summary"}
                 </UIButton>
-                <For each={contradictedHypotheses()}>
-                  {(hypothesis) => (
-                    <UIButton
-                      variant="outline"
-                      onClick={() => handleCreateChangedMind(hypothesis._id)}
-                      aria-busy={creatingChangedMind()}
-                    >
-                      {creatingChangedMind()
-                        ? "Creating changed-mind draft..."
-                        : `Create changed-mind draft for ${hypothesis.title}`}
-                    </UIButton>
+                <For each={contradictedRows.ids()}>
+                  {(id) => (
+                    <Show when={contradictedRows.byId().get(id)}>
+                      {(hypothesis) => (
+                        <UIButton
+                          variant="outline"
+                          onClick={() =>
+                            handleCreateChangedMind(hypothesis()._id)
+                          }
+                          aria-busy={creatingChangedMind()}
+                        >
+                          {creatingChangedMind()
+                            ? "Creating changed-mind draft..."
+                            : `Create changed-mind draft for ${hypothesis().title}`}
+                        </UIButton>
+                      )}
+                    </Show>
                   )}
                 </For>
               </div>
