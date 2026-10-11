@@ -5,6 +5,7 @@ import {
   readdir,
   readFile,
   rename,
+  stat,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -16,6 +17,7 @@ import { ConvexToolHttpError } from "../tools/convexTools.js";
 
 const OUTBOX_TOOLS = ["appendAgentRunEvent", "reportCaptureFailure"] as const;
 const OUTBOX_CAPACITY = 2000;
+const TEMP_WRITE_GRACE_MS = 15 * 60_000;
 const DEAD_LETTER_SLOTS = Array.from(
   { length: OUTBOX_CAPACITY },
   (_, index) => `slot-${index}.json`,
@@ -69,7 +71,7 @@ export class DurableOutbox {
   async flush(callTool: ToolCaller) {
     await mkdir(this.dir, { recursive: true, mode: 0o700 });
     const pending = (await readdir(this.dir))
-      .filter((file) => /^[a-f0-9-]+\.json$/.test(file))
+      .filter((file) => /^[a-f0-9-]+\.(json|tmp)$/.test(file))
       .sort();
     // Failed records stay durable, but cannot monopolize every poll's batch.
     const files = [
@@ -82,6 +84,15 @@ export class DurableOutbox {
       const path = join(this.dir, file);
       let invalidRecord = false;
       try {
+        // A recent temporary file may still be in an enqueue's write/rename
+        // window. Older writes are replayed with the same validation and
+        // acknowledgment rules as committed records; partial JSON is retained
+        // in quarantine rather than silently discarded.
+        if (
+          file.endsWith(".tmp") &&
+          Date.now() - (await stat(path)).mtimeMs < TEMP_WRITE_GRACE_MS
+        )
+          continue;
         const bytes = await readFile(path, "utf8");
         invalidRecord = true;
         const delivery = JSON.parse(bytes) as Delivery;

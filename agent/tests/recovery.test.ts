@@ -7,6 +7,7 @@ import {
   readFile,
   writeFile,
   unlink,
+  utimes,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -19,6 +20,117 @@ import type { SourceScoutState } from "../src/state/sourceScoutState.js";
 import { captureInputZ } from "../../convex/shared/operationRecovery";
 
 describe("recovery seams", () => {
+  test("reconstruction replays an abandoned temporary write and preserves a recent write", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-temp-"));
+    try {
+      for (const file of ["0.tmp", "1.tmp"])
+        await writeFile(
+          join(dir, file),
+          JSON.stringify({
+            tool: "appendAgentRunEvent",
+            args: { deliveryId: file },
+          }),
+        );
+      const old = new Date(Date.now() - 16 * 60_000);
+      await utimes(join(dir, "0.tmp"), old, old);
+      const callTool = vi.fn(async () => null);
+      await new DurableOutbox(dir).flush(callTool);
+      expect(callTool).toHaveBeenCalledExactlyOnceWith("appendAgentRunEvent", {
+        deliveryId: "0.tmp",
+      });
+      expect(await readdir(dir)).toEqual(["1.tmp"]);
+      expect(
+        JSON.parse(await readFile(join(dir, "1.tmp"), "utf8")).args.deliveryId,
+      ).toBe("1.tmp");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  test("a transient failure retains an abandoned temporary write for replay", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-temp-retry-"));
+    try {
+      const record = JSON.stringify({
+        tool: "reportCaptureFailure",
+        args: { deliveryId: "stable" },
+      });
+      await writeFile(join(dir, "0.tmp"), record);
+      const old = new Date(Date.now() - 16 * 60_000);
+      await utimes(join(dir, "0.tmp"), old, old);
+      await expect(
+        new DurableOutbox(dir).flush(async () => {
+          throw new Error("offline");
+        }),
+      ).rejects.toThrow("offline");
+      expect(await readFile(join(dir, "0.tmp"), "utf8")).toBe(record);
+      const callTool = vi.fn(async () => null);
+      await new DurableOutbox(dir).flush(callTool);
+      expect(callTool).toHaveBeenCalledExactlyOnceWith("reportCaptureFailure", {
+        deliveryId: "stable",
+      });
+      expect(await readdir(dir)).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  test("a partial abandoned temporary write is retained in quarantine without blocking later delivery", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-temp-partial-"));
+    try {
+      const partial = '{"tool":"appendAgentRunEvent","args":';
+      await writeFile(join(dir, "0.tmp"), partial);
+      const old = new Date(Date.now() - 16 * 60_000);
+      await utimes(join(dir, "0.tmp"), old, old);
+      await writeFile(
+        join(dir, "1.json"),
+        JSON.stringify({
+          tool: "appendAgentRunEvent",
+          args: { deliveryId: "later" },
+        }),
+      );
+      const callTool = vi.fn(async () => null);
+      await expect(
+        new DurableOutbox(dir).flush(callTool),
+      ).rejects.toBeInstanceOf(SyntaxError);
+      expect(callTool).toHaveBeenCalledExactlyOnceWith("appendAgentRunEvent", {
+        deliveryId: "later",
+      });
+      expect(await readdir(dir)).toEqual(["dead-letter"]);
+      expect(
+        await readFile(join(dir, "dead-letter", "slot-0.json"), "utf8"),
+      ).toBe(partial);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  test("a full spool of abandoned temporary writes recovers capacity after acknowledgment", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "recovery-temp-capacity-"));
+    try {
+      const old = new Date(Date.now() - 16 * 60_000);
+      await Promise.all(
+        Array.from({ length: 2000 }, async (_, index) => {
+          const path = join(dir, `${index.toString(16)}.tmp`);
+          await writeFile(
+            path,
+            JSON.stringify({
+              tool: "appendAgentRunEvent",
+              args: { deliveryId: String(index) },
+            }),
+          );
+          await utimes(path, old, old);
+        }),
+      );
+      const callTool = vi.fn(async () => null);
+      const outbox = new DurableOutbox(dir);
+      await outbox.flush(callTool);
+      expect(callTool).toHaveBeenCalledTimes(5);
+      await outbox.enqueue({
+        tool: "reportCaptureFailure",
+        args: { deliveryId: "new" },
+      });
+      expect(await readdir(dir)).toHaveLength(1996);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
   test.each([false, true])(
     "full quarantine preserves reports and continues delivery (corrupt record: %s)",
     async (corrupt) => {
